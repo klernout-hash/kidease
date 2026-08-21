@@ -1,0 +1,151 @@
+export type NativePlatform = "ios" | "android" | "web";
+
+type CapWindow = Window & {
+  Capacitor?: {
+    isNativePlatform?: () => boolean;
+    getPlatform?: () => string;
+  };
+};
+
+export function isNative(): boolean {
+  if (typeof window === "undefined") return false;
+  return Boolean((window as CapWindow).Capacitor?.isNativePlatform?.());
+}
+
+export function nativePlatform(): NativePlatform {
+  if (typeof window === "undefined") return "web";
+  const p = (window as CapWindow).Capacitor?.getPlatform?.();
+  if (p === "ios" || p === "android") return p;
+  return "web";
+}
+
+export function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  const standalone = window.matchMedia("(display-mode: standalone)").matches;
+  const iosHome = Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+  return standalone || iosHome || isNative();
+}
+
+export function isIosBrowser(): boolean {
+  if (typeof window === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(window.navigator.userAgent);
+}
+
+/** True Apple silicon / Intel Mac — not an iPad spoofing Macintosh. */
+export function isMac(): boolean {
+  if (typeof window === "undefined") return false;
+  const ua = window.navigator.userAgent;
+  const mac = /Macintosh|Mac OS X/.test(ua);
+  const iPad = /iPad/.test(ua) || (mac && (window.navigator.maxTouchPoints ?? 0) > 1);
+  return mac && !iPad && !/iPhone|iPod/.test(ua);
+}
+
+export async function getDeviceLocation(): Promise<{ lat: number; lng: number } | null> {
+  if (isNative()) {
+    try {
+      const { Geolocation } = await import("@capacitor/geolocation");
+      const pos = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: false,
+        timeout: 8000,
+      });
+      return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    } catch {
+      return null;
+    }
+  }
+  if (typeof navigator === "undefined" || !navigator.geolocation) return null;
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: 4000 },
+    );
+  });
+}
+
+export async function hapticLight(): Promise<void> {
+  if (!isNative()) return;
+  try {
+    const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
+    await Haptics.impact({ style: ImpactStyle.Light });
+  } catch {
+    /* web or denied */
+  }
+}
+
+export async function shareText(title: string, text: string, url?: string): Promise<boolean> {
+  try {
+    if (isNative()) {
+      const { Share } = await import("@capacitor/share");
+      await Share.share({ title, text, url });
+      return true;
+    }
+    if (navigator.share) {
+      await navigator.share({ title, text, url });
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+export async function hideNativeSplash(): Promise<void> {
+  if (!isNative()) return;
+  try {
+    const { SplashScreen } = await import("@capacitor/splash-screen");
+    await SplashScreen.hide();
+  } catch {
+    /* web */
+  }
+}
+
+export async function paintStatusBar(): Promise<void> {
+  if (!isNative()) return;
+  try {
+    const { StatusBar, Style } = await import("@capacitor/status-bar");
+    await StatusBar.setStyle({ style: Style.Dark });
+    await StatusBar.setBackgroundColor({ color: "#FFFFFF" });
+  } catch {
+    /* ios/android variant */
+  }
+}
+
+type BeforeInstall = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
+let deferredInstall: BeforeInstall | null = null;
+const installListeners = new Set<() => void>();
+
+export function captureInstallPrompt(): void {
+  if (typeof window === "undefined") return;
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstall = event as BeforeInstall;
+    installListeners.forEach((fn) => fn());
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredInstall = null;
+    installListeners.forEach((fn) => fn());
+  });
+}
+
+export function hasInstallPrompt(): boolean {
+  return Boolean(deferredInstall);
+}
+
+export function onInstallChange(fn: () => void): () => void {
+  installListeners.add(fn);
+  return () => installListeners.delete(fn);
+}
+
+export async function promptInstall(): Promise<boolean> {
+  if (!deferredInstall) return false;
+  await deferredInstall.prompt();
+  const { outcome } = await deferredInstall.userChoice;
+  deferredInstall = null;
+  installListeners.forEach((fn) => fn());
+  return outcome === "accepted";
+}
