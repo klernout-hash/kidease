@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { haversineKm } from "@/lib/geo";
-import { CATALOG, catalogBySlug, catalogById, catalogMonths, type CatalogDaycare } from "@/lib/catalog";
+import { getCatalog, catalogBySlugGet, catalogMonths, type CatalogDaycare } from "@/lib/catalog";
 import { upsertDaycare } from "./seed";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
@@ -82,7 +82,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const origin = { lat: data.lat, lng: data.lng };
     let cards: DaycareCard[] = [];
-    for (const d of CATALOG) {
+    for (const d of await getCatalog()) {
       const km = haversineKm(origin, { lat: d.lat, lng: d.lng });
       if (km > data.radiusKm) continue;
       cards.push(toCard(d, origin));
@@ -140,7 +140,7 @@ export const featuredDaycares = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const origin = { lat: data.lat, lng: data.lng };
     const nearby: DaycareCard[] = [];
-    for (const d of CATALOG) {
+    for (const d of await getCatalog()) {
       const km = haversineKm(origin, { lat: d.lat, lng: d.lng });
       if (km > 40) continue;
       const card = toCard(d, origin);
@@ -183,7 +183,7 @@ export const featuredDaycares = createServerFn({ method: "POST" })
 export const getDaycare = createServerFn({ method: "GET" })
   .validator((slug: string) => slug)
   .handler(async ({ data: slug }) => {
-    const found = catalogBySlug.get(slug);
+    const found = await catalogBySlugGet(slug);
     if (!found) return null;
     const sql = await getSql();
     await upsertDaycare(sql, found);
@@ -220,7 +220,8 @@ export const getDaycare = createServerFn({ method: "GET" })
       on conflict (daycare_id, viewed_on)
       do update set count = daycare_views.count + 1
     `;
-    const nearby = CATALOG.filter((d) => d.id !== found.id && d.city === found.city)
+    const nearby = (await getCatalog())
+      .filter((d) => d.id !== found.id && d.city === found.city)
       .slice(0, 4)
       .map((d) => toCard(d, { lat: found.lat, lng: found.lng }));
     return {
@@ -243,8 +244,10 @@ export const getDaycaresByIds = createServerFn({ method: "POST" })
   .validator((ids: string[]) => ids)
   .handler(async ({ data: ids }) => {
     const origin = { lat: 49.8951, lng: -97.1384 };
+    const catalog = await getCatalog();
+    const byId = new Map(catalog.map((d) => [d.id, d]));
     const cards = ids
-      .map((id) => catalogById.get(id))
+      .map((id) => byId.get(id))
       .filter((d): d is CatalogDaycare => Boolean(d))
       .map((d) => toCard(d, origin));
     return overlayClaimed(cards, (card, claimed) => {

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { CATALOG, catalogById } from "@/lib/catalog";
+import { getCatalog, catalogByIdGet } from "@/lib/catalog";
 import { nid } from "@/lib/utils";
 import { upsertDaycare } from "./seed";
 import { mapDaycare, type DaycareRow } from "./map-row";
@@ -39,7 +39,7 @@ export const searchClaimable = createServerFn({ method: "POST" })
     `.catch(() => [] as { id: string }[]);
     const taken = new Set(claimed.map((r) => r.id));
     const scored: Array<ClaimHit & { score: number }> = [];
-    for (const d of CATALOG) {
+    for (const d of await getCatalog()) {
       const name = d.name.toLowerCase();
       const city = d.city.toLowerCase();
       const addr = d.address.toLowerCase();
@@ -76,7 +76,7 @@ export const startClaim = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
-    const listed = catalogById.get(daycareId);
+    const listed = await catalogByIdGet(daycareId);
     if (!listed) throw new Error("Listing not found");
     const sql = await getSql();
     const existing = await sql<{ user_id: string }>`
@@ -148,7 +148,7 @@ export const verifyClaim = createServerFn({ method: "POST" })
     `;
     await sql`update profiles set role = 'provider' where user_id = ${context.userId}`;
     const actor = await lookupUser(context.userId);
-    const listedAfter = catalogById.get(data.daycareId);
+    const listedAfter = await catalogByIdGet(data.daycareId);
     void notifyProviderJoined({
       kind: "claim",
       daycareName: listedAfter?.name,

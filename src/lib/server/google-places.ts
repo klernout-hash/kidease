@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
-import { catalogById } from "@/lib/catalog";
+import { catalogByIdGet } from "@/lib/catalog";
 
 const KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY || "";
 
@@ -27,7 +27,7 @@ async function lookupPlace(name: string, address: string): Promise<PlaceHit | nu
 export const refreshGoogleRating = createServerFn({ method: "POST" })
   .validator((id: string) => id)
   .handler(async ({ data: id }) => {
-    const listed = catalogById.get(id);
+    const listed = await catalogByIdGet(id);
     if (!listed) return null;
     const hit = await lookupPlace(listed.name, `${listed.address}, ${listed.city} ${listed.province}`);
     if (!hit) return { ratingX10: listed.ratingX10, reviewCount: listed.reviewCount, googlePlaceId: listed.googlePlaceId };

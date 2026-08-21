@@ -4,7 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { ensureSeed, upsertDaycare } from "./seed";
 import { lookupUser, notifyProviderJoined } from "./notify";
-import { catalogById } from "@/lib/catalog";
+import { catalogByIdGet } from "@/lib/catalog";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
 import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, Payment, PayMethod, Schedule } from "@/lib/types";
@@ -239,7 +239,7 @@ export const toggleSave = createServerFn({ method: "POST" })
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
-    const listed = catalogById.get(daycareId);
+    const listed = await catalogByIdGet(daycareId);
     if (listed) await upsertDaycare(sql, listed);
     const existing = await sql<{ user_id: string }>`
       select user_id from saved_daycares where user_id = ${context.userId} and daycare_id = ${daycareId}
@@ -277,7 +277,7 @@ export const createBooking = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const listed = catalogById.get(data.daycareId);
+    const listed = await catalogByIdGet(data.daycareId);
     if (listed) await upsertDaycare(sql, listed);
     const rows = await sql<DaycareRow>`select * from daycares where id = ${data.daycareId} limit 1`;
     const row = rows[0];
@@ -357,7 +357,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureProfile(sql, context.userId);
-    const listed = catalogById.get(data.daycareId);
+    const listed = await catalogByIdGet(data.daycareId);
     if (listed) await upsertDaycare(sql, listed);
     const rows = await sql<DaycareRow>`select * from daycares where id = ${data.daycareId} limit 1`;
     const row = rows[0];
@@ -649,7 +649,7 @@ export const openConversation = createServerFn({ method: "POST" })
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
-    const listed = catalogById.get(daycareId);
+    const listed = await catalogByIdGet(daycareId);
     if (listed) await upsertDaycare(sql, listed);
     const existing = await sql<{ id: string }>`
       select id from conversations where user_id = ${context.userId} and daycare_id = ${daycareId}

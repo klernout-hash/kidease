@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { CATALOG } from "@/lib/catalog";
+import { getCatalog } from "@/lib/catalog";
 
 export const matchCentres = createServerFn({ method: "POST" })
   .validator((prompt: string) => prompt.trim().slice(0, 500))
@@ -7,6 +7,7 @@ export const matchCentres = createServerFn({ method: "POST" })
     const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) return { ok: false as const, error: "unavailable" };
     const tokens = prompt.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+    const CATALOG = await getCatalog();
     const scored = CATALOG.map((d) => {
       const hay = `${d.name} ${d.city} ${d.province} ${d.amenities} ${d.tagline}`.toLowerCase();
       const score = tokens.reduce((n, t) => n + (hay.includes(t) ? 1 : 0), 0);

@@ -1,6 +1,5 @@
 import { nextMonths } from "./utils";
 import { catalogGoogleRating } from "./google-reviews";
-import centresJson from "./data/load-centres.js";
 import storefrontsJson from "./data/storefronts.json";
 
 export type CatalogDaycare = {
@@ -163,10 +162,44 @@ function hydrate(raw: RawCentre, index: number): CatalogDaycare {
   };
 }
 
-export const CATALOG: CatalogDaycare[] = (centresJson as RawCentre[]).map(hydrate);
+const CATALOG_URL =
+  "https://raw.githubusercontent.com/klernout-hash/kidease/main/src/lib/data/centres.json";
 
-export const catalogBySlug = new Map(CATALOG.map((d) => [d.slug, d]));
-export const catalogById = new Map(CATALOG.map((d) => [d.id, d]));
+let cachedCatalog: CatalogDaycare[] | null = null;
+let catalogBySlugMap = new Map<string, CatalogDaycare>();
+let catalogByIdMap = new Map<string, CatalogDaycare>();
+
+async function loadRawCentres(): Promise<RawCentre[]> {
+  try {
+    const { readFile } = await import("node:fs/promises");
+    const { fileURLToPath } = await import("node:url");
+    const path = fileURLToPath(new URL("./data/centres.json", import.meta.url));
+    return JSON.parse(await readFile(path, "utf8")) as RawCentre[];
+  } catch {
+    const res = await fetch(CATALOG_URL);
+    if (!res.ok) throw new Error(`Catalogue unavailable (${res.status})`);
+    return (await res.json()) as RawCentre[];
+  }
+}
+
+export async function getCatalog(): Promise<CatalogDaycare[]> {
+  if (cachedCatalog) return cachedCatalog;
+  const raw = await loadRawCentres();
+  cachedCatalog = raw.map(hydrate);
+  catalogBySlugMap = new Map(cachedCatalog.map((d) => [d.slug, d]));
+  catalogByIdMap = new Map(cachedCatalog.map((d) => [d.id, d]));
+  return cachedCatalog;
+}
+
+export async function catalogBySlugGet(slug: string) {
+  await getCatalog();
+  return catalogBySlugMap.get(slug);
+}
+
+export async function catalogByIdGet(id: string) {
+  await getCatalog();
+  return catalogByIdMap.get(id);
+}
 
 export function catalogMonths() {
   return nextMonths(6);
