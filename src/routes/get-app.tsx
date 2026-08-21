@@ -18,10 +18,10 @@ import { useCopy } from "@/lib/use-copy";
 export const Route = createFileRoute("/get-app")({ component: GetApp });
 
 const SHOTS = [
-  { src: "/store/shot-home.png", alt: "Home" },
-  { src: "/store/shot-search.png", alt: "Search" },
-  { src: "/store/shot-listing.png", alt: "Listing" },
-  { src: "/store/shot-login.png", alt: "Sign in" },
+  { src: "/store/phone-home.jpg", alt: "Home" },
+  { src: "/store/phone-search.jpg", alt: "Search" },
+  { src: "/store/phone-listing.jpg", alt: "Listing" },
+  { src: "/store/phone-login.jpg", alt: "Sign in" },
 ];
 
 function GetApp() {
@@ -49,7 +49,7 @@ function GetApp() {
   return (
     <Shell>
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-8">
-        <section className="grid items-center gap-10 md:grid-cols-[1fr_280px]">
+        <section className="grid items-center gap-10 md:grid-cols-[1fr_minmax(16rem,22rem)]">
           <div>
             <BrandMark size="md" align="start" />
             <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-muted">{t("getAppKicker")}</p>
@@ -84,7 +84,7 @@ function GetApp() {
               {STORE.ageRating} · {STORE.price} · {STORE.category} · v{STORE.version}
             </p>
           </div>
-          <PhoneFrame src="/store/shot-search.png" />
+          <PhoneFrame src="/store/phone-search.jpg" />
         </section>
 
         {mac ? (
@@ -132,18 +132,23 @@ function GetApp() {
           <Feat icon={ShieldCheck} title={t("featSafe")} body={t("featSafeBody")} />
         </section>
 
-        <section className="mt-14">
-          <h2 className="font-display text-2xl">{t("onYourPhone")}</h2>
-          <div className="mt-5 flex gap-4 overflow-x-auto pb-2">
+        <section className="mt-14 overflow-hidden rounded-xl bg-primary px-4 py-10 text-primary-fg sm:px-8 md:py-14">
+          <h2 className="font-display text-2xl text-primary-fg md:text-3xl">{t("onYourPhone")}</h2>
+          <p className="mt-2 max-w-xl text-sm text-primary-fg/80">{t("onYourPhoneLead")}</p>
+          <ul className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
             {SHOTS.map((s) => (
-              <img
-                key={s.src}
-                src={s.src}
-                alt={s.alt}
-                className="h-80 w-auto shrink-0 rounded-xl object-cover object-top ring-1 ring-border"
-              />
+              <li key={s.src} className="min-w-0">
+                <img
+                  src={s.src}
+                  alt={s.alt}
+                  width={1000}
+                  height={1500}
+                  className="w-full object-contain"
+                />
+                <p className="mt-3 text-center text-xs font-medium tracking-wide text-primary-fg/75">{s.alt}</p>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
 
         <section id="store-ready" className="mt-14 rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
@@ -198,10 +203,8 @@ function Meta({ k, v }: { k: string; v: string }) {
 
 function PhoneFrame({ src }: { src: string }) {
   return (
-    <div className="mx-auto w-64 rounded-device bg-fg p-2 shadow-[var(--shadow-card)]">
-      <div className="overflow-hidden rounded-xl bg-bg">
-        <img src={src} alt="" className="aspect-[9/16] w-full object-cover object-top" />
-      </div>
+    <div className="mx-auto w-full max-w-xs">
+      <img src={src} alt="" width={1000} height={1500} className="w-full object-contain" />
     </div>
   );
 }
