@@ -1,15 +1,11 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  BadgeCheck,
-  Camera,
   LocateFixed,
   MapPin,
   MessageCircle,
   Search,
-  ShieldCheck,
   ListChecks,
-  Lock,
 } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
@@ -208,7 +204,6 @@ function Home() {
                 {t("orEnterCity")}
               </button>
             )}
-            <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>
           </div>
           <div className="relative">
             <div className="overflow-hidden rounded-xl shadow-lift ring-1 ring-border">
@@ -232,7 +227,7 @@ function Home() {
         <h2 className="max-w-2xl text-3xl md:text-4xl">{t("howStressFree")}</h2>
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           <Step n="1" icon={MapPin} title={t("how1t")} body={t("how1")} />
-          <Step n="2" icon={Camera} title={t("how2t")} body={t("how2")} />
+          <Step n="2" icon={ListChecks} title={t("how2t")} body={t("how2")} />
           <Step n="3" icon={MessageCircle} title={t("how3t")} body={t("how3")} />
         </div>
       </section>
@@ -240,7 +235,6 @@ function Home() {
       <section id="featured" className="bg-surface">
         <div className="mx-auto max-w-6xl px-5 py-16">
           <h2 className="text-3xl md:text-4xl">{t("featured")}</h2>
-          <p className="mt-3 max-w-2xl text-muted">{t("featuredBody")}</p>
 
           <form
             className="mt-8 flex flex-col gap-2 md:flex-row md:items-center"
@@ -316,32 +310,9 @@ function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 py-16">
-        <h2 className="text-3xl md:text-4xl">{t("trustWhyTitle")}</h2>
-        <ul className="mt-8 grid gap-4 md:grid-cols-2">
-          <Why icon={BadgeCheck} text={t("trustWhy1")} />
-          <Why icon={Camera} text={t("trustWhy2")} />
-          <Why icon={ListChecks} text={t("trustWhy3")} />
-          <Why icon={Lock} text={t("trustWhy4")} />
-        </ul>
-        <p className="mt-8 max-w-2xl text-muted">{t("trustWhyLocal")}</p>
-      </section>
-
-      <section className="bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-16">
-          <h2 className="text-3xl md:text-4xl">{t("quotesTitle")}</h2>
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            <Quote body={t("quote1")} by={t("quote1By")} />
-            <Quote body={t("quote2")} by={t("quote2By")} />
-            <Quote body={t("quote3")} by={t("quote3By")} />
-          </div>
-        </div>
-      </section>
-
       <section className="bg-primary text-primary-fg">
         <div className="mx-auto max-w-3xl px-5 py-16 text-center">
           <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
-          <p className="mx-auto mt-4 max-w-xl text-primary-fg/85">{t("finalCtaBody")}</p>
           <Button
             size="lg"
             variant="secondary"
@@ -383,25 +354,5 @@ function Step({
       <h3 className="mt-4 text-xl">{title}</h3>
       <p className="mt-2 text-sm text-muted">{body}</p>
     </div>
-  );
-}
-
-function Why({ icon: Icon, text }: { icon: typeof ShieldCheck; text: string }) {
-  return (
-    <li className="flex gap-3 rounded-xl bg-surface p-5 ring-1 ring-border">
-      <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-        <Icon className="size-4" />
-      </span>
-      <p className="text-sm leading-relaxed">{text}</p>
-    </li>
-  );
-}
-
-function Quote({ body, by }: { body: string; by: string }) {
-  return (
-    <blockquote className="rounded-xl bg-bg p-6 ring-1 ring-border">
-      <p className="text-[15px] leading-relaxed text-fg">“{body}”</p>
-      <footer className="mt-4 text-sm font-medium text-muted">— {by}</footer>
-    </blockquote>
   );
 }
