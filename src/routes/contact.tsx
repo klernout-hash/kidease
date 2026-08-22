@@ -6,6 +6,7 @@ import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
+import { submitPublicMessage } from "@/lib/server/notify";
 import type { CopyKey } from "@/lib/copy";
 
 export const Route = createFileRoute("/contact")({ component: Contact });
@@ -25,10 +26,22 @@ export function Contact() {
   const [subject, setSubject] = useState<CopyKey>("subjectGeneral");
   const [body, setBody] = useState("");
 
-  function send(e: React.FormEvent) {
+  const [busy, setBusy] = useState(false);
+
+  async function send(e: React.FormEvent) {
     e.preventDefault();
-    toast.success(t("contactSent"));
-    setBody("");
+    setBusy(true);
+    try {
+      await submitPublicMessage({
+        data: { kind: "contact", name, email, subject: t(subject), body },
+      });
+      toast.success(t("contactSent"));
+      setBody("");
+    } catch {
+      toast.error("Could not send. Email kyle@kidease.ca directly.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -84,7 +97,7 @@ export function Contact() {
               onChange={(e) => setBody(e.target.value)}
             />
           </label>
-          <Button type="submit" className="w-full" size="lg">
+          <Button type="submit" className="w-full" size="lg" disabled={busy}>
             {t("submit")}
           </Button>
         </form>

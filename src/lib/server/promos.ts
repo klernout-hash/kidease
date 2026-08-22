@@ -3,6 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { promoPlan, type PromoPlanId } from "@/lib/promos";
+import { lookupUser, notifyPlatform } from "./notify";
 
 export async function overlayPriority<T extends { id: string; priority?: boolean; priorityUntil?: string | null }>(
   items: T[],
@@ -57,5 +58,17 @@ export const promoteListing = createServerFn({ method: "POST" })
     await sql`
       update daycares set priority_until = ${endsIso} where id = ${data.daycareId}
     `;
+    const actor = await lookupUser(context.userId);
+    const listed = await sql<{ name: string; slug: string }>`
+      select name, slug from daycares where id = ${data.daycareId} limit 1
+    `.catch(() => [] as { name: string; slug: string }[]);
+    void notifyPlatform({
+      kind: "promo",
+      daycareName: listed[0]?.name,
+      slug: listed[0]?.slug,
+      actorName: actor.name,
+      actorEmail: actor.email,
+      detail: `${plan.id} · ${plan.days} days · $${plan.amount} · until ${endsIso}`,
+    });
     return { ok: true as const, endsAt: endsIso, amount: plan.amount, days: plan.days };
   });

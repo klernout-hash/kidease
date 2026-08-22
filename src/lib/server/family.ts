@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { ensureSeed, upsertDaycare } from "./seed";
-import { lookupUser, notifyProviderJoined } from "./notify";
+import { lookupUser, notifyAccountCreated, notifyPlatform, notifyProviderJoined } from "./notify";
 import { catalogByIdGet } from "@/lib/catalog";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
@@ -23,10 +23,15 @@ import {
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
-  await sql`
+  const inserted = await sql<{ user_id: string }>`
     insert into profiles (user_id, role) values (${userId}, 'parent')
     on conflict (user_id) do nothing
+    returning user_id
   `;
+  if (inserted[0]) {
+    const actor = await lookupUser(userId);
+    void notifyAccountCreated({ name: actor.name, email: actor.email });
+  }
 }
 
 export const getFamily = createServerFn({ method: "GET" })
@@ -452,6 +457,26 @@ export const createSpotRequest = createServerFn({ method: "POST" })
       values (${nid("msg")}, ${cid}, ${"provider"}, ${centreAckMessage(copy, locale)}, ${"chat"})
     `;
     await sql`update conversations set last_at = now() where id = ${cid}`;
+
+    const actor = await lookupUser(context.userId);
+    void notifyPlatform({
+      kind: "spot_request",
+      daycareName: d.name,
+      address: d.address,
+      city: d.city,
+      province: d.province,
+      slug: d.slug,
+      actorName: parentName || actor.name,
+      actorEmail: actor.email,
+      detail: [
+        `Child: ${childName}`,
+        `Start: ${data.startDate}`,
+        `Schedule: ${data.schedule}`,
+        data.message?.trim() ? `Message: ${data.message.trim()}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    });
 
     return {
       id: bookingId,
@@ -885,6 +910,14 @@ export const createPayment = createServerFn({ method: "POST" })
     if (status === "paid") {
       await sql`update bookings set status = 'active' where id = ${b.id} and user_id = ${context.userId}`;
       await postSpotConfirmed(sql, b.id, data.locale === "fr" ? "fr" : "en");
+      const actor = await lookupUser(context.userId);
+      void notifyPlatform({
+        kind: "payment",
+        daycareName: b.daycare_id,
+        actorName: actor.name,
+        actorEmail: actor.email,
+        detail: `Amount: $${b.monthly_amount} · ${data.method} · ${reference}`,
+      });
     }
     return { id, status, reference, amount: b.monthly_amount };
   });
@@ -905,6 +938,13 @@ export const confirmInterac = createServerFn({ method: "POST" })
     if (rows[0].booking_id) {
       await sql`update bookings set status = 'active' where id = ${rows[0].booking_id} and user_id = ${context.userId}`;
       await postSpotConfirmed(sql, rows[0].booking_id, data.locale === "fr" ? "fr" : "en");
+      const actor = await lookupUser(context.userId);
+      void notifyPlatform({
+        kind: "payment",
+        actorName: actor.name,
+        actorEmail: actor.email,
+        detail: `Interac confirmed · payment ${paymentId}`,
+      });
     }
     return { ok: true };
   });

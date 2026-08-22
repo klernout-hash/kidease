@@ -29,18 +29,20 @@ function AdminPage() {
     <Shell>
       <main className="mx-auto max-w-3xl px-4 py-10">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Admin</p>
-        <h1 className="mt-2 font-display text-4xl">Provider sign-ups</h1>
-        <p className="mt-2 text-muted">Every new provider account and claimed listing. Emails go to klernout@hotmail.com.</p>
+        <h1 className="mt-2 font-display text-4xl">Platform activity</h1>
+        <p className="mt-2 text-muted">
+          Accounts, claims, spot requests, payments, and messages. Alerts go to kyle@kidease.ca.
+        </p>
         <ul className="mt-8 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
           {rows.length === 0 ? (
-            <li className="p-8 text-center text-muted">No sign-ups yet.</li>
+            <li className="p-8 text-center text-muted">No activity yet.</li>
           ) : (
             rows.map((r) => (
               <li key={r.id} className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-subtle">{r.kind}</p>
-                    <p className="font-medium">{r.daycare_name || "Provider account"}</p>
+                    <p className="font-medium">{r.daycare_name || (r.kind === "account" ? "New account" : "Activity")}</p>
                     <p className="text-sm text-muted">
                       {[r.address, r.city, r.province].filter(Boolean).join(", ") || "—"}
                     </p>

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
+import { submitPublicMessage } from "@/lib/server/notify";
 
 export const Route = createFileRoute("/support")({ component: Support });
 
@@ -13,10 +14,22 @@ function Support() {
   const [email, setEmail] = useState("");
   const [body, setBody] = useState("");
 
-  function send(e: React.FormEvent) {
+  const [busy, setBusy] = useState(false);
+
+  async function send(e: React.FormEvent) {
     e.preventDefault();
-    toast.success(t("supportSent"));
-    setBody("");
+    setBusy(true);
+    try {
+      await submitPublicMessage({
+        data: { kind: "support", name, email, body },
+      });
+      toast.success(t("supportSent"));
+      setBody("");
+    } catch {
+      toast.error("Could not send. Email kyle@kidease.ca directly.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -56,7 +69,7 @@ function Support() {
               onChange={(e) => setBody(e.target.value)}
             />
           </label>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" disabled={busy}>
             {t("send")}
           </Button>
         </form>
