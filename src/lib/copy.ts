@@ -551,7 +551,7 @@ export const copy = {
     subjectTech: "Technical Issue",
     subjectPartner: "Partnership",
     subjectOther: "Other",
-    helloEmail: "hello@kidease.ca",
+    helloEmail: "kyle@kidease.ca",
     contactDirect: "Direct contact",
     contactResponse: "We typically respond within 1–2 business days.",
     contactLocation:
@@ -1165,7 +1165,7 @@ export const copy = {
     subjectTech: "Problème technique",
     subjectPartner: "Partenariat",
     subjectOther: "Autre",
-    helloEmail: "hello@kidease.ca",
+    helloEmail: "kyle@kidease.ca",
     contactDirect: "Contact direct",
     contactResponse: "Nous répondons généralement en 1 ou 2 jours ouvrables.",
     contactLocation:

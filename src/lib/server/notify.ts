@@ -88,6 +88,172 @@ function defaultTitle(kind: PlatformKind) {
   }
 }
 
+const KIND_LABEL: Record<string, string> = {
+  account: "New accounts",
+  claim: "Listings claimed",
+  signup: "Provider accounts",
+  listing: "Listings created",
+  spot_request: "Spot requests",
+  payment: "Payments",
+  promo: "Priority listings",
+  contact: "Contact messages",
+  support: "Support messages",
+};
+
+function winnipegDay() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Winnipeg" }).format(new Date());
+}
+
+function digestCopy(
+  day: string,
+  rows: Array<{
+    kind: string;
+    daycare_name: string | null;
+    provider_name: string | null;
+    provider_email: string | null;
+    address: string | null;
+    city: string | null;
+    slug: string | null;
+    created_at: string;
+  }>,
+) {
+  const counts = new Map<string, number>();
+  for (const r of rows) counts.set(r.kind, (counts.get(r.kind) ?? 0) + 1);
+  const summary = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, n]) => `${KIND_LABEL[k] || k}: ${n}`)
+    .join("\n");
+  const lines = rows.map((r) => {
+    const who = [r.provider_name, r.provider_email].filter(Boolean).join(" · ") || "—";
+    const place = [r.daycare_name, r.city].filter(Boolean).join(" · ") || r.address || "—";
+    const when = new Date(r.created_at).toLocaleString("en-CA", {
+      timeZone: "America/Winnipeg",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `• ${KIND_LABEL[r.kind] || r.kind} — ${place} (${who}) at ${when}`;
+  });
+  const title = `KidEase daily digest — ${day}`;
+  const admin = `${appOrigin()}/admin`;
+  const text = [
+    title,
+    `${rows.length} event${rows.length === 1 ? "" : "s"} in the last 24 hours.`,
+    "",
+    summary,
+    "",
+    lines.join("\n"),
+    "",
+    `Admin: ${admin}`,
+  ].join("\n");
+  const htmlSummary = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(
+      ([k, n]) =>
+        `<td style="padding:10px 12px;border:1px solid #e3ddd3;"><strong>${esc(KIND_LABEL[k] || k)}</strong><br/>${n}</td>`,
+    )
+    .join("");
+  const htmlItems = rows
+    .map((r) => {
+      const who = [r.provider_name, r.provider_email].filter(Boolean).join(" · ") || "—";
+      const place = [r.daycare_name, r.city].filter(Boolean).join(" · ") || r.address || "—";
+      const when = new Date(r.created_at).toLocaleString("en-CA", {
+        timeZone: "America/Winnipeg",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      return `<tr>
+        <td style="padding:10px 0;border-bottom:1px solid #e3ddd3;vertical-align:top;width:38%;">${esc(KIND_LABEL[r.kind] || r.kind)}<br/><span style="color:#5c6578;font-size:12px;">${esc(when)}</span></td>
+        <td style="padding:10px 0;border-bottom:1px solid #e3ddd3;">${esc(place)}<br/><span style="color:#5c6578;font-size:12px;">${esc(who)}</span></td>
+      </tr>`;
+    })
+    .join("");
+  const html = `<!doctype html>
+<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
+    <tr><td style="padding:28px 28px 8px;">
+      <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
+      <h1 style="margin:12px 0 0;font-size:24px;line-height:1.2;">Daily digest</h1>
+      <p style="margin:8px 0 0;color:#5c6578;">${esc(day)} · ${rows.length} event${rows.length === 1 ? "" : "s"} · last 24 hours</p>
+    </td></tr>
+    <tr><td style="padding:16px 28px 8px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>${htmlSummary}</tr></table>
+    </td></tr>
+    <tr><td style="padding:8px 28px 28px;">
+      <table width="100%" cellpadding="0" cellspacing="0">${htmlItems}</table>
+      <p style="margin:24px 0 0;">
+        <a href="${admin}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">Open admin</a>
+      </p>
+    </td></tr>
+  </table>
+</body></html>`;
+  return { title, text, html };
+}
+
+async function ensureDigestTable() {
+  const sql = await getSql();
+  await sql
+    .query(
+      `create table if not exists digest_sends (
+        day text primary key,
+        sent_at timestamptz not null default now(),
+        event_count int not null default 0,
+        email_status text not null
+      )`,
+    )
+    .catch(() => undefined);
+}
+
+export async function sendDailyDigest() {
+  await ensureEventsTable();
+  await ensureDigestTable();
+  const sql = await getSql();
+  const day = winnipegDay();
+  const already = await sql<{ day: string }>`select day from digest_sends where day = ${day}`.catch(
+    () => [] as { day: string }[],
+  );
+  if (already[0]) return { ok: true as const, skipped: true as const, day, reason: "already-sent" };
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const rows = await sql<{
+    kind: string;
+    daycare_name: string | null;
+    provider_name: string | null;
+    provider_email: string | null;
+    address: string | null;
+    city: string | null;
+    slug: string | null;
+    created_at: string;
+  }>`
+    select kind, daycare_name, provider_name, provider_email, address, city, slug, created_at
+    from platform_events
+    where created_at >= ${since}
+    order by created_at desc
+    limit 200
+  `.catch(() => []);
+
+  if (!rows.length) {
+    await sql`insert into digest_sends (day, event_count, email_status) values (${day}, 0, ${"empty"})`.catch(
+      () => undefined,
+    );
+    return { ok: true as const, skipped: true as const, empty: true as const, day };
+  }
+
+  const { title, text, html } = digestCopy(day, rows);
+  let status = "queued";
+  let error: string | null = null;
+  try {
+    status = await deliverEmail(title, text, html);
+  } catch (err) {
+    status = "failed";
+    error = err instanceof Error ? err.message : "send failed";
+    console.error("[kidease-digest]", error);
+  }
+  await sql`insert into digest_sends (day, event_count, email_status) values (${day}, ${rows.length}, ${status})`.catch(
+    () => undefined,
+  );
+  return { ok: true as const, day, count: rows.length, status, error };
+}
+
 function emailCopy(p: PlatformEvent) {
   const when = whenWinnipeg();
   const title = p.title || defaultTitle(p.kind);

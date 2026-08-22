@@ -105,7 +105,7 @@ export function Contact() {
         <div className="mt-10 rounded-xl bg-surface p-5 ring-1 ring-border">
           <p className="text-sm font-semibold">{t("contactDirect")}</p>
           <a
-            href="mailto:hello@kidease.ca"
+            href={`mailto:${t("helloEmail")}`}
             className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
           >
             <Mail className="size-4" />
