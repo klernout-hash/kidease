@@ -1,0 +1,17 @@
+{
+  "name": "KidEase",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "dev",
+      "command": "npm run dev",
+      "description": "Vite dev server for the KidEase app on http://localhost:8080 (uses the embedded PGLite database when DATABASE_URL is unset)."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 8080
+    }
+  ]
+}
