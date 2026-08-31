@@ -25,6 +25,7 @@ export const Route = createFileRoute("/search")({
 });
 
 const PRESETS = [5, 10, 15, 25, 50, 75];
+const DOT = " \u00b7 ";
 
 function SearchPage() {
   const { t } = useCopy();
@@ -144,14 +145,7 @@ function SearchPage() {
 
   function chip(on: boolean, label: string, action: () => void) {
     return (
-      <button
-        type="button"
-        onClick={action}
-        className={cn(
-          "rounded-full px-3.5 py-1.5 text-sm font-medium ring-1",
-          on ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border",
-        )}
-      >
+      <button type="button" onClick={action} className={cn("rounded-full px-3.5 py-1.5 text-sm font-medium ring-1", on ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border")}>
         {label}
       </button>
     );
@@ -164,7 +158,9 @@ function SearchPage() {
           <div className="min-w-0">
             <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>
             <p className="mt-0.5 text-[13px] text-muted">
-              {list.length} {list.length === 1 ? "centre" : "centres"} \u00b7 {radiusKm} {t("km")}
+              {list.length} {list.length === 1 ? "centre" : "centres"}
+              {DOT}
+              {radiusKm} {t("km")}
             </p>
           </div>
           <Link to="/" search={{ change: "1" }} className="shrink-0 pb-0.5 text-[13px] font-medium text-primary">
@@ -172,68 +168,30 @@ function SearchPage() {
           </Link>
         </div>
 
-        <form
-          className="mt-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            applyQuery();
-          }}
-        >
+        <form className="mt-3" onSubmit={(e) => { e.preventDefault(); applyQuery(); }}>
           <div className="flex min-h-12 items-center gap-2 rounded-full bg-surface pl-4 pr-1.5 shadow-card ring-1 ring-border">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("locationPh")}
-              className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none"
-            />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("locationPh")} className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
             <button type="button" onClick={() => void geo()} className="grid size-10 place-items-center text-muted" aria-label={t("useLocation")}>
               <LocateFixed className="size-5" />
             </button>
-            <Button type="submit" className="h-10 rounded-full px-5">
-              {t("search")}
-            </Button>
+            <Button type="submit" className="h-10 rounded-full px-5">{t("search")}</Button>
           </div>
         </form>
 
         <div className="mt-3 flex items-center gap-2">
           <div className="flex min-h-10 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border">
-            <button
-              type="button"
-              onClick={() => setLiveOnly(true)}
-              className={cn("flex-1 rounded-full px-3 text-[13px] font-semibold", liveOnly ? "bg-primary text-primary-fg" : "text-muted")}
-            >
-              {t("live")} \u00b7 {liveCount}
+            <button type="button" onClick={() => setLiveOnly(true)} className={cn("flex-1 rounded-full px-3 text-[13px] font-semibold", liveOnly ? "bg-primary text-primary-fg" : "text-muted")}>
+              {t("live")}{DOT}{liveCount}
             </button>
-            <button
-              type="button"
-              onClick={() => setLiveOnly(false)}
-              className={cn("flex-1 rounded-full px-3 text-[13px] font-semibold", !liveOnly ? "bg-fg text-bg" : "text-muted")}
-            >
+            <button type="button" onClick={() => setLiveOnly(false)} className={cn("flex-1 rounded-full px-3 text-[13px] font-semibold", !liveOnly ? "bg-fg text-bg" : "text-muted")}>
               {t("showAll")}
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setFilters((v) => !v)}
-            className={cn(
-              "relative inline-flex h-10 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold ring-1",
-              filters || extraFilters ? "bg-primary text-primary-fg ring-primary" : "bg-surface text-fg ring-border",
-            )}
-          >
+          <button type="button" onClick={() => setFilters((v) => !v)} className={cn("relative inline-flex h-10 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold ring-1", filters || extraFilters ? "bg-primary text-primary-fg ring-primary" : "bg-surface text-fg ring-border")}>
             <SlidersHorizontal className="size-3.5" />
             {t("sort") === "Trier" ? "Filtres" : "Filters"}
-            {extraFilters ? (
-              <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">{extraFilters}</span>
-            ) : null}
+            {extraFilters ? <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">{extraFilters}</span> : null}
           </button>
-          <div className="hidden h-10 rounded-full bg-surface p-0.5 ring-1 ring-border sm:flex">
-            <button type="button" onClick={() => setView("list")} className={cn("rounded-full px-3 text-[13px] font-semibold", view === "list" ? "bg-fg text-bg" : "text-muted")}>
-              {t("list")}
-            </button>
-            <button type="button" onClick={() => setView("map")} className={cn("rounded-full px-3 text-[13px] font-semibold", view === "map" ? "bg-fg text-bg" : "text-muted")}>
-              {t("map")}
-            </button>
-          </div>
         </div>
 
         {filters ? (
@@ -252,73 +210,21 @@ function SearchPage() {
             <div>
               <div className="mb-2 flex items-center justify-between text-sm">
                 <span>{t("radius")}</span>
-                <span className="tabular-nums">
-                  {radiusKm} {t("km")}
-                </span>
+                <span className="tabular-nums">{radiusKm} {t("km")}</span>
               </div>
               <input type="range" min={1} max={100} value={radiusKm} onChange={(e) => setRadiusKm(Number(e.target.value))} className="w-full accent-primary" />
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {PRESETS.map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setRadiusKm(n)}
-                    className={cn("rounded-full px-3 py-1 text-xs ring-1", radiusKm === n ? "bg-primary text-primary-fg ring-primary" : "ring-border")}
-                  >
+                  <button key={n} type="button" onClick={() => setRadiusKm(n)} className={cn("rounded-full px-3 py-1 text-xs ring-1", radiusKm === n ? "bg-primary text-primary-fg ring-primary" : "ring-border")}>
                     {n} {t("km")}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {(["any", "infant", "toddler", "preschool"] as const).map((a) => (
-                <button
-                  key={a}
-                  type="button"
-                  onClick={() => setAgeGroup(a === "any" ? "any" : (a as AgeGroup))}
-                  className={cn("rounded-full px-3 py-1.5 text-sm ring-1", ageGroup === a ? "bg-primary text-primary-fg ring-primary" : "ring-border")}
-                >
-                  {a === "any" ? t("anyAge") : t(a)}
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(
-                [
-                  ["distance", t("sortDistance")],
-                  ["price", t("sortPrice")],
-                  ["rating", t("sortRating")],
-                  ["availability", t("sortOpen")],
-                ] as [SortKey, string][]
-              ).map(([k, label]) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setSort(k)}
-                  className={cn("rounded-full px-3 py-1.5 text-sm ring-1", sort === k ? "bg-fg text-bg ring-fg" : "ring-border")}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => setMatchOpen((v) => !v)} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
-              <Sparkles className="size-4" />
-              {t("match")}
-            </button>
-            {matchOpen ? (
-              <div>
-                <label className="text-sm font-medium">{t("matchNeed")}</label>
-                <textarea value={need} onChange={(e) => setNeed(e.target.value)} placeholder={t("matchPh")} rows={2} className="mt-2 w-full rounded-md border border-border bg-bg p-3 text-sm" />
-                <Button type="button" className="mt-3" disabled={matchBusy || !need.trim()} onClick={() => void runMatch()}>
-                  {t("matchGo")}
-                </Button>
-                {matchNote ? <p className="mt-3 text-sm text-muted">{matchNote}</p> : null}
-              </div>
-            ) : null}
           </div>
         ) : null}
 
-        <div className="mt-3 flex gap-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:hidden">
+        <div className="mt-3 flex gap-1 rounded-full bg-surface p-0.5 ring-1 ring-border">
           <button type="button" onClick={() => setView("list")} className={cn("min-h-9 flex-1 rounded-full text-[13px] font-semibold", view === "list" ? "bg-fg text-bg" : "text-muted")}>
             {t("list")}
           </button>
@@ -350,17 +256,7 @@ function SearchPage() {
             )}
           </div>
           <div className={cn("h-[45dvh] min-h-[16rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:sticky lg:top-20 lg:h-[calc(100dvh-7rem)]", view === "list" ? "hidden lg:block" : "block")}>
-            <MapView
-              items={list}
-              origin={origin}
-              radiusKm={radiusKm}
-              activeSlug={active}
-              onSelect={(slug) => setActive(slug)}
-              onRelocate={(pos) => {
-                setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) });
-                void hapticLight();
-              }}
-            />
+            <MapView items={list} origin={origin} radiusKm={radiusKm} activeSlug={active} onSelect={(slug) => setActive(slug)} onRelocate={(pos) => { setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }); void hapticLight(); }} />
           </div>
         </div>
       </div>
