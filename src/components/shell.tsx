@@ -74,7 +74,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <button
                     type="button"
                     onClick={() => void signOut("/")}
-                    className="inline-flex h-9 items-center gap-2 rounded-full px-3 text-xs text-muted hover:text-fg"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-full px-3 text-xs leading-9 text-muted hover:text-fg"
                   >
                     {user.profileImageUrl ? (
                       <img src={user.profileImageUrl} alt="" className="size-5 rounded-full object-cover" />
@@ -91,7 +91,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <Link
                     to="/login"
                     search={{ role: "provider", intent: "in", next: "/provider" }}
-                    className="inline-flex h-9 items-center rounded-full px-3 text-xs text-muted hover:text-fg"
+                    className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs leading-9 text-muted hover:text-fg"
                   >
                     <span className="hidden sm:inline">{t("providerLogin")}</span>
                     <span className="sm:hidden">{t("provider")}</span>
@@ -100,7 +100,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <Link
                     to="/login"
                     search={{ role: "parent", intent: "in", next: "/search" }}
-                    className="inline-flex h-9 items-center rounded-full px-3 text-xs text-muted hover:text-fg"
+                    className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs leading-9 text-muted hover:text-fg"
                   >
                     <span className="sm:hidden">{t("signIn")}</span>
                     <span className="hidden sm:inline">{t("parentSignIn")}</span>

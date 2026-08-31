@@ -9,7 +9,7 @@ export function LanguageSelect({ className = "" }: { className?: string }) {
   const setLocale = useAppStore((s) => s.setLocale);
 
   return (
-    <label className={cn("inline-flex h-9 items-center", className)}>
+    <label className={cn("inline-flex h-9 items-center justify-center", className)}>
       <span className="sr-only">{t("language")}</span>
       <select
         value={locale}
@@ -18,7 +18,7 @@ export function LanguageSelect({ className = "" }: { className?: string }) {
           setLocale(next);
           applyDocumentLocale(next);
         }}
-        className="h-9 max-w-[8.5rem] cursor-pointer appearance-none rounded-full border-0 bg-transparent px-3 text-xs text-muted hover:text-fg"
+        className="h-9 cursor-pointer appearance-none rounded-full border-0 bg-transparent px-3 text-center text-xs leading-9 text-muted hover:text-fg [text-align-last:center]"
         aria-label={t("language")}
       >
         {LANGUAGES.map((lang) => (
