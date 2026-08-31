@@ -48,6 +48,9 @@ export function SiteFooter() {
           </Link>
         </nav>
         <p className="mt-4 text-xs text-subtle">{t("neverSell")}</p>
+        <a href="mailto:kyle@kidease.ca" className="mt-3 inline-block text-xs text-muted hover:text-fg">
+          kyle@kidease.ca
+        </a>
       </div>
     </footer>
   );
