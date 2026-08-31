@@ -46,7 +46,7 @@ export function Contact() {
 
   return (
     <Shell bare>
-      <main className="mx-auto max-w-lg px-5 py-12 md:py-16">
+      <main className="ke-gutter mx-auto max-w-lg py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("contact")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("contactTitle")}</h1>
         <p className="mt-6 text-muted">{t("contactIntro")}</p>

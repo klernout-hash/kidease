@@ -98,7 +98,7 @@ function BenefitsPage() {
   const { t } = useCopy();
   return (
     <Shell>
-      <main className="mx-auto max-w-3xl px-4 py-10">
+      <main className="ke-gutter mx-auto max-w-3xl py-10">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t("benefitsShort")}</p>
         <h1 className="mt-2 text-4xl">{t("benefitsTitle")}</h1>
         <p className="mt-4 max-w-2xl text-muted">{t("benefitsLead")}</p>

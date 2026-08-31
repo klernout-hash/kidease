@@ -10,7 +10,7 @@ export function About() {
   const { t } = useCopy();
   return (
     <Shell bare>
-      <main className="mx-auto max-w-3xl px-5 py-12 md:py-16">
+      <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("about")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("aboutTitle")}</h1>
         <p className="mt-6 text-lg text-muted">{t("aboutHero")}</p>

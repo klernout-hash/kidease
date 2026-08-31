@@ -48,7 +48,7 @@ function GetApp() {
 
   return (
     <Shell>
-      <main className="mx-auto max-w-6xl px-4 pb-16 pt-8">
+      <main className="ke-gutter mx-auto max-w-6xl pb-16 pt-8">
         <section className="grid items-center gap-10 md:grid-cols-[1fr_minmax(16rem,22rem)]">
           <div>
             <BrandMark size="md" align="start" />

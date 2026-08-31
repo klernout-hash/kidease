@@ -60,7 +60,7 @@ function AccountPage() {
 
   return (
     <Shell>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="ke-gutter mx-auto max-w-4xl py-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl">{t("dashboard")}</h1>

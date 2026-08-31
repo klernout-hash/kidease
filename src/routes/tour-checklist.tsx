@@ -10,7 +10,7 @@ export function TourChecklist() {
   const items = ["tourQ1", "tourQ2", "tourQ3", "tourQ4", "tourQ5", "tourQ6"] as const;
   return (
     <Shell>
-      <main className="mx-auto max-w-2xl px-5 py-12">
+      <main className="ke-gutter mx-auto max-w-2xl py-12">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("bookTour")}</p>
         <h1 className="mt-2 text-4xl">{t("tourChecklist")}</h1>
         <p className="mt-4 text-muted">{t("tourChecklistLead")}</p>

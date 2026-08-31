@@ -97,7 +97,7 @@ function Login() {
           <div className="absolute inset-0 bg-gradient-to-t from-fg/70 to-fg/10" />
           <p className="absolute bottom-10 left-10 right-10 font-display text-3xl text-primary-fg">{t("tagline")}</p>
         </div>
-        <div className="grid place-items-center px-4 py-10">
+        <div className="grid place-items-center px-[clamp(1rem,4vw,2rem)] py-10">
           <div className="w-full max-w-md rounded-xl bg-surface p-8 shadow-card ring-1 ring-border">
             <div className="flex justify-center">
               <BrandMark size="md" />

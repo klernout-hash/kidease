@@ -10,18 +10,29 @@ const ITEMS = [
 
 export function TrustBar({ compact = false }: { compact?: boolean }) {
   const { t } = useCopy();
+  if (compact) {
+    return (
+      <ul className="flex flex-wrap justify-center gap-2">
+        {ITEMS.map((item) => (
+          <li
+            key={item.key}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-bg px-3 py-1.5 text-xs font-medium text-fg ring-1 ring-border"
+          >
+            <item.icon className="size-4 text-primary" />
+            {t(item.key)}
+          </li>
+        ))}
+      </ul>
+    );
+  }
   return (
-    <ul className={compact ? "flex flex-wrap justify-center gap-2" : "grid grid-cols-2 gap-3 sm:grid-cols-4"}>
+    <ul className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-2 md:overflow-visible lg:grid-cols-4">
       {ITEMS.map((item) => (
         <li
           key={item.key}
-          className={
-            compact
-              ? "inline-flex items-center gap-1.5 rounded-full bg-bg px-3 py-1.5 text-xs font-medium text-fg ring-1 ring-border"
-              : "inline-flex items-center justify-center gap-2 rounded-xl bg-bg px-3 py-3 text-sm font-semibold tracking-[-0.015em] text-fg ring-1 ring-border"
-          }
+          className="inline-flex min-w-[78%] shrink-0 snap-start items-center justify-center gap-2 rounded-xl bg-bg px-3 py-3 text-sm font-semibold tracking-[-0.015em] text-fg ring-1 ring-border sm:min-w-[46%] md:min-w-0"
         >
-          <item.icon className="size-4 text-primary" />
+          <item.icon className="size-4 shrink-0 text-primary" />
           {t(item.key)}
         </li>
       ))}

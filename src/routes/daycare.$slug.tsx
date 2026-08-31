@@ -72,7 +72,7 @@ function Listing() {
   if (!data) {
     return (
       <Shell>
-        <div className="mx-auto max-w-5xl px-4 py-10">
+        <div className="ke-gutter mx-auto max-w-5xl py-10">
           <div className="aspect-[16/9] animate-pulse rounded-xl bg-surface-2" />
         </div>
       </Shell>
@@ -141,7 +141,7 @@ function Listing() {
 
   return (
     <Shell>
-      <article className="mx-auto max-w-5xl overflow-x-hidden px-4 py-6 pb-28 md:pb-10">
+      <article className="ke-gutter mx-auto max-w-5xl overflow-x-hidden py-6 pb-28 md:pb-10">
         <div className="overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
           <div className="relative aspect-[16/10] bg-surface-2 md:aspect-[2/1]">
             {photos[photo]?.includes("-logo") ? (

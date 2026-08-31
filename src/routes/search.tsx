@@ -137,10 +137,10 @@ function SearchPage() {
 
   return (
     <Shell>
-      <div className="mx-auto max-w-7xl px-4 py-4">
-        <div className="mb-3 flex items-end justify-between gap-3">
+      <div className="ke-gutter mx-auto max-w-7xl py-4">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="font-display text-3xl">
+            <h1 className="font-display text-[clamp(1.75rem,5vw,1.875rem)]">
               {t("nearYou")} {origin.label.split(",")[0]}
             </h1>
             <p className="text-sm text-muted">
@@ -149,12 +149,12 @@ function SearchPage() {
             </p>
             <p className="mt-1 text-xs text-subtle">{t("allCentresLicensed")} · {t("liveMeans")}</p>
           </div>
-          <Link to="/" search={{ change: "1" }} className="shrink-0 text-sm text-primary underline-offset-4 hover:underline">
+          <Link to="/" search={{ change: "1" }} className="inline-flex min-h-11 shrink-0 items-center text-sm text-primary underline-offset-4 hover:underline">
             {t("changeLocation")}
           </Link>
         </div>
         <form
-          className="flex flex-col gap-2 md:flex-row md:items-center"
+          className="flex flex-col gap-2 lg:flex-row lg:items-center"
           onSubmit={(e) => {
             e.preventDefault();
             applyQuery();
@@ -165,19 +165,19 @@ function SearchPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("locationPh")}
-              className="h-11 flex-1 bg-transparent outline-none"
+              className="h-11 flex-1 bg-transparent text-base outline-none"
             />
-            <button type="button" onClick={geo} className="text-muted hover:text-fg" aria-label={t("useLocation")}>
+            <button type="button" onClick={geo} className="grid size-11 place-items-center text-muted hover:text-fg" aria-label={t("useLocation")}>
               <LocateFixed className="size-5" />
             </button>
           </div>
           <div className="flex gap-2">
-            <Button type="submit">{t("search")}</Button>
-            <Button type="button" variant="secondary" onClick={() => setFilters((v) => !v)}>
+            <Button type="submit" className="min-h-11 flex-1 lg:flex-none">{t("search")}</Button>
+            <Button type="button" variant="secondary" className="min-h-11" onClick={() => setFilters((v) => !v)}>
               <SlidersHorizontal className="size-4" />
               {radiusKm} {t("km")}
             </Button>
-            <Button type="button" variant="ghost" onClick={() => setMatchOpen((v) => !v)}>
+            <Button type="button" variant="ghost" className="min-h-11" onClick={() => setMatchOpen((v) => !v)}>
               <Sparkles className="size-4" />
               <span className="hidden sm:inline">{t("match")}</span>
             </Button>
@@ -339,11 +339,11 @@ function SearchPage() {
           </div>
         ) : null}
 
-        <div className="mt-4 flex gap-2 md:hidden">
-          <Button variant={view === "list" ? "primary" : "secondary"} className="flex-1" onClick={() => setView("list")}>
+        <div className="mt-4 flex gap-2 lg:hidden">
+          <Button variant={view === "list" ? "primary" : "secondary"} className="min-h-11 flex-1" onClick={() => setView("list")}>
             {t("list")}
           </Button>
-          <Button variant={view === "map" ? "primary" : "secondary"} className="flex-1" onClick={() => setView("map")}>
+          <Button variant={view === "map" ? "primary" : "secondary"} className="min-h-11 flex-1" onClick={() => setView("map")}>
             {t("map")}
           </Button>
         </div>
@@ -351,7 +351,7 @@ function SearchPage() {
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className={cn(view === "map" ? "hidden lg:block" : "block")}>
             {items === null ? (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="h-64 animate-pulse rounded-xl bg-surface-2" />
                 ))}
@@ -361,7 +361,7 @@ function SearchPage() {
                 {liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("noResults")}
               </p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {list.map((item) => (
                   <div
                     key={item.id}
@@ -374,7 +374,7 @@ function SearchPage() {
               </div>
             )}
           </div>
-          <div className={cn("h-[60vh] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:sticky lg:top-20 lg:h-[calc(100dvh-7rem)]", view === "list" ? "hidden lg:block" : "block")}>
+          <div className={cn("h-[45dvh] min-h-[16rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:sticky lg:top-20 lg:h-[calc(100dvh-7rem)]", view === "list" ? "hidden lg:block" : "block")}>
             <MapView
               items={list}
               origin={origin}

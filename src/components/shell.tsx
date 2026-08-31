@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Building2, Heart, Inbox, Search, UserRound } from "lucide-react";
+import { Building2, Heart, Inbox, Menu, Search, UserRound } from "lucide-react";
 import { SignedIn, SignedOut } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
@@ -8,63 +9,58 @@ import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
 import { LanguageSelect } from "@/components/language-select";
-import { useEffect } from "react";
+import { NavDrawer } from "@/components/nav-drawer";
 import { applyDocumentLocale } from "@/lib/languages";
 
 export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     applyDocumentLocale(locale);
   }, [locale]);
 
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  const close = useCallback(() => {
+    setOpen(false);
+  }, []);
+
+  const navItems = [
+    { to: "/search", label: t("explore") },
+    { to: "/benefits", label: t("benefitsTab") },
+    { to: "/account", label: t("saved") },
+    { to: "/about", label: t("about") },
+    { to: "/team", label: t("team") },
+    { to: "/contact", label: t("contact") },
+    ...(bare
+      ? []
+      : [
+          { to: "/inbox", label: t("inbox") },
+          { to: "/get-app", label: t("getApp") },
+        ]),
+  ];
+
   return (
     <div className="min-h-dvh bg-bg text-fg">
-      <header className="sticky top-0 z-30 border-b border-border/80 bg-bg/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 py-2">
+      <header className="sticky top-0 z-30 border-b border-border/80 bg-bg/80 pt-[env(safe-area-inset-top)] shadow-[0_1px_0_rgba(28,36,56,0.04)] backdrop-blur-[16px]">
+        <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 py-2">
           <Link to="/" className="shrink-0" aria-label="KidEase">
             <BrandMark size="sm" />
           </Link>
-          <nav className="hidden items-center gap-5 text-sm text-muted lg:flex">
-            <Link to="/search" className="hover:text-fg">
-              {t("explore")}
-            </Link>
-            <Link to="/benefits" className="hover:text-fg">
-              {t("benefitsTab")}
-            </Link>
-            <Link to="/account" className="hover:text-fg">
-              {t("saved")}
-            </Link>
-            <Link to="/about" className="hover:text-fg">
-              {t("about")}
-            </Link>
-            <Link to="/team" className="hover:text-fg">
-              {t("team")}
-            </Link>
-            <Link to="/contact" className="hover:text-fg">
-              {t("contact")}
-            </Link>
-            {bare ? null : (
-              <>
-                <Link to="/inbox" className="hover:text-fg">
-                  {t("inbox")}
-                </Link>
-                <Link to="/get-app" className="hover:text-fg">
-                  {t("getApp")}
-                </Link>
-              </>
-            )}
+          <nav className="hidden items-center gap-5 text-sm text-muted xl:flex">
+            {navItems.map((item) => (
+              <Link key={item.to} to={item.to} className="hover:text-fg">
+                {item.label}
+              </Link>
+            ))}
           </nav>
-          <div className="flex items-center gap-2">
-            <Link to="/benefits" className="truncate text-xs text-muted hover:text-fg lg:hidden">
-              {t("benefitsTab")}
-            </Link>
-            <Link to="/account" className="text-xs text-muted hover:text-fg lg:hidden">
-              {t("saved")}
-            </Link>
-            <div className="flex h-9 items-center rounded-full bg-surface/90 ring-1 ring-border">
+          <div className="flex items-center gap-1.5">
+            <div className="hidden h-11 items-center rounded-full bg-surface/90 ring-1 ring-border xl:flex">
               <LanguageSelect />
               <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
               {isPending ? (
@@ -74,7 +70,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <button
                     type="button"
                     onClick={() => void signOut("/")}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-full px-3 text-xs leading-9 text-muted hover:text-fg"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full px-3 text-xs leading-none text-muted hover:text-fg"
                   >
                     {user.profileImageUrl ? (
                       <img src={user.profileImageUrl} alt="" className="size-5 rounded-full object-cover" />
@@ -91,27 +87,49 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <Link
                     to="/login"
                     search={{ role: "provider", intent: "in", next: "/provider" }}
-                    className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs leading-9 text-muted hover:text-fg"
+                    className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-none text-muted hover:text-fg"
                   >
-                    <span className="hidden sm:inline">{t("providerLogin")}</span>
-                    <span className="sm:hidden">{t("provider")}</span>
+                    {t("providerLogin")}
                   </Link>
                   <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
                   <Link
                     to="/login"
                     search={{ role: "parent", intent: "in", next: "/search" }}
-                    className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs leading-9 text-muted hover:text-fg"
+                    className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-none text-muted hover:text-fg"
                   >
-                    <span className="sm:hidden">{t("signIn")}</span>
-                    <span className="hidden sm:inline">{t("parentSignIn")}</span>
+                    {t("parentSignIn")}
                   </Link>
                 </SignedOut>
               )}
             </div>
+            <div className="flex h-11 items-center rounded-full bg-surface/90 ring-1 ring-border xl:hidden">
+              <LanguageSelect />
+            </div>
+            <button
+              type="button"
+              className="grid size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface xl:hidden"
+              aria-label="Menu"
+              aria-expanded={open}
+              aria-controls="ke-nav-drawer"
+              onClick={() => setOpen(true)}
+            >
+              <Menu className="size-6" strokeWidth={1.75} />
+            </button>
           </div>
         </div>
       </header>
-      <div className={bare ? "" : "pb-20 md:pb-0"}>{children}</div>
+      <NavDrawer
+        open={open}
+        onClose={close}
+        title={t("explore")}
+        items={navItems}
+        parentLabel={t("parentSignIn")}
+        providerLabel={t("providerLogin")}
+        signedIn={Boolean(user)}
+        accountLabel={t("account")}
+        onSignOut={() => void signOut("/")}
+      />
+      <div className={bare ? "" : "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0"}>{children}</div>
       {bare ? null : (
         <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur-md md:hidden">
           <div className="mx-auto grid max-w-lg grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">

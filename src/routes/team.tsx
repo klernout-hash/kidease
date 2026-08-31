@@ -9,12 +9,12 @@ export function Team() {
   const { t } = useCopy();
   return (
     <Shell bare>
-      <main className="mx-auto max-w-3xl px-5 py-12 md:py-16">
+      <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("team")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("team")}</h1>
         <p className="mt-6 text-lg text-muted">{t("teamIntro")}</p>
 
-        <div className="mt-10 space-y-6">
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
           <article className="rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
             <div className="flex items-center gap-4">
               <img

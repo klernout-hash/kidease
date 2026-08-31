@@ -148,17 +148,17 @@ function Home() {
   return (
     <Shell bare>
       <section className="relative overflow-hidden bg-gradient-to-b from-[#eef2fb] via-bg to-bg">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20">
+        <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20 xl:py-24">
           <div>
             <BrandMark size="md" align="start" />
-            <h1 className="mt-8 max-w-xl text-4xl text-fg md:text-5xl">{t("tagline")}</h1>
+            <h1 className="mt-8 max-w-xl text-[clamp(2rem,6vw,3.25rem)] text-fg">{t("tagline")}</h1>
             <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button size="lg" className="w-full sm:w-auto" onClick={() => void useLocation()} disabled={busy}>
+              <Button size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => void useLocation()} disabled={busy}>
                 <Search className="size-5" />
                 {busy ? t("loading") : t("heroCta")}
               </Button>
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto" asChild>
+              <Button size="lg" variant="secondary" className="min-h-12 w-full sm:w-auto" asChild>
                 <a href="#how">{t("howItWorksCta")}</a>
               </Button>
             </div>
@@ -218,14 +218,14 @@ function Home() {
       </section>
 
       <section className="border-y border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-6">
+        <div className="ke-gutter mx-auto max-w-6xl py-6">
           <TrustBar />
         </div>
       </section>
 
-      <section id="how" className="mx-auto max-w-6xl px-5 py-16">
-        <h2 className="max-w-2xl text-3xl md:text-4xl">{t("howStressFree")}</h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+      <section id="how" className="ke-gutter mx-auto max-w-6xl py-16">
+        <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <Step n="1" icon={MapPin} title={t("how1t")} body={t("how1")} />
           <Step n="2" icon={ListChecks} title={t("how2t")} body={t("how2")} />
           <Step n="3" icon={MessageCircle} title={t("how3t")} body={t("how3")} />
@@ -233,11 +233,11 @@ function Home() {
       </section>
 
       <section id="featured" className="bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-16">
-          <h2 className="text-3xl md:text-4xl">{t("featured")}</h2>
+        <div className="ke-gutter mx-auto max-w-6xl py-16">
+          <h2 className="text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
 
           <form
-            className="mt-8 flex flex-col gap-2 md:flex-row md:items-center"
+            className="mt-8 flex flex-col gap-2 lg:flex-row lg:items-center"
             onSubmit={(e) => {
               e.preventDefault();
               applyPlace(place);
@@ -255,13 +255,13 @@ function Home() {
               <button
                 type="button"
                 onClick={() => void pinLocation()}
-                className="text-muted hover:text-fg"
+                className="grid size-11 place-items-center text-muted hover:text-fg"
                 aria-label={t("useLocation")}
               >
                 <LocateFixed className="size-5" />
               </button>
             </div>
-            <Button type="submit">{t("search")}</Button>
+            <Button type="submit" className="min-h-11 w-full lg:w-auto">{t("search")}</Button>
           </form>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -311,7 +311,7 @@ function Home() {
       </section>
 
       <section className="bg-primary text-primary-fg">
-        <div className="mx-auto max-w-3xl px-5 py-16 text-center">
+        <div className="ke-gutter mx-auto max-w-3xl py-16 text-center">
           <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
           <Button
             size="lg"
