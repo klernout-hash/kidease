@@ -36,7 +36,7 @@ export const Route = createFileRoute("/")({
 const CITY_CHIPS = [
   { q: "Winnipeg", label: "Winnipeg" },
   { q: "Toronto", label: "Toronto" },
-  { q: "Montréal", label: "Montréal" },
+  { q: "Montreal", label: "Montreal" },
   { q: "Vancouver", label: "Vancouver" },
   { q: "Calgary", label: "Calgary" },
   { q: "Ottawa", label: "Ottawa" },
@@ -182,55 +182,26 @@ function Home() {
               </Button>
             </div>
             {manual ? (
-              <form
-                className="mt-5 max-w-md"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (q.trim()) applyCity(q);
-                }}
-              >
-                <input
-                  autoFocus
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder={t("locationPh")}
-                  className="ke-input"
-                />
-                <Button type="submit" variant="secondary" className="mt-2 w-full" disabled={!q.trim()}>
-                  {t("search")}
-                </Button>
+              <form className="mt-5 max-w-md" onSubmit={(e) => { e.preventDefault(); if (q.trim()) applyCity(q); }}>
+                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("locationPh")} className="ke-input" />
+                <Button type="submit" variant="secondary" className="mt-2 w-full" disabled={!q.trim()}>{t("search")}</Button>
                 {denied ? (
                   <div className="mt-4 flex flex-wrap gap-2">
                     {CITY_CHIPS.map((c) => (
-                      <button
-                        key={c.q}
-                        type="button"
-                        onClick={() => applyCity(c.q)}
-                        className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border hover:text-fg"
-                      >
-                        {c.label}
-                      </button>
+                      <button key={c.q} type="button" onClick={() => applyCity(c.q)} className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border hover:text-fg">{c.label}</button>
                     ))}
                   </div>
                 ) : null}
               </form>
             ) : (
-              <button
-                type="button"
-                className="mt-5 text-sm text-muted underline-offset-4 hover:text-fg hover:underline"
-                onClick={() => setManual(true)}
-              >
+              <button type="button" className="mt-5 text-sm text-muted underline-offset-4 hover:text-fg hover:underline" onClick={() => setManual(true)}>
                 {t("orEnterCity")}
               </button>
             )}
           </div>
           <div className="relative">
             <div className="overflow-hidden rounded-xl shadow-lift ring-1 ring-border">
-              <img
-                src="/photos/playroom.jpg"
-                alt=""
-                className="aspect-[4/3] w-full object-cover"
-              />
+              <img src="/photos/playroom.jpg" alt="" className="aspect-[4/3] w-full object-cover" />
             </div>
           </div>
         </div>
@@ -245,75 +216,37 @@ function Home() {
       <section id="how" className="ke-gutter mx-auto max-w-6xl py-16">
         <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Step n="1" icon={MapPin} title={t("how1t")} body={t("how1")} />
-          <Step n="2" icon={ListChecks} title={t("how2t")} body={t("how2")} />
-          <Step n="3" icon={MessageCircle} title={t("how3t")} body={t("how3")} />
+          <Step icon={MapPin} title={t("how1t")} body={t("how1")} />
+          <Step icon={ListChecks} title={t("how2t")} body={t("how2")} />
+          <Step icon={MessageCircle} title={t("how3t")} body={t("how3")} />
         </div>
       </section>
 
       <section id="featured" className="bg-surface">
         <div className="ke-gutter mx-auto max-w-6xl py-16">
           <h2 className="text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
-
-          <form
-            className="mt-8 flex flex-col gap-2 lg:flex-row lg:items-center"
-            onSubmit={(e) => {
-              e.preventDefault();
-              applyPlace(place);
-            }}
-          >
+          <form className="mt-8 flex flex-col gap-2 lg:flex-row lg:items-center" onSubmit={(e) => { e.preventDefault(); applyPlace(place); }}>
             <div className="flex min-h-12 flex-1 items-center gap-2 rounded-full bg-bg px-4 shadow-card ring-1 ring-border">
               <MapPin className="size-4 shrink-0 text-primary" />
-              <input
-                value={place}
-                onChange={(e) => setPlace(e.target.value)}
-                placeholder={t("locationPh")}
-                className="h-11 flex-1 bg-transparent text-sm outline-none"
-                aria-label={t("locationPh")}
-              />
-              <button
-                type="button"
-                onClick={() => void pinLocation()}
-                className="grid size-11 place-items-center text-muted hover:text-fg"
-                aria-label={t("useLocation")}
-              >
+              <input value={place} onChange={(e) => setPlace(e.target.value)} placeholder={t("locationPh")} className="h-11 flex-1 bg-transparent text-sm outline-none" aria-label={t("locationPh")} />
+              <button type="button" onClick={() => void pinLocation()} className="grid size-11 place-items-center text-muted hover:text-fg" aria-label={t("useLocation")}>
                 <LocateFixed className="size-5" />
               </button>
             </div>
             <Button type="submit" className="min-h-11 w-full lg:w-auto">{t("search")}</Button>
           </form>
-
           <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setLiveOnly(true)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium ring-1",
-                liveOnly ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border",
-              )}
-            >
-              {t("liveOnly")} · {liveCount}
+            <button type="button" onClick={() => setLiveOnly(true)} className={cn("rounded-full px-4 py-2 text-sm font-medium ring-1", liveOnly ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border")}>
+              {t("liveOnly")} {liveCount}
             </button>
-            <button
-              type="button"
-              onClick={() => setLiveOnly(false)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium ring-1",
-                !liveOnly ? "bg-fg text-bg ring-fg" : "bg-bg text-fg ring-border",
-              )}
-            >
-              {t("showAll")} · {featured.length}
+            <button type="button" onClick={() => setLiveOnly(false)} className={cn("rounded-full px-4 py-2 text-sm font-medium ring-1", !liveOnly ? "bg-fg text-bg ring-fg" : "bg-bg text-fg ring-border")}>
+              {t("showAll")} {featured.length}
             </button>
           </div>
-
-          <p className="mt-3 text-sm text-muted">
-            {origin.label.split(",")[0]} · {radiusKm} {t("km")}
-          </p>
-
+          <p className="mt-3 text-sm text-muted">{origin.label.split(",")[0]} {radiusKm} {t("km")}</p>
           <ListingRail title={t("recentlyViewed")} items={recent} />
           <ListingRail title={t("availableNow")} items={availableNow} />
           <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
-
           {shown.length === 0 ? (
             <p className="mt-6 rounded-xl bg-bg p-8 text-center text-muted ring-1 ring-border">
               {liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
@@ -331,13 +264,7 @@ function Home() {
       <section className="bg-primary text-primary-fg">
         <div className="ke-gutter mx-auto max-w-3xl py-16 text-center">
           <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
-          <Button
-            size="lg"
-            variant="secondary"
-            className="mt-8"
-            onClick={() => void useLocation()}
-            disabled={busy}
-          >
+          <Button size="lg" variant="secondary" className="mt-8" onClick={() => void useLocation()} disabled={busy}>
             <Search className="size-5" />
             {t("heroCta")}
           </Button>
@@ -351,24 +278,19 @@ function Home() {
 }
 
 function Step({
-  n,
   icon: Icon,
   title,
   body,
 }: {
-  n: string;
   icon: typeof MapPin;
   title: string;
   body: string;
 }) {
   return (
     <div className="rounded-xl bg-surface p-6 shadow-card ring-1 ring-border">
-      <div className="flex items-center gap-3">
-        <span className="grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
-          <Icon className="size-5" />
-        </span>
-        <span className="text-xs font-semibold tracking-wide text-primary">0{n}</span>
-      </div>
+      <span className="grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
+        <Icon className="size-5" />
+      </span>
       <h3 className="mt-4 text-xl">{title}</h3>
       <p className="mt-2 text-sm text-muted">{body}</p>
     </div>
