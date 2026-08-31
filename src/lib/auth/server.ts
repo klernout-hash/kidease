@@ -36,7 +36,8 @@ import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
 import { emailAndPasswordEnabled } from "./email-password";
-import { GROK_PROVIDERS } from "./providers";
+import { GROK_PROVIDERS, BROKER_PROVIDERS } from "./providers";
+import { APPLE_CLIENT_ID, appleClientSecret, appleIdpConfigured } from "./apple-idp";
 import { pgliteDialect } from "./pglite-dialect";
 import {
   GROK_ISSUER_DEFAULT,
@@ -206,7 +207,7 @@ export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 // breaking brackets (models often trip on the conditional plugin spread).
 const grokOAuthPlugin = authConfigured
   ? genericOAuth({
-      config: GROK_PROVIDERS.map(({ providerId, idp }) => ({
+      config: BROKER_PROVIDERS.map(({ providerId, idp }) => ({
         providerId,
         clientId: grokClientId as string,
         clientSecret: grokClientSecret as string,
@@ -248,12 +249,22 @@ export const auth = betterAuth({
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
-      trustedProviders: GROK_PROVIDERS.map((p) => p.providerId),
-      // X's synthetic email is never "verified", so don't gate linking on the
-      // local user's email-verified state.
+      trustedProviders: [...GROK_PROVIDERS.map((p) => p.providerId), "apple"],
       requireLocalEmailVerified: false,
     },
   },
+
+  ...(appleIdpConfigured && APPLE_CLIENT_ID
+    ? {
+        socialProviders: {
+          apple: {
+            clientId: APPLE_CLIENT_ID,
+            clientSecret: appleClientSecret() as string,
+            appBundleIdentifier: env("APPLE_BUNDLE_ID") ?? "ca.kidease.app",
+          },
+        },
+      }
+    : {}),
 
   // Cache the session in the short-lived signed `session_data` cookie so reads
   // (incl. the client's `/get-session`) skip the DB — this shrinks the "loading"

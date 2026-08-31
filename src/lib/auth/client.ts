@@ -118,6 +118,36 @@ export async function signIn(
   }
   setBearerToken(null);
 
+  if (providerId === "apple") {
+    if (inLivePreview()) {
+      if (!popup) throw new Error("Pop-up blocked — allow pop-ups for sign-in");
+      const token = await waitForPopupToken(popup);
+      if (!token) throw new Error("Sign-in was cancelled or failed");
+      setBearerToken(token);
+      try {
+        await authClient.getSession();
+      } catch {
+        /* session store will recover */
+      }
+      if (typeof window !== "undefined") {
+        const dest = new URL(callbackURL, window.location.origin);
+        const here = window.location;
+        if (dest.origin !== here.origin || dest.pathname !== here.pathname || dest.search !== here.search) {
+          window.location.href = callbackURL;
+        }
+      }
+      return;
+    }
+    const { data, error } = await authClient.signIn.social({
+      provider: "apple",
+      callbackURL,
+      errorCallbackURL,
+    });
+    if (error) throw new Error(error.message ?? "Sign-in failed");
+    if (data?.url) window.location.href = data.url;
+    return;
+  }
+
   if (inLivePreview()) {
     if (!popup) throw new Error("Pop-up blocked — allow pop-ups for sign-in");
     const token = await waitForPopupToken(popup);

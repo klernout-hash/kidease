@@ -23,10 +23,16 @@ export type GrokProvider = {
   idp: string;
   /** Human label for the sign-in button. */
   label: string;
+  /** Native Apple IDP — not federated through the Grok broker. */
+  native?: boolean;
 };
 
 export const GROK_PROVIDERS: readonly GrokProvider[] = [
-  { providerId: "grok-apple", idp: "apple", label: "Apple" },
+  { providerId: "apple", idp: "apple", label: "Apple", native: true },
   { providerId: "grok-google", idp: "google", label: "Google" },
   { providerId: "grok-x", idp: "twitter", label: "X" },
 ];
+
+/** Broker-only upstreams (Google + X). Apple uses appleid.apple.com directly. */
+export const BROKER_PROVIDERS = GROK_PROVIDERS.filter((p) => !p.native);
+

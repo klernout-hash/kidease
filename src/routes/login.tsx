@@ -221,6 +221,9 @@ function friendlyAuthError(message?: string | null) {
   if (raw.includes("popup")) {
     return "Pop-up blocked — allow pop-ups for KidEase, then try again.";
   }
+  if (raw.includes("client_id") || raw.includes("apple") && raw.includes("secret") || raw.includes("provider") && raw.includes("not found")) {
+    return "Apple Sign In is connecting to Apple’s live IDP. Add your Apple Developer Services ID on the host, or use Google / email for now.";
+  }
   return message || "Sign-in failed";
 }
 
