@@ -116,7 +116,6 @@ function SearchPage() {
     }
   }
 
-  const count = items?.length ?? 0;
   const list = useMemo(() => {
     let rows = items ?? [];
     if (liveOnly) rows = rows.filter((r) => r.live);
@@ -132,122 +131,124 @@ function SearchPage() {
     return rows;
   }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, extended, infantOnly]);
   const liveCount = useMemo(() => (items ?? []).filter((r) => r.live).length, [items]);
+  const extraFilters =
+    (avail !== "any" ? 1 : 0) +
+    (ten ? 1 : 0) +
+    (meals ? 1 : 0) +
+    (outdoor ? 1 : 0) +
+    (inclusive ? 1 : 0) +
+    (extended ? 1 : 0) +
+    (infantOnly ? 1 : 0) +
+    (ageGroup !== "any" ? 1 : 0);
+  const city = origin.label.split(",")[0];
+
+  function chip(on: boolean, label: string, action: () => void) {
+    return (
+      <button
+        type="button"
+        onClick={action}
+        className={cn(
+          "rounded-full px-3.5 py-1.5 text-sm font-medium ring-1",
+          on ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border",
+        )}
+      >
+        {label}
+      </button>
+    );
+  }
 
   return (
     <Shell>
-      <div className="ke-gutter mx-auto max-w-7xl py-4">
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="font-display text-[clamp(1.75rem,5vw,1.875rem)]">
-              {t("nearYou")} {origin.label.split(",")[0]}
-            </h1>
-            <p className="text-sm text-muted">
-              {list.length} {list.length === 1 ? "centre" : "centres"}
-              {liveOnly ? ` · ${t("liveOnly")}` : ` · ${liveCount} ${t("live")}`} · {radiusKm} {t("km")}
+      <div className="ke-gutter mx-auto max-w-7xl pb-4 pt-3">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>
+            <p className="mt-0.5 text-[13px] text-muted">
+              {list.length} {list.length === 1 ? "centre" : "centres"} \u00b7 {radiusKm} {t("km")}
             </p>
-            <p className="mt-1 text-xs text-subtle">{t("allCentresLicensed")} · {t("liveMeans")}</p>
           </div>
-          <Link to="/" search={{ change: "1" }} className="inline-flex min-h-11 shrink-0 items-center text-sm text-primary underline-offset-4 hover:underline">
+          <Link to="/" search={{ change: "1" }} className="shrink-0 pb-0.5 text-[13px] font-medium text-primary">
             {t("changeLocation")}
           </Link>
         </div>
+
         <form
-          className="flex flex-col gap-2 lg:flex-row lg:items-center"
+          className="mt-3"
           onSubmit={(e) => {
             e.preventDefault();
             applyQuery();
           }}
         >
-          <div className="flex min-h-12 flex-1 items-center gap-2 rounded-full bg-surface px-4 shadow-card ring-1 ring-border">
+          <div className="flex min-h-12 items-center gap-2 rounded-full bg-surface pl-4 pr-1.5 shadow-card ring-1 ring-border">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("locationPh")}
-              className="h-11 flex-1 bg-transparent text-base outline-none"
+              className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none"
             />
-            <button type="button" onClick={geo} className="grid size-11 place-items-center text-muted hover:text-fg" aria-label={t("useLocation")}>
+            <button type="button" onClick={() => void geo()} className="grid size-10 place-items-center text-muted" aria-label={t("useLocation")}>
               <LocateFixed className="size-5" />
             </button>
-          </div>
-          <div className="flex gap-2">
-            <Button type="submit" className="min-h-11 flex-1 lg:flex-none">{t("search")}</Button>
-            <Button type="button" variant="secondary" className="min-h-11" onClick={() => setFilters((v) => !v)}>
-              <SlidersHorizontal className="size-4" />
-              {radiusKm} {t("km")}
-            </Button>
-            <Button type="button" variant="ghost" className="min-h-11" onClick={() => setMatchOpen((v) => !v)}>
-              <Sparkles className="size-4" />
-              <span className="hidden sm:inline">{t("match")}</span>
+            <Button type="submit" className="h-10 rounded-full px-5">
+              {t("search")}
             </Button>
           </div>
         </form>
 
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex items-center gap-2">
+          <div className="flex min-h-10 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border">
+            <button
+              type="button"
+              onClick={() => setLiveOnly(true)}
+              className={cn("flex-1 rounded-full px-3 text-[13px] font-semibold", liveOnly ? "bg-primary text-primary-fg" : "text-muted")}
+            >
+              {t("live")} \u00b7 {liveCount}
+            </button>
+            <button
+              type="button"
+              onClick={() => setLiveOnly(false)}
+              className={cn("flex-1 rounded-full px-3 text-[13px] font-semibold", !liveOnly ? "bg-fg text-bg" : "text-muted")}
+            >
+              {t("showAll")}
+            </button>
+          </div>
           <button
             type="button"
-            onClick={() => setLiveOnly(true)}
+            onClick={() => setFilters((v) => !v)}
             className={cn(
-              "rounded-full px-4 py-2 text-sm font-medium ring-1",
-              liveOnly ? "bg-primary text-primary-fg ring-primary" : "bg-surface text-fg ring-border",
+              "relative inline-flex h-10 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold ring-1",
+              filters || extraFilters ? "bg-primary text-primary-fg ring-primary" : "bg-surface text-fg ring-border",
             )}
           >
-            {t("liveOnly")} · {liveCount}
+            <SlidersHorizontal className="size-3.5" />
+            {t("sort") === "Trier" ? "Filtres" : "Filters"}
+            {extraFilters ? (
+              <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">{extraFilters}</span>
+            ) : null}
           </button>
-          <button
-            type="button"
-            onClick={() => setLiveOnly(false)}
-            className={cn(
-              "rounded-full px-4 py-2 text-sm font-medium ring-1",
-              !liveOnly ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border",
-            )}
-          >
-            {t("showAll")} · {count}
-          </button>
-          {(
-            [
-              ["open", t("filterOpen")],
-              ["waitlist", t("filterWaitlist")],
-              ["unknown", t("filterUnknown")],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setAvail((v) => (v === key ? "any" : key))}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium ring-1",
-                avail === key ? "bg-primary text-primary-fg ring-primary" : "bg-surface text-fg ring-border",
-              )}
-            >
-              {label}
+          <div className="hidden h-10 rounded-full bg-surface p-0.5 ring-1 ring-border sm:flex">
+            <button type="button" onClick={() => setView("list")} className={cn("rounded-full px-3 text-[13px] font-semibold", view === "list" ? "bg-fg text-bg" : "text-muted")}>
+              {t("list")}
             </button>
-          ))}
-          {(
-            [
-              [ten, setTen, t("filterTen")],
-              [meals, setMeals, t("filterMeals")],
-              [outdoor, setOutdoor, t("filterOutdoor")],
-              [inclusive, setInclusive, t("filterInclusive")],
-              [extended, setExtended, t("filterExtended")],
-              [infantOnly, setInfantOnly, t("filterInfant")],
-            ] as const
-          ).map(([on, set, label]) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => set(!on)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium ring-1",
-                on ? "bg-primary text-primary-fg ring-primary" : "bg-surface text-fg ring-border",
-              )}
-            >
-              {label}
+            <button type="button" onClick={() => setView("map")} className={cn("rounded-full px-3 text-[13px] font-semibold", view === "map" ? "bg-fg text-bg" : "text-muted")}>
+              {t("map")}
             </button>
-          ))}
+          </div>
         </div>
 
         {filters ? (
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
+            <div className="flex flex-wrap gap-2">
+              {chip(avail === "open", t("filterOpen"), () => setAvail((v) => (v === "open" ? "any" : "open")))}
+              {chip(avail === "waitlist", t("filterWaitlist"), () => setAvail((v) => (v === "waitlist" ? "any" : "waitlist")))}
+              {chip(avail === "unknown", t("filterUnknown"), () => setAvail((v) => (v === "unknown" ? "any" : "unknown")))}
+              {chip(ten, t("filterTen"), () => setTen((v) => !v))}
+              {chip(meals, t("filterMeals"), () => setMeals((v) => !v))}
+              {chip(outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v))}
+              {chip(inclusive, t("filterInclusive"), () => setInclusive((v) => !v))}
+              {chip(extended, t("filterExtended"), () => setExtended((v) => !v))}
+              {chip(infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v))}
+            </div>
             <div>
               <div className="mb-2 flex items-center justify-between text-sm">
                 <span>{t("radius")}</span>
@@ -255,24 +256,14 @@ function SearchPage() {
                   {radiusKm} {t("km")}
                 </span>
               </div>
-              <input
-                type="range"
-                min={1}
-                max={100}
-                value={radiusKm}
-                onChange={(e) => setRadiusKm(Number(e.target.value))}
-                className="w-full accent-primary"
-              />
+              <input type="range" min={1} max={100} value={radiusKm} onChange={(e) => setRadiusKm(Number(e.target.value))} className="w-full accent-primary" />
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {PRESETS.map((n) => (
                   <button
                     key={n}
                     type="button"
                     onClick={() => setRadiusKm(n)}
-                    className={cn(
-                      "rounded-full px-3 py-1 text-xs ring-1",
-                      radiusKm === n ? "bg-primary text-primary-fg ring-primary" : "ring-border",
-                    )}
+                    className={cn("rounded-full px-3 py-1 text-xs ring-1", radiusKm === n ? "bg-primary text-primary-fg ring-primary" : "ring-border")}
                   >
                     {n} {t("km")}
                   </button>
@@ -285,10 +276,7 @@ function SearchPage() {
                   key={a}
                   type="button"
                   onClick={() => setAgeGroup(a === "any" ? "any" : (a as AgeGroup))}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-sm ring-1",
-                    ageGroup === a ? "bg-primary text-primary-fg ring-primary" : "ring-border",
-                  )}
+                  className={cn("rounded-full px-3 py-1.5 text-sm ring-1", ageGroup === a ? "bg-primary text-primary-fg ring-primary" : "ring-border")}
                 >
                   {a === "any" ? t("anyAge") : t(a)}
                 </button>
@@ -307,42 +295,36 @@ function SearchPage() {
                   key={k}
                   type="button"
                   onClick={() => setSort(k)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-sm ring-1",
-                    sort === k ? "bg-fg text-bg ring-fg" : "ring-border",
-                  )}
+                  className={cn("rounded-full px-3 py-1.5 text-sm ring-1", sort === k ? "bg-fg text-bg ring-fg" : "ring-border")}
                 >
                   {label}
                 </button>
               ))}
             </div>
+            <button type="button" onClick={() => setMatchOpen((v) => !v)} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+              <Sparkles className="size-4" />
+              {t("match")}
+            </button>
+            {matchOpen ? (
+              <div>
+                <label className="text-sm font-medium">{t("matchNeed")}</label>
+                <textarea value={need} onChange={(e) => setNeed(e.target.value)} placeholder={t("matchPh")} rows={2} className="mt-2 w-full rounded-md border border-border bg-bg p-3 text-sm" />
+                <Button type="button" className="mt-3" disabled={matchBusy || !need.trim()} onClick={() => void runMatch()}>
+                  {t("matchGo")}
+                </Button>
+                {matchNote ? <p className="mt-3 text-sm text-muted">{matchNote}</p> : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
 
-        {matchOpen ? (
-          <div className="mt-3 rounded-xl bg-surface p-4 ring-1 ring-border">
-            <label className="text-sm font-medium">{t("matchNeed")}</label>
-            <textarea
-              value={need}
-              onChange={(e) => setNeed(e.target.value)}
-              placeholder={t("matchPh")}
-              rows={3}
-              className="mt-2 w-full rounded-md border border-border bg-bg p-3 text-sm"
-            />
-            <Button type="button" className="mt-3" disabled={matchBusy || !need.trim()} onClick={() => void runMatch()}>
-              {t("matchGo")}
-            </Button>
-            {matchNote ? <p className="mt-3 text-sm text-muted">{matchNote}</p> : null}
-          </div>
-        ) : null}
-
-        <div className="mt-4 flex gap-2 lg:hidden">
-          <Button variant={view === "list" ? "primary" : "secondary"} className="min-h-11 flex-1" onClick={() => setView("list")}>
+        <div className="mt-3 flex gap-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:hidden">
+          <button type="button" onClick={() => setView("list")} className={cn("min-h-9 flex-1 rounded-full text-[13px] font-semibold", view === "list" ? "bg-fg text-bg" : "text-muted")}>
             {t("list")}
-          </Button>
-          <Button variant={view === "map" ? "primary" : "secondary"} className="min-h-11 flex-1" onClick={() => setView("map")}>
+          </button>
+          <button type="button" onClick={() => setView("map")} className={cn("min-h-9 flex-1 rounded-full text-[13px] font-semibold", view === "map" ? "bg-fg text-bg" : "text-muted")}>
             {t("map")}
-          </Button>
+          </button>
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -360,11 +342,7 @@ function SearchPage() {
             ) : (
               <div className="ke-listings-narrow">
                 {list.map((item) => (
-                  <div
-                    key={item.id}
-                    onMouseEnter={() => setActive(item.slug)}
-                    className={cn(active === item.slug && "rounded-xl ring-2 ring-fg")}
-                  >
+                  <div key={item.id} onMouseEnter={() => setActive(item.slug)} className={cn(active === item.slug && "rounded-xl ring-2 ring-fg")}>
                     <DaycareCard item={item} />
                   </div>
                 ))}
