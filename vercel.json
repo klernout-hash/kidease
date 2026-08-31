@@ -4,5 +4,13 @@
       "path": "/api/digest",
       "schedule": "0 13 * * *"
     }
+  ],
+  "redirects": [
+    { "source": "/explore", "destination": "/search", "permanent": true },
+    { "source": "/childcare-benefits-program", "destination": "/benefits", "permanent": true },
+    { "source": "/meet-the-team", "destination": "/team", "permanent": true },
+    { "source": "/parent", "destination": "/login?role=parent", "permanent": false },
+    { "source": "/faq", "destination": "/tour-checklist", "permanent": false },
+    { "source": "/how-it-works", "destination": "/#how", "permanent": false }
   ]
 }
