@@ -132,18 +132,53 @@ const baseURL = {
   fallback: explicitBaseURL ?? "https://kidease.ca",
 };
 
+function requestOrigin(request?: Request): string | undefined {
+  if (!request) return undefined;
+  const raw = request.headers.get("origin") || request.headers.get("referer");
+  if (!raw) return undefined;
+  try {
+    const u = new URL(raw);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function hostAllowed(host: string): boolean {
+  const h = host.toLowerCase();
+  if (PRODUCTION_HOSTS.includes(h)) return true;
+  if (h.endsWith(".grok-sandbox.com") || h === "grok-sandbox.com") return true;
+  if (h.endsWith(".grok.me") || h === "grok.me") return true;
+  if (h.includes("kidease") && h.endsWith(".vercel.app")) return true;
+  if (h === "localhost" || h === "127.0.0.1" || h === "[::1]") return true;
+  return false;
+}
+
 // Origins Better Auth accepts on credentialed POSTs (sign-up/sign-in, etc.).
 // Missing entries here surface as FORBIDDEN "Invalid origin".
-const trustedOrigins: string[] = explicitBaseURL
-  ? [explicitBaseURL, ...PRODUCTION_ORIGINS, ...LOCAL_DEV_ORIGINS]
-  : [
-      // Host wildcards (matched against Origin's host)
-      ...previewAllowedHosts,
-      // Full-origin wildcards (matched against Origin)
-      ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
-      ...PRODUCTION_ORIGINS,
-      ...LOCAL_DEV_ORIGINS,
-    ];
+const staticTrustedOrigins: string[] = [
+  ...(explicitBaseURL ? [explicitBaseURL] : []),
+  ...PRODUCTION_ORIGINS,
+  "https://*.grok-sandbox.com",
+  "http://*.grok-sandbox.com",
+  "https://*.grok.me",
+  ...previewAllowedHosts,
+  ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
+  ...LOCAL_DEV_ORIGINS,
+];
+
+const trustedOrigins = (request?: Request) => {
+  const extra: string[] = [];
+  const origin = requestOrigin(request);
+  if (origin) {
+    try {
+      if (hostAllowed(new URL(origin).host)) extra.push(origin);
+    } catch {
+      /* ignore */
+    }
+  }
+  return [...staticTrustedOrigins, ...extra];
+};
 
 const databaseUrl = env("DATABASE_URL");
 
