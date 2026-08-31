@@ -17,9 +17,11 @@ export function Team() {
         <div className="mt-10 space-y-6">
           <article className="rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
             <div className="flex items-center gap-4">
-              <span className="grid size-14 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-fg">
-                Ky
-              </span>
+              <img
+                src="/photos/team/kyle-lernout.jpg"
+                alt="Kyle Lernout"
+                className="size-20 shrink-0 rounded-full object-cover object-[center_18%] ring-1 ring-border"
+              />
               <div>
                 <h2 className="text-2xl">Kyle Lernout</h2>
                 <p className="text-sm font-medium text-primary">{t("kyleRole")}</p>
