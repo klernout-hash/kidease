@@ -1,6 +1,6 @@
 import { nextMonths } from "./utils";
 import { catalogGoogleRating } from "./google-reviews";
-import storefrontsJson from "./data/storefronts.json";
+import realStorefrontsJson from "./data/real-storefronts.json";
 
 export type CatalogDaycare = {
   id: string;
@@ -78,21 +78,13 @@ type RawCentre = {
   fee?: number;
 };
 
-/* photos-v3 */
+/* photos-v4: never use Street View */
 const PLACEHOLDER = "/photos/storefront-placeholder.jpg";
-const STOREFRONTS = storefrontsJson as Record<string, string>;
-
-function streetViewPhoto(lat: number, lng: number) {
-  return `https://streetviewpixels-pa.googleapis.com/v1/thumbnail?cb_client=maps_sv.tactile&w=800&h=600&ll=${lat},${lng}`;
-}
+const STOREFRONTS = realStorefrontsJson as Record<string, string>;
 
 function listingPhotos(raw: RawCentre): string[] {
   const logos = (raw.photos ?? []).filter((p) => p.includes("-logo"));
-  const local = STOREFRONTS[raw.id];
-  const lat = Number(raw.lat);
-  const lng = Number(raw.lng);
-  const street = Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 ? streetViewPhoto(lat, lng) : PLACEHOLDER;
-  const storefront = local || street;
+  const storefront = STOREFRONTS[raw.id] || PLACEHOLDER;
   return [storefront, ...logos];
 }
 
