@@ -348,7 +348,7 @@ function SearchPage() {
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className={cn(view === "map" ? "hidden lg:block" : "block")}>
             {items === null ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-1 xl:grid-cols-2">
+              <div className="ke-listings-narrow">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="aspect-square animate-pulse rounded-xl bg-surface-2" />
                 ))}
@@ -358,14 +358,14 @@ function SearchPage() {
                 {liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("noResults")}
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-1 xl:grid-cols-2">
+              <div className="ke-listings-narrow">
                 {list.map((item) => (
                   <div
                     key={item.id}
                     onMouseEnter={() => setActive(item.slug)}
                     className={cn(active === item.slug && "rounded-xl ring-2 ring-fg")}
                   >
-                    <DaycareCard item={item} compact />
+                    <DaycareCard item={item} />
                   </div>
                 ))}
               </div>

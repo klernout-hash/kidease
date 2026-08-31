@@ -123,6 +123,38 @@
   .ke-gutter {
     padding-inline: clamp(16px, 4vw, 64px);
   }
+  .ke-listings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 0.75rem;
+  }
+  .ke-listings-narrow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 0.75rem;
+  }
+  .ke-rail {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.25rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .ke-rail::-webkit-scrollbar {
+    display: none;
+  }
+  .ke-rail-card {
+    flex: 0 0 calc((100% - 0.75rem) / 2);
+    max-width: 16.5rem;
+    min-width: 9.75rem;
+    scroll-snap-align: start;
+  }
+  .ke-card h3 {
+    font-family: var(--font-sans);
+  }
   .ke-input {
     height: 2.75rem;
     width: 100%;
@@ -142,6 +174,25 @@
   }
   .ke-priority-pill {
     animation: ke-priority-pill 1.8s ease-in-out infinite;
+  }
+}
+
+@media (min-width: 768px) {
+  .ke-listings {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem 1rem;
+  }
+  .ke-rail {
+    gap: 1rem;
+  }
+  .ke-rail-card {
+    flex-basis: calc((100% - 2rem) / 3);
+  }
+}
+
+@media (min-width: 1280px) {
+  .ke-listings {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

@@ -104,7 +104,7 @@ function AccountPage() {
         </div>
 
         {tab === "saved" ? (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="ke-listings mt-6">
             {saved.length ? saved.map((item) => <DaycareCard key={item.id} item={item} showDistance={false} />) : (
               <p className="text-muted">{t("noSaved")}</p>
             )}

@@ -468,7 +468,7 @@ function Listing() {
         {data.nearby.length ? (
           <section className="mt-12">
             <h2 className="font-display text-2xl">{t("similar")}</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="ke-listings mt-4">
               {data.nearby.map((item) => (
                 <DaycareCard key={item.id} item={item} showDistance={false} />
               ))}
