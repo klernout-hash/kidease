@@ -71,17 +71,29 @@ function Login() {
           password,
           name: name || email.split("@")[0],
         });
-        if (res.error) throw new Error(res.error.message || "Could not create account");
+        if (res.error) throw new Error(friendlyAuthError(res.error.message));
         rememberToken(res.data);
       } else {
         const res = await authClient.signIn.email({ email, password });
-        if (res.error) throw new Error(res.error.message || "Sign-in failed");
+        if (res.error) throw new Error(friendlyAuthError(res.error.message));
         rememberToken(res.data);
       }
       await finish();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign-in failed");
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onSocial(providerId: string) {
+    setBusy(true);
+    setError(null);
+    if (role) rememberRole(role);
+    try {
+      await signIn(providerId, { callbackURL: dest, errorCallbackURL: "/login" });
+    } catch (err) {
+      setError(err instanceof Error ? friendlyAuthError(err.message) : "Sign-in failed");
       setBusy(false);
     }
   }
@@ -112,10 +124,8 @@ function Login() {
                   type="button"
                   variant={p.idp === "apple" ? "apple" : "secondary"}
                   className="w-full"
-                  onClick={() => {
-                    if (role) rememberRole(role);
-                    void signIn(p.providerId, { callbackURL: dest });
-                  }}
+                  disabled={busy}
+                  onClick={() => void onSocial(p.providerId)}
                 >
                   {p.idp === "apple" ? <AppleMark /> : null}
                   {p.idp === "apple" ? t("continueApple") : p.idp === "google" ? t("continueGoogle") : t("continueX")}
@@ -195,6 +205,23 @@ function Login() {
       </main>
     </Shell>
   );
+}
+
+function friendlyAuthError(message?: string | null) {
+  const raw = (message || "").toLowerCase();
+  if (raw.includes("invalid origin") || raw.includes("invalid_origin")) {
+    return "This sign-in page needs a refresh — try again, or use email.";
+  }
+  if (raw.includes("invalid password") || raw.includes("invalid_password") || raw.includes("invalid email")) {
+    return "Email or password is incorrect.";
+  }
+  if (raw.includes("user already exists") || raw.includes("already exists")) {
+    return "An account with that email already exists. Sign in instead.";
+  }
+  if (raw.includes("popup")) {
+    return "Pop-up blocked — allow pop-ups for KidEase, then try again.";
+  }
+  return message || "Sign-in failed";
 }
 
 function rememberToken(data: { token?: string | null } | null | undefined) {

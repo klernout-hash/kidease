@@ -109,25 +109,39 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
 ];
-const baseURL = explicitBaseURL ?? {
-  // Include loopback hosts so dynamic baseURL resolves for local email/password
-  // (not only the preview wildcard).
-  allowedHosts: [...previewAllowedHosts, "localhost", "127.0.0.1", "[::1]"],
-  // `auto` → trust both http:// and https:// expansions of allowedHosts
-  // (preview is https; local dev is http).
+// Public custom domain + platform aliases. BETTER_AUTH_URL is kidease.grok.me,
+// so without these, kidease.ca POSTs 403 Invalid origin and OAuth state cookies
+// are set on the wrong host.
+const PRODUCTION_HOSTS: string[] = [
+  "kidease.ca",
+  "www.kidease.ca",
+  "kidease.grok.me",
+  "kidease.vercel.app",
+  "kidease-klernout-1129s-projects.vercel.app",
+];
+const PRODUCTION_ORIGINS = PRODUCTION_HOSTS.map((h) => `https://${h}`);
+const baseURL = {
+  allowedHosts: [
+    ...PRODUCTION_HOSTS,
+    ...previewAllowedHosts,
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
+  ],
   protocol: "auto" as const,
-  fallback: "http://localhost:8080",
+  fallback: explicitBaseURL ?? "https://kidease.ca",
 };
 
 // Origins Better Auth accepts on credentialed POSTs (sign-up/sign-in, etc.).
 // Missing entries here surface as FORBIDDEN "Invalid origin".
 const trustedOrigins: string[] = explicitBaseURL
-  ? [explicitBaseURL, ...LOCAL_DEV_ORIGINS]
+  ? [explicitBaseURL, ...PRODUCTION_ORIGINS, ...LOCAL_DEV_ORIGINS]
   : [
       // Host wildcards (matched against Origin's host)
       ...previewAllowedHosts,
       // Full-origin wildcards (matched against Origin)
       ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
+      ...PRODUCTION_ORIGINS,
       ...LOCAL_DEV_ORIGINS,
     ];
 
