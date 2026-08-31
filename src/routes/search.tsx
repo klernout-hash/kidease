@@ -55,7 +55,6 @@ function SearchPage() {
   const [meals, setMeals] = useState(false);
   const [outdoor, setOutdoor] = useState(false);
   const [inclusive, setInclusive] = useState(false);
-  const [french, setFrench] = useState(false);
   const [extended, setExtended] = useState(false);
   const [infantOnly, setInfantOnly] = useState(false);
 
@@ -128,11 +127,10 @@ function SearchPage() {
     if (meals) rows = rows.filter((r) => hasAmenity(r.amenities, "meals"));
     if (outdoor) rows = rows.filter((r) => hasAmenity(r.amenities, "outdoor") || hasAmenity(r.amenities, "yard"));
     if (inclusive) rows = rows.filter((r) => hasAmenity(r.amenities, "inclusive"));
-    if (french) rows = rows.filter((r) => r.languages.includes("fr") || hasAmenity(r.amenities, "french") || hasAmenity(r.amenities, "bilingual"));
     if (extended) rows = rows.filter((r) => staysLate(r.hours, r.amenities) || opensEarly(r.hours));
     if (infantOnly) rows = rows.filter((r) => r.agesKnown && r.ageMinMonths <= 18);
     return rows;
-  }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, french, extended, infantOnly]);
+  }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, extended, infantOnly]);
   const liveCount = useMemo(() => (items ?? []).filter((r) => r.live).length, [items]);
 
   return (
@@ -230,7 +228,6 @@ function SearchPage() {
               [meals, setMeals, t("filterMeals")],
               [outdoor, setOutdoor, t("filterOutdoor")],
               [inclusive, setInclusive, t("filterInclusive")],
-              [french, setFrench, t("filterFrench")],
               [extended, setExtended, t("filterExtended")],
               [infantOnly, setInfantOnly, t("filterInfant")],
             ] as const
