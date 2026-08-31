@@ -15,12 +15,22 @@ import { formatAgeLabel } from "@/lib/templates";
 import { formatMonth, money } from "@/lib/utils";
 import type { Booking, Child, DaycareCard as Card, Payment } from "@/lib/types";
 
-export const Route = createFileRoute("/account")({ component: AccountPage });
+export const Route = createFileRoute("/account")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const tab = s.tab;
+    if (tab === "saved" || tab === "enrolled" || tab === "profile") return { tab };
+    return {};
+  },
+  component: AccountPage,
+});
 
 function AccountPage() {
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
-  const [tab, setTab] = useState<"saved" | "bookings" | "payments" | "children">("children");
+  const search = Route.useSearch();
+  const [tab, setTab] = useState<"saved" | "bookings" | "payments" | "children">(
+    search.tab === "saved" ? "saved" : search.tab === "enrolled" ? "bookings" : "children",
+  );
   const [saved, setSaved] = useState<Card[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -41,6 +51,12 @@ function AccountPage() {
     if (!user) return;
     void load().catch(() => undefined);
   }, [user]);
+
+  useEffect(() => {
+    if (search.tab === "saved") setTab("saved");
+    else if (search.tab === "enrolled") setTab("bookings");
+    else if (search.tab === "profile") setTab("children");
+  }, [search.tab]);
 
   if (isPending) {
     return (

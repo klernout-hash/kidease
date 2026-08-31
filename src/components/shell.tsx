@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Building2, Heart, Inbox, Menu, Search, UserRound } from "lucide-react";
+import { Heart, ClipboardCheck, Menu, MessageCircle, Search, UserRound } from "lucide-react";
 import { SignedIn, SignedOut } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
@@ -15,6 +15,7 @@ import { applyDocumentLocale } from "@/lib/languages";
 export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const tab = useRouterState({ select: (s) => (s.location.search as { tab?: string }).tab });
   const { user, isPending } = useCurrentUserState();
   const [open, setOpen] = useState(false);
 
@@ -29,6 +30,10 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const close = useCallback(() => {
     setOpen(false);
   }, []);
+
+  const hideTabs = pathname.startsWith("/login");
+  const onAccount = pathname.startsWith("/account");
+  const accountTab = tab ?? "profile";
 
   const navItems = [
     { to: "/search", label: t("explore") },
@@ -129,20 +134,38 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         accountLabel={t("account")}
         onSignOut={() => void signOut("/")}
       />
-      <div className={bare ? "" : "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0"}>{children}</div>
-      {bare ? null : (
-        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur-md md:hidden">
-          <div className="mx-auto grid max-w-lg grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
+      <div className={hideTabs ? "" : "pb-[calc(5.25rem+env(safe-area-inset-bottom))] xl:pb-0"}>{children}</div>
+      {hideTabs ? null : (
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur-md xl:hidden">
+          <div className="mx-auto grid max-w-lg grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)] pt-1">
             <Tab
-              to="/search"
-              label={t("explore")}
+              to="/"
+              label={t("search")}
               icon={Search}
-              active={pathname.startsWith("/search") || pathname.startsWith("/daycare") || pathname === "/"}
+              active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")}
             />
-            <Tab to="/account" label={t("saved")} icon={Heart} active={pathname.startsWith("/account")} />
-            <Tab to="/inbox" label={t("inbox")} icon={Inbox} active={pathname.startsWith("/inbox")} />
-            <Tab to="/provider" label={t("provider")} icon={Building2} active={pathname.startsWith("/provider")} />
-            <Tab to={user ? "/account" : "/login"} label={t("account")} icon={UserRound} active={pathname.startsWith("/login")} />
+            <Tab
+              to="/account"
+              search={{ tab: "saved" }}
+              label={t("saved")}
+              icon={Heart}
+              active={onAccount && accountTab === "saved"}
+            />
+            <Tab
+              to="/account"
+              search={{ tab: "enrolled" }}
+              label={t("enrolled")}
+              icon={ClipboardCheck}
+              active={onAccount && accountTab === "enrolled"}
+            />
+            <Tab to="/inbox" label={t("messages")} icon={MessageCircle} active={pathname.startsWith("/inbox")} />
+            <Tab
+              to={user ? "/account" : "/login"}
+              search={user ? { tab: "profile" } : { role: "parent", intent: "in", next: "/account" }}
+              label={t("profile")}
+              icon={UserRound}
+              active={onAccount && accountTab === "profile"}
+            />
           </div>
         </nav>
       )}
@@ -155,21 +178,24 @@ function Tab({
   label,
   icon: Icon,
   active,
+  search,
 }: {
   to: string;
   label: string;
   icon: typeof Search;
   active: boolean;
+  search?: Record<string, string>;
 }) {
   return (
     <Link
       to={to}
+      search={search}
       className={cn(
-        "flex min-h-12 flex-col items-center justify-center gap-0.5 text-[11px]",
+        "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 text-[10px] font-medium tracking-wide",
         active ? "text-primary" : "text-muted",
       )}
     >
-      <Icon className="size-5" strokeWidth={1.75} />
+      <Icon className="size-[22px]" strokeWidth={active ? 2.2 : 1.7} fill={active && Icon === Heart ? "currentColor" : "none"} />
       {label}
     </Link>
   );
