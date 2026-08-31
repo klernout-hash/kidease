@@ -275,7 +275,7 @@ export const copy = {
     roleParent: "Parent",
     roleProvider: "Provider",
     switchRole: "Using as",
-    footerCopy: "KidEase is a Winnipeg project for Canadian families looking for childcare.",
+    footerCopy: "KidEase is a Winnipeg-based, Canada-wide project serving families across the country.",
     pipeda: "PIPEDA & child safety",
     pipedaBody:
       "KidEase is built around PIPEDA’s consent, limiting-collection, and safeguarding principles. We store the minimum needed to run search, enrolment, and payments: your account, child care profiles you add (allergies, routines, emergency contacts), messages you send, and payment records. We do not sell personal information. Children’s details are visible only to you and to a centre you contact or book. Video check-in is a parent-initiated room — we do not offer continuous livestreams of children. In production, payments would run through PCI-compliant processors (Stripe, Interac) and messages would be encrypted in transit. This preview keeps data in the app database for the session.",
@@ -555,7 +555,7 @@ export const copy = {
     contactDirect: "Direct contact",
     contactResponse: "We typically respond within 1–2 business days.",
     contactLocation:
-      "KidEase is a Winnipeg-based project serving families across the city and surrounding areas.",
+      "KidEase is a Winnipeg-based project, built to serve families across Canada.",
     contactPrivacy: "Your message is private. We do not share or sell your contact information.",
     contactSent: "Thanks — we received your message and will reply within 1–2 business days.",
     messageLabel: "Message",
@@ -889,7 +889,7 @@ export const copy = {
     roleParent: "Parent",
     roleProvider: "Fournisseur",
     switchRole: "Espace",
-    footerCopy: "KidEase aide les parents de Winnipeg à trouver une garderie permise près de chez eux.",
+    footerCopy: "KidEase est un projet basé à Winnipeg, au service des familles partout au Canada.",
     pipeda: "PIPEDA et sécurité des enfants",
     pipedaBody:
       "KidEase s'appuie sur le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous conservons le minimum pour la recherche, l'inscription et les paiements. Nous ne vendons pas de renseignements personnels. Les prénoms et dates de naissance des enfants ne sont visibles que par vous et par un centre que vous contactez. La visio est lancée par le parent — pas de diffusion continue d'enfants. En production, les paiements passeraient par des processeurs conformes PCI (Stripe, Interac).",
@@ -1169,7 +1169,7 @@ export const copy = {
     contactDirect: "Contact direct",
     contactResponse: "Nous répondons généralement en 1 ou 2 jours ouvrables.",
     contactLocation:
-      "KidEase est un projet basé à Winnipeg, au service des familles de la ville et des environs.",
+      "KidEase est un projet basé à Winnipeg, conçu pour servir les familles partout au Canada.",
     contactPrivacy: "Votre message est privé. Nous ne partageons ni ne vendons vos coordonnées.",
     contactSent: "Merci — nous avons reçu votre message et répondrons en 1 ou 2 jours ouvrables.",
     messageLabel: "Message",
