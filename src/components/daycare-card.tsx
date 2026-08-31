@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { MapPin } from "lucide-react";
+import { Heart, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { GoogleRating } from "@/components/google-rating";
@@ -14,10 +14,12 @@ export function DaycareCard({
   item,
   showDistance = true,
   cta = "book",
+  compact = false,
 }: {
   item: Card;
   showDistance?: boolean;
   cta?: "book" | "details";
+  compact?: boolean;
 }) {
   const { t, locale } = useCopy();
   const name = locale === "fr" ? item.nameFr : item.name;
@@ -39,6 +41,55 @@ export function DaycareCard({
     return () => window.removeEventListener("kidease-compare", sync);
   }, [item.id]);
 
+  if (compact) {
+    return (
+      <div className="relative w-full">
+        <Link to="/daycare/$slug" params={{ slug: item.slug }} className="group block">
+          <div className="relative aspect-square overflow-hidden rounded-xl bg-surface-2">
+            <BuildingPhoto
+              src={building}
+              className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            {item.priority ? (
+              <span className="absolute left-2 top-2">
+                <PriorityPill />
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-2 space-y-0.5">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="line-clamp-2 text-[13px] font-semibold leading-4 tracking-[-0.015em]">{name}</h3>
+              <GoogleRating item={item} ratingX10={item.ratingX10} reviewCount={item.reviewCount} compact asButton />
+            </div>
+            <p className="truncate text-[12px] text-muted">
+              {showDistance && item.distanceKm ? `${item.distanceKm} ${t("kmAway")}` : item.city}
+              {known && open ? ` · ${item.spotsTotal} ${t("spots")}` : known && !open ? ` · ${t("waitlist")}` : ""}
+            </p>
+            {feeOk ? (
+              <p className="text-[13px] tabular-nums">
+                <span className="font-semibold">{money(item.fromPrice, locale)}</span>
+                <span className="text-muted">{t("month")}</span>
+              </p>
+            ) : (
+              <p className="text-[12px] text-muted">{t("feeUnknown")}</p>
+            )}
+          </div>
+        </Link>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            toggleCompare(item.id);
+          }}
+          className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-surface/90 text-fg shadow-card ring-1 ring-border"
+          aria-label={t("compare")}
+        >
+          <Heart className={cn("size-3.5", picked ? "fill-primary text-primary" : "")} strokeWidth={1.75} />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -47,7 +98,7 @@ export function DaycareCard({
       )}
     >
       <Link to="/daycare/$slug" params={{ slug: item.slug }} className="group block">
-        <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
+        <div className="relative aspect-square overflow-hidden bg-surface-2">
           <BuildingPhoto
             src={building}
             className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
@@ -74,10 +125,10 @@ export function DaycareCard({
             ) : null}
           </div>
         </div>
-        <div className="space-y-1.5 p-3.5 pb-3">
-          <h3 className="text-[15px] font-semibold leading-5 tracking-[-0.015em]">{name}</h3>
+        <div className="space-y-1 p-3 pb-2.5">
+          <h3 className="line-clamp-2 text-[14px] font-semibold leading-5 tracking-[-0.015em]">{name}</h3>
           <GoogleRating item={item} ratingX10={item.ratingX10} reviewCount={item.reviewCount} compact asButton />
-          <div className="flex items-baseline justify-between gap-3 text-sm">
+          <div className="flex items-baseline justify-between gap-3 text-[13px]">
             {item.agesKnown ? (
               <>
                 <p className="min-w-0 truncate text-muted">
@@ -96,7 +147,7 @@ export function DaycareCard({
               <p className="text-muted">{t("agesUnknown")}</p>
             )}
           </div>
-          <div className="flex items-center justify-between pt-1 text-sm">
+          <div className="flex items-center justify-between pt-0.5 text-[13px]">
             <span className="inline-flex items-center gap-1 text-muted">
               <MapPin className="size-3.5" />
               {showDistance && item.distanceKm ? `${item.distanceKm} ${t("kmAway")}` : item.city}
@@ -113,7 +164,7 @@ export function DaycareCard({
           </div>
         </div>
       </Link>
-      <div className="flex items-center justify-between gap-3 border-t border-border px-3.5 py-2.5">
+      <div className="flex items-center justify-between gap-3 border-t border-border px-3 py-2">
         <Link
           to="/daycare/$slug"
           params={{ slug: item.slug }}

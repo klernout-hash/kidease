@@ -10,7 +10,7 @@ import {
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import { BrandMark } from "@/components/brand-mark";
-import { DaycareCard } from "@/components/daycare-card";
+import { ListingRail } from "@/components/listing-rail";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { CompareBar } from "@/components/compare-bar";
@@ -22,6 +22,7 @@ import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
+import { readRecent } from "@/lib/recent";
 import type { DaycareCard as Card } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
@@ -59,6 +60,7 @@ function Home() {
   const [denied, setDenied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [featured, setFeatured] = useState<Card[]>([]);
+  const [recent, setRecent] = useState<Card[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -113,11 +115,28 @@ function Home() {
     }
   }
 
+  useEffect(() => {
+    function sync() {
+      setRecent(readRecent());
+    }
+    sync();
+    window.addEventListener("kidease-recent", sync);
+    return () => window.removeEventListener("kidease-recent", sync);
+  }, []);
   const liveCount = useMemo(() => featured.filter((r) => r.live).length, [featured]);
   const shown = useMemo(
     () => (liveOnly ? featured.filter((r) => r.live) : featured),
     [featured, liveOnly],
   );
+  const availableNow = useMemo(() => {
+    const open = shown.filter((r) => (r.live || r.availabilityKnown) && r.spotsTotal > 0);
+    return (open.length ? open : shown).slice(0, 18);
+  }, [shown]);
+  const availableNextMonth = useMemo(() => {
+    const top = new Set(availableNow.slice(0, 6).map((r) => r.id));
+    const rest = shown.filter((r) => !top.has(r.id));
+    return (rest.length ? rest : shown.slice(6)).slice(0, 18);
+  }, [shown, availableNow]);
 
   async function useLocation() {
     setBusy(true);
@@ -291,11 +310,10 @@ function Home() {
             {origin.label.split(",")[0]} · {radiusKm} {t("km")}
           </p>
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {shown.map((item) => (
-              <DaycareCard key={item.id} item={item} cta="details" />
-            ))}
-          </div>
+          <ListingRail title={t("recentlyViewed")} items={recent} />
+          <ListingRail title={t("availableNow")} items={availableNow} />
+          <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
+
           {shown.length === 0 ? (
             <p className="mt-6 rounded-xl bg-bg p-8 text-center text-muted ring-1 ring-border">
               {liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}

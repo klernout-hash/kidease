@@ -13,6 +13,7 @@ import { isSaved, openConversation, toggleSave } from "@/lib/server/family";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind } from "@/lib/licensing";
 import { readCompare, toggleCompare } from "@/lib/compare";
+import { rememberViewed } from "@/lib/recent";
 import { ListingBadges } from "@/components/listing-badges";
 import { CompareBar } from "@/components/compare-bar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -68,6 +69,19 @@ function Listing() {
       .then((r) => setSaved(r.saved))
       .catch(() => setSaved(false));
   }, [data, user, isPending]);
+
+  useEffect(() => {
+    if (!data) return;
+    const d = data.daycare;
+    const spots = d.spotsInfant + d.spotsToddler + d.spotsPreschool;
+    const prices = [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].filter((n): n is number => n != null && n > 0);
+    rememberViewed({
+      ...d,
+      distanceKm: 0,
+      spotsTotal: spots,
+      fromPrice: prices.length ? Math.min(...prices) : 0,
+    });
+  }, [data]);
 
   if (!data) {
     return (
