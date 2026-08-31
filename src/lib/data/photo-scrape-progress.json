@@ -1,0 +1,14 @@
+{
+  "last_city": "Winnipeg",
+  "last_province": "MB",
+  "last_id_processed": "mb-3001",
+  "mapped_count": 15,
+  "skipped_no_photo_this_run": ["mb-100141", "mb-101548", "mb-101862", "mb-1036"],
+  "next_queue": ["mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576", "mb-102700", "mb-100249"],
+  "winnipeg_total": 428,
+  "winnipeg_mapped": 15,
+  "national_total": 20846,
+  "national_mapped": 15,
+  "updated": "2026-08-31T10:20:00Z",
+  "notes": "Added official Agassiz (mb-3001) from agassizchildcare.com. Promoted 7 previously listed mapped ids. Images for new mappings are local; binary push pending."
+}
