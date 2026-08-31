@@ -7,6 +7,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Decode leftover HTML entities so names like "Kids & Company" never show as "Kids & Company". */
+export function decodeHtml(value: string) {
+  if (!value || !value.includes("&")) return value;
+  return value
+    .replace(/&/gi, "&")
+    .replace(/'/gi, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/"/gi, '"')
+    .replace(/</gi, "<")
+    .replace(/>/gi, ">");
+}
+
 export function money(cad: number, locale: Locale = "en") {
   return new Intl.NumberFormat(localeTag(locale), {
     style: "currency",
