@@ -1,14 +1,14 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-100131",
-  "mapped_count": 26,
-  "skipped_no_photo_this_run": ["mb-100170", "mb-100171", "mb-1002", "mb-100238", "mb-100249", "mb-100259", "mb-1003"],
-  "next_queue": ["mb-1004", "mb-1005", "mb-1006", "mb-1007", "mb-100900", "mb-100937", "mb-1011", "mb-1013", "mb-1023", "mb-1046"],
+  "last_id_processed": "mb-1011",
+  "mapped_count": 29,
+  "skipped_no_photo_this_run": ["mb-1005", "mb-1007", "mb-100900", "mb-100937", "mb-1013", "mb-1023", "mb-1046"],
+  "next_queue": ["mb-100351", "mb-100379", "mb-100404", "mb-100414", "mb-100425", "mb-100426", "mb-1005", "mb-100529", "mb-100530", "mb-100532"],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 26,
+  "winnipeg_mapped": 29,
   "national_total": 20846,
-  "national_mapped": 26,
-  "updated": "2026-09-01T15:20:00Z",
-  "notes": "Added 3 official photos: St. Maurice School Age Centre sign/building (mb-100042) from official daycare site; Paradise Montessori Preschool Kenaston exterior (mb-100048) from their official website; Inspired by Wonder Inc. infant room (mb-100131) from official website. Skipped several with no clear usable official classroom/building/kids photos found this pass."
+  "national_mapped": 29,
+  "updated": "2026-09-01T20:10:00Z",
+  "notes": "Added 3 official photos: Campus Children's Centre infant ball-pit room (mb-1004) from campuschildrenscentre.com; Carpathia Children's Centre building/entrance at John Dafoe School (mb-1006) from carpathiachildrenscentre.com; Day Nursery Centre Crossways kids outdoor photos (mb-1011) from daynurserycentre.ca. Skipped others this pass with no clear usable official photos found."
 }
