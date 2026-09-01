@@ -1,14 +1,14 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-102576",
-  "mapped_count": 23,
-  "skipped_no_photo_this_run": ["mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576"],
-  "next_queue": ["mb-100042", "mb-100048", "mb-100131", "mb-100170", "mb-100171", "mb-1002", "mb-100238", "mb-100249", "mb-100259", "mb-1003"],
+  "last_id_processed": "mb-100131",
+  "mapped_count": 26,
+  "skipped_no_photo_this_run": ["mb-100170", "mb-100171", "mb-1002", "mb-100238", "mb-100249", "mb-100259", "mb-1003"],
+  "next_queue": ["mb-1004", "mb-1005", "mb-1006", "mb-1007", "mb-100900", "mb-100937", "mb-1011", "mb-1013", "mb-1023", "mb-1046"],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 23,
+  "winnipeg_mapped": 26,
   "national_total": 20846,
-  "national_mapped": 23,
-  "updated": "2026-09-01T13:20:00Z",
-  "notes": "Added 2 official photos: Advantage Child Care Academy Scurfield classroom (mb-101548) from their photo gallery; Acorn Family Place Playroom program photo (mb-100141) from official website. Skipped 8 with no clear usable official classroom/building/kids photo found on official sites this pass."
+  "national_mapped": 26,
+  "updated": "2026-09-01T15:20:00Z",
+  "notes": "Added 3 official photos: St. Maurice School Age Centre sign/building (mb-100042) from official daycare site; Paradise Montessori Preschool Kenaston exterior (mb-100048) from their official website; Inspired by Wonder Inc. infant room (mb-100131) from official website. Skipped several with no clear usable official classroom/building/kids photos found this pass."
 }
