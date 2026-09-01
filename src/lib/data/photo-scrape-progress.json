@@ -1,14 +1,14 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-3088",
-  "mapped_count": 21,
-  "skipped_no_photo_this_run": ["mb-103141", "mb-100529", "mb-100937", "mb-100532", "mb-3088"],
-  "next_queue": ["mb-100141", "mb-101548", "mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576"],
+  "last_id_processed": "mb-102576",
+  "mapped_count": 23,
+  "skipped_no_photo_this_run": ["mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576"],
+  "next_queue": ["mb-100042", "mb-100048", "mb-100131", "mb-100170", "mb-100171", "mb-1002", "mb-100238", "mb-100249", "mb-100259", "mb-1003"],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 21,
+  "winnipeg_mapped": 23,
   "national_total": 20846,
-  "national_mapped": 21,
-  "updated": "2026-09-01T03:18:09Z",
-  "notes": "Added 5 official photos: BSLS Birchdale exterior (mb-9265), BHF facility (mb-1242), Bridgwater Montessori classroom (mb-103006), Bright Beginnings (mb-100814), Brightling classroom (mb-103244). Skipped 5 with no clear usable official photo this pass."
+  "national_mapped": 23,
+  "updated": "2026-09-01T13:20:00Z",
+  "notes": "Added 2 official photos: Advantage Child Care Academy Scurfield classroom (mb-101548) from their photo gallery; Acorn Family Place Playroom program photo (mb-100141) from official website. Skipped 8 with no clear usable official classroom/building/kids photo found on official sites this pass."
 }
