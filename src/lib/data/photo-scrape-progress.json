@@ -1,14 +1,14 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-100249",
-  "mapped_count": 16,
-  "skipped_no_photo_this_run": ["mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576", "mb-100249"],
-  "next_queue": ["mb-9265", "mb-1242", "mb-103141", "mb-100529", "mb-100937", "mb-103006", "mb-100814", "mb-100532", "mb-103244", "mb-3088"],
+  "last_id_processed": "mb-3088",
+  "mapped_count": 21,
+  "skipped_no_photo_this_run": ["mb-103141", "mb-100529", "mb-100937", "mb-100532", "mb-3088"],
+  "next_queue": ["mb-100141", "mb-101548", "mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576"],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 16,
+  "winnipeg_mapped": 21,
   "national_total": 20846,
-  "national_mapped": 16,
-  "updated": "2026-08-31T13:10:00Z",
-  "notes": "Added official Avicenna Academy (mb-102700) building exterior from avicenna-academy.ca. Skipped 7 with no usable official photos. Binary image local; push pending if needed."
+  "national_mapped": 21,
+  "updated": "2026-09-01T03:18:09Z",
+  "notes": "Added 5 official photos: BSLS Birchdale exterior (mb-9265), BHF facility (mb-1242), Bridgwater Montessori classroom (mb-103006), Bright Beginnings (mb-100814), Brightling classroom (mb-103244). Skipped 5 with no clear usable official photo this pass."
 }
