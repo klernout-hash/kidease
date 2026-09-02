@@ -249,26 +249,7 @@ export function defineHtmlOverlay(maps: typeof google.maps) {
 
 export type HtmlOverlayInstance = InstanceType<ReturnType<typeof defineHtmlOverlay>>;
 
-type AdvancedMarkerOptions = {
-  map: google.maps.Map | null;
-  position: google.maps.LatLngLiteral;
-  content?: HTMLElement;
-  zIndex?: number;
-  gmpClickable?: boolean;
-};
-
-type AdvancedMarkerInstance = {
-  map: google.maps.Map | null;
-  position?: google.maps.LatLngLiteral | google.maps.LatLng | null;
-  zIndex?: number;
-  addListener: (eventName: string, handler: () => void) => void;
-};
-
-export type AdvancedMarkerCtor = new (opts: AdvancedMarkerOptions) => AdvancedMarkerInstance;
-
-type MarkerLibrary = {
-  AdvancedMarkerElement?: AdvancedMarkerCtor;
-};
+export type AdvancedMarkerCtor = typeof google.maps.marker.AdvancedMarkerElement;
 
 /** Advanced Markers need a Map ID. Skip the library unless one is configured. */
 export async function loadAdvancedMarkerElement(
@@ -277,15 +258,11 @@ export async function loadAdvancedMarkerElement(
 ): Promise<AdvancedMarkerCtor | null> {
   if (!mapId.trim()) return null;
   try {
-    const importer = (
-      maps as typeof maps & { importLibrary?: (name: string) => Promise<MarkerLibrary> }
-    ).importLibrary;
-    if (typeof importer === "function") {
-      const lib = await importer("marker");
-      if (lib?.AdvancedMarkerElement) return lib.AdvancedMarkerElement;
+    if (typeof maps.importLibrary === "function") {
+      const lib = await maps.importLibrary("marker");
+      if (lib.AdvancedMarkerElement) return lib.AdvancedMarkerElement;
     }
-    const fromNs = (maps as typeof maps & { marker?: MarkerLibrary }).marker?.AdvancedMarkerElement;
-    return fromNs ?? null;
+    return maps.marker?.AdvancedMarkerElement ?? null;
   } catch {
     return null;
   }
@@ -304,13 +281,16 @@ function createAdvancedListingOverlay(
   opts: ListingOverlayOpts,
 ): ListingOverlay {
   const content = opts.content;
-  if (opts.centered) content.classList.add("ke-adv-centered");
   const marker = new AdvancedMarker({
     map: opts.map,
     position: opts.position,
     content,
     zIndex: opts.zIndex,
     gmpClickable: Boolean(opts.onClick),
+    collisionBehavior: "REQUIRED",
+    anchorLeft: "-50%",
+    // Default Advanced Marker anchor is bottom-center; clusters sit on the point.
+    anchorTop: opts.centered ? "-50%" : "-100%",
   });
   if (opts.onClick) {
     let armed = true;
@@ -383,6 +363,9 @@ export function createYouAreHereDot(opts: {
       content,
       zIndex: 2,
       gmpClickable: false,
+      collisionBehavior: "REQUIRED",
+      anchorLeft: "-50%",
+      anchorTop: "-50%",
     });
     return {
       setPosition(position) {
