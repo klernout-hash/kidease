@@ -1,0 +1,9 @@
+{
+  "run_date": "2026-09-02",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_processed": ["mb-1231", "mb-1233", "mb-1240", "mb-1243", "mb-1244", "mb-1247", "mb-1249", "mb-1251", "mb-1255", "mb-1257", "mb-1258", "mb-1261"],
+  "new_photos_mapped": ["mb-1244", "mb-1255"],
+  "skipped_no_photo": ["mb-1231", "mb-1233", "mb-1240", "mb-1243", "mb-1247", "mb-1249", "mb-1251", "mb-1257", "mb-1258", "mb-1261"],
+  "notes": "Mapped Stanley Knowles Pre-School official playground (skps.ca) and Provincial Employees Portage official classroom (provempdaycare.com/portage). Other 10 centres had no usable official photo of that specific site. No maps, Street View, stock, or generated images used."
+}
