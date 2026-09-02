@@ -17,11 +17,11 @@ import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/get-app")({ component: GetApp });
 
-const SHOTS = [
-  { src: "/store/phone-home.jpg", alt: "Home" },
-  { src: "/store/phone-search.jpg", alt: "Search" },
-  { src: "/store/phone-listing.jpg", alt: "Listing" },
-  { src: "/store/phone-login.jpg", alt: "Sign in" },
+const SHOTS: { src: string; alt: string; device: "iphone" | "android"; caption: string }[] = [
+  { src: "/store/shot-home.png", alt: "Home", device: "iphone", caption: "Home · iPhone" },
+  { src: "/store/shot-search.png", alt: "Search", device: "iphone", caption: "Search · iPhone" },
+  { src: "/store/shot-listing.png", alt: "Listing", device: "android", caption: "Listing · Android" },
+  { src: "/store/shot-login.png", alt: "Sign in", device: "android", caption: "Sign in · Android" },
 ];
 
 function GetApp() {
@@ -45,11 +45,15 @@ function GetApp() {
   }
 
   const desc = locale === "fr" ? STORE.descriptionFr : STORE.description;
+  const phoneLead =
+    locale === "fr"
+      ? "KidEase sur iPhone et Android — accueil, recherche, une fiche, et connexion."
+      : "KidEase on iPhone and Android — home, search, a listing, and sign in.";
 
   return (
     <Shell>
       <main className="ke-gutter mx-auto max-w-6xl pb-16 pt-8">
-        <section className="grid items-center gap-10 md:grid-cols-[1fr_minmax(16rem,22rem)]">
+        <section className="grid items-center gap-10 md:grid-cols-[1fr_minmax(16rem,20rem)]">
           <div>
             <BrandMark size="md" align="start" />
             <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-muted">{t("getAppKicker")}</p>
@@ -84,7 +88,7 @@ function GetApp() {
               {STORE.ageRating} · {STORE.price} · {STORE.category} · v{STORE.version}
             </p>
           </div>
-          <PhoneFrame src="/store/phone-search.jpg" />
+          <DeviceFrame src="/store/shot-search.png" alt="KidEase search" device="iphone" />
         </section>
 
         {mac ? (
@@ -132,20 +136,14 @@ function GetApp() {
           <Feat icon={ShieldCheck} title={t("featSafe")} body={t("featSafeBody")} />
         </section>
 
-        <section className="mt-14 overflow-hidden rounded-xl bg-primary px-4 py-10 text-primary-fg sm:px-8 md:py-14">
+        <section className="mt-14 overflow-hidden rounded-xl bg-primary px-4 py-10 text-primary-fg sm:px-8 md:px-10 md:py-14">
           <h2 className="font-display text-2xl text-primary-fg md:text-3xl">{t("onYourPhone")}</h2>
-          <p className="mt-2 max-w-xl text-sm text-primary-fg/80">{t("onYourPhoneLead")}</p>
-          <ul className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+          <p className="mt-2 max-w-xl text-sm text-primary-fg/80">{phoneLead}</p>
+          <ul className="mt-10 grid grid-cols-2 items-end gap-5 lg:grid-cols-4 lg:gap-8">
             {SHOTS.map((s) => (
               <li key={s.src} className="min-w-0">
-                <img
-                  src={s.src}
-                  alt={s.alt}
-                  width={1000}
-                  height={1500}
-                  className="w-full object-contain"
-                />
-                <p className="mt-3 text-center text-xs font-medium tracking-wide text-primary-fg/75">{s.alt}</p>
+                <DeviceFrame src={s.src} alt={s.alt} device={s.device} />
+                <p className="mt-4 text-center text-xs font-medium tracking-wide text-primary-fg/75">{s.caption}</p>
               </li>
             ))}
           </ul>
@@ -201,10 +199,47 @@ function Meta({ k, v }: { k: string; v: string }) {
   );
 }
 
-function PhoneFrame({ src }: { src: string }) {
+function DeviceFrame({
+  src,
+  alt,
+  device,
+}: {
+  src: string;
+  alt: string;
+  device: "iphone" | "android";
+}) {
+  const isIphone = device === "iphone";
   return (
-    <div className="mx-auto w-full max-w-xs">
-      <img src={src} alt="" width={1000} height={1500} className="w-full object-contain" />
+    <div className="mx-auto w-full max-w-[220px]">
+      <div
+        className={
+          isIphone
+            ? "relative mx-auto aspect-[9/19.2] w-full overflow-hidden rounded-[2.05rem] bg-[#111318] p-[7px] shadow-[0_18px_40px_-18px_rgba(8,16,40,0.55)] ring-1 ring-black/40"
+            : "relative mx-auto aspect-[9/19] w-full overflow-hidden rounded-[1.55rem] bg-[#1a1d24] p-[6px] shadow-[0_18px_40px_-18px_rgba(8,16,40,0.55)] ring-1 ring-black/35"
+        }
+      >
+        <div
+          className={
+            isIphone
+              ? "relative h-full overflow-hidden rounded-[1.65rem] bg-[#f6f3ee]"
+              : "relative h-full overflow-hidden rounded-[1.15rem] bg-[#f6f3ee]"
+          }
+        >
+          <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover object-top" />
+          {isIphone ? (
+            <span className="pointer-events-none absolute left-1/2 top-[7px] z-10 h-[18px] w-[72px] -translate-x-1/2 rounded-full bg-[#111318]" />
+          ) : (
+            <span className="pointer-events-none absolute left-1/2 top-[8px] z-10 size-[10px] -translate-x-1/2 rounded-full bg-[#111318] ring-2 ring-black/20" />
+          )}
+          <span
+            className={
+              isIphone
+                ? "pointer-events-none absolute bottom-[7px] left-1/2 z-10 h-[4px] w-[86px] -translate-x-1/2 rounded-full bg-black/35"
+                : "pointer-events-none absolute bottom-[6px] left-1/2 z-10 h-[3px] w-[72px] -translate-x-1/2 rounded-full bg-black/30"
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 }
