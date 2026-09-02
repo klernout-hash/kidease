@@ -8,10 +8,11 @@ import { StatusBadge } from "@/components/status-badge";
 import { PriorityPill } from "@/components/priority-pill";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { createListing, getProvider, setRole, updateRequestStatus } from "@/lib/server/family";
+import { createListing, getProvider, setRole } from "@/lib/server/family";
+import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
 import { useCopy } from "@/lib/use-copy";
-import { formatAgeLabel, formatStart, emailBodyNewRequest, emailSubjectNewRequest, scheduleLabel } from "@/lib/templates";
-import type { BookingStatus, Daycare, SpotRequest } from "@/lib/types";
+import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
+import type { Child, Daycare, SpotRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { CapacityForm, Field, PromotePanel } from "@/components/provider-listing-forms";
 
@@ -38,10 +39,10 @@ function ProviderPage() {
   });
 
   async function load() {
-    const res = await getProvider();
+    const [res, incoming] = await Promise.all([getProvider(), listDaycareIncoming()]);
     setListings(res.listings);
     setStats(res.stats);
-    setRequests(res.requests);
+    setRequests(incoming);
   }
 
   useEffect(() => {
@@ -58,68 +59,54 @@ function ProviderPage() {
   }
   if (!user) return <RedirectToSignIn />;
 
+  const waiting = requests.filter((r) => r.status === "requested" || r.status === "under_review");
+  const later = requests.filter((r) => r.status !== "requested" && r.status !== "under_review");
+
   return (
     <DeskShell desk="daycare" active={desk} onSelect={(id) => setDesk(id as DaycareDesk)}>
       {desk === "requests" ? (
-        <section>
-          <h2 className="font-display text-2xl">{t("incomingRequests")}</h2>
-          <p className="mt-1 text-sm text-muted">Parents who asked this centre for a spot.</p>
-          <ul className="mt-4 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-            {requests.length === 0 ? (
-              <li className="p-8 text-center text-muted">{t("noRequests")}</li>
-            ) : (
-              requests.map((r) => {
-                const copy = {
-                  parentName: r.parentName ?? t("parentLabel"),
-                  childName: r.childName ?? t("child"),
-                  age: r.birthdate ? formatAgeLabel(r.birthdate, locale) : t(r.ageGroup),
-                  dob: r.birthdate,
-                  daycareName: r.daycareName,
-                  start: formatStart(r.startDate ?? r.startMonth, locale),
-                  schedule: scheduleLabel(r.schedule, r.days, locale),
-                  note: r.parentNote,
-                };
-                return (
-                  <li key={r.id} className="p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium">{emailSubjectNewRequest(copy, locale)}</p>
-                          <StatusBadge status={r.status} />
-                        </div>
-                      </div>
-                      {r.conversationId ? (
-                        <Button size="sm" asChild>
-                          <Link to="/inbox/$id" params={{ id: r.conversationId }}>
-                            {t("viewRespond")}
-                          </Link>
-                        </Button>
-                      ) : null}
-                    </div>
-                    <pre className="mt-3 whitespace-pre-wrap rounded-lg bg-bg px-3 py-3 font-sans text-sm leading-relaxed text-fg">
-                      {emailBodyNewRequest(copy, locale)}
-                    </pre>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(["under_review", "accepted", "waitlist", "declined"] as BookingStatus[]).map((st) => (
-                        <Button
-                          key={st}
-                          size="sm"
-                          variant={r.status === st ? "primary" : "secondary"}
-                          onClick={() => {
-                            void updateRequestStatus({ data: { bookingId: r.id, status: st } })
-                              .then(() => load())
-                              .then(() => toast.success(t("requestSent")));
-                          }}
-                        >
-                          {st === "under_review" ? t("markReview") : st === "accepted" ? t("offerSpot") : st === "waitlist" ? t("waitlistChild") : t("declineRequest")}
-                        </Button>
-                      ))}
-                    </div>
-                  </li>
+        <section className="space-y-8">
+          <div>
+            <h2 className="font-display text-2xl">Waiting on you</h2>
+            <p className="mt-1 text-sm text-muted">
+              Parents who sent a child profile or asked this centre for a spot. Approve, put on waiting, or decline. The parent is notified in their inbox.
+            </p>
+            {listings.length === 0 ? (
+              <p className="mt-4 rounded-xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
+                Claim or list a centre first. Incoming parent requests only show for centres you own.
+              </p>
+            ) : null}
+            <RequestList
+              items={waiting}
+              empty="No new parent requests right now."
+              onDecide={async (id, decision) => {
+                await decideParentRequest({ data: { bookingId: id, decision } });
+                toast.success(
+                  decision === "approve"
+                    ? "Approved — parent can pay to confirm."
+                    : decision === "decline"
+                      ? "Declined — parent was notified."
+                      : "Marked waiting — parent was notified.",
                 );
-              })
-            )}
-          </ul>
+                await load();
+              }}
+              locale={locale}
+            />
+          </div>
+          <div>
+            <h2 className="font-display text-2xl">Decided</h2>
+            <p className="mt-1 text-sm text-muted">Approved, waitlisted, declined, or already enrolled.</p>
+            <RequestList
+              items={later}
+              empty="Nothing decided yet."
+              onDecide={async (id, decision) => {
+                await decideParentRequest({ data: { bookingId: id, decision } });
+                toast.success("Updated.");
+                await load();
+              }}
+              locale={locale}
+            />
+          </div>
         </section>
       ) : null}
 
@@ -219,5 +206,114 @@ function ProviderPage() {
         )
       ) : null}
     </DeskShell>
+  );
+}
+
+function RequestList({
+  items,
+  empty,
+  onDecide,
+  locale,
+}: {
+  items: SpotRequest[];
+  empty: string;
+  onDecide: (id: string, decision: "approve" | "decline" | "waiting") => Promise<void>;
+  locale: "en" | "fr" | string;
+}) {
+  const { t } = useCopy();
+  if (!items.length) {
+    return <p className="mt-4 rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{empty}</p>;
+  }
+  return (
+    <ul className="mt-4 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
+      {items.map((r) => (
+        <li key={r.id} className="p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-medium">
+                  {r.parentName ?? "Parent"} · {r.childName ?? "Child"}
+                </p>
+                <StatusBadge status={r.status} />
+              </div>
+              <p className="mt-1 text-sm text-muted">
+                {r.daycareName} · {r.birthdate ? formatAgeLabel(r.birthdate, locale as "en") : t(r.ageGroup)} ·{" "}
+                {formatStart(r.startDate ?? r.startMonth, locale as "en")} · {scheduleLabel(r.schedule, r.days, locale as "en")}
+              </p>
+            </div>
+            {r.conversationId ? (
+              <Button size="sm" variant="secondary" asChild>
+                <Link to="/inbox/$id" params={{ id: r.conversationId }}>
+                  {t("viewRespond")}
+                </Link>
+              </Button>
+            ) : null}
+          </div>
+          <ChildPacket child={r.child} allergies={r.allergies} epiPen={r.epiPen} note={r.parentNote} />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant={r.status === "accepted" ? "primary" : "secondary"}
+              onClick={() => void onDecide(r.id, "approve").catch((err) => toast.error(err instanceof Error ? err.message : "Could not update"))}
+            >
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant={r.status === "under_review" || r.status === "requested" ? "primary" : "secondary"}
+              onClick={() => void onDecide(r.id, "waiting").catch((err) => toast.error(err instanceof Error ? err.message : "Could not update"))}
+            >
+              Waiting
+            </Button>
+            <Button
+              size="sm"
+              variant={r.status === "declined" ? "primary" : "secondary"}
+              onClick={() => void onDecide(r.id, "decline").catch((err) => toast.error(err instanceof Error ? err.message : "Could not update"))}
+            >
+              Decline
+            </Button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ChildPacket({
+  child,
+  allergies,
+  epiPen,
+  note,
+}: {
+  child?: Child | null;
+  allergies?: string;
+  epiPen?: boolean;
+  note?: string | null;
+}) {
+  const bits = [
+    (allergies || child?.allergies) && `Allergies: ${allergies || child?.allergies}`,
+    (epiPen || child?.epiPen) && "EpiPen",
+    child?.medicalNotes && `Medical: ${child.medicalNotes}`,
+    child?.medications && `Meds: ${child.medications}`,
+    child?.diet && `Diet: ${child.diet}`,
+    child?.foodsAvoid && `Avoid: ${child.foodsAvoid}`,
+    child?.napRoutine && `Naps: ${child.napRoutine}`,
+    child?.toilet && `Toilet: ${child.toilet}`,
+    child?.homeLanguage && `Language: ${child.homeLanguage}`,
+    child?.emergencyName && `Emergency: ${child.emergencyName} ${child.emergencyPhone || ""}`.trim(),
+    child?.pickupPeople && `Pickup: ${child.pickupPeople}`,
+    note && `Note: ${note}`,
+  ].filter(Boolean) as string[];
+  if (!bits.length) {
+    return <p className="mt-3 text-sm text-subtle">Child profile attached — limited details so far.</p>;
+  }
+  return (
+    <ul className="mt-3 flex flex-wrap gap-1.5">
+      {bits.map((b) => (
+        <li key={b} className="rounded-full bg-bg px-2.5 py-1 text-xs text-muted ring-1 ring-border">
+          {b}
+        </li>
+      ))}
+    </ul>
   );
 }
