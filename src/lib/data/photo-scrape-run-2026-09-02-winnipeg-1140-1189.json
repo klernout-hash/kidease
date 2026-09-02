@@ -1,0 +1,35 @@
+{
+  "run_date": "2026-09-02",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_processed": [
+    "mb-1140",
+    "mb-1144",
+    "mb-1145",
+    "mb-1148",
+    "mb-1153",
+    "mb-1157",
+    "mb-1159",
+    "mb-1160",
+    "mb-1169",
+    "mb-1172",
+    "mb-1174",
+    "mb-1189"
+  ],
+  "new_photos_mapped": [],
+  "skipped_no_photo": [
+    "mb-1140",
+    "mb-1144",
+    "mb-1145",
+    "mb-1148",
+    "mb-1153",
+    "mb-1157",
+    "mb-1159",
+    "mb-1160",
+    "mb-1169",
+    "mb-1172",
+    "mb-1174",
+    "mb-1189"
+  ],
+  "notes": "Processed next queue of 12 Winnipeg centres. Official sites checked: Rainbow Day Nursery (rainbowdaynursery.ca) has locations pages but only logo/graphic assets, no classroom/building photos of Phase 1 Island Shore. YMCA-YWCA Creative Play (ywinnipeg.ca) lists location only, no centre-specific photos. Prairie Children's Centres Beaumont (prairiechildrenscentres.com) uses stock/generic kids images (happy-girl-teacher, diverse kids raising hands) not identifiable as Beaumont site rooms or exterior. Provincial Employees Care for Kids Osborne (provempdaycare.com) logo and graphics only. Dante Day Nursery, Faith Children's Centre / Faith Lutheran Day Care, Lovin N Learnin, St. Boniface Children's Place, St. Norbert Children's Centre, Cuddles Infant Centre, On The Move Inc, Learning and Growing Day Care: no official websites with usable photos found; directory listings and charity pages only; no Facebook/Instagram business pages with verifiable centre photos located. Strict rule applied: leave placeholders. No maps, Street View, or stock used."
+}
