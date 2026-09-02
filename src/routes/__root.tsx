@@ -4,6 +4,7 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { Toaster } from "sonner";
+import { CHANNEL_BOOT_SCRIPT } from "@/lib/runtime";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
@@ -46,14 +47,14 @@ export const Route = createRootRoute({
         type: "font/woff2",
         crossOrigin: "anonymous",
       },
-      { rel: "preconnect", href: "https://basemaps.cartocdn.com" },
-      { rel: "preconnect", href: "https://a.basemaps.cartocdn.com" },
-      { rel: "dns-prefetch", href: "https://server.arcgisonline.com" },
+      { rel: "preconnect", href: "https://maps.googleapis.com" },
+      { rel: "preconnect", href: "https://maps.gstatic.com" },
     ],
   }),
   component: () => (
-    <html lang="en" className="antialiased" suppressHydrationWarning>
+    <html lang="en" className="antialiased" data-channel="website" data-runtime="web" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: CHANNEL_BOOT_SCRIPT }} />
         <HeadContent />
       </head>
       <body>

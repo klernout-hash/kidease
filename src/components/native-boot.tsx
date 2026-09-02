@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { BrandMark } from "@/components/brand-mark";
 import { captureInstallPrompt, getDeviceLocation, hideNativeSplash, isStandalone, paintStatusBar } from "@/lib/native";
 import { locateHere } from "@/lib/proximity";
-import { paintRuntime, isApp } from "@/lib/runtime";
+import { startChannelListener } from "@/lib/runtime";
 import { startWebVitals } from "@/lib/web-vitals";
 import { readSavedOrigin } from "@/lib/geo";
 import { LANGUAGES } from "@/lib/languages";
@@ -12,7 +11,6 @@ import type { Locale } from "@/lib/types";
 
 export function NativeBoot() {
   const [splash, setSplash] = useState(false);
-  const navigate = useNavigate();
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setLocated = useAppStore((s) => s.setLocated);
   const setLocale = useAppStore((s) => s.setLocale);
@@ -52,19 +50,13 @@ export function NativeBoot() {
     return () => window.clearTimeout(idle);
   }, []);
 
-  useEffect(() => {
-    paintRuntime();
+  useLayoutEffect(() => {
+    const stop = startChannelListener();
     const root = document.documentElement;
     if (isStandalone()) root.classList.add("standalone");
     else root.classList.remove("standalone");
+    return stop;
   }, []);
-
-  useEffect(() => {
-    if (!isApp()) return;
-    if (window.location.pathname === "/" || window.location.pathname === "") {
-      void navigate({ to: "/search", replace: true });
-    }
-  }, [navigate]);
 
   useEffect(() => {
     const saved = readSavedOrigin();

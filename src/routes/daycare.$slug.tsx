@@ -482,7 +482,7 @@ function Listing() {
       </article>
 
       {!requestOpen ? (
-      <div className="fixed inset-x-0 bottom-20 z-20 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur-md md:hidden">
+      <div className="fixed inset-x-0 bottom-20 z-20 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur-md [[data-channel=website]_&]:hidden">
         <div className="mx-auto flex max-w-lg items-center gap-2">
           <Button className="flex-1" variant="secondary" onClick={onTour}>
             {t("bookTour")}
