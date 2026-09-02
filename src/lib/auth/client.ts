@@ -1,6 +1,6 @@
 import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
-import { GROK_PROVIDERS } from "./providers";
+import { isNativeSocialProvider } from "./providers";
 
 /**
  * Better Auth client for this React SPA (browser-side).
@@ -35,7 +35,7 @@ export const authClient = createAuthClient({
 export const authEnabled = import.meta.env.VITE_AUTH_ENABLED !== "false";
 
 /** The upstream providers to render sign-in buttons for. */
-export { GROK_PROVIDERS };
+export { GROK_PROVIDERS, isNativeSocialProvider, NATIVE_GOOGLE, visibleSignInProviders } from "./providers";
 
 // ── Live-preview bearer token ────────────────────────────────────────────────
 // The embedded preview iframe has partitioned cookies, so we keep the session's
@@ -80,15 +80,18 @@ function inLivePreview(): boolean {
 type PopupMessage = { source: "grok-auth-popup"; token: string | null; error?: string };
 
 /**
- * Start sign-in with one upstream provider (`providerId` from `GROK_PROVIDERS`),
- * federating through the Grok auth broker.
+ * Start sign-in with one upstream provider (`providerId` from `GROK_PROVIDERS`
+ * or native `google` / `apple`).
+ *
+ * Native Google (`google`) and Apple use Better Auth `signIn.social`.
+ * Broker Google (`grok-google`) and X federate through the Grok auth broker.
  *
  * - **Live preview** (`*.grok-sandbox.com` iframe): opens a POPUP to
  *   `/auth/popup`, served by the template Vite plugin (see `vite.config.ts` +
  *   `popup.server.ts`) — 302s to the broker/upstream login (no app chrome) and,
  *   on return, posts the session bearer token back. We store it and refresh the
  *   session; no top-level navigation of the iframe to the broker.
- * - **Deployed** (and local non-iframe): a normal full-page redirect into the broker.
+ * - **Deployed** (and local non-iframe): a normal full-page redirect.
  *
  * Either way it clears any existing local session FIRST so switching providers
  * actually switches identity.
@@ -118,7 +121,7 @@ export async function signIn(
   }
   setBearerToken(null);
 
-  if (providerId === "apple") {
+  if (isNativeSocialProvider(providerId)) {
     if (inLivePreview()) {
       if (!popup) throw new Error("Pop-up blocked — allow pop-ups for sign-in");
       const token = await waitForPopupToken(popup);
@@ -139,7 +142,7 @@ export async function signIn(
       return;
     }
     const { data, error } = await authClient.signIn.social({
-      provider: "apple",
+      provider: providerId as "apple" | "google",
       callbackURL,
       errorCallbackURL,
     });
