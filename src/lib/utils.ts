@@ -7,16 +7,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Decode leftover HTML entities so names like "Kids & Company" never show as "Kids & Company". */
+/** Decode leftover HTML entities in listing names. */
 export function decodeHtml(value: string) {
   if (!value || !value.includes("&")) return value;
   return value
-    .replace(/&/gi, "&")
-    .replace(/'/gi, "'")
+    .replace(/&amp;/gi, "&")
+    .replace(/&apos;/gi, "'")
     .replace(/&#39;/g, "'")
-    .replace(/"/gi, '"')
-    .replace(/</gi, "<")
-    .replace(/>/gi, ">");
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
 }
 
 export function money(cad: number, locale: Locale = "en") {
@@ -51,15 +51,6 @@ export function formatMonth(ym: string, locale: Locale = "en") {
   return new Intl.DateTimeFormat(localeTag(locale), { month: "long", year: "numeric" }).format(d);
 }
 
-export function decodeHtml(str: string) {
-  return str
-    .replace(/&/gi, "&")
-    .replace(/'/gi, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/"/gi, '"')
-    .replace(/</gi, "<")
-    .replace(/>/gi, ">");
-}
 
 export function formatAgeRange(min: number, max: number) {
   return `${min} m – ${max} m`;
