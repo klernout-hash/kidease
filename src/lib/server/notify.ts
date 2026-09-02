@@ -1,7 +1,13 @@
 import { nid } from "@/lib/utils";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { publicSubmitResult, resolveMailReplyTo, sendMailThenPersist } from "./notify-mail";
+import {
+  afterPublicAdminNotify,
+  resolveMailReplyTo,
+  sendMailThenPersist,
+  VISITOR_AUTO_REPLY_SUBJECT,
+  VISITOR_AUTO_REPLY_TEXT,
+} from "./notify-mail";
 
 /** Load SQL only when we persist or query — never before sending contact mail. */
 async function loadSql() {
@@ -310,8 +316,14 @@ function esc(s: string) {
     .join("");
 }
 
-async function deliverEmail(subject: string, text: string, html: string, replyTo?: string | null) {
-  const reply = resolveMailReplyTo(replyTo, ADMIN_EMAIL);
+async function deliverEmail(
+  subject: string,
+  text: string,
+  html: string,
+  opts?: { to?: string | null; replyTo?: string | null },
+) {
+  const to = (opts?.to ?? "").trim() || ADMIN_EMAIL;
+  const reply = resolveMailReplyTo(opts?.replyTo, ADMIN_EMAIL);
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
     const res = await fetch("https://api.resend.com/emails", {
@@ -319,7 +331,7 @@ async function deliverEmail(subject: string, text: string, html: string, replyTo
       headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: MAIL_FROM,
-        to: [ADMIN_EMAIL],
+        to: [to],
         reply_to: reply,
         subject,
         text,
@@ -338,7 +350,7 @@ async function deliverEmail(subject: string, text: string, html: string, replyTo
       method: "POST",
       headers: { Authorization: `Bearer ${sendgrid}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: ADMIN_EMAIL }] }],
+        personalizations: [{ to: [{ email: to }] }],
         from: { email: fromEmail, name: fromName },
         reply_to: { email: reply },
         subject,
@@ -351,8 +363,29 @@ async function deliverEmail(subject: string, text: string, html: string, replyTo
     if (!res.ok) throw new Error(`SendGrid ${res.status}: ${await res.text()}`);
     return "sent";
   }
-  console.info("[kidease-mail]", ADMIN_EMAIL, subject, "reply_to=", reply, "\n", text);
+  console.info("[kidease-mail]", to, subject, "reply_to=", reply, "\n", text);
   return "logged";
+}
+
+function visitorAutoReplyCopy() {
+  const paragraphs = VISITOR_AUTO_REPLY_TEXT.split("\n\n")
+    .map((p) => `<p style="margin:16px 0 0;">${esc(p)}</p>`)
+    .join("");
+  const html = `<!doctype html>
+<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
+    <tr><td style="padding:28px;">
+      <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
+      ${paragraphs}
+    </td></tr>
+  </table>
+</body></html>`;
+  return { title: VISITOR_AUTO_REPLY_SUBJECT, text: VISITOR_AUTO_REPLY_TEXT, html };
+}
+
+async function sendVisitorAutoReply(to: string) {
+  const { title, text, html } = visitorAutoReplyCopy();
+  await deliverEmail(title, text, html, { to, replyTo: ADMIN_EMAIL });
 }
 
 async function ensureEventsTable() {
@@ -416,7 +449,7 @@ export async function notifyPlatform(p: PlatformEvent) {
   const { title, text, html } = emailCopy(p);
   const id = nid("ev");
   const result = await sendMailThenPersist({
-    send: () => deliverEmail(title, text, html, p.actorEmail),
+    send: () => deliverEmail(title, text, html, { replyTo: p.actorEmail }),
     persist: ({ status, error }) => persistPlatformEvent(id, p, status, error),
     onMailError: (message, err) => {
       console.error("[kidease-mail]", message, err);
@@ -474,7 +507,14 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
         actorEmail: data.email,
         detail: [data.subject, data.body].filter(Boolean).join("\n\n"),
       });
-      return publicSubmitResult(result.status, result.error);
+      return afterPublicAdminNotify({
+        adminStatus: result.status,
+        adminError: result.error,
+        sendAutoReply: () => sendVisitorAutoReply(data.email),
+        onAutoReplyError: (err) => {
+          console.error("[kidease-contact] auto-reply failed", err);
+        },
+      });
     } catch (err) {
       console.error("[kidease-contact]", err);
       throw err;

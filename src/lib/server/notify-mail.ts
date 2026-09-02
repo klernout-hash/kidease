@@ -18,6 +18,37 @@ export function publicSubmitResult(status: string, error?: string | null): { ok:
   return { ok: true };
 }
 
+export const VISITOR_AUTO_REPLY_SUBJECT = "We got your message — KidEase";
+
+export const VISITOR_AUTO_REPLY_TEXT =
+  "Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.\n\nThank you";
+
+/** Auto-reply only after Resend/SendGrid accepted the admin notify — never after a failed admin send. */
+export function shouldSendVisitorAutoReply(adminStatus: string): boolean {
+  return adminStatus === "sent";
+}
+
+/**
+ * Confirm the admin notify, then optionally auto-reply. Auto-reply failures are logged
+ * and must not fail the public submit — the parent already reached KidEase.
+ */
+export async function afterPublicAdminNotify(args: {
+  adminStatus: string;
+  adminError?: string | null;
+  sendAutoReply: () => Promise<unknown>;
+  onAutoReplyError?: (err: unknown) => void;
+}): Promise<{ ok: true }> {
+  const result = publicSubmitResult(args.adminStatus, args.adminError);
+  if (shouldSendVisitorAutoReply(args.adminStatus)) {
+    try {
+      await args.sendAutoReply();
+    } catch (err) {
+      args.onAutoReplyError?.(err);
+    }
+  }
+  return result;
+}
+
 /**
  * Send first, then persist. SQL / persist failures never hide a successful send
  * and never prevent the caller from seeing the mail outcome.

@@ -1,10 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  afterPublicAdminNotify,
   publicNotifyOk,
   publicSubmitResult,
   resolveMailReplyTo,
   sendMailThenPersist,
+  shouldSendVisitorAutoReply,
+  VISITOR_AUTO_REPLY_SUBJECT,
+  VISITOR_AUTO_REPLY_TEXT,
 } from "../src/lib/server/notify-mail.ts";
 
 test("reply_to is the visitor email when present", () => {
@@ -89,4 +93,62 @@ test("contact submit throws when Resend fails", async () => {
     onMailError: () => undefined,
   });
   assert.throws(() => publicSubmitResult(result.status, result.error), /Resend 403/);
+});
+
+test("auto-reply copy is the short thanks only", () => {
+  assert.equal(VISITOR_AUTO_REPLY_SUBJECT, "We got your message — KidEase");
+  assert.equal(
+    VISITOR_AUTO_REPLY_TEXT,
+    "Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.\n\nThank you",
+  );
+  assert.doesNotMatch(VISITOR_AUTO_REPLY_TEXT, /HELLO|General Question|kyle@openroadoutlet/i);
+});
+
+test("auto-reply is sent only after a successful Resend/SendGrid admin notify", () => {
+  assert.equal(shouldSendVisitorAutoReply("sent"), true);
+  assert.equal(shouldSendVisitorAutoReply("failed"), false);
+  assert.equal(shouldSendVisitorAutoReply("logged"), false);
+  assert.equal(shouldSendVisitorAutoReply("queued"), false);
+});
+
+test("auto-reply runs after admin sent and submit still succeeds if auto-reply throws", async () => {
+  let autoReplies = 0;
+  const ok = await afterPublicAdminNotify({
+    adminStatus: "sent",
+    sendAutoReply: async () => {
+      autoReplies += 1;
+      throw new Error("Resend 429: rate limited");
+    },
+    onAutoReplyError: () => undefined,
+  });
+  assert.deepEqual(ok, { ok: true });
+  assert.equal(autoReplies, 1);
+});
+
+test("auto-reply is skipped when admin notify failed", async () => {
+  let autoReplies = 0;
+  await assert.rejects(
+    () =>
+      afterPublicAdminNotify({
+        adminStatus: "failed",
+        adminError: "Resend 403: domain not verified",
+        sendAutoReply: async () => {
+          autoReplies += 1;
+        },
+      }),
+    /Resend 403/,
+  );
+  assert.equal(autoReplies, 0);
+});
+
+test("auto-reply is skipped when admin notify was only logged locally", async () => {
+  let autoReplies = 0;
+  const ok = await afterPublicAdminNotify({
+    adminStatus: "logged",
+    sendAutoReply: async () => {
+      autoReplies += 1;
+    },
+  });
+  assert.deepEqual(ok, { ok: true });
+  assert.equal(autoReplies, 0);
 });
