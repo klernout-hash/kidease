@@ -173,6 +173,15 @@ function hydrate(raw: RawCentre, _index: number): CatalogDaycare {
 
 const CATALOG_URL =
   "https://raw.githubusercontent.com/klernout-hash/kidease/main/src/lib/data/centres.json";
+const EXTRA_FILES = [
+  "centres-extra-1.json",
+  "centres-extra-2.json",
+  "centres-extra-3.json",
+  "centres-extra-4.json",
+  "centres-extra-5.json",
+];
+const EXTRA_BASE =
+  "https://raw.githubusercontent.com/klernout-hash/kidease/main/src/lib/data/";
 
 let cachedCatalog: CatalogDaycare[] | null = null;
 let catalogBySlugMap = new Map<string, CatalogDaycare>();
@@ -198,17 +207,45 @@ function buildCatalogGrid(rows: CatalogDaycare[]) {
   catalogGrid = grid;
 }
 
-async function loadRawCentres(): Promise<RawCentre[]> {
+async function readLocalJson(rel: string): Promise<unknown | null> {
   try {
     const { readFile } = await import("node:fs/promises");
     const { fileURLToPath } = await import("node:url");
-    const path = fileURLToPath(new URL("./data/centres.json", import.meta.url));
-    return JSON.parse(await readFile(path, "utf8")) as RawCentre[];
+    const path = fileURLToPath(new URL(rel, import.meta.url));
+    return JSON.parse(await readFile(path, "utf8"));
   } catch {
+    return null;
+  }
+}
+
+async function loadRawCentres(): Promise<RawCentre[]> {
+  let main = (await readLocalJson("./data/centres.json")) as RawCentre[] | null;
+  if (!main) {
     const res = await fetch(CATALOG_URL);
     if (!res.ok) throw new Error(`Catalogue unavailable (${res.status})`);
-    return (await res.json()) as RawCentre[];
+    main = (await res.json()) as RawCentre[];
   }
+  const extra: RawCentre[] = [];
+  for (const file of EXTRA_FILES) {
+    let part = (await readLocalJson(`./data/${file}`)) as RawCentre[] | null;
+    if (!part) {
+      try {
+        const res = await fetch(EXTRA_BASE + file);
+        part = res.ok ? ((await res.json()) as RawCentre[]) : [];
+      } catch {
+        part = [];
+      }
+    }
+    extra.push(...(part ?? []));
+  }
+  const seen = new Set(main.map((row) => row.id));
+  const merged = [...main];
+  for (const row of extra) {
+    if (!row?.id || seen.has(row.id)) continue;
+    seen.add(row.id);
+    merged.push(row);
+  }
+  return merged;
 }
 
 export async function getCatalog(): Promise<CatalogDaycare[]> {
