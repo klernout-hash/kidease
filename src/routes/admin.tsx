@@ -24,6 +24,17 @@ function AdminPage() {
     );
   }
   if (!user) return <RedirectToSignIn />;
+  const admin = (user.primaryEmail || "").trim().toLowerCase() === "kyle@kidease.ca";
+  if (!admin) {
+    return (
+      <Shell>
+        <main className="mx-auto max-w-lg px-4 py-16 text-center">
+          <h1 className="font-display text-3xl">Not found</h1>
+          <p className="mt-3 text-muted">This page is only for the KidEase operator.</p>
+        </main>
+      </Shell>
+    );
+  }
 
   return (
     <Shell>
