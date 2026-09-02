@@ -71,7 +71,7 @@ function Home() {
   const distanceUnit = useAppStore((s) => s.distanceUnit);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
-  const [role, setRole] = useState<"parent" | "provider" | null>(null);
+  const [role, setRole] = useState<"parent" | "provider" | "admin" | null>(null);
   const [q, setQ] = useState("");
   const [place, setPlace] = useState(origin.label);
   const [manual, setManual] = useState(Boolean(search.change));
@@ -180,7 +180,9 @@ function Home() {
 
   useEffect(() => {
     if (isPending) return;
-    if (user && role === "provider") {
+    if (user && role === "admin") {
+      void navigate({ to: "/admin" });
+    } else if (user && role === "provider") {
       void navigate({ to: "/provider" });
     }
   }, [isPending, user, role, navigate]);

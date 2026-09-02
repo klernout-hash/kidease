@@ -607,7 +607,9 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
 
 export const listPlatformEvents = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    const { requireAdmin } = await import("@/lib/server/roles");
+    await requireAdmin(context.userId);
     await ensureEventsTable();
     const sql = await getSql();
     const rows = await sql<{

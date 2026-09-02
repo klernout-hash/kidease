@@ -87,6 +87,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     verified: Boolean(r.verified),
     contactEmail: r.contact_email ?? null,
     claimed,
+    claimStatus: r.claim_status ?? null,
     listingActive,
     pauseCode: r.pause_code ?? null,
     pauseReason: r.pause_reason ?? null,

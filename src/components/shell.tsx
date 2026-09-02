@@ -12,6 +12,7 @@ import { LanguageSelect } from "@/components/language-select";
 import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
+import { DeskSwitcher } from "@/components/desk-switcher";
 
 export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
   const { t, locale } = useCopy();
@@ -70,6 +71,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             })}
           </nav>
           <div className="flex items-center gap-1.5">
+            {user ? <DeskSwitcher /> : null}
             <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:xl:flex">
               <LanguageSelect />
               <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
@@ -94,7 +96,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
                   <Link
                     to="/login"
-                    search={{ role: "parent", intent: "in", next: "/search" }}
+                    search={{ role: "parent", intent: "in", next: "/parent" }}
                     className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-normal text-muted hover:text-fg"
                   >
                     {t("parentSignIn")}
@@ -242,11 +244,19 @@ function AccountMenu({
           </Link>
           <Link
             role="menuitem"
-            to="/admin"
+            to="/parent"
             onClick={() => setOpen(false)}
             className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
           >
-            Operator portal
+            Parent desk
+          </Link>
+          <Link
+            role="menuitem"
+            to="/provider"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+          >
+            Provider desk
           </Link>
           <button
             type="button"
