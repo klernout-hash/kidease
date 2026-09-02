@@ -26,7 +26,7 @@ import { geocode, reverseGeocode, WINNIPEG } from "@/lib/geo";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
-import { cn } from "@/lib/utils";
+import { cn, uniqueById } from "@/lib/utils";
 import { readRecent } from "@/lib/recent";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { LocationConsentCard } from "@/components/location-consent";
@@ -74,8 +74,8 @@ function Home() {
   const [role, setRole] = useState<"parent" | "provider" | "admin" | null>(null);
   const [q, setQ] = useState("");
   const [place, setPlace] = useState(origin.label);
-  const [manual, setManual] = useState(Boolean(search.change));
-  const [denied, setDenied] = useState(false);
+  const [manual, setManual] = useState(Boolean(search.change) || locationConsent === "denied");
+  const [denied, setDenied] = useState(locationConsent === "denied");
   const [askLocation, setAskLocation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [featured, setFeatured] = useState<Card[]>(boot.featured ?? []);
@@ -93,10 +93,17 @@ function Home() {
   }, [user]);
 
   useEffect(() => {
+    if (locationConsent === "denied") {
+      setDenied(true);
+      setManual(true);
+    }
+  }, [locationConsent]);
+
+  useEffect(() => {
     const loc = origin.lat ? origin : WINNIPEG;
     setPlace(origin.label);
     void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng } })
-      .then(setFeatured)
+      .then((rows) => setFeatured(uniqueById(rows)))
       .catch(() => setFeatured([]));
   }, [origin.lat, origin.lng, origin.label]);
 
@@ -135,6 +142,7 @@ function Home() {
     }
     setLocationConsent("denied");
     setDenied(true);
+    setManual(true);
     return false;
   }
 
@@ -155,17 +163,16 @@ function Home() {
     return () => window.removeEventListener("kidease-recent", sync);
   }, []);
   const shown = useMemo(
-    () => (liveOnly ? featured.filter((r) => r.live) : featured),
+    () => uniqueById(liveOnly ? featured.filter((r) => r.live) : featured),
     [featured, liveOnly],
   );
   const availableNow = useMemo(() => {
     const open = shown.filter((r) => (r.live || r.availabilityKnown) && r.spotsTotal > 0);
-    return (open.length ? open : shown).slice(0, 18);
+    return uniqueById(open.length ? open : shown).slice(0, 18);
   }, [shown]);
   const availableNextMonth = useMemo(() => {
     const top = new Set(availableNow.slice(0, 6).map((r) => r.id));
-    const rest = shown.filter((r) => !top.has(r.id));
-    return (rest.length ? rest : shown.slice(6)).slice(0, 18);
+    return shown.filter((r) => !top.has(r.id)).slice(0, 18);
   }, [shown, availableNow]);
 
   async function useLocation() {
@@ -187,6 +194,21 @@ function Home() {
     }
   }, [isPending, user, role, navigate]);
 
+  const cityChips = (
+    <div className="mt-4 flex flex-wrap gap-2">
+      {CITY_CHIPS.map((c) => (
+        <button
+          key={c.q}
+          type="button"
+          onClick={() => applyCity(c.q)}
+          className="min-h-11 rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border hover:text-fg"
+        >
+          {c.label}
+        </button>
+      ))}
+    </div>
+  );
+
   const locationForm = (
     <>
       {manual ? (
@@ -197,6 +219,11 @@ function Home() {
             if (q.trim()) void applyCity(q);
           }}
         >
+          {denied ? (
+            <p className="mb-2 text-sm text-muted">
+              Location is off. Enter a city or postal code to find licensed centres nearby.
+            </p>
+          ) : null}
           <PlaceSearch
             value={q}
             onChange={setQ}
@@ -207,25 +234,12 @@ function Home() {
             }}
             placeholder={t("locationPh")}
             origin={origin}
-            inputClassName="ke-input w-full"
+            inputClassName="ke-input w-full min-h-12"
           />
-          <Button type="submit" variant="secondary" className="mt-2 w-full" disabled={!q.trim()}>
+          <Button type="submit" variant="secondary" className="mt-2 min-h-12 w-full" disabled={!q.trim()}>
             {t("search")}
           </Button>
-          {denied ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {CITY_CHIPS.map((c) => (
-                <button
-                  key={c.q}
-                  type="button"
-                  onClick={() => applyCity(c.q)}
-                  className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border hover:text-fg"
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
+          {cityChips}
         </form>
       ) : (
         <button
@@ -271,7 +285,7 @@ function Home() {
             <LocateFixed className="size-5" />
           </button>
         </div>
-        <Button type="submit" className="min-h-11 w-full lg:w-auto">
+        <Button type="submit" className="min-h-12 w-full lg:w-auto">
           {t("search")}
         </Button>
       </form>
@@ -281,7 +295,7 @@ function Home() {
           type="button"
           onClick={() => setLiveOnly(true)}
           className={cn(
-            "rounded-full px-4 py-2 text-sm font-medium ring-1",
+            "min-h-11 rounded-full px-4 py-2 text-sm font-medium ring-1",
             liveOnly ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border",
           )}
         >
@@ -291,11 +305,11 @@ function Home() {
           type="button"
           onClick={() => setLiveOnly(false)}
           className={cn(
-            "rounded-full px-4 py-2 text-sm font-medium ring-1",
+            "min-h-11 rounded-full px-4 py-2 text-sm font-medium ring-1",
             !liveOnly ? "bg-fg text-bg ring-fg" : "bg-bg text-fg ring-border",
           )}
         >
-          {t("showAll")} · {featured.length}
+          {t("showAll")} · {shown.length}
         </button>
       </div>
 
@@ -306,7 +320,10 @@ function Home() {
               setAskLocation(false);
               void pinHere();
             }}
-            onLater={() => setAskLocation(false)}
+            onLater={() => {
+              setAskLocation(false);
+              setManual(true);
+            }}
           />
         </div>
       ) : null}
