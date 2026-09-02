@@ -1,5 +1,5 @@
 import { PriorityPill } from "@/components/priority-pill";
-import { feeBadgeKey } from "@/lib/licensing";
+import { feeProgramBadgeKey } from "@/lib/licensing";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
@@ -23,6 +23,7 @@ export function ListingBadges({
   compact?: boolean;
 }) {
   const { t } = useCopy();
+  const feeBadge = feeProgramBadgeKey(item.province);
   const spots = (item.spotsInfant ?? 0) + (item.spotsToddler ?? 0) + (item.spotsPreschool ?? 0);
   const live = Boolean(item.live);
   const known = Boolean(item.availabilityKnown || live);
@@ -34,11 +35,7 @@ export function ListingBadges({
     <div className="flex flex-wrap gap-1.5">
       {item.priority ? <PriorityPill /> : null}
       <span className={pill}>{t("licensed")}</span>
-      {item.live ? (
-        <span className={cn(pill, "bg-primary text-primary-fg")}>{t(feeBadgeKey(item.province))}</span>
-      ) : (
-        <span className={cn(pill, "text-muted")}>{t("badgeTenAsk")}</span>
-      )}
+      {feeBadge ? <span className={cn(pill, "bg-primary text-primary-fg")}>{t(feeBadge)}</span> : null}
       <span className={pill}>{t("badgeSubsidy")}</span>
       {live ? (
         <span className={cn(pill, "bg-ok text-primary-fg")}>{t("live")}</span>

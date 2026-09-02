@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { BrandMark } from "@/components/brand-mark";
-import { captureInstallPrompt, getDeviceLocation, hideNativeSplash, isStandalone, paintStatusBar } from "@/lib/native";
+import { captureInstallPrompt, getDeviceLocation, hideNativeSplash, isNative, isStandalone, paintStatusBar } from "@/lib/native";
 import { locateHere } from "@/lib/proximity";
 import { startChannelListener } from "@/lib/runtime";
 import { startWebVitals } from "@/lib/web-vitals";
-import { readSavedOrigin } from "@/lib/geo";
+import { canadaOriginOrWinnipeg, isInCanada, readSavedOrigin, WINNIPEG } from "@/lib/geo";
 import { LANGUAGES } from "@/lib/languages";
 import { useAppStore } from "@/lib/store";
 import type { Locale } from "@/lib/types";
@@ -66,24 +66,30 @@ export function NativeBoot() {
 
   useEffect(() => {
     const saved = readSavedOrigin();
-    if (saved) setOrigin(saved);
+    setOrigin(canadaOriginOrWinnipeg(saved));
+    setLocated(true);
     let cancelled = false;
     const consent = readLocationConsent();
-    if (consent !== "granted") {
-      setLocated(Boolean(saved));
+    const askGps = consent === "granted" || (consent !== "denied" && (isStandalone() || isNative()));
+    if (!askGps) {
       return () => {
         cancelled = true;
       };
     }
     void getDeviceLocation({ precise: true }).then((pos) => {
       if (cancelled) return;
-      if (pos) {
+      if (pos && isInCanada(pos.lat, pos.lng)) {
         const here = locateHere(pos.lat, pos.lng);
-        setOrigin({
-          lat: here.lat,
-          lng: here.lng,
-          label: here.label,
-        }, "gps");
+        setOrigin(
+          {
+            lat: here.lat,
+            lng: here.lng,
+            label: here.label,
+          },
+          "gps",
+        );
+      } else if (!saved || !isInCanada(saved.lat, saved.lng)) {
+        setOrigin(WINNIPEG);
       }
       setLocated(true);
     });
