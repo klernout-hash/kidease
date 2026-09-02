@@ -1,32 +1,36 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-1062",
-  "mapped_count": 44,
+  "last_id_processed": "mb-1153",
+  "mapped_count": 46,
   "skipped_no_photo_this_run": [
-    "mb-1053",
-    "mb-1055",
-    "mb-1056",
-    "mb-1059",
-    "mb-1060",
-    "mb-1062"
-  ],
-  "next_queue": [
     "mb-1063",
     "mb-1064",
     "mb-1070",
-    "mb-1074",
     "mb-1140",
     "mb-1144",
     "mb-1145",
-    "mb-1147",
     "mb-1148",
     "mb-1153"
   ],
+  "next_queue": [
+    "mb-1002",
+    "mb-1003",
+    "mb-1005",
+    "mb-1007",
+    "mb-1008",
+    "mb-1010",
+    "mb-1012",
+    "mb-1013",
+    "mb-1017",
+    "mb-1018",
+    "mb-1020",
+    "mb-1022"
+  ],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 44,
+  "winnipeg_mapped": 46,
   "national_total": 20846,
-  "national_mapped": 44,
-  "updated": "2026-09-02T10:09:19Z",
-  "notes": "Added 4 official photos this run: YMCA-YWCA Winnipeg South Child Care (mb-1052) building from ywinnipeg.ca; Sugar N Spice Riverbend playground (mb-1054) from sugarnspicedaycare.ca; NorWest Early Learning classroom (mb-1057) from norwestcoop.ca; Univillage Preschool classroom (mb-1061) from univillagecentre.ca. Skipped Explorers, Sunny Mountain, Sunnyside, Transcona Jaycees, Universal Day Care, Victor Play — no usable official photo found. JPEGs in public/photos/buildings/."
+  "national_mapped": 46,
+  "updated": "2026-09-02T11:09:06Z",
+  "notes": "Added 2 official photos this run: U.W.S.A. Day Care Centre (mb-1074) classroom/program photo from Uniter coverage of the UWSA Day Care expansion; Wild Strawberry Children's Centre (mb-1147) classroom art activity from the centre's official gallery. Skipped Wild Honey, Munroe ECEC Chalmers, Little Bo-Peep, Rainbow Phase 1, Downtown Y Creative Play (only Google-sourced facade on Y site), St. Boniface Children's Place, Dante Day Nursery, Lovin N Learnin — no usable official photo. JPEGs in public/photos/buildings/ and artifacts/photo-archive/."
 }

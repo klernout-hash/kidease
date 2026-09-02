@@ -34,5 +34,24 @@
     "source_image": "https://static.wixstatic.com/media/8cf122_cdca003d62f349faad6494d8409477cb~mv2.jpg",
     "kind": "classroom interior",
     "file": "/photos/buildings/mb-1061.jpg"
+  },
+  "mb-1074": {
+    "id": "mb-1074",
+    "name": "U.W.S.A. Day Care Centre",
+    "address": "548 Furby Place, Winnipeg, MB",
+    "source_page": "https://uniter.ca/view/day-care-can-ease-the-student-parent-experience",
+    "source_image": "https://uniter.ca/images/made/images/articles/_resized/daycareheader_1100_594_90.jpg",
+    "kind": "classroom interior with children in program at expanded UWSA Day Care",
+    "file": "/photos/buildings/mb-1074.jpg",
+    "note": "Press photo captioned as UWSA Day Care play area; photographer Keeley Braunstein-Black. Operator is UWSA (theuwsa.ca/daycare)."
+  },
+  "mb-1147": {
+    "id": "mb-1147",
+    "name": "Wild Strawberry Children's Centre",
+    "address": "659  Alverstone Street, Winnipeg, MB",
+    "source_page": "https://wildstrawberrychildrenscentre.net/gallery/",
+    "source_image": "https://wildstrawberrychildrenscentre.net/wp-content/uploads/2024/04/20191030_101332-edited-1.jpg",
+    "kind": "classroom interior kids in art program",
+    "file": "/photos/buildings/mb-1147.jpg"
   }
 }
