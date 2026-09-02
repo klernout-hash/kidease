@@ -34,7 +34,11 @@ export function ListingBadges({
     <div className="flex flex-wrap gap-1.5">
       {item.priority ? <PriorityPill /> : null}
       <span className={pill}>{t("licensed")}</span>
-      <span className={cn(pill, "bg-primary text-primary-fg")}>{t(feeBadgeKey(item.province))}</span>
+      {item.live ? (
+        <span className={cn(pill, "bg-primary text-primary-fg")}>{t(feeBadgeKey(item.province))}</span>
+      ) : (
+        <span className={cn(pill, "text-muted")}>{t("badgeTenAsk")}</span>
+      )}
       <span className={pill}>{t("badgeSubsidy")}</span>
       {live ? (
         <span className={cn(pill, "bg-ok text-primary-fg")}>{t("live")}</span>
