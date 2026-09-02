@@ -1,14 +1,14 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-1016",
-  "mapped_count": 32,
-  "skipped_no_photo_this_run": ["mb-1002", "mb-1003", "mb-1008", "mb-1010", "mb-1012", "mb-1013", "mb-1017", "mb-1018", "mb-1020", "mb-1022", "mb-1023", "mb-1024"],
-  "next_queue": ["mb-1026", "mb-1027", "mb-1028", "mb-1030", "mb-1031", "mb-1032", "mb-1033", "mb-1034", "mb-1035", "mb-1036"],
+  "last_id_processed": "mb-1033",
+  "mapped_count": 37,
+  "skipped_no_photo_this_run": ["mb-1026", "mb-1029", "mb-1031", "mb-1034", "mb-1035", "mb-1036"],
+  "next_queue": ["mb-1038", "mb-1039", "mb-1040", "mb-1042", "mb-1043", "mb-1045", "mb-1046", "mb-1048", "mb-1050", "mb-1051"],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 32,
+  "winnipeg_mapped": 37,
   "national_total": 20846,
-  "national_mapped": 32,
-  "updated": "2026-09-01T21:05:00Z",
-  "notes": "Added 3 official photos: Fort Garry Child Care Co-op children lined up (mb-1009) from fortgarrychildcare.ca; Horizons Children's Centre (mb-1014) from horizonschildrenscentre.com; Epiphany Children's Centre kids group (mb-1016) from epiphanychildrenscentre.ca. Skipped several with no clear usable official photos found this pass (including Day Nursery Kennedy/Gretta which share org site already used for Crossways)."
+  "national_mapped": 37,
+  "updated": "2026-09-02T08:06:41Z",
+  "notes": "Added 5 official photos this run: Kings Park Child Care (mb-1027) child with camera from kingsparkchildcare.org; Knox Day Nursery (mb-1028) classroom kids from knoxdaynursery.com; Little Voyageurs Site 1 (mb-1030) from littlevoyageurs.ca; Lord Roberts Preschool (mb-1032) from lordroberts.org; Machray Day Nursery (mb-1033) from machraydaynursery.com. Skipped Kidi-Garden, Learning Tree, Little People's, Maples, Anne Ross (no clear usable official photos found)."
 }
