@@ -141,6 +141,19 @@ test("auto-reply is skipped when admin notify failed", async () => {
   assert.equal(autoReplies, 0);
 });
 
+test("auto-reply is invoked before the submit handler returns (same request, not scheduled)", async () => {
+  const order = [];
+  const done = afterPublicAdminNotify({
+    adminStatus: "sent",
+    sendAutoReply: async () => {
+      order.push("auto-reply");
+    },
+  });
+  const ok = await done;
+  assert.deepEqual(order, ["auto-reply"]);
+  assert.deepEqual(ok, { ok: true });
+});
+
 test("auto-reply is skipped when admin notify was only logged locally", async () => {
   let autoReplies = 0;
   const ok = await afterPublicAdminNotify({

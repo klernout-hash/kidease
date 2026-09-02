@@ -383,6 +383,7 @@ function visitorAutoReplyCopy() {
   return { title: VISITOR_AUTO_REPLY_SUBJECT, text: VISITOR_AUTO_REPLY_TEXT, html };
 }
 
+/** Immediate second provider send in this request. Not scheduled. */
 async function sendVisitorAutoReply(to: string) {
   const { title, text, html } = visitorAutoReplyCopy();
   await deliverEmail(title, text, html, { to, replyTo: ADMIN_EMAIL });

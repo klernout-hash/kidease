@@ -23,14 +23,18 @@ export const VISITOR_AUTO_REPLY_SUBJECT = "We got your message — KidEase";
 export const VISITOR_AUTO_REPLY_TEXT =
   "Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.\n\nThank you";
 
-/** Auto-reply only after Resend/SendGrid accepted the admin notify — never after a failed admin send. */
+/**
+ * Auto-reply only after Resend/SendGrid accepted the admin notify — never after a failed admin send.
+ * "within 24 hours" is email copy only. This is not a wait, cron, queue, or delayed job.
+ */
 export function shouldSendVisitorAutoReply(adminStatus: string): boolean {
   return adminStatus === "sent";
 }
 
 /**
- * Confirm the admin notify, then optionally auto-reply. Auto-reply failures are logged
- * and must not fail the public submit — the parent already reached KidEase.
+ * Same request as the admin notify: if that send succeeded, immediately email the visitor.
+ * Auto-reply failures are logged and must not fail the public submit — the parent already reached KidEase.
+ * Do not schedule this for later.
  */
 export async function afterPublicAdminNotify(args: {
   adminStatus: string;
