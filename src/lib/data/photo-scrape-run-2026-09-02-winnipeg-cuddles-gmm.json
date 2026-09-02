@@ -1,0 +1,9 @@
+{
+  "run": "2026-09-02-winnipeg-cuddles-gmm",
+  "city": "Winnipeg",
+  "province": "MB",
+  "added": ["mb-3012", "mb-102704"],
+  "files_written_or_backfilled": ["mb-3012", "mb-102704", "mb-1043", "mb-1014"],
+  "skipped": ["mb-3003", "mb-1172", "mb-3109", "mb-1148", "mb-100900", "mb-100689", "mb-101488", "mb-9320", "mb-1144", "mb-100414", "mb-100630", "mb-102175", "mb-9529", "mb-2131"],
+  "notes": "Official-site photos only. Earl Grey outdoor program photo from earlgreychildrenscentre.ca. Guiding Minds classroom photo from guidingmindsmontessori.com. Discovery exterior and Horizons program photo JPEGs backfilled locally. No Street View, maps, stock, or generated images used."
+}
