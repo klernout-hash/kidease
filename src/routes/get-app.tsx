@@ -16,7 +16,12 @@ import {
 import { STORE } from "@/lib/store-listing";
 import { useCopy } from "@/lib/use-copy";
 
-export const Route = createFileRoute("/get-app")({ component: GetApp });
+export const Route = createFileRoute("/get-app")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    dev: s.dev === "1" || s.dev === 1 || s.dev === true ? ("1" as const) : undefined,
+  }),
+  component: GetApp,
+});
 
 const SHOTS: { key: string; device: "iphone" | "android"; caption: string; screen: ReactNode }[] = [
   { key: "home", device: "iphone", caption: "Home \u00b7 iPhone", screen: <ShotHome /> },
@@ -27,6 +32,8 @@ const SHOTS: { key: string; device: "iphone" | "android"; caption: string; scree
 
 function GetApp() {
   const { t, locale } = useCopy();
+  const { dev } = Route.useSearch();
+  const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [ios, setIos] = useState(false);
@@ -50,6 +57,8 @@ function GetApp() {
     locale === "fr"
       ? "KidEase sur iPhone et Android \u2014 accueil, recherche, une fiche, et connexion."
       : "KidEase on iPhone and Android \u2014 home, search, a listing, and sign in.";
+  const coming =
+    locale === "fr" ? "Bient\u00f4t dans l\u2019App Store et sur Google Play." : "Coming soon on the App Store and Google Play.";
 
   return (
     <Shell>
@@ -82,12 +91,10 @@ function GetApp() {
               )}
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
-              <StoreBadge store="apple" label={t("appStore")} />
-              <StoreBadge store="play" label={t("googlePlay")} />
+              <StoreBadge store="apple" label={locale === "fr" ? "App Store \u00b7 Bient\u00f4t" : "App Store \u00b7 Coming soon"} />
+              <StoreBadge store="play" label={locale === "fr" ? "Google Play \u00b7 Bient\u00f4t" : "Google Play \u00b7 Coming soon"} />
             </div>
-            <p className="mt-3 text-xs text-subtle">
-              {STORE.ageRating} \u00b7 {STORE.price} \u00b7 {STORE.category} \u00b7 v{STORE.version}
-            </p>
+            <p className="mt-3 max-w-md text-xs text-subtle">{coming}</p>
           </div>
           <DeviceFrame device="iphone">
             <ShotSearch />
@@ -95,42 +102,38 @@ function GetApp() {
         </section>
 
         {mac ? (
-          <section className="mt-10 grid gap-4 rounded-xl bg-surface p-6 ring-1 ring-border md:grid-cols-2 md:p-8">
-            <div>
-              <span className="grid size-10 place-items-center rounded-md bg-bg ring-1 ring-border">
-                <Laptop className="size-5" strokeWidth={1.6} />
-              </span>
-              <h2 className="mt-3 font-display text-2xl">{t("addToDock")}</h2>
-              <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted">
-                <li>{locale === "fr" ? "Ouvrez cette page dans Safari." : "Open this page in Safari."}</li>
-                <li>{locale === "fr" ? "Menu Fichier \u2192 Ajouter au Dock." : "File menu \u2192 Add to Dock."}</li>
-                <li>{locale === "fr" ? "Lancez KidEase depuis le Dock, en plein \u00e9cran." : "Launch KidEase from the Dock, full screen."}</li>
-              </ol>
-            </div>
-            <div>
-              <span className="grid size-10 place-items-center rounded-md bg-bg ring-1 ring-border">
-                <Download className="size-5" strokeWidth={1.6} />
-              </span>
-              <h2 className="mt-3 font-display text-2xl">{t("xcodeTitle")}</h2>
-              <p className="mt-3 text-sm text-muted">{t("xcodeBody")}</p>
-              <Button asChild className="mt-5">
-                <a href="/store/KidEase-iOS.zip" download>
-                  <Download className="size-4" />
-                  {t("downloadXcode")}
-                </a>
-              </Button>
-            </div>
+          <section className="mt-10 rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
+            <span className="grid size-10 place-items-center rounded-md bg-bg ring-1 ring-border">
+              <Laptop className="size-5" strokeWidth={1.6} />
+            </span>
+            <h2 className="mt-3 font-display text-2xl">{t("addToDock")}</h2>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted">
+              <li>{locale === "fr" ? "Ouvrez cette page dans Safari." : "Open this page in Safari."}</li>
+              <li>{locale === "fr" ? "Menu Fichier \u2192 Ajouter au Dock." : "File menu \u2192 Add to Dock."}</li>
+              <li>{locale === "fr" ? "Lancez KidEase depuis le Dock, en plein \u00e9cran." : "Launch KidEase from the Dock, full screen."}</li>
+            </ol>
           </section>
-        ) : (
-          <div className="mt-8">
-            <Button asChild variant="secondary">
+        ) : null}
+
+        {showDev ? (
+          <section className="mt-10 rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
+            <span className="grid size-10 place-items-center rounded-md bg-bg ring-1 ring-border">
+              <Download className="size-5" strokeWidth={1.6} />
+            </span>
+            <h2 className="mt-3 font-display text-2xl">{t("xcodeTitle")}</h2>
+            <p className="mt-3 text-sm text-muted">{t("xcodeBody")}</p>
+            <Button asChild className="mt-5">
               <a href="/store/KidEase-iOS.zip" download>
                 <Download className="size-4" />
                 {t("downloadXcode")}
               </a>
             </Button>
-          </div>
-        )}
+            <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
+              <Meta k="Bundle ID" v={STORE.bundleId} />
+              <Meta k="Version" v={`${STORE.version} (${STORE.build})`} />
+            </dl>
+          </section>
+        ) : null}
 
         <section className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Feat icon={MapPinned} title={t("featGps")} body={t("featGpsBody")} />
@@ -154,16 +157,21 @@ function GetApp() {
 
         <section id="store-ready" className="mt-14 rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
           <h2 className="font-display text-2xl">{t("storeReady")}</h2>
+          <p className="mt-3 max-w-2xl text-sm text-muted">{coming}</p>
           <p className="mt-3 max-w-2xl text-sm text-muted">{t("storeReadyBody")}</p>
-          <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-            <Meta k="Bundle ID" v={STORE.bundleId} />
-            <Meta k="Version" v={`${STORE.version} (${STORE.build})`} />
-            <Meta k={locale === "fr" ? "Cat\u00e9gorie" : "Category"} v={`${STORE.category} / ${STORE.secondaryCategory}`} />
-            <Meta k={locale === "fr" ? "Classification" : "Age rating"} v={STORE.ageRating} />
-          </dl>
-          <pre className="mt-6 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-bg p-4 text-xs text-muted">
-            {desc.split("\n").slice(0, 8).join("\n")}
-          </pre>
+          {showDev ? (
+            <>
+              <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
+                <Meta k="Bundle ID" v={STORE.bundleId} />
+                <Meta k="Version" v={`${STORE.version} (${STORE.build})`} />
+                <Meta k={locale === "fr" ? "Cat\u00e9gorie" : "Category"} v={`${STORE.category} / ${STORE.secondaryCategory}`} />
+                <Meta k={locale === "fr" ? "Classification" : "Age rating"} v={STORE.ageRating} />
+              </dl>
+              <pre className="mt-6 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-bg p-4 text-xs text-muted">
+                {desc.split("\n").slice(0, 8).join("\n")}
+              </pre>
+            </>
+          ) : null}
           <div className="mt-6 flex flex-wrap gap-4 text-sm">
             <Link to="/privacy" className="underline-offset-4 hover:underline">
               {t("privacy")}
@@ -304,7 +312,7 @@ function DeviceFrame({ device, children }: { device: "iphone" | "android"; child
 
 function StoreBadge({ store, label }: { store: "apple" | "play"; label: string }) {
   return (
-    <span className="inline-flex h-11 items-center gap-2 rounded-md bg-fg px-3 text-sm text-bg">
+    <span className="inline-flex h-11 items-center gap-2 rounded-md bg-fg/90 px-3 text-sm text-bg" aria-disabled="true">
       {store === "apple" ? (
         <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
           <path
