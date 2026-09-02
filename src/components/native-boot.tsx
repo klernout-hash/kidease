@@ -45,14 +45,6 @@ export function NativeBoot() {
   }, []);
 
   useEffect(() => {
-    const id = window.setTimeout(() => {
-      void import("leaflet");
-      void import("leaflet/dist/leaflet.css");
-    }, 400);
-    return () => window.clearTimeout(id);
-  }, []);
-
-  useEffect(() => {
     paintRuntime();
     const root = document.documentElement;
     if (isStandalone()) root.classList.add("standalone");
