@@ -5,7 +5,7 @@ import type { DaycareCard as Card } from "@/lib/types";
 import { BuildingPhoto } from "@/components/building-photo";
 import { GoogleRating } from "@/components/google-rating";
 import { useCopy } from "@/lib/use-copy";
-import { cn, decodeHtml, formatAgeRange, money } from "@/lib/utils";
+import { cn, displayCentreName, formatAgeRange, money } from "@/lib/utils";
 import { distanceKm as kmBetween, proximityBand } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
@@ -28,7 +28,7 @@ export function DaycareCard({
   eager?: boolean;
 }) {
   const { t, locale } = useCopy();
-  const name = decodeHtml(locale === "fr" ? item.nameFr : item.name);
+  const name = displayCentreName(locale === "fr" ? item.nameFr : item.name);
   const building = listingThumb(item.photos);
   const live = Boolean(item.live);
   const known = Boolean(item.availabilityKnown || live);
@@ -73,7 +73,6 @@ export function DaycareCard({
 
   return (
     <>
-      {/* Phone-width web + Capacitor native */}
       <article className="ke-card relative hidden w-full [[data-channel=app]_&]:block">
         <Link to="/daycare/$slug" params={{ slug: item.slug }} className="group block">
           <div
@@ -81,7 +80,7 @@ export function DaycareCard({
             style={{ animationDelay: `${(item.id.charCodeAt(item.id.length - 1) % 9) * 0.12}s` }}
           >
             <div className="ke-card-photo relative overflow-hidden rounded-[0.9rem] bg-surface-2">
-              <BuildingPhoto src={building} eager={eager} className="size-full object-cover object-center" />
+              <BuildingPhoto src={building} eager={eager} alt={`Storefront of ${name}`} className="size-full object-cover object-center" />
               <div className="absolute inset-x-2 top-2 z-[1] flex flex-nowrap items-center gap-1 overflow-hidden">{badges}</div>
             </div>
           </div>
@@ -140,14 +139,13 @@ export function DaycareCard({
             e.preventDefault();
             toggleCompare(item.id);
           }}
-          className="absolute -right-0.5 -top-0.5 z-20 grid size-7 place-items-center rounded-full bg-surface/95 text-fg shadow-card ring-1 ring-border"
+          className="absolute -right-0.5 -top-0.5 z-20 grid size-11 place-items-center rounded-full bg-surface/95 text-fg shadow-card ring-1 ring-border"
           aria-label={t("compare")}
         >
           <Heart className={cn("size-3.5", picked ? "fill-primary text-primary" : "")} strokeWidth={1.75} />
         </button>
       </article>
 
-      {/* Laptop / wide web storefront */}
       <article
         className={cn(
           "relative overflow-hidden rounded-xl bg-surface shadow-card transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lift [[data-channel=app]_&]:hidden",
@@ -156,7 +154,7 @@ export function DaycareCard({
       >
         <Link to="/daycare/$slug" params={{ slug: item.slug }} className="group block">
           <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
-            <BuildingPhoto src={building} eager={eager} className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+            <BuildingPhoto src={building} eager={eager} alt={`Storefront of ${name}`} className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
             <div className="absolute left-3 top-3 flex flex-nowrap items-center gap-1.5 overflow-hidden">{badges}</div>
           </div>
           <div className="space-y-1.5 p-3.5 pb-3">
@@ -188,7 +186,7 @@ export function DaycareCard({
                   <span className="text-muted">{t("month")}</span>
                 </span>
               ) : (
-                <span className="text-xs font-medium text-muted">{t("feeUnknown")}</span>
+                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted">{t("feeUnknown")}</span>
               )}
             </div>
             {item.inCatchment ? (
@@ -203,12 +201,12 @@ export function DaycareCard({
             ) : null}
           </div>
         </Link>
-        <div className="flex items-center justify-between gap-3 border-t border-border px-3.5 py-2.5">
-          <Link to="/daycare/$slug" params={{ slug: item.slug }} className="font-sans text-sm font-medium text-primary">
+        <div className="flex min-h-12 items-center justify-between gap-2 border-t border-border px-3.5 py-2.5">
+          <Link to="/daycare/$slug" params={{ slug: item.slug }} className="inline-flex min-h-11 items-center font-sans text-sm font-medium text-primary">
             {cta === "details" ? t("viewDetails") : live ? t("book") : t("viewDetails")}
           </Link>
-          <ListingContact name={name} slug={item.slug} city={item.city} />
-          <a href={licenceHref} target="_blank" rel="noreferrer" className="font-sans text-sm font-medium text-primary">
+          <ListingContact name={name} slug={item.slug} city={item.city} className="inline-flex min-h-11 items-center" />
+          <a href={licenceHref} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center font-sans text-sm font-medium text-primary">
             {t("viewLicenceShort")}
           </a>
         </div>
@@ -219,7 +217,7 @@ export function DaycareCard({
             toggleCompare(item.id);
           }}
           className={cn(
-            "absolute right-3 top-3 rounded-full px-2 py-0.5 text-[11px] font-medium shadow-card ring-1",
+            "absolute right-3 top-3 min-h-11 rounded-full px-3 text-[11px] font-medium shadow-card ring-1",
             picked ? "bg-fg text-bg ring-fg" : "bg-surface/95 text-fg ring-border",
           )}
         >
