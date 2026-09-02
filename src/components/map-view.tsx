@@ -255,7 +255,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
                 map.fitBounds(box, MAP_PAD);
               } else {
                 map.setZoom(Math.min(zoom + 2, 16));
-                map.panTo({ lat: node.lat, lng.lng });
+                map.panTo({ lat: node.lat, lng: node.lng });
               }
             },
           });
