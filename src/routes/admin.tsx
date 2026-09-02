@@ -7,11 +7,13 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
+import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
+import { AdminContractsPanel } from "@/components/admin-contracts";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 
-type AdminDesk = "queue" | "daycares" | "money" | "activity";
+type AdminDesk = "queue" | "daycares" | "contracts" | "money" | "activity";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -41,6 +43,9 @@ function AdminPage() {
   const [tab, setTab] = useState<AdminDesk>("queue");
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listPlatformEvents>>>([]);
   const [centres, setCentres] = useState<AdminCentreRow[]>([]);
+  const [contracts, setContracts] = useState<AdminContractRow[]>([]);
+  const [contractMode, setContractMode] = useState<"live" | "demo">("demo");
+  const [contractBusy, setContractBusy] = useState<string | null>(null);
   const [ledger, setLedger] = useState<AdminMoneyLedger>({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 });
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState("");
@@ -50,14 +55,17 @@ function AdminPage() {
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
 
   async function refresh() {
-    const [events, list, cash] = await Promise.all([
+    const [events, list, cash, envelopes] = await Promise.all([
       listPlatformEvents().catch(() => []),
       listAdminCentres().catch(() => []),
       listAdminMoney().catch(() => ({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 })),
+      listAdminContracts().catch(() => ({ mode: "demo" as const, rows: [] })),
     ]);
     setRows(events);
     setCentres(list);
     setLedger(cash);
+    setContracts(envelopes.rows);
+    setContractMode(envelopes.mode);
   }
 
   useEffect(() => {
@@ -228,6 +236,8 @@ function AdminPage() {
             </section>
           )}
         </>
+      ) : tab === "contracts" ? (
+        <AdminContractsPanel rows={contracts} mode={contractMode} busy={contractBusy} setBusy={setContractBusy} onRefresh={refresh} />
       ) : tab === "money" ? (
         <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} />
       ) : (
