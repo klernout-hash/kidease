@@ -92,8 +92,6 @@ function slimCard(card: DaycareCard): DaycareCard {
     descriptionFr: "",
     address: "",
     phone: null,
-    hours: "",
-    hoursFr: "",
     photos: [listingThumb(card.photos)],
   };
 }
@@ -159,7 +157,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
       if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
       return compareProximity(a, b);
     });
-    return cards.slice(0, 4000).map(slimCard);
+    return cards.map(slimCard);
   });
 
 export const featuredDaycares = createServerFn({ method: "POST" })

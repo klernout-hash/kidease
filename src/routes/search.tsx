@@ -324,7 +324,7 @@ function SearchPage() {
         <ExploreSheet
           snap={snap}
           onSnap={setSnap}
-          label={`${list.length} · ${radiusKm} ${t("km")}`}
+          label={`${list.length} centres · ${radiusKm} ${t("km")}`}
         >
           {items === null ? (
             <div className="ke-listings-narrow">

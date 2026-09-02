@@ -22,7 +22,9 @@ export function NativeBoot() {
     try {
       const saved = window.localStorage.getItem("kidease-locale");
       if (saved && LANGUAGES.some((l) => l.code === saved)) setLocale(saved as Locale);
-      if (window.localStorage.getItem("kidease-live-only") === "0") setLiveOnly(false);
+      const livePref = window.localStorage.getItem("kidease-live-only");
+      if (livePref === "1") setLiveOnly(true);
+      else if (livePref === "0") setLiveOnly(false);
     } catch {
       /* ignore */
     }

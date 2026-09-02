@@ -25,7 +25,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["search", "near me", "location", "map", "km", "radius", "find"],
     lines: [
-      "Tap Search Daycares Near Me or Explore. We use your location (or a city/postal code) and sort by distance. You can change the kilometre radius in filters.",
+      "Tap Search Daycares Near Me or Explore. We use your location (or a city/postal code) and list every licensed centre inside the kilometre radius you set in Filters (1–100 km). The map and the count match that circle.",
       "KidEase is proximity-first: listings show km from you, not just a city name. On a phone the map is first; drag the sheet up for the list.",
       "If location is blocked, type a city or postal code. Results are licensed centres only.",
     ],
