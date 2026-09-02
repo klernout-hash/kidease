@@ -1,5 +1,4 @@
 import { nextMonths } from "./utils";
-import { catalogGoogleRating } from "./google-reviews";
 import realStorefrontsJson from "./data/real-storefronts.json";
 import wpgStorefrontsJson from "./data/storefronts.json";
 
@@ -100,23 +99,15 @@ function listingPhotos(raw: RawCentre): string[] {
   return [storefront, ...logos];
 }
 
-/** Starting monthly parent fee shown on every listing. */
-export const FROM_MONTHLY = 299;
-
-const HOURS = "7:30 a.m. – 5:30 p.m., Monday to Friday";
-const HOURS_FR = "7 h 30 – 17 h 30, du lundi au vendredi";
-
 function inferAges(raw: RawCentre) {
   if (
     typeof raw.ageMinMonths === "number" &&
     typeof raw.ageMaxMonths === "number" &&
     raw.ageMaxMonths > raw.ageMinMonths
   ) {
-    return { min: raw.ageMinMonths, max: raw.ageMaxMonths };
+    return { min: raw.ageMinMonths, max: raw.ageMaxMonths, known: true };
   }
-  const am = (raw.amenities || "").toLowerCase();
-  if (am.includes("infant-room") || am.includes("nursery")) return { min: 3, max: 24 };
-  return { min: 12, max: 60 };
+  return { min: 0, max: 0, known: false };
 }
 
 function hydrate(raw: RawCentre, index: number): CatalogDaycare {
@@ -139,7 +130,6 @@ function hydrate(raw: RawCentre, index: number): CatalogDaycare {
   const descFr =
     raw.descriptionFr ||
     `${nameFr} est un centre de garde permis${address ? ` au ${address}` : ""}${city ? `, ${city}` : ""} ${postal} (${province}). Heures et places selon le registre provincial.`.trim();
-  const google = catalogGoogleRating(raw.id);
   const ages = inferAges(raw);
   return {
     id: raw.id,
@@ -157,8 +147,8 @@ function hydrate(raw: RawCentre, index: number): CatalogDaycare {
     lat: Number(raw.lat),
     lng: Number(raw.lng),
     phone: raw.phone ?? "",
-    hours: raw.hours || HOURS,
-    hoursFr: raw.hoursFr || HOURS_FR,
+    hours: raw.hours || "",
+    hoursFr: raw.hoursFr || "",
     ageMinMonths: ages.min,
     ageMaxMonths: ages.max,
     infantMonthly: null,
@@ -169,8 +159,8 @@ function hydrate(raw: RawCentre, index: number): CatalogDaycare {
     spotsToddler: 0,
     spotsPreschool: 0,
     waitlist: 0,
-    ratingX10: raw.ratingX10 ?? google?.ratingX10 ?? 0,
-    reviewCount: google?.reviewCount ?? raw.reviews?.length ?? 0,
+    ratingX10: raw.googlePlaceId ? raw.ratingX10 ?? 0 : 0,
+    reviewCount: raw.googlePlaceId ? (raw.reviews?.length ?? 0) : 0,
     licenseNumber: raw.licenseNumber || raw.id,
     languages: raw.languages || (province === "QC" ? "fr" : "en"),
     amenities,
