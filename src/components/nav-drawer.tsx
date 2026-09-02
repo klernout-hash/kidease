@@ -119,11 +119,18 @@ export function NavDrawer({
           {signedIn ? (
             <>
               <Link
-                to="/account"
+                to="/parent"
                 onClick={onClose}
                 className="flex min-h-12 items-center rounded-xl bg-primary px-3 text-base font-medium text-primary-fg"
               >
                 {accountLabel}
+              </Link>
+              <Link
+                to="/provider"
+                onClick={onClose}
+                className="mt-2 flex min-h-12 items-center rounded-xl px-3 text-base text-fg ring-1 ring-border"
+              >
+                Provider desk
               </Link>
               <button
                 type="button"
@@ -139,7 +146,7 @@ export function NavDrawer({
           ) : (
             <Link
               to="/login"
-              search={{ role: "parent", intent: "in", next: "/search" }}
+              search={{ role: "parent", intent: "in", next: "/parent" }}
               onClick={onClose}
               className="flex min-h-12 items-center justify-center rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
             >

@@ -5,20 +5,24 @@ import { NativeBoot } from "@/components/native-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { Toaster } from "sonner";
 import { CHANNEL_BOOT_SCRIPT } from "@/lib/runtime";
+import { reportError } from "@/lib/observe";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
 const APP_ICON = "/app-icon?v=5";
 
 export const Route = createRootRoute({
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }) => {
+    reportError(error, { route: typeof window !== "undefined" ? window.location.pathname : "root" });
+    return (
     <div style={{ fontFamily: "Plus Jakarta Sans, Segoe UI, sans-serif", background: "#f6f3ee", color: "#1c2438", padding: 48, minHeight: "100vh" }}>
       <p style={{ fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase" }}>KidEase</p>
       <h1 style={{ fontSize: 28 }}>Something went wrong</h1>
       <p>Refresh the page, or go back to kidease.ca. If it keeps happening, email kyle@kidease.ca.</p>
       <p style={{ color: "#5c6578", fontSize: 13 }}>{error instanceof Error ? error.message : "Please try again."}</p>
     </div>
-  ),
+    );
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },

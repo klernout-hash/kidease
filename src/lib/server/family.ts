@@ -4,6 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { ensureSeed, upsertDaycare } from "./seed";
 import { lookupUser, notifyAccountCreated, notifyPlatform, notifyProviderJoined } from "./notify";
+import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
@@ -121,7 +122,10 @@ export const getFamily = createServerFn({ method: "GET" })
       select role from profiles where user_id = ${context.userId}
     `;
     return {
-      role: (profile[0]?.role ?? "parent") as "parent" | "provider",
+      role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as
+        | "parent"
+        | "provider"
+        | "admin",
       children: children.map(mapChild),
       saved: saved.map((r) => {
         const d = mapDaycare(r);
@@ -592,7 +596,7 @@ export const getThread = createServerFn({ method: "GET" })
       where c.id = ${conversationId}
         and (
           c.user_id = ${context.userId}
-          or exists (select 1 from profiles where user_id = ${context.userId} and role = 'provider')
+          or exists (select 1 from profiles where user_id = ${context.userId} and role in ('provider', 'admin'))
         )
       limit 1
     `;
@@ -741,7 +745,7 @@ export const sendMessage = createServerFn({ method: "POST" })
       where c.id = ${data.conversationId}
         and (
           c.user_id = ${context.userId}
-          or exists (select 1 from profiles where user_id = ${context.userId} and role = 'provider')
+          or exists (select 1 from profiles where user_id = ${context.userId} and role in ('provider', 'admin'))
         )
     `;
     if (!conv[0]) throw new Error("Conversation not found");
@@ -992,30 +996,28 @@ export const confirmInterac = createServerFn({ method: "POST" })
 export const getMyRole = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const sql = await getSql();
-    await ensureProfile(sql, context.userId);
-    const rows = await sql<{ role: string }>`
-      select role from profiles where user_id = ${context.userId}
-    `;
-    return { role: (rows[0]?.role === "provider" ? "provider" : "parent") as "parent" | "provider" };
+    const session = await resolveSessionDesks(context.userId);
+    return {
+      role: session.role,
+      desks: session.desks,
+      home: session.home,
+      unread: session.unread,
+      stripeLive: session.stripeLive,
+      ledgerLabel: session.ledgerLabel,
+    };
   });
 
 export const setRole = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((role: "parent" | "provider") => role)
   .handler(async ({ context, data: role }) => {
-    const sql = await getSql();
-    const prev = await sql<{ role: string }>`select role from profiles where user_id = ${context.userId}`;
-    if (!prev[0]) {
-      await sql`insert into profiles (user_id, role) values (${context.userId}, ${role})`;
-      await pingNewAccount(context.userId, role);
-    } else {
-      await sql`update profiles set role = ${role} where user_id = ${context.userId}`;
-      if (role === "provider" && prev[0].role !== "provider") {
-        await pingNewAccount(context.userId, "provider");
-      }
+    const written = await writeProfileRole(context.userId, role);
+    if (!written.previous) {
+      await pingNewAccount(context.userId, written.role === "admin" ? "parent" : written.role);
+    } else if (role === "provider" && written.previous !== "provider" && written.role === "provider") {
+      await pingNewAccount(context.userId, "provider");
     }
-    return { role };
+    return { role: written.role };
   });
 
 export const getProvider = createServerFn({ method: "GET" })
@@ -1171,7 +1173,7 @@ export const createListing = createServerFn({ method: "POST" })
       )
     `;
     await sql`insert into provider_daycares (user_id, daycare_id) values (${context.userId}, ${id})`;
-    await sql`update profiles set role = 'provider' where user_id = ${context.userId}`;
+    await writeProfileRole(context.userId, "provider");
     const actor = await lookupUser(context.userId);
     try {
       await notifyProviderJoined({

@@ -6,7 +6,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityPill } from "@/components/priority-pill";
-import { RedirectToSignIn } from "@/lib/auth/gates";
+import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole } from "@/lib/server/family";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
@@ -15,6 +15,7 @@ import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { CapacityForm, Field, PromotePanel } from "@/components/provider-listing-forms";
+import { ListingStatusBadge } from "@/components/listing-status-badge";
 
 type DaycareDesk = "requests" | "listings" | "licence" | "contract" | "promote";
 
@@ -63,6 +64,7 @@ function ProviderPage() {
   const later = requests.filter((r) => r.status !== "requested" && r.status !== "under_review");
 
   return (
+    <TwoFactorGate next="/provider">
     <DeskShell desk="daycare" active={desk} onSelect={(id) => setDesk(id as DaycareDesk)}>
       {desk === "requests" ? (
         <section className="space-y-8">
@@ -118,9 +120,12 @@ function ProviderPage() {
               <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <Link to="/daycare/$slug" params={{ slug: d.slug }} className="font-display text-2xl hover:underline">
-                      {locale === "fr" ? d.nameFr : d.name}
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link to="/daycare/$slug" params={{ slug: d.slug }} className="font-display text-2xl hover:underline">
+                        {locale === "fr" ? d.nameFr : d.name}
+                      </Link>
+                      <ListingStatusBadge claimStatus={d.claimStatus} live={d.live} />
+                    </div>
                     <p className="text-sm text-muted">
                       {d.address}, {d.city} · {d.licenseNumber}
                     </p>
@@ -206,6 +211,7 @@ function ProviderPage() {
         )
       ) : null}
     </DeskShell>
+    </TwoFactorGate>
   );
 }
 

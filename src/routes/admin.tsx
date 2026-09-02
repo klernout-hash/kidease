@@ -2,8 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
-import { RedirectToSignIn } from "@/lib/auth/gates";
+import { ListingStatusBadge, LedgerHonesty } from "@/components/listing-status-badge";
+import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useSessionDesks } from "@/components/desk-switcher";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
@@ -12,6 +14,7 @@ import { AdminContractsPanel } from "@/components/admin-contracts";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
+import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
 
 type AdminDesk = "queue" | "daycares" | "contracts" | "money" | "activity";
 
@@ -21,7 +24,7 @@ const PROV_ORDER = PROVINCES.map((p) => p.code);
 const PROV_NAME = Object.fromEntries(PROVINCES.map((p) => [p.code, p.name]));
 
 function isQueued(status: string) {
-  return status === "waiting" || status === "pending";
+  return isWaitingClaim(status);
 }
 
 function provCode(raw: string | null | undefined) {
@@ -31,15 +34,9 @@ function provCode(raw: string | null | undefined) {
   return hit?.code || (v || "—");
 }
 
-function statusLabel(c: AdminCentreRow) {
-  if (c.claimStatus === "approved" || c.live) return "Live";
-  if (c.claimStatus === "declined") return "Declined";
-  if (c.claimStatus === "pending") return "Submitted";
-  return "Waiting";
-}
-
 function AdminPage() {
   const { user, isPending } = useCurrentUserState();
+  const { session, ready } = useSessionDesks();
   const [tab, setTab] = useState<AdminDesk>("queue");
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listPlatformEvents>>>([]);
   const [centres, setCentres] = useState<AdminCentreRow[]>([]);
@@ -73,7 +70,7 @@ function AdminPage() {
     void refresh();
   }, [user]);
 
-  const admin = (user?.primaryEmail || "").trim().toLowerCase() === "kyle@kidease.ca";
+  const admin = Boolean(ready && session?.desks.includes("admin"));
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -115,9 +112,9 @@ function AdminPage() {
   }, [filtered]);
 
   const counts = useMemo(() => {
-    const waiting = centres.filter((c) => isQueued(c.claimStatus)).length;
-    const approved = centres.filter((c) => c.claimStatus === "approved" || c.live).length;
-    const declined = centres.filter((c) => c.claimStatus === "declined").length;
+    const waiting = centres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "waiting").length;
+    const approved = centres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "live").length;
+    const declined = centres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "declined").length;
     return { waiting, approved, declined, all: centres.length };
   }, [centres]);
 
@@ -155,18 +152,26 @@ function AdminPage() {
     );
   }
   if (!user) return <RedirectToSignIn />;
+  if (!ready) {
+    return (
+      <Shell>
+        <p className="p-8 text-muted">Loading…</p>
+      </Shell>
+    );
+  }
   if (!admin) {
     return (
       <Shell>
         <main className="mx-auto max-w-lg px-4 py-16 text-center">
           <h1 className="font-display text-3xl">Not found</h1>
-          <p className="mt-3 text-muted">This page is only for the KidEase operator.</p>
+          <p className="mt-3 text-muted">This page is only for KidEase staff with profiles.role = admin.</p>
         </main>
       </Shell>
     );
   }
 
   return (
+    <TwoFactorGate next="/admin">
     <DeskShell desk="admin" active={tab} onSelect={(id) => setTab(id as AdminDesk)}>
       {tab === "queue" || tab === "daycares" ? (
         <>
@@ -239,7 +244,7 @@ function AdminPage() {
       ) : tab === "contracts" ? (
         <AdminContractsPanel rows={contracts} mode={contractMode} busy={contractBusy} setBusy={setContractBusy} onRefresh={refresh} />
       ) : tab === "money" ? (
-        <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} />
+        <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} />
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
           {rows.length === 0 ? (
@@ -272,6 +277,7 @@ function AdminPage() {
         </ul>
       )}
     </DeskShell>
+    </TwoFactorGate>
   );
 }
 
@@ -282,6 +288,7 @@ function MoneyPanel({
   setQ,
   dir,
   setDir,
+  stripeLive,
 }: {
   ledger: AdminMoneyLedger;
   rows: AdminMoneyRow[];
@@ -289,9 +296,14 @@ function MoneyPanel({
   setQ: (v: string) => void;
   dir: "all" | "in" | "out";
   setDir: (v: "all" | "in" | "out") => void;
+  stripeLive: boolean;
 }) {
   return (
     <>
+      <div className="mb-4">
+        <h2 className="font-display text-2xl">Money</h2>
+        <LedgerHonesty stripeLive={stripeLive} className="mt-1" />
+      </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <CashStat label="In (paid)" value={ledger.inPaid} />
         <CashStat label="In (pending)" value={ledger.inPending} />
@@ -374,16 +386,14 @@ function CentreRow({
   invert?: boolean;
 }) {
   const muted = invert ? "text-primary-fg/70" : "text-muted";
-  const label = statusLabel(c);
+  const status = listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt });
   return (
     <li className="px-5 py-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium">{c.name}</p>
-            <span className={invert ? "rounded-full bg-white/15 px-2 py-0.5 text-[11px] uppercase tracking-wide" : label === "Live" ? "rounded-full bg-primary/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-primary" : label === "Declined" ? "rounded-full bg-danger/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-danger" : "rounded-full bg-surface-2 px-2 py-0.5 text-[11px] uppercase tracking-wide text-muted"}>
-              {label}
-            </span>
+            <ListingStatusBadge claimStatus={c.claimStatus} live={c.live} claimedAt={c.claimedAt} invert={invert} />
           </div>
           <p className={`mt-1 text-sm ${muted}`}>
             {[c.city, c.province].filter(Boolean).join(", ")}
@@ -394,13 +404,13 @@ function CentreRow({
           </p>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button size="sm" variant={c.claimStatus === "approved" || c.live ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
+          <Button size="sm" variant={status === "live" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
             Approve
           </Button>
-          <Button size="sm" variant={isQueued(c.claimStatus) ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "waiting")}>
+          <Button size="sm" variant={status === "waiting" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "waiting")}>
             Waiting
           </Button>
-          <Button size="sm" variant={c.claimStatus === "declined" ? "danger" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "decline")}>
+          <Button size="sm" variant={status === "declined" ? "danger" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "decline")}>
             Decline
           </Button>
         </div>

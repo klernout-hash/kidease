@@ -18,6 +18,7 @@ import { rememberViewed } from "@/lib/recent";
 import { trackLocation } from "@/lib/telemetry";
 import { useAppStore } from "@/lib/store";
 import { ListingBadges } from "@/components/listing-badges";
+import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { CompareBar } from "@/components/compare-bar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
@@ -213,7 +214,10 @@ function Listing() {
                 </p>
                 <h1 className="mt-1 font-display text-3xl md:text-4xl">{name}</h1>
                 <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
-                <div className="mt-3">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
+                    <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
+                  ) : null}
                   <ListingBadges item={d} />
                 </div>
                 <p className="mt-3 text-sm text-muted">{t("licensedCentreLine")}</p>

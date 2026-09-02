@@ -1,7 +1,9 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
+import { reportError } from "@/lib/observe";
 
 export function AppErrorComponent({ error }: ErrorComponentProps) {
+  reportError(error, { route: typeof window !== "undefined" ? window.location.pathname : "app" });
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-bg px-6 text-center text-fg">
       <span className="text-danger" aria-hidden="true">

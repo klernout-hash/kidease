@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { ADMIN_EMAIL, lookupUser, notifyPlatform } from "@/lib/server/notify";
+import { lookupUser, notifyPlatform } from "@/lib/server/notify";
+import { requireAdmin, resolveAdminAccess } from "@/lib/server/roles";
 import { CENTRE_AGREEMENT_TITLE, centreAgreementBody } from "@/lib/contracts";
 import { nid } from "@/lib/utils";
 import {
@@ -51,16 +52,13 @@ export type ProviderContractRow = {
   body: string;
 };
 
-function operatorEmails() {
-  const extra = (process.env.ADMIN_EMAIL || ADMIN_EMAIL || "kyle@kidease.ca").trim().toLowerCase();
-  return new Set(["kyle@kidease.ca", extra].filter(Boolean));
+async function requireOperator(userId: string) {
+  return requireAdmin(userId);
 }
 
-async function requireOperator(userId: string) {
-  const actor = await lookupUser(userId);
-  const email = (actor.email || "").trim().toLowerCase();
-  if (!operatorEmails().has(email)) throw new Error("Not authorized");
-  return actor;
+async function isOperator(userId: string) {
+  const access = await resolveAdminAccess(userId);
+  return access.ok;
 }
 
 function validEmail(value: string) {
@@ -356,7 +354,7 @@ export const getSignContract = createServerFn({ method: "GET" })
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
     const actor = await lookupUser(context.userId);
-    const admin = operatorEmails().has((actor.email || "").trim().toLowerCase());
+    const admin = await isOperator(context.userId);
     const sql = await getSql();
     const rows = await sql<{
       id: string;
@@ -419,7 +417,7 @@ export const signCentreContract = createServerFn({ method: "POST" })
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
     const actor = await lookupUser(context.userId);
-    const admin = operatorEmails().has((actor.email || "").trim().toLowerCase());
+    const admin = await isOperator(context.userId);
     const sql = await getSql();
     const rows = await sql<{
       id: string;

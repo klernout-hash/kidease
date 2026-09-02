@@ -7,6 +7,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
+import { getMyDesks } from "@/lib/server/roles";
 import { useCopy } from "@/lib/use-copy";
 
 type Role = "parent" | "provider" | "admin";
@@ -45,7 +46,7 @@ function Login() {
       : role === "admin"
         ? "/admin"
         : role === "parent"
-          ? "/search"
+          ? "/parent"
           : "/";
   const [mode, setMode] = useState<"in" | "up">(operator ? "in" : search.intent === "up" ? "up" : "in");
   const [name, setName] = useState("");
@@ -71,7 +72,16 @@ function Login() {
         /* RoleBoot will retry once the session is visible */
       }
     }
-    window.location.assign(twoFactorUrl(dest));
+    let destUrl = dest.startsWith("/") ? dest : "/";
+    if (!search.next) {
+      try {
+        const session = await getMyDesks();
+        destUrl = session.home;
+      } catch {
+        /* keep dest from the login role */
+      }
+    }
+    window.location.assign(twoFactorUrl(destUrl));
   }
 
   async function onEmail(e: React.FormEvent) {

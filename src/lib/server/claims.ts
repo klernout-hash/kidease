@@ -6,6 +6,7 @@ import { nid } from "@/lib/utils";
 import { upsertDaycare } from "./seed";
 import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
+import { writeProfileRole } from "./roles";
 
 export type ClaimHit = {
   id: string;
@@ -115,7 +116,7 @@ export const startClaim = createServerFn({ method: "POST" })
     await sql`
       update daycares set claim_status = 'pending' where id = ${daycareId} and claimed_at is null
     `;
-    await sql`update profiles set role = 'provider' where user_id = ${context.userId}`;
+    await writeProfileRole(context.userId, "provider");
     return {
       alreadyOwned: false as const,
       daycareId,
@@ -159,7 +160,7 @@ export const verifyClaim = createServerFn({ method: "POST" })
       set claim_status = 'waiting'
       where id = ${data.daycareId} and claimed_at is null
     `;
-    await sql`update profiles set role = 'provider' where user_id = ${context.userId}`;
+    await writeProfileRole(context.userId, "provider");
     const actor = await lookupUser(context.userId);
     const listedAfter = await catalogByIdGet(data.daycareId);
     try {

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { ADMIN_EMAIL, lookupUser } from "@/lib/server/notify";
+import { requireAdmin } from "@/lib/server/roles";
 
 export type MoneyDirection = "in" | "out";
 export type MoneyKind = "tuition" | "promo" | "payout" | "invoice";
@@ -35,16 +35,8 @@ export type AdminMoneyLedger = {
   fees: number;
 };
 
-function operatorEmails() {
-  const env = (process.env.ADMIN_EMAIL || ADMIN_EMAIL || "kyle@kidease.ca").trim().toLowerCase();
-  return new Set(["kyle@kidease.ca", env].filter(Boolean));
-}
-
 async function requireOperator(userId: string) {
-  const actor = await lookupUser(userId);
-  const email = (actor.email || "").trim().toLowerCase();
-  if (!operatorEmails().has(email)) throw new Error("Not authorized");
-  return actor;
+  return requireAdmin(userId);
 }
 
 function paidStatus(status: string) {
