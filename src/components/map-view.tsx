@@ -7,6 +7,14 @@ import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { mapZoomForRadius, openDirections, readMapBase, writeMapBase, type MapBase } from "@/lib/maps";
+import {
+  defineHtmlOverlay,
+  googleMapTypeId,
+  GOOGLE_MAPS_BROWSER_ENV,
+  hasGoogleMapsBrowserKey,
+  loadGoogleMaps,
+  type HtmlOverlayInstance,
+} from "@/lib/google-maps";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { PriorityPill } from "@/components/priority-pill";
@@ -21,26 +29,29 @@ type Props = {
   onRelocate?: (pos: { lat: number; lng: number }) => void;
 };
 
-type LMap = import("leaflet").Map;
-type LMarker = import("leaflet").Marker;
-type LTile = import("leaflet").TileLayer;
-type LLayer = import("leaflet").LayerGroup;
-type LCircle = import("leaflet").Circle;
+const ROAD_STYLES: google.maps.MapTypeStyle[] = [
+  { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
 
 export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onRelocate }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LMap | null>(null);
-  const tilesRef = useRef<{ road: LTile; sat: LTile } | null>(null);
-  const pinsRef = useRef<LLayer | null>(null);
-  const youRef = useRef<LLayer | null>(null);
-  const circleRef = useRef<LCircle | null>(null);
-  const markersBySlug = useRef(new Map<string, LMarker>());
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const mapsApiRef = useRef<typeof google.maps | null>(null);
+  const HtmlOverlayRef = useRef<ReturnType<typeof defineHtmlOverlay> | null>(null);
+  const pinsRef = useRef<HtmlOverlayInstance[]>([]);
+  const youRef = useRef<google.maps.Marker | null>(null);
+  const circleRef = useRef<google.maps.Circle | null>(null);
+  const markersBySlug = useRef(new Map<string, HtmlOverlayInstance>());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
 
   const locale = useAppStore((s) => s.locale);
   const { t } = useCopy();
   const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(() =>
+    hasGoogleMapsBrowserKey() ? null : `${GOOGLE_MAPS_BROWSER_ENV} is not set`,
+  );
   const [zoom, setZoom] = useState(12);
   const [base, setBase] = useState<MapBase>(() => readMapBase());
   const [picked, setPicked] = useState<string | null>(activeSlug ?? null);
@@ -57,65 +68,63 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
 
   useEffect(() => {
     const el = host.current;
-    if (!el) return;
+    if (!el || !hasGoogleMapsBrowserKey()) return;
     let cancelled = false;
-    let map: LMap | null = null;
+    let map: google.maps.Map | null = null;
+    const markers = markersBySlug.current;
 
     void (async () => {
-      const L = await import("leaflet");
-      await import("leaflet/dist/leaflet.css");
-      if (cancelled || !el) return;
-      el.innerHTML = "";
-      map = L.map(el, {
-        zoomControl: false,
-        scrollWheelZoom: true,
-        attributionControl: true,
-        preferCanvas: true,
-      });
-      L.control.zoom({ position: "bottomright" }).addTo(map);
-      const road = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution: "&copy; OpenStreetMap &copy; CARTO",
-        maxZoom: 19,
-        subdomains: "abcd",
-        updateWhenIdle: true,
-        updateWhenZooming: false,
-        keepBuffer: 8,
-        crossOrigin: true,
-        detectRetina: true,
-      });
-      const sat = L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        {
-          attribution: "Tiles &copy; Esri",
-          maxZoom: 19,
-          updateWhenIdle: true,
-          updateWhenZooming: false,
-          keepBuffer: 8,
-          crossOrigin: true,
-        },
-      );
-      (readMapBase() === "satellite" ? sat : road).addTo(map);
-      map.setView([origin.lat, origin.lng], mapZoomForRadius(radiusKm));
-      const live = map;
-      live.on("zoomend", () => setZoom(live.getZoom()));
-      setZoom(live.getZoom());
-      mapRef.current = map;
-      tilesRef.current = { road, sat };
-      pinsRef.current = L.layerGroup().addTo(map);
-      youRef.current = L.layerGroup().addTo(map);
-      setReady(true);
+      try {
+        const maps = await loadGoogleMaps();
+        if (cancelled || !el) return;
+        el.innerHTML = "";
+        map = new maps.Map(el, {
+          center: { lat: origin.lat, lng: origin.lng },
+          zoom: mapZoomForRadius(radiusKm),
+          mapTypeId: googleMapTypeId(readMapBase()),
+          disableDefaultUI: true,
+          zoomControl: true,
+          zoomControlOptions: { position: maps.ControlPosition.RIGHT_BOTTOM },
+          gestureHandling: "greedy",
+          clickableIcons: false,
+          styles: ROAD_STYLES,
+        });
+        map.addListener("zoom_changed", () => {
+          const next = map?.getZoom();
+          if (typeof next === "number") setZoom(next);
+        });
+        const startZoom = map.getZoom();
+        if (typeof startZoom === "number") setZoom(startZoom);
+        mapRef.current = map;
+        mapsApiRef.current = maps;
+        HtmlOverlayRef.current = defineHtmlOverlay(maps);
+        setLoadError(null);
+        setReady(true);
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(err instanceof Error ? err.message : "Google Maps failed to load");
+          setReady(false);
+        }
+      }
     })();
 
     return () => {
       cancelled = true;
       setReady(false);
-      map?.remove();
-      mapRef.current = null;
-      tilesRef.current = null;
-      pinsRef.current = null;
+      if (map) {
+        window.google?.maps?.event.clearInstanceListeners(map);
+      }
+      for (const pin of pinsRef.current) pin.setMap(null);
+      pinsRef.current = [];
+      youRef.current?.setMap(null);
       youRef.current = null;
+      circleRef.current?.setMap(null);
       circleRef.current = null;
-      markersBySlug.current.clear();
+      markers.clear();
+      mapRef.current = null;
+      mapsApiRef.current = null;
+      HtmlOverlayRef.current = null;
+      el.innerHTML = "";
     };
     // Created once per mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,107 +134,121 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
     const map = mapRef.current;
     const el = host.current;
     if (!map || !el || !ready) return;
-    const ro = new ResizeObserver(() => map.invalidateSize());
+    const ro = new ResizeObserver(() => {
+      window.google?.maps?.event.trigger(map, "resize");
+    });
     ro.observe(el);
-    map.invalidateSize();
+    window.google?.maps?.event.trigger(map, "resize");
     return () => ro.disconnect();
   }, [ready]);
 
   useEffect(() => {
-    const tiles = tilesRef.current;
     const map = mapRef.current;
-    if (!tiles || !map || !ready) return;
-    const next = base === "satellite" ? tiles.sat : tiles.road;
-    const prev = base === "satellite" ? tiles.road : tiles.sat;
-    if (!map.hasLayer(next)) next.addTo(map);
-    if (map.hasLayer(prev)) map.removeLayer(prev);
+    if (!map || !ready) return;
+    map.setMapTypeId(googleMapTypeId(base));
     writeMapBase(base);
   }, [base, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready) return;
-    map.setView([origin.lat, origin.lng], mapZoomForRadius(radiusKm), { animate: true });
-    void import("leaflet").then((L) => {
-      if (circleRef.current) {
-        circleRef.current.setLatLng([origin.lat, origin.lng]);
-        circleRef.current.setRadius(Math.max(radiusKm, 0.5) * 1000);
-      } else {
-        circleRef.current = L.circle([origin.lat, origin.lng], {
-          radius: Math.max(radiusKm, 0.5) * 1000,
-          color: "#1a3790",
-          weight: 1,
-          fillColor: "#1a3790",
-          fillOpacity: 0.08,
-          interactive: false,
-        }).addTo(map);
-      }
-      youRef.current?.clearLayers();
-      L.circleMarker([origin.lat, origin.lng], {
-        radius: 8,
-        color: "#ffffff",
-        weight: 3,
+    const maps = mapsApiRef.current;
+    if (!map || !maps || !ready) return;
+    map.panTo({ lat: origin.lat, lng: origin.lng });
+    map.setZoom(mapZoomForRadius(radiusKm));
+    if (circleRef.current) {
+      circleRef.current.setCenter({ lat: origin.lat, lng: origin.lng });
+      circleRef.current.setRadius(Math.max(radiusKm, 0.5) * 1000);
+    } else {
+      circleRef.current = new maps.Circle({
+        map,
+        center: { lat: origin.lat, lng: origin.lng },
+        radius: Math.max(radiusKm, 0.5) * 1000,
+        strokeColor: "#1a3790",
+        strokeWeight: 1,
         fillColor: "#1a3790",
-        fillOpacity: 1,
-        interactive: false,
-      }).addTo(youRef.current!);
-    });
+        fillOpacity: 0.08,
+        clickable: false,
+      });
+    }
+    if (youRef.current) {
+      youRef.current.setPosition({ lat: origin.lat, lng: origin.lng });
+    } else {
+      youRef.current = new maps.Marker({
+        map,
+        position: { lat: origin.lat, lng: origin.lng },
+        clickable: false,
+        zIndex: 2,
+        icon: {
+          path: maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: "#1a3790",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 3,
+        },
+      });
+    }
   }, [origin.lat, origin.lng, radiusKm, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
-    const group = pinsRef.current;
-    if (!map || !group || !ready) return;
-    let cancelled = false;
-    void import("leaflet").then((L) => {
-      if (cancelled) return;
-      group.clearLayers();
-      markersBySlug.current.clear();
-      const clusters = clusterItems(items, zoom);
-      for (const node of clusters) {
-        if (node.kind === "group") {
-          const icon = L.divIcon({
-            className: "ke-cluster",
-            html: `<span>${node.count}</span>`,
-            iconSize: [36, 36],
-            iconAnchor: [18, 18],
-          });
-          L.marker([node.lat, node.lng], { icon, zIndexOffset: 100 })
-            .on("click", () => map.setView([node.lat, node.lng], Math.min(zoom + 2, 16), { animate: true }))
-            .addTo(group);
-          continue;
-        }
-        const item = node.item;
-        if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-        const live = Boolean(item.live);
-        const icon = L.divIcon({
-          className: `dn-pin${live ? " is-live" : " is-unclaimed"}`,
-          html: live
-            ? `<span class="ke-pin-check">✓</span><span>${pinFeeLabel(item.province, true, item.fromPrice, locale, money)}</span>`
-            : `<span>${pinFeeLabel(item.province, false, item.fromPrice, locale, money)}</span>`,
-          iconSize: live ? [84, 28] : [72, 28],
-          iconAnchor: live ? [42, 28] : [36, 28],
+    const HtmlOverlay = HtmlOverlayRef.current;
+    if (!map || !HtmlOverlay || !ready) return;
+
+    for (const pin of pinsRef.current) pin.setMap(null);
+    pinsRef.current = [];
+    markersBySlug.current.clear();
+
+    const clusters = clusterItems(items, zoom);
+    const nextPins: HtmlOverlayInstance[] = [];
+    for (const node of clusters) {
+      if (node.kind === "group") {
+        const content = document.createElement("div");
+        content.className = "ke-cluster";
+        content.innerHTML = `<span>${node.count}</span>`;
+        const overlay = new HtmlOverlay({
+          map,
+          position: { lat: node.lat, lng: node.lng },
+          content,
+          centered: true,
+          zIndex: 100,
+          onClick: () => {
+            map.setZoom(Math.min(zoom + 2, 16));
+            map.panTo({ lat: node.lat, lng: node.lng });
+          },
         });
-        const marker = L.marker([item.lat, item.lng], { icon });
-        marker.on("click", () => {
+        nextPins.push(overlay);
+        continue;
+      }
+      const item = node.item;
+      if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
+      const live = Boolean(item.live);
+      const content = document.createElement("div");
+      content.className = `dn-pin${live ? " is-live" : " is-unclaimed"}`;
+      content.innerHTML = live
+        ? `<span class="ke-pin-check">✓</span><span>${pinFeeLabel(item.province, true, item.fromPrice, locale, money)}</span>`
+        : `<span>${pinFeeLabel(item.province, false, item.fromPrice, locale, money)}</span>`;
+      const overlay = new HtmlOverlay({
+        map,
+        position: { lat: item.lat, lng: item.lng },
+        content,
+        onClick: () => {
           setPicked(item.slug);
           onSelectRef.current(item.slug);
-        });
-        marker.addTo(group);
-        markersBySlug.current.set(item.slug, marker);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
+        },
+      });
+      nextPins.push(overlay);
+      markersBySlug.current.set(item.slug, overlay);
+    }
+    pinsRef.current = nextPins;
   }, [items, locale, ready, zoom]);
 
   useEffect(() => {
     const slug = picked || activeSlug;
     for (const [id, marker] of markersBySlug.current) {
       const el = marker.getElement();
-      if (el) el.classList.toggle("is-active", id === slug);
-      marker.setZIndexOffset(id === slug ? 500 : 0);
+      el.classList.toggle("is-active", id === slug);
+      marker.setZIndex(id === slug ? 500 : 0);
     }
   }, [picked, activeSlug, zoom, items]);
 
@@ -234,7 +257,8 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
     const pos = await getDeviceLocation();
     setLocating(false);
     if (!pos) return;
-    mapRef.current?.setView([pos.lat, pos.lng], 13, { animate: true });
+    mapRef.current?.panTo({ lat: pos.lat, lng: pos.lng });
+    mapRef.current?.setZoom(13);
     void hapticLight();
     onRelocate?.(pos);
   }
@@ -242,6 +266,15 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
   return (
     <div className="relative size-full min-h-[280px] overflow-hidden rounded-lg bg-map">
       <div ref={host} className="absolute inset-0" />
+
+      {loadError ? (
+        <div className="absolute inset-0 z-[300] grid place-items-center bg-map px-6 text-center">
+          <p className="max-w-sm text-sm text-muted">
+            Map is unavailable. Set <span className="font-mono text-fg">{GOOGLE_MAPS_BROWSER_ENV}</span> so the
+            browser can load Google Maps.
+          </p>
+        </div>
+      ) : null}
 
       <div className="absolute right-3 top-3 z-[400] flex flex-col gap-2">
         <div className="overflow-hidden rounded-full bg-surface text-xs font-medium shadow-card ring-1 ring-border">

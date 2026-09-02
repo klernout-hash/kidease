@@ -329,6 +329,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .dn-pin.is-open {
@@ -358,6 +359,8 @@
 }
 
 .ke-cluster {
+  width: 36px;
+  height: 36px;
   background: var(--color-primary);
   color: var(--color-primary-fg);
   border: 2px solid #fff;
@@ -367,6 +370,7 @@
   font-size: 13px;
   font-weight: 700;
   box-shadow: var(--shadow-card);
+  cursor: pointer;
 }
 
 .ke-pin-check {
