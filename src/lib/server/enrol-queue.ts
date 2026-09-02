@@ -87,13 +87,14 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
 
     const childIds = [...new Set(rows.map((r) => r.child_id).filter(Boolean))] as string[];
     const kids = childIds.length
-      ? await sql<ChildRow>`
-          select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
-                 doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
-                 toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
-                 photo_ok, sunscreen_ok, notes
-          from children where id in ${sql(childIds)}
-        `
+      ? await sql.query<ChildRow>(
+          `select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
+                  doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
+                  toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
+                  photo_ok, sunscreen_ok, notes
+           from children where id = any($1::text[])`,
+          [childIds],
+        )
       : [];
     const byId = new Map(kids.map((k) => [k.id, mapChild(k)]));
     return rows.map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
@@ -168,7 +169,7 @@ export const shareChildWithCentres = createServerFn({ method: "POST" })
           startDate: start,
           schedule: "full",
           days: [],
-          message: noteBits.join(" \u00b7 ") || undefined,
+          message: noteBits.join(" · ") || undefined,
           parentName: parent[0]?.name ?? undefined,
         },
       });
