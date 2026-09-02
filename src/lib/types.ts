@@ -206,4 +206,5 @@ export type SpotRequest = Booking & {
   birthdate: string | null;
   allergies?: string;
   epiPen?: boolean;
+  child?: Child | null;
 };
