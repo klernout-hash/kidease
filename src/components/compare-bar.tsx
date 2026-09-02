@@ -24,17 +24,25 @@ export function CompareBar() {
 
   if (!ids.length) return null;
 
+  const ready = ids.length >= 2;
+
   return (
     <div className="fixed inset-x-0 bottom-20 z-30 border-t border-border bg-surface/95 px-[clamp(1rem,4vw,2rem)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lift backdrop-blur-md [[data-channel=website]_&]:bottom-0">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 overflow-x-auto">
         <p className="text-sm font-medium">
-          {t("compare")} · {ids.length}/3
+          {t("compare")} · {ids.length}/3{ready ? "" : " — pick one more"}
         </p>
         <div className="flex items-center gap-2">
-          <Button asChild size="sm">
-            <Link to="/compare">{t("compareNow")}</Link>
-          </Button>
-          <button type="button" className="grid size-9 place-items-center text-muted hover:text-fg" onClick={() => clearCompare()} aria-label={t("clearCompare")}>
+          {ready ? (
+            <Button asChild size="sm">
+              <Link to="/compare">{t("compareNow")}</Link>
+            </Button>
+          ) : (
+            <Button size="sm" disabled>
+              {t("compareNow")}
+            </Button>
+          )}
+          <button type="button" className="grid size-11 place-items-center text-muted hover:text-fg" onClick={() => clearCompare()} aria-label={t("clearCompare")}>
             <X className="size-4" />
           </button>
         </div>

@@ -7,9 +7,15 @@ export function SiteFooter() {
     <footer className="border-t border-border bg-bg">
       <div className="ke-gutter mx-auto max-w-6xl py-10">
         <p className="text-sm font-medium">{t("footerCopy")}</p>
-        <nav className="mt-4 grid grid-cols-2 gap-x-4 gap-y-0 text-sm text-muted sm:flex sm:flex-wrap sm:gap-x-5 sm:gap-y-2">
+        <nav className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted sm:flex sm:flex-wrap sm:gap-x-5">
           <Link to="/about" className="hover:text-fg">
             {t("about")}
+          </Link>
+          <Link to="/how-it-works" className="hover:text-fg">
+            {t("howItWorksCta")}
+          </Link>
+          <Link to="/get-app" className="hover:text-fg">
+            {t("getApp")}
           </Link>
           <Link to="/team" className="hover:text-fg">
             {t("team")}

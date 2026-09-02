@@ -9,7 +9,8 @@ export function cn(...inputs: ClassValue[]) {
 
 /** Decode leftover HTML entities in listing names. */
 export function decodeHtml(value: string) {
-  if (!value || !value.includes("&")) return value;
+  if (!value) return value;
+  if (!value.includes("&")) return value;
   return value
     .replace(/&amp;/gi, "&")
     .replace(/&apos;/gi, "'")
@@ -17,6 +18,15 @@ export function decodeHtml(value: string) {
     .replace(/&quot;/gi, '"')
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">");
+}
+
+/** Registry typos we refuse to show on parent-facing cards. */
+export function displayCentreName(value: string) {
+  return decodeHtml(value)
+    .replace(/\bCetnre\b/g, "Centre")
+    .replace(/\bCetnres\b/g, "Centres")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 export function money(cad: number, locale: Locale = "en") {
@@ -50,7 +60,6 @@ export function formatMonth(ym: string, locale: Locale = "en") {
   const d = new Date(y || 2026, (m || 1) - 1, 1);
   return new Intl.DateTimeFormat(localeTag(locale), { month: "long", year: "numeric" }).format(d);
 }
-
 
 export function formatAgeRange(min: number, max: number) {
   return `${min} m – ${max} m`;
