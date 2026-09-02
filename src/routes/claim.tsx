@@ -5,9 +5,8 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { searchClaimable, startClaim, verifyClaim, type ClaimHit } from "@/lib/server/claims";
+import { searchClaimable, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { submitPublicMessage } from "@/lib/server/notify";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/claim")({
@@ -36,7 +35,8 @@ function ClaimPage() {
   const [pending, setPending] = useState<{ daycareId: string; name: string; code: string } | null>(null);
   const [code, setCode] = useState("");
   const [license, setLicense] = useState("");
-  const [enroll, setEnroll] = useState({ name: "", email: "", centre: "", city: "", phone: "", body: "" });
+  const [enroll, setEnroll] = useState({ name: "", email: "", centre: "", city: "", phone: "", body: "", daycareId: "" });
+  const [enrollLicense, setEnrollLicense] = useState("");
   const [enrollBusy, setEnrollBusy] = useState(false);
   const [enrollHits, setEnrollHits] = useState<ClaimHit[]>([]);
   const [enrollOpen, setEnrollOpen] = useState(false);
@@ -137,6 +137,10 @@ function ClaimPage() {
   async function verify(e: React.FormEvent) {
     e.preventDefault();
     if (!pending) return;
+    if (!license.startsWith("data:image")) {
+      toast.error("Upload a photo of your provincial licence");
+      return;
+    }
     setBusy(true);
     try {
       await verifyClaim({ data: { daycareId: pending.daycareId, code, licensePhoto: license } });
@@ -149,34 +153,44 @@ function ClaimPage() {
     }
   }
 
-  function onFile(file: File | undefined) {
+  function readLicense(file: File | undefined, into: "claim" | "enroll") {
     if (!file) return;
     if (file.size > 1_800_000) {
       toast.error(t("photoTooBig"));
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => setLicense(String(reader.result ?? ""));
+    reader.onload = () => {
+      const value = String(reader.result ?? "");
+      if (into === "claim") setLicense(value);
+      else setEnrollLicense(value);
+    };
     reader.readAsDataURL(file);
   }
 
   async function sendEnroll(e: React.FormEvent) {
     e.preventDefault();
+    if (!enrollLicense.startsWith("data:image")) {
+      toast.error("Upload a photo of your provincial licence");
+      return;
+    }
     setEnrollBusy(true);
     try {
-      await submitPublicMessage({
+      await submitEnrollLicense({
         data: {
-          kind: "enroll",
           name: enroll.name,
           email: enroll.email,
           centre: enroll.centre,
           city: enroll.city,
           phone: enroll.phone,
           body: enroll.body,
+          licensePhoto: enrollLicense,
+          daycareId: enroll.daycareId || undefined,
         },
       });
       toast.success(t("enrollSent"));
-      setEnroll({ name: "", email: "", centre: "", city: "", phone: "", body: "" });
+      setEnroll({ name: "", email: "", centre: "", city: "", phone: "", body: "", daycareId: "" });
+      setEnrollLicense("");
     } catch {
       toast.error("Could not send. Email kyle@kidease.ca directly.");
     } finally {
@@ -238,11 +252,12 @@ function ClaimPage() {
                 autoComplete="one-time-code"
               />
             </label>
-            <label className="block text-sm">
-              {t("licensePhoto")}
-              <input type="file" accept="image/*" className="mt-1 block w-full text-sm" onChange={(e) => onFile(e.target.files?.[0])} />
+            <label className="block text-sm font-medium">
+              Provincial licence photo
+              <span className="mt-1 block text-xs font-normal text-muted">Required. Photo or scan of the current licence.</span>
+              <input required type="file" accept="image/*" className="mt-2 block w-full text-sm" onChange={(e) => readLicense(e.target.files?.[0], "claim")} />
             </label>
-            {license ? <img src={license} alt="" className="max-h-40 rounded-md object-contain ring-1 ring-border" /> : null}
+            {license ? <img src={license} alt="Licence preview" className="max-h-40 rounded-md object-contain ring-1 ring-border" /> : null}
             <div className="flex flex-wrap gap-2">
               <Button type="submit" disabled={busy}>
                 {t("finishClaim")}
@@ -338,7 +353,7 @@ function ClaimPage() {
                 onFocus={() => setEnrollOpen(true)}
                 onChange={(e) => {
                   setEnrollManual(false);
-                  setEnroll((s) => ({ ...s, centre: e.target.value }));
+                  setEnroll((s) => ({ ...s, centre: e.target.value, daycareId: "" }));
                 }}
               />
               {enrollOpen ? (
@@ -369,6 +384,7 @@ function ClaimPage() {
                             centre: h.name,
                             city: [h.city, h.province].filter(Boolean).join(", "),
                             phone: h.phone || s.phone,
+                            daycareId: h.id,
                           }));
                           setEnrollManual(false);
                           setEnrollOpen(false);
@@ -396,6 +412,12 @@ function ClaimPage() {
             {t("enrollPhone")}
             <input className="ke-input mt-1" value={enroll.phone} onChange={(e) => setEnroll((s) => ({ ...s, phone: e.target.value }))} autoComplete="tel" />
           </label>
+          <label className="block text-sm font-medium">
+            Provincial licence photo
+            <span className="mt-1 block text-xs font-normal text-muted">Required for compliance review. Clear photo or scan of the current licence.</span>
+            <input required type="file" accept="image/*" className="mt-2 block w-full text-sm" onChange={(e) => readLicense(e.target.files?.[0], "enroll")} />
+          </label>
+          {enrollLicense ? <img src={enrollLicense} alt="Licence preview" className="max-h-40 rounded-md object-contain ring-1 ring-border" /> : null}
           <label className="block text-sm font-medium">
             {t("enrollMessage")}
             <textarea
