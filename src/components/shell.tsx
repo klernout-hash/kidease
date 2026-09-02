@@ -119,7 +119,10 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               aria-label="Menu"
               aria-expanded={open}
               aria-controls="ke-nav-drawer"
-              onClick={() => setOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen((v) => !v);
+              }}
             >
               <Menu className="size-6" strokeWidth={1.75} />
             </button>
