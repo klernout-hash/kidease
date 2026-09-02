@@ -1,1 +1,44 @@
-PLACEHOLDER
+{
+  "last_city": "Winnipeg",
+  "last_province": "MB",
+  "last_id_processed": "mb-3017",
+  "mapped_count_national": 68,
+  "mapped_count_winnipeg": 68,
+  "this_run_added": [
+    "mb-3004",
+    "mb-3005",
+    "mb-3010"
+  ],
+  "this_run_skipped": [
+    "mb-3003",
+    "mb-3006",
+    "mb-3008",
+    "mb-3009",
+    "mb-3012",
+    "mb-3013",
+    "mb-3015",
+    "mb-3016",
+    "mb-3017"
+  ],
+  "skip_reasons": {
+    "mb-3003": "Crestview School Children's Centre — no dedicated official site with usable room/building photos (school page only)",
+    "mb-3006": "Linwood Child Centre Inc. — no official website found with photos",
+    "mb-3008": "Lord Roberts School Age Program — site exists but no clear usable classroom/building photo confirmed this run",
+    "mb-3009": "O.K. Before and After School - A.E. Wright — multi-site operator, no site-specific official photo found",
+    "mb-3012": "Earl Grey Children's Centre — official site hero/gallery appear stock-style; skipped to avoid non-specific image",
+    "mb-3013": "O.K. Before and After School - Elwick — multi-site, no site-specific photo",
+    "mb-3015": "Garden Grove Child Care — site photos appear generic/stock; skipped",
+    "mb-3016": "Harstone Children's Centre — multi-location operator; no confirmed photo of 905 Sargent site this run",
+    "mb-3017": "Inkster Community Child Care — site photos too low-res or banner-only"
+  },
+  "next_queue": [
+    "mb-3018",
+    "mb-3019",
+    "mb-3020",
+    "mb-3021",
+    "mb-3022",
+    "mb-3023",
+    "mb-3024",
+    "mb-3025"
+  ]
+}
