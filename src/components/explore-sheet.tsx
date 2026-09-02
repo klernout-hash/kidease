@@ -27,7 +27,7 @@ export function ExploreSheet({
 
   return (
     <div
-      className="ke-sheet pointer-events-auto lg:hidden"
+      className="ke-sheet pointer-events-auto"
       style={{ height: HEIGHT[snap] }}
     >
       <div

@@ -247,7 +247,7 @@ function SearchPage() {
 
   return (
     <Shell>
-      <div className="relative lg:hidden">
+      <div className="relative hidden [[data-channel=app]_&]:block">
         <div className="h-[calc(100dvh-9.5rem)] overflow-hidden bg-map">
           <Suspense fallback={<div className="size-full bg-map" />}>
             <MapView
@@ -355,7 +355,7 @@ function SearchPage() {
         </ExploreSheet>
       </div>
 
-      <div className="ke-gutter mx-auto hidden max-w-7xl pb-6 pt-4 lg:block">
+      <div className="ke-gutter mx-auto max-w-7xl pb-6 pt-4 [[data-channel=app]_&]:hidden">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>

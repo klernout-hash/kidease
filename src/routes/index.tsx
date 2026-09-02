@@ -169,210 +169,247 @@ function Home() {
     }
   }, [isPending, user, role, navigate]);
 
+  const locationForm = (
+    <>
+      {manual ? (
+        <form
+          className="mt-5 max-w-md"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (q.trim()) applyCity(q);
+          }}
+        >
+          <input
+            autoFocus
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={t("locationPh")}
+            className="ke-input"
+          />
+          <Button type="submit" variant="secondary" className="mt-2 w-full" disabled={!q.trim()}>
+            {t("search")}
+          </Button>
+          {denied ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {CITY_CHIPS.map((c) => (
+                <button
+                  key={c.q}
+                  type="button"
+                  onClick={() => applyCity(c.q)}
+                  className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border hover:text-fg"
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </form>
+      ) : (
+        <button
+          type="button"
+          className="mt-5 text-sm text-muted underline-offset-4 hover:text-fg hover:underline"
+          onClick={() => setManual(true)}
+        >
+          {t("orEnterCity")}
+        </button>
+      )}
+    </>
+  );
+
+  const featuredSearch = (
+    <>
+      <form
+        className="mt-8 flex flex-col gap-2 lg:flex-row lg:items-center"
+        onSubmit={(e) => {
+          e.preventDefault();
+          applyPlace(place);
+        }}
+      >
+        <div className="flex min-h-12 flex-1 items-center gap-2 rounded-full bg-bg px-4 shadow-card ring-1 ring-border">
+          <MapPin className="size-4 shrink-0 text-primary" />
+          <input
+            value={place}
+            onChange={(e) => setPlace(e.target.value)}
+            placeholder={t("locationPh")}
+            className="h-11 flex-1 bg-transparent text-sm outline-none"
+            aria-label={t("locationPh")}
+          />
+          <button
+            type="button"
+            onClick={() => void pinLocation()}
+            className="grid size-11 place-items-center text-muted hover:text-fg"
+            aria-label={t("useLocation")}
+          >
+            <LocateFixed className="size-5" />
+          </button>
+        </div>
+        <Button type="submit" className="min-h-11 w-full lg:w-auto">
+          {t("search")}
+        </Button>
+      </form>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setLiveOnly(true)}
+          className={cn(
+            "rounded-full px-4 py-2 text-sm font-medium ring-1",
+            liveOnly ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border",
+          )}
+        >
+          {t("liveOnly")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setLiveOnly(false)}
+          className={cn(
+            "rounded-full px-4 py-2 text-sm font-medium ring-1",
+            !liveOnly ? "bg-fg text-bg ring-fg" : "bg-bg text-fg ring-border",
+          )}
+        >
+          {t("showAll")} · {featured.length}
+        </button>
+      </div>
+
+      <p className="mt-3 text-sm text-muted">
+        {origin.label.split(",")[0]} · {radiusKm} {t("km")}
+      </p>
+    </>
+  );
+
   return (
     <Shell bare>
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#eef2fb] via-bg to-bg">
-        <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20 xl:py-24">
-          <div>
-            <BrandMark size="md" align="start" />
-            <h1 className="mt-8 max-w-xl text-[clamp(2rem,6vw,3.25rem)] text-fg">{t("tagline")}</h1>
-            <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <Button size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => void useLocation()} disabled={busy}>
-                <Search className="size-5" />
-                {busy ? t("loading") : t("heroCta")}
-              </Button>
-              <Button size="lg" variant="secondary" className="min-h-12 w-full sm:w-auto" asChild>
-                <a href="#how">{t("howItWorksCta")}</a>
-              </Button>
-            </div>
-            {manual ? (
-              <form
-                className="mt-5 max-w-md"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (q.trim()) applyCity(q);
-                }}
-              >
-                <input
-                  autoFocus
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder={t("locationPh")}
-                  className="ke-input"
-                />
-                <Button type="submit" variant="secondary" className="mt-2 w-full" disabled={!q.trim()}>
-                  {t("search")}
+      <div className="[[data-channel=app]_&]:hidden">
+        <section className="relative overflow-hidden bg-gradient-to-b from-[#eef2fb] via-bg to-bg">
+          <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20 xl:py-24">
+            <div>
+              <BrandMark size="md" align="start" />
+              <h1 className="mt-8 max-w-xl text-[clamp(2rem,6vw,3.25rem)] text-fg">{t("tagline")}</h1>
+              <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <Button size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => void useLocation()} disabled={busy}>
+                  <Search className="size-5" />
+                  {busy ? t("loading") : t("heroCta")}
                 </Button>
-                {denied ? (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {CITY_CHIPS.map((c) => (
-                      <button
-                        key={c.q}
-                        type="button"
-                        onClick={() => applyCity(c.q)}
-                        className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border hover:text-fg"
-                      >
-                        {c.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </form>
-            ) : (
-              <button
-                type="button"
-                className="mt-5 text-sm text-muted underline-offset-4 hover:text-fg hover:underline"
-                onClick={() => setManual(true)}
-              >
-                {t("orEnterCity")}
-              </button>
-            )}
-            <p className="mt-6 hidden text-xs font-medium text-muted md:block">{t("heroTrust")}</p>
-          </div>
-          <div className="relative hidden md:block">
-            <div className="overflow-hidden rounded-xl shadow-lift ring-1 ring-border">
-              <HeroPlayroom />
+                <Button size="lg" variant="secondary" className="min-h-12 w-full sm:w-auto" asChild>
+                  <a href="#how">{t("howItWorksCta")}</a>
+                </Button>
+              </div>
+              {locationForm}
+              <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>
+            </div>
+            <div className="relative">
+              <div className="overflow-hidden rounded-xl shadow-lift ring-1 ring-border">
+                <HeroPlayroom />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="border-y border-border bg-surface">
-        <div className="ke-gutter mx-auto max-w-6xl py-6">
-          <TrustBar />
-        </div>
-      </section>
+        <section className="border-y border-border bg-surface">
+          <div className="ke-gutter mx-auto max-w-6xl py-6">
+            <TrustBar />
+          </div>
+        </section>
 
-      <section id="how" className="ke-gutter mx-auto max-w-6xl py-16">
-        <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Step n="1" icon={MapPin} title={t("how1t")} body={t("how1")} />
-          <Step n="2" icon={ListChecks} title={t("how2t")} body={t("how2")} />
-          <Step n="3" icon={MessageCircle} title={t("how3t")} body={t("how3")} />
-        </div>
-      </section>
+        <section id="how" className="ke-gutter mx-auto max-w-6xl py-16">
+          <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <Step n="1" icon={MapPin} title={t("how1t")} body={t("how1")} />
+            <Step n="2" icon={ListChecks} title={t("how2t")} body={t("how2")} />
+            <Step n="3" icon={MessageCircle} title={t("how3t")} body={t("how3")} />
+          </div>
+        </section>
 
-      <section id="featured" className="bg-surface">
-        <div className="ke-gutter mx-auto max-w-6xl py-16">
-          <RoleEnrollChooser heading="h2" className="rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8" />
+        <section id="featured" className="bg-surface">
+          <div className="ke-gutter mx-auto max-w-6xl py-16">
+            <RoleEnrollChooser heading="h2" className="rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8" />
 
-          <h2 className="mt-12 text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
-          <p className="mt-3 hidden max-w-2xl text-muted md:block">{t("featuredBody")}</p>
-
-          <form
-            className="mt-8 flex flex-col gap-2 lg:flex-row lg:items-center"
-            onSubmit={(e) => {
-              e.preventDefault();
-              applyPlace(place);
-            }}
-          >
-            <div className="flex min-h-12 flex-1 items-center gap-2 rounded-full bg-bg px-4 shadow-card ring-1 ring-border">
-              <MapPin className="size-4 shrink-0 text-primary" />
-              <input
-                value={place}
-                onChange={(e) => setPlace(e.target.value)}
-                placeholder={t("locationPh")}
-                className="h-11 flex-1 bg-transparent text-sm outline-none"
-                aria-label={t("locationPh")}
-              />
-              <button
-                type="button"
-                onClick={() => void pinLocation()}
-                className="grid size-11 place-items-center text-muted hover:text-fg"
-                aria-label={t("useLocation")}
-              >
-                <LocateFixed className="size-5" />
-              </button>
+            <h2 className="mt-12 text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
+            <p className="mt-3 max-w-2xl text-muted">{t("featuredBody")}</p>
+            {featuredSearch}
+            <div className="ke-web-grid mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {shown.slice(0, 9).map((item, i) => (
+                <DaycareCard key={item.id} item={item} eager={i < 3} />
+              ))}
             </div>
-            <Button type="submit" className="min-h-11 w-full lg:w-auto">{t("search")}</Button>
-          </form>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setLiveOnly(true)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium ring-1",
-                liveOnly ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border",
-              )}
-            >
-              {t("liveOnly")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setLiveOnly(false)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium ring-1",
-                !liveOnly ? "bg-fg text-bg ring-fg" : "bg-bg text-fg ring-border",
-              )}
-            >
-              {t("showAll")} · {featured.length}
-            </button>
+            {shown.length === 0 ? (
+              <p className="mt-6 rounded-xl bg-bg p-8 text-center text-muted ring-1 ring-border">
+                {liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
+              </p>
+            ) : null}
+            <div className="mt-8">
+              <Button size="lg" onClick={() => goSearch(origin.label)}>
+                <Search className="size-5" />
+                {t("heroCta")}
+              </Button>
+            </div>
           </div>
+        </section>
 
-          <p className="mt-3 text-sm text-muted">
-            {origin.label.split(",")[0]} · {radiusKm} {t("km")}
-          </p>
+        <section className="mx-auto max-w-6xl px-5 py-16">
+          <h2 className="text-3xl md:text-4xl">{t("trustWhyTitle")}</h2>
+          <ul className="mt-8 grid gap-4 md:grid-cols-2">
+            <Why icon={BadgeCheck} text={t("trustWhy1")} />
+            <Why icon={Camera} text={t("trustWhy2")} />
+            <Why icon={ListChecks} text={t("trustWhy3")} />
+            <Why icon={Lock} text={t("trustWhy4")} />
+          </ul>
+          <p className="mt-8 max-w-2xl text-muted">{t("trustWhyLocal")}</p>
+        </section>
 
-          <div className="md:hidden">
-            <ListingRail title={t("recentlyViewed")} items={recent} />
-            <ListingRail title={t("availableNow")} items={availableNow} />
-            <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
+        <section className="bg-surface">
+          <div className="mx-auto max-w-6xl px-5 py-16">
+            <h2 className="text-3xl md:text-4xl">{t("quotesTitle")}</h2>
+            <div className="mt-8 grid gap-5 md:grid-cols-3">
+              <Quote body={t("quote1")} by={t("quote1By")} />
+              <Quote body={t("quote2")} by={t("quote2By")} />
+              <Quote body={t("quote3")} by={t("quote3By")} />
+            </div>
           </div>
-          <div className="ke-web-grid mt-6 hidden gap-5 md:grid md:grid-cols-2 lg:grid-cols-3">
-            {shown.slice(0, 9).map((item, i) => (
-              <DaycareCard key={item.id} item={item} eager={i < 3} />
-            ))}
-          </div>
+        </section>
 
+        <section className="bg-primary text-primary-fg">
+          <div className="ke-gutter mx-auto max-w-3xl py-16 text-center">
+            <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
+            <p className="mx-auto mt-4 max-w-xl text-primary-fg/90">{t("finalCtaBody")}</p>
+            <Button size="lg" variant="secondary" className="mt-8" onClick={() => setEnrollOpen(true)}>
+              {t("enrollNow")}
+            </Button>
+          </div>
+        </section>
+
+        <SiteFooter />
+      </div>
+
+      <div className="hidden [[data-channel=app]_&]:block">
+        <section className="ke-gutter mx-auto max-w-6xl pb-6 pt-5">
+          <h1 className="font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{t("tagline")}</h1>
+          <div className="mt-4 flex flex-col gap-2">
+            <Button size="lg" className="min-h-12 w-full" onClick={() => void useLocation()} disabled={busy}>
+              <Search className="size-5" />
+              {busy ? t("loading") : t("useLocation")}
+            </Button>
+            {locationForm}
+          </div>
+          {featuredSearch}
+          <ListingRail title={t("recentlyViewed")} items={recent} />
+          <ListingRail title={t("availableNow")} items={availableNow} />
+          <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
           {shown.length === 0 ? (
             <p className="mt-6 rounded-xl bg-bg p-8 text-center text-muted ring-1 ring-border">
               {liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
             </p>
           ) : null}
           <div className="mt-8">
-            <Button size="lg" onClick={() => goSearch(origin.label)}>
+            <Button size="lg" className="w-full" onClick={() => goSearch(origin.label)}>
               <Search className="size-5" />
               {t("heroCta")}
             </Button>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <section className="mx-auto hidden max-w-6xl px-5 py-16 md:block">
-        <h2 className="text-3xl md:text-4xl">{t("trustWhyTitle")}</h2>
-        <ul className="mt-8 grid gap-4 md:grid-cols-2">
-          <Why icon={BadgeCheck} text={t("trustWhy1")} />
-          <Why icon={Camera} text={t("trustWhy2")} />
-          <Why icon={ListChecks} text={t("trustWhy3")} />
-          <Why icon={Lock} text={t("trustWhy4")} />
-        </ul>
-        <p className="mt-8 max-w-2xl text-muted">{t("trustWhyLocal")}</p>
-      </section>
-
-      <section className="hidden bg-surface md:block">
-        <div className="mx-auto max-w-6xl px-5 py-16">
-          <h2 className="text-3xl md:text-4xl">{t("quotesTitle")}</h2>
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            <Quote body={t("quote1")} by={t("quote1By")} />
-            <Quote body={t("quote2")} by={t("quote2By")} />
-            <Quote body={t("quote3")} by={t("quote3By")} />
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-primary text-primary-fg">
-        <div className="ke-gutter mx-auto max-w-3xl py-16 text-center">
-          <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
-          <p className="mx-auto mt-4 max-w-xl text-primary-fg/90">{t("finalCtaBody")}</p>
-          <Button size="lg" variant="secondary" className="mt-8" onClick={() => setEnrollOpen(true)}>
-            {t("enrollNow")}
-          </Button>
-        </div>
-      </section>
-
-      <SiteFooter />
       <Suspense fallback={null}>
         <CompareBar />
       </Suspense>
@@ -382,7 +419,7 @@ function Home() {
 }
 
 function Step({
-  n,
+  n: _n,
   icon: Icon,
   title,
   body,

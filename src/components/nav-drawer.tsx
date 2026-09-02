@@ -65,7 +65,7 @@ export function NavDrawer({
   }, [open, onClose]);
 
   return (
-    <div className={cn("xl:hidden", open ? "pointer-events-auto" : "pointer-events-none")}>
+    <div className={cn("[[data-channel=website]_&]:xl:hidden", open ? "pointer-events-auto" : "pointer-events-none")}>
       <button
         type="button"
         tabIndex={open ? 0 : -1}

@@ -59,7 +59,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
           <Link to="/" className="shrink-0" aria-label="KidEase">
             <BrandMark size="sm" />
           </Link>
-          <nav className="hidden items-center gap-6 text-[13px] font-medium text-muted xl:flex">
+          <nav className="hidden items-center gap-6 text-[13px] font-medium text-muted [[data-channel=website]_&]:xl:flex">
             {desktopNav.map((item) => {
               const on = item.match.some((p) => pathname === p || pathname.startsWith(`${p}/`));
               return (
@@ -70,7 +70,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             })}
           </nav>
           <div className="flex items-center gap-1.5">
-            <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border xl:flex">
+            <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:xl:flex">
               <LanguageSelect />
               <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
               {user ? (
@@ -110,12 +110,12 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                 </>
               )}
             </div>
-            <div className="flex h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border xl:hidden">
+            <div className="flex h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:xl:hidden">
               <LanguageSelect />
             </div>
             <button
               type="button"
-              className="grid size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface xl:hidden"
+              className="grid size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=website]_&]:xl:hidden"
               aria-label="Menu"
               aria-expanded={open}
               aria-controls="ke-nav-drawer"
@@ -137,9 +137,11 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         accountLabel={t("account")}
         onSignOut={() => void signOut("/")}
       />
-      <div className={hideTabs ? "" : "pb-[calc(5.25rem+env(safe-area-inset-bottom))] md:pb-0"}>{children}</div>
+      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"}>
+        {children}
+      </div>
       {hideTabs ? null : (
-        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur-md md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-30 hidden border-t border-border bg-surface/95 backdrop-blur-md [[data-channel=app]_&]:block">
           <div className="mx-auto grid max-w-lg grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)] pt-1">
             <Tab
               to="/"

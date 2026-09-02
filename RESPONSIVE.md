@@ -1,25 +1,27 @@
 # KidEase layout: website vs app
 
-One product, **two surfaces**. Same listings and account — different chrome.
+One codebase, **two looks**. Same listings and accounts.
 
-| | **Phone / app** (<768px, PWA, App Store) | **Website** (≥768px laptop/desktop) |
+| | **App** | **Website** |
 |---|---|---|
-| Chrome | Bottom tabs: Search, Saved, Enrolled, Messages, Profile | Top nav: Explore, Benefits, About, Get the app |
-| Cards | Compact ~172px, 2-up, horizontal rails | ~296px, 3–4 across, page grid |
-| Home | Logo, headline, Use my location | 2-col hero + photo, trust bar, How it works, listing grid |
-| Explore | List first, Map toggle, Filters sheet | Map + list side by side |
+| When | Phone-width web **&lt; 1024px (`lg`)**, **or** Capacitor iOS/Android (any width) | Browser at **≥ 1024px**, and **not** in the native shell |
+| Chrome | Bottom tabs: Search, Saved, Enrolled, Messages, Profile | Top nav: Explore, Benefits, About, Get the app (full header at ≥1280) |
+| Home | Location + swipe rails, square cards, heart | Wide hero, How it works, 3-across storefront cards, Google rating, View details / Licence record, parent quotes |
+| Explore | Map + list sheet, compact cards | Map + list side by side, storefront cards |
+
+Detection lives in `src/lib/runtime.ts`: `resolveChannel({ native, widthPx })` writes `html[data-channel=app|website]`. A boot script in `__root` sets the attribute before paint.
 
 Do not stretch the phone card to fill a desktop window. Do not shrink the website card to the phone size.
 
 ## Breakpoint ladder
 
-| Name | Width | Surface |
+| Name | Width | Surface (web) |
 |---|---|---|
-| Phone | 320–767 | App |
-| Tablet / laptop | 768–1279 | Website (drawer until 1280) |
-| Desktop | ≥1280 | Website, full header |
+| Phone | 320–1023 | App |
+| Laptop / desktop | ≥1024 | Website (drawer until 1280) |
+| Native shell | any | App |
 
-`xl` (1280) is the desktop header. Below that: `[logo] [English] [☰]` plus a right-hand drawer (~86vw phones, max 24rem / 380px on iPad).
+`xl` (1280) is the desktop header on the website. Below that on website: `[logo] [English] [☰]` plus a right-hand drawer.
 
 ## Drawer
 
@@ -28,23 +30,20 @@ Do not stretch the phone card to fill a desktop window. Do not shrink the websit
 - Body scroll locked while open
 - Close: overlay, Escape, route change, Android back (`popstate`)
 - Focus trap, `aria-expanded` / `aria-controls`
-- Rows: Explore, Childcare Benefits Program, Saved, About, Meet the Team, Contact, Inbox/Get the App, Parent Sign In (filled), Daycare Sign In (outline), language
 
-Phone-only bottom tabs (Explore · Saved · Inbox · Provider · Account) hide at `md` (768). Compare bar sits above them and uses `env(safe-area-inset-bottom)`.
+App bottom tabs hide on the website channel. Compare bar sits above them and uses `env(safe-area-inset-bottom)`.
 
 ## Trust chips
 
-- <768: horizontal snap carousel
-- 768–1023: 2×2
-- ≥1024: 4-across
+- App: horizontal snap carousel
+- Website 1024–1279: 2×2
+- Website ≥1280: 4-across
 
 ## Search / Explore
 
-- <1024: full-width field, 16px font, navy Search **under** the field
-- Phone: list first, Map/List toggle, map ~45dvh
-- iPad portrait: stacked list then map
-- ≥1024: side-by-side when each pane is wide enough
-- Cards: 1 col <640, 2 col 640–1023, 3 col ≥1024 (1 col beside the map until `xl`)
+- App: list first, Map/List sheet, map ~45dvh
+- Website: side-by-side when each pane is wide enough
+- Cards: compact squares on app; storefront cards on website (1 col beside the map)
 
 ## Safe areas & viewport
 
@@ -59,4 +58,4 @@ Phone-only bottom tabs (Explore · Saved · Inbox · Provider · Account) hide a
 
 320, 360, 375, 390, 412, 430, 768, 820, 834, 1024, 1080, 1180, 1194, 1366, 1440, 1920.
 
-Pass: no horizontal scroll; every header link reachable; homepage desktop look preserved at ≥1280; Explore usable one-handed; rotation and Chrome toolbar show/hide do not break sticky chrome.
+Pass: a reviewer can tell desktop www.kidease.ca is the storefront site and a phone-width or native shell is the compact tabbed app, sharing the same listings.

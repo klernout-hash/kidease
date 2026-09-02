@@ -69,8 +69,8 @@ export function DaycareCard({
 
   return (
     <>
-      {/* Phone / app */}
-      <article className="ke-card relative w-full md:hidden">
+      {/* Phone-width web + Capacitor native */}
+      <article className="ke-card relative hidden w-full [[data-channel=app]_&]:block">
         <Link to="/daycare/$slug" params={{ slug: item.slug }} className="group block">
           <div
             className={cn("rounded-[1.25rem] p-3", live ? "ke-live-pulse" : "ke-muted-pulse")}
@@ -143,10 +143,10 @@ export function DaycareCard({
         </button>
       </article>
 
-      {/* Website */}
+      {/* Laptop / wide web storefront */}
       <article
         className={cn(
-          "relative hidden overflow-hidden rounded-xl bg-surface shadow-card transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lift md:block",
+          "relative overflow-hidden rounded-xl bg-surface shadow-card transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lift [[data-channel=app]_&]:hidden",
           live ? "ke-live-pulse border-2 border-primary" : "border border-border",
         )}
       >
