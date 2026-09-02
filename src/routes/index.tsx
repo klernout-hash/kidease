@@ -259,10 +259,10 @@ function Home() {
 
       <section id="featured" className="bg-surface">
         <div className="ke-gutter mx-auto max-w-6xl py-16">
-          <h2 className="text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
-          <p className="mt-3 hidden max-w-2xl text-muted md:block">{t("featuredBody")}</p>
+          <RoleEnrollChooser heading="h2" className="rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8" />
 
-          <RoleEnrollChooser heading="h3" className="mt-8 rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8" />
+          <h2 className="mt-12 text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
+          <p className="mt-3 hidden max-w-2xl text-muted md:block">{t("featuredBody")}</p>
 
           <form
             className="mt-8 flex flex-col gap-2 lg:flex-row lg:items-center"
