@@ -160,6 +160,18 @@ export default defineConfig(({ command, isPreview }) => ({
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.
             serverDir: "./server",
+            // Vite 8.2 + Rolldown 1.2.x + nitro 3.0.260610-beta splits the
+            // SSR service into mutually-importing chunks and re-exports an
+            // undeclared `ssr_exports` binding. Node then throws
+            // `SyntaxError: Export 'ssr_exports' is not defined in module`
+            // on compileSourceTextModule — every request 500s (GET /,
+            // /api/auth/get-session, POST /_serverFn/…) while `vite build`
+            // still exits 0. Inlining the SSR graph keeps the namespace in
+            // the same module. Remove once Rolldown #10734 / Start #8031
+            // ship a real fix.
+            // @see https://github.com/TanStack/router/issues/8031
+            // @see https://github.com/nitrojs/nitro/issues/4533
+            inlineDynamicImports: true,
           }),
         ]
       : []),
