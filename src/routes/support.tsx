@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
@@ -75,6 +76,7 @@ function Support() {
           </Button>
         </form>
       </main>
+      <SiteFooter />
     </Shell>
   );
 }

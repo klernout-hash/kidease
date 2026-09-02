@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { CalendarCheck, Globe, MapPin, Megaphone, MessageCircle, Smartphone, TrendingUp, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { searchClaimable, startClaim, verifyClaim, type ClaimHit } from "@/lib/server/claims";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -411,6 +412,7 @@ function ClaimPage() {
           </Button>
         </form>
       </main>
+      <SiteFooter />
     </Shell>
   );
 }

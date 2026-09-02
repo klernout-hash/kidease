@@ -32,6 +32,12 @@ export function SiteFooter() {
           <Link to="/privacy" className="hover:text-fg">
             {t("privacy")}
           </Link>
+          <Link to="/terms" className="hover:text-fg">
+            {t("terms")}
+          </Link>
+          <Link to="/support" className="hover:text-fg">
+            {t("support")}
+          </Link>
           <Link to="/privacy" className="hover:text-fg">
             {t("verifyListings")}
           </Link>

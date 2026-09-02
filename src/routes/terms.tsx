@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
+import { SiteFooter } from "@/components/site-footer";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/terms")({ component: Terms });
@@ -57,6 +58,7 @@ function Terms() {
           )}
         </div>
       </main>
+      <SiteFooter />
     </Shell>
   );
 }

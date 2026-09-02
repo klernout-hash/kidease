@@ -2,6 +2,13 @@ import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import {
+  afterPublicAdminNotify,
+  resolveMailReplyTo,
+  sendMailThenPersist,
+  VISITOR_AUTO_REPLY_SUBJECT,
+  VISITOR_AUTO_REPLY_TEXT,
+} from "@/lib/server/notify-mail";
 
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
 const MAIL_FROM = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
@@ -316,7 +323,8 @@ function esc(s: string) {
     .join("");
 }
 
-async function deliverEmail(subject: string, text: string, html: string, to = ADMIN_EMAIL) {
+async function deliverEmail(subject: string, text: string, html: string, to = ADMIN_EMAIL, replyTo?: string) {
+  const reply = resolveMailReplyTo(replyTo, ADMIN_EMAIL);
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
     const res = await fetch("https://api.resend.com/emails", {
@@ -325,7 +333,7 @@ async function deliverEmail(subject: string, text: string, html: string, to = AD
       body: JSON.stringify({
         from: MAIL_FROM,
         to: [to],
-        reply_to: ADMIN_EMAIL,
+        reply_to: reply,
         subject,
         text,
         html,
@@ -345,7 +353,7 @@ async function deliverEmail(subject: string, text: string, html: string, to = AD
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
         from: { email: fromEmail, name: fromName },
-        reply_to: { email: ADMIN_EMAIL },
+        reply_to: { email: reply },
         subject,
         content: [
           { type: "text/plain", value: text },
@@ -356,7 +364,10 @@ async function deliverEmail(subject: string, text: string, html: string, to = AD
     if (!res.ok) throw new Error(`SendGrid ${res.status}: ${await res.text()}`);
     return "sent";
   }
-  console.info("[kidease-mail]", to, subject, "\n", text);
+  console.info("[kidease-mail]", to, subject, "reply_to", reply, "\n", text);
+  if (process.env.VERCEL_ENV === "production") {
+    throw new Error("Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY)");
+  }
   return "logged";
 }
 
@@ -418,6 +429,24 @@ async function sendEnrollReceipt(to: string, name: string, centre?: string) {
   await sendUserConfirmation(to, name, "provider", centre);
 }
 
+async function sendVisitorAutoReply(to: string, name: string) {
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
+  const who = name.split(" ")[0] || "there";
+  const text = `Hi ${who},\n\n${VISITOR_AUTO_REPLY_TEXT}`;
+  const html = `<!doctype html>
+<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
+    <tr><td style="padding:28px;font-size:16px;line-height:1.6;">
+      <p style="margin:0;">Hi ${esc(who)},</p>
+      <p>Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.</p>
+      <p>Thank you</p>
+      <p style="margin:24px 0 0;">Talk soon,<br/>Kyle<br/>KidEase<br/><a href="mailto:kyle@kidease.ca" style="color:#1a3790;">kyle@kidease.ca</a></p>
+    </td></tr>
+  </table>
+</body></html>`;
+  await deliverEmail(VISITOR_AUTO_REPLY_SUBJECT, text, html, to, ADMIN_EMAIL);
+}
+
 async function deliverSms(kind: PlatformKind, title: string, detail?: string) {
   if (!SMS_KINDS.has(kind)) return "skip";
   const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
@@ -473,58 +502,47 @@ export async function notifyPlatform(p: PlatformEvent) {
   await ensureEventsTable();
   const sql = await getSql();
   const id = nid("ev");
-  let status = "queued";
-  let error: string | null = null;
-  try {
-    status = await deliverEmail(title, text, html);
-  } catch (err) {
-    status = "failed";
-    error = err instanceof Error ? err.message : "send failed";
-    console.error("[kidease-mail]", error);
-  }
+  const { status, error } = await sendMailThenPersist({
+    send: () => deliverEmail(title, text, html, ADMIN_EMAIL, p.actorEmail ?? undefined),
+    persist: async ({ status, error }) => {
+      await sql.query(
+        `insert into platform_events (
+      id, kind, daycare_name, address, city, province, slug,
+      provider_name, provider_email, listing_url, email_to, email_status, email_error
+    ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        [
+          id,
+          p.kind,
+          p.daycareName ?? null,
+          p.address ?? p.detail ?? null,
+          p.city ?? null,
+          p.province ?? null,
+          p.slug ?? null,
+          p.actorName ?? null,
+          p.actorEmail ?? null,
+          listingUrl(p.slug),
+          ADMIN_EMAIL,
+          status,
+          error,
+        ],
+      );
+    },
+    onMailError: (msg) => console.error("[kidease-mail]", msg),
+    onPersistError: (e) => console.error("[platform_events]", e),
+  });
   try {
     await deliverSms(p.kind, title, p.detail);
   } catch (err) {
     console.error("[kidease-sms]", err instanceof Error ? err.message : err);
   }
-  if (
-    p.actorEmail &&
-    (p.kind === "account" ||
-      p.kind === "enroll" ||
-      p.kind === "signup" ||
-      p.kind === "claim" ||
-      p.kind === "listing" ||
-      p.kind === "spot_request")
-  ) {
+  const receiptKinds = new Set<PlatformKind>(["account", "signup", "claim", "listing", "spot_request"]);
+  if (p.actorEmail && receiptKinds.has(p.kind)) {
     const confirmKind = p.kind === "spot_request" ? "spot" : p.kind === "account" ? "parent" : "provider";
     await sendUserConfirmation(p.actorEmail, p.actorName || "there", confirmKind, p.daycareName).catch((err) =>
       console.error("[kidease-user-receipt]", err instanceof Error ? err.message : err),
     );
   }
-  await sql
-    .query(
-      `insert into platform_events (
-      id, kind, daycare_name, address, city, province, slug,
-      provider_name, provider_email, listing_url, email_to, email_status, email_error
-    ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-      [
-        id,
-        p.kind,
-        p.daycareName ?? null,
-        p.address ?? p.detail ?? null,
-        p.city ?? null,
-        p.province ?? null,
-        p.slug ?? null,
-        p.actorName ?? null,
-        p.actorEmail ?? null,
-        listingUrl(p.slug),
-        ADMIN_EMAIL,
-        status,
-        error,
-      ],
-    )
-    .catch((e) => console.error("[platform_events]", e));
-  return { id, status };
+  return { id, status, error };
 }
 
 export async function notifyAccountCreated(p: {
@@ -590,7 +608,7 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
         : data.kind === "contact"
           ? `Contact: ${data.subject || "Message"}`
           : "New support message";
-    await notifyPlatform({
+    const result = await notifyPlatform({
       kind: data.kind,
       title,
       actorName: data.name,
@@ -601,7 +619,19 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
         .filter(Boolean)
         .join("\n"),
     });
-    return { ok: true as const };
+    return afterPublicAdminNotify({
+      adminStatus: result.status,
+      adminError: result.error,
+      sendAutoReply: async () => {
+        if (data.kind === "enroll") {
+          await sendEnrollReceipt(data.email, data.name, data.centre);
+        } else {
+          await sendVisitorAutoReply(data.email, data.name);
+        }
+      },
+      onAutoReplyError: (err) =>
+        console.error("[kidease-user-receipt]", err instanceof Error ? err.message : err),
+    });
   });
 
 export const listPlatformEvents = createServerFn({ method: "GET" })
