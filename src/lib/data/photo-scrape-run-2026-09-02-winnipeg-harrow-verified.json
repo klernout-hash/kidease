@@ -1,0 +1,40 @@
+{
+  "run_date": "2026-09-02T23:15:00Z",
+  "city": "Winnipeg",
+  "province": "MB",
+  "verified_official": {
+    "mb-3038": {
+      "name": "Harrow Co-operative Children's Centre Inc.",
+      "address": "550 Harrow Street",
+      "source_url": "https://www.harrowdaycare.ca/",
+      "image_url": "https://images.squarespace-cdn.com/content/v1/6578a7fc5c6fb04cf62919d9/1702432658592-CS21EVQU6T1R2HYWITOY/image-asset.jpeg",
+      "type": "official_website_classroom_kids_toys",
+      "note": "Homepage hero published by the co-op for both 550 Harrow Street and 611 Guelph Street. Kids with ride-on toys in a classroom."
+    },
+    "mb-101459": {
+      "name": "Harrow Co-operative Children's Centre Inc. Infant & Preschool",
+      "address": "611 Guelph Street",
+      "source_url": "https://www.harrowdaycare.ca/",
+      "image_url": "https://images.squarespace-cdn.com/content/v1/6578a7fc5c6fb04cf62919d9/1702432658592-CS21EVQU6T1R2HYWITOY/image-asset.jpeg",
+      "type": "official_website_classroom_kids_toys",
+      "note": "Same operator site lists both addresses together."
+    }
+  },
+  "skipped_no_usable_photo": {
+    "mb-3016": "Harstone 905 Sargent — official site hero is stock kids; head-office image is Google Street View (banned)",
+    "mb-3073": "Harstone Alverstone — same operator site, no location-specific official photo",
+    "mb-102575": "Harstone Clifton — same",
+    "mb-9131": "Harstone Minto — same",
+    "mb-100992": "Harstone Dominion — same",
+    "mb-101646": "Harstone Principal Sparling — same",
+    "mb-101340": "Henderson Early Learning — no official website or published centre photo found",
+    "mb-102970": "Heritage Park Thompson — homepage hero is Wix stock (11062b) kids with backpacks; galleries password-protected",
+    "mb-3074": "Heritage Park Heritage Blvd — same stock hero; do not map",
+    "mb-102965": "Heritage Park Athlone — same",
+    "mb-9677": "Heritage Park Jameswood — same",
+    "mb-101877": "Highbury Early Learning (YMCA-YWCA) — listed on ywinnipeg.ca but no Highbury-specific published photo found",
+    "mb-101768": "Horizon's Access / Horizons Children's Centre Access at 280 Booth — official site exists; no clearly usable non-logo program photo isolated this run"
+  },
+  "jpeg_status": "Harrow source JPEG/WEBP downloaded this run but binary push to public/photos/buildings/ was not completed. Mapping should be added only after square 900px JPEG exists at public/photos/buildings/{id}.jpg.",
+  "next_queue_suggested": ["Inkster Community Child Care 633 Inkster Blvd", "Kids & Company 158 Fort Street", "then remaining Winnipeg after H"]
+}
