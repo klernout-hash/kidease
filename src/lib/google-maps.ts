@@ -26,7 +26,25 @@ export function hasGoogleMapsBrowserKey(): boolean {
 
 const SCRIPT_ID = "kidease-google-maps-js";
 
+/**
+ * Quarterly is the stable raster-friendly channel. The weekly channel (also the
+ * default if `v` is omitted) has been shipping the vector canvas renderer,
+ * which stays blank without a Cloud Map ID / Map Tiles API.
+ */
+export const GOOGLE_MAPS_SCRIPT_VERSION = "quarterly";
+
 let mapsPromise: Promise<typeof google.maps> | null = null;
+
+export function googleMapsScriptSrc(key: string): string {
+  return `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=${GOOGLE_MAPS_SCRIPT_VERSION}`;
+}
+
+/** Classic PNG/JPEG tiles. No Map ID required — only Maps JavaScript API + referrers. */
+export function googleMapsRasterRenderingType(maps: typeof google.maps): "RASTER" {
+  const raster = (maps as typeof maps & { RenderingType?: { RASTER?: "RASTER" } }).RenderingType
+    ?.RASTER;
+  return raster ?? "RASTER";
+}
 
 export function loadGoogleMaps(): Promise<typeof google.maps> {
   if (typeof window === "undefined") {
@@ -80,7 +98,7 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
     script.id = SCRIPT_ID;
     script.async = true;
     script.defer = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly`;
+    script.src = googleMapsScriptSrc(key);
     script.onload = finish;
     script.onerror = () => {
       fail("Google Maps failed to load");

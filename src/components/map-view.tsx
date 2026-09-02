@@ -10,6 +10,7 @@ import { mapZoomForRadius, openDirections, readMapBase, writeMapBase, type MapBa
 import {
   defineHtmlOverlay,
   googleMapTypeId,
+  googleMapsRasterRenderingType,
   GOOGLE_MAPS_BROWSER_ENV,
   hasGoogleMapsBrowserKey,
   loadGoogleMaps,
@@ -92,6 +93,9 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
           gestureHandling: "greedy",
           clickableIcons: false,
           styles: ROAD_STYLES,
+          // Raster tiles paint with Maps JavaScript API alone. Vector canvases
+          // stay gray unless a Cloud Map ID / Map Tiles API is configured.
+          renderingType: googleMapsRasterRenderingType(maps),
         });
         map.addListener("zoom_changed", () => {
           const next = map?.getZoom();

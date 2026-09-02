@@ -19,12 +19,31 @@ describe("listing map uses browser Google Maps key, not Carto/Leaflet", () => {
     assert.doesNotMatch(src, /process\.env\.GOOGLE_PLACES_API_KEY/);
   });
 
+  it("loads the quarterly channel and forces classic raster tiles (no Map ID)", () => {
+    const loader = read("src/lib/google-maps.ts");
+    const view = read("src/components/map-view.tsx");
+    assert.match(loader, /GOOGLE_MAPS_SCRIPT_VERSION = "quarterly"/);
+    assert.match(loader, /v=\$\{GOOGLE_MAPS_SCRIPT_VERSION\}/);
+    assert.doesNotMatch(loader, /GOOGLE_MAPS_SCRIPT_VERSION = "weekly"/);
+    assert.doesNotMatch(loader, /[?&]v=weekly/);
+    assert.match(loader, /RenderingType[\s\S]*RASTER/);
+    assert.match(view, /renderingType:\s*googleMapsRasterRenderingType\(maps\)/);
+    assert.doesNotMatch(loader, /mapId\s*:/);
+    assert.doesNotMatch(view, /mapId\s*:/);
+    assert.doesNotMatch(view, /AdvancedMarker|markerLibrary|PinElement/);
+  });
+
   it("map view no longer requests Leaflet or Carto tiles", () => {
     const src = read("src/components/map-view.tsx");
     assert.match(src, /loadGoogleMaps/);
     assert.doesNotMatch(src, /leaflet/i);
     assert.doesNotMatch(src, /cartocdn|basemaps\.carto|carto\.com/i);
     assert.doesNotMatch(src, /tile\.openstreetmap|arcgisonline/i);
+  });
+
+  it("does not constrain Google Maps raster tile images", () => {
+    const css = read("src/styles.css");
+    assert.match(css, /\.gm-style img[\s\S]*max-width:\s*none\s*!important/);
   });
 
   it("server Places ratings still use the server-only keys", () => {
