@@ -4,7 +4,7 @@ import { Shell } from "@/components/shell";
 import { StatusBadge } from "@/components/status-badge";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { listInbox } from "@/lib/server/family";
+import { listInbox } from "@/lib/server/inbox";
 import { useCopy } from "@/lib/use-copy";
 import type { Conversation } from "@/lib/types";
 
@@ -32,7 +32,11 @@ export function InboxList() {
   return (
     <Shell>
       <main className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="font-display text-3xl">{t("inbox")}</h1>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Message centre</p>
+        <h1 className="mt-2 font-display text-3xl">{t("inbox")}</h1>
+        <p className="mt-2 text-sm text-muted">
+          Threads open when a parent requests a spot. The parent and that daycare share the same conversation.
+        </p>
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {items === null ? (
             <li className="p-6 text-muted">{t("loading")}</li>
