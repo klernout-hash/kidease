@@ -1,1 +1,23 @@
-PLACEHOLDER
+{
+  "mb-3004": {
+    "name": "Fort Rouge Child Care Program Board Inc.",
+    "source_url": "https://frcc.ca/",
+    "image_url": "https://images.squarespace-cdn.com/content/v1/5d94cce263895e4db969f15d/1570122042341-K8F5UJMBVR53HON9JST4/image-asset.jpeg",
+    "type": "official_website_kids_in_program",
+    "scraped": "2026-09-02"
+  },
+  "mb-3005": {
+    "name": "Lakewood Children's Centre Inc.",
+    "source_url": "https://www.lakewoodcc.ca/",
+    "image_url": "https://www.lakewoodcc.ca/assets/img/gallery/service10.jpg",
+    "type": "official_website_gallery",
+    "scraped": "2026-09-02"
+  },
+  "mb-3010": {
+    "name": "Cairns Children's Centre Inc.",
+    "source_url": "http://www.cairnscc.com/",
+    "image_url": "https://images.squarespace-cdn.com/content/v1/548c9d96e4b04ff00dd5ca7b/1783958660282-R1YBXKLYXFFSN687G4MB/IMG_0564.jpg",
+    "type": "official_website_program_photo",
+    "scraped": "2026-09-02"
+  }
+}
