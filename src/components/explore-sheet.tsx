@@ -31,7 +31,7 @@ export function ExploreSheet({
       style={{ height: HEIGHT[snap] }}
     >
       <div
-        className="flex cursor-grab touch-none flex-col items-center pb-2 pt-2 active:cursor-grabbing"
+        className="flex shrink-0 cursor-grab touch-none flex-col items-center pb-2 pt-2 active:cursor-grabbing"
         onPointerDown={(e) => {
           startY.current = e.clientY;
           startSnap.current = snap;
@@ -48,7 +48,7 @@ export function ExploreSheet({
         <span className="mb-2 h-1 w-10 rounded-full bg-border" />
         <p className="text-[13px] font-semibold text-fg">{label}</p>
       </div>
-      <div className={cn("min-h-0 flex-1 overflow-y-auto px-4 pb-4", snap === "peek" && "overflow-hidden")}>
+      <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4", snap === "peek" && "overflow-hidden")}>
         {children}
       </div>
     </div>
