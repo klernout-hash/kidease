@@ -40,12 +40,14 @@ export function isMac(): boolean {
   return mac && !iPad && !/iPhone|iPod/.test(ua);
 }
 
-export async function getDeviceLocation(): Promise<{ lat: number; lng: number } | null> {
+/** Precise location while the app is in use. Never request background location. */
+export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<{ lat: number; lng: number } | null> {
+  const enableHighAccuracy = opts?.precise !== false;
   if (isNative()) {
     try {
       const { Geolocation } = await import("@capacitor/geolocation");
       const pos = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: false,
+        enableHighAccuracy,
         timeout: 12000,
       });
       return { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -58,7 +60,7 @@ export async function getDeviceLocation(): Promise<{ lat: number; lng: number } 
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => resolve(null),
-      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60_000 },
+      { enableHighAccuracy, timeout: 12000, maximumAge: enableHighAccuracy ? 8_000 : 60_000 },
     );
   });
 }
@@ -69,7 +71,7 @@ export function watchDeviceLocation(onFix: (pos: { lat: number; lng: number }) =
     let watchId: string | undefined;
     void import("@capacitor/geolocation").then(({ Geolocation }) => {
       if (stopped) return;
-      void Geolocation.watchPosition({ enableHighAccuracy: false, timeout: 12000 }, (pos) => {
+      void Geolocation.watchPosition({ enableHighAccuracy: true, timeout: 12000 }, (pos) => {
         if (stopped || !pos) return;
         onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       }).then((id) => {
@@ -88,7 +90,7 @@ export function watchDeviceLocation(onFix: (pos: { lat: number; lng: number }) =
   const id = navigator.geolocation.watchPosition(
     (pos) => onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
     () => {},
-    { enableHighAccuracy: false, timeout: 12000, maximumAge: 15_000 },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 8_000 },
   );
   return () => {
     stopped = true;

@@ -3,6 +3,8 @@ import { WINNIPEG, writeSavedOrigin } from "./geo";
 import type { OriginSource } from "./presence";
 import { applyDocumentLocale } from "./languages";
 import type { AgeGroup, Locale } from "./types";
+import { writeDistanceUnit, type DistanceUnit } from "./units";
+import { writeLocationConsent, type LocationConsent } from "./location-consent";
 
 export type SortKey = "distance" | "price" | "rating" | "availability";
 
@@ -31,6 +33,10 @@ type SearchState = {
   setQuery: (q: string) => void;
   liveOnly: boolean;
   setLiveOnly: (v: boolean) => void;
+  distanceUnit: DistanceUnit;
+  setDistanceUnit: (unit: DistanceUnit) => void;
+  locationConsent: LocationConsent;
+  setLocationConsent: (v: LocationConsent) => void;
 };
 
 export const useAppStore = create<SearchState>()((set) => ({
@@ -80,5 +86,15 @@ export const useAppStore = create<SearchState>()((set) => ({
       /* ignore */
     }
     set({ liveOnly });
+  },
+  distanceUnit: "km",
+  setDistanceUnit: (distanceUnit) => {
+    writeDistanceUnit(distanceUnit);
+    set({ distanceUnit });
+  },
+  locationConsent: "unset",
+  setLocationConsent: (locationConsent) => {
+    writeLocationConsent(locationConsent);
+    set({ locationConsent });
   },
 }));

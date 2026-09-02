@@ -1,7 +1,7 @@
 import { BENEFITS_BRIEF, matchBenefitProgram } from "@/lib/benefits-knowledge";
 
 const FACTS = `KidEase (kidease.ca) is a Canada-wide finder for provincially licensed daycares only. Founders Kyle Lernout and Kevin Lamont. Email kyle@kidease.ca.
-Parents: search by GPS or city/postal code, map + list, distance in km, ages, $10-a-day / CWELCC badges, storefront photos, Request a spot, Book a tour, 💬 Contact, Save, Compare. Childcare Benefits Program at https://www.kidease.ca/benefits has every official provincial, territorial, and federal back-link. KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
+Parents: search by GPS or address/city/postal code, map + list, distance in km or miles, ages, $10-a-day / CWELCC badges, storefront photos, Request a spot, Book a tour, 💬 Contact, Save, Compare. Childcare Benefits Program at https://www.kidease.ca/benefits has every official provincial, territorial, and federal back-link. KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
 Providers: Enroll Now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages. Manual enroll form if not in the 20,000+ catalogue.
 Fees: unclaimed listings say fee not confirmed — never invent a price. Live listings (claimed centres) show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
 Privacy: PIPEDA. We do not sell data. Children’s details only for the parent and a centre they contact.
@@ -21,9 +21,9 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["search", "near me", "location", "map", "km", "radius", "find"],
     lines: [
-      "Tap Search Daycares Near Me or Explore. We use your location (or a city/postal code) and list every licensed centre inside the kilometre radius you set in Filters (1–100 km). The map and the count match that circle.",
-      "KidEase is proximity-first: listings show km from you, not just a city name. On a phone the map is first; drag the sheet up for the list.",
-      "If location is blocked, type a city or postal code. Results are licensed centres only.",
+      "Tap Search Daycares Near Me or Explore. We use your location (or an address / city / postal code) and list every licensed centre inside the radius you set in Filters (1–100 km, or miles). The map and the count match that circle.",
+      "KidEase is proximity-first: listings show distance from you, not just a city name. Switch km or miles in Filters. On a phone the map is first; drag the sheet up for the list.",
+      "If location is blocked, type an address or postal code. Precise location is used only while you search — never in the background. Results are licensed centres only.",
     ],
   },
   {

@@ -25,6 +25,7 @@ import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { PriorityPill } from "@/components/priority-pill";
 import { feeBadgeKey, licenseRecordUrl } from "@/lib/licensing";
+import { displayDistance } from "@/lib/units";
 
 type Props = {
   items: DaycareCard[];
@@ -33,6 +34,7 @@ type Props = {
   activeSlug?: string | null;
   onSelect: (slug: string) => void;
   onRelocate?: (pos: { lat: number; lng: number }) => void;
+  onLocate?: () => void;
 };
 
 /** Brand map pin — same smiling teardrop as the KidEase logo. */
@@ -57,7 +59,7 @@ type SlugPin = AnyPin & {
 
 const MAP_PAD = { top: 88, right: 20, bottom: 240, left: 20 };
 
-export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onRelocate }: Props) {
+export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onRelocate, onLocate }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const mapsApiRef = useRef<typeof google.maps | null>(null);
@@ -71,6 +73,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
   onSelectRef.current = onSelect;
 
   const locale = useAppStore((s) => s.locale);
+  const distanceUnit = useAppStore((s) => s.distanceUnit);
   const { t } = useCopy();
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(() =>
@@ -312,8 +315,12 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
   }, [picked, activeSlug, zoom, items]);
 
   async function locateMe() {
+    if (onLocate) {
+      onLocate();
+      return;
+    }
     setLocating(true);
-    const pos = await getDeviceLocation();
+    const pos = await getDeviceLocation({ precise: true });
     setLocating(false);
     if (!pos) return;
     mapRef.current?.panTo({ lat: pos.lat, lng: pos.lng });
@@ -334,7 +341,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
       <div ref={host} className="absolute inset-0" />
 
       {loadError ? (
-        <div className="absolute inset-0 z-[300] grid place-items-center bg-map px-6 text-center">
+        <div className="absolute inset-0 z-[1] grid place-items-center bg-map px-6 text-center">
           <p className="max-w-sm text-sm text-muted">
             Map is temporarily unavailable. Licensed daycares are still listed on this page.
           </p>
@@ -417,7 +424,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
                 </span>
               </div>
               <p className="mt-0.5 text-xs text-muted">
-                {selected.distanceKm} {t("km")}
+                {displayDistance(selected.distanceKm, distanceUnit)} {distanceUnit === "mi" ? t("mi") : t("km")}
                 {" \u00b7 "}
                 {selected.live || selected.availabilityKnown
                   ? selected.spotsTotal > 0
