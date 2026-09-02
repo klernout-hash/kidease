@@ -1,9 +1,13 @@
+import { BENEFITS_BRIEF, matchBenefitProgram } from "@/lib/benefits-knowledge";
+
 const FACTS = `KidEase (kidease.ca) is a Canada-wide finder for provincially licensed daycares only. Founders Kyle Lernout and Kevin Lamont. Email kyle@kidease.ca.
-Parents: search by GPS or city/postal code, map + list, distance in km, ages, $10-a-day / CWELCC badges, Google ratings, storefront photos, Request a spot, Book a tour, 💬 Contact, Save, Compare, Childcare Benefits Program with official provincial links. KidEase does not process subsidy applications.
-Providers: Enroll Now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages, payments to the centre. Manual enroll form if not in the 20,000+ catalogue.
-Fees: unclaimed listings say fee not confirmed — never invent a price. Live listings show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
+Parents: search by GPS or city/postal code, map + list, distance in km, ages, $10-a-day / CWELCC badges, storefront photos, Request a spot, Book a tour, 💬 Contact, Save, Compare. Childcare Benefits Program at https://www.kidease.ca/benefits has every official provincial, territorial, and federal back-link. KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
+Providers: Enroll Now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages. Manual enroll form if not in the 20,000+ catalogue.
+Fees: unclaimed listings say fee not confirmed — never invent a price. Live listings (claimed centres) show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
 Privacy: PIPEDA. We do not sell data. Children’s details only for the parent and a centre they contact.
-App: website + iPhone + Android, same accounts.`;
+App: website + iPhone + Android, same accounts.
+
+${BENEFITS_BRIEF}`;
 
 const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
@@ -12,14 +16,6 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
       "If you run a licensed centre, tap Enroll Now (or Claim). Search your name in our catalogue — over 20,000 licensed centres across Canada. Not listed? Choose Enter name manually and send the form. It goes to kyle@kidease.ca. Claiming is free.",
       "Providers get a free landing page, proximity so nearby parents find you first, in-app chat, and payments paid to you. Start at Enroll Now on the home page or kidease.ca/claim.",
       "To go live: claim your listing, add spots and monthly fees, and upload a storefront photo. Priority listing can pin you higher — that’s optional.",
-    ],
-  },
-  {
-    keys: ["benefit", "subsidy", "10 a day", "10-a-day", "$10", "cwelcc", "affordable", "help paying"],
-    lines: [
-      "Open Childcare Benefits Program in the menu. Each province has an official link. KidEase does not process those applications — the government site does. $10-a-day (or $15 in Alberta for younger kids) is at participating licensed centres.",
-      "Most CWELCC reduced fees are applied at the centre. Extra low-income subsidies are a separate application by province. We link the official pages so you apply in the right place.",
-      "Look for the $10-a-day badge on a listing, then confirm with the centre. For extra subsidy, use the Benefits page for your province.",
     ],
   },
   {
@@ -42,7 +38,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
     keys: ["price", "fee", "cost", "tuition", "month"],
     lines: [
       "We only show a monthly fee when the centre has claimed the listing and entered it. Otherwise you’ll see Fee not confirmed — please ask the centre or use Contact.",
-      "Fees vary by age (infant / toddler / preschool) and by province programs like $10-a-day. Check the listing, then confirm with the provider.",
+      "Fees vary by age (infant / toddler / preschool) and by province programs like $10-a-day. Check the listing, then confirm with the provider. For government help paying, ask me your province or open kidease.ca/benefits.",
     ],
   },
   {
@@ -73,7 +69,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["hello", "hi ", "hey", "bonjour", "thanks", "thank"],
     lines: [
-      "Hi — I can help you find licensed care near you, explain $10-a-day, or help a centre enroll. What do you need?",
+      "Hi — I can help you find licensed care near you, explain $10-a-day and provincial benefits, or help a centre enroll. What do you need?",
       "Welcome to KidEase. Search nearby licensed daycares, or ask me about benefits, claiming a listing, or how spots work.",
     ],
   },
@@ -95,7 +91,14 @@ const AGENT_KEYS = [
 
 export const KIDEASE_SYSTEM = `${FACTS}
 
-You are KidEase Live Chat. Answer only from these facts and the conversation. Never invent fees, open spots, or licence status. Keep replies to 2–4 short sentences. Vary your wording — do not repeat the previous assistant message. After you answer, ask once whether they’d like a live agent? If you already asked about a live agent in this thread, don’t ask again unless they seem stuck. If they want a person, say you’ll connect them.`;
+You are KidEase Live Chat for Canadian parents and daycare providers.
+Answer from these facts, the benefits brief, and the conversation. Prefer the official government URL for that province over a vague “check your province” reply.
+Never invent fees, open spots, licence status, income cut-offs, or wait times that are not in this brief. If an amount might have changed, say so and send the official estimator/apply page.
+KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
+Keep everyday replies to 2–4 short sentences. For benefits / $10-a-day / subsidy questions, 4–8 short sentences is OK: name the program, say if the reduced fee is already on the centre invoice or needs a separate application, paste the official URL, and point to https://www.kidease.ca/benefits for every back-link.
+If the parent does not name a province or city, ask for it, then answer.
+Answer in the same language as the parent (English or French).
+Vary your wording — do not repeat the previous assistant message. After you answer, ask once whether they’d like a live agent? If you already asked about a live agent in this thread, don’t ask again unless they seem stuck. If they want a person, say you’ll connect them.`;
 
 export function wantsLiveAgent(text: string) {
   const q = text.toLowerCase();
@@ -104,11 +107,12 @@ export function wantsLiveAgent(text: string) {
 }
 
 export function localHelpReply(userText: string, priorAssistant: string[]) {
+  const benefit = matchBenefitProgram(userText);
   const q = userText.toLowerCase();
   const hit = REPLIES.find((r) => r.keys.some((k) => q.includes(k)));
-  const pool = hit?.lines ?? [
+  const pool = benefit ? [benefit.reply] : hit?.lines ?? [
     "I can help you search licensed daycares near you, explain $10-a-day and provincial benefits, or enroll a centre. Tell me if you’re a parent or a provider, and your city.",
-    "Try Explore for centres by kilometre, or Childcare Benefits Program for official subsidy links. If you run a daycare, use Enroll Now. What would you like to do?",
+    "Try Explore for centres by kilometre, or Childcare Benefits Program (kidease.ca/benefits) for every official subsidy link. If you run a daycare, use Enroll Now. What would you like to do?",
     "KidEase only lists provincially licensed care. Share your city or postal code and your child’s age and I’ll point you to the next step.",
   ];
   const unused = pool.filter((line) => !priorAssistant.some((p) => p.includes(line.slice(0, 40))));

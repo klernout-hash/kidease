@@ -9,7 +9,7 @@ export const Route = createFileRoute("/benefits")({ component: BenefitsPage });
 
 const PROGRAMS: { key: string; title: CopyKey; body: CopyKey; href: string }[] = [
   { key: "ab", title: "benefitsAbT", body: "benefitsAb", href: "https://www.alberta.ca/child-care-subsidy" },
-  { key: "bc", title: "benefitsBcT", body: "benefitsBc", href: "https://www2.gov.bc.ca/gov/content/family-social-supports/caring-for-young-children/child-care-funding/child-care-benefit" },
+  { key: "bc", title: "benefitsBcT", body: "benefitsBc", href: "https://www.gov.bc.ca/affordablechildcarebenefit" },
   { key: "fed", title: "benefitsFedT", body: "benefitsFed", href: "https://www.canada.ca/en/revenue-agency/services/child-family-benefits/canada-child-benefit.html" },
   { key: "mb", title: "benefitsMbT", body: "benefitsMb", href: "https://www.gov.mb.ca/education/childcare/families/childcare_subsidies.html" },
   { key: "nb", title: "benefitsNbT", body: "benefitsNb", href: "https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/information-for-families/guide.html" },

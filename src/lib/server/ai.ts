@@ -110,7 +110,7 @@ export const askKidEase = createServerFn({ method: "POST" })
         },
         body: JSON.stringify({
           model: "grok-4.5",
-          max_tokens: 420,
+          max_tokens: 700,
           temperature: 0.6,
           messages: [
             { role: "system", content: KIDEASE_SYSTEM },
