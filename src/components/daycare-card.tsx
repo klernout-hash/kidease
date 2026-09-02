@@ -11,7 +11,7 @@ import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
 import { readCompare, toggleCompare } from "@/lib/compare";
 import { PriorityPill } from "@/components/priority-pill";
-import { feeBadgeKey, licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
+import { feeProgramBadgeKey, licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
 import { ListingContact } from "@/components/listing-contact";
 import { listingThumb } from "@/lib/listing-photo";
 
@@ -57,12 +57,15 @@ export function DaycareCard({
     return () => window.removeEventListener("kidease-compare", sync);
   }, [item.id]);
 
+  const feeBadge = feeProgramBadgeKey(item.province);
   const badges = (
     <>
       {item.priority ? <PriorityPill /> : null}
-      <span className="ke-badge-pulse shrink-0 whitespace-nowrap rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold leading-4 text-primary-fg">
-        {t(feeBadgeKey(item.province))}
-      </span>
+      {feeBadge ? (
+        <span className="ke-badge-pulse shrink-0 whitespace-nowrap rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold leading-4 text-primary-fg">
+          {t(feeBadge)}
+        </span>
+      ) : null}
       {live ? (
         <span className="ke-live-badge-pulse shrink-0 whitespace-nowrap rounded-full bg-ok px-2 py-0.5 text-[11px] font-semibold leading-4 text-primary-fg">
           {t("live")}
