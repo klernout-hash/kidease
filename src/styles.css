@@ -402,41 +402,30 @@ html[data-channel="website"] .ke-web-grid > article {
   height: 44px;
 }
 
-.ke-count-cluster {
-  display: grid;
-  place-items: center;
+.ke-logo-cluster {
+  width: 40px;
+  height: 40px;
+}
+.ke-logo-cluster svg {
+  width: 40px;
+  height: 40px;
+}
+.ke-pin-count {
+  position: absolute;
+  top: -2px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
   border-radius: 999px;
   background: #1a3790;
   color: #fff;
-  border: 2.5px solid #fff;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  box-shadow: 0 2px 8px rgba(26, 55, 144, 0.32);
-  cursor: pointer;
-  user-select: none;
-  pointer-events: auto;
-}
-.ke-count-cluster--sm {
-  width: 36px;
-  height: 36px;
-  font-size: 12px;
-}
-.ke-count-cluster--md {
-  width: 44px;
-  height: 44px;
-  font-size: 13px;
-}
-.ke-count-cluster--lg {
-  width: 52px;
-  height: 52px;
-  font-size: 14px;
-}
-.ke-count-cluster--xl {
-  width: 60px;
-  height: 60px;
-  font-size: 15px;
+  border: 2px solid #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(26, 55, 144, 0.35);
 }
 
 .dn-pin {
