@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { DaycareCard } from "@/components/daycare-card";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ChildProfileForm } from "@/components/child-profile-form";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { deleteAccount, getFamily, setRole } from "@/lib/server/family";
+import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { hasCareDetails } from "@/lib/child-profile";
 import { useCopy } from "@/lib/use-copy";
 import { signOut } from "@/lib/auth/client";
@@ -38,6 +40,8 @@ function AccountPage() {
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [picked, setPicked] = useState<Record<string, string[]>>({});
 
   async function load() {
     const f = await getFamily();
@@ -175,7 +179,9 @@ function AccountPage() {
         <div className="mt-6 space-y-4">
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
-            <p className="mt-1 text-sm text-muted">{t("childProfileLead")}</p>
+            <p className="mt-1 text-sm text-muted">
+              Save the child profile, then send it to saved centres. Each centre sees it in Incoming requests and can approve, wait, or decline.
+            </p>
           </div>
           {editing ? (
             <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
@@ -194,39 +200,100 @@ function AccountPage() {
                 {children.length === 0 ? (
                   <li className="p-8 text-center text-muted">{t("noChildren")}</li>
                 ) : (
-                  children.map((c) => (
-                    <li key={c.id} className="p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-medium">
-                            {c.name}
-                            {c.preferredName ? <span className="text-muted"> ({c.preferredName})</span> : null}
-                          </p>
-                          <p className="text-sm text-muted">
-                            {formatAgeLabel(c.birthdate, locale)} · {c.birthdate}
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {c.epiPen ? (
-                              <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs text-danger ring-1 ring-danger/20">
-                                {t("epiPenBadge")}
+                  children.map((c) => {
+                    const selected = picked[c.id] ?? [];
+                    return (
+                      <li key={c.id} className="p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium">
+                              {c.name}
+                              {c.preferredName ? <span className="text-muted"> ({c.preferredName})</span> : null}
+                            </p>
+                            <p className="text-sm text-muted">
+                              {formatAgeLabel(c.birthdate, locale)} · {c.birthdate}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {c.epiPen ? (
+                                <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs text-danger ring-1 ring-danger/20">
+                                  {t("epiPenBadge")}
+                                </span>
+                              ) : null}
+                              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted">
+                                {c.allergies || t("noAllergies")}
                               </span>
-                            ) : null}
-                            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted">
-                              {c.allergies || t("noAllergies")}
-                            </span>
-                            {hasCareDetails(c) ? (
-                              <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs text-ok">
-                                {t("sharedWithCentre")}
-                              </span>
-                            ) : null}
+                              {hasCareDetails(c) ? (
+                                <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs text-ok">
+                                  {t("sharedWithCentre")}
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
+                          <Button size="sm" variant="secondary" onClick={() => setEditing(c)}>
+                            {t("editChild")}
+                          </Button>
                         </div>
-                        <Button size="sm" variant="secondary" onClick={() => setEditing(c)}>
-                          {t("editChild")}
-                        </Button>
-                      </div>
-                    </li>
-                  ))
+                        <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
+                          <p className="text-sm font-medium">Send this profile to a centre</p>
+                          {saved.length === 0 ? (
+                            <p className="mt-2 text-sm text-muted">
+                              Save centres from search first, or open a listing and tap Request a spot.
+                              <Link to="/search" className="ml-1 underline">
+                                Find care
+                              </Link>
+                            </p>
+                          ) : (
+                            <>
+                              <ul className="mt-2 space-y-1.5">
+                                {saved.map((d) => {
+                                  const on = selected.includes(d.id);
+                                  return (
+                                    <li key={d.id}>
+                                      <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm">
+                                        <input
+                                          type="checkbox"
+                                          className="size-4 accent-primary"
+                                          checked={on}
+                                          onChange={() =>
+                                            setPicked((cur) => {
+                                              const next = new Set(cur[c.id] ?? []);
+                                              if (on) next.delete(d.id);
+                                              else next.add(d.id);
+                                              return { ...cur, [c.id]: [...next] };
+                                            })
+                                          }
+                                        />
+                                        <span>{d.name}</span>
+                                        <span className="text-subtle">{d.city}</span>
+                                      </label>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                              <Button
+                                className="mt-3"
+                                size="sm"
+                                disabled={!selected.length || sendingId === c.id}
+                                onClick={() => {
+                                  setSendingId(c.id);
+                                  void shareChildWithCentres({ data: { childId: c.id, daycareIds: selected } })
+                                    .then((res) => {
+                                      toast.success(`Sent ${res.childName} to ${res.sent.length} centre${res.sent.length === 1 ? "" : "s"}.`);
+                                      setTab("bookings");
+                                      return load();
+                                    })
+                                    .catch((err) => toast.error(err instanceof Error ? err.message : "Could not send"))
+                                    .finally(() => setSendingId(null));
+                                }}
+                              >
+                                {sendingId === c.id ? "Sending…" : "Send to selected centres"}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })
                 )}
               </ul>
               <Button onClick={() => setEditing("new")}>{children.length ? t("newChild") : t("addChild")}</Button>
