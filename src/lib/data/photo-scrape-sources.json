@@ -1,0 +1,38 @@
+{
+  "mb-1052": {
+    "id": "mb-1052",
+    "name": "YMCA-YWCA of Winnipeg South Child Care Centre",
+    "address": "5 Fermor Avenue, Winnipeg, MB",
+    "source_page": "https://www.ywinnipeg.ca/locations/south-community-hub",
+    "source_image": "https://www.ywinnipeg.ca/sites/default/files/2022-10/dsc_0332-sm.jpg",
+    "kind": "building exterior",
+    "file": "/photos/buildings/mb-1052.jpg"
+  },
+  "mb-1054": {
+    "id": "mb-1054",
+    "name": "Sugar N' Spice Kiddie Haven Inc.",
+    "address": "123 Red River Boulevard W, Winnipeg, MB",
+    "source_page": "http://www.sugarnspicedaycare.ca/locations/riverbend-school/",
+    "source_image": "http://www.sugarnspicedaycare.ca/wp-content/uploads/2026/01/RB-playground.jpg",
+    "kind": "playground at Riverbend School site",
+    "file": "/photos/buildings/mb-1054.jpg"
+  },
+  "mb-1057": {
+    "id": "mb-1057",
+    "name": "Nor'West Early Learning and Child Care Centre",
+    "address": "105 Lucas Avenue, Winnipeg, MB",
+    "source_page": "https://norwestcoop.ca/locations/day-care-centre/",
+    "source_image": "https://norwestcoop.ca/wp-content/uploads/2016/12/child_care_centre.jpg",
+    "kind": "classroom interior",
+    "file": "/photos/buildings/mb-1057.jpg"
+  },
+  "mb-1061": {
+    "id": "mb-1061",
+    "name": "Univillage Preschool and Infant Centre Inc.",
+    "address": "100-99 Dalhousie Drive, Winnipeg, MB",
+    "source_page": "https://www.univillagecentre.ca/",
+    "source_image": "https://static.wixstatic.com/media/8cf122_cdca003d62f349faad6494d8409477cb~mv2.jpg",
+    "kind": "classroom interior",
+    "file": "/photos/buildings/mb-1061.jpg"
+  }
+}

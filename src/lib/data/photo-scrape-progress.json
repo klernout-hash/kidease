@@ -1,14 +1,32 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-1051",
-  "mapped_count": 40,
-  "skipped_no_photo_this_run": ["mb-1038", "mb-1039", "mb-1042", "mb-1045", "mb-1046", "mb-1048", "mb-1051"],
-  "next_queue": ["mb-1052", "mb-1053", "mb-1054", "mb-1055", "mb-1056", "mb-1057", "mb-1059", "mb-1060", "mb-1061", "mb-1062"],
+  "last_id_processed": "mb-1062",
+  "mapped_count": 44,
+  "skipped_no_photo_this_run": [
+    "mb-1053",
+    "mb-1055",
+    "mb-1056",
+    "mb-1059",
+    "mb-1060",
+    "mb-1062"
+  ],
+  "next_queue": [
+    "mb-1063",
+    "mb-1064",
+    "mb-1070",
+    "mb-1074",
+    "mb-1140",
+    "mb-1144",
+    "mb-1145",
+    "mb-1147",
+    "mb-1148",
+    "mb-1153"
+  ],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 40,
+  "winnipeg_mapped": 44,
   "national_total": 20846,
-  "national_mapped": 40,
-  "updated": "2026-09-02T09:05:50Z",
-  "notes": "Added 3 official photos this run: RRC Early Childhood Centre (mb-1040), Discovery Children's Centre (mb-1043), Seven Oaks Child Day Care (mb-1050). JPEGs must be copied to public/photos/buildings/."
+  "national_mapped": 44,
+  "updated": "2026-09-02T10:09:19Z",
+  "notes": "Added 4 official photos this run: YMCA-YWCA Winnipeg South Child Care (mb-1052) building from ywinnipeg.ca; Sugar N Spice Riverbend playground (mb-1054) from sugarnspicedaycare.ca; NorWest Early Learning classroom (mb-1057) from norwestcoop.ca; Univillage Preschool classroom (mb-1061) from univillagecentre.ca. Skipped Explorers, Sunny Mountain, Sunnyside, Transcona Jaycees, Universal Day Care, Victor Play — no usable official photo found. JPEGs in public/photos/buildings/."
 }
