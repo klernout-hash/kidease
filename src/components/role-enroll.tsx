@@ -21,7 +21,7 @@ export function RoleEnrollChooser({
     <div className={cn("w-full", className)}>
       <Title
         id={titleId}
-        className="text-center text-[clamp(1.35rem,3vw,1.75rem)] text-fg"
+        className="text-center text-[clamp(1.75rem,4vw,2.25rem)] text-fg"
       >
         {t("rolePickTitle")}
       </Title>
