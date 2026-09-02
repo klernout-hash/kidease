@@ -1,27 +1,13 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-1261",
-  "mapped_count": 53,
+  "last_id_processed": "mb-1298",
+  "mapped_count": 55,
   "skipped_no_photo_this_run": [
-    "mb-1231",
-    "mb-1233",
-    "mb-1240",
-    "mb-1243",
-    "mb-1247",
-    "mb-1249",
-    "mb-1251",
-    "mb-1257",
-    "mb-1258",
-    "mb-1261"
-  ],
-  "next_queue": [
-    "mb-1263",
     "mb-1264",
     "mb-1270",
     "mb-1272",
     "mb-1275",
-    "mb-1276",
     "mb-1278",
     "mb-1284",
     "mb-1286",
@@ -29,10 +15,22 @@
     "mb-1292",
     "mb-1298"
   ],
+  "next_queue": [
+    "mb-1300",
+    "mb-1305",
+    "mb-1310",
+    "mb-1315",
+    "mb-1320",
+    "mb-1325",
+    "mb-1330",
+    "mb-1335",
+    "mb-1340",
+    "mb-1345"
+  ],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 53,
+  "winnipeg_mapped": 55,
   "national_total": 20846,
-  "national_mapped": 53,
-  "updated": "2026-09-02T17:30:00Z",
-  "notes": "Run processed 12 queued Winnipeg centres (mb-1231 to mb-1261). New official photos mapped: mb-1244 Stanley Knowles Pre-School playground from skps.ca; mb-1255 Provincial Employees Care for Kids Portage classroom from provempdaycare.com/portage. Skipped 10 with no usable official photo of that specific site. Placeholders retained. JPEGs in Drive folder KidEase listing photos and local artifacts."
+  "national_mapped": 55,
+  "updated": "2026-09-02T17:35:00Z",
+  "notes": "Hourly run continued Winnipeg. Added mb-1263 Panda Bear Day Care from pandabearwpg.ca official gallery photo of kids in program; mb-1276 Casa Montessori Fennell from montessoriandorff.ca/fennell classroom photo. Confirmed prior mappings. Skipped remaining in queue lacking usable official site photos. JPEGs in local artifacts/public/photos/buildings/."
 }
