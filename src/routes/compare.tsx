@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { BuildingPhoto } from "@/components/building-photo";
+import { listingThumb } from "@/lib/listing-photo";
 import { Button } from "@/components/ui/button";
 import { getDaycaresByIds } from "@/lib/server/daycares";
 import { clearCompare, readCompare, toggleCompare } from "@/lib/compare";
@@ -46,7 +47,7 @@ function ComparePage() {
                   <th className="p-2" />
                   {items.map((d) => (
                     <th key={d.id} className="p-2 align-bottom">
-                      <BuildingPhoto src={d.photos[0] ?? "/photos/storefront-placeholder.jpg"} className="mb-2 aspect-[4/3] w-full rounded-lg object-cover" />
+                      <BuildingPhoto src={listingThumb(d.photos)} className="mb-2 aspect-[4/3] w-full rounded-lg object-cover" />
                       <Link to="/daycare/$slug" params={{ slug: d.slug }} className="font-semibold hover:underline">
                         {locale === "fr" ? d.nameFr : d.name}
                       </Link>

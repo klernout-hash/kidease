@@ -13,6 +13,7 @@ import { readCompare, toggleCompare } from "@/lib/compare";
 import { PriorityPill } from "@/components/priority-pill";
 import { feeBadgeKey, licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
 import { ListingContact } from "@/components/listing-contact";
+import { listingThumb } from "@/lib/listing-photo";
 
 export function DaycareCard({
   item,
@@ -28,7 +29,7 @@ export function DaycareCard({
 }) {
   const { t, locale } = useCopy();
   const name = decodeHtml(locale === "fr" ? item.nameFr : item.name);
-  const building = item.photos.find((p) => !p.includes("-logo")) ?? item.photos[0] ?? "/photos/storefront-placeholder.jpg";
+  const building = listingThumb(item.photos);
   const live = Boolean(item.live);
   const known = Boolean(item.availabilityKnown || live);
   const open = item.spotsTotal > 0;

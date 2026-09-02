@@ -2,6 +2,7 @@ import { nextMonths } from "./utils";
 import realStorefrontsJson from "./data/real-storefronts.json";
 import wpgStorefrontsJson from "./data/storefronts.json";
 import operatorFactsJson from "./data/operator-facts.json";
+import { listingPhotosFor } from "./listing-photo";
 import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
 
 export type CatalogDaycare = {
@@ -126,25 +127,12 @@ function operatorFactFor(raw: RawCentre): OperatorFact | undefined {
   return undefined;
 }
 
-/* photos-v4: never use Street View */
-const PLACEHOLDER = "/photos/storefront-placeholder.jpg";
+/* photos-v4: never use Street View. Official operator photos live in real-storefronts.json. */
 const BUILDINGS = realStorefrontsJson as Record<string, string>;
 const WPG = wpgStorefrontsJson as Record<string, string>;
-const BUILDING_ON_DISK = new Set([
-  "mb-1150",
-  "mb-1252",
-  "mb-2169",
-  "mb-3096",
-  "mb-101384",
-  "mb-101850",
-  "mb-102137",
-]);
 
 function listingPhotos(raw: RawCentre): string[] {
-  const logos = (raw.photos ?? []).filter((p) => p.includes("-logo"));
-  const building = BUILDING_ON_DISK.has(raw.id) ? BUILDINGS[raw.id] : undefined;
-  const storefront = building || WPG[raw.id] || PLACEHOLDER;
-  return [storefront, ...logos];
+  return listingPhotosFor(raw.id, raw.photos, BUILDINGS, WPG);
 }
 
 function inferAges(min?: number, max?: number) {
