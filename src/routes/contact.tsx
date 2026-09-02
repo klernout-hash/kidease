@@ -9,9 +9,16 @@ import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
 import type { CopyKey } from "@/lib/copy";
 
-export const Route = createFileRoute("/contact")({ component: Contact });
+export const Route = createFileRoute("/contact")({
+  validateSearch: (s: Record<string, unknown>) => {
+    if (s.intent === "parent") return { intent: "parent" as const };
+    return {};
+  },
+  component: Contact,
+});
 
 const SUBJECTS: CopyKey[] = [
+  "subjectCare",
   "subjectGeneral",
   "subjectListing",
   "subjectTech",
@@ -21,9 +28,11 @@ const SUBJECTS: CopyKey[] = [
 
 export function Contact() {
   const { t } = useCopy();
+  const search = Route.useSearch();
+  const isParent = search.intent === "parent";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [subject, setSubject] = useState<CopyKey>("subjectGeneral");
+  const [subject, setSubject] = useState<CopyKey>(isParent ? "subjectCare" : "subjectGeneral");
   const [body, setBody] = useState("");
 
   const [busy, setBusy] = useState(false);
@@ -32,8 +41,15 @@ export function Contact() {
     e.preventDefault();
     setBusy(true);
     try {
+      const label = t(subject);
       await submitPublicMessage({
-        data: { kind: "contact", name, email, subject: t(subject), body },
+        data: {
+          kind: "contact",
+          name,
+          email,
+          subject: isParent ? `${t("roleParentTitle")} — ${label}` : label,
+          body,
+        },
       });
       toast.success(t("contactSent"));
       setBody("");
@@ -49,15 +65,19 @@ export function Contact() {
     <Shell bare>
       <main className="ke-gutter mx-auto max-w-lg py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("contact")}</p>
-        <h1 className="mt-2 text-4xl md:text-5xl">{t("contactTitle")}</h1>
-        <p className="mt-6 text-muted">{t("contactIntro")}</p>
+        <h1 className="mt-2 text-4xl md:text-5xl">{isParent ? t("parentContactTitle") : t("contactTitle")}</h1>
+        <p className="mt-6 text-muted">{isParent ? t("parentContactIntro") : t("contactIntro")}</p>
 
-        <div className="mt-8 rounded-xl bg-surface p-5 text-center ring-1 ring-border">
-          <p className="text-base font-semibold">{t("daycareEnrollLead")}</p>
-          <Button asChild size="lg" className="mt-4 w-full">
-            <Link to="/claim">{t("enrollNow")}</Link>
-          </Button>
-        </div>
+        {isParent ? null : (
+          <div className="mt-8 rounded-xl bg-surface p-5 text-center ring-1 ring-border">
+            <p className="text-base font-semibold">{t("daycareEnrollLead")}</p>
+            <Button asChild size="lg" className="mt-4 w-full">
+              <Link to="/claim" hash="enroll">
+                {t("enrollNow")}
+              </Link>
+            </Button>
+          </div>
+        )}
 
         <form className="mt-8 space-y-3" onSubmit={send}>
           <label className="block text-sm font-medium">

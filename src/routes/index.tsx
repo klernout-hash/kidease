@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
@@ -18,6 +18,7 @@ import { DaycareCard } from "@/components/daycare-card";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { CompareBar } from "@/components/compare-bar";
+import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMyRole } from "@/lib/server/family";
 import { searchDaycares } from "@/lib/server/daycares";
@@ -66,6 +67,7 @@ function Home() {
   const [busy, setBusy] = useState(false);
   const [featured, setFeatured] = useState<Card[]>([]);
   const [recent, setRecent] = useState<Card[]>([]);
+  const [enrollOpen, setEnrollOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -179,11 +181,11 @@ function Home() {
               <Button size="lg" variant="secondary" className="min-h-12 w-full sm:w-auto" asChild>
                 <a href="#how">{t("howItWorksCta")}</a>
               </Button>
-              <Button size="lg" variant="secondary" className="min-h-12 w-full sm:w-auto" asChild>
-                <Link to="/claim">{t("enrollNow")}</Link>
+              <Button size="lg" variant="secondary" className="min-h-12 w-full sm:w-auto" onClick={() => setEnrollOpen(true)}>
+                {t("enrollNow")}
               </Button>
             </div>
-            <p className="mt-3 text-sm text-muted">{t("daycareEnrollLead")}</p>
+            <p className="mt-3 text-sm text-muted">{t("enrollBothLead")}</p>
             {manual ? (
               <form
                 className="mt-5 max-w-md"
@@ -259,6 +261,8 @@ function Home() {
         <div className="ke-gutter mx-auto max-w-6xl py-16">
           <h2 className="text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
           <p className="mt-3 hidden max-w-2xl text-muted md:block">{t("featuredBody")}</p>
+
+          <RoleEnrollChooser heading="h3" className="mt-8 rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8" />
 
           <form
             className="mt-8 flex flex-col gap-2 lg:flex-row lg:items-center"
@@ -366,14 +370,15 @@ function Home() {
         <div className="ke-gutter mx-auto max-w-3xl py-16 text-center">
           <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
           <p className="mx-auto mt-4 max-w-xl text-primary-fg/90">{t("finalCtaBody")}</p>
-          <Button size="lg" variant="secondary" className="mt-8" asChild>
-            <Link to="/claim">{t("enrollNow")}</Link>
+          <Button size="lg" variant="secondary" className="mt-8" onClick={() => setEnrollOpen(true)}>
+            {t("enrollNow")}
           </Button>
         </div>
       </section>
 
       <SiteFooter />
       <CompareBar />
+      <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />
     </Shell>
   );
 }

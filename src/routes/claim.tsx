@@ -68,6 +68,17 @@ function ClaimPage() {
   }, [id0, user]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash !== "#enroll") return;
+    const el = document.getElementById("enroll");
+    if (!el) return;
+    const tmr = window.setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+    return () => window.clearTimeout(tmr);
+  }, []);
+
+  useEffect(() => {
     function onDoc(e: MouseEvent) {
       if (!box.current?.contains(e.target as Node)) setOpen(false);
     }
@@ -302,7 +313,7 @@ function ClaimPage() {
           </>
         )}
 
-        <form onSubmit={sendEnroll} className="mt-12 space-y-3 rounded-xl bg-surface p-5 ring-1 ring-border">
+        <form id="enroll" onSubmit={sendEnroll} className="mt-12 scroll-mt-24 space-y-3 rounded-xl bg-surface p-5 ring-1 ring-border">
           <h2 className="font-display text-2xl">{t("enrollFormTitle")}</h2>
           <p className="text-sm text-muted">{t("enrollFormLead")}</p>
           <p className="text-sm font-semibold">{t("daycareEnrollLead")}</p>
