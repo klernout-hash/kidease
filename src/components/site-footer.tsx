@@ -51,6 +51,11 @@ export function SiteFooter() {
             {t("mbChildcare")}
           </a>
         </nav>
+        <p className="mt-5 text-sm text-muted">
+          App Store · Coming soon
+          <span className="mx-2 text-subtle">·</span>
+          Google Play · Coming soon
+        </p>
         <p className="mt-4 text-xs text-subtle">{t("neverSell")}</p>
         <a href="mailto:kyle@kidease.ca" className="mt-3 inline-block text-xs text-muted hover:text-fg">
           kyle@kidease.ca
