@@ -1,23 +1,9 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-1046",
+  "last_id_processed": "mb-1076",
   "mapped_count": 49,
   "skipped_no_photo_this_run": [
-    "mb-1023",
-    "mb-1024",
-    "mb-1026",
-    "mb-1029",
-    "mb-1031",
-    "mb-1034",
-    "mb-1036",
-    "mb-1038",
-    "mb-1039",
-    "mb-1042",
-    "mb-1045",
-    "mb-1046"
-  ],
-  "next_queue": [
     "mb-1048",
     "mb-1051",
     "mb-1053",
@@ -31,10 +17,24 @@
     "mb-1070",
     "mb-1076"
   ],
+  "next_queue": [
+    "mb-1140",
+    "mb-1144",
+    "mb-1145",
+    "mb-1148",
+    "mb-1153",
+    "mb-1157",
+    "mb-1159",
+    "mb-1160",
+    "mb-1169",
+    "mb-1172",
+    "mb-1174",
+    "mb-1189"
+  ],
   "winnipeg_total": 428,
   "winnipeg_mapped": 49,
   "national_total": 20846,
   "national_mapped": 49,
-  "updated": "2026-09-02T13:21:04Z",
-  "notes": "Run processed 12 Winnipeg centres after mb-1022. No new official photos mapped. Fairlane site uses stock banner. FHELC IRCOM site not confirmed on current locations page. Placeholders kept."
+  "updated": "2026-09-02T14:45:36Z",
+  "notes": "Run processed 12 queued centres after mb-1046. No new official photos mapped. SCDN and UDC and Munroe ECEC official sites use generic stock banners/room thumbnails (Unsplash/stock kids, not this-centre rooms). Homestead Sunny Mountain blocked. Transcona Jaycees childcare.link 404. mb-1076 is Dauphin not Winnipeg; skipped here and remains for Dauphin pass. Placeholders kept."
 }

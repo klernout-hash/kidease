@@ -1,0 +1,21 @@
+{
+  "run": "2026-09-02-winnipeg-mb-1048-1076",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [],
+  "mapped_count_after": 49,
+  "skipped": [
+    {"id": "mb-1048", "name": "St. Vital Child Care Co-op Inc.", "address": "15 St. Michael Road, Winnipeg, MB", "reason": "Directories/charity listings only; no official website or gallery."},
+    {"id": "mb-1051", "name": "Shepherd's Care Day Nursery Inc.", "address": "1188 Jefferson Avenue, Winnipeg, MB", "reason": "Official site scdndaycare.ca uses Unsplash/stock kid photos only; not used."},
+    {"id": "mb-1053", "name": "Explorer's Children's Centre Inc.", "address": "1466 William Avenue W, Winnipeg, MB", "reason": "Directory/MapQuest only; no official Winnipeg gallery."},
+    {"id": "mb-1055", "name": "Sunny Mountain Day Care Centre (1985) Inc.", "address": "Unit 4-1965 Main Street, Winnipeg, MB", "reason": "sunnymountaindaycare.ca and weebly 404; homestead Cloudflare-blocked; no extractable official photo of this Main Street site."},
+    {"id": "mb-1056", "name": "Sunnyside Child Care Centre Inc.", "address": "530 Dieppe Road, Winnipeg, MB", "reason": "Charity listing at 520/530 Dieppe; no official website photos."},
+    {"id": "mb-1059", "name": "Transcona Jaycees Day Care Centre", "address": "1800 Winona Street, Winnipeg, MB", "reason": "tjdcc.childcare.link / Fastoche waitlist 404; no public gallery."},
+    {"id": "mb-1060", "name": "Universal Day Care Centre Inc.", "address": "20 Donnelly Street, Winnipeg, MB", "reason": "Official myudc.net Room24-27 images are generic stock (bubbles field, play-dough, tropical playground, posed drawing); not used."},
+    {"id": "mb-1062", "name": "Victor Play Centre", "address": "766 Victor Street, Winnipeg, MB", "reason": "victorplaycentreinc.ca unreachable; communities4families listing only."},
+    {"id": "mb-1063", "name": "Wild Honey Children's Centre", "address": "811 St. Paul Avenue, Winnipeg, MB", "reason": "Job posting/directories only; sister Wild Strawberry site is a different centre."},
+    {"id": "mb-1064", "name": "Munroe Early Childhood Education Centre Inc.", "address": "186-505 Chalmers Avenue, Winnipeg, MB", "reason": "Official munroeececentre.ca confirms Chalmers/Elmwood High address but hero image is stock classroom filename classroom-child-care-center-colorful-blocks-toys.png; not used."},
+    {"id": "mb-1070", "name": "Little Bo-Peep Early Learning Centre Inc.", "address": "906 Cottonwood Road, Winnipeg, MB", "reason": "Same address as Little People's Place; no official website or gallery."},
+    {"id": "mb-1076", "name": "Peter Pan Day Nursery Inc.", "address": "165 Kerr Avenue, Dauphin, MB", "reason": "Queued with Winnipeg ids but city is Dauphin; deferred to Dauphin pass. No Winnipeg photo assigned."}
+  ]
+}
