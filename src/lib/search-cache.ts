@@ -27,7 +27,7 @@ export function readSearchCache(key: string): DaycareCard[] | null {
     if (!raw) return null;
     const env = JSON.parse(raw) as Envelope;
     if (env.key !== key || !Array.isArray(env.rows)) return null;
-    if (Date.now() - env.at > 10 * 60_000) return null;
+    if (Date.now() - env.at > 60_000) return null;
     return env.rows;
   } catch {
     return null;
@@ -40,5 +40,14 @@ export function writeSearchCache(key: string, rows: DaycareCard[]) {
     sessionStorage.setItem(KEY, JSON.stringify({ key, at: Date.now(), rows }));
   } catch {
     /* quota */
+  }
+}
+
+export function clearSearchCache() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
   }
 }
