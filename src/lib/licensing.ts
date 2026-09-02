@@ -125,3 +125,15 @@ export function opensEarly(hours: string) {
 export function staysLate(hours: string, amenities: string) {
   return hasAmenity(amenities, "extended") || hasAmenity(amenities, "evenings") || /18:|19:|6 p\.?m|7 p\.?m/i.test(hours);
 }
+
+/**
+ * Hide sequential source IDs (bc-1 → "1") so cards only show a real provincial licence #.
+ * Ontario numbers are 4–7 digits or P-codes; those stay visible.
+ */
+export function officialLicenceNumber(raw?: string | null, id?: string | null): string | null {
+  const n = (raw || "").trim();
+  if (!n || n === "—" || n.toLowerCase() === "unknown") return null;
+  const tail = (id || "").split("-").pop() || "";
+  if (/^\d{1,3}$/.test(n) && (!id || n === tail)) return null;
+  return n;
+}
