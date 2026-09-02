@@ -10,7 +10,7 @@ import { distanceKm as kmBetween, proximityBand } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { readCompare, toggleCompare } from "@/lib/compare";
 import { PriorityPill } from "@/components/priority-pill";
-import { feeBadgeKey, licenseRecordUrl } from "@/lib/licensing";
+import { feeBadgeKey, licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
 import { ListingContact } from "@/components/listing-contact";
 
 export function DaycareCard({
@@ -31,7 +31,7 @@ export function DaycareCard({
   const live = Boolean(item.live);
   const known = Boolean(item.availabilityKnown || live);
   const open = item.spotsTotal > 0;
-  const feeOk = live && item.fromPrice > 0;
+  const feeOk = (live || Boolean(item.feeConfirmed)) && item.fromPrice > 0;
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
@@ -39,7 +39,8 @@ export function DaycareCard({
   const bandLabel =
     band === "walk" ? t("bandWalk") : band === "nearby" ? t("bandNearby") : band === "commute" ? t("bandCommute") : t("bandDrive");
   const [picked, setPicked] = useState(false);
-  const licenceHref = licenseRecordUrl(item.province, item.name, item.licenseNumber);
+  const licenceNo = officialLicenceNumber(item.licenseNumber, item.id);
+  const licenceHref = licenseRecordUrl(item.province, item.name, licenceNo);
   const kmLine = located ? `${distanceKm} ${t("kmAway")}` : t("locating");
   const kmWeb = located ? `${distanceKm} ${t("kmAway")} · ${bandLabel}` : t("locating");
 
@@ -101,6 +102,11 @@ export function DaycareCard({
                 <span className="text-muted">{t("agesUnknown")}</span>
               )}
             </p>
+            {licenceNo ? (
+              <p className="truncate text-[12px] leading-5 text-muted tabular-nums">
+                {t("license")} {licenceNo}
+              </p>
+            ) : null}
             {known && open ? (
               <p className="flex items-baseline justify-between gap-2 text-[13px] leading-5">
                 <span className="text-muted">{t("spotsAvailable")}</span>
@@ -162,6 +168,11 @@ export function DaycareCard({
                 <p className="text-muted">{t("agesUnknown")}</p>
               )}
             </div>
+            {licenceNo ? (
+              <p className="truncate text-[12px] leading-5 text-muted tabular-nums">
+                {t("license")} {licenceNo}
+              </p>
+            ) : null}
             <div className="flex items-center justify-between pt-1 text-sm">
               <span className="inline-flex items-center gap-1 text-muted">
                 <MapPin className="size-3.5" />
