@@ -1,0 +1,21 @@
+{
+  "run": "2026-09-02-winnipeg-mb-1023-1046",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [],
+  "mapped_count_after": 49,
+  "skipped": [
+    {"id": "mb-1023", "name": "Children at the Centre", "address": "60 Pearl Street, Winnipeg, MB", "reason": "HSC campus rooms; no official centre website photo."},
+    {"id": "mb-1024", "name": "Stars of Promise Inc.", "address": "114-1100 Concordia Avenue, Winnipeg, MB", "reason": "Directory only."},
+    {"id": "mb-1026", "name": "Kidi-Garden Day Nurseries Inc.", "address": "172 Smithfield Avenue, Winnipeg, MB", "reason": "No official website."},
+    {"id": "mb-1029", "name": "Learning Tree Day Nursery", "address": "7-1575 Regent Avenue W, Winnipeg, MB", "reason": "Could not confirm Winnipeg official gallery."},
+    {"id": "mb-1031", "name": "Little People's Place Inc.", "address": "906 Cottonwood Road, Winnipeg, MB", "reason": "No Winnipeg official site."},
+    {"id": "mb-1034", "name": "Maples DayCare Inc.", "address": "27 Anglia Avenue, Winnipeg, MB", "reason": "Directory only."},
+    {"id": "mb-1036", "name": "Anne Ross Day Nursery", "address": "511 King Street, Winnipeg, MB", "reason": "Mount Carmel operator confirmed; no extractable centre photo."},
+    {"id": "mb-1038", "name": "Explore and Discover Early Learning Centre Inc.", "address": "251 Edgeland Boulevard, Winnipeg, MB", "reason": "explorediscover.ca 503; other cities excluded."},
+    {"id": "mb-1039", "name": "Freight House Early Learning and Care Inc. Infant and IRCOM Site", "address": "470 Pacific Avenue, Winnipeg, MB", "reason": "FHELC homepage is stock; 470 Pacific not on current locations list."},
+    {"id": "mb-1042", "name": "River Avenue Co-operative Day Nursery Inc.", "address": "127 Bell Avenue, Winnipeg, MB", "reason": "No confirmed live gallery."},
+    {"id": "mb-1045", "name": "Fairlane Children's Centre Incorporated", "address": "369 Fairlane Avenue, Winnipeg, MB", "reason": "Official site exists; banner is generic stock, not used."},
+    {"id": "mb-1046", "name": "Care and Share Children's Centre Inc.", "address": "22 Strauss Drive, Winnipeg, MB", "reason": "Waitlist platform only, no photos."}
+  ]
+}
