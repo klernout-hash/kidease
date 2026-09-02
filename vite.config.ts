@@ -144,6 +144,8 @@ export default defineConfig(({ command, isPreview }) => ({
     allowedHosts: true,
   },
   resolve: { tsconfigPaths: true },
+  ssr: { external: ["sharp"] },
+  optimizeDeps: { exclude: ["sharp"] },
   plugins: [
     pgliteBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.

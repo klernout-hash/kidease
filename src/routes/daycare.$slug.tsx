@@ -169,7 +169,7 @@ function Listing() {
                 className="size-full object-contain bg-surface p-10"
               />
             ) : (
-              <BuildingPhoto src={photos[photo] ?? "/photos/storefront-placeholder.jpg"} className="size-full object-cover" />
+              <BuildingPhoto eager src={photos[photo] ?? "/photos/storefront-placeholder.jpg"} sizes="(max-width: 767px) 100vw, 720px" width={768} height={576} className="size-full object-cover" />
             )}
             {photos.length > 1 ? (
               <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">

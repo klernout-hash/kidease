@@ -115,7 +115,10 @@ export function HelpBot() {
 /** Mount after hydration so SSR never loads the chat server module. */
 export function LiveChatSlot() {
   const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
+  useEffect(() => {
+    const idle = window.setTimeout(() => setReady(true), 2500);
+    return () => window.clearTimeout(idle);
+  }, []);
   if (!ready) return null;
   return <HelpBot />;
 }

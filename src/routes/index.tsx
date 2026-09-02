@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
   Camera,
@@ -17,13 +17,12 @@ import { ListingRail } from "@/components/listing-rail";
 import { DaycareCard } from "@/components/daycare-card";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
-import { CompareBar } from "@/components/compare-bar";
 import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
+import { HeroPlayroom } from "@/components/building-photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMyRole } from "@/lib/server/family";
-import { searchDaycares } from "@/lib/server/daycares";
+import { featuredDaycares } from "@/lib/server/daycares";
 import { geocode, reverseGeocode, WINNIPEG } from "@/lib/geo";
-import { fsaOf } from "@/lib/proximity";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
@@ -31,10 +30,16 @@ import { cn } from "@/lib/utils";
 import { readRecent } from "@/lib/recent";
 import type { DaycareCard as Card } from "@/lib/types";
 
+const CompareBar = lazy(() => import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })));
+
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>) => {
     const change = s.change === "1" || s.change === true;
     return change ? { change: "1" as const } : {};
+  },
+  loader: async () => {
+    const featured = await featuredDaycares({ data: { lat: WINNIPEG.lat, lng: WINNIPEG.lng } }).catch(() => [] as Card[]);
+    return { featured };
   },
   component: Home,
 });
@@ -52,6 +57,7 @@ function Home() {
   const { t } = useCopy();
   const navigate = useNavigate();
   const search = Route.useSearch();
+  const boot = Route.useLoaderData();
   const { user, isPending } = useCurrentUserState();
   const origin = useAppStore((s) => s.origin);
   const setOrigin = useAppStore((s) => s.setOrigin);
@@ -65,7 +71,7 @@ function Home() {
   const [manual, setManual] = useState(Boolean(search.change));
   const [denied, setDenied] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [featured, setFeatured] = useState<Card[]>([]);
+  const [featured, setFeatured] = useState<Card[]>(boot.featured ?? []);
   const [recent, setRecent] = useState<Card[]>([]);
   const [enrollOpen, setEnrollOpen] = useState(false);
 
@@ -82,12 +88,10 @@ function Home() {
   useEffect(() => {
     const loc = origin.lat ? origin : WINNIPEG;
     setPlace(origin.label);
-    void searchDaycares({
-      data: { lat: loc.lat, lng: loc.lng, radiusKm, sort: "distance", ageGroup: "any", fsa: fsaOf(origin.label) },
-    })
+    void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng } })
       .then(setFeatured)
       .catch(() => setFeatured([]));
-  }, [origin.lat, origin.lng, origin.label, radiusKm]);
+  }, [origin.lat, origin.lng, origin.label]);
 
   function goSearch(label?: string) {
     void navigate({ to: "/search", search: label ? { q: label } : {} });
@@ -228,11 +232,7 @@ function Home() {
           </div>
           <div className="relative hidden md:block">
             <div className="overflow-hidden rounded-xl shadow-lift ring-1 ring-border">
-              <img
-                src="/photos/playroom.jpg"
-                alt=""
-                className="aspect-[4/3] w-full object-cover"
-              />
+              <HeroPlayroom />
             </div>
           </div>
         </div>
@@ -321,8 +321,8 @@ function Home() {
             <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
           </div>
           <div className="ke-web-grid mt-6 hidden gap-5 md:grid md:grid-cols-2 lg:grid-cols-3">
-            {shown.slice(0, 9).map((item) => (
-              <DaycareCard key={item.id} item={item} />
+            {shown.slice(0, 9).map((item, i) => (
+              <DaycareCard key={item.id} item={item} eager={i < 3} />
             ))}
           </div>
 
@@ -373,7 +373,9 @@ function Home() {
       </section>
 
       <SiteFooter />
-      <CompareBar />
+      <Suspense fallback={null}>
+        <CompareBar />
+      </Suspense>
       <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />
     </Shell>
   );

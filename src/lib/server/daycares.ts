@@ -7,6 +7,7 @@ import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
 import { overlayPriority, sortPriorityFirst } from "./promos";
 import { isPlatformLive } from "@/lib/live";
+import { listingThumb } from "@/lib/photo";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
 
 type SearchInput = {
@@ -82,6 +83,21 @@ function toCard(d: CatalogDaycare, origin: { lat: number; lng: number }, originF
   };
 }
 
+function slimCard(card: DaycareCard): DaycareCard {
+  return {
+    ...card,
+    tagline: "",
+    taglineFr: "",
+    description: "",
+    descriptionFr: "",
+    address: "",
+    phone: null,
+    hours: "",
+    hoursFr: "",
+    photos: [listingThumb(card.photos)],
+  };
+}
+
 export const searchDaycares = createServerFn({ method: "POST" })
   .validator((input: SearchInput) => input)
   .handler(async ({ data }) => {
@@ -140,7 +156,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
       if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
       return compareProximity(a, b);
     });
-    return cards.slice(0, 80);
+    return cards.slice(0, 80).map(slimCard);
   });
 
 export const featuredDaycares = createServerFn({ method: "POST" })
@@ -187,7 +203,7 @@ export const featuredDaycares = createServerFn({ method: "POST" })
       return { ...next, spotsTotal: spotsTotal(next), fromPrice: fromPrice(next) };
     });
     const ranked = sortPriorityFirst(await overlayPriority(merged));
-    return ranked.slice(0, 6);
+    return ranked.slice(0, 12).map(slimCard);
   });
 
 export const getDaycare = createServerFn({ method: "GET" })

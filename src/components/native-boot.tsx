@@ -4,6 +4,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { captureInstallPrompt, getDeviceLocation, hideNativeSplash, isStandalone, paintStatusBar } from "@/lib/native";
 import { locateHere } from "@/lib/proximity";
 import { paintRuntime, isApp } from "@/lib/runtime";
+import { startWebVitals } from "@/lib/web-vitals";
 import { readSavedOrigin } from "@/lib/geo";
 import { LANGUAGES } from "@/lib/languages";
 import { useAppStore } from "@/lib/store";
@@ -42,6 +43,11 @@ export function NativeBoot() {
     }
     void hideNativeSplash();
     return undefined;
+  }, []);
+
+  useEffect(() => {
+    const idle = window.setTimeout(() => startWebVitals(), 2500);
+    return () => window.clearTimeout(idle);
   }, []);
 
   useEffect(() => {

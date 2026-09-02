@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LocateFixed, SlidersHorizontal, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
 import { DaycareCard } from "@/components/daycare-card";
-import { MapView } from "@/components/map-view";
 import { Button } from "@/components/ui/button";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
@@ -18,9 +17,11 @@ import { useAppStore, type SortKey } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
-import { CompareBar } from "@/components/compare-bar";
 import { ExploreSheet, type SheetSnap } from "@/components/explore-sheet";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
+
+const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
+const CompareBar = lazy(() => import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })));
 
 export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -66,6 +67,7 @@ function SearchPage() {
   const [infantOnly, setInfantOnly] = useState(false);
   const [catchmentOnly, setCatchmentOnly] = useState(false);
   const [snap, setSnap] = useState<SheetSnap>("peek");
+  const [shownN, setShownN] = useState(24);
   const originAt = useAppStore((s) => s.originAt);
   const originSource = useAppStore((s) => s.originSource);
   useLivePresence(true);
@@ -185,7 +187,8 @@ function SearchPage() {
     <Shell>
       <div className="relative lg:hidden">
         <div className="h-[calc(100dvh-9.5rem)] overflow-hidden bg-map">
-          <MapView
+          <Suspense fallback={<div className="size-full bg-map" />}>
+            <MapView
             items={list}
             origin={origin}
             radiusKm={radiusKm}
@@ -199,6 +202,7 @@ function SearchPage() {
               void hapticLight();
             }}
           />
+          </Suspense>
         </div>
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-3">
           <form
@@ -236,11 +240,20 @@ function SearchPage() {
             <p className="p-6 text-center text-sm text-muted">{t("noResults")}</p>
           ) : (
             <div className={cn("ke-listings-narrow", refreshing && "opacity-70")}>
-              {list.map((item) => (
+              {list.slice(0, shownN).map((item, i) => (
                 <div key={item.id} onClick={() => setActive(item.slug)}>
-                  <DaycareCard item={item} />
+                  <DaycareCard item={item} eager={i < 2} />
                 </div>
               ))}
+              {list.length > shownN ? (
+                <button
+                  type="button"
+                  className="col-span-full rounded-xl bg-surface px-4 py-3 text-sm font-medium ring-1 ring-border"
+                  onClick={() => setShownN((n) => n + 24)}
+                >
+                  {t("showAll")} · {list.length}
+                </button>
+              ) : null}
             </div>
           )}
         </ExploreSheet>
@@ -434,11 +447,20 @@ function SearchPage() {
               </p>
             ) : (
               <div className={cn("ke-listings-narrow", refreshing && "opacity-70")}>
-                {list.map((item) => (
+                {list.slice(0, shownN).map((item, i) => (
                   <div key={item.id} onMouseEnter={() => setActive(item.slug)} className={cn(active === item.slug && "rounded-xl ring-2 ring-fg")}>
-                    <DaycareCard item={item} />
+                    <DaycareCard item={item} eager={i < 3} />
                   </div>
                 ))}
+                {list.length > shownN ? (
+                  <button
+                    type="button"
+                    className="rounded-xl bg-surface px-4 py-3 text-sm font-medium ring-1 ring-border"
+                    onClick={() => setShownN((n) => n + 24)}
+                  >
+                    {t("showAll")} · {list.length}
+                  </button>
+                ) : null}
               </div>
             )}
           </div>
@@ -448,6 +470,7 @@ function SearchPage() {
               view === "list" ? "hidden lg:block" : "block",
             )}
           >
+            <Suspense fallback={<div className="size-full bg-map" />}>
             <MapView
               items={list}
               origin={origin}
@@ -459,10 +482,13 @@ function SearchPage() {
                 void hapticLight();
               }}
             />
+            </Suspense>
           </div>
         </div>
       </div>
-      <CompareBar />
+      <Suspense fallback={null}>
+        <CompareBar />
+      </Suspense>
     </Shell>
   );
 }

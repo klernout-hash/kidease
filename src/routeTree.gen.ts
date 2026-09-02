@@ -22,6 +22,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GetAppRouteImport } from './routes/get-app'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as ImgRouteImport } from './routes/img'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
@@ -105,6 +106,11 @@ const GetAppRoute = GetAppRouteImport.update({
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImgRoute = ImgRouteImport.update({
+  id: '/img',
+  path: '/img',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InboxRoute = InboxRouteImport.update({
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/get-app': typeof GetAppRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/get-app': typeof GetAppRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
@@ -279,6 +287,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/get-app': typeof GetAppRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/get-app'
     | '/how-it-works'
+    | '/img'
     | '/inbox'
     | '/login'
     | '/meet-the-team'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/get-app'
     | '/how-it-works'
+    | '/img'
     | '/inbox'
     | '/login'
     | '/meet-the-team'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/get-app'
     | '/how-it-works'
+    | '/img'
     | '/inbox'
     | '/login'
     | '/meet-the-team'
@@ -414,6 +426,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   GetAppRoute: typeof GetAppRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  ImgRoute: typeof ImgRoute
   InboxRoute: typeof InboxRouteWithChildren
   LoginRoute: typeof LoginRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
@@ -524,6 +537,13 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/img': {
+      id: '/img'
+      path: '/img'
+      fullPath: '/img'
+      preLoaderRoute: typeof ImgRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inbox': {
@@ -679,6 +699,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   GetAppRoute: GetAppRoute,
   HowItWorksRoute: HowItWorksRoute,
+  ImgRoute: ImgRoute,
   InboxRoute: InboxRouteWithChildren,
   LoginRoute: LoginRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,

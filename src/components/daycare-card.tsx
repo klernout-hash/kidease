@@ -17,16 +17,17 @@ export function DaycareCard({
   item,
   showDistance = true,
   cta = "details",
+  eager = false,
 }: {
   item: Card;
   showDistance?: boolean;
   cta?: "book" | "details";
   compact?: boolean;
+  eager?: boolean;
 }) {
   const { t, locale } = useCopy();
   const name = decodeHtml(locale === "fr" ? item.nameFr : item.name);
   const building = item.photos.find((p) => !p.includes("-logo")) ?? item.photos[0] ?? "/photos/storefront-placeholder.jpg";
-  const logo = item.photos.find((p) => p.includes("-logo"));
   const live = Boolean(item.live);
   const known = Boolean(item.availabilityKnown || live);
   const open = item.spotsTotal > 0;
@@ -75,7 +76,7 @@ export function DaycareCard({
             style={{ animationDelay: `${(item.id.charCodeAt(item.id.length - 1) % 9) * 0.12}s` }}
           >
             <div className="ke-card-photo relative overflow-hidden rounded-[0.9rem] bg-surface-2">
-              <BuildingPhoto src={building} className="size-full object-cover object-center" />
+              <BuildingPhoto src={building} eager={eager} className="size-full object-cover object-center" />
               <div className="absolute inset-x-2 top-2 z-[1] flex flex-nowrap items-center gap-1 overflow-hidden">{badges}</div>
             </div>
           </div>
@@ -145,12 +146,7 @@ export function DaycareCard({
       >
         <Link to="/daycare/$slug" params={{ slug: item.slug }} className="group block">
           <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
-            <BuildingPhoto src={building} className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
-            {logo ? (
-              <span className="absolute bottom-3 right-3 grid h-12 max-w-[7.5rem] place-items-center overflow-hidden rounded-md bg-surface/95 px-1.5 py-1 shadow-card ring-1 ring-border">
-                <img src={logo} alt="" className="max-h-10 max-w-[6.5rem] object-contain" />
-              </span>
-            ) : null}
+            <BuildingPhoto src={building} eager={eager} className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
             <div className="absolute left-3 top-3 flex flex-nowrap items-center gap-1.5 overflow-hidden">{badges}</div>
           </div>
           <div className="space-y-1.5 p-3.5 pb-3">
