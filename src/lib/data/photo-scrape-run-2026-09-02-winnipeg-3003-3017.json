@@ -1,1 +1,36 @@
-PLACEHOLDER
+{
+  "run": "2026-09-02-winnipeg-3003-3017",
+  "city": "Winnipeg",
+  "province": "MB",
+  "processed": [
+    "mb-3003",
+    "mb-3004",
+    "mb-3005",
+    "mb-3006",
+    "mb-3008",
+    "mb-3009",
+    "mb-3010",
+    "mb-3012",
+    "mb-3013",
+    "mb-3015",
+    "mb-3016",
+    "mb-3017"
+  ],
+  "added": [
+    "mb-3004",
+    "mb-3005",
+    "mb-3010"
+  ],
+  "skipped": [
+    "mb-3003",
+    "mb-3006",
+    "mb-3008",
+    "mb-3009",
+    "mb-3012",
+    "mb-3013",
+    "mb-3015",
+    "mb-3016",
+    "mb-3017"
+  ],
+  "notes": "Added official kids/program photos from frcc.ca, lakewoodcc.ca, cairnscc.com. No Street View, maps, stock, or generated images used. Skipped when no clear centre-specific official photo."
+}
