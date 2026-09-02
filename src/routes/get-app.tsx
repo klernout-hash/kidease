@@ -216,28 +216,29 @@ function DeviceFrame({ device, children }: { device: "iphone" | "android"; child
       <div className={iphone ? "relative aspect-[9/19.5] w-full" : "relative aspect-[9/19.4] w-full"}>
         {iphone ? (
           <>
-            <span className="absolute left-[-3px] top-[15.5%] z-20 h-[14px] w-[3px] rounded-l-[2px] bg-[#2a2d34]" />
-            <span className="absolute left-[-3px] top-[22.5%] z-20 h-[30px] w-[3px] rounded-l-[2px] bg-[#2a2d34]" />
-            <span className="absolute left-[-3px] top-[33%] z-20 h-[30px] w-[3px] rounded-l-[2px] bg-[#2a2d34]" />
-            <span className="absolute right-[-3px] top-[27%] z-20 h-[50px] w-[3px] rounded-r-[2px] bg-[#2a2d34]" />
+            <span className="absolute left-[-3px] top-[15.5%] z-20 h-[14px] w-[3px] rounded-l-[2px] bg-[#8a8f99]" />
+            <span className="absolute left-[-3px] top-[22.5%] z-20 h-[30px] w-[3px] rounded-l-[2px] bg-[#8a8f99]" />
+            <span className="absolute left-[-3px] top-[33%] z-20 h-[30px] w-[3px] rounded-l-[2px] bg-[#8a8f99]" />
+            <span className="absolute right-[-3px] top-[27%] z-20 h-[50px] w-[3px] rounded-r-[2px] bg-[#8a8f99]" />
           </>
         ) : (
           <>
-            <span className="absolute right-[-3px] top-[19%] z-20 h-[36px] w-[3px] rounded-r-[2px] bg-[#32363e]" />
-            <span className="absolute right-[-3px] top-[33%] z-20 h-[54px] w-[3px] rounded-r-[2px] bg-[#32363e]" />
+            <span className="absolute right-[-3px] top-[19%] z-20 h-[36px] w-[3px] rounded-r-[2px] bg-[#9aa0aa]" />
+            <span className="absolute right-[-3px] top-[33%] z-20 h-[54px] w-[3px] rounded-r-[2px] bg-[#9aa0aa]" />
           </>
         )}
         <svg className="pointer-events-none absolute inset-0 z-30 h-full w-full overflow-visible" viewBox="0 0 220 476" aria-hidden>
           <defs>
             <linearGradient id={`${uid}-shell`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#5a5e68" />
-              <stop offset="0.16" stopColor="#1c1f26" />
-              <stop offset="0.52" stopColor="#0b0c0f" />
-              <stop offset="1" stopColor="#1a1d23" />
+              <stop offset="0" stopColor="#d5d8de" />
+              <stop offset="0.1" stopColor="#7a7f8a" />
+              <stop offset="0.42" stopColor="#2c3038" />
+              <stop offset="0.72" stopColor="#14161b" />
+              <stop offset="1" stopColor="#4a4e58" />
             </linearGradient>
             <linearGradient id={`${uid}-shine`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#fff" stopOpacity="0.28" />
-              <stop offset="0.18" stopColor="#fff" stopOpacity="0" />
+              <stop offset="0" stopColor="#fff" stopOpacity="0.42" />
+              <stop offset="0.14" stopColor="#fff" stopOpacity="0" />
             </linearGradient>
             <mask id={`${uid}-bezel`} maskUnits="userSpaceOnUse">
               <rect width="220" height="476" fill="#fff" />
@@ -251,8 +252,8 @@ function DeviceFrame({ device, children }: { device: "iphone" | "android"; child
             height="475"
             rx={outerR}
             fill={`url(#${uid}-shell)`}
-            stroke="rgba(255,255,255,0.22)"
-            strokeWidth="1"
+            stroke="#d7dae0"
+            strokeWidth="1.15"
             mask={`url(#${uid}-bezel)`}
           />
           <rect x="0.5" y="0.5" width="219" height="475" rx={outerR} fill={`url(#${uid}-shine)`} mask={`url(#${uid}-bezel)`} />
@@ -263,8 +264,8 @@ function DeviceFrame({ device, children }: { device: "iphone" | "android"; child
             height={476 - bezel * 2}
             rx={innerR}
             fill="none"
-            stroke="rgba(0,0,0,0.4)"
-            strokeWidth="0.75"
+            stroke="#050608"
+            strokeWidth="1"
           />
         </svg>
         <div className="absolute inset-0 overflow-hidden bg-[#f6f3ee]" style={{ borderRadius: outerR }}>
