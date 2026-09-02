@@ -14,12 +14,18 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BenefitsRouteImport } from './routes/benefits'
+import { Route as ChildcareBenefitsProgramRouteImport } from './routes/childcare-benefits-program'
 import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GetAppRouteImport } from './routes/get-app'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
+import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as SearchRouteImport } from './routes/search'
@@ -60,6 +66,12 @@ const BenefitsRoute = BenefitsRouteImport.update({
   path: '/benefits',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChildcareBenefitsProgramRoute =
+  ChildcareBenefitsProgramRouteImport.update({
+    id: '/childcare-benefits-program',
+    path: '/childcare-benefits-program',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ClaimRoute = ClaimRouteImport.update({
   id: '/claim',
   path: '/claim',
@@ -75,9 +87,24 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GetAppRoute = GetAppRouteImport.update({
   id: '/get-app',
   path: '/get-app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InboxRoute = InboxRouteImport.update({
@@ -88,6 +115,16 @@ const InboxRoute = InboxRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
+  id: '/meet-the-team',
+  path: '/meet-the-team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentRoute = ParentRouteImport.update({
+  id: '/parent',
+  path: '/parent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -167,12 +204,18 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
   '/benefits': typeof BenefitsRoute
+  '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
   '/claim': typeof ClaimRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
+  '/explore': typeof ExploreRoute
+  '/faq': typeof FaqRoute
   '/get-app': typeof GetAppRoute
+  '/how-it-works': typeof HowItWorksRoute
   '/inbox': typeof InboxRouteWithChildren
   '/login': typeof LoginRoute
+  '/meet-the-team': typeof MeetTheTeamRoute
+  '/parent': typeof ParentRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRoute
   '/search': typeof SearchRoute
@@ -194,12 +237,18 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
   '/benefits': typeof BenefitsRoute
+  '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
   '/claim': typeof ClaimRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
+  '/explore': typeof ExploreRoute
+  '/faq': typeof FaqRoute
   '/get-app': typeof GetAppRoute
+  '/how-it-works': typeof HowItWorksRoute
   '/inbox': typeof InboxRouteWithChildren
   '/login': typeof LoginRoute
+  '/meet-the-team': typeof MeetTheTeamRoute
+  '/parent': typeof ParentRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRoute
   '/search': typeof SearchRoute
@@ -222,12 +271,18 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
   '/benefits': typeof BenefitsRoute
+  '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
   '/claim': typeof ClaimRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
+  '/explore': typeof ExploreRoute
+  '/faq': typeof FaqRoute
   '/get-app': typeof GetAppRoute
+  '/how-it-works': typeof HowItWorksRoute
   '/inbox': typeof InboxRouteWithChildren
   '/login': typeof LoginRoute
+  '/meet-the-team': typeof MeetTheTeamRoute
+  '/parent': typeof ParentRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRoute
   '/search': typeof SearchRoute
@@ -251,12 +306,18 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/benefits'
+    | '/childcare-benefits-program'
     | '/claim'
     | '/compare'
     | '/contact'
+    | '/explore'
+    | '/faq'
     | '/get-app'
+    | '/how-it-works'
     | '/inbox'
     | '/login'
+    | '/meet-the-team'
+    | '/parent'
     | '/privacy'
     | '/provider'
     | '/search'
@@ -278,12 +339,18 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/benefits'
+    | '/childcare-benefits-program'
     | '/claim'
     | '/compare'
     | '/contact'
+    | '/explore'
+    | '/faq'
     | '/get-app'
+    | '/how-it-works'
     | '/inbox'
     | '/login'
+    | '/meet-the-team'
+    | '/parent'
     | '/privacy'
     | '/provider'
     | '/search'
@@ -305,12 +372,18 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/benefits'
+    | '/childcare-benefits-program'
     | '/claim'
     | '/compare'
     | '/contact'
+    | '/explore'
+    | '/faq'
     | '/get-app'
+    | '/how-it-works'
     | '/inbox'
     | '/login'
+    | '/meet-the-team'
+    | '/parent'
     | '/privacy'
     | '/provider'
     | '/search'
@@ -333,12 +406,18 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRoute
   BenefitsRoute: typeof BenefitsRoute
+  ChildcareBenefitsProgramRoute: typeof ChildcareBenefitsProgramRoute
   ClaimRoute: typeof ClaimRoute
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
+  ExploreRoute: typeof ExploreRoute
+  FaqRoute: typeof FaqRoute
   GetAppRoute: typeof GetAppRoute
+  HowItWorksRoute: typeof HowItWorksRoute
   InboxRoute: typeof InboxRouteWithChildren
   LoginRoute: typeof LoginRoute
+  MeetTheTeamRoute: typeof MeetTheTeamRoute
+  ParentRoute: typeof ParentRoute
   PrivacyRoute: typeof PrivacyRoute
   ProviderRoute: typeof ProviderRoute
   SearchRoute: typeof SearchRoute
@@ -391,6 +470,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BenefitsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/childcare-benefits-program': {
+      id: '/childcare-benefits-program'
+      path: '/childcare-benefits-program'
+      fullPath: '/childcare-benefits-program'
+      preLoaderRoute: typeof ChildcareBenefitsProgramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/claim': {
       id: '/claim'
       path: '/claim'
@@ -412,11 +498,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/get-app': {
       id: '/get-app'
       path: '/get-app'
       fullPath: '/get-app'
       preLoaderRoute: typeof GetAppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inbox': {
@@ -431,6 +538,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meet-the-team': {
+      id: '/meet-the-team'
+      path: '/meet-the-team'
+      fullPath: '/meet-the-team'
+      preLoaderRoute: typeof MeetTheTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent': {
+      id: '/parent'
+      path: '/parent'
+      fullPath: '/parent'
+      preLoaderRoute: typeof ParentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -550,12 +671,18 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   AdminRoute: AdminRoute,
   BenefitsRoute: BenefitsRoute,
+  ChildcareBenefitsProgramRoute: ChildcareBenefitsProgramRoute,
   ClaimRoute: ClaimRoute,
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
+  ExploreRoute: ExploreRoute,
+  FaqRoute: FaqRoute,
   GetAppRoute: GetAppRoute,
+  HowItWorksRoute: HowItWorksRoute,
   InboxRoute: InboxRouteWithChildren,
   LoginRoute: LoginRoute,
+  MeetTheTeamRoute: MeetTheTeamRoute,
+  ParentRoute: ParentRoute,
   PrivacyRoute: PrivacyRoute,
   ProviderRoute: ProviderRoute,
   SearchRoute: SearchRoute,

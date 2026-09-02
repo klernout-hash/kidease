@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
@@ -156,17 +156,12 @@ function Home() {
     setManual(true);
   }
 
-  if (isPending || (user && !role)) {
-    return (
-      <Shell bare>
-        <main className="grid min-h-[70dvh] place-items-center px-4">
-          <p className="text-sm text-muted">{t("loading")}</p>
-        </main>
-      </Shell>
-    );
-  }
-
-  if (user && role === "provider") return <Navigate to="/provider" />;
+  useEffect(() => {
+    if (isPending) return;
+    if (user && role === "provider") {
+      void navigate({ to: "/provider" });
+    }
+  }, [isPending, user, role, navigate]);
 
   return (
     <Shell bare>

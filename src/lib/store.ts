@@ -1,30 +1,8 @@
 import { create } from "zustand";
 import { WINNIPEG, writeSavedOrigin } from "./geo";
 import type { OriginSource } from "./presence";
-import { applyDocumentLocale, LANGUAGES } from "./languages";
+import { applyDocumentLocale } from "./languages";
 import type { AgeGroup, Locale } from "./types";
-
-function readLocale(): Locale {
-  if (typeof window === "undefined") return "en";
-  try {
-    const saved = window.localStorage.getItem("kidease-locale");
-    if (saved && LANGUAGES.some((l) => l.code === saved)) return saved as Locale;
-  } catch {
-    /* ignore */
-  }
-  return "en";
-}
-
-function readLiveOnly(): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    const v = window.localStorage.getItem("kidease-live-only");
-    if (v === "0") return false;
-  } catch {
-    /* ignore */
-  }
-  return true;
-}
 
 export type SortKey = "distance" | "price" | "rating" | "availability";
 
@@ -56,7 +34,7 @@ type SearchState = {
 };
 
 export const useAppStore = create<SearchState>()((set) => ({
-  locale: readLocale(),
+  locale: "en",
   setLocale: (locale) => {
     try {
       window.localStorage.setItem("kidease-locale", locale);
@@ -94,7 +72,7 @@ export const useAppStore = create<SearchState>()((set) => ({
   setView: (view) => set({ view }),
   query: "",
   setQuery: (query) => set({ query }),
-  liveOnly: readLiveOnly(),
+  liveOnly: true,
   setLiveOnly: (liveOnly) => {
     try {
       window.localStorage.setItem("kidease-live-only", liveOnly ? "1" : "0");

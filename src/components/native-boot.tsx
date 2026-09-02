@@ -5,13 +5,27 @@ import { captureInstallPrompt, getDeviceLocation, hideNativeSplash, isStandalone
 import { locateHere } from "@/lib/proximity";
 import { paintRuntime, isApp } from "@/lib/runtime";
 import { readSavedOrigin } from "@/lib/geo";
+import { LANGUAGES } from "@/lib/languages";
 import { useAppStore } from "@/lib/store";
+import type { Locale } from "@/lib/types";
 
 export function NativeBoot() {
   const [splash, setSplash] = useState(false);
   const navigate = useNavigate();
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setLocated = useAppStore((s) => s.setLocated);
+  const setLocale = useAppStore((s) => s.setLocale);
+  const setLiveOnly = useAppStore((s) => s.setLiveOnly);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("kidease-locale");
+      if (saved && LANGUAGES.some((l) => l.code === saved)) setLocale(saved as Locale);
+      if (window.localStorage.getItem("kidease-live-only") === "0") setLiveOnly(false);
+    } catch {
+      /* ignore */
+    }
+  }, [setLocale, setLiveOnly]);
 
   useEffect(() => {
     captureInstallPrompt();

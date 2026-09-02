@@ -50,17 +50,7 @@ function SearchPage() {
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
   const query = useAppStore((s) => s.query);
   const setQuery = useAppStore((s) => s.setQuery);
-  const [items, setItems] = useState<Card[] | null>(() =>
-    readSearchCache(
-      searchCacheKey({
-        lat: useAppStore.getState().origin.lat,
-        lng: useAppStore.getState().origin.lng,
-        radiusKm: useAppStore.getState().radiusKm,
-        sort: useAppStore.getState().sort,
-        ageGroup: useAppStore.getState().ageGroup,
-      }),
-    ),
-  );
+  const [items, setItems] = useState<Card[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);

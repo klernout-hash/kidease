@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Heart, ClipboardCheck, Menu, MessageCircle, Search, UserRound } from "lucide-react";
-import { SignedIn, SignedOut } from "@/lib/auth/gates";
+import { SignedIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { useCopy } from "@/lib/use-copy";
@@ -17,7 +17,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const tab = useRouterState({ select: (s) => (s.location.search as { tab?: string }).tab });
-  const { user, isPending } = useCurrentUserState();
+  const { user } = useCurrentUserState();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -73,9 +73,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border xl:flex">
               <LanguageSelect />
               <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
-              {isPending ? (
-                <div className="mx-2 size-5 animate-pulse rounded-full bg-surface-2" />
-              ) : user ? (
+              {user ? (
                 <SignedIn>
                   <button
                     type="button"
@@ -93,7 +91,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   </button>
                 </SignedIn>
               ) : (
-                <SignedOut>
+                <>
                   <Link
                     to="/login"
                     search={{ role: "provider", intent: "in", next: "/provider" }}
@@ -109,7 +107,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   >
                     {t("parentSignIn")}
                   </Link>
-                </SignedOut>
+                </>
               )}
             </div>
             <div className="flex h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border xl:hidden">

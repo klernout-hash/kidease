@@ -53,9 +53,13 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
     hasGoogleMapsBrowserKey() ? null : `${GOOGLE_MAPS_BROWSER_ENV} is not set`,
   );
   const [zoom, setZoom] = useState(12);
-  const [base, setBase] = useState<MapBase>(() => readMapBase());
+  const [base, setBase] = useState<MapBase>("roadmap");
   const [picked, setPicked] = useState<string | null>(activeSlug ?? null);
   const [locating, setLocating] = useState(false);
+
+  useEffect(() => {
+    setBase(readMapBase());
+  }, []);
 
   const selected = useMemo(
     () => items.find((i) => i.slug === (picked || activeSlug)) ?? null,
