@@ -10,11 +10,11 @@ export type DeskItem = {
 /** Swap these labels anytime — ids stay stable. */
 export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   admin: [
-    { id: "queue", label: "Waiting on you", hint: "Claims to review" },
-    { id: "daycares", label: "Daycares", hint: "By province" },
-    { id: "contracts", label: "Contracts", hint: "DocuSign each centre" },
-    { id: "money", label: "Money", hint: "In and out" },
-    { id: "activity", label: "Activity", hint: "Platform log" },
+    { id: "queue", label: "Waiting on you", hint: "Claims to review", href: "/admin" },
+    { id: "daycares", label: "Daycares", hint: "By province", href: "/admin" },
+    { id: "contracts", label: "Contracts", hint: "DocuSign each centre", href: "/admin-contracts" },
+    { id: "money", label: "Money", hint: "In and out", href: "/admin" },
+    { id: "activity", label: "Activity", hint: "Platform log", href: "/admin" },
   ],
   daycare: [
     { id: "requests", label: "Incoming requests", hint: "Parent enrolments" },
