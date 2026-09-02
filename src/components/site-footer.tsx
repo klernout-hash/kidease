@@ -41,12 +41,7 @@ export function SiteFooter() {
           <Link to="/privacy" className="hover:text-fg">
             {t("verifyListings")}
           </Link>
-          <a
-            href="https://childcaresearch.gov.mb.ca/en"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-fg"
-          >
+          <a href="https://childcaresearch.gov.mb.ca/en" target="_blank" rel="noreferrer" className="hover:text-fg">
             {t("mbChildcare")}
           </a>
           <Link to="/claim" className="hover:text-fg">
@@ -57,6 +52,15 @@ export function SiteFooter() {
         <a href="mailto:kyle@kidease.ca" className="mt-3 inline-block text-xs text-muted hover:text-fg">
           kyle@kidease.ca
         </a>
+        <div className="mt-8 border-t border-border/70 pt-4">
+          <Link
+            to="/login"
+            search={{ role: "admin", intent: "in", next: "/admin" }}
+            className="text-[11px] tracking-wide text-subtle hover:text-muted"
+          >
+            Operator sign-in
+          </Link>
+        </div>
       </div>
     </footer>
   );
