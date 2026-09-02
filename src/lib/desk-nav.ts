@@ -12,7 +12,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   admin: [
     { id: "queue", label: "Waiting on you", hint: "Claims to review" },
     { id: "daycares", label: "Daycares", hint: "By province" },
-    { id: "contracts", label: "Contracts", hint: "DocuSign each centre", href: "/admin-contracts" },
+    { id: "contracts", label: "Contracts", hint: "DocuSign each centre" },
     { id: "money", label: "Money", hint: "In and out" },
     { id: "activity", label: "Activity", hint: "Platform log" },
   ],
