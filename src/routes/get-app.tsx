@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, Download, Laptop, MapPinned, ShieldCheck, Smartphone, Wallet } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Shell } from "@/components/shell";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
+import { ShotHome, ShotListing, ShotLogin, ShotSearch } from "@/components/app-shots";
 import {
   hasInstallPrompt,
   isIosBrowser,
@@ -17,11 +18,11 @@ import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/get-app")({ component: GetApp });
 
-const SHOTS: { src: string; alt: string; device: "iphone" | "android"; caption: string }[] = [
-  { src: "/store/shot-home.png", alt: "Home", device: "iphone", caption: "Home · iPhone" },
-  { src: "/store/shot-search.png", alt: "Search", device: "iphone", caption: "Search · iPhone" },
-  { src: "/store/shot-listing.png", alt: "Listing", device: "android", caption: "Listing · Android" },
-  { src: "/store/shot-login.png", alt: "Sign in", device: "android", caption: "Sign in · Android" },
+const SHOTS: { key: string; device: "iphone" | "android"; caption: string; screen: ReactNode }[] = [
+  { key: "home", device: "iphone", caption: "Home · iPhone", screen: <ShotHome /> },
+  { key: "search", device: "iphone", caption: "Search · iPhone", screen: <ShotSearch /> },
+  { key: "listing", device: "android", caption: "Listing · Android", screen: <ShotListing /> },
+  { key: "login", device: "android", caption: "Sign in · Android", screen: <ShotLogin /> },
 ];
 
 function GetApp() {
@@ -88,7 +89,9 @@ function GetApp() {
               {STORE.ageRating} · {STORE.price} · {STORE.category} · v{STORE.version}
             </p>
           </div>
-          <DeviceFrame src="/store/shot-search.png" alt="KidEase search" device="iphone" />
+          <DeviceFrame device="iphone">
+            <ShotSearch />
+          </DeviceFrame>
         </section>
 
         {mac ? (
@@ -141,8 +144,8 @@ function GetApp() {
           <p className="mt-2 max-w-xl text-sm text-primary-fg/80">{phoneLead}</p>
           <ul className="mt-10 grid grid-cols-2 items-end gap-5 lg:grid-cols-4 lg:gap-8">
             {SHOTS.map((s) => (
-              <li key={s.src} className="min-w-0">
-                <DeviceFrame src={s.src} alt={s.alt} device={s.device} />
+              <li key={s.key} className="min-w-0">
+                <DeviceFrame device={s.device}>{s.screen}</DeviceFrame>
                 <p className="mt-4 text-center text-xs font-medium tracking-wide text-primary-fg/75">{s.caption}</p>
               </li>
             ))}
@@ -199,15 +202,7 @@ function Meta({ k, v }: { k: string; v: string }) {
   );
 }
 
-function DeviceFrame({
-  src,
-  alt,
-  device,
-}: {
-  src: string;
-  alt: string;
-  device: "iphone" | "android";
-}) {
+function DeviceFrame({ device, children }: { device: "iphone" | "android"; children: ReactNode }) {
   const isIphone = device === "iphone";
   return (
     <div className="mx-auto w-full max-w-[220px]">
@@ -225,7 +220,7 @@ function DeviceFrame({
               : "relative h-full overflow-hidden rounded-[1.15rem] bg-[#f6f3ee]"
           }
         >
-          <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover object-top" />
+          {children}
           {isIphone ? (
             <span className="pointer-events-none absolute left-1/2 top-[7px] z-10 h-[18px] w-[72px] -translate-x-1/2 rounded-full bg-[#111318]" />
           ) : (
