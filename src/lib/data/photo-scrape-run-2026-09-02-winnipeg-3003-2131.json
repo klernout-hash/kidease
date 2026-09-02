@@ -1,0 +1,17 @@
+{
+  "run": "2026-09-02-winnipeg-3003-2131",
+  "city": "Winnipeg",
+  "province": "MB",
+  "processed": [
+    "mb-3003", "mb-1172", "mb-3109", "mb-1148", "mb-100900",
+    "mb-100689", "mb-101488", "mb-9320", "mb-1144", "mb-100414",
+    "mb-3012", "mb-100630", "mb-102175", "mb-9529", "mb-2131"
+  ],
+  "added": ["mb-3012", "mb-9320"],
+  "skipped": [
+    "mb-3003", "mb-1172", "mb-3109", "mb-1148", "mb-100900",
+    "mb-100689", "mb-101488", "mb-1144", "mb-100414",
+    "mb-100630", "mb-102175", "mb-9529", "mb-2131"
+  ],
+  "notes": "Added official program photos: Earl Grey Children's Centre (kids outdoor painting from earlgreychildrenscentre.ca) and Downtown Y school-age program photo from ywinnipeg.ca. No Street View, maps, stock, or generated images. Skipped school-based and others lacking clear centre-specific official usable photos. JPEG binaries committed locally; GitHub text metadata pushed."
+}
