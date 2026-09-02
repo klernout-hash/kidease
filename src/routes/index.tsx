@@ -181,11 +181,7 @@ function Home() {
               <Button size="lg" variant="secondary" className="min-h-12 w-full sm:w-auto" asChild>
                 <a href="#how">{t("howItWorksCta")}</a>
               </Button>
-              <Button size="lg" variant="secondary" className="min-h-12 w-full sm:w-auto" onClick={() => setEnrollOpen(true)}>
-                {t("enrollNow")}
-              </Button>
             </div>
-            <p className="mt-3 text-sm text-muted">{t("enrollBothLead")}</p>
             {manual ? (
               <form
                 className="mt-5 max-w-md"
