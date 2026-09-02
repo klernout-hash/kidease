@@ -1,14 +1,14 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-1011",
-  "mapped_count": 29,
-  "skipped_no_photo_this_run": ["mb-1005", "mb-1007", "mb-100900", "mb-100937", "mb-1013", "mb-1023", "mb-1046"],
-  "next_queue": ["mb-100351", "mb-100379", "mb-100404", "mb-100414", "mb-100425", "mb-100426", "mb-1005", "mb-100529", "mb-100530", "mb-100532"],
+  "last_id_processed": "mb-1016",
+  "mapped_count": 32,
+  "skipped_no_photo_this_run": ["mb-1002", "mb-1003", "mb-1008", "mb-1010", "mb-1012", "mb-1013", "mb-1017", "mb-1018", "mb-1020", "mb-1022", "mb-1023", "mb-1024"],
+  "next_queue": ["mb-1026", "mb-1027", "mb-1028", "mb-1030", "mb-1031", "mb-1032", "mb-1033", "mb-1034", "mb-1035", "mb-1036"],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 29,
+  "winnipeg_mapped": 32,
   "national_total": 20846,
-  "national_mapped": 29,
-  "updated": "2026-09-01T20:10:00Z",
-  "notes": "Added 3 official photos: Campus Children's Centre infant ball-pit room (mb-1004) from campuschildrenscentre.com; Carpathia Children's Centre building/entrance at John Dafoe School (mb-1006) from carpathiachildrenscentre.com; Day Nursery Centre Crossways kids outdoor photos (mb-1011) from daynurserycentre.ca. Skipped others this pass with no clear usable official photos found."
+  "national_mapped": 32,
+  "updated": "2026-09-01T21:05:00Z",
+  "notes": "Added 3 official photos: Fort Garry Child Care Co-op children lined up (mb-1009) from fortgarrychildcare.ca; Horizons Children's Centre (mb-1014) from horizonschildrenscentre.com; Epiphany Children's Centre kids group (mb-1016) from epiphanychildrenscentre.ca. Skipped several with no clear usable official photos found this pass (including Day Nursery Kennedy/Gretta which share org site already used for Crossways)."
 }
