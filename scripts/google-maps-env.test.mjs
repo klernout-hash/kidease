@@ -24,7 +24,8 @@ describe("listing map uses browser Google Maps key, not Carto/Leaflet", () => {
     const view = read("src/components/map-view.tsx");
     assert.match(loader, /GOOGLE_MAPS_SCRIPT_VERSION = "quarterly"/);
     assert.match(loader, /v=\$\{GOOGLE_MAPS_SCRIPT_VERSION\}/);
-    assert.doesNotMatch(loader, /v=weekly/);
+    assert.doesNotMatch(loader, /GOOGLE_MAPS_SCRIPT_VERSION = "weekly"/);
+    assert.doesNotMatch(loader, /[?&]v=weekly/);
     assert.match(loader, /RenderingType[\s\S]*RASTER/);
     assert.match(view, /renderingType:\s*googleMapsRasterRenderingType\(maps\)/);
     assert.doesNotMatch(loader, /mapId\s*:/);

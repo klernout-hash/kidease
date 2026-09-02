@@ -27,9 +27,9 @@ export function hasGoogleMapsBrowserKey(): boolean {
 const SCRIPT_ID = "kidease-google-maps-js";
 
 /**
- * Quarterly is the stable raster-friendly channel. `v=weekly` (also the default
- * if omitted) has been shipping the vector canvas renderer, which stays blank
- * without a Cloud Map ID / Map Tiles API.
+ * Quarterly is the stable raster-friendly channel. The weekly channel (also the
+ * default if `v` is omitted) has been shipping the vector canvas renderer,
+ * which stays blank without a Cloud Map ID / Map Tiles API.
  */
 export const GOOGLE_MAPS_SCRIPT_VERSION = "quarterly";
 
