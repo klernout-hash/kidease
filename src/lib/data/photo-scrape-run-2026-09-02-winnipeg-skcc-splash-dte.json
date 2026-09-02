@@ -1,0 +1,40 @@
+{
+  "run": "2026-09-02-winnipeg-skcc-splash-downtoearth",
+  "run_date": "2026-09-02",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_processed": ["mb-1036", "mb-1249", "mb-3002", "mb-102891", "mb-1264", "mb-1233", "mb-102363", "mb-1199", "mb-1003", "mb-7834", "mb-101214", "mb-100820", "mb-7893", "mb-3026", "mb-1046", "mb-3092", "mb-3062", "mb-101065"],
+  "new_photos_mapped": [
+    {
+      "id": "mb-3092",
+      "name": "Stanley Knowles Children's Centre Inc.",
+      "city": "Winnipeg",
+      "address": "27,29-2424 King Edward Street",
+      "source": "https://skcc.ca/",
+      "photo": "/photos/buildings/mb-3092.jpg",
+      "source_image": "https://skcc.ca/wp-content/uploads/2023/11/IMG_2023-10-20-12-17-23-086-e1700501146867-1920x645.jpg",
+      "note": "Official SKCC homepage photo of children on a program outing; one child wears an SKCC branded hat."
+    },
+    {
+      "id": "mb-3062",
+      "name": "SPLASH Child Care Inc.",
+      "city": "Winnipeg",
+      "address": "233 McKenzie Street",
+      "source": "https://splashcares.ca/",
+      "photo": "/photos/buildings/mb-3062.jpg",
+      "source_image": "https://splashcares.ca/wp-content/uploads/2025/08/1000024207-1.jpg",
+      "note": "Official Splash Forest School photo attached to flagship McKenzie listing only."
+    },
+    {
+      "id": "mb-101065",
+      "name": "Down to Earth Children's Centre",
+      "city": "Winnipeg",
+      "address": "300 Carpathia Road",
+      "source": "https://downtoearthchildrenscentre.ca/",
+      "photo": "/photos/buildings/mb-101065.jpg",
+      "source_image": "https://downtoearthchildrenscentre.ca/wp-content/uploads/2025/08/Front_page_pic-1024x768.jpg",
+      "note": "Official Down to Earth homepage photo of children picnicking during a centre program."
+    }
+  ],
+  "mapped_count_after": 72
+}
