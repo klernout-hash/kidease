@@ -179,6 +179,11 @@ const EXTRA_FILES = [
   "centres-extra-3.json",
   "centres-extra-4.json",
   "centres-extra-5.json",
+  "centres-extra-6.json",
+  "centres-extra-7.json",
+  "centres-extra-8.json",
+  "centres-extra-9.json",
+  "centres-extra-10.json",
 ];
 const EXTRA_BASE =
   "https://raw.githubusercontent.com/klernout-hash/kidease/main/src/lib/data/";
