@@ -10,6 +10,12 @@
  */
 export const GOOGLE_MAPS_BROWSER_ENV = "VITE_GOOGLE_MAPS_API_KEY";
 
+declare global {
+  interface Window {
+    gm_authFailure?: () => void;
+  }
+}
+
 export function googleMapsBrowserKey(): string {
   return String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "").trim();
 }
@@ -36,14 +42,21 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
   if (mapsPromise) return mapsPromise;
 
   mapsPromise = new Promise((resolve, reject) => {
+    const fail = (message: string) => {
+      mapsPromise = null;
+      reject(new Error(message));
+    };
+    window.gm_authFailure = () => {
+      fail("Google Maps key was rejected");
+    };
+
     const finish = () => {
       const maps = window.google?.maps;
       if (maps?.Map) {
         resolve(maps);
         return;
       }
-      mapsPromise = null;
-      reject(new Error("Google Maps script loaded without google.maps"));
+      fail("Google Maps script loaded without google.maps");
     };
 
     const prev = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
@@ -56,8 +69,7 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
       prev.addEventListener(
         "error",
         () => {
-          mapsPromise = null;
-          reject(new Error("Google Maps failed to load"));
+          fail("Google Maps failed to load");
         },
         { once: true },
       );
@@ -71,8 +83,7 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly`;
     script.onload = finish;
     script.onerror = () => {
-      mapsPromise = null;
-      reject(new Error("Google Maps failed to load"));
+      fail("Google Maps failed to load");
     };
     document.head.appendChild(script);
   });

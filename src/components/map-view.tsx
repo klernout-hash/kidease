@@ -274,8 +274,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
       {loadError ? (
         <div className="absolute inset-0 z-[300] grid place-items-center bg-map px-6 text-center">
           <p className="max-w-sm text-sm text-muted">
-            Map is unavailable. Set <span className="font-mono text-fg">{GOOGLE_MAPS_BROWSER_ENV}</span> so the
-            browser can load Google Maps.
+            Map is temporarily unavailable. Licensed daycares are still listed on this page.
           </p>
         </div>
       ) : null}
