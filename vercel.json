@@ -13,6 +13,12 @@
     { "source": "/faq", "destination": "/tour-checklist", "permanent": false },
     { "source": "/how-it-works", "destination": "/#how", "permanent": false }
   ],
+  "rewrites": [
+    { "source": "/apple-touch-icon.png", "destination": "/app-icon" },
+    { "source": "/apple-touch-icon-precomposed.png", "destination": "/app-icon" },
+    { "source": "/apple-touch-icon-180x180.png", "destination": "/app-icon" },
+    { "source": "/apple-touch-icon-180x180-precomposed.png", "destination": "/app-icon" }
+  ],
   "headers": [
     {
       "source": "/photos/(.*)",
@@ -24,6 +30,14 @@
     },
     {
       "source": "/img",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/app-icon",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/apple-touch-icon(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
