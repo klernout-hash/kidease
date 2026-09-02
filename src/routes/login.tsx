@@ -9,13 +9,14 @@ import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
 
-type Role = "parent" | "provider";
+type Role = "parent" | "provider" | "admin";
+const OPERATOR_EMAIL = "kyle@kidease.ca";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => {
     const out: { next?: string; role?: Role; intent?: "in" | "up" } = {};
     if (typeof s.next === "string" && s.next.startsWith("/")) out.next = s.next;
-    if (s.role === "parent" || s.role === "provider") out.role = s.role;
+    if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
     if (s.intent === "in" || s.intent === "up") out.intent = s.intent;
     return out;
   },
@@ -26,27 +27,35 @@ export const Route = createFileRoute("/login")({
   component: Login,
 });
 
+function twoFactorUrl(dest: string) {
+  const next = dest.startsWith("/") ? dest : "/";
+  return `/verify-2fa?next=${encodeURIComponent(next)}`;
+}
+
 function Login() {
   const { t } = useCopy();
   const { providers } = Route.useLoaderData();
   const search = Route.useSearch();
   const role = search.role;
+  const operator = role === "admin";
   const dest = search.next && search.next.startsWith("/")
     ? search.next
     : role === "provider"
       ? "/provider"
-      : role === "parent"
-        ? "/search"
-        : "/";
-  const [mode, setMode] = useState<"in" | "up">(search.intent === "up" ? "up" : "in");
+      : role === "admin"
+        ? "/admin"
+        : role === "parent"
+          ? "/search"
+          : "/";
+  const [mode, setMode] = useState<"in" | "up">(operator ? "in" : search.intent === "up" ? "up" : "in");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(operator ? OPERATOR_EMAIL : "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (role) rememberRole(role);
+    if (role === "parent" || role === "provider") rememberRole(role);
   }, [role]);
 
   async function finish() {
@@ -55,15 +64,14 @@ function Login() {
     } catch {
       /* session store will catch up */
     }
-    if (role) {
+    if (role === "parent" || role === "provider") {
       try {
         await setRole({ data: role });
       } catch {
         /* RoleBoot will retry once the session is visible */
       }
     }
-    const destUrl = dest.startsWith("/") ? dest : "/";
-    window.location.assign(destUrl);
+    window.location.assign(twoFactorUrl(dest));
   }
 
   async function onEmail(e: React.FormEvent) {
@@ -71,6 +79,9 @@ function Login() {
     setBusy(true);
     setError(null);
     try {
+      if (operator && email.trim().toLowerCase() !== OPERATOR_EMAIL) {
+        throw new Error("Operator sign-in is only for the KidEase owner account.");
+      }
       if (mode === "up") {
         const res = await authClient.signUp.email({
           email,
@@ -95,17 +106,29 @@ function Login() {
   async function onSocial(providerId: string) {
     setBusy(true);
     setError(null);
-    if (role) rememberRole(role);
+    if (role === "parent" || role === "provider") rememberRole(role);
     try {
-      await signIn(providerId, { callbackURL: dest, errorCallbackURL: "/login" });
+      await signIn(providerId, { callbackURL: twoFactorUrl(dest), errorCallbackURL: "/login" });
     } catch (err) {
       setError(err instanceof Error ? friendlyAuthError(err.message) : "Sign-in failed");
       setBusy(false);
     }
   }
 
-  const title = role === "provider" ? t("providerSignIn") : role === "parent" ? t("parentSignIn") : t("signIn");
-  const lead = role === "provider" ? t("loginLeadProvider") : role === "parent" ? t("loginLeadParent") : t("loginLead");
+  const title = operator
+    ? "Operator sign-in"
+    : role === "provider"
+      ? t("providerSignIn")
+      : role === "parent"
+        ? t("parentSignIn")
+        : t("signIn");
+  const lead = operator
+    ? "This page is only for Kyle. After the password, KidEase emails a 6-digit code."
+    : role === "provider"
+      ? t("loginLeadProvider")
+      : role === "parent"
+        ? t("loginLeadParent")
+        : t("loginLead");
 
   return (
     <Shell bare>
@@ -120,8 +143,9 @@ function Login() {
             <div className="flex justify-center">
               <BrandMark size="md" />
             </div>
-            <h1 className="mt-6 font-display text-3xl">{mode === "up" && role ? t("createAccount") : title}</h1>
+            <h1 className="mt-6 font-display text-3xl">{mode === "up" && role && !operator ? t("createAccount") : title}</h1>
             <p className="mt-2 text-sm text-muted">{lead}</p>
+          {!operator ? (
           <div className="mt-6 space-y-2">
             {authEnabled ? (
               providers.map((p) => (
@@ -141,13 +165,16 @@ function Login() {
               <p className="text-sm text-muted">Sign-in is disabled.</p>
             )}
           </div>
+          ) : null}
+          {!operator ? (
           <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
             <span className="h-px flex-1 bg-border" />
             {t("orEmail")}
             <span className="h-px flex-1 bg-border" />
           </div>
+          ) : <div className="mt-6" />}
           <form onSubmit={onEmail} className="space-y-3">
-            {mode === "up" ? (
+            {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}
                 <input
@@ -167,6 +194,7 @@ function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                readOnly={operator}
               />
             </label>
             <label className="block text-sm">
@@ -183,9 +211,10 @@ function Login() {
             </label>
             {error ? <p className="text-sm text-danger">{error}</p> : null}
             <Button type="submit" className="w-full" disabled={busy}>
-              {mode === "up" ? t("createAccount") : t("signIn")}
+              {mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
           </form>
+          {!operator ? (
           <button
             type="button"
             className="mt-4 text-sm text-muted underline-offset-4 hover:underline"
@@ -193,6 +222,7 @@ function Login() {
           >
             {mode === "up" ? t("haveAccount") : t("needAccount")}
           </button>
+          ) : null}
           <p className="mt-6 text-center text-xs text-subtle">
             <Link to="/" className="underline-offset-4 hover:underline">
               {t("back")}
@@ -227,7 +257,7 @@ function friendlyAuthError(message?: string | null) {
   if (raw.includes("popup")) {
     return "Pop-up blocked — allow pop-ups for KidEase, then try again.";
   }
-  if (raw.includes("client_id") || raw.includes("apple") && raw.includes("secret") || raw.includes("provider") && raw.includes("not found")) {
+  if ((raw.includes("client_id") || raw.includes("apple") && raw.includes("secret")) || (raw.includes("provider") && raw.includes("not found"))) {
     return "Social sign-in is not configured on this host. Set GOOGLE_CLIENT_* or TWITTER_CLIENT_* (server env), or use email.";
   }
   return message || "Sign-in failed";
