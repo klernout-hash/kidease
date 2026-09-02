@@ -19,7 +19,7 @@ import {
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { PriorityPill } from "@/components/priority-pill";
-import { feeBadgeKey, pinFeeLabel, licenseRecordUrl } from "@/lib/licensing";
+import { feeBadgeKey, licenseRecordUrl } from "@/lib/licensing";
 
 type Props = {
   items: DaycareCard[];
@@ -34,6 +34,22 @@ const ROAD_STYLES: google.maps.MapTypeStyle[] = [
   { featureType: "poi.business", stylers: [{ visibility: "off" }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
+
+/** Brand map pin — same smiling teardrop as the KidEase logo. */
+const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">
+  <path class="ke-pin-body" fill="#1A3790" d="M50 6c20.4 0 37 16.2 37 36.2 0 14.6-9.2 27.4-23.4 39.2L50 96 36.4 81.4C22.2 69.6 13 56.8 13 42.2 13 22.2 29.6 6 50 6z"/>
+  <circle cx="50" cy="42" r="22" fill="#fff"/>
+  <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M39 40c2.2-4 6.2-4 8.4 0"/>
+  <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M52.6 40c2.2-4 6.2-4 8.4 0"/>
+  <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M41 51c5.4 7 12.6 7 18 0"/>
+</svg>`;
+
+const CLUSTER_FACE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" aria-hidden="true">
+  <circle cx="20" cy="20" r="18" fill="#fff"/>
+  <path fill="none" stroke="#1A3790" stroke-width="2.4" stroke-linecap="round" d="M14 19c1.2-2.2 3.4-2.2 4.6 0"/>
+  <path fill="none" stroke="#1A3790" stroke-width="2.4" stroke-linecap="round" d="M21.4 19c1.2-2.2 3.4-2.2 4.6 0"/>
+  <path fill="none" stroke="#1A3790" stroke-width="2.4" stroke-linecap="round" d="M15 24.2c3 4 7 4 10 0"/>
+</svg>`;
 
 export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onRelocate }: Props) {
   const host = useRef<HTMLDivElement>(null);
@@ -218,7 +234,9 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
       if (node.kind === "group") {
         const content = document.createElement("div");
         content.className = "ke-cluster";
-        content.innerHTML = `<span>${node.count}</span>`;
+        content.innerHTML = `${CLUSTER_FACE}<span>${node.count}</span>`;
+        content.setAttribute("role", "button");
+        content.setAttribute("aria-label", `${node.count} licensed centres`);
         const overlay = new HtmlOverlay({
           map,
           position: { lat: node.lat, lng: node.lng },
@@ -237,10 +255,10 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
       if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
       const live = Boolean(item.live);
       const content = document.createElement("div");
-      content.className = `dn-pin${live ? " is-live" : " is-unclaimed"}`;
-      content.innerHTML = live
-        ? `<span class="ke-pin-check">✓</span><span>${pinFeeLabel(item.province, true, item.fromPrice, locale, money)}</span>`
-        : `<span>${pinFeeLabel(item.province, false, item.fromPrice, locale, money)}</span>`;
+      content.className = `ke-logo-pin${live ? " is-live" : " is-unclaimed"}`;
+      content.innerHTML = PIN_SVG;
+      content.setAttribute("role", "button");
+      content.setAttribute("aria-label", item.name);
       const overlay = new HtmlOverlay({
         map,
         position: { lat: item.lat, lng: item.lng },

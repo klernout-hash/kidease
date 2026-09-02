@@ -344,6 +344,34 @@
   max-width: none !important;
 }
 
+.ke-logo-pin {
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  transform-origin: bottom center;
+  filter: drop-shadow(0 2px 3px rgba(26, 55, 144, 0.28));
+  pointer-events: auto;
+}
+.ke-logo-pin svg {
+  display: block;
+  width: 34px;
+  height: 34px;
+}
+.ke-logo-pin.is-unclaimed .ke-pin-body {
+  fill: #fff;
+  stroke: #1a3790;
+  stroke-width: 5;
+}
+.ke-logo-pin.is-active {
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 4px 8px rgba(26, 55, 144, 0.38));
+}
+.ke-logo-pin.is-active svg {
+  width: 42px;
+  height: 42px;
+}
+
 .dn-pin {
   background: var(--color-surface);
   color: var(--color-fg);
@@ -387,18 +415,27 @@
 }
 
 .ke-cluster {
-  width: 36px;
-  height: 36px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px 0 4px;
   background: var(--color-primary);
   color: var(--color-primary-fg);
   border: 2px solid #fff;
   border-radius: 999px;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   font-weight: 700;
   box-shadow: var(--shadow-card);
   cursor: pointer;
+  line-height: 1;
+}
+.ke-cluster svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .ke-pin-check {
