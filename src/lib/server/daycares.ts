@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
-import { bboxFromRadius, catchmentMatch, compareProximity, distanceKm, fsaOf, inBbox } from "@/lib/proximity";
-import { getCatalog, catalogBySlugGet, catalogMonths, type CatalogDaycare } from "@/lib/catalog";
+import { catchmentMatch, compareProximity, distanceKm, fsaOf } from "@/lib/proximity";
+import { getCatalog, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
 import { upsertDaycare } from "./seed";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
@@ -103,13 +103,8 @@ export const searchDaycares = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     const origin = { lat: data.lat, lng: data.lng };
-    const box = bboxFromRadius(origin, data.radiusKm);
     let cards: DaycareCard[] = [];
-    for (const d of await getCatalog()) {
-      const point = { lat: d.lat, lng: d.lng };
-      if (!inBbox(point, box)) continue;
-      const km = distanceKm(origin, point);
-      if (km > data.radiusKm) continue;
+    for (const d of await catalogNear(origin, data.radiusKm)) {
       cards.push(toCard(d, origin, data.fsa));
     }
     cards = await overlayClaimed(cards, (card, claimed) => {
@@ -164,13 +159,8 @@ export const featuredDaycares = createServerFn({ method: "POST" })
   .validator((input: { lat: number; lng: number }) => input)
   .handler(async ({ data }) => {
     const origin = { lat: data.lat, lng: data.lng };
-    const box = bboxFromRadius(origin, 40);
     const nearby: DaycareCard[] = [];
-    for (const d of await getCatalog()) {
-      const point = { lat: d.lat, lng: d.lng };
-      if (!inBbox(point, box)) continue;
-      const km = distanceKm(origin, point);
-      if (km > 40) continue;
+    for (const d of await catalogNear(origin, 40)) {
       nearby.push(toCard(d, origin));
     }
     nearby.sort(compareProximity);
@@ -247,8 +237,8 @@ export const getDaycare = createServerFn({ method: "GET" })
       on conflict (daycare_id, viewed_on)
       do update set count = daycare_views.count + 1
     `;
-    const nearby = (await getCatalog())
-      .filter((d) => d.id !== found.id && d.city === found.city)
+    const nearby = (await catalogNear({ lat: found.lat, lng: found.lng }, 15))
+      .filter((d) => d.id !== found.id)
       .slice(0, 4)
       .map((d) => toCard(d, { lat: found.lat, lng: found.lng }));
     return {
