@@ -14,12 +14,14 @@
  * Tri-mode:
  *   - Vercel production: native Google via `socialProviders.google` when
  *     `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` are set (callback
- *     `/api/auth/callback/google`). Do not rely on the preview broker client.
+ *     `/api/auth/callback/google`), and native X via `socialProviders.twitter`
+ *     when `TWITTER_CLIENT_ID` + `TWITTER_CLIENT_SECRET` are set (callback
+ *     `/api/auth/callback/twitter`). Do not rely on the preview broker client.
  *     Production must also set `BETTER_AUTH_SECRET` (never commit one).
  *   - Deployed with broker: the deployer injects a per-app `GROK_AUTH_*` +
  *     `BETTER_AUTH_URL` + `DATABASE_URL`, so federated auth is persisted in
- *     Postgres. Native Google and the broker can coexist (`google` vs
- *     `grok-google`).
+ *     Postgres. Native Google/X and the broker can coexist (`google` vs
+ *     `grok-google`, `twitter` vs `grok-x`).
  *   - Sandbox live preview: no injection -> falls back to the shared **preview
  *     client** (`./preview`) and derives the preview's `https://*.grok-sandbox.com`
  *     origin from the request, so real sign-in works (no demo users). Sessions
@@ -49,6 +51,11 @@ import {
   GOOGLE_CLIENT_SECRET,
   googleIdpConfigured,
 } from "./google-idp";
+import {
+  TWITTER_CLIENT_ID,
+  TWITTER_CLIENT_SECRET,
+  twitterIdpConfigured,
+} from "./twitter-idp";
 import {
   grokBrokerConfigured,
   grokClientId,
@@ -87,12 +94,14 @@ const authDisabled = env("VITE_AUTH_ENABLED") === "false";
 
 // Broker federation: explicit `GROK_AUTH_*` (grok.me / live preview) or the
 // shared preview client on non-Vercel hosts. Vercel production does NOT fall
-// back to the preview client — use native Google (`GOOGLE_CLIENT_*`) there.
-/** True when real auth is enforced (broker, native Google, Apple, or email). */
+// back to the preview client — use native Google (`GOOGLE_CLIENT_*`) and/or
+// native X (`TWITTER_CLIENT_*`) there.
+/** True when real auth is enforced (broker, native Google/X, Apple, or email). */
 export const authConfigured =
   !authDisabled &&
   (grokBrokerConfigured ||
     googleIdpConfigured ||
+    twitterIdpConfigured ||
     appleIdpConfigured ||
     emailAndPasswordEnabled);
 
@@ -270,6 +279,14 @@ const socialProviders = {
         },
       }
     : {}),
+  ...(twitterIdpConfigured && TWITTER_CLIENT_ID && TWITTER_CLIENT_SECRET
+    ? {
+        twitter: {
+          clientId: TWITTER_CLIENT_ID,
+          clientSecret: TWITTER_CLIENT_SECRET,
+        },
+      }
+    : {}),
 };
 
 export const auth = betterAuth({
@@ -295,7 +312,7 @@ export const auth = betterAuth({
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
-      trustedProviders: [...GROK_PROVIDERS.map((p) => p.providerId), "apple", "google"],
+      trustedProviders: [...GROK_PROVIDERS.map((p) => p.providerId), "apple", "google", "twitter"],
       requireLocalEmailVerified: false,
     },
   },

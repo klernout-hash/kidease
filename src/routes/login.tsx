@@ -228,7 +228,7 @@ function friendlyAuthError(message?: string | null) {
     return "Pop-up blocked — allow pop-ups for KidEase, then try again.";
   }
   if (raw.includes("client_id") || raw.includes("apple") && raw.includes("secret") || raw.includes("provider") && raw.includes("not found")) {
-    return "Social sign-in is not configured on this host. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET (server env), or use email.";
+    return "Social sign-in is not configured on this host. Set GOOGLE_CLIENT_* or TWITTER_CLIENT_* (server env), or use email.";
   }
   return message || "Sign-in failed";
 }
