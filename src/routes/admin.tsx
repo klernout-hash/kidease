@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 
- cons type AdminDesk = "queue" | "daycares" | "money" | "activity";
+type AdminDesk = "queue" | "daycares" | "money" | "activity";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
