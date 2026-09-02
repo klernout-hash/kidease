@@ -3,7 +3,11 @@ import { nid } from "@/lib/utils";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import {
+  afterEnrollmentAdminNotify,
   afterPublicAdminNotify,
+  actorConfirmationReplyTo,
+  actorConfirmationText,
+  ACTOR_CONFIRM_SUBJECT,
   resolveMailReplyTo,
   sendMailThenPersist,
   VISITOR_AUTO_REPLY_SUBJECT,
@@ -371,62 +375,28 @@ async function deliverEmail(subject: string, text: string, html: string, to = AD
   return "logged";
 }
 
-async function sendUserConfirmation(
-  to: string,
-  name: string,
-  kind: "parent" | "provider" | "spot",
-  centre?: string,
-) {
-  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
-  const who = name.split(" ")[0] || "there";
-  const place = centre || "your daycare";
-  const subject =
-    kind === "spot"
-      ? `Got your request for ${place}`
-      : kind === "parent"
-        ? "You're in — we got your KidEase signup"
-        : `Got your KidEase daycare signup${centre ? ` — ${centre}` : ""}`;
-  const opener =
-    kind === "spot"
-      ? `Thanks for reaching out about ${place}. We got your spot request.`
-      : kind === "parent"
-        ? "Thanks for signing up. Your parent account is on KidEase."
-        : centre
-          ? `Thanks for signing ${centre} up with KidEase. We got your daycare enrollment.`
-          : "Thanks for signing your daycare up with KidEase. We got your enrollment.";
-  const follow =
-    kind === "provider"
-      ? "We’ll be in touch within 24 hours to help you claim your listing, set open spots, and get in front of parents nearby."
-      : "We’ll be in touch within 24 hours.";
-  const text = [
-    `Hi ${who},`,
-    "",
-    opener,
-    "",
-    follow,
-    "If you need us sooner, just reply to this email.",
-    "",
-    "Talk soon,",
-    "Kyle",
-    "KidEase",
-    "kyle@kidease.ca",
-  ].join("\n");
+function thanksEmailCopy(subject: string, text: string) {
+  const paragraphs = text
+    .split("\n\n")
+    .map((p) => `<p style="margin:16px 0 0;">${esc(p)}</p>`)
+    .join("");
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
-    <tr><td style="padding:28px;font-size:16px;line-height:1.6;">
-      <p style="margin:0;">Hi ${esc(who)},</p>
-      <p>${esc(opener)}</p>
-      <p>${esc(follow)} If you need us sooner, just reply to this email.</p>
-      <p style="margin:24px 0 0;">Talk soon,<br/>Kyle<br/>KidEase<br/><a href="mailto:kyle@kidease.ca" style="color:#1a3790;">kyle@kidease.ca</a></p>
+    <tr><td style="padding:28px;">
+      <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
+      ${paragraphs}
     </td></tr>
   </table>
 </body></html>`;
-  await deliverEmail(subject, text, html, to);
+  return { title: subject, text, html };
 }
 
-async function sendEnrollReceipt(to: string, name: string, centre?: string) {
-  await sendUserConfirmation(to, name, "provider", centre);
+/** Immediate parent/provider confirmation. Reply-To is Kyle so they can reach him. */
+async function sendActorConfirmation(kind: string, to: string) {
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
+  const { title, text, html } = thanksEmailCopy(ACTOR_CONFIRM_SUBJECT, actorConfirmationText(kind));
+  await deliverEmail(title, text, html, to, actorConfirmationReplyTo(ADMIN_EMAIL));
 }
 
 async function sendVisitorAutoReply(to: string, name: string) {
@@ -535,13 +505,16 @@ export async function notifyPlatform(p: PlatformEvent) {
   } catch (err) {
     console.error("[kidease-sms]", err instanceof Error ? err.message : err);
   }
-  const receiptKinds = new Set<PlatformKind>(["account", "signup", "claim", "listing", "spot_request"]);
-  if (p.actorEmail && receiptKinds.has(p.kind)) {
-    const confirmKind = p.kind === "spot_request" ? "spot" : p.kind === "account" ? "parent" : "provider";
-    await sendUserConfirmation(p.actorEmail, p.actorName || "there", confirmKind, p.daycareName).catch((err) =>
-      console.error("[kidease-user-receipt]", err instanceof Error ? err.message : err),
-    );
-  }
+  const actorEmail = (p.actorEmail ?? "").trim();
+  await afterEnrollmentAdminNotify({
+    kind: p.kind,
+    adminStatus: status,
+    actorEmail,
+    sendConfirmation: () => sendActorConfirmation(p.kind, actorEmail),
+    onConfirmationError: (err) => {
+      console.error("[kidease-confirm] confirmation failed", err);
+    },
+  });
   return { id, status, error };
 }
 
@@ -623,14 +596,12 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
       adminStatus: result.status,
       adminError: result.error,
       sendAutoReply: async () => {
-        if (data.kind === "enroll") {
-          await sendEnrollReceipt(data.email, data.name, data.centre);
-        } else {
+        if (data.kind === "contact" || data.kind === "support") {
           await sendVisitorAutoReply(data.email, data.name);
         }
       },
       onAutoReplyError: (err) =>
-        console.error("[kidease-user-receipt]", err instanceof Error ? err.message : err),
+        console.error("[kidease-contact] auto-reply failed", err),
     });
   });
 

@@ -149,16 +149,20 @@ export const verifyClaim = createServerFn({ method: "POST" })
     await sql`update profiles set role = 'provider' where user_id = ${context.userId}`;
     const actor = await lookupUser(context.userId);
     const listedAfter = await catalogByIdGet(data.daycareId);
-    void notifyProviderJoined({
-      kind: "claim",
-      daycareName: listedAfter?.name,
-      address: listedAfter?.address,
-      city: listedAfter?.city,
-      province: listedAfter?.province,
-      slug: listedAfter?.slug,
-      providerName: actor.name,
-      providerEmail: actor.email,
-    });
+    try {
+      await notifyProviderJoined({
+        kind: "claim",
+        daycareName: listedAfter?.name,
+        address: listedAfter?.address,
+        city: listedAfter?.city,
+        province: listedAfter?.province,
+        slug: listedAfter?.slug,
+        providerName: actor.name,
+        providerEmail: actor.email,
+      });
+    } catch (err) {
+      console.error("[kidease-mail] claim notify failed", err);
+    }
     return { ok: true as const };
   });
 

@@ -1,11 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  afterEnrollmentAdminNotify,
   afterPublicAdminNotify,
+  actorConfirmationReplyTo,
+  actorConfirmationText,
+  ACTOR_CONFIRM_KINDS,
+  ACTOR_CONFIRM_SUBJECT,
+  isActorConfirmKind,
   publicNotifyOk,
   publicSubmitResult,
   resolveMailReplyTo,
   sendMailThenPersist,
+  shouldSendActorConfirmation,
   shouldSendVisitorAutoReply,
   VISITOR_AUTO_REPLY_SUBJECT,
   VISITOR_AUTO_REPLY_TEXT,
@@ -164,4 +171,95 @@ test("auto-reply is skipped when admin notify was only logged locally", async ()
   });
   assert.deepEqual(ok, { ok: true });
   assert.equal(autoReplies, 0);
+});
+
+test("actor confirmation kinds are signup, enroll, claim, and spot request", () => {
+  for (const kind of ["account", "signup", "enroll", "listing", "claim", "spot_request"]) {
+    assert.equal(isActorConfirmKind(kind), true);
+    assert.equal(shouldSendActorConfirmation(kind, "sent", "parent@example.com"), true);
+  }
+  assert.deepEqual([...ACTOR_CONFIRM_KINDS], ["account", "signup", "enroll", "listing", "claim", "spot_request"]);
+});
+
+test("actor confirmation is not sent for contact, support, payment, or promo", () => {
+  for (const kind of ["contact", "support", "payment", "promo"]) {
+    assert.equal(isActorConfirmKind(kind), false);
+    assert.equal(shouldSendActorConfirmation(kind, "sent", "parent@example.com"), false);
+  }
+});
+
+test("actor confirmation is skipped when admin notify failed or was only logged", () => {
+  assert.equal(shouldSendActorConfirmation("account", "failed", "parent@example.com"), false);
+  assert.equal(shouldSendActorConfirmation("spot_request", "logged", "parent@example.com"), false);
+  assert.equal(shouldSendActorConfirmation("claim", "queued", "parent@example.com"), false);
+});
+
+test("actor confirmation is skipped when there is no actor email", () => {
+  assert.equal(shouldSendActorConfirmation("account", "sent", null), false);
+  assert.equal(shouldSendActorConfirmation("account", "sent", ""), false);
+  assert.equal(shouldSendActorConfirmation("account", "sent", "   "), false);
+});
+
+test("confirmation copy keeps the 24-hour promise and Thank you, and does not invent spots or fees", () => {
+  assert.equal(ACTOR_CONFIRM_SUBJECT, "We got your request — KidEase");
+  for (const kind of ACTOR_CONFIRM_KINDS) {
+    const text = actorConfirmationText(kind);
+    assert.match(text, /within 24 hours/);
+    assert.match(text, /Thank you$/);
+    assert.doesNotMatch(text, /\$|fee|spot is held|open spots|deposit/i);
+  }
+  assert.match(actorConfirmationText("account"), /signing up with KidEase/);
+  assert.match(actorConfirmationText("signup"), /signing up as a provider/);
+  assert.match(actorConfirmationText("enroll"), /enrolment/);
+  assert.match(actorConfirmationText("listing"), /daycare listing/);
+  assert.match(actorConfirmationText("claim"), /listing claim/);
+  assert.match(actorConfirmationText("spot_request"), /spot request/);
+});
+
+test("confirmation reply_to is Kyle, not the parent or provider", () => {
+  assert.equal(actorConfirmationReplyTo("kyle@kidease.ca"), "kyle@kidease.ca");
+  assert.equal(actorConfirmationReplyTo("  kyle@kidease.ca  "), "kyle@kidease.ca");
+  assert.notEqual(actorConfirmationReplyTo("kyle@kidease.ca"), "parent@example.com");
+});
+
+test("confirmation runs after admin sent and signup still succeeds if confirmation throws", async () => {
+  let confirms = 0;
+  await afterEnrollmentAdminNotify({
+    kind: "account",
+    adminStatus: "sent",
+    actorEmail: "parent@example.com",
+    sendConfirmation: async () => {
+      confirms += 1;
+      throw new Error("Resend 429: rate limited");
+    },
+    onConfirmationError: () => undefined,
+  });
+  assert.equal(confirms, 1);
+});
+
+test("confirmation is skipped when admin notify failed — user action still succeeds", async () => {
+  let confirms = 0;
+  await afterEnrollmentAdminNotify({
+    kind: "spot_request",
+    adminStatus: "failed",
+    actorEmail: "parent@example.com",
+    sendConfirmation: async () => {
+      confirms += 1;
+    },
+  });
+  assert.equal(confirms, 0);
+});
+
+test("confirmation is invoked before the enroll handler returns (same request, not scheduled)", async () => {
+  const order = [];
+  const done = afterEnrollmentAdminNotify({
+    kind: "claim",
+    adminStatus: "sent",
+    actorEmail: "provider@example.com",
+    sendConfirmation: async () => {
+      order.push("confirm");
+    },
+  });
+  await done;
+  assert.deepEqual(order, ["confirm"]);
 });
