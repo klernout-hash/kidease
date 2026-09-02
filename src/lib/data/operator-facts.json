@@ -1,0 +1,180 @@
+{
+  "_comment": "Operator-published ages and parent fees only. Fees are CWELCC parent rates where the operator posted them. Monthly = posted daily × 21 weekdays. Do not invent.",
+  "byLicence": {
+    "0005238": {
+      "name": "West Ridge Early Education Centre",
+      "ageMinMonths": 2,
+      "ageMaxMonths": 144,
+      "infantMonthly": 462,
+      "toddlerMonthly": 462,
+      "preschoolMonthly": 462,
+      "dailyCwelcc": 22,
+      "hours": "Mon–Fri 7:00 a.m.–5:30 p.m.",
+      "phone": "705-326-3299",
+      "email": "admissions@wreec.ca",
+      "website": "https://westridgeearlyeducation.ca",
+      "source": "https://westridgeearlyeducation.ca/program/infant/",
+      "feeConfirmed": true
+    },
+    "61412": {
+      "name": "West Ridge Early Education Centre - North Campus",
+      "ageMinMonths": 2,
+      "ageMaxMonths": 144,
+      "infantMonthly": 462,
+      "toddlerMonthly": 462,
+      "preschoolMonthly": 462,
+      "dailyCwelcc": 22,
+      "hours": "Mon–Fri 7:30 a.m.–5:00 p.m.",
+      "phone": "705-326-3299",
+      "email": "admissions@wreec.ca",
+      "website": "https://westridgeearlyeducation.ca",
+      "source": "https://westridgeearlyeducation.ca/program/pre-jk/",
+      "feeConfirmed": true
+    },
+    "P3N15": {
+      "name": "Jemcare Day Care Services Inc. - Wee Watch Enriched Home Childcare",
+      "ageMinMonths": 2,
+      "ageMaxMonths": 144,
+      "infantMonthly": 462,
+      "toddlerMonthly": 462,
+      "preschoolMonthly": 462,
+      "dailyCwelcc": 22,
+      "phone": "705-326-5015",
+      "email": "orillia@weewatch.com",
+      "website": "https://www.weewatch.com",
+      "source": "https://weewatch.com/wp-content/uploads/2025/01/135-Orillia-Rate-Sheet-2025-1.pdf",
+      "feeConfirmed": true
+    },
+    "56554": {
+      "name": "Orillia Central Preschool Orchard Park",
+      "ageMinMonths": 0,
+      "ageMaxMonths": 144,
+      "hours": "Mon–Fri 6:30 a.m.–6:00 p.m.",
+      "phone": "705-327-2764",
+      "email": "ocp@rogers.com",
+      "website": "https://orilliacentralpreschool.com",
+      "source": "https://orilliacentralpreschool.com/",
+      "feeConfirmed": false
+    },
+    "55234": {
+      "name": "Orillia Central Preschool North",
+      "ageMinMonths": 0,
+      "ageMaxMonths": 60,
+      "hours": "Mon–Fri 6:30 a.m.–6:00 p.m.",
+      "phone": "705-327-5764",
+      "email": "ocp.north@rogers.com",
+      "website": "https://orilliacentralpreschool.com",
+      "source": "https://orilliacentralpreschool.com/",
+      "feeConfirmed": false
+    },
+    "57008": {
+      "name": "Orillia Central Preschool St Bernard's",
+      "ageMinMonths": 0,
+      "ageMaxMonths": 60,
+      "hours": "Mon–Fri 6:30 a.m.–6:00 p.m.",
+      "phone": "705-259-6600",
+      "email": "ocp.south@rogers.com",
+      "website": "https://orilliacentralpreschool.com",
+      "source": "https://orilliacentralpreschool.com/",
+      "feeConfirmed": false
+    },
+    "59935": {
+      "name": "Orillia Central Preschool Uptergrove",
+      "ageMinMonths": 48,
+      "ageMaxMonths": 144,
+      "phone": "705-327-2764",
+      "email": "ocp.schoolage@rogers.com",
+      "website": "https://orilliacentralpreschool.com",
+      "source": "https://orilliacentralpreschool.com/",
+      "feeConfirmed": false
+    },
+    "0004776": {
+      "name": "YMCA Child Care - Regent Park",
+      "ageMinMonths": 18,
+      "ageMaxMonths": 144,
+      "infantMonthly": 462,
+      "toddlerMonthly": 462,
+      "preschoolMonthly": 462,
+      "dailyCwelcc": 22,
+      "phone": "705-330-3515",
+      "website": "https://www.ymcaofsimcoemuskoka.ca/our-locations/child-care/regent-park/",
+      "source": "https://www.ymcaofsimcoemuskoka.ca/wp-content/uploads/2026/07/YMCASM_ChildCare_ParentHandbook_July-1-2026_v2.pdf",
+      "feeConfirmed": true
+    },
+    "0003629": {
+      "name": "YMCA Child Care - Harriett Todd",
+      "ageMinMonths": 0,
+      "ageMaxMonths": 144,
+      "infantMonthly": 462,
+      "toddlerMonthly": 462,
+      "preschoolMonthly": 462,
+      "dailyCwelcc": 22,
+      "website": "https://www.ymcaofsimcoemuskoka.ca/programs-services/child-care-services/",
+      "source": "https://www.ymcaofsimcoemuskoka.ca/wp-content/uploads/2026/07/YMCASM_ChildCare_ParentHandbook_July-1-2026_v2.pdf",
+      "feeConfirmed": true
+    },
+    "0005466": {
+      "name": "YMCA Child Care - Lion's Oval",
+      "ageMinMonths": 0,
+      "ageMaxMonths": 144,
+      "infantMonthly": 462,
+      "toddlerMonthly": 462,
+      "preschoolMonthly": 462,
+      "dailyCwelcc": 22,
+      "website": "https://www.ymcaofsimcoemuskoka.ca/programs-services/child-care-services/",
+      "source": "https://www.ymcaofsimcoemuskoka.ca/wp-content/uploads/2026/07/YMCASM_ChildCare_ParentHandbook_July-1-2026_v2.pdf",
+      "feeConfirmed": true
+    },
+    "18043": {
+      "name": "YMCA Child Care - Notre Dame",
+      "ageMinMonths": 0,
+      "ageMaxMonths": 144,
+      "infantMonthly": 462,
+      "toddlerMonthly": 462,
+      "preschoolMonthly": 462,
+      "dailyCwelcc": 22,
+      "website": "https://www.ymcaofsimcoemuskoka.ca/programs-services/child-care-services/",
+      "source": "https://www.ymcaofsimcoemuskoka.ca/wp-content/uploads/2026/07/YMCASM_ChildCare_ParentHandbook_July-1-2026_v2.pdf",
+      "feeConfirmed": true
+    },
+    "0003317": {
+      "name": "YMCA School Age - Marchmont",
+      "ageMinMonths": 48,
+      "ageMaxMonths": 144,
+      "website": "https://www.ymcaofsimcoemuskoka.ca/programs-services/child-care-services/",
+      "source": "https://www.ymcaofsimcoemuskoka.ca/wp-content/uploads/2026/07/YMCASM_ChildCare_ParentHandbook_July-1-2026_v2.pdf",
+      "feeConfirmed": false
+    },
+    "55450": {
+      "name": "YMCA School Age, Couchiching Heights",
+      "ageMinMonths": 48,
+      "ageMaxMonths": 144,
+      "website": "https://www.ymcaofsimcoemuskoka.ca/programs-services/child-care-services/",
+      "source": "https://www.ymcaofsimcoemuskoka.ca/wp-content/uploads/2026/07/YMCASM_ChildCare_ParentHandbook_July-1-2026_v2.pdf",
+      "feeConfirmed": false
+    },
+    "0006261": {
+      "name": "YMCA Schoolage - Monsignor Lee",
+      "ageMinMonths": 48,
+      "ageMaxMonths": 144,
+      "website": "https://www.ymcaofsimcoemuskoka.ca/programs-services/child-care-services/",
+      "source": "https://www.ymcaofsimcoemuskoka.ca/wp-content/uploads/2026/07/YMCASM_ChildCare_ParentHandbook_July-1-2026_v2.pdf",
+      "feeConfirmed": false
+    },
+    "0004906": {
+      "name": "Biinoojinsauk Child Care Centre - Orillia",
+      "email": "adumontmoreau@banac.on.ca",
+      "website": "https://banac.on.ca/biinoojinsauk-child-care-centre/",
+      "source": "https://banac.on.ca/biinoojinsauk-child-care-centre/",
+      "feeConfirmed": false
+    },
+    "P3N07": {
+      "name": "655561 Ontario Ltd. - Simcare Private Home Day Care",
+      "phone": "705-327-5566",
+      "email": "simcare@rogers.com",
+      "ageMinMonths": 0,
+      "ageMaxMonths": 144,
+      "feeConfirmed": false
+    }
+  }
+}
