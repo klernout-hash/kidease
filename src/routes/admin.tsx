@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
+import { DeskShell } from "@/components/desk-shell";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listPlatformEvents } from "@/lib/server/notify";
@@ -9,6 +10,8 @@ import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
+
+ cons type AdminDesk = "queue" | "daycares" | "money" | "activity";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -35,7 +38,7 @@ function statusLabel(c: AdminCentreRow) {
 
 function AdminPage() {
   const { user, isPending } = useCurrentUserState();
-  const [tab, setTab] = useState<"queue" | "money" | "activity">("queue");
+  const [tab, setTab] = useState<AdminDesk>("queue");
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listPlatformEvents>>>([]);
   const [centres, setCentres] = useState<AdminCentreRow[]>([]);
   const [ledger, setLedger] = useState<AdminMoneyLedger>({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 });
@@ -156,71 +159,30 @@ function AdminPage() {
   }
 
   return (
-    <Shell>
-      <main className="mx-auto max-w-6xl px-4 py-8 md:py-10">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Operator</p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display text-4xl">{tab === "money" ? "Money" : tab === "activity" ? "Activity" : "Daycares"}</h1>
-            <p className="mt-2 max-w-xl text-muted">
-              {tab === "money"
-                ? "Every dollar in from parents and promo purchases, and every dollar out to daycares."
-                : tab === "activity"
-                  ? "Accounts, messages, payments, and claims. Alerts still go to kyle@kidease.ca."
-                  : "New claims land in Waiting on you. Approve to go live, decline to keep them off search."}
-            </p>
+    <DeskShell desk="admin" active={tab} onSelect={(id) => setTab(id as AdminDesk)}>
+      {tab === "queue" || tab === "daycares" ? (
+        <>
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Waiting on you" value={counts.waiting} accent />
+            <Stat label="Live" value={counts.approved} />
+            <Stat label="Declined" value={counts.declined} />
+            <Stat label="In this list" value={counts.all} />
+          </dl>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant={tab === "queue" ? "primary" : "secondary"} onClick={() => setTab("queue")}>
-              Daycares
-            </Button>
-            <Button size="sm" variant={tab === "money" ? "primary" : "secondary"} onClick={() => setTab("money")}>
-              Money
-            </Button>
-            <Button size="sm" variant={tab === "activity" ? "primary" : "secondary"} onClick={() => setTab("activity")}>
-              Activity
-            </Button>
-          </div>
-        </div>
-
-        {tab === "queue" ? (
-          <>
-            <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Stat label="Waiting on you" value={counts.waiting} accent />
-              <Stat label="Live" value={counts.approved} />
-              <Stat label="Declined" value={counts.declined} />
-              <Stat label="In this list" value={counts.all} />
-            </dl>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search name, city, email…"
-                className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
-              />
-              <input
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Optional note on next decision"
-                className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
-              />
-            </div>
-
+          {tab === "queue" ? (
             <section className="mt-8 overflow-hidden rounded-2xl bg-[#1a3790] text-primary-fg shadow-card">
               <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-fg/70">Urgency</p>
                   <h2 className="mt-1 font-display text-2xl">Waiting on you</h2>
                 </div>
-                <p className="text-sm text-primary-fg/75">
-                  {waitingOnYou.length === 0 ? "Caught up" : `${waitingOnYou.length} to review`}
-                </p>
+                <p className="text-sm text-primary-fg/75">{waitingOnYou.length === 0 ? "Caught up" : `${waitingOnYou.length} to review`}</p>
               </div>
               {waitingOnYou.length === 0 ? (
-                <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/70">
-                  No submitted daycares are waiting. New claims appear here first.
-                </p>
+                <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/70">No submitted daycares are waiting.</p>
               ) : (
                 <ul className="divide-y divide-white/10 border-t border-white/10">
                   {waitingOnYou.map((c) => (
@@ -229,26 +191,19 @@ function AdminPage() {
                 </ul>
               )}
             </section>
-
-            <section className="mt-10">
+          ) : (
+            <section className="mt-8">
               <h2 className="font-display text-2xl">By province</h2>
-              <p className="mt-1 text-sm text-muted">Every submitted or live centre, grouped so you can scan a province at a time.</p>
               <div className="mt-5 space-y-3">
                 {byProvince.length === 0 ? (
-                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
-                    No daycares match that search yet.
-                  </p>
+                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">No daycares match that search yet.</p>
                 ) : (
                   byProvince.map((group) => {
                     const open = openProv[group.code] !== false;
                     const queued = group.rows.filter((c) => isQueued(c.claimStatus)).length;
                     return (
                       <div key={group.code} className="overflow-hidden rounded-xl bg-surface ring-1 ring-border">
-                        <button
-                          type="button"
-                          className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left"
-                          onClick={() => setOpenProv((s) => ({ ...s, [group.code]: !open }))}
-                        >
+                        <button type="button" className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left" onClick={() => setOpenProv((s) => ({ ...s, [group.code]: !open }))}>
                           <span className="font-display text-lg">
                             {group.name}
                             <span className="ml-2 text-sm font-sans font-normal text-muted">{group.code}</span>
@@ -271,44 +226,42 @@ function AdminPage() {
                 )}
               </div>
             </section>
-          </>
-        ) : tab === "money" ? (
-          <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} />
-        ) : (
-          <section className="mt-8">
-            <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-              {rows.length === 0 ? (
-                <li className="p-8 text-center text-muted">No activity yet.</li>
-              ) : (
-                rows.map((r) => (
-                  <li key={r.id} className="p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-subtle">{r.kind}</p>
-                        <p className="font-medium">{r.daycare_name || (r.kind === "account" ? "New account" : "Activity")}</p>
-                        <p className="text-sm text-muted">{[r.address, r.city, r.province].filter(Boolean).join(", ") || "—"}</p>
-                        <p className="mt-1 text-sm">
-                          {r.provider_name || "—"} · {r.provider_email || "no email"}
-                        </p>
-                      </div>
-                      <div className="text-right text-xs text-muted">
-                        <p>{new Date(r.created_at).toLocaleString()}</p>
-                        <p className="mt-1">email {r.email_status}</p>
-                        {r.slug ? (
-                          <Link to="/daycare/$slug" params={{ slug: r.slug }} className="text-primary underline-offset-4 hover:underline">
-                            View listing
-                          </Link>
-                        ) : null}
-                      </div>
-                    </div>
-                  </li>
-                ))
-              )}
-            </ul>
-          </section>
-        )}
-      </main>
-    </Shell>
+          )}
+        </>
+      ) : tab === "money" ? (
+        <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} />
+      ) : (
+        <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
+          {rows.length === 0 ? (
+            <li className="p-8 text-center text-muted">No activity yet.</li>
+          ) : (
+            rows.map((r) => (
+              <li key={r.id} className="p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-subtle">{r.kind}</p>
+                    <p className="font-medium">{r.daycare_name || (r.kind === "account" ? "New account" : "Activity")}</p>
+                    <p className="text-sm text-muted">{[r.address, r.city, r.province].filter(Boolean).join(", ") || "—"}</p>
+                    <p className="mt-1 text-sm">
+                      {r.provider_name || "—"} · {r.provider_email || "no email"}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-muted">
+                    <p>{new Date(r.created_at).toLocaleString()}</p>
+                    <p className="mt-1">email {r.email_status}</p>
+                    {r.slug ? (
+                      <Link to="/daycare/$slug" params={{ slug: r.slug }} className="text-primary underline-offset-4 hover:underline">
+                        View listing
+                      </Link>
+                    ) : null}
+                  </div>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </DeskShell>
   );
 }
 
@@ -329,33 +282,17 @@ function MoneyPanel({
 }) {
   return (
     <>
-      <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <CashStat label="In (paid)" value={ledger.inPaid} />
         <CashStat label="In (pending)" value={ledger.inPending} />
         <CashStat label="Out to daycares" value={ledger.outPaid + ledger.outPending} />
         <CashStat label="Platform fees" value={ledger.fees} />
       </dl>
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search parent, centre, reference…"
-          className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
-        />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search parent, centre, reference…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
         <div className="flex gap-2">
-          {(
-            [
-              ["all", "All"],
-              ["in", "Money in"],
-              ["out", "Money out"],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setDir(key)}
-              className={dir === key ? "rounded-full bg-primary px-3 py-2 text-sm text-primary-fg" : "rounded-full bg-surface px-3 py-2 text-sm ring-1 ring-border"}
-            >
+          {([["all", "All"], ["in", "Money in"], ["out", "Money out"]] as const).map(([key, label]) => (
+            <button key={key} type="button" onClick={() => setDir(key)} className={dir === key ? "rounded-full bg-primary px-3 py-2 text-sm text-primary-fg" : "rounded-full bg-surface px-3 py-2 text-sm ring-1 ring-border"}>
               {label}
             </button>
           ))}
@@ -363,7 +300,7 @@ function MoneyPanel({
       </div>
       <ul className="mt-6 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
         {rows.length === 0 ? (
-          <li className="p-8 text-center text-muted">No payments yet. Parent tuition, promo buys, and daycare payouts show here.</li>
+          <li className="p-8 text-center text-muted">No payments yet.</li>
         ) : (
           rows.map((r) => (
             <li key={`${r.kind}-${r.id}`} className="p-4">
@@ -381,19 +318,13 @@ function MoneyPanel({
                     {r.partyName || r.partyEmail || "—"}
                     {r.city ? ` · ${r.city}` : ""}
                     {r.method ? ` · ${r.method}` : ""}
-                    {r.reference ? ` · ${r.reference}` : ""}
                   </p>
                   <p className="mt-0.5 text-xs text-subtle">{new Date(r.createdAt).toLocaleString()}</p>
                 </div>
-                <div className="text-right">
-                  <p className="font-display text-2xl tabular-nums">{r.direction === "out" ? "−" : "+"}{money(r.direction === "out" ? r.net || r.amount : r.amount)}</p>
-                  {r.fee ? <p className="text-xs text-muted">fee {money(r.fee)}</p> : null}
-                  {r.slug ? (
-                    <Link to="/daycare/$slug" params={{ slug: r.slug }} className="text-xs text-primary underline-offset-4 hover:underline">
-                      Listing
-                    </Link>
-                  ) : null}
-                </div>
+                <p className="font-display text-2xl tabular-nums">
+                  {r.direction === "out" ? "−" : "+"}
+                  {money(r.direction === "out" ? r.net || r.amount : r.amount)}
+                </p>
               </div>
             </li>
           ))
@@ -440,17 +371,7 @@ function CentreRow({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium">{c.name}</p>
-            <span
-              className={
-                invert
-                  ? "rounded-full bg-white/15 px-2 py-0.5 text-[11px] uppercase tracking-wide"
-                  : label === "Live"
-                    ? "rounded-full bg-primary/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-primary"
-                    : label === "Declined"
-                      ? "rounded-full bg-danger/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-danger"
-                      : "rounded-full bg-surface-2 px-2 py-0.5 text-[11px] uppercase tracking-wide text-muted"
-              }
-            >
+            <span className={invert ? "rounded-full bg-white/15 px-2 py-0.5 text-[11px] uppercase tracking-wide" : label === "Live" ? "rounded-full bg-primary/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-primary" : label === "Declined" ? "rounded-full bg-danger/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-danger" : "rounded-full bg-surface-2 px-2 py-0.5 text-[11px] uppercase tracking-wide text-muted"}>
               {label}
             </span>
           </div>
@@ -461,44 +382,17 @@ function CentreRow({
           <p className={`mt-0.5 text-sm ${muted}`}>
             {c.providerName || "—"} · {c.providerEmail || c.contactEmail || "no email"}
           </p>
-          <p className={`mt-0.5 text-xs ${muted}`}>
-            {c.submittedAt ? new Date(c.submittedAt).toLocaleString() : "No timestamp"}
-          </p>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <Link
-            to="/daycare/$slug"
-            params={{ slug: c.slug }}
-            className={invert ? "text-xs text-primary-fg underline-offset-4 hover:underline" : "text-xs text-primary underline-offset-4 hover:underline"}
-          >
-            Listing
-          </Link>
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button
-              size="sm"
-              variant={c.claimStatus === "approved" || c.live ? "primary" : "secondary"}
-              disabled={busy !== null}
-              onClick={() => onDecide(c.daycareId, "approve")}
-            >
-              {busy === `${c.daycareId}:approve` ? "…" : "Approve"}
-            </Button>
-            <Button
-              size="sm"
-              variant={isQueued(c.claimStatus) ? "primary" : "secondary"}
-              disabled={busy !== null}
-              onClick={() => onDecide(c.daycareId, "waiting")}
-            >
-              {busy === `${c.daycareId}:waiting` ? "…" : "Waiting"}
-            </Button>
-            <Button
-              size="sm"
-              variant={c.claimStatus === "declined" ? "danger" : "secondary"}
-              disabled={busy !== null}
-              onClick={() => onDecide(c.daycareId, "decline")}
-            >
-              {busy === `${c.daycareId}:decline` ? "…" : "Decline"}
-            </Button>
-          </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button size="sm" variant={c.claimStatus === "approved" || c.live ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
+            Approve
+          </Button>
+          <Button size="sm" variant={isQueued(c.claimStatus) ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "waiting")}>
+            Waiting
+          </Button>
+          <Button size="sm" variant={c.claimStatus === "declined" ? "danger" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "decline")}>
+            Decline
+          </Button>
         </div>
       </div>
     </li>
