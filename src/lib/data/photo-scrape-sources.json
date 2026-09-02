@@ -53,5 +53,32 @@
     "source_image": "https://wildstrawberrychildrenscentre.net/wp-content/uploads/2024/04/20191030_101332-edited-1.jpg",
     "kind": "classroom interior kids in art program",
     "file": "/photos/buildings/mb-1147.jpg"
+  },
+  "mb-1012": {
+    "id": "mb-1012",
+    "name": "Day Nursery Centre Inc. - Kennedy Site",
+    "address": "355 Kennedy St., Winnipeg, MB",
+    "source_page": "https://www.daynurserycentre.ca/programs/kennedy-unit/",
+    "source_image": "https://www.daynurserycentre.ca/wp-content/uploads/2021/11/kennedy250.jpg",
+    "kind": "building entrance / storefront with Day Nursery Centre sign",
+    "file": "/photos/buildings/mb-1012.jpg"
+  },
+  "mb-1013": {
+    "id": "mb-1013",
+    "name": "Day Nursery Centre Inc. - Gretta Brown",
+    "address": "336 flora Avenue, Winnipeg, MB",
+    "source_page": "https://www.daynurserycentre.ca/programs/gretta-brown-unit/",
+    "source_image": "https://www.daynurserycentre.ca/wp-content/uploads/2021/11/gretta250.jpg",
+    "kind": "building exterior of Gretta H. Brown Unit",
+    "file": "/photos/buildings/mb-1013.jpg"
+  },
+  "mb-1017": {
+    "id": "mb-1017",
+    "name": "Fort Rouge Co-op Day Nursery Inc.",
+    "address": "513 Stradbrook Avenue, Winnipeg, MB",
+    "source_page": "https://frcdn.ca/",
+    "source_image": "https://frcdn.ca/wp-content/uploads/2019/08/20190321_104157-1-1568x882.jpg",
+    "kind": "playground with children in program at official preschool site",
+    "file": "/photos/buildings/mb-1017.jpg"
   }
 }
