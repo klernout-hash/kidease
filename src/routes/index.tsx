@@ -323,13 +323,23 @@ function Home() {
               <BrandMark size="md" align="start" />
               <h1 className="mt-8 max-w-xl text-[clamp(2rem,6vw,3.25rem)] text-fg">{t("tagline")}</h1>
               <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                <Button size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => void useLocation()} disabled={busy}>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+                <Button
+                  size="lg"
+                  className="h-14 min-h-14 w-full px-7 text-base sm:w-auto"
+                  onClick={() => void useLocation()}
+                  disabled={busy}
+                >
                   <Search className="size-5" />
                   {busy ? t("loading") : t("heroCta")}
                 </Button>
-                <Button size="lg" variant="secondary" className="min-h-12 w-full sm:w-auto" asChild>
-                  <a href="#how">{t("howItWorksCta")}</a>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="h-14 min-h-14 w-full px-7 text-base sm:w-auto"
+                  onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  {t("howItWorksCta")}
                 </Button>
               </div>
               {locationForm}
@@ -360,7 +370,9 @@ function Home() {
 
         <section id="featured" className="bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">
-            <RoleEnrollChooser heading="h2" className="rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8" />
+            <div id="enroll">
+              <RoleEnrollChooser heading="h2" className="rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8" />
+            </div>
 
             <h2 className="mt-12 text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
             <p className="mt-3 max-w-2xl text-muted">{t("featuredBody")}</p>
@@ -410,7 +422,15 @@ function Home() {
           <div className="ke-gutter mx-auto max-w-3xl py-16 text-center">
             <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
             <p className="mx-auto mt-4 max-w-xl text-primary-fg/90">{t("finalCtaBody")}</p>
-            <Button size="lg" variant="secondary" className="mt-8" onClick={() => setEnrollOpen(true)}>
+            <Button
+              size="lg"
+              variant="secondary"
+              className="mt-8 h-14 min-h-14 px-7 text-base"
+              onClick={() => {
+                setEnrollOpen(true);
+                document.getElementById("enroll")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
               {t("enrollNow")}
             </Button>
           </div>
