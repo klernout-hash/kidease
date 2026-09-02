@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
@@ -53,25 +54,26 @@ export function NavDrawer({
         first.focus();
       }
     };
-    const onPop = () => onClose();
     window.addEventListener("keydown", onKey);
-    window.addEventListener("popstate", onPop);
-    window.history.pushState({ keNav: true }, "");
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("popstate", onPop);
     };
   }, [open, onClose]);
 
-  return (
-    <div className={cn("[[data-channel=website]_&]:xl:hidden", open ? "pointer-events-auto" : "pointer-events-none")}>
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className={cn(open ? "pointer-events-auto" : "pointer-events-none")}
+      hidden={!open}
+    >
       <button
         type="button"
         tabIndex={open ? 0 : -1}
         aria-hidden={!open}
         className={cn(
-          "fixed inset-0 z-40 bg-fg/40 backdrop-blur-[2px] transition-opacity duration-300",
+          "fixed inset-0 z-[80] bg-fg/40 backdrop-blur-[2px] transition-opacity duration-300",
           open ? "opacity-100" : "opacity-0",
         )}
         onClick={onClose}
@@ -83,7 +85,7 @@ export function NavDrawer({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-[min(86vw,24rem)] flex-col bg-bg shadow-lift ring-1 ring-border transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "fixed inset-y-0 right-0 z-[90] flex w-[min(86vw,24rem)] flex-col bg-bg shadow-lift ring-1 ring-border transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
           open ? "translate-x-0" : "translate-x-full",
         )}
       >
@@ -160,6 +162,7 @@ export function NavDrawer({
           </div>
         </nav>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
