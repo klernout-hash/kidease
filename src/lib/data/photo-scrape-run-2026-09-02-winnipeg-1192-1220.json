@@ -1,0 +1,9 @@
+{
+  "run_date": "2026-09-02",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_processed": ["mb-1192", "mb-1196", "mb-1198", "mb-1199", "mb-1201", "mb-1204", "mb-1206", "mb-1210", "mb-1214", "mb-1215", "mb-1219", "mb-1220"],
+  "new_photos_mapped": ["mb-1206", "mb-1214"],
+  "skipped_no_photo": ["mb-1192", "mb-1196", "mb-1198", "mb-1199", "mb-1201", "mb-1204", "mb-1210", "mb-1215", "mb-1219", "mb-1220"],
+  "notes": "Mapped St. Anne's Day Nursery gallery classroom and Lindenwoods official infant play area. Other 10 centres had no usable official photo of that specific site. No maps, Street View, stock, or generated images used."
+}
