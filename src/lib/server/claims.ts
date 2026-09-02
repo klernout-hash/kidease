@@ -5,7 +5,7 @@ import { getCatalog, catalogByIdGet } from "@/lib/catalog";
 import { nid } from "@/lib/utils";
 import { upsertDaycare } from "./seed";
 import { mapDaycare, type DaycareRow } from "./map-row";
-import { lookupUser, notifyProviderJoined } from "./notify";
+import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 
 export type ClaimHit = {
   id: string;
@@ -26,6 +26,17 @@ function makeCode() {
   let out = "";
   for (let i = 0; i < 6; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
   return out;
+}
+
+function asImage(raw?: string | null) {
+  const v = (raw || "").trim();
+  return v.startsWith("data:image") ? v : null;
+}
+
+async function storeLicensePhoto(sql: Awaited<ReturnType<typeof getSql>>, daycareId: string | null, photo: string) {
+  if (daycareId) {
+    await sql`update daycares set license_photo = ${photo} where id = ${daycareId}`.catch(() => undefined);
+  }
 }
 
 export const searchClaimable = createServerFn({ method: "POST" })
@@ -119,6 +130,8 @@ export const verifyClaim = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId: string; code: string; licensePhoto?: string }) => input)
   .handler(async ({ context, data }) => {
+    const photo = asImage(data.licensePhoto);
+    if (!photo) throw new Error("Upload a photo of your provincial licence");
     const sql = await getSql();
     const rows = await sql<{ id: string; code: string }>`
       select id, code from listing_claims
@@ -130,12 +143,12 @@ export const verifyClaim = createServerFn({ method: "POST" })
     if (claim.code.toUpperCase() !== data.code.trim().toUpperCase()) {
       throw new Error("That code does not match");
     }
-    const photo = data.licensePhoto?.startsWith("data:image") ? data.licensePhoto : null;
     await sql`
       update listing_claims
       set status = 'waiting', license_photo = ${photo}, verified_at = now()
       where id = ${claim.id}
     `;
+    await storeLicensePhoto(sql, data.daycareId, photo);
     await sql`
       insert into provider_daycares (user_id, daycare_id)
       values (${context.userId}, ${data.daycareId})
@@ -166,6 +179,57 @@ export const verifyClaim = createServerFn({ method: "POST" })
     return { ok: true as const, status: "waiting" as const };
   });
 
+export const submitEnrollLicense = createServerFn({ method: "POST" })
+  .validator((input: {
+    name: string;
+    email: string;
+    centre: string;
+    city: string;
+    phone?: string;
+    body: string;
+    licensePhoto: string;
+    daycareId?: string;
+  }) => input)
+  .handler(async ({ data }) => {
+    const name = data.name.trim();
+    const email = data.email.trim();
+    const centre = data.centre.trim();
+    const city = data.city.trim();
+    const body = data.body.trim();
+    const photo = asImage(data.licensePhoto);
+    if (!name || !email || !centre || !city || !body) throw new Error("Missing fields");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email");
+    if (!photo) throw new Error("Upload a photo of your provincial licence");
+    const sql = await getSql();
+    const id = nid("lic");
+    await sql`
+      insert into license_uploads (
+        id, daycare_id, centre_name, contact_name, contact_email, city, phone, note, license_photo
+      ) values (
+        ${id}, ${data.daycareId || null}, ${centre.slice(0, 160)}, ${name.slice(0, 120)},
+        ${email.slice(0, 200)}, ${city.slice(0, 80)}, ${(data.phone || "").trim().slice(0, 40) || null},
+        ${body.slice(0, 4000)}, ${photo}
+      )
+    `.catch(async () => {
+      await sql`
+        insert into license_uploads (id, centre_name, contact_email, license_photo)
+        values (${id}, ${centre.slice(0, 160)}, ${email.slice(0, 200)}, ${photo})
+      `;
+    });
+    if (data.daycareId) await storeLicensePhoto(sql, data.daycareId, photo);
+    await notifyPlatform({
+      kind: "enroll",
+      title: `Enroll Now: ${centre}`,
+      actorName: name,
+      actorEmail: email,
+      daycareName: centre,
+      city,
+      slug: undefined,
+      detail: [`Licence photo attached`, data.phone && `Phone: ${data.phone}`, body].filter(Boolean).join("\n"),
+    });
+    return { ok: true as const };
+  });
+
 export const updateListing = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
@@ -180,6 +244,7 @@ export const updateListing = createServerFn({ method: "POST" })
       email: string;
       storefront?: string;
       interiors?: string[];
+      licensePhoto?: string;
       spotsInfant: number;
       spotsToddler: number;
       spotsPreschool: number;
@@ -210,6 +275,7 @@ export const updateListing = createServerFn({ method: "POST" })
     }
     const minAge = Math.max(0, Math.min(216, Math.round(data.ageMinMonths)));
     const maxAge = Math.max(minAge, Math.min(216, Math.round(data.ageMaxMonths)));
+    const license = asImage(data.licensePhoto);
     await sql`
       update daycares set
         name = ${data.name.trim()},
@@ -232,6 +298,13 @@ export const updateListing = createServerFn({ method: "POST" })
         ages_confirmed = 1
       where id = ${data.daycareId}
     `;
+    if (license) {
+      await storeLicensePhoto(sql, data.daycareId, license);
+      await sql`
+        update listing_claims set license_photo = ${license}
+        where daycare_id = ${data.daycareId} and user_id = ${context.userId}
+      `.catch(() => undefined);
+    }
     return { ok: true as const };
   });
 
