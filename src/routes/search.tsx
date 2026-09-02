@@ -20,7 +20,7 @@ import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { ExploreSheet, type SheetSnap } from "@/components/explore-sheet";
 import { LocationConsentCard } from "@/components/location-consent";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
-import { displayDistance, kmToMi, miToKm, type DistanceUnit } from "@/lib/units";
+import { kmToMi, miToKm, type DistanceUnit } from "@/lib/units";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
@@ -335,7 +335,7 @@ function SearchPage() {
           />
           </Suspense>
         </div>
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-3">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-[450] p-3">
           <form
             className="pointer-events-auto"
             onSubmit={(e) => {
@@ -403,7 +403,7 @@ function SearchPage() {
         <ExploreSheet
           snap={snap}
           onSnap={setSnap}
-          label={`${list.length} centres · ${displayDistance(radiusKm, distanceUnit)} ${u}`}
+          label={`${list.length} centres · ${shownRadius} ${u}`}
         >
           {items === null ? (
             <div className="ke-listings-narrow">
@@ -441,7 +441,7 @@ function SearchPage() {
             <p className="mt-0.5 text-sm text-muted">
               {list.length} {list.length === 1 ? "centre" : "centres"}
               {DOT}
-              {displayDistance(radiusKm, distanceUnit)} {u}
+              {shownRadius} {u}
               {DOT}
               {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
             </p>

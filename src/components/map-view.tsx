@@ -341,7 +341,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
       <div ref={host} className="absolute inset-0" />
 
       {loadError ? (
-        <div className="absolute inset-0 z-[300] grid place-items-center bg-map px-6 text-center">
+        <div className="absolute inset-0 z-[1] grid place-items-center bg-map px-6 text-center">
           <p className="max-w-sm text-sm text-muted">
             Map is temporarily unavailable. Licensed daycares are still listed on this page.
           </p>
