@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, Download, Laptop, MapPinned, ShieldCheck, Smartphone, Wallet } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { Shell } from "@/components/shell";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
@@ -142,7 +142,7 @@ function GetApp() {
         <section className="mt-14 overflow-hidden rounded-xl bg-primary px-4 py-10 text-primary-fg sm:px-8 md:px-10 md:py-14">
           <h2 className="font-display text-2xl text-primary-fg md:text-3xl">{t("onYourPhone")}</h2>
           <p className="mt-2 max-w-xl text-sm text-primary-fg/80">{phoneLead}</p>
-          <ul className="mt-10 grid grid-cols-2 items-end gap-5 lg:grid-cols-4 lg:gap-8">
+          <ul className="mt-10 grid grid-cols-2 items-center gap-5 lg:grid-cols-4 lg:gap-8">
             {SHOTS.map((s) => (
               <li key={s.key} className="min-w-0">
                 <DeviceFrame device={s.device}>{s.screen}</DeviceFrame>
@@ -162,7 +162,7 @@ function GetApp() {
             <Meta k={locale === "fr" ? "Classification" : "Age rating"} v={STORE.ageRating} />
           </dl>
           <pre className="mt-6 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-bg p-4 text-xs text-muted">
-            {desc.split("\\n").slice(0, 8).join("\\n")}
+            {desc.split("\n").slice(0, 8).join("\n")}
           </pre>
           <div className="mt-6 flex flex-wrap gap-4 text-sm">
             <Link to="/privacy" className="underline-offset-4 hover:underline">
@@ -203,66 +203,96 @@ function Meta({ k, v }: { k: string; v: string }) {
 }
 
 function DeviceFrame({ device, children }: { device: "iphone" | "android"; children: ReactNode }) {
+  const uid = useId().replace(/:/g, "");
   const iphone = device === "iphone";
+  const outerR = iphone ? 32 : 22;
+  const bezel = 4;
+  const innerR = outerR - bezel;
   return (
-    <div className="relative mx-auto w-full max-w-[228px] select-none">
-      {iphone ? (
-        <>
-          <span className="absolute left-[-2.5px] top-[16%] z-20 h-[16px] w-[2.5px] rounded-l-[2px] bg-[#2c3038]" />
-          <span className="absolute left-[-2.5px] top-[24%] z-20 h-[32px] w-[2.5px] rounded-l-[2px] bg-[#2c3038]" />
-          <span className="absolute left-[-2.5px] top-[36%] z-20 h-[32px] w-[2.5px] rounded-l-[2px] bg-[#2c3038]" />
-          <span className="absolute right-[-2.5px] top-[28%] z-20 h-[52px] w-[2.5px] rounded-r-[2px] bg-[#2c3038]" />
-        </>
-      ) : (
-        <>
-          <span className="absolute right-[-2.5px] top-[20%] z-20 h-[40px] w-[2.5px] rounded-r-[2px] bg-[#3a3f48]" />
-          <span className="absolute right-[-2.5px] top-[36%] z-20 h-[58px] w-[2.5px] rounded-r-[2px] bg-[#3a3f48]" />
-        </>
-      )}
-      <div
-        className={
-          iphone
-            ? "relative aspect-[9/19.5] w-full overflow-hidden rounded-[2.15rem] bg-[#0c0d10] p-[4.5px]"
-            : "relative aspect-[9/19.4] w-full overflow-hidden rounded-[1.65rem] bg-[#0c0d10] p-[4.5px]"
-        }
-        style={{
-          boxShadow:
-            "inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 1px rgba(0,0,0,0.35), 0 22px 44px -18px rgba(8,16,40,0.55)",
-        }}
-      >
-        <div
-          className={
-            iphone
-              ? "relative h-full overflow-hidden rounded-[1.88rem] bg-[#f6f3ee]"
-              : "relative h-full overflow-hidden rounded-[1.32rem] bg-[#f6f3ee]"
-          }
-          style={{ boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.45)" }}
-        >
+    <div
+      className="relative mx-auto w-full max-w-[220px] select-none"
+      style={{ filter: "drop-shadow(0 14px 18px rgba(8,16,40,0.28))" }}
+    >
+      <div className={iphone ? "relative aspect-[9/19.5] w-full" : "relative aspect-[9/19.4] w-full"}>
+        {iphone ? (
+          <>
+            <span className="absolute left-[-3px] top-[15.5%] z-20 h-[14px] w-[3px] rounded-l-[2px] bg-[#2a2d34]" />
+            <span className="absolute left-[-3px] top-[22.5%] z-20 h-[30px] w-[3px] rounded-l-[2px] bg-[#2a2d34]" />
+            <span className="absolute left-[-3px] top-[33%] z-20 h-[30px] w-[3px] rounded-l-[2px] bg-[#2a2d34]" />
+            <span className="absolute right-[-3px] top-[27%] z-20 h-[50px] w-[3px] rounded-r-[2px] bg-[#2a2d34]" />
+          </>
+        ) : (
+          <>
+            <span className="absolute right-[-3px] top-[19%] z-20 h-[36px] w-[3px] rounded-r-[2px] bg-[#32363e]" />
+            <span className="absolute right-[-3px] top-[33%] z-20 h-[54px] w-[3px] rounded-r-[2px] bg-[#32363e]" />
+          </>
+        )}
+        <svg className="pointer-events-none absolute inset-0 z-30 h-full w-full overflow-visible" viewBox="0 0 220 476" aria-hidden>
+          <defs>
+            <linearGradient id={`${uid}-shell`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#5a5e68" />
+              <stop offset="0.16" stopColor="#1c1f26" />
+              <stop offset="0.52" stopColor="#0b0c0f" />
+              <stop offset="1" stopColor="#1a1d23" />
+            </linearGradient>
+            <linearGradient id={`${uid}-shine`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#fff" stopOpacity="0.28" />
+              <stop offset="0.18" stopColor="#fff" stopOpacity="0" />
+            </linearGradient>
+            <mask id={`${uid}-bezel`} maskUnits="userSpaceOnUse">
+              <rect width="220" height="476" fill="#fff" />
+              <rect x={bezel} y={bezel} width={220 - bezel * 2} height={476 - bezel * 2} rx={innerR} fill="#000" />
+            </mask>
+          </defs>
+          <rect
+            x="0.5"
+            y="0.5"
+            width="219"
+            height="475"
+            rx={outerR}
+            fill={`url(#${uid}-shell)`}
+            stroke="rgba(255,255,255,0.22)"
+            strokeWidth="1"
+            mask={`url(#${uid}-bezel)`}
+          />
+          <rect x="0.5" y="0.5" width="219" height="475" rx={outerR} fill={`url(#${uid}-shine)`} mask={`url(#${uid}-bezel)`} />
+          <rect
+            x={bezel}
+            y={bezel}
+            width={220 - bezel * 2}
+            height={476 - bezel * 2}
+            rx={innerR}
+            fill="none"
+            stroke="rgba(0,0,0,0.4)"
+            strokeWidth="0.75"
+          />
+        </svg>
+        <div className="absolute inset-0 overflow-hidden bg-[#f6f3ee]" style={{ borderRadius: outerR }}>
           {children}
           {iphone ? (
-            <span className="pointer-events-none absolute left-1/2 top-[7px] z-20 flex h-[22px] w-[82px] -translate-x-1/2 items-center justify-end rounded-full bg-[#0c0d10] pr-[9px]">
+            <span className="pointer-events-none absolute left-1/2 top-[8px] z-20 flex h-[21px] w-[78px] -translate-x-1/2 items-center justify-end rounded-full bg-[#0b0c0f] pr-[8px]">
               <span
                 className="size-[7px] rounded-full"
                 style={{
-                  background: "radial-gradient(circle at 35% 30%, #2a3348 0%, #15181f 55%, #0c0d10 100%)",
-                  boxShadow: "inset 0 0 0 0.5px rgba(255,255,255,0.16)",
+                  background: "radial-gradient(circle at 34% 32%, #3a4660 0%, #161a22 58%, #0b0c0f 100%)",
+                  boxShadow: "inset 0 0 0 0.5px rgba(255,255,255,0.2)",
                 }}
               />
             </span>
           ) : (
             <span
-              className="pointer-events-none absolute left-1/2 top-[8px] z-20 size-[9px] -translate-x-1/2 rounded-full"
+              className="pointer-events-none absolute left-1/2 top-[8px] z-20 size-[8px] -translate-x-1/2 rounded-full"
               style={{
-                background: "radial-gradient(circle at 35% 30%, #2a3348 0%, #15181f 60%, #0c0d10 100%)",
-                boxShadow: "0 0 0 2px #0c0d10, 0 0 0 3px rgba(0,0,0,0.25)",
+                background: "radial-gradient(circle at 34% 32%, #3a4660 0%, #161a22 58%, #0b0c0f 100%)",
+                boxShadow: "0 0 0 2px #0b0c0f, 0 0 0 2.5px rgba(255,255,255,0.12)",
               }}
             />
           )}
           <span
             className={
               iphone
-                ? "pointer-events-none absolute bottom-[6px] left-1/2 z-20 h-[4px] w-[92px] -translate-x-1/2 rounded-full bg-[#1c2438]/38"
-                : "pointer-events-none absolute bottom-[6px] left-1/2 z-20 h-[3px] w-[78px] -translate-x-1/2 rounded-full bg-[#1c2438]/28"
+                ? "pointer-events-none absolute bottom-[7px] left-1/2 z-20 h-[3.5px] w-[86px] -translate-x-1/2 rounded-full bg-[#1c2438]/32"
+                : "pointer-events-none absolute bottom-[7px] left-1/2 z-20 h-[3px] w-[70px] -translate-x-1/2 rounded-full bg-[#1c2438]/24"
             }
           />
         </div>

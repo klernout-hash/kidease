@@ -46,21 +46,21 @@ function AppChrome({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-full flex-col" style={{ background: CREAM, color: INK }}>
       <StatusBar />
-      <header className="flex items-center gap-1.5 px-3 pb-1.5 pt-1">
+      <header className="flex items-center gap-1 px-2.5 pb-1.5 pt-1">
         <div className="flex min-w-0 items-center gap-1">
           {PIN}
-          <span className="font-display text-[11px] font-semibold tracking-tight">KidEase</span>
+          <span className="font-display text-[11px] font-semibold tracking-tight" style={{ color: NAVY }}>
+            KidEase
+          </span>
         </div>
         <span
-          className="ml-auto rounded-full px-2.5 py-0.5 text-[8px]"
+          className="ml-auto rounded-full px-2 py-0.5 text-[8px]"
           style={{ background: PAPER, color: MUTED, boxShadow: `inset 0 0 0 1px ${LINE}` }}
         >
           EN
         </span>
-        <span className="grid size-5 place-items-center" aria-hidden>
-          <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke={INK} strokeWidth="2">
-            <path d="M4 7h16M4 12h16M4 17h16" />
-          </svg>
+        <span className="rounded-full px-2.5 py-0.5 text-[8px] font-medium text-white" style={{ background: NAVY }}>
+          Sign in
         </span>
       </header>
       <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
@@ -119,7 +119,7 @@ function TabBar({ active }: { active: "search" | "profile" }) {
   );
 }
 
-function Storefront({ tall = false }: { tall?: boolean }) {
+function Storefront({ tall = false, badge = "$10-a-day" }: { tall?: boolean; badge?: string }) {
   return (
     <div className={`relative overflow-hidden rounded-lg ${tall ? "h-full" : "aspect-[4/3]"}`} style={{ background: "#d4e0f6" }}>
       <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,#c3d4f2 0%,#e7eef8 48%,#9eb4d6 100%)" }} />
@@ -128,7 +128,7 @@ function Storefront({ tall = false }: { tall?: boolean }) {
       <div className="absolute left-8 right-8 top-11 h-5 rounded-sm" style={{ background: NAVY }} />
       <div className="absolute bottom-2 left-1/2 h-6 w-7 -translate-x-1/2 rounded-t-sm" style={{ background: "#5c6f8c" }} />
       <span className="absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[7px] font-semibold text-white" style={{ background: NAVY }}>
-        $10-a-day
+        {badge}
       </span>
     </div>
   );
@@ -165,7 +165,7 @@ export function ShotHome() {
             Winnipeg, MB
           </div>
           <div className="mt-1.5 flex h-7 items-center justify-center rounded-full text-[10px] font-medium text-white" style={{ background: NAVY }}>
-            Search
+            Search nearby care
           </div>
           <div className="mt-2.5 flex gap-1.5">
             <Pill>Live listings</Pill>
@@ -190,9 +190,28 @@ export function ShotSearch() {
   return (
     <AppChrome>
       <div className="flex h-full flex-col">
-        <div className="px-3 pb-1.5">
+        <div className="px-2.5 pb-1.5">
           <div className="flex h-7 items-center rounded-full px-2.5 text-[9px]" style={{ background: PAPER, color: SUBTLE, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
             Address, city, or postal code
+          </div>
+          <div className="mt-1.5 flex items-center gap-1">
+            <span className="flex h-6 flex-1 items-center justify-center rounded-full text-[8px] font-medium text-white" style={{ background: NAVY }}>
+              Search
+            </span>
+            <span
+              className="flex h-6 items-center rounded-full px-2 text-[8px] font-medium"
+              style={{ color: NAVY, background: PAPER, boxShadow: `inset 0 0 0 1px ${NAVY}` }}
+            >
+              15 km
+            </span>
+            <span className="flex overflow-hidden rounded-full text-[8px] font-medium" style={{ boxShadow: `inset 0 0 0 1px ${LINE}` }}>
+              <span className="px-2 py-1 text-white" style={{ background: NAVY }}>
+                List
+              </span>
+              <span className="px-2 py-1" style={{ background: PAPER, color: MUTED }}>
+                Map
+              </span>
+            </span>
           </div>
         </div>
         <div className="relative min-h-0 flex-1" style={{ background: "#dce6f6" }}>
@@ -207,19 +226,11 @@ export function ShotSearch() {
             className="absolute left-[58%] top-[36%] size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{ background: NAVY, boxShadow: "0 0 0 6px rgba(26,55,144,0.22)" }}
           />
-          <div className="absolute right-2 top-2 flex overflow-hidden rounded-full text-[8px] font-medium" style={{ boxShadow: `inset 0 0 0 1px ${LINE}` }}>
-            <span className="px-2 py-1 text-white" style={{ background: NAVY }}>
-              Map
-            </span>
-            <span className="px-2 py-1" style={{ background: PAPER, color: MUTED }}>
-              List
-            </span>
-          </div>
           <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl px-3 pb-2 pt-2" style={{ background: PAPER, boxShadow: "0 -10px 24px -16px rgba(26,55,144,0.35)" }}>
             <div className="mx-auto mb-1.5 h-1 w-8 rounded-full" style={{ background: LINE }} />
-            <p className="text-center text-[11px] font-semibold">462 centres \u00b7 16 km</p>
+            <p className="text-center text-[11px] font-semibold">462 centres · 16 km</p>
             <div className="mt-1.5 h-24 overflow-hidden rounded-xl">
-              <Storefront tall />
+              <Storefront tall badge="Licensed" />
             </div>
           </div>
         </div>
