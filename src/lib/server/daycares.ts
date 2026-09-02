@@ -99,7 +99,10 @@ function slimCard(card: DaycareCard): DaycareCard {
 }
 
 export const searchDaycares = createServerFn({ method: "POST" })
-  .validator((input: SearchInput) => input)
+  .validator((input: SearchInput) => ({
+    ...input,
+    radiusKm: Math.min(100, Math.max(1, Math.round(Number(input.radiusKm) || 25))),
+  }))
   .handler(async ({ data }) => {
     const origin = { lat: data.lat, lng: data.lng };
     const box = bboxFromRadius(origin, data.radiusKm);
@@ -156,7 +159,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
       if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
       return compareProximity(a, b);
     });
-    return cards.slice(0, 80).map(slimCard);
+    return cards.slice(0, 4000).map(slimCard);
   });
 
 export const featuredDaycares = createServerFn({ method: "POST" })

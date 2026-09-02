@@ -162,7 +162,6 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
     const maps = mapsApiRef.current;
     if (!map || !maps || !ready) return;
     map.panTo({ lat: origin.lat, lng: origin.lng });
-    map.setZoom(mapZoomForRadius(radiusKm));
     if (circleRef.current) {
       circleRef.current.setCenter({ lat: origin.lat, lng: origin.lng });
       circleRef.current.setRadius(Math.max(radiusKm, 0.5) * 1000);
@@ -177,6 +176,12 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         fillOpacity: 0.08,
         clickable: false,
       });
+    }
+    const bounds = circleRef.current.getBounds();
+    if (bounds) {
+      map.fitBounds(bounds, { top: 72, right: 56, bottom: 120, left: 40 });
+    } else {
+      map.setZoom(mapZoomForRadius(radiusKm));
     }
     if (youRef.current) {
       youRef.current.setPosition({ lat: origin.lat, lng: origin.lng });
@@ -400,8 +405,9 @@ type ClusterNode =
   | { kind: "group"; lat: number; lng: number; count: number };
 
 function clusterItems(items: DaycareCard[], zoom: number): ClusterNode[] {
-  if (zoom >= 13 || items.length < 18) return items.map((item) => ({ kind: "pin", item }));
-  const cell = zoom >= 11 ? 0.045 : zoom >= 9 ? 0.09 : 0.18;
+  const pinZoom = items.length > 400 ? 14 : 13;
+  if (zoom >= pinZoom || items.length < 18) return items.map((item) => ({ kind: "pin", item }));
+  const cell = zoom >= 12 ? 0.03 : zoom >= 10 ? 0.06 : zoom >= 8 ? 0.12 : 0.22;
   const buckets = new Map<string, DaycareCard[]>();
   for (const item of items) {
     const key = `${Math.round(item.lat / cell)}_${Math.round(item.lng / cell)}`;

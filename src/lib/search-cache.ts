@@ -37,7 +37,7 @@ export function readSearchCache(key: string): DaycareCard[] | null {
 export function writeSearchCache(key: string, rows: DaycareCard[]) {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(KEY, JSON.stringify({ key, at: Date.now(), rows: rows.slice(0, 80) }));
+    sessionStorage.setItem(KEY, JSON.stringify({ key, at: Date.now(), rows }));
   } catch {
     /* quota */
   }

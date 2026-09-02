@@ -31,7 +31,7 @@ export const Route = createFileRoute("/search")({
   component: SearchPage,
 });
 
-const PRESETS = [5, 10, 15, 25, 50, 75];
+const PRESETS = [1, 5, 10, 15, 25, 50, 75, 100];
 const DOT = " \u00b7 ";
 
 function SearchPage() {
@@ -86,25 +86,32 @@ function SearchPage() {
     const cached = readSearchCache(key);
     if (cached) setItems(cached);
     else setRefreshing(true);
-    void searchDaycares({
-      data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label) },
-    })
-      .then((rows) => {
-        if (!live) return;
-        setItems(rows);
-        writeSearchCache(key, rows);
+    const tmr = window.setTimeout(() => {
+      void searchDaycares({
+        data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label) },
       })
-      .catch(() => {
-        if (live && !cached) setItems([]);
-      })
-      .finally(() => {
-        if (live) setRefreshing(false);
-      });
+        .then((rows) => {
+          if (!live) return;
+          setItems(rows);
+          writeSearchCache(key, rows);
+        })
+        .catch(() => {
+          if (live && !cached) setItems([]);
+        })
+        .finally(() => {
+          if (live) setRefreshing(false);
+        });
+    }, 160);
     trackLocation("search", origin.lat, origin.lng, origin.label, { radiusKm });
     return () => {
       live = false;
+      window.clearTimeout(tmr);
     };
-  }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query]);
+  }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query, origin.label]);
+
+  useEffect(() => {
+    setShownN(24);
+  }, [origin.lat, origin.lng, radiusKm, liveOnly]);
 
   function applyQuery() {
     const hit = geocode(query);
@@ -183,6 +190,61 @@ function SearchPage() {
     );
   }
 
+  const radiusSlider = (
+    <div>
+      <div className="mb-2 flex items-center justify-between text-sm">
+        <span>{t("radius")}</span>
+        <span className="tabular-nums font-semibold">
+          {radiusKm} {t("km")}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={1}
+        max={100}
+        step={1}
+        value={radiusKm}
+        onChange={(e) => setRadiusKm(Number(e.target.value))}
+        className="w-full accent-primary"
+        aria-valuemin={1}
+        aria-valuemax={100}
+        aria-valuenow={radiusKm}
+        aria-label={`${t("radius")} ${radiusKm} ${t("km")}`}
+      />
+      <div className="mt-1 flex justify-between text-[11px] text-muted">
+        <span>1 {t("km")}</span>
+        <span>100 {t("km")}</span>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {PRESETS.map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => setRadiusKm(n)}
+            className={cn("rounded-full px-3 py-1 text-xs ring-1", radiusKm === n ? "bg-fg text-bg ring-fg" : "ring-border")}
+          >
+            {n} {t("km")}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const filterChips = (
+    <div className="flex flex-wrap gap-2">
+      {chip(avail === "open", t("filterOpen"), () => setAvail((v) => (v === "open" ? "any" : "open")))}
+      {chip(avail === "waitlist", t("filterWaitlist"), () => setAvail((v) => (v === "waitlist" ? "any" : "waitlist")))}
+      {chip(avail === "unknown", t("filterUnknown"), () => setAvail((v) => (v === "unknown" ? "any" : "unknown")))}
+      {chip(ten, t("filterTen"), () => setTen((v) => !v))}
+      {chip(meals, t("filterMeals"), () => setMeals((v) => !v))}
+      {chip(outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v))}
+      {chip(inclusive, t("filterInclusive"), () => setInclusive((v) => !v))}
+      {chip(extended, t("filterExtended"), () => setExtended((v) => !v))}
+      {chip(infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v))}
+      {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
+    </div>
+  );
+
   return (
     <Shell>
       <div className="relative lg:hidden">
@@ -222,7 +284,41 @@ function SearchPage() {
               <button type="button" onClick={() => void geo()} className="grid size-10 place-items-center text-muted" aria-label={t("useLocation")}>
                 <LocateFixed className="size-5" />
               </button>
+              <button
+                type="button"
+                onClick={() => setFilters((v) => !v)}
+                className={cn(
+                  "grid size-10 place-items-center rounded-full",
+                  filters || extraFilters ? "bg-fg text-bg" : "text-muted",
+                )}
+                aria-label={t("filters")}
+                aria-pressed={filters}
+              >
+                <SlidersHorizontal className="size-5" />
+              </button>
             </div>
+            {filters ? (
+              <div className="pointer-events-auto mt-2 max-h-[52dvh] space-y-4 overflow-y-auto rounded-xl bg-surface/95 p-4 shadow-lift ring-1 ring-border backdrop-blur">
+                <div className="flex min-h-10 rounded-full bg-bg p-0.5 ring-1 ring-border">
+                  <button
+                    type="button"
+                    onClick={() => setLiveOnly(true)}
+                    className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", liveOnly ? "bg-ok text-primary-fg" : "text-muted")}
+                  >
+                    {t("liveOnly")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLiveOnly(false)}
+                    className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", !liveOnly ? "bg-fg text-bg" : "text-muted")}
+                  >
+                    {t("showAll")}
+                  </button>
+                </div>
+                {radiusSlider}
+                {filterChips}
+              </div>
+            ) : null}
           </form>
         </div>
         <ExploreSheet
@@ -355,39 +451,8 @@ function SearchPage() {
 
         {filters ? (
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
-            <div className="flex flex-wrap gap-2">
-              {chip(avail === "open", t("filterOpen"), () => setAvail((v) => (v === "open" ? "any" : "open")))}
-              {chip(avail === "waitlist", t("filterWaitlist"), () => setAvail((v) => (v === "waitlist" ? "any" : "waitlist")))}
-              {chip(avail === "unknown", t("filterUnknown"), () => setAvail((v) => (v === "unknown" ? "any" : "unknown")))}
-              {chip(ten, t("filterTen"), () => setTen((v) => !v))}
-              {chip(meals, t("filterMeals"), () => setMeals((v) => !v))}
-              {chip(outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v))}
-              {chip(inclusive, t("filterInclusive"), () => setInclusive((v) => !v))}
-              {chip(extended, t("filterExtended"), () => setExtended((v) => !v))}
-              {chip(infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v))}
-              {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
-            </div>
-            <div>
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span>{t("radius")}</span>
-                <span className="tabular-nums">
-                  {radiusKm} {t("km")}
-                </span>
-              </div>
-              <input type="range" min={1} max={100} value={radiusKm} onChange={(e) => setRadiusKm(Number(e.target.value))} className="w-full accent-primary" />
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {PRESETS.map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setRadiusKm(n)}
-                    className={cn("rounded-full px-3 py-1 text-xs ring-1", radiusKm === n ? "bg-fg text-bg ring-fg" : "ring-border")}
-                  >
-                    {n} {t("km")}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {filterChips}
+            {radiusSlider}
             <div className="flex flex-wrap gap-2">
               {(["any", "infant", "toddler", "preschool"] as const).map((a) => (
                 <button

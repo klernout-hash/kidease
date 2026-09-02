@@ -48,10 +48,12 @@ export async function openDirections(lat: number, lng: number, name?: string) {
 }
 
 export function mapZoomForRadius(radiusKm: number) {
-  if (radiusKm <= 3) return 14;
-  if (radiusKm <= 6) return 13;
-  if (radiusKm <= 12) return 12;
-  if (radiusKm <= 25) return 11;
-  if (radiusKm <= 50) return 10;
-  return 9;
+  if (radiusKm <= 2) return 14;
+  if (radiusKm <= 5) return 13;
+  if (radiusKm <= 10) return 12;
+  if (radiusKm <= 20) return 11;
+  if (radiusKm <= 35) return 10;
+  if (radiusKm <= 55) return 9;
+  if (radiusKm <= 80) return 8;
+  return 7;
 }

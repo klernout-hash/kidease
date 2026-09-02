@@ -63,7 +63,7 @@ export const useAppStore = create<SearchState>()((set) => ({
   },
   touchGps: () => set({ located: true, originSource: "gps", originAt: Date.now() }),
   radiusKm: 25,
-  setRadiusKm: (radiusKm) => set({ radiusKm }),
+  setRadiusKm: (n) => set({ radiusKm: Math.min(100, Math.max(1, Math.round(n))) }),
   sort: "distance",
   setSort: (sort) => set({ sort }),
   ageGroup: "any",
@@ -72,7 +72,7 @@ export const useAppStore = create<SearchState>()((set) => ({
   setView: (view) => set({ view }),
   query: "",
   setQuery: (query) => set({ query }),
-  liveOnly: true,
+  liveOnly: false,
   setLiveOnly: (liveOnly) => {
     try {
       window.localStorage.setItem("kidease-live-only", liveOnly ? "1" : "0");
