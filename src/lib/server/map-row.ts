@@ -41,9 +41,14 @@ export type DaycareRow = {
   claim_status?: string | null;
   priority_until?: string | null;
   ages_confirmed?: number | boolean | null;
+  listing_active?: number | boolean | null;
+  pause_code?: string | null;
+  pause_reason?: string | null;
 };
 
 export function mapDaycare(r: DaycareRow): Daycare {
+  const listingActive = r.listing_active === 0 || r.listing_active === false ? false : true;
+  const claimed = Boolean(r.claimed_at);
   return {
     id: r.id,
     slug: r.slug,
@@ -81,12 +86,19 @@ export function mapDaycare(r: DaycareRow): Daycare {
     photos: r.photos ? r.photos.split(",").filter(Boolean) : [],
     verified: Boolean(r.verified),
     contactEmail: r.contact_email ?? null,
-    claimed: Boolean(r.claimed_at),
-    live: isPlatformLive(r.id, Boolean(r.claimed_at)),
-    feeConfirmed: Boolean(r.claimed_at),
-    availabilityKnown: Boolean(r.claimed_at),
+    claimed,
+    listingActive,
+    pauseCode: r.pause_code ?? null,
+    pauseReason: r.pause_reason ?? null,
+    live: isPlatformLive(r.id, claimed, {
+      listingActive,
+      ratingX10: r.rating_x10,
+      reviewCount: r.review_count,
+    }),
+    feeConfirmed: claimed,
+    availabilityKnown: claimed,
     spotsUpdatedAt: r.claimed_at ?? null,
-    licenseStatus: r.claimed_at ? "active" : "unknown",
+    licenseStatus: claimed ? "active" : "unknown",
     priority: Boolean(r.priority_until && Date.parse(r.priority_until) > Date.now()),
     priorityUntil: r.priority_until ?? null,
     agesKnown: Boolean(r.ages_confirmed),
