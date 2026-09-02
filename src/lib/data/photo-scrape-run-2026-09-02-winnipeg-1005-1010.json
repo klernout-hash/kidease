@@ -1,0 +1,32 @@
+{
+  "run": "2026-09-02-winnipeg-mb-1005-1010",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [
+    {
+      "id": "mb-7923",
+      "name": "Casa Montessori & Orff School Inc.",
+      "address": "1055 Wilkes Avenue, Winnipeg, MB",
+      "source_url": "https://montessoriandorff.ca/early-childhood-program",
+      "image_url": "https://assets.cdn.filesafe.space/sSc5Nr5mYDvMFZCDdOfF/media/6858efebb2497389c9b5d6f3.jpeg",
+      "type": "official_website_classroom_orff_program"
+    }
+  ],
+  "mapped_count_after": 73,
+  "skipped": [
+    {"id": "mb-1005", "name": "Care-A-Lot Nursery Inc.", "address": "829 Watt Street, Winnipeg, MB", "reason": "Directory listings only; no official Winnipeg website or gallery."},
+    {"id": "mb-9360", "name": "Carpathia; JB Mitchell Site", "address": "1720 John Brebeuf Road, Winnipeg, MB", "reason": "Official site exists but published building photo is John Dafoe School, not the JB Mitchell classroom site."},
+    {"id": "mb-1007", "name": "Carter Early Learning Centre Inc.", "address": "465B Stafford Street, Winnipeg, MB", "reason": "Partner church page only; no extractable centre classroom or building photo."},
+    {"id": "mb-3084", "name": "Central Park Child Care Inc.", "address": "101-461 Cumberland Avenue, Winnipeg, MB", "reason": "No official website or usable official photo."},
+    {"id": "mb-101711", "name": "Centre D'apprentissage et de garde d'enfants de Saint-Boniface", "address": "205 Rue Despins, Winnipeg, MB", "reason": "USB official page has logo plus a screenshot-like image; not used because it may be stock."},
+    {"id": "mb-103160", "name": "Centre D'apprentissage Sage Creek", "address": "45 Witham Road, Winnipeg, MB", "reason": "Waitlist platform only; no official gallery for this site."},
+    {"id": "mb-9829", "name": "Centre Soleil Inc.", "address": "81 Quail Ridge Chemin, Winnipeg, MB", "reason": "Directory only; no official website."},
+    {"id": "mb-101123", "name": "Chabad Torah Tots", "address": "1845 Mathers Avenue, Winnipeg, MB", "reason": "Official domain returned 503; Facebook exists but no extractable official still photo this run."},
+    {"id": "mb-1284", "name": "Champlain Community Child Care Centre Inc.", "address": "119-275 Church Avenue, Winnipeg, MB", "reason": "School page text only; no centre photos."},
+    {"id": "mb-9318", "name": "Chancellor Before and After School Program", "address": "1520 Chancellor Drive, Winnipeg, MB", "reason": "School page only; no official daycare gallery."},
+    {"id": "mb-3057", "name": "Chapman Day Care Inc.", "address": "450 Laxdal Avenue, Winnipeg, MB", "reason": "Official site exists; homepage banner is generic stock and was not used."},
+    {"id": "mb-1023", "name": "Children at the Centre", "address": "60 Pearl Street, Winnipeg, MB", "reason": "Previously reviewed; HSC campus rooms; no official centre website photo."},
+    {"id": "mb-101062", "name": "Concordia Child Care Centre", "address": "CP 108-1000 Molson Avenue, Winnipeg, MB", "reason": "Provincial directory only; no official website gallery."},
+    {"id": "mb-1010", "name": "Crestview Park Day Nursery Incorporated", "address": "37 Voyageur Avenue, Winnipeg, MB", "reason": "Directory / charity listings only; no official website."}
+  ]
+}
