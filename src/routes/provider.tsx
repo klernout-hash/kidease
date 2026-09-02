@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Camera, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
@@ -10,14 +9,11 @@ import { PriorityPill } from "@/components/priority-pill";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole, updateRequestStatus } from "@/lib/server/family";
-import { updateListing } from "@/lib/server/claims";
-import { promoteListing } from "@/lib/server/promos";
-import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
 import { useCopy } from "@/lib/use-copy";
 import { formatAgeLabel, formatStart, emailBodyNewRequest, emailSubjectNewRequest, scheduleLabel } from "@/lib/templates";
-import { cn, money, formatAgeRange } from "@/lib/utils";
 import type { BookingStatus, Daycare, SpotRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
+import { CapacityForm, Field, PromotePanel } from "@/components/provider-listing-forms";
 
 type DaycareDesk = "requests" | "listings" | "licence" | "contract" | "promote";
 
