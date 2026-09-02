@@ -4,7 +4,8 @@ import { captureInstallPrompt, getDeviceLocation, hideNativeSplash, isNative, is
 import { locateHere } from "@/lib/proximity";
 import { startChannelListener } from "@/lib/runtime";
 import { startWebVitals } from "@/lib/web-vitals";
-import { canadaOriginOrWinnipeg, isInCanada, readSavedOrigin, WINNIPEG } from "@/lib/geo";
+import { canadaOriginOrWinnipeg, isInCanada } from "@/lib/canada-origin";
+import { readSavedOrigin, WINNIPEG } from "@/lib/geo";
 import { LANGUAGES } from "@/lib/languages";
 import { useAppStore } from "@/lib/store";
 import type { Locale } from "@/lib/types";
