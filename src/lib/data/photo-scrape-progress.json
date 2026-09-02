@@ -1,32 +1,13 @@
 {
-  "last_run": "2026-09-02T20:30:00Z",
+  "last_run": "2026-09-02T21:15:00Z",
   "city": "Winnipeg",
   "province": "MB",
-  "last_id_processed": "mb-1010",
-  "mapped_count": 73,
-  "mapped_winnipeg": 72,
+  "last_id_processed": "mb-2131",
+  "mapped_count": 75,
+  "mapped_winnipeg": 74,
   "winnipeg_total": 428,
   "national_total": 20846,
   "skipped_no_photo_this_run": [
-    "mb-1005",
-    "mb-9360",
-    "mb-1007",
-    "mb-3084",
-    "mb-101711",
-    "mb-103160",
-    "mb-9829",
-    "mb-101123",
-    "mb-1284",
-    "mb-9318",
-    "mb-3057",
-    "mb-1023",
-    "mb-101062",
-    "mb-1010"
-  ],
-  "ids_added_this_run": [
-    "mb-7923"
-  ],
-  "next_queue": [
     "mb-3003",
     "mb-1172",
     "mb-3109",
@@ -34,14 +15,33 @@
     "mb-100900",
     "mb-100689",
     "mb-101488",
-    "mb-9320",
     "mb-1144",
     "mb-100414",
-    "mb-3012",
     "mb-100630",
     "mb-102175",
     "mb-9529",
     "mb-2131"
+  ],
+  "ids_added_this_run": [
+    "mb-3012",
+    "mb-9320"
+  ],
+  "next_queue": [
+    "mb-1018",
+    "mb-1020",
+    "mb-1022",
+    "mb-1024",
+    "mb-1026",
+    "mb-1029",
+    "mb-1031",
+    "mb-1034",
+    "mb-1036",
+    "mb-1038",
+    "mb-1039",
+    "mb-1042",
+    "mb-1045",
+    "mb-1046",
+    "mb-1047"
   ],
   "next_city_after_winnipeg": "Brandon"
 }
