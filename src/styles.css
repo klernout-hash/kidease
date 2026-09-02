@@ -232,6 +232,12 @@
     flex-direction: column;
     align-items: flex-end;
   }
+  @media (max-width: 767px) {
+    .ke-help-bot {
+      bottom: calc(24dvh + 5.5rem + env(safe-area-inset-bottom));
+      right: 0.75rem;
+    }
+  }
   @media (min-width: 768px) {
     .ke-help-bot {
       bottom: 1.5rem;
@@ -254,7 +260,6 @@
 }
 
 @media (min-width: 768px) {
-  /* Website — directory cards, not the phone app */
   .ke-listings {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.5rem 1.25rem;
@@ -338,15 +343,20 @@
   }
 }
 
-/* Raster basemap tiles are <img>. The base `max-width: 100%` rule collapses them. */
 .gm-style img,
 .gm-style map img {
   max-width: none !important;
 }
 
+.gm-bundled-control,
+.gm-bundled-control-on-bottom,
+.gmnoprint.gm-bundled-control {
+  display: none !important;
+}
+
 .ke-logo-pin {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
   position: relative;
   transform-origin: bottom center;
@@ -355,42 +365,54 @@
 }
 .ke-logo-pin svg {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
 }
 .ke-logo-pin.is-active {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   filter: drop-shadow(0 4px 8px rgba(26, 55, 144, 0.38));
 }
 .ke-logo-pin.is-active svg {
-  width: 48px;
-  height: 48px;
-}
-.ke-logo-cluster {
   width: 44px;
   height: 44px;
 }
-.ke-logo-cluster svg {
-  width: 44px;
-  height: 44px;
-}
-.ke-pin-count {
-  position: absolute;
-  top: -2px;
-  right: -8px;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+
+.ke-count-cluster {
+  display: grid;
+  place-items: center;
   border-radius: 999px;
   background: #1a3790;
   color: #fff;
-  border: 2px solid #fff;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 16px;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(26, 55, 144, 0.35);
+  border: 2.5px solid #fff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(26, 55, 144, 0.32);
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+}
+.ke-count-cluster--sm {
+  width: 36px;
+  height: 36px;
+  font-size: 12px;
+}
+.ke-count-cluster--md {
+  width: 44px;
+  height: 44px;
+  font-size: 13px;
+}
+.ke-count-cluster--lg {
+  width: 52px;
+  height: 52px;
+  font-size: 14px;
+}
+.ke-count-cluster--xl {
+  width: 60px;
+  height: 60px;
+  font-size: 15px;
 }
 
 .dn-pin {
