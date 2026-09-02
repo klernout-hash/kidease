@@ -54,7 +54,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
 
   return (
     <div className="min-h-dvh bg-bg text-fg">
-      <header className="sticky top-0 z-30 border-b border-border/80 bg-bg/80 pt-[env(safe-area-inset-top)] shadow-[0_1px_0_rgba(28,36,56,0.04)] backdrop-blur-[16px]">
+      <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
         <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 py-2">
           <Link to="/" className="shrink-0" aria-label="KidEase">
             <BrandMark size="sm" />
@@ -141,7 +141,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         {children}
       </div>
       {hideTabs ? null : (
-        <nav className="fixed inset-x-0 bottom-0 z-30 hidden border-t border-border bg-surface/95 backdrop-blur-md [[data-channel=app]_&]:block">
+        <nav className="fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
           <div className="mx-auto grid max-w-lg grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)] pt-1">
             <Tab
               to="/"
@@ -174,7 +174,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
           </div>
         </nav>
       )}
-      {hideTabs ? null : <LiveChatSlot />}
+      {hideTabs || pathname.startsWith("/search") ? null : <LiveChatSlot />}
     </div>
   );
 }
