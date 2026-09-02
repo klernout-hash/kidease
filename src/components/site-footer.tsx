@@ -44,9 +44,6 @@ export function SiteFooter() {
           <a href="https://childcaresearch.gov.mb.ca/en" target="_blank" rel="noreferrer" className="hover:text-fg">
             {t("mbChildcare")}
           </a>
-          <Link to="/claim" className="hover:text-fg">
-            {t("providerLogin")}
-          </Link>
         </nav>
         <p className="mt-4 text-xs text-subtle">{t("neverSell")}</p>
         <a href="mailto:kyle@kidease.ca" className="mt-3 inline-block text-xs text-muted hover:text-fg">
