@@ -48,8 +48,6 @@ const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" a
   <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M41 51c5.4 7 12.6 7 18 0"/>
 </svg>`;
 
-const PIN_DATA_URL = "/favicon.svg";
-
 type AnyPin = {
   setMap(map: google.maps.Map | null): void;
 };
@@ -236,7 +234,6 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
 
       const clusters = clusterItems(items, zoom);
       const nextPins: AnyPin[] = [];
-      const useAdvanced = Boolean(advancedMarkerRef.current);
       for (const node of clusters) {
         if (node.kind === "group") {
           const content = clusterEl(node.count);
@@ -258,7 +255,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
                 map.fitBounds(box, MAP_PAD);
               } else {
                 map.setZoom(Math.min(zoom + 2, 16));
-                map.panTo({ lat: node.lat, lng: node.lng });
+                map.panTo({ lat: node.lat, lng.lng });
               }
             },
           });
@@ -267,38 +264,21 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         }
         const item = node.item;
         if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-        if (useAdvanced) {
-          const content = logoPinEl("ke-logo-pin");
-          content.setAttribute("aria-label", item.name);
-          const overlay = createOverlay({
-            map,
-            position: { lat: item.lat, lng: item.lng },
-            content,
-            zIndex: item.live ? 20 : 10,
-            collision: "OPTIONAL_AND_HIDES_LOWER_PRIORITY",
-            onClick: () => {
-              setPicked(item.slug);
-              onSelectRef.current(item.slug);
-            },
-          });
-          nextPins.push(overlay);
-          markersBySlug.current.set(item.slug, wrapOverlayPin(overlay));
-          continue;
-        }
-        const marker = new maps.Marker({
+        const content = logoPinEl("ke-logo-pin");
+        content.setAttribute("aria-label", item.name);
+        const overlay = createOverlay({
           map,
           position: { lat: item.lat, lng: item.lng },
-          icon: pinIcon(maps, 36),
-          title: item.name,
-          optimized: false,
+          content,
           zIndex: item.live ? 20 : 10,
+          collision: "OPTIONAL_AND_HIDES_LOWER_PRIORITY",
+          onClick: () => {
+            setPicked(item.slug);
+            onSelectRef.current(item.slug);
+          },
         });
-        marker.addListener("click", () => {
-          setPicked(item.slug);
-          onSelectRef.current(item.slug);
-        });
-        nextPins.push(marker);
-        markersBySlug.current.set(item.slug, wrapClassicPin(marker));
+        nextPins.push(overlay);
+        markersBySlug.current.set(item.slug, wrapOverlayPin(overlay));
       }
       pinsRef.current = nextPins;
     }, 50);
@@ -494,20 +474,12 @@ function logoPinEl(className: string) {
 
 function clusterEl(count: number) {
   const content = document.createElement("div");
-  const size = count >= 200 ? "xl" : count >= 50 ? "lg" : count >= 10 ? "md" : "sm";
-  content.className = `ke-count-cluster ke-count-cluster--${size}`;
-  content.textContent = count > 999 ? "999+" : String(count);
+  content.className = "ke-logo-pin ke-logo-cluster";
+  const label = count > 999 ? "999+" : String(count);
+  content.innerHTML = `${PIN_SVG}<span class="ke-pin-count">${label}</span>`;
   content.setAttribute("role", "button");
   content.setAttribute("aria-label", `${count} licensed centres`);
   return content;
-}
-
-function pinIcon(maps: typeof google.maps, size: number): google.maps.Icon {
-  return {
-    url: PIN_DATA_URL,
-    scaledSize: new maps.Size(size, size),
-    anchor: new maps.Point(size / 2, size),
-  };
 }
 
 function wrapOverlayPin(overlay: ListingOverlay): SlugPin {
@@ -522,29 +494,13 @@ function wrapOverlayPin(overlay: ListingOverlay): SlugPin {
   };
 }
 
-function wrapClassicPin(marker: google.maps.Marker): SlugPin {
-  return {
-    setMap(map) {
-      marker.setMap(map);
-    },
-    setActive(on, maps) {
-      marker.setIcon(pinIcon(maps, on ? 46 : 36));
-      marker.setZIndex(on ? 500 : 10);
-    },
-  };
-}
-
 function clusterCellDegrees(zoom: number): number {
-  if (zoom >= 15) return 0;
-  if (zoom >= 14) return 0.012;
-  if (zoom >= 13) return 0.022;
-  if (zoom >= 12) return 0.038;
-  if (zoom >= 11) return 0.07;
-  if (zoom >= 10) return 0.13;
-  if (zoom >= 9) return 0.22;
-  if (zoom >= 8) return 0.36;
-  if (zoom >= 7) return 0.55;
-  return 0.85;
+  // City / neighbourhood zoom shows a KidEase logo on every listing.
+  // Cluster only when the map is pulled far back so pins would stack.
+  if (zoom >= 11) return 0;
+  if (zoom >= 9) return 0.16;
+  if (zoom >= 7) return 0.32;
+  return 0.65;
 }
 
 function clusterItems(items: DaycareCard[], zoom: number): ClusterNode[] {
