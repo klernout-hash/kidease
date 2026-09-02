@@ -19,5 +19,33 @@
     "image_url": "https://images.squarespace-cdn.com/content/v1/548c9d96e4b04ff00dd5ca7b/1783958660282-R1YBXKLYXFFSN687G4MB/IMG_0564.jpg",
     "type": "official_website_program_photo",
     "scraped": "2026-09-02"
+  },
+  "mb-102885": {
+    "name": "Advantage Child Care Academy - McGillivray",
+    "source_url": "https://advantagechildcareacademy.ca/photo-gallery/",
+    "image_url": "https://advantagechildcareacademy.ca/photo-gallery/",
+    "type": "official_website_gallery_exterior_sign",
+    "scraped": "2026-09-02"
+  },
+  "mb-3092": {
+    "name": "Stanley Knowles Children's Centre Inc.",
+    "source_url": "https://skcc.ca/",
+    "image_url": "https://skcc.ca/wp-content/uploads/2023/11/IMG_2023-10-20-12-17-23-086-e1700501146867-1920x645.jpg",
+    "type": "official_website_program_photo",
+    "scraped": "2026-09-02"
+  },
+  "mb-3062": {
+    "name": "SPLASH Child Care Inc.",
+    "source_url": "https://splashcares.ca/",
+    "image_url": "https://splashcares.ca/wp-content/uploads/2025/08/1000024207-1.jpg",
+    "type": "official_website_forest_school_photo",
+    "scraped": "2026-09-02"
+  },
+  "mb-101065": {
+    "name": "Down to Earth Children's Centre",
+    "source_url": "https://downtoearthchildrenscentre.ca/",
+    "image_url": "https://downtoearthchildrenscentre.ca/wp-content/uploads/2025/08/Front_page_pic-1024x768.jpg",
+    "type": "official_website_program_photo",
+    "scraped": "2026-09-02"
   }
 }

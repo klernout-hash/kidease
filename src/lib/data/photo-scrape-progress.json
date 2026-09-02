@@ -1,44 +1,50 @@
 {
-  "last_city": "Winnipeg",
-  "last_province": "MB",
-  "last_id_processed": "mb-3017",
-  "mapped_count_national": 68,
-  "mapped_count_winnipeg": 68,
-  "this_run_added": [
-    "mb-3004",
-    "mb-3005",
-    "mb-3010"
+  "last_run": "2026-09-02T20:22:52Z",
+  "city": "Winnipeg",
+  "province": "MB",
+  "last_id_processed": "mb-101065",
+  "mapped_count": 72,
+  "mapped_winnipeg": 71,
+  "winnipeg_total": 428,
+  "national_total": 20846,
+  "skipped_no_photo_this_run": [
+    "mb-1036",
+    "mb-1249",
+    "mb-3002",
+    "mb-102891",
+    "mb-1264",
+    "mb-1233",
+    "mb-102363",
+    "mb-1199",
+    "mb-1003",
+    "mb-7834",
+    "mb-101214",
+    "mb-100820",
+    "mb-7893",
+    "mb-3026",
+    "mb-1046"
   ],
-  "this_run_skipped": [
-    "mb-3003",
-    "mb-3006",
-    "mb-3008",
-    "mb-3009",
-    "mb-3012",
-    "mb-3013",
-    "mb-3015",
-    "mb-3016",
-    "mb-3017"
+  "ids_added_this_run": [
+    "mb-3092",
+    "mb-3062",
+    "mb-101065"
   ],
-  "skip_reasons": {
-    "mb-3003": "Crestview School Children's Centre — no dedicated official site with usable room/building photos (school page only)",
-    "mb-3006": "Linwood Child Centre Inc. — no official website found with photos",
-    "mb-3008": "Lord Roberts School Age Program — site exists but no clear usable classroom/building photo confirmed this run",
-    "mb-3009": "O.K. Before and After School - A.E. Wright — multi-site operator, no site-specific official photo found",
-    "mb-3012": "Earl Grey Children's Centre — official site hero/gallery appear stock-style; skipped to avoid non-specific image",
-    "mb-3013": "O.K. Before and After School - Elwick — multi-site, no site-specific photo",
-    "mb-3015": "Garden Grove Child Care — site photos appear generic/stock; skipped",
-    "mb-3016": "Harstone Children's Centre — multi-location operator; no confirmed photo of 905 Sargent site this run",
-    "mb-3017": "Inkster Community Child Care — site photos too low-res or banner-only"
-  },
   "next_queue": [
-    "mb-3018",
-    "mb-3019",
-    "mb-3020",
-    "mb-3021",
-    "mb-3022",
-    "mb-3023",
-    "mb-3024",
-    "mb-3025"
-  ]
+    "mb-1005",
+    "mb-9360",
+    "mb-1007",
+    "mb-7923",
+    "mb-3084",
+    "mb-101711",
+    "mb-103160",
+    "mb-9829",
+    "mb-101123",
+    "mb-1284",
+    "mb-9318",
+    "mb-3057",
+    "mb-1023",
+    "mb-101062",
+    "mb-1010"
+  ],
+  "next_city_after_winnipeg": "Brandon"
 }
