@@ -74,7 +74,7 @@ function SearchPage() {
   const [extended, setExtended] = useState(false);
   const [infantOnly, setInfantOnly] = useState(false);
   const [catchmentOnly, setCatchmentOnly] = useState(false);
-  const [snap, setSnap] = useState<SheetSnap>("peek");
+  const [snap, setSnap] = useState<SheetSnap>("mid");
   const [shownN, setShownN] = useState(24);
   const originAt = useAppStore((s) => s.originAt);
   const originSource = useAppStore((s) => s.originSource);
@@ -315,8 +315,8 @@ function SearchPage() {
 
   return (
     <Shell>
-      <div className="relative hidden [[data-channel=app]_&]:block">
-        <div className="h-[calc(100dvh-9.5rem)] overflow-hidden bg-map">
+      <div className="ke-app-search hidden [[data-channel=app]_&]:block">
+        <div className="absolute inset-0 overflow-hidden bg-map">
           <Suspense fallback={<div className="size-full bg-map" />}>
             <MapView
             items={list}
@@ -335,7 +335,7 @@ function SearchPage() {
           />
           </Suspense>
         </div>
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-[450] p-3">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-30 p-3">
           <form
             className="pointer-events-auto"
             onSubmit={(e) => {
