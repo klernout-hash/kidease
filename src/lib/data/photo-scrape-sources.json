@@ -80,5 +80,23 @@
     "source_image": "https://frcdn.ca/wp-content/uploads/2019/08/20190321_104157-1-1568x882.jpg",
     "kind": "playground with children in program at official preschool site",
     "file": "/photos/buildings/mb-1017.jpg"
+  },
+  "mb-1244": {
+    "id": "mb-1244",
+    "name": "Stanley Knowles Pre-School Centre Inc.",
+    "address": "112-2424 King Edward Street, Winnipeg, MB",
+    "source_page": "https://skps.ca/",
+    "source_image": "https://skps.ca/wp-content/uploads/2024/07/Backyard-photo-for-website-e1721754355729.jpg",
+    "kind": "official playground and building exterior published by the centre",
+    "file": "/photos/buildings/mb-1244.jpg"
+  },
+  "mb-1255": {
+    "id": "mb-1255",
+    "name": "Provincial Employee Day Care / Portage",
+    "address": "1-800 Portage Avenue, Winnipeg, MB",
+    "source_page": "https://provempdaycare.com/portage/",
+    "source_image": "https://provempdaycare.com/wp-content/uploads/2024/06/2aab0db89c6c3f38c65aac052df1aa24.jpg",
+    "kind": "official classroom / indoor program photo of Portage location",
+    "file": "/photos/buildings/mb-1255.jpg"
   }
 }
