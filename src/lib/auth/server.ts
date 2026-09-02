@@ -12,8 +12,14 @@
  * each provider's `idp` hint.
  *
  * Tri-mode:
- *   - Deployed: the deployer injects a per-app `GROK_AUTH_*` + `BETTER_AUTH_URL`
- *     + `DATABASE_URL`, so real federated auth is persisted in Postgres.
+ *   - Vercel production: native Google via `socialProviders.google` when
+ *     `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` are set (callback
+ *     `/api/auth/callback/google`). Do not rely on the preview broker client.
+ *     Production must also set `BETTER_AUTH_SECRET` (never commit one).
+ *   - Deployed with broker: the deployer injects a per-app `GROK_AUTH_*` +
+ *     `BETTER_AUTH_URL` + `DATABASE_URL`, so federated auth is persisted in
+ *     Postgres. Native Google and the broker can coexist (`google` vs
+ *     `grok-google`).
  *   - Sandbox live preview: no injection -> falls back to the shared **preview
  *     client** (`./preview`) and derives the preview's `https://*.grok-sandbox.com`
  *     origin from the request, so real sign-in works (no demo users). Sessions
@@ -38,13 +44,19 @@ import { ensureDbReady, getPglite } from "../db";
 import { emailAndPasswordEnabled } from "./email-password";
 import { GROK_PROVIDERS, BROKER_PROVIDERS } from "./providers";
 import { APPLE_CLIENT_ID, appleClientSecret, appleIdpConfigured } from "./apple-idp";
-import { pgliteDialect } from "./pglite-dialect";
 import {
-  GROK_ISSUER_DEFAULT,
-  PREVIEW_ALLOWED_HOSTS,
-  PREVIEW_CLIENT_ID,
-  PREVIEW_CLIENT_SECRET,
-} from "./preview";
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  googleIdpConfigured,
+} from "./google-idp";
+import {
+  grokBrokerConfigured,
+  grokClientId,
+  grokClientSecret,
+  grokIssuer,
+} from "./broker-env";
+import { pgliteDialect } from "./pglite-dialect";
+import { PREVIEW_ALLOWED_HOSTS } from "./preview";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
 void ensureDbReady();
@@ -73,16 +85,16 @@ const env = (key: string): string | undefined => {
 // provisions auth; set it to "false" to force auth off everywhere (dev user).
 const authDisabled = env("VITE_AUTH_ENABLED") === "false";
 
-// Broker federation creds: the deployer injects a per-app client when deployed;
-// otherwise fall back to the shared live-preview client, which the broker accepts
-// for any `*.grok-sandbox.com` callback (see `./preview`).
-const grokIssuer = env("GROK_AUTH_ISSUER") ?? GROK_ISSUER_DEFAULT;
-const grokClientId = env("GROK_AUTH_CLIENT_ID") ?? PREVIEW_CLIENT_ID;
-const grokClientSecret = env("GROK_AUTH_CLIENT_SECRET") ?? PREVIEW_CLIENT_SECRET;
-
-/** True when federated sign-in is active (real auth is enforced). */
+// Broker federation: explicit `GROK_AUTH_*` (grok.me / live preview) or the
+// shared preview client on non-Vercel hosts. Vercel production does NOT fall
+// back to the preview client — use native Google (`GOOGLE_CLIENT_*`) there.
+/** True when real auth is enforced (broker, native Google, Apple, or email). */
 export const authConfigured =
-  !authDisabled && Boolean(grokClientId && grokClientSecret);
+  !authDisabled &&
+  (grokBrokerConfigured ||
+    googleIdpConfigured ||
+    appleIdpConfigured ||
+    emailAndPasswordEnabled);
 
 // This app's own Better Auth origin. When deployed the deployer injects the
 // public URL. In the sandbox live preview there's no fixed URL (each preview gets
@@ -118,6 +130,7 @@ const PRODUCTION_HOSTS: string[] = [
   "www.kidease.ca",
   "kidease.grok.me",
   "kidease.vercel.app",
+  "kidease-git.vercel.app",
   "kidease-klernout-1129s-projects.vercel.app",
 ];
 const PRODUCTION_ORIGINS = PRODUCTION_HOSTS.map((h) => `https://${h}`);
@@ -207,8 +220,9 @@ export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 
 // Built separately so the `betterAuth({...})` call stays easy to edit without
 // breaking brackets (models often trip on the conditional plugin spread).
-const grokOAuthPlugin = authConfigured
-  ? genericOAuth({
+const grokOAuthPlugin =
+  grokBrokerConfigured && grokClientId && grokClientSecret
+    ? genericOAuth({
       config: BROKER_PROVIDERS.map(({ providerId, idp }) => ({
         providerId,
         clientId: grokClientId as string,
@@ -227,13 +241,43 @@ const grokOAuthPlugin = authConfigured
         authorizationUrlParams: { idp, prompt: "login" },
       })),
     })
-  : null;
+    : null;
+
+const betterAuthSecret = env("BETTER_AUTH_SECRET");
+if (process.env.VERCEL && !betterAuthSecret) {
+  console.error(
+    "[auth] Production must set BETTER_AUTH_SECRET (Vercel server env). " +
+      "Do not commit a secret. Without it, sessions cannot be verified across serverless instances.",
+  );
+}
+
+const socialProviders = {
+  ...(appleIdpConfigured && APPLE_CLIENT_ID
+    ? {
+        apple: {
+          clientId: APPLE_CLIENT_ID,
+          clientSecret: appleClientSecret() as string,
+          appBundleIdentifier: env("APPLE_BUNDLE_ID") ?? "ca.kidease.app",
+        },
+      }
+    : {}),
+  ...(googleIdpConfigured && GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET
+    ? {
+        google: {
+          clientId: GOOGLE_CLIENT_ID,
+          clientSecret: GOOGLE_CLIENT_SECRET,
+          prompt: "select_account" as const,
+        },
+      }
+    : {}),
+};
 
 export const auth = betterAuth({
   baseURL,
-  // Deployed apps inject BETTER_AUTH_SECRET. Preview: process-stable secret on
+  // Deployed apps must set BETTER_AUTH_SECRET. Preview: process-stable secret on
   // globalThis so HMR doesn't invalidate PGLite-backed sessions (see above).
-  secret: env("BETTER_AUTH_SECRET") ?? previewAuthSecret(),
+  // Do not mint a production secret in the repo.
+  secret: betterAuthSecret ?? previewAuthSecret(),
   database,
 
   // CSRF / origin check for credentialed auth POSTs (email sign-up/sign-in, …).
@@ -251,22 +295,12 @@ export const auth = betterAuth({
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
-      trustedProviders: [...GROK_PROVIDERS.map((p) => p.providerId), "apple"],
+      trustedProviders: [...GROK_PROVIDERS.map((p) => p.providerId), "apple", "google"],
       requireLocalEmailVerified: false,
     },
   },
 
-  ...(appleIdpConfigured && APPLE_CLIENT_ID
-    ? {
-        socialProviders: {
-          apple: {
-            clientId: APPLE_CLIENT_ID,
-            clientSecret: appleClientSecret() as string,
-            appBundleIdentifier: env("APPLE_BUNDLE_ID") ?? "ca.kidease.app",
-          },
-        },
-      }
-    : {}),
+  ...(Object.keys(socialProviders).length > 0 ? { socialProviders } : {}),
 
   // Cache the session in the short-lived signed `session_data` cookie so reads
   // (incl. the client's `/get-session`) skip the DB — this shrinks the "loading"

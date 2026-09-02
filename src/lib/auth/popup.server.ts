@@ -16,6 +16,7 @@
  * React route here paints the full app shell in the popup. The opener lives in
  * `client.ts` (`signIn` → `openSignInPopup`).
  */
+import { isNativeSocialProvider } from "./providers";
 import { auth, SESSION_TOKEN_COOKIE } from "./server";
 
 /** Message shape the popup posts to the opener (must match `client.ts`). */
@@ -63,10 +64,10 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
   const back = `${url.origin}/auth/popup?done=1`;
   try {
     const apiRes =
-      providerId === "apple"
+      isNativeSocialProvider(providerId)
         ? await auth.api.signInSocial({
             body: {
-              provider: "apple",
+              provider: providerId as "apple" | "google",
               callbackURL: back,
               errorCallbackURL: `${back}&error=1`,
             },

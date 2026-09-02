@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
@@ -18,11 +19,16 @@ export const Route = createFileRoute("/login")({
     if (s.intent === "in" || s.intent === "up") out.intent = s.intent;
     return out;
   },
+  loader: async () => {
+    const providers = await getSignInProviders().catch(() => [...GROK_PROVIDERS]);
+    return { providers };
+  },
   component: Login,
 });
 
 function Login() {
   const { t } = useCopy();
+  const { providers } = Route.useLoaderData();
   const search = Route.useSearch();
   const role = search.role;
   const dest = search.next && search.next.startsWith("/")
@@ -118,7 +124,7 @@ function Login() {
             <p className="mt-2 text-sm text-muted">{lead}</p>
           <div className="mt-6 space-y-2">
             {authEnabled ? (
-              GROK_PROVIDERS.map((p) => (
+              providers.map((p) => (
                 <Button
                   key={p.providerId}
                   type="button"
@@ -222,7 +228,7 @@ function friendlyAuthError(message?: string | null) {
     return "Pop-up blocked — allow pop-ups for KidEase, then try again.";
   }
   if (raw.includes("client_id") || raw.includes("apple") && raw.includes("secret") || raw.includes("provider") && raw.includes("not found")) {
-    return "Apple Sign In is connecting to Apple’s live IDP. Add your Apple Developer Services ID on the host, or use Google / email for now.";
+    return "Social sign-in is not configured on this host. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET (server env), or use email.";
   }
   return message || "Sign-in failed";
 }
