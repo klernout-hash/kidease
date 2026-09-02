@@ -1,36 +1,37 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-1153",
-  "mapped_count": 46,
+  "last_id_processed": "mb-1022",
+  "mapped_count": 49,
   "skipped_no_photo_this_run": [
-    "mb-1063",
-    "mb-1064",
-    "mb-1070",
-    "mb-1140",
-    "mb-1144",
-    "mb-1145",
-    "mb-1148",
-    "mb-1153"
-  ],
-  "next_queue": [
     "mb-1002",
     "mb-1003",
     "mb-1005",
     "mb-1007",
     "mb-1008",
     "mb-1010",
-    "mb-1012",
-    "mb-1013",
-    "mb-1017",
     "mb-1018",
     "mb-1020",
     "mb-1022"
   ],
+  "next_queue": [
+    "mb-1023",
+    "mb-1024",
+    "mb-1026",
+    "mb-1029",
+    "mb-1031",
+    "mb-1034",
+    "mb-1036",
+    "mb-1038",
+    "mb-1039",
+    "mb-1042",
+    "mb-1045",
+    "mb-1046"
+  ],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 46,
+  "winnipeg_mapped": 49,
   "national_total": 20846,
-  "national_mapped": 46,
-  "updated": "2026-09-02T11:09:06Z",
-  "notes": "Added 2 official photos this run: U.W.S.A. Day Care Centre (mb-1074) classroom/program photo from Uniter coverage of the UWSA Day Care expansion; Wild Strawberry Children's Centre (mb-1147) classroom art activity from the centre's official gallery. Skipped Wild Honey, Munroe ECEC Chalmers, Little Bo-Peep, Rainbow Phase 1, Downtown Y Creative Play (only Google-sourced facade on Y site), St. Boniface Children's Place, Dante Day Nursery, Lovin N Learnin — no usable official photo. JPEGs in public/photos/buildings/ and artifacts/photo-archive/."
+  "national_mapped": 49,
+  "updated": "2026-09-02T12:35:00Z",
+  "notes": "Added 3 official photos: Day Nursery Centre Kennedy Site (mb-1012) storefront from daynurserycentre.ca/programs/kennedy-unit/; Day Nursery Centre Gretta Brown (mb-1013) building from daynurserycentre.ca/programs/gretta-brown-unit/; Fort Rouge Co-op Day Nursery (mb-1017) playground/kids photo from official site frcdn.ca. Skipped Brooklands, C.A.P.T. Queenston, Care-A-Lot, Carter ELC, Elmwood Day Nursery, Crestview Park, Freight House Ross, Waverley Heights, Harmony \u2014 no usable official photo (Freight House homepage image is stock). JPEGs saved locally in artifacts/kidease-photos/ and artifacts/photo-archive/. Next queue is following Winnipeg ids."
 }
