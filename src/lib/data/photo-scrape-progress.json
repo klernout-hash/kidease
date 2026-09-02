@@ -1,26 +1,34 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-2198",
-  "mapped_count": 63,
+  "last_id_processed": "mb-3002",
+  "mapped_count": 66,
   "skipped_no_photo_this_run": [
-    "mb-2028",
-    "mb-2029",
-    "mb-2131",
-    "mb-2140",
-    "mb-2141",
-    "mb-2157",
-    "mb-2180",
-    "mb-2188",
-    "mb-2193",
-    "mb-2195",
-    "mb-2198"
+    "mb-2219",
+    "mb-2288",
+    "mb-2295",
+    "mb-2314",
+    "mb-2334",
+    "mb-3002"
   ],
-  "next_queue": [],
+  "next_queue": [
+    "mb-3003",
+    "mb-3004",
+    "mb-3005",
+    "mb-3006",
+    "mb-3008",
+    "mb-3009",
+    "mb-3010",
+    "mb-3012",
+    "mb-3013",
+    "mb-3015",
+    "mb-3016",
+    "mb-3017"
+  ],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 63,
+  "winnipeg_mapped": 66,
   "national_total": 20846,
-  "national_mapped": 63,
-  "updated": "2026-09-02T18:45:00Z",
-  "notes": "Winnipeg continued from queue. Added mb-2151 McLeod Nursery (official site photo), mb-2160 Starlight Christian Nursery School (official gallery interior). Skipped 11 with no usable official photo. Photos processed locally; binary push pending."
+  "national_mapped": 66,
+  "updated": "2026-09-02T19:28:46Z",
+  "notes": "Winnipeg batch after mb-2198. Added 5 official photos: mb-2207 Roblin Park building, mb-2249 St James Montessori classroom, mb-2256 Thrive playground, mb-2273 Kinderschule classroom, mb-2335 MFRC Nursery classroom. Skipped 6 with no usable official photo. JPEG binaries saved locally; GitHub JSON updated this run."
 }

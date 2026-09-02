@@ -1,0 +1,16 @@
+{
+  "run": "2026-09-02-winnipeg-2207-3002",
+  "city": "Winnipeg",
+  "province": "MB",
+  "processed": ["mb-2207", "mb-2219", "mb-2249", "mb-2256", "mb-2273", "mb-2288", "mb-2295", "mb-2314", "mb-2334", "mb-2335", "mb-3002"],
+  "added": ["mb-2207", "mb-2249", "mb-2256", "mb-2273", "mb-2335"],
+  "skipped": ["mb-2219", "mb-2288", "mb-2295", "mb-2314", "mb-2334", "mb-3002"],
+  "skip_reasons": {
+    "mb-2219": "Greendell Tiny Tots — no official website with usable classroom/building photos",
+    "mb-2288": "Little Lambs official site exists but published no usable classroom/building photos",
+    "mb-2295": "Tyndall Park Playschool official site only published a logo graphic",
+    "mb-2314": "Norwood French Immersion Preschool — no official website photo of this room",
+    "mb-2334": "The Little Years School official site photo is a close-up of toys only",
+    "mb-3002": "Assiniboine Children's Centre official site published logo only"
+  }
+}
