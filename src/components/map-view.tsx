@@ -8,12 +8,18 @@ import { useCopy } from "@/lib/use-copy";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { mapZoomForRadius, openDirections, readMapBase, writeMapBase, type MapBase } from "@/lib/maps";
 import {
-  defineHtmlOverlay,
+  createListingOverlayFactory,
+  createYouAreHereDot,
   googleMapTypeId,
-  googleMapsRasterRenderingType,
+  googleMapsMapId,
   GOOGLE_MAPS_BROWSER_ENV,
   hasGoogleMapsBrowserKey,
+  listingMapConstructorOptions,
+  loadAdvancedMarkerElement,
   loadGoogleMaps,
+  type AdvancedMarkerCtor,
+  type ListingOverlay,
+  type MovableDot,
 } from "@/lib/google-maps";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
@@ -29,11 +35,6 @@ type Props = {
   onRelocate?: (pos: { lat: number; lng: number }) => void;
 };
 
-const ROAD_STYLES: google.maps.MapTypeStyle[] = [
-  { featureType: "poi.business", stylers: [{ visibility: "off" }] },
-  { featureType: "transit", stylers: [{ visibility: "off" }] },
-];
-
 /** Brand map pin — same smiling teardrop as the KidEase logo. */
 const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">
   <path fill="#ffffff" d="M50 3c22 0 40 17.4 40 39.2 0 16-10 29.4-25.2 42.2L50 99 35.2 84.4C20 71.6 10 58.2 10 42.2 10 20.4 28 3 50 3z"/>
@@ -46,15 +47,24 @@ const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" a
 
 const PIN_DATA_URL = "/favicon.svg";
 
+type AnyPin = {
+  setMap(map: google.maps.Map | null): void;
+};
+
+type SlugPin = AnyPin & {
+  setActive(on: boolean, maps: typeof google.maps): void;
+};
+
 export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onRelocate }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const mapsApiRef = useRef<typeof google.maps | null>(null);
-  const HtmlOverlayRef = useRef<ReturnType<typeof defineHtmlOverlay> | null>(null);
-  const pinsRef = useRef<Array<{ setMap: (map: google.maps.Map | null) => void }>>([]);
-  const youRef = useRef<google.maps.Marker | null>(null);
+  const overlayFactoryRef = useRef<ReturnType<typeof createListingOverlayFactory> | null>(null);
+  const advancedMarkerRef = useRef<AdvancedMarkerCtor | null>(null);
+  const pinsRef = useRef<AnyPin[]>([]);
+  const youRef = useRef<MovableDot | null>(null);
   const circleRef = useRef<google.maps.Circle | null>(null);
-  const markersBySlug = useRef(new Map<string, google.maps.Marker>());
+  const markersBySlug = useRef(new Map<string, SlugPin>());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
 
@@ -94,29 +104,29 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         const maps = await loadGoogleMaps();
         if (cancelled || !el) return;
         el.innerHTML = "";
-        map = new maps.Map(el, {
-          center: { lat: origin.lat, lng: origin.lng },
-          zoom: mapZoomForRadius(radiusKm),
-          mapTypeId: googleMapTypeId(readMapBase()),
-          disableDefaultUI: true,
-          zoomControl: true,
-          zoomControlOptions: { position: maps.ControlPosition.RIGHT_BOTTOM },
-          gestureHandling: "greedy",
-          clickableIcons: false,
-          styles: ROAD_STYLES,
-          // Raster tiles paint with Maps JavaScript API alone. Vector canvases
-          // stay gray unless a Cloud Map ID / Map Tiles API is configured.
-          renderingType: googleMapsRasterRenderingType(maps),
-        });
+        const mapId = googleMapsMapId();
+        map = new maps.Map(
+          el,
+          listingMapConstructorOptions({
+            maps,
+            center: { lat: origin.lat, lng: origin.lng },
+            zoom: mapZoomForRadius(radiusKm),
+            mapTypeId: googleMapTypeId(readMapBase()),
+            mapId,
+          }),
+        );
         map.addListener("zoom_changed", () => {
           const next = map?.getZoom();
           if (typeof next === "number") setZoom(next);
         });
         const startZoom = map.getZoom();
         if (typeof startZoom === "number") setZoom(startZoom);
+        const AdvancedMarker = await loadAdvancedMarkerElement(maps, mapId);
+        if (cancelled) return;
         mapRef.current = map;
         mapsApiRef.current = maps;
-        HtmlOverlayRef.current = defineHtmlOverlay(maps);
+        advancedMarkerRef.current = AdvancedMarker;
+        overlayFactoryRef.current = createListingOverlayFactory(maps, AdvancedMarker);
         setLoadError(null);
         setReady(true);
       } catch (err) {
@@ -142,7 +152,8 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
       markers.clear();
       mapRef.current = null;
       mapsApiRef.current = null;
-      HtmlOverlayRef.current = null;
+      overlayFactoryRef.current = null;
+      advancedMarkerRef.current = null;
       el.innerHTML = "";
     };
     // Created once per mount.
@@ -197,19 +208,11 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
     if (youRef.current) {
       youRef.current.setPosition({ lat: origin.lat, lng: origin.lng });
     } else {
-      youRef.current = new maps.Marker({
+      youRef.current = createYouAreHereDot({
+        maps,
         map,
         position: { lat: origin.lat, lng: origin.lng },
-        clickable: false,
-        zIndex: 2,
-        icon: {
-          path: maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: "#1a3790",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 3,
-        },
+        AdvancedMarker: advancedMarkerRef.current,
       });
     }
   }, [origin.lat, origin.lng, radiusKm, ready]);
@@ -217,8 +220,8 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
   useEffect(() => {
     const map = mapRef.current;
     const maps = mapsApiRef.current;
-    const HtmlOverlay = HtmlOverlayRef.current;
-    if (!map || !maps || !HtmlOverlay || !ready) return;
+    const createOverlay = overlayFactoryRef.current;
+    if (!map || !maps || !createOverlay || !ready) return;
 
     const timer = window.setTimeout(() => {
       for (const pin of pinsRef.current) pin.setMap(null);
@@ -226,18 +229,16 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
       markersBySlug.current.clear();
 
       const clusters = clusterItems(items, zoom);
-      const nextPins: Array<{ setMap: (map: google.maps.Map | null) => void }> = [];
+      const nextPins: AnyPin[] = [];
+      const useAdvanced = Boolean(advancedMarkerRef.current);
       for (const node of clusters) {
         if (node.kind === "group") {
-          const content = document.createElement("div");
-          content.className = "ke-logo-pin ke-logo-cluster";
-          content.innerHTML = `${PIN_SVG}<span class="ke-pin-count">${node.count}</span>`;
-          content.setAttribute("role", "button");
-          content.setAttribute("aria-label", `${node.count} licensed centres`);
-          const overlay = new HtmlOverlay({
+          const content = logoPinEl("ke-logo-pin ke-logo-cluster", node.count);
+          const overlay = createOverlay({
             map,
             position: { lat: node.lat, lng: node.lng },
             content,
+            centered: true,
             zIndex: 80,
             onClick: () => {
               map.setZoom(Math.min(zoom + 2, 16));
@@ -249,6 +250,23 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         }
         const item = node.item;
         if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
+        if (useAdvanced) {
+          const content = logoPinEl("ke-logo-pin");
+          content.setAttribute("aria-label", item.name);
+          const overlay = createOverlay({
+            map,
+            position: { lat: item.lat, lng: item.lng },
+            content,
+            zIndex: item.live ? 20 : 10,
+            onClick: () => {
+              setPicked(item.slug);
+              onSelectRef.current(item.slug);
+            },
+          });
+          nextPins.push(overlay);
+          markersBySlug.current.set(item.slug, wrapOverlayPin(overlay));
+          continue;
+        }
         const marker = new maps.Marker({
           map,
           position: { lat: item.lat, lng: item.lng },
@@ -262,7 +280,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
           onSelectRef.current(item.slug);
         });
         nextPins.push(marker);
-        markersBySlug.current.set(item.slug, marker);
+        markersBySlug.current.set(item.slug, wrapClassicPin(marker));
       }
       pinsRef.current = nextPins;
     }, 50);
@@ -274,10 +292,8 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
     const maps = mapsApiRef.current;
     if (!maps) return;
     const slug = picked || activeSlug;
-    for (const [id, marker] of markersBySlug.current) {
-      const on = id === slug;
-      marker.setIcon(pinIcon(maps, on ? 46 : 36));
-      marker.setZIndex(on ? 500 : 10);
+    for (const [id, pin] of markersBySlug.current) {
+      pin.setActive(id === slug, maps);
     }
   }, [picked, activeSlug, zoom, items]);
 
@@ -420,11 +436,44 @@ type ClusterNode =
   | { kind: "pin"; item: DaycareCard }
   | { kind: "group"; lat: number; lng: number; count: number };
 
+function logoPinEl(className: string, count?: number) {
+  const content = document.createElement("div");
+  content.className = className;
+  content.innerHTML = count != null ? `${PIN_SVG}<span class="ke-pin-count">${count}</span>` : PIN_SVG;
+  content.setAttribute("role", "button");
+  if (count != null) content.setAttribute("aria-label", `${count} licensed centres`);
+  return content;
+}
+
 function pinIcon(maps: typeof google.maps, size: number): google.maps.Icon {
   return {
     url: PIN_DATA_URL,
     scaledSize: new maps.Size(size, size),
     anchor: new maps.Point(size / 2, size),
+  };
+}
+
+function wrapOverlayPin(overlay: ListingOverlay): SlugPin {
+  return {
+    setMap(map) {
+      overlay.setMap(map);
+    },
+    setActive(on) {
+      overlay.getElement().classList.toggle("is-active", on);
+      overlay.setZIndex(on ? 500 : 10);
+    },
+  };
+}
+
+function wrapClassicPin(marker: google.maps.Marker): SlugPin {
+  return {
+    setMap(map) {
+      marker.setMap(map);
+    },
+    setActive(on, maps) {
+      marker.setIcon(pinIcon(maps, on ? 46 : 36));
+      marker.setZIndex(on ? 500 : 10);
+    },
   };
 }
 

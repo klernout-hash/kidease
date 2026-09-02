@@ -471,3 +471,12 @@
   font-weight: 800;
   line-height: 1;
 }
+
+.ke-you-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #1a3790;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 6px rgba(26, 55, 144, 0.35);
+}
