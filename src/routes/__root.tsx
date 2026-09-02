@@ -9,7 +9,7 @@ import { reportError } from "@/lib/observe";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
-const APP_ICON = "/app-icon?v=5";
+const APP_ICON = "/app-icon?v=6";
 
 export const Route = createRootRoute({
   errorComponent: ({ error }) => {
@@ -28,7 +28,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: APP_NAME },
-      { name: "theme-color", content: "#2F6BFF" },
+      { name: "theme-color", content: "#1A3790" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
@@ -40,9 +40,9 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=5" },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=6" },
       { rel: "icon", type: "image/png", sizes: "180x180", href: APP_ICON },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png?v=5" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png?v=6" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: APP_ICON },

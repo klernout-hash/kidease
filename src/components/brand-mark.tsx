@@ -18,7 +18,7 @@ export function BrandMark({
   return (
     <span className={cn("inline-flex flex-col", align === "start" ? "items-start" : "items-center")}>
       <img
-        src="/logo-transparent.svg?v=3"
+        src="/logo-transparent.png?v=4"
         alt=""
         className={cn(logo, "bg-transparent object-contain")}
       />
