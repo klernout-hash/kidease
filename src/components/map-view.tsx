@@ -14,7 +14,6 @@ import {
   GOOGLE_MAPS_BROWSER_ENV,
   hasGoogleMapsBrowserKey,
   loadGoogleMaps,
-  type HtmlOverlayInstance,
 } from "@/lib/google-maps";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
@@ -37,29 +36,25 @@ const ROAD_STYLES: google.maps.MapTypeStyle[] = [
 
 /** Brand map pin — same smiling teardrop as the KidEase logo. */
 const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">
-  <path class="ke-pin-body" fill="#1A3790" d="M50 6c20.4 0 37 16.2 37 36.2 0 14.6-9.2 27.4-23.4 39.2L50 96 36.4 81.4C22.2 69.6 13 56.8 13 42.2 13 22.2 29.6 6 50 6z"/>
+  <path fill="#ffffff" d="M50 3c22 0 40 17.4 40 39.2 0 16-10 29.4-25.2 42.2L50 99 35.2 84.4C20 71.6 10 58.2 10 42.2 10 20.4 28 3 50 3z"/>
+  <path fill="#1A3790" d="M50 6c20.4 0 37 16.2 37 36.2 0 14.6-9.2 27.4-23.4 39.2L50 96 36.4 81.4C22.2 69.6 13 56.8 13 42.2 13 22.2 29.6 6 50 6z"/>
   <circle cx="50" cy="42" r="22" fill="#fff"/>
   <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M39 40c2.2-4 6.2-4 8.4 0"/>
   <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M52.6 40c2.2-4 6.2-4 8.4 0"/>
   <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M41 51c5.4 7 12.6 7 18 0"/>
 </svg>`;
 
-const CLUSTER_FACE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" aria-hidden="true">
-  <circle cx="20" cy="20" r="18" fill="#fff"/>
-  <path fill="none" stroke="#1A3790" stroke-width="2.4" stroke-linecap="round" d="M14 19c1.2-2.2 3.4-2.2 4.6 0"/>
-  <path fill="none" stroke="#1A3790" stroke-width="2.4" stroke-linecap="round" d="M21.4 19c1.2-2.2 3.4-2.2 4.6 0"/>
-  <path fill="none" stroke="#1A3790" stroke-width="2.4" stroke-linecap="round" d="M15 24.2c3 4 7 4 10 0"/>
-</svg>`;
+const PIN_DATA_URL = "/favicon.svg";
 
 export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onRelocate }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const mapsApiRef = useRef<typeof google.maps | null>(null);
   const HtmlOverlayRef = useRef<ReturnType<typeof defineHtmlOverlay> | null>(null);
-  const pinsRef = useRef<HtmlOverlayInstance[]>([]);
+  const pinsRef = useRef<Array<{ setMap: (map: google.maps.Map | null) => void }>>([]);
   const youRef = useRef<google.maps.Marker | null>(null);
   const circleRef = useRef<google.maps.Circle | null>(null);
-  const markersBySlug = useRef(new Map<string, HtmlOverlayInstance>());
+  const markersBySlug = useRef(new Map<string, google.maps.Marker>());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
 
@@ -221,65 +216,68 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
 
   useEffect(() => {
     const map = mapRef.current;
+    const maps = mapsApiRef.current;
     const HtmlOverlay = HtmlOverlayRef.current;
-    if (!map || !HtmlOverlay || !ready) return;
+    if (!map || !maps || !HtmlOverlay || !ready) return;
 
-    for (const pin of pinsRef.current) pin.setMap(null);
-    pinsRef.current = [];
-    markersBySlug.current.clear();
+    const timer = window.setTimeout(() => {
+      for (const pin of pinsRef.current) pin.setMap(null);
+      pinsRef.current = [];
+      markersBySlug.current.clear();
 
-    const clusters = clusterItems(items, zoom);
-    const nextPins: HtmlOverlayInstance[] = [];
-    for (const node of clusters) {
-      if (node.kind === "group") {
-        const content = document.createElement("div");
-        content.className = "ke-cluster";
-        content.innerHTML = `${CLUSTER_FACE}<span>${node.count}</span>`;
-        content.setAttribute("role", "button");
-        content.setAttribute("aria-label", `${node.count} licensed centres`);
-        const overlay = new HtmlOverlay({
+      const clusters = clusterItems(items, zoom);
+      const nextPins: Array<{ setMap: (map: google.maps.Map | null) => void }> = [];
+      for (const node of clusters) {
+        if (node.kind === "group") {
+          const content = document.createElement("div");
+          content.className = "ke-logo-pin ke-logo-cluster";
+          content.innerHTML = `${PIN_SVG}<span class="ke-pin-count">${node.count}</span>`;
+          content.setAttribute("role", "button");
+          content.setAttribute("aria-label", `${node.count} licensed centres`);
+          const overlay = new HtmlOverlay({
+            map,
+            position: { lat: node.lat, lng: node.lng },
+            content,
+            zIndex: 80,
+            onClick: () => {
+              map.setZoom(Math.min(zoom + 2, 16));
+              map.panTo({ lat: node.lat, lng: node.lng });
+            },
+          });
+          nextPins.push(overlay);
+          continue;
+        }
+        const item = node.item;
+        if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
+        const marker = new maps.Marker({
           map,
-          position: { lat: node.lat, lng: node.lng },
-          content,
-          centered: true,
-          zIndex: 100,
-          onClick: () => {
-            map.setZoom(Math.min(zoom + 2, 16));
-            map.panTo({ lat: node.lat, lng: node.lng });
-          },
+          position: { lat: item.lat, lng: item.lng },
+          icon: pinIcon(maps, 36),
+          title: item.name,
+          optimized: false,
+          zIndex: item.live ? 20 : 10,
         });
-        nextPins.push(overlay);
-        continue;
-      }
-      const item = node.item;
-      if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-      const live = Boolean(item.live);
-      const content = document.createElement("div");
-      content.className = `ke-logo-pin${live ? " is-live" : " is-unclaimed"}`;
-      content.innerHTML = PIN_SVG;
-      content.setAttribute("role", "button");
-      content.setAttribute("aria-label", item.name);
-      const overlay = new HtmlOverlay({
-        map,
-        position: { lat: item.lat, lng: item.lng },
-        content,
-        onClick: () => {
+        marker.addListener("click", () => {
           setPicked(item.slug);
           onSelectRef.current(item.slug);
-        },
-      });
-      nextPins.push(overlay);
-      markersBySlug.current.set(item.slug, overlay);
-    }
-    pinsRef.current = nextPins;
+        });
+        nextPins.push(marker);
+        markersBySlug.current.set(item.slug, marker);
+      }
+      pinsRef.current = nextPins;
+    }, 50);
+
+    return () => window.clearTimeout(timer);
   }, [items, locale, ready, zoom]);
 
   useEffect(() => {
+    const maps = mapsApiRef.current;
+    if (!maps) return;
     const slug = picked || activeSlug;
     for (const [id, marker] of markersBySlug.current) {
-      const el = marker.getElement();
-      el.classList.toggle("is-active", id === slug);
-      marker.setZIndex(id === slug ? 500 : 0);
+      const on = id === slug;
+      marker.setIcon(pinIcon(maps, on ? 46 : 36));
+      marker.setZIndex(on ? 500 : 10);
     }
   }, [picked, activeSlug, zoom, items]);
 
@@ -422,10 +420,19 @@ type ClusterNode =
   | { kind: "pin"; item: DaycareCard }
   | { kind: "group"; lat: number; lng: number; count: number };
 
+function pinIcon(maps: typeof google.maps, size: number): google.maps.Icon {
+  return {
+    url: PIN_DATA_URL,
+    scaledSize: new maps.Size(size, size),
+    anchor: new maps.Point(size / 2, size),
+  };
+}
+
 function clusterItems(items: DaycareCard[], zoom: number): ClusterNode[] {
-  const pinZoom = items.length > 400 ? 14 : 13;
-  if (zoom >= pinZoom || items.length < 18) return items.map((item) => ({ kind: "pin", item }));
-  const cell = zoom >= 12 ? 0.03 : zoom >= 10 ? 0.06 : zoom >= 8 ? 0.12 : 0.22;
+  // City-scale (zoom 10+) shows a KidEase logo on every listing. Cluster only
+  // when the map is zoomed far out so thousands of pins would overlap.
+  if (zoom >= 10 || items.length < 50) return items.map((item) => ({ kind: "pin", item }));
+  const cell = zoom >= 8 ? 0.12 : zoom >= 6 ? 0.22 : 0.4;
   const buckets = new Map<string, DaycareCard[]>();
   for (const item of items) {
     const key = `${Math.round(item.lat / cell)}_${Math.round(item.lng / cell)}`;

@@ -345,31 +345,52 @@
 }
 
 .ke-logo-pin {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
+  position: relative;
   transform-origin: bottom center;
   filter: drop-shadow(0 2px 3px rgba(26, 55, 144, 0.28));
   pointer-events: auto;
 }
 .ke-logo-pin svg {
   display: block;
-  width: 34px;
-  height: 34px;
-}
-.ke-logo-pin.is-unclaimed .ke-pin-body {
-  fill: #fff;
-  stroke: #1a3790;
-  stroke-width: 5;
+  width: 40px;
+  height: 40px;
 }
 .ke-logo-pin.is-active {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   filter: drop-shadow(0 4px 8px rgba(26, 55, 144, 0.38));
 }
 .ke-logo-pin.is-active svg {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
+}
+.ke-logo-cluster {
+  width: 44px;
+  height: 44px;
+}
+.ke-logo-cluster svg {
+  width: 44px;
+  height: 44px;
+}
+.ke-pin-count {
+  position: absolute;
+  top: -2px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #1a3790;
+  color: #fff;
+  border: 2px solid #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(26, 55, 144, 0.35);
 }
 
 .dn-pin {
