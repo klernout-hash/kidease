@@ -9,6 +9,7 @@ import { overlayClaimed } from "./claims";
 import { overlayPriority, sortPriorityFirst } from "./promos";
 import { isPlatformLive } from "@/lib/live";
 import { listingThumb } from "@/lib/photo";
+import { uniqueById } from "@/lib/utils";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
 
 type SearchInput = {
@@ -153,7 +154,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
       if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
       return compareProximity(a, b);
     });
-    return cards.map(slimCard);
+    return uniqueById(cards).map(slimCard);
   });
 
 export const featuredDaycares = createServerFn({ method: "POST" })
@@ -195,7 +196,7 @@ export const featuredDaycares = createServerFn({ method: "POST" })
       return { ...next, spotsTotal: spotsTotal(next), fromPrice: fromPrice(next) };
     });
     const ranked = sortPriorityFirst(await overlayPriority(merged));
-    return ranked.slice(0, 12).map(slimCard);
+    return uniqueById(ranked).slice(0, 12).map(slimCard);
   });
 
 export const getDaycare = createServerFn({ method: "GET" })
@@ -238,10 +239,11 @@ export const getDaycare = createServerFn({ method: "GET" })
       on conflict (daycare_id, viewed_on)
       do update set count = daycare_views.count + 1
     `;
-    const nearby = (await catalogNear({ lat: found.lat, lng: found.lng }, 15))
-      .filter((d) => d.id !== found.id)
-      .slice(0, 4)
-      .map((d) => toCard(d, { lat: found.lat, lng: found.lng }));
+    const nearby = uniqueById(
+      (await catalogNear({ lat: found.lat, lng: found.lng }, 15))
+        .filter((d) => d.id !== found.id)
+        .map((d) => toCard(d, { lat: found.lat, lng: found.lng })),
+    ).slice(0, 4);
     return {
       daycare,
       reviews: reviews.map((r) => ({
@@ -264,10 +266,12 @@ export const getDaycaresByIds = createServerFn({ method: "POST" })
     const origin = { lat: 49.8951, lng: -97.1384 };
     const catalog = await getCatalog();
     const byId = new Map(catalog.map((d) => [d.id, d]));
-    const cards = ids
-      .map((id) => byId.get(id))
-      .filter((d): d is CatalogDaycare => Boolean(d))
-      .map((d) => toCard(d, origin));
+    const cards = uniqueById(
+      ids
+        .map((id) => byId.get(id))
+        .filter((d): d is CatalogDaycare => Boolean(d))
+        .map((d) => toCard(d, origin)),
+    );
     return overlayClaimed(cards, (card, claimed) => {
       const next = {
         ...card,
