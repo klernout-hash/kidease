@@ -1,14 +1,14 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-1033",
-  "mapped_count": 37,
-  "skipped_no_photo_this_run": ["mb-1026", "mb-1029", "mb-1031", "mb-1034", "mb-1035", "mb-1036"],
-  "next_queue": ["mb-1038", "mb-1039", "mb-1040", "mb-1042", "mb-1043", "mb-1045", "mb-1046", "mb-1048", "mb-1050", "mb-1051"],
+  "last_id_processed": "mb-1051",
+  "mapped_count": 40,
+  "skipped_no_photo_this_run": ["mb-1038", "mb-1039", "mb-1042", "mb-1045", "mb-1046", "mb-1048", "mb-1051"],
+  "next_queue": ["mb-1052", "mb-1053", "mb-1054", "mb-1055", "mb-1056", "mb-1057", "mb-1059", "mb-1060", "mb-1061", "mb-1062"],
   "winnipeg_total": 428,
-  "winnipeg_mapped": 37,
+  "winnipeg_mapped": 40,
   "national_total": 20846,
-  "national_mapped": 37,
-  "updated": "2026-09-02T08:06:41Z",
-  "notes": "Added 5 official photos this run: Kings Park Child Care (mb-1027) child with camera from kingsparkchildcare.org; Knox Day Nursery (mb-1028) classroom kids from knoxdaynursery.com; Little Voyageurs Site 1 (mb-1030) from littlevoyageurs.ca; Lord Roberts Preschool (mb-1032) from lordroberts.org; Machray Day Nursery (mb-1033) from machraydaynursery.com. Skipped Kidi-Garden, Learning Tree, Little People's, Maples, Anne Ross (no clear usable official photos found)."
+  "national_mapped": 40,
+  "updated": "2026-09-02T09:05:50Z",
+  "notes": "Added 3 official photos this run: RRC Early Childhood Centre (mb-1040), Discovery Children's Centre (mb-1043), Seven Oaks Child Day Care (mb-1050). JPEGs must be copied to public/photos/buildings/."
 }
