@@ -7,6 +7,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function uniqueById<T extends { id: string }>(rows: T[]) {
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    if (seen.has(row.id)) return false;
+    seen.add(row.id);
+    return true;
+  });
+}
+
 /** Decode leftover HTML entities in listing names. */
 export function decodeHtml(value: string) {
   if (!value) return value;
