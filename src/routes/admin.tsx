@@ -6,17 +6,40 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { Button } from "@/components/ui/button";
+import { PROVINCES } from "@/lib/geo";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
+const PROV_ORDER = PROVINCES.map((p) => p.code);
+const PROV_NAME = Object.fromEntries(PROVINCES.map((p) => [p.code, p.name]));
+
+function isQueued(status: string) {
+  return status === "waiting" || status === "pending";
+}
+
+function provCode(raw: string | null | undefined) {
+  const v = (raw || "").trim().toUpperCase();
+  if (PROV_NAME[v]) return v;
+  const hit = PROVINCES.find((p) => p.name.toUpperCase() === v || p.nameFr.toUpperCase() === v);
+  return hit?.code || (v || "—");
+}
+
+function statusLabel(c: AdminCentreRow) {
+  if (c.claimStatus === "approved" || c.live) return "Live";
+  if (c.claimStatus === "declined") return "Declined";
+  if (c.claimStatus === "pending") return "Submitted";
+  return "Waiting";
+}
+
 function AdminPage() {
   const { user, isPending } = useCurrentUserState();
-  const [tab, setTab] = useState<"centres" | "activity">("centres");
+  const [tab, setTab] = useState<"queue" | "activity">("queue");
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listPlatformEvents>>>([]);
   const [centres, setCentres] = useState<AdminCentreRow[]>([]);
-  const [filter, setFilter] = useState<"all" | "waiting" | "approved" | "declined">("all");
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const [q, setQ] = useState("");
+  const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
 
   async function refresh() {
     const [events, list] = await Promise.all([
@@ -32,34 +55,50 @@ function AdminPage() {
     void refresh();
   }, [user]);
 
-  if (isPending) {
-    return (
-      <Shell>
-        <p className="p-8 text-muted">Loading…</p>
-      </Shell>
-    );
-  }
-  if (!user) return <RedirectToSignIn />;
-  const admin = (user.primaryEmail || "").trim().toLowerCase() === "kyle@kidease.ca";
-  if (!admin) {
-    return (
-      <Shell>
-        <main className="mx-auto max-w-lg px-4 py-16 text-center">
-          <h1 className="font-display text-3xl">Not found</h1>
-          <p className="mt-3 text-muted">This page is only for the KidEase operator.</p>
-        </main>
-      </Shell>
-    );
-  }
+  const admin = (user?.primaryEmail || "").trim().toLowerCase() === "kyle@kidease.ca";
 
-  const visible = useMemo(() => {
-    if (filter === "all") return centres;
-    return centres.filter((c) => c.claimStatus === filter);
-  }, [centres, filter]);
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return centres;
+    return centres.filter((c) =>
+      [c.name, c.city, c.province, c.address, c.providerName, c.providerEmail, c.contactEmail]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(needle),
+    );
+  }, [centres, q]);
+
+  const waitingOnYou = useMemo(
+    () => filtered.filter((c) => isQueued(c.claimStatus)).sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || "")),
+    [filtered],
+  );
+
+  const byProvince = useMemo(() => {
+    const map = new Map<string, AdminCentreRow[]>();
+    for (const c of filtered) {
+      const code = provCode(c.province);
+      const list = map.get(code) ?? [];
+      list.push(c);
+      map.set(code, list);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => a.city.localeCompare(b.city) || a.name.localeCompare(b.name));
+    }
+    const keys = [...map.keys()].sort((a, b) => {
+      const ia = PROV_ORDER.indexOf(a);
+      const ib = PROV_ORDER.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    return keys.map((code) => ({ code, name: PROV_NAME[code] || code, rows: map.get(code) || [] }));
+  }, [filtered]);
 
   const counts = useMemo(() => {
-    const waiting = centres.filter((c) => c.claimStatus === "waiting" || c.claimStatus === "pending").length;
-    const approved = centres.filter((c) => c.claimStatus === "approved").length;
+    const waiting = centres.filter((c) => isQueued(c.claimStatus)).length;
+    const approved = centres.filter((c) => c.claimStatus === "approved" || c.live).length;
     const declined = centres.filter((c) => c.claimStatus === "declined").length;
     return { waiting, approved, declined, all: centres.length };
   }, [centres]);
@@ -77,125 +116,138 @@ function AdminPage() {
     }
   }
 
+  if (isPending) {
+    return (
+      <Shell>
+        <p className="p-8 text-muted">Loading…</p>
+      </Shell>
+    );
+  }
+  if (!user) return <RedirectToSignIn />;
+  if (!admin) {
+    return (
+      <Shell>
+        <main className="mx-auto max-w-lg px-4 py-16 text-center">
+          <h1 className="font-display text-3xl">Not found</h1>
+          <p className="mt-3 text-muted">This page is only for the KidEase operator.</p>
+        </main>
+      </Shell>
+    );
+  }
+
   return (
     <Shell>
-      <main className="mx-auto max-w-5xl px-4 py-10">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Admin</p>
-        <h1 className="mt-2 font-display text-4xl">Operator portal</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          Master list of daycares that signed up or claimed a listing. Approve to go live, decline to keep them off
-          search, or hold them in waiting. Each decision emails the daycare.
-        </p>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Button size="sm" variant={tab === "centres" ? "primary" : "secondary"} onClick={() => setTab("centres")}>
-            Daycares
-          </Button>
-          <Button size="sm" variant={tab === "activity" ? "primary" : "secondary"} onClick={() => setTab("activity")}>
-            Activity
-          </Button>
+      <main className="mx-auto max-w-6xl px-4 py-8 md:py-10">
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Operator</p>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-4xl">Daycares</h1>
+            <p className="mt-2 max-w-xl text-muted">
+              New claims land in Waiting on you. Approve to go live, decline to keep them off search. Each decision emails the centre.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant={tab === "queue" ? "primary" : "secondary"} onClick={() => setTab("queue")}>
+              Daycares
+            </Button>
+            <Button size="sm" variant={tab === "activity" ? "primary" : "secondary"} onClick={() => setTab("activity")}>
+              Activity
+            </Button>
+          </div>
         </div>
 
-        {tab === "centres" ? (
-          <section className="mt-8">
-            <div className="flex flex-wrap gap-2">
-              {(
-                [
-                  ["all", `All (${counts.all})`],
-                  ["waiting", `Waiting (${counts.waiting})`],
-                  ["approved", `Live (${counts.approved})`],
-                  ["declined", `Declined (${counts.declined})`],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setFilter(key)}
-                  className={
-                    filter === key
-                      ? "rounded-full bg-primary px-3 py-1.5 text-sm text-primary-fg"
-                      : "rounded-full bg-surface px-3 py-1.5 text-sm ring-1 ring-border"
-                  }
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <label className="mt-4 block text-sm text-muted">
-              Optional note on the next decision
+        {tab === "queue" ? (
+          <>
+            <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Stat label="Waiting on you" value={counts.waiting} accent />
+              <Stat label="Live" value={counts.approved} />
+              <Stat label="Declined" value={counts.declined} />
+              <Stat label="In this list" value={counts.all} />
+            </dl>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search name, city, email…"
+                className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
+              />
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="mt-1 w-full rounded-md bg-surface px-3 py-2 text-fg ring-1 ring-border"
-                placeholder="Shown only in your activity log"
+                placeholder="Optional note on next decision"
+                className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
               />
-            </label>
-            <ul className="mt-6 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-              {visible.length === 0 ? (
-                <li className="p-8 text-center text-muted">No daycares in this list yet.</li>
+            </div>
+
+            <section className="mt-8 overflow-hidden rounded-2xl bg-[#1a3790] text-primary-fg shadow-card">
+              <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-fg/70">Urgency</p>
+                  <h2 className="mt-1 font-display text-2xl">Waiting on you</h2>
+                </div>
+                <p className="text-sm text-primary-fg/75">
+                  {waitingOnYou.length === 0 ? "Caught up" : `${waitingOnYou.length} to review`}
+                </p>
+              </div>
+              {waitingOnYou.length === 0 ? (
+                <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/70">
+                  No submitted daycares are waiting. New claims appear here first.
+                </p>
               ) : (
-                visible.map((c) => (
-                  <li key={c.daycareId} className="p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-medium">{c.name}</p>
-                        <p className="text-sm text-muted">
-                          {[c.address, c.city, c.province].filter(Boolean).join(", ")}
-                        </p>
-                        <p className="mt-1 text-sm">
-                          {c.providerName || "—"} · {c.providerEmail || c.contactEmail || "no email"}
-                        </p>
-                        <p className="mt-1 text-xs uppercase tracking-wide text-subtle">
-                          {c.live ? "Live" : c.claimStatus} · {c.submittedAt ? new Date(c.submittedAt).toLocaleString() : "—"}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Link
-                          to="/daycare/$slug"
-                          params={{ slug: c.slug }}
-                          className="text-xs text-primary underline-offset-4 hover:underline"
-                        >
-                          View listing
-                        </Link>
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant={c.claimStatus === "approved" ? "primary" : "secondary"}
-                            disabled={busy !== null}
-                            onClick={() => void onDecide(c.daycareId, "approve")}
-                          >
-                            {busy === `${c.daycareId}:approve` ? "…" : "Approve"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={c.claimStatus === "waiting" || c.claimStatus === "pending" ? "primary" : "secondary"}
-                            disabled={busy !== null}
-                            onClick={() => void onDecide(c.daycareId, "waiting")}
-                          >
-                            {busy === `${c.daycareId}:waiting` ? "…" : "Waiting"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={c.claimStatus === "declined" ? "danger" : "secondary"}
-                            disabled={busy !== null}
-                            onClick={() => void onDecide(c.daycareId, "decline")}
-                          >
-                            {busy === `${c.daycareId}:decline` ? "…" : "Decline"}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                ))
+                <ul className="divide-y divide-white/10 border-t border-white/10">
+                  {waitingOnYou.map((c) => (
+                    <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} invert />
+                  ))}
+                </ul>
               )}
-            </ul>
-          </section>
+            </section>
+
+            <section className="mt-10">
+              <h2 className="font-display text-2xl">By province</h2>
+              <p className="mt-1 text-sm text-muted">Every submitted or live centre, grouped so you can scan a province at a time.</p>
+              <div className="mt-5 space-y-3">
+                {byProvince.length === 0 ? (
+                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
+                    No daycares match that search yet.
+                  </p>
+                ) : (
+                  byProvince.map((group) => {
+                    const open = openProv[group.code] !== false;
+                    const queued = group.rows.filter((c) => isQueued(c.claimStatus)).length;
+                    return (
+                      <div key={group.code} className="overflow-hidden rounded-xl bg-surface ring-1 ring-border">
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left"
+                          onClick={() => setOpenProv((s) => ({ ...s, [group.code]: !open }))}
+                        >
+                          <span className="font-display text-lg">
+                            {group.name}
+                            <span className="ml-2 text-sm font-sans font-normal text-muted">{group.code}</span>
+                          </span>
+                          <span className="text-xs text-muted">
+                            {queued ? `${queued} waiting · ` : ""}
+                            {group.rows.length} centre{group.rows.length === 1 ? "" : "s"}
+                          </span>
+                        </button>
+                        {open ? (
+                          <ul className="divide-y divide-border border-t border-border">
+                            {group.rows.map((c) => (
+                              <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} />
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          </>
         ) : (
           <section className="mt-8">
-            <p className="text-muted">
-              Accounts, claims, spot requests, payments, and messages. Instant alerts and a morning digest go to
-              kyle@kidease.ca.
-            </p>
+            <p className="text-muted">Accounts, messages, payments, and claims. Alerts still go to kyle@kidease.ca.</p>
             <ul className="mt-6 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
               {rows.length === 0 ? (
                 <li className="p-8 text-center text-muted">No activity yet.</li>
@@ -218,11 +270,7 @@ function AdminPage() {
                           <Link to="/daycare/$slug" params={{ slug: r.slug }} className="text-primary underline-offset-4 hover:underline">
                             View listing
                           </Link>
-                        ) : (
-                          <Link to="/provider" className="text-primary underline-offset-4 hover:underline">
-                            Dashboard
-                          </Link>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </li>
@@ -233,5 +281,98 @@ function AdminPage() {
         )}
       </main>
     </Shell>
+  );
+}
+
+function Stat({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+  return (
+    <div className={accent ? "rounded-xl bg-primary px-4 py-3 text-primary-fg" : "rounded-xl bg-surface px-4 py-3 ring-1 ring-border"}>
+      <dt className={`text-[11px] uppercase tracking-[0.14em] ${accent ? "text-primary-fg/70" : "text-subtle"}`}>{label}</dt>
+      <dd className="mt-1 font-display text-2xl">{value}</dd>
+    </div>
+  );
+}
+
+function CentreRow({
+  c,
+  busy,
+  onDecide,
+  invert,
+}: {
+  c: AdminCentreRow;
+  busy: string | null;
+  onDecide: (id: string, d: Decision) => void;
+  invert?: boolean;
+}) {
+  const muted = invert ? "text-primary-fg/70" : "text-muted";
+  const label = statusLabel(c);
+  return (
+    <li className="px-5 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium">{c.name}</p>
+            <span
+              className={
+                invert
+                  ? "rounded-full bg-white/15 px-2 py-0.5 text-[11px] uppercase tracking-wide"
+                  : label === "Live"
+                    ? "rounded-full bg-primary/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-primary"
+                    : label === "Declined"
+                      ? "rounded-full bg-danger/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-danger"
+                      : "rounded-full bg-surface-2 px-2 py-0.5 text-[11px] uppercase tracking-wide text-muted"
+              }
+            >
+              {label}
+            </span>
+          </div>
+          <p className={`mt-1 text-sm ${muted}`}>
+            {[c.city, c.province].filter(Boolean).join(", ")}
+            {c.address ? ` · ${c.address}` : ""}
+          </p>
+          <p className={`mt-0.5 text-sm ${muted}`}>
+            {c.providerName || "—"} · {c.providerEmail || c.contactEmail || "no email"}
+          </p>
+          <p className={`mt-0.5 text-xs ${muted}`}>
+            {c.submittedAt ? new Date(c.submittedAt).toLocaleString() : "No timestamp"}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <Link
+            to="/daycare/$slug"
+            params={{ slug: c.slug }}
+            className={invert ? "text-xs text-primary-fg underline-offset-4 hover:underline" : "text-xs text-primary underline-offset-4 hover:underline"}
+          >
+            Listing
+          </Link>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              size="sm"
+              variant={c.claimStatus === "approved" || c.live ? "primary" : "secondary"}
+              disabled={busy !== null}
+              onClick={() => onDecide(c.daycareId, "approve")}
+            >
+              {busy === `${c.daycareId}:approve` ? "…" : "Approve"}
+            </Button>
+            <Button
+              size="sm"
+              variant={isQueued(c.claimStatus) ? "primary" : "secondary"}
+              disabled={busy !== null}
+              onClick={() => onDecide(c.daycareId, "waiting")}
+            >
+              {busy === `${c.daycareId}:waiting` ? "…" : "Waiting"}
+            </Button>
+            <Button
+              size="sm"
+              variant={c.claimStatus === "declined" ? "danger" : "secondary"}
+              disabled={busy !== null}
+              onClick={() => onDecide(c.daycareId, "decline")}
+            >
+              {busy === `${c.daycareId}:decline` ? "…" : "Decline"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </li>
   );
 }
