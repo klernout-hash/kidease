@@ -1,9 +1,17 @@
-/** True only when the centre has claimed and can take requests on KidEase. */
+/** Live / search rules for a centre on KidEase. */
 export const MIN_LIVE_RATING = 3.5;
-export const MIN_RATING_REVIEWS = 3;
+
+/**
+ * A listing stays on the site until a real star rating exists.
+ * New centres have no history yet — do not hide them for a missing score.
+ * The 3.5 floor only runs after reviewCount >= 1 and ratingX10 > 0.
+ */
+export function hasAssignedRating(ratingX10 = 0, reviewCount = 0) {
+  return reviewCount >= 1 && ratingX10 > 0;
+}
 
 export function meetsRatingFloor(ratingX10 = 0, reviewCount = 0) {
-  if (!reviewCount || reviewCount < MIN_RATING_REVIEWS) return true;
+  if (!hasAssignedRating(ratingX10, reviewCount)) return true;
   return ratingX10 >= MIN_LIVE_RATING * 10;
 }
 
