@@ -1,5 +1,5 @@
 /** Which database backend is active. */
-export type DbSource = "neon" | "pglite";
+export type DbSource = "neon" | "pglite" | "none";
 
 // An empty/whitespace DATABASE_URL (an easy misconfig in deploy UIs) must mean
 // "unset" — otherwise production would silently run on the PGLite fallback.
@@ -14,7 +14,11 @@ const databaseUrl =
  * the app has a working database even with nothing configured — the live preview
  * included. Swap in Neon later by just setting `DATABASE_URL`; no code changes.
  */
-export const dbSource: DbSource = databaseUrl ? "neon" : "pglite";
+export const dbSource: DbSource = databaseUrl
+  ? "neon"
+  : process.env.VERCEL
+    ? "none"
+    : "pglite";
 
 /**
  * Minimal shared SQL surface, satisfied by both Neon and PGLite. Both the
@@ -169,6 +173,11 @@ async function createPgliteSql(): Promise<Sql> {
 
 let sqlPromise: Promise<Sql> | null = null;
 
+function createNoopSql(): Promise<Sql> {
+  console.error("[db] DATABASE_URL is not set on Vercel. Catalogue pages still load; accounts need Neon.");
+  return Promise.resolve(toSql(async () => []));
+}
+
 async function createSql(): Promise<Sql> {
   if (typeof window !== "undefined") {
     throw new Error(
@@ -176,7 +185,9 @@ async function createSql(): Promise<Sql> {
         "or a server route loader, never from client code.",
     );
   }
-  return dbSource === "neon" ? createNeonSql() : createPgliteSql();
+  if (dbSource === "neon") return createNeonSql();
+  if (dbSource === "none") return createNoopSql();
+  return createPgliteSql();
 }
 
 /**
@@ -233,6 +244,5 @@ if (typeof window === "undefined" && dbSource === "pglite") {
   globalBoot.__pgBootstrapPromise__ ??= ensureDbReady().catch((err) => {
     globalBoot.__pgBootstrapPromise__ = undefined;
     console.error("[db] PGLite bootstrap failed:", err);
-    throw err;
   });
 }

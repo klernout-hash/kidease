@@ -78,7 +78,10 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         maxZoom: 19,
         subdomains: "abcd",
         updateWhenIdle: true,
-        keepBuffer: 2,
+        updateWhenZooming: false,
+        keepBuffer: 8,
+        crossOrigin: true,
+        detectRetina: true,
       });
       const sat = L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -86,7 +89,9 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
           attribution: "Tiles &copy; Esri",
           maxZoom: 19,
           updateWhenIdle: true,
-          keepBuffer: 2,
+          updateWhenZooming: false,
+          keepBuffer: 8,
+          crossOrigin: true,
         },
       );
       (readMapBase() === "satellite" ? sat : road).addTo(map);

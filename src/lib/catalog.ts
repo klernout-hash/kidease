@@ -94,6 +94,19 @@ export const FROM_MONTHLY = 299;
 const HOURS = "7:30 a.m. – 5:30 p.m., Monday to Friday";
 const HOURS_FR = "7 h 30 – 17 h 30, du lundi au vendredi";
 
+function inferAges(raw: RawCentre) {
+  if (
+    typeof raw.ageMinMonths === "number" &&
+    typeof raw.ageMaxMonths === "number" &&
+    raw.ageMaxMonths > raw.ageMinMonths
+  ) {
+    return { min: raw.ageMinMonths, max: raw.ageMaxMonths };
+  }
+  const am = (raw.amenities || "").toLowerCase();
+  if (am.includes("infant-room") || am.includes("nursery")) return { min: 3, max: 24 };
+  return { min: 12, max: 60 };
+}
+
 function hydrate(raw: RawCentre, index: number): CatalogDaycare {
   const city = raw.city || "";
   const province = raw.province || "";
@@ -115,6 +128,7 @@ function hydrate(raw: RawCentre, index: number): CatalogDaycare {
     raw.descriptionFr ||
     `${nameFr} est un centre de garde permis${address ? ` au ${address}` : ""}${city ? `, ${city}` : ""} ${postal} (${province}). Heures et places selon le registre provincial.`.trim();
   const google = catalogGoogleRating(raw.id);
+  const ages = inferAges(raw);
   return {
     id: raw.id,
     slug: raw.slug,
@@ -133,8 +147,8 @@ function hydrate(raw: RawCentre, index: number): CatalogDaycare {
     phone: raw.phone ?? "",
     hours: raw.hours || HOURS,
     hoursFr: raw.hoursFr || HOURS_FR,
-    ageMinMonths: raw.ageMinMonths ?? 0,
-    ageMaxMonths: raw.ageMaxMonths ?? 0,
+    ageMinMonths: ages.min,
+    ageMaxMonths: ages.max,
     infantMonthly: null,
     toddlerMonthly: null,
     preschoolMonthly: null,

@@ -73,6 +73,8 @@ export type DaycareCard = Daycare & {
   distanceKm: number;
   spotsTotal: number;
   fromPrice: number;
+  catchmentKm?: number;
+  inCatchment?: boolean;
 };
 
 export type Review = {

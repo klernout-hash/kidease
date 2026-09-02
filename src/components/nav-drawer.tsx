@@ -99,17 +99,20 @@ export function NavDrawer({
             <X className="size-6" strokeWidth={1.75} />
           </button>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <nav className="flex-1 overflow-y-auto px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
           {items.map((item) => (
-            <Link
-              key={item.to + item.label}
-              to={item.to}
-              search={item.search}
-              onClick={onClose}
-              className="flex min-h-12 items-center rounded-xl px-3 text-base text-fg hover:bg-surface"
-            >
-              {item.label}
-            </Link>
+            <span key={item.to + item.label}>
+              {item.to === "/about" ? <div className="my-3 h-px bg-border" /> : null}
+              <Link
+                to={item.to}
+                search={item.search}
+                onClick={onClose}
+                className="flex min-h-12 items-center rounded-xl px-3 text-[15px] font-medium text-fg hover:bg-surface"
+              >
+                {item.label}
+              </Link>
+            </span>
           ))}
           <div className="my-3 h-px bg-border" />
           {signedIn ? (
@@ -152,7 +155,7 @@ export function NavDrawer({
               </Link>
             </>
           )}
-          <div className="mt-4 rounded-full bg-surface ring-1 ring-border">
+          <div className="mt-4 overflow-visible rounded-full bg-surface ring-1 ring-border">
             <LanguageSelect className="w-full justify-start" />
           </div>
         </nav>

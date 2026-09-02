@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getCatalog } from "@/lib/catalog";
+import { AGENT_CONFIRM, KIDEASE_SYSTEM, localHelpReply, wantsLiveAgent } from "@/lib/help-knowledge";
+import { notifyPlatform } from "@/lib/server/notify";
 
 export const matchCentres = createServerFn({ method: "POST" })
   .validator((prompt: string) => prompt.trim().slice(0, 500))
@@ -68,5 +70,62 @@ export const matchCentres = createServerFn({ method: "POST" })
       return { ok: true as const, picks: parsed.picks ?? [], note: parsed.note ?? "" };
     } catch {
       return { ok: false as const, error: "parse" };
+    }
+  });
+
+export const askKidEase = createServerFn({ method: "POST" })
+  .validator((input: { messages: Array<{ role: "user" | "assistant"; text: string }> }) => ({
+    messages: input.messages.slice(-8).map((m) => ({
+      role: m.role,
+      text: m.text.trim().slice(0, 800),
+    })),
+  }))
+  .handler(async ({ data }) => {
+    try {
+      const last = data.messages.filter((m) => m.role === "user").at(-1)?.text;
+      if (!last) return { ok: true as const, reply: "How can I help you find licensed care?" };
+      const transcript = data.messages
+        .map((m) => `${m.role === "user" ? "Visitor" : "KidEase"}: ${m.text}`)
+        .join("\n");
+      const prior = data.messages.filter((m) => m.role === "assistant").map((m) => m.text);
+      const ping = async (title: string) => {
+        try {
+          await notifyPlatform({ kind: "chat", title, detail: transcript });
+        } catch {
+          /* still answer in the widget */
+        }
+      };
+      if (wantsLiveAgent(last)) {
+        await ping("Live agent requested");
+        return { ok: true as const, live: true as const, reply: AGENT_CONFIRM };
+      }
+      await ping(`Live Chat: ${last.slice(0, 80)}`);
+      const apiKey = process.env.XAI_API_KEY;
+      if (!apiKey) return { ok: true as const, live: false as const, reply: localHelpReply(last, prior) };
+      const res = await fetch("https://api.x.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "grok-4.5",
+          max_tokens: 420,
+          temperature: 0.6,
+          messages: [
+            { role: "system", content: KIDEASE_SYSTEM },
+            ...data.messages.map((m) => ({
+              role: m.role === "assistant" ? "assistant" : "user",
+              content: m.text,
+            })),
+          ],
+        }),
+      });
+      if (!res.ok) return { ok: true as const, live: false as const, reply: localHelpReply(last, prior) };
+      const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+      const reply = (body.choices?.[0]?.message?.content || "").trim();
+      return { ok: true as const, live: true as const, reply: reply || localHelpReply(last, prior) };
+    } catch {
+      return { ok: true as const, live: false as const, reply: AGENT_CONFIRM };
     }
   });

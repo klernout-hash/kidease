@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { BrandMark } from "@/components/brand-mark";
 import { captureInstallPrompt, getDeviceLocation, hideNativeSplash, isStandalone, paintStatusBar } from "@/lib/native";
-import { readSavedOrigin, reverseGeocode } from "@/lib/geo";
+import { locateHere } from "@/lib/proximity";
+import { paintRuntime, isApp } from "@/lib/runtime";
+import { readSavedOrigin } from "@/lib/geo";
 import { useAppStore } from "@/lib/store";
 
 export function NativeBoot() {
   const [splash, setSplash] = useState(false);
+  const navigate = useNavigate();
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setLocated = useAppStore((s) => s.setLocated);
 
@@ -27,30 +31,46 @@ export function NativeBoot() {
   }, []);
 
   useEffect(() => {
+    const id = window.setTimeout(() => {
+      void import("leaflet");
+      void import("leaflet/dist/leaflet.css");
+    }, 400);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    paintRuntime();
     const root = document.documentElement;
     if (isStandalone()) root.classList.add("standalone");
     else root.classList.remove("standalone");
   }, []);
 
   useEffect(() => {
+    if (!isApp()) return;
+    if (window.location.pathname === "/" || window.location.pathname === "") {
+      void navigate({ to: "/search", replace: true });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
     const saved = readSavedOrigin();
     if (saved) setOrigin(saved);
-    if (sessionStorage.getItem("kidease-geo-done") === "1") {
-      setLocated(true);
-      return;
-    }
-    sessionStorage.setItem("kidease-geo-done", "1");
+    let cancelled = false;
     void getDeviceLocation().then((pos) => {
-      if (!pos) {
-        setLocated(true);
-        return;
+      if (cancelled) return;
+      if (pos) {
+        const here = locateHere(pos.lat, pos.lng);
+        setOrigin({
+          lat: here.lat,
+          lng: here.lng,
+          label: here.label,
+        }, "gps");
       }
-      setOrigin({
-        lat: pos.lat,
-        lng: pos.lng,
-        label: reverseGeocode(pos.lat, pos.lng),
-      });
+      setLocated(true);
     });
+    return () => {
+      cancelled = true;
+    };
   }, [setOrigin, setLocated]);
 
   if (!splash) return null;

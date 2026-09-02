@@ -27,6 +27,7 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
+import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
@@ -124,6 +125,11 @@ const TourChecklistRoute = TourChecklistRouteImport.update({
   path: '/tour-checklist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDigestRoute = ApiDigestRouteImport.update({
+  id: '/api/digest',
+  path: '/api/digest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookSlugRoute = BookSlugRouteImport.update({
   id: '/book/$slug',
   path: '/book/$slug',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/api/digest': typeof ApiDigestRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/api/digest': typeof ApiDigestRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/api/digest': typeof ApiDigestRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/api/digest'
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/api/digest'
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -307,6 +318,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/api/digest'
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -334,6 +346,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
+  ApiDigestRoute: typeof ApiDigestRoute
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
@@ -469,6 +482,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TourChecklistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/digest': {
+      id: '/api/digest'
+      path: '/api/digest'
+      fullPath: '/api/digest'
+      preLoaderRoute: typeof ApiDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/$slug': {
       id: '/book/$slug'
       path: '/book/$slug'
@@ -543,6 +563,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
+  ApiDigestRoute: ApiDigestRoute,
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,

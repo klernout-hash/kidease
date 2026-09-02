@@ -14,11 +14,13 @@ import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind } from "@/lib/licensing";
 import { readCompare, toggleCompare } from "@/lib/compare";
 import { rememberViewed } from "@/lib/recent";
+import { trackLocation } from "@/lib/telemetry";
+import { useAppStore } from "@/lib/store";
 import { ListingBadges } from "@/components/listing-badges";
 import { CompareBar } from "@/components/compare-bar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
-import { formatMonth, money, formatAgeRange } from "@/lib/utils";
+import { formatMonth, money, formatAgeRange, decodeHtml } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
@@ -81,6 +83,8 @@ function Listing() {
       spotsTotal: spots,
       fromPrice: prices.length ? Math.min(...prices) : 0,
     });
+    const origin = useAppStore.getState().origin;
+    trackLocation("view", origin.lat, origin.lng, origin.label, { slug: d.slug });
   }, [data]);
 
   if (!data) {
@@ -94,7 +98,7 @@ function Listing() {
   }
 
   const d = data.daycare;
-  const name = locale === "fr" ? d.nameFr : d.name;
+  const name = decodeHtml(locale === "fr" ? d.nameFr : d.name);
   const desc = locale === "fr" ? d.descriptionFr : d.description;
   const hours = locale === "fr" ? d.hoursFr : d.hours;
   const spots = d.spotsInfant + d.spotsToddler + d.spotsPreschool;
@@ -245,8 +249,8 @@ function Listing() {
               <Meta label={t("ages")} value={d.agesKnown ? formatAgeRange(d.ageMinMonths, d.ageMaxMonths) : t("agesUnknown")} />
               <Meta label={t("license")} value={d.licenseNumber ?? "—"} />
               <Meta
-                label={t("openNow")}
-                value={known ? (spots > 0 ? `${spots} ${t("spots")}` : t("waitlist")) : t("availUnknown")}
+                label={t("spotsAvailable")}
+                value={known ? (spots > 0 ? `${spots}` : t("waitlist")) : t("availUnknown")}
               />
             </dl>
 

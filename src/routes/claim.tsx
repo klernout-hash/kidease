@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { CalendarCheck, Globe, MapPin, Megaphone, MessageCircle, Smartphone, TrendingUp, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { searchClaimable, startClaim, verifyClaim, type ClaimHit } from "@/lib/server/claims";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { submitPublicMessage } from "@/lib/server/notify";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/claim")({
@@ -33,7 +35,13 @@ function ClaimPage() {
   const [pending, setPending] = useState<{ daycareId: string; name: string; code: string } | null>(null);
   const [code, setCode] = useState("");
   const [license, setLicense] = useState("");
+  const [enroll, setEnroll] = useState({ name: "", email: "", centre: "", city: "", phone: "", body: "" });
+  const [enrollBusy, setEnrollBusy] = useState(false);
+  const [enrollHits, setEnrollHits] = useState<ClaimHit[]>([]);
+  const [enrollOpen, setEnrollOpen] = useState(false);
+  const [enrollManual, setEnrollManual] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const enrollBox = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const term = q.trim();
@@ -62,6 +70,29 @@ function ClaimPage() {
   useEffect(() => {
     function onDoc(e: MouseEvent) {
       if (!box.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  useEffect(() => {
+    const term = enroll.centre.trim();
+    if (enrollManual || term.length < 2) {
+      if (term.length < 2) setEnrollHits([]);
+      return;
+    }
+    const tmr = window.setTimeout(() => {
+      void searchClaimable({ data: term }).then((rows) => {
+        setEnrollHits(rows);
+        setEnrollOpen(true);
+      });
+    }, 180);
+    return () => window.clearTimeout(tmr);
+  }, [enroll.centre, enrollManual]);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!enrollBox.current?.contains(e.target as Node)) setEnrollOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -117,6 +148,30 @@ function ClaimPage() {
     reader.readAsDataURL(file);
   }
 
+  async function sendEnroll(e: React.FormEvent) {
+    e.preventDefault();
+    setEnrollBusy(true);
+    try {
+      await submitPublicMessage({
+        data: {
+          kind: "enroll",
+          name: enroll.name,
+          email: enroll.email,
+          centre: enroll.centre,
+          city: enroll.city,
+          phone: enroll.phone,
+          body: enroll.body,
+        },
+      });
+      toast.success(t("enrollSent"));
+      setEnroll({ name: "", email: "", centre: "", city: "", phone: "", body: "" });
+    } catch {
+      toast.error("Could not send. Email kyle@kidease.ca directly.");
+    } finally {
+      setEnrollBusy(false);
+    }
+  }
+
   return (
     <Shell>
       <main className="mx-auto max-w-3xl px-4 py-10">
@@ -125,17 +180,26 @@ function ClaimPage() {
         <p className="mt-3 max-w-xl text-muted">{t("providerDiscover")}</p>
         <p className="mt-2 max-w-xl text-sm text-subtle">{t("claimLead")}</p>
 
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-          {[
-            ["providerApproveT", "providerApprove"],
-            ["providerFreeT", "providerFree"],
-            ["providerIntentT", "providerIntent"],
-            ["providerRatesT", "providerRates"],
-            ["providerSecureT", "providerSecure"],
-          ].map(([title, body]) => (
-            <li key={title} className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border">
-              <p className="font-medium">{t(title as "providerApproveT")}</p>
-              <p className="mt-1 text-sm text-muted">{t(body as "providerApprove")}</p>
+        <h2 className="mt-10 font-display text-2xl">{t("partnerPerksTitle")}</h2>
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {(
+            [
+              [Users, "perkParents"],
+              [Megaphone, "perkBrand"],
+              [Globe, "perkPage"],
+              [CalendarCheck, "perkSpots"],
+              [MessageCircle, "perkChat"],
+              [MapPin, "perkNear"],
+              [Smartphone, "perkMobile"],
+              [Wallet, "perkPay"],
+              [TrendingUp, "perkGrow"],
+            ] as const
+          ).map(([Icon, key]) => (
+            <li key={key} className="flex gap-3 rounded-xl bg-surface p-4 shadow-card ring-1 ring-border">
+              <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                <Icon className="size-4" />
+              </span>
+              <p className="text-sm font-medium leading-6">{t(key)}</p>
             </li>
           ))}
         </ul>
@@ -237,6 +301,104 @@ function ClaimPage() {
             </p>
           </>
         )}
+
+        <form onSubmit={sendEnroll} className="mt-12 space-y-3 rounded-xl bg-surface p-5 ring-1 ring-border">
+          <h2 className="font-display text-2xl">{t("enrollFormTitle")}</h2>
+          <p className="text-sm text-muted">{t("enrollFormLead")}</p>
+          <p className="text-sm font-semibold">{t("daycareEnrollLead")}</p>
+          <label className="block text-sm font-medium">
+            {t("name")}
+            <input required className="ke-input mt-1" value={enroll.name} onChange={(e) => setEnroll((s) => ({ ...s, name: e.target.value }))} autoComplete="name" />
+          </label>
+          <label className="block text-sm font-medium">
+            {t("email")}
+            <input required type="email" className="ke-input mt-1" value={enroll.email} onChange={(e) => setEnroll((s) => ({ ...s, email: e.target.value }))} autoComplete="email" />
+          </label>
+          <label className="block text-sm font-medium">
+            {t("enrollCentre")}
+            <div ref={enrollBox} className="relative mt-1">
+              <input
+                required
+                className="ke-input"
+                value={enroll.centre}
+                autoComplete="off"
+                placeholder={t("enrollPickHint")}
+                onFocus={() => setEnrollOpen(true)}
+                onChange={(e) => {
+                  setEnrollManual(false);
+                  setEnroll((s) => ({ ...s, centre: e.target.value }));
+                }}
+              />
+              {enrollOpen ? (
+                <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
+                  <li>
+                    <button
+                      type="button"
+                      className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-bg"
+                      onClick={() => {
+                        setEnrollManual(true);
+                        setEnrollOpen(false);
+                      }}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">{t("enrollManual")}</span>
+                        <span className="mt-0.5 block text-sm text-muted">{t("enrollManualHint")}</span>
+                      </span>
+                    </button>
+                  </li>
+                  {enrollHits.map((h) => (
+                    <li key={h.id}>
+                      <button
+                        type="button"
+                        className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-bg"
+                        onClick={() => {
+                          setEnroll((s) => ({
+                            ...s,
+                            centre: h.name,
+                            city: [h.city, h.province].filter(Boolean).join(", "),
+                            phone: h.phone || s.phone,
+                          }));
+                          setEnrollManual(false);
+                          setEnrollOpen(false);
+                        }}
+                      >
+                        <img src={h.photo} alt="" className="mt-0.5 size-10 shrink-0 rounded-md object-cover" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{h.name}</span>
+                          <span className="mt-0.5 block truncate text-sm text-muted">
+                            {h.address}, {h.city} {h.province}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </label>
+          <label className="block text-sm font-medium">
+            {t("enrollCity")}
+            <input required className="ke-input mt-1" value={enroll.city} onChange={(e) => setEnroll((s) => ({ ...s, city: e.target.value }))} />
+          </label>
+          <label className="block text-sm font-medium">
+            {t("enrollPhone")}
+            <input className="ke-input mt-1" value={enroll.phone} onChange={(e) => setEnroll((s) => ({ ...s, phone: e.target.value }))} autoComplete="tel" />
+          </label>
+          <label className="block text-sm font-medium">
+            {t("enrollMessage")}
+            <textarea
+              required
+              rows={5}
+              className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+              placeholder={t("enrollMessagePh")}
+              value={enroll.body}
+              onChange={(e) => setEnroll((s) => ({ ...s, body: e.target.value }))}
+            />
+          </label>
+          <Button type="submit" size="lg" className="w-full" disabled={enrollBusy}>
+            {t("enrollNow")}
+          </Button>
+        </form>
       </main>
     </Shell>
   );

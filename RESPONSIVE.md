@@ -1,18 +1,23 @@
-# KidEase responsive layout
+# KidEase layout: website vs app
 
-Fluid layout from **320px to 2560px**. No separate mobile site. Desktop at ≥1280px stays as designed; narrower widths reflow.
+One product, **two surfaces**. Same listings and account — different chrome.
+
+| | **Phone / app** (<768px, PWA, App Store) | **Website** (≥768px laptop/desktop) |
+|---|---|---|
+| Chrome | Bottom tabs: Search, Saved, Enrolled, Messages, Profile | Top nav: Explore, Benefits, About, Get the app |
+| Cards | Compact ~172px, 2-up, horizontal rails | ~296px, 3–4 across, page grid |
+| Home | Logo, headline, Use my location | 2-col hero + photo, trust bar, How it works, listing grid |
+| Explore | List first, Map toggle, Filters sheet | Map + list side by side |
+
+Do not stretch the phone card to fill a desktop window. Do not shrink the website card to the phone size.
 
 ## Breakpoint ladder
 
-| Name | Width | UI |
+| Name | Width | Surface |
 |---|---|---|
-| Small phone | 320–374 | Drawer nav. Single column. Full-width CTAs. |
-| Phone | 375–429 | Same, more air. |
-| Large phone | 430–639 | Drawer. Cards may peek. |
-| Small tablet | 640–767 | 2-col cards. Drawer. |
-| iPad portrait | 768–1023 | Drawer (full desktop nav does not fit). Hero 2-col if photo ≥280px. Cards 2-col. Map+list stacked. |
-| iPad landscape / small laptop | 1024–1279 | Drawer unless every header link fits with ≥16px gaps. Cards 2–3 col. Map+list side-by-side if each pane ≥320px. |
-| Desktop | ≥1280 | Current desktop header, 2-col hero, 3-col cards. |
+| Phone | 320–767 | App |
+| Tablet / laptop | 768–1279 | Website (drawer until 1280) |
+| Desktop | ≥1280 | Website, full header |
 
 `xl` (1280) is the desktop header. Below that: `[logo] [English] [☰]` plus a right-hand drawer (~86vw phones, max 24rem / 380px on iPad).
 

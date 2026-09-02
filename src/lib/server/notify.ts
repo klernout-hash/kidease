@@ -1,22 +1,12 @@
+import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import {
-  afterPublicAdminNotify,
-  resolveMailReplyTo,
-  sendMailThenPersist,
-  VISITOR_AUTO_REPLY_SUBJECT,
-  VISITOR_AUTO_REPLY_TEXT,
-} from "./notify-mail";
-
-/** Load SQL only when we persist or query — never before sending contact mail. */
-async function loadSql() {
-  const { getSql } = await import("@/lib/db");
-  return getSql();
-}
 
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
 const MAIL_FROM = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
+const ADMIN_SMS = (process.env.ADMIN_SMS || "+12048088398").replace(/[^\d+]/g, "");
+const SMS_KINDS = new Set<PlatformKind>(["chat", "contact", "enroll", "spot_request", "account", "signup"]);
 
 export type PlatformKind =
   | "account"
@@ -27,7 +17,9 @@ export type PlatformKind =
   | "payment"
   | "promo"
   | "contact"
-  | "support";
+  | "support"
+  | "enroll"
+  | "chat";
 
 export type ProviderJoinKind = "claim" | "signup" | "listing";
 
@@ -60,7 +52,7 @@ function appOrigin() {
 }
 
 export async function lookupUser(userId: string) {
-  const sql = await loadSql();
+  const sql = await getSql();
   const rows = await sql
     .query<{ email: string | null; name: string | null }>(`select email, name from "user" where id = $1 limit 1`, [userId])
     .catch(() => [] as { email: string | null; name: string | null }[]);
@@ -80,7 +72,7 @@ function whenWinnipeg() {
 function defaultTitle(kind: PlatformKind) {
   switch (kind) {
     case "account":
-      return "New KidEase account";
+      return "New parent account";
     case "claim":
       return "New daycare listing claimed";
     case "listing":
@@ -97,6 +89,12 @@ function defaultTitle(kind: PlatformKind) {
       return "New contact form message";
     case "support":
       return "New support message";
+    case "enroll":
+      return "Daycare enroll request";
+    case "chat":
+      return "Live Chat message";
+    default:
+      return "KidEase update";
   }
 }
 
@@ -110,6 +108,8 @@ const KIND_LABEL: Record<string, string> = {
   promo: "Priority listings",
   contact: "Contact messages",
   support: "Support messages",
+  enroll: "Daycare enrollments",
+  chat: "Live Chat",
 };
 
 function winnipegDay() {
@@ -202,7 +202,7 @@ function digestCopy(
 }
 
 async function ensureDigestTable() {
-  const sql = await loadSql();
+  const sql = await getSql();
   await sql
     .query(
       `create table if not exists digest_sends (
@@ -218,7 +218,7 @@ async function ensureDigestTable() {
 export async function sendDailyDigest() {
   await ensureEventsTable();
   await ensureDigestTable();
-  const sql = await loadSql();
+  const sql = await getSql();
   const day = winnipegDay();
   const already = await sql<{ day: string }>`select day from digest_sends where day = ${day}`.catch(
     () => [] as { day: string }[],
@@ -316,14 +316,7 @@ function esc(s: string) {
     .join("");
 }
 
-async function deliverEmail(
-  subject: string,
-  text: string,
-  html: string,
-  opts?: { to?: string | null; replyTo?: string | null },
-) {
-  const to = (opts?.to ?? "").trim() || ADMIN_EMAIL;
-  const reply = resolveMailReplyTo(opts?.replyTo, ADMIN_EMAIL);
+async function deliverEmail(subject: string, text: string, html: string, to = ADMIN_EMAIL) {
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
     const res = await fetch("https://api.resend.com/emails", {
@@ -332,7 +325,7 @@ async function deliverEmail(
       body: JSON.stringify({
         from: MAIL_FROM,
         to: [to],
-        reply_to: reply,
+        reply_to: ADMIN_EMAIL,
         subject,
         text,
         html,
@@ -352,7 +345,7 @@ async function deliverEmail(
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
         from: { email: fromEmail, name: fromName },
-        reply_to: { email: reply },
+        reply_to: { email: ADMIN_EMAIL },
         subject,
         content: [
           { type: "text/plain", value: text },
@@ -363,34 +356,94 @@ async function deliverEmail(
     if (!res.ok) throw new Error(`SendGrid ${res.status}: ${await res.text()}`);
     return "sent";
   }
-  console.info("[kidease-mail]", to, subject, "reply_to=", reply, "\n", text);
+  console.info("[kidease-mail]", to, subject, "\n", text);
   return "logged";
 }
 
-function visitorAutoReplyCopy() {
-  const paragraphs = VISITOR_AUTO_REPLY_TEXT.split("\n\n")
-    .map((p) => `<p style="margin:16px 0 0;">${esc(p)}</p>`)
-    .join("");
+async function sendUserConfirmation(
+  to: string,
+  name: string,
+  kind: "parent" | "provider" | "spot",
+  centre?: string,
+) {
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
+  const who = name.split(" ")[0] || "there";
+  const place = centre || "your daycare";
+  const subject =
+    kind === "spot"
+      ? `Got your request for ${place}`
+      : kind === "parent"
+        ? "You're in — we got your KidEase signup"
+        : `Got your KidEase daycare signup${centre ? ` — ${centre}` : ""}`;
+  const opener =
+    kind === "spot"
+      ? `Thanks for reaching out about ${place}. We got your spot request.`
+      : kind === "parent"
+        ? "Thanks for signing up. Your parent account is on KidEase."
+        : centre
+          ? `Thanks for signing ${centre} up with KidEase. We got your daycare enrollment.`
+          : "Thanks for signing your daycare up with KidEase. We got your enrollment.";
+  const follow =
+    kind === "provider"
+      ? "We’ll be in touch within 24 hours to help you claim your listing, set open spots, and get in front of parents nearby."
+      : "We’ll be in touch within 24 hours.";
+  const text = [
+    `Hi ${who},`,
+    "",
+    opener,
+    "",
+    follow,
+    "If you need us sooner, just reply to this email.",
+    "",
+    "Talk soon,",
+    "Kyle",
+    "KidEase",
+    "kyle@kidease.ca",
+  ].join("\n");
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
-    <tr><td style="padding:28px;">
-      <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
-      ${paragraphs}
+    <tr><td style="padding:28px;font-size:16px;line-height:1.6;">
+      <p style="margin:0;">Hi ${esc(who)},</p>
+      <p>${esc(opener)}</p>
+      <p>${esc(follow)} If you need us sooner, just reply to this email.</p>
+      <p style="margin:24px 0 0;">Talk soon,<br/>Kyle<br/>KidEase<br/><a href="mailto:kyle@kidease.ca" style="color:#1a3790;">kyle@kidease.ca</a></p>
     </td></tr>
   </table>
 </body></html>`;
-  return { title: VISITOR_AUTO_REPLY_SUBJECT, text: VISITOR_AUTO_REPLY_TEXT, html };
+  await deliverEmail(subject, text, html, to);
 }
 
-/** Immediate second provider send in this request. Not scheduled. */
-async function sendVisitorAutoReply(to: string) {
-  const { title, text, html } = visitorAutoReplyCopy();
-  await deliverEmail(title, text, html, { to, replyTo: ADMIN_EMAIL });
+async function sendEnrollReceipt(to: string, name: string, centre?: string) {
+  await sendUserConfirmation(to, name, "provider", centre);
+}
+
+async function deliverSms(kind: PlatformKind, title: string, detail?: string) {
+  if (!SMS_KINDS.has(kind)) return "skip";
+  const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
+  const token = process.env.TWILIO_AUTH_TOKEN?.trim();
+  const from = process.env.TWILIO_FROM_NUMBER?.trim();
+  const snippet = (detail || title).replace(/\s+/g, " ").slice(0, 120);
+  const body = `KidEase ${kind === "chat" ? "Live Chat" : title}: ${snippet}`;
+  if (!sid || !token || !from) {
+    console.info("[kidease-sms]", ADMIN_SMS, body);
+    return "logged";
+  }
+  const auth = btoa(`${sid}:${token}`);
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({ To: ADMIN_SMS, From: from, Body: body.slice(0, 1600) }),
+  });
+  if (!res.ok) throw new Error(`Twilio ${res.status}: ${await res.text()}`);
+  return "sent";
 }
 
 async function ensureEventsTable() {
-  const sql = await loadSql();
+  const sql = await getSql();
   await sql
     .query(
       `
@@ -415,60 +468,79 @@ async function ensureEventsTable() {
     .catch(() => undefined);
 }
 
-async function persistPlatformEvent(
-  id: string,
-  p: PlatformEvent,
-  status: string,
-  error: string | null,
-) {
+export async function notifyPlatform(p: PlatformEvent) {
+  const { title, text, html } = emailCopy(p);
   await ensureEventsTable();
-  const sql = await loadSql();
-  await sql.query(
-    `insert into platform_events (
+  const sql = await getSql();
+  const id = nid("ev");
+  let status = "queued";
+  let error: string | null = null;
+  try {
+    status = await deliverEmail(title, text, html);
+  } catch (err) {
+    status = "failed";
+    error = err instanceof Error ? err.message : "send failed";
+    console.error("[kidease-mail]", error);
+  }
+  try {
+    await deliverSms(p.kind, title, p.detail);
+  } catch (err) {
+    console.error("[kidease-sms]", err instanceof Error ? err.message : err);
+  }
+  if (
+    p.actorEmail &&
+    (p.kind === "account" ||
+      p.kind === "enroll" ||
+      p.kind === "signup" ||
+      p.kind === "claim" ||
+      p.kind === "listing" ||
+      p.kind === "spot_request")
+  ) {
+    const confirmKind = p.kind === "spot_request" ? "spot" : p.kind === "account" ? "parent" : "provider";
+    await sendUserConfirmation(p.actorEmail, p.actorName || "there", confirmKind, p.daycareName).catch((err) =>
+      console.error("[kidease-user-receipt]", err instanceof Error ? err.message : err),
+    );
+  }
+  await sql
+    .query(
+      `insert into platform_events (
       id, kind, daycare_name, address, city, province, slug,
       provider_name, provider_email, listing_url, email_to, email_status, email_error
     ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-    [
-      id,
-      p.kind,
-      p.daycareName ?? null,
-      p.address ?? p.detail ?? null,
-      p.city ?? null,
-      p.province ?? null,
-      p.slug ?? null,
-      p.actorName ?? null,
-      p.actorEmail ?? null,
-      listingUrl(p.slug),
-      ADMIN_EMAIL,
-      status,
-      error,
-    ],
-  );
+      [
+        id,
+        p.kind,
+        p.daycareName ?? null,
+        p.address ?? p.detail ?? null,
+        p.city ?? null,
+        p.province ?? null,
+        p.slug ?? null,
+        p.actorName ?? null,
+        p.actorEmail ?? null,
+        listingUrl(p.slug),
+        ADMIN_EMAIL,
+        status,
+        error,
+      ],
+    )
+    .catch((e) => console.error("[platform_events]", e));
+  return { id, status };
 }
 
-export async function notifyPlatform(p: PlatformEvent) {
-  const { title, text, html } = emailCopy(p);
-  const id = nid("ev");
-  const result = await sendMailThenPersist({
-    send: () => deliverEmail(title, text, html, { replyTo: p.actorEmail }),
-    persist: ({ status, error }) => persistPlatformEvent(id, p, status, error),
-    onMailError: (message, err) => {
-      console.error("[kidease-mail]", message, err);
-    },
-    onPersistError: (err) => {
-      console.error("[platform_events] persist failed (mail outcome unchanged)", err);
-    },
-  });
-  return { id, ...result };
-}
-
-export async function notifyAccountCreated(p: { name?: string | null; email?: string | null }) {
-  return notifyPlatform({
+export async function notifyAccountCreated(p: {
+  name?: string | null;
+  email?: string | null;
+  role?: "parent" | "provider";
+}) {
+  const role = p.role === "provider" ? "daycare provider" : "parent";
+  const result = await notifyPlatform({
     kind: "account",
+    title: p.role === "provider" ? "New daycare provider account" : "New parent account",
     actorName: p.name,
     actorEmail: p.email,
-    detail: "A parent or provider just created an account.",
+    detail: `A ${role} just signed up on KidEase.${p.email ? ` Email: ${p.email}` : ""}`,
   });
+  return result;
 }
 
 export async function notifyProviderJoined(p: ProviderJoinPayload) {
@@ -485,7 +557,16 @@ export async function notifyProviderJoined(p: ProviderJoinPayload) {
 }
 
 export const submitPublicMessage = createServerFn({ method: "POST" })
-  .validator((input: { kind: "contact" | "support"; name: string; email: string; subject?: string; body: string }) => {
+  .validator((input: {
+    kind: "contact" | "support" | "enroll";
+    name: string;
+    email: string;
+    subject?: string;
+    body: string;
+    centre?: string;
+    phone?: string;
+    city?: string;
+  }) => {
     const name = input.name.trim();
     const email = input.email.trim();
     const body = input.body.trim();
@@ -497,36 +578,37 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
       email: email.slice(0, 200),
       subject: (input.subject || "").trim().slice(0, 160),
       body: body.slice(0, 4000),
+      centre: (input.centre || "").trim().slice(0, 160),
+      phone: (input.phone || "").trim().slice(0, 40),
+      city: (input.city || "").trim().slice(0, 80),
     };
   })
   .handler(async ({ data }) => {
-    try {
-      const result = await notifyPlatform({
-        kind: data.kind,
-        title: data.kind === "contact" ? `Contact: ${data.subject || "Message"}` : "New support message",
-        actorName: data.name,
-        actorEmail: data.email,
-        detail: [data.subject, data.body].filter(Boolean).join("\n\n"),
-      });
-      return afterPublicAdminNotify({
-        adminStatus: result.status,
-        adminError: result.error,
-        sendAutoReply: () => sendVisitorAutoReply(data.email),
-        onAutoReplyError: (err) => {
-          console.error("[kidease-contact] auto-reply failed", err);
-        },
-      });
-    } catch (err) {
-      console.error("[kidease-contact]", err);
-      throw err;
-    }
+    const title =
+      data.kind === "enroll"
+        ? `Enroll Now: ${data.centre || data.name}`
+        : data.kind === "contact"
+          ? `Contact: ${data.subject || "Message"}`
+          : "New support message";
+    await notifyPlatform({
+      kind: data.kind,
+      title,
+      actorName: data.name,
+      actorEmail: data.email,
+      daycareName: data.centre || undefined,
+      city: data.city || undefined,
+      detail: [data.centre && `Centre: ${data.centre}`, data.city && `City: ${data.city}`, data.phone && `Phone: ${data.phone}`, data.subject, data.body]
+        .filter(Boolean)
+        .join("\n"),
+    });
+    return { ok: true as const };
   });
 
 export const listPlatformEvents = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async () => {
     await ensureEventsTable();
-    const sql = await loadSql();
+    const sql = await getSql();
     const rows = await sql<{
       id: string;
       kind: string;

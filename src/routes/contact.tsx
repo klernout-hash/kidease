@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
@@ -51,6 +51,13 @@ export function Contact() {
         <p className="text-sm font-semibold tracking-wide text-primary">{t("contact")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("contactTitle")}</h1>
         <p className="mt-6 text-muted">{t("contactIntro")}</p>
+
+        <div className="mt-8 rounded-xl bg-surface p-5 text-center ring-1 ring-border">
+          <p className="text-base font-semibold">{t("daycareEnrollLead")}</p>
+          <Button asChild size="lg" className="mt-4 w-full">
+            <Link to="/claim">{t("enrollNow")}</Link>
+          </Button>
+        </div>
 
         <form className="mt-8 space-y-3" onSubmit={send}>
           <label className="block text-sm font-medium">

@@ -9,6 +9,14 @@ import appCss from "../styles.css?url";
 const APP_NAME = "KidEase";
 
 export const Route = createRootRoute({
+  errorComponent: ({ error }) => (
+    <div style={{ fontFamily: "Plus Jakarta Sans, Segoe UI, sans-serif", background: "#f6f3ee", color: "#1c2438", padding: 48, minHeight: "100vh" }}>
+      <p style={{ fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase" }}>KidEase</p>
+      <h1 style={{ fontSize: 28 }}>Something went wrong</h1>
+      <p>Refresh the page, or go back to kidease.ca. If it keeps happening, email kyle@kidease.ca.</p>
+      <p style={{ color: "#5c6578", fontSize: 13 }}>{error instanceof Error ? error.message : "Please try again."}</p>
+    </div>
+  ),
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -31,6 +39,9 @@ export const Route = createRootRoute({
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/icon-180.png" },
+      { rel: "preconnect", href: "https://basemaps.cartocdn.com" },
+      { rel: "preconnect", href: "https://a.basemaps.cartocdn.com" },
+      { rel: "dns-prefetch", href: "https://server.arcgisonline.com" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",

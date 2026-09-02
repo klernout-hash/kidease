@@ -28,10 +28,24 @@ async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: st
     on conflict (user_id) do nothing
     returning user_id
   `;
-  if (inserted[0]) {
-    const actor = await lookupUser(userId);
-    void notifyAccountCreated({ name: actor.name, email: actor.email });
+  return Boolean(inserted[0]);
+}
+
+async function pingNewAccount(userId: string, role: "parent" | "provider") {
+  const actor = await lookupUser(userId);
+  if (role === "provider") {
+    void notifyProviderJoined({
+      kind: "signup",
+      providerName: actor.name,
+      providerEmail: actor.email,
+    });
+    return;
   }
+  void notifyAccountCreated({
+    name: actor.name,
+    email: actor.email,
+    role: "parent",
+  });
 }
 
 export const getFamily = createServerFn({ method: "GET" })
@@ -39,7 +53,8 @@ export const getFamily = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureSeed(sql);
-    await ensureProfile(sql, context.userId);
+    const isNew = await ensureProfile(sql, context.userId);
+    if (isNew) await pingNewAccount(context.userId, "parent");
     const children = await sql<ChildRow>`
       select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
              doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
@@ -965,16 +980,15 @@ export const setRole = createServerFn({ method: "POST" })
   .validator((role: "parent" | "provider") => role)
   .handler(async ({ context, data: role }) => {
     const sql = await getSql();
-    await ensureProfile(sql, context.userId);
     const prev = await sql<{ role: string }>`select role from profiles where user_id = ${context.userId}`;
-    await sql`update profiles set role = ${role} where user_id = ${context.userId}`;
-    if (role === "provider" && prev[0]?.role !== "provider") {
-      const actor = await lookupUser(context.userId);
-      void notifyProviderJoined({
-        kind: "signup",
-        providerName: actor.name,
-        providerEmail: actor.email,
-      });
+    if (!prev[0]) {
+      await sql`insert into profiles (user_id, role) values (${context.userId}, ${role})`;
+      await pingNewAccount(context.userId, role);
+    } else {
+      await sql`update profiles set role = ${role} where user_id = ${context.userId}`;
+      if (role === "provider" && prev[0].role !== "provider") {
+        await pingNewAccount(context.userId, "provider");
+      }
     }
     return { role };
   });

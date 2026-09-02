@@ -46,7 +46,7 @@ export async function getDeviceLocation(): Promise<{ lat: number; lng: number } 
       const { Geolocation } = await import("@capacitor/geolocation");
       const pos = await Geolocation.getCurrentPosition({
         enableHighAccuracy: false,
-        timeout: 8000,
+        timeout: 12000,
       });
       return { lat: pos.coords.latitude, lng: pos.coords.longitude };
     } catch {
@@ -58,9 +58,42 @@ export async function getDeviceLocation(): Promise<{ lat: number; lng: number } 
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => resolve(null),
-      { enableHighAccuracy: false, timeout: 4000 },
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60_000 },
     );
   });
+}
+
+export function watchDeviceLocation(onFix: (pos: { lat: number; lng: number }) => void): () => void {
+  let stopped = false;
+  if (isNative()) {
+    let watchId: string | undefined;
+    void import("@capacitor/geolocation").then(({ Geolocation }) => {
+      if (stopped) return;
+      void Geolocation.watchPosition({ enableHighAccuracy: false, timeout: 12000 }, (pos) => {
+        if (stopped || !pos) return;
+        onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      }).then((id) => {
+        watchId = id;
+      });
+    });
+    return () => {
+      stopped = true;
+      if (!watchId) return;
+      void import("@capacitor/geolocation").then(({ Geolocation }) => {
+        void Geolocation.clearWatch({ id: watchId! });
+      });
+    };
+  }
+  if (typeof navigator === "undefined" || !navigator.geolocation) return () => {};
+  const id = navigator.geolocation.watchPosition(
+    (pos) => onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    () => {},
+    { enableHighAccuracy: false, timeout: 12000, maximumAge: 15_000 },
+  );
+  return () => {
+    stopped = true;
+    navigator.geolocation.clearWatch(id);
+  };
 }
 
 export async function hapticLight(): Promise<void> {

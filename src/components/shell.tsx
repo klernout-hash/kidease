@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
 import { LanguageSelect } from "@/components/language-select";
 import { NavDrawer } from "@/components/nav-drawer";
+import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 
 export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
@@ -35,19 +36,20 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const onAccount = pathname.startsWith("/account");
   const accountTab = tab ?? "profile";
 
-  const navItems = [
+  const desktopNav = [
+    { to: "/search", label: t("explore"), match: ["/search", "/daycare"] },
+    { to: "/benefits", label: t("benefitsTab"), match: ["/benefits"] },
+    { to: "/about", label: t("about"), match: ["/about"] },
+    { to: "/get-app", label: t("getApp"), match: ["/get-app"] },
+  ];
+
+  const drawerItems = [
     { to: "/search", label: t("explore") },
     { to: "/benefits", label: t("benefitsTab") },
-    { to: "/account", label: t("saved") },
+    { to: "/get-app", label: t("getApp") },
     { to: "/about", label: t("about") },
     { to: "/team", label: t("team") },
     { to: "/contact", label: t("contact") },
-    ...(bare
-      ? []
-      : [
-          { to: "/inbox", label: t("inbox") },
-          { to: "/get-app", label: t("getApp") },
-        ]),
   ];
 
   return (
@@ -57,15 +59,18 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
           <Link to="/" className="shrink-0" aria-label="KidEase">
             <BrandMark size="sm" />
           </Link>
-          <nav className="hidden items-center gap-5 text-sm text-muted xl:flex">
-            {navItems.map((item) => (
-              <Link key={item.to} to={item.to} className="hover:text-fg">
-                {item.label}
-              </Link>
-            ))}
+          <nav className="hidden items-center gap-6 text-[13px] font-medium text-muted xl:flex">
+            {desktopNav.map((item) => {
+              const on = item.match.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+              return (
+                <Link key={item.to} to={item.to} className={cn("whitespace-nowrap hover:text-fg", on && "text-fg")}>
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
           <div className="flex items-center gap-1.5">
-            <div className="hidden h-11 items-center rounded-full bg-surface/90 ring-1 ring-border xl:flex">
+            <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border xl:flex">
               <LanguageSelect />
               <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
               {isPending ? (
@@ -75,7 +80,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <button
                     type="button"
                     onClick={() => void signOut("/")}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full px-3 text-xs leading-none text-muted hover:text-fg"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full px-3 text-xs leading-normal text-muted hover:text-fg"
                   >
                     {user.profileImageUrl ? (
                       <img src={user.profileImageUrl} alt="" className="size-5 rounded-full object-cover" />
@@ -92,7 +97,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <Link
                     to="/login"
                     search={{ role: "provider", intent: "in", next: "/provider" }}
-                    className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-none text-muted hover:text-fg"
+                    className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-normal text-muted hover:text-fg"
                   >
                     {t("providerLogin")}
                   </Link>
@@ -100,14 +105,14 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <Link
                     to="/login"
                     search={{ role: "parent", intent: "in", next: "/search" }}
-                    className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-none text-muted hover:text-fg"
+                    className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-normal text-muted hover:text-fg"
                   >
                     {t("parentSignIn")}
                   </Link>
                 </SignedOut>
               )}
             </div>
-            <div className="flex h-11 items-center rounded-full bg-surface/90 ring-1 ring-border xl:hidden">
+            <div className="flex h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border xl:hidden">
               <LanguageSelect />
             </div>
             <button
@@ -127,16 +132,16 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         open={open}
         onClose={close}
         title={t("explore")}
-        items={navItems}
+        items={drawerItems}
         parentLabel={t("parentSignIn")}
         providerLabel={t("providerLogin")}
         signedIn={Boolean(user)}
         accountLabel={t("account")}
         onSignOut={() => void signOut("/")}
       />
-      <div className={hideTabs ? "" : "pb-[calc(5.25rem+env(safe-area-inset-bottom))] xl:pb-0"}>{children}</div>
+      <div className={hideTabs ? "" : "pb-[calc(5.25rem+env(safe-area-inset-bottom))] md:pb-0"}>{children}</div>
       {hideTabs ? null : (
-        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur-md xl:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur-md md:hidden">
           <div className="mx-auto grid max-w-lg grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)] pt-1">
             <Tab
               to="/"
@@ -169,6 +174,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
           </div>
         </nav>
       )}
+      {hideTabs ? null : <LiveChatSlot />}
     </div>
   );
 }

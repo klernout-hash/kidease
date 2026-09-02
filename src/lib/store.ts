@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { WINNIPEG, writeSavedOrigin } from "./geo";
+import type { OriginSource } from "./presence";
 import { applyDocumentLocale, LANGUAGES } from "./languages";
 import type { AgeGroup, Locale } from "./types";
 
@@ -33,9 +34,13 @@ type SearchState = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   origin: Origin;
-  setOrigin: (origin: Origin) => void;
+  setOrigin: (origin: Origin, source?: OriginSource) => void;
   located: boolean;
   setLocated: (v: boolean) => void;
+  originSource: OriginSource | null;
+  originAt: number | null;
+  setLiveFix: (lat: number, lng: number, label: string) => void;
+  touchGps: () => void;
   radiusKm: number;
   setRadiusKm: (n: number) => void;
   sort: SortKey;
@@ -62,19 +67,30 @@ export const useAppStore = create<SearchState>()((set) => ({
     set({ locale });
   },
   origin: { lat: WINNIPEG.lat, lng: WINNIPEG.lng, label: WINNIPEG.label },
-  setOrigin: (origin) => {
+  setOrigin: (origin, source = "manual") => {
     writeSavedOrigin(origin);
-    set({ origin, located: true });
+    set({ origin, located: true, originSource: source, originAt: Date.now() });
   },
   located: false,
   setLocated: (located) => set({ located }),
+  originSource: null,
+  originAt: null,
+  setLiveFix: (lat, lng, label) => {
+    set({
+      origin: { lat, lng, label },
+      located: true,
+      originSource: "gps",
+      originAt: Date.now(),
+    });
+  },
+  touchGps: () => set({ located: true, originSource: "gps", originAt: Date.now() }),
   radiusKm: 25,
   setRadiusKm: (radiusKm) => set({ radiusKm }),
   sort: "distance",
   setSort: (sort) => set({ sort }),
   ageGroup: "any",
   setAgeGroup: (ageGroup) => set({ ageGroup }),
-  view: "list",
+  view: "map",
   setView: (view) => set({ view }),
   query: "",
   setQuery: (query) => set({ query }),

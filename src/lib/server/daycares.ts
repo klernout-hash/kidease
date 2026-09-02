@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
-import { haversineKm } from "@/lib/geo";
+import { bboxFromRadius, catchmentMatch, compareProximity, distanceKm, fsaOf, inBbox } from "@/lib/proximity";
 import { getCatalog, catalogBySlugGet, catalogMonths, type CatalogDaycare } from "@/lib/catalog";
 import { upsertDaycare } from "./seed";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
@@ -15,6 +15,7 @@ type SearchInput = {
   radiusKm: number;
   sort: "distance" | "price" | "rating" | "availability";
   ageGroup: "any" | AgeGroup;
+  fsa?: string;
 };
 
 function toDaycare(d: CatalogDaycare): Daycare {
@@ -63,17 +64,21 @@ function toDaycare(d: CatalogDaycare): Daycare {
     licenseStatus: "active",
     priority: false,
     priorityUntil: null,
-    agesKnown: false,
+    agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
   };
 }
 
-function toCard(d: CatalogDaycare, origin: { lat: number; lng: number }): DaycareCard {
+function toCard(d: CatalogDaycare, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
   const daycare = toDaycare(d);
+  const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
+  const catchm = catchmentMatch(origin, { lat: d.lat, lng: d.lng, postalCode: d.postalCode }, km, originFsa);
   return {
     ...daycare,
-    distanceKm: Math.round(haversineKm(origin, { lat: d.lat, lng: d.lng }) * 10) / 10,
+    distanceKm: km,
     spotsTotal: spotsTotal(daycare),
     fromPrice: fromPrice(daycare),
+    catchmentKm: catchm.catchmentKm,
+    inCatchment: catchm.inCatchment,
   };
 }
 
@@ -81,11 +86,14 @@ export const searchDaycares = createServerFn({ method: "POST" })
   .validator((input: SearchInput) => input)
   .handler(async ({ data }) => {
     const origin = { lat: data.lat, lng: data.lng };
+    const box = bboxFromRadius(origin, data.radiusKm);
     let cards: DaycareCard[] = [];
     for (const d of await getCatalog()) {
-      const km = haversineKm(origin, { lat: d.lat, lng: d.lng });
+      const point = { lat: d.lat, lng: d.lng };
+      if (!inBbox(point, box)) continue;
+      const km = distanceKm(origin, point);
       if (km > data.radiusKm) continue;
-      cards.push(toCard(d, origin));
+      cards.push(toCard(d, origin, data.fsa));
     }
     cards = await overlayClaimed(cards, (card, claimed) => {
       const next = {
@@ -112,7 +120,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
         priorityUntil: claimed.priorityUntil,
         ageMinMonths: claimed.agesKnown ? claimed.ageMinMonths : card.ageMinMonths,
         ageMaxMonths: claimed.agesKnown ? claimed.ageMaxMonths : card.ageMaxMonths,
-        agesKnown: Boolean(claimed.agesKnown),
+        agesKnown: Boolean(claimed.agesKnown) || Boolean(card.agesKnown),
       };
       return { ...next, spotsTotal: spotsTotal(next), fromPrice: fromPrice(next) };
     });
@@ -130,7 +138,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
       if (data.sort === "price") return (a.fromPrice || 9e6) - (b.fromPrice || 9e6);
       if (data.sort === "rating") return b.ratingX10 - a.ratingX10;
       if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
-      return a.distanceKm - b.distanceKm;
+      return compareProximity(a, b);
     });
     return cards.slice(0, 80);
   });
@@ -139,14 +147,16 @@ export const featuredDaycares = createServerFn({ method: "POST" })
   .validator((input: { lat: number; lng: number }) => input)
   .handler(async ({ data }) => {
     const origin = { lat: data.lat, lng: data.lng };
+    const box = bboxFromRadius(origin, 40);
     const nearby: DaycareCard[] = [];
     for (const d of await getCatalog()) {
-      const km = haversineKm(origin, { lat: d.lat, lng: d.lng });
+      const point = { lat: d.lat, lng: d.lng };
+      if (!inBbox(point, box)) continue;
+      const km = distanceKm(origin, point);
       if (km > 40) continue;
-      const card = toCard(d, origin);
-      nearby.push(card);
+      nearby.push(toCard(d, origin));
     }
-    nearby.sort((a, b) => a.distanceKm - b.distanceKm);
+    nearby.sort(compareProximity);
     const merged = await overlayClaimed(nearby, (card, claimed) => {
       const next = {
         ...card,
@@ -172,7 +182,7 @@ export const featuredDaycares = createServerFn({ method: "POST" })
         priorityUntil: claimed.priorityUntil,
         ageMinMonths: claimed.agesKnown ? claimed.ageMinMonths : card.ageMinMonths,
         ageMaxMonths: claimed.agesKnown ? claimed.ageMaxMonths : card.ageMaxMonths,
-        agesKnown: Boolean(claimed.agesKnown),
+        agesKnown: Boolean(claimed.agesKnown) || Boolean(card.agesKnown),
       };
       return { ...next, spotsTotal: spotsTotal(next), fromPrice: fromPrice(next) };
     });

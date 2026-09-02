@@ -198,7 +198,9 @@ const grokUserInfoUrl = `${issuerBase}/api/auth/oauth2/userinfo`;
 // schema from `migrations/0001_auth.sql`.
 const database = databaseUrl
   ? new Pool({ connectionString: databaseUrl })
-  : { dialect: pgliteDialect(() => getPglite()), type: "postgres" as const };
+  : process.env.VERCEL
+    ? undefined
+    : { dialect: pgliteDialect(() => getPglite()), type: "postgres" as const };
 
 /** Session token cookie name — also read by the live-preview popup completion page. */
 export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";

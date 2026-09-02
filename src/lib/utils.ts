@@ -51,6 +51,16 @@ export function formatMonth(ym: string, locale: Locale = "en") {
   return new Intl.DateTimeFormat(localeTag(locale), { month: "long", year: "numeric" }).format(d);
 }
 
+export function decodeHtml(str: string) {
+  return str
+    .replace(/&/gi, "&")
+    .replace(/'/gi, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/"/gi, '"')
+    .replace(/</gi, "<")
+    .replace(/>/gi, ">");
+}
+
 export function formatAgeRange(min: number, max: number) {
   return `${min} m – ${max} m`;
 }

@@ -9,7 +9,7 @@ export function LanguageSelect({ className = "" }: { className?: string }) {
   const setLocale = useAppStore((s) => s.setLocale);
 
   return (
-    <label className={cn("inline-flex h-11 min-w-[4.75rem] items-center justify-center", className)}>
+    <label className={cn("inline-flex h-11 min-w-[7.25rem] items-center justify-center overflow-visible", className)}>
       <span className="sr-only">{t("language")}</span>
       <select
         value={locale}
@@ -18,7 +18,7 @@ export function LanguageSelect({ className = "" }: { className?: string }) {
           setLocale(next);
           applyDocumentLocale(next);
         }}
-        className="h-11 min-h-11 w-full cursor-pointer appearance-none rounded-full border-0 bg-transparent px-3 text-center text-sm leading-none text-muted hover:text-fg [text-align-last:center]"
+        className="ke-lang-select h-11 min-h-11 w-full cursor-pointer rounded-full border-0 bg-transparent px-3.5 text-center text-[15px] font-medium text-muted hover:text-fg"
         aria-label={t("language")}
       >
         {LANGUAGES.map((lang) => (

@@ -94,7 +94,7 @@ export function feeBadgeKey(province: string): "badgeTen" | "badgeFifteen" | "ba
   if (kind === "qc") return "badgeReducedQc";
   if (kind === "ab") return "badgeFifteen";
   if (kind === "typical") return "badgeTen";
-  return "badgeTenAsk";
+  return "badgeTen";
 }
 
 export function pinFeeLabel(
