@@ -133,7 +133,7 @@ export const verifyClaim = createServerFn({ method: "POST" })
     const photo = data.licensePhoto?.startsWith("data:image") ? data.licensePhoto : null;
     await sql`
       update listing_claims
-      set status = 'verified', license_photo = ${photo}, verified_at = now()
+      set status = 'waiting', license_photo = ${photo}, verified_at = now()
       where id = ${claim.id}
     `;
     await sql`
@@ -143,8 +143,8 @@ export const verifyClaim = createServerFn({ method: "POST" })
     `;
     await sql`
       update daycares
-      set claimed_at = now(), claim_status = 'verified', verified = 1
-      where id = ${data.daycareId}
+      set claim_status = 'waiting'
+      where id = ${data.daycareId} and claimed_at is null
     `;
     await sql`update profiles set role = 'provider' where user_id = ${context.userId}`;
     const actor = await lookupUser(context.userId);
@@ -163,7 +163,7 @@ export const verifyClaim = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-mail] claim notify failed", err);
     }
-    return { ok: true as const };
+    return { ok: true as const, status: "waiting" as const };
   });
 
 export const updateListing = createServerFn({ method: "POST" })
