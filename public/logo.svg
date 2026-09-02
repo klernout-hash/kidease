@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="KidEase">
+  <rect width="1024" height="1024" fill="#ffffff"/>
+  <g transform="translate(512 508)">
+    <path fill="#2F6BFF" d="M0,-368 C203,-368 368,-203 368,0 C368,148 276,278 132,400 L0,512 L-132,400 C-276,278 -368,148 -368,0 C-368,-203 -203,-368 0,-368 Z"/>
+    <circle cx="0" cy="-36" r="228" fill="#ffffff"/>
+    <g fill="none" stroke="#2F6BFF" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M-118,-62 C-96,-108 -56,-108 -34,-62"/>
+      <path d="M34,-62 C56,-108 96,-108 118,-62"/>
+      <path d="M-96,48 C-48,118 48,118 96,48"/>
+    </g>
+  </g>
+</svg>
