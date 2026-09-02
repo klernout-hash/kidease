@@ -19,7 +19,27 @@ export type BookingStatus =
   | "declined"
   | "active"
   | "cancelled";
-export type PayMethod = "card" | "apple" | "google" | "paypal" | "interac";
+export type PayMethod =
+  | "card"
+  | "apple"
+  | "google"
+  | "apple_pay"
+  | "google_pay"
+  | "link"
+  | "paypal"
+  | "amazon_pay"
+  | "cashapp"
+  | "interac"
+  | "acss_debit"
+  | "customer_balance"
+  | "us_bank_account"
+  | "afterpay_clearpay"
+  | "klarna"
+  | "affirm"
+  | "alipay"
+  | "wechat_pay"
+  | "sepa_debit"
+  | "ideal";
 
 export type Daycare = {
   id: string;
@@ -175,6 +195,8 @@ export type Payment = {
   status: string;
   reference: string | null;
   createdAt: string;
+  invoiceId?: string | null;
+  period?: string | null;
 };
 
 export type SpotRequest = Booking & {
