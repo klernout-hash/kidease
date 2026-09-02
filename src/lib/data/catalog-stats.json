@@ -1,1 +1,22 @@
-{"total":24187,"byProvince":{"AB":2889,"BC":5702,"MB":932,"NB":931,"NL":390,"NS":337,"NT":100,"NU":16,"ON":8830,"PE":89,"QC":3695,"SK":251,"YT":25}}
+{
+  "total": 24187,
+  "byProvince": {
+    "AB": 2889,
+    "BC": 5702,
+    "MB": 929,
+    "NB": 931,
+    "NL": 387,
+    "NS": 337,
+    "NT": 100,
+    "NU": 16,
+    "ON": 8836,
+    "PE": 89,
+    "QC": 3695,
+    "SK": 251,
+    "YT": 25
+  },
+  "addedFromMaster": 3341,
+  "masterRows": 23927,
+  "skippedDup": 20433,
+  "skippedNoGeo": 153
+}
