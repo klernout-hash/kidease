@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LocateFixed, Navigation } from "lucide-react";
+import { LocateFixed, Minus, Navigation, Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { DaycareCard } from "@/lib/types";
 import { cn, money } from "@/lib/utils";
@@ -54,6 +54,8 @@ type AnyPin = {
 type SlugPin = AnyPin & {
   setActive(on: boolean, maps: typeof google.maps): void;
 };
+
+const MAP_PAD = { top: 88, right: 20, bottom: 240, left: 20 };
 
 export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onRelocate }: Props) {
   const host = useRef<HTMLDivElement>(null);
@@ -195,13 +197,13 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         strokeColor: "#1a3790",
         strokeWeight: 1,
         fillColor: "#1a3790",
-        fillOpacity: 0.08,
+        fillOpacity: 0.06,
         clickable: false,
       });
     }
     const bounds = circleRef.current.getBounds();
     if (bounds) {
-      map.fitBounds(bounds, { top: 72, right: 56, bottom: 120, left: 40 });
+      map.fitBounds(bounds, MAP_PAD);
     } else {
       map.setZoom(mapZoomForRadius(radiusKm));
     }
@@ -233,16 +235,27 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
       const useAdvanced = Boolean(advancedMarkerRef.current);
       for (const node of clusters) {
         if (node.kind === "group") {
-          const content = logoPinEl("ke-logo-pin ke-logo-cluster", node.count);
+          const content = clusterEl(node.count);
           const overlay = createOverlay({
             map,
             position: { lat: node.lat, lng: node.lng },
             content,
             centered: true,
-            zIndex: 80,
+            zIndex: 40 + Math.min(node.count, 200),
+            collision: "REQUIRED",
             onClick: () => {
-              map.setZoom(Math.min(zoom + 2, 16));
-              map.panTo({ lat: node.lat, lng: node.lng });
+              const box = new maps.LatLngBounds();
+              for (const item of node.items) {
+                if (Number.isFinite(item.lat) && Number.isFinite(item.lng)) {
+                  box.extend({ lat: item.lat, lng: item.lng });
+                }
+              }
+              if (!box.isEmpty()) {
+                map.fitBounds(box, MAP_PAD);
+              } else {
+                map.setZoom(Math.min(zoom + 2, 16));
+                map.panTo({ lat: node.lat, lng: node.lng });
+              }
             },
           });
           nextPins.push(overlay);
@@ -258,6 +271,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
             position: { lat: item.lat, lng: item.lng },
             content,
             zIndex: item.live ? 20 : 10,
+            collision: "OPTIONAL_AND_HIDES_LOWER_PRIORITY",
             onClick: () => {
               setPicked(item.slug);
               onSelectRef.current(item.slug);
@@ -308,6 +322,13 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
     onRelocate?.(pos);
   }
 
+  function bumpZoom(delta: number) {
+    const map = mapRef.current;
+    if (!map) return;
+    const next = Math.min(18, Math.max(4, (map.getZoom() ?? zoom) + delta));
+    map.setZoom(next);
+  }
+
   return (
     <div className="relative size-full min-h-[280px] overflow-hidden rounded-lg bg-map">
       <div ref={host} className="absolute inset-0" />
@@ -320,7 +341,9 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         </div>
       ) : null}
 
-      <div className="absolute right-3 top-3 z-[400] flex flex-col gap-2">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[400] h-16 bg-gradient-to-b from-bg/55 to-transparent lg:h-8" />
+
+      <div className="ke-map-controls absolute right-3 top-[4.6rem] z-[400] flex flex-col items-end gap-2 lg:top-3">
         <div className="overflow-hidden rounded-full bg-surface text-xs font-medium shadow-card ring-1 ring-border">
           <button
             type="button"
@@ -346,10 +369,29 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         >
           <LocateFixed className={cn("size-5", locating && "animate-pulse")} />
         </button>
+        <div className="overflow-hidden rounded-full bg-surface shadow-card ring-1 ring-border">
+          <button
+            type="button"
+            onClick={() => bumpZoom(1)}
+            className="grid size-10 place-items-center text-fg hover:bg-surface-2"
+            aria-label="Zoom in"
+          >
+            <Plus className="size-4" strokeWidth={2.2} />
+          </button>
+          <span className="mx-auto block h-px w-6 bg-border" aria-hidden />
+          <button
+            type="button"
+            onClick={() => bumpZoom(-1)}
+            className="grid size-10 place-items-center text-fg hover:bg-surface-2"
+            aria-label="Zoom out"
+          >
+            <Minus className="size-4" strokeWidth={2.2} />
+          </button>
+        </div>
       </div>
 
       {selected ? (
-        <div className="absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
+        <div className="absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border lg:bottom-3">
           {selected.live ? <span className="block h-1 bg-primary" /> : null}
           <div className="flex gap-3 p-3">
             {selected.photos.find((p) => !p.includes("-logo")) ? (
@@ -376,7 +418,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
               </div>
               <p className="mt-0.5 text-xs text-muted">
                 {selected.distanceKm} {t("km")}
-                {" · "}
+                {" \u00b7 "}
                 {selected.live || selected.availabilityKnown
                   ? selected.spotsTotal > 0
                     ? `${selected.spotsTotal} ${t("spots")}`
@@ -434,14 +476,23 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
 
 type ClusterNode =
   | { kind: "pin"; item: DaycareCard }
-  | { kind: "group"; lat: number; lng: number; count: number };
+  | { kind: "group"; lat: number; lng: number; count: number; items: DaycareCard[] };
 
-function logoPinEl(className: string, count?: number) {
+function logoPinEl(className: string) {
   const content = document.createElement("div");
   content.className = className;
-  content.innerHTML = count != null ? `${PIN_SVG}<span class="ke-pin-count">${count}</span>` : PIN_SVG;
+  content.innerHTML = PIN_SVG;
   content.setAttribute("role", "button");
-  if (count != null) content.setAttribute("aria-label", `${count} licensed centres`);
+  return content;
+}
+
+function clusterEl(count: number) {
+  const content = document.createElement("div");
+  const size = count >= 200 ? "xl" : count >= 50 ? "lg" : count >= 10 ? "md" : "sm";
+  content.className = `ke-count-cluster ke-count-cluster--${size}`;
+  content.textContent = count > 999 ? "999+" : String(count);
+  content.setAttribute("role", "button");
+  content.setAttribute("aria-label", `${count} licensed centres`);
   return content;
 }
 
@@ -477,27 +528,70 @@ function wrapClassicPin(marker: google.maps.Marker): SlugPin {
   };
 }
 
+function clusterCellDegrees(zoom: number): number {
+  if (zoom >= 15) return 0;
+  if (zoom >= 14) return 0.012;
+  if (zoom >= 13) return 0.022;
+  if (zoom >= 12) return 0.038;
+  if (zoom >= 11) return 0.07;
+  if (zoom >= 10) return 0.13;
+  if (zoom >= 9) return 0.22;
+  if (zoom >= 8) return 0.36;
+  if (zoom >= 7) return 0.55;
+  return 0.85;
+}
+
 function clusterItems(items: DaycareCard[], zoom: number): ClusterNode[] {
-  // City-scale (zoom 10+) shows a KidEase logo on every listing. Cluster only
-  // when the map is zoomed far out so thousands of pins would overlap.
-  if (zoom >= 10 || items.length < 50) return items.map((item) => ({ kind: "pin", item }));
-  const cell = zoom >= 8 ? 0.12 : zoom >= 6 ? 0.22 : 0.4;
+  const usable = items.filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lng));
+  const cell = clusterCellDegrees(zoom);
+  if (cell <= 0 || usable.length < 2) return usable.map((item) => ({ kind: "pin", item }));
+
   const buckets = new Map<string, DaycareCard[]>();
-  for (const item of items) {
+  for (const item of usable) {
     const key = `${Math.round(item.lat / cell)}_${Math.round(item.lng / cell)}`;
     const list = buckets.get(key);
     if (list) list.push(item);
     else buckets.set(key, [item]);
   }
-  const out: ClusterNode[] = [];
+
+  type Group = { lat: number; lng: number; items: DaycareCard[] };
+  const groups: Group[] = [];
   for (const list of buckets.values()) {
-    if (list.length === 1) {
-      out.push({ kind: "pin", item: list[0] });
-      continue;
-    }
     const lat = list.reduce((s, i) => s + i.lat, 0) / list.length;
     const lng = list.reduce((s, i) => s + i.lng, 0) / list.length;
-    out.push({ kind: "group", lat, lng, count: list.length });
+    groups.push({ lat, lng, items: list });
+  }
+
+  const minSep = cell * 0.72;
+  const minSep2 = minSep * minSep;
+  const merged = new Array(groups.length).fill(false);
+  const out: ClusterNode[] = [];
+  for (let i = 0; i < groups.length; i++) {
+    if (merged[i]) continue;
+    let lat = groups[i].lat * groups[i].items.length;
+    let lng = groups[i].lng * groups[i].items.length;
+    const pack = [...groups[i].items];
+    for (let j = i + 1; j < groups.length; j++) {
+      if (merged[j]) continue;
+      const dLat = groups[i].lat - groups[j].lat;
+      const dLng = (groups[i].lng - groups[j].lng) * Math.cos((groups[i].lat * Math.PI) / 180);
+      if (dLat * dLat + dLng * dLng > minSep2) continue;
+      merged[j] = true;
+      lat += groups[j].lat * groups[j].items.length;
+      lng += groups[j].lng * groups[j].items.length;
+      pack.push(...groups[j].items);
+    }
+    if (pack.length === 1) {
+      out.push({ kind: "pin", item: pack[0] });
+      continue;
+    }
+    out.push({
+      kind: "group",
+      lat: lat / pack.length,
+      lng: lng / pack.length,
+      count: pack.length,
+      items: pack,
+    });
   }
   return out;
 }
