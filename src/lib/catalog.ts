@@ -1,6 +1,7 @@
 import { nextMonths } from "./utils";
 import realStorefrontsJson from "./data/real-storefronts.json";
 import wpgStorefrontsJson from "./data/storefronts.json";
+import operatorFactsJson from "./data/operator-facts.json";
 import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
 
 export type CatalogDaycare = {
@@ -80,6 +81,51 @@ type RawCentre = {
   fee?: number;
 };
 
+type OperatorFact = {
+  name?: string;
+  ageMinMonths?: number;
+  ageMaxMonths?: number;
+  infantMonthly?: number | null;
+  toddlerMonthly?: number | null;
+  preschoolMonthly?: number | null;
+  partTimeMonthly?: number | null;
+  hours?: string;
+  phone?: string;
+  feeConfirmed?: boolean;
+};
+
+type OperatorFactsFile = {
+  byLicence?: Record<string, OperatorFact>;
+};
+
+const FACTS: Record<string, OperatorFact> =
+  (operatorFactsJson as OperatorFactsFile).byLicence ?? {};
+
+/** Match operator-facts keys to a centre via licence # or id tail (0005238 / 5238 / on-0005238). */
+function factLookupKeys(raw: RawCentre): string[] {
+  const keys = new Set<string>();
+  const add = (value?: string | null) => {
+    const n = (value || "").trim();
+    if (!n) return;
+    keys.add(n);
+    const stripped = n.replace(/^0+/, "") || n;
+    keys.add(stripped);
+    if (/^\d+$/.test(n) && n.length < 7) keys.add(n.padStart(7, "0"));
+    if (/^\d+$/.test(stripped) && stripped.length < 7) keys.add(stripped.padStart(7, "0"));
+  };
+  add(raw.licenseNumber);
+  add((raw.id || "").split("-").pop());
+  return [...keys];
+}
+
+function operatorFactFor(raw: RawCentre): OperatorFact | undefined {
+  for (const key of factLookupKeys(raw)) {
+    const fact = FACTS[key];
+    if (fact) return fact;
+  }
+  return undefined;
+}
+
 /* photos-v4: never use Street View */
 const PLACEHOLDER = "/photos/storefront-placeholder.jpg";
 const BUILDINGS = realStorefrontsJson as Record<string, string>;
@@ -101,18 +147,15 @@ function listingPhotos(raw: RawCentre): string[] {
   return [storefront, ...logos];
 }
 
-function inferAges(raw: RawCentre) {
-  if (
-    typeof raw.ageMinMonths === "number" &&
-    typeof raw.ageMaxMonths === "number" &&
-    raw.ageMaxMonths > raw.ageMinMonths
-  ) {
-    return { min: raw.ageMinMonths, max: raw.ageMaxMonths, known: true };
+function inferAges(min?: number, max?: number) {
+  if (typeof min === "number" && typeof max === "number" && max > min) {
+    return { min, max, known: true };
   }
   return { min: 0, max: 0, known: false };
 }
 
 function hydrate(raw: RawCentre, _index: number): CatalogDaycare {
+  const fact = operatorFactFor(raw);
   const city = raw.city || "";
   const province = raw.province || "";
   const name = raw.name;
@@ -132,7 +175,8 @@ function hydrate(raw: RawCentre, _index: number): CatalogDaycare {
   const descFr =
     raw.descriptionFr ||
     `${nameFr} est un centre de garde permis${address ? ` au ${address}` : ""}${city ? `, ${city}` : ""} ${postal} (${province}). Heures et places selon le registre provincial.`.trim();
-  const ages = inferAges(raw);
+  const ages = inferAges(fact?.ageMinMonths ?? raw.ageMinMonths, fact?.ageMaxMonths ?? raw.ageMaxMonths);
+  const feeOk = Boolean(fact?.feeConfirmed);
   return {
     id: raw.id,
     slug: raw.slug,
@@ -148,15 +192,15 @@ function hydrate(raw: RawCentre, _index: number): CatalogDaycare {
     postalCode: postal,
     lat: Number(raw.lat),
     lng: Number(raw.lng),
-    phone: raw.phone ?? "",
-    hours: raw.hours || "",
+    phone: fact?.phone || raw.phone || "",
+    hours: fact?.hours || raw.hours || "",
     hoursFr: raw.hoursFr || "",
     ageMinMonths: ages.min,
     ageMaxMonths: ages.max,
-    infantMonthly: null,
-    toddlerMonthly: null,
-    preschoolMonthly: null,
-    partTimeMonthly: null,
+    infantMonthly: feeOk ? fact?.infantMonthly ?? null : null,
+    toddlerMonthly: feeOk ? fact?.toddlerMonthly ?? null : null,
+    preschoolMonthly: feeOk ? fact?.preschoolMonthly ?? null : null,
+    partTimeMonthly: feeOk ? fact?.partTimeMonthly ?? null : null,
     spotsInfant: 0,
     spotsToddler: 0,
     spotsPreschool: 0,
@@ -169,6 +213,7 @@ function hydrate(raw: RawCentre, _index: number): CatalogDaycare {
     photos: listingPhotos(raw),
     reviews: raw.reviews ?? [],
     googlePlaceId: raw.googlePlaceId ?? null,
+    feeConfirmed: feeOk,
   };
 }
 
