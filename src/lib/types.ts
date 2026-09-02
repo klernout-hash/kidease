@@ -79,6 +79,9 @@ export type Daycare = {
   verified: boolean;
   contactEmail?: string | null;
   claimed?: boolean;
+  listingActive?: boolean;
+  pauseCode?: string | null;
+  pauseReason?: string | null;
   live: boolean;
   feeConfirmed?: boolean;
   availabilityKnown?: boolean;
