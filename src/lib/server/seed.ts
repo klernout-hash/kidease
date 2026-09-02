@@ -63,7 +63,7 @@ export async function upsertDaycare(sql: Sql, d: CatalogDaycare) {
       d.languages,
       d.amenities,
       d.photos.join(","),
-      1,
+      0,
     ],
   );
   for (const month of months) {
@@ -75,4 +75,3 @@ export async function upsertDaycare(sql: Sql, d: CatalogDaycare) {
     );
   }
 }
-

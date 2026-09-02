@@ -86,7 +86,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     feeConfirmed: Boolean(r.claimed_at),
     availabilityKnown: Boolean(r.claimed_at),
     spotsUpdatedAt: r.claimed_at ?? null,
-    licenseStatus: "active",
+    licenseStatus: r.claimed_at ? "active" : "unknown",
     priority: Boolean(r.priority_until && Date.parse(r.priority_until) > Date.now()),
     priorityUntil: r.priority_until ?? null,
     agesKnown: Boolean(r.ages_confirmed),
