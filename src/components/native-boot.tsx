@@ -8,6 +8,8 @@ import { readSavedOrigin } from "@/lib/geo";
 import { LANGUAGES } from "@/lib/languages";
 import { useAppStore } from "@/lib/store";
 import type { Locale } from "@/lib/types";
+import { readDistanceUnit } from "@/lib/units";
+import { readLocationConsent } from "@/lib/location-consent";
 
 export function NativeBoot() {
   const [splash, setSplash] = useState(false);
@@ -15,6 +17,8 @@ export function NativeBoot() {
   const setLocated = useAppStore((s) => s.setLocated);
   const setLocale = useAppStore((s) => s.setLocale);
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
+  const setDistanceUnit = useAppStore((s) => s.setDistanceUnit);
+  const setLocationConsent = useAppStore((s) => s.setLocationConsent);
 
   useEffect(() => {
     try {
@@ -23,10 +27,12 @@ export function NativeBoot() {
       const livePref = window.localStorage.getItem("kidease-live-only");
       if (livePref === "1") setLiveOnly(true);
       else if (livePref === "0") setLiveOnly(false);
+      setDistanceUnit(readDistanceUnit());
+      setLocationConsent(readLocationConsent());
     } catch {
       /* ignore */
     }
-  }, [setLocale, setLiveOnly]);
+  }, [setLocale, setLiveOnly, setDistanceUnit, setLocationConsent]);
 
   useEffect(() => {
     captureInstallPrompt();
@@ -62,7 +68,14 @@ export function NativeBoot() {
     const saved = readSavedOrigin();
     if (saved) setOrigin(saved);
     let cancelled = false;
-    void getDeviceLocation().then((pos) => {
+    const consent = readLocationConsent();
+    if (consent !== "granted") {
+      setLocated(Boolean(saved));
+      return () => {
+        cancelled = true;
+      };
+    }
+    void getDeviceLocation({ precise: true }).then((pos) => {
       if (cancelled) return;
       if (pos) {
         const here = locateHere(pos.lat, pos.lng);

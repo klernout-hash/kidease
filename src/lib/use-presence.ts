@@ -6,10 +6,11 @@ import { useAppStore } from "@/lib/store";
 import { publishFix } from "@/lib/location-stream";
 import { trackLocation } from "@/lib/telemetry";
 
-/** Live GPS fabric while Explore is open. Raw GPS stays in this session. */
+/** Live GPS while Explore is open and the parent granted when-in-use location. */
 export function useLivePresence(active: boolean) {
   useEffect(() => {
     if (!active) return undefined;
+    if (useAppStore.getState().locationConsent !== "granted") return undefined;
     return watchDeviceLocation((pos) => {
       const { origin, setOrigin, touchGps, radiusKm } = useAppStore.getState();
       if (!movedEnough(origin, pos)) {

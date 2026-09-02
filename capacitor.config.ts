@@ -33,6 +33,9 @@ const config: CapacitorConfig = {
     Keyboard: {
       resize: "body",
     },
+    Geolocation: {
+      // When-in-use / precise only. Do not add background location permissions.
+    },
   },
   android: {
     allowMixedContent: true,

@@ -151,6 +151,12 @@ async function createPgliteSql(): Promise<Sql> {
     )) {
       const name = path.split("/").pop() as string;
       if (done.has(name)) continue;
+      // PostGIS (0011) is Neon-only. Record the file so preview stays aligned
+      // with migrate.mjs without failing CREATE EXTENSION on PGLite.
+      if (name.includes("geography") || name.includes("postgis")) {
+        await pg.query("insert into _migrations (name) values ($1)", [name]);
+        continue;
+      }
       // Apply + record atomically (parity with scripts/migrate.mjs) so a failed
       // statement can't leave a file half-applied but untracked.
       await pg.transaction(async (tx) => {

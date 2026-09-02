@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { catchmentMatch, compareProximity, distanceKm, fsaOf } from "@/lib/proximity";
 import { getCatalog, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
+import { nearbyListings, type NearbyListing } from "./nearby";
 import { upsertDaycare } from "./seed";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
@@ -69,9 +70,9 @@ function toDaycare(d: CatalogDaycare): Daycare {
   };
 }
 
-function toCard(d: CatalogDaycare, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
+function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
   const daycare = toDaycare(d);
-  const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
+  const km = typeof d.distanceKm === "number" ? d.distanceKm : distanceKm(origin, { lat: d.lat, lng: d.lng });
   const catchm = catchmentMatch(origin, { lat: d.lat, lng: d.lng, postalCode: d.postalCode }, km, originFsa);
   return {
     ...daycare,
@@ -104,7 +105,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const origin = { lat: data.lat, lng: data.lng };
     let cards: DaycareCard[] = [];
-    for (const d of await catalogNear(origin, data.radiusKm)) {
+    for (const d of await nearbyListings(origin, data.radiusKm)) {
       cards.push(toCard(d, origin, data.fsa));
     }
     cards = await overlayClaimed(cards, (card, claimed) => {
@@ -160,7 +161,7 @@ export const featuredDaycares = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const origin = { lat: data.lat, lng: data.lng };
     const nearby: DaycareCard[] = [];
-    for (const d of await catalogNear(origin, 40)) {
+    for (const d of await nearbyListings(origin, 40)) {
       nearby.push(toCard(d, origin));
     }
     nearby.sort(compareProximity);

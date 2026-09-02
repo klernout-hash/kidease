@@ -18,6 +18,9 @@ import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { ExploreSheet, type SheetSnap } from "@/components/explore-sheet";
+import { LocationConsentCard } from "@/components/location-consent";
+import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
+import { displayDistance, kmToMi, miToKm, type DistanceUnit } from "@/lib/units";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
@@ -31,8 +34,13 @@ export const Route = createFileRoute("/search")({
   component: SearchPage,
 });
 
-const PRESETS = [1, 5, 10, 15, 25, 50, 75, 100];
+const PRESETS_KM = [1, 5, 10, 15, 25, 50, 75, 100];
+const PRESETS_MI = [1, 3, 5, 10, 15, 25, 40, 60];
 const DOT = " \u00b7 ";
+
+function unitLabel(unit: DistanceUnit, t: (k: "km" | "mi") => string) {
+  return unit === "mi" ? t("mi") : t("km");
+}
 
 function SearchPage() {
   const { t } = useCopy();
@@ -70,14 +78,24 @@ function SearchPage() {
   const [shownN, setShownN] = useState(24);
   const originAt = useAppStore((s) => s.originAt);
   const originSource = useAppStore((s) => s.originSource);
-  useLivePresence(true);
+  const distanceUnit = useAppStore((s) => s.distanceUnit);
+  const setDistanceUnit = useAppStore((s) => s.setDistanceUnit);
+  const locationConsent = useAppStore((s) => s.locationConsent);
+  const setLocationConsent = useAppStore((s) => s.setLocationConsent);
+  const [askLocation, setAskLocation] = useState(false);
+  useLivePresence(locationConsent === "granted");
 
   useEffect(() => {
-    if (incoming.q) {
-      const hit = geocode(incoming.q);
-      if (hit) setOrigin(hit);
-      setQuery(incoming.q);
+    if (!incoming.q) return;
+    setQuery(incoming.q);
+    const local = geocode(incoming.q);
+    if (local) {
+      setOrigin(local);
+      return;
     }
+    void resolveLocationQuery(incoming.q).then((hit) => {
+      if (hit) setOrigin(hit);
+    });
   }, [incoming.q, setOrigin, setQuery]);
 
   useEffect(() => {
@@ -113,16 +131,39 @@ function SearchPage() {
     setShownN(24);
   }, [origin.lat, origin.lng, radiusKm, liveOnly]);
 
-  function applyQuery() {
-    const hit = geocode(query);
-    if (hit) setOrigin(hit);
+  function applyPlace(place: { lat: number; lng: number; label: string }) {
+    setOrigin(place);
+    setQuery(place.label);
+  }
+
+  async function applyQuery() {
+    const hit = await resolveLocationQuery(query);
+    if (hit) applyPlace(hit);
   }
 
   async function geo() {
-    const pos = await getDeviceLocation();
+    if (locationConsent !== "granted") {
+      setAskLocation(true);
+      return;
+    }
+    const pos = await getDeviceLocation({ precise: true });
     if (pos) {
       setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
       void hapticLight();
+    } else {
+      setLocationConsent("denied");
+    }
+  }
+
+  async function allowLocation() {
+    setAskLocation(false);
+    setLocationConsent("granted");
+    const pos = await getDeviceLocation({ precise: true });
+    if (pos) {
+      setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
+      void hapticLight();
+    } else {
+      setLocationConsent("denied");
     }
   }
 
@@ -190,42 +231,69 @@ function SearchPage() {
     );
   }
 
+  const shownRadius = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
+  const radiusMax = distanceUnit === "mi" ? 62 : 100;
+  const presets = distanceUnit === "mi" ? PRESETS_MI : PRESETS_KM;
+  const u = unitLabel(distanceUnit, t);
+
   const radiusSlider = (
     <div>
       <div className="mb-2 flex items-center justify-between text-sm">
         <span>{t("radius")}</span>
         <span className="tabular-nums font-semibold">
-          {radiusKm} {t("km")}
+          {shownRadius} {u}
         </span>
+      </div>
+      <div className="mb-3 flex h-9 overflow-hidden rounded-full bg-bg ring-1 ring-border">
+        <button
+          type="button"
+          onClick={() => setDistanceUnit("km")}
+          className={cn("flex-1 text-[12px] font-semibold", distanceUnit === "km" ? "bg-fg text-bg" : "text-muted")}
+        >
+          {t("unitsKm")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setDistanceUnit("mi")}
+          className={cn("flex-1 text-[12px] font-semibold", distanceUnit === "mi" ? "bg-fg text-bg" : "text-muted")}
+        >
+          {t("unitsMi")}
+        </button>
       </div>
       <input
         type="range"
         min={1}
-        max={100}
+        max={radiusMax}
         step={1}
-        value={radiusKm}
-        onChange={(e) => setRadiusKm(Number(e.target.value))}
+        value={shownRadius}
+        onChange={(e) => {
+          const n = Number(e.target.value);
+          setRadiusKm(distanceUnit === "mi" ? miToKm(n) : n);
+        }}
         className="w-full accent-primary"
         aria-valuemin={1}
-        aria-valuemax={100}
-        aria-valuenow={radiusKm}
-        aria-label={`${t("radius")} ${radiusKm} ${t("km")}`}
+        aria-valuemax={radiusMax}
+        aria-valuenow={shownRadius}
+        aria-label={`${t("radius")} ${shownRadius} ${u}`}
       />
       <div className="mt-1 flex justify-between text-[11px] text-muted">
-        <span>1 {t("km")}</span>
-        <span>100 {t("km")}</span>
+        <span>1 {u}</span>
+        <span>{radiusMax} {u}</span>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
-        {PRESETS.map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => setRadiusKm(n)}
-            className={cn("rounded-full px-3 py-1 text-xs ring-1", radiusKm === n ? "bg-fg text-bg ring-fg" : "ring-border")}
-          >
-            {n} {t("km")}
-          </button>
-        ))}
+        {presets.map((n) => {
+          const current = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
+          return (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setRadiusKm(distanceUnit === "mi" ? miToKm(n) : n)}
+              className={cn("rounded-full px-3 py-1 text-xs ring-1", current === n ? "bg-fg text-bg ring-fg" : "ring-border")}
+            >
+              {n} {u}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -263,6 +331,7 @@ function SearchPage() {
               setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
               void hapticLight();
             }}
+            onLocate={() => void geo()}
           />
           </Suspense>
         </div>
@@ -271,15 +340,17 @@ function SearchPage() {
             className="pointer-events-auto"
             onSubmit={(e) => {
               e.preventDefault();
-              applyQuery();
+              void applyQuery();
             }}
           >
             <div className="flex min-h-12 items-center gap-2 rounded-full bg-surface/95 pl-4 pr-1.5 shadow-lift ring-1 ring-border backdrop-blur">
-              <input
+              <PlaceSearch
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={setQuery}
+                onResolved={applyPlace}
                 placeholder={t("locationPh")}
-                className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none"
+                origin={origin}
+                inputClassName="h-11 min-w-0 w-full bg-transparent text-[15px] outline-none"
               />
               <button type="button" onClick={() => void geo()} className="grid size-10 place-items-center text-muted" aria-label={t("useLocation")}>
                 <LocateFixed className="size-5" />
@@ -297,6 +368,14 @@ function SearchPage() {
                 <SlidersHorizontal className="size-5" />
               </button>
             </div>
+            {askLocation ? (
+              <div className="pointer-events-auto mt-2">
+                <LocationConsentCard
+                  onAllow={() => void allowLocation()}
+                  onLater={() => setAskLocation(false)}
+                />
+              </div>
+            ) : null}
             {filters ? (
               <div className="pointer-events-auto mt-2 max-h-[52dvh] space-y-4 overflow-y-auto rounded-xl bg-surface/95 p-4 shadow-lift ring-1 ring-border backdrop-blur">
                 <div className="flex min-h-10 rounded-full bg-bg p-0.5 ring-1 ring-border">
@@ -324,7 +403,7 @@ function SearchPage() {
         <ExploreSheet
           snap={snap}
           onSnap={setSnap}
-          label={`${list.length} centres · ${radiusKm} ${t("km")}`}
+          label={`${list.length} centres · ${displayDistance(radiusKm, distanceUnit)} ${u}`}
         >
           {items === null ? (
             <div className="ke-listings-narrow">
@@ -362,7 +441,7 @@ function SearchPage() {
             <p className="mt-0.5 text-sm text-muted">
               {list.length} {list.length === 1 ? "centre" : "centres"}
               {DOT}
-              {radiusKm} {t("km")}
+              {displayDistance(radiusKm, distanceUnit)} {u}
               {DOT}
               {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
             </p>
@@ -381,15 +460,17 @@ function SearchPage() {
           className="mt-4"
           onSubmit={(e) => {
             e.preventDefault();
-            applyQuery();
+            void applyQuery();
           }}
         >
           <div className="flex min-h-12 items-center gap-2 rounded-full bg-surface pl-4 pr-1.5 shadow-card ring-1 ring-border">
-            <input
+            <PlaceSearch
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={setQuery}
+              onResolved={applyPlace}
               placeholder={t("locationPh")}
-              className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none"
+              origin={origin}
+              inputClassName="h-11 min-w-0 w-full bg-transparent text-[15px] outline-none"
             />
             <button type="button" onClick={() => void geo()} className="grid size-10 place-items-center text-muted" aria-label={t("useLocation")}>
               <LocateFixed className="size-5" />
@@ -448,6 +529,15 @@ function SearchPage() {
             </button>
           </div>
         </div>
+
+        {askLocation ? (
+          <div className="mt-3">
+            <LocationConsentCard
+              onAllow={() => void allowLocation()}
+              onLater={() => setAskLocation(false)}
+            />
+          </div>
+        ) : null}
 
         {filters ? (
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
@@ -546,6 +636,7 @@ function SearchPage() {
                 setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
                 void hapticLight();
               }}
+              onLocate={() => void geo()}
             />
             </Suspense>
           </div>

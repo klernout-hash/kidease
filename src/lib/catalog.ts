@@ -39,6 +39,7 @@ export type CatalogDaycare = {
   photos: string[];
   reviews: Array<{ author: string; rating: number; body: string; bodyFr: string }>;
   googlePlaceId: string | null;
+  feeConfirmed?: boolean;
 };
 
 type RawCentre = {

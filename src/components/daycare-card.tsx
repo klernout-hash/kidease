@@ -8,6 +8,7 @@ import { useCopy } from "@/lib/use-copy";
 import { cn, decodeHtml, formatAgeRange, money } from "@/lib/utils";
 import { distanceKm as kmBetween, proximityBand } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
+import { displayDistance } from "@/lib/units";
 import { readCompare, toggleCompare } from "@/lib/compare";
 import { PriorityPill } from "@/components/priority-pill";
 import { feeBadgeKey, licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
@@ -34,6 +35,7 @@ export function DaycareCard({
   const feeOk = (live || Boolean(item.feeConfirmed)) && item.fromPrice > 0;
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
+  const distanceUnit = useAppStore((s) => s.distanceUnit);
   const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
   const band = proximityBand(distanceKm);
   const bandLabel =
@@ -41,8 +43,9 @@ export function DaycareCard({
   const [picked, setPicked] = useState(false);
   const licenceNo = officialLicenceNumber(item.licenseNumber, item.id);
   const licenceHref = licenseRecordUrl(item.province, item.name, licenceNo);
-  const kmLine = located ? `${distanceKm} ${t("kmAway")}` : t("locating");
-  const kmWeb = located ? `${distanceKm} ${t("kmAway")} · ${bandLabel}` : t("locating");
+  const away = `${displayDistance(distanceKm, distanceUnit)} ${distanceUnit === "mi" ? t("miAway") : t("kmAway")}`;
+  const kmLine = located ? away : t("locating");
+  const kmWeb = located ? `${away} · ${bandLabel}` : t("locating");
 
   useEffect(() => {
     function sync() {

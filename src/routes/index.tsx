@@ -28,6 +28,9 @@ import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { readRecent } from "@/lib/recent";
+import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
+import { LocationConsentCard } from "@/components/location-consent";
+import { displayDistance } from "@/lib/units";
 import type { DaycareCard as Card } from "@/lib/types";
 
 const CompareBar = lazy(() => import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })));
@@ -65,11 +68,15 @@ function Home() {
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const setQuery = useAppStore((s) => s.setQuery);
+  const distanceUnit = useAppStore((s) => s.distanceUnit);
+  const locationConsent = useAppStore((s) => s.locationConsent);
+  const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const [role, setRole] = useState<"parent" | "provider" | null>(null);
   const [q, setQ] = useState("");
   const [place, setPlace] = useState(origin.label);
   const [manual, setManual] = useState(Boolean(search.change));
   const [denied, setDenied] = useState(false);
+  const [askLocation, setAskLocation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [featured, setFeatured] = useState<Card[]>(boot.featured ?? []);
   const [recent, setRecent] = useState<Card[]>([]);
@@ -97,14 +104,14 @@ function Home() {
     void navigate({ to: "/search", search: label ? { q: label } : {} });
   }
 
-  function applyCity(raw: string) {
-    const hit = geocode(raw);
+  async function applyCity(raw: string) {
+    const hit = (await resolveLocationQuery(raw)) ?? geocode(raw);
     if (hit) setOrigin(hit);
     goSearch(hit?.label ?? raw);
   }
 
-  function applyPlace(raw: string) {
-    const hit = geocode(raw);
+  async function applyPlace(raw: string) {
+    const hit = (await resolveLocationQuery(raw)) ?? geocode(raw);
     if (hit) {
       setOrigin(hit);
       setPlace(hit.label);
@@ -114,16 +121,29 @@ function Home() {
     }
   }
 
-  async function pinLocation() {
+  async function pinHere() {
     setBusy(true);
-    const pos = await getDeviceLocation();
+    const pos = await getDeviceLocation({ precise: true });
     setBusy(false);
     if (pos) {
+      setLocationConsent("granted");
       const label = reverseGeocode(pos.lat, pos.lng);
-      setOrigin({ lat: pos.lat, lng: pos.lng, label });
+      setOrigin({ lat: pos.lat, lng: pos.lng, label }, "gps");
       setPlace(label);
       void hapticLight();
+      return true;
     }
+    setLocationConsent("denied");
+    setDenied(true);
+    return false;
+  }
+
+  async function pinLocation() {
+    if (locationConsent !== "granted") {
+      setAskLocation(true);
+      return;
+    }
+    await pinHere();
   }
 
   useEffect(() => {
@@ -149,12 +169,8 @@ function Home() {
   }, [shown, availableNow]);
 
   async function useLocation() {
-    setBusy(true);
-    const pos = await getDeviceLocation();
-    setBusy(false);
-    if (pos) {
-      setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) });
-      void hapticLight();
+    const ok = await pinHere();
+    if (ok) {
       goSearch();
       return;
     }
@@ -176,15 +192,20 @@ function Home() {
           className="mt-5 max-w-md"
           onSubmit={(e) => {
             e.preventDefault();
-            if (q.trim()) applyCity(q);
+            if (q.trim()) void applyCity(q);
           }}
         >
-          <input
-            autoFocus
+          <PlaceSearch
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={setQ}
+            onResolved={(hit) => {
+              setOrigin(hit);
+              setQ(hit.label);
+              goSearch(hit.label);
+            }}
             placeholder={t("locationPh")}
-            className="ke-input"
+            origin={origin}
+            inputClassName="ke-input w-full"
           />
           <Button type="submit" variant="secondary" className="mt-2 w-full" disabled={!q.trim()}>
             {t("search")}
@@ -227,12 +248,17 @@ function Home() {
       >
         <div className="flex min-h-12 flex-1 items-center gap-2 rounded-full bg-bg px-4 shadow-card ring-1 ring-border">
           <MapPin className="size-4 shrink-0 text-primary" />
-          <input
+          <PlaceSearch
             value={place}
-            onChange={(e) => setPlace(e.target.value)}
+            onChange={setPlace}
+            onResolved={(hit) => {
+              setOrigin(hit);
+              setPlace(hit.label);
+              setQuery(hit.label);
+            }}
             placeholder={t("locationPh")}
-            className="h-11 flex-1 bg-transparent text-sm outline-none"
-            aria-label={t("locationPh")}
+            origin={origin}
+            inputClassName="h-11 w-full bg-transparent text-sm outline-none"
           />
           <button
             type="button"
@@ -271,8 +297,19 @@ function Home() {
         </button>
       </div>
 
+      {askLocation ? (
+        <div className="mt-3">
+          <LocationConsentCard
+            onAllow={() => {
+              setAskLocation(false);
+              void pinHere();
+            }}
+            onLater={() => setAskLocation(false)}
+          />
+        </div>
+      ) : null}
       <p className="mt-3 text-sm text-muted">
-        {origin.label.split(",")[0]} · {radiusKm} {t("km")}
+        {origin.label.split(",")[0]} · {displayDistance(radiusKm, distanceUnit)} {distanceUnit === "mi" ? t("mi") : t("km")}
       </p>
     </>
   );
