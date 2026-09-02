@@ -23,3 +23,14 @@ import { LocationConsentCard } from "@/components/location-consent";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { kmToMi, miToKm, type DistanceUnit } from "@/lib/units";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
+
+const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
+const CompareBar = lazy(() => import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })));
+
+export const Route = createFileRoute("/search")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const q = typeof s.q === "string" ? s.q : "";
+    return q ? { q } : {};
+  },
+  component: SearchPage,
+});
