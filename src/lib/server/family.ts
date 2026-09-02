@@ -33,19 +33,23 @@ async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: st
 
 async function pingNewAccount(userId: string, role: "parent" | "provider") {
   const actor = await lookupUser(userId);
-  if (role === "provider") {
-    void notifyProviderJoined({
-      kind: "signup",
-      providerName: actor.name,
-      providerEmail: actor.email,
+  try {
+    if (role === "provider") {
+      await notifyProviderJoined({
+        kind: "signup",
+        providerName: actor.name,
+        providerEmail: actor.email,
+      });
+      return;
+    }
+    await notifyAccountCreated({
+      name: actor.name,
+      email: actor.email,
+      role: "parent",
     });
-    return;
+  } catch (err) {
+    console.error("[kidease-mail] account notify failed", err);
   }
-  void notifyAccountCreated({
-    name: actor.name,
-    email: actor.email,
-    role: "parent",
-  });
 }
 
 export const getFamily = createServerFn({ method: "GET" })
@@ -355,6 +359,23 @@ export const createBooking = createServerFn({ method: "POST" })
       insert into messages (id, conversation_id, sender, body)
       values (${nid("msg")}, ${cid}, 'provider', ${body})
     `;
+    const actor = await lookupUser(context.userId);
+    try {
+      await notifyPlatform({
+        kind: "enroll",
+        title: "New enrolment",
+        daycareName: d.name,
+        address: d.address,
+        city: d.city,
+        province: d.province,
+        slug: d.slug,
+        actorName: actor.name,
+        actorEmail: actor.email,
+        detail: [`Start: ${data.startMonth}`, `Schedule: ${data.schedule}`].join("\n"),
+      });
+    } catch (err) {
+      console.error("[kidease-mail] enrol notify failed", err);
+    }
     return { id, status, amount, conversationId: cid };
   });
 
@@ -474,24 +495,28 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     await sql`update conversations set last_at = now() where id = ${cid}`;
 
     const actor = await lookupUser(context.userId);
-    void notifyPlatform({
-      kind: "spot_request",
-      daycareName: d.name,
-      address: d.address,
-      city: d.city,
-      province: d.province,
-      slug: d.slug,
-      actorName: parentName || actor.name,
-      actorEmail: actor.email,
-      detail: [
-        `Child: ${childName}`,
-        `Start: ${data.startDate}`,
-        `Schedule: ${data.schedule}`,
-        data.message?.trim() ? `Message: ${data.message.trim()}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    });
+    try {
+      await notifyPlatform({
+        kind: "spot_request",
+        daycareName: d.name,
+        address: d.address,
+        city: d.city,
+        province: d.province,
+        slug: d.slug,
+        actorName: parentName || actor.name,
+        actorEmail: actor.email,
+        detail: [
+          `Child: ${childName}`,
+          `Start: ${data.startDate}`,
+          `Schedule: ${data.schedule}`,
+          data.message?.trim() ? `Message: ${data.message.trim()}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      });
+    } catch (err) {
+      console.error("[kidease-mail] spot request notify failed", err);
+    }
 
     return {
       id: bookingId,
@@ -1148,16 +1173,20 @@ export const createListing = createServerFn({ method: "POST" })
     await sql`insert into provider_daycares (user_id, daycare_id) values (${context.userId}, ${id})`;
     await sql`update profiles set role = 'provider' where user_id = ${context.userId}`;
     const actor = await lookupUser(context.userId);
-    void notifyProviderJoined({
-      kind: "listing",
-      daycareName: data.name,
-      address: data.address,
-      city: data.city,
-      province: "MB",
-      slug,
-      providerName: actor.name,
-      providerEmail: actor.email,
-    });
+    try {
+      await notifyProviderJoined({
+        kind: "listing",
+        daycareName: data.name,
+        address: data.address,
+        city: data.city,
+        province: "MB",
+        slug,
+        providerName: actor.name,
+        providerEmail: actor.email,
+      });
+    } catch (err) {
+      console.error("[kidease-mail] listing notify failed", err);
+    }
     return { id, slug };
   });
 
