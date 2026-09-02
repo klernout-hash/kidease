@@ -23,6 +23,7 @@ import {
 } from "@/lib/google-maps";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
+import { listingThumb } from "@/lib/listing-photo";
 import { PriorityPill } from "@/components/priority-pill";
 import { feeBadgeKey, licenseRecordUrl } from "@/lib/licensing";
 import { displayDistance } from "@/lib/units";
@@ -401,12 +402,10 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         <div className="absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border lg:bottom-3">
           {selected.live ? <span className="block h-1 bg-primary" /> : null}
           <div className="flex gap-3 p-3">
-            {selected.photos.find((p) => !p.includes("-logo")) ? (
-              <BuildingPhoto
-                src={selected.photos.find((p) => !p.includes("-logo")) ?? ""}
-                className="size-16 shrink-0 rounded-md object-cover"
-              />
-            ) : null}
+            <BuildingPhoto
+              src={listingThumb(selected.photos)}
+              className="size-16 shrink-0 rounded-md object-cover"
+            />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <Link to="/daycare/$slug" params={{ slug: selected.slug }} className="block truncate text-[15px] font-semibold tracking-[-0.015em] hover:underline">

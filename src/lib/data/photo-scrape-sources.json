@@ -81,6 +81,24 @@
     "kind": "playground with children in program at official preschool site",
     "file": "/photos/buildings/mb-1017.jpg"
   },
+  "mb-1206": {
+    "id": "mb-1206",
+    "name": "St. Anne's Day Nursery Inc.",
+    "address": "425 St. Anne's Road, Winnipeg, MB",
+    "source_page": "https://stannesdaynursery.ca/gallery",
+    "source_image": "https://stannesdaynursery.ca/img/IMG_3120-750x563.jpg",
+    "kind": "classroom interior",
+    "file": "/photos/buildings/mb-1206.jpg"
+  },
+  "mb-1214": {
+    "id": "mb-1214",
+    "name": "Lindenwoods Child Care Centre Inc.",
+    "address": "1 Princemere Road, Winnipeg, MB",
+    "source_page": "http://www.lwccc.ca/centre.shtml",
+    "source_image": "http://www.lwccc.ca/00_rel/images/centre/infant/playArea.jpg",
+    "kind": "infant classroom play area",
+    "file": "/photos/buildings/mb-1214.jpg"
+  },
   "mb-1244": {
     "id": "mb-1244",
     "name": "Stanley Knowles Pre-School Centre Inc.",

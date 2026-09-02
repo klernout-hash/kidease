@@ -7,6 +7,7 @@ import { DaycareCard } from "@/components/daycare-card";
 import { RequestSpotSheet } from "@/components/request-spot";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
+import { LISTING_PLACEHOLDER, isOfficialBuildingPhoto } from "@/lib/listing-photo";
 import { Button } from "@/components/ui/button";
 import { getDaycare } from "@/lib/server/daycares";
 import { isSaved, openConversation, toggleSave } from "@/lib/server/family";
@@ -102,7 +103,11 @@ function Listing() {
   const desc = locale === "fr" ? d.descriptionFr : d.description;
   const hours = locale === "fr" ? d.hoursFr : d.hours;
   const spots = d.spotsInfant + d.spotsToddler + d.spotsPreschool;
-  const photos = d.photos.length ? d.photos : ["/photos/storefront-placeholder.jpg"];
+  const photos = (() => {
+    const list = [...d.photos].filter(Boolean);
+    list.sort((a, b) => Number(isOfficialBuildingPhoto(b)) - Number(isOfficialBuildingPhoto(a)));
+    return list.length ? list : [LISTING_PLACEHOLDER];
+  })();
   const prices = [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].filter((n): n is number => n != null && n > 0);
   const from = prices.length ? Math.min(...prices) : 0;
   const live = Boolean(d.live);

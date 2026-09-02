@@ -23,7 +23,4 @@ export function photoSrcSet(src: string, widths: readonly number[] = PHOTO_WIDTH
   return widths.map((w) => `${photoUrl(src, w)} ${w}w`).join(", ");
 }
 
-export function listingThumb(photos: string[] | undefined) {
-  const hit = (photos ?? []).find((p) => p && !p.includes("-logo"));
-  return hit || "/photos/storefront-placeholder.jpg";
-}
+export { listingThumb, LISTING_PLACEHOLDER } from "./listing-photo";
