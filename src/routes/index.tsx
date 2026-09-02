@@ -243,7 +243,7 @@ function Home() {
         className="mt-8 flex flex-col gap-2 lg:flex-row lg:items-center"
         onSubmit={(e) => {
           e.preventDefault();
-          applyPlace(place);
+          void applyPlace(place);
         }}
       >
         <div className="flex min-h-12 flex-1 items-center gap-2 rounded-full bg-bg px-4 shadow-card ring-1 ring-border">
