@@ -8,6 +8,7 @@ import { CHANNEL_BOOT_SCRIPT } from "@/lib/runtime";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
+const APP_ICON = "/app-icon?v=5";
 
 export const Route = createRootRoute({
   errorComponent: ({ error }) => (
@@ -36,13 +37,13 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=5" },
-      { rel: "icon", type: "image/png", sizes: "180x180", href: "/app-icon?v=5" },
+      { rel: "icon", type: "image/png", sizes: "180x180", href: APP_ICON },
       { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png?v=5" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=5" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png?v=5" },
-      { rel: "apple-touch-icon-precomposed", href: "/apple-touch-icon.png?v=5" },
+      { rel: "apple-touch-icon", href: APP_ICON },
+      { rel: "apple-touch-icon", sizes: "180x180", href: APP_ICON },
+      { rel: "apple-touch-icon-precomposed", href: APP_ICON },
       {
         rel: "preload",
         href: "/fonts/plus-jakarta-sans-latin.woff2",
