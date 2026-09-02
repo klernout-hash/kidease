@@ -1,0 +1,16 @@
+{
+  "run_date": "2026-09-02",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-3038", "mb-101459", "mb-3016", "mb-3073", "mb-102575", "mb-9131", "mb-100992", "mb-101646", "mb-101340", "mb-102970", "mb-3074", "mb-102965", "mb-9677", "mb-101877", "mb-101768"],
+  "ids_added": ["mb-3038", "mb-101459", "mb-102970", "mb-3074", "mb-102965", "mb-9677"],
+  "ids_skipped_no_usable_photo": ["mb-3016", "mb-3073", "mb-102575", "mb-9131", "mb-100992", "mb-101646", "mb-101340", "mb-101877", "mb-101768"],
+  "sources": {
+    "mb-3038": "https://www.harrowdaycare.ca/ classroom kids toys",
+    "mb-101459": "https://www.harrowdaycare.ca/ interior",
+    "mb-102970": "https://www.heritageparkchildrensprograms.com/ kids walking backpacks",
+    "mb-3074": "same Heritage official",
+    "mb-102965": "same Heritage official",
+    "mb-9677": "same Heritage official"
+  },
+  "notes": "Harstone Children's Centre official site uses stock-style group kids photos; no location-specific building or classroom photos identified. Left placeholder."
+}

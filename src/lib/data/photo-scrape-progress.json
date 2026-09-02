@@ -1,15 +1,15 @@
 {
-  "last_run": "2026-09-02T22:10:00Z",
+  "last_run": "2026-09-02T23:10:00Z",
   "city": "Winnipeg",
   "province": "MB",
-  "last_id_processed": "mb-1022",
-  "mapped_count": 79,
-  "mapped_winnipeg": 79,
+  "last_id_processed": "mb-9677",
+  "mapped_count": 85,
+  "mapped_winnipeg": 85,
   "winnipeg_total": 428,
   "national_total": 20846,
-  "skipped_no_photo_this_run": ["mb-1018", "mb-102422", "mb-100996", "mb-1039", "mb-100238", "mb-100842", "mb-2219", "mb-9089", "mb-101106", "mb-102023", "mb-1022"],
-  "ids_added_this_run": ["mb-3015", "mb-102087", "mb-101931", "mb-2005"],
-  "next_queue": ["mb-3038", "mb-101459", "mb-3016", "mb-3073", "mb-102575", "mb-9131", "mb-100992", "mb-101646", "mb-101340", "mb-102970", "mb-3074", "mb-102965", "mb-9677", "mb-101877", "mb-101768"],
+  "skipped_no_photo_this_run": ["mb-3016", "mb-3073", "mb-102575", "mb-9131", "mb-100992", "mb-101646", "mb-101340", "mb-101877", "mb-101768"],
+  "ids_added_this_run": ["mb-3038", "mb-101459", "mb-102970", "mb-3074", "mb-102965", "mb-9677"],
+  "next_queue": ["mb-101877", "mb-101768", "mb-1040", "mb-1050", "mb-1061", "mb-1074", "mb-1147", "mb-1150", "mb-1206", "mb-1214", "mb-1242", "mb-1244", "mb-1252", "mb-1255", "mb-1263"],
   "next_city_after_winnipeg": "Brandon",
-  "note": "This run added 4 official photos. JPEG binaries also need to live in public/photos/buildings/."
+  "note": "This run added 6 official photos from Harrow Co-op and Heritage Park Children's Programs websites. Harstone locations skipped - no clear non-stock building/classroom photos found on official site. JPEG binaries need public/photos/buildings/."
 }
