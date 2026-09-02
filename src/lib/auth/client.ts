@@ -35,7 +35,13 @@ export const authClient = createAuthClient({
 export const authEnabled = import.meta.env.VITE_AUTH_ENABLED !== "false";
 
 /** The upstream providers to render sign-in buttons for. */
-export { GROK_PROVIDERS, isNativeSocialProvider, NATIVE_GOOGLE, visibleSignInProviders } from "./providers";
+export {
+  GROK_PROVIDERS,
+  isNativeSocialProvider,
+  NATIVE_GOOGLE,
+  NATIVE_TWITTER,
+  visibleSignInProviders,
+} from "./providers";
 
 // ── Live-preview bearer token ────────────────────────────────────────────────
 // The embedded preview iframe has partitioned cookies, so we keep the session's
@@ -81,10 +87,11 @@ type PopupMessage = { source: "grok-auth-popup"; token: string | null; error?: s
 
 /**
  * Start sign-in with one upstream provider (`providerId` from `GROK_PROVIDERS`
- * or native `google` / `apple`).
+ * or native `google` / `twitter` / `apple`).
  *
- * Native Google (`google`) and Apple use Better Auth `signIn.social`.
- * Broker Google (`grok-google`) and X federate through the Grok auth broker.
+ * Native Google (`google`), native X (`twitter`), and Apple use Better Auth
+ * `signIn.social`. Broker Google (`grok-google`) and broker X (`grok-x`)
+ * federate through the Grok auth broker.
  *
  * - **Live preview** (`*.grok-sandbox.com` iframe): opens a POPUP to
  *   `/auth/popup`, served by the template Vite plugin (see `vite.config.ts` +
@@ -142,7 +149,7 @@ export async function signIn(
       return;
     }
     const { data, error } = await authClient.signIn.social({
-      provider: providerId as "apple" | "google",
+      provider: providerId as "apple" | "google" | "twitter",
       callbackURL,
       errorCallbackURL,
     });

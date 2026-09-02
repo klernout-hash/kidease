@@ -67,7 +67,7 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
       isNativeSocialProvider(providerId)
         ? await auth.api.signInSocial({
             body: {
-              provider: providerId as "apple" | "google",
+              provider: providerId as "apple" | "google" | "twitter",
               callbackURL: back,
               errorCallbackURL: `${back}&error=1`,
             },

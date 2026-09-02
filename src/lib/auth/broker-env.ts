@@ -4,7 +4,8 @@
  * Keep the broker path when `GROK_AUTH_CLIENT_ID` + `GROK_AUTH_CLIENT_SECRET`
  * are present (Grok live preview / grok.me). The shared preview client is
  * sandbox/local only — Vercel production must not fall back to it, because
- * that client only allows `*.grok-sandbox.com` callbacks.
+ * that client only allows `*.grok-sandbox.com` callbacks. Production uses
+ * native Google (`GOOGLE_CLIENT_*`) and/or native X (`TWITTER_CLIENT_*`).
  */
 import {
   GROK_ISSUER_DEFAULT,
