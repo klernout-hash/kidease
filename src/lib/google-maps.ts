@@ -91,8 +91,10 @@ export function listingMapConstructorOptions(input: {
     zoom: input.zoom,
     mapTypeId: input.mapTypeId,
     disableDefaultUI: true,
-    zoomControl: true,
-    zoomControlOptions: { position: input.maps.ControlPosition.RIGHT_BOTTOM },
+    zoomControl: false,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
     gestureHandling: "greedy",
     clickableIcons: false,
   };
@@ -174,6 +176,8 @@ export function googleMapTypeId(base: "roadmap" | "satellite"): google.maps.MapT
   return base === "satellite" ? "hybrid" : "roadmap";
 }
 
+export type MarkerCollision = "REQUIRED" | "OPTIONAL_AND_HIDES_LOWER_PRIORITY" | "REQUIRED_AND_HIDES_OPTIONAL";
+
 type HtmlOverlayOpts = {
   position: google.maps.LatLngLiteral;
   content: HTMLElement;
@@ -182,6 +186,7 @@ type HtmlOverlayOpts = {
   /** Clusters sit on the point; listing pins anchor at the bottom center. */
   centered?: boolean;
   zIndex?: number;
+  collision?: MarkerCollision;
 };
 
 /** Custom HTML pin/cluster overlay. Avoids Advanced Markers (no Map ID required). */
@@ -287,7 +292,7 @@ function createAdvancedListingOverlay(
     content,
     zIndex: opts.zIndex,
     gmpClickable: Boolean(opts.onClick),
-    collisionBehavior: "REQUIRED",
+    collisionBehavior: opts.collision ?? "REQUIRED",
     anchorLeft: "-50%",
     // Default Advanced Marker anchor is bottom-center; clusters sit on the point.
     anchorTop: opts.centered ? "-50%" : "-100%",
