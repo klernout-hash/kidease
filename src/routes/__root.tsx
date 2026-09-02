@@ -36,10 +36,11 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=3" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/logo.svg?v=3" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/icons/icon-180.png?v=3" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/icon-180.png?v=3" },
+      { rel: "apple-touch-icon", href: "/logo.svg?v=3" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/logo.svg?v=3" },
       {
         rel: "preload",
         href: "/fonts/plus-jakarta-sans-latin.woff2",
