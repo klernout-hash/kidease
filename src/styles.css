@@ -316,6 +316,12 @@
   }
 }
 
+/* Raster basemap tiles are <img>. The base `max-width: 100%` rule collapses them. */
+.gm-style img,
+.gm-style map img {
+  max-width: none !important;
+}
+
 .dn-pin {
   background: var(--color-surface);
   color: var(--color-fg);
