@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
+import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
 import { Route as ChildcareBenefitsProgramRouteImport } from './routes/childcare-benefits-program'
 import { Route as ClaimRouteImport } from './routes/claim'
@@ -34,13 +36,18 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
+import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
+import { Route as SignIdRouteImport } from './routes/sign.$id'
+import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -60,6 +67,16 @@ const AccountRoute = AccountRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminContractsRoute = AdminContractsRouteImport.update({
+  id: '/admin-contracts',
+  path: '/admin-contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIconRoute = AppIconRouteImport.update({
+  id: '/app-icon',
+  path: '/app-icon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BenefitsRoute = BenefitsRouteImport.update({
@@ -168,6 +185,11 @@ const TourChecklistRoute = TourChecklistRouteImport.update({
   path: '/tour-checklist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Verify2faRoute = Verify2faRouteImport.update({
+  id: '/verify-2fa',
+  path: '/verify-2fa',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDigestRoute = ApiDigestRouteImport.update({
   id: '/api/digest',
   path: '/api/digest',
@@ -198,9 +220,29 @@ const PayBookingIdRoute = PayBookingIdRouteImport.update({
   path: '/pay/$bookingId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignIdRoute = SignIdRouteImport.update({
+  id: '/sign/$id',
+  path: '/sign/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminContractsRoute = ApiAdminContractsRouteImport.update({
+  id: '/api/admin/contracts',
+  path: '/api/admin/contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDocusignWebhookRoute = ApiDocusignWebhookRouteImport.update({
+  id: '/api/docusign/webhook',
+  path: '/api/docusign/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -209,6 +251,8 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
+  '/admin-contracts': typeof AdminContractsRoute
+  '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
   '/claim': typeof ClaimRoute
@@ -230,19 +274,26 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/sign/$id': typeof SignIdRoute
+  '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
+  '/admin-contracts': typeof AdminContractsRoute
+  '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
   '/claim': typeof ClaimRoute
@@ -264,13 +315,18 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/sign/$id': typeof SignIdRoute
+  '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -278,6 +334,8 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
+  '/admin-contracts': typeof AdminContractsRoute
+  '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
   '/claim': typeof ClaimRoute
@@ -299,13 +357,18 @@ export interface FileRoutesById {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/sign/$id': typeof SignIdRoute
+  '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -314,6 +377,8 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/admin'
+    | '/admin-contracts'
+    | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
     | '/claim'
@@ -335,19 +400,26 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/verify-2fa'
     | '/api/digest'
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
+    | '/sign/$id'
+    | '/api/admin/contracts'
     | '/api/auth/$'
+    | '/api/docusign/webhook'
+    | '/api/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/account'
     | '/admin'
+    | '/admin-contracts'
+    | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
     | '/claim'
@@ -369,19 +441,26 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/verify-2fa'
     | '/api/digest'
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
+    | '/sign/$id'
+    | '/api/admin/contracts'
     | '/api/auth/$'
+    | '/api/docusign/webhook'
+    | '/api/stripe/webhook'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/account'
     | '/admin'
+    | '/admin-contracts'
+    | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
     | '/claim'
@@ -403,13 +482,18 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/verify-2fa'
     | '/api/digest'
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
+    | '/sign/$id'
+    | '/api/admin/contracts'
     | '/api/auth/$'
+    | '/api/docusign/webhook'
+    | '/api/stripe/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -417,6 +501,8 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRoute
+  AdminContractsRoute: typeof AdminContractsRoute
+  AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
   ChildcareBenefitsProgramRoute: typeof ChildcareBenefitsProgramRoute
   ClaimRoute: typeof ClaimRoute
@@ -438,12 +524,17 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
+  Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   PayBookingIdRoute: typeof PayBookingIdRoute
+  SignIdRoute: typeof SignIdRoute
+  ApiAdminContractsRoute: typeof ApiAdminContractsRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -474,6 +565,20 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-contracts': {
+      id: '/admin-contracts'
+      path: '/admin-contracts'
+      fullPath: '/admin-contracts'
+      preLoaderRoute: typeof AdminContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app-icon': {
+      id: '/app-icon'
+      path: '/app-icon'
+      fullPath: '/app-icon'
+      preLoaderRoute: typeof AppIconRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/benefits': {
@@ -623,6 +728,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TourChecklistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify-2fa': {
+      id: '/verify-2fa'
+      path: '/verify-2fa'
+      fullPath: '/verify-2fa'
+      preLoaderRoute: typeof Verify2faRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/digest': {
       id: '/api/digest'
       path: '/api/digest'
@@ -665,11 +777,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PayBookingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sign/$id': {
+      id: '/sign/$id'
+      path: '/sign/$id'
+      fullPath: '/sign/$id'
+      preLoaderRoute: typeof SignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/contracts': {
+      id: '/api/admin/contracts'
+      path: '/api/admin/contracts'
+      fullPath: '/api/admin/contracts'
+      preLoaderRoute: typeof ApiAdminContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/docusign/webhook': {
+      id: '/api/docusign/webhook'
+      path: '/api/docusign/webhook'
+      fullPath: '/api/docusign/webhook'
+      preLoaderRoute: typeof ApiDocusignWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -690,6 +830,8 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
   AdminRoute: AdminRoute,
+  AdminContractsRoute: AdminContractsRoute,
+  AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,
   ChildcareBenefitsProgramRoute: ChildcareBenefitsProgramRoute,
   ClaimRoute: ClaimRoute,
@@ -711,18 +853,24 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
+  Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   PayBookingIdRoute: PayBookingIdRoute,
+  SignIdRoute: SignIdRoute,
+  ApiAdminContractsRoute: ApiAdminContractsRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
+
 import type { createStart } from '@tanstack/react-start'
 declare module '@tanstack/react-start' {
   interface Register {
