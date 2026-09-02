@@ -55,5 +55,21 @@
     "type": "official_website_classroom_orff_program",
     "scraped": "2026-09-02",
     "local_file": "public/photos/buildings/mb-7923.jpg"
+  },
+  "mb-3012": {
+    "name": "Earl Grey Children's Centre Inc.",
+    "source_url": "https://earlgreychildrenscentre.ca/programs/preschool/",
+    "image_url": "https://earlgreychildrenscentre.ca/wp-content/uploads/2022/04/header03.jpg",
+    "type": "official_website_program_photo_kids_painting",
+    "scraped": "2026-09-02",
+    "local_file": "public/photos/buildings/mb-3012.jpg"
+  },
+  "mb-9320": {
+    "name": "Downtown YM-YWCA Before and After School Program",
+    "source_url": "https://www.ywinnipeg.ca/child-care-programs",
+    "image_url": "https://www.ywinnipeg.ca/sites/default/files/styles/card_image/public/2024-06/schoolage-care.jpg.webp",
+    "type": "official_ymca_school_age_program_photo",
+    "scraped": "2026-09-02",
+    "local_file": "public/photos/buildings/mb-9320.jpg"
   }
 }
