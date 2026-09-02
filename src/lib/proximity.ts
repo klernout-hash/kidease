@@ -1,11 +1,22 @@
 import { CITIES, PROVINCES, geocode, haversineKm, reverseGeocode, type LatLng } from "@/lib/geo";
 import type { DaycareCard } from "@/lib/types";
 
+export const MAX_SEARCH_RADIUS_KM = 100;
+export const MIN_SEARCH_RADIUS_KM = 1;
+
+/** Hard cap: never query or render beyond 100 km of the active origin. */
+export function clampRadiusKm(radiusKm: number) {
+  const n = Number(radiusKm);
+  if (!Number.isFinite(n)) return 25;
+  return Math.min(MAX_SEARCH_RADIUS_KM, Math.max(MIN_SEARCH_RADIUS_KM, Math.round(n)));
+}
+
 /** Fast lat/lng window so we don't haversine every centre in Canada. */
 export function bboxFromRadius(origin: LatLng, radiusKm: number) {
-  const latDelta = radiusKm / 110.574;
+  const radius = clampRadiusKm(radiusKm);
+  const latDelta = radius / 110.574;
   const cos = Math.cos((origin.lat * Math.PI) / 180);
-  const lngDelta = radiusKm / (111.32 * Math.max(0.2, Math.abs(cos)));
+  const lngDelta = radius / (111.32 * Math.max(0.2, Math.abs(cos)));
   return {
     minLat: origin.lat - latDelta,
     maxLat: origin.lat + latDelta,
@@ -135,12 +146,13 @@ export function withinRadius<T extends LatLng>(
   radiusKm: number,
   points: T[],
 ): Array<T & { distanceKm: number }> {
-  const box = bboxFromRadius(origin, radiusKm);
+  const radius = clampRadiusKm(radiusKm);
+  const box = bboxFromRadius(origin, radius);
   const out: Array<T & { distanceKm: number }> = [];
   for (const p of points) {
     if (!inBbox(p, box)) continue;
     const km = distanceKm(origin, p);
-    if (km > radiusKm) continue;
+    if (km > radius) continue;
     out.push({ ...p, distanceKm: km });
   }
   return out;

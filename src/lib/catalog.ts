@@ -1,6 +1,7 @@
 import { nextMonths } from "./utils";
 import realStorefrontsJson from "./data/real-storefronts.json";
 import wpgStorefrontsJson from "./data/storefronts.json";
+import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
 
 export type CatalogDaycare = {
   id: string;
@@ -110,7 +111,7 @@ function inferAges(raw: RawCentre) {
   return { min: 0, max: 0, known: false };
 }
 
-function hydrate(raw: RawCentre, index: number): CatalogDaycare {
+function hydrate(raw: RawCentre, _index: number): CatalogDaycare {
   const city = raw.city || "";
   const province = raw.province || "";
   const name = raw.name;
@@ -176,6 +177,26 @@ const CATALOG_URL =
 let cachedCatalog: CatalogDaycare[] | null = null;
 let catalogBySlugMap = new Map<string, CatalogDaycare>();
 let catalogByIdMap = new Map<string, CatalogDaycare>();
+let catalogGrid: Map<string, CatalogDaycare[]> | null = null;
+
+/** ~28 km cells. Search only walks cells that intersect the 100 km cap. */
+const GRID_DEG = 0.25;
+
+function gridKey(lat: number, lng: number) {
+  return `${Math.floor(lat / GRID_DEG)}_${Math.floor(lng / GRID_DEG)}`;
+}
+
+function buildCatalogGrid(rows: CatalogDaycare[]) {
+  const grid = new Map<string, CatalogDaycare[]>();
+  for (const d of rows) {
+    if (!Number.isFinite(d.lat) || !Number.isFinite(d.lng)) continue;
+    const key = gridKey(d.lat, d.lng);
+    const bucket = grid.get(key);
+    if (bucket) bucket.push(d);
+    else grid.set(key, [d]);
+  }
+  catalogGrid = grid;
+}
 
 async function loadRawCentres(): Promise<RawCentre[]> {
   try {
@@ -196,7 +217,34 @@ export async function getCatalog(): Promise<CatalogDaycare[]> {
   cachedCatalog = raw.map(hydrate);
   catalogBySlugMap = new Map(cachedCatalog.map((d) => [d.slug, d]));
   catalogByIdMap = new Map(cachedCatalog.map((d) => [d.id, d]));
+  buildCatalogGrid(cachedCatalog);
   return cachedCatalog;
+}
+
+/** Only centres inside `radiusKm`, hard-capped at 100 km. Does not scan Canada. */
+export async function catalogNear(origin: { lat: number; lng: number }, radiusKm: number) {
+  await getCatalog();
+  if (!catalogGrid) return [];
+  const radius = clampRadiusKm(radiusKm);
+  const box = bboxFromRadius(origin, radius);
+  const minI = Math.floor(box.minLat / GRID_DEG);
+  const maxI = Math.floor(box.maxLat / GRID_DEG);
+  const minJ = Math.floor(box.minLng / GRID_DEG);
+  const maxJ = Math.floor(box.maxLng / GRID_DEG);
+  const out: CatalogDaycare[] = [];
+  for (let i = minI; i <= maxI; i++) {
+    for (let j = minJ; j <= maxJ; j++) {
+      const bucket = catalogGrid.get(`${i}_${j}`);
+      if (!bucket) continue;
+      for (const d of bucket) {
+        const point = { lat: d.lat, lng: d.lng };
+        if (!inBbox(point, box)) continue;
+        if (distanceKm(origin, point) > radius) continue;
+        out.push(d);
+      }
+    }
+  }
+  return out;
 }
 
 export async function catalogBySlugGet(slug: string) {
