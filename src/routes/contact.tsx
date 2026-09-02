@@ -37,7 +37,8 @@ export function Contact() {
       });
       toast.success(t("contactSent"));
       setBody("");
-    } catch {
+    } catch (err) {
+      console.error("[kidease-contact]", err);
       toast.error("Could not send. Email kyle@kidease.ca directly.");
     } finally {
       setBusy(false);

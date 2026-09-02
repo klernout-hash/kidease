@@ -1,7 +1,13 @@
-import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { publicSubmitResult, resolveMailReplyTo, sendMailThenPersist } from "./notify-mail";
+
+/** Load SQL only when we persist or query — never before sending contact mail. */
+async function loadSql() {
+  const { getSql } = await import("@/lib/db");
+  return getSql();
+}
 
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
 const MAIL_FROM = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
@@ -48,7 +54,7 @@ function appOrigin() {
 }
 
 export async function lookupUser(userId: string) {
-  const sql = await getSql();
+  const sql = await loadSql();
   const rows = await sql
     .query<{ email: string | null; name: string | null }>(`select email, name from "user" where id = $1 limit 1`, [userId])
     .catch(() => [] as { email: string | null; name: string | null }[]);
@@ -190,7 +196,7 @@ function digestCopy(
 }
 
 async function ensureDigestTable() {
-  const sql = await getSql();
+  const sql = await loadSql();
   await sql
     .query(
       `create table if not exists digest_sends (
@@ -206,7 +212,7 @@ async function ensureDigestTable() {
 export async function sendDailyDigest() {
   await ensureEventsTable();
   await ensureDigestTable();
-  const sql = await getSql();
+  const sql = await loadSql();
   const day = winnipegDay();
   const already = await sql<{ day: string }>`select day from digest_sends where day = ${day}`.catch(
     () => [] as { day: string }[],
@@ -304,7 +310,8 @@ function esc(s: string) {
     .join("");
 }
 
-async function deliverEmail(subject: string, text: string, html: string) {
+async function deliverEmail(subject: string, text: string, html: string, replyTo?: string | null) {
+  const reply = resolveMailReplyTo(replyTo, ADMIN_EMAIL);
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
     const res = await fetch("https://api.resend.com/emails", {
@@ -313,7 +320,7 @@ async function deliverEmail(subject: string, text: string, html: string) {
       body: JSON.stringify({
         from: MAIL_FROM,
         to: [ADMIN_EMAIL],
-        reply_to: ADMIN_EMAIL,
+        reply_to: reply,
         subject,
         text,
         html,
@@ -333,7 +340,7 @@ async function deliverEmail(subject: string, text: string, html: string) {
       body: JSON.stringify({
         personalizations: [{ to: [{ email: ADMIN_EMAIL }] }],
         from: { email: fromEmail, name: fromName },
-        reply_to: { email: ADMIN_EMAIL },
+        reply_to: { email: reply },
         subject,
         content: [
           { type: "text/plain", value: text },
@@ -344,12 +351,12 @@ async function deliverEmail(subject: string, text: string, html: string) {
     if (!res.ok) throw new Error(`SendGrid ${res.status}: ${await res.text()}`);
     return "sent";
   }
-  console.info("[kidease-mail]", ADMIN_EMAIL, subject, "\n", text);
+  console.info("[kidease-mail]", ADMIN_EMAIL, subject, "reply_to=", reply, "\n", text);
   return "logged";
 }
 
 async function ensureEventsTable() {
-  const sql = await getSql();
+  const sql = await loadSql();
   await sql
     .query(
       `
@@ -374,44 +381,51 @@ async function ensureEventsTable() {
     .catch(() => undefined);
 }
 
-export async function notifyPlatform(p: PlatformEvent) {
-  const { title, text, html } = emailCopy(p);
+async function persistPlatformEvent(
+  id: string,
+  p: PlatformEvent,
+  status: string,
+  error: string | null,
+) {
   await ensureEventsTable();
-  const sql = await getSql();
-  const id = nid("ev");
-  let status = "queued";
-  let error: string | null = null;
-  try {
-    status = await deliverEmail(title, text, html);
-  } catch (err) {
-    status = "failed";
-    error = err instanceof Error ? err.message : "send failed";
-    console.error("[kidease-mail]", error);
-  }
-  await sql
-    .query(
-      `insert into platform_events (
+  const sql = await loadSql();
+  await sql.query(
+    `insert into platform_events (
       id, kind, daycare_name, address, city, province, slug,
       provider_name, provider_email, listing_url, email_to, email_status, email_error
     ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-      [
-        id,
-        p.kind,
-        p.daycareName ?? null,
-        p.address ?? p.detail ?? null,
-        p.city ?? null,
-        p.province ?? null,
-        p.slug ?? null,
-        p.actorName ?? null,
-        p.actorEmail ?? null,
-        listingUrl(p.slug),
-        ADMIN_EMAIL,
-        status,
-        error,
-      ],
-    )
-    .catch((e) => console.error("[platform_events]", e));
-  return { id, status };
+    [
+      id,
+      p.kind,
+      p.daycareName ?? null,
+      p.address ?? p.detail ?? null,
+      p.city ?? null,
+      p.province ?? null,
+      p.slug ?? null,
+      p.actorName ?? null,
+      p.actorEmail ?? null,
+      listingUrl(p.slug),
+      ADMIN_EMAIL,
+      status,
+      error,
+    ],
+  );
+}
+
+export async function notifyPlatform(p: PlatformEvent) {
+  const { title, text, html } = emailCopy(p);
+  const id = nid("ev");
+  const result = await sendMailThenPersist({
+    send: () => deliverEmail(title, text, html, p.actorEmail),
+    persist: ({ status, error }) => persistPlatformEvent(id, p, status, error),
+    onMailError: (message, err) => {
+      console.error("[kidease-mail]", message, err);
+    },
+    onPersistError: (err) => {
+      console.error("[platform_events] persist failed (mail outcome unchanged)", err);
+    },
+  });
+  return { id, ...result };
 }
 
 export async function notifyAccountCreated(p: { name?: string | null; email?: string | null }) {
@@ -452,21 +466,26 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
-    await notifyPlatform({
-      kind: data.kind,
-      title: data.kind === "contact" ? `Contact: ${data.subject || "Message"}` : "New support message",
-      actorName: data.name,
-      actorEmail: data.email,
-      detail: [data.subject, data.body].filter(Boolean).join("\n\n"),
-    });
-    return { ok: true as const };
+    try {
+      const result = await notifyPlatform({
+        kind: data.kind,
+        title: data.kind === "contact" ? `Contact: ${data.subject || "Message"}` : "New support message",
+        actorName: data.name,
+        actorEmail: data.email,
+        detail: [data.subject, data.body].filter(Boolean).join("\n\n"),
+      });
+      return publicSubmitResult(result.status, result.error);
+    } catch (err) {
+      console.error("[kidease-contact]", err);
+      throw err;
+    }
   });
 
 export const listPlatformEvents = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async () => {
     await ensureEventsTable();
-    const sql = await getSql();
+    const sql = await loadSql();
     const rows = await sql<{
       id: string;
       kind: string;
