@@ -5,7 +5,6 @@ import { DaycareCard } from "@/components/daycare-card";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { ChildProfileForm } from "@/components/child-profile-form";
-import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { deleteAccount, getFamily, setRole } from "@/lib/server/family";
 import { hasCareDetails } from "@/lib/child-profile";
@@ -65,7 +64,26 @@ function AccountPage() {
       </Shell>
     );
   }
-  if (!user) return <RedirectToSignIn />;
+  if (!user) {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto max-w-lg py-12 text-center">
+          <h1 className="font-display text-3xl">{search.tab === "enrolled" ? t("enrolled") : search.tab === "saved" ? t("saved") : t("account")}</h1>
+          <p className="mt-3 text-muted">{t("loginLead")}</p>
+          <div className="mt-8 flex flex-col gap-3">
+            <Button size="lg" className="h-14 min-h-14 w-full px-7 text-base" asChild>
+              <Link to="/login" search={{ role: "parent", intent: "in", next: "/account" }}>
+                {t("parentSignIn")}
+              </Link>
+            </Button>
+            <Button size="lg" variant="secondary" className="h-14 min-h-14 w-full px-7 text-base" asChild>
+              <Link to="/search">{t("heroCta")}</Link>
+            </Button>
+          </div>
+        </main>
+      </Shell>
+    );
+  }
 
   const tabs = [
     ["children", t("children")],
@@ -114,7 +132,14 @@ function AccountPage() {
         {tab === "bookings" ? (
           <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
             {bookings.length === 0 ? (
-              <li className="p-8 text-center text-muted">{t("noRequests")}</li>
+              <li className="p-8 text-center">
+                <p className="text-muted">{t("noRequests")}</p>
+                <div className="mt-5">
+                  <Button size="lg" className="h-14 min-h-14 px-7 text-base" asChild>
+                    <Link to="/search">{t("heroCta")}</Link>
+                  </Button>
+                </div>
+              </li>
             ) : (
               bookings.map((b) => (
                 <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
