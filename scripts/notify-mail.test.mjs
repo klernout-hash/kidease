@@ -211,7 +211,7 @@ test("confirmation copy keeps the 24-hour promise and Thank you, and does not in
   assert.match(actorConfirmationText("account"), /signing up with KidEase/);
   assert.match(actorConfirmationText("signup"), /signing up as a provider/);
   assert.match(actorConfirmationText("enroll"), /enrolment/);
-  assert.match(actorConfirmationText("listing"), /enrolment/);
+  assert.match(actorConfirmationText("listing"), /daycare listing/);
   assert.match(actorConfirmationText("claim"), /listing claim/);
   assert.match(actorConfirmationText("spot_request"), /spot request/);
 });

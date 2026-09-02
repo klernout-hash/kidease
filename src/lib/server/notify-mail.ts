@@ -36,7 +36,7 @@ const ACTOR_CONFIRM_FIRST_LINE: Record<ActorConfirmKind, string> = {
   account: "Thanks for signing up with KidEase.",
   signup: "Thanks for signing up as a provider with KidEase.",
   enroll: "Thanks for sending your enrolment to KidEase.",
-  listing: "Thanks for sending your enrolment to KidEase.",
+  listing: "Thanks for sending your daycare listing to KidEase.",
   claim: "Thanks for sending your listing claim to KidEase.",
   spot_request: "Thanks for sending your spot request to KidEase.",
 };
