@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Building2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -87,11 +88,11 @@ export function RoleEnrollDialog({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-fg/40 sm:items-center sm:p-6"
+      className="fixed inset-0 z-[95] flex items-end justify-center bg-fg/40 sm:items-center sm:p-6"
       onClick={onClose}
     >
       <div
@@ -113,6 +114,7 @@ export function RoleEnrollDialog({
         </div>
         <RoleEnrollChooser heading="h2" titleId="role-enroll-title" />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
