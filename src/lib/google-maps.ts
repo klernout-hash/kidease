@@ -7,8 +7,13 @@
  *
  * Set `VITE_GOOGLE_MAPS_API_KEY` on Vercel (same key value as the server
  * Maps/Places key). Maps JavaScript API must stay enabled on the GCP project.
+ *
+ * Optional `VITE_GOOGLE_MAPS_MAP_ID` (public Cloud Map ID) turns on vector
+ * tiles, cloud styling, and Advanced Markers. Leave it empty to keep the
+ * classic raster path — weekly/vector without a Map ID paints a gray canvas.
  */
 export const GOOGLE_MAPS_BROWSER_ENV = "VITE_GOOGLE_MAPS_API_KEY";
+export const GOOGLE_MAPS_MAP_ID_ENV = "VITE_GOOGLE_MAPS_MAP_ID";
 
 declare global {
   interface Window {
@@ -24,19 +29,28 @@ export function hasGoogleMapsBrowserKey(): boolean {
   return googleMapsBrowserKey().length > 0;
 }
 
+export function googleMapsMapId(): string {
+  return String(import.meta.env.VITE_GOOGLE_MAPS_MAP_ID ?? "").trim();
+}
+
+export function hasGoogleMapsMapId(): boolean {
+  return googleMapsMapId().length > 0;
+}
+
 const SCRIPT_ID = "kidease-google-maps-js";
 
 /**
- * Quarterly is the stable raster-friendly channel. The weekly channel (also the
- * default if `v` is omitted) has been shipping the vector canvas renderer,
- * which stays blank without a Cloud Map ID / Map Tiles API.
+ * Quarterly is the stable channel. Weekly (also the default if `v` is omitted)
+ * has shipped the vector canvas renderer, which stays blank without a Cloud
+ * Map ID / Map Tiles API. Raster fallback therefore stays on quarterly.
  */
 export const GOOGLE_MAPS_SCRIPT_VERSION = "quarterly";
 
 let mapsPromise: Promise<typeof google.maps> | null = null;
 
-export function googleMapsScriptSrc(key: string): string {
-  return `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=${GOOGLE_MAPS_SCRIPT_VERSION}`;
+export function googleMapsScriptSrc(key: string, mapId = googleMapsMapId()): string {
+  const base = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=${GOOGLE_MAPS_SCRIPT_VERSION}`;
+  return mapId ? `${base}&libraries=marker` : base;
 }
 
 /** Classic PNG/JPEG tiles. No Map ID required — only Maps JavaScript API + referrers. */
@@ -44,6 +58,53 @@ export function googleMapsRasterRenderingType(maps: typeof google.maps): "RASTER
   const raster = (maps as typeof maps & { RenderingType?: { RASTER?: "RASTER" } }).RenderingType
     ?.RASTER;
   return raster ?? "RASTER";
+}
+
+/** Raster JSON styles. Ignored by the Maps JS API when `mapId` is set. */
+export const ROAD_STYLES: google.maps.MapTypeStyle[] = [
+  { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
+
+/**
+ * Vector (Cloud Map ID) vs raster extras for `new maps.Map`.
+ * Empty / whitespace Map ID keeps raster so Search never ships a gray canvas.
+ */
+export function listingMapRendererExtras(mapId: string):
+  | { mapId: string }
+  | { styles: typeof ROAD_STYLES; renderingType: "RASTER" } {
+  const id = mapId.trim();
+  if (id) return { mapId: id };
+  return { styles: ROAD_STYLES, renderingType: "RASTER" };
+}
+
+export function listingMapConstructorOptions(input: {
+  maps: typeof google.maps;
+  center: google.maps.LatLngLiteral;
+  zoom: number;
+  mapTypeId: google.maps.MapTypeId | "roadmap" | "hybrid";
+  mapId?: string;
+}): google.maps.MapOptions {
+  const extras = listingMapRendererExtras(input.mapId ?? googleMapsMapId());
+  const shared: google.maps.MapOptions = {
+    center: input.center,
+    zoom: input.zoom,
+    mapTypeId: input.mapTypeId,
+    disableDefaultUI: true,
+    zoomControl: true,
+    zoomControlOptions: { position: input.maps.ControlPosition.RIGHT_BOTTOM },
+    gestureHandling: "greedy",
+    clickableIcons: false,
+  };
+  if ("mapId" in extras) {
+    return { ...shared, mapId: extras.mapId };
+  }
+  return {
+    ...shared,
+    styles: extras.styles,
+    // Raster only when no Map ID — vector without mapId is a gray canvas.
+    renderingType: googleMapsRasterRenderingType(input.maps),
+  } as google.maps.MapOptions;
 }
 
 export function loadGoogleMaps(): Promise<typeof google.maps> {
@@ -187,3 +248,171 @@ export function defineHtmlOverlay(maps: typeof google.maps) {
 }
 
 export type HtmlOverlayInstance = InstanceType<ReturnType<typeof defineHtmlOverlay>>;
+
+type AdvancedMarkerOptions = {
+  map: google.maps.Map | null;
+  position: google.maps.LatLngLiteral;
+  content?: HTMLElement;
+  zIndex?: number;
+  gmpClickable?: boolean;
+};
+
+type AdvancedMarkerInstance = {
+  map: google.maps.Map | null;
+  position?: google.maps.LatLngLiteral | google.maps.LatLng | null;
+  zIndex?: number;
+  addListener: (eventName: string, handler: () => void) => void;
+};
+
+export type AdvancedMarkerCtor = new (opts: AdvancedMarkerOptions) => AdvancedMarkerInstance;
+
+type MarkerLibrary = {
+  AdvancedMarkerElement?: AdvancedMarkerCtor;
+};
+
+/** Advanced Markers need a Map ID. Skip the library unless one is configured. */
+export async function loadAdvancedMarkerElement(
+  maps: typeof google.maps,
+  mapId = googleMapsMapId(),
+): Promise<AdvancedMarkerCtor | null> {
+  if (!mapId.trim()) return null;
+  try {
+    const importer = (
+      maps as typeof maps & { importLibrary?: (name: string) => Promise<MarkerLibrary> }
+    ).importLibrary;
+    if (typeof importer === "function") {
+      const lib = await importer("marker");
+      if (lib?.AdvancedMarkerElement) return lib.AdvancedMarkerElement;
+    }
+    const fromNs = (maps as typeof maps & { marker?: MarkerLibrary }).marker?.AdvancedMarkerElement;
+    return fromNs ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export type ListingOverlay = {
+  setMap(map: google.maps.Map | null): void;
+  getElement(): HTMLElement;
+  setZIndex(z: number): void;
+};
+
+export type ListingOverlayOpts = HtmlOverlayOpts;
+
+function createAdvancedListingOverlay(
+  AdvancedMarker: AdvancedMarkerCtor,
+  opts: ListingOverlayOpts,
+): ListingOverlay {
+  const content = opts.content;
+  if (opts.centered) content.classList.add("ke-adv-centered");
+  const marker = new AdvancedMarker({
+    map: opts.map,
+    position: opts.position,
+    content,
+    zIndex: opts.zIndex,
+    gmpClickable: Boolean(opts.onClick),
+  });
+  if (opts.onClick) {
+    let armed = true;
+    const handle = () => {
+      if (!armed) return;
+      armed = false;
+      queueMicrotask(() => {
+        armed = true;
+      });
+      opts.onClick?.();
+    };
+    try {
+      marker.addListener("gmp-click", handle);
+    } catch {
+      /* older marker builds */
+    }
+    try {
+      marker.addListener("click", handle);
+    } catch {
+      /* click is optional */
+    }
+    content.addEventListener("click", (event) => {
+      event.stopPropagation();
+      handle();
+    });
+  }
+  return {
+    setMap(map) {
+      marker.map = map;
+    },
+    getElement() {
+      return content;
+    },
+    setZIndex(z) {
+      marker.zIndex = z;
+      content.style.zIndex = String(z);
+    },
+  };
+}
+
+export function createListingOverlayFactory(
+  maps: typeof google.maps,
+  AdvancedMarker?: AdvancedMarkerCtor | null,
+): (opts: ListingOverlayOpts) => ListingOverlay {
+  if (AdvancedMarker) {
+    return (opts) => createAdvancedListingOverlay(AdvancedMarker, opts);
+  }
+  const HtmlOverlay = defineHtmlOverlay(maps);
+  return (opts) => new HtmlOverlay(opts);
+}
+
+export type MovableDot = {
+  setPosition(position: google.maps.LatLngLiteral): void;
+  setMap(map: google.maps.Map | null): void;
+};
+
+export function createYouAreHereDot(opts: {
+  maps: typeof google.maps;
+  map: google.maps.Map;
+  position: google.maps.LatLngLiteral;
+  AdvancedMarker?: AdvancedMarkerCtor | null;
+}): MovableDot {
+  if (opts.AdvancedMarker) {
+    const content = document.createElement("div");
+    content.className = "ke-you-dot";
+    content.setAttribute("aria-hidden", "true");
+    const marker = new opts.AdvancedMarker({
+      map: opts.map,
+      position: opts.position,
+      content,
+      zIndex: 2,
+      gmpClickable: false,
+    });
+    return {
+      setPosition(position) {
+        marker.position = position;
+      },
+      setMap(map) {
+        marker.map = map;
+      },
+    };
+  }
+  const marker = new opts.maps.Marker({
+    map: opts.map,
+    position: opts.position,
+    clickable: false,
+    zIndex: 2,
+    icon: {
+      path: opts.maps.SymbolPath.CIRCLE,
+      scale: 8,
+      fillColor: "#1a3790",
+      fillOpacity: 1,
+      strokeColor: "#ffffff",
+      strokeWeight: 3,
+    },
+  });
+  return {
+    setPosition(position) {
+      marker.setPosition(position);
+    },
+    setMap(map) {
+      marker.setMap(map);
+    },
+  };
+}
