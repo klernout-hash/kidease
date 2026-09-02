@@ -5,18 +5,10 @@ import { nid } from "@/lib/utils";
 import { lookupUser, notifyPlatform } from "./notify";
 import type { BookingStatus, Conversation } from "@/lib/types";
 
-async function ownedCentreIds(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
-  const rows = await sql<{ daycare_id: string }>`
-    select daycare_id from provider_daycares where user_id = ${userId}
-  `.catch(() => [] as { daycare_id: string }[]);
-  return rows.map((r) => r.daycare_id);
-}
-
 export const listInbox = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
-    const owned = await ownedCentreIds(sql, context.userId);
     const rows = await sql<{
       id: string;
       daycare_id: string;
@@ -43,33 +35,12 @@ export const listInbox = createServerFn({ method: "GET" })
       join daycares d on d.id = c.daycare_id
       left join "user" u on u.id = c.user_id
       where c.user_id = ${context.userId}
-         or c.daycare_id = any(${owned.length ? owned : ["__none__"]})
+         or exists (
+           select 1 from provider_daycares p
+           where p.user_id = ${context.userId} and p.daycare_id = c.daycare_id
+         )
       order by c.last_at desc
-    `.catch(async () => {
-      return sql<{
-        id: string;
-        daycare_id: string;
-        parent_user_id: string;
-        name: string;
-        slug: string;
-        photos: string;
-        last_at: string;
-        phone: string | null;
-        parent_name: string | null;
-        parent_email: string | null;
-        status: BookingStatus | null;
-      }>`
-        select c.id, c.daycare_id, c.user_id as parent_user_id,
-               d.name, d.slug, d.photos, c.last_at, d.phone,
-               u.name as parent_name, u.email as parent_email,
-               null::text as status
-        from conversations c
-        join daycares d on d.id = c.daycare_id
-        left join "user" u on u.id = c.user_id
-        where c.user_id = ${context.userId}
-        order by c.last_at desc
-      `;
-    });
+    `;
 
     const out: Conversation[] = [];
     for (const r of rows) {
@@ -99,7 +70,6 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     const sql = await getSql();
     const body = data.body.trim();
     if (!body) return { ok: false as const };
-    const owned = await ownedCentreIds(sql, context.userId);
     const conv = await sql<{
       id: string;
       user_id: string;
@@ -111,7 +81,13 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
       from conversations c
       join daycares d on d.id = c.daycare_id
       where c.id = ${data.conversationId}
-        and (c.user_id = ${context.userId} or c.daycare_id = any(${owned.length ? owned : ["__none__"]}))
+        and (
+          c.user_id = ${context.userId}
+          or exists (
+            select 1 from provider_daycares p
+            where p.user_id = ${context.userId} and p.daycare_id = c.daycare_id
+          )
+        )
       limit 1
     `;
     const row = conv[0];
