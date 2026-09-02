@@ -1,23 +1,9 @@
 {
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_id_processed": "mb-1076",
+  "last_id_processed": "mb-1189",
   "mapped_count": 49,
   "skipped_no_photo_this_run": [
-    "mb-1048",
-    "mb-1051",
-    "mb-1053",
-    "mb-1055",
-    "mb-1056",
-    "mb-1059",
-    "mb-1060",
-    "mb-1062",
-    "mb-1063",
-    "mb-1064",
-    "mb-1070",
-    "mb-1076"
-  ],
-  "next_queue": [
     "mb-1140",
     "mb-1144",
     "mb-1145",
@@ -31,10 +17,24 @@
     "mb-1174",
     "mb-1189"
   ],
+  "next_queue": [
+    "mb-1192",
+    "mb-1196",
+    "mb-1198",
+    "mb-1199",
+    "mb-1201",
+    "mb-1204",
+    "mb-1206",
+    "mb-1210",
+    "mb-1214",
+    "mb-1215",
+    "mb-1219",
+    "mb-1220"
+  ],
   "winnipeg_total": 428,
   "winnipeg_mapped": 49,
   "national_total": 20846,
   "national_mapped": 49,
-  "updated": "2026-09-02T14:45:36Z",
-  "notes": "Run processed 12 queued centres after mb-1046. No new official photos mapped. SCDN and UDC and Munroe ECEC official sites use generic stock banners/room thumbnails (Unsplash/stock kids, not this-centre rooms). Homestead Sunny Mountain blocked. Transcona Jaycees childcare.link 404. mb-1076 is Dauphin not Winnipeg; skipped here and remains for Dauphin pass. Placeholders kept."
+  "updated": "2026-09-02T15:40:00Z",
+  "notes": "Run processed 12 queued centres (mb-1140 to mb-1189). No new official photos mapped. All skipped: official sites either absent, logo-only, or stock/generic imagery not clearly of that specific centre's rooms/building/playground. Placeholders retained. Next queue ready for following Winnipeg IDs."
 }
