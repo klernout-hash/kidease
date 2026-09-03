@@ -8,12 +8,24 @@ export type Channel = "website" | "app";
  * Storefront (laptop www.kidease.ca) at Tailwind `lg` and up, and only in the
  * browser — never inside the Capacitor native shell.
  *
- * App chrome: phone-width web (below 1024px) OR Capacitor iOS/Android.
+ * App chrome: phone-width web (below 1024px) OR Capacitor iOS/Android OR ?app=1.
  */
 export const STOREFRONT_MIN_PX = 1024;
 
-export function resolveChannel(input: { native: boolean; widthPx: number }): Channel {
-  if (input.native) return "app";
+function forceAppFromUrl(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("app") === "1" || q.get("channel") === "app") return true;
+    if (q.get("app") === "0" || q.get("channel") === "website") return false;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+export function resolveChannel(input: { native: boolean; widthPx: number; forceApp?: boolean }): Channel {
+  if (input.forceApp || input.native) return "app";
   return input.widthPx >= STOREFRONT_MIN_PX ? "website" : "app";
 }
 
@@ -27,7 +39,7 @@ export function readWidth(): number {
 }
 
 export function channel(): Channel {
-  return resolveChannel({ native: isNative(), widthPx: readWidth() });
+  return resolveChannel({ native: isNative(), widthPx: readWidth(), forceApp: forceAppFromUrl() });
 }
 
 export function isApp() {
@@ -39,7 +51,7 @@ export function isWebsite() {
 }
 
 /** Runs in the document head before paint so phone-width does not flash the storefront. */
-export const CHANNEL_BOOT_SCRIPT = `(function(){try{var c=window.Capacitor;var n=!!(c&&c.isNativePlatform&&c.isNativePlatform());var w=window.innerWidth||0;var r=document.documentElement;r.dataset.channel=(n||w<${STOREFRONT_MIN_PX})?"app":"website";r.dataset.runtime=n&&c.getPlatform?c.getPlatform():"web";}catch(e){document.documentElement.dataset.channel="website";}})();`;
+export const CHANNEL_BOOT_SCRIPT = `(function(){try{var c=window.Capacitor;var n=!!(c&&c.isNativePlatform&&c.isNativePlatform());var q=new URLSearchParams(location.search);var force=q.get("app")==="1"||q.get("channel")==="app";var w=window.innerWidth||0;var r=document.documentElement;r.dataset.channel=(force||n||w<${STOREFRONT_MIN_PX})?"app":"website";r.dataset.runtime=n&&c.getPlatform?c.getPlatform():"web";}catch(e){document.documentElement.dataset.channel="website";}})();`;
 
 export function paintRuntime() {
   if (typeof document === "undefined") return;
