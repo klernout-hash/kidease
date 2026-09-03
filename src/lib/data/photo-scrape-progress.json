@@ -1,39 +1,45 @@
 {
-  "last_run": "2026-09-03T14:15:00Z",
+  "last_run": "2026-09-03T10:07:09Z",
   "city": "Winnipeg",
   "province": "MB",
-  "last_id_processed": "mb-101053",
-  "mapped_count": 63,
-  "mapped_winnipeg": 63,
+  "last_id_processed": "mb-102610",
+  "mapped_count": 65,
+  "mapped_winnipeg": 65,
   "winnipeg_total": 428,
   "national_total": 20846,
-  "real_storefronts_keys": 63,
+  "real_storefronts_keys": 65,
   "pending_jpeg_upload": [
+    "mb-101167",
+    "mb-102610",
     "mb-101065",
     "mb-1014",
     "mb-101053"
   ],
   "skipped_no_photo_this_run": [
-    "mb-1053",
-    "mb-1045",
-    "mb-1157",
-    "mb-100414",
-    "mb-3109",
-    "mb-1148",
-    "mb-101768",
-    "mb-9539",
-    "mb-1038"
+    "mb-1010",
+    "mb-1140",
+    "mb-9470",
+    "mb-100426",
+    "mb-9837",
+    "mb-102060",
+    "mb-100926",
+    "mb-100927",
+    "mb-3030",
+    "mb-1298",
+    "mb-100592",
+    "mb-3002",
+    "mb-102576",
+    "mb-103026",
+    "mb-3088"
   ],
   "ids_added_this_run": [
-    "mb-101065",
-    "mb-1014",
-    "mb-101053"
+    "mb-101167",
+    "mb-102610"
   ],
   "next_queue": [
-    "Winnipeg unmapped with possible websites: Rainbow Day Nursery phases, Concordia Child Care, Crestview Park Day Nursery, Discovery/Assiniboine Children's Centre if site revived, Time 2 Play, Village Child Care, Winnipeg Mennonite ELCC",
-    "then remaining Winnipeg",
+    "Continue Winnipeg: Rainbow phases if photos appear, Crestview Park, Concordia, Village sites if better photos, remaining A-C names",
     "then Brandon MB"
   ],
   "next_city_after_winnipeg": "Brandon",
-  "note": "This runner added Down to Earth picnic kids (mb-101065), Horizons Hampton official child photo (mb-1014), Carpenter's Montessori Fort Whyte classroom (mb-101053). Fairlane only had generic stock so skipped. Eagle Wing domain is parked. Explorer's/Faith/Dante/Dalhousie had no usable official photos. JPEG binaries are in workspace artifacts/photos/buildings; binary git push is not available from this connector. Keep all photo provenance in photo-scrape-sources.json keyed by centre id."
+  "note": "Added Winnipeg Mennonite Early Learning (building exterior from school campus site) and Time 2 Play (official classroom from their gallery). Rainbow Day Nursery site has no usable room/kids/building photos (logo only). Crestview Park no official website with photos. Village hero image appears stock (EXIF home play). Assiniboine and Bumble Bee sites lacked clear non-stock centre-specific photos. JPEG binaries local in artifacts/photos/buildings; update via create_or_update_file or manual."
 }
