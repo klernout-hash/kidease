@@ -1,0 +1,82 @@
+{
+  "run": "2026-09-03T11:28:56Z",
+  "city": "Winnipeg",
+  "added": [
+    {
+      "id": "mb-101488",
+      "name": "Day Nursery Centre Inc. - Kid Gloves",
+      "address": "555 Logan Avenue, Winnipeg, MB",
+      "source_url": "https://www.daynurserycentre.ca/programs/kid-gloves/",
+      "source_image": "https://www.daynurserycentre.ca/wp-content/uploads/2021/11/kidgloves250.jpg",
+      "kind": "official storefront / building exterior of Western Glove Works site",
+      "file": "/photos/buildings/mb-101488.jpg"
+    },
+    {
+      "id": "mb-1011",
+      "name": "Day Nursery Centre Inc. - Crossways",
+      "address": "103-222 Furby Street, Winnipeg, MB",
+      "source_url": "https://www.daynurserycentre.ca/programs/crossways-unit/",
+      "source_image": "https://www.daynurserycentre.ca/wp-content/uploads/2021/11/crossways250.jpg",
+      "kind": "official storefront / building entrance with CROSSWAYS sign",
+      "file": "/photos/buildings/mb-1011.jpg"
+    },
+    {
+      "id": "mb-102422",
+      "name": "Freight House Early Learning and Care Inc. Logan Site",
+      "address": "560 Logan Avenue, Winnipeg, MB",
+      "source_url": "https://www.freighthouseearlylearning.ca/post/designing-a-new-space-with-loose-parts-logan-preschool-2",
+      "source_image": "https://static.wixstatic.com/media/e8a1e4_959896c3ccb34640b9dbbf13e1e3ae46~mv2.jpg",
+      "kind": "official classroom interior - Logan Preschool 2 loose-parts studio",
+      "file": "/photos/buildings/mb-102422.jpg"
+    },
+    {
+      "id": "mb-3092",
+      "name": "Stanley Knowles Children's Centre Inc.",
+      "address": "27,29-2424 King Edward Street, Winnipeg, MB",
+      "source_url": "https://skcc.ca/",
+      "source_image": "https://skcc.ca/wp-content/uploads/2021/10/schoolAge.jpg",
+      "kind": "official program photo - school-age classroom science activity",
+      "file": "/photos/buildings/mb-3092.jpg"
+    },
+    {
+      "id": "mb-1244",
+      "name": "Stanley Knowles Pre-School Centre Inc.",
+      "address": "112-2424 King Edward Street, Winnipeg, MB",
+      "source_url": "https://skcc.ca/",
+      "source_image": "https://skcc.ca/wp-content/uploads/2021/10/kinder.jpg",
+      "kind": "official program photo - child in SKCC preschool program on a farm visit",
+      "file": "/photos/buildings/mb-1244.jpg"
+    },
+    {
+      "id": "mb-3004",
+      "name": "Fort Rouge Child Care Program Board Inc.",
+      "address": "525 Wardlaw Avenue, Winnipeg, MB",
+      "source_url": "https://frcc.ca/",
+      "source_image": "https://images.squarespace-cdn.com/content/v1/5d94cce263895e4db969f15d/1571796338583-0JJUF9ZUU29F9XVF1PIK/Crescent+Fort+Rouge+United+Church.jpg",
+      "kind": "official location photo - Crescent Fort Rouge United Church building that houses the Wardlaw site",
+      "file": "/photos/buildings/mb-3004.jpg"
+    },
+    {
+      "id": "mb-102722",
+      "name": "Fort Rouge Child Care",
+      "address": "290 Lilac Street, Winnipeg, MB",
+      "source_url": "https://frcc.ca/",
+      "source_image": "https://images.squarespace-cdn.com/content/v1/5d94cce263895e4db969f15d/e6a978b5-7178-4df4-9fd4-064a450d8f0c/LaVerendrye+school+photo.jpg",
+      "kind": "official location photo - Ecole LaVerendrye building that houses the Lilac site",
+      "file": "/photos/buildings/mb-102722.jpg"
+    }
+  ],
+  "skipped": [
+    "mb-1284 Champlain Community Child Care - WSD school page text only",
+    "mb-9318 Chancellor Before and After - no official centre photo site",
+    "mb-3057 Chapman Day Care - chapmandaycare.ca hero is generic stock",
+    "mb-1023 Children at the Centre Pearl St - no official website with photos",
+    "mb-101062 Concordia Child Care - no official Winnipeg site",
+    "mb-1010 Crestview Park Day Nursery - no official photo site this run",
+    "mb-3003 Crestview School Children's Centre - no official photo site this run",
+    "mb-1172 Cuddles Infant Centre - no official website",
+    "mb-3109 Dalhousie Day Care - Pembina Trails school page text only",
+    "mb-1148 Dante Day Nursery - no official website",
+    "mb-1045 Fairlane Children's Centre - official site hero is stock"
+  ]
+}
