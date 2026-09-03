@@ -1,0 +1,18 @@
+{
+  "run": "2026-09-03T20:20:00Z",
+  "city": "Winnipeg",
+  "processed": [
+    {"id": "mb-1192", "name": "Morrow Early Learning & Child Development (Rene Deleurme Centre)", "address": "511 St. Anne's Road", "result": "skipped", "reason": "melcd.ca official site uses generic stock images only"},
+    {"id": "mb-1196", "name": "Rupertsland Day Care Centre Corporation", "address": "107-201 Princess Street", "result": "skipped", "reason": "no official website or usable photos"},
+    {"id": "mb-1198", "name": "Sadok Veselka Daycare Inc.", "address": "520 Airlies Street", "result": "skipped", "reason": "no official website; Seven Oaks Sadok is a different centre/address"},
+    {"id": "mb-1199", "name": "C.A.P.T. (Grosvenor) Inc.", "address": "1045 Grosvenor Avenue", "result": "skipped", "reason": "school text page only, no centre photos"},
+    {"id": "mb-1201", "name": "Leila Day Care Centre Inc.", "address": "2095 Sinclair Avenue", "result": "skipped", "reason": "no official website"},
+    {"id": "mb-1204", "name": "River Road Child Care", "address": "440 River Road", "result": "mapped", "source": "https://stamant.ca/wp-content/uploads/2022/10/IMG_1139_RRCC-scaled.jpg"},
+    {"id": "mb-1210", "name": "Prairie Sunrise Child Care", "address": "10 Ryerson Avenue", "result": "skipped", "reason": "school site only; historic school photo is not daycare-published"},
+    {"id": "mb-1215", "name": "Pacific Junction Day Care Incorporated", "address": "715 Cathcart Street", "result": "skipped", "reason": "no official daycare website photos"},
+    {"id": "mb-1219", "name": "St. Germain Day Care Centre Incorporated", "address": "79 John Forsyth Road", "result": "skipped", "reason": "no official website"},
+    {"id": "mb-1220", "name": "South Park Child Care Co-op Inc.", "address": "194 Burland Avenue", "result": "skipped", "reason": "no official website"},
+    {"id": "mb-1231", "name": "Shaughnessy Park Daycare Inc.", "address": "1641 Manitoba Avenue", "result": "skipped", "reason": "no official daycare website photos"},
+    {"id": "mb-1233", "name": "Busy Bee Day Care Centre", "address": "646-648 McGee Street", "result": "skipped", "reason": "no official Winnipeg site (other Busy Bee sites are different cities)"}
+  ]
+}
