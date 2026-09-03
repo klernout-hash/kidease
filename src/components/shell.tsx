@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Heart, ClipboardCheck, Menu, MessageCircle, Search, UserRound } from "lucide-react";
+import { Heart, ClipboardCheck, Menu, MessageCircle, Search } from "lucide-react";
 import { SignedIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
@@ -14,6 +14,7 @@ import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { DeskSwitcher } from "@/components/desk-switcher";
 import { SiteFooter } from "@/components/site-footer";
+import { ProfileAvatar } from "@/components/profile-avatar";
 
 export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
   const { t, locale } = useCopy();
@@ -39,6 +40,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const accountTab = tab ?? "profile";
   const hideFooter =
     hideTabs || pathname.startsWith("/admin") || pathname.startsWith("/verify-2fa");
+  const onProfile = onAccount && accountTab === "profile";
 
   const desktopNav = [
     { to: "/search", label: t("explore"), match: ["/search", "/daycare"] },
@@ -107,12 +109,24 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                 </>
               )}
             </div>
-            <div className="flex h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=app]_&]:hidden [[data-channel=website]_&]:xl:hidden">
+            <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:flex [[data-channel=website]_&]:xl:hidden">
               <LanguageSelect />
             </div>
+            <Link
+              to={user ? "/account" : "/login"}
+              search={user ? { tab: "profile" } : { role: "parent", intent: "in", next: "/account?tab=profile" }}
+              className={cn(
+                "hidden min-w-12 flex-col items-center justify-center gap-0.5 px-1 py-0.5 [[data-channel=app]_&]:flex",
+                onProfile ? "text-primary" : "text-muted",
+              )}
+              aria-label={t("profile")}
+            >
+              <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={user?.displayName} size="sm" />
+              <span className="text-[9px] font-medium tracking-wide">{t("profile")}</span>
+            </Link>
             <button
               type="button"
-              className="grid size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=app]_&]:hidden [[data-channel=website]_&]:xl:hidden"
+              className="hidden size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=website]_&]:grid [[data-channel=website]_&]:xl:hidden"
               aria-label="Menu"
               aria-expanded={open}
               aria-controls="ke-nav-drawer"
@@ -143,7 +157,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       {hideFooter ? null : <SiteFooter />}
       {hideTabs ? null : (
         <nav className="fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
-          <div className="mx-auto grid max-w-lg grid-cols-6 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
+          <div className="mx-auto grid max-w-lg grid-cols-5 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
             <Tab
               to="/"
               label={t("search")}
@@ -165,13 +179,6 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               active={onAccount && accountTab === "enrolled"}
             />
             <Tab to="/inbox" label={t("messages")} icon={MessageCircle} active={pathname.startsWith("/inbox")} />
-            <Tab
-              to={user ? "/account" : "/login"}
-              search={user ? { tab: "profile" } : { role: "parent", intent: "in", next: "/account" }}
-              label={t("profile")}
-              icon={UserRound}
-              active={onAccount && accountTab === "profile"}
-            />
             <Tab to="/menu" label={locale === "fr" ? "Menu" : "Menu"} icon={Menu} active={pathname.startsWith("/menu")} />
           </div>
         </nav>
