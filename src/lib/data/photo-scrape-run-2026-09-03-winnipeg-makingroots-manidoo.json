@@ -1,0 +1,8 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-1033", "mb-100547", "mb-101381", "mb-102878", "mb-101696", "mb-1278"],
+  "ids_mapped": ["mb-101696", "mb-1278"],
+  "ids_skipped": ["mb-1033", "mb-100547", "mb-101381", "mb-102878"],
+  "notes": "Making Roots official outdoor kids photo; Manidoo official site photo for R.B. Russell site. Machray skipped - generic blurred images only."
+}
