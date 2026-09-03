@@ -1,17 +1,53 @@
 {
-  "last_run": "2026-09-03T00:30:00Z",
+  "last_run": "2026-09-03T01:36:00Z",
   "city": "Winnipeg",
   "province": "MB",
-  "last_id_processed": "mb-100903",
-  "mapped_count": 93,
-  "mapped_winnipeg": 93,
+  "last_id_processed": "mb-3005",
+  "mapped_count": 22,
+  "mapped_winnipeg": 22,
   "winnipeg_total": 428,
   "national_total": 20846,
-  "real_storefronts_keys": 93,
-  "pending_jpeg_then_map": [],
-  "skipped_no_photo_this_run": ["mb-9420", "mb-102019", "mb-102387", "mb-102755", "mb-101882", "mb-1240"],
-  "ids_added_this_run": ["mb-102633", "mb-100903"],
-  "next_queue": ["Little Saints Learning Center", "Little Sprouts", "Maples Day Care", "Meadows West Kids Kare", "then remaining Winnipeg unmapped L-M"],
+  "real_storefronts_keys": 22,
+  "pending_jpeg_upload": [
+    "mb-102288",
+    "mb-102556",
+    "mb-102633",
+    "mb-3005"
+  ],
+  "skipped_no_photo_this_run": [
+    "mb-9420",
+    "mb-102019",
+    "mb-102387",
+    "mb-102755",
+    "mb-101882",
+    "mb-1240",
+    "mb-101322",
+    "mb-102082",
+    "mb-9826",
+    "mb-3021",
+    "mb-1034",
+    "mb-1275",
+    "mb-2151",
+    "mb-9597",
+    "mb-1064",
+    "mb-101696"
+  ],
+  "ids_added_this_run": [
+    "mb-102288",
+    "mb-102556",
+    "mb-102633",
+    "mb-3005"
+  ],
+  "next_queue": [
+    "Laugh N Learn Early Learning Centre mb-102082",
+    "Little Flamingos mb-103043",
+    "Little Voyageurs sites mb-1030 / mb-102359 / mb-102616",
+    "Maples DayCare Inc mb-1034",
+    "Mini-Skool / Kiddie Kampus mb-9597",
+    "Munroe ECEC sites",
+    "Morrow Early Learning sites",
+    "then remaining Winnipeg N-Z"
+  ],
   "next_city_after_winnipeg": "Brandon",
-  "note": "Added Little Footprints Montessori classroom materials from official Wix site; Makoonsag exterior from Prairie Architects project page (clearly THAT centre)."
+  "note": "real-storefronts.json was empty ({}) despite an old progress claim of 93. Restored ONLY ids that already have a JPEG in public/photos/buildings/ (18 files) plus four verified official L-M photos cropped locally. Do not treat /photos/wpg/ as official. Binary JPEG push is not available through GitHub text tools — upload pending_jpeg_upload files from the local artifacts folder."
 }

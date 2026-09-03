@@ -1,0 +1,67 @@
+{
+  "run_date": "2026-09-03T01:36:00Z",
+  "city": "Winnipeg",
+  "province": "MB",
+  "batch": "remaining L-M after skipped Little Saints / Sprouts / Maples Amber Trails / Meadows West",
+  "verified_official": {
+    "mb-102556": "Mighty Minds Montessori official homepage classroom kids photo",
+    "mb-102288": "Living Prairie Childcare official building exterior",
+    "mb-102633": "Little Footprints Montessori official classroom materials",
+    "mb-3005": "Lakewood Children's Centre official gallery outdoor play 2020-09-03"
+  },
+  "skipped_no_usable_photo": {
+    "mb-9420": "Little Saints — previously skipped",
+    "mb-102019": "Little Saints site 2 — previously skipped",
+    "mb-102387": "Little Saints summer — previously skipped",
+    "mb-102755": "Little Sprouts — previously skipped",
+    "mb-101882": "Maples Amber Trails — previously skipped",
+    "mb-1240": "Meadows West — previously skipped",
+    "mb-101696": "Making Roots — candidate photo looks like stock",
+    "mb-1275": "Mary Kardash — stock-style toys hero",
+    "mb-2151": "McLeod Nursery — stock-style Lego hero",
+    "mb-1030": "Little Voyageurs — generic child hero",
+    "mb-9597": "Mini-Skool — site TLS failure",
+    "mb-1064": "Munroe ECEC — no photos on official site",
+    "mb-1034": "Maples DayCare Inc — no official site"
+  },
+  "already_on_github_buildings": [
+    "mb-1012",
+    "mb-1013",
+    "mb-1017",
+    "mb-1052",
+    "mb-1054",
+    "mb-1057",
+    "mb-1061",
+    "mb-1074",
+    "mb-1147",
+    "mb-1150",
+    "mb-1206",
+    "mb-1214",
+    "mb-1252",
+    "mb-2169",
+    "mb-3096",
+    "mb-101384",
+    "mb-101850",
+    "mb-102137"
+  ],
+  "jpeg_upload_needed": {
+    "mb-102556": "/home/workdir/artifacts/kidease-work/photos/buildings/mb-102556.jpg",
+    "mb-102288": "/home/workdir/artifacts/kidease-work/photos/buildings/mb-102288.jpg",
+    "mb-102633": "/home/workdir/artifacts/kidease-work/photos/buildings/mb-102633.jpg",
+    "mb-3005": "crop from https://www.lakewoodcc.ca/assets/img/gallery/img_glr_03_09_2020_7.JPG to public/photos/buildings/mb-3005.jpg"
+  },
+  "hard_rules_kept": [
+    "no Google Street View",
+    "no generated photos",
+    "no unrelated stock",
+    "placeholder left when unsure"
+  ],
+  "next_queue": [
+    "Little Flamingos retry",
+    "Laugh N Learn",
+    "Linden Meadows",
+    "Morrow Early Learning sites",
+    "remaining Winnipeg N-Z",
+    "then Brandon MB"
+  ]
+}
