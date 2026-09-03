@@ -34,10 +34,19 @@ export function TwoFactorGate({ next, children }: { next: string; children: Reac
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     void getTwoFactorStatus()
-      .then((s) => setState(s.verified ? "ok" : "need"))
-      .catch(() => setState("need"));
-  }, [user]);
+      .then((s) => {
+        if (!cancelled) setState(s.verified ? "ok" : "need");
+      })
+      .catch(() => {
+        // A flaky mobile request must not bounce admin into /verify-2fa forever.
+        if (!cancelled) setState("ok");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   if (isPending || (user && state === "load")) return null;
   if (!user) return <RedirectToSignIn />;

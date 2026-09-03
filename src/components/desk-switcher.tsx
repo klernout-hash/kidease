@@ -32,17 +32,21 @@ export function useSessionDesks() {
       setReady(true);
       return;
     }
-    setReady(false);
+    let cancelled = false;
     void getMyDesks()
       .then((s) => {
+        if (cancelled) return;
         setSession(s);
         setReady(true);
       })
       .catch(() => {
-        setSession(null);
+        if (cancelled) return;
         setReady(true);
       });
-  }, [user, isPending]);
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, isPending]);
 
   return { session, ready };
 }
