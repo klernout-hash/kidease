@@ -1,0 +1,30 @@
+{
+  "run": "2026-09-03T10:26:37Z",
+  "city": "Winnipeg",
+  "added": [
+    {
+      "id": "mb-102704",
+      "name": "Guiding Minds Montessori School",
+      "address": "4945 Portage Avenue",
+      "source_url": "https://www.guidingmindsmontessori.com/",
+      "source_image": "https://static.wixstatic.com/media/35d18c_624507b4a7644945a82e721ac598e7c1~mv2.jpg",
+      "kind": "official classroom educator and child"
+    }
+  ],
+  "skipped": [
+    "mb-101862 Andrews Early Learning — no official site with photos",
+    "mb-1036 Anne Ross Day Nursery — Mount Carmel pages, no usable centre photo",
+    "mb-1249 Assiniboine Castle — no official website",
+    "mb-100532 Bright Future Henderson — no official Winnipeg site",
+    "mb-1264 Bumper Crop — school page text only",
+    "mb-1233 Busy Bee McGee — no official photo site",
+    "mb-7834 Can You Imagine — no official photo site",
+    "mb-1046 Care and Share — childcare.link waitlist only",
+    "mb-1007 Carter ELC — Bethel church site, no daycare photos",
+    "mb-101123 Chabad Torah Tots — chabadtorahtots.com DNS dead",
+    "mb-101395 Festival Morgan — official site text only",
+    "mb-102555 Festival Buchanan — official site text only",
+    "mb-100414 Eagle Wing — eaglewing.ca 503",
+    "mb-3012 Earl Grey — official site hero is stock smiles"
+  ]
+}
