@@ -142,7 +142,7 @@ function inferAges(min?: number, max?: number) {
   return { min: 0, max: 0, known: false };
 }
 
-function hydrate(raw: RawCentre, _index: number): CatalogDaycare {
+function hydrate(raw: RawCentre): CatalogDaycare {
   const fact = operatorFactFor(raw);
   const city = raw.city || "";
   const province = raw.province || "";
@@ -222,10 +222,13 @@ const EXTRA_FILES = [
 const EXTRA_BASE =
   "https://raw.githubusercontent.com/klernout-hash/kidease/main/src/lib/data/";
 
+let rawCentres: RawCentre[] | null = null;
+let rawBySlug = new Map<string, RawCentre>();
+let rawById = new Map<string, RawCentre>();
+let rawGrid: Map<string, RawCentre[]> | null = null;
 let cachedCatalog: CatalogDaycare[] | null = null;
 let catalogBySlugMap = new Map<string, CatalogDaycare>();
 let catalogByIdMap = new Map<string, CatalogDaycare>();
-let catalogGrid: Map<string, CatalogDaycare[]> | null = null;
 
 /** ~28 km cells. Search only walks cells that intersect the 50 km cap. */
 const GRID_DEG = 0.25;
@@ -234,8 +237,8 @@ function gridKey(lat: number, lng: number) {
   return `${Math.floor(lat / GRID_DEG)}_${Math.floor(lng / GRID_DEG)}`;
 }
 
-function buildCatalogGrid(rows: CatalogDaycare[]) {
-  const grid = new Map<string, CatalogDaycare[]>();
+function buildRawGrid(rows: RawCentre[]) {
+  const grid = new Map<string, RawCentre[]>();
   for (const d of rows) {
     if (!Number.isFinite(d.lat) || !Number.isFinite(d.lng)) continue;
     const key = gridKey(d.lat, d.lng);
@@ -243,7 +246,7 @@ function buildCatalogGrid(rows: CatalogDaycare[]) {
     if (bucket) bucket.push(d);
     else grid.set(key, [d]);
   }
-  catalogGrid = grid;
+  rawGrid = grid;
 }
 
 async function readLocalJson(rel: string): Promise<unknown | null> {
@@ -287,20 +290,28 @@ async function loadRawCentres(): Promise<RawCentre[]> {
   return merged;
 }
 
+async function ensureRaw() {
+  if (rawCentres) return rawCentres;
+  rawCentres = await loadRawCentres();
+  rawBySlug = new Map(rawCentres.map((d) => [d.slug, d]));
+  rawById = new Map(rawCentres.map((d) => [d.id, d]));
+  buildRawGrid(rawCentres);
+  return rawCentres;
+}
+
 export async function getCatalog(): Promise<CatalogDaycare[]> {
   if (cachedCatalog) return cachedCatalog;
-  const raw = await loadRawCentres();
+  const raw = await ensureRaw();
   cachedCatalog = raw.map(hydrate);
   catalogBySlugMap = new Map(cachedCatalog.map((d) => [d.slug, d]));
   catalogByIdMap = new Map(cachedCatalog.map((d) => [d.id, d]));
-  buildCatalogGrid(cachedCatalog);
   return cachedCatalog;
 }
 
-/** Only centres inside `radiusKm`, hard-capped at 50 km. Does not scan Canada. */
+/** Only centres inside `radiusKm`, hard-capped at 50 km. Hydrates matches only. */
 export async function catalogNear(origin: { lat: number; lng: number }, radiusKm: number) {
-  await getCatalog();
-  if (!catalogGrid) return [];
+  await ensureRaw();
+  if (!rawGrid) return [];
   const radius = clampRadiusKm(radiusKm);
   const box = bboxFromRadius(origin, radius);
   const minI = Math.floor(box.minLat / GRID_DEG);
@@ -310,13 +321,13 @@ export async function catalogNear(origin: { lat: number; lng: number }, radiusKm
   const out: CatalogDaycare[] = [];
   for (let i = minI; i <= maxI; i++) {
     for (let j = minJ; j <= maxJ; j++) {
-      const bucket = catalogGrid.get(`${i}_${j}`);
+      const bucket = rawGrid.get(`${i}_${j}`);
       if (!bucket) continue;
       for (const d of bucket) {
         const point = { lat: d.lat, lng: d.lng };
         if (!inBbox(point, box)) continue;
         if (distanceKm(origin, point) > radius) continue;
-        out.push(d);
+        out.push(hydrate(d));
       }
     }
   }
@@ -324,13 +335,17 @@ export async function catalogNear(origin: { lat: number; lng: number }, radiusKm
 }
 
 export async function catalogBySlugGet(slug: string) {
-  await getCatalog();
-  return catalogBySlugMap.get(slug);
+  if (catalogBySlugMap.has(slug)) return catalogBySlugMap.get(slug);
+  await ensureRaw();
+  const raw = rawBySlug.get(slug);
+  return raw ? hydrate(raw) : undefined;
 }
 
 export async function catalogByIdGet(id: string) {
-  await getCatalog();
-  return catalogByIdMap.get(id);
+  if (catalogByIdMap.has(id)) return catalogByIdMap.get(id);
+  await ensureRaw();
+  const raw = rawById.get(id);
+  return raw ? hydrate(raw) : undefined;
 }
 
 export function catalogMonths() {
