@@ -1,44 +1,53 @@
 {
-  "last_run": "2026-09-03T10:26:37Z",
+  "last_run": "2026-09-03T11:28:56Z",
   "city": "Winnipeg",
   "province": "MB",
-  "last_id_processed": "mb-102704",
-  "mapped_count": 66,
-  "mapped_winnipeg": 66,
+  "last_id_processed": "mb-102722",
+  "mapped_count": 73,
+  "mapped_winnipeg": 73,
   "winnipeg_total": 428,
   "national_total": 20846,
-  "real_storefronts_keys": 66,
+  "real_storefronts_keys": 73,
   "pending_jpeg_upload": [
     "mb-102704",
     "mb-101167",
     "mb-102610",
     "mb-101065",
     "mb-1014",
-    "mb-101053"
+    "mb-101053",
+    "mb-101488",
+    "mb-1011",
+    "mb-102422",
+    "mb-102722",
+    "mb-1244",
+    "mb-3004",
+    "mb-3092"
   ],
   "skipped_no_photo_this_run": [
-    "mb-101862",
-    "mb-1036",
-    "mb-1249",
-    "mb-100532",
-    "mb-1264",
-    "mb-1233",
-    "mb-7834",
-    "mb-1046",
-    "mb-1007",
-    "mb-101123",
-    "mb-101395",
-    "mb-102555",
-    "mb-100414",
-    "mb-3012"
+    "mb-1284",
+    "mb-9318",
+    "mb-3057",
+    "mb-1023",
+    "mb-101062",
+    "mb-1010",
+    "mb-3003",
+    "mb-1172",
+    "mb-3109",
+    "mb-1148",
+    "mb-1045"
   ],
   "ids_added_this_run": [
-    "mb-102704"
+    "mb-101488",
+    "mb-1011",
+    "mb-102422",
+    "mb-3092",
+    "mb-1244",
+    "mb-3004",
+    "mb-102722"
   ],
   "next_queue": [
-    "Continue Winnipeg: Champlain, Chapman, Concordia, Cuddles, Dante, Day Nursery Kid Gloves, Eagle Wing if site recovers, Festival if photos appear, Freight House garden posts if non-stock, Casa Fennel only if Fennel-specific photo",
-    "then remaining D-G Winnipeg names, then Brandon MB"
+    "Continue Winnipeg E-G names then remaining H-Z, then Brandon MB"
   ],
   "next_city_after_winnipeg": "Brandon",
-  "note": "Added Guiding Minds Montessori (mb-102704) official classroom photo from guidingmindsmontessori.com. JPEGs stored locally; GitHub binary upload still pending."
+  "note": "Added 7 official photos. JPEGs stored locally; GitHub binary upload still pending."
 }
