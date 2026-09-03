@@ -112,18 +112,16 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:flex [[data-channel=website]_&]:xl:hidden">
               <LanguageSelect />
             </div>
-            <Link
-              to="/account"
-              search={{ tab: "profile" }}
-              className={cn(
-                "hidden min-w-12 flex-col items-center justify-center gap-0.5 px-1 py-0.5 [[data-channel=app]_&]:flex",
-                onProfile ? "text-primary" : "text-muted",
-              )}
-              aria-label={t("profile")}
-            >
-              <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={user?.displayName} size="sm" />
-              <span className="text-[9px] font-medium tracking-wide">{t("profile")}</span>
-            </Link>
+            <HeaderProfile
+              userId={user?.id}
+              image={user?.profileImageUrl}
+              name={user?.displayName}
+              signedIn={Boolean(user)}
+              active={onProfile}
+              profileLabel={t("profile")}
+              parentLabel={t("parentSignIn")}
+              providerLabel={t("providerLogin")}
+            />
             <button
               type="button"
               className="hidden size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=website]_&]:grid [[data-channel=website]_&]:xl:hidden"
@@ -184,6 +182,105 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         </nav>
       )}
       {hideTabs || pathname.startsWith("/search") ? null : <LiveChatSlot />}
+    </div>
+  );
+}
+
+function HeaderProfile({
+  userId,
+  image,
+  name,
+  signedIn,
+  active,
+  profileLabel,
+  parentLabel,
+  providerLabel,
+}: {
+  userId?: string | null;
+  image?: string | null;
+  name?: string | null;
+  signedIn: boolean;
+  active: boolean;
+  profileLabel: string;
+  parentLabel: string;
+  providerLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const triggerClass = cn(
+    "flex min-w-12 flex-col items-center justify-center gap-0.5 px-1 py-0.5 [[data-channel=app]_&]:flex",
+    "hidden [[data-channel=website]_&]:flex [[data-channel=website]_&]:xl:hidden",
+    active ? "text-primary" : "text-muted",
+  );
+
+  if (signedIn) {
+    return (
+      <Link to="/account" search={{ tab: "profile" }} className={triggerClass} aria-label={profileLabel}>
+        <ProfileAvatar userId={userId} fallback={image} name={name} size="sm" />
+        <span className="text-[9px] font-medium tracking-wide">{profileLabel}</span>
+      </Link>
+    );
+  }
+
+  return (
+    <div ref={wrap} className="relative hidden [[data-channel=app]_&]:block [[data-channel=website]_&]:block [[data-channel=website]_&]:xl:hidden">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={profileLabel}
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex min-w-12 flex-col items-center justify-center gap-0.5 px-1 py-0.5",
+          open ? "text-primary" : "text-muted",
+        )}
+      >
+        <ProfileAvatar userId={userId} fallback={image} name={name} size="sm" />
+        <span className="text-[9px] font-medium tracking-wide">{profileLabel}</span>
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-56 overflow-hidden rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
+        >
+          <p className="border-b border-border px-3 py-2 text-xs font-medium text-muted">Sign in</p>
+          <Link
+            role="menuitem"
+            to="/login"
+            search={{ role: "parent", intent: "in", next: "/parent" }}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+          >
+            {parentLabel}
+          </Link>
+          <Link
+            role="menuitem"
+            to="/login"
+            search={{ role: "provider", intent: "in", next: "/provider" }}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+          >
+            {providerLabel}
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }
