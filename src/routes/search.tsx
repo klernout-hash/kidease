@@ -2,8 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { LocateFixed, SlidersHorizontal, Sparkles } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
-import { DaycareCard } from "@/components/daycare-card";
 import { Button } from "@/components/ui/button";
+import { ExploreRails } from "@/components/explore-rails";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
 import { reverseGeocode } from "@/lib/geo";
@@ -18,7 +18,6 @@ import { useAppStore, type SortKey } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
-import { ExploreSheet, type SheetSnap } from "@/components/explore-sheet";
 import { LocationConsentCard } from "@/components/location-consent";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
@@ -75,8 +74,6 @@ function SearchPage() {
   const [extended, setExtended] = useState(false);
   const [infantOnly, setInfantOnly] = useState(false);
   const [catchmentOnly, setCatchmentOnly] = useState(false);
-  const [snap, setSnap] = useState<SheetSnap>("mid");
-  const [shownN, setShownN] = useState(24);
   const originAt = useAppStore((s) => s.originAt);
   const originSource = useAppStore((s) => s.originSource);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
@@ -127,10 +124,6 @@ function SearchPage() {
       window.clearTimeout(tmr);
     };
   }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query, origin.label]);
-
-  useEffect(() => {
-    setShownN(24);
-  }, [origin.lat, origin.lng, radiusKm, liveOnly]);
 
   function applyPlace(place: { lat: number; lng: number; label: string }) {
     setOrigin(place);
@@ -279,7 +272,9 @@ function SearchPage() {
       />
       <div className="mt-1 flex justify-between text-[11px] text-muted">
         <span>1 {u}</span>
-        <span>{radiusMax} {u}</span>
+        <span>
+          {radiusMax} {u}
+        </span>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {presets.map((n) => {
@@ -316,126 +311,7 @@ function SearchPage() {
 
   return (
     <Shell>
-      <div className="ke-app-search hidden [[data-channel=app]_&]:block">
-        <div className="absolute inset-0 overflow-hidden bg-map">
-          <Suspense fallback={<div className="size-full bg-map" />}>
-            <MapView
-            items={list}
-            origin={origin}
-            radiusKm={radiusKm}
-            activeSlug={active}
-            onSelect={(slug) => {
-              setActive(slug);
-              setSnap("mid");
-            }}
-            onRelocate={(pos) => {
-              setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
-              void hapticLight();
-            }}
-            onLocate={() => void geo()}
-          />
-          </Suspense>
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-30 p-3">
-          <form
-            className="pointer-events-auto"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void applyQuery();
-            }}
-          >
-            <div className="flex min-h-12 items-center gap-2 rounded-full bg-surface/95 pl-4 pr-1.5 shadow-lift ring-1 ring-border backdrop-blur">
-              <PlaceSearch
-                value={query}
-                onChange={setQuery}
-                onResolved={applyPlace}
-                placeholder={t("locationPh")}
-                origin={origin}
-                inputClassName="h-11 min-w-0 w-full bg-transparent text-[15px] outline-none"
-              />
-              <button type="button" onClick={() => void geo()} className="grid size-10 place-items-center text-muted" aria-label={t("useLocation")}>
-                <LocateFixed className="size-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilters((v) => !v)}
-                className={cn(
-                  "grid size-10 place-items-center rounded-full",
-                  filters || extraFilters ? "bg-fg text-bg" : "text-muted",
-                )}
-                aria-label={t("filters")}
-                aria-pressed={filters}
-              >
-                <SlidersHorizontal className="size-5" />
-              </button>
-            </div>
-            {askLocation ? (
-              <div className="pointer-events-auto mt-2">
-                <LocationConsentCard
-                  onAllow={() => void allowLocation()}
-                  onLater={() => setAskLocation(false)}
-                />
-              </div>
-            ) : null}
-            {filters ? (
-              <div className="pointer-events-auto mt-2 max-h-[52dvh] space-y-4 overflow-y-auto rounded-xl bg-surface/95 p-4 shadow-lift ring-1 ring-border backdrop-blur">
-                <div className="flex min-h-10 rounded-full bg-bg p-0.5 ring-1 ring-border">
-                  <button
-                    type="button"
-                    onClick={() => setLiveOnly(true)}
-                    className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", liveOnly ? "bg-ok text-primary-fg" : "text-muted")}
-                  >
-                    {t("liveOnly")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLiveOnly(false)}
-                    className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", !liveOnly ? "bg-fg text-bg" : "text-muted")}
-                  >
-                    {t("showAll")}
-                  </button>
-                </div>
-                {radiusSlider}
-                {filterChips}
-              </div>
-            ) : null}
-          </form>
-        </div>
-        <ExploreSheet
-          snap={snap}
-          onSnap={setSnap}
-          label={`${list.length} centres · ${shownRadius} ${u}`}
-        >
-          {items === null ? (
-            <div className="ke-listings-narrow">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-square animate-pulse rounded-xl bg-surface-2" />
-              ))}
-            </div>
-          ) : list.length === 0 ? (
-            <p className="p-6 text-center text-sm text-muted">{t("noResults")}</p>
-          ) : (
-            <div className={cn("ke-listings-narrow", refreshing && "opacity-70")}>
-              {list.slice(0, shownN).map((item, i) => (
-                <div key={item.id} onClick={() => setActive(item.slug)}>
-                  <DaycareCard item={item} eager={i < 2} />
-                </div>
-              ))}
-              {list.length > shownN ? (
-                <button
-                  type="button"
-                  className="col-span-full rounded-xl bg-surface px-4 py-3 text-sm font-medium ring-1 ring-border"
-                  onClick={() => setShownN((n) => n + 24)}
-                >
-                  {t("showAll")} · {list.length}
-                </button>
-              ) : null}
-            </div>
-          )}
-        </ExploreSheet>
-      </div>
-
-      <div className="ke-gutter mx-auto max-w-7xl pb-6 pt-4 [[data-channel=app]_&]:hidden">
+      <div className="ke-gutter mx-auto max-w-7xl pb-10 pt-4">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>
@@ -447,9 +323,7 @@ function SearchPage() {
               {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
             </p>
             {fabric.live > 0 ? (
-              <p className="mt-1 text-xs font-medium text-ok">
-                {t("liveInArea").replace("{n}", String(fabric.live))}
-              </p>
+              <p className="mt-1 text-xs font-medium text-ok">{t("liveInArea").replace("{n}", String(fabric.live))}</p>
             ) : null}
           </div>
           <Link to="/" search={{ change: "1" }} className="shrink-0 pb-0.5 text-sm font-medium text-primary">
@@ -509,9 +383,7 @@ function SearchPage() {
           >
             <SlidersHorizontal className="size-3.5" />
             {t("filters")}
-            {extraFilters ? (
-              <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">{extraFilters}</span>
-            ) : null}
+            {extraFilters ? <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">{extraFilters}</span> : null}
           </button>
           <div className="flex h-10 min-w-[10rem] flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:flex-none">
             <button
@@ -519,7 +391,7 @@ function SearchPage() {
               onClick={() => setView("list")}
               className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", view === "list" ? "bg-fg text-bg" : "text-muted")}
             >
-              {t("list")}
+              {t("explore")}
             </button>
             <button
               type="button"
@@ -533,10 +405,7 @@ function SearchPage() {
 
         {askLocation ? (
           <div className="mt-3">
-            <LocationConsentCard
-              onAllow={() => void allowLocation()}
-              onLater={() => setAskLocation(false)}
-            />
+            <LocationConsentCard onAllow={() => void allowLocation()} onLater={() => setAskLocation(false)} />
           </div>
         ) : null}
 
@@ -589,60 +458,39 @@ function SearchPage() {
           </div>
         ) : null}
 
-        <div className={cn("mt-5 grid gap-4", view === "map" && "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]")}>
-          <div className={cn(view === "map" ? "hidden lg:block" : "block")}>
-            {items === null ? (
-              <div className="ke-listings-narrow">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="aspect-square animate-pulse rounded-xl bg-surface-2" />
-                ))}
+        <div className={cn("mt-2", refreshing && "opacity-70")}>
+          {view === "map" ? (
+            mapEnabled ? (
+              <div className="mt-4 h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
+                <Suspense fallback={<div className="size-full bg-map" />}>
+                  <MapView
+                    items={list}
+                    origin={origin}
+                    radiusKm={radiusKm}
+                    activeSlug={active}
+                    onSelect={(slug) => setActive(slug)}
+                    onRelocate={(pos) => {
+                      setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
+                      void hapticLight();
+                    }}
+                    onLocate={() => void geo()}
+                  />
+                </Suspense>
               </div>
-            ) : list.length === 0 ? (
-              <p className="rounded-xl bg-surface p-8 text-center text-muted ring-1 ring-border">
-                {liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("noResults")}
-              </p>
-            ) : (
-              <div className={cn("ke-listings-narrow", refreshing && "opacity-70")}>
-                {list.slice(0, shownN).map((item, i) => (
-                  <div key={item.id} onMouseEnter={() => setActive(item.slug)} className={cn(active === item.slug && "rounded-xl ring-2 ring-fg")}>
-                    <DaycareCard item={item} eager={i < 3} />
-                  </div>
-                ))}
-                {list.length > shownN ? (
-                  <button
-                    type="button"
-                    className="rounded-xl bg-surface px-4 py-3 text-sm font-medium ring-1 ring-border"
-                    onClick={() => setShownN((n) => n + 24)}
-                  >
-                    {t("showAll")} · {list.length}
-                  </button>
-                ) : null}
-              </div>
-            )}
-          </div>
-          {mapEnabled ? (
-          <div
-            className={cn(
-              "h-[28dvh] min-h-[11rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:sticky lg:top-20 lg:h-[22rem]",
-              view === "list" ? "hidden" : "block",
-            )}
-          >
-            <Suspense fallback={<div className="size-full bg-map" />}>
-            <MapView
-              items={list}
-              origin={origin}
-              radiusKm={radiusKm}
-              activeSlug={active}
-              onSelect={(slug) => setActive(slug)}
-              onRelocate={(pos) => {
-                setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
-                void hapticLight();
-              }}
-              onLocate={() => void geo()}
-            />
-            </Suspense>
-          </div>
-          ) : null}
+            ) : null
+          ) : items === null ? (
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="aspect-[20/19] animate-pulse rounded-xl bg-surface-2" />
+              ))}
+            </div>
+          ) : list.length === 0 ? (
+            <p className="mt-6 rounded-xl bg-surface p-8 text-center text-muted ring-1 ring-border">
+              {liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("noResults")}
+            </p>
+          ) : (
+            <ExploreRails items={list} onHover={setActive} />
+          )}
         </div>
       </div>
       <Suspense fallback={null}>
