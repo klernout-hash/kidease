@@ -9,7 +9,7 @@ import { reportError } from "@/lib/observe";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
-const APP_ICON = "/app-icon?v=6";
+const APP_ICON = "/app-icon?v=7";
 
 export const Route = createRootRoute({
   errorComponent: ({ error }) => {
@@ -40,11 +40,11 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=6" },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=7" },
       { rel: "icon", type: "image/png", sizes: "180x180", href: APP_ICON },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png?v=6" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png?v=7" },
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "manifest", href: "/manifest.webmanifest?v=7" },
       { rel: "apple-touch-icon", href: APP_ICON },
       { rel: "apple-touch-icon", sizes: "180x180", href: APP_ICON },
       { rel: "apple-touch-icon-precomposed", href: APP_ICON },
