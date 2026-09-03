@@ -1,0 +1,9 @@
+{
+  "run_id": "2026-09-03-winnipeg-queue-1001-103141",
+  "finished": "2026-09-03T23:17:44Z",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_added": [],
+  "ids_skipped_no_photo": ["mb-1001", "mb-100141", "mb-100249", "mb-100529", "mb-100901", "mb-100902", "mb-100937", "mb-101827", "mb-101862", "mb-1036", "mb-103026", "mb-103141"],
+  "notes": "Mostly school-age/in-school programs. Official sites had stock only or no facility photos. Existing wpg/ images are Google Street View — not mapped. storefront/mb-103026.jpg is Assiniboine Park Zoo — not mapped. Placeholders left."
+}
