@@ -1,0 +1,8 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_added": ["mb-100048", "mb-102027", "mb-101527", "mb-102549", "mb-102662", "mb-2024", "mb-1263", "mb-9330", "mb-3005"],
+  "ids_skipped_no_photo": ["mb-102933", "mb-1272", "mb-9490", "mb-1159", "mb-101378", "mb-100170"],
+  "notes": "Official-site photos only. JPEGs saved locally at artifacts/kidease-photos/buildings because GitHub text push cannot carry binary JPEGs in this session. real-storefronts.json updated on main."
+}
