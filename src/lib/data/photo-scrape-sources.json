@@ -79,5 +79,32 @@
     "source_image": "https://static.wixstatic.com/media/ed789b_4eb3041bd2484eb68b7ba3b6972a4b3b~mv2.jpg",
     "kind": "official program photo — children outdoor winter play",
     "file": "/photos/buildings/mb-3001.jpg"
+  },
+  "mb-101065": {
+    "id": "mb-101065",
+    "name": "Down to Earth Children's Centre",
+    "address": "300 Carpathia Road, Winnipeg, MB",
+    "source_url": "https://downtoearthchildrenscentre.ca/",
+    "source_image": "https://downtoearthchildrenscentre.ca/wp-content/uploads/2025/08/Front_page_pic-scaled.jpg",
+    "kind": "official program photo — children picnic / outdoor play at the centre",
+    "file": "/photos/buildings/mb-101065.jpg"
+  },
+  "mb-1014": {
+    "id": "mb-1014",
+    "name": "Horizons Children's Centre",
+    "address": "367 Hampton Street, Winnipeg, MB",
+    "source_url": "https://www.horizonschildrenscentre.com/",
+    "source_image": "https://static.wixstatic.com/media/57223c_8224f6311210400ba1b210565d364a3a~mv2.jpg",
+    "kind": "official program photo — child outdoors (operator site; Hampton listing)",
+    "file": "/photos/buildings/mb-1014.jpg"
+  },
+  "mb-101053": {
+    "id": "mb-101053",
+    "name": "The Carpenter's Montessori School Inc.",
+    "address": "300-400 Fort Whyte Way, Winnipeg, MB",
+    "source_url": "https://carpentersmontessori.com/",
+    "source_image": "https://carpentersmontessori.com/04.jpg",
+    "kind": "official classroom interior at Fort Whyte Way campus",
+    "file": "/photos/buildings/mb-101053.jpg"
   }
 }

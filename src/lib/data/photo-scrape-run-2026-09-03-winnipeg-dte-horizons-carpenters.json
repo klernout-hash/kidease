@@ -1,0 +1,19 @@
+{
+  "run": "2026-09-03T14:15:00Z",
+  "city": "Winnipeg",
+  "processed": [
+    {"id": "mb-1053", "name": "Explorer's Children's Centre Inc.", "result": "skipped-no-photo", "reason": "no official website; directory listings only"},
+    {"id": "mb-1045", "name": "Fairlane Children's Centre Incorporated", "result": "skipped-stock", "reason": "official site exists (fairlanechildrenscentre.ca) but images are generic stock, not identifiable as this centre"},
+    {"id": "mb-1157", "name": "Faith Children's Centre", "result": "skipped-no-photo", "reason": "hosted at Faith Lutheran Church; no daycare classroom/kids/building photos on faithlc.ca"},
+    {"id": "mb-100414", "name": "Eagle Wing Early Education Centre", "result": "skipped-no-photo", "reason": "eaglewing.ca SSL broken / HTTP is a parked easyDNS page"},
+    {"id": "mb-3109", "name": "Dalhousie Day Care Inc.", "result": "skipped-no-photo", "reason": "only Pembina Trails school text page; no photos"},
+    {"id": "mb-1148", "name": "Dante Day Nursery Inc.", "result": "skipped-no-photo", "reason": "no official website found"},
+    {"id": "mb-1014", "name": "Horizons Children's Centre", "result": "mapped", "source": "https://www.horizonschildrenscentre.com/", "image": "https://static.wixstatic.com/media/57223c_8224f6311210400ba1b210565d364a3a~mv2.jpg"},
+    {"id": "mb-101768", "name": "Horizon's Access", "result": "skipped-not-site-specific", "reason": "Horizons operator photo is not labeled Access/280 Booth; leave placeholder"},
+    {"id": "mb-9539", "name": "Horizons Children's Centre Inc. /Grace", "result": "skipped-not-site-specific", "reason": "same operator photo not labeled Grace/408 Booth; leave placeholder"},
+    {"id": "mb-101065", "name": "Down to Earth Children's Centre", "result": "mapped", "source": "https://downtoearthchildrenscentre.ca/", "image": "https://downtoearthchildrenscentre.ca/wp-content/uploads/2025/08/Front_page_pic-scaled.jpg"},
+    {"id": "mb-101053", "name": "The Carpenter's Montessori School Inc.", "result": "mapped", "source": "https://carpentersmontessori.com/", "image": "https://carpentersmontessori.com/04.jpg"},
+    {"id": "mb-1038", "name": "Explore and Discover Early Learning Centre Inc.", "result": "skipped-stock", "reason": "exploreanddiscover.info hero images appear to be generic stock"}
+  ],
+  "added": ["mb-101065", "mb-1014", "mb-101053"]
+}
