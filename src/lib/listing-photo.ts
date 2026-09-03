@@ -1,6 +1,6 @@
 /** Listing-honesty photo pick. Official operator JPEGs beat /photos/wpg/; never Street View. */
 
-export const LISTING_PLACEHOLDER = "/photos/storefront-placeholder.jpg";
+export const LISTING_PLACEHOLDER = "/photos/storefront-placeholder-480.webp";
 
 export function isOfficialBuildingPhoto(src: string | undefined): boolean {
   return Boolean(src && src.startsWith("/photos/buildings/") && !src.includes("..") && !src.includes("-logo"));

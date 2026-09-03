@@ -5,6 +5,10 @@ import { PHOTO_WIDTHS } from "@/lib/photo";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOW = /^\/photos\/[a-z0-9/_-]+\.(jpe?g|png|webp|avif)$/i;
+const MEM_MAX = 64;
+
+type Cached = { body: Buffer; type: string };
+const mem = new Map<string, Cached>();
 
 export async function optimizePhoto(request: Request): Promise<Response> {
   const url = new URL(request.url);
@@ -22,7 +26,20 @@ export async function optimizePhoto(request: Request): Promise<Response> {
     ? "avif"
     : accept.includes("image/webp")
       ? "webp"
-      : "jpeg";
+      : "webp";
+
+  const cacheKey = `${src}|${width}|${format}`;
+  const cached = mem.get(cacheKey);
+  if (cached) {
+    return new Response(cached.body, {
+      status: 200,
+      headers: {
+        "content-type": cached.type,
+        "cache-control": "public, max-age=31536000, immutable",
+        vary: "Accept",
+      },
+    });
+  }
 
   let buf: Buffer;
   try {
@@ -45,14 +62,20 @@ export async function optimizePhoto(request: Request): Promise<Response> {
       width,
       withoutEnlargement: true,
     });
-    if (format === "avif") pipeline = pipeline.avif({ quality: 48 });
-    else if (format === "webp") pipeline = pipeline.webp({ quality: 70 });
-    else pipeline = pipeline.jpeg({ quality: 72, mozjpeg: true });
+    if (format === "avif") pipeline = pipeline.avif({ quality: 42 });
+    else if (format === "webp") pipeline = pipeline.webp({ quality: 62 });
+    else pipeline = pipeline.jpeg({ quality: 68, mozjpeg: true });
     const out = await pipeline.toBuffer();
+    const type = format === "jpeg" ? "image/jpeg" : `image/${format}`;
+    mem.set(cacheKey, { body: out, type });
+    if (mem.size > MEM_MAX) {
+      const first = mem.keys().next().value;
+      if (typeof first === "string") mem.delete(first);
+    }
     return new Response(out, {
       status: 200,
       headers: {
-        "content-type": format === "jpeg" ? "image/jpeg" : `image/${format}`,
+        "content-type": type,
         "cache-control": "public, max-age=31536000, immutable",
         vary: "Accept",
       },

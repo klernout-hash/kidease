@@ -75,7 +75,7 @@ export const useAppStore = create<SearchState>()((set) => ({
   setSort: (sort) => set({ sort }),
   ageGroup: "any",
   setAgeGroup: (ageGroup) => set({ ageGroup }),
-  view: "map",
+  view: "list",
   setView: (view) => set({ view }),
   query: "",
   setQuery: (query) => set({ query }),
