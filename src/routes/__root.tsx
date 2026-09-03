@@ -9,7 +9,7 @@ import { reportError } from "@/lib/observe";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
-const APP_ICON = "/app-icon?v=7";
+const APP_ICON = "/icons/icon-1024.png?v=7";
 
 export const Route = createRootRoute({
   errorComponent: ({ error }) => {
