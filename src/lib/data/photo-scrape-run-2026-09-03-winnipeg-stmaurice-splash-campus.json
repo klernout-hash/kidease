@@ -1,0 +1,27 @@
+{
+  "run_date": "2026-09-03T16:52:00Z",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_added": ["mb-1004", "mb-100351"],
+  "ids_skipped": ["mb-100042", "mb-1001", "mb-100131", "mb-100141", "mb-100170", "mb-100171", "mb-1002", "mb-100238", "mb-100249", "mb-100259", "mb-1003", "mb-100379", "mb-100404"],
+  "details": {
+    "mb-1004": {
+      "name": "Campus Children's Centre Inc.",
+      "address": "15 - 19 Dysart Road, Winnipeg",
+      "official_site": "https://www.campuschildrenscentre.com/",
+      "source_url": "https://static.wixstatic.com/media/591b5b_234cf05f03584dfbac1ae708dad980c8~mv2.jpeg",
+      "image_kind": "official site infant playroom interior at Fort Garry campus centre",
+      "repo_path": "public/photos/buildings/mb-1004.jpg",
+      "status": "MAPPED"
+    },
+    "mb-100351": {
+      "name": "Splash Child Enrichment Centre Inc (McGregor Location)",
+      "address": "363 McGregor Street, Winnipeg",
+      "official_site": "https://splashcares.ca/our-locations/",
+      "source_url": "https://splashcares.ca/wp-content/uploads/2020/07/ec-centre-photoshoped.png",
+      "image_kind": "official site exterior of Splash EC / Win Gardner Place at 363 McGregor",
+      "repo_path": "public/photos/buildings/mb-100351.jpg",
+      "status": "MAPPED"
+    }
+  }
+}
