@@ -39,7 +39,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const onAccount = pathname.startsWith("/account");
   const accountTab = tab ?? "profile";
   const hideFooter =
-    hideTabs || pathname.startsWith("/admin") || pathname.startsWith("/verify-2fa");
+    hideTabs || pathname.startsWith("/admin") || pathname.startsWith("/verify-2fa") || pathname.startsWith("/menu");
   const onProfile = onAccount && accountTab === "profile";
 
   const desktopNav = [
@@ -113,8 +113,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               <LanguageSelect />
             </div>
             <Link
-              to={user ? "/account" : "/login"}
-              search={user ? { tab: "profile" } : { role: "parent", intent: "in", next: "/account?tab=profile" }}
+              to="/account"
+              search={{ tab: "profile" }}
               className={cn(
                 "hidden min-w-12 flex-col items-center justify-center gap-0.5 px-1 py-0.5 [[data-channel=app]_&]:flex",
                 onProfile ? "text-primary" : "text-muted",
