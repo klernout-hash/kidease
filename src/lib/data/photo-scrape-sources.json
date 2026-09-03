@@ -61,5 +61,23 @@
     "source_image": "https://assets.cdn.filesafe.space/sSc5Nr5mYDvMFZCDdOfF/media/6849be26468a693b544c81ea.jpeg",
     "kind": "official classroom — child with Montessori pink tower",
     "file": "/photos/buildings/mb-7923.jpg"
+  },
+  "mb-3010": {
+    "id": "mb-3010",
+    "name": "Cairns Children's Centre Inc.",
+    "address": "1100 Chancellor Drive, Winnipeg, MB",
+    "source_url": "http://www.cairnscc.com/",
+    "source_image": "https://images.squarespace-cdn.com/content/v1/548c9d96e4b04ff00dd5ca7b/1783959173889-TPYEGKVVNQVDV0ROTYBN/IMG_5307.jpg",
+    "kind": "official program photo — children outdoor winter play",
+    "file": "/photos/buildings/mb-3010.jpg"
+  },
+  "mb-3001": {
+    "id": "mb-3001",
+    "name": "Agassiz Child Care Centre Inc.",
+    "address": "131 Leach Street, Winnipeg, MB",
+    "source_url": "https://www.agassizchildcare.com/",
+    "source_image": "https://static.wixstatic.com/media/ed789b_4eb3041bd2484eb68b7ba3b6972a4b3b~mv2.jpg",
+    "kind": "official program photo — children outdoor winter play",
+    "file": "/photos/buildings/mb-3001.jpg"
   }
 }
