@@ -9,7 +9,7 @@ import { reportError } from "@/lib/observe";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
-const ICON_VER = "12";
+const ICON_VER = "13";
 const APP_ICON = `/icon-512.png?v=${ICON_VER}`;
 
 export const Route = createRootRoute({
@@ -32,12 +32,12 @@ export const Route = createRootRoute({
       { name: "theme-color", content: "#1A3790" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
       { name: "application-name", content: APP_NAME },
       {
         name: "description",
-        content: "Find licensed childcare in Canada within a kilometre radius. Monthly fees, open spots, and enrolment in one place.",
+        content: "Find licensed childcare in Canada within a kilometre radius. Monthly fees, open spots, and enrolment in your pocket.",
       },
     ],
     links: [
