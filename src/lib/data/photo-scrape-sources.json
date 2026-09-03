@@ -74,5 +74,21 @@
     "image_url": "https://www.discoverycc.com/wp-content/uploads/2020/10/front-address-scaled.jpg",
     "type": "official_website_storefront_playground",
     "scraped_at": "2026-09-03T18:30:00Z"
+  },
+  "mb-1027": {
+    "name": "Kings Park Day Care Centre Inc.",
+    "address": "230 Dalhousie Drive, Winnipeg, MB",
+    "source_url": "https://www.kingsparkchildcare.org/",
+    "image_url": "https://static.wixstatic.com/media/d07713_a4485c1c8bef4663a94aba50817a5b4b~mv2.png",
+    "type": "official_website_kids_in_program",
+    "scraped_at": "2026-09-03T19:20:00Z"
+  },
+  "mb-1050": {
+    "name": "Seven Oaks Child Day Care Centre Inc.",
+    "address": "2300 McPhillips Street, Winnipeg, MB",
+    "source_url": "https://www.sevenoakschilddaycarecentre.com/",
+    "image_url": "https://img.pagecloud.com/Ss2Cg9ETAhW0gFtfP2kg2Rz8fOI=/2100x0/filters:no_upscale()/catarinas-website-3/images/IMG_1257.jpg",
+    "type": "official_website_kids_outdoor",
+    "scraped_at": "2026-09-03T19:20:00Z"
   }
 }
