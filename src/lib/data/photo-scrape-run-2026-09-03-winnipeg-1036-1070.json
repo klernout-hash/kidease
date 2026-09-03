@@ -1,1 +1,21 @@
-see local
+{
+  "run": "2026-09-03T19:32:00Z",
+  "city": "Winnipeg",
+  "processed": ["mb-1036", "mb-1046", "mb-1048", "mb-1050", "mb-1051", "mb-1053", "mb-1055", "mb-1056", "mb-1059", "mb-1060", "mb-1062", "mb-1063", "mb-1064", "mb-1070"],
+  "added": ["mb-1050", "mb-1064"],
+  "skipped": ["mb-1036", "mb-1046", "mb-1048", "mb-1051", "mb-1053", "mb-1055", "mb-1056", "mb-1059", "mb-1060", "mb-1062", "mb-1063", "mb-1070"],
+  "notes": {
+    "mb-1036": "Anne Ross Day Nursery / Mount Carmel: no usable nursery or 511 King storefront photo on official pages",
+    "mb-1046": "Care and Share: childcare.link waitlist only",
+    "mb-1048": "St. Vital Child Care Co-op: no official website photos",
+    "mb-1051": "Shepherd's Care official site uses stock-looking photos",
+    "mb-1053": "Explorer's Children's Centre: no official website",
+    "mb-1055": "Sunny Mountain sites 404/blocked",
+    "mb-1056": "Sunnyside Dieppe Road: no official photos of this centre",
+    "mb-1059": "Transcona Jaycees: waitlist only",
+    "mb-1060": "Universal Day Care site uses cartoons and stock photos",
+    "mb-1062": "Victor Play Centre domain does not resolve",
+    "mb-1063": "Wild Honey: no official website photos",
+    "mb-1070": "Little Bo-Peep: no official website"
+  }
+}
