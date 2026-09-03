@@ -84,7 +84,12 @@ function SearchPage() {
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const [askLocation, setAskLocation] = useState(false);
+  const [mapEnabled, setMapEnabled] = useState(false);
   useLivePresence(locationConsent === "granted");
+
+  useEffect(() => {
+    if (view === "map") setMapEnabled(true);
+  }, [view]);
 
   useEffect(() => {
     void bootSearchOrigin(incoming.q);
@@ -584,7 +589,7 @@ function SearchPage() {
           </div>
         ) : null}
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className={cn("mt-5 grid gap-4", view === "map" && "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]")}>
           <div className={cn(view === "map" ? "hidden lg:block" : "block")}>
             {items === null ? (
               <div className="ke-listings-narrow">
@@ -615,10 +620,11 @@ function SearchPage() {
               </div>
             )}
           </div>
+          {mapEnabled ? (
           <div
             className={cn(
               "h-[28dvh] min-h-[11rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:sticky lg:top-20 lg:h-[22rem]",
-              view === "list" ? "hidden lg:block" : "block",
+              view === "list" ? "hidden" : "block",
             )}
           >
             <Suspense fallback={<div className="size-full bg-map" />}>
@@ -636,6 +642,7 @@ function SearchPage() {
             />
             </Suspense>
           </div>
+          ) : null}
         </div>
       </div>
       <Suspense fallback={null}>
