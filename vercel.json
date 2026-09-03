@@ -18,7 +18,10 @@
     { "source": "/apple-touch-icon-precomposed.png", "destination": "/icon-512.png" },
     { "source": "/apple-touch-icon-180x180.png", "destination": "/icon-512.png" },
     { "source": "/apple-touch-icon-180x180-precomposed.png", "destination": "/icon-512.png" },
-    { "source": "/app-icon", "destination": "/icon-512.png" },
+    { "source": "/apple-touch-icon-precomposed.png", "destination": "/icon-512.png" },
+    { "source": "/__grok/icon-180.png", "destination": "/icon-512.png" },
+    { "source": "/__grok/icon-192.png", "destination": "/icon-512.png" },
+    { "source": "/__grok/icon-512.png", "destination": "/icon-512.png" },
     { "source": "/icon-192.png", "destination": "/icon-512.png" },
     { "source": "/icons/icon-180.png", "destination": "/icon-512.png" },
     { "source": "/icons/icon-192.png", "destination": "/icon-512.png" },
@@ -44,15 +47,15 @@
     },
     {
       "source": "/app-icon",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
     },
     {
       "source": "/apple-touch-icon(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
     },
     {
       "source": "/icons/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
     },
     {
       "source": "/assets/(.*)",
