@@ -227,7 +227,7 @@ let catalogBySlugMap = new Map<string, CatalogDaycare>();
 let catalogByIdMap = new Map<string, CatalogDaycare>();
 let catalogGrid: Map<string, CatalogDaycare[]> | null = null;
 
-/** ~28 km cells. Search only walks cells that intersect the 100 km cap. */
+/** ~28 km cells. Search only walks cells that intersect the 50 km cap. */
 const GRID_DEG = 0.25;
 
 function gridKey(lat: number, lng: number) {
@@ -297,7 +297,7 @@ export async function getCatalog(): Promise<CatalogDaycare[]> {
   return cachedCatalog;
 }
 
-/** Only centres inside `radiusKm`, hard-capped at 100 km. Does not scan Canada. */
+/** Only centres inside `radiusKm`, hard-capped at 50 km. Does not scan Canada. */
 export async function catalogNear(origin: { lat: number; lng: number }, radiusKm: number) {
   await getCatalog();
   if (!catalogGrid) return [];
