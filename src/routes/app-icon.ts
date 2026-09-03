@@ -1,12 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { appIconPngResponse } from "@/lib/app-icon-png";
 
-/** Bright 180x180 KidEase pin. Real PNG bytes so iOS Add to Home Screen
- *  does not fall back to a stretched page screenshot or tall transparent logo. */
+/** iOS Add to Home Screen hits /app-icon and /apple-touch-icon.png.
+ *  Serve the real square KidEase pin already at /icon-512.png. */
 export const Route = createFileRoute("/app-icon")({
   server: {
     handlers: {
-      GET: async () => appIconPngResponse(),
+      GET: async () =>
+        new Response(null, {
+          status: 302,
+          headers: {
+            Location: "/icon-512.png?v=12",
+            "cache-control": "public, max-age=3600, must-revalidate",
+          },
+        }),
     },
   },
 });

@@ -14,10 +14,16 @@
     { "source": "/how-it-works", "destination": "/#how", "permanent": false }
   ],
   "rewrites": [
-    { "source": "/apple-touch-icon.png", "destination": "/app-icon" },
-    { "source": "/apple-touch-icon-precomposed.png", "destination": "/app-icon" },
-    { "source": "/apple-touch-icon-180x180.png", "destination": "/app-icon" },
-    { "source": "/apple-touch-icon-180x180-precomposed.png", "destination": "/app-icon" }
+    { "source": "/apple-touch-icon.png", "destination": "/icon-512.png" },
+    { "source": "/apple-touch-icon-precomposed.png", "destination": "/icon-512.png" },
+    { "source": "/apple-touch-icon-180x180.png", "destination": "/icon-512.png" },
+    { "source": "/apple-touch-icon-180x180-precomposed.png", "destination": "/icon-512.png" },
+    { "source": "/app-icon", "destination": "/icon-512.png" },
+    { "source": "/icon-192.png", "destination": "/icon-512.png" },
+    { "source": "/icons/icon-180.png", "destination": "/icon-512.png" },
+    { "source": "/icons/icon-192.png", "destination": "/icon-512.png" },
+    { "source": "/icons/icon-512.png", "destination": "/icon-512.png" },
+    { "source": "/icons/icon-1024.png", "destination": "/icon-512.png" }
   ],
   "headers": [
     {
@@ -33,16 +39,20 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
-      "source": "/app-icon",
+      "source": "/icon-512.png",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/app-icon",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
     },
     {
       "source": "/apple-touch-icon(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
     },
     {
       "source": "/icons/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
     },
     {
       "source": "/assets/(.*)",
