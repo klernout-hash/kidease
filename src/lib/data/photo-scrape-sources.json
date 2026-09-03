@@ -68,6 +68,24 @@
     "repo_path": "public/photos/buildings/mb-100903.jpg",
     "status": "MAPPED"
   },
+  "mb-101696": {
+    "name": "Making Roots Montessori Centre Inc.",
+    "address": "660 Elizabeth Road, Winnipeg",
+    "official_site": "https://www.makingroots.ca/",
+    "source_url": "https://www.makingroots.ca/uploads/ck/images/home.2.@1x.jpg",
+    "image_kind": "official site photo of children in outdoor program at the centre",
+    "repo_path": "public/photos/buildings/mb-101696.jpg",
+    "status": "MAPPED_local_pending_binary"
+  },
+  "mb-1278": {
+    "name": "Manidoo Gi Miini Gonaan/R.B. Russell Infant Centre Inc.",
+    "address": "364 Dufferin Avenue, Winnipeg",
+    "official_site": "https://www.manidoo.ca/",
+    "source_url": "https://images.squarespace-cdn.com/content/v1/670eaa408afa6e2d874fca06/d182ae72-8b8f-47f4-9695-a8e6e1bcf571/54635f2a7c271c988d6630da8f453269.jpg",
+    "image_kind": "official site photo published by Manidoo",
+    "repo_path": "public/photos/buildings/mb-1278.jpg",
+    "status": "MAPPED_local_pending_binary"
+  },
   "mb-103205": {
     "name": "Little Fox Child Care Centre",
     "status": "SKIPPED",
@@ -92,5 +110,25 @@
     "name": "Louis Riel Child Care Centre",
     "status": "SKIPPED",
     "reason": "MMF news page image is a branded template, not a photo of this centre."
+  },
+  "mb-1033": {
+    "name": "Machray Day Nursery Inc.",
+    "status": "SKIPPED",
+    "reason": "Official Wix site uses heavily blurred/generic kids images; no clear unique classroom or building photo of the Salter St centre."
+  },
+  "mb-100547": {
+    "name": "Machray Day Nursery Inc, School Age",
+    "status": "SKIPPED",
+    "reason": "Same org site; no location-specific usable photos."
+  },
+  "mb-101381": {
+    "name": "Machray Day Nursery Machray School Site",
+    "status": "SKIPPED",
+    "reason": "Same org site; no location-specific usable photos."
+  },
+  "mb-102878": {
+    "name": "Machray Day Nursery -Bison Run",
+    "status": "SKIPPED",
+    "reason": "Same org site; no location-specific usable photos."
   }
 }
