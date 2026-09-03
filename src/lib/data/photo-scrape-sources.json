@@ -25,5 +25,41 @@
     "source_image": "http://www.carpathiachildrenscentre.com/school.JPG",
     "kind": "official storefront / building with centre sign",
     "file": "/photos/buildings/mb-1006.jpg"
+  },
+  "mb-1009": {
+    "id": "mb-1009",
+    "name": "Fort Garry Child Care Centre Co-op Inc.",
+    "address": "1555 Pembina Highway, Winnipeg, MB",
+    "source_url": "https://fortgarrychildcare.ca/",
+    "source_image": "https://fortgarrychildcare.ca/wp-content/uploads/2022/07/children-lined-up-scaled.jpg",
+    "kind": "official program photo — children outdoors",
+    "file": "/photos/buildings/mb-1009.jpg"
+  },
+  "mb-101665": {
+    "id": "mb-101665",
+    "name": "Inspired by Wonder Inc. - SSCY site",
+    "address": "1155 Notre Dame Avenue, Winnipeg, MB",
+    "source_url": "https://www.inspiredbywonder.ca/",
+    "source_image": "https://www.inspiredbywonder.ca/wp-content/uploads/2019/11/infant-room.jpg",
+    "kind": "official infant classroom interior (SSCY infant program)",
+    "file": "/photos/buildings/mb-101665.jpg"
+  },
+  "mb-3062": {
+    "id": "mb-3062",
+    "name": "SPLASH Child Care Inc.",
+    "address": "233 McKenzie Street, Winnipeg, MB",
+    "source_url": "https://splashcares.ca/",
+    "source_image": "https://splashcares.ca/wp-content/uploads/2025/08/20250715_130012-1.jpg",
+    "kind": "official forest-school / program photo of child",
+    "file": "/photos/buildings/mb-3062.jpg"
+  },
+  "mb-7923": {
+    "id": "mb-7923",
+    "name": "Casa Montessori & Orff School Inc.",
+    "address": "1055 Wilkes Avenue, Winnipeg, MB",
+    "source_url": "https://montessoriandorff.ca/",
+    "source_image": "https://assets.cdn.filesafe.space/sSc5Nr5mYDvMFZCDdOfF/media/6849be26468a693b544c81ea.jpeg",
+    "kind": "official classroom — child with Montessori pink tower",
+    "file": "/photos/buildings/mb-7923.jpg"
   }
 }

@@ -1,13 +1,13 @@
 {
-  "last_run": "2026-09-03T06:19:04Z",
+  "last_run": "2026-09-03T07:15:00Z",
   "city": "Winnipeg",
   "province": "MB",
-  "last_id_processed": "mb-103244",
-  "mapped_count": 52,
-  "mapped_winnipeg": 52,
+  "last_id_processed": "mb-7923",
+  "mapped_count": 56,
+  "mapped_winnipeg": 56,
   "winnipeg_total": 428,
   "national_total": 20846,
-  "real_storefronts_keys": 52,
+  "real_storefronts_keys": 56,
   "pending_jpeg_upload": [
     "mb-100042",
     "mb-100048",
@@ -26,7 +26,6 @@
     "mb-102633",
     "mb-102662",
     "mb-102694",
-    "mb-102700",
     "mb-102899",
     "mb-103006",
     "mb-103043",
@@ -42,28 +41,36 @@
     "mb-2314",
     "mb-3005",
     "mb-7858",
-    "mb-9088"
+    "mb-9088",
+    "mb-1009",
+    "mb-101665",
+    "mb-3062",
+    "mb-7923"
   ],
   "skipped_no_photo_this_run": [
-    "mb-1063",
-    "mb-101862",
-    "mb-3002",
-    "mb-100170",
-    "mb-100131",
-    "mb-100808",
-    "mb-2029",
-    "mb-1045"
+    "mb-1007",
+    "mb-102349",
+    "mb-100351",
+    "mb-102576",
+    "mb-100681",
+    "mb-1002",
+    "mb-1276",
+    "mb-102891",
+    "mb-1264",
+    "mb-3088",
+    "mb-1046"
   ],
   "ids_added_this_run": [
-    "mb-1006",
-    "mb-102700",
-    "mb-103244"
+    "mb-1009",
+    "mb-101665",
+    "mb-3062",
+    "mb-7923"
   ],
   "next_queue": [
-    "Winnipeg unmapped with likely websites: Fort Garry Child Care mb-1009, Carter ELC mb-1007, SPLASH sites mb-3062/mb-102349/mb-100351, Inspired by Wonder mb-101665, Assiniboine Children's Centre Parkside mb-102576, Small Scholars mb-100681, Brooklands mb-1002",
+    "Winnipeg unmapped with possible websites: Aleph-Bet mb-1001, CAPT mb-1003/mb-1199, Cairns mb-3010, Canterbury Park mb-3026, Care-A-Lot mb-1005, Busy Bee mb-1233, Agassiz mb-3001",
     "then remaining Winnipeg",
     "then Brandon MB"
   ],
   "next_city_after_winnipeg": "Brandon",
-  "note": "This run mapped 3 official photos: Avicenna Academy storefront (mb-102700); Brightling classroom (mb-103244); Carpathia building with centre sign (mb-1006). JPEGs saved locally."
+  "note": "This run mapped 4 official photos: Fort Garry children outdoors (mb-1009); Inspired by Wonder SSCY infant room (mb-101665); SPLASH forest-school child (mb-3062); Casa Montessori Wilkes classroom (mb-7923). JPEG binaries saved locally in artifacts; git push of binaries failed without credentials."
 }

@@ -1,0 +1,87 @@
+{
+  "run": "2026-09-03T07:15Z",
+  "city": "Winnipeg",
+  "added": [
+    {
+      "id": "mb-1009",
+      "name": "Fort Garry Child Care Centre Co-op Inc.",
+      "source": "https://fortgarrychildcare.ca/",
+      "image": "https://fortgarrychildcare.ca/wp-content/uploads/2022/07/children-lined-up-scaled.jpg"
+    },
+    {
+      "id": "mb-101665",
+      "name": "Inspired by Wonder Inc. - SSCY site",
+      "source": "https://www.inspiredbywonder.ca/",
+      "image": "https://www.inspiredbywonder.ca/wp-content/uploads/2019/11/infant-room.jpg"
+    },
+    {
+      "id": "mb-3062",
+      "name": "SPLASH Child Care Inc.",
+      "source": "https://splashcares.ca/",
+      "image": "https://splashcares.ca/wp-content/uploads/2025/08/20250715_130012-1.jpg"
+    },
+    {
+      "id": "mb-7923",
+      "name": "Casa Montessori & Orff School Inc.",
+      "source": "https://montessoriandorff.ca/",
+      "image": "https://assets.cdn.filesafe.space/sSc5Nr5mYDvMFZCDdOfF/media/6849be26468a693b544c81ea.jpeg"
+    }
+  ],
+  "skipped": [
+    {
+      "id": "mb-1007",
+      "name": "Carter Early Learning Centre Inc.",
+      "reason": "Bethel Mennonite listing only; no usable ELC classroom/building photo"
+    },
+    {
+      "id": "mb-102349",
+      "name": "SPLASH Child Care Inc - Pulford Site",
+      "reason": "did not reuse org forest-school photo on a different licensed site"
+    },
+    {
+      "id": "mb-100351",
+      "name": "Splash Child Enrichment Centre Inc (McGregor Location)",
+      "reason": "did not reuse org forest-school photo on a different licensed site"
+    },
+    {
+      "id": "mb-102576",
+      "name": "Assiniboine Children's Centre Inc. Parkside Site",
+      "reason": "no official site photo of this Parkside location"
+    },
+    {
+      "id": "mb-100681",
+      "name": "Small Scholars Inc.",
+      "reason": "no current official website with usable photos"
+    },
+    {
+      "id": "mb-1002",
+      "name": "Brooklands Day Care Centre Inc.",
+      "reason": "no official daycare website with photos"
+    },
+    {
+      "id": "mb-1276",
+      "name": "Casa Montessori & Orff School Fennel",
+      "reason": "official classroom photo is Wilkes early-childhood, not Fennell infant-toddler"
+    },
+    {
+      "id": "mb-102891",
+      "name": "Bumble Bee Early Learning Centre Inc.",
+      "reason": "official site hero may be stock; extracted asset was logo only"
+    },
+    {
+      "id": "mb-1264",
+      "name": "Bumper Crop Early Learning Centre Inc.",
+      "reason": "school-division page only, no program photos"
+    },
+    {
+      "id": "mb-3088",
+      "name": "Brock Corydon Day Care Inc.",
+      "reason": "official site has no usable classroom/building photo"
+    },
+    {
+      "id": "mb-1046",
+      "name": "Care and Share Children's Centre Inc.",
+      "reason": "childcare.link parent portal only"
+    }
+  ]
+}
