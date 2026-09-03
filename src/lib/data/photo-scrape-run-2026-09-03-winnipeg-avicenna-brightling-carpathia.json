@@ -1,0 +1,19 @@
+{
+  "run": "2026-09-03T06:20Z",
+  "city": "Winnipeg",
+  "added": [
+    {"id": "mb-102700", "name": "Avicenna Academy", "source": "https://www.avicenna-academy.ca/"},
+    {"id": "mb-103244", "name": "Brightling Children's Academy Inc.", "source": "https://www.brightlingacademy.ca/"},
+    {"id": "mb-1006", "name": "Carpathia Children's Centre Inc.", "source": "http://www.carpathiachildrenscentre.com/"}
+  ],
+  "skipped": [
+    {"id": "mb-1063", "name": "Wild Honey Children's Centre", "reason": "no official website with usable photos"},
+    {"id": "mb-101862", "name": "Andrews Early Learning Centre", "reason": "no official site found"},
+    {"id": "mb-3002", "name": "Assiniboine Children's Centre Inc.", "reason": "no usable official photo located"},
+    {"id": "mb-100170", "name": "Prairie Children's Centres Pembina", "reason": "official site uses stock photos"},
+    {"id": "mb-100131", "name": "Inspired by Wonder Inc. - School site", "reason": "no usable program photo"},
+    {"id": "mb-100808", "name": "Sky's The Limit Montessori School", "reason": "generic pencils, not the centre"},
+    {"id": "mb-2029", "name": "Seven Oaks Sadok Inc.", "reason": "toy still-life, not classroom/building"},
+    {"id": "mb-1045", "name": "Fairlane Children's Centre Incorporated", "reason": "hero looks generic/stock"}
+  ]
+}
