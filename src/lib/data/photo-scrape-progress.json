@@ -1,0 +1,17 @@
+{
+  "last_run": "2026-09-03T00:30:00Z",
+  "city": "Winnipeg",
+  "province": "MB",
+  "last_id_processed": "mb-100903",
+  "mapped_count": 93,
+  "mapped_winnipeg": 93,
+  "winnipeg_total": 428,
+  "national_total": 20846,
+  "real_storefronts_keys": 93,
+  "pending_jpeg_then_map": [],
+  "skipped_no_photo_this_run": ["mb-9420", "mb-102019", "mb-102387", "mb-102755", "mb-101882", "mb-1240"],
+  "ids_added_this_run": ["mb-102633", "mb-100903"],
+  "next_queue": ["Little Saints Learning Center", "Little Sprouts", "Maples Day Care", "Meadows West Kids Kare", "then remaining Winnipeg unmapped L-M"],
+  "next_city_after_winnipeg": "Brandon",
+  "note": "Added Little Footprints Montessori classroom materials from official Wix site; Makoonsag exterior from Prairie Architects project page (clearly THAT centre)."
+}
