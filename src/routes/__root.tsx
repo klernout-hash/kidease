@@ -9,7 +9,8 @@ import { reportError } from "@/lib/observe";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
-const APP_ICON = "/icons/icon-1024.png?v=7";
+const ICON_VER = "8";
+const APP_ICON = `/app-icon?v=${ICON_VER}`;
 
 export const Route = createRootRoute({
   errorComponent: ({ error }) => {
@@ -40,13 +41,13 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=7" },
+      { rel: "icon", type: "image/svg+xml", href: `/favicon.svg?v=${ICON_VER}` },
       { rel: "icon", type: "image/png", sizes: "180x180", href: APP_ICON },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png?v=7" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: `/icon-192.png?v=${ICON_VER}` },
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.webmanifest?v=7" },
-      { rel: "apple-touch-icon", href: APP_ICON },
+      { rel: "manifest", href: `/manifest.webmanifest?v=${ICON_VER}` },
       { rel: "apple-touch-icon", sizes: "180x180", href: APP_ICON },
+      { rel: "apple-touch-icon", href: APP_ICON },
       { rel: "apple-touch-icon-precomposed", href: APP_ICON },
       {
         rel: "preload",
