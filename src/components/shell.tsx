@@ -13,6 +13,7 @@ import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { DeskSwitcher } from "@/components/desk-switcher";
+import { SiteFooter } from "@/components/site-footer";
 
 export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
   const { t, locale } = useCopy();
@@ -36,6 +37,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const hideTabs = pathname.startsWith("/login");
   const onAccount = pathname.startsWith("/account");
   const accountTab = tab ?? "profile";
+  const hideFooter =
+    hideTabs || pathname.startsWith("/admin") || pathname.startsWith("/verify-2fa");
 
   const desktopNav = [
     { to: "/search", label: t("explore"), match: ["/search", "/daycare"] },
@@ -137,6 +140,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"}>
         {children}
       </div>
+      {hideFooter ? null : <SiteFooter />}
       {hideTabs ? null : (
         <nav className="fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
           <div className="mx-auto grid max-w-lg grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)] pt-1">
