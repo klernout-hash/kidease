@@ -57,23 +57,17 @@ function MenuPage() {
       <main className="ke-gutter mx-auto max-w-lg pb-8 pt-5">
         <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{fr ? "Menu" : "Menu"}</h1>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <Link
-            to="/search"
-            className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border"
-          >
-            <p className="text-sm font-semibold">{t("search")}</p>
-            <p className="mt-1 text-xs text-muted">{t("tagline")}</p>
-          </Link>
-          <Link to="/claim" className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border">
-            <p className="text-sm font-semibold">{t("claimCta")}</p>
-            <p className="mt-1 text-xs text-muted">{t("providerDiscover")}</p>
-          </Link>
-        </div>
+        <Group title="KidEase">
+          <Row to="/search" label={t("explore")} />
+          <Row to="/benefits" label={t("benefitsTab")} />
+          <Row to="/get-app" label={t("getApp")} />
+          <Row to="/about" label={t("about")} />
+          <Row to="/team" label={t("team")} />
+          <Row to="/contact" label={t("contact")} />
+        </Group>
 
         <Group title={fr ? "Soutien" : "Support"}>
           <Row to="/support" label={fr ? "Centre d’aide" : "Help Centre"} />
-          <Row to="/contact" label={t("contact")} />
           <Row to="/faq" label="FAQ" />
           <Row to="/how-it-works" label={t("howItWorksCta")} />
           <Row to="/privacy" label={t("privacy")} />
@@ -81,23 +75,18 @@ function MenuPage() {
         </Group>
 
         <Group title="Parents">
-          <Row to="/search" label={t("search")} />
           <Row to="/login" search={{ role: "parent", intent: "in", next: "/parent" }} label={t("parentSignIn")} />
           <Row to="/parent" label={fr ? "Espace parent" : "Parent desk"} />
-          <Row to="/benefits" label={t("benefitsTab")} />
+          <Row to="/account" search={{ tab: "profile" }} label={t("profile")} />
           <Row to="/tour-checklist" label={t("tourChecklist")} />
           <Row to="/compare" label={t("compare")} />
           <Row to="/account" search={{ tab: "saved" }} label={t("saved")} />
-          <Row to="/get-app" label={t("getApp")} />
         </Group>
 
         <Group title={fr ? "Garderies" : "Daycares"}>
           <Row to="/claim" label={t("claimCta")} />
           <Row to="/login" search={{ role: "provider", intent: "in", next: "/provider" }} label={t("providerLogin")} />
           <Row to="/provider" label={fr ? "Espace garderie" : "Daycare desk"} />
-          <Row to="/about" label={t("about")} />
-          <Row to="/team" label={t("team")} />
-          <Row to="/privacy" label={t("verifyListings")} />
           <Row href="https://childcaresearch.gov.mb.ca/en" label={t("mbChildcare")} />
         </Group>
 
