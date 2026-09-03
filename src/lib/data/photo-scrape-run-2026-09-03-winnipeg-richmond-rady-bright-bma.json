@@ -1,0 +1,17 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-102694", "mb-103286", "mb-9088", "mb-101831", "mb-102899", "mb-103006"],
+  "ids_added": ["mb-102694", "mb-103286", "mb-9088", "mb-101831", "mb-102899", "mb-103006"],
+  "ids_skipped": [],
+  "sources": {
+    "mb-102694": {"name": "Richmond Montessori School Inc Unit B -1450 Taylor Ave", "source": "https://taylor.richmondmontessorischool.ca/", "kind": "official exterior building with sign and playground"},
+    "mb-103286": {"name": "Richmond Montessori School - Dakota", "source": "https://dakota.richmondmontessorischool.ca/", "kind": "official site photo"},
+    "mb-9088": {"name": "Rady JCC Childcare", "source": "https://radyjcc.com/early-learning-centres/", "kind": "official kids in program photo"},
+    "mb-101831": {"name": "Rady JCC Child Care Centre (Grosvenor)", "source": "https://radyjcc.com/early-learning-centres/david-ruth-asper-early-learning-centre", "kind": "official kids photo"},
+    "mb-102899": {"name": "Bright Scholars Montessori", "source": "https://brightscholarsmontessori.ca/", "kind": "official site photo"},
+    "mb-103006": {"name": "Bridgwater Montessori", "source": "https://bmacademy.ca/", "kind": "official facility exterior/classroom"}
+  },
+  "mapped_after": 42,
+  "note": "6 new real official photos mapped; JPEGs local only"
+}
