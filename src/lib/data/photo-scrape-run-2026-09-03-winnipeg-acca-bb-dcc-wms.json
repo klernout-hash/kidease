@@ -1,0 +1,44 @@
+{
+  "run_date": "2026-09-03T05:16:07Z",
+  "city": "Winnipeg",
+  "ids_added": ["mb-101548", "mb-102052", "mb-1043", "mb-2024"],
+  "ids_skipped": ["mb-1045", "mb-102891", "mb-7834", "mb-3001", "mb-1264", "mb-3010", "mb-103244", "mb-102700"],
+  "details": {
+    "mb-101548": {
+      "name": "Advantage Child Care Academy Inc.",
+      "address": "51 Scurfield Boulevard, Winnipeg",
+      "official_site": "https://advantagechildcareacademy.ca/",
+      "source_url": "https://advantagechildcareacademy.ca/wp-content/uploads/2025/11/ACCAClassroom3983-1-scaled-1.jpg",
+      "image_kind": "official site classroom interior at Scurfield centre",
+      "repo_path": "public/photos/buildings/mb-101548.jpg",
+      "status": "MAPPED"
+    },
+    "mb-102052": {
+      "name": "Building Blocks on Balmoral",
+      "address": "51 Balmoral Street, Winnipeg",
+      "official_site": "https://www.prairiearchitects.ca/building-blocks-on-balmoral",
+      "source_url": "https://images.squarespace-cdn.com/content/v1/5b282137f93fd4517582a532/1548179867618-HVYQ4DLSYT5N70L7ZKKB/Great-West-Life-Daycare-interior-preschool-room-1.jpg",
+      "image_kind": "architect press interior preschool classroom of THIS centre at 51 Balmoral",
+      "repo_path": "public/photos/buildings/mb-102052.jpg",
+      "status": "MAPPED"
+    },
+    "mb-1043": {
+      "name": "Discovery Children's Centre Inc.",
+      "address": "367 Hampton Street, Winnipeg",
+      "official_site": "https://www.discoverycc.com/our-facilities/",
+      "source_url": "https://www.discoverycc.com/wp-content/uploads/2020/10/front-address-scaled.jpg",
+      "image_kind": "official site exterior of 367 Hampton with Discovery Centre sign",
+      "repo_path": "public/photos/buildings/mb-1043.jpg",
+      "status": "MAPPED"
+    },
+    "mb-2024": {
+      "name": "Winnipeg Montessori School Inc.",
+      "address": "1525 Willson Place, Winnipeg",
+      "official_site": "https://www.winnipegmontessori.com/about-us",
+      "source_url": "https://images.squarespace-cdn.com/content/v1/67ac061a9150aa7236607d41/05605567-666c-4935-b3b1-6a0e44145f48/Winnipeg+Montessori+School+Classroom",
+      "image_kind": "official site preschool classroom interior at Willson Place",
+      "repo_path": "public/photos/buildings/mb-2024.jpg",
+      "status": "MAPPED"
+    }
+  }
+}
