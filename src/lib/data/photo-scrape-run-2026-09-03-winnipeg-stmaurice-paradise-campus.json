@@ -1,0 +1,54 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "ids_processed": [
+    "mb-100042",
+    "mb-100048",
+    "mb-1001",
+    "mb-100131",
+    "mb-100141",
+    "mb-100170",
+    "mb-1004"
+  ],
+  "ids_added": [
+    "mb-100042",
+    "mb-100048",
+    "mb-1004"
+  ],
+  "ids_skipped_no_photo": [
+    "mb-1001",
+    "mb-100131",
+    "mb-100141",
+    "mb-100170"
+  ],
+  "sources": {
+    "mb-100042": {
+      "name": "St. Maurice School Age Centre",
+      "address": "1639 Pembina Highway, Winnipeg",
+      "official_site": "https://www.stmauricedaycare.ca/",
+      "source_url": "https://static.wixstatic.com/media/8cf122_378ddb92883e48ffb3ad83ec707a7e76f000.jpg",
+      "image_kind": "official site facility sign / storefront identification published by the centre",
+      "repo_path": "public/photos/buildings/mb-100042.jpg",
+      "status": "MAPPED_JPEG_LOCAL"
+    },
+    "mb-100048": {
+      "name": "Paradise Montessori Preschool Inc.",
+      "address": "1341 Kenaston Boulevard, Winnipeg",
+      "official_site": "https://www.paradisemontessori.ca/",
+      "source_url": "https://www.paradisemontessori.ca/kenaston_exterior2.png",
+      "image_kind": "official site Kenaston location building exterior",
+      "repo_path": "public/photos/buildings/mb-100048.jpg",
+      "status": "MAPPED_JPEG_LOCAL"
+    },
+    "mb-1004": {
+      "name": "Campus Children's Centre Inc.",
+      "address": "15 - 19 Dysart Road, Winnipeg",
+      "official_site": "https://www.campuschildrenscentre.com/",
+      "source_url": "https://static.wixstatic.com/media/591b5b_234cf05f03584dfbac1ae708dad980c8~mv2.jpeg",
+      "image_kind": "official site interior photo of child in centre program space (ball pit)",
+      "repo_path": "public/photos/buildings/mb-1004.jpg",
+      "status": "MAPPED_JPEG_LOCAL"
+    }
+  },
+  "notes": "Paradise Montessori and Campus Children's Centre had clear official facility photos. St Maurice published their own facility sign. Several school-age / family place centres had no usable centre-specific room/building photos."
+}
