@@ -1,0 +1,32 @@
+{
+  "run": "2026-09-03T22:10:00Z",
+  "city": "Winnipeg",
+  "province": "MB",
+  "added": [
+    {
+      "id": "mb-2025",
+      "name": "Norwood Nursery School and Day Care Inc.",
+      "address": "87 Walmer Street, Winnipeg, MB R2H 3H4",
+      "phone": "(204) 237-1572",
+      "official_site": "https://www.norwoodnursery.com/",
+      "source_image": "https://www.norwoodnursery.com/uploads/ck/images/IMG_7057.1.jpeg",
+      "local_file": "/home/workdir/artifacts/kidease-photos/buildings/mb-2025.jpg",
+      "repo_path": "public/photos/buildings/mb-2025.jpg",
+      "kind": "building exterior + playground at Norwood Community Centre (same 87 Walmer address as the licensed nursery)",
+      "verified": true
+    }
+  ],
+  "skipped": [
+    {"id": "mb-2005", "name": "General Vanier Nursery School Inc.", "reason": "Official Wix site exists but hero images are generic stock children photos."},
+    {"id": "mb-2007", "name": "Les Tournesols de St.Vital Inc.", "reason": "Official ltsv.ca hero banner appears AI/stock, not a verified photo of this centre."},
+    {"id": "mb-2008", "name": "Kids Centre Co-op Inc.", "reason": "Facebook page only; no official website photo downloadable."},
+    {"id": "mb-2009", "name": "Kirkfield-Westwood Nursery School", "reason": "kwnurseryschool.com domain hijacked; no usable official photo."},
+    {"id": "mb-2011", "name": "Mennonite Brethren Children's Centre Inc.", "reason": "No dedicated centre website with classroom/building photos."},
+    {"id": "mb-2012", "name": "Les Franco-Lions de Lacerte Inc.", "reason": "Email/Facebook only; school page has no confirmed daycare photo."},
+    {"id": "mb-2014", "name": "Riverview Montessori", "reason": "riverviewmontessori.ca returned 503."},
+    {"id": "mb-2016", "name": "Richmond Kings Nursery School Inc.", "reason": "rkns.ca official site has illustrated posters/logos only."},
+    {"id": "mb-2019", "name": "Southdale Nursery School Inc.", "reason": "Listed website has no usable photos."},
+    {"id": "mb-2021", "name": "Springfield Heights Nursery School Incorporated", "reason": "No official nursery website or confirmed photos."},
+    {"id": "mb-2023", "name": "Winakwa Nursery School Inc.", "reason": "No official nursery website or confirmed photos."}
+  ]
+}
