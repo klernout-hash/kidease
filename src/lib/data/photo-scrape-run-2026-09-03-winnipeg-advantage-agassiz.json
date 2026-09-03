@@ -1,0 +1,20 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-101548", "mb-3001", "mb-100902", "mb-100901", "mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576", "mb-102700", "mb-9265", "mb-1242"],
+  "ids_added": ["mb-101548", "mb-3001"],
+  "ids_skipped_no_photo": ["mb-100902", "mb-100901", "mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576", "mb-102700", "mb-9265", "mb-1242"],
+  "photos": {
+    "mb-101548": {
+      "source": "https://advantagechildcareacademy.ca/photo-gallery/",
+      "image": "https://advantagechildcareacademy.ca/wp-content/uploads/2025/11/ACCAClassroom3983-1-scaled-1.jpg",
+      "type": "classroom"
+    },
+    "mb-3001": {
+      "source": "https://www.agassizchildcare.com/",
+      "image": "https://static.wixstatic.com/media/ed789b_61d774a7d0d945bf83cf336a88f99de5~mv2.jpg",
+      "type": "kids_program"
+    }
+  },
+  "notes": "Advantage classroom photo and Agassiz kids photo from official sites. Other centres in queue lacked clear official usable photos in initial search (no website gallery or matching building/kids photos confirmed)."
+}
