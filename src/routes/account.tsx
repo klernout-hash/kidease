@@ -32,11 +32,16 @@ function AccountPage() {
       </Shell>
     );
   }
+
+  if (search.tab === "profile" || !search.tab) {
+    return <ProfilePane />;
+  }
+
   if (!user) {
     return (
       <Shell>
         <main className="ke-gutter mx-auto max-w-lg py-12 text-center">
-          <h1 className="font-display text-3xl">{search.tab === "enrolled" ? t("enrolled") : search.tab === "saved" ? t("saved") : t("profile")}</h1>
+          <h1 className="font-display text-3xl">{search.tab === "enrolled" ? t("enrolled") : t("saved")}</h1>
           <p className="mt-3 text-muted">{t("loginLead")}</p>
           <div className="mt-8 flex flex-col gap-3">
             <Button size="lg" className="h-14 min-h-14 w-full px-7 text-base" asChild>
@@ -53,14 +58,6 @@ function AccountPage() {
     );
   }
 
-  if (search.tab === "profile" || !search.tab) {
-    return (
-      <TwoFactorGate next="/account?tab=profile">
-        <ProfilePane />
-      </TwoFactorGate>
-    );
-  }
-
   const initialTab = search.tab === "saved" ? "saved" : search.tab === "enrolled" ? "bookings" : "children";
   return (
     <TwoFactorGate next="/parent">
@@ -74,16 +71,15 @@ function ProfilePane() {
   const { t } = useCopy();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-  if (!user) return null;
 
   return (
     <Shell>
       <main className="ke-gutter mx-auto max-w-lg pb-10 pt-6">
         <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("profile")}</h1>
         <div className="mt-8 flex flex-col items-center text-center">
-          <ProfileAvatar userId={user.id} fallback={user.profileImageUrl} name={user.displayName} size="lg" />
-          <p className="mt-4 text-lg font-semibold">{user.displayName ?? t("profile")}</p>
-          {user.primaryEmail ? <p className="mt-1 text-sm text-muted">{user.primaryEmail}</p> : null}
+          <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={user?.displayName} size="lg" />
+          <p className="mt-4 text-lg font-semibold">{user?.displayName ?? t("profile")}</p>
+          {user?.primaryEmail ? <p className="mt-1 text-sm text-muted">{user.primaryEmail}</p> : null}
           <input
             ref={inputRef}
             type="file"
@@ -93,6 +89,7 @@ function ProfilePane() {
               const file = e.target.files?.[0];
               e.target.value = "";
               if (!file) return;
+              if (!user) return;
               setBusy(true);
               void compressProfileFile(file)
                 .then(async (dataUrl) => {
@@ -108,9 +105,17 @@ function ProfilePane() {
                 .finally(() => setBusy(false));
             }}
           />
-          <Button className="mt-6" size="lg" disabled={busy} onClick={() => inputRef.current?.click()}>
-            {busy ? t("loading") : "Add profile picture"}
-          </Button>
+          {user ? (
+            <Button className="mt-6" size="lg" disabled={busy} onClick={() => inputRef.current?.click()}>
+              {busy ? t("loading") : "Add or change photo"}
+            </Button>
+          ) : (
+            <Button className="mt-6" size="lg" asChild>
+              <Link to="/login" search={{ role: "parent", intent: "in", next: "/account?tab=profile" }}>
+                Sign in to add a photo
+              </Link>
+            </Button>
+          )}
         </div>
       </main>
     </Shell>
