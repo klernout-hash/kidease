@@ -1,0 +1,41 @@
+{
+  "run": "2026-09-03-winnipeg-mamawi-niigaanaki",
+  "city": "Winnipeg",
+  "mapped": [
+    {
+      "id": "mb-1064",
+      "name": "Munroe Early Childhood Education Centre Inc.",
+      "address": "186-505 Chalmers Avenue, Winnipeg",
+      "source": "https://www.munroeececentre.ca/",
+      "image": "https://munroeececentre.wordpress.com/wp-content/uploads/2023/07/2018-01-10.jpg",
+      "kind": "official storefront entrance with centre sign"
+    }
+  ],
+  "skipped": {
+    "mb-9180": "Ma Mawi CDC - mamawi.com is official org but no photo of Blake Street child development centre",
+    "mb-101882": "Maples Day Care Amber Trails - school page only, no daycare photos",
+    "mb-1034": "Maples DayCare Inc. Anglia - no official website photos",
+    "mb-1275": "Mary Kardash - official site uses Unsplash stock only",
+    "mb-3061": "Maybrook - no official website",
+    "mb-2151": "McLeod Nursery - official site uses generic stock (blocks, diploma, confetti)",
+    "mb-1240": "Meadows West Kids Kare - no official photo site",
+    "mb-2011": "Mennonite Brethren Children's Centre - no daycare photos on church sites",
+    "mb-9182": "MFRC Child Care 630 Wihuri - CFMWS photo is Admin Building at Comet St, not the childcare building",
+    "mb-9597": "Mini-Skool/Kiddie Kampus Scotland Ave - site cert invalid; no verified Winnipeg-specific official photo downloaded",
+    "mb-100530": "Morrow Centre 24/7 - melcd.ca uses stock family photos only",
+    "mb-100259": "Morrow Dr D.W. Penner - same operator site, stock only",
+    "mb-9307": "Morrow Glenwood - stock only",
+    "mb-1290": "Morrow Hastings - stock only",
+    "mb-3134": "Morrow Lavallee West - stock only",
+    "mb-3133": "Morrow Marie-Anne Gaboury - stock only",
+    "mb-1192": "Morrow Rene Deleurme - stock only",
+    "mb-101497": "Morrow Salvation Army - stock only",
+    "mb-9096": "Morrow Victor Wyatt - stock only",
+    "mb-102959": "Mountain Ave Child Care - no official website found",
+    "mb-102725": "Munroe Grosvenor School Site - operator classroom stock/icons; storefront photo is Chalmers main site only",
+    "mb-9027": "Munroe School Age Kent - munroesa.ca text-only",
+    "mb-9743": "Munroe School Age George V - no site-specific official photo",
+    "mb-100404": "Munroe Polson - no site-specific official photo",
+    "mb-1272": "Niigaanaki - news coverage only, no official photo published by the centre"
+  }
+}

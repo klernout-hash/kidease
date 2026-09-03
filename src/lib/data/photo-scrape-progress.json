@@ -1,13 +1,13 @@
 {
-  "last_run": "2026-09-03T03:10:00Z",
+  "last_run": "2026-09-03T03:15:00Z",
   "city": "Winnipeg",
   "province": "MB",
-  "last_id_processed": "mb-1278",
-  "mapped_count": 28,
-  "mapped_winnipeg": 28,
+  "last_id_processed": "mb-1272",
+  "mapped_count": 29,
+  "mapped_winnipeg": 29,
   "winnipeg_total": 428,
   "national_total": 20846,
-  "real_storefronts_keys": 28,
+  "real_storefronts_keys": 29,
   "pending_jpeg_upload": [
     "mb-102288",
     "mb-102556",
@@ -18,26 +18,47 @@
     "mb-101974",
     "mb-100903",
     "mb-101696",
-    "mb-1278"
+    "mb-1278",
+    "mb-1064"
   ],
   "skipped_no_photo_this_run": [
-    "mb-1033",
-    "mb-100547",
-    "mb-101381",
-    "mb-102878"
+    "mb-9180",
+    "mb-101882",
+    "mb-1034",
+    "mb-1275",
+    "mb-3061",
+    "mb-2151",
+    "mb-1240",
+    "mb-2011",
+    "mb-9182",
+    "mb-9597",
+    "mb-100530",
+    "mb-100259",
+    "mb-9307",
+    "mb-1290",
+    "mb-3134",
+    "mb-3133",
+    "mb-1192",
+    "mb-101497",
+    "mb-9096",
+    "mb-102959",
+    "mb-102725",
+    "mb-9027",
+    "mb-9743",
+    "mb-100404",
+    "mb-1272"
   ],
   "ids_added_this_run": [
-    "mb-101696",
-    "mb-1278"
+    "mb-1064"
   ],
   "next_queue": [
-    "Ma Mawi Wi Chi Itata mb-9180",
-    "Maples Day Care sites",
-    "Morrow Early Learning sites",
-    "Munroe ECEC sites",
-    "Norwood / Oak / Prairie Garden remaining Winnipeg N-Z",
+    "Norwood French Immersion mb-2314",
+    "Norwood Nursery School sites",
+    "Oak Street Nursery School",
+    "Prairie Children's Centres / Prairie Soul / Prairie Sunrise",
+    "remaining Winnipeg N-Z",
     "then Brandon MB"
   ],
   "next_city_after_winnipeg": "Brandon",
-  "note": "This run mapped 2 verified official photos (Making Roots children outdoor program; Manidoo/R.B. Russell official site photo). Machray Day Nursery 4 sites skipped - only blurred generic Wix images. JPEGs local under /tmp/kidease-photos. GitHub text tools cannot push binary JPEGs reliably."
+  "note": "This run verified 1 official photo: Munroe ECEC Inc. Chalmers storefront (mb-1064) from munroeececentre.ca dated 2018-01-10. JPEG saved locally at artifacts/kidease-photos/buildings/mb-1064.jpg. Other batch sites had no usable official classroom/building photo (stock Unsplash/iStock, admin-building-only, or no website). GitHub text tools cannot reliably push binary JPEGs."
 }
