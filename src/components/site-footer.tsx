@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { useCopy } from "@/lib/use-copy";
 
 function Col({
@@ -40,9 +41,17 @@ export function SiteFooter() {
   const support = fr ? "Soutien" : "Support";
   const parents = "Parents";
   const daycares = fr ? "Garderies" : "Daycares";
+  const root = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const list = document.querySelectorAll("footer.ke-site-footer");
+    list.forEach((el, i) => {
+      (el as HTMLElement).hidden = i !== list.length - 1;
+    });
+  }, []);
 
   return (
-    <footer className="border-t border-border bg-surface [[data-channel=app]_&]:hidden">
+    <footer ref={root} className="ke-site-footer border-t border-border bg-surface [[data-channel=app]_&]:hidden">
       <div className="ke-gutter mx-auto max-w-6xl py-12 md:py-16">
         <nav className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3" aria-label="KidEase">
           <Col title={support}>
