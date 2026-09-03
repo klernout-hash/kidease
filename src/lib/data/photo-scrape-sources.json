@@ -27,5 +27,19 @@
     "image_url": "https://www.oakstreetnurseryschool.com/uploads/1/0/6/4/10644229/6628893_orig.jpg",
     "type": "official_website_classroom",
     "scraped_at": "2026-09-03T15:30:00Z"
+  },
+  "mb-101548": {
+    "name": "Advantage Child Care Academy Inc.",
+    "source_url": "https://advantagechildcareacademy.ca/photo-gallery/",
+    "image_url": "https://advantagechildcareacademy.ca/wp-content/uploads/2025/11/ACCAClassroom3983-1-scaled-1.jpg",
+    "type": "official_website_classroom",
+    "scraped_at": "2026-09-03T17:30:00Z"
+  },
+  "mb-3001": {
+    "name": "Agassiz Child Care Centre Inc.",
+    "source_url": "https://www.agassizchildcare.com/",
+    "image_url": "https://static.wixstatic.com/media/ed789b_61d774a7d0d945bf83cf336a88f99de5~mv2.jpg",
+    "type": "official_website_kids",
+    "scraped_at": "2026-09-03T17:30:00Z"
   }
 }
