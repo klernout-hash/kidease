@@ -41,7 +41,7 @@ function Row({
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-7">
-      <h2 className="px-1 text-[13px] font-semibold text-fg">{title}</h2>
+      <h2 className="px-1 text-[15px] font-bold text-fg">{title}</h2>
       <div className="mt-2">{children}</div>
     </section>
   );
