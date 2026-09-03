@@ -4,8 +4,6 @@
     "address": "Unit 8-2835 Pembina Highway, Winnipeg",
     "source_site": "https://mightymindsmontessori.com/",
     "image_kind": "official homepage classroom / kids in program",
-    "local_raw": "raw/by-id/mb-102556_Mighty-Minds-Montessori_classroom-hero.jpeg",
-    "local_crop": "photos/buildings/mb-102556.jpg",
     "repo_path": "public/photos/buildings/mb-102556.jpg",
     "status": "cropped_locally_pending_binary_upload"
   },
@@ -14,19 +12,14 @@
     "address": "215 des Hivernants Boulevard, Winnipeg",
     "source_site": "https://livingprairiechildcare.ca/",
     "image_kind": "official site building exterior",
-    "local_raw": "raw/by-id/mb-102288_Living-Prairie-Childcare_building.jpg",
-    "local_crop": "photos/buildings/mb-102288.jpg",
     "repo_path": "public/photos/buildings/mb-102288.jpg",
-    "status": "cropped_locally_pending_binary_upload",
-    "note": "Official storefront photo has a dark overlay from the website hero treatment."
+    "status": "cropped_locally_pending_binary_upload"
   },
   "mb-102633": {
     "name": "Little Footprints Montessori Inc.",
     "address": "1727 Henderson Highway, Winnipeg",
     "source_site": "official Little Footprints Wix site",
-    "image_kind": "official classroom Montessori materials (moveable alphabet)",
-    "local_raw": "raw/by-id/mb-102633_Little-Footprints-Montessori_moveable-alphabet.jpeg",
-    "local_crop": "photos/buildings/mb-102633.jpg",
+    "image_kind": "official classroom Montessori materials",
     "repo_path": "public/photos/buildings/mb-102633.jpg",
     "status": "cropped_locally_pending_binary_upload"
   },
@@ -35,53 +28,69 @@
     "address": "55 Kay Crescent, Winnipeg",
     "source_site": "https://www.lakewoodcc.ca/",
     "image_url": "https://www.lakewoodcc.ca/assets/img/gallery/img_glr_03_09_2020_7.JPG",
-    "image_kind": "official gallery 2020-09-03 outdoor program play",
-    "alt_candidates": [
-      "https://www.lakewoodcc.ca/assets/img/gallery/img_glr_03_09_2020_3.JPG",
-      "https://www.lakewoodcc.ca/assets/img/gallery/img_glr_03_09_2020_5.JPG"
-    ],
+    "image_kind": "official gallery outdoor program play",
     "repo_path": "public/photos/buildings/mb-3005.jpg",
     "status": "source_verified_crop_pending_or_local"
   },
-  "mb-101696": {
-    "name": "Making Roots Montessori Centre Inc.",
-    "address": "660 Elizabeth Road, Winnipeg",
-    "status": "SKIPPED",
-    "reason": "Candidate teacher-child photo looks like generic stock Montessori photography. Left on placeholder until a clearly centre-specific official photo is confirmed."
-  },
-  "mb-1275": {
-    "name": "Mary Kardash Child Care Centre Inc.",
-    "status": "SKIPPED",
-    "reason": "Official site hero is generic toys / Minions / Scrabble stock-style photo, not a classroom or building of THIS centre."
-  },
-  "mb-2151": {
-    "name": "McLeod Nursery Incorporated",
-    "status": "SKIPPED",
-    "reason": "Official site hero is generic close-up Lego stock-style photo."
-  },
-  "mb-1030": {
-    "name": "Little Voyageurs Learning Centre Inc. (Site 1)",
-    "status": "SKIPPED",
-    "reason": "Official site hero is a generic child portrait with heavy overlay; programs page uses illustrations only."
-  },
-  "mb-9597": {
-    "name": "Mini-Skool & Montessori Academy",
-    "status": "SKIPPED",
-    "reason": "kiddiekampus.ca TLS certificate invalid this run; Ontario mini-skool.ca is a different operator."
-  },
-  "mb-1064": {
-    "name": "Munroe Early Childhood Education Centre Inc.",
-    "status": "SKIPPED",
-    "reason": "munroesa.ca has no classroom, playground, or building photos — logo tiles only."
-  },
-  "mb-1034": {
-    "name": "Maples DayCare Inc.",
-    "status": "SKIPPED",
-    "reason": "No official centre website found; only directory listings."
-  },
   "mb-103043": {
     "name": "Little Flamingos Early Learning Centre",
-    "status": "DEFERRED",
-    "reason": "littleflamingoselc.ca HTTP2 error this run. Site exists and may have opening-day photos; retry next run."
+    "address": "742 Ravelston Ave W, Winnipeg",
+    "official_site": "https://littleflamingoselc.ca/",
+    "source_url": "https://littleflamingoselc.ca/wp-content/uploads/2024/12/1000002164-2048x1153.jpg",
+    "image_kind": "official opening classroom interior published by the centre",
+    "repo_path": "public/photos/buildings/mb-103043.jpg",
+    "status": "MAPPED"
+  },
+  "mb-2288": {
+    "name": "Little Lambs Christian Preschool Inc.",
+    "address": "500 Lagimodiere Blvd, Winnipeg",
+    "official_site": "https://littlelambswinnipeg.ca/",
+    "source_url": "https://img1.wsimg.com/isteam/ip/e48aa999-fe50-47e0-9044-176e29f869cc/1.jpg",
+    "image_kind": "official See Our Space classroom interior",
+    "repo_path": "public/photos/buildings/mb-2288.jpg",
+    "status": "MAPPED"
+  },
+  "mb-101974": {
+    "name": "Little Stars PLAYhouse",
+    "address": "681 Selkirk Avenue, Winnipeg",
+    "official_site": "https://littlestarsplayhouse.ca/",
+    "source_url": "https://littlestarsplayhouse.ca/wp-content/uploads/2022/08/littlestarsrunningCROPPED.jpg",
+    "image_kind": "official site photo of children in program at the Selkirk Ave centre",
+    "repo_path": "public/photos/buildings/mb-101974.jpg",
+    "status": "MAPPED"
+  },
+  "mb-100903": {
+    "name": "Makoonsag Intergenerational Children's Centre",
+    "address": "527 Selkirk Avenue, Winnipeg",
+    "official_site": "https://www.prairiearchitects.ca/makoonsag-daycare",
+    "source_url": "https://images.squarespace-cdn.com/content/v1/5b282137f93fd4517582a532/1548350995264-KX9IZ8V59KFJTRKQVJJ4/Makoonsag-Daycare-ext-1.jpg",
+    "image_kind": "architect press exterior of THIS named building at 527 Selkirk",
+    "repo_path": "public/photos/buildings/mb-100903.jpg",
+    "status": "MAPPED"
+  },
+  "mb-103205": {
+    "name": "Little Fox Child Care Centre",
+    "status": "SKIPPED",
+    "reason": "MMF published image is a graphic news-release template, not a classroom/building photo of 200 Main."
+  },
+  "mb-100700": {
+    "name": "Little Learners Inc.",
+    "status": "SKIPPED",
+    "reason": "No official website found; only directory listings."
+  },
+  "mb-1031": {
+    "name": "Little People's Place Inc.",
+    "status": "SKIPPED",
+    "reason": "No official centre website with classroom/building photos."
+  },
+  "mb-1153": {
+    "name": "Lovin 'N' Learnin Day Care Inc.",
+    "status": "SKIPPED",
+    "reason": "No official website found; only directory listings."
+  },
+  "mb-102919": {
+    "name": "Louis Riel Child Care Centre",
+    "status": "SKIPPED",
+    "reason": "MMF news page image is a branded template, not a photo of this centre."
   }
 }
