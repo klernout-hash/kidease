@@ -1,0 +1,11 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "ids_added": ["mb-3094", "mb-102556"],
+  "ids_skipped": ["mb-102933", "mb-103080", "mb-102453", "mb-1210", "mb-1258", "mb-9257", "mb-1215", "mb-1264", "mb-102891", "mb-1140", "mb-102060"],
+  "sources": {
+    "mb-3094": {"name": "Poplar Avenue Kids Care Inc.", "source": "https://www.pakcinc.com/fun-time-photos", "kind": "official classroom program photo"},
+    "mb-102556": {"name": "Mighty Minds Montessori", "source": "https://mightymindsmontessori.com/", "kind": "official classroom interior at Pembina unit"}
+  },
+  "mapped_after": 29
+}
