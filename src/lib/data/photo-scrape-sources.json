@@ -1,0 +1,31 @@
+{
+  "mb-1040": {
+    "name": "R.R.C. Early Childhood Centre Inc.",
+    "source_url": "https://www.rrcearlychildhoodcentre.com/",
+    "image_url": "https://static.wixstatic.com/media/c16bdc_0099ff74bec84428aa40144ea58ebd49~mv2.jpg",
+    "type": "official_website_kids_outdoor",
+    "scraped_at": "2026-09-03T15:25:00Z"
+  },
+  "mb-102138": {
+    "name": "R.R.C. Early Childhood Centre Inc. - School-age",
+    "source_url": "https://www.rrcearlychildhoodcentre.com/",
+    "image_url": "https://static.wixstatic.com/media/c16bdc_0099ff74bec84428aa40144ea58ebd49~mv2.jpg",
+    "type": "official_website_kids_outdoor",
+    "scraped_at": "2026-09-03T15:25:00Z",
+    "note": "same operator/campus photo as mb-1040"
+  },
+  "mb-102603": {
+    "name": "O.K. Before and After School Child Care Centres Inc.-Templeton",
+    "source_url": "https://okbeforeandafter.com/",
+    "image_url": "https://okbeforeandafter.com/wp-content/uploads/2021/03/heroImage.jpg",
+    "type": "official_website_kids",
+    "scraped_at": "2026-09-03T15:30:00Z"
+  },
+  "mb-2155": {
+    "name": "Oak Street Nursery School Inc",
+    "source_url": "https://www.oakstreetnurseryschool.com/photo-gallery.html",
+    "image_url": "https://www.oakstreetnurseryschool.com/uploads/1/0/6/4/10644229/6628893_orig.jpg",
+    "type": "official_website_classroom",
+    "scraped_at": "2026-09-03T15:30:00Z"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-9470", "mb-100426", "mb-9837", "mb-100801", "mb-3090", "mb-1040", "mb-102138", "mb-100624", "mb-101831", "mb-9088", "mb-102603", "mb-2155", "mb-1174"],
+  "ids_added": ["mb-1040", "mb-102138", "mb-102603", "mb-2155"],
+  "ids_skipped_no_photo": ["mb-9470", "mb-100426", "mb-9837", "mb-100801", "mb-3090", "mb-100624", "mb-101831", "mb-9088", "mb-1174"],
+  "photos": {
+    "mb-1040": "RRC Early Childhood Centre official site kids outdoor play",
+    "mb-102138": "RRC same photo (school-age same campus)",
+    "mb-102603": "OK Before & After official hero kids photo",
+    "mb-2155": "Oak Street Nursery School official gallery classroom"
+  },
+  "notes": "Rainbow Day Nursery phases: official site logo only. Rady JCC: artwork only. R.H.S., Radisson, On The Move, Manidoo: no usable official photo this run."
+}
