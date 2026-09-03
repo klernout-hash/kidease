@@ -21,7 +21,7 @@ import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { ExploreSheet, type SheetSnap } from "@/components/explore-sheet";
 import { LocationConsentCard } from "@/components/location-consent";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
-import { kmToMi, miToKm, type DistanceUnit } from "@/lib/units";
+import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
@@ -35,8 +35,8 @@ export const Route = createFileRoute("/search")({
   component: SearchPage,
 });
 
-const PRESETS_KM = [1, 5, 10, 15, 25, 40, 59];
-const PRESETS_MI = [1, 3, 5, 10, 15, 25, 37];
+const PRESETS_KM = [1, 5, 10, 15, 25, 40, 50];
+const PRESETS_MI = [1, 3, 5, 10, 15, 25, 31];
 const DOT = " \u00b7 ";
 
 function unitLabel(unit: DistanceUnit, t: (k: "km" | "mi") => string) {
@@ -228,7 +228,7 @@ function SearchPage() {
   }
 
   const shownRadius = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
-  const radiusMax = distanceUnit === "mi" ? 37 : MAX_SEARCH_RADIUS_KM;
+  const radiusMax = distanceUnit === "mi" ? MAX_RADIUS_MI : MAX_SEARCH_RADIUS_KM;
   const presets = distanceUnit === "mi" ? PRESETS_MI : PRESETS_KM;
   const u = unitLabel(distanceUnit, t);
 
