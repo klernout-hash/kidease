@@ -1,53 +1,45 @@
 {
-  "last_run": "2026-09-03T01:36:00Z",
+  "last_run": "2026-09-03T02:05:57Z",
   "city": "Winnipeg",
   "province": "MB",
-  "last_id_processed": "mb-3005",
-  "mapped_count": 22,
-  "mapped_winnipeg": 22,
+  "last_id_processed": "mb-100903",
+  "mapped_count": 26,
+  "mapped_winnipeg": 26,
   "winnipeg_total": 428,
   "national_total": 20846,
-  "real_storefronts_keys": 22,
+  "real_storefronts_keys": 26,
   "pending_jpeg_upload": [
     "mb-102288",
     "mb-102556",
     "mb-102633",
-    "mb-3005"
+    "mb-3005",
+    "mb-103043",
+    "mb-2288",
+    "mb-101974",
+    "mb-100903"
   ],
   "skipped_no_photo_this_run": [
-    "mb-9420",
-    "mb-102019",
-    "mb-102387",
-    "mb-102755",
-    "mb-101882",
-    "mb-1240",
-    "mb-101322",
-    "mb-102082",
-    "mb-9826",
-    "mb-3021",
-    "mb-1034",
-    "mb-1275",
-    "mb-2151",
-    "mb-9597",
-    "mb-1064",
-    "mb-101696"
+    "mb-103205",
+    "mb-100700",
+    "mb-1031",
+    "mb-1153",
+    "mb-102919"
   ],
   "ids_added_this_run": [
-    "mb-102288",
-    "mb-102556",
-    "mb-102633",
-    "mb-3005"
+    "mb-103043",
+    "mb-2288",
+    "mb-101974",
+    "mb-100903"
   ],
   "next_queue": [
-    "Laugh N Learn Early Learning Centre mb-102082",
-    "Little Flamingos mb-103043",
-    "Little Voyageurs sites mb-1030 / mb-102359 / mb-102616",
-    "Maples DayCare Inc mb-1034",
-    "Mini-Skool / Kiddie Kampus mb-9597",
-    "Munroe ECEC sites",
+    "Living Prairie Childcare sites",
+    "Machray Day Nursery sites mb-1033 / mb-102878 / mb-100547 / mb-101381",
+    "Manidoo Gi Miini Gonaan mb-1278",
+    "Ma Mawi Wi Chi Itata mb-9180",
     "Morrow Early Learning sites",
-    "then remaining Winnipeg N-Z"
+    "Norwood / Oak / Prairie Garden remaining Winnipeg N-Z",
+    "then Brandon MB"
   ],
   "next_city_after_winnipeg": "Brandon",
-  "note": "real-storefronts.json was empty ({}) despite an old progress claim of 93. Restored ONLY ids that already have a JPEG in public/photos/buildings/ (18 files) plus four verified official L-M photos cropped locally. Do not treat /photos/wpg/ as official. Binary JPEG push is not available through GitHub text tools — upload pending_jpeg_upload files from the local artifacts folder."
+  "note": "This run mapped 4 verified official photos (Little Flamingos classroom, Little Lambs classroom, Little Stars PLAYhouse circle time, Makoonsag architect exterior). JPEGs saved locally under public/photos/buildings and artifacts/kidease-photos. GitHub text tools cannot reliably push binary JPEGs. Do not treat /photos/wpg/ as official."
 }

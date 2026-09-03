@@ -1,0 +1,44 @@
+{
+  "run": "2026-09-03-winnipeg-flamingos-lambs-stars-makoonsag",
+  "city": "Winnipeg",
+  "added": ["mb-103043", "mb-2288", "mb-101974", "mb-100903"],
+  "skipped": ["mb-103205", "mb-100700", "mb-1031", "mb-1153", "mb-102919"],
+  "sources": {
+    "mb-103043": {
+      "name": "Little Flamingos Early Learning Centre",
+      "address": "742 Ravelston Ave W, Winnipeg",
+      "official_site": "https://littleflamingoselc.ca/",
+      "source_url": "https://littleflamingoselc.ca/wp-content/uploads/2024/12/1000002164-2048x1153.jpg",
+      "image_kind": "official opening classroom interior published by the centre",
+      "repo_path": "public/photos/buildings/mb-103043.jpg",
+      "status": "MAPPED"
+    },
+    "mb-2288": {
+      "name": "Little Lambs Christian Preschool Inc.",
+      "address": "500 Lagimodiere Blvd, Winnipeg",
+      "official_site": "https://littlelambswinnipeg.ca/",
+      "source_url": "https://img1.wsimg.com/isteam/ip/e48aa999-fe50-47e0-9044-176e29f869cc/1.jpg",
+      "image_kind": "official See Our Space classroom interior",
+      "repo_path": "public/photos/buildings/mb-2288.jpg",
+      "status": "MAPPED"
+    },
+    "mb-101974": {
+      "name": "Little Stars PLAYhouse",
+      "address": "681 Selkirk Avenue, Winnipeg",
+      "official_site": "https://littlestarsplayhouse.ca/",
+      "source_url": "https://littlestarsplayhouse.ca/wp-content/uploads/2022/08/littlestarsrunningCROPPED.jpg",
+      "image_kind": "official site photo of children in program at the Selkirk Ave centre",
+      "repo_path": "public/photos/buildings/mb-101974.jpg",
+      "status": "MAPPED"
+    },
+    "mb-100903": {
+      "name": "Makoonsag Intergenerational Children's Centre",
+      "address": "527 Selkirk Avenue, Winnipeg",
+      "official_site": "https://www.prairiearchitects.ca/makoonsag-daycare",
+      "source_url": "https://images.squarespace-cdn.com/content/v1/5b282137f93fd4517582a532/1548350995264-KX9IZ8V59KFJTRKQVJJ4/Makoonsag-Daycare-ext-1.jpg",
+      "image_kind": "architect press exterior of THIS named building at 527 Selkirk",
+      "repo_path": "public/photos/buildings/mb-100903.jpg",
+      "status": "MAPPED"
+    }
+  }
+}
