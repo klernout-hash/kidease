@@ -19,6 +19,7 @@ export function DaycareCard({
   item,
   showDistance = true,
   cta = "details",
+  compact = false,
   eager = false,
 }: {
   item: Card;
@@ -73,6 +74,64 @@ export function DaycareCard({
       ) : null}
     </>
   );
+
+  if (compact) {
+    return (
+      <article data-slug={item.slug} className="ke-tile group relative w-full">
+        <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block">
+          <div className="relative aspect-[20/19] overflow-hidden rounded-xl bg-surface-2">
+            <BuildingPhoto
+              src={building}
+              eager={eager}
+              alt={`Storefront of ${name}`}
+              className="size-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
+            />
+            <div className="absolute inset-x-2 top-2 z-[1] flex flex-nowrap items-center gap-1 overflow-hidden">{badges}</div>
+          </div>
+          <div className="mt-2 space-y-0.5">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.015em]">{name}</h3>
+              {item.ratingX10 > 0 && item.reviewCount > 0 ? (
+                <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 text-[13px] font-medium tabular-nums">
+                  <Star className="size-3 fill-fg text-fg" strokeWidth={0} />
+                  {(item.ratingX10 / 10).toFixed(2)}
+                </span>
+              ) : null}
+            </div>
+            {showDistance ? <p className="truncate text-[13px] leading-5 text-muted tabular-nums">{kmLine}</p> : null}
+            {item.ageMaxMonths > item.ageMinMonths ? (
+              <p className="truncate text-[13px] leading-5 text-muted">
+                {t("agesShort")} {formatAgeRange(item.ageMinMonths, item.ageMaxMonths)}
+              </p>
+            ) : null}
+            {known && open ? (
+              <p className="truncate text-[13px] leading-5 text-muted">
+                {t("spotsAvailable")} {item.spotsTotal}
+              </p>
+            ) : null}
+            {feeOk ? (
+              <p className="pt-0.5 text-[14px] leading-5 tabular-nums">
+                <span className="font-semibold">{money(item.fromPrice, locale)}</span>
+                <span className="text-muted">{t("month")}</span>
+              </p>
+            ) : null}
+          </div>
+        </Link>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleCompare(item.id);
+          }}
+          className="absolute right-2 top-2 z-20 grid size-9 place-items-center rounded-full text-white drop-shadow-md"
+          aria-label={t("saved")}
+        >
+          <Heart className={cn("size-5", picked ? "fill-primary text-primary" : "fill-black/25 text-white")} strokeWidth={1.6} />
+        </button>
+      </article>
+    );
+  }
 
   return (
     <>
