@@ -1,0 +1,11 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "ids_attempted": ["mb-101167", "mb-102610", "mb-1010", "mb-1140", "mb-3030", "mb-102891"],
+  "ids_added": ["mb-101167", "mb-102610"],
+  "ids_skipped_no_usable_photo": ["mb-1010", "mb-1140", "mb-3030", "mb-102891"],
+  "sources": {
+    "mb-101167": "https://www.mennoniteschool.ca/bedson-campus building exterior",
+    "mb-102610": "https://time2play-elc.ca/gallery classroom"
+  }
+}
