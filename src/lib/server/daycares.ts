@@ -10,6 +10,7 @@ import { overlayPriority, sortPriorityFirst } from "./promos";
 import { isPlatformLive } from "@/lib/live";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
+import { rememberSearch, searchMemoKey } from "./search-memo";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
 
 type SearchInput = {
@@ -94,8 +95,64 @@ function slimCard(card: DaycareCard): DaycareCard {
     descriptionFr: "",
     address: "",
     phone: null,
+    hoursFr: "",
+    contactEmail: null,
     photos: [listingThumb(card.photos)],
   };
+}
+
+async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
+  const origin = { lat: data.lat, lng: data.lng };
+  let cards: DaycareCard[] = [];
+  for (const d of await nearbyListings(origin, data.radiusKm)) {
+    cards.push(toCard(d, origin, data.fsa));
+  }
+  cards = await overlayClaimed(cards, (card, claimed) => {
+    const next = {
+      ...card,
+      ...claimed,
+      claimed: true,
+      live: true,
+      feeConfirmed: true,
+      availabilityKnown: true,
+      ratingX10: claimed.ratingX10 || card.ratingX10,
+      reviewCount: claimed.reviewCount || card.reviewCount,
+      googlePlaceId: claimed.googlePlaceId || card.googlePlaceId,
+      distanceKm: card.distanceKm,
+      spotsInfant: claimed.spotsInfant,
+      spotsToddler: claimed.spotsToddler,
+      spotsPreschool: claimed.spotsPreschool,
+      waitlist: claimed.waitlist,
+      infantMonthly: claimed.infantMonthly,
+      toddlerMonthly: claimed.toddlerMonthly,
+      preschoolMonthly: claimed.preschoolMonthly,
+      partTimeMonthly: claimed.partTimeMonthly,
+      photos: claimed.photos?.length ? claimed.photos : card.photos,
+      priority: claimed.priority,
+      priorityUntil: claimed.priorityUntil,
+      ageMinMonths: claimed.agesKnown ? claimed.ageMinMonths : card.ageMinMonths,
+      ageMaxMonths: claimed.agesKnown ? claimed.ageMaxMonths : card.ageMaxMonths,
+      agesKnown: Boolean(claimed.agesKnown) || Boolean(card.agesKnown),
+    };
+    return { ...next, spotsTotal: spotsTotal(next), fromPrice: fromPrice(next) };
+  });
+  cards = await overlayPriority(cards);
+  if (data.ageGroup !== "any") {
+    cards = cards.filter((c) => {
+      if (!c.agesKnown) return false;
+      if (data.ageGroup === "infant") return c.ageMinMonths <= 18;
+      if (data.ageGroup === "toddler") return c.ageMinMonths < 36 && c.ageMaxMonths >= 18;
+      return c.ageMaxMonths >= 30 && c.ageMinMonths < 72;
+    });
+  }
+  cards.sort((a, b) => {
+    if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
+    if (data.sort === "price") return (a.fromPrice || 9e6) - (b.fromPrice || 9e6);
+    if (data.sort === "rating") return b.ratingX10 - a.ratingX10;
+    if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
+    return compareProximity(a, b);
+  });
+  return uniqueById(cards).map(slimCard);
 }
 
 export const searchDaycares = createServerFn({ method: "POST" })
@@ -103,59 +160,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
     ...input,
     radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
   }))
-  .handler(async ({ data }) => {
-    const origin = { lat: data.lat, lng: data.lng };
-    let cards: DaycareCard[] = [];
-    for (const d of await nearbyListings(origin, data.radiusKm)) {
-      cards.push(toCard(d, origin, data.fsa));
-    }
-    cards = await overlayClaimed(cards, (card, claimed) => {
-      const next = {
-        ...card,
-        ...claimed,
-        claimed: true,
-        live: true,
-        feeConfirmed: true,
-        availabilityKnown: true,
-        ratingX10: claimed.ratingX10 || card.ratingX10,
-        reviewCount: claimed.reviewCount || card.reviewCount,
-        googlePlaceId: claimed.googlePlaceId || card.googlePlaceId,
-        distanceKm: card.distanceKm,
-        spotsInfant: claimed.spotsInfant,
-        spotsToddler: claimed.spotsToddler,
-        spotsPreschool: claimed.spotsPreschool,
-        waitlist: claimed.waitlist,
-        infantMonthly: claimed.infantMonthly,
-        toddlerMonthly: claimed.toddlerMonthly,
-        preschoolMonthly: claimed.preschoolMonthly,
-        partTimeMonthly: claimed.partTimeMonthly,
-        photos: claimed.photos?.length ? claimed.photos : card.photos,
-        priority: claimed.priority,
-        priorityUntil: claimed.priorityUntil,
-        ageMinMonths: claimed.agesKnown ? claimed.ageMinMonths : card.ageMinMonths,
-        ageMaxMonths: claimed.agesKnown ? claimed.ageMaxMonths : card.ageMaxMonths,
-        agesKnown: Boolean(claimed.agesKnown) || Boolean(card.agesKnown),
-      };
-      return { ...next, spotsTotal: spotsTotal(next), fromPrice: fromPrice(next) };
-    });
-    cards = await overlayPriority(cards);
-    if (data.ageGroup !== "any") {
-      cards = cards.filter((c) => {
-        if (!c.agesKnown) return false;
-        if (data.ageGroup === "infant") return c.ageMinMonths <= 18;
-        if (data.ageGroup === "toddler") return c.ageMinMonths < 36 && c.ageMaxMonths >= 18;
-        return c.ageMaxMonths >= 30 && c.ageMinMonths < 72;
-      });
-    }
-    cards.sort((a, b) => {
-      if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
-      if (data.sort === "price") return (a.fromPrice || 9e6) - (b.fromPrice || 9e6);
-      if (data.sort === "rating") return b.ratingX10 - a.ratingX10;
-      if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
-      return compareProximity(a, b);
-    });
-    return uniqueById(cards).map(slimCard);
-  });
+  .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => runSearch(data)));
 
 export const featuredDaycares = createServerFn({ method: "POST" })
   .validator((input: { lat: number; lng: number }) => input)
