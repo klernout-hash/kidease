@@ -1,0 +1,25 @@
+{
+  "run": "2026-09-03T19:25:00Z",
+  "city": "Winnipeg",
+  "processed": ["mb-1023", "mb-1024", "mb-1026", "mb-1027", "mb-1028", "mb-1029", "mb-1030", "mb-1031", "mb-1032", "mb-1033", "mb-1034", "mb-1038", "mb-1039", "mb-1042", "mb-1045"],
+  "added": [
+    {"id": "mb-1027", "name": "Kings Park Day Care Centre Inc.", "source": "https://www.kingsparkchildcare.org/", "type": "official classroom / kids in program"},
+    {"id": "mb-1028", "name": "Knox Day Nursery", "source": "http://www.knoxdaynursery.com/", "type": "official storefront / building 406 Edmonton"}
+  ],
+  "skipped_no_usable_official_photo": {
+    "mb-1023": "Children at the Centre, 60 Pearl St (HSC rooms) — directory listing only, no official website or photos found",
+    "mb-1024": "Stars of Promise Inc. — directory listings only, no official website",
+    "mb-1026": "Kidi-Garden Day Nurseries — charity listing only, no website",
+    "mb-1029": "Learning Tree Day Nursery Regent — thelearningtreedaynursery.com is a UK chain, not this Winnipeg centre",
+    "mb-1030": "Little Voyageurs Site 1 — official site uses generic stock child photo, no site-1 classroom/building photo",
+    "mb-1031": "Little People's Place — no official website; WFP press photo exists but paywalled/unusable download this run",
+    "mb-1032": "Lord Roberts Preschool — official site hero images are stock photography",
+    "mb-1033": "Machray Day Nursery — official Wix site images are stock library photos",
+    "mb-1034": "Maples DayCare Inc. — no official website beyond 7 Oaks directory page",
+    "mb-1038": "Explore and Discover ELC — official domains did not resolve with usable photos",
+    "mb-1039": "FHELC Infant/IRCOM site — operator site has classroom photos but they are not labeled as the 470 Pacific / IRCOM infant site",
+    "mb-1042": "River Avenue Co-op — radcwinnipeg.ca did not load",
+    "mb-1045": "Fairlane Children's Centre — official site only has logo + stock drawing banner"
+  },
+  "notes": "Did not use Street View, generated images, or stock. Fairlane was mentioned in an earlier commit but is not in current real-storefronts.json; left unmapped because no usable official photo."
+}
