@@ -1,4 +1,4 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { ListingRail } from "@/components/listing-rail";
 import { uniqueById } from "@/lib/utils";
@@ -23,15 +23,6 @@ function fill(preferred: Card[], pool: Card[], n = 12) {
   return out;
 }
 
-function subscribeRecent(cb: () => void) {
-  window.addEventListener("kidease-recent", cb);
-  window.addEventListener("storage", cb);
-  return () => {
-    window.removeEventListener("kidease-recent", cb);
-    window.removeEventListener("storage", cb);
-  };
-}
-
 export function ExploreRails({
   items,
   onHover,
@@ -43,7 +34,16 @@ export function ExploreRails({
   const fr = locale === "fr";
   const originLabel = useAppStore((s) => s.origin.label);
   const city = originLabel.split(",")[0]?.trim() || "your area";
-  const recent = useSyncExternalStore(subscribeRecent, readRecent, () => [] as Card[]);
+  const [recent, setRecent] = useState<Card[]>([]);
+
+  useEffect(() => {
+    function sync() {
+      setRecent(readRecent());
+    }
+    sync();
+    window.addEventListener("kidease-recent", sync);
+    return () => window.removeEventListener("kidease-recent", sync);
+  }, []);
 
   const rows = useMemo(() => {
     const byDistance = [...items].sort((a, b) => a.distanceKm - b.distanceKm);
@@ -54,26 +54,26 @@ export function ExploreRails({
     const rated = items
       .filter((r) => r.ratingX10 > 0 && r.reviewCount > 0)
       .sort((a, b) => b.ratingX10 - a.ratingX10 || b.reviewCount - a.reviewCount);
-    const priority = items
-      .filter((r) => r.priority)
-      .sort((a, b) => a.distanceKm - b.distanceKm);
+    const priority = items.filter((r) => r.priority).sort((a, b) => a.distanceKm - b.distanceKm);
     const recentHits = recent.filter((r) => items.some((i) => i.id === r.id));
-    const first = recentHits.length ? take(recentHits) : fill(priority, byDistance);
     return {
-      first,
-      firstTitle: recentHits.length
-        ? t("recentlyViewed")
-        : fr
-          ? "Réservations prioritaires"
-          : "Priority listings",
+      first: recentHits.length ? take(recentHits) : fill(priority, byDistance),
+      firstTitle: recentHits.length ? "recent" : "priority",
       available: fill(available, byDistance),
       nextMonth: fill(nextMonth, byDistance),
       near: take(byDistance),
       rated: fill(rated, byDistance),
     };
-  }, [items, recent, t, fr]);
+  }, [items, recent]);
 
   if (!items.length) return null;
+
+  const firstTitle =
+    rows.firstTitle === "recent"
+      ? t("recentlyViewed")
+      : fr
+        ? "Réservations prioritaires"
+        : "Priority listings";
 
   return (
     <div
@@ -84,7 +84,7 @@ export function ExploreRails({
         if (slug) onHover?.(slug);
       }}
     >
-      <ListingRail title={rows.firstTitle} items={rows.first} />
+      <ListingRail title={firstTitle} items={rows.first} />
       <ListingRail title={t("availableNow")} items={rows.available} />
       <ListingRail title={t("availableNextMonth")} items={rows.nextMonth} />
       <ListingRail
