@@ -1,0 +1,13 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-1001", "mb-1003", "mb-3001", "mb-3010", "mb-3026"],
+  "ids_added": ["mb-3001", "mb-3010"],
+  "ids_skipped_no_photo": ["mb-1001", "mb-1003", "mb-3026"],
+  "photos_mapped": 2,
+  "sources": {
+    "mb-3001": "https://www.agassizchildcare.com/ - outdoor kids photo",
+    "mb-3010": "http://www.cairnscc.com/ - outdoor kids photo"
+  },
+  "notes": "Resumed from mb-7923. Focused on next_queue suggestions. Real official program photos only."
+}

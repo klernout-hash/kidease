@@ -1,13 +1,13 @@
 {
-  "last_run": "2026-09-03T07:15:00Z",
+  "last_run": "2026-09-03T08:20:00Z",
   "city": "Winnipeg",
   "province": "MB",
-  "last_id_processed": "mb-7923",
-  "mapped_count": 56,
-  "mapped_winnipeg": 56,
+  "last_id_processed": "mb-3010",
+  "mapped_count": 58,
+  "mapped_winnipeg": 58,
   "winnipeg_total": 428,
   "national_total": 20846,
-  "real_storefronts_keys": 56,
+  "real_storefronts_keys": 58,
   "pending_jpeg_upload": [
     "mb-100042",
     "mb-100048",
@@ -45,32 +45,24 @@
     "mb-1009",
     "mb-101665",
     "mb-3062",
-    "mb-7923"
+    "mb-7923",
+    "mb-3001",
+    "mb-3010"
   ],
   "skipped_no_photo_this_run": [
-    "mb-1007",
-    "mb-102349",
-    "mb-100351",
-    "mb-102576",
-    "mb-100681",
-    "mb-1002",
-    "mb-1276",
-    "mb-102891",
-    "mb-1264",
-    "mb-3088",
-    "mb-1046"
+    "mb-1001",
+    "mb-1003",
+    "mb-3026"
   ],
   "ids_added_this_run": [
-    "mb-1009",
-    "mb-101665",
-    "mb-3062",
-    "mb-7923"
+    "mb-3001",
+    "mb-3010"
   ],
   "next_queue": [
-    "Winnipeg unmapped with possible websites: Aleph-Bet mb-1001, CAPT mb-1003/mb-1199, Cairns mb-3010, Canterbury Park mb-3026, Care-A-Lot mb-1005, Busy Bee mb-1233, Agassiz mb-3001",
+    "Winnipeg remaining: Care-A-Lot variants, Busy Bee mb-1233 if exists, other unmapped with websites",
     "then remaining Winnipeg",
     "then Brandon MB"
   ],
   "next_city_after_winnipeg": "Brandon",
-  "note": "This run mapped 4 official photos: Fort Garry children outdoors (mb-1009); Inspired by Wonder SSCY infant room (mb-101665); SPLASH forest-school child (mb-3062); Casa Montessori Wilkes classroom (mb-7923). JPEG binaries saved locally in artifacts; git push of binaries failed without credentials."
+  "note": "This run mapped 2 official photos: Agassiz children outdoor winter (mb-3001); Cairns children outdoor winter play (mb-3010). JPEG binaries saved locally in artifacts/photos; git push of binaries may need credentials. Skipped Aleph-Bet (stock only), CAPT (no photos), Canterbury Park (no site photos)."
 }
