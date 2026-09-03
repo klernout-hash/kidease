@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 export type SheetSnap = "peek" | "mid" | "full";
 
 const HEIGHT: Record<SheetSnap, string> = {
-  peek: "22dvh",
-  mid: "52dvh",
+  peek: "38dvh",
+  mid: "58dvh",
   full: "86dvh",
 };
 

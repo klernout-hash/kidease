@@ -1,10 +1,10 @@
 import { CITIES, PROVINCES, geocode, haversineKm, reverseGeocode, type LatLng } from "@/lib/geo";
 import type { DaycareCard } from "@/lib/types";
 
-export const MAX_SEARCH_RADIUS_KM = 100;
+export const MAX_SEARCH_RADIUS_KM = 59;
 export const MIN_SEARCH_RADIUS_KM = 1;
 
-/** Hard cap: never query or render beyond 100 km of the active origin. */
+/** Hard cap: never query or render beyond 59 km of the active origin. */
 export function clampRadiusKm(radiusKm: number) {
   const n = Number(radiusKm);
   if (!Number.isFinite(n)) return 25;

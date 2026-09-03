@@ -2,7 +2,7 @@ export type DistanceUnit = "km" | "mi";
 
 export const KM_PER_MI = 1.609344;
 export const DISTANCE_UNIT_KEY = "kidease-distance-unit";
-export const MAX_RADIUS_MI = 62;
+export const MAX_RADIUS_MI = 37;
 
 export function kmToMi(km: number) {
   return Math.round((km / KM_PER_MI) * 10) / 10;

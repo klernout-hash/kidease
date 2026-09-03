@@ -5,6 +5,7 @@ import { applyDocumentLocale } from "./languages";
 import type { AgeGroup, Locale } from "./types";
 import { writeDistanceUnit, type DistanceUnit } from "./units";
 import { writeLocationConsent, type LocationConsent } from "./location-consent";
+import { clampRadiusKm } from "./proximity";
 
 export type SortKey = "distance" | "price" | "rating" | "availability";
 
@@ -69,7 +70,7 @@ export const useAppStore = create<SearchState>()((set) => ({
   },
   touchGps: () => set({ located: true, originSource: "gps", originAt: Date.now() }),
   radiusKm: 25,
-  setRadiusKm: (n) => set({ radiusKm: Math.min(100, Math.max(1, Math.round(n))) }),
+  setRadiusKm: (n) => set({ radiusKm: clampRadiusKm(n) }),
   sort: "distance",
   setSort: (sort) => set({ sort }),
   ageGroup: "any",
