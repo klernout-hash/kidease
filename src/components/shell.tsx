@@ -107,12 +107,12 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                 </>
               )}
             </div>
-            <div className="flex h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:xl:hidden">
+            <div className="flex h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=app]_&]:hidden [[data-channel=website]_&]:xl:hidden">
               <LanguageSelect />
             </div>
             <button
               type="button"
-              className="grid size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=website]_&]:xl:hidden"
+              className="grid size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=app]_&]:hidden [[data-channel=website]_&]:xl:hidden"
               aria-label="Menu"
               aria-expanded={open}
               aria-controls="ke-nav-drawer"
@@ -143,7 +143,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       {hideFooter ? null : <SiteFooter />}
       {hideTabs ? null : (
         <nav className="fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
-          <div className="mx-auto grid max-w-lg grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)] pt-1">
+          <div className="mx-auto grid max-w-lg grid-cols-6 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
             <Tab
               to="/"
               label={t("search")}
@@ -172,6 +172,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               icon={UserRound}
               active={onAccount && accountTab === "profile"}
             />
+            <Tab to="/menu" label={locale === "fr" ? "Menu" : "Menu"} icon={Menu} active={pathname.startsWith("/menu")} />
           </div>
         </nav>
       )}
@@ -294,11 +295,11 @@ function Tab({
       to={to}
       search={search}
       className={cn(
-        "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 text-[10px] font-medium tracking-wide",
+        "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 text-[9px] font-medium tracking-wide",
         active ? "text-primary" : "text-muted",
       )}
     >
-      <Icon className="size-[22px]" strokeWidth={active ? 2.2 : 1.7} fill={active && Icon === Heart ? "currentColor" : "none"} />
+      <Icon className="size-5" strokeWidth={active ? 2.2 : 1.7} fill={active && Icon === Heart ? "currentColor" : "none"} />
       {label}
     </Link>
   );
