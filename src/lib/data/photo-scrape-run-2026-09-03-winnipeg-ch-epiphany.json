@@ -1,0 +1,39 @@
+{
+  "run": "2026-09-03T08:20Z",
+  "city": "Winnipeg",
+  "added": [
+    {
+      "id": "mb-2026",
+      "name": "Children's House",
+      "address": "150 Pacific Avenue, Winnipeg, MB",
+      "source": "https://www.childrenshousemontessori.ca/",
+      "image": "https://images.squarespace-cdn.com/content/v1/626019f99b39a813e5f40391/0332cf11-bdad-4091-afe3-011145b52ddc/ZJG09471.jpg",
+      "kind": "official classroom interior"
+    },
+    {
+      "id": "mb-1016",
+      "name": "Epiphany Children's Centre Inc.",
+      "address": "196 Dalhousie Drive, Winnipeg, MB",
+      "source": "https://epiphanychildrenscentre.ca/",
+      "image": "https://epiphanychildrenscentre.ca/wp-content/uploads/2022/02/Picture-1-2.jpg",
+      "kind": "official program photo — children in classroom"
+    }
+  ],
+  "skipped": [
+    {"id": "mb-1001", "reason": "Aleph-Bet official site uses stock kids-in-field hero"},
+    {"id": "mb-100902", "reason": "no Forest Park site photo"},
+    {"id": "mb-100901", "reason": "no Margaret Park site photo"},
+    {"id": "mb-1233", "reason": "Busy Bee — no official Winnipeg site photos"},
+    {"id": "mb-1003", "reason": "CAPT Queenston — school text page only"},
+    {"id": "mb-1199", "reason": "CAPT Grosvenor — school text page only"},
+    {"id": "mb-3026", "reason": "Canterbury Park — no website"},
+    {"id": "mb-1005", "reason": "Care-A-Lot Winnipeg — no official site"},
+    {"id": "mb-3057", "reason": "Chapman official site uses stock hero"},
+    {"id": "mb-101123", "reason": "Torah Tots site down / Cloudflare"},
+    {"id": "mb-3012", "reason": "Earl Grey official site uses stock photos"},
+    {"id": "mb-1036", "reason": "Anne Ross — no usable nursery photo on Mount Carmel site"},
+    {"id": "mb-1249", "reason": "Assiniboine Castle — no official site photos"},
+    {"id": "mb-3002", "reason": "Assiniboine Children's Centre site is contact-only"}
+  ],
+  "already_mapped_by_concurrent_run": ["mb-3001", "mb-3010"]
+}
