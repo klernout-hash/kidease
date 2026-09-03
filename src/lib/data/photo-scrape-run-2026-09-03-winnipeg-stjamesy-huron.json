@@ -1,0 +1,48 @@
+{
+  "run": "2026-09-03-winnipeg-stjamesy-huron",
+  "city": "Winnipeg",
+  "mapped": [
+    {
+      "id": "mb-1261",
+      "name": "St. James Y Family Child Care",
+      "address": "3550 Portage Avenue, Winnipeg",
+      "source": "https://www.ywinnipeg.ca/locations/west-portage-community-hub",
+      "image": "https://www.ywinnipeg.ca/sites/default/files/2025-09/new_front_image_0.jpg",
+      "kind": "official storefront 3550 Portage YMCA-YWCA"
+    },
+    {
+      "id": "mb-1270",
+      "name": "Wee Bairns Infant Care Centre",
+      "address": "260 Redonda Street, Winnipeg",
+      "source": "https://www.weebairns.ca/",
+      "image": "https://static.wixstatic.com/media/2a1536_0a7d8a35ea7443919375e42d70d64b8af000.jpg",
+      "kind": "official outdoor kids water-table program photo"
+    },
+    {
+      "id": "mb-1276",
+      "name": "Casa Montessori & Orff School Fennel",
+      "address": "80 Fennel Street, Winnipeg",
+      "source": "https://montessoriandorff.ca/fennell",
+      "image": "https://assets.cdn.filesafe.space/sSc5Nr5mYDvMFZCDdOfF/media/684a48878beb4bc489a8f2f4.jpeg",
+      "kind": "official Fennell campus educator and toddler"
+    },
+    {
+      "id": "mb-1286",
+      "name": "Huron Child Care Inc.",
+      "address": "1120 McPhillips Street, Winnipeg",
+      "source": "https://www.huronchildcare.com/",
+      "image": "https://static.wixstatic.com/media/7013d3_ef063ba8c9f844d8b3d538152cc15628~mv2.jpg",
+      "kind": "official Room A classroom with Huron sign"
+    }
+  ],
+  "skipped": {
+    "mb-1264": "Bumper Crop Early Learning Centre - WSD Waterford Springs page text only, no centre photos",
+    "mb-1272": "Niigaanaki Day Care - no official website photos",
+    "mb-1275": "Mary Kardash - official site uses Unsplash stock only",
+    "mb-1278": "Manidoo Gi Miini Gonaan / R.B. Russell Infant Centre - manidoo.ca contact page text only",
+    "mb-1284": "Champlain Community Child Care - WSD Champlain school page text only",
+    "mb-1290": "Morrow Hastings - melcd.ca uses shutterstock/stock family photos only",
+    "mb-1292": "Roblin Park Day Care Ltd at 5905 Roblin Blvd - no official site; roblinpark.org is a different Children's Programs licence",
+    "mb-1298": "Village Child Care Meadowood - official site hero is generic stock (Jenga)"
+  }
+}
