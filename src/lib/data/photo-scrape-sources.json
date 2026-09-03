@@ -41,5 +41,38 @@
     "image_url": "https://static.wixstatic.com/media/ed789b_61d774a7d0d945bf83cf336a88f99de5~mv2.jpg",
     "type": "official_website_kids",
     "scraped_at": "2026-09-03T17:30:00Z"
+  },
+  "mb-1006": {
+    "name": "Carpathia Children's Centre Inc.",
+    "address": "1777 Grant Avenue, Winnipeg, MB",
+    "source_url": "http://www.carpathiachildrenscentre.com/",
+    "image_url": "http://www.carpathiachildrenscentre.com/school.JPG",
+    "type": "official_website_storefront",
+    "scraped_at": "2026-09-03T18:30:00Z",
+    "note": "Official homepage photo of John Dafoe School entrance at 1777 Grant with Carpathia Children's Centre Inc. sign"
+  },
+  "mb-1009": {
+    "name": "Fort Garry Child Care Centre Co-op Inc.",
+    "address": "1555 Pembina Highway, Winnipeg, MB",
+    "source_url": "https://fortgarrychildcare.ca/",
+    "image_url": "https://fortgarrychildcare.ca/wp-content/uploads/2022/07/children-lined-up-scaled.jpg",
+    "type": "official_website_kids_in_program",
+    "scraped_at": "2026-09-03T18:30:00Z"
+  },
+  "mb-1016": {
+    "name": "Epiphany Children's Centre Inc.",
+    "address": "196 Dalhousie Drive, Winnipeg, MB",
+    "source_url": "https://epiphanychildrenscentre.ca/",
+    "image_url": "https://epiphanychildrenscentre.ca/wp-content/uploads/2022/03/33.jpg",
+    "type": "official_website_classroom",
+    "scraped_at": "2026-09-03T18:30:00Z"
+  },
+  "mb-1043": {
+    "name": "Discovery Children's Centre Inc.",
+    "address": "367 Hampton Street, Winnipeg, MB",
+    "source_url": "https://www.discoverycc.com/our-facilities/",
+    "image_url": "https://www.discoverycc.com/wp-content/uploads/2020/10/front-address-scaled.jpg",
+    "type": "official_website_storefront_playground",
+    "scraped_at": "2026-09-03T18:30:00Z"
   }
 }
