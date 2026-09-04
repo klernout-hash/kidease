@@ -39,15 +39,11 @@ export {
   GROK_PROVIDERS,
   isNativeSocialProvider,
   NATIVE_GOOGLE,
-  NATIVE_TWITTER,
+  NATIVE_FACEBOOK,
   visibleSignInProviders,
 } from "./providers";
 
 // ── Live-preview bearer token ────────────────────────────────────────────────
-// The embedded preview iframe has partitioned cookies, so we keep the session's
-// bearer token in sessionStorage and attach it to every Better Auth request (and
-// to server functions, via `@/lib/auth/middleware`). Empty everywhere except the
-// preview after a popup sign-in, so the cookie path is untouched elsewhere.
 const BEARER_KEY = "grok-auth.bearer-token";
 
 /** The stored preview bearer token, or null. */
@@ -70,11 +66,6 @@ function setBearerToken(token: string | null): void {
   }
 }
 
-/**
- * The sandbox live preview runs this app inside an iframe on a `*.grok-sandbox.com`
- * host, where a full-page redirect to the broker can't work — so sign-in uses a
- * popup there and a normal redirect everywhere else.
- */
 function inLivePreview(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -82,27 +73,8 @@ function inLivePreview(): boolean {
   );
 }
 
-/** Message the popup posts back to the opener once sign-in completes. */
 type PopupMessage = { source: "grok-auth-popup"; token: string | null; error?: string };
 
-/**
- * Start sign-in with one upstream provider (`providerId` from `GROK_PROVIDERS`
- * or native `google` / `twitter` / `apple`).
- *
- * Native Google (`google`), native X (`twitter`), and Apple use Better Auth
- * `signIn.social`. Broker Google (`grok-google`) and broker X (`grok-x`)
- * federate through the Grok auth broker.
- *
- * - **Live preview** (`*.grok-sandbox.com` iframe): opens a POPUP to
- *   `/auth/popup`, served by the template Vite plugin (see `vite.config.ts` +
- *   `popup.server.ts`) — 302s to the broker/upstream login (no app chrome) and,
- *   on return, posts the session bearer token back. We store it and refresh the
- *   session; no top-level navigation of the iframe to the broker.
- * - **Deployed** (and local non-iframe): a normal full-page redirect.
- *
- * Either way it clears any existing local session FIRST so switching providers
- * actually switches identity.
- */
 export async function signIn(
   providerId: string,
   opts: { callbackURL?: string; errorCallbackURL?: string } = {},
@@ -110,20 +82,14 @@ export async function signIn(
   const callbackURL = opts.callbackURL ?? "/";
   const errorCallbackURL = opts.errorCallbackURL ?? "/";
 
-  // Open the popup SYNCHRONOUSLY on the user gesture — before any await
-  // (including signOut). Awaiting first drops user-gesture privilege in some
-  // browsers when the opener is a cross-origin live-preview iframe.
   const popup = inLivePreview() ? openSignInPopup(providerId) : null;
 
-  // Clear any prior session so switching providers actually switches identity.
-  // In the live preview the iframe has no session cookie — only a bearer token —
-  // so skip the network signOut when there's nothing to clear.
   const hadBearer = Boolean(getBearerToken());
   if (hadBearer || !inLivePreview()) {
     try {
       await authClient.signOut();
     } catch {
-      // No active session (or a transient sign-out error) — proceed to sign in.
+      // No active session — proceed to sign in.
     }
   }
   setBearerToken(null);
@@ -149,7 +115,7 @@ export async function signIn(
       return;
     }
     const { data, error } = await authClient.signIn.social({
-      provider: providerId as "apple" | "google" | "twitter",
+      provider: providerId as "apple" | "google" | "facebook" | "twitter",
       callbackURL,
       errorCallbackURL,
     });
@@ -163,9 +129,6 @@ export async function signIn(
     const token = await waitForPopupToken(popup);
     if (!token) throw new Error("Sign-in was cancelled or failed");
     setBearerToken(token);
-    // Refresh the client session store with the bearer attached (onRequest).
-    // Avoid a full iframe reload when we're already on the destination — that
-    // reload was the slow "still loading after the popup closed" feeling.
     try {
       await authClient.getSession();
     } catch {
@@ -190,27 +153,13 @@ export async function signIn(
   if (data?.url) window.location.href = data.url;
 }
 
-/**
- * Open `/auth/popup` in a new window. Must run synchronously inside the click
- * handler (no await before this). The path is served by the template Vite
- * plugin (`authPopupPlugin` in vite.config.ts) — NOT by a React route.
- *
- * Opens the real URL directly (not about:blank → assign). From a cross-origin
- * iframe the about:blank dance often fails on the first click and the window
- * ends up showing the app shell.
- */
 function openSignInPopup(providerId: string): Window | null {
   const origin = window.location.origin;
   const url = `${origin}/auth/popup?providerId=${encodeURIComponent(providerId)}`;
-  // Unique name per attempt so a prior attempt stuck on the SPA is not reused.
   const name = `grok-signin-${Date.now()}`;
   return window.open(url, name, "popup,width=500,height=650");
 }
 
-/**
- * Wait for the popup's completion page to postMessage the session bearer (or
- * for the user to dismiss the popup).
- */
 function waitForPopupToken(popup: Window): Promise<string | null> {
   return new Promise((resolve) => {
     const origin = window.location.origin;
@@ -228,8 +177,6 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
       if (!data || data.source !== "grok-auth-popup") return;
       settle(data.token ?? null);
     };
-    // Fallback when the user dismisses the popup. Grace period lets the
-    // completion page's postMessage win over a racing `popup.closed`.
     const pollTimer = window.setInterval(() => {
       if (!popup.closed) return;
       window.clearInterval(pollTimer);
@@ -244,7 +191,6 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
   });
 }
 
-/** Sign out of THIS app's local session, clear the preview token, then redirect. */
 export async function signOut(redirectTo = "/"): Promise<void> {
   try {
     await authClient.signOut();
