@@ -1,0 +1,38 @@
+{
+  "run": "2026-09-04-winnipeg-queue-1026-1045-plus-sky-ibw",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [
+    {
+      "id": "mb-100808",
+      "name": "Sky's The Limit Montessori School",
+      "address": "3202 Birds Hill Road, Winnipeg, MB",
+      "source_url": "https://www.skysthelimitmontessori.com/",
+      "image_url": "https://static.wixstatic.com/media/0d5591_e879f8cba3fe4e7684fb7bd2287ccb16~mv2.jpg",
+      "type": "official_website_classroom_kids_in_program",
+      "file": "/photos/buildings/mb-100808.jpg"
+    },
+    {
+      "id": "mb-101665",
+      "name": "Inspired by Wonder Inc. - SSCY site",
+      "address": "1155 Notre Dame Avenue, Winnipeg, MB",
+      "source_url": "https://www.inspiredbywonder.ca/",
+      "image_url": "https://www.inspiredbywonder.ca/wp-content/uploads/2019/11/infant-room.jpg",
+      "type": "official_website_infant_classroom_interior",
+      "file": "/photos/buildings/mb-101665.jpg"
+    }
+  ],
+  "skipped": [
+    {"id": "mb-1026", "reason": "No official website; directories only"},
+    {"id": "mb-1029", "reason": "No confirmed Winnipeg official gallery"},
+    {"id": "mb-1030", "reason": "Official site uses stock-looking uploads only"},
+    {"id": "mb-1031", "reason": "No Winnipeg official website"},
+    {"id": "mb-1032", "reason": "lordroberts.org slides are generic stock"},
+    {"id": "mb-1033", "reason": "Wix stock library images only"},
+    {"id": "mb-1034", "reason": "No official centre website"},
+    {"id": "mb-1038", "reason": "No confirmed usable official gallery this run"},
+    {"id": "mb-1042", "reason": "No usable official photo found"},
+    {"id": "mb-1045", "reason": "Official site banners are generic stock"}
+  ],
+  "mapped_count_after": 64
+}

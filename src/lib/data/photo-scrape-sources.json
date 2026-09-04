@@ -6,5 +6,21 @@
     "image_url": "https://bsls.ca/wp-content/uploads/2026/08/daycare-nursery-image-website-1.webp",
     "type": "classroom/kids program",
     "date_scraped": "2026-09-04"
+  },
+  "mb-100808": {
+    "name": "Sky's The Limit Montessori School",
+    "city": "Winnipeg",
+    "source_url": "https://www.skysthelimitmontessori.com/",
+    "image_url": "https://static.wixstatic.com/media/0d5591_e879f8cba3fe4e7684fb7bd2287ccb16~mv2.jpg",
+    "type": "classroom/kids in program",
+    "date_scraped": "2026-09-04"
+  },
+  "mb-101665": {
+    "name": "Inspired by Wonder Inc. - SSCY site",
+    "city": "Winnipeg",
+    "source_url": "https://www.inspiredbywonder.ca/",
+    "image_url": "https://www.inspiredbywonder.ca/wp-content/uploads/2019/11/infant-room.jpg",
+    "type": "infant classroom interior",
+    "date_scraped": "2026-09-04"
   }
 }
