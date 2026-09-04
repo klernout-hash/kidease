@@ -1,0 +1,20 @@
+{
+  "run": "2026-09-04-hourly-winnipeg-montessori-bright-brightling-campus",
+  "city": "Winnipeg",
+  "province": "MB",
+  "added": [
+    {"id": "mb-2024", "name": "Winnipeg Montessori School Inc.", "photo": "/photos/buildings/mb-2024.jpg", "source": "https://www.winnipegmontessori.com/about-us"},
+    {"id": "mb-102899", "name": "Bright Scholars Montessori", "photo": "/photos/buildings/mb-102899.jpg", "source": "https://brightscholarsmontessori.ca/"},
+    {"id": "mb-103244", "name": "Brightling Children's Academy Inc.", "photo": "/photos/buildings/mb-103244.jpg", "source": "https://www.brightlingacademy.ca/"},
+    {"id": "mb-1004", "name": "Campus Children's Centre Inc.", "photo": "/photos/buildings/mb-1004.jpg", "source": "https://www.campuschildrenscentre.com/"}
+  ],
+  "skipped_no_usable_official_photo": [
+    {"id": "mb-103006", "name": "Bridgwater Montessori", "reason": "official site photos are generic classroom materials + logo"},
+    {"id": "mb-3002", "name": "Assiniboine Children's Centre Inc.", "reason": "no usable public classroom/building photo found this pass"},
+    {"id": "mb-3032", "name": "Westgrove Children's Centre Inc.", "reason": "Facebook-only, no official website photo used"},
+    {"id": "mb-1063", "name": "Wild Honey Children's Centre", "reason": "no official website photo found"},
+    {"id": "mb-3036", "name": "Windsor Park Children's Care Center Inc.", "reason": "no official website photo found"},
+    {"id": "mb-7834", "name": "Can You Imagine Preschool Care and Education Centre Inc.", "reason": "school-page text only, no centre photo"},
+    {"id": "mb-101167", "name": "Winnipeg Mennonite Early Learning Christian Centre", "reason": "campus photos are school not clearly the licensed ELC rooms"}
+  ]
+}

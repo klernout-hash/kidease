@@ -1,0 +1,38 @@
+{
+  "mb-2024": {
+    "name": "Winnipeg Montessori School Inc.",
+    "city": "Winnipeg",
+    "address": "1525 Willson Place",
+    "source_page": "https://www.winnipegmontessori.com/about-us",
+    "source_image": "https://images.squarespace-cdn.com/content/v1/67ac061a9150aa7236607d41/51f25ac2-617a-4389-979c-9c3c48682289/20250218LRE-9624.jpg",
+    "kind": "official classroom / kids in program",
+    "file": "/photos/buildings/mb-2024.jpg"
+  },
+  "mb-102899": {
+    "name": "Bright Scholars Montessori",
+    "city": "Winnipeg",
+    "address": "325 North Town Road",
+    "source_page": "https://brightscholarsmontessori.ca/",
+    "source_image": "https://storage.googleapis.com/msgsndr/31SjJThNiFwaRDIcqmT6/media/6793c6a758bc9b1e8b787c63.jpeg",
+    "kind": "official storefront / building with centre signage",
+    "file": "/photos/buildings/mb-102899.jpg"
+  },
+  "mb-103244": {
+    "name": "Brightling Children's Academy Inc.",
+    "city": "Winnipeg",
+    "address": "1461 Chevrier Boulevard",
+    "source_page": "https://www.brightlingacademy.ca/",
+    "source_image": "https://images.squarespace-cdn.com/content/v1/6a2c8e5c17ac4f6146055286/124c45f2-806f-4ba5-88e6-4c649e599110/94-Brightling-24-7146.jpg",
+    "kind": "official classroom / kids in program",
+    "file": "/photos/buildings/mb-103244.jpg"
+  },
+  "mb-1004": {
+    "name": "Campus Children's Centre Inc.",
+    "city": "Winnipeg",
+    "address": "15-19 Dysart Road",
+    "source_page": "https://www.campuschildrenscentre.com/",
+    "source_image": "https://static.wixstatic.com/media/591b5b_234cf05f03584dfbac1ae708dad980c8~mv2.jpeg",
+    "kind": "official interior playroom / infant in program",
+    "file": "/photos/buildings/mb-1004.jpg"
+  }
+}
