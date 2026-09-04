@@ -79,5 +79,23 @@
     "source_image": "https://www.inspiredbywonder.ca/wp-content/uploads/2019/11/infant-room.jpg",
     "kind": "official infant classroom interior",
     "file": "/photos/buildings/mb-101665.jpg"
+  },
+  "mb-1006": {
+    "name": "Carpathia Children's Centre Inc.",
+    "city": "Winnipeg",
+    "address": "1777 Grant Avenue",
+    "source_page": "http://www.carpathiachildrenscentre.com/",
+    "source_image": "http://www.carpathiachildrenscentre.com/publishImages/index~~element4.jpg",
+    "kind": "official storefront / building with centre signage at John Dafoe School",
+    "file": "/photos/buildings/mb-1006.jpg"
+  },
+  "mb-1016": {
+    "name": "Epiphany Children's Centre Inc.",
+    "city": "Winnipeg",
+    "address": "196 Dalhousie Drive",
+    "source_page": "https://epiphanychildrenscentre.ca/",
+    "source_image": "https://epiphanychildrenscentre.ca/wp-content/uploads/elementor/thumbs/Picture-4-pkndy46bgfknrm7kx1khjdopw2x406bu2nao2c2xd8.jpg",
+    "kind": "official classroom / kids in program",
+    "file": "/photos/buildings/mb-1016.jpg"
   }
 }
