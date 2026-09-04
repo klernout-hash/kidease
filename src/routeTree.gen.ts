@@ -33,9 +33,910 @@ import { Route as MenuRouteImport } from './routes/menu'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
+import { Route as ApiDigestRouteImport } from './routes/api/digest'
+import { Route as BookSlugRouteImport } from './routes/book.$slug'
+import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
+import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
+import { Route as InboxIdRouteImport } from './routes/inbox.$id'
+import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
+import { Route as SignIdRouteImport } from './routes/sign.$id'
+import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminContractsRoute = AdminContractsRouteImport.update({
+  id: '/admin-contracts',
+  path: '/admin-contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIconRoute = AppIconRouteImport.update({
+  id: '/app-icon',
+  path: '/app-icon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BenefitsRoute = BenefitsRouteImport.update({
+  id: '/benefits',
+  path: '/benefits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChildcareBenefitsProgramRoute =
+  ChildcareBenefitsProgramRouteImport.update({
+    id: '/childcare-benefits-program',
+    path: '/childcare-benefits-program',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ClaimRoute = ClaimRouteImport.update({
+  id: '/claim',
+  path: '/claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GetAppRoute = GetAppRouteImport.update({
+  id: '/get-app',
+  path: '/get-app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImgRoute = ImgRouteImport.update({
+  id: '/img',
+  path: '/img',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InboxRoute = InboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
+  id: '/meet-the-team',
+  path: '/meet-the-team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MenuRoute = MenuRouteImport.update({
+  id: '/menu',
+  path: '/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentRoute = ParentRouteImport.update({
+  id: '/parent',
+  path: '/parent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderRoute = ProviderRouteImport.update({
+  id: '/provider',
+  path: '/provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TourChecklistRoute = TourChecklistRouteImport.update({
+  id: '/tour-checklist',
+  path: '/tour-checklist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Verify2faRoute = Verify2faRouteImport.update({
+  id: '/verify-2fa',
+  path: '/verify-2fa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDigestRoute = ApiDigestRouteImport.update({
+  id: '/api/digest',
+  path: '/api/digest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookSlugRoute = BookSlugRouteImport.update({
+  id: '/book/$slug',
+  path: '/book/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckinIdRoute = CheckinIdRouteImport.update({
+  id: '/checkin/$id',
+  path: '/checkin/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DaycareSlugRoute = DaycareSlugRouteImport.update({
+  id: '/daycare/$slug',
+  path: '/daycare/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InboxIdRoute = InboxIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => InboxRoute,
+} as any)
+const PayBookingIdRoute = PayBookingIdRouteImport.update({
+  id: '/pay/$bookingId',
+  path: '/pay/$bookingId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignIdRoute = SignIdRouteImport.update({
+  id: '/sign/$id',
+  path: '/sign/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminContractsRoute = ApiAdminContractsRouteImport.update({
+  id: '/api/admin/contracts',
+  path: '/api/admin/contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDocusignWebhookRoute = ApiDocusignWebhookRouteImport.update({
+  id: '/api/docusign/webhook',
+  path: '/api/docusign/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/account': typeof AccountRoute
+  '/admin': typeof AdminRoute
+  '/admin-contracts': typeof AdminContractsRoute
+  '/app-icon': typeof AppIconRoute
+  '/benefits': typeof BenefitsRoute
+  '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
+  '/claim': typeof ClaimRoute
+  '/compare': typeof CompareRoute
+  '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/explore': typeof ExploreRoute
+  '/faq': typeof FaqRoute
+  '/get-app': typeof GetAppRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/img': typeof ImgRoute
+  '/inbox': typeof InboxRouteWithChildren
+  '/login': typeof LoginRoute
+  '/meet-the-team': typeof MeetTheTeamRoute
+  '/menu': typeof MenuRoute
+  '/parent': typeof ParentRoute
+  '/privacy': typeof PrivacyRoute
+  '/provider': typeof ProviderRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
+  '/support': typeof SupportRoute
+  '/team': typeof TeamRoute
+  '/terms': typeof TermsRoute
+  '/tour-checklist': typeof TourChecklistRoute
+  '/verify-2fa': typeof Verify2faRoute
+  '/api/digest': typeof ApiDigestRoute
+  '/book/$slug': typeof BookSlugRoute
+  '/checkin/$id': typeof CheckinIdRoute
+  '/daycare/$slug': typeof DaycareSlugRoute
+  '/inbox/$id': typeof InboxIdRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/sign/$id': typeof SignIdRoute
+  '/api/admin/contracts': typeof ApiAdminContractsRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/account': typeof AccountRoute
+  '/admin': typeof AdminRoute
+  '/admin-contracts': typeof AdminContractsRoute
+  '/app-icon': typeof AppIconRoute
+  '/benefits': typeof BenefitsRoute
+  '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
+  '/claim': typeof ClaimRoute
+  '/compare': typeof CompareRoute
+  '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/explore': typeof ExploreRoute
+  '/faq': typeof FaqRoute
+  '/get-app': typeof GetAppRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/img': typeof ImgRoute
+  '/inbox': typeof InboxRouteWithChildren
+  '/login': typeof LoginRoute
+  '/meet-the-team': typeof MeetTheTeamRoute
+  '/menu': typeof MenuRoute
+  '/parent': typeof ParentRoute
+  '/privacy': typeof PrivacyRoute
+  '/provider': typeof ProviderRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
+  '/support': typeof SupportRoute
+  '/team': typeof TeamRoute
+  '/terms': typeof TermsRoute
+  '/tour-checklist': typeof TourChecklistRoute
+  '/verify-2fa': typeof Verify2faRoute
+  '/api/digest': typeof ApiDigestRoute
+  '/book/$slug': typeof BookSlugRoute
+  '/checkin/$id': typeof CheckinIdRoute
+  '/daycare/$slug': typeof DaycareSlugRoute
+  '/inbox/$id': typeof InboxIdRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/sign/$id': typeof SignIdRoute
+  '/api/admin/contracts': typeof ApiAdminContractsRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+}
+export interface FileRoutesById {
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/account': typeof AccountRoute
+  '/admin': typeof AdminRoute
+  '/admin-contracts': typeof AdminContractsRoute
+  '/app-icon': typeof AppIconRoute
+  '/benefits': typeof BenefitsRoute
+  '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
+  '/claim': typeof ClaimRoute
+  '/compare': typeof CompareRoute
+  '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/explore': typeof ExploreRoute
+  '/faq': typeof FaqRoute
+  '/get-app': typeof GetAppRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/img': typeof ImgRoute
+  '/inbox': typeof InboxRouteWithChildren
+  '/login': typeof LoginRoute
+  '/meet-the-team': typeof MeetTheTeamRoute
+  '/menu': typeof MenuRoute
+  '/parent': typeof ParentRoute
+  '/privacy': typeof PrivacyRoute
+  '/provider': typeof ProviderRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
+  '/support': typeof SupportRoute
+  '/team': typeof TeamRoute
+  '/terms': typeof TermsRoute
+  '/tour-checklist': typeof TourChecklistRoute
+  '/verify-2fa': typeof Verify2faRoute
+  '/api/digest': typeof ApiDigestRoute
+  '/book/$slug': typeof BookSlugRoute
+  '/checkin/$id': typeof CheckinIdRoute
+  '/daycare/$slug': typeof DaycareSlugRoute
+  '/inbox/$id': typeof InboxIdRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/sign/$id': typeof SignIdRoute
+  '/api/admin/contracts': typeof ApiAdminContractsRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+}
+export interface FileRouteTypes {
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/account'
+    | '/admin'
+    | '/admin-contracts'
+    | '/app-icon'
+    | '/benefits'
+    | '/childcare-benefits-program'
+    | '/claim'
+    | '/compare'
+    | '/contact'
+    | '/cookies'
+    | '/explore'
+    | '/faq'
+    | '/get-app'
+    | '/how-it-works'
+    | '/img'
+    | '/inbox'
+    | '/login'
+    | '/meet-the-team'
+    | '/menu'
+    | '/parent'
+    | '/privacy'
+    | '/provider'
+    | '/reset-password'
+    | '/search'
+    | '/support'
+    | '/team'
+    | '/terms'
+    | '/tour-checklist'
+    | '/verify-2fa'
+    | '/api/digest'
+    | '/book/$slug'
+    | '/checkin/$id'
+    | '/daycare/$slug'
+    | '/inbox/$id'
+    | '/pay/$bookingId'
+    | '/sign/$id'
+    | '/api/admin/contracts'
+    | '/api/auth/$'
+    | '/api/docusign/webhook'
+    | '/api/stripe/webhook'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/about'
+    | '/account'
+    | '/admin'
+    | '/admin-contracts'
+    | '/app-icon'
+    | '/benefits'
+    | '/childcare-benefits-program'
+    | '/claim'
+    | '/compare'
+    | '/contact'
+    | '/cookies'
+    | '/explore'
+    | '/faq'
+    | '/get-app'
+    | '/how-it-works'
+    | '/img'
+    | '/inbox'
+    | '/login'
+    | '/meet-the-team'
+    | '/menu'
+    | '/parent'
+    | '/privacy'
+    | '/provider'
+    | '/reset-password'
+    | '/search'
+    | '/support'
+    | '/team'
+    | '/terms'
+    | '/tour-checklist'
+    | '/verify-2fa'
+    | '/api/digest'
+    | '/book/$slug'
+    | '/checkin/$id'
+    | '/daycare/$slug'
+    | '/inbox/$id'
+    | '/pay/$bookingId'
+    | '/sign/$id'
+    | '/api/admin/contracts'
+    | '/api/auth/$'
+    | '/api/docusign/webhook'
+    | '/api/stripe/webhook'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/account'
+    | '/admin'
+    | '/admin-contracts'
+    | '/app-icon'
+    | '/benefits'
+    | '/childcare-benefits-program'
+    | '/claim'
+    | '/compare'
+    | '/contact'
+    | '/cookies'
+    | '/explore'
+    | '/faq'
+    | '/get-app'
+    | '/how-it-works'
+    | '/img'
+    | '/inbox'
+    | '/login'
+    | '/meet-the-team'
+    | '/menu'
+    | '/parent'
+    | '/privacy'
+    | '/provider'
+    | '/reset-password'
+    | '/search'
+    | '/support'
+    | '/team'
+    | '/terms'
+    | '/tour-checklist'
+    | '/verify-2fa'
+    | '/api/digest'
+    | '/book/$slug'
+    | '/checkin/$id'
+    | '/daycare/$slug'
+    | '/inbox/$id'
+    | '/pay/$bookingId'
+    | '/sign/$id'
+    | '/api/admin/contracts'
+    | '/api/auth/$'
+    | '/api/docusign/webhook'
+    | '/api/stripe/webhook'
+  fileRoutesById: FileRoutesById
+}
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AccountRoute: typeof AccountRoute
+  AdminRoute: typeof AdminRoute
+  AdminContractsRoute: typeof AdminContractsRoute
+  AppIconRoute: typeof AppIconRoute
+  BenefitsRoute: typeof BenefitsRoute
+  ChildcareBenefitsProgramRoute: typeof ChildcareBenefitsProgramRoute
+  ClaimRoute: typeof ClaimRoute
+  CompareRoute: typeof CompareRoute
+  ContactRoute: typeof ContactRoute
+  CookiesRoute: typeof CookiesRoute
+  ExploreRoute: typeof ExploreRoute
+  FaqRoute: typeof FaqRoute
+  GetAppRoute: typeof GetAppRoute
+  HowItWorksRoute: typeof HowItWorksRoute
+  ImgRoute: typeof ImgRoute
+  InboxRoute: typeof InboxRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  MeetTheTeamRoute: typeof MeetTheTeamRoute
+  MenuRoute: typeof MenuRoute
+  ParentRoute: typeof ParentRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ProviderRoute: typeof ProviderRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SearchRoute: typeof SearchRoute
+  SupportRoute: typeof SupportRoute
+  TeamRoute: typeof TeamRoute
+  TermsRoute: typeof TermsRoute
+  TourChecklistRoute: typeof TourChecklistRoute
+  Verify2faRoute: typeof Verify2faRoute
+  ApiDigestRoute: typeof ApiDigestRoute
+  BookSlugRoute: typeof BookSlugRoute
+  CheckinIdRoute: typeof CheckinIdRoute
+  DaycareSlugRoute: typeof DaycareSlugRoute
+  PayBookingIdRoute: typeof PayBookingIdRoute
+  SignIdRoute: typeof SignIdRoute
+  ApiAdminContractsRoute: typeof ApiAdminContractsRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-contracts': {
+      id: '/admin-contracts'
+      path: '/admin-contracts'
+      fullPath: '/admin-contracts'
+      preLoaderRoute: typeof AdminContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app-icon': {
+      id: '/app-icon'
+      path: '/app-icon'
+      fullPath: '/app-icon'
+      preLoaderRoute: typeof AppIconRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/benefits': {
+      id: '/benefits'
+      path: '/benefits'
+      fullPath: '/benefits'
+      preLoaderRoute: typeof BenefitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/childcare-benefits-program': {
+      id: '/childcare-benefits-program'
+      path: '/childcare-benefits-program'
+      fullPath: '/childcare-benefits-program'
+      preLoaderRoute: typeof ChildcareBenefitsProgramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/claim': {
+      id: '/claim'
+      path: '/claim'
+      fullPath: '/claim'
+      preLoaderRoute: typeof ClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/get-app': {
+      id: '/get-app'
+      path: '/get-app'
+      fullPath: '/get-app'
+      preLoaderRoute: typeof GetAppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/img': {
+      id: '/img'
+      path: '/img'
+      fullPath: '/img'
+      preLoaderRoute: typeof ImgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inbox': {
+      id: '/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meet-the-team': {
+      id: '/meet-the-team'
+      path: '/meet-the-team'
+      fullPath: '/meet-the-team'
+      preLoaderRoute: typeof MeetTheTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/menu': {
+      id: '/menu'
+      path: '/menu'
+      fullPath: '/menu'
+      preLoaderRoute: typeof MenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent': {
+      id: '/parent'
+      path: '/parent'
+      fullPath: '/parent'
+      preLoaderRoute: typeof ParentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider': {
+      id: '/provider'
+      path: '/provider'
+      fullPath: '/provider'
+      preLoaderRoute: typeof ProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tour-checklist': {
+      id: '/tour-checklist'
+      path: '/tour-checklist'
+      fullPath: '/tour-checklist'
+      preLoaderRoute: typeof TourChecklistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-2fa': {
+      id: '/verify-2fa'
+      path: '/verify-2fa'
+      fullPath: '/verify-2fa'
+      preLoaderRoute: typeof Verify2faRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/digest': {
+      id: '/api/digest'
+      path: '/api/digest'
+      fullPath: '/api/digest'
+      preLoaderRoute: typeof ApiDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/book/$slug': {
+      id: '/book/$slug'
+      path: '/book/$slug'
+      fullPath: '/book/$slug'
+      preLoaderRoute: typeof BookSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkin/$id': {
+      id: '/checkin/$id'
+      path: '/checkin/$id'
+      fullPath: '/checkin/$id'
+      preLoaderRoute: typeof CheckinIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daycare/$slug': {
+      id: '/daycare/$slug'
+      path: '/daycare/$slug'
+      fullPath: '/daycare/$slug'
+      preLoaderRoute: typeof DaycareSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inbox/$id': {
+      id: '/inbox/$id'
+      path: '/$id'
+      fullPath: '/inbox/$id'
+      preLoaderRoute: typeof InboxIdRouteImport
+      parentRoute: typeof InboxRoute
+    }
+    '/pay/$bookingId': {
+      id: '/pay/$bookingId'
+      path: '/pay/$bookingId'
+      fullPath: '/pay/$bookingId'
+      preLoaderRoute: typeof PayBookingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign/$id': {
+      id: '/sign/$id'
+      path: '/sign/$id'
+      fullPath: '/sign/$id'
+      preLoaderRoute: typeof SignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/contracts': {
+      id: '/api/admin/contracts'
+      path: '/api/admin/contracts'
+      fullPath: '/api/admin/contracts'
+      preLoaderRoute: typeof ApiAdminContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/docusign/webhook': {
+      id: '/api/docusign/webhook'
+      path: '/api/docusign/webhook'
+      fullPath: '/api/docusign/webhook'
+      preLoaderRoute: typeof ApiDocusignWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
+}
+
+interface InboxRouteChildren {
+  InboxIdRoute: typeof InboxIdRoute
+}
+
+const InboxRouteChildren: InboxRouteChildren = {
+  InboxIdRoute: InboxIdRoute,
+}
+
+const InboxRouteWithChildren = InboxRoute._addFileChildren(InboxRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AccountRoute: AccountRoute,
+  AdminRoute: AdminRoute,
+  AdminContractsRoute: AdminContractsRoute,
+  AppIconRoute: AppIconRoute,
+  BenefitsRoute: BenefitsRoute,
+  ChildcareBenefitsProgramRoute: ChildcareBenefitsProgramRoute,
+  ClaimRoute: ClaimRoute,
+  CompareRoute: CompareRoute,
+  ContactRoute: ContactRoute,
+  CookiesRoute: CookiesRoute,
+  ExploreRoute: ExploreRoute,
+  FaqRoute: FaqRoute,
+  GetAppRoute: GetAppRoute,
+  HowItWorksRoute: HowItWorksRoute,
+  ImgRoute: ImgRoute,
+  InboxRoute: InboxRouteWithChildren,
+  LoginRoute: LoginRoute,
+  MeetTheTeamRoute: MeetTheTeamRoute,
+  MenuRoute: MenuRoute,
+  ParentRoute: ParentRoute,
+  PrivacyRoute: PrivacyRoute,
+  ProviderRoute: ProviderRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SearchRoute: SearchRoute,
+  SupportRoute: SupportRoute,
+  TeamRoute: TeamRoute,
+  TermsRoute: TermsRoute,
+  TourChecklistRoute: TourChecklistRoute,
+  Verify2faRoute: Verify2faRoute,
+  ApiDigestRoute: ApiDigestRoute,
+  BookSlugRoute: BookSlugRoute,
+  CheckinIdRoute: CheckinIdRoute,
+  DaycareSlugRoute: DaycareSlugRoute,
+  PayBookingIdRoute: PayBookingIdRoute,
+  SignIdRoute: SignIdRoute,
+  ApiAdminContractsRoute: ApiAdminContractsRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+}
+export const routeTree = rootRouteImport
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
