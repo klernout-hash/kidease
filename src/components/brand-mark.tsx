@@ -8,7 +8,7 @@ export function BrandMark({
   align?: "center" | "start";
 }) {
   const logo =
-    size === "lg" ? "size-24" : size === "md" ? "size-16" : "size-9";
+    size === "lg" ? "h-36 w-36" : size === "md" ? "h-16 w-16" : "h-9 w-9";
   const name =
     size === "lg"
       ? "mt-2 text-3xl font-semibold tracking-[-0.03em]"
@@ -18,7 +18,7 @@ export function BrandMark({
   return (
     <span className={cn("inline-flex flex-col", align === "start" ? "items-start" : "items-center")}>
       <img
-        src="/logo.svg?v=14"
+        src="/logo-transparent.png?v=16"
         alt=""
         className={cn(logo, "bg-transparent object-contain")}
       />
