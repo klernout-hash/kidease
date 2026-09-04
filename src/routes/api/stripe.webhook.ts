@@ -1,30 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { constructStripeEvent, StripeSignatureError } from "@/lib/server/stripe-signature";
+import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 
 /**
- * Stripe webhook sink. Signature checks run once STRIPE_WEBHOOK_SECRET is set.
- * Parent invoices and daycare payouts are already written by the KidEase
- * billing ledger on pay / Interac confirm. After Stripe is connected this
- * route will mark the matching payment_intent as captured.
+ * Stripe webhook sink. Fail closed: missing secret or bad signature → 401.
+ * Uses the same HMAC scheme as stripe.webhooks.constructEvent.
  */
-function authorized(request: Request, rawBody: string): boolean {
-  const secret = (process.env.STRIPE_WEBHOOK_SECRET || "").trim();
-  if (!secret) return true;
-  const header = request.headers.get("stripe-signature") || "";
-  return header.length > 0 && rawBody.length > 0;
-}
-
 async function run(request: Request) {
   const raw = await request.text();
-  if (!authorized(request, raw)) return new Response("Unauthorized", { status: 401 });
+  const secret = (process.env.STRIPE_WEBHOOK_SECRET || "").trim();
+  const sig = request.headers.get("stripe-signature") || "";
+  const ip = requestIp(request);
 
-  let event: { type?: string; id?: string; data?: { object?: { id?: string } } } = {};
+  if (!secret) {
+    await logSecurityEvent({ kind: "webhook_reject", detail: "stripe secret missing", ip });
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  let event;
   try {
-    event = raw ? (JSON.parse(raw) as typeof event) : {};
-  } catch {
-    return new Response("invalid json", { status: 400 });
+    event = constructStripeEvent(raw, sig, secret);
+  } catch (err) {
+    const reason = err instanceof StripeSignatureError ? err.message : "stripe verify failed";
+    await logSecurityEvent({ kind: "webhook_reject", detail: reason, ip });
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const type = event.type ?? "";
+  await logSecurityEvent({
+    kind: "webhook_accept",
+    detail: `stripe ${type || "ping"}`,
+    ip,
+  });
+
   if (
     type === "payment_intent.succeeded" ||
     type === "checkout.session.completed" ||
@@ -39,7 +47,7 @@ async function run(request: Request) {
 export const Route = createFileRoute("/api/stripe/webhook")({
   server: {
     handlers: {
-      GET: () => Response.json({ ok: true, configured: Boolean(process.env.STRIPE_SECRET_KEY) }),
+      GET: () => new Response("Method Not Allowed", { status: 405 }),
       POST: ({ request }) => run(request),
     },
   },
