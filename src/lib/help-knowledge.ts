@@ -4,7 +4,7 @@ const FACTS = `KidEase (kidease.ca) is a Canada-wide finder for provincially lic
 Parents: search by GPS or address/city/postal code, map + list, distance in km or miles, ages, $10-a-day / CWELCC badges, storefront photos, Request a spot, Book a tour, 💬 Contact, Save, Compare. Childcare Benefits Program at https://www.kidease.ca/benefits has every official provincial, territorial, and federal back-link. KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
 Providers: Enroll Now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages. Manual enroll form if not in the 20,000+ catalogue.
 Fees: unclaimed listings say fee not confirmed — never invent a price. Live listings (claimed centres) show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
-Privacy: PIPEDA. We do not sell data. Children’s details only for the parent and a centre they contact.
+Privacy: PIPEDA. We do not sell data. Children’s details only for the parent and a centre they contact. Processors include Google Maps/Places, Better Auth / Google sign-in, Resend, Titan (operator mail), Vercel, Neon, Cloudflare when proxied, Stripe when enabled. Location is GPS or typed address for distance search only — not shared with other parents, no background tracking. Cookie policy at /cookies. No ad trackers, so no cookie banner.
 App: website + iPhone + Android, same accounts.
 
 ${BENEFITS_BRIEF}`;
@@ -63,7 +63,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["privacy", "pipeda", "data", "sell"],
     lines: [
-      "KidEase follows PIPEDA. We don’t sell your data. Child details you add are only for you and a centre you contact or book. Full note is on the Privacy page.",
+      "KidEase follows PIPEDA. We don’t sell your data. Child details you add are only for you and a centre you contact or book. Full note is on the Privacy page. Cookies and local storage are listed at /cookies — no advertising trackers, so no banner.",
     ],
   },
   {

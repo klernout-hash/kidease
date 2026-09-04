@@ -303,7 +303,7 @@ export const copy = {
     footerCopy: "KidEase is a Winnipeg-based, Canada-wide project serving families across the country.",
     pipeda: "PIPEDA & child safety",
     pipedaBody:
-      "KidEase is built around PIPEDA’s consent, limiting-collection, and safeguarding principles. We store the minimum needed to run search, enrolment, and payments: your account, child care profiles you add (allergies, routines, emergency contacts), messages you send, and payment records. We do not sell personal information. Children’s details are visible only to you and to a centre you contact or book. Video check-in is a parent-initiated room — we do not offer continuous livestreams of children. In production, payments would run through PCI-compliant processors (Stripe, Interac) and messages would be encrypted in transit. This preview keeps data in the app database for the session.",
+      "KidEase is built around PIPEDA’s consent, limiting-collection, and safeguarding principles. We store the minimum needed to run search, enrolment, and payments: your account, child care profiles you add (allergies, routines, emergency contacts), messages you send, and payment records. We do not sell personal information. Children’s details are visible only to you and to a centre you contact or book. Video check-in is a parent-initiated room — we do not offer continuous livestreams of children. Card payments, when enabled, run through Stripe. Messages are encrypted in transit (HTTPS).",
     aiUnavailable: "Matching is unavailable in this environment.",
     loading: "Loading",
     emptyMap: "Move the map or widen the radius.",
@@ -383,6 +383,7 @@ export const copy = {
     onYourPhone: "On the phone",
     onYourPhoneLead: "KidEase on iPhone — home, map search, a listing, and sign in.",
     terms: "Terms",
+    cookies: "Cookies",
     support: "Support",
     supportLead: "Parents and providers — we read every note. Apple and Google review also uses this page as the support URL.",
     supportSent: "Message sent. We’ll reply by email.",
@@ -994,7 +995,7 @@ export const copy = {
     footerCopy: "KidEase est un projet basé à Winnipeg, au service des familles partout au Canada.",
     pipeda: "PIPEDA et sécurité des enfants",
     pipedaBody:
-      "KidEase s'appuie sur le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous conservons le minimum pour la recherche, l'inscription et les paiements. Nous ne vendons pas de renseignements personnels. Les prénoms et dates de naissance des enfants ne sont visibles que par vous et par un centre que vous contactez. La visio est lancée par le parent — pas de diffusion continue d'enfants. En production, les paiements passeraient par des processeurs conformes PCI (Stripe, Interac).",
+      "KidEase s'appuie sur le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous conservons le minimum pour la recherche, l'inscription et les paiements. Nous ne vendons pas de renseignements personnels. Les détails sur les enfants ne sont visibles que par vous et par un centre que vous contactez. La visio est lancée par le parent — pas de diffusion continue d'enfants. Les paiements par carte, lorsqu'ils sont activés, passent par Stripe. Les messages sont chiffrés en transit (HTTPS).",
     aiUnavailable: "La correspondance n'est pas disponible ici.",
     loading: "Chargement",
     emptyMap: "Déplacez la carte ou élargissez le rayon.",
@@ -1074,6 +1075,7 @@ export const copy = {
     onYourPhone: "Sur votre téléphone",
     onYourPhoneLead: "KidEase sur iPhone — accueil, carte, une fiche, et connexion.",
     terms: "Conditions",
+    cookies: "Témoins",
     support: "Soutien",
     supportLead: "Parents et fournisseurs — nous lisons chaque note. Apple et Google utilisent aussi cette page comme URL de soutien.",
     supportSent: "Message envoyé. Nous répondrons par courriel.",

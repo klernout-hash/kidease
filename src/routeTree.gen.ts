@@ -20,6 +20,7 @@ import { Route as ChildcareBenefitsProgramRouteImport } from './routes/childcare
 import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GetAppRouteImport } from './routes/get-app'

@@ -46,6 +46,8 @@ export function SiteFooter() {
               <Item to="/how-it-works">{t("howItWorksCta")}</Item>
               <Item to="/privacy">{t("privacy")}</Item>
               <Item to="/terms">{t("terms")}</Item>
+              <Item to="/cookies">{t("cookies")}</Item>
+              <Item to="/account">{t("deleteAccount")}</Item>
               <li>
                 <a href="mailto:kyle@kidease.ca" className="ke-footer-link">
                   kyle@kidease.ca
@@ -92,6 +94,38 @@ export function SiteFooter() {
           </section>
         </nav>
 
+        <nav
+          className="mt-10 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
+          aria-label={fr ? "Juridique" : "Legal"}
+        >
+          <Link to="/privacy" className="ke-footer-link">
+            {t("privacy")}
+          </Link>
+          <span className="text-subtle" aria-hidden>
+            ·
+          </span>
+          <Link to="/terms" className="ke-footer-link">
+            {t("terms")}
+          </Link>
+          <span className="text-subtle" aria-hidden>
+            ·
+          </span>
+          <Link to="/cookies" className="ke-footer-link">
+            {t("cookies")}
+          </Link>
+          <span className="text-subtle" aria-hidden>
+            ·
+          </span>
+          <Link to="/support" className="ke-footer-link">
+            {t("support")}
+          </Link>
+          <span className="text-subtle" aria-hidden>
+            ·
+          </span>
+          <Link to="/account" className="ke-footer-link">
+            {t("deleteAccount")}
+          </Link>
+        </nav>
         <div className="ke-footer-legal">
           <p>
             © {new Date().getFullYear()} KidEase

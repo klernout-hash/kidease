@@ -179,6 +179,9 @@ function GetApp() {
             <Link to="/terms" className="underline-offset-4 hover:underline">
               {t("terms")}
             </Link>
+            <Link to="/cookies" className="underline-offset-4 hover:underline">
+              {t("cookies")}
+            </Link>
             <Link to="/support" className="underline-offset-4 hover:underline">
               {t("support")}
             </Link>
