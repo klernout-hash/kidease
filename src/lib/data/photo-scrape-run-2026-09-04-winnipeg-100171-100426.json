@@ -1,0 +1,19 @@
+{
+  "run_date": "2026-09-04",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_processed": [
+    {"id": "mb-100171", "name": "North Kildonan Little Thinkers Inc.", "result": "skipped-no-photo", "notes": "No official website with photos; charity listings only"},
+    {"id": "mb-1002", "name": "Brooklands Day Care Centre Inc.", "result": "skipped-no-photo", "notes": "Located at Brooklands School; no dedicated daycare site with photos"},
+    {"id": "mb-100238", "name": "Frontenac Before and After School Program", "result": "skipped-no-photo", "notes": "School-based; no independent official photos found"},
+    {"id": "mb-100259", "name": "Morrow Early Learning & Child Development (Dr. D. W. Penner School)", "result": "skipped-no-photo", "notes": "School program; no qualifying official photos"},
+    {"id": "mb-1003", "name": "C.A.P.T. Inc.", "result": "skipped-no-photo", "notes": "Queenston School based; school page text only, no photos"},
+    {"id": "mb-100379", "name": "Fort Garry Oakenwald School Age Program", "result": "skipped-no-photo", "notes": "School-based program; no official photos located"},
+    {"id": "mb-100404", "name": "Munroe Early Childhood Education Centre Inc.- Polson", "result": "skipped-no-photo", "notes": "munroesa.ca has no building/classroom photos"},
+    {"id": "mb-100414", "name": "Eagle Wing Early Education Centre", "result": "skipped-no-photo", "notes": "eaglewing.ca SSL error / inaccessible; no usable press photos of the centre itself"},
+    {"id": "mb-100425", "name": "James Child Care - 2nd site", "result": "skipped-no-photo", "notes": "jameschildcare.com uses generic stock photo of children painting; not centre-specific"},
+    {"id": "mb-100426", "name": "Rainbow Day Nursery Inc. (phase 3-B)", "result": "skipped-no-photo", "notes": "rainbowdaynursery.ca logo-only / locations text; no classroom or building photos on site"}
+  ],
+  "photos_added": 0,
+  "skipped": 10
+}
