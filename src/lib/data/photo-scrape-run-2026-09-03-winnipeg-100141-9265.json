@@ -1,0 +1,8 @@
+{
+  "run_date": "2026-09-03",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-100141", "mb-100902", "mb-1001", "mb-100901", "mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576", "mb-102700", "mb-100249", "mb-9265"],
+  "added": ["mb-9265"],
+  "skipped": ["mb-100141", "mb-100902", "mb-1001", "mb-100901", "mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576", "mb-102700", "mb-100249"],
+  "notes": "Added 1 official Winnipeg photo: Beautiful Savior Lutheran School Birchdale (mb-9265) daycare/nursery program image from bsls.ca. Skipped 14 others after checking official sites. No Street View used."
+}
