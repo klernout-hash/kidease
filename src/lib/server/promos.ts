@@ -26,8 +26,12 @@ export async function overlayPriority<T extends { id: string; priority?: boolean
   }
 }
 
-export function sortPriorityFirst<T extends { priority?: boolean }>(items: T[]) {
-  return [...items].sort((a, b) => Number(Boolean(b.priority)) - Number(Boolean(a.priority)));
+export function sortPriorityFirst<T extends { priority?: boolean; live?: boolean }>(items: T[]) {
+  return [...items].sort((a, b) => {
+    if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
+    if (Boolean(a.live) !== Boolean(b.live)) return a.live ? -1 : 1;
+    return 0;
+  });
 }
 
 export const promoteListing = createServerFn({ method: "POST" })
