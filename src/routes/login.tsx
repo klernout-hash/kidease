@@ -54,6 +54,9 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [forgotNote, setForgotNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (role === "parent" || role === "provider") rememberRole(role);
@@ -111,6 +114,27 @@ function Login() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function onForgot(e: React.FormEvent) {
+    e.preventDefault();
+    const target = (operator ? OPERATOR_EMAIL : email).trim().toLowerCase();
+    if (!target || !target.includes("@")) {
+      setForgotNote("Enter the email on the account first.");
+      return;
+    }
+    setForgotBusy(true);
+    setForgotNote(null);
+    try {
+      await authClient.forgetPassword({
+        email: target,
+        redirectTo: "/reset-password",
+      });
+    } catch {
+      /* generic note only — do not leak whether the inbox exists */
+    }
+    setForgotNote("If that email is registered with KidEase, we sent a reset link. Check the inbox and junk folder.");
+    setForgotBusy(false);
   }
 
   async function onSocial(providerId: string) {
@@ -224,6 +248,31 @@ function Login() {
               {mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
           </form>
+          {mode === "in" ? (
+            <div className="mt-3">
+              <button
+                type="button"
+                className="text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
+                onClick={() => {
+                  setForgotOpen((open) => !open);
+                  setForgotNote(null);
+                }}
+              >
+                Forgot password?
+              </button>
+              {forgotOpen ? (
+                <form onSubmit={onForgot} className="mt-3 space-y-2 rounded-md bg-bg px-3 py-3 ring-1 ring-border">
+                  <p className="text-[13px] leading-snug text-muted">
+                    We’ll email a reset link to the address above{operator ? ` (${OPERATOR_EMAIL})` : ""}.
+                  </p>
+                  <Button type="submit" variant="secondary" className="w-full" disabled={forgotBusy}>
+                    {forgotBusy ? "Sending…" : "Email reset link"}
+                  </Button>
+                  {forgotNote ? <p className="text-[13px] leading-snug text-muted">{forgotNote}</p> : null}
+                </form>
+              ) : null}
+            </div>
+          ) : null}
           {!operator ? (
           <button
             type="button"
