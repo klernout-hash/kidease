@@ -1,0 +1,13 @@
+{
+  "run_date": "2026-09-04",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_processed": ["mb-1005", "mb-1006", "mb-1007", "mb-1008", "mb-1009", "mb-1010", "mb-1011", "mb-1014", "mb-1015", "mb-1016", "mb-1018", "mb-1019"],
+  "ids_added": ["mb-1006", "mb-1016"],
+  "ids_skipped_no_photo": ["mb-1005", "mb-1007", "mb-1008", "mb-1009", "mb-1010", "mb-1011", "mb-1014", "mb-1015", "mb-1018", "mb-1019"],
+  "sources": {
+    "mb-1006": "http://www.carpathiachildrenscentre.com/ (building photo)",
+    "mb-1016": "https://epiphanychildrenscentre.ca/ (kids in program)"
+  },
+  "notes": "Official operator sites only. No Street View, maps, stock, or generated images. Binaries local pending binary upload."
+}
