@@ -71,9 +71,8 @@ async function unreadInboxCount(sql: Awaited<ReturnType<typeof getSql>>, userId:
 
 /**
  * Gate /admin on profiles.role = 'admin'.
- * ADMIN_EMAIL is only used when no admin row exists yet (one-time bootstrap).
- * After that, promote staff with:
- *   update profiles set role = 'admin' where user_id = '…';
+ * The owner email (ADMIN_EMAIL / kyle@kidease.ca) is always promoted to admin.
+ * Extra staff: update profiles set role = 'admin' where user_id = '…';
  */
 export async function resolveAdminAccess(userId: string) {
   const sql = await getSql();
@@ -87,13 +86,10 @@ export async function resolveAdminAccess(userId: string) {
     return { ok: true as const, role, bootstrapped: false };
   }
 
-  const admins = await adminRowCount(sql);
-  if (admins > 0) {
-    return { ok: false as const, role, bootstrapped: false };
-  }
-
   const actor = await lookupUser(userId);
   const email = (actor.email || "").trim().toLowerCase();
+  // Owner email is always staff, even if another admin row already exists
+  // or this account first signed in through Daycare / Parent.
   if (email && email === bootstrapEmail()) {
     await sql`update profiles set role = 'admin' where user_id = ${userId}`;
     return { ok: true as const, role: "admin" as const, bootstrapped: true };

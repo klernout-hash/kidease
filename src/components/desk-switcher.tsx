@@ -24,15 +24,18 @@ export function useSessionDesks() {
   const { user, isPending } = useCurrentUserState();
   const [session, setSession] = useState<SessionDesks | null>(null);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (isPending) return;
     if (!user) {
       setSession(null);
+      setError(false);
       setReady(true);
       return;
     }
     let cancelled = false;
+    setError(false);
     void getMyDesks()
       .then((s) => {
         if (cancelled) return;
@@ -41,6 +44,7 @@ export function useSessionDesks() {
       })
       .catch(() => {
         if (cancelled) return;
+        setError(true);
         setReady(true);
       });
     return () => {
@@ -48,7 +52,7 @@ export function useSessionDesks() {
     };
   }, [user?.id, isPending]);
 
-  return { session, ready };
+  return { session, ready, error };
 }
 
 export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
