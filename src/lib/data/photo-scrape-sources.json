@@ -1,0 +1,24 @@
+{
+  "mb-1027": {
+    "id": "mb-1027",
+    "name": "Kings Park Day Care Centre Inc.",
+    "city": "Winnipeg",
+    "province": "MB",
+    "address": "230 Dalhousie Drive",
+    "file": "/photos/buildings/mb-1027.jpg",
+    "source_page": "https://www.kingsparkchildcare.org/",
+    "source_image": "https://static.wixstatic.com/media/d07713_8dc5816fb42c4f29859555104e3d3240~mv2.jpeg",
+    "kind": "classroom / kids in program"
+  },
+  "mb-1028": {
+    "id": "mb-1028",
+    "name": "Knox Day Nursery",
+    "city": "Winnipeg",
+    "province": "MB",
+    "address": "400 Edmonton Street",
+    "file": "/photos/buildings/mb-1028.jpg",
+    "source_page": "http://www.knoxdaynursery.com/",
+    "source_image": "http://www.knoxdaynursery.com/assets/img/bg/img2a.jpg",
+    "kind": "building / storefront"
+  }
+}

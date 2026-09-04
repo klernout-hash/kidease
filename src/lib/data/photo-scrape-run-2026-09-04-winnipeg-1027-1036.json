@@ -1,8 +1,15 @@
 {
-  "run_date": "2026-09-04",
+  "run": "2026-09-04T16:09:04Z",
   "city": "Winnipeg",
-  "ids_processed": ["mb-1027", "mb-1028", "mb-1029", "mb-1030", "mb-1031", "mb-1032", "mb-1033", "mb-1034", "mb-1036"],
-  "ids_added": [],
-  "ids_skipped": ["mb-1027", "mb-1028", "mb-1029", "mb-1030", "mb-1031", "mb-1032", "mb-1033", "mb-1034", "mb-1036"],
-  "notes": "No usable official facility photos meeting hard rules. Sites found but images generic or multi-site."
+  "processed": [
+    {"id": "mb-1027", "name": "Kings Park Day Care Centre Inc.", "result": "mapped", "source": "https://www.kingsparkchildcare.org/"},
+    {"id": "mb-1028", "name": "Knox Day Nursery", "result": "mapped", "source": "http://www.knoxdaynursery.com/"},
+    {"id": "mb-1029", "name": "Learning Tree Day Nursery", "result": "skipped-no-official-photo"},
+    {"id": "mb-1030", "name": "Little Voyageurs Learning Centre Inc. (Site 1)", "result": "skipped-site-unspecific"},
+    {"id": "mb-1031", "name": "Little People's Place Inc.", "result": "skipped-no-official-site"},
+    {"id": "mb-1032", "name": "Lord Roberts Preschool Child Care", "result": "skipped-stock-or-multi-site"},
+    {"id": "mb-1033", "name": "Machray Day Nursery Inc.", "result": "skipped-blurred-multi-site"},
+    {"id": "mb-1034", "name": "Maples DayCare Inc.", "result": "skipped-no-official-site"},
+    {"id": "mb-1036", "name": "Anne Ross Day Nursery", "result": "skipped-not-clearly-this-centre"}
+  ]
 }
