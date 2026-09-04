@@ -26,7 +26,6 @@ export function parseAppRole(raw: string | null | undefined): AppRole {
   return "parent";
 }
 
-/** Highest role wins the post-login landing; user can still switch desks. */
 export function primaryDesk(desks: DeskKey[]): DeskKey {
   if (desks.includes("admin")) return "admin";
   if (desks.includes("provider")) return "provider";
@@ -39,22 +38,17 @@ export function landingPath(desks: DeskKey[]): "/admin" | "/provider" | "/parent
 
 /**
  * Desks the signed-in user may open.
- * Admin sees all three. A director (provider) also gets Parent. A parent
- * only gets Provider if they already own a centre or their stored role is provider.
+ * Admin (Kyle) sees all three.
+ * A daycare login sees Provider only.
+ * A parent login sees Parent only.
  */
 export function desksFor(input: {
   role: AppRole;
   ownsCentre?: boolean;
 }): DeskKey[] {
-  const desks = new Set<DeskKey>(["parent"]);
-  if (input.role === "admin") {
-    desks.add("admin");
-    desks.add("provider");
-  }
-  if (input.role === "provider" || input.ownsCentre) {
-    desks.add("provider");
-  }
-  return (["admin", "provider", "parent"] as const).filter((d) => desks.has(d));
+  if (input.role === "admin") return ["admin", "provider", "parent"];
+  if (input.role === "provider" || input.ownsCentre) return ["provider"];
+  return ["parent"];
 }
 
 export function canVisitDesk(desks: DeskKey[], desk: DeskKey) {
