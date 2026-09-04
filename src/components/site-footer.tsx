@@ -25,7 +25,7 @@ export function SiteFooter() {
 
   return (
     <footer className="ke-site-footer [[data-channel=app]_&]:hidden">
-      <div className="ke-gutter mx-auto max-w-6xl py-12 md:py-16">
+      <div className="ke-gutter mx-auto max-w-6xl py-8 md:py-10">
         <nav className="ke-footer-cols" aria-label="KidEase">
           <section>
             <p className="ke-footer-title">{fr ? "Soutien" : "Support"}</p>
@@ -94,7 +94,7 @@ export function SiteFooter() {
             Google Play · Coming soon
           </p>
         </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-subtle">{t("neverSell")}</p>
           <Link
             to="/login"
