@@ -11,6 +11,7 @@ import {
   htmlToText,
   humanTitanError,
   imapFetchList,
+  imapFetchUid,
   imapLogin,
   imapQuote,
   imapSelectInbox,
@@ -200,6 +201,21 @@ test("IMAP login and list talk the protocol without leaking secrets in errors", 
   assert.equal(items[0].fromEmail, "pat@parents.ca");
   assert.equal(items[0].unseen, true);
   assert.equal(authPlainB64("kyle@kidease.ca", "x").length > 8, true);
+
+  resetImapTag(3);
+  const rfc822 = "From: Pat <pat@parents.ca>\r\nSubject: Need a spot\r\nMessage-ID: <id@titan>\r\n\r\nWe need a toddler spot.\r\n";
+  reads.push(
+    {
+      text: `* 1 FETCH (UID 9 FLAGS () ENVELOPE (NIL "Need a spot" (("Pat" NIL "pat" "parents.ca")) NIL NIL ((NIL NIL "kyle" "kidease.ca")) NIL NIL NIL "<id@titan>") BODY[] {0})`,
+      literals: [rfc822],
+    },
+    { text: "A4 OK FETCH completed", literals: [] },
+    { text: "A5 OK STORE completed", literals: [] },
+  );
+  const opened = await imapFetchUid(io, 9);
+  assert.equal(opened.fromEmail, "pat@parents.ca");
+  assert.equal(opened.text, "We need a toddler spot.");
+  assert.equal(opened.unseen, false);
 });
 
 test("SMTP transaction authenticates then sends from the mailbox", async () => {
