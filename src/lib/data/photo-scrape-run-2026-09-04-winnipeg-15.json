@@ -1,0 +1,21 @@
+{
+  "run_date": "2026-09-04",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_processed": ["mb-101214", "mb-100820", "mb-7893", "mb-3026", "mb-1046", "mb-1005", "mb-9360", "mb-1007", "mb-3084", "mb-101711"],
+  "names": [
+    "Can You Imagine School Age Care and Education Centre Inc. - River Elm",
+    "Can You Imagine School-Age Care & Education Centre (Carmen)",
+    "Canterbury Park Before and After School Program",
+    "Canterbury Park Day Care Inc.",
+    "Care and Share Children's Centre Inc.",
+    "Care-A-Lot Nursery Inc.",
+    "Carpathia; JB Mitchell Site",
+    "Carter Early Learning Centre Inc.",
+    "Central Park Child Care Inc.",
+    "Centre D'apprentissage et de garde d'enfants de Saint-Boniface"
+  ],
+  "photos_added": [],
+  "skipped_no_photo": ["mb-101214", "mb-100820", "mb-7893", "mb-3026", "mb-1046", "mb-1005", "mb-9360", "mb-1007", "mb-3084", "mb-101711"],
+  "notes": "No usable official centre-published classroom/kids/playground/storefront photos found meeting hard rules. Carpathia site shows John Dafoe exterior (different site). Carter/Bethel logo only."
+}
