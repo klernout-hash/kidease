@@ -1,20 +1,20 @@
 {
-  "last_run": "2026-09-04T11:20:00Z",
+  "last_run": "2026-09-04T11:13:40Z",
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_ids_processed": ["mb-100700", "mb-100849", "mb-100903", "mb-100930", "mb-100937", "mb-100992", "mb-100996", "mb-1010", "mb-101053", "mb-101061", "mb-101062"],
+  "last_ids_processed": ["mb-100811", "mb-100818", "mb-100820", "mb-100824", "mb-100842", "mb-100849", "mb-100900", "mb-100903", "mb-100926", "mb-100927", "mb-100930", "mb-100937", "mb-100992", "mb-100996", "mb-101002"],
   "mapped_count_official_buildings": 51,
-  "mapped_ids": ["mb-1004", "mb-100808", "mb-1012", "mb-1013", "mb-101384", "mb-101548", "mb-101665", "mb-1017", "mb-101850", "mb-102137", "mb-102700", "mb-102899", "mb-103244", "mb-1043", "mb-1052", "mb-1054", "mb-1057", "mb-1061", "mb-1074", "mb-1147", "mb-1150", "mb-1206", "mb-1214", "mb-1252", "mb-2024", "mb-2169", "mb-3096", "mb-100141", "mb-3001", "mb-100902", "mb-100901", "mb-9265", "mb-1242", "mb-103141", "mb-100814", "mb-103006", "mb-3010", "mb-1006", "mb-1016", "mb-1040", "mb-100351", "mb-1009", "mb-3005", "mb-1050", "mb-100042", "mb-100048", "mb-100131", "mb-100801", "mb-100903"],
+  "mapped_ids": ["mb-1004", "mb-100808", "mb-1012", "mb-1013", "mb-101384", "mb-101548", "mb-101665", "mb-1017", "mb-101850", "mb-102137", "mb-102700", "mb-102899", "mb-103244", "mb-1043", "mb-1052", "mb-1054", "mb-1057", "mb-1061", "mb-1074", "mb-1147", "mb-1150", "mb-1206", "mb-1214", "mb-1252", "mb-2024", "mb-2169", "mb-3096", "mb-100141", "mb-3001", "mb-100902", "mb-100901", "mb-9265", "mb-1242", "mb-103141", "mb-100814", "mb-103006", "mb-3010", "mb-1006", "mb-1016", "mb-1040", "mb-100351", "mb-1009", "mb-3005", "mb-1050", "mb-1045", "mb-3062", "mb-102052", "mb-100042", "mb-100048", "mb-100131", "mb-100801", "mb-100903"],
   "winnipeg_total": 428,
   "winnipeg_official_mapped": 51,
   "national_total": 20846,
   "ids_added_this_run": ["mb-100903"],
   "ids_restored_binaries_this_run": [],
-  "skipped_no_photo_this_run": ["mb-100700", "mb-100849", "mb-100930", "mb-100937", "mb-100992", "mb-100996", "mb-1010", "mb-101053", "mb-101061", "mb-101062"],
+  "skipped_no_photo_this_run": ["mb-100811", "mb-100818", "mb-100820", "mb-100824", "mb-100842", "mb-100849", "mb-100900", "mb-100926", "mb-100927", "mb-100930", "mb-100937", "mb-100992", "mb-100996", "mb-101002"],
   "next_queue": {
     "city": "Winnipeg",
     "ids": [],
     "then": ["remaining Winnipeg", "Brandon MB", "Dauphin", "Thompson", "Portage La Prairie", "Steinbach", "Selkirk", "rest of MB", "SK"]
   },
-  "notes": "2026-09-04 11:20Z run: processed 11 Winnipeg centres. 1 new official photo for mb-100903 (Makoonsag Intergenerational Children's Centre) from prairiearchitects.ca official project page showing exterior of THAT centre. Others: no website, stock-only kids photos, logo-only, or school-age with no usable official building/classroom photo of the specific site. Winnipeg 51/428, national 51/20846."
+  "notes": "2026-09-04 run: processed 15 Winnipeg centres starting after mb-100801. 1 new official photo for mb-100903 (Makoonsag Intergenerational Children's Centre) from prairiearchitects.ca architect press photos of the actual centre exterior. Others no usable official photos (school-based programs, stock-only sites, or no site). Winnipeg 51/428, national 51/20846."
 }
