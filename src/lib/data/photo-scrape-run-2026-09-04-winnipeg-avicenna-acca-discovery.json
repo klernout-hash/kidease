@@ -1,0 +1,26 @@
+{
+  "run": "2026-09-04T07:15Z-winnipeg-queue-plus-official-galleries",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [
+    {"id": "mb-102700", "name": "Avicenna Academy", "source": "https://www.avicenna-academy.ca/images/school.jpg"},
+    {"id": "mb-101548", "name": "Advantage Child Care Academy Inc.", "source": "https://advantagechildcareacademy.ca/photo-gallery/"},
+    {"id": "mb-1043", "name": "Discovery Children's Centre Inc.", "source": "https://www.discoverycc.com/our-facilities/"},
+    {"id": "mb-100808", "name": "Sky's The Limit Montessori School", "source": "https://www.skysthelimitmontessori.com/"},
+    {"id": "mb-101665", "name": "Inspired by Wonder Inc. - SSCY site", "source": "https://www.inspiredbywonder.ca/"}
+  ],
+  "restored_binaries_already_mapped": ["mb-1004", "mb-102899", "mb-103244", "mb-2024"],
+  "skipped": [
+    {"id": "mb-1001", "reason": "alephbet.ca hero is generic field photo"},
+    {"id": "mb-101862", "reason": "no official website"},
+    {"id": "mb-1036", "reason": "no usable Mount Carmel daycare photo"},
+    {"id": "mb-1249", "reason": "no official website with photos"},
+    {"id": "mb-3002", "reason": "assiniboinecc.org contact form only"},
+    {"id": "mb-100532", "reason": "no Winnipeg official site"},
+    {"id": "mb-3088", "reason": "stock dragonfly banner only"},
+    {"id": "mb-1002", "reason": "no official website with photos"},
+    {"id": "mb-102891", "reason": "bumble-b.ca hero looks stock"},
+    {"id": "mb-1264", "reason": "no standalone official gallery"},
+    {"id": "mb-1233", "reason": "no official website with usable photos"}
+  ]
+}
