@@ -58,7 +58,10 @@ export function useSessionDesks() {
 export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session } = useSessionDesks();
-  if (!session || session.desks.length < 2) return null;
+  // Header pills are an operator tool. Parents and daycares should not hop
+  // between backends here — they use separate profiles from the menu.
+  if (!session || session.role !== "admin") return null;
+  if (session.desks.length < 2) return null;
 
   const current = deskFromPath(pathname);
 

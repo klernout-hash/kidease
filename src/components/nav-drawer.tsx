@@ -17,6 +17,8 @@ export function NavDrawer({
   providerLabel,
   signedIn,
   accountLabel,
+  accountHref = "/parent",
+  isAdmin = false,
   onSignOut,
 }: {
   open: boolean;
@@ -27,6 +29,8 @@ export function NavDrawer({
   providerLabel: string;
   signedIn: boolean;
   accountLabel: string;
+  accountHref?: string;
+  isAdmin?: boolean;
   onSignOut: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -117,19 +121,21 @@ export function NavDrawer({
           {signedIn ? (
             <>
               <Link
-                to="/parent"
+                to={accountHref}
                 onClick={onClose}
                 className="flex min-h-12 items-center rounded-xl bg-primary px-3 text-base font-medium text-primary-fg"
               >
                 {accountLabel}
               </Link>
-              <Link
-                to="/provider"
-                onClick={onClose}
-                className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
-              >
-                {providerLabel}
-              </Link>
+              {isAdmin ? (
+                <Link
+                  to="/provider"
+                  onClick={onClose}
+                  className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
+                >
+                  {providerLabel}
+                </Link>
+              ) : null}
               <button
                 type="button"
                 onClick={() => {
