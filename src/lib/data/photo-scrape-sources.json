@@ -54,5 +54,13 @@
     "image_url": "https://images.squarespace-cdn.com/content/v1/548c9d96e4b04ff00dd5ca7b/1783958037717-AIW8AS4MW11YTS5NQWJG/IMG-20220806-WA0125.JPEG",
     "type": "child in outdoor program",
     "date_scraped": "2026-09-04"
+  },
+  "mb-9360": {
+    "name": "Carpathia; JB Mitchell Site",
+    "city": "Winnipeg",
+    "source_url": "http://www.carpathiachildrenscentre.com/",
+    "image_url": "http://www.carpathiachildrenscentre.com/publishImages/index~~element4.jpg",
+    "type": "official storefront / school entrance with centre sign",
+    "date_scraped": "2026-09-04"
   }
 }
