@@ -1,0 +1,58 @@
+{
+  "run": "2026-09-04-winnipeg-casa-dte-prep-gmm",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [
+    {
+      "id": "mb-7923",
+      "name": "Casa Montessori & Orff School Inc.",
+      "address": "1055 Wilkes Avenue, Winnipeg, MB",
+      "source_url": "https://montessoriandorff.ca/",
+      "image_url": "https://assets.cdn.filesafe.space/sSc5Nr5mYDvMFZCDdOfF/media/6858efebb2497389c9b5d6f3.jpeg",
+      "type": "official_website_classroom_orff",
+      "file": "/photos/buildings/mb-7923.jpg"
+    },
+    {
+      "id": "mb-101065",
+      "name": "Down to Earth Children's Centre",
+      "address": "300 Carpathia Road, Winnipeg, MB",
+      "source_url": "https://downtoearthchildrenscentre.ca/",
+      "image_url": "https://downtoearthchildrenscentre.ca/wp-content/uploads/2025/08/Front_page_pic-scaled.jpg",
+      "type": "official_website_kids_in_program",
+      "file": "/photos/buildings/mb-101065.jpg"
+    },
+    {
+      "id": "mb-102182",
+      "name": "The Prep Montessori Daycare",
+      "address": "Unit D-3525 Roblin Boulevard, Winnipeg, MB",
+      "source_url": "https://theprepmontessori.ca/",
+      "image_url": "https://img1.wsimg.com/isteam/ip/4fb2894a-4620-44df-8ad1-c33db5b9fc6e/18.jpg",
+      "type": "official_website_classroom",
+      "file": "/photos/buildings/mb-102182.jpg"
+    },
+    {
+      "id": "mb-102704",
+      "name": "Guiding Minds Montessori School",
+      "address": "4945 Portage Avenue, Winnipeg, MB",
+      "source_url": "https://www.guidingmindsmontessori.com/",
+      "image_url": "https://static.wixstatic.com/media/35d18c_cd24ec3e11ec40e39828e47a86d20390~mv2.jpg",
+      "type": "official_website_classroom",
+      "file": "/photos/buildings/mb-102704.jpg"
+    }
+  ],
+  "skipped": [
+    {"id": "mb-3002", "reason": "Assiniboine Children's Centre official site logo only"},
+    {"id": "mb-1055", "reason": "Sunny Mountain listings only; no usable gallery"},
+    {"id": "mb-1002", "reason": "No official Brooklands website with photos"},
+    {"id": "mb-1005", "reason": "Directories only"},
+    {"id": "mb-1010", "reason": "No official Crestview website"},
+    {"id": "mb-9654", "reason": "St Maurice official site portraits/logos only"},
+    {"id": "mb-1008", "reason": "No official Elmwood gallery"},
+    {"id": "mb-1233", "reason": "Busy Bee Winnipeg has no official site"},
+    {"id": "mb-1023", "reason": "Children at the Centre - no official photo gallery found"},
+    {"id": "mb-1249", "reason": "Assiniboine Castle - no official photo gallery found"},
+    {"id": "mb-100532", "reason": "Bright Future Winnipeg directories only"},
+    {"id": "mb-3088", "reason": "Brock Corydon - no official website photo found this run"}
+  ],
+  "mapped_count_after": 57
+}
