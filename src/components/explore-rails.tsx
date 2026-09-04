@@ -55,10 +55,13 @@ export function ExploreRails({
       .filter((r) => r.ratingX10 > 0 && r.reviewCount > 0)
       .sort((a, b) => b.ratingX10 - a.ratingX10 || b.reviewCount - a.reviewCount);
     const priority = items.filter((r) => r.priority).sort((a, b) => a.distanceKm - b.distanceKm);
+    const liveNear = take(
+      items.filter((r) => r.live).sort((a, b) => a.distanceKm - b.distanceKm),
+    );
     const recentHits = recent.filter((r) => items.some((i) => i.id === r.id));
     return {
-      first: recentHits.length ? take(recentHits) : fill(priority, byDistance),
-      firstTitle: recentHits.length ? "recent" : "priority",
+      first: liveNear.length ? liveNear : recentHits.length ? take(recentHits) : fill(priority, byDistance),
+      firstTitle: liveNear.length ? "live" : recentHits.length ? "recent" : "priority",
       available: fill(available, byDistance),
       nextMonth: fill(nextMonth, byDistance),
       near: take(byDistance),
@@ -69,11 +72,15 @@ export function ExploreRails({
   if (!items.length) return null;
 
   const firstTitle =
-    rows.firstTitle === "recent"
-      ? t("recentlyViewed")
-      : fr
-        ? "Réservations prioritaires"
-        : "Priority listings";
+    rows.firstTitle === "live"
+      ? fr
+        ? `Fiches actives près de ${city}`
+        : `Live listings near ${city}`
+      : rows.firstTitle === "recent"
+        ? t("recentlyViewed")
+        : fr
+          ? "Réservations prioritaires"
+          : "Priority listings";
 
   return (
     <div

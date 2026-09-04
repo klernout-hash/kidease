@@ -34,3 +34,8 @@ export async function rememberSearch<T>(key: string, build: () => Promise<T>): P
   }
   return value;
 }
+
+/** Drop every memoized search so a just-approved live listing is not hidden for 60s. */
+export function flushSearchMemo() {
+  cache.clear();
+}
