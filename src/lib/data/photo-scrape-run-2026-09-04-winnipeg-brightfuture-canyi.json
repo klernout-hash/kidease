@@ -1,0 +1,25 @@
+{
+  "run": "2026-09-04-hourly",
+  "city": "Winnipeg",
+  "processed": ["mb-100532", "mb-3088", "mb-1002", "mb-102891", "mb-1264", "mb-1233", "mb-102363", "mb-1199", "mb-1003", "mb-7834"],
+  "names": [
+    "Bright Future Child Care Center Inc.",
+    "Brock Corydon Day Care Inc.",
+    "Brooklands Day Care Centre Inc.",
+    "Bumble Bee Early Learning Centre Inc.",
+    "Bumper Crop Early Learning Centre Inc.",
+    "Busy Bee Day Care Centre",
+    "Busy Bee Day Care Centre Inc. School Age Program",
+    "C.A.P.T. (Grosvenor) Inc.",
+    "C.A.P.T. Inc.",
+    "Can You Imagine Preschool Care and Education Centre Inc."
+  ],
+  "added_photos": [],
+  "skipped": ["mb-100532", "mb-3088", "mb-1002", "mb-102891", "mb-1264", "mb-1233", "mb-102363", "mb-1199", "mb-1003", "mb-7834"],
+  "reason": "No usable official photos (classroom, kids in program, playground, storefront, interior) found on centre websites, official FB/IG, or press. Stock/logo only or none.",
+  "sites_checked": {
+    "mb-3088": "https://brockcorydondaycare.ca/",
+    "mb-102891": "https://bumble-b.ca/",
+    "others": "YellowPages/Canpages/school division pages, no photo galleries of centre"
+  }
+}
