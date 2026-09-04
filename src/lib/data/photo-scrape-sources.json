@@ -38,5 +38,21 @@
     "image_url": "https://images.squarespace-cdn.com/content/v1/5b282137f93fd4517582a532/1548179867618-HVYQ4DLSYT5N70L7ZKKB/Great-West-Life-Daycare-interior-preschool-room-1.jpg",
     "type": "architect press classroom of this centre",
     "date_scraped": "2026-09-04"
+  },
+  "mb-100814": {
+    "name": "Bright Beginnings for Kids INC.",
+    "city": "Winnipeg",
+    "source_url": "https://brightbeginningsforkids.ca/",
+    "image_url": "https://brightbeginningsforkids.ca/wp-content/uploads/2022/08/world.jpg",
+    "type": "classroom interior / world rug room",
+    "date_scraped": "2026-09-04"
+  },
+  "mb-3010": {
+    "name": "Cairns Children's Centre Inc.",
+    "city": "Winnipeg",
+    "source_url": "http://www.cairnscc.com/",
+    "image_url": "https://images.squarespace-cdn.com/content/v1/548c9d96e4b04ff00dd5ca7b/1783958037717-AIW8AS4MW11YTS5NQWJG/IMG-20220806-WA0125.JPEG",
+    "type": "child in outdoor program",
+    "date_scraped": "2026-09-04"
   }
 }
