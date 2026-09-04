@@ -294,6 +294,10 @@ function Login() {
             <Link to="/terms" className="underline-offset-4 hover:underline">
               {t("terms")}
             </Link>
+            {" · "}
+            <Link to="/cookies" className="underline-offset-4 hover:underline">
+              {t("cookies")}
+            </Link>
           </p>
           </div>
         </div>

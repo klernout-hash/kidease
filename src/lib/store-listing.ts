@@ -15,6 +15,7 @@ export const STORE = {
   privacyPolicyPath: "/privacy",
   supportPath: "/support",
   termsPath: "/terms",
+  cookiesPath: "/cookies",
   keywords:
     "daycare,childcare,Canada,licensed,preschool,infant,$10-a-day,garde,garderie,province",
   /** Google Play short description — max 80 characters. */
@@ -41,7 +42,7 @@ KidEase is a parent and provider app — not a children’s app. Child first nam
 
 Payments for childcare deposits are real-world services (not digital in-app purchases).
 
-Privacy policy, terms, and account deletion live in the app.`,
+Privacy policy, terms, cookie policy, and account deletion live in the app.`,
   descriptionFr: `KidEase aide les parents canadiens à trouver une garde permise dans un rayon en kilomètres.
 
 Cherchez par GPS ou code postal. Voyez les frais mensuels (y compris les places financées 10 $ par jour au Manitoba), les places ouvertes, les heures, les langues et une photo aérienne du bâtiment.

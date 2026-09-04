@@ -72,6 +72,8 @@ function MenuPage() {
           <Row to="/how-it-works" label={t("howItWorksCta")} />
           <Row to="/privacy" label={t("privacy")} />
           <Row to="/terms" label={t("terms")} />
+          <Row to="/cookies" label={t("cookies")} />
+          <Row to="/account" label={t("deleteAccount")} />
         </Group>
 
         <Group title="Parents">
