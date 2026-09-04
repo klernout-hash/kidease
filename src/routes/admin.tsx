@@ -11,12 +11,13 @@ import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } fr
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
 import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
 import { AdminContractsPanel } from "@/components/admin-contracts";
+import { AdminMailPanel } from "@/components/admin-mail";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
 
-type AdminDesk = "queue" | "daycares" | "contracts" | "money" | "activity";
+type AdminDesk = "queue" | "daycares" | "mail" | "contracts" | "money" | "activity";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -241,6 +242,8 @@ function AdminPage() {
             </section>
           )}
         </>
+      ) : tab === "mail" ? (
+        <AdminMailPanel />
       ) : tab === "contracts" ? (
         <AdminContractsPanel rows={contracts} mode={contractMode} busy={contractBusy} setBusy={setContractBusy} onRefresh={refresh} />
       ) : tab === "money" ? (
