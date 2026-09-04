@@ -1,0 +1,21 @@
+{
+  "run": "2026-09-04T14:10:00Z",
+  "city": "Winnipeg",
+  "province": "MB",
+  "processed": [
+    {"id": "mb-100532", "name": "Bright Future Child Care Center Inc.", "address": "898 Henderson Highway", "result": "skip", "reason": "No official website/FB/IG photos; directories only. Other Bright Future sites are ON/MN and not this centre."},
+    {"id": "mb-3088", "name": "Brock Corydon Day Care Inc.", "address": "1510 Corydon Avenue", "result": "skip", "reason": "Official site brockcorydondaycare.ca has logo and decorative insect banner only; no classroom/kids/building photo."},
+    {"id": "mb-1002", "name": "Brooklands Day Care Centre Inc.", "address": "1950 Pacific Avenue W", "result": "skip", "reason": "In Brooklands School rooms; no daycare-published photos. Did not use school architecture photos."},
+    {"id": "mb-102891", "name": "Bumble Bee Early Learning Centre Inc.", "address": "1770 King Edward Street", "result": "skip", "reason": "Official site bumble-b.ca hero appears generic stock kids coloring; no confirmed on-site photo. Logo skipped."},
+    {"id": "mb-1264", "name": "Bumper Crop Early Learning Centre Inc.", "address": "2090 Jefferson Ave", "result": "skip", "reason": "Only school waitlist page + email; Waterford Springs school photos are school not daycare-published."},
+    {"id": "mb-1233", "name": "Busy Bee Day Care Centre", "address": "646-648 McGee Street", "result": "skip", "reason": "No official site or verified FB photos of this McGee location."},
+    {"id": "mb-102363", "name": "Busy Bee Day Care Centre Inc. School Age Program", "address": "640 McGee Street", "result": "skip", "reason": "Same operator as mb-1233; no official photos."},
+    {"id": "mb-1199", "name": "C.A.P.T. (Grosvenor) Inc.", "address": "1045 Grosvenor Avenue", "result": "skip", "reason": "School daycare page only; capt.ca is unrelated pharmacy association."},
+    {"id": "mb-1003", "name": "C.A.P.T. Inc.", "address": "245 Queenston Street", "result": "skip", "reason": "Queenston School text page only; no official photos."},
+    {"id": "mb-7834", "name": "Can You Imagine Preschool Care and Education Centre Inc.", "address": "55 Stadacona Street", "result": "skip", "reason": "Charity listing + school program page for other sites; no official photo of Stadacona centre."}
+  ],
+  "ids_added": [],
+  "ids_skipped": ["mb-100532", "mb-3088", "mb-1002", "mb-102891", "mb-1264", "mb-1233", "mb-102363", "mb-1199", "mb-1003", "mb-7834"],
+  "next_ids": ["mb-101214", "mb-100820", "mb-7893", "mb-3026", "mb-1046", "mb-1005", "mb-9360", "mb-1007", "mb-3084", "mb-101711"],
+  "totals": {"winnipeg_mapped": 59, "winnipeg_total": 428, "national_mapped": 59, "national_total": 20846}
+}
