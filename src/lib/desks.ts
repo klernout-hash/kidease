@@ -38,17 +38,23 @@ export function landingPath(desks: DeskKey[]): "/admin" | "/provider" | "/parent
 
 /**
  * Desks the signed-in user may open.
- * Admin (Kyle) sees all three.
- * A daycare login sees Provider only.
- * A parent login sees Parent only.
+ * Header pills stay admin-only in DeskSwitcher.
+ * Dual parent + daycare accounts are allowed (separate profiles).
+ * A provider also keeps Parent so they can use a parent profile on the same email.
  */
 export function desksFor(input: {
   role: AppRole;
   ownsCentre?: boolean;
 }): DeskKey[] {
-  if (input.role === "admin") return ["admin", "provider", "parent"];
-  if (input.role === "provider" || input.ownsCentre) return ["provider"];
-  return ["parent"];
+  const desks = new Set<DeskKey>(["parent"]);
+  if (input.role === "admin") {
+    desks.add("admin");
+    desks.add("provider");
+  }
+  if (input.role === "provider" || input.ownsCentre) {
+    desks.add("provider");
+  }
+  return (["admin", "provider", "parent"] as const).filter((d) => desks.has(d));
 }
 
 export function canVisitDesk(desks: DeskKey[], desk: DeskKey) {
