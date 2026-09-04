@@ -1,18 +1,17 @@
 {
-  "last_run": "2026-09-04T15:24:25Z",
+  "last_run": "2026-09-04T16:10:00Z",
   "last_city": "Winnipeg",
   "last_province": "MB",
   "last_ids_processed": [
-    "mb-1002",
-    "mb-1003",
-    "mb-1010",
-    "mb-1011",
-    "mb-1018",
-    "mb-1020",
-    "mb-1022",
-    "mb-1023",
-    "mb-1024",
-    "mb-1026"
+    "mb-1027",
+    "mb-1028",
+    "mb-1029",
+    "mb-1030",
+    "mb-1031",
+    "mb-1032",
+    "mb-1033",
+    "mb-1034",
+    "mb-1036"
   ],
   "mapped_count_official_buildings": 62,
   "mapped_ids": [
@@ -85,30 +84,29 @@
   "ids_added_this_run": [],
   "ids_restored_binaries_this_run": [],
   "skipped_no_photo_this_run": [
-    "mb-1002",
-    "mb-1003",
-    "mb-1010",
-    "mb-1011",
-    "mb-1018",
-    "mb-1020",
-    "mb-1022",
-    "mb-1023",
-    "mb-1024",
-    "mb-1026"
+    "mb-1027",
+    "mb-1028",
+    "mb-1029",
+    "mb-1030",
+    "mb-1031",
+    "mb-1032",
+    "mb-1033",
+    "mb-1034",
+    "mb-1036"
   ],
   "next_queue": {
     "city": "Winnipeg",
     "ids": [
-      "mb-1027",
-      "mb-1028",
-      "mb-1029",
-      "mb-1030",
-      "mb-1031",
-      "mb-1032",
-      "mb-1033",
-      "mb-1034",
-      "mb-1035",
-      "mb-1036"
+      "mb-1038",
+      "mb-1039",
+      "mb-1042",
+      "mb-1045",
+      "mb-1046",
+      "mb-1048",
+      "mb-1051",
+      "mb-1053",
+      "mb-1055",
+      "mb-1056"
     ],
     "then": [
       "remaining Winnipeg",
@@ -122,5 +120,5 @@
       "SK"
     ]
   },
-  "notes": "2026-09-04 hourly run. Processed 10 Winnipeg centres (Brooklands Day Care Centre Inc, C.A.P.T. Inc, Crestview Park Day Nursery, Day Nursery Centre Inc - Crossways, Freight House Early Learning Ross Site, Waverley Heights Child Care, Harmony Day Care Centre, Children at the Centre, Stars of Promise, Kidi-Garden Day Nurseries). Searched official sites and operator pages. Freight House has freighthouseearlylearning.ca with program photos but none clearly identifiable as the 505 Ross site storefront/classroom/playground specific enough under hard rules. Day Nursery Centre operator site has kids-in-program photos but not confirmed specific to Crossways unit vs other sites. Most others are school-based B&A or have no official website photos of the facility. Skipped all 10. Winnipeg remains 62/428, national 62/20846."
+  "notes": "2026-09-04 hourly run. Processed 9 Winnipeg centres (Kings Park Day Care Centre Inc, Knox Day Nursery, Learning Tree Day Nursery, Little Voyageurs Learning Centre Site 1, Little People's Place Inc, Lord Roberts Preschool Child Care, Machray Day Nursery Inc, Maples DayCare Inc, Anne Ross Day Nursery). mb-1035 not in catalogue. Official sites found for Kings Park (kingsparkchildcare.org), Knox (knoxdaynursery.com), Little Voyageurs (littlevoyageurs.ca), Machray (machraydaynursery.com), Lord Roberts (lordroberts.org). Sites contain logos, generic stock-style child photos, or multi-site operator imagery not clearly identifiable as the specific listed address storefront/classroom/playground under hard rules. No Facebook/IG business pages yielded usable centre-specific facility photos. Skipped all. Winnipeg remains 62/428, national 62/20846."
 }
