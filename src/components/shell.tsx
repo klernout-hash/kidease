@@ -1,1 +1,410 @@
-RESTORE
+import type { ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Heart, ClipboardCheck, Menu, MessageCircle, Search } from "lucide-react";
+import { SignedIn } from "@/lib/auth/gates";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { signOut } from "@/lib/auth/client";
+import { useCopy } from "@/lib/use-copy";
+import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/brand-mark";
+import { LanguageSelect } from "@/components/language-select";
+import { NavDrawer } from "@/components/nav-drawer";
+import { LiveChatSlot } from "@/components/help-bot";
+import { applyDocumentLocale } from "@/lib/languages";
+import { DeskSwitcher } from "@/components/desk-switcher";
+import { SiteFooter } from "@/components/site-footer";
+import { ProfileAvatar } from "@/components/profile-avatar";
+
+export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
+  const { t, locale } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const tab = useRouterState({ select: (s) => (s.location.search as { tab?: string }).tab });
+  const { user } = useCurrentUserState();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    applyDocumentLocale(locale);
+  }, [locale]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  const close = useCallback(() => {
+    setOpen(false);
+  }, []);
+
+  const hideTabs = pathname.startsWith("/login");
+  const onAccount = pathname.startsWith("/account");
+  const accountTab = tab ?? "profile";
+  const hideFooter =
+    hideTabs || pathname.startsWith("/admin") || pathname.startsWith("/verify-2fa") || pathname.startsWith("/menu");
+  const onProfile = onAccount && accountTab === "profile";
+
+  const desktopNav = [
+    { to: "/search", label: t("explore"), match: ["/search", "/daycare"] },
+    { to: "/benefits", label: t("benefitsTab"), match: ["/benefits"] },
+    { to: "/about", label: t("about"), match: ["/about"] },
+    { to: "/get-app", label: t("getApp"), match: ["/get-app"] },
+  ];
+
+  const drawerItems = [
+    { to: "/search", label: t("explore") },
+    { to: "/benefits", label: t("benefitsTab") },
+    { to: "/get-app", label: t("getApp") },
+    { to: "/about", label: t("about") },
+    { to: "/team", label: t("team") },
+    { to: "/contact", label: t("contact") },
+  ];
+
+  return (
+    <div className="min-h-dvh bg-bg text-fg">
+      <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
+        <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 py-2">
+          <Link to="/" className="shrink-0" aria-label="KidEase">
+            <BrandMark size="sm" />
+          </Link>
+          <nav className="hidden items-center gap-6 text-[13px] font-medium text-muted [[data-channel=website]_&]:xl:flex">
+            {desktopNav.map((item) => {
+              const on = item.match.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+              return (
+                <Link key={item.to} to={item.to} className={cn("whitespace-nowrap hover:text-fg", on && "text-fg")}>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="flex items-center gap-1.5">
+            {user ? <DeskSwitcher /> : null}
+            <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:xl:flex">
+              <LanguageSelect />
+              <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
+              {user ? (
+                <SignedIn>
+                  <AccountMenu
+                    name={user.displayName ?? t("account")}
+                    image={user.profileImageUrl}
+                    accountLabel={t("account")}
+                    email={user.primaryEmail}
+                  />
+                </SignedIn>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    search={{ role: "provider", intent: "in", next: "/provider" }}
+                    className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-normal text-muted hover:text-fg"
+                  >
+                    {t("providerLogin")}
+                  </Link>
+                  <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
+                  <Link
+                    to="/login"
+                    search={{ role: "parent", intent: "in", next: "/parent" }}
+                    className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-normal text-muted hover:text-fg"
+                  >
+                    {t("parentSignIn")}
+                  </Link>
+                </>
+              )}
+            </div>
+            <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:flex [[data-channel=website]_&]:xl:hidden">
+              <LanguageSelect />
+            </div>
+            <HeaderProfile
+              userId={user?.id}
+              image={user?.profileImageUrl}
+              name={user?.displayName}
+              signedIn={Boolean(user)}
+              active={onProfile}
+              profileLabel={t("profile")}
+              parentLabel={t("parentSignIn")}
+              providerLabel={t("providerLogin")}
+            />
+            <button
+              type="button"
+              className="hidden size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=website]_&]:grid [[data-channel=website]_&]:xl:hidden"
+              aria-label="Menu"
+              aria-expanded={open}
+              aria-controls="ke-nav-drawer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen((v) => !v);
+              }}
+            >
+              <Menu className="size-6" strokeWidth={1.75} />
+            </button>
+          </div>
+        </div>
+      </header>
+      <NavDrawer
+        open={open}
+        onClose={close}
+        title={t("explore")}
+        items={drawerItems}
+        parentLabel={t("parentSignIn")}
+        providerLabel={t("providerLogin")}
+        signedIn={Boolean(user)}
+        accountLabel={t("account")}
+        onSignOut={() => void signOut("/")}
+      />
+      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"}>
+        {children}
+      </div>
+      {hideFooter || bare ? null : <SiteFooter />}
+      {hideTabs ? null : (
+        <nav className="fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
+          <div className="mx-auto grid max-w-lg grid-cols-5 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
+            <Tab
+              to="/"
+              label={t("search")}
+              icon={Search}
+              active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")}
+            />
+            <Tab
+              to="/account"
+              search={{ tab: "saved" }}
+              label={t("saved")}
+              icon={Heart}
+              active={onAccount && accountTab === "saved"}
+            />
+            <Tab
+              to="/account"
+              search={{ tab: "enrolled" }}
+              label={t("enrolled")}
+              icon={ClipboardCheck}
+              active={onAccount && accountTab === "enrolled"}
+            />
+            <Tab to="/inbox" label={t("messages")} icon={MessageCircle} active={pathname.startsWith("/inbox")} />
+            <Tab to="/menu" label={locale === "fr" ? "Menu" : "Menu"} icon={Menu} active={pathname.startsWith("/menu")} />
+          </div>
+        </nav>
+      )}
+      {hideTabs || pathname.startsWith("/search") ? null : <LiveChatSlot />}
+    </div>
+  );
+}
+
+function HeaderProfile({
+  userId,
+  image,
+  name,
+  signedIn,
+  active,
+  profileLabel,
+  parentLabel,
+  providerLabel,
+}: {
+  userId?: string | null;
+  image?: string | null;
+  name?: string | null;
+  signedIn: boolean;
+  active: boolean;
+  profileLabel: string;
+  parentLabel: string;
+  providerLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const triggerClass = cn(
+    "flex min-w-12 flex-col items-center justify-center gap-0.5 px-1 py-0.5 [[data-channel=app]_&]:flex",
+    "hidden [[data-channel=website]_&]:flex [[data-channel=website]_&]:xl:hidden",
+    active ? "text-primary" : "text-muted",
+  );
+
+  if (signedIn) {
+    return (
+      <Link to="/account" search={{ tab: "profile" }} className={triggerClass} aria-label={profileLabel}>
+        <ProfileAvatar userId={userId} fallback={image} name={name} size="sm" />
+        <span className="text-[9px] font-medium tracking-wide">{profileLabel}</span>
+      </Link>
+    );
+  }
+
+  return (
+    <div ref={wrap} className="relative hidden [[data-channel=app]_&]:block [[data-channel=website]_&]:block [[data-channel=website]_&]:xl:hidden">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={profileLabel}
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex min-w-12 flex-col items-center justify-center gap-0.5 px-1 py-0.5",
+          open ? "text-primary" : "text-muted",
+        )}
+      >
+        <ProfileAvatar userId={userId} fallback={image} name={name} size="sm" />
+        <span className="text-[9px] font-medium tracking-wide">{profileLabel}</span>
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-56 overflow-hidden rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
+        >
+          <p className="border-b border-border px-3 py-2 text-xs font-medium text-muted">Sign in</p>
+          <Link
+            role="menuitem"
+            to="/login"
+            search={{ role: "parent", intent: "in", next: "/parent" }}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+          >
+            {parentLabel}
+          </Link>
+          <Link
+            role="menuitem"
+            to="/login"
+            search={{ role: "provider", intent: "in", next: "/provider" }}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+          >
+            {providerLabel}
+          </Link>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AccountMenu({
+  name,
+  image,
+  accountLabel,
+  email,
+}: {
+  name: string;
+  image: string | null;
+  accountLabel: string;
+  email: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrap} className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-normal text-muted hover:text-fg"
+      >
+        {image ? (
+          <img src={image} alt="" className="size-5 rounded-full object-cover" />
+        ) : (
+          <span className="grid size-5 place-items-center rounded-full bg-primary text-[10px] text-primary-fg">
+            {name.slice(0, 1).toUpperCase()}
+          </span>
+        )}
+        <span className="hidden max-w-28 truncate sm:inline">{name}</span>
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-56 overflow-hidden rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
+        >
+          <div className="border-b border-border px-3 py-2">
+            <p className="truncate text-sm font-medium text-fg">{name}</p>
+            {email ? <p className="truncate text-xs text-muted">{email}</p> : null}
+          </div>
+          <Link
+            role="menuitem"
+            to="/account"
+            search={{ tab: "profile" }}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+          >
+            {accountLabel}
+          </Link>
+          <Link
+            role="menuitem"
+            to="/parent"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+          >
+            Parent desk
+          </Link>
+          <Link
+            role="menuitem"
+            to="/provider"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+          >
+            Provider desk
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            className="block w-full px-3 py-2.5 text-left text-sm text-danger hover:bg-surface-2"
+            onClick={() => void signOut("/")}
+          >
+            Sign out
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function Tab({
+  to,
+  label,
+  icon: Icon,
+  active,
+  search,
+}: {
+  to: string;
+  label: string;
+  icon: typeof Search;
+  active: boolean;
+  search?: Record<string, string>;
+}) {
+  return (
+    <Link
+      to={to}
+      search={search}
+      className={cn(
+        "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 text-[9px] font-medium tracking-wide",
+        active ? "text-primary" : "text-muted",
+      )}
+    >
+      <Icon className="size-5" strokeWidth={active ? 2.2 : 1.7} fill={active && Icon === Heart ? "currentColor" : "none"} />
+      {label}
+    </Link>
+  );
+}
