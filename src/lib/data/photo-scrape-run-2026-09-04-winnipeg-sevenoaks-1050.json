@@ -1,0 +1,31 @@
+{
+  "run": "2026-09-04-winnipeg-sevenoaks-fgcccc-fhelc-udc",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [
+    {
+      "id": "mb-1050",
+      "name": "Seven Oaks Child Day Care Centre Inc.",
+      "address": "2300 McPhillips Street, Winnipeg, MB",
+      "source_url": "https://www.sevenoakschilddaycarecentre.com/",
+      "image_url": "https://siteassets.pagecloud.com/catarinas-website-3/images/IMG_7401-2.jpg",
+      "type": "official_website_playground_kids_in_program",
+      "file": "/photos/buildings/mb-1050.jpg",
+      "binary_status": "source verified; 900px jpeg crop pending binary push to public/photos/buildings/mb-1050.jpg"
+    }
+  ],
+  "skipped": [
+    {"id": "mb-1009", "name": "Fort Garry Child Care Centre Co-op Inc.", "reason": "Official site fortgarrychildcare.ca hero is generic stock kids-from-behind; no unique classroom/building photo"},
+    {"id": "mb-1018", "name": "Freight House Early Learning Ross Site", "reason": "Official site uses shared stock toddler/shape-sorter hero; operator has multiple sites so materials photos not assigned to Ross specifically"},
+    {"id": "mb-1039", "name": "Freight House Infant and IRCOM Site", "reason": "470 Pacific not on current official locations list; no site-specific photo"},
+    {"id": "mb-1046", "name": "Care and Share Children's Centre Inc.", "reason": "cscc.childcare.link portal only; no public gallery"},
+    {"id": "mb-1048", "name": "St. Vital Child Care Co-op Inc.", "reason": "No official website or gallery"},
+    {"id": "mb-1051", "name": "Shepherd's Care Day Nursery Inc.", "reason": "scdndaycare.ca uses same stock classroom images as other Wix templates"},
+    {"id": "mb-1053", "name": "Explorer's Children's Centre Inc.", "reason": "Directories only; no official website"},
+    {"id": "mb-1055", "name": "Sunny Mountain Day Care Centre (1985) Inc.", "reason": "Homestead listing only; no usable current official gallery"},
+    {"id": "mb-1056", "name": "Sunnyside Child Care Centre Inc.", "reason": "No confirmed Winnipeg official gallery"},
+    {"id": "mb-1059", "name": "Transcona Jaycees Day Care Centre", "reason": "No official website"},
+    {"id": "mb-1060", "name": "Universal Day Care Centre Inc.", "reason": "myudc.net is official but no downloadable classroom/building photo confirmed this run"}
+  ],
+  "mapped_count_after": 42
+}
