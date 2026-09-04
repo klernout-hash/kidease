@@ -1,0 +1,26 @@
+{
+  "run": "2026-09-04T11:15:00Z",
+  "city": "Winnipeg",
+  "added": [
+    {
+      "id": "mb-100937",
+      "name": "BH Beginnings DayCare Centre",
+      "address": "630 Westminster Street",
+      "source": "https://www.balmoralhall.com/about-us/our-campus",
+      "file": "public/photos/buildings/mb-100937.jpg"
+    },
+    {
+      "id": "mb-101065",
+      "name": "Down to Earth Children's Centre",
+      "address": "300 Carpathia Road",
+      "source": "https://downtoearthchildrenscentre.ca/",
+      "file": "public/photos/buildings/mb-101065.jpg"
+    }
+  ],
+  "binary_saved_locally": [
+    "public/photos/buildings/mb-100903.jpg",
+    "public/photos/buildings/mb-100937.jpg",
+    "public/photos/buildings/mb-101065.jpg"
+  ],
+  "note": "JPEG binaries could not be pushed through the GitHub text-file API this run. Files are in the scrape workspace for upload."
+}
