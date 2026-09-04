@@ -83,7 +83,7 @@ export function DaycareCard({
             <BuildingPhoto
               src={building}
               eager={eager}
-              alt={`Storefront of ${name}`}
+              alt=""
               className="size-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
             />
             <div className="absolute inset-x-2 top-2 z-[1] flex flex-nowrap items-center gap-1 overflow-hidden">{badges}</div>
@@ -142,7 +142,7 @@ export function DaycareCard({
             style={{ animationDelay: `${(item.id.charCodeAt(item.id.length - 1) % 9) * 0.12}s` }}
           >
             <div className="ke-card-photo relative overflow-hidden rounded-[0.9rem] bg-surface-2">
-              <BuildingPhoto src={building} eager={eager} alt={`Storefront of ${name}`} className="size-full object-cover object-center" />
+              <BuildingPhoto src={building} eager={eager} alt="" className="size-full object-cover object-center" />
               <div className="absolute inset-x-2 top-2 z-[1] flex flex-nowrap items-center gap-1 overflow-hidden">{badges}</div>
             </div>
           </div>
@@ -216,7 +216,7 @@ export function DaycareCard({
       >
         <Link to="/daycare/$slug" params={{ slug: item.slug }} className="group block">
           <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
-            <BuildingPhoto src={building} eager={eager} alt={`Storefront of ${name}`} className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+            <BuildingPhoto src={building} eager={eager} alt="" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
             <div className="absolute left-3 top-3 flex flex-nowrap items-center gap-1.5 overflow-hidden">{badges}</div>
           </div>
           <div className="space-y-1.5 p-3.5 pb-3">

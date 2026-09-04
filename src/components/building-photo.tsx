@@ -24,8 +24,10 @@ export function BuildingPhoto({
   const ref = useRef<HTMLImageElement>(null);
   const [active, setActive] = useState(eager);
   const [cur, setCur] = useState(src || FALLBACK);
+  const [broken, setBroken] = useState(false);
 
   useEffect(() => {
+    setBroken(false);
     setCur(src || FALLBACK);
   }, [src]);
 
@@ -49,6 +51,10 @@ export function BuildingPhoto({
     return () => io.disconnect();
   }, [eager, src]);
 
+  if (broken) {
+    return <div className={cn("bg-surface-2", className)} aria-hidden="true" />;
+  }
+
   const ready = active ? cur || FALLBACK : undefined;
   const blank = "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
 
@@ -60,13 +66,14 @@ export function BuildingPhoto({
       sizes={sizes}
       width={width}
       height={height}
-      alt={alt}
-      className={cn("bg-surface-2", className)}
+      alt=""
+      className={cn("bg-surface-2 text-transparent", className)}
       loading={eager ? "eager" : "lazy"}
-      decoding={eager ? "async" : "async"}
+      decoding="async"
       fetchPriority={eager ? "high" : "low"}
       onError={() => {
         if (cur !== FALLBACK) setCur(FALLBACK);
+        else setBroken(true);
       }}
     />
   );
