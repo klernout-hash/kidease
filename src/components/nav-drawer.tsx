@@ -14,6 +14,7 @@ export function NavDrawer({
   title,
   items,
   parentLabel,
+  providerLabel,
   signedIn,
   accountLabel,
   onSignOut,
@@ -144,14 +145,24 @@ export function NavDrawer({
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              search={{ role: "parent", intent: "in", next: "/parent" }}
-              onClick={onClose}
-              className="flex min-h-12 items-center justify-center rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
-            >
-              {parentLabel}
-            </Link>
+            <>
+              <Link
+                to="/login"
+                search={{ role: "parent", intent: "in", next: "/parent" }}
+                onClick={onClose}
+                className="flex min-h-12 items-center justify-center rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
+              >
+                {parentLabel}
+              </Link>
+              <Link
+                to="/login"
+                search={{ role: "provider", intent: "in", next: "/provider" }}
+                onClick={onClose}
+                className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border hover:bg-surface"
+              >
+                {providerLabel ?? "Daycare Sign In"}
+              </Link>
+            </>
           )}
           <div className="mt-4 overflow-visible rounded-full bg-surface ring-1 ring-border">
             <LanguageSelect className="w-full justify-start" />
