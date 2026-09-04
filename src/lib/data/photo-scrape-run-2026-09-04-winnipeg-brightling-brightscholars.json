@@ -1,0 +1,41 @@
+{
+  "run": "2026-09-04-winnipeg-brightling-brightscholars",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [
+    {
+      "id": "mb-103244",
+      "name": "Brightling Children's Academy Inc.",
+      "address": "1461 Chevrier Boulevard, Winnipeg, MB",
+      "source_url": "https://www.brightlingacademy.ca/",
+      "image_url": "https://images.squarespace-cdn.com/content/v1/6a2c8e5c17ac4f6146055286/50cb06b0-ff1c-4295-a8ef-eaed5ebd7ab6/11-Brightling-24-6752.jpg",
+      "type": "official_website_classroom_kids",
+      "file": "/photos/buildings/mb-103244.jpg"
+    },
+    {
+      "id": "mb-102899",
+      "name": "Bright Scholars Montessori",
+      "address": "325 North Town Road, Winnipeg, MB",
+      "source_url": "https://brightscholarsmontessori.ca/",
+      "image_url": "https://storage.googleapis.com/msgsndr/31SjJThNiFwaRDIcqmT6/media/6793d6fc2df9fedb46cf4aed.png",
+      "type": "official_website_storefront",
+      "file": "/photos/buildings/mb-102899.jpg"
+    }
+  ],
+  "skipped": [
+    {"id": "mb-1003", "name": "C.A.P.T. Inc.", "reason": "no official website/gallery found"},
+    {"id": "mb-1005", "name": "Care-A-Lot Nursery Inc.", "reason": "directories only"},
+    {"id": "mb-1007", "name": "Carter Early Learning Centre Inc.", "reason": "Bethel parent site; no usable Carter classroom photo"},
+    {"id": "mb-1008", "name": "Elmwood Day Nursery Inc.", "reason": "no official gallery"},
+    {"id": "mb-1010", "name": "Crestview Park Day Nursery Incorporated", "reason": "no official website with photos"},
+    {"id": "mb-1011", "name": "Day Nursery Centre Inc. - Crossways", "reason": "org site exists but photo not clearly this site"},
+    {"id": "mb-1014", "name": "Horizons Children's Centre", "reason": "no official gallery confirmed"},
+    {"id": "mb-1018", "name": "Freight House Early Learning and Care Inc. Ross Site", "reason": "official site; no usable still found"},
+    {"id": "mb-1020", "name": "Waverley Heights Child Care Inc.", "reason": "no official website with photos"},
+    {"id": "mb-1022", "name": "Harmony Day Care Centre", "reason": "no official website"},
+    {"id": "mb-1024", "name": "Stars of Promise Inc.", "reason": "no official photo gallery"},
+    {"id": "mb-3012", "name": "Earl Grey Children's Centre Inc.", "reason": "official site images look like stock"},
+    {"id": "mb-102610", "name": "Time 2 Play Early Learning Centre", "reason": "official site theme/stock images"}
+  ],
+  "mapped_count_after": 62
+}
