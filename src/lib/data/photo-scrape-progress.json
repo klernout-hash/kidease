@@ -1,5 +1,5 @@
 {
-  "last_run": "2026-09-04T14:22:44Z",
+  "last_run": "2026-09-04T14:30:00Z",
   "last_city": "Winnipeg",
   "last_province": "MB",
   "last_ids_processed": [
@@ -21,6 +21,7 @@
     "mb-1001",
     "mb-100131",
     "mb-100141",
+    "mb-100170",
     "mb-100351",
     "mb-1004",
     "mb-1006",
@@ -65,6 +66,7 @@
     "mb-1214",
     "mb-1242",
     "mb-1252",
+    "mb-1276",
     "mb-2024",
     "mb-2169",
     "mb-3001",
@@ -72,9 +74,7 @@
     "mb-3010",
     "mb-3096",
     "mb-7923",
-    "mb-9265",
-    "mb-1276",
-    "mb-100170"
+    "mb-9265"
   ],
   "winnipeg_total": 428,
   "winnipeg_official_mapped": 59,
@@ -119,5 +119,5 @@
       "SK"
     ]
   },
-  "notes": "2026-09-04 hourly continuation. Processed next 10 unmapped Winnipeg centres (Andrews Early Learning Centre mb-101862, Anne Ross Day Nursery mb-1036, Arthur Day Fun Club mb-101827, Assiniboine Castle Daycare Co-op Inc. mb-1249 + School Age mb-9508, Assiniboine Children's Centre Inc @Linwood mb-103026 + main mb-3002 + Parkside mb-102576, Bairdmore Before and After School Program mb-100249, Belmont Learning Centre mb-100529). Official site assiniboinecc.org for Assiniboine Children's Centre group: logo + Unsplash stock only, no usable official classroom/kids-in-program/playground/storefront/interior photos specific to the centres. Anne Ross under Mount Carmel Clinic (mountcarmel.ca early-learning pages): text only, no centre photos. Bairdmore is YMCA-YWCA school-age listing (ywinnipeg.ca) with no location-specific photos. Andrews/Belmont share operator mentions on directory sites but no official photo galleries meeting hard rules. Others: no official websites or FB/IG business pages with usable photos of THAT centre. 0 new photos. Placeholders left. Winnipeg 59/428 official mapped, national 59/20846."
+  "notes": "2026-09-04 continuation. Processed next 10 unmapped Winnipeg centres (Andrews Early Learning Centre, Anne Ross Day Nursery, Arthur Day Fun Club, Assiniboine Castle Daycare Co-op + School Age, Assiniboine Children's Centre @Linwood / main / Parkside, Bairdmore Before and After, Belmont Learning Centre). Official site found for Assiniboine Children's Centre (assiniboinecc.org) — logo/contact only, no usable classroom/kids/playground/storefront/interior photos. Anne Ross via Mount Carmel Clinic site — program descriptions only, no qualifying official photos of the specific centre. Others: directory/school pages or no official photo sources meeting hard rules (no Street View, no stock, no unrelated). 0 new photos. Left placeholders. Winnipeg 59/428, national 59/20846."
 }
