@@ -143,11 +143,14 @@ export const startTwoFactor = createServerFn({ method: "POST" })
 
 export const verifyTwoFactor = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { code: string; remember?: boolean }) => ({
+  .validator((input: { code: string; remember?: boolean; turnstileToken?: string }) => ({
     code: String(input.code || "").replace(/\D/g, "").slice(0, 6),
     remember: Boolean(input.remember),
+    turnstileToken: String(input.turnstileToken || ""),
   }))
   .handler(async ({ context, data }) => {
+    const { assertTurnstileToken } = await import("@/lib/server/turnstile");
+    await assertTurnstileToken(data.turnstileToken);
     if (data.code.length !== 6) throw new Error("Enter the 6-digit code from your email.");
     await ensureTable();
     const sql = await getSql();

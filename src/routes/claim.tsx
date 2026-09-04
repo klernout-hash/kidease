@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { searchClaimable, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 
 export const Route = createFileRoute("/claim")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -43,6 +44,8 @@ function ClaimPage() {
   const [enrollManual, setEnrollManual] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const enrollBox = useRef<HTMLDivElement>(null);
+  const claimChallenge = useTurnstileToken();
+  const enrollChallenge = useTurnstileToken();
 
   useEffect(() => {
     const term = q.trim();
@@ -143,7 +146,7 @@ function ClaimPage() {
     }
     setBusy(true);
     try {
-      await verifyClaim({ data: { daycareId: pending.daycareId, code, licensePhoto: license } });
+      await verifyClaim({ data: { daycareId: pending.daycareId, code, licensePhoto: license, turnstileToken: claimChallenge.token } });
       toast.success(t("claimVerified"));
       void navigate({ to: "/provider" });
     } catch (err) {
@@ -186,6 +189,7 @@ function ClaimPage() {
           body: enroll.body,
           licensePhoto: enrollLicense,
           daycareId: enroll.daycareId || undefined,
+          turnstileToken: enrollChallenge.token,
         },
       });
       toast.success(t("enrollSent"));
@@ -258,6 +262,7 @@ function ClaimPage() {
               <input required type="file" accept="image/*" className="mt-2 block w-full text-sm" onChange={(e) => readLicense(e.target.files?.[0], "claim")} />
             </label>
             {license ? <img src={license} alt="Licence preview" className="max-h-40 rounded-md object-contain ring-1 ring-border" /> : null}
+            <TurnstileField onToken={claimChallenge.onToken} />
             <div className="flex flex-wrap gap-2">
               <Button type="submit" disabled={busy}>
                 {t("finishClaim")}
@@ -429,6 +434,7 @@ function ClaimPage() {
               onChange={(e) => setEnroll((s) => ({ ...s, body: e.target.value }))}
             />
           </label>
+          <TurnstileField onToken={enrollChallenge.onToken} />
           <Button type="submit" size="lg" className="w-full" disabled={enrollBusy}>
             {t("enrollNow")}
           </Button>

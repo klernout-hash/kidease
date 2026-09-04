@@ -18,4 +18,6 @@ export const GHOST_LISTING = {
   tagline: "QA ghost listing — not a real centre.",
   description:
     "KidEase internal test listing so the owner can walk Claim → licence → waiting → admin approve. Not a licensed daycare.",
+  visibility: "admin_only",
+  isTest: true,
 } as const;

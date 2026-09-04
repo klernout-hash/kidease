@@ -181,3 +181,9 @@ export async function signOut(redirectTo = "/"): Promise<void> {
   }
   window.location.href = redirectTo;
 }
+
+export function turnstileFetchOptions(token: string) {
+  const trimmed = token.trim();
+  if (!trimmed) return {};
+  return { headers: { "x-turnstile-token": trimmed } };
+}

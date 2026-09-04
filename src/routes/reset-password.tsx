@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { authClient } from "@/lib/auth/client";
+import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
+import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
@@ -21,6 +22,7 @@ function ResetPassword() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
+  const { token: challenge, onToken } = useTurnstileToken();
   const ready = passwordMeetsPolicy(password) && password === confirm && Boolean(token);
 
   async function onSubmit(e: React.FormEvent) {
@@ -40,7 +42,11 @@ function ResetPassword() {
     setBusy(true);
     setError(null);
     try {
-      const res = await authClient.resetPassword({ newPassword: password, token });
+      const res = await authClient.resetPassword({
+        newPassword: password,
+        token,
+        fetchOptions: turnstileFetchOptions(challenge),
+      });
       if (res.error) throw new Error(res.error.message || "Could not reset the password.");
       setDone(true);
     } catch (err) {
@@ -97,6 +103,7 @@ function ResetPassword() {
                 {confirm && confirm !== password ? (
                   <p className="text-[13px] text-danger">Those passwords do not match.</p>
                 ) : null}
+                <TurnstileField onToken={onToken} />
                 {error ? <p className="text-sm text-danger">{error}</p> : null}
                 <Button type="submit" className="w-full" disabled={busy || !ready}>
                   Save new password

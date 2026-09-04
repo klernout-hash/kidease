@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getTwoFactorStatus, startTwoFactor, verifyTwoFactor } from "@/lib/server/two-factor";
+import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 
 export const Route = createFileRoute("/verify-2fa")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -25,6 +26,7 @@ function VerifyTwoFactorPage() {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [verified, setVerified] = useState(false);
+  const { token, onToken } = useTurnstileToken();
 
   useEffect(() => {
     if (!user) return;
@@ -66,7 +68,7 @@ function VerifyTwoFactorPage() {
               e.preventDefault();
               setBusy(true);
               setError(null);
-              void verifyTwoFactor({ data: { code, remember: true } })
+              void verifyTwoFactor({ data: { code, remember: true, turnstileToken: token } })
                 .then(() => setVerified(true))
                 .catch((err) => setError(err instanceof Error ? err.message : "Could not verify"))
                 .finally(() => setBusy(false));
@@ -85,6 +87,7 @@ function VerifyTwoFactorPage() {
                 maxLength={6}
               />
             </label>
+            <TurnstileField onToken={onToken} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
             <Button type="submit" className="w-full" disabled={busy || !ready || code.length !== 6}>
               Verify and continue
