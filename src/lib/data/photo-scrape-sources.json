@@ -34,5 +34,50 @@
     "source_image": "https://static.wixstatic.com/media/591b5b_234cf05f03584dfbac1ae708dad980c8~mv2.jpeg",
     "kind": "official interior playroom / infant in program",
     "file": "/photos/buildings/mb-1004.jpg"
+  },
+  "mb-102700": {
+    "name": "Avicenna Academy",
+    "city": "Winnipeg",
+    "address": "200 Dalhousie Drive",
+    "source_page": "https://www.avicenna-academy.ca/",
+    "source_image": "https://www.avicenna-academy.ca/images/school.jpg",
+    "kind": "official storefront / building with centre signage",
+    "file": "/photos/buildings/mb-102700.jpg"
+  },
+  "mb-101548": {
+    "name": "Advantage Child Care Academy Inc.",
+    "city": "Winnipeg",
+    "address": "51 Scurfield Boulevard",
+    "source_page": "https://advantagechildcareacademy.ca/photo-gallery/",
+    "source_image": "https://advantagechildcareacademy.ca/wp-content/uploads/2025/11/ACCAClassroom3983-1-scaled-1.jpg",
+    "kind": "official classroom interior",
+    "file": "/photos/buildings/mb-101548.jpg"
+  },
+  "mb-1043": {
+    "name": "Discovery Children's Centre Inc.",
+    "city": "Winnipeg",
+    "address": "Rm1-12-367 Hampton Street",
+    "source_page": "https://www.discoverycc.com/our-facilities/",
+    "source_image": "https://www.discoverycc.com/wp-content/uploads/2020/10/front-address-scaled.jpg",
+    "kind": "official storefront / playground / building with Discovery Centre signage",
+    "file": "/photos/buildings/mb-1043.jpg"
+  },
+  "mb-100808": {
+    "name": "Sky's The Limit Montessori School",
+    "city": "Winnipeg",
+    "address": "3202 Birds Hill Road",
+    "source_page": "https://www.skysthelimitmontessori.com/",
+    "source_image": "https://static.wixstatic.com/media/0d5591_e879f8cba3fe4e7684fb7bd2287ccb16~mv2.jpg",
+    "kind": "official classroom / kids in program",
+    "file": "/photos/buildings/mb-100808.jpg"
+  },
+  "mb-101665": {
+    "name": "Inspired by Wonder Inc. - SSCY site",
+    "city": "Winnipeg",
+    "address": "1155 Notre Dame Avenue",
+    "source_page": "https://www.inspiredbywonder.ca/",
+    "source_image": "https://www.inspiredbywonder.ca/wp-content/uploads/2019/11/infant-room.jpg",
+    "kind": "official infant classroom interior",
+    "file": "/photos/buildings/mb-101665.jpg"
   }
 }
