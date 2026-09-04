@@ -1,0 +1,15 @@
+{
+  "run_date": "2026-09-04",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-1027", "mb-1028", "mb-1029", "mb-1030", "mb-1031", "mb-1032", "mb-1033", "mb-1034", "mb-1036"],
+  "ids_added": ["mb-1027", "mb-1028", "mb-1030", "mb-1032", "mb-1033"],
+  "ids_skipped_no_photo": ["mb-1029", "mb-1031", "mb-1034", "mb-1036"],
+  "sources": {
+    "mb-1027": {"name": "Kings Park Day Care Centre Inc.", "url": "https://www.kingsparkchildcare.org/", "photo_type": "kids in program"},
+    "mb-1028": {"name": "Knox Day Nursery", "url": "http://www.knoxdaynursery.com/", "photo_type": "facility"},
+    "mb-1030": {"name": "Little Voyageurs Learning Centre Inc. (Site 1)", "url": "https://littlevoyageurs.ca/", "photo_type": "kids in program"},
+    "mb-1032": {"name": "Lord Roberts Preschool Child Care", "url": "https://www.lordroberts.org/", "photo_type": "toddlers classroom"},
+    "mb-1033": {"name": "Machray Day Nursery Inc.", "url": "https://www.machraydaynursery.com/", "photo_type": "program interior"}
+  },
+  "notes": "Official website photos only; square ~900px JPEG. Binaries to be committed separately if needed."
+}
