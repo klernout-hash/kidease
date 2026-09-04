@@ -1,3 +1,4 @@
+import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { useCopy } from "@/lib/use-copy";
 
@@ -22,6 +23,15 @@ function Item({
 export function SiteFooter() {
   const { t, locale } = useCopy();
   const fr = locale === "fr";
+
+  useLayoutEffect(() => {
+    const all = document.querySelectorAll("footer.ke-site-footer");
+    if (all.length < 2) return;
+    all.forEach((node, index) => {
+      if (index === all.length - 1) node.removeAttribute("hidden");
+      else node.setAttribute("hidden", "");
+    });
+  }, []);
 
   return (
     <footer className="ke-site-footer [[data-channel=app]_&]:hidden">
