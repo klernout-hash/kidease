@@ -25,7 +25,7 @@ export function SiteFooter() {
 
   return (
     <footer className="ke-site-footer [[data-channel=app]_&]:hidden">
-      <div className="ke-gutter mx-auto max-w-6xl py-8 md:py-10">
+      <div className="ke-gutter mx-auto max-w-6xl py-8 md:py-9">
         <nav className="ke-footer-cols" aria-label="KidEase">
           <section>
             <p className="ke-footer-title">{fr ? "Soutien" : "Support"}</p>
