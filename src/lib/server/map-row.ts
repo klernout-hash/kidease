@@ -44,6 +44,8 @@ export type DaycareRow = {
   listing_active?: number | boolean | null;
   pause_code?: string | null;
   pause_reason?: string | null;
+  visibility?: string | null;
+  is_test?: number | boolean | null;
 };
 
 export function mapDaycare(r: DaycareRow): Daycare {
@@ -103,6 +105,8 @@ export function mapDaycare(r: DaycareRow): Daycare {
     priority: Boolean(r.priority_until && Date.parse(r.priority_until) > Date.now()),
     priorityUntil: r.priority_until ?? null,
     agesKnown: Boolean(r.ages_confirmed),
+    visibility: r.visibility === "admin_only" ? "admin_only" : "public",
+    isTest: r.is_test === 1 || r.is_test === true,
   };
 }
 

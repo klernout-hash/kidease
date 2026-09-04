@@ -557,6 +557,7 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
     centre?: string;
     phone?: string;
     city?: string;
+    turnstileToken?: string;
   }) => {
     const name = input.name.trim();
     const email = input.email.trim();
@@ -572,9 +573,12 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
       centre: (input.centre || "").trim().slice(0, 160),
       phone: (input.phone || "").trim().slice(0, 40),
       city: (input.city || "").trim().slice(0, 80),
+      turnstileToken: String(input.turnstileToken || ""),
     };
   })
   .handler(async ({ data }) => {
+    const { assertTurnstileToken } = await import("@/lib/server/turnstile");
+    await assertTurnstileToken(data.turnstileToken);
     const title =
       data.kind === "enroll"
         ? `Enroll Now: ${data.centre || data.name}`

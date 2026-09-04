@@ -66,6 +66,13 @@ export async function upsertDaycare(sql: Sql, d: CatalogDaycare) {
       0,
     ],
   );
+  await sql
+    .query(`update daycares set visibility = $1, is_test = $2 where id = $3`, [
+      d.visibility === "admin_only" ? "admin_only" : "public",
+      d.isTest ? 1 : 0,
+      d.id,
+    ])
+    .catch(() => undefined);
   for (const month of months) {
     await sql.query(
       `insert into availability (daycare_id, month, infant, toddler, preschool)

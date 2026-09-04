@@ -45,11 +45,16 @@ function Listing() {
   const [requestOpen, setRequestOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [comparing, setComparing] = useState(false);
+  const [missing, setMissing] = useState(false);
 
   useEffect(() => {
     let live = true;
+    setMissing(false);
+    setData(null);
     void getDaycare({ data: slug }).then((res) => {
-      if (live) setData(res);
+      if (!live) return;
+      if (!res) setMissing(true);
+      else setData(res);
     });
     return () => {
       live = false;
@@ -88,6 +93,20 @@ function Listing() {
     const origin = useAppStore.getState().origin;
     trackLocation("view", origin.lat, origin.lng, origin.label, { slug: d.slug });
   }, [data]);
+
+  if (missing) {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto max-w-lg py-16 text-center">
+          <h1 className="font-display text-3xl">Not found</h1>
+          <p className="mt-3 text-muted">This listing is not available.</p>
+          <Link to="/search" className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
+            {t("search")}
+          </Link>
+        </main>
+      </Shell>
+    );
+  }
 
   if (!data) {
     return (

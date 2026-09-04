@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
+import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import type { CopyKey } from "@/lib/copy";
 
 export const Route = createFileRoute("/contact")({
@@ -36,6 +37,7 @@ export function Contact() {
   const [body, setBody] = useState("");
 
   const [busy, setBusy] = useState(false);
+  const { token, onToken } = useTurnstileToken();
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -49,6 +51,7 @@ export function Contact() {
           email,
           subject: isParent ? `${t("roleParentTitle")} — ${label}` : label,
           body,
+          turnstileToken: token,
         },
       });
       toast.success(t("contactSent"));
@@ -125,6 +128,7 @@ export function Contact() {
               onChange={(e) => setBody(e.target.value)}
             />
           </label>
+          <TurnstileField onToken={onToken} />
           <Button type="submit" className="w-full" size="lg" disabled={busy}>
             {t("submit")}
           </Button>

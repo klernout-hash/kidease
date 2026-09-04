@@ -91,6 +91,8 @@ export type Daycare = {
   priority?: boolean;
   priorityUntil?: string | null;
   agesKnown?: boolean;
+  visibility?: "public" | "admin_only";
+  isTest?: boolean;
 };
 
 export type DaycareCard = Daycare & {

@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
+import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 
 export const Route = createFileRoute("/support")({ component: Support });
 
@@ -16,13 +17,14 @@ function Support() {
   const [body, setBody] = useState("");
 
   const [busy, setBusy] = useState(false);
+  const { token, onToken } = useTurnstileToken();
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
       await submitPublicMessage({
-        data: { kind: "support", name, email, body },
+        data: { kind: "support", name, email, body, turnstileToken: token },
       });
       toast.success(t("supportSent"));
       setBody("");
@@ -71,6 +73,7 @@ function Support() {
               onChange={(e) => setBody(e.target.value)}
             />
           </label>
+          <TurnstileField onToken={onToken} />
           <Button type="submit" className="w-full" disabled={busy}>
             {t("send")}
           </Button>

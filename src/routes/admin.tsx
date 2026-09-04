@@ -19,7 +19,15 @@ import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
 
 type AdminDesk = "queue" | "daycares" | "mail" | "contracts" | "money" | "activity";
 
-export const Route = createFileRoute("/admin")({ component: AdminPage });
+export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [
+      { title: "Admin · KidEase" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
+  component: AdminPage,
+});
 
 const PROV_ORDER = PROVINCES.map((p) => p.code);
 const PROV_NAME = Object.fromEntries(PROVINCES.map((p) => [p.code, p.name]));

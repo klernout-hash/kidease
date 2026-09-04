@@ -2,8 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getCatalog, catalogByIdGet } from "@/lib/catalog";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { nid } from "@/lib/utils";
 import { upsertDaycare } from "./seed";
+import { callerIsAdmin } from "./public-listing";
 import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
@@ -51,7 +53,9 @@ export const searchClaimable = createServerFn({ method: "POST" })
     `.catch(() => [] as { id: string }[]);
     const taken = new Set(claimed.map((r) => r.id));
     const scored: Array<ClaimHit & { score: number }> = [];
+    const admin = await callerIsAdmin();
     for (const d of await getCatalog()) {
+      if (isAdminOnlyListing(d) && !admin) continue;
       const name = d.name.toLowerCase();
       const city = d.city.toLowerCase();
       const addr = d.address.toLowerCase();
@@ -90,6 +94,9 @@ export const startClaim = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const listed = await catalogByIdGet(daycareId);
     if (!listed) throw new Error("Listing not found");
+    if (isAdminOnlyListing(listed) && !(await callerIsAdmin())) {
+      throw new Error("Listing not found");
+    }
     const sql = await getSql();
     const existing = await sql<{ user_id: string }>`
       select user_id from provider_daycares where daycare_id = ${daycareId} limit 1
@@ -129,8 +136,10 @@ export const startClaim = createServerFn({ method: "POST" })
 
 export const verifyClaim = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { daycareId: string; code: string; licensePhoto?: string }) => input)
+  .validator((input: { daycareId: string; code: string; licensePhoto?: string; turnstileToken?: string }) => input)
   .handler(async ({ context, data }) => {
+    const { assertTurnstileToken } = await import("@/lib/server/turnstile");
+    await assertTurnstileToken(data.turnstileToken);
     const photo = asImage(data.licensePhoto);
     if (!photo) throw new Error("Upload a photo of your provincial licence");
     const sql = await getSql();
@@ -190,8 +199,11 @@ export const submitEnrollLicense = createServerFn({ method: "POST" })
     body: string;
     licensePhoto: string;
     daycareId?: string;
+    turnstileToken?: string;
   }) => input)
   .handler(async ({ data }) => {
+    const { assertTurnstileToken } = await import("@/lib/server/turnstile");
+    await assertTurnstileToken(data.turnstileToken);
     const name = data.name.trim();
     const email = data.email.trim();
     const centre = data.centre.trim();
@@ -201,6 +213,12 @@ export const submitEnrollLicense = createServerFn({ method: "POST" })
     if (!name || !email || !centre || !city || !body) throw new Error("Missing fields");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email");
     if (!photo) throw new Error("Upload a photo of your provincial licence");
+    if (data.daycareId) {
+      const listed = await catalogByIdGet(data.daycareId);
+      if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
+        throw new Error("Listing not found");
+      }
+    }
     const sql = await getSql();
     const id = nid("lic");
     await sql`

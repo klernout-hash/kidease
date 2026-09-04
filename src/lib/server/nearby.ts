@@ -1,5 +1,6 @@
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import { catalogNear, type CatalogDaycare } from "@/lib/catalog";
+import { isPublicListing } from "@/lib/listing-visibility";
 import { clampRadiusKm } from "@/lib/proximity";
 import { upsertDaycare } from "./seed";
 
@@ -37,6 +38,8 @@ type GeoRow = {
   claimed_at: string | null;
   priority_until: string | null;
   ages_confirmed: number | boolean | null;
+  visibility: string | null;
+  is_test: number | boolean | null;
   distance_km: number;
 };
 
@@ -47,10 +50,12 @@ select id, slug, name, name_fr, city, province, postal_code, lat, lng,
   infant_monthly, toddler_monthly, preschool_monthly, part_time_monthly,
   spots_infant, spots_toddler, spots_preschool, waitlist,
   rating_x10, review_count, license_number, languages, amenities, photos,
-  claimed_at, priority_until, ages_confirmed,
+  claimed_at, priority_until, ages_confirmed, visibility, is_test,
   st_distance(location, st_setsrid(st_makepoint($1, $2), 4326)::geography) / 1000.0 as distance_km
 from daycares
 where location is not null
+  and coalesce(visibility, 'public') = 'public'
+  and coalesce(is_test, 0) = 0
   and st_dwithin(
     location,
     st_setsrid(st_makepoint($1, $2), 4326)::geography,
@@ -125,6 +130,8 @@ function rowToListing(row: GeoRow): NearbyListing {
     reviews: [],
     googlePlaceId: null,
     feeConfirmed: Boolean(row.claimed_at),
+    visibility: row.visibility === "admin_only" ? "admin_only" : "public",
+    isTest: row.is_test === 1 || row.is_test === true,
     distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
   };
 }
@@ -152,14 +159,14 @@ export async function nearbyListings(
       const sql = await getSql();
       if (await postgisReady(sql)) {
         const geo = await queryDWithin(sql, origin, radiusKm);
-        if (geo.length > 0) return geo.map(rowToListing);
+        if (geo.length > 0) return geo.map(rowToListing).filter(isPublicListing);
         const fallback = await catalogNear(origin, radiusKm);
         if (fallback.length > 0) {
           await importCatalogSlice(sql, fallback).catch(() => undefined);
           const again = await queryDWithin(sql, origin, radiusKm);
-          if (again.length > 0) return again.map(rowToListing);
+          if (again.length > 0) return again.map(rowToListing).filter(isPublicListing);
         }
-        return fallback;
+        return fallback.filter(isPublicListing);
       }
     } catch {
       /* fall through to catalogue */

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { submitPublicMessage } from "@/lib/server/notify";
+import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export function ListingContact({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", body: "" });
+  const { token, onToken } = useTurnstileToken();
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +36,7 @@ export function ListingContact({
           city: city || "",
           subject: `Listing inquiry: ${name}`,
           body: `${form.body}\n\nListing: https://kidease.ca/daycare/${slug}`,
+          turnstileToken: token,
         },
       });
       toast.success(t("listingContactSent"));
@@ -92,6 +95,7 @@ export function ListingContact({
                 onChange={(e) => setForm((s) => ({ ...s, body: e.target.value }))}
               />
             </label>
+            <TurnstileField onToken={onToken} />
             <div className="flex gap-2 pt-1">
               <Button type="submit" className="flex-1" disabled={busy}>
                 {t("submit")}

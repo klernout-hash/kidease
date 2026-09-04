@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, fsaOf } from "@/lib/proximity";
-import { getCatalog, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
+import { getPublicCatalog, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { nearbyListings, type NearbyListing } from "./nearby";
+import { callerIsAdmin } from "./public-listing";
 import { upsertDaycare } from "./seed";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
@@ -69,6 +71,8 @@ function toDaycare(d: CatalogDaycare): Daycare {
     priority: false,
     priorityUntil: null,
     agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
+    visibility: d.visibility,
+    isTest: d.isTest,
   };
 }
 
@@ -209,6 +213,7 @@ export const getDaycare = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
+    if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
     const sql = await getSql();
     await upsertDaycare(sql, found);
     const claimedRow = await sql<DaycareRow>`
@@ -269,7 +274,7 @@ export const getDaycaresByIds = createServerFn({ method: "POST" })
   .validator((ids: string[]) => ids)
   .handler(async ({ data: ids }) => {
     const origin = { lat: 49.8951, lng: -97.1384 };
-    const catalog = await getCatalog();
+    const catalog = await getPublicCatalog();
     const byId = new Map(catalog.map((d) => [d.id, d]));
     const cards = uniqueById(
       ids

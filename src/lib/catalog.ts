@@ -3,6 +3,7 @@ import realStorefrontsJson from "./data/real-storefronts.json";
 import wpgStorefrontsJson from "./data/storefronts.json";
 import operatorFactsJson from "./data/operator-facts.json";
 import { listingPhotosFor } from "./listing-photo";
+import { isAdminOnlyListing, listingVisibilityOf, type ListingVisibility } from "./listing-visibility";
 import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
 
 export type CatalogDaycare = {
@@ -42,6 +43,8 @@ export type CatalogDaycare = {
   reviews: Array<{ author: string; rating: number; body: string; bodyFr: string }>;
   googlePlaceId: string | null;
   feeConfirmed?: boolean;
+  visibility: ListingVisibility;
+  isTest: boolean;
 };
 
 type RawCentre = {
@@ -80,6 +83,8 @@ type RawCentre = {
   reviews?: CatalogDaycare["reviews"];
   googlePlaceId?: string;
   fee?: number;
+  visibility?: string;
+  isTest?: boolean;
 };
 
 type OperatorFact = {
@@ -202,6 +207,8 @@ function hydrate(raw: RawCentre): CatalogDaycare {
     reviews: raw.reviews ?? [],
     googlePlaceId: raw.googlePlaceId ?? null,
     feeConfirmed: feeOk,
+    visibility: listingVisibilityOf(raw),
+    isTest: Boolean(raw.isTest) || isAdminOnlyListing(raw),
   };
 }
 
@@ -308,6 +315,11 @@ export async function getCatalog(): Promise<CatalogDaycare[]> {
   return cachedCatalog;
 }
 
+/** Catalogue minus admin-only / QA fixtures. */
+export async function getPublicCatalog(): Promise<CatalogDaycare[]> {
+  return (await getCatalog()).filter((d) => !isAdminOnlyListing(d));
+}
+
 /** Only centres inside `radiusKm`, hard-capped at 50 km. Hydrates matches only. */
 export async function catalogNear(origin: { lat: number; lng: number }, radiusKm: number) {
   await ensureRaw();
@@ -327,7 +339,9 @@ export async function catalogNear(origin: { lat: number; lng: number }, radiusKm
         const point = { lat: d.lat, lng: d.lng };
         if (!inBbox(point, box)) continue;
         if (distanceKm(origin, point) > radius) continue;
-        out.push(hydrate(d));
+        const listed = hydrate(d);
+        if (isAdminOnlyListing(listed)) continue;
+        out.push(listed);
       }
     }
   }

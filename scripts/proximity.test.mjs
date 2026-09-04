@@ -51,7 +51,7 @@ describe("nearby uses PostGIS ST_DWithin with a catalogue fallback", () => {
     const nearby = read("src/lib/server/nearby.ts");
     assert.match(search, /nearbyListings/);
     assert.match(nearby, /catalogNear/);
-    assert.match(nearby, /dbSource !== "neon"/);
+    assert.match(nearby, /dbSource === "neon"/);
     assert.match(nearby, /importCatalogSlice/);
   });
 

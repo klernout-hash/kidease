@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { GROK_PROVIDERS, authClient, authEnabled, signIn, turnstileFetchOptions } from "@/lib/auth/client";
+import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
@@ -57,6 +58,7 @@ function Login() {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotBusy, setForgotBusy] = useState(false);
   const [forgotNote, setForgotNote] = useState<string | null>(null);
+  const { token, onToken } = useTurnstileToken();
 
   useEffect(() => {
     if (role === "parent" || role === "provider") rememberRole(role);
@@ -100,11 +102,12 @@ function Login() {
           email,
           password,
           name: name || email.split("@")[0],
+          fetchOptions: turnstileFetchOptions(token),
         });
         if (res.error) throw new Error(friendlyAuthError(res.error.message));
         rememberToken(res.data);
       } else {
-        const res = await authClient.signIn.email({ email, password });
+        const res = await authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(token) });
         if (res.error) throw new Error(friendlyAuthError(res.error.message));
         rememberToken(res.data);
       }
@@ -129,6 +132,7 @@ function Login() {
       await authClient.forgetPassword({
         email: target,
         redirectTo: "/reset-password",
+        fetchOptions: turnstileFetchOptions(token),
       });
     } catch {
       /* generic note only — do not leak whether the inbox exists */
@@ -243,6 +247,7 @@ function Login() {
                 autoComplete={mode === "up" ? "new-password" : "current-password"}
               />
             </label>
+            <TurnstileField onToken={onToken} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
             <Button type="submit" className="w-full" disabled={busy}>
               {mode === "up" && !operator ? t("createAccount") : t("signIn")}

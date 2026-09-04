@@ -6,6 +6,8 @@ import { ensureSeed, upsertDaycare } from "./seed";
 import { lookupUser, notifyAccountCreated, notifyPlatform, notifyProviderJoined } from "./notify";
 import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { callerIsAdmin } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
 import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, Payment, PayMethod, Schedule } from "@/lib/types";
@@ -121,16 +123,19 @@ export const getFamily = createServerFn({ method: "GET" })
     const profile = await sql<{ role: string }>`
       select role from profiles where user_id = ${context.userId}
     `;
+    const admin = await callerIsAdmin();
     return {
       role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as
         | "parent"
         | "provider"
         | "admin",
       children: children.map(mapChild),
-      saved: saved.map((r) => {
-        const d = mapDaycare(r);
-        return { ...d, spotsTotal: spotsTotal(d), fromPrice: fromPrice(d), distanceKm: 0 };
-      }),
+      saved: saved
+        .map((r) => {
+          const d = mapDaycare(r);
+          return { ...d, spotsTotal: spotsTotal(d), fromPrice: fromPrice(d), distanceKm: 0 };
+        })
+        .filter((d) => admin || !isAdminOnlyListing(d)),
       bookings: bookings.map((b) => ({
         id: b.id,
         daycareId: b.daycare_id,
@@ -268,6 +273,9 @@ export const toggleSave = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+      throw new Error("Listing not found");
+    }
     if (listed) await upsertDaycare(sql, listed);
     const existing = await sql<{ user_id: string }>`
       select user_id from saved_daycares where user_id = ${context.userId} and daycare_id = ${daycareId}
@@ -306,6 +314,9 @@ export const createBooking = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
+    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
+      throw new Error("Listing not found");
+    }
     if (listed) await upsertDaycare(sql, listed);
     const rows = await sql<DaycareRow>`select * from daycares where id = ${data.daycareId} limit 1`;
     const row = rows[0];
@@ -403,6 +414,9 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     const sql = await getSql();
     await ensureProfile(sql, context.userId);
     const listed = await catalogByIdGet(data.daycareId);
+    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
+      throw new Error("Listing not found");
+    }
     if (listed) await upsertDaycare(sql, listed);
     const rows = await sql<DaycareRow>`select * from daycares where id = ${data.daycareId} limit 1`;
     const row = rows[0];
@@ -719,6 +733,9 @@ export const openConversation = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+      throw new Error("Listing not found");
+    }
     if (listed) await upsertDaycare(sql, listed);
     const existing = await sql<{ id: string }>`
       select id from conversations where user_id = ${context.userId} and daycare_id = ${daycareId}
