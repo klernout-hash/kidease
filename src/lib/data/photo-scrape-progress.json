@@ -1,18 +1,18 @@
 {
-  "last_run": "2026-09-04T14:30:00Z",
+  "last_run": "2026-09-04T14:28:00Z",
   "last_city": "Winnipeg",
   "last_province": "MB",
   "last_ids_processed": [
-    "mb-101862",
-    "mb-1036",
-    "mb-101827",
-    "mb-1249",
-    "mb-9508",
-    "mb-103026",
-    "mb-3002",
-    "mb-102576",
-    "mb-100249",
-    "mb-100529"
+    "mb-101214",
+    "mb-100820",
+    "mb-7893",
+    "mb-3026",
+    "mb-1046",
+    "mb-1005",
+    "mb-9360",
+    "mb-1007",
+    "mb-3084",
+    "mb-101711"
   ],
   "mapped_count_official_buildings": 59,
   "mapped_ids": [
@@ -82,30 +82,30 @@
   "ids_added_this_run": [],
   "ids_restored_binaries_this_run": [],
   "skipped_no_photo_this_run": [
-    "mb-101862",
-    "mb-1036",
-    "mb-101827",
-    "mb-1249",
-    "mb-9508",
-    "mb-103026",
-    "mb-3002",
-    "mb-102576",
-    "mb-100249",
-    "mb-100529"
+    "mb-101214",
+    "mb-100820",
+    "mb-7893",
+    "mb-3026",
+    "mb-1046",
+    "mb-1005",
+    "mb-9360",
+    "mb-1007",
+    "mb-3084",
+    "mb-101711"
   ],
   "next_queue": {
     "city": "Winnipeg",
     "ids": [
-      "mb-101214",
-      "mb-100820",
-      "mb-7893",
-      "mb-3026",
-      "mb-1046",
-      "mb-1005",
-      "mb-9360",
-      "mb-1007",
-      "mb-3084",
-      "mb-101711"
+      "mb-100171",
+      "mb-1002",
+      "mb-100238",
+      "mb-100259",
+      "mb-1003",
+      "mb-100379",
+      "mb-100404",
+      "mb-100414",
+      "mb-100425",
+      "mb-100426"
     ],
     "then": [
       "remaining Winnipeg",
@@ -119,5 +119,5 @@
       "SK"
     ]
   },
-  "notes": "2026-09-04 continuation. Processed next 10 unmapped Winnipeg centres (Andrews Early Learning Centre, Anne Ross Day Nursery, Arthur Day Fun Club, Assiniboine Castle Daycare Co-op + School Age, Assiniboine Children's Centre @Linwood / main / Parkside, Bairdmore Before and After, Belmont Learning Centre). Official site found for Assiniboine Children's Centre (assiniboinecc.org) — logo/contact only, no usable classroom/kids/playground/storefront/interior photos. Anne Ross via Mount Carmel Clinic site — program descriptions only, no qualifying official photos of the specific centre. Others: directory/school pages or no official photo sources meeting hard rules (no Street View, no stock, no unrelated). 0 new photos. Left placeholders. Winnipeg 59/428, national 59/20846."
+  "notes": "2026-09-04 hourly run. Processed next 10 unmapped Winnipeg centres (Can You Imagine School Age River Elm & Carmen Ave, Canterbury Park Before and After + Day Care Inc, Care and Share Children's Centre, Care-A-Lot Nursery, Carpathia JB Mitchell Site, Carter Early Learning Centre, Central Park Child Care, Centre D'apprentissage et de garde d'enfants de Saint-Boniface / Espace pour grandir). Official sources checked: Carter on bethelmennonite.ca (text/mission only, no classroom/kids/playground/storefront photos); Carpathia carpathiachildrenscentre.com (header banner + small decorative images only, not usable room/building photos); Care and Share via cscc.childcare.link / Fastoche portal (generic/login, no public centre photos); Université de Saint-Boniface / Espace pour grandir page text-only; remaining centres have school-directory pages or no official website with photos meeting hard rules (no Street View, satellite, stock, logos, or unrelated centres). 0 new photos added. Placeholders retained. Winnipeg official mapped remains 59/428; national 59/20846."
 }
