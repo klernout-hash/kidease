@@ -1,0 +1,23 @@
+{
+  "run": "2026-09-04T10:30:00Z-winnipeg-100404-100599",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [],
+  "processed": [
+    {"id": "mb-100404", "name": "Munroe Early Childhood Education Centre Inc.- Polson", "official_site": "https://munroesa.ca/", "result": "skipped-no-photo", "reason": "Official site hero is Pixabay stock kids-2985782_1280.jpg"},
+    {"id": "mb-100414", "name": "Eagle Wing Early Education Centre", "official_site": "https://eaglewing.ca/", "result": "skipped-no-photo", "reason": "TLS certificate expired; no confirmed gallery"},
+    {"id": "mb-100700", "name": "Little Learners Inc.", "official_site": null, "result": "skipped-no-photo", "reason": "No Winnipeg official website"},
+    {"id": "mb-100425", "name": "James Child Care - 2nd site", "official_site": "https://www.jameschildcare.com/", "result": "skipped-no-photo", "reason": "Official site logo only"},
+    {"id": "mb-100426", "name": "Rainbow Day Nursery Inc. (phase 3-B)", "official_site": "https://www.rainbowdaynursery.ca/", "result": "skipped-no-photo", "reason": "Official site logo/wordmark only"},
+    {"id": "mb-1005", "name": "Care-A-Lot Nursery Inc.", "official_site": null, "result": "skipped-no-photo", "reason": "No Winnipeg official website"},
+    {"id": "mb-100529", "name": "Belmont Learning Centre", "official_site": null, "result": "skipped-no-photo", "reason": "No confirmed operator gallery for this licence"},
+    {"id": "mb-100530", "name": "Morrow Early Learning Centre 24/7", "official_site": "https://melcd.ca/", "result": "skipped-no-photo", "reason": "Shutterstock / generic stock only; not Centre 24/7"},
+    {"id": "mb-100532", "name": "Bright Future Child Care Center Inc.", "official_site": null, "result": "skipped-no-photo", "reason": "No Winnipeg official website"},
+    {"id": "mb-100547", "name": "Machray Day Nursery Inc, School Age", "official_site": "https://www.machraydaynursery.com/", "result": "skipped-no-photo", "reason": "Wix stock library; no confirmed Andrews site photo"},
+    {"id": "mb-100592", "name": "Village Child Care Incorporated - Minnetonka School", "official_site": "https://www.villagechildcareinc.ca/", "result": "skipped-no-photo", "reason": "Official site uses commercial stock photos"},
+    {"id": "mb-100599", "name": "Seven Oaks Child Day Care Centre Inc. School Age Program", "official_site": "https://www.sevenoakschilddaycarecentre.com/", "result": "skipped-no-photo", "reason": "No Morrison-site-specific official photo"}
+  ],
+  "mapped_count_after": 49,
+  "winnipeg_total": 428,
+  "national_total": 20846
+}
