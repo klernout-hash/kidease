@@ -4,6 +4,8 @@ import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
+import { PasswordRules } from "@/components/password-rules";
+import { PASSWORD_POLICY_HINT, passwordMeetsPolicy } from "@/lib/password-policy";
 
 export const Route = createFileRoute("/reset-password")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -19,11 +21,12 @@ function ResetPassword() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
+  const ready = passwordMeetsPolicy(password) && password === confirm && Boolean(token);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 8) {
-      setError("Use at least 8 characters.");
+    if (!passwordMeetsPolicy(password)) {
+      setError(PASSWORD_POLICY_HINT);
       return;
     }
     if (password !== confirm) {
@@ -78,6 +81,7 @@ function ResetPassword() {
                     autoComplete="new-password"
                   />
                 </label>
+                <PasswordRules password={password} />
                 <label className="block text-sm">
                   Confirm password
                   <input
@@ -90,8 +94,11 @@ function ResetPassword() {
                     autoComplete="new-password"
                   />
                 </label>
+                {confirm && confirm !== password ? (
+                  <p className="text-[13px] text-danger">Those passwords do not match.</p>
+                ) : null}
                 {error ? <p className="text-sm text-danger">{error}</p> : null}
-                <Button type="submit" className="w-full" disabled={busy}>
+                <Button type="submit" className="w-full" disabled={busy || !ready}>
                   Save new password
                 </Button>
               </form>

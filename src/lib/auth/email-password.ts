@@ -16,6 +16,7 @@ export async function sendResetPassword({
 
 export const emailAndPasswordConfig = {
   enabled: true as const,
+  minPasswordLength: 8,
   revokeSessionsOnPasswordReset: true as const,
   sendResetPassword,
 };
