@@ -1,0 +1,12 @@
+{
+  "run_date": "2026-09-04",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-103141", "mb-100529", "mb-100937", "mb-103006", "mb-100814", "mb-100532", "mb-3088", "mb-1002", "mb-102891", "mb-1264", "mb-1233", "mb-102363", "mb-1199", "mb-1003", "mb-3010"],
+  "ids_added": ["mb-100814", "mb-3010"],
+  "ids_skipped_no_photo": ["mb-103141", "mb-100529", "mb-100937", "mb-103006", "mb-100532", "mb-3088", "mb-1002", "mb-102891", "mb-1264", "mb-1233", "mb-102363", "mb-1199", "mb-1003"],
+  "photos_added": {
+    "mb-100814": "https://brightbeginningsforkids.ca/wp-content/uploads/2022/08/world.jpg",
+    "mb-3010": "https://images.squarespace-cdn.com/content/v1/548c9d96e4b04ff00dd5ca7b/1783958037717-AIW8AS4MW11YTS5NQWJG/IMG-20220806-WA0125.JPEG"
+  },
+  "notes": "Processed next Winnipeg queue. Added mb-100814 Bright Beginnings for Kids classroom interior (world rug room) from their official site. Added mb-3010 Cairns Children's Centre child in outdoor program from cairnscc.com Squarespace gallery. No Street View. No invented photos."
+}
