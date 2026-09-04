@@ -1,17 +1,18 @@
 {
-  "last_run": "2026-09-04T16:09:04Z",
+  "last_run": "2026-09-04T17:10:00Z",
   "last_city": "Winnipeg",
   "last_province": "MB",
   "last_ids_processed": [
-    "mb-1027",
-    "mb-1028",
-    "mb-1029",
-    "mb-1030",
-    "mb-1031",
-    "mb-1032",
-    "mb-1033",
-    "mb-1034",
-    "mb-1036"
+    "mb-1038",
+    "mb-1039",
+    "mb-1042",
+    "mb-1045",
+    "mb-1046",
+    "mb-1048",
+    "mb-1051",
+    "mb-1053",
+    "mb-1055",
+    "mb-1056"
   ],
   "mapped_count_official_buildings": 64,
   "mapped_ids": [
@@ -83,33 +84,33 @@
   "winnipeg_total": 428,
   "winnipeg_official_mapped": 64,
   "national_total": 20846,
-  "ids_added_this_run": [
-    "mb-1027",
-    "mb-1028"
-  ],
+  "ids_added_this_run": [],
   "ids_restored_binaries_this_run": [],
   "skipped_no_photo_this_run": [
-    "mb-1029",
-    "mb-1030",
-    "mb-1031",
-    "mb-1032",
-    "mb-1033",
-    "mb-1034",
-    "mb-1036"
+    "mb-1038",
+    "mb-1039",
+    "mb-1042",
+    "mb-1045",
+    "mb-1046",
+    "mb-1048",
+    "mb-1051",
+    "mb-1053",
+    "mb-1055",
+    "mb-1056"
   ],
   "next_queue": {
     "city": "Winnipeg",
     "ids": [
-      "mb-1038",
-      "mb-1039",
-      "mb-1042",
-      "mb-1045",
-      "mb-1046",
-      "mb-1048",
-      "mb-1051",
-      "mb-1053",
-      "mb-1055",
-      "mb-1056"
+      "mb-1058",
+      "mb-1059",
+      "mb-1060",
+      "mb-1062",
+      "mb-1063",
+      "mb-1064",
+      "mb-1065",
+      "mb-1066",
+      "mb-1067",
+      "mb-1068"
     ],
     "then": [
       "remaining Winnipeg",
@@ -123,5 +124,5 @@
       "SK"
     ]
   },
-  "notes": "2026-09-04 hourly run. Processed 9 Winnipeg centres (mb-1035 does not exist in centres.json). ADDED mb-1027 Kings Park and mb-1028 Knox from official websites. Skipped 7 with no usable official photo. Winnipeg 64/428, national 64/20846."
+  "notes": "2026-09-04 hourly run. Processed 10 Winnipeg centres (Explore and Discover Early Learning Centre Inc, Freight House Early Learning and Care Inc Infant/IRCOM, River Avenue Co-operative Day Nursery Inc, Fairlane Children's Centre Inc, Care and Share Children's Centre Inc, St. Vital Child Care Co-op Inc, Shepherd's Care Day Nursery Inc, Explorer's Children's Centre Inc, Sunny Mountain Day Care Centre (1985) Inc, Sunnyside Child Care Centre Inc). Official sites: fairlanechildrenscentre.ca, freighthouseearlylearning.ca, exploreanddiscover.org, scdndaycare.ca, sunnymountain variants. No usable centre-specific official facility/classroom/playground/storefront photos under hard rules (logos/generic/multi-site only). Skipped all. Winnipeg 64/428, national 64/20846."
 }
