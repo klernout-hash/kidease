@@ -28,8 +28,8 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "messages", label: "Messages", href: "/inbox" },
   ],
   parent: [
-    { id: "children", label: "Children", hint: "Send profiles to centres" },
-    { id: "bookings", label: "Requests", hint: "Enrolment status" },
+    { id: "children", label: "Children", hint: "Up to 4 profiles" },
+    { id: "bookings", label: "Enrolment", hint: "Per child, per centre" },
     { id: "saved", label: "Saved centres" },
     { id: "payments", label: "Payments" },
     { id: "messages", label: "Messages", href: "/inbox" },
