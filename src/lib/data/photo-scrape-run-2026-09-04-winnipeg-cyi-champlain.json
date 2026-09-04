@@ -1,0 +1,11 @@
+{
+  "run_date": "2026-09-04",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-7834", "mb-101214", "mb-100820", "mb-7893", "mb-3026", "mb-1046", "mb-1005", "mb-9360", "mb-1007", "mb-3084", "mb-101711", "mb-103160", "mb-9829", "mb-101123", "mb-1284"],
+  "ids_added": ["mb-101711"],
+  "ids_skipped_no_photo": ["mb-7834", "mb-101214", "mb-100820", "mb-7893", "mb-3026", "mb-1046", "mb-1005", "mb-9360", "mb-1007", "mb-3084", "mb-103160", "mb-9829", "mb-101123", "mb-1284"],
+  "photos_added": {
+    "mb-101711": "https://images.squarespace-cdn.com/content/v1/5b282137f93fd4517582a532/1630521185848-CACDY1NN274VSAKYSJH3/_USB_Daycare_Exterior_playard.jpg"
+  },
+  "notes": "Added mb-101711 Espace pour grandir official architect exterior+playground from prairiearchitects.ca (205 Despins). Skipped 14 centres with no usable official photo of that exact site. No Street View. No invented photos."
+}
