@@ -24,7 +24,7 @@ export function NavDrawer({
   title: string;
   items: Item[];
   parentLabel: string;
-  providerLabel?: string;
+  providerLabel: string;
   signedIn: boolean;
   accountLabel: string;
   onSignOut: () => void;
@@ -64,10 +64,7 @@ export function NavDrawer({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div
-      className={cn(open ? "pointer-events-auto" : "pointer-events-none")}
-      hidden={!open}
-    >
+    <div className={cn(open ? "pointer-events-auto" : "pointer-events-none")} hidden={!open}>
       <button
         type="button"
         tabIndex={open ? 0 : -1}
@@ -129,9 +126,9 @@ export function NavDrawer({
               <Link
                 to="/provider"
                 onClick={onClose}
-                className="mt-2 flex min-h-12 items-center rounded-xl px-3 text-base text-fg ring-1 ring-border"
+                className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
               >
-                Provider desk
+                {providerLabel}
               </Link>
               <button
                 type="button"
@@ -158,9 +155,9 @@ export function NavDrawer({
                 to="/login"
                 search={{ role: "provider", intent: "in", next: "/provider" }}
                 onClick={onClose}
-                className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border hover:bg-surface"
+                className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
               >
-                {providerLabel ?? "Daycare Sign In"}
+                {providerLabel}
               </Link>
             </>
           )}
