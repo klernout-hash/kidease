@@ -1,0 +1,19 @@
+{
+  "run_date": "2026-09-04",
+  "city": "Winnipeg",
+  "province": "MB",
+  "ids_processed": ["mb-1001", "mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002"],
+  "ids_added": [],
+  "ids_skipped_no_photo": ["mb-1001", "mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002"],
+  "details": {
+    "mb-1001": "Aleph-Bet Child Life Enrichment Program Inc. - official site alephbet.ca has stock hero image of kids in field, logos only; FB limited, no classroom/building photos of the Sinclair St centre usable.",
+    "mb-101862": "Andrews Early Learning Centre - no dedicated official website found with photos; aggregator sites only, no usable official images.",
+    "mb-1036": "Anne Ross Day Nursery - Mount Carmel Clinic site mountcarmel.ca describes program but no photos of the nursery/classroom/building.",
+    "mb-101827": "Arthur Day Fun Club - no official website or photos found.",
+    "mb-1249": "Assiniboine Castle Daycare Co-op Inc. - no official website with photos; school page mention only.",
+    "mb-9508": "Assiniboine Castle school age - same as above.",
+    "mb-103026": "Assiniboine Children's Centre @Linwood - assiniboinecc.org minimal site, contact only, no gallery/photos.",
+    "mb-3002": "Assiniboine Children's Centre Inc. - same official site, no usable photos of Winston Rd or other locations."
+  },
+  "sources_checked": ["alephbet.ca", "facebook.com/alephbetwpg", "mountcarmel.ca", "assiniboinecc.org", "web searches for each name + Winnipeg + official/website/facebook/gallery"]
+}
