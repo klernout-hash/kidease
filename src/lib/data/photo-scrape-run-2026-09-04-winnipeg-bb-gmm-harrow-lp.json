@@ -1,0 +1,53 @@
+{
+  "run": "2026-09-04T12:20Z-winnipeg-buildingblocks-gmm-harrow-lp",
+  "city": "Winnipeg",
+  "province": "MB",
+  "new_photos": [
+    {
+      "id": "mb-102052",
+      "name": "Building Blocks on Balmoral",
+      "address": "51 Balmoral Street, Winnipeg, MB",
+      "source_url": "https://www.prairiearchitects.ca/building-blocks-on-balmoral",
+      "image_url": "https://images.squarespace-cdn.com/content/v1/5b282137f93fd4517582a532/1548179867618-HVYQ4DLSYT5N70L7ZKKB/Great-West-Life-Daycare-interior-preschool-room-1.jpg",
+      "type": "architect_press_classroom",
+      "file": "/photos/buildings/mb-102052.jpg"
+    },
+    {
+      "id": "mb-102704",
+      "name": "Guiding Minds Montessori School",
+      "address": "4945 Portage Avenue, Winnipeg, MB",
+      "source_url": "https://www.guidingmindsmontessori.com/",
+      "image_url": "https://static.wixstatic.com/media/35d18c_624507b4a7644945a82e721ac598e7c1~mv2.jpg",
+      "type": "official_website_classroom_kids_in_program",
+      "file": "/photos/buildings/mb-102704.jpg"
+    },
+    {
+      "id": "mb-3038",
+      "name": "Harrow Co-operative Children's Centre Inc.",
+      "address": "550 Harrow Street, Winnipeg, MB",
+      "source_url": "https://www.harrowdaycare.ca/",
+      "image_url": "https://images.squarespace-cdn.com/content/v1/6578a7fc5c6fb04cf62919d9/1702432658592-CS21EVQU6T1R2HYWITOY/image-asset.jpeg?format=2500w",
+      "type": "official_website_kids_in_program",
+      "file": "/photos/buildings/mb-3038.jpg"
+    },
+    {
+      "id": "mb-102288",
+      "name": "Living Prairie Childcare Inc.",
+      "address": "215 des Hivernants Boulevard, Winnipeg, MB",
+      "source_url": "https://www.livingprairiechildcare.ca/",
+      "image_url": "https://static.wixstatic.com/media/a2101a_0e4ad95e8f65428983cc5939b654b6d9~mv2.jpg",
+      "type": "official_website_storefront",
+      "file": "/photos/buildings/mb-102288.jpg"
+    }
+  ],
+  "skipped": [
+    {"id": "mb-102891", "name": "Bumble Bee Early Learning Centre Inc.", "reason": "Official bumble-b.ca hero looks like generic stock; no confirmed King Edward facility photo."},
+    {"id": "mb-1264", "name": "Bumper Crop Early Learning Centre Inc.", "reason": "WSD text page only; no official photo gallery."},
+    {"id": "mb-7923", "name": "Casa Montessori & Orff School Inc.", "reason": "Official site uses stock/decorative images; no confirmed Wilkes photo."},
+    {"id": "mb-1276", "name": "Casa Montessori Fennel", "reason": "Same official site; no Fennell-specific usable photo."},
+    {"id": "mb-101123", "name": "Chabad Torah Tots", "reason": "chabadtorahtots.com returned 503."},
+    {"id": "mb-3088", "name": "Brock Corydon Day Care Inc.", "reason": "Official site returned empty/blocked HTML."},
+    {"id": "mb-1060", "name": "Universal Day Care Centre Inc.", "reason": "Official classroom thumbs are 360x360, below quality bar."}
+  ],
+  "mapped_count_after": 58
+}
