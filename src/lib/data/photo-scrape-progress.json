@@ -1,5 +1,5 @@
 {
-  "last_run": "2026-09-04T14:28:00Z",
+  "last_run": "2026-09-04T14:28:30Z",
   "last_city": "Winnipeg",
   "last_province": "MB",
   "last_ids_processed": [
@@ -14,7 +14,7 @@
     "mb-3084",
     "mb-101711"
   ],
-  "mapped_count_official_buildings": 59,
+  "mapped_count_official_buildings": 62,
   "mapped_ids": [
     "mb-100042",
     "mb-100048",
@@ -25,6 +25,7 @@
     "mb-100351",
     "mb-1004",
     "mb-1006",
+    "mb-1007",
     "mb-100801",
     "mb-100808",
     "mb-100814",
@@ -44,6 +45,7 @@
     "mb-1016",
     "mb-101665",
     "mb-1017",
+    "mb-101711",
     "mb-101850",
     "mb-102052",
     "mb-102137",
@@ -74,12 +76,17 @@
     "mb-3010",
     "mb-3096",
     "mb-7923",
-    "mb-9265"
+    "mb-9265",
+    "mb-9360"
   ],
   "winnipeg_total": 428,
-  "winnipeg_official_mapped": 59,
+  "winnipeg_official_mapped": 62,
   "national_total": 20846,
-  "ids_added_this_run": [],
+  "ids_added_this_run": [
+    "mb-9360",
+    "mb-1007",
+    "mb-101711"
+  ],
   "ids_restored_binaries_this_run": [],
   "skipped_no_photo_this_run": [
     "mb-101214",
@@ -88,10 +95,7 @@
     "mb-3026",
     "mb-1046",
     "mb-1005",
-    "mb-9360",
-    "mb-1007",
-    "mb-3084",
-    "mb-101711"
+    "mb-3084"
   ],
   "next_queue": {
     "city": "Winnipeg",
@@ -119,5 +123,5 @@
       "SK"
     ]
   },
-  "notes": "2026-09-04 hourly run. Processed next 10 unmapped Winnipeg centres (Can You Imagine School Age River Elm & Carmen Ave, Canterbury Park Before and After + Day Care Inc, Care and Share Children's Centre, Care-A-Lot Nursery, Carpathia JB Mitchell Site, Carter Early Learning Centre, Central Park Child Care, Centre D'apprentissage et de garde d'enfants de Saint-Boniface / Espace pour grandir). Official sources checked: Carter on bethelmennonite.ca (text/mission only, no classroom/kids/playground/storefront photos); Carpathia carpathiachildrenscentre.com (header banner + small decorative images only, not usable room/building photos); Care and Share via cscc.childcare.link / Fastoche portal (generic/login, no public centre photos); Université de Saint-Boniface / Espace pour grandir page text-only; remaining centres have school-directory pages or no official website with photos meeting hard rules (no Street View, satellite, stock, logos, or unrelated centres). 0 new photos added. Placeholders retained. Winnipeg official mapped remains 59/428; national 59/20846."
+  "notes": "2026-09-04 hourly run. Added 3 official photos for Carpathia (building from official site), Carter Early Learning Centre (kids in outdoor program from official site), and Centre d'apprentissage et de garde d'enfants de Saint-Boniface / Espace pour grandir (building exterior press photo). Skipped 7 with no qualifying official photos. Winnipeg 62/428, national 62/20846."
 }
