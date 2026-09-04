@@ -1,18 +1,14 @@
 {
-  "last_run": "2026-09-04T16:13:28Z",
+  "last_run": "2026-09-04T16:17:07Z",
   "last_city": "Winnipeg",
   "last_province": "MB",
   "last_ids_processed": [
-    "mb-1038",
-    "mb-1039",
-    "mb-1042",
-    "mb-1045",
-    "mb-1046",
-    "mb-1048",
-    "mb-1051",
-    "mb-1053",
-    "mb-1055",
-    "mb-1056"
+    "mb-1059",
+    "mb-1060",
+    "mb-1062",
+    "mb-1063",
+    "mb-1064",
+    "mb-1070"
   ],
   "mapped_count_official_buildings": 65,
   "mapped_ids": [
@@ -85,34 +81,29 @@
   "winnipeg_total": 428,
   "winnipeg_official_mapped": 65,
   "national_total": 20846,
-  "ids_added_this_run": [
-    "mb-1039"
-  ],
+  "ids_added_this_run": [],
   "ids_restored_binaries_this_run": [],
   "skipped_no_photo_this_run": [
-    "mb-1038",
-    "mb-1042",
-    "mb-1045",
-    "mb-1046",
-    "mb-1048",
-    "mb-1051",
-    "mb-1053",
-    "mb-1055",
-    "mb-1056"
+    "mb-1059",
+    "mb-1060",
+    "mb-1062",
+    "mb-1063",
+    "mb-1064",
+    "mb-1070"
   ],
   "next_queue": {
     "city": "Winnipeg",
     "ids": [
-      "mb-1058",
-      "mb-1059",
-      "mb-1060",
-      "mb-1062",
-      "mb-1063",
-      "mb-1064",
-      "mb-1065",
-      "mb-1066",
-      "mb-1067",
-      "mb-1068"
+      "mb-1071",
+      "mb-1072",
+      "mb-1073",
+      "mb-1075",
+      "mb-1076",
+      "mb-1077",
+      "mb-1078",
+      "mb-1079",
+      "mb-1080",
+      "mb-1081"
     ],
     "then": [
       "remaining Winnipeg",
@@ -126,5 +117,5 @@
       "SK"
     ]
   },
-  "notes": "2026-09-04 continue. Processed 10 Winnipeg centres. ADDED mb-1039 Freight House from official freighthouseearlylearning.ca classroom interior photo. Skipped 9 with no usable official photo (logos/banners only or no site photos). Winnipeg 65/428, national 65/20846."
+  "notes": "2026-09-04 continue Winnipeg. Searched Transcona Jaycees, Universal (myudc.net), Victor Play, Wild Honey, Munroe Chalmers, Little Bo-Peep. No usable official classroom/kids/playground/storefront photos found meeting rules. Skipped. Winnipeg remains 65/428, national 65/~20846. Next: remaining Winnipeg unmapped then Brandon."
 }
