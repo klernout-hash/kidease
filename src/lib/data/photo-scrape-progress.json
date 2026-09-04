@@ -1,20 +1,20 @@
 {
-  "last_run": "2026-09-04T13:08:05Z",
+  "last_run": "2026-09-04T13:15:00Z",
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_ids_processed": ["mb-100426", "mb-1005", "mb-100529", "mb-100530", "mb-100532", "mb-100547", "mb-100592", "mb-100599", "mb-1007", "mb-1008"],
-  "mapped_count_official_buildings": 55,
-  "mapped_ids": ["mb-100042", "mb-100048", "mb-100131", "mb-100141", "mb-100351", "mb-1004", "mb-1006", "mb-100801", "mb-100808", "mb-100814", "mb-1009", "mb-100901", "mb-100902", "mb-100903", "mb-100937", "mb-101053", "mb-101061", "mb-101065", "mb-1012", "mb-1013", "mb-101384", "mb-1014", "mb-101548", "mb-1016", "mb-101665", "mb-1017", "mb-101850", "mb-102052", "mb-102137", "mb-102700", "mb-102899", "mb-103006", "mb-103141", "mb-103244", "mb-1040", "mb-1043", "mb-1050", "mb-1052", "mb-1054", "mb-1057", "mb-1061", "mb-1074", "mb-1147", "mb-1150", "mb-1206", "mb-1214", "mb-1242", "mb-1252", "mb-2024", "mb-2169", "mb-3001", "mb-3005", "mb-3010", "mb-3096", "mb-9265"],
+  "last_ids_processed": ["mb-100426", "mb-1005", "mb-100529", "mb-100530", "mb-100532", "mb-100547", "mb-100592", "mb-100599", "mb-1007", "mb-1008", "mb-7923"],
+  "mapped_count_official_buildings": 56,
+  "mapped_ids": ["mb-100042", "mb-100048", "mb-100131", "mb-100141", "mb-100351", "mb-1004", "mb-1006", "mb-100801", "mb-100808", "mb-100814", "mb-1009", "mb-100901", "mb-100902", "mb-100903", "mb-100937", "mb-101053", "mb-101061", "mb-101065", "mb-1012", "mb-1013", "mb-101384", "mb-1014", "mb-101548", "mb-1016", "mb-101665", "mb-1017", "mb-101850", "mb-102052", "mb-102137", "mb-102700", "mb-102899", "mb-103006", "mb-103141", "mb-103244", "mb-1040", "mb-1043", "mb-1050", "mb-1052", "mb-1054", "mb-1057", "mb-1061", "mb-1074", "mb-1147", "mb-1150", "mb-1206", "mb-1214", "mb-1242", "mb-1252", "mb-2024", "mb-2169", "mb-3001", "mb-3005", "mb-3010", "mb-3096", "mb-7923", "mb-9265"],
   "winnipeg_total": 428,
-  "winnipeg_official_mapped": 55,
+  "winnipeg_official_mapped": 56,
   "national_total": 20846,
-  "ids_added_this_run": [],
-  "ids_restored_binaries_this_run": [],
+  "ids_added_this_run": ["mb-7923"],
+  "ids_restored_binaries_this_run": ["mb-1006", "mb-1009", "mb-1016", "mb-1043", "mb-1050", "mb-100141", "mb-102052", "mb-103244", "mb-102899", "mb-101065", "mb-100808", "mb-101665"],
   "skipped_no_photo_this_run": ["mb-100426", "mb-1005", "mb-100529", "mb-100530", "mb-100532", "mb-100547", "mb-100592", "mb-100599", "mb-1007", "mb-1008"],
   "next_queue": {
     "city": "Winnipeg",
-    "ids": ["mb-100820", "mb-101214", "mb-102363", "mb-102576", "mb-102891", "mb-103026", "mb-1036", "mb-1046", "mb-1199", "mb-1233", "mb-1249", "mb-1264", "mb-1276", "mb-3002", "mb-3026"],
+    "ids": ["mb-1001", "mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576", "mb-100249"],
     "then": ["remaining Winnipeg", "Brandon MB", "Dauphin", "Thompson", "Portage La Prairie", "Steinbach", "Selkirk", "rest of MB", "SK"]
   },
-  "notes": "2026-09-04 ~13:10Z hourly run: Processed next 10 Winnipeg centres (Rainbow Day Nursery Phase 3-B Lakewood, Care-A-Lot Nursery Watt, Belmont Learning Centre, Morrow EL Centre 24/7 St Anne's, Bright Future Child Care Henderson, Machray Day Nursery School Age Andrews, Village Child Care Minnetonka School, Seven Oaks Child Day Care Morrison School Age, Carter Early Learning Stafford, Elmwood Day Nursery Brazier). Official sites checked (rainbowdaynursery.ca, villagechildcareinc.ca, machraydaynursery.com, sevenoakschilddaycarecentre.com, melcd.ca, school division pages, Facebook searches). No usable specific classroom/kids-in-program/storefront/interior photos of those exact centres found that meet rules (logo-only sites, generic/stock kids photos, no site photos, or wrong city FB results). Skipped all 10. Winnipeg remains 55/428, national 55/20846. Next: more Winnipeg ids. No new JPEGs."
+  "notes": "2026-09-04 hourly run. 10 queued Winnipeg centres skipped (no usable official photo). NEW mb-7923 Casa Montessori Wilkes. Restored 12 official JPEG binaries locally. Winnipeg 56/428, national 56/20846."
 }
