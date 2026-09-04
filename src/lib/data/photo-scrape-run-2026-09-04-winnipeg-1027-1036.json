@@ -1,0 +1,8 @@
+{
+  "run_date": "2026-09-04",
+  "city": "Winnipeg",
+  "ids_processed": ["mb-1027", "mb-1028", "mb-1029", "mb-1030", "mb-1031", "mb-1032", "mb-1033", "mb-1034", "mb-1036"],
+  "ids_added": [],
+  "ids_skipped": ["mb-1027", "mb-1028", "mb-1029", "mb-1030", "mb-1031", "mb-1032", "mb-1033", "mb-1034", "mb-1036"],
+  "notes": "No usable official facility photos meeting hard rules. Sites found but images generic or multi-site."
+}
