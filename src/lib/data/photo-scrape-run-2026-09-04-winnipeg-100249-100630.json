@@ -1,0 +1,94 @@
+{
+  "run": "2026-09-04T15:20:00Z",
+  "city": "Winnipeg",
+  "province": "MB",
+  "processed": [
+    {
+      "id": "mb-100249",
+      "name": "Bairdmore Before and After School Program",
+      "address": "700 Bairdmore Boulevard",
+      "result": "skipped-no-photo",
+      "reason": "School-hosted Bairdmore/Pembina Trails pages only; no standalone official daycare site with classroom/kids/building photos."
+    },
+    {
+      "id": "mb-1005",
+      "name": "Care-A-Lot Nursery Inc.",
+      "address": "829 Watt Street",
+      "result": "skipped-no-photo",
+      "reason": "Directory/Yelp listings only. No official website."
+    },
+    {
+      "id": "mb-100529",
+      "name": "Belmont Learning Centre",
+      "address": "525 Belmont Street",
+      "result": "skipped-no-photo",
+      "reason": "Cannot verify official photos of the 525 Belmont childcare rooms. Phone matches Sunny Mountain main site at a different address."
+    },
+    {
+      "id": "mb-100530",
+      "name": "Morrow Early Learning & Child Development (Centre 24/7)",
+      "address": "533 St. Anne's Road",
+      "result": "skipped-no-photo",
+      "reason": "Official MELCD site lists this address but only publishes stock/generic images, not a verified photo of this site."
+    },
+    {
+      "id": "mb-100532",
+      "name": "Bright Future Child Care Center Inc.",
+      "address": "898 Henderson Highway",
+      "result": "skipped-no-photo",
+      "reason": "Directory listings only. Similarly named sites are other cities."
+    },
+    {
+      "id": "mb-100547",
+      "name": "Machray Day Nursery Inc, School Age",
+      "address": "460 Andrews Street",
+      "result": "skipped-no-photo",
+      "reason": "Official site confirms location in text only; no site-specific classroom or building photo."
+    },
+    {
+      "id": "mb-100592",
+      "name": "Village Child Care Incorporated - Minnetonka School",
+      "address": "18-200 Minnetonka Road",
+      "result": "skipped-no-photo",
+      "reason": "Official multi-site site; banner images cannot be verified as the Minnetonka rooms."
+    },
+    {
+      "id": "mb-100599",
+      "name": "Seven Oaks Child Day Care Centre Inc. School Age Program",
+      "address": "25 Morrison Street",
+      "result": "skipped-no-photo",
+      "reason": "Official site photo cannot be verified as the R.F. Morrison school-age site vs hospital main site."
+    },
+    {
+      "id": "mb-100624",
+      "name": "Radisson School Before and After Program Inc",
+      "address": "1105 Winona Street",
+      "result": "skipped-no-photo",
+      "reason": "RETSD school page mentions program; no official program photos."
+    },
+    {
+      "id": "mb-100630",
+      "name": "East Transcona Before and After Program Inc.",
+      "address": "500 Redonda Street",
+      "result": "skipped-no-photo",
+      "reason": "Directory listing only. No official program website photos."
+    }
+  ],
+  "ids_added": [],
+  "ids_skipped": [
+    "mb-100249",
+    "mb-1005",
+    "mb-100529",
+    "mb-100530",
+    "mb-100532",
+    "mb-100547",
+    "mb-100592",
+    "mb-100599",
+    "mb-100624",
+    "mb-100630"
+  ],
+  "mapped_after_run": 62,
+  "winnipeg_mapped": 62,
+  "winnipeg_total": 428,
+  "national_total": 20846
+}
