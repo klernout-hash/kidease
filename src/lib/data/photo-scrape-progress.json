@@ -1,8 +1,8 @@
 {
-  "last_run": "2026-09-04T14:10:00Z",
+  "last_run": "2026-09-04T15:00:00Z",
   "last_city": "Winnipeg",
   "last_province": "MB",
-  "last_ids_processed": ["mb-100532", "mb-3088", "mb-1002", "mb-102891", "mb-1264", "mb-1233", "mb-102363", "mb-1199", "mb-1003", "mb-7834"],
+  "last_ids_processed": ["mb-101214", "mb-100820", "mb-7893", "mb-3026", "mb-1046", "mb-1005", "mb-9360", "mb-1007", "mb-3084", "mb-101711"],
   "mapped_count_official_buildings": 59,
   "mapped_ids": ["mb-100042", "mb-100048", "mb-1001", "mb-100131", "mb-100141", "mb-100351", "mb-1004", "mb-1006", "mb-100801", "mb-100808", "mb-100814", "mb-1009", "mb-100901", "mb-100902", "mb-100903", "mb-100937", "mb-101053", "mb-101061", "mb-101065", "mb-1012", "mb-1013", "mb-101384", "mb-1014", "mb-101548", "mb-1016", "mb-101665", "mb-1017", "mb-101850", "mb-102052", "mb-102137", "mb-102700", "mb-102899", "mb-103006", "mb-103141", "mb-103244", "mb-1040", "mb-1043", "mb-1050", "mb-1052", "mb-1054", "mb-1057", "mb-1061", "mb-1074", "mb-1147", "mb-1150", "mb-1206", "mb-1214", "mb-1242", "mb-1252", "mb-2024", "mb-2169", "mb-3001", "mb-3005", "mb-3010", "mb-3096", "mb-7923", "mb-9265", "mb-1276", "mb-100170"],
   "winnipeg_total": 428,
@@ -10,11 +10,11 @@
   "national_total": 20846,
   "ids_added_this_run": [],
   "ids_restored_binaries_this_run": [],
-  "skipped_no_photo_this_run": ["mb-100532", "mb-3088", "mb-1002", "mb-102891", "mb-1264", "mb-1233", "mb-102363", "mb-1199", "mb-1003", "mb-7834"],
+  "skipped_no_photo_this_run": ["mb-101214", "mb-100820", "mb-7893", "mb-3026", "mb-1046", "mb-1005", "mb-9360", "mb-1007", "mb-3084", "mb-101711"],
   "next_queue": {
     "city": "Winnipeg",
-    "ids": ["mb-101214", "mb-100820", "mb-7893", "mb-3026", "mb-1046", "mb-1005", "mb-9360", "mb-1007", "mb-3084", "mb-101711"],
+    "ids": ["mb-101862", "mb-1036", "mb-101827", "mb-1249", "mb-9508", "mb-103026", "mb-3002", "mb-102576", "mb-100249", "mb-100529"],
     "then": ["remaining Winnipeg", "Brandon MB", "Dauphin", "Thompson", "Portage La Prairie", "Steinbach", "Selkirk", "rest of MB", "SK"]
   },
-  "notes": "2026-09-04 14:10Z continuation. Processed next 10 unmapped Winnipeg centres (Bright Future Henderson Hwy, Brock Corydon Day Care, Brooklands Day Care, Bumble Bee ELC King Edward, Bumper Crop ELC Waterford Springs, Busy Bee McGee + school-age, C.A.P.T. Grosvenor, C.A.P.T. Queenston, Can You Imagine Stadacona). Official sites found for Brock Corydon (brockcorydondaycare.ca: logo + decorative dragonfly only) and Bumble Bee (bumble-b.ca: cartoon logo + likely stock kids-coloring hero, no confirmed centre-specific classroom/playground/storefront). Others: directory/school bulletin/charity pages only; no official FB/IG program photos verified as this centre. Left placeholders per hard rules. 0 new photos. Winnipeg 59/428, national 59/20846."
+  "notes": "2026-09-04 15:00Z continuation. Processed next 10 unmapped Winnipeg centres (Can You Imagine River Elm + Carmen, Canterbury Park B&A + Day Care, Care and Share, Care-A-Lot, Carpathia JB Mitchell, Carter ELC, Central Park Child Care, Centre d'apprentissage Saint-Boniface / Espace pour grandir). Official sites: Carpathia (carpathiachildrenscentre.com) has John Dafoe school exterior with centre sign (not the JB Mitchell site address); Carter via bethelmennonite.ca logo/text only, no program/building photos; others directory/school pages or 404/no public galleries with centre-specific classroom/kids/playground/storefront. Left placeholders per hard rules. 0 new photos. Winnipeg 59/428, national 59/20846."
 }
