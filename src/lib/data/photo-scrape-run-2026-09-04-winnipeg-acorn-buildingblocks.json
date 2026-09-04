@@ -1,0 +1,44 @@
+{
+  "run": "2026-09-04-winnipeg-acorn-buildingblocks",
+  "city": "Winnipeg",
+  "province": "MB",
+  "started": "2026-09-04T03:04:00Z",
+  "finished": "2026-09-04T04:10:00Z",
+  "new_photos": [
+    {
+      "id": "mb-100141",
+      "name": "Acorn Family Place Playroom",
+      "address": "205-222 Furby Street, Winnipeg, MB",
+      "source_url": "https://acornfamilyplace.ca/",
+      "image_url": "https://acornfamilyplace.ca/wp-content/uploads/2021/10/baby-playing-with-cube.jpg",
+      "type": "official_website_playroom_child",
+      "file": "/photos/buildings/mb-100141.jpg"
+    },
+    {
+      "id": "mb-102052",
+      "name": "Building Blocks on Balmoral",
+      "address": "51 Balmoral Street, Winnipeg, MB",
+      "source_url": "https://www.prairiearchitects.ca/building-blocks-on-balmoral",
+      "image_url": "https://images.squarespace-cdn.com/content/v1/5b282137f93fd4517582a532/1548179867618-HVYQ4DLSYT5N70L7ZKKB/Great-West-Life-Daycare-interior-preschool-room-1.jpg",
+      "type": "architect_press_classroom_this_centre",
+      "file": "/photos/buildings/mb-102052.jpg"
+    }
+  ],
+  "skipped": [
+    {"id": "mb-100902", "name": "Aleph-Bet Forest Park", "reason": "alephbet.ca logo only"},
+    {"id": "mb-1001", "name": "Aleph-Bet Child Life Enrichment Program Inc.", "reason": "same official site; logo only"},
+    {"id": "mb-100901", "name": "Aleph-Bet Margaret Park", "reason": "same official site; logo only"},
+    {"id": "mb-101862", "name": "Andrews Early Learning Centre", "reason": "no official centre website or gallery found"},
+    {"id": "mb-1036", "name": "Anne Ross Day Nursery", "reason": "Mount Carmel parent site; no usable classroom still"},
+    {"id": "mb-101827", "name": "Arthur Day Fun Club", "reason": "school-age club; no standalone gallery"},
+    {"id": "mb-1249", "name": "Assiniboine Castle Daycare Co-op Inc.", "reason": "no official website with photos"},
+    {"id": "mb-9508", "name": "Assiniboine Castle School Age", "reason": "no official website with photos"},
+    {"id": "mb-103026", "name": "Assiniboine Children's Centre Inc @Linwood", "reason": "assiniboinecc.org dead"},
+    {"id": "mb-3002", "name": "Assiniboine Children's Centre Inc.", "reason": "assiniboinecc.org dead"},
+    {"id": "mb-102576", "name": "Assiniboine Children's Centre Parkside", "reason": "operator site dead"},
+    {"id": "mb-102700", "name": "Avicenna Academy", "reason": "storefront visible on official site but clean JPEG asset not downloadable this run"},
+    {"id": "mb-100249", "name": "Bairdmore Before and After School Program", "reason": "school program; no official gallery"},
+    {"id": "mb-1242", "name": "Behavioural Health Foundation Day Care", "reason": "bhf.ca describes daycare; no downloadable classroom photo"}
+  ],
+  "mapped_count_after": 66
+}

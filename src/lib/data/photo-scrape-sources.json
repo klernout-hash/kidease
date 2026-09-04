@@ -22,5 +22,21 @@
     "image_url": "https://www.inspiredbywonder.ca/wp-content/uploads/2019/11/infant-room.jpg",
     "type": "infant classroom interior",
     "date_scraped": "2026-09-04"
+  },
+  "mb-100141": {
+    "name": "Acorn Family Place Playroom",
+    "city": "Winnipeg",
+    "source_url": "https://acornfamilyplace.ca/",
+    "image_url": "https://acornfamilyplace.ca/wp-content/uploads/2021/10/baby-playing-with-cube.jpg",
+    "type": "playroom / child in program",
+    "date_scraped": "2026-09-04"
+  },
+  "mb-102052": {
+    "name": "Building Blocks on Balmoral",
+    "city": "Winnipeg",
+    "source_url": "https://www.prairiearchitects.ca/building-blocks-on-balmoral",
+    "image_url": "https://images.squarespace-cdn.com/content/v1/5b282137f93fd4517582a532/1548179867618-HVYQ4DLSYT5N70L7ZKKB/Great-West-Life-Daycare-interior-preschool-room-1.jpg",
+    "type": "architect press classroom of this centre",
+    "date_scraped": "2026-09-04"
   }
 }
