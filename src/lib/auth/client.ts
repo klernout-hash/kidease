@@ -2,16 +2,6 @@ import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { isNativeSocialProvider } from "./providers";
 
-/**
- * Better Auth client for this React SPA (browser-side).
- *
- * Talks to this app's OWN Better Auth at same-origin `/api/auth/*`. In the live
- * preview the app is an embedded iframe with PARTITIONED cookies, so after a
- * popup sign-in it can't read the session cookie — it authenticates with a
- * bearer token instead (captured from the popup, see `signIn`). The `onRequest`
- * hook attaches that token when present; when deployed (cookie auth) no token
- * is stored, so nothing changes.
- */
 export const authClient = createAuthClient({
   plugins: [genericOAuthClient()],
   fetchOptions: {
@@ -27,14 +17,8 @@ export const authClient = createAuthClient({
   },
 });
 
-/**
- * True when sign-in UI should be shown. On by default (preview via the baked
- * preview client, deployed apps via the injected per-app client); set
- * `VITE_AUTH_ENABLED=false` to force it off (dev user — see `use-current-user`).
- */
 export const authEnabled = import.meta.env.VITE_AUTH_ENABLED !== "false";
 
-/** The upstream providers to render sign-in buttons for. */
 export {
   GROK_PROVIDERS,
   isNativeSocialProvider,
@@ -43,10 +27,8 @@ export {
   visibleSignInProviders,
 } from "./providers";
 
-// ── Live-preview bearer token ────────────────────────────────────────────────
 const BEARER_KEY = "grok-auth.bearer-token";
 
-/** The stored preview bearer token, or null. */
 export function getBearerToken(): string | null {
   if (typeof window === "undefined") return null;
   try {
@@ -89,7 +71,7 @@ export async function signIn(
     try {
       await authClient.signOut();
     } catch {
-      // No active session — proceed to sign in.
+      /* proceed */
     }
   }
   setBearerToken(null);
@@ -115,7 +97,7 @@ export async function signIn(
       return;
     }
     const { data, error } = await authClient.signIn.social({
-      provider: providerId as "apple" | "google" | "facebook" | "twitter",
+      provider: providerId as "apple" | "google" | "facebook",
       callbackURL,
       errorCallbackURL,
     });
@@ -132,7 +114,7 @@ export async function signIn(
     try {
       await authClient.getSession();
     } catch {
-      /* session store will recover on next useSession fetch */
+      /* session store will recover */
     }
     if (typeof window !== "undefined") {
       const dest = new URL(callbackURL, window.location.origin);
