@@ -93,6 +93,11 @@ function AdminChatPage() {
               value={lab?.sms.enabled ? "on" : "off"}
               hint={smsHint(lab)}
             />
+            <Stat
+              label="FEATURE_VIDEO"
+              value={lab?.video.enabled ? "on" : "off"}
+              hint={videoHint(lab)}
+            />
           </dl>
           <div className="rounded-2xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
             <p>
@@ -104,6 +109,13 @@ function AdminChatPage() {
             </p>
             <p className="mt-2">
               No Stream or Sendbird. Types live in <code>src/lib/chat-scaffold.ts</code>.
+            </p>
+            <p className="mt-2">
+              Parent Plus video tours:{" "}
+              <Link to="/video/$roomId" params={{ roomId: "lab" }} className="text-fg underline">
+                /video/lab
+              </Link>
+              . Flag and env presence only — no secrets.
             </p>
           </div>
         </section>
@@ -121,6 +133,16 @@ function smsHint(lab: LabStatus | null): string {
     return `${auth}. ${sender}. Values are not shown.`;
   }
   return `No Twilio send credentials (${auth}; ${sender}). Do not invent SID or token values.`;
+}
+
+function videoHint(lab: LabStatus | null): string {
+  if (!lab) return "Twilio Video env not loaded. Do not invent credentials.";
+  const p = lab.video.presence;
+  const key = p.apiKey ? "API key present" : "no API key (tokens need TWILIO_API_KEY_SID + SECRET)";
+  if (lab.video.credentialsPresent) {
+    return `${key}. Account SID present. Values are not shown.`;
+  }
+  return `No Twilio Video credentials (${key}; SID ${p.accountSid ? "present" : "missing"}). Do not invent SID or secret values.`;
 }
 
 function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {

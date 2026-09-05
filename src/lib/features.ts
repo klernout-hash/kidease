@@ -26,6 +26,11 @@ export function smsEnabled(env: EnvMap = process.env): boolean {
   return envFlagOn(env.FEATURE_SMS);
 }
 
+/** Parent ↔ centre Twilio Video tours (Parent Plus). Default OFF. */
+export function videoEnabled(env: EnvMap = process.env): boolean {
+  return envFlagOn(env.FEATURE_VIDEO);
+}
+
 /** Daycare SaaS packages on the provider desk. Default OFF — admin still previews (ghost). */
 export function providerSubscriptionsEnabled(env: EnvMap = process.env): boolean {
   return envFlagOn(env.FEATURE_PROVIDER_SUBSCRIPTIONS);

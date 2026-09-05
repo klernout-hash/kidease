@@ -45,6 +45,7 @@ import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
+import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
@@ -240,6 +241,11 @@ const CheckinIdRoute = CheckinIdRouteImport.update({
   path: '/checkin/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VideoRoomIdRoute = VideoRoomIdRouteImport.update({
+  id: '/video/$roomId',
+  path: '/video/$roomId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DaycareSlugRoute = DaycareSlugRouteImport.update({
   id: '/daycare/$slug',
   path: '/daycare/$slug',
@@ -343,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/api/digest': typeof ApiDigestRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
+  '/video/$roomId': typeof VideoRoomIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/api/digest': typeof ApiDigestRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
+  '/video/$roomId': typeof VideoRoomIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
@@ -446,6 +454,7 @@ export interface FileRoutesById {
   '/api/digest': typeof ApiDigestRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
+  '/video/$roomId': typeof VideoRoomIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
@@ -499,6 +508,7 @@ export interface FileRouteTypes {
     | '/api/digest'
     | '/book/$slug'
     | '/checkin/$id'
+    | '/video/$roomId'
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/api/digest'
     | '/book/$slug'
     | '/checkin/$id'
+    | '/video/$roomId'
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
@@ -601,6 +612,7 @@ export interface FileRouteTypes {
     | '/api/digest'
     | '/book/$slug'
     | '/checkin/$id'
+    | '/video/$roomId'
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
@@ -653,6 +665,7 @@ export interface RootRouteChildren {
   ApiDigestRoute: typeof ApiDigestRoute
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
+  VideoRoomIdRoute: typeof VideoRoomIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   PayBookingIdRoute: typeof PayBookingIdRoute
   PayBillBillIdRoute: typeof PayBillBillIdRoute
@@ -921,6 +934,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckinIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/video/$roomId': {
+      id: '/video/$roomId'
+      path: '/video/$roomId'
+      fullPath: '/video/$roomId'
+      preLoaderRoute: typeof VideoRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/daycare/$slug': {
       id: '/daycare/$slug'
       path: '/daycare/$slug'
@@ -1062,6 +1082,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDigestRoute: ApiDigestRoute,
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
+  VideoRoomIdRoute: VideoRoomIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   PayBookingIdRoute: PayBookingIdRoute,
   PayBillBillIdRoute: PayBillBillIdRoute,
