@@ -74,7 +74,7 @@ function ResetPassword() {
           ) : (
             <>
               <p className="mt-2 text-sm text-muted">This works for Parent, Daycare, and Operator accounts.</p>
-              <form onSubmit={onSubmit} className="mt-6 space-y-3">
+              <form onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
                 <label className="block text-sm">
                   New password
                   <input

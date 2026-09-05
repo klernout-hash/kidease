@@ -162,6 +162,13 @@ export const PRIVACY_EN: LegalDoc = {
               href: "https://stripe.com/en-ca/privacy",
               hrefLabel: "Stripe Privacy Policy",
             },
+            {
+              name: "PostHog, when product analytics is on",
+              purpose:
+                "Page views, in-app clicks, feature flags, and privacy-masked session replay so we can improve KidEase. We send a random visitor id or your account id — not your password, email, or child-profile fields. Session replay masks form inputs and on-screen text. PostHog is not an advertising or remarketing pixel.",
+              href: "https://posthog.com/privacy",
+              hrefLabel: "PostHog Privacy Policy",
+            },
           ],
         },
         {
@@ -293,7 +300,7 @@ export const PRIVACY_EN: LegalDoc = {
             ["Requests & chat", "Tour, spot request, messages", "Connect that family and that centre"],
             ["Claim docs", "Licence photo, claim code", "Verify the director runs that centre"],
             ["Payments", "Amount, method, reference", "Hold a spot when payment is used"],
-            ["Technical", "Session cookie, coarse geohash", "Stay signed in; improve search"],
+            ["Technical", "Session cookie, coarse geohash, product analytics id", "Stay signed in; improve search and the product"],
           ],
         },
       ],
@@ -304,7 +311,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase is based in Winnipeg, Manitoba. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe when enabled, Cloudflare when proxied). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
+          text: "KidEase is based in Winnipeg, Manitoba. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe when enabled, Cloudflare when proxied, PostHog when analytics is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
         },
       ],
     },
@@ -494,6 +501,13 @@ export const PRIVACY_FR: LegalDoc = {
               href: "https://stripe.com/en-ca/privacy",
               hrefLabel: "Politique de confidentialité Stripe",
             },
+            {
+              name: "PostHog, lorsque l’analytique produit est active",
+              purpose:
+                "Pages vues, clics, drapeaux de fonctionnalité et replay de session masqué pour améliorer KidEase. Nous envoyons un identifiant anonyme ou l’identifiant de compte — pas le mot de passe, le courriel ni les profils d’enfants. Les champs de formulaire et le texte à l’écran sont masqués. Ce n’est pas un pixel publicitaire.",
+              href: "https://posthog.com/privacy",
+              hrefLabel: "Politique de confidentialité PostHog",
+            },
           ],
         },
         {
@@ -625,7 +639,7 @@ export const PRIVACY_FR: LegalDoc = {
             ["Demandes et messages", "Visite, place, clavardage", "Relier cette famille et ce centre"],
             ["Pièces de revendication", "Photo du permis, code", "Vérifier que la direction exploite le centre"],
             ["Paiements", "Montant, mode, référence", "Retenir une place si un dépôt est utilisé"],
-            ["Technique", "Témoin de session, géohachage", "Rester connecté; améliorer la recherche"],
+            ["Technique", "Témoin de session, géohachage, identifiant d’analytique", "Rester connecté; améliorer la recherche et le produit"],
           ],
         },
       ],
@@ -636,7 +650,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase est à Winnipeg (Manitoba). Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe si activé, Cloudflare si proxifié). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
+          text: "KidEase est à Winnipeg (Manitoba). Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe si activé, Cloudflare si proxifié, PostHog si l’analytique est active). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
         },
       ],
     },
@@ -747,6 +761,7 @@ export const COOKIES_EN: LegalDoc = {
             "Recent centres you opened, and a short-lived search cache.",
             "A random session id for first-party search telemetry (coarse geohash only).",
             "A sign-in token in session storage on some preview hosts — not used for ads.",
+            "When product analytics is on, PostHog may keep a first-party visitor id so page views and masked session replay stay on one browser.",
           ],
         },
       ],
@@ -758,6 +773,16 @@ export const COOKIES_EN: LegalDoc = {
         {
           type: "p",
           text: "When a map is shown, Google’s Maps script may set its own cookies in your browser. We load the map so you can see centres on a street map. We do not use Google Ads tags or remarketing pixels. See Google’s privacy policy for cookies Google sets.",
+        },
+      ],
+    },
+    {
+      id: "posthog",
+      title: "PostHog (product analytics, not ads)",
+      blocks: [
+        {
+          type: "p",
+          text: "When analytics is enabled in production, PostHog records page views, in-app clicks, and privacy-masked session replay so we can see how KidEase is used. It may set a first-party cookie on this site and talk to us.i.posthog.com / us-assets.i.posthog.com. Passwords and form fields are masked. This is not an advertising or remarketing cookie.",
         },
       ],
     },
@@ -831,6 +856,7 @@ export const COOKIES_FR: LegalDoc = {
             "Centres récemment ouverts et cache de recherche temporaire.",
             "Un identifiant de session pour la télémétrie de recherche (géohachage grossier seulement).",
             "Un jeton de connexion en stockage de session sur certains hôtes d’aperçu.",
+            "Lorsque l’analytique produit est active, PostHog peut garder un identifiant de visiteur pour relier les pages vues et le replay masqué.",
           ],
         },
       ],
@@ -842,6 +868,16 @@ export const COOKIES_FR: LegalDoc = {
         {
           type: "p",
           text: "Quand une carte s’affiche, le script Google Maps peut déposer ses propres témoins. Nous chargeons la carte pour montrer les centres. Nous n’utilisons pas les balises Google Ads. Voir la politique de Google pour les témoins qu’il dépose.",
+        },
+      ],
+    },
+    {
+      id: "posthog",
+      title: "PostHog (analytique produit, pas de publicité)",
+      blocks: [
+        {
+          type: "p",
+          text: "Lorsque l’analytique est active en production, PostHog enregistre les pages vues, les clics et un replay de session masqué. Il peut déposer un témoin de première partie et parler à us.i.posthog.com / us-assets.i.posthog.com. Les mots de passe et les champs de formulaire sont masqués. Ce n’est pas un témoin publicitaire.",
         },
       ],
     },
