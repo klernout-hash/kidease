@@ -1,4 +1,8 @@
-/** Listing-honesty photo pick. Official operator JPEGs beat /photos/wpg/; never Street View. */
+/**
+ * Listing-honesty photo pick. Official operator JPEGs beat /photos/wpg/; never Street View.
+ * Catalogue paths stay `/photos/…`. `/img` prefers R2 (`photos/…` keys) when configured
+ * and falls back to Git `public/photos/…` — see docs/r2-media.md.
+ */
 
 export const LISTING_PLACEHOLDER = "/photos/storefront-placeholder-480.webp";
 

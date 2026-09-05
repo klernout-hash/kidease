@@ -5,12 +5,15 @@
  * Raw originals live here so listing JPEGs can leave Git later. Delivery /
  * optimization stays with Cloudflare Images / Stream (already Active).
  *
- * TODO (follow-up, not this module):
- * - Migrate `public/photos/buildings/*` originals into R2
+ * Listing photos stay as `/photos/…` paths in the catalogue. `/img` prefers
+ * the matching R2 object (`photos/wpg/1052.jpg`) when R2 is configured, then
+ * falls back to `public/photos/…`. Git files are not deleted by the migrate
+ * script. Set `R2_MEDIA_READ=0` to keep credentials but skip the R2 read.
+ *
+ * TODO (follow-up):
+ * - Run `npm run media:migrate-r2 -- --apply` with Production R2_* (see docs/r2-media.md)
  * - Admin / provider upload UI
- * - Point `/img` or listing thumbs at R2 / Images, not Git
- * - If a public media host is added, extend CSP `img-src` (signed URLs
- *   already match today's `img-src … https:`)
+ * - After R2 is the source of truth, drop Git originals in a later PR
  */
 
 import { createHash, createHmac } from "node:crypto";
@@ -25,6 +28,9 @@ export const R2_KEY_MAX = 512;
 
 export const R2_SETUP_MESSAGE =
   "R2 is not configured. Set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_ENDPOINT (or R2_ACCOUNT_ID) on the Vercel project. Bucket defaults to kidease-media.";
+
+/** Git-mirrored listing objects. `/photos/wpg/1052.jpg` → `photos/wpg/1052.jpg`. */
+export const PUBLIC_PHOTO_KEY_RE = /^photos\/[a-z0-9/_-]+\.(jpe?g|png|webp|avif)$/i;
 
 export const R2_ALLOWED_TYPES = [
   "image/jpeg",
@@ -144,6 +150,38 @@ export function resolveR2Config(
       missing: [],
     };
   }
+}
+
+/**
+ * Dual-read is on whenever R2 credentials resolve, unless Kyle sets
+ * `R2_MEDIA_READ=0` (or false/off) to pause listing reads without removing keys.
+ */
+export function r2MediaReadEnabled(env: EnvMap = process.env): boolean {
+  if (!resolveR2Config(env).ok) return false;
+  const raw = envStr(env, "R2_MEDIA_READ").toLowerCase();
+  return raw !== "0" && raw !== "false" && raw !== "off" && raw !== "no";
+}
+
+/** Map a catalogue `/photos/…` path to the R2 object key, or null if unsafe. */
+export function publicPhotoToR2Key(src: string): string | null {
+  const raw = String(src || "")
+    .trim()
+    .replace(/^\/+/, "");
+  if (!PUBLIC_PHOTO_KEY_RE.test(raw)) return null;
+  try {
+    return sanitizeObjectKey(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function contentTypeForPhotoKey(key: string): string {
+  const lower = key.toLowerCase();
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".avif")) return "image/avif";
+  if (lower.endsWith(".gif")) return "image/gif";
+  return "image/jpeg";
 }
 
 export function r2StatusFromEnv(env: EnvMap = process.env): R2Status {

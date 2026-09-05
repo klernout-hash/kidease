@@ -37,23 +37,38 @@ export async function optimizePhoto(request: Request): Promise<Response> {
         "content-type": cached.type,
         "cache-control": "public, max-age=31536000, immutable",
         vary: "Accept",
+        "x-kidease-photo-source": "cache",
       },
     });
   }
 
   let buf: Buffer;
+  let source: "r2" | "git" | "origin" = "git";
   try {
-    buf = await readFile(join(process.cwd(), "public", src.slice(1)));
+    const { tryReadPublicPhotoFromR2 } = await import("@/lib/server/r2.server");
+    const fromR2 = await tryReadPublicPhotoFromR2(src);
+    if (fromR2 && fromR2.body.byteLength <= MAX_BYTES) {
+      buf = fromR2.body;
+      source = "r2";
+    } else {
+      throw new Error("r2-miss");
+    }
   } catch {
     try {
-      const origin = new URL(request.url).origin;
-      const res = await fetch(`${origin}${src}`);
-      if (!res.ok) return new Response("not found", { status: 404 });
-      const ab = await res.arrayBuffer();
-      if (ab.byteLength > MAX_BYTES) return new Response("too large", { status: 413 });
-      buf = Buffer.from(ab);
+      buf = await readFile(join(process.cwd(), "public", src.slice(1)));
+      source = "git";
     } catch {
-      return new Response("not found", { status: 404 });
+      try {
+        const origin = new URL(request.url).origin;
+        const res = await fetch(`${origin}${src}`);
+        if (!res.ok) return new Response("not found", { status: 404 });
+        const ab = await res.arrayBuffer();
+        if (ab.byteLength > MAX_BYTES) return new Response("too large", { status: 413 });
+        buf = Buffer.from(ab);
+        source = "origin";
+      } catch {
+        return new Response("not found", { status: 404 });
+      }
     }
   }
 
@@ -78,6 +93,7 @@ export async function optimizePhoto(request: Request): Promise<Response> {
         "content-type": type,
         "cache-control": "public, max-age=31536000, immutable",
         vary: "Accept",
+        "x-kidease-photo-source": source,
       },
     });
   } catch {

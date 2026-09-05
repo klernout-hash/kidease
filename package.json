@@ -10,6 +10,7 @@
     "dev": "vite dev --host 0.0.0.0 --port 8080",
     "build": "vite build && node scripts/check-ssr-bundle.mjs && npm run db:migrate",
     "db:migrate": "node scripts/migrate.mjs",
+    "media:migrate-r2": "node --experimental-strip-types scripts/migrate-photos-to-r2.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",

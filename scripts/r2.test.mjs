@@ -6,14 +6,17 @@ import { test } from "node:test";
 import {
   allowContentType,
   amzDateParts,
+  contentTypeForPhotoKey,
   decodeObjectBody,
   deriveR2Endpoint,
   encodeS3Path,
   humanR2Error,
   parseR2Endpoint,
   presignS3Get,
+  publicPhotoToR2Key,
   R2_DEFAULT_BUCKET,
   R2_SETUP_MESSAGE,
+  r2MediaReadEnabled,
   r2MissingEnv,
   r2StatusFromEnv,
   resolveR2Config,
@@ -22,6 +25,7 @@ import {
   sha256Hex,
   signS3Request,
 } from "../src/lib/server/r2.ts";
+import { planPhotoMigration } from "./migrate-photos-to-r2.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -151,6 +155,46 @@ test("presigned GET is query-signed and does not embed the secret", () => {
   assert.equal(sha256Hex(""), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 });
 
+test("catalogue /photos paths map to mirrored R2 keys and dual-read is opt-out", () => {
+  assert.equal(publicPhotoToR2Key("/photos/wpg/1052.jpg"), "photos/wpg/1052.jpg");
+  assert.equal(publicPhotoToR2Key("photos/buildings/mb-1052.jpg"), "photos/buildings/mb-1052.jpg");
+  assert.equal(publicPhotoToR2Key("/photos/wpg/3001-logo.png"), "photos/wpg/3001-logo.png");
+  assert.equal(publicPhotoToR2Key("/photos/../secret.jpg"), null);
+  assert.equal(publicPhotoToR2Key("/img/foo.jpg"), null);
+  assert.equal(publicPhotoToR2Key(""), null);
+  assert.equal(contentTypeForPhotoKey("photos/wpg/3001-logo.png"), "image/png");
+  assert.equal(contentTypeForPhotoKey("photos/buildings/mb-1052.jpg"), "image/jpeg");
+
+  const configured = {
+    R2_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+    R2_ACCESS_KEY_ID: "test-access-key",
+    R2_SECRET_ACCESS_KEY: "test-secret-key-not-real",
+  };
+  assert.equal(r2MediaReadEnabled({}), false);
+  assert.equal(r2MediaReadEnabled(configured), true);
+  assert.equal(r2MediaReadEnabled({ ...configured, R2_MEDIA_READ: "0" }), false);
+  assert.equal(r2MediaReadEnabled({ ...configured, R2_MEDIA_READ: "false" }), false);
+  assert.equal(r2MediaReadEnabled({ ...configured, R2_MEDIA_READ: "1" }), true);
+});
+
+test("photo migrate planner mirrors Git paths and never targets a delete", () => {
+  const src = readFileSync(join(root, "scripts/migrate-photos-to-r2.mjs"), "utf8");
+  assert.match(src, /Does not delete/);
+  assert.doesNotMatch(src, /rmSync|unlinkSync|rm -rf/);
+  const { planned, skipped } = planPhotoMigration(
+    [
+      join(root, "public/photos/buildings/mb-1052.jpg"),
+      join(root, "public/photos/storefront-placeholder-480.webp"),
+    ],
+    { prefix: "photos/buildings" },
+  );
+  assert.equal(planned.length, 1);
+  assert.equal(planned[0].key, "photos/buildings/mb-1052.jpg");
+  assert.equal(skipped.length, 0);
+  assert.match(readFileSync(join(root, "docs/r2-media.md"), "utf8"), /kidease-media/);
+  assert.match(readFileSync(join(root, "package.json"), "utf8"), /media:migrate-r2/);
+});
+
 test("admin media route is registered and env example has names only", () => {
   const route = readFileSync(join(root, "src/routes/api/admin.media.ts"), "utf8");
   const tree = readFileSync(join(root, "src/routeTree.gen.ts"), "utf8");
@@ -166,8 +210,12 @@ test("admin media route is registered and env example has names only", () => {
   assert.match(envExample, /R2_ACCESS_KEY_ID=/);
   assert.match(envExample, /R2_SECRET_ACCESS_KEY=/);
   assert.match(envExample, /R2_ENDPOINT=/);
+  assert.match(envExample, /R2_MEDIA_READ=/);
   assert.doesNotMatch(envExample, /R2_SECRET_ACCESS_KEY=\S+/);
   assert.doesNotMatch(envExample, /R2_ACCESS_KEY_ID=\S+/);
   assert.match(csp, /img-src 'self' data: blob: https:/);
   assert.doesNotMatch(csp, /r2\.cloudflarestorage\.com/);
+  const optimize = readFileSync(join(root, "src/lib/server/optimize-photo.ts"), "utf8");
+  assert.match(optimize, /tryReadPublicPhotoFromR2/);
+  assert.match(optimize, /join\(process\.cwd\(\), "public"/);
 });
