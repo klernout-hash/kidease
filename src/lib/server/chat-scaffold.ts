@@ -2,14 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { requireAdmin } from "@/lib/server/roles";
 import { CHAT_SCAFFOLD_MESSAGE, CHAT_SCAFFOLD_READY } from "@/lib/chat-scaffold";
-import { inAppChatEnabled, pushEnabled, smsEnabled } from "@/lib/features";
+import { inAppChatEnabled, pushEnabled, smsEnabled, videoEnabled } from "@/lib/features";
 import { pushCredentialsPresent } from "@/lib/push";
 import { smsCredentialsPresent, smsEnvPresence, type SmsEnvPresence } from "@/lib/sms";
+import { videoCredentialsPresent, videoEnvPresence, type VideoEnvPresence } from "@/lib/video";
 
 export type LabStatus = {
   chat: { enabled: boolean; ready: false; message: string };
   push: { enabled: boolean; ready: false; credentialsPresent: boolean };
   sms: { enabled: boolean; credentialsPresent: boolean; presence: SmsEnvPresence };
+  video: { enabled: boolean; credentialsPresent: boolean; presence: VideoEnvPresence };
 };
 
 export async function resolveLabStatus(): Promise<LabStatus> {
@@ -28,6 +30,11 @@ export async function resolveLabStatus(): Promise<LabStatus> {
       enabled: smsEnabled(),
       credentialsPresent: smsCredentialsPresent(),
       presence: smsEnvPresence(),
+    },
+    video: {
+      enabled: videoEnabled(),
+      credentialsPresent: videoCredentialsPresent(),
+      presence: videoEnvPresence(),
     },
   };
 }

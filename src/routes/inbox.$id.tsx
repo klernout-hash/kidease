@@ -158,9 +158,9 @@ function ThreadPage() {
                 </a>
               </Button>
             ) : null}
-            {slug ? (
+            {id ? (
               <Button variant="ghost" size="icon" asChild>
-                <Link to="/checkin/$id" params={{ id: slug }} aria-label={t("videoCall")}>
+                <Link to="/video/$roomId" params={{ roomId: id }} aria-label={t("videoCall")}>
                   <Video className="size-5" />
                 </Link>
               </Button>

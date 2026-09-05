@@ -12,6 +12,7 @@ export const PLUS_MONTHLY_CAD = 7.99;
 export const PLUS_YEARLY_CAD = 59;
 
 export const PLUS_FEATURES: Array<{ en: string; fr: string }> = [
+  { en: "Parent ↔ centre video tour (Twilio Video)", fr: "Visite vidéo parent ↔ centre (Twilio Video)" },
   { en: "Saved-search alerts when a centre opens spots", fr: "Alertes quand un centre ouvre des places" },
   { en: "Priority support from KidEase", fr: "Soutien prioritaire KidEase" },
   { en: "Early access to new family tools", fr: "Accès anticipé aux outils famille" },

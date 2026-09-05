@@ -10,6 +10,7 @@ import {
   providerSubscriptionsEnabled,
   pushEnabled,
   smsEnabled,
+  videoEnabled,
 } from "../src/lib/features.ts";
 import { CHAT_SCAFFOLD_READY } from "../src/lib/chat-scaffold.ts";
 
@@ -25,6 +26,8 @@ test("feature flags default off and only accept explicit on values", () => {
   assert.equal(pushEnabled({ FEATURE_PUSH: "true" }), true);
   assert.equal(smsEnabled({}), false);
   assert.equal(smsEnabled({ FEATURE_SMS: "1" }), true);
+  assert.equal(videoEnabled({}), false);
+  assert.equal(videoEnabled({ FEATURE_VIDEO: "1" }), true);
   assert.equal(providerSubscriptionsEnabled({}), false);
   assert.equal(providerSubscriptionsEnabled({ FEATURE_PROVIDER_SUBSCRIPTIONS: "1" }), true);
   assert.equal(canSeeProviderSubscriptions("admin", {}), true);
@@ -61,6 +64,7 @@ test("push stubs do not invent credentials and env example has names only", () =
   assert.match(envExample, /FEATURE_PUSH=0/);
   assert.match(envExample, /FEATURE_PROVIDER_SUBSCRIPTIONS=0/);
   assert.match(envExample, /FEATURE_SMS=0/);
+  assert.match(envExample, /FEATURE_VIDEO=0/);
 });
 
 test("admin chat lab is registered, admin-gated, and honest", () => {
@@ -72,6 +76,7 @@ test("admin chat lab is registered, admin-gated, and honest", () => {
   assert.match(route, /desks\.includes\("admin"\)/);
   assert.match(route, /CHAT_SCAFFOLD_MESSAGE/);
   assert.match(route, /FEATURE_SMS/);
+  assert.match(route, /FEATURE_VIDEO/);
   assert.match(route, /Scaffold/);
   assert.match(route, /from "@\/lib\/server\/chat-scaffold"/);
   assert.doesNotMatch(route, /\.server['"]/);
