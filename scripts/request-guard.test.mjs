@@ -8,6 +8,8 @@ import {
   CHANGE_PASSWORD_DESTINATION,
   CHANGE_PASSWORD_PATH,
   decideRequest,
+  HIDDEN_LISTING_SLUGS,
+  isHiddenListingPath,
   isSensitiveDeskPath,
   isVercelAppHost,
 } from "./request-guard.mjs";
@@ -32,6 +34,8 @@ test("isSensitiveDeskPath is prefix-safe", () => {
   assert.equal(isSensitiveDeskPath("/admin/queue"), true);
   assert.equal(isSensitiveDeskPath("/admin-contracts"), true);
   assert.equal(isSensitiveDeskPath("/admin-contracts/"), true);
+  assert.equal(isSensitiveDeskPath("/admin-chat"), true);
+  assert.equal(isSensitiveDeskPath("/admin-chat/"), true);
   assert.equal(isSensitiveDeskPath("/api/admin/contracts"), true);
   assert.equal(isSensitiveDeskPath("/api/admin/media"), true);
   assert.equal(isSensitiveDeskPath("/api/admin/sentry-test"), true);
@@ -74,6 +78,14 @@ test("admin desks on vercel.app 302 to www so Cloudflare Access applies", () => 
     },
   );
   assert.deepEqual(
+    decideRequest({ host: "kidease-git.vercel.app", pathname: "/admin-chat" }),
+    {
+      action: "redirect",
+      status: 302,
+      location: `${CANONICAL_ORIGIN}/admin-chat`,
+    },
+  );
+  assert.deepEqual(
     decideRequest({ host: "kidease-git.vercel.app", pathname: "/admin", search: "?tab=mail" }),
     {
       action: "redirect",
@@ -95,6 +107,7 @@ test("admin on www / apex / localhost is not redirected by this guard", () => {
   for (const host of ["www.kidease.ca", "kidease.ca", "localhost:8080"]) {
     assert.deepEqual(decideRequest({ host, pathname: "/admin" }), { action: "next" });
     assert.deepEqual(decideRequest({ host, pathname: "/admin-contracts" }), { action: "next" });
+    assert.deepEqual(decideRequest({ host, pathname: "/admin-chat" }), { action: "next" });
   }
 });
 
@@ -121,10 +134,50 @@ test("/.well-known/change-password redirects to /login on every host", () => {
   assert.equal(CHANGE_PASSWORD_DESTINATION, "/login");
 });
 
+test("hidden listing slugs include the QA ghost id and slug", () => {
+  assert.deepEqual(HIDDEN_LISTING_SLUGS, ["test-ghost-claim-lab", "ke-test-ghost-001"]);
+});
+
+test("isHiddenListingPath matches daycare and book aliases, not claim or search", () => {
+  assert.equal(isHiddenListingPath("/daycare/test-ghost-claim-lab"), true);
+  assert.equal(isHiddenListingPath("/daycare/test-ghost-claim-lab/"), true);
+  assert.equal(isHiddenListingPath("/Daycare/TEST-GHOST-CLAIM-LAB"), true);
+  assert.equal(isHiddenListingPath("/book/test-ghost-claim-lab"), true);
+  assert.equal(isHiddenListingPath("/book/ke-test-ghost-001"), true);
+  assert.equal(isHiddenListingPath("/daycare/ke-test-ghost-001"), true);
+  assert.equal(isHiddenListingPath("/daycare/bonnie-bairns-childcare-services-1"), false);
+  assert.equal(isHiddenListingPath("/claim"), false);
+  assert.equal(isHiddenListingPath("/admin"), false);
+  assert.equal(isHiddenListingPath("/search"), false);
+  assert.equal(isHiddenListingPath("/daycare/test-ghost-claim-lab-extra"), false);
+});
+
+test("QA ghost listing document URLs 404 on every host", () => {
+  for (const host of ["www.kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
+    for (const pathname of [
+      "/daycare/test-ghost-claim-lab",
+      "/daycare/test-ghost-claim-lab/",
+      "/book/test-ghost-claim-lab",
+      "/daycare/ke-test-ghost-001",
+    ]) {
+      assert.deepEqual(decideRequest({ host, pathname }), { action: "not_found", status: 404 });
+    }
+  }
+});
+
+test("real listing document URLs are not 404'd by the guard", () => {
+  assert.deepEqual(
+    decideRequest({ host: "www.kidease.ca", pathname: "/daycare/bonnie-bairns-childcare-services-1" }),
+    { action: "next" },
+  );
+  assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/claim" }), { action: "next" });
+});
+
 test("nitro middleware and vercel.json stay wired to the guard", () => {
   const middleware = readFileSync(join(root, "server/middleware/request-guard.ts"), "utf8");
   assert.match(middleware, /from "\.\.\/\.\.\/scripts\/request-guard\.mjs"/);
   assert.match(middleware, /headers\.get\("host"\)/);
+  assert.match(middleware, /decision\.action === "not_found"/);
   assert.doesNotMatch(middleware, /x-forwarded-host/);
 
   const viteConfig = readFileSync(join(root, "vite.config.ts"), "utf8");

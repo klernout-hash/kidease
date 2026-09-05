@@ -11,6 +11,7 @@ import { getFamily, getThread, updateRequestStatus } from "@/lib/server/family";
 import { sendConnectedMessage } from "@/lib/server/inbox";
 import { formatAgeLabel, formatStart, pushNewRequest, scheduleLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
+import { useSessionDesks } from "@/components/desk-switcher";
 import { cn, money } from "@/lib/utils";
 import type { BookingStatus, Child, Message, Schedule } from "@/lib/types";
 
@@ -35,6 +36,7 @@ function ThreadPage() {
   const { id } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
+  const { session: desks } = useSessionDesks();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [photo, setPhoto] = useState("");
@@ -178,7 +180,7 @@ function ThreadPage() {
             <ChildCareCard child={child} showCompleteLink={isParent} />
           </div>
         ) : null}
-        {isParent && booking?.status === "accepted" && booking.paymentStatus !== "paid" ? (
+        {isParent && desks?.stripeLive && booking?.status === "accepted" && booking.paymentStatus !== "paid" ? (
           <div className="mt-3 rounded-xl bg-primary p-4 text-primary-fg">
             <p className="font-medium">{t("payTitle")}</p>
             <Button size="sm" variant="secondary" className="mt-3" asChild>

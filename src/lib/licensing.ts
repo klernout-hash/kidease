@@ -1,67 +1,13 @@
 /** Official provincial / territorial licence lookup and subsidy pages. */
 
 import type { Locale } from "@/lib/types";
-
-const REGISTRY: Record<string, { licence: string; subsidy: string }> = {
-  BC: {
-    licence: "https://www2.gov.bc.ca/gov/content/family-social-supports/caring-for-young-children/finding-child-care",
-    subsidy: "https://www.gov.bc.ca/affordablechildcarebenefit",
-  },
-  AB: {
-    licence: "https://www.alberta.ca/lookup-child-care",
-    subsidy: "https://www.alberta.ca/child-care-subsidy",
-  },
-  SK: {
-    licence: "https://www.saskatchewan.ca/residents/family-and-social-support/child-care",
-    subsidy: "https://www.saskatchewan.ca/residents/family-and-social-support/child-care",
-  },
-  MB: {
-    licence: "https://childcaresearch.gov.mb.ca/en",
-    subsidy: "https://direct3.gov.mb.ca/daycare/see/see.nsf/see?ReadForm#/en-ca",
-  },
-  ON: {
-    licence: "https://www.ontario.ca/page/licensed-child-care",
-    subsidy: "https://www.ontario.ca/page/child-care-subsidies",
-  },
-  QC: {
-    licence: "https://www.mfa.gouv.qc.ca/en/services-de-garde/Parents/Pages/default.aspx",
-    subsidy: "https://www.revenuquebec.ca/en/citizens/tax-credits/tax-credit-for-childcare-expenses/",
-  },
-  NB: {
-    licence: "https://www2.gnb.ca/content/gnb/en/departments/education/elcc.html",
-    subsidy: "https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/information-for-families/guide.html",
-  },
-  NS: {
-    licence: "https://childcarenovascotia.ca/",
-    subsidy: "https://childcarenovascotia.ca/families/child-care-subsidy",
-  },
-  PE: {
-    licence: "https://www.princeedwardisland.ca/en/information/education-and-early-years/licensed-early-learning-and-child-care",
-    subsidy: "https://peichildcareregistry.com/calculator.php",
-  },
-  NL: {
-    licence: "https://www.gov.nl.ca/education/childcare/",
-    subsidy: "https://www.gov.nl.ca/education/childcare/childcaresubsidy/",
-  },
-  YT: {
-    licence: "https://yukon.ca/en/find-child-care",
-    subsidy: "https://yukon.ca/en/universal-child-care",
-  },
-  NT: {
-    licence: "https://www.ece.gov.nt.ca/en/services/early-learning-and-child-care",
-    subsidy: "https://www.ece.gov.nt.ca/en/average-10-day-child-care",
-  },
-  NU: {
-    licence: "https://www.gov.nu.ca/en/education-and-schools/early-learning-and-child-care",
-    subsidy: "https://www.gov.nu.ca/en/education-and-schools/10_day-child-care",
-  },
-};
+import { canadaFallbackUrl, jurisdiction } from "@/lib/province-registry";
 
 /** Jurisdictions where $10-a-day / reduced parent fees are typical at licensed 0–5 centres. Confirm with the centre. */
 const TYPICAL_TEN = new Set(["MB", "SK", "PE", "NL", "YT", "NT", "NU"]);
 
 export function licenseRegistryUrl(province: string) {
-  return REGISTRY[province]?.licence ?? "https://www.canada.ca/en/early-learning-child-care.html";
+  return jurisdiction(province)?.registryUrl ?? canadaFallbackUrl();
 }
 
 /** Official registry, with a search query so parents land closer to this centre. */
@@ -76,7 +22,7 @@ export function licenseRecordUrl(province: string, name?: string, licenseNumber?
 }
 
 export function subsidyEstimatorUrl(province: string) {
-  return REGISTRY[province]?.subsidy ?? "https://www.canada.ca/en/early-learning-child-care.html";
+  return jurisdiction(province)?.subsidyUrl ?? canadaFallbackUrl();
 }
 
 export type CwelccKind = "typical" | "ask" | "qc" | "ab";

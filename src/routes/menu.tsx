@@ -4,6 +4,8 @@ import { Shell } from "@/components/shell";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
+import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { showDeskSwitcher } from "@/lib/desks";
 
 export const Route = createFileRoute("/menu")({
   component: MenuPage,
@@ -50,12 +52,22 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 function MenuPage() {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
+  const { session } = useSessionDesks();
   const fr = locale === "fr";
+  const multiDesk = Boolean(user && showDeskSwitcher(session?.desks));
 
   return (
     <Shell>
       <main className="ke-gutter mx-auto max-w-lg pb-8 pt-5">
         <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{fr ? "Menu" : "Menu"}</h1>
+
+        {multiDesk ? (
+          <Group title={fr ? "Vos espaces" : "Your desks"}>
+            <div className="px-1 py-2">
+              <DeskSwitcher />
+            </div>
+          </Group>
+        ) : null}
 
         <Group title="KidEase">
           <Row to="/search" label={t("explore")} />

@@ -21,6 +21,7 @@ const PUBLIC_PATHS = [
   "/support",
   "/team",
   "/benefits",
+  "/faq",
   "/tour-checklist",
   "/get-app",
   "/claim",
@@ -30,7 +31,9 @@ const PUBLIC_PATHS = [
 test("robots.txt keeps admin disallows and points Sitemap at the www URL", () => {
   assert.match(robots, /^Disallow: \/admin$/m);
   assert.match(robots, /^Disallow: \/admin-contracts$/m);
+  assert.match(robots, /^Disallow: \/admin-chat$/m);
   assert.match(robots, /^Disallow: \/daycare\/test-ghost-claim-lab$/m);
+  assert.match(robots, /^Disallow: \/book\/test-ghost-claim-lab$/m);
   assert.match(robots, /^Sitemap: https:\/\/www\.kidease\.ca\/sitemap\.xml$/m);
   assert.doesNotMatch(robots, /Sitemap: https:\/\/kidease\.ca\/sitemap\.xml/);
 });
@@ -45,6 +48,21 @@ test("sitemap.xml lists canonical www public pages and omits admin paths", () =>
   assert.doesNotMatch(sitemap, /https:\/\/kidease\.ca\//);
   assert.doesNotMatch(sitemap, /\/admin/);
   assert.doesNotMatch(sitemap, /test-ghost-claim-lab/);
+});
+
+test("vercel CSP does not allowlist grok.com and still keeps product hosts", () => {
+  const vercel = readFileSync(join(root, "vercel.json"), "utf8");
+  assert.match(vercel, /Content-Security-Policy/);
+  assert.match(vercel, /maps\.googleapis\.com/);
+  assert.match(vercel, /js\.stripe\.com/);
+  assert.match(vercel, /challenges\.cloudflare\.com/);
+  assert.match(vercel, /us\.i\.posthog\.com/);
+  assert.match(vercel, /script-src 'self' 'unsafe-inline'/);
+  assert.match(vercel, /style-src 'self' 'unsafe-inline'/);
+  assert.doesNotMatch(vercel, /grok\.com/);
+  assert.match(vercel, /"source": "\/admin-chat"/);
+  assert.match(vercel, /"source": "\/daycare\/test-ghost-claim-lab"/);
+  assert.match(vercel, /"source": "\/book\/test-ghost-claim-lab"/);
 });
 
 test("security.txt is RFC 9116-ish and lives at /.well-known/security.txt", () => {

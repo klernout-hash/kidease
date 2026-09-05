@@ -272,6 +272,9 @@ export const updateListing = createServerFn({ method: "POST" })
       preschoolMonthly: number;
       ageMinMonths: number;
       ageMaxMonths: number;
+      licenseNumber?: string;
+      licenseExpiry?: string;
+      licensedCapacity?: number;
     }) => input,
   )
   .handler(async ({ context, data }) => {
@@ -295,6 +298,12 @@ export const updateListing = createServerFn({ method: "POST" })
     const minAge = Math.max(0, Math.min(216, Math.round(data.ageMinMonths)));
     const maxAge = Math.max(minAge, Math.min(216, Math.round(data.ageMaxMonths)));
     const license = asImage(data.licensePhoto);
+    const licenseNumber = (data.licenseNumber ?? "").trim().slice(0, 80);
+    const licenseExpiry = (data.licenseExpiry ?? "").trim().slice(0, 10) || null;
+    const licensedCapacity =
+      typeof data.licensedCapacity === "number" && data.licensedCapacity > 0
+        ? Math.min(400, Math.round(data.licensedCapacity))
+        : null;
     await sql`
       update daycares set
         name = ${data.name.trim()},
@@ -314,9 +323,35 @@ export const updateListing = createServerFn({ method: "POST" })
         preschool_monthly = ${data.preschoolMonthly},
         age_min_months = ${minAge},
         age_max_months = ${maxAge},
-        ages_confirmed = 1
+        ages_confirmed = 1,
+        license_number = coalesce(${licenseNumber || null}, license_number),
+        license_expiry = coalesce(${licenseExpiry}, license_expiry),
+        licensed_capacity = coalesce(${licensedCapacity}, licensed_capacity)
       where id = ${data.daycareId}
-    `;
+    `.catch(async () => {
+      await sql`
+        update daycares set
+          name = ${data.name.trim()},
+          name_fr = ${data.name.trim()},
+          address = ${data.address.trim()},
+          city = ${data.city.trim()},
+          province = ${data.province.trim() || "MB"},
+          postal_code = ${data.postalCode.trim()},
+          phone = ${data.phone.trim() || null},
+          contact_email = ${data.email.trim() || null},
+          photos = ${photos},
+          spots_infant = ${Math.max(0, data.spotsInfant)},
+          spots_toddler = ${Math.max(0, data.spotsToddler)},
+          spots_preschool = ${Math.max(0, data.spotsPreschool)},
+          infant_monthly = ${data.infantMonthly},
+          toddler_monthly = ${data.toddlerMonthly},
+          preschool_monthly = ${data.preschoolMonthly},
+          age_min_months = ${minAge},
+          age_max_months = ${maxAge},
+          ages_confirmed = 1
+        where id = ${data.daycareId}
+      `;
+    });
     if (license) {
       await storeLicensePhoto(sql, data.daycareId, license);
       await sql`

@@ -5,6 +5,8 @@ import { DeskShell } from "@/components/desk-shell";
 import { DaycareCard } from "@/components/daycare-card";
 import { StatusBadge } from "@/components/status-badge";
 import { ListingStatusBadge, LedgerHonesty } from "@/components/listing-status-badge";
+import { TrustSignals } from "@/components/trust-badge";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { ChildProfileForm } from "@/components/child-profile-form";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -63,14 +65,17 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
           {saved.length ? (
             saved.map((item) => (
               <div key={item.id} className="space-y-2">
-                {item.live || (item.claimStatus && item.claimStatus !== "unclaimed") ? (
-                  <ListingStatusBadge claimStatus={item.claimStatus} live={item.live} />
-                ) : null}
+                <div className="flex flex-wrap items-center gap-2">
+                  {item.live || (item.claimStatus && item.claimStatus !== "unclaimed") ? (
+                    <ListingStatusBadge claimStatus={item.claimStatus} live={item.live} />
+                  ) : null}
+                  <TrustSignals item={item} surface="parent" compact />
+                </div>
                 <DaycareCard item={item} showDistance={false} />
               </div>
             ))
           ) : (
-            <p className="text-muted">{t("noSaved")}</p>
+            <EmptyState title={t("noSaved")} body={t("noSavedLead")} action={t("emptyFindCare")} actionTo="/search" />
           )}
         </div>
       ) : null}
@@ -79,12 +84,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {bookings.length === 0 ? (
             <li className="p-8 text-center">
-              <p className="text-muted">{t("noRequests")}</p>
-              <div className="mt-5">
-                <Button size="lg" className="h-14 min-h-14 px-7 text-base" asChild>
-                  <Link to="/search">{t("heroCta")}</Link>
-                </Button>
-              </div>
+              <EmptyState title={t("noRequests")} body={t("noSavedLead")} action={t("emptyFindCare")} actionTo="/search" />
             </li>
           ) : (
             bookings.map((b) => (
@@ -109,7 +109,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                       </Link>
                     </Button>
                   ) : null}
-                  {b.status === "accepted" && b.paymentStatus !== "paid" ? (
+                  {b.status === "accepted" && b.paymentStatus !== "paid" && desks?.stripeLive ? (
                     <Button size="sm" asChild>
                       <Link to="/pay/$bookingId" params={{ bookingId: b.id }}>
                         {t("pay")}
@@ -128,7 +128,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
           <LedgerHonesty stripeLive={Boolean(desks?.stripeLive)} className="mb-3" />
           <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
             {payments.length === 0 ? (
-              <li className="p-8 text-center text-muted">{t("noPayments")}</li>
+              <li className="p-2">
+                <EmptyState title={t("noPayments")} body={t("noPaymentsLead")} action={t("emptyFindCare")} actionTo="/search" />
+              </li>
             ) : (
               payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between p-4 text-sm">
@@ -169,7 +171,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             <>
               <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
                 {children.length === 0 ? (
-                  <li className="p-8 text-center text-muted">{t("noChildren")}</li>
+                  <li className="p-2">
+                    <EmptyState title={t("noChildren")} body={t("noChildrenLead")} action={t("emptyAddChild")} onAction={() => setEditing("new")} />
+                  </li>
                 ) : (
                   children.map((c) => {
                     const selected = picked[c.id] ?? [];

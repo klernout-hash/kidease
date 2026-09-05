@@ -2,6 +2,8 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin-contracts
+Disallow: /admin-chat
 Disallow: /daycare/test-ghost-claim-lab
+Disallow: /book/test-ghost-claim-lab
 
 Sitemap: https://www.kidease.ca/sitemap.xml

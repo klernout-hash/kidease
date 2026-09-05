@@ -50,8 +50,12 @@ export function isWebsite() {
   return channel() === "website";
 }
 
-/** Runs in the document head before paint so phone-width does not flash the storefront. */
-export const CHANNEL_BOOT_SCRIPT = `(function(){try{var c=window.Capacitor;var n=!!(c&&c.isNativePlatform&&c.isNativePlatform());var q=new URLSearchParams(location.search);var force=q.get("app")==="1"||q.get("channel")==="app";var w=window.innerWidth||0;var r=document.documentElement;r.dataset.channel=(force||n||w<${STOREFRONT_MIN_PX})?"app":"website";r.dataset.runtime=n&&c.getPlatform?c.getPlatform():"web";}catch(e){document.documentElement.dataset.channel="website";}})();`;
+/**
+ * First-party channel boot lives at `/channel-boot.js` (CSP `'self'`).
+ * Keep STOREFRONT_MIN_PX in sync with that file (1024). Do not put the boot
+ * IIFE back inline — adding a CSP hash while `'unsafe-inline'` remains would
+ * disable `'unsafe-inline'` for every other script (TanStack `<Scripts />`).
+ */
 
 export function paintRuntime() {
   if (typeof document === "undefined") return;

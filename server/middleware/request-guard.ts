@@ -1,6 +1,7 @@
 /**
  * Nitro request middleware: hide admin desks on `*.vercel.app` (Cloudflare
- * Access only sits on www.kidease.ca) and serve `/.well-known/change-password`.
+ * Access only sits on www.kidease.ca), 404 QA ghost-listing document URLs,
+ * and serve `/.well-known/change-password`.
  *
  * Uses the `Host` header, not `X-Forwarded-Host`, so a spoofed forwarded host
  * cannot un-gate a vercel.app request. `www.kidease.ca` keeps serving /admin
@@ -28,6 +29,17 @@ export default async function requestGuardMiddleware(
     return new Response(null, {
       status: decision.status,
       headers: { location: decision.location },
+    });
+  }
+
+  if (decision.action === "not_found") {
+    return new Response("Not Found", {
+      status: 404,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "x-robots-tag": "noindex, nofollow",
+        "cache-control": "no-store",
+      },
     });
   }
 

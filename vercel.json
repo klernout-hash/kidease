@@ -32,6 +32,18 @@
       "permanent": false
     },
     {
+      "source": "/admin-chat",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/admin-chat",
+      "permanent": false
+    },
+    {
+      "source": "/admin-chat/:path*",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/admin-chat/:path*",
+      "permanent": false
+    },
+    {
       "source": "/api/admin/:path*",
       "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
       "destination": "https://www.kidease.ca/api/admin/:path*",
@@ -43,20 +55,6 @@
     { "source": "/parent", "destination": "/login?role=parent", "permanent": false },
     { "source": "/faq", "destination": "/tour-checklist", "permanent": false },
     { "source": "/how-it-works", "destination": "/#how", "permanent": false }
-  ],
-  "rewrites": [
-    { "source": "/apple-touch-icon.png", "destination": "/icon-512.png" },
-    { "source": "/apple-touch-icon-precomposed.png", "destination": "/icon-512.png" },
-    { "source": "/apple-touch-icon-180x180.png", "destination": "/icon-512.png" },
-    { "source": "/apple-touch-icon-180x180-precomposed.png", "destination": "/icon-512.png" },
-    { "source": "/__grok/icon-180.png", "destination": "/icon-512.png" },
-    { "source": "/__grok/icon-192.png", "destination": "/icon-512.png" },
-    { "source": "/__grok/icon-512.png", "destination": "/icon-512.png" },
-    { "source": "/icon-192.png", "destination": "/icon-512.png" },
-    { "source": "/icons/icon-180.png", "destination": "/icon-512.png" },
-    { "source": "/icons/icon-192.png", "destination": "/icon-512.png" },
-    { "source": "/icons/icon-512.png", "destination": "/icon-512.png" },
-    { "source": "/icons/icon-1024.png", "destination": "/icon-512.png" }
   ],
   "headers": [
     {
@@ -83,7 +81,23 @@
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {
+      "source": "/admin-chat",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/admin-chat/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
       "source": "/admin/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/daycare/test-ghost-claim-lab",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/book/test-ghost-claim-lab",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {

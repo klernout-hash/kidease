@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { LocateFixed, Minus, Navigation, Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { DaycareCard } from "@/lib/types";
-import { cn, money } from "@/lib/utils";
+import { cn, displayCentreName, money } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
@@ -265,7 +265,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         const item = node.item;
         if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
         const content = logoPinEl("ke-logo-pin");
-        content.setAttribute("aria-label", item.name);
+        content.setAttribute("aria-label", displayCentreName(item.name));
         const overlay = createOverlay({
           map,
           position: { lat: item.lat, lng: item.lng },
@@ -389,7 +389,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <Link to="/daycare/$slug" params={{ slug: selected.slug }} className="block truncate text-[15px] font-semibold tracking-[-0.015em] hover:underline">
-                  {locale === "fr" ? selected.nameFr : selected.name}
+                  {displayCentreName(locale === "fr" ? selected.nameFr : selected.name)}
                 </Link>
                 {selected.priority ? <PriorityPill /> : null}
                 <span

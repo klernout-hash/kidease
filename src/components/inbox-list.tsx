@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
+import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -35,13 +36,15 @@ export function InboxList() {
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Message centre</p>
         <h1 className="mt-2 font-display text-3xl">{t("inbox")}</h1>
         <p className="mt-2 text-sm text-muted">
-          Threads open when a parent requests a spot. The parent and that daycare share the same conversation.
+          Threads open when a parent requests a spot. There is no separate admin chat console — Kyle still uses Mail for Titan and the listing for public pages.
         </p>
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {items === null ? (
             <li className="p-6 text-muted">{t("loading")}</li>
           ) : items.length === 0 ? (
-            <li className="p-8 text-center text-muted">{t("noInbox")}</li>
+            <li className="p-2">
+              <EmptyState title={t("noInbox")} body={t("noInboxLead")} action={t("emptyFindCare")} actionTo="/search" />
+            </li>
           ) : (
             items.map((c) => (
               <li key={c.id}>

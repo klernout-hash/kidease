@@ -298,6 +298,8 @@ function AccountMenu({
 }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
+  const { session } = useSessionDesks();
+  const desks = session?.desks ?? [];
 
   useEffect(() => {
     if (!open) return;
@@ -367,6 +369,16 @@ function AccountMenu({
           >
             Provider desk
           </Link>
+          {desks.includes("admin") ? (
+            <Link
+              role="menuitem"
+              to="/admin"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+            >
+              Admin desk
+            </Link>
+          ) : null}
           <button
             type="button"
             role="menuitem"

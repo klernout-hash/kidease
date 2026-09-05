@@ -10,6 +10,8 @@ import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
 import { readCompare, toggleCompare } from "@/lib/compare";
 import { feeProgramBadgeKey } from "@/lib/licensing";
+import { licenseBadge } from "@/lib/trust";
+import type { CopyKey } from "@/lib/copy";
 
 const HEART_SAVED = "#FF385C";
 
@@ -49,7 +51,8 @@ export function DaycareCard({
     return () => window.removeEventListener("kidease-compare", sync);
   }, [item.id]);
 
-  const pill = feeBadge ? t(feeBadge) : live ? t("live") : t("licensed");
+  const license = licenseBadge(item);
+  const pill = feeBadge ? t(feeBadge) : live ? t("live") : t(license.labelKey as CopyKey);
   const ages =
     item.ageMaxMonths > item.ageMinMonths ? `${item.ageMinMonths}–${item.ageMaxMonths} months` : "";
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
@@ -73,6 +76,11 @@ export function DaycareCard({
               {item.priority ? `✦ ${pill}` : pill}
             </span>
           </div>
+          {photos.length === 0 || photos.every((p) => p.includes("placeholder")) ? (
+            <span className="pointer-events-none absolute bottom-3 left-3 z-[2] rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white">
+              {live ? t("storefrontPhoto") : t("notOnKidEase")}
+            </span>
+          ) : null}
         </div>
 
         <div className="mt-2.5 space-y-[3px] text-[#222]">

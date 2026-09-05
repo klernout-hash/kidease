@@ -5,7 +5,8 @@
  * wiring — `src/router.tsx` only builds the router, and function middleware
  * (`src/lib/auth/middleware.ts`) runs on server functions, not document GETs.
  * Nitro global middleware is the chokepoint that actually sees Host + path
- * on Vercel (vite.config.ts `serverDir: "./server"`).
+ * on Vercel (vite.config.ts `serverDir: "./server"`). Document GETs for the
+ * QA ghost listing are 404'd here so the SPA shell cannot return HTTP 200.
  */
 
 export const CANONICAL_ORIGIN = "https://www.kidease.ca";
@@ -48,6 +49,8 @@ export function isSensitiveDeskPath(pathname) {
     path.startsWith("/admin/") ||
     path === "/admin-contracts" ||
     path.startsWith("/admin-contracts/") ||
+    path === "/admin-chat" ||
+    path.startsWith("/admin-chat/") ||
     path === "/api/admin" ||
     path.startsWith("/api/admin/")
   );
@@ -60,8 +63,33 @@ function queryString(search) {
 }
 
 /**
+ * QA fixture slugs that must not serve a public document. Keep in sync with
+ * GHOST_LISTING / listing-visibility.ts (scripts/listing-visibility.test.mjs
+ * tripwires both sides). Listing *data* is already admin-gated; this is the
+ * HTTP chokepoint so `/daycare/test-ghost-claim-lab` is not a public 200.
+ *
+ * Authenticated admin can still load the listing via getDaycare after a
+ * same-origin SPA navigation from /admin. Checking admin here would pull
+ * Better Auth + Postgres into this tiny Nitro guard — not clean.
+ */
+export const HIDDEN_LISTING_SLUGS = ["test-ghost-claim-lab", "ke-test-ghost-001"];
+
+/** Public document prefixes that take a centre slug. */
+const LISTING_DOCUMENT_PREFIXES = ["/daycare/", "/book/"];
+
+export function isHiddenListingPath(pathname) {
+  const path = normalizePath(pathname).toLowerCase();
+  for (const prefix of LISTING_DOCUMENT_PREFIXES) {
+    if (!path.startsWith(prefix)) continue;
+    const slug = path.slice(prefix.length);
+    if (HIDDEN_LISTING_SLUGS.includes(slug)) return true;
+  }
+  return false;
+}
+
+/**
  * @param {{ host?: string | null, pathname?: string | null, search?: string | null }} input
- * @returns {{ action: "next" } | { action: "redirect", status: 302, location: string }}
+ * @returns {{ action: "next" } | { action: "redirect", status: 302, location: string } | { action: "not_found", status: 404 }}
  */
 export function decideRequest(input = {}) {
   const path = normalizePath(input.pathname);
@@ -72,6 +100,10 @@ export function decideRequest(input = {}) {
       status: 302,
       location: CHANGE_PASSWORD_DESTINATION,
     };
+  }
+
+  if (isHiddenListingPath(path)) {
+    return { action: "not_found", status: 404 };
   }
 
   if (isVercelAppHost(input.host) && isSensitiveDeskPath(path)) {

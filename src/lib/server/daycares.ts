@@ -10,6 +10,7 @@ import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
 import { overlayPriority, sortPriorityFirst } from "./promos";
 import { isPlatformLive } from "@/lib/live";
+import { defaultTrustFields } from "@/lib/trust";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { rememberSearch, searchMemoKey } from "./search-memo";
@@ -67,7 +68,8 @@ function toDaycare(d: CatalogDaycare): Daycare {
     feeConfirmed: Boolean(d.feeConfirmed),
     availabilityKnown: false,
     spotsUpdatedAt: null,
-    licenseStatus: "active",
+    ...defaultTrustFields(),
+    licenseVerificationSource: d.licenseNumber ? "catalog" : null,
     priority: false,
     priorityUntil: null,
     agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
@@ -88,6 +90,35 @@ function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFs
     catchmentKm: catchm.catchmentKm,
     inCatchment: catchm.inCatchment,
   };
+}
+
+function rejectAfter(ms: number, message: string) {
+  return new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(message)), ms);
+  });
+}
+
+function catalogAvailability(found: CatalogDaycare): AvailabilityRow[] {
+  return catalogMonths().map((month) => ({
+    month,
+    infant: found.spotsInfant,
+    toddler: found.spotsToddler,
+    preschool: found.spotsPreschool,
+  }));
+}
+
+function mapReviews(
+  reviews: Array<Review & { daycare_id: string; body_fr: string; created_at: string }>,
+): Review[] {
+  return reviews.map((r) => ({
+    id: r.id,
+    daycareId: r.daycare_id,
+    author: r.author,
+    rating: r.rating,
+    body: r.body,
+    bodyFr: r.body_fr,
+    createdAt: String(r.created_at),
+  }));
 }
 
 function slimCard(card: DaycareCard): DaycareCard {
@@ -214,60 +245,57 @@ export const getDaycare = createServerFn({ method: "GET" })
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
     if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
-    const sql = await getSql();
-    await upsertDaycare(sql, found);
-    const claimedRow = await sql<DaycareRow>`
-      select * from daycares where id = ${found.id} and claimed_at is not null limit 1
-    `.catch(() => [] as DaycareRow[]);
-    const daycare = claimedRow[0] ? mapDaycare(claimedRow[0]) : toDaycare(found);
-    daycare.live = isPlatformLive(daycare.id, Boolean(daycare.claimed));
-    if (!daycare.reviewCount) {
-      daycare.ratingX10 = found.ratingX10;
-      daycare.reviewCount = found.reviewCount;
-    }
-    daycare.googlePlaceId = found.googlePlaceId ?? daycare.googlePlaceId;
-    const reviews = await sql<Review & { daycare_id: string; body_fr: string; created_at: string }>`
-      select id, daycare_id, author, rating, body, body_fr, created_at
-      from reviews where daycare_id = ${daycare.id} order by created_at desc
-    `;
-    let availability = await sql<AvailabilityRow>`
-      select month, infant, toddler, preschool from availability
-      where daycare_id = ${daycare.id} order by month
-    `;
-    if (availability.length === 0) {
-      availability = catalogMonths().map((month) => ({
-        month,
-        infant: found.spotsInfant,
-        toddler: found.spotsToddler,
-        preschool: found.spotsPreschool,
-      }));
-    }
-    const day = new Date().toISOString().slice(0, 10);
-    await sql`
-      insert into daycare_views (daycare_id, viewed_on, count)
-      values (${daycare.id}, ${day}, 1)
-      on conflict (daycare_id, viewed_on)
-      do update set count = daycare_views.count + 1
-    `;
     const nearby = uniqueById(
       (await catalogNear({ lat: found.lat, lng: found.lng }, 15))
         .filter((d) => d.id !== found.id)
         .map((d) => toCard(d, { lat: found.lat, lng: found.lng })),
     ).slice(0, 4);
-    return {
-      daycare,
-      reviews: reviews.map((r) => ({
-        id: r.id,
-        daycareId: r.daycare_id,
-        author: r.author,
-        rating: r.rating,
-        body: r.body,
-        bodyFr: r.body_fr,
-        createdAt: String(r.created_at),
-      })),
-      availability,
+    const catalogDaycare = toDaycare(found);
+    catalogDaycare.live = isPlatformLive(catalogDaycare.id, Boolean(catalogDaycare.claimed));
+    const catalogPayload = {
+      daycare: catalogDaycare,
+      reviews: [] as Review[],
+      availability: catalogAvailability(found),
       nearby,
     };
+    try {
+      const sql = await Promise.race([getSql(), rejectAfter(6000, "listing-sql-timeout")]);
+      await upsertDaycare(sql, found);
+      const claimedRow = await sql<DaycareRow>`
+        select * from daycares where id = ${found.id} and claimed_at is not null limit 1
+      `.catch(() => [] as DaycareRow[]);
+      const daycare = claimedRow[0] ? mapDaycare(claimedRow[0]) : toDaycare(found);
+      daycare.live = isPlatformLive(daycare.id, Boolean(daycare.claimed));
+      if (!daycare.reviewCount) {
+        daycare.ratingX10 = found.ratingX10;
+        daycare.reviewCount = found.reviewCount;
+      }
+      daycare.googlePlaceId = found.googlePlaceId ?? daycare.googlePlaceId;
+      const reviews = await sql<Review & { daycare_id: string; body_fr: string; created_at: string }>`
+        select id, daycare_id, author, rating, body, body_fr, created_at
+        from reviews where daycare_id = ${daycare.id} order by created_at desc
+      `.catch(() => [] as Array<Review & { daycare_id: string; body_fr: string; created_at: string }>);
+      let availability = await sql<AvailabilityRow>`
+        select month, infant, toddler, preschool from availability
+        where daycare_id = ${daycare.id} order by month
+      `.catch(() => [] as AvailabilityRow[]);
+      if (availability.length === 0) availability = catalogAvailability(found);
+      const day = new Date().toISOString().slice(0, 10);
+      await sql`
+        insert into daycare_views (daycare_id, viewed_on, count)
+        values (${daycare.id}, ${day}, 1)
+        on conflict (daycare_id, viewed_on)
+        do update set count = daycare_views.count + 1
+      `.catch(() => undefined);
+      return {
+        daycare,
+        reviews: mapReviews(reviews),
+        availability,
+        nearby,
+      };
+    } catch {
+      return catalogPayload;
+    }
   });
 
 export const getDaycaresByIds = createServerFn({ method: "POST" })

@@ -87,7 +87,16 @@ export type Daycare = {
   feeConfirmed?: boolean;
   availabilityKnown?: boolean;
   spotsUpdatedAt?: string | null;
-  licenseStatus?: "active" | "unknown";
+  licenseStatus?: "unverified" | "matched" | "expired" | "suspended" | "active" | "unknown";
+  licenseExpiry?: string | null;
+  licensedCapacity?: number | null;
+  registryMatchState?: "unmatched" | "pending" | "matched" | "mismatch";
+  licenseVerifiedAt?: string | null;
+  licenseVerificationSource?: string | null;
+  staffScreeningAttested?: boolean;
+  staffScreeningAttestedAt?: string | null;
+  staffScreeningAttestedBy?: string | null;
+  stripeIdentityVerified?: boolean;
   priority?: boolean;
   priorityUntil?: string | null;
   agesKnown?: boolean;

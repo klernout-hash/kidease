@@ -5,7 +5,10 @@ import {
   listingStatusLabel,
   isWaitingClaim,
 } from "../src/lib/listing-status.ts";
-import { desksFor, landingPath, nextStoredRole, parseAppRole, primaryDesk } from "../src/lib/desks.ts";
+import { desksFor, landingPath, nextStoredRole, parseAppRole, primaryDesk, showDeskSwitcher } from "../src/lib/desks.ts";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { stripeChargesLive, INTERNAL_LEDGER_LABEL } from "../src/lib/stripe-live.ts";
 import { parseSentryDsn } from "../src/lib/sentry-shared.ts";
 
@@ -33,6 +36,17 @@ test("admin role unlocks all three desks; provider also gets parent", () => {
   assert.equal(landingPath(["admin", "provider", "parent"]), "/admin");
   assert.equal(landingPath(["provider", "parent"]), "/provider");
   assert.equal(landingPath(["parent"]), "/parent");
+  assert.equal(showDeskSwitcher(["parent"]), false);
+  assert.equal(showDeskSwitcher(["provider", "parent"]), true);
+  assert.equal(showDeskSwitcher(["admin", "provider", "parent"]), true);
+});
+
+test("desk switcher is for any multi-desk session, not admin-only", () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const src = readFileSync(join(root, "src/components/desk-switcher.tsx"), "utf8");
+  assert.match(src, /showDeskSwitcher/);
+  assert.doesNotMatch(src, /session\.role !== "admin"/);
+  assert.match(src, /do not call setRole/);
 });
 
 test("setRole never demotes an admin", () => {
