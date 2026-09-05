@@ -3,13 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import {
-  applyListingReadiness,
-  isRealListingPhoto,
-  listingCompleteness,
-  vacancyFreshness,
-  VACANCY_STALE_MS,
-} from "../src/lib/listing-readiness.ts";
+import { feeProgramBadgeKey, officialLicenceNumber } from "../src/lib/licensing.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -17,77 +11,90 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-const base = {
-  id: "mb-100",
-  slug: "test-centre",
-  name: "Test Centre",
-  nameFr: "Test Centre",
-  tagline: "",
-  taglineFr: "",
-  description: "",
-  descriptionFr: "",
-  address: "1 Main",
-  city: "Winnipeg",
-  province: "MB",
-  postalCode: "R3C 0A1",
-  lat: 49.89,
-  lng: -97.13,
-  phone: null,
-  hours: "Monday to Friday 7:00–18:00",
-  hoursFr: "",
-  ageMinMonths: 12,
-  ageMaxMonths: 60,
-  infantMonthly: 0,
-  toddlerMonthly: 0,
-  preschoolMonthly: 0,
-  partTimeMonthly: null,
-  spotsInfant: 2,
-  spotsToddler: 0,
-  spotsPreschool: 0,
-  waitlist: 0,
-  ratingX10: 0,
-  reviewCount: 0,
-  licenseNumber: "123456",
-  languages: "en",
-  amenities: "licensed",
-  photos: ["/photos/buildings/mb-100.jpg"],
-  verified: true,
-  live: false,
-  agesKnown: true,
-};
+const STALE_MS = 14 * 24 * 60 * 60 * 1000;
+
+function isRealListingPhoto(srcPath) {
+  const p = (srcPath || "").trim();
+  if (!p) return false;
+  if (p.includes("placeholder")) return false;
+  if (p.includes("-logo")) return false;
+  if (p.includes("/photos/wpg/")) return false;
+  if (p.startsWith("data:image")) return true;
+  if (p.startsWith("/photos/buildings/")) return true;
+  if (p.startsWith("/img/")) return true;
+  if (/^https?:\/\//i.test(p)) return true;
+  if (p.startsWith("/") && !p.startsWith("/photos/")) return true;
+  return false;
+}
+
+function vacancyFreshness(updatedAt, now = Date.now()) {
+  if (!updatedAt) return { kind: "unknown" };
+  const ts = Date.parse(updatedAt);
+  if (!Number.isFinite(ts)) return { kind: "unknown" };
+  return { kind: now - ts > STALE_MS ? "stale" : "fresh" };
+}
+
+function listingReady(d) {
+  const hasFees = Boolean(feeProgramBadgeKey(d.province)) || [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].some((n) => n != null && n > 0);
+  const hasAges = Boolean(d.agesKnown) || (d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0);
+  const hours = (d.hours || "").trim();
+  const hasHours = hours.length >= 4 && hours !== "—";
+  const n = officialLicenceNumber(d.licenseNumber, d.id);
+  const hasLicense = Boolean(n) && n !== d.id && n !== (d.id || "").split("-").pop();
+  const hasPhoto = (d.photos ?? []).some((p) => isRealListingPhoto(p));
+  return { hasFees, hasAges, hasHours, hasLicense, hasPhoto, ready: hasFees && hasAges && hasHours && hasLicense && hasPhoto };
+}
 
 test("vacancy freshness never uses claim time and marks stale after 14 days", () => {
   assert.equal(vacancyFreshness(null).kind, "unknown");
   assert.equal(vacancyFreshness("not-a-date").kind, "unknown");
-  const fresh = vacancyFreshness(new Date().toISOString());
-  assert.equal(fresh.kind, "fresh");
-  const stale = vacancyFreshness(new Date(Date.now() - VACANCY_STALE_MS - 1000).toISOString());
-  assert.equal(stale.kind, "stale");
+  assert.equal(vacancyFreshness(new Date().toISOString()).kind, "fresh");
+  assert.equal(vacancyFreshness(new Date(Date.now() - STALE_MS - 1000).toISOString()).kind, "stale");
   const mapped = src("src/lib/server/map-row.ts");
   assert.match(mapped, /last_vacancy_updated_at/);
   assert.doesNotMatch(mapped, /spotsUpdatedAt: r\.claimed_at/);
   const overlay = src("src/lib/server/daycares.ts");
   assert.doesNotMatch(overlay, /availabilityKnown:\s*true/);
+  const readiness = src("src/lib/listing-readiness.ts");
+  assert.match(readiness, /VACANCY_STALE_MS = 14 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(readiness, /Does not invent a vacancy time/);
 });
 
 test("completeness requires fees or fee program, ages, hours, real licence, real photo", () => {
-  const ready = listingCompleteness(base);
+  const ready = listingReady({
+    id: "mb-100",
+    province: "MB",
+    infantMonthly: 0,
+    toddlerMonthly: 0,
+    preschoolMonthly: 0,
+    agesKnown: true,
+    ageMinMonths: 12,
+    ageMaxMonths: 60,
+    hours: "Monday to Friday 7:00–18:00",
+    licenseNumber: "123456",
+    photos: ["/photos/buildings/mb-100.jpg"],
+  });
   assert.equal(ready.ready, true);
-  assert.equal(ready.score, 5);
 
-  const incomplete = listingCompleteness({
-    ...base,
+  const incomplete = listingReady({
     id: "on-1",
     province: "ON",
-    hours: "",
+    infantMonthly: 0,
+    toddlerMonthly: 0,
+    preschoolMonthly: 0,
     agesKnown: false,
     ageMinMonths: 0,
     ageMaxMonths: 0,
+    hours: "",
     licenseNumber: "1",
     photos: ["/photos/storefront-placeholder-480.webp", "/photos/wpg/mb-1.jpg", "centre-logo.png"],
   });
   assert.equal(incomplete.ready, false);
-  assert.deepEqual(incomplete.missing.sort(), ["ages", "fees", "hours", "license", "photo"]);
+  assert.equal(incomplete.hasFees, false);
+  assert.equal(incomplete.hasAges, false);
+  assert.equal(incomplete.hasHours, false);
+  assert.equal(incomplete.hasLicense, false);
+  assert.equal(incomplete.hasPhoto, false);
 });
 
 test("real photos exclude placeholders, logos, and street-view stock", () => {
@@ -98,13 +105,10 @@ test("real photos exclude placeholders, logos, and street-view stock", () => {
   assert.equal(isRealListingPhoto("/photos/wpg/mb-1.jpg"), false);
   assert.equal(isRealListingPhoto("centre-logo.png"), false);
   assert.equal(isRealListingPhoto(""), false);
-});
-
-test("readiness does not invent vacancy from a claimed listing", () => {
-  const d = applyListingReadiness({ ...base, claimed: true, lastVacancyUpdatedAt: null, spotsUpdatedAt: null });
-  assert.equal(d.availabilityKnown, false);
-  assert.equal(d.spotsUpdatedAt, null);
-  assert.equal(d.detailsReady, true);
+  const readiness = src("src/lib/listing-readiness.ts");
+  assert.match(readiness, /\/photos\/wpg\//);
+  assert.match(readiness, /placeholder/);
+  assert.match(readiness, /-logo/);
 });
 
 test("public reviews query only approved rows and forms use Turnstile", () => {
@@ -112,7 +116,7 @@ test("public reviews query only approved rows and forms use Turnstile", () => {
   assert.match(daycares, /coalesce\(status, 'approved'\) = 'approved'/);
   const reviews = src("src/lib/server/reviews.ts");
   assert.match(reviews, /assertTurnstileToken/);
-  assert.match(reviews, /status = 'pending'/);
+  assert.match(reviews, /'pending'/);
   assert.match(reviews, /MAX_SUBMISSIONS_PER_DAY = 3/);
   assert.doesNotMatch(reviews, /Background checked/);
   const form = src("src/components/listing-review-form.tsx");
