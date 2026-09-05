@@ -1,7 +1,11 @@
 /**
- * Single source of truth for platform head chrome (PWA, extensions.js, OG),
- * shared by the Vite plugin and Nitro middleware. Plain ESM so `node --test`
- * and the Nitro bundler can both consume it.
+ * Single source of truth for platform head chrome (PWA, OG), shared by the
+ * Vite plugin and Nitro middleware. Plain ESM so `node --test` and the Nitro
+ * bundler can both consume it.
+ *
+ * `extensions.js` is Grok App Builder editor chrome. Inject it only on grok
+ * preview/editor hosts — never on kidease.ca / Vercel / empty production
+ * hosts (that URL is not on the KidEase CSP allowlist).
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -202,6 +206,43 @@ export function grokPwaHeadTags(appName = DEFAULT_APP_NAME) {
 
 export const GROK_EXTENSIONS_SCRIPT_SRC = "https://grok.com/grok-app-builder/extensions.js";
 
+const GROK_EXTENSIONS_TAG_RE =
+  /<script\b[^>]*\/grok-app-builder\/extensions\.js[^>]*>\s*<\/script>|<meta\b[^>]*(?:name=["']grok-project-id["']|property=["']grok:app_id["'])[^>]*>/gi;
+
+/** True for Grok App Builder preview/editor hosts — not KidEase production. */
+export function isGrokEditorHost(hostHeader) {
+  const host = String(hostHeader ?? "")
+    .split(",")[0]
+    .trim()
+    .split(":")[0]
+    .toLowerCase();
+  if (!host) return false;
+  return (
+    host === "grok.me" ||
+    host.endsWith(".grok.me") ||
+    host === "grok.com" ||
+    host.endsWith(".grok.com") ||
+    host === "grok-sandbox.com" ||
+    host.endsWith(".grok-sandbox.com")
+  );
+}
+
+/**
+ * Editor extension script is only for Grok preview. `VITE_PUBLIC_HOSTNAME`
+ * wins when set (published grok.me apps). Empty / kidease / Vercel hosts
+ * must not ship the script to real users.
+ */
+export function shouldInjectGrokExtensions({ host } = {}) {
+  const envHost =
+    typeof process !== "undefined" ? String(process.env?.VITE_PUBLIC_HOSTNAME ?? "") : "";
+  return isGrokEditorHost(envHost) || isGrokEditorHost(host);
+}
+
+/** Drop leftover editor tags from HTML that should not go to KidEase users. */
+export function stripGrokExtensionsTags(html) {
+  return String(html).replace(GROK_EXTENSIONS_TAG_RE, "");
+}
+
 export function readGrokProjectId() {
   const fromProcess = typeof process !== "undefined" ? process.env?.VITE_PROJECT_ID : "";
   return String(fromProcess ?? "").trim();
@@ -227,7 +268,7 @@ export function grokXCreatorHeadTags(creator = readXCreator(), creatorId = readX
   ];
 }
 
-/** Platform "Created with Grok" banner — injected into every HTML document. */
+/** Platform "Created with Grok" banner — only for grok editor/preview hosts. */
 export function grokExtensionsHeadTags(projectId = readGrokProjectId()) {
   const id = escapeHtml(projectId);
   const tags = [];
@@ -433,6 +474,10 @@ export function injectGrokPwaHead(html, ctx = {}) {
     documentTitle,
   );
   let next = stripShareMetaTags(html);
+  const injectExtensions = shouldInjectGrokExtensions({ host });
+  if (!injectExtensions) {
+    next = stripGrokExtensionsTags(next);
+  }
 
   const missing = grokPwaHeadTags(appName)
     .filter(([key]) => {
@@ -447,17 +492,19 @@ export function injectGrokPwaHead(html, ctx = {}) {
     grokOgHeadTags({ host, appName, site, documentTitle, cwd }).join(""),
   );
 
-  if (!next.includes("/grok-app-builder/extensions.js")) {
-    missing.push(...grokExtensionsHeadTags(projectId));
-  } else if (projectId && !next.includes('name="grok-project-id"')) {
-    missing.push(`<meta name="grok-project-id" content="${escapeHtml(projectId)}">`);
-  }
-  if (
-    projectId &&
-    !next.includes('property="grok:app_id"') &&
-    !next.includes("property='grok:app_id'")
-  ) {
-    missing.push(`<meta property="grok:app_id" content="${escapeHtml(projectId)}">`);
+  if (injectExtensions) {
+    if (!next.includes("/grok-app-builder/extensions.js")) {
+      missing.push(...grokExtensionsHeadTags(projectId));
+    } else if (projectId && !next.includes('name="grok-project-id"')) {
+      missing.push(`<meta name="grok-project-id" content="${escapeHtml(projectId)}">`);
+    }
+    if (
+      projectId &&
+      !next.includes('property="grok:app_id"') &&
+      !next.includes("property='grok:app_id'")
+    ) {
+      missing.push(`<meta property="grok:app_id" content="${escapeHtml(projectId)}">`);
+    }
   }
   const creatorTags = grokXCreatorHeadTags(creator, creatorId);
   if (creatorTags.length > 0) {

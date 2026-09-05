@@ -15,7 +15,7 @@ export type ListingVisibilityInput = {
   isTest?: boolean | number | null;
 };
 
-/** Known QA fixture — keep in sync with GHOST_LISTING / centres-extra-1.json. */
+/** Known QA fixture — keep in sync with GHOST_LISTING / centres-extra-1.json / request-guard HIDDEN_LISTING_SLUGS. */
 const KNOWN_ADMIN_ONLY_IDS = new Set(["ke-test-ghost-001"]);
 const KNOWN_ADMIN_ONLY_SLUGS = new Set(["test-ghost-claim-lab"]);
 const KNOWN_ADMIN_ONLY_LICENCES = new Set(["test-ghost-0001"]);

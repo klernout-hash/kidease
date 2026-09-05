@@ -10,8 +10,10 @@ import {
   grokXCreatorHeadTags,
   injectGrokPwaHead,
   isDocumentPath,
+  isGrokEditorHost,
   isInstallQuery,
   renderWebManifest,
+  shouldInjectGrokExtensions,
   snapshotOgIdentity,
   stripInstallParams,
 } from "./grok-pwa-shared.mjs";
@@ -23,14 +25,45 @@ test("injects before </head>", () => {
   const out = injectGrokPwaHead("<html><head><title>x</title></head><body></body></html>");
   assert.match(out, /rel="manifest"/);
   assert.match(out, /apple-touch-icon/);
-  assert.match(out, /grok-app-builder\/extensions\.js/);
+  assert.doesNotMatch(out, /grok-app-builder\/extensions\.js/);
   assert.ok(out.indexOf("manifest") < out.indexOf("</head>"));
 });
 
-test("injects the extensions script without a project id", () => {
+test("does not inject grok extensions on KidEase / empty / Vercel hosts", () => {
+  const prev = process.env.VITE_PUBLIC_HOSTNAME;
+  delete process.env.VITE_PUBLIC_HOSTNAME;
+  try {
+    for (const host of ["", "www.kidease.ca", "kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
+      const out = injectGrokPwaHead("<html><head></head></html>", {
+        appName: "KidEase",
+        projectId: "proj-123",
+        host,
+      });
+      assert.doesNotMatch(out, /grok\.com/);
+      assert.doesNotMatch(out, /grok-app-builder\/extensions\.js/);
+      assert.doesNotMatch(out, /grok-project-id/);
+      assert.doesNotMatch(out, /property="grok:app_id"/);
+    }
+  } finally {
+    if (prev === undefined) delete process.env.VITE_PUBLIC_HOSTNAME;
+    else process.env.VITE_PUBLIC_HOSTNAME = prev;
+  }
+});
+
+test("strips a leftover extensions script on KidEase hosts", () => {
+  const dirty =
+    '<html><head><script src="https://grok.com/grok-app-builder/extensions.js" defer></script><meta name="grok-project-id" content="x"><meta property="grok:app_id" content="x"></head></html>';
+  const out = injectGrokPwaHead(dirty, { host: "www.kidease.ca" });
+  assert.doesNotMatch(out, /grok-app-builder\/extensions\.js/);
+  assert.doesNotMatch(out, /grok-project-id/);
+  assert.doesNotMatch(out, /property="grok:app_id"/);
+});
+
+test("injects the extensions script on grok editor hosts without a project id", () => {
   const out = injectGrokPwaHead("<html><head></head></html>", {
     appName: "Demo",
     projectId: "",
+    host: "wild-race.grok.me",
   });
   assert.match(out, /src="https:\/\/grok\.com\/grok-app-builder\/extensions\.js" defer/);
   assert.doesNotMatch(out, /grok-project-id/);
@@ -38,18 +71,31 @@ test("injects the extensions script without a project id", () => {
   assert.doesNotMatch(out, /property="grok:app_id"/);
 });
 
-test("injects project id on the script and meta when provided", () => {
+test("injects project id on the script and meta when provided on a grok host", () => {
   const out = injectGrokPwaHead("<html><head></head></html>", {
     appName: "Demo",
     projectId: "proj-123",
+    host: "wild-race.grok.me",
   });
   assert.match(out, /name="grok-project-id" content="proj-123"/);
   assert.match(out, /data-project-id="proj-123"/);
   assert.match(out, /property="grok:app_id" content="proj-123"/);
 });
 
+test("isGrokEditorHost is only grok preview/editor hosts", () => {
+  assert.equal(isGrokEditorHost("wild-race.grok.me"), true);
+  assert.equal(isGrokEditorHost("grok.com"), true);
+  assert.equal(isGrokEditorHost("preview.grok-sandbox.com"), true);
+  assert.equal(shouldInjectGrokExtensions({ host: "wild-race.grok.me" }), true);
+  assert.equal(isGrokEditorHost("www.kidease.ca"), false);
+  assert.equal(isGrokEditorHost("kidease-git.vercel.app"), false);
+  assert.equal(isGrokEditorHost(""), false);
+  assert.equal(shouldInjectGrokExtensions({ host: "www.kidease.ca" }), false);
+  assert.equal(shouldInjectGrokExtensions({}), false);
+});
+
 test("does not duplicate grok:app_id", () => {
-  const ctx = { appName: "Demo", projectId: "proj-123" };
+  const ctx = { appName: "Demo", projectId: "proj-123", host: "wild-race.grok.me" };
   const once = injectGrokPwaHead("<html><head></head></html>", ctx);
   const twice = injectGrokPwaHead(once, ctx);
   assert.equal(once, twice);
@@ -287,7 +333,7 @@ test("streaming injector matches </HEAD> case-insensitively", () => {
 });
 
 test("does not duplicate the extensions script", () => {
-  const ctx = { appName: "Demo", projectId: "proj-123" };
+  const ctx = { appName: "Demo", projectId: "proj-123", host: "wild-race.grok.me" };
   const once = injectGrokPwaHead("<html><head></head></html>", ctx);
   const twice = injectGrokPwaHead(once, ctx);
   assert.equal(once, twice);
