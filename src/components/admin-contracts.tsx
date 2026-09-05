@@ -84,8 +84,15 @@ export function AdminContractsPanel({
       </dl>
       <p className="mt-4 text-sm text-muted">
         Each claimed centre signs the KidEase licensed centre agreement.
-        {mode === "live" ? " Envelopes go through DocuSign." : " DocuSign keys are not set yet, so centres sign in-app until you add them on Vercel."}
+        {mode === "live"
+          ? " Envelopes go through DocuSign."
+          : " DocuSign keys are not set. Send is off so we do not pretend envelopes leave KidEase. Centres can still sign in-app from their desk."}
       </p>
+      {mode !== "live" ? (
+        <p className="mt-3 rounded-xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border">
+          Set the DocuSign env names on Vercel when you want live envelopes. Until then this list is a status board only.
+        </p>
+      ) : null}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <input
           value={q}
@@ -136,9 +143,15 @@ export function AdminContractsPanel({
                   {r.signedAt ? <p className="mt-0.5 text-xs text-subtle">Signed {new Date(r.signedAt).toLocaleString()}</p> : null}
                 </div>
                 <div className="flex flex-wrap justify-end gap-2">
-                  <Button size="sm" disabled={busy !== null} onClick={() => void send(r)}>
-                    {r.status === "signed" ? "Resend" : r.status === "sent" || r.status === "viewed" ? "Send again" : "Send to sign"}
-                  </Button>
+                  {mode === "live" ? (
+                    <Button size="sm" disabled={busy !== null} onClick={() => void send(r)}>
+                      {r.status === "signed" ? "Resend" : r.status === "sent" || r.status === "viewed" ? "Send again" : "Send to sign"}
+                    </Button>
+                  ) : (
+                    <Button size="sm" disabled>
+                      Send (DocuSign off)
+                    </Button>
+                  )}
                   {r.signingUrl && r.status !== "signed" && r.status !== "voided" ? (
                     <Button size="sm" variant="secondary" asChild>
                       <a href={r.signingUrl}>Open signing</a>

@@ -38,7 +38,9 @@ export function ListingStatusBadge({
 export function LedgerHonesty({ stripeLive, className }: { stripeLive: boolean; className?: string }) {
   return (
     <p className={cn("text-sm text-muted", className)}>
-      {stripeLive ? "Stripe live keys are set — charges can settle." : "Internal ledger (not charged)"}
+      {stripeLive
+        ? "Stripe live keys are set — charges can settle."
+        : "Internal ledger only. $0 here is not a Stripe balance, and parents cannot pay by card until live keys are on."}
     </p>
   );
 }

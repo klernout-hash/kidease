@@ -8,6 +8,8 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { confirmInterac, createPayment, getFamily } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
+import { useSessionDesks } from "@/components/desk-switcher";
+import { LedgerHonesty } from "@/components/listing-status-badge";
 import { money } from "@/lib/utils";
 import type { Booking, PayMethod } from "@/lib/types";
 
@@ -19,6 +21,8 @@ function PayPage() {
   const { bookingId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
+  const { session: desks } = useSessionDesks();
+  const stripeLive = Boolean(desks?.stripeLive);
   const navigate = useNavigate();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [method, setMethod] = useState<PayMethod>("apple");
@@ -50,7 +54,7 @@ function PayPage() {
   }
   if (!user) return <RedirectToSignIn />;
 
-  const canPay = booking?.status === "accepted" && booking.paymentStatus !== "paid";
+  const canPay = Boolean(stripeLive && booking?.status === "accepted" && booking.paymentStatus !== "paid");
   const alreadyPaid = booking?.status === "active" || booking?.paymentStatus === "paid" || result?.status === "paid";
 
   async function pay() {
@@ -75,6 +79,12 @@ function PayPage() {
         </Link>
         <h1 className="mt-3 font-display text-3xl">{alreadyPaid ? t("receiptTitle") : t("payTitle")}</h1>
         <p className="mt-2 text-sm text-muted">{alreadyPaid ? t("receiptLead") : t("payLead")}</p>
+        <LedgerHonesty stripeLive={stripeLive} className="mt-3" />
+        {booking && !stripeLive && !alreadyPaid ? (
+          <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-muted ring-1 ring-border">
+            Card, Apple Pay, and Google Pay stay off until Stripe live keys are on. This page will not take a charge.
+          </p>
+        ) : null}
 
         {booking ? (
           <div className="mt-6 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">

@@ -58,6 +58,8 @@ function AdminPage() {
   const [q, setQ] = useState("");
   const [moneyQ, setMoneyQ] = useState("");
   const [moneyDir, setMoneyDir] = useState<"all" | "in" | "out">("all");
+  const [activityKind, setActivityKind] = useState("all");
+  const [activityQ, setActivityQ] = useState("");
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
 
   async function refresh() {
@@ -126,6 +128,23 @@ function AdminPage() {
     const declined = centres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "declined").length;
     return { waiting, approved, declined, all: centres.length };
   }, [centres]);
+
+  const activityRows = useMemo(() => {
+    const needle = activityQ.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (activityKind !== "all" && r.kind !== activityKind) return false;
+      if (!needle) return true;
+      return [r.kind, r.daycare_name, r.address, r.city, r.province, r.provider_name, r.provider_email]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(needle);
+    });
+  }, [rows, activityKind, activityQ]);
+  const activityKinds = useMemo(() => {
+    const set = new Set(rows.map((r) => r.kind).filter(Boolean));
+    return ["all", ...[...set].sort()];
+  }, [rows]);
 
   const moneyRows = useMemo(() => {
     const needle = moneyQ.trim().toLowerCase();
@@ -257,11 +276,38 @@ function AdminPage() {
       ) : tab === "money" ? (
         <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} />
       ) : (
+        <>
+        <div className="mb-4">
+          <h2 className="font-display text-2xl">Activity</h2>
+          <p className="mt-1 text-sm text-muted">
+            Platform log only. Export, RBAC, and admin chat actions are not built — filter here, then open the listing.
+          </p>
+        </div>
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+          <input
+            value={activityQ}
+            onChange={(e) => setActivityQ(e.target.value)}
+            placeholder="Search activity…"
+            className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
+          />
+          <div className="flex flex-wrap gap-2">
+            {activityKinds.map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                onClick={() => setActivityKind(kind)}
+                className={activityKind === kind ? "rounded-full bg-primary px-3 py-2 text-sm text-primary-fg" : "rounded-full bg-surface px-3 py-2 text-sm ring-1 ring-border"}
+              >
+                {kind === "all" ? "All" : kind}
+              </button>
+            ))}
+          </div>
+        </div>
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-          {rows.length === 0 ? (
-            <li className="p-8 text-center text-muted">No activity yet.</li>
+          {activityRows.length === 0 ? (
+            <li className="p-8 text-center text-muted">{rows.length === 0 ? "No activity yet." : "No activity matches that filter."}</li>
           ) : (
-            rows.map((r) => (
+            activityRows.map((r) => (
               <li key={r.id} className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -286,6 +332,7 @@ function AdminPage() {
             ))
           )}
         </ul>
+        </>
       )}
     </DeskShell>
     </TwoFactorGate>
@@ -314,6 +361,9 @@ function MoneyPanel({
       <div className="mb-4">
         <h2 className="font-display text-2xl">Money</h2>
         <LedgerHonesty stripeLive={stripeLive} className="mt-1" />
+        {!stripeLive ? (
+          <p className="mt-2 text-sm text-muted">Pending totals are not settled. There is no payout, refund, or parent Pay CTA while Stripe is off.</p>
+        ) : null}
       </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <CashStat label="In (paid)" value={ledger.inPaid} />

@@ -64,17 +64,28 @@ export function AdminMailPanel() {
   async function onOpen(uid: number) {
     setBusy(true);
     setOpenError(null);
+    setOpen(null);
+    const watchdog = window.setTimeout(() => {
+      setOpenError("That message is taking too long in KidEase. Use Titan webmail if you need the original, or try another row.");
+      setBusy(false);
+    }, 10_000);
     try {
       const res = await getAdminMailboxMessage({ data: { uid } });
+      window.clearTimeout(watchdog);
       if (!res.ok || !res.message) {
-        setOpenError(res.error || "Could not open that message.");
+        setOpenError(res.error || "Could not open that message in KidEase.");
         return;
       }
-      setOpen(res.message);
+      setOpen({
+        ...res.message,
+        text: (res.message.text || "").slice(0, 12_000),
+      });
       setMessages((rows) => rows.map((row) => (row.uid === uid ? { ...row, unseen: false } : row)));
     } catch (err) {
-      setOpenError(err instanceof Error ? err.message : "Could not open that message.");
+      window.clearTimeout(watchdog);
+      setOpenError(err instanceof Error ? err.message : "Could not open that message in KidEase.");
     } finally {
+      window.clearTimeout(watchdog);
       setBusy(false);
     }
   }
@@ -116,7 +127,7 @@ export function AdminMailPanel() {
         <div>
           <h2 className="font-display text-2xl">Mail</h2>
           <p className="mt-1 text-sm text-muted">
-            Inbox is Titan for <span className="text-fg">{mailbox}</span>. List, read, and reply here; Open Titan inbox stays as a fallback.
+            Inbox is Titan for <span className="text-fg">{mailbox}</span>. Open rows in KidEase. Titan’s website is a third-party tab — if that tab crashes, stay here.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -128,10 +139,10 @@ export function AdminMailPanel() {
           <a
             href={inboxUrl}
             target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+            rel="noopener noreferrer"
+            className="inline-flex h-11 items-center rounded-full bg-surface px-4 text-sm font-medium ring-1 ring-border"
           >
-            Open Titan inbox
+            Titan webmail (external)
           </a>
         </div>
       </div>
@@ -193,7 +204,7 @@ export function AdminMailPanel() {
             {open.date ? ` · ${formatMailDate(open.date)}` : ""}
           </p>
           <pre className="mt-4 max-h-80 overflow-auto whitespace-pre-wrap font-sans text-sm leading-6">
-            {open.text || "No plain-text body. Use Open Titan inbox if you need the original."}
+            {open.text || "No plain-text body. Open Titan webmail if you need the original HTML."}
           </pre>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button type="button" size="sm" onClick={() => onReply(open)}>
