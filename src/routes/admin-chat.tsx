@@ -88,6 +88,11 @@ function AdminChatPage() {
                   : "No FCM / APNs credentials. Do not invent keys."
               }
             />
+            <Stat
+              label="FEATURE_SMS"
+              value={lab?.sms.enabled ? "on" : "off"}
+              hint={smsHint(lab)}
+            />
           </dl>
           <div className="rounded-2xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
             <p>
@@ -105,6 +110,17 @@ function AdminChatPage() {
       </DeskShell>
     </TwoFactorGate>
   );
+}
+
+function smsHint(lab: LabStatus | null): string {
+  if (!lab) return "Twilio env not loaded. Do not invent credentials.";
+  const p = lab.sms.presence;
+  const sender = p.messagingService ? "Messaging Service present" : p.fromNumber ? "From number present" : "no Canadian sender / Messaging Service";
+  const auth = p.authMode === "api_key" ? "API key present" : p.authMode === "auth_token" ? "auth token present" : "no auth";
+  if (lab.sms.credentialsPresent) {
+    return `${auth}. ${sender}. Values are not shown.`;
+  }
+  return `No Twilio send credentials (${auth}; ${sender}). Do not invent SID or token values.`;
 }
 
 function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {

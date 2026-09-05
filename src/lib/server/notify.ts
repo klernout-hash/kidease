@@ -13,11 +13,12 @@ import {
   VISITOR_AUTO_REPLY_SUBJECT,
   VISITOR_AUTO_REPLY_TEXT,
 } from "@/lib/server/notify-mail";
+import { sendSms } from "@/lib/server/sms";
 
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
 const MAIL_FROM = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
 const ADMIN_SMS = (process.env.ADMIN_SMS || "+12048088398").replace(/[^\d+]/g, "");
-const SMS_KINDS = new Set<PlatformKind>(["chat", "contact", "enroll", "spot_request", "account", "signup"]);
+const SMS_KINDS = new Set<PlatformKind>(["chat", "contact", "enroll", "spot_request", "account", "signup", "claim"]);
 
 export type PlatformKind =
   | "account"
@@ -421,28 +422,18 @@ async function sendVisitorAutoReply(to: string, name: string) {
   await deliverEmail(VISITOR_AUTO_REPLY_SUBJECT, text, html, to, ADMIN_EMAIL);
 }
 
+/** Parallel to email. sendSms no-ops when FEATURE_SMS is off or Twilio env is missing. */
 async function deliverSms(kind: PlatformKind, title: string, detail?: string) {
   if (!SMS_KINDS.has(kind)) return "skip";
-  const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
-  const token = process.env.TWILIO_AUTH_TOKEN?.trim();
-  const from = process.env.TWILIO_FROM_NUMBER?.trim();
   const snippet = (detail || title).replace(/\s+/g, " ").slice(0, 120);
   const body = `KidEase ${kind === "chat" ? "Live Chat" : title}: ${snippet}`;
-  if (!sid || !token || !from) {
-    console.info("[kidease-sms]", ADMIN_SMS, body);
-    return "logged";
+  const result = await sendSms({ to: ADMIN_SMS, body });
+  if (result.ok) return "sent";
+  if (result.skipped) {
+    console.info("[kidease-sms]", result.error);
+    return "skip";
   }
-  const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ To: ADMIN_SMS, From: from, Body: body.slice(0, 1600) }),
-  });
-  if (!res.ok) throw new Error(`Twilio ${res.status}: ${await res.text()}`);
-  return "sent";
+  throw new Error(result.error);
 }
 
 async function ensureEventsTable() {
