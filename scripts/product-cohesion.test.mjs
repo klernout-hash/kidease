@@ -55,6 +55,18 @@ test("admin request-info email includes the operator note", () => {
   assert.match(waiting.text, /Licence photo is blurry/);
 });
 
+test("search does not block the first response on a Neon catalog import", () => {
+  const nearby = readFileSync(join(root, "src/lib/server/nearby.ts"), "utf8");
+  assert.match(nearby, /void importCatalogSlice/);
+  assert.doesNotMatch(nearby, /await importCatalogSlice\(sql, fallback\)/);
+});
+
+test("unsigned provider desk redirects instead of hanging on Loading", () => {
+  const provider = readFileSync(join(root, "src/routes/provider.tsx"), "utf8");
+  assert.match(provider, /useSettledUser/);
+  assert.match(provider, /role: "provider"/);
+});
+
 test("guest FAQ and verify listings stay on public sitemap", () => {
   const sitemap = readFileSync(join(root, "public/sitemap.xml"), "utf8");
   assert.match(sitemap, /https:\/\/www\.kidease\.ca\/faq/);

@@ -82,6 +82,7 @@ function SearchPage() {
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const [askLocation, setAskLocation] = useState(false);
   const [mapEnabled, setMapEnabled] = useState(false);
+  const [searchFailed, setSearchFailed] = useState(false);
   useLivePresence(locationConsent === "granted");
 
   useEffect(() => {
@@ -100,8 +101,13 @@ function SearchPage() {
     let live = true;
     const key = searchCacheKey({ lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup });
     const cached = readSearchCache(key);
-    if (cached) setItems(cached);
-    else setRefreshing(true);
+    if (cached) {
+      setItems(cached);
+      setSearchFailed(false);
+    } else {
+      setRefreshing(true);
+      setSearchFailed(false);
+    }
     const tmr = window.setTimeout(() => {
       void searchDaycares({
         data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label) },
@@ -109,19 +115,33 @@ function SearchPage() {
         .then((rows) => {
           if (!live) return;
           setItems(rows);
+          setSearchFailed(false);
           writeSearchCache(key, rows);
         })
         .catch(() => {
-          if (live && !cached) setItems([]);
+          if (live && !cached) {
+            setItems([]);
+            setSearchFailed(true);
+          }
         })
         .finally(() => {
           if (live) setRefreshing(false);
         });
     }, 160);
+    const watchdog = window.setTimeout(() => {
+      if (!live) return;
+      setItems((cur) => {
+        if (cur) return cur;
+        setSearchFailed(true);
+        return [];
+      });
+      setRefreshing(false);
+    }, 12_000);
     trackLocation("search", origin.lat, origin.lng, origin.label, { radiusKm });
     return () => {
       live = false;
       window.clearTimeout(tmr);
+      window.clearTimeout(watchdog);
     };
   }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query, origin.label]);
 
@@ -491,9 +511,39 @@ function SearchPage() {
               ))}
             </div>
           ) : list.length === 0 ? (
-            <p className="mt-6 rounded-xl bg-surface p-8 text-center text-muted ring-1 ring-border">
-              {liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("noResults")}
-            </p>
+            <div className="mt-6 rounded-xl bg-surface p-8 text-center ring-1 ring-border">
+              <p className="text-muted">
+                {searchFailed
+                  ? t("noResults")
+                  : liveOnly && (items?.length ?? 0) > 0
+                    ? t("noLiveResults")
+                    : t("noResults")}
+              </p>
+              {searchFailed ? (
+                <Button
+                  className="mt-4"
+                  onClick={() => {
+                    setItems(null);
+                    setSearchFailed(false);
+                    setRefreshing(true);
+                    void searchDaycares({
+                      data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label) },
+                    })
+                      .then((rows) => {
+                        setItems(rows);
+                        setSearchFailed(false);
+                      })
+                      .catch(() => {
+                        setItems([]);
+                        setSearchFailed(true);
+                      })
+                      .finally(() => setRefreshing(false));
+                  }}
+                >
+                  {t("search")}
+                </Button>
+              ) : null}
+            </div>
           ) : (
             <ExploreRails items={list} onHover={setActive} />
           )}

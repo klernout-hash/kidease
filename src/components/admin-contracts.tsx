@@ -145,7 +145,15 @@ export function AdminContractsPanel({
                 </div>
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button size="sm" disabled={busy !== null} onClick={() => void send(r)}>
-                    {r.status === "signed" ? "Resend" : r.status === "sent" || r.status === "viewed" ? "Send again" : "Send to sign"}
+                    {mode === "demo"
+                      ? r.status === "signed"
+                        ? "Resend in-app"
+                        : "Send in-app signing"
+                      : r.status === "signed"
+                        ? "Resend"
+                        : r.status === "sent" || r.status === "viewed"
+                          ? "Send again"
+                          : "Send to sign"}
                   </Button>
                   {r.signingUrl && r.status !== "signed" && r.status !== "voided" ? (
                     <Button size="sm" variant="secondary" asChild>

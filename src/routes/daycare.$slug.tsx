@@ -52,11 +52,15 @@ function Listing() {
     let live = true;
     setMissing(false);
     setData(null);
-    void getDaycare({ data: slug }).then((res) => {
-      if (!live) return;
-      if (!res) setMissing(true);
-      else setData(res);
-    });
+    void getDaycare({ data: slug })
+      .then((res) => {
+        if (!live) return;
+        if (!res) setMissing(true);
+        else setData(res);
+      })
+      .catch(() => {
+        if (live) setMissing(true);
+      });
     return () => {
       live = false;
     };
@@ -455,7 +459,11 @@ function Listing() {
               )}
             </p>
             <div className="mt-4 grid gap-2">
-              <Button onClick={onTour}>{t("bookTour")}</Button>
+              {live ? (
+                <Button onClick={onTour}>{t("bookTour")}</Button>
+              ) : (
+                <Button disabled>{t("requestUnavailable")}</Button>
+              )}
               {live ? (
                 <Button variant="secondary" onClick={onRequest}>{t("book")}</Button>
               ) : (
@@ -510,9 +518,11 @@ function Listing() {
       {!requestOpen ? (
       <div className="fixed inset-x-0 bottom-20 z-20 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur-md [[data-channel=website]_&]:hidden">
         <div className="mx-auto flex max-w-lg items-center gap-2">
-          <Button className="flex-1" variant="secondary" onClick={onTour}>
-            {t("bookTour")}
-          </Button>
+          {live ? (
+            <Button className="flex-1" variant="secondary" onClick={onTour}>
+              {t("bookTour")}
+            </Button>
+          ) : null}
           {live ? (
             <Button className="flex-1" onClick={onRequest}>
               {t("book")}

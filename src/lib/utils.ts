@@ -34,6 +34,8 @@ export function displayCentreName(value: string) {
   return decodeHtml(value)
     .replace(/\bCetnre\b/g, "Centre")
     .replace(/\bCetnres\b/g, "Centres")
+    .replace(/\s+-\s*/g, " – ")
+    .replace(/([a-z])-([A-Z])/g, "$1 – $2")
     .replace(/\s{2,}/g, " ")
     .trim();
 }

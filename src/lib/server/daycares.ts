@@ -229,11 +229,11 @@ export const getDaycare = createServerFn({ method: "GET" })
     const reviews = await sql<Review & { daycare_id: string; body_fr: string; created_at: string }>`
       select id, daycare_id, author, rating, body, body_fr, created_at
       from reviews where daycare_id = ${daycare.id} order by created_at desc
-    `;
+    `.catch(() => [] as Array<Review & { daycare_id: string; body_fr: string; created_at: string }>);
     let availability = await sql<AvailabilityRow>`
       select month, infant, toddler, preschool from availability
       where daycare_id = ${daycare.id} order by month
-    `;
+    `.catch(() => [] as AvailabilityRow[]);
     if (availability.length === 0) {
       availability = catalogMonths().map((month) => ({
         month,
@@ -248,7 +248,7 @@ export const getDaycare = createServerFn({ method: "GET" })
       values (${daycare.id}, ${day}, 1)
       on conflict (daycare_id, viewed_on)
       do update set count = daycare_views.count + 1
-    `;
+    `.catch(() => undefined);
     const nearby = uniqueById(
       (await catalogNear({ lat: found.lat, lng: found.lng }, 15))
         .filter((d) => d.id !== found.id)

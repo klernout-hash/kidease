@@ -162,9 +162,9 @@ export async function nearbyListings(
         if (geo.length > 0) return geo.map(rowToListing).filter(isPublicListing);
         const fallback = await catalogNear(origin, radiusKm);
         if (fallback.length > 0) {
-          await importCatalogSlice(sql, fallback).catch(() => undefined);
-          const again = await queryDWithin(sql, origin, radiusKm);
-          if (again.length > 0) return again.map(rowToListing).filter(isPublicListing);
+          // Do not block the parent/guest search on a 400-row upsert. Import in
+          // the background so the first request still returns catalogue hits.
+          void importCatalogSlice(sql, fallback).catch(() => undefined);
         }
         return fallback.filter(isPublicListing);
       }

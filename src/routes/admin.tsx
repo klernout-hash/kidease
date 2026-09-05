@@ -464,13 +464,13 @@ function CentreRow({
           <Button size="sm" variant={status === "live" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
             Approve
           </Button>
-          <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => onDecide(c.daycareId, "info")}>
+          <Button size="sm" variant="secondary" disabled={busy !== null || status === "declined"} onClick={() => onDecide(c.daycareId, "info")}>
             Request info
           </Button>
-          <Button size="sm" variant={status === "waiting" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "waiting")}>
+          <Button size="sm" variant={status === "waiting" ? "primary" : "secondary"} disabled={busy !== null || status === "declined"} onClick={() => onDecide(c.daycareId, "waiting")}>
             Waiting
           </Button>
-          <Button size="sm" variant={status === "declined" ? "danger" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "decline")}>
+          <Button size="sm" variant={status === "declined" ? "danger" : "secondary"} disabled={busy !== null || status === "declined"} onClick={() => onDecide(c.daycareId, "decline")}>
             Decline
           </Button>
         </div>

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { ParentDesk } from "@/components/parent-desk";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useSettledUser } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/parent")({
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/parent")({
 });
 
 function ParentPage() {
-  const { user, isPending } = useCurrentUserState();
+  const { user, isPending } = useSettledUser();
   const { t } = useCopy();
   const search = Route.useSearch();
   const initialTab =
