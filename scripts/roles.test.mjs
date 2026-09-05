@@ -6,7 +6,7 @@ import {
   isWaitingClaim,
 } from "../src/lib/listing-status.ts";
 import { desksFor, landingPath, nextStoredRole, parseAppRole, primaryDesk, showDeskSwitcher } from "../src/lib/desks.ts";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { stripeChargesLive, INTERNAL_LEDGER_LABEL } from "../src/lib/stripe-live.ts";
@@ -51,6 +51,34 @@ test("desk switcher is for any multi-desk session, not admin-only", () => {
   assert.match(src, /showDeskSwitcher/);
   assert.doesNotMatch(src, /session\.role !== "admin"/);
   assert.match(src, /do not call setRole/);
+});
+
+function walkTs(dir, acc = []) {
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, ent.name);
+    if (ent.isDirectory()) walkTs(p, acc);
+    else if (/\.(tsx|ts)$/.test(ent.name)) acc.push(p);
+  }
+  return acc;
+}
+
+test("useSessionDesks is defined and imported at every call site", () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const hookFile = join(root, "src/components/desk-switcher.tsx");
+  const hookSrc = readFileSync(hookFile, "utf8");
+  assert.match(hookSrc, /export function useSessionDesks\(/);
+
+  const missing = [];
+  for (const file of walkTs(join(root, "src"))) {
+    const text = readFileSync(file, "utf8");
+    if (!/\buseSessionDesks\s*\(/.test(text)) continue;
+    const defines = /export function useSessionDesks\s*\(/.test(text);
+    const imported = /import\s*\{[^}]*\buseSessionDesks\b[^}]*\}\s*from\s*["']@\/components\/desk-switcher["']/.test(
+      text,
+    );
+    if (!defines && !imported) missing.push(file.slice(root.length + 1));
+  }
+  assert.deepEqual(missing, [], `useSessionDesks() used without import: ${missing.join(", ")}`);
 });
 
 test("setRole never demotes staff", () => {
