@@ -32,25 +32,34 @@ function PayBillPage() {
   const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
 
-  async function load() {
-    try {
-      const res = await getBill({ data: billId });
-      setBill(res.bill);
-      setStripeLive(res.stripeLive);
-      setMissing(false);
-    } catch {
-      setMissing(true);
-    }
-  }
-
   useEffect(() => {
     if (!user) return;
-    void load();
+    let cancelled = false;
+    void getBill({ data: billId })
+      .then((res) => {
+        if (cancelled) return;
+        setBill(res.bill);
+        setStripeLive(res.stripeLive);
+        setMissing(false);
+      })
+      .catch(() => {
+        if (!cancelled) setMissing(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [user, billId]);
 
   useEffect(() => {
     if (!search.paid || !user) return;
-    const tmr = window.setTimeout(() => void load(), 1200);
+    const tmr = window.setTimeout(() => {
+      void getBill({ data: billId })
+        .then((res) => {
+          setBill(res.bill);
+          setStripeLive(res.stripeLive);
+        })
+        .catch(() => undefined);
+    }, 1200);
     return () => window.clearTimeout(tmr);
   }, [search.paid, user, billId]);
 
@@ -73,7 +82,9 @@ function PayBillPage() {
       const res = await createBillCheckout({ data: bill.id });
       if (res.alreadyPaid) {
         toast.success(t("paid"));
-        await load();
+        const latest = await getBill({ data: bill.id });
+        setBill(latest.bill);
+        setStripeLive(latest.stripeLive);
         return;
       }
       if (res.url) {
