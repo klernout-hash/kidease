@@ -13,6 +13,7 @@ import {
 } from "@/lib/desks";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { reportError } from "@/lib/observe";
+import { canSeeProviderSubscriptions } from "@/lib/features";
 
 export const ADMIN_PROMOTE_SQL =
   "update profiles set role = 'admin' where user_id = '…';";
@@ -123,6 +124,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     unread,
     stripeLive,
     ledgerLabel: stripeLive ? "Stripe live" : "Internal ledger (not charged)",
+    providerSubscriptions: canSeeProviderSubscriptions(stored),
   };
 }
 

@@ -1,9 +1,15 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { CreditCard } from "lucide-react";
 import { Shell } from "@/components/shell";
-import { DeskSwitcher } from "@/components/desk-switcher";
-import { DESK_META, DESK_NAV, type DeskId } from "@/lib/desk-nav";
+import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { DESK_META, visibleDeskNav, type DeskIcon, type DeskId } from "@/lib/desk-nav";
 import { cn } from "@/lib/utils";
+
+function DeskItemIcon({ name, className }: { name?: DeskIcon; className?: string }) {
+  if (name === "credit-card") return <CreditCard className={className} strokeWidth={1.8} />;
+  return null;
+}
 
 export function DeskShell({
   desk,
@@ -17,7 +23,9 @@ export function DeskShell({
   children: ReactNode;
 }) {
   const meta = DESK_META[desk];
-  const items = DESK_NAV[desk];
+  const { session } = useSessionDesks();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const items = visibleDeskNav(desk, { providerSubscriptions: session?.providerSubscriptions });
 
   return (
     <Shell>
@@ -31,14 +39,29 @@ export function DeskShell({
           <nav className="mt-5 flex gap-2 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
             {items.map((item) => {
               if (item.href) {
+                const on =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(`${item.href}/`));
                 return (
                   <Link
                     key={item.id}
                     to={item.href}
-                    className="shrink-0 rounded-full px-3 py-2 text-sm text-muted ring-1 ring-border hover:text-fg md:rounded-xl md:ring-0 md:hover:bg-surface"
+                    className={cn(
+                      "shrink-0 rounded-full px-3 py-2 text-sm md:rounded-xl",
+                      on
+                        ? "bg-primary text-primary-fg"
+                        : "text-muted ring-1 ring-border hover:text-fg md:ring-0 md:hover:bg-surface",
+                    )}
                   >
-                    <span className="block font-medium">{item.label}</span>
-                    {item.hint ? <span className="mt-0.5 hidden text-xs text-subtle md:block">{item.hint}</span> : null}
+                    <span className="flex items-center gap-2 font-medium">
+                      <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
+                      {item.label}
+                    </span>
+                    {item.hint ? (
+                      <span className={cn("mt-0.5 hidden text-xs md:block", on ? "text-primary-fg/70" : "text-subtle")}>
+                        {item.hint}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               }
@@ -53,7 +76,10 @@ export function DeskShell({
                     on ? "bg-primary text-primary-fg" : "text-muted ring-1 ring-border hover:text-fg md:ring-0 md:hover:bg-surface",
                   )}
                 >
-                  <span className="block font-medium">{item.label}</span>
+                  <span className="flex items-center gap-2 font-medium">
+                    <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
+                    {item.label}
+                  </span>
                   {item.hint ? (
                     <span className={cn("mt-0.5 hidden text-xs md:block", on ? "text-primary-fg/70" : "text-subtle")}>
                       {item.hint}

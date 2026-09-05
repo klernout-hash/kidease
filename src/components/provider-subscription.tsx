@@ -1,0 +1,259 @@
+import { useEffect, useState } from "react";
+import { Check, CreditCard } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { useCopy } from "@/lib/use-copy";
+import { cn, money } from "@/lib/utils";
+import {
+  planPriceCad,
+  planPriceHint,
+  PROVIDER_ADDONS,
+  PROVIDER_CHECKOUT_STUB_MESSAGE,
+  PROVIDER_COMPARE,
+  PROVIDER_PLANS,
+  PROVIDER_SUBSCRIPTION_GHOST_MESSAGE,
+  type ProviderAddonId,
+  type ProviderInterval,
+  type ProviderPlanId,
+} from "@/lib/provider-plans";
+import {
+  getProviderSubscription,
+  saveProviderSubscription,
+  type ProviderSubscriptionState,
+} from "@/lib/server/provider-subscriptions";
+
+const COPY = {
+  en: {
+    eyebrow: "Daycare SaaS",
+    title: "Subscription",
+    lead: "Centre plans for listing, inquiries, and multi-site tools. This is not parent Plus or family payments.",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    yearlySave: "Pro saves two months",
+    subscribe: "Subscribe",
+    current: "Current plan",
+    compare: "Compare",
+    addons: "Add-ons",
+    addonsLead: "Shown now — pay later when checkout is live.",
+    once: "one-time",
+    perMonth: "/ month",
+    checkout: "Coming soon — checkout next",
+    networkNeed: "Network is priced for 3 or more sites.",
+    sites: (n: number) => (n === 1 ? "1 listed site" : `${n} listed sites`),
+  },
+  fr: {
+    eyebrow: "SaaS garderie",
+    title: "Abonnement",
+    lead: "Forfaits centre pour la fiche, les demandes et plusieurs sites. Ce n’est pas Plus parents ni les paiements famille.",
+    monthly: "Mensuel",
+    yearly: "Annuel",
+    yearlySave: "Pro : deux mois offerts",
+    subscribe: "S’abonner",
+    current: "Forfait actuel",
+    compare: "Comparer",
+    addons: "Options",
+    addonsLead: "Affichées maintenant — paiement plus tard, quand le checkout sera prêt.",
+    once: "unique",
+    perMonth: "/ mois",
+    checkout: "Bientôt — checkout ensuite",
+    networkNeed: "Réseau est tarifé pour 3 sites ou plus.",
+    sites: (n: number) => (n === 1 ? "1 site listé" : `${n} sites listés`),
+  },
+};
+
+export function ProviderSubscriptionPanel() {
+  const { locale } = useCopy();
+  const loc = locale === "fr" ? "fr" : "en";
+  const t = COPY[loc];
+  const [state, setState] = useState<ProviderSubscriptionState | null>(null);
+  const [interval, setInterval] = useState<ProviderInterval>("month");
+  const [addons, setAddons] = useState<ProviderAddonId[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    void getProviderSubscription()
+      .then((s) => {
+        setState(s);
+        setInterval(s.interval);
+        setAddons(s.addons);
+        setLoadError(false);
+      })
+      .catch(() => setLoadError(true));
+  }, []);
+
+  if (loadError) {
+    return (
+      <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">
+        Could not load centre plans. This tab is a staff preview until FEATURE_PROVIDER_SUBSCRIPTIONS is on.
+      </p>
+    );
+  }
+  if (!state) {
+    return <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">Loading plans…</p>;
+  }
+
+  async function persist(next: { plan: ProviderPlanId; interval: ProviderInterval; addons: ProviderAddonId[] }) {
+    setBusy(true);
+    try {
+      const saved = await saveProviderSubscription({ data: next });
+      setState(saved);
+      setInterval(saved.interval);
+      setAddons(saved.addons);
+      toast.success(PROVIDER_CHECKOUT_STUB_MESSAGE);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save plan");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="space-y-8">
+      <div>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t.eyebrow}</p>
+        <h2 className="mt-2 inline-flex items-center gap-2 font-display text-2xl">
+          <CreditCard className="size-6 text-primary" strokeWidth={1.8} />
+          {t.title}
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm text-muted">{t.lead}</p>
+        {state.ghost ? (
+          <p className="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{PROVIDER_SUBSCRIPTION_GHOST_MESSAGE}</p>
+        ) : null}
+        <p className="mt-3 text-sm text-muted">{PROVIDER_CHECKOUT_STUB_MESSAGE}</p>
+        <p className="mt-1 text-xs text-subtle">{t.sites(state.siteCount)}</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {(["month", "year"] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setInterval(id)}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-sm",
+              interval === id ? "bg-primary text-primary-fg" : "bg-surface text-muted ring-1 ring-border hover:text-fg",
+            )}
+          >
+            {id === "month" ? t.monthly : t.yearly}
+          </button>
+        ))}
+        {interval === "year" ? <span className="text-xs text-subtle">{t.yearlySave}</span> : null}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {PROVIDER_PLANS.map((plan) => {
+          const current = state.plan === plan.id;
+          const price = planPriceCad(plan, interval, state.siteCount);
+          const hint = planPriceHint(plan, interval, loc);
+          return (
+            <article
+              key={plan.id}
+              className={cn(
+                "flex flex-col rounded-xl bg-surface p-5 ring-1",
+                current ? "ring-2 ring-primary" : "ring-border",
+              )}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{plan.name[loc]}</p>
+              <p className="mt-2 font-display text-3xl tabular-nums">{money(price, loc)}</p>
+              <p className="mt-1 text-xs text-subtle">{hint}</p>
+              <p className="mt-3 text-sm text-muted">{plan.tagline[loc]}</p>
+              <ul className="mt-4 flex-1 space-y-2 text-sm">
+                {plan.features.map((f) => (
+                  <li key={f.en} className="flex items-start gap-2">
+                    <Check className="mt-0.5 size-4 shrink-0 text-ok" strokeWidth={2} />
+                    <span>{f[loc]}</span>
+                  </li>
+                ))}
+              </ul>
+              {plan.id === "network" && state.siteCount < plan.minSites ? (
+                <p className="mt-3 text-xs text-subtle">{t.networkNeed}</p>
+              ) : null}
+              <Button
+                className="mt-5 w-full"
+                variant={current ? "secondary" : "primary"}
+                disabled={busy || current}
+                onClick={() => void persist({ plan: plan.id, interval, addons })}
+              >
+                {current ? t.current : t.subscribe}
+              </Button>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="overflow-x-auto rounded-xl bg-surface ring-1 ring-border">
+        <table className="w-full min-w-[36rem] text-left text-sm">
+          <caption className="sr-only">{t.compare}</caption>
+          <thead>
+            <tr className="border-b border-border text-xs uppercase tracking-[0.12em] text-subtle">
+              <th className="px-4 py-3 font-medium">{t.compare}</th>
+              {PROVIDER_PLANS.map((p) => (
+                <th key={p.id} className="px-4 py-3 font-medium">
+                  {p.name[loc]}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {PROVIDER_COMPARE.map((row) => (
+              <tr key={row.id} className="border-b border-border last:border-0">
+                <th className="px-4 py-3 font-medium text-fg">{row.label[loc]}</th>
+                <td className="px-4 py-3 text-muted">{row.free[loc]}</td>
+                <td className="px-4 py-3 text-muted">{row.pro[loc]}</td>
+                <td className="px-4 py-3 text-muted">{row.network[loc]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <h3 className="font-display text-xl">{t.addons}</h3>
+        <p className="mt-1 text-sm text-muted">{t.addonsLead}</p>
+        <ul className="mt-4 grid gap-3 sm:grid-cols-3">
+          {PROVIDER_ADDONS.map((addon) => {
+            const on = addons.includes(addon.id);
+            return (
+              <li key={addon.id}>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    const next = on ? addons.filter((id) => id !== addon.id) : [...addons, addon.id];
+                    setAddons(next);
+                    void persist({ plan: state.plan, interval, addons: next });
+                  }}
+                  className={cn(
+                    "h-full w-full rounded-xl px-4 py-4 text-left ring-1",
+                    on ? "bg-primary/5 ring-2 ring-primary" : "bg-surface ring-border hover:ring-primary/40",
+                  )}
+                >
+                  <p className="font-medium">{addon.name[loc]}</p>
+                  <p className="mt-1 font-display text-2xl tabular-nums">
+                    {money(addon.amount, loc)}
+                    <span className="ml-1 text-xs font-sans font-normal text-subtle">
+                      {addon.cadence === "once" ? t.once : t.perMonth}
+                    </span>
+                  </p>
+                  <p className="mt-2 text-sm text-muted">{addon.blurb[loc]}</p>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="rounded-xl bg-surface px-5 py-5 ring-1 ring-border">
+        <Button disabled className="w-full sm:w-auto">
+          {t.checkout}
+        </Button>
+        <p className="mt-3 text-sm text-muted">
+          {state.stripeLive
+            ? "Live Stripe keys are on for parent deposits. Centre plan checkout is still a stub — this Subscribe button does not charge a card."
+            : "Internal ledger only. Centre plan checkout is not wired. No card is charged."}
+        </p>
+      </div>
+    </section>
+  );
+}
