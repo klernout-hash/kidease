@@ -56,20 +56,6 @@
     { "source": "/faq", "destination": "/tour-checklist", "permanent": false },
     { "source": "/how-it-works", "destination": "/#how", "permanent": false }
   ],
-  "rewrites": [
-    { "source": "/apple-touch-icon.png", "destination": "/icon-512.png" },
-    { "source": "/apple-touch-icon-precomposed.png", "destination": "/icon-512.png" },
-    { "source": "/apple-touch-icon-180x180.png", "destination": "/icon-512.png" },
-    { "source": "/apple-touch-icon-180x180-precomposed.png", "destination": "/icon-512.png" },
-    { "source": "/__grok/icon-180.png", "destination": "/icon-512.png" },
-    { "source": "/__grok/icon-192.png", "destination": "/icon-512.png" },
-    { "source": "/__grok/icon-512.png", "destination": "/icon-512.png" },
-    { "source": "/icon-192.png", "destination": "/icon-512.png" },
-    { "source": "/icons/icon-180.png", "destination": "/icon-512.png" },
-    { "source": "/icons/icon-192.png", "destination": "/icon-512.png" },
-    { "source": "/icons/icon-512.png", "destination": "/icon-512.png" },
-    { "source": "/icons/icon-1024.png", "destination": "/icon-512.png" }
-  ],
   "headers": [
     {
       "source": "/(.*)",

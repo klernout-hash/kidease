@@ -6,7 +6,7 @@ import { appIconPngResponse } from "@/lib/app-icon-png";
 export const Route = createFileRoute("/app-icon")({
   server: {
     handlers: {
-      GET: async () => appIconPngResponse(),
+      GET: async ({ request }) => appIconPngResponse(request),
     },
   },
 });
