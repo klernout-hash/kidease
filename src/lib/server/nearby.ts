@@ -136,6 +136,12 @@ function rowToListing(row: GeoRow): NearbyListing {
   };
 }
 
+function rejectAfter(ms: number, message: string) {
+  return new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(message)), ms);
+  });
+}
+
 async function importCatalogSlice(sql: Sql, rows: CatalogDaycare[]) {
   const chunk = 24;
   for (let i = 0; i < rows.length; i += chunk) {
@@ -156,15 +162,18 @@ export async function nearbyListings(
 ): Promise<NearbyListing[]> {
   if (dbSource === "neon") {
     try {
-      const sql = await getSql();
+      const sql = await Promise.race([getSql(), rejectAfter(6000, "nearby-sql-timeout")]);
       if (await postgisReady(sql)) {
-        const geo = await queryDWithin(sql, origin, radiusKm);
+        const geo = await Promise.race([
+          queryDWithin(sql, origin, radiusKm),
+          rejectAfter(6000, "nearby-dwithin-timeout"),
+        ]);
         if (geo.length > 0) return geo.map(rowToListing).filter(isPublicListing);
         const fallback = await catalogNear(origin, radiusKm);
         if (fallback.length > 0) {
-          await importCatalogSlice(sql, fallback).catch(() => undefined);
-          const again = await queryDWithin(sql, origin, radiusKm);
-          if (again.length > 0) return again.map(rowToListing).filter(isPublicListing);
+          // Do not block guest search on a 400-row upsert. Import in the
+          // background so the first request still returns catalogue hits.
+          void importCatalogSlice(sql, fallback).catch(() => undefined);
         }
         return fallback.filter(isPublicListing);
       }

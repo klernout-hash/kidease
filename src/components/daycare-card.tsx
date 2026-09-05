@@ -73,6 +73,11 @@ export function DaycareCard({
               {item.priority ? `✦ ${pill}` : pill}
             </span>
           </div>
+          {photos.length === 0 || photos.every((p) => p.includes("placeholder")) ? (
+            <span className="pointer-events-none absolute bottom-3 left-3 z-[2] rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white">
+              {live ? t("storefrontPhoto") : t("notOnKidEase")}
+            </span>
+          ) : null}
         </div>
 
         <div className="mt-2.5 space-y-[3px] text-[#222]">

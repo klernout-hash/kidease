@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -6,8 +6,8 @@ import { DeskShell } from "@/components/desk-shell";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityPill } from "@/components/priority-pill";
-import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { TwoFactorGate } from "@/lib/auth/gates";
+import { useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole } from "@/lib/server/family";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
 import { useCopy } from "@/lib/use-copy";
@@ -22,7 +22,7 @@ type DaycareDesk = "requests" | "listings" | "licence" | "contract" | "promote";
 export const Route = createFileRoute("/provider")({ component: ProviderPage });
 
 function ProviderPage() {
-  const { user, isPending } = useCurrentUserState();
+  const { user, isPending } = useSettledUser();
   const { t, locale } = useCopy();
   const [desk, setDesk] = useState<DaycareDesk>("requests");
   const [listings, setListings] = useState<Daycare[]>([]);
@@ -58,7 +58,7 @@ function ProviderPage() {
       </Shell>
     );
   }
-  if (!user) return <RedirectToSignIn />;
+  if (!user) return <Navigate to="/login" search={{ role: "provider", intent: "in", next: "/provider" }} />;
 
   const waiting = requests.filter((r) => r.status === "requested" || r.status === "under_review");
   const later = requests.filter((r) => r.status !== "requested" && r.status !== "under_review");
