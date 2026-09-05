@@ -39,6 +39,9 @@ test("isSensitiveDeskPath is prefix-safe", () => {
   assert.equal(isSensitiveDeskPath("/api/admin/contracts"), true);
   assert.equal(isSensitiveDeskPath("/api/admin/media"), true);
   assert.equal(isSensitiveDeskPath("/api/admin/sentry-test"), true);
+  assert.equal(isSensitiveDeskPath("/support"), true);
+  assert.equal(isSensitiveDeskPath("/support/sc_abc"), true);
+  assert.equal(isSensitiveDeskPath("/help"), false);
   assert.equal(isSensitiveDeskPath("/administrator"), false);
   assert.equal(isSensitiveDeskPath("/provider"), false);
   assert.equal(isSensitiveDeskPath("/parent"), false);
@@ -101,6 +104,14 @@ test("admin desks on vercel.app 302 to www so Cloudflare Access applies", () => 
       location: `${CANONICAL_ORIGIN}/api/admin/contracts`,
     },
   );
+  assert.deepEqual(decideRequest({ host: "kidease-git.vercel.app", pathname: "/support" }), {
+    action: "redirect",
+    status: 302,
+    location: `${CANONICAL_ORIGIN}/support`,
+  });
+  assert.deepEqual(decideRequest({ host: "kidease-git.vercel.app", pathname: "/help" }), {
+    action: "next",
+  });
 });
 
 test("admin on www / apex / localhost is not redirected by this guard", () => {

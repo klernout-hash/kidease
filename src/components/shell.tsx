@@ -12,7 +12,7 @@ import { LanguageSelect } from "@/components/language-select";
 import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
-import { DeskSwitcher } from "@/components/desk-switcher";
+import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
 
@@ -39,7 +39,11 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const onAccount = pathname.startsWith("/account");
   const accountTab = tab ?? "profile";
   const hideFooter =
-    hideTabs || pathname.startsWith("/admin") || pathname.startsWith("/verify-2fa") || pathname.startsWith("/menu");
+    hideTabs ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/support") ||
+    pathname.startsWith("/verify-2fa") ||
+    pathname.startsWith("/menu");
   const onProfile = onAccount && accountTab === "profile";
 
   const desktopNav = [
@@ -377,6 +381,16 @@ function AccountMenu({
               className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
             >
               Admin desk
+            </Link>
+          ) : null}
+          {desks.includes("support") ? (
+            <Link
+              role="menuitem"
+              to="/support"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+            >
+              Support desk
             </Link>
           ) : null}
           <button

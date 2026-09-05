@@ -13,7 +13,7 @@ export const STORE = {
   ageRating: "4+",
   price: "Free",
   privacyPolicyPath: "/privacy",
-  supportPath: "/support",
+  supportPath: "/help",
   termsPath: "/terms",
   cookiesPath: "/cookies",
   keywords:

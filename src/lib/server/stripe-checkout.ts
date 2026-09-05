@@ -150,6 +150,7 @@ export async function stripeRequest<T>(
   path: string,
   body: Record<string, unknown>,
   method: "POST" | "GET" = "POST",
+  opts?: { idempotencyKey?: string },
 ): Promise<T> {
   const key = (process.env.STRIPE_SECRET_KEY || "").trim();
   if (!key) throw new Error("Stripe is not configured");
@@ -157,6 +158,7 @@ export async function stripeRequest<T>(
   const headers: Record<string, string> = {
     Authorization: `Bearer ${key}`,
   };
+  if (opts?.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
   let payload: string | undefined;
   if (method === "GET") {
     const params = new URLSearchParams();
@@ -203,4 +205,39 @@ export async function createBillingPortalSession(input: BillingPortalInput): Pro
   });
   if (!json.url) throw new Error("Stripe did not return a billing portal link");
   return { url: json.url };
+}
+
+export type StripeRefundInput = {
+  paymentIntentId?: string | null;
+  chargeId?: string | null;
+  amountCents?: number;
+  idempotencyKey: string;
+  metadata?: Record<string, string>;
+};
+
+export type StripeRefundResult = {
+  id: string;
+  status: string | null;
+  amount: number | null;
+};
+
+/** Live refunds only. Caller must have already checked stripeChargesLive(). */
+export async function createStripeRefund(input: StripeRefundInput): Promise<StripeRefundResult> {
+  const paymentIntent = String(input.paymentIntentId || "").trim();
+  const charge = String(input.chargeId || "").trim();
+  if (!paymentIntent && !charge) throw new Error("Stripe refund needs a payment intent or charge id");
+  const body: Record<string, unknown> = {
+    metadata: { kidease: "support_refund", ...(input.metadata || {}) },
+  };
+  if (paymentIntent) body.payment_intent = paymentIntent;
+  else body.charge = charge;
+  if (input.amountCents != null && input.amountCents > 0) body.amount = Math.floor(input.amountCents);
+  const json = await stripeRequest<{ id?: string; status?: string; amount?: number }>(
+    "/refunds",
+    body,
+    "POST",
+    { idempotencyKey: input.idempotencyKey },
+  );
+  if (!json.id) throw new Error("Stripe refund failed");
+  return { id: json.id, status: json.status ?? null, amount: json.amount ?? null };
 }

@@ -38,6 +38,8 @@ import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subs
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as HelpRouteImport } from './routes/help'
+import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
@@ -205,6 +207,16 @@ const SupportRoute = SupportRouteImport.update({
   path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportCaseIdRoute = SupportCaseIdRouteImport.update({
+  id: '/support/$caseId',
+  path: '/support/$caseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -336,6 +348,8 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/support': typeof SupportRoute
+  '/help': typeof HelpRoute
+  '/support/$caseId': typeof SupportCaseIdRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
@@ -387,6 +401,8 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/support': typeof SupportRoute
+  '/help': typeof HelpRoute
+  '/support/$caseId': typeof SupportCaseIdRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
@@ -439,6 +455,8 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/support': typeof SupportRoute
+  '/help': typeof HelpRoute
+  '/support/$caseId': typeof SupportCaseIdRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
@@ -492,6 +510,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/support'
+    | '/help'
+    | '/support/$caseId'
     | '/team'
     | '/terms'
     | '/tour-checklist'
@@ -543,6 +563,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/support'
+    | '/help'
+    | '/support/$caseId'
     | '/team'
     | '/terms'
     | '/tour-checklist'
@@ -594,6 +616,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/support'
+    | '/help'
+    | '/support/$caseId'
     | '/team'
     | '/terms'
     | '/tour-checklist'
@@ -646,6 +670,8 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
   SupportRoute: typeof SupportRoute
+  HelpRoute: typeof HelpRoute
+  SupportCaseIdRoute: typeof SupportCaseIdRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
@@ -872,6 +898,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support/$caseId': {
+      id: '/support/$caseId'
+      path: '/support/$caseId'
+      fullPath: '/support/$caseId'
+      preLoaderRoute: typeof SupportCaseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team': {
       id: '/team'
       path: '/team'
@@ -1055,6 +1095,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
   SupportRoute: SupportRoute,
+  HelpRoute: HelpRoute,
+  SupportCaseIdRoute: SupportCaseIdRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,

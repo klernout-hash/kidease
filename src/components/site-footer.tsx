@@ -40,7 +40,7 @@ export function SiteFooter() {
           <section>
             <p className="ke-footer-title">{fr ? "Soutien" : "Support"}</p>
             <ul className="ke-footer-list">
-              <Item to="/support">{fr ? "Centre d’aide" : "Help Centre"}</Item>
+              <Item to="/help">{fr ? "Centre d’aide" : "Help Centre"}</Item>
               <Item to="/contact">{t("contact")}</Item>
               <Item to="/faq">FAQ</Item>
               <Item to="/how-it-works">{t("howItWorksCta")}</Item>
@@ -116,7 +116,7 @@ export function SiteFooter() {
           <span className="text-subtle" aria-hidden>
             ·
           </span>
-          <Link to="/support" className="ke-footer-link">
+          <Link to="/help" className="ke-footer-link">
             {t("support")}
           </Link>
           <span className="text-subtle" aria-hidden>

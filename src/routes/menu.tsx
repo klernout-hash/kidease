@@ -79,7 +79,7 @@ function MenuPage() {
         </Group>
 
         <Group title={fr ? "Soutien" : "Support"}>
-          <Row to="/support" label={fr ? "Centre d’aide" : "Help Centre"} />
+          <Row to="/help" label={fr ? "Centre d’aide" : "Help Centre"} />
           <Row to="/faq" label="FAQ" />
           <Row to="/how-it-works" label={t("howItWorksCta")} />
           <Row to="/privacy" label={t("privacy")} />

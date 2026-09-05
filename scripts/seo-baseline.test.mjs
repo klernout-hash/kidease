@@ -18,7 +18,7 @@ const PUBLIC_PATHS = [
   "/about",
   "/search",
   "/contact",
-  "/support",
+  "/help",
   "/team",
   "/benefits",
   "/faq",
@@ -32,6 +32,7 @@ test("robots.txt keeps admin disallows and points Sitemap at the www URL", () =>
   assert.match(robots, /^Disallow: \/admin$/m);
   assert.match(robots, /^Disallow: \/admin-contracts$/m);
   assert.match(robots, /^Disallow: \/admin-chat$/m);
+  assert.match(robots, /^Disallow: \/support$/m);
   assert.match(robots, /^Disallow: \/provider\/subscription$/m);
   assert.match(robots, /^Disallow: \/daycare\/test-ghost-claim-lab$/m);
   assert.match(robots, /^Disallow: \/book\/test-ghost-claim-lab$/m);

@@ -27,18 +27,22 @@ test("listing status words are Waiting / Live / Declined only", () => {
   assert.equal(isWaitingClaim("approved"), false);
 });
 
-test("admin role unlocks all three desks; provider also gets parent", () => {
-  assert.deepEqual(desksFor({ role: "admin" }), ["admin", "provider", "parent"]);
+test("admin role unlocks all four desks; provider also gets parent", () => {
+  assert.deepEqual(desksFor({ role: "admin" }), ["admin", "support", "provider", "parent"]);
+  assert.deepEqual(desksFor({ role: "support" }), ["support", "parent"]);
+  assert.deepEqual(desksFor({ role: "support_lead" }), ["support", "parent"]);
   assert.deepEqual(desksFor({ role: "provider" }), ["provider", "parent"]);
   assert.deepEqual(desksFor({ role: "parent" }), ["parent"]);
   assert.deepEqual(desksFor({ role: "parent", ownsCentre: true }), ["provider", "parent"]);
   assert.equal(primaryDesk(["parent", "provider"]), "provider");
-  assert.equal(landingPath(["admin", "provider", "parent"]), "/admin");
+  assert.equal(primaryDesk(["support", "parent"]), "support");
+  assert.equal(landingPath(["admin", "support", "provider", "parent"]), "/admin");
+  assert.equal(landingPath(["support", "parent"]), "/support");
   assert.equal(landingPath(["provider", "parent"]), "/provider");
   assert.equal(landingPath(["parent"]), "/parent");
   assert.equal(showDeskSwitcher(["parent"]), false);
   assert.equal(showDeskSwitcher(["provider", "parent"]), true);
-  assert.equal(showDeskSwitcher(["admin", "provider", "parent"]), true);
+  assert.equal(showDeskSwitcher(["admin", "support", "provider", "parent"]), true);
 });
 
 test("desk switcher is for any multi-desk session, not admin-only", () => {
@@ -49,11 +53,14 @@ test("desk switcher is for any multi-desk session, not admin-only", () => {
   assert.match(src, /do not call setRole/);
 });
 
-test("setRole never demotes an admin", () => {
+test("setRole never demotes staff", () => {
   assert.equal(nextStoredRole("admin", "provider"), "admin");
   assert.equal(nextStoredRole("admin", "parent"), "admin");
+  assert.equal(nextStoredRole("support", "provider"), "support");
+  assert.equal(nextStoredRole("support_lead", "parent"), "support_lead");
   assert.equal(nextStoredRole("parent", "provider"), "provider");
   assert.equal(parseAppRole("ADMIN"), "admin");
+  assert.equal(parseAppRole("support_lead"), "support_lead");
 });
 
 test("only sk_live_ keys count as Stripe live charges", () => {

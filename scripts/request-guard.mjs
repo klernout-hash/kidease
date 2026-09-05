@@ -40,7 +40,8 @@ export function normalizePath(pathname) {
 }
 
 /**
- * Admin desks and their API. `/administrator` and `/provider` are not matched.
+ * Staff desks and their API. `/administrator`, `/help`, and `/provider` are not matched.
+ * `/support*` is the Support desk (Access can be added later on www — see docs/support.md).
  */
 export function isSensitiveDeskPath(pathname) {
   const path = normalizePath(pathname);
@@ -52,7 +53,9 @@ export function isSensitiveDeskPath(pathname) {
     path === "/admin-chat" ||
     path.startsWith("/admin-chat/") ||
     path === "/api/admin" ||
-    path.startsWith("/api/admin/")
+    path.startsWith("/api/admin/") ||
+    path === "/support" ||
+    path.startsWith("/support/")
   );
 }
 

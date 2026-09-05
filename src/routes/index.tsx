@@ -21,6 +21,7 @@ import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
 import { HeroPlayroom } from "@/components/building-photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMyRole } from "@/lib/server/family";
+import type { AppRole } from "@/lib/desks";
 import { featuredDaycares } from "@/lib/server/daycares";
 import { geocode, reverseGeocode, WINNIPEG } from "@/lib/geo";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
@@ -71,7 +72,7 @@ function Home() {
   const distanceUnit = useAppStore((s) => s.distanceUnit);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
-  const [role, setRole] = useState<"parent" | "provider" | "admin" | null>(null);
+  const [role, setRole] = useState<AppRole | null>(null);
   const [q, setQ] = useState("");
   const [place, setPlace] = useState(origin.label);
   const [manual, setManual] = useState(Boolean(search.change) || locationConsent === "denied");

@@ -20,6 +20,7 @@ import { TrustSignals } from "@/components/trust-badge";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import { ProviderMoneyPanel } from "@/components/provider-money";
+import { SupportPreviewBanner } from "@/components/support-preview-banner";
 
 type DaycareDesk = "requests" | "money" | "listings" | "licence" | "contract" | "promote";
 
@@ -27,9 +28,11 @@ const DESKS: DaycareDesk[] = ["requests", "money", "listings", "licence", "contr
 
 export const Route = createFileRoute("/provider")({
   validateSearch: (s: Record<string, unknown>) => {
+    const out: { desk?: DaycareDesk; preview?: "support" } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
-    if (DESKS.includes(desk as DaycareDesk)) return { desk: desk as DaycareDesk };
-    return {};
+    if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
+    if (s.preview === "support") out.preview = "support";
+    return out;
   },
   component: ProviderPage,
 });
@@ -102,6 +105,7 @@ function ProviderPage() {
 
   return (
     <TwoFactorGate next="/provider">
+    {search.preview === "support" ? <SupportPreviewBanner /> : null}
     <DeskShell
       desk="daycare"
       active={desk}

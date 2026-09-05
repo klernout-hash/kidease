@@ -28,7 +28,7 @@ function FaqPage() {
           ))}
         </ul>
         <p className="mt-8 text-sm">
-          <Link to="/support" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to="/help" className="font-medium text-primary underline-offset-4 hover:underline">
             {t("support")}
           </Link>
           {" · "}

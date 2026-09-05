@@ -1,4 +1,4 @@
-export type DeskId = "admin" | "daycare" | "parent";
+export type DeskId = "admin" | "support" | "daycare" | "parent";
 
 export type DeskIcon = "credit-card";
 
@@ -22,6 +22,11 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "activity", label: "Activity", hint: "Platform log" },
     { id: "reviews", label: "Reviews", hint: "Parent reviews to approve" },
     { id: "chat", label: "Chat lab", hint: "Scaffold only", href: "/admin-chat" },
+    { id: "support", label: "Support", hint: "Support desk scaffold", href: "/support" },
+  ],
+  support: [
+    { id: "inbox", label: "Inbox", hint: "Cases — one object + timeline", href: "/support" },
+    { id: "new", label: "New case", hint: "Open a case" },
   ],
   daycare: [
     { id: "requests", label: "Incoming requests", hint: "Approve, wait, decline" },
@@ -47,6 +52,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
 
 export const DESK_META: Record<DeskId, { eyebrow: string; title: string }> = {
   admin: { eyebrow: "Operator", title: "Admin" },
+  support: { eyebrow: "Support desk scaffold", title: "Support" },
   daycare: { eyebrow: "Daycare", title: "Centre desk" },
   parent: { eyebrow: "Parent", title: "Family desk" },
 };
