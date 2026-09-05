@@ -3,6 +3,7 @@ Allow: /
 Disallow: /admin
 Disallow: /admin-contracts
 Disallow: /admin-chat
+Disallow: /provider/subscription
 Disallow: /daycare/test-ghost-claim-lab
 Disallow: /book/test-ghost-claim-lab
 

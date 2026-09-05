@@ -1,10 +1,13 @@
 export type DeskId = "admin" | "daycare" | "parent";
 
+export type DeskIcon = "credit-card";
+
 export type DeskItem = {
   id: string;
   label: string;
   hint?: string;
   href?: string;
+  icon?: DeskIcon;
 };
 
 /** Swap these labels anytime — ids stay stable. */
@@ -25,6 +28,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "licence", label: "Licence", hint: "Compliance photo" },
     { id: "contract", label: "Contract", hint: "KidEase agreement" },
     { id: "promote", label: "Promote", hint: "Priority placement" },
+    { id: "subscription", label: "Subscription", hint: "Centre plans", icon: "credit-card", href: "/provider/subscription" },
     { id: "claim", label: "Claim a centre", href: "/claim" },
     { id: "messages", label: "Messages", href: "/inbox" },
   ],
@@ -43,3 +47,14 @@ export const DESK_META: Record<DeskId, { eyebrow: string; title: string }> = {
   daycare: { eyebrow: "Daycare", title: "Centre desk" },
   parent: { eyebrow: "Parent", title: "Family desk" },
 };
+
+/** Hide ghost provider Subscription unless admin (or FEATURE_PROVIDER_SUBSCRIPTIONS). */
+export function visibleDeskNav(
+  desk: DeskId,
+  opts?: { providerSubscriptions?: boolean },
+): DeskItem[] {
+  return DESK_NAV[desk].filter((item) => {
+    if (item.id === "subscription") return Boolean(opts?.providerSubscriptions);
+    return true;
+  });
+}

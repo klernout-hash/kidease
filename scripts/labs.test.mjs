@@ -3,7 +3,13 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { envFlagOn, inAppChatEnabled, pushEnabled } from "../src/lib/features.ts";
+import {
+  canSeeProviderSubscriptions,
+  envFlagOn,
+  inAppChatEnabled,
+  providerSubscriptionsEnabled,
+  pushEnabled,
+} from "../src/lib/features.ts";
 import { CHAT_SCAFFOLD_READY } from "../src/lib/chat-scaffold.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -16,6 +22,12 @@ test("feature flags default off and only accept explicit on values", () => {
   assert.equal(inAppChatEnabled({ FEATURE_INAPP_CHAT: "1" }), true);
   assert.equal(pushEnabled({}), false);
   assert.equal(pushEnabled({ FEATURE_PUSH: "true" }), true);
+  assert.equal(providerSubscriptionsEnabled({}), false);
+  assert.equal(providerSubscriptionsEnabled({ FEATURE_PROVIDER_SUBSCRIPTIONS: "1" }), true);
+  assert.equal(canSeeProviderSubscriptions("admin", {}), true);
+  assert.equal(canSeeProviderSubscriptions("provider", {}), false);
+  assert.equal(canSeeProviderSubscriptions("provider", { FEATURE_PROVIDER_SUBSCRIPTIONS: "1" }), true);
+  assert.equal(canSeeProviderSubscriptions("parent", { FEATURE_PROVIDER_SUBSCRIPTIONS: "1" }), false);
   assert.equal(CHAT_SCAFFOLD_READY, false);
 });
 
@@ -44,6 +56,7 @@ test("push stubs do not invent credentials and env example has names only", () =
   assert.doesNotMatch(envExample, /APNS_KEY=\S+/);
   assert.match(envExample, /FEATURE_INAPP_CHAT=0/);
   assert.match(envExample, /FEATURE_PUSH=0/);
+  assert.match(envExample, /FEATURE_PROVIDER_SUBSCRIPTIONS=0/);
 });
 
 test("admin chat lab is registered, admin-gated, and honest", () => {

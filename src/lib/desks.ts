@@ -74,6 +74,8 @@ export type SessionDesks = {
   unread: number;
   stripeLive: boolean;
   ledgerLabel: string;
+  /** Subscription tab on the provider desk (admin ghost, or flag on). */
+  providerSubscriptions: boolean;
 };
 
 /** Never demote an admin when a page or claim writes provider/parent. */
