@@ -55,10 +55,12 @@ import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
 import { Route as ApiAdminMediaRouteImport } from './routes/api/admin.media'
+import { Route as ApiAdminPushDryRunRouteImport } from './routes/api/admin.push-dry-run'
 import { Route as ApiAdminSentryTestRouteImport } from './routes/api/admin.sentry-test'
 import { Route as ApiAdminStripeCatalogRouteImport } from './routes/api/admin.stripe-catalog'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
+import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 
@@ -293,6 +295,11 @@ const ApiAdminMediaRoute = ApiAdminMediaRouteImport.update({
   path: '/api/admin/media',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminPushDryRunRoute = ApiAdminPushDryRunRouteImport.update({
+  id: '/api/admin/push-dry-run',
+  path: '/api/admin/push-dry-run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminSentryTestRoute = ApiAdminSentryTestRouteImport.update({
   id: '/api/admin/sentry-test',
   path: '/api/admin/sentry-test',
@@ -311,6 +318,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 const ApiDocusignWebhookRoute = ApiDocusignWebhookRouteImport.update({
   id: '/api/docusign/webhook',
   path: '/api/docusign/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPushRegisterRoute = ApiPushRegisterRouteImport.update({
+  id: '/api/push/register',
+  path: '/api/push/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSmsStatusRoute = ApiSmsStatusRouteImport.update({
@@ -371,10 +383,12 @@ export interface FileRoutesByFullPath {
   '/sign/$id': typeof SignIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
+  '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/push/register': typeof ApiPushRegisterRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
@@ -425,10 +439,12 @@ export interface FileRoutesByTo {
   '/sign/$id': typeof SignIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
+  '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/push/register': typeof ApiPushRegisterRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
@@ -480,10 +496,12 @@ export interface FileRoutesById {
   '/sign/$id': typeof SignIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
+  '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/push/register': typeof ApiPushRegisterRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
@@ -536,10 +554,12 @@ export interface FileRouteTypes {
     | '/sign/$id'
     | '/api/admin/contracts'
     | '/api/admin/media'
+    | '/api/admin/push-dry-run'
     | '/api/admin/sentry-test'
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
+    | '/api/push/register'
     | '/api/sms/status'
     | '/api/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -590,10 +610,12 @@ export interface FileRouteTypes {
     | '/sign/$id'
     | '/api/admin/contracts'
     | '/api/admin/media'
+    | '/api/admin/push-dry-run'
     | '/api/admin/sentry-test'
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
+    | '/api/push/register'
     | '/api/sms/status'
     | '/api/stripe/webhook'
   id:
@@ -644,10 +666,12 @@ export interface FileRouteTypes {
     | '/sign/$id'
     | '/api/admin/contracts'
     | '/api/admin/media'
+    | '/api/admin/push-dry-run'
     | '/api/admin/sentry-test'
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
+    | '/api/push/register'
     | '/api/sms/status'
     | '/api/stripe/webhook'
   fileRoutesById: FileRoutesById
@@ -698,10 +722,12 @@ export interface RootRouteChildren {
   SignIdRoute: typeof SignIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
   ApiAdminMediaRoute: typeof ApiAdminMediaRoute
+  ApiAdminPushDryRunRoute: typeof ApiAdminPushDryRunRoute
   ApiAdminSentryTestRoute: typeof ApiAdminSentryTestRoute
   ApiAdminStripeCatalogRoute: typeof ApiAdminStripeCatalogRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
+  ApiPushRegisterRoute: typeof ApiPushRegisterRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
@@ -1030,6 +1056,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/push-dry-run': {
+      id: '/api/admin/push-dry-run'
+      path: '/api/admin/push-dry-run'
+      fullPath: '/api/admin/push-dry-run'
+      preLoaderRoute: typeof ApiAdminPushDryRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/sentry-test': {
       id: '/api/admin/sentry-test'
       path: '/api/admin/sentry-test'
@@ -1056,6 +1089,13 @@ declare module '@tanstack/react-router' {
       path: '/api/docusign/webhook'
       fullPath: '/api/docusign/webhook'
       preLoaderRoute: typeof ApiDocusignWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/push/register': {
+      id: '/api/push/register'
+      path: '/api/push/register'
+      fullPath: '/api/push/register'
+      preLoaderRoute: typeof ApiPushRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/sms/status': {
@@ -1131,10 +1171,12 @@ const rootRouteChildren: RootRouteChildren = {
   SignIdRoute: SignIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
   ApiAdminMediaRoute: ApiAdminMediaRoute,
+  ApiAdminPushDryRunRoute: ApiAdminPushDryRunRoute,
   ApiAdminSentryTestRoute: ApiAdminSentryTestRoute,
   ApiAdminStripeCatalogRoute: ApiAdminStripeCatalogRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
+  ApiPushRegisterRoute: ApiPushRegisterRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }

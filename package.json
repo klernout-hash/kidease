@@ -20,9 +20,12 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "icons": "node scripts/make-app-icons.mjs",
+    "cap:assets": "node scripts/sync-native-assets.mjs",
+    "cap:permissions": "node scripts/patch-native-permissions.mjs",
     "cap:sync": "npx cap sync",
     "cap:ios": "npx cap open ios",
-    "cap:android": "npx cap open android"
+    "cap:android": "npx cap open android",
+    "cap:prepare": "npm run cap:assets && npm run cap:permissions && npx cap sync"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",
@@ -32,6 +35,7 @@
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/keyboard": "^8.0.5",
     "@capacitor/preferences": "^8.0.1",
+    "@capacitor/push-notifications": "^8.1.2",
     "@capacitor/share": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",

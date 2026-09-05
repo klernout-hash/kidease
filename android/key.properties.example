@@ -1,0 +1,6 @@
+# Local release signing only. Copy to android/key.properties (gitignored).
+# Create a keystore on your machine — never commit the .jks / passwords.
+storeFile=/absolute/path/to/kidease-upload.jks
+storePassword=
+keyAlias=kidease
+keyPassword=
