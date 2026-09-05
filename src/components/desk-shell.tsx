@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
+import { DeskSwitcher } from "@/components/desk-switcher";
 import { DESK_META, DESK_NAV, type DeskId } from "@/lib/desk-nav";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,9 @@ export function DeskShell({
         <aside className="md:sticky md:top-24 md:w-56 md:shrink-0">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{meta.eyebrow}</p>
           <h1 className="mt-2 font-display text-3xl">{meta.title}</h1>
+          <div className="mt-3 md:hidden">
+            <DeskSwitcher compact />
+          </div>
           <nav className="mt-5 flex gap-2 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
             {items.map((item) => {
               if (item.href) {

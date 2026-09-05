@@ -5,7 +5,6 @@ import { NativeBoot } from "@/components/native-boot";
 import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { Toaster } from "sonner";
-import { CHANNEL_BOOT_SCRIPT } from "@/lib/runtime";
 import { reportError } from "@/lib/observe";
 import appCss from "../styles.css?url";
 
@@ -65,7 +64,7 @@ export const Route = createRootRoute({
   component: () => (
     <html lang="en" className="antialiased" data-channel="website" data-runtime="web" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: CHANNEL_BOOT_SCRIPT }} />
+        <script src="/channel-boot.js" />
         <HeadContent />
       </head>
       <body>

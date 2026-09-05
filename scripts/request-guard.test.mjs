@@ -34,6 +34,8 @@ test("isSensitiveDeskPath is prefix-safe", () => {
   assert.equal(isSensitiveDeskPath("/admin/queue"), true);
   assert.equal(isSensitiveDeskPath("/admin-contracts"), true);
   assert.equal(isSensitiveDeskPath("/admin-contracts/"), true);
+  assert.equal(isSensitiveDeskPath("/admin-chat"), true);
+  assert.equal(isSensitiveDeskPath("/admin-chat/"), true);
   assert.equal(isSensitiveDeskPath("/api/admin/contracts"), true);
   assert.equal(isSensitiveDeskPath("/api/admin/media"), true);
   assert.equal(isSensitiveDeskPath("/administrator"), false);
@@ -75,6 +77,14 @@ test("admin desks on vercel.app 302 to www so Cloudflare Access applies", () => 
     },
   );
   assert.deepEqual(
+    decideRequest({ host: "kidease-git.vercel.app", pathname: "/admin-chat" }),
+    {
+      action: "redirect",
+      status: 302,
+      location: `${CANONICAL_ORIGIN}/admin-chat`,
+    },
+  );
+  assert.deepEqual(
     decideRequest({ host: "kidease-git.vercel.app", pathname: "/admin", search: "?tab=mail" }),
     {
       action: "redirect",
@@ -96,6 +106,7 @@ test("admin on www / apex / localhost is not redirected by this guard", () => {
   for (const host of ["www.kidease.ca", "kidease.ca", "localhost:8080"]) {
     assert.deepEqual(decideRequest({ host, pathname: "/admin" }), { action: "next" });
     assert.deepEqual(decideRequest({ host, pathname: "/admin-contracts" }), { action: "next" });
+    assert.deepEqual(decideRequest({ host, pathname: "/admin-chat" }), { action: "next" });
   }
 });
 

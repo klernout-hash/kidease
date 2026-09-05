@@ -49,6 +49,8 @@ export function isSensitiveDeskPath(pathname) {
     path.startsWith("/admin/") ||
     path === "/admin-contracts" ||
     path.startsWith("/admin-contracts/") ||
+    path === "/admin-chat" ||
+    path.startsWith("/admin-chat/") ||
     path === "/api/admin" ||
     path.startsWith("/api/admin/")
   );

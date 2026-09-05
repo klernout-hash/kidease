@@ -30,6 +30,7 @@ const PUBLIC_PATHS = [
 test("robots.txt keeps admin disallows and points Sitemap at the www URL", () => {
   assert.match(robots, /^Disallow: \/admin$/m);
   assert.match(robots, /^Disallow: \/admin-contracts$/m);
+  assert.match(robots, /^Disallow: \/admin-chat$/m);
   assert.match(robots, /^Disallow: \/daycare\/test-ghost-claim-lab$/m);
   assert.match(robots, /^Disallow: \/book\/test-ghost-claim-lab$/m);
   assert.match(robots, /^Sitemap: https:\/\/www\.kidease\.ca\/sitemap\.xml$/m);
@@ -55,7 +56,10 @@ test("vercel CSP does not allowlist grok.com and still keeps product hosts", () 
   assert.match(vercel, /js\.stripe\.com/);
   assert.match(vercel, /challenges\.cloudflare\.com/);
   assert.match(vercel, /us\.i\.posthog\.com/);
+  assert.match(vercel, /script-src 'self' 'unsafe-inline'/);
+  assert.match(vercel, /style-src 'self' 'unsafe-inline'/);
   assert.doesNotMatch(vercel, /grok\.com/);
+  assert.match(vercel, /"source": "\/admin-chat"/);
   assert.match(vercel, /"source": "\/daycare\/test-ghost-claim-lab"/);
   assert.match(vercel, /"source": "\/book\/test-ghost-claim-lab"/);
 });
