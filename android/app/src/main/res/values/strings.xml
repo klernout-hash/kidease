@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KidEase</string>
+    <string name="title_activity_main">KidEase</string>
+    <string name="package_name">ca.daycarenearme.app</string>
+    <string name="custom_url_scheme">ca.daycarenearme.app</string>
+    <string name="location_permission_rationale">KidEase uses your location only while you search so we can show licensed daycares near you. Location is not used in the background.</string>
+</resources>
