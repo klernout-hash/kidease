@@ -34,6 +34,7 @@ import { useCopy } from "@/lib/use-copy";
 import { formatMonth, money, formatAgeRange, displayCentreName } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
+import { ListingMap } from "@/components/listing-map";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 
 export const Route = createFileRoute("/daycare/$slug")({ component: Listing });
@@ -164,7 +165,6 @@ function Listing() {
   const live = Boolean(d.live);
   const known = Boolean(d.availabilityKnown);
   const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
-  const mapsEmbed = `https://maps.google.com/maps?q=${d.lat},${d.lng}&z=16&output=embed`;
   const mapsDir = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
@@ -403,13 +403,7 @@ function Listing() {
                 </button>
               </div>
               <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
-                <iframe
-                  title={`${name} — Google Maps`}
-                  src={mapsEmbed}
-                  className="h-64 w-full border-0 md:h-80"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
+                <ListingMap lat={d.lat} lng={d.lng} title={`${name} — Google Maps`} />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button type="button" onClick={() => void openDirections(d.lat, d.lng, name)}>

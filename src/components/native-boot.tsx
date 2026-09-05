@@ -1,6 +1,14 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { BrandMark } from "@/components/brand-mark";
-import { captureInstallPrompt, getDeviceLocation, hideNativeSplash, isNative, isStandalone, paintStatusBar } from "@/lib/native";
+import {
+  captureInstallPrompt,
+  getDeviceLocation,
+  hideNativeSplash,
+  isNative,
+  isStandalone,
+  paintStatusBar,
+  registerOfflineShell,
+} from "@/lib/native";
 import { locateHere } from "@/lib/proximity";
 import { startChannelListener } from "@/lib/runtime";
 import { startWebVitals } from "@/lib/web-vitals";
@@ -37,6 +45,7 @@ export function NativeBoot() {
 
   useEffect(() => {
     captureInstallPrompt();
+    registerOfflineShell();
     void paintStatusBar();
     const already = sessionStorage.getItem("dn-splashed") === "1";
     if (!already && isStandalone()) {

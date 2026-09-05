@@ -136,6 +136,16 @@ describe("listing map uses browser Google Maps key, not Carto/Leaflet", () => {
     assert.doesNotMatch(src, /tile\.openstreetmap|arcgisonline/i);
   });
 
+  it("listing detail preview shares the same Maps JS loader", () => {
+    const src = read("src/components/listing-map.tsx");
+    assert.match(src, /loadGoogleMaps/);
+    assert.match(src, /listingMapConstructorOptions/);
+    assert.match(src, /VITE_GOOGLE_MAPS_API_KEY|hasGoogleMapsBrowserKey/);
+    assert.doesNotMatch(src, /<iframe/);
+    assert.doesNotMatch(src, /leaflet/i);
+    assert.doesNotMatch(src, /AIza[0-9A-Za-z_-]{20,}/);
+  });
+
   it("keeps KidEase logo pins from main on both vector and raster paths", () => {
     const src = read("src/components/map-view.tsx");
     assert.match(src, /ke-logo-pin/);

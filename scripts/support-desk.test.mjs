@@ -177,4 +177,13 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
   const security = readFileSync(join(root, "public/.well-known/security.txt"), "utf8");
   assert.match(security, /^Contact: mailto:support@kidease\.ca$/m);
   assert.doesNotMatch(security, /kyle@kidease\.ca/);
+
+  const help = readFileSync(join(root, "src/routes/help.tsx"), "utf8");
+  assert.match(help, /Help Centre · KidEase/);
+  assert.match(help, /t\("helpTitle"\)/);
+  assert.match(help, /t\("helpKicker"\)/);
+  assert.doesNotMatch(help, /t\("support"\)/);
+  const copy = readFileSync(join(root, "src/lib/copy.ts"), "utf8");
+  assert.match(copy, /helpKicker: "Help"/);
+  assert.match(copy, /helpTitle: "Help Centre"/);
 });

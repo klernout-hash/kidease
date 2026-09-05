@@ -49,7 +49,7 @@ function Help() {
   return (
     <Shell bare>
       <main className="ke-gutter mx-auto max-w-lg py-12 md:py-16">
-        <p className="ke-kicker">{t("support")}</p>
+        <p className="ke-kicker">{t("helpKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("helpTitle")}</h1>
         <p className="mt-6 text-muted">{t("supportLead")}</p>
 

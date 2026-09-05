@@ -378,7 +378,7 @@ function SearchPage() {
             void applyQuery();
           }}
         >
-          <div className="flex min-h-12 items-center gap-2 rounded-full bg-surface pl-4 pr-1.5 shadow-card ring-1 ring-border">
+          <div className="flex min-h-12 min-w-0 items-center gap-1.5 rounded-full bg-surface pl-3 pr-1.5 shadow-card ring-1 ring-border sm:gap-2 sm:pl-4">
             <PlaceSearch
               value={query}
               onChange={setQuery}
@@ -387,17 +387,17 @@ function SearchPage() {
               origin={origin}
               inputClassName="h-11 min-w-0 w-full bg-transparent text-[15px] outline-none"
             />
-            <button type="button" onClick={() => void geo()} className="grid size-11 place-items-center text-muted" aria-label={t("useLocation")}>
+            <button type="button" onClick={() => void geo()} className="grid size-11 shrink-0 place-items-center text-muted" aria-label={t("useLocation")}>
               <LocateFixed className="size-5" />
             </button>
-            <Button type="submit" className="h-11 rounded-full px-5">
+            <Button type="submit" className="h-11 shrink-0 rounded-full px-3 sm:px-5">
               {t("search")}
             </Button>
           </div>
         </form>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex min-h-11 min-w-[13.5rem] flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:flex-none">
+          <div className="flex min-h-11 w-full min-w-0 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[13.5rem] sm:flex-none">
             <button
               type="button"
               onClick={() => setLiveOnly(true)}
@@ -425,7 +425,7 @@ function SearchPage() {
             {t("filters")}
             {extraFilters ? <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">{extraFilters}</span> : null}
           </button>
-          <div className="flex h-11 min-w-[10rem] flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:flex-none">
+          <div className="flex h-11 w-full min-w-0 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[10rem] sm:flex-none">
             <button
               type="button"
               onClick={() => setView("list")}
