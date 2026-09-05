@@ -547,6 +547,58 @@ export async function notifyProviderJoined(p: ProviderJoinPayload) {
   });
 }
 
+/** Parent notice when a centre Sends a bill. Uses Resend/SendGrid when wired; otherwise logs. */
+export async function notifyParentBill(p: {
+  to?: string | null;
+  parentName?: string | null;
+  daycareName: string;
+  amountLabel: string;
+  period: string;
+  dueAt?: string | null;
+  payUrl: string;
+}) {
+  const to = (p.to || "").trim();
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    console.info("[kidease-bill] no parent email — in-app notice only", p.daycareName, p.amountLabel);
+    return { status: "skipped" as const };
+  }
+  const who = (p.parentName || "there").split(" ")[0] || "there";
+  const due = p.dueAt ? ` Due ${p.dueAt}.` : "";
+  const title = `New bill from ${p.daycareName}`;
+  const text = [
+    `Hi ${who},`,
+    "",
+    `${p.daycareName} sent you a bill for ${p.amountLabel} (${p.period}).${due}`,
+    "",
+    `Pay in KidEase: ${p.payUrl}`,
+    "",
+    "Talk soon,",
+    "Kyle",
+    "KidEase",
+  ].join("\n");
+  const html = `<!doctype html>
+<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
+    <tr><td style="padding:28px;">
+      <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
+      <h1 style="margin:12px 0 0;font-size:24px;line-height:1.2;">New bill from ${esc(p.daycareName)}</h1>
+      <p style="margin:16px 0 0;">Hi ${esc(who)},</p>
+      <p style="margin:16px 0 0;">${esc(p.daycareName)} sent you a bill for <strong>${esc(p.amountLabel)}</strong> (${esc(p.period)}).${due ? ` ${esc(due.trim())}` : ""}</p>
+      <p style="margin:24px 0 0;">
+        <a href="${esc(p.payUrl)}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">Pay this bill</a>
+      </p>
+    </td></tr>
+  </table>
+</body></html>`;
+  try {
+    const status = await deliverEmail(title, text, html, to, ADMIN_EMAIL);
+    return { status };
+  } catch (err) {
+    console.error("[kidease-bill] parent mail failed", err);
+    return { status: "failed" as const };
+  }
+}
+
 export const submitPublicMessage = createServerFn({ method: "POST" })
   .validator((input: {
     kind: "contact" | "support" | "enroll";

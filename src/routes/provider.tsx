@@ -19,15 +19,26 @@ import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
 import { listingStatusFromClaim } from "@/lib/listing-status";
+import { ProviderMoneyPanel } from "@/components/provider-money";
 
-type DaycareDesk = "requests" | "listings" | "licence" | "contract" | "promote";
+type DaycareDesk = "requests" | "money" | "listings" | "licence" | "contract" | "promote";
 
-export const Route = createFileRoute("/provider")({ component: ProviderPage });
+const DESKS: DaycareDesk[] = ["requests", "money", "listings", "licence", "contract", "promote"];
+
+export const Route = createFileRoute("/provider")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const desk = typeof s.desk === "string" ? s.desk : "";
+    if (DESKS.includes(desk as DaycareDesk)) return { desk: desk as DaycareDesk };
+    return {};
+  },
+  component: ProviderPage,
+});
 
 function ProviderPage() {
   const { user, isPending } = useSettledUser();
   const { t, locale } = useCopy();
-  const [desk, setDesk] = useState<DaycareDesk>("requests");
+  const search = Route.useSearch();
+  const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? "requests");
   const [listings, setListings] = useState<Daycare[]>([]);
   const [stats, setStats] = useState<Array<{ daycareId: string; views: number; inquiries: number; requests: number }>>([]);
   const [requests, setRequests] = useState<SpotRequest[]>([]);
@@ -53,6 +64,10 @@ function ProviderPage() {
     if (!user) return;
     void setRole({ data: "provider" }).then(() => load()).catch(() => undefined);
   }, [user]);
+
+  useEffect(() => {
+    if (search.desk) setDesk(search.desk);
+  }, [search.desk]);
 
   if (isPending) {
     return (
@@ -222,6 +237,8 @@ function ProviderPage() {
           ))
         )
       ) : null}
+
+      {desk === "money" ? <ProviderMoneyPanel /> : null}
 
       {desk === "contract" ? <ProviderContractsPanel /> : null}
 

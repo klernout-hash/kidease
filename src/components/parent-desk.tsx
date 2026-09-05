@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ChildProfileForm } from "@/components/child-profile-form";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { deleteAccount, getFamily } from "@/lib/server/family";
+import { listParentBills } from "@/lib/server/billing";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { hasCareDetails } from "@/lib/child-profile";
 import { useCopy } from "@/lib/use-copy";
@@ -19,6 +20,10 @@ import { formatAgeLabel } from "@/lib/templates";
 import { formatMonth, money } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
 import type { Booking, Child, DaycareCard as Card, Payment } from "@/lib/types";
+import type { Bill } from "@/lib/bill";
+import { billDollars, billIsOpen } from "@/lib/bill";
+import { BillStatusBadge } from "@/components/bill-status";
+import { periodLabel } from "@/lib/stripe-methods";
 
 type ParentTab = "saved" | "bookings" | "payments" | "children";
 
@@ -30,6 +35,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [saved, setSaved] = useState<Card[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -38,10 +44,11 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [picked, setPicked] = useState<Record<string, string[]>>({});
 
   async function load() {
-    const f = await getFamily();
+    const [f, billed] = await Promise.all([getFamily(), listParentBills().catch(() => ({ bills: [] as Bill[] }))]);
     setSaved(f.saved);
     setBookings(f.bookings);
     setPayments(f.payments);
+    setBills(billed.bills);
     setChildren(f.children);
   }
 
@@ -109,13 +116,28 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                       </Link>
                     </Button>
                   ) : null}
-                  {b.status === "accepted" && b.paymentStatus !== "paid" && desks?.stripeLive ? (
-                    <Button size="sm" asChild>
-                      <Link to="/pay/$bookingId" params={{ bookingId: b.id }}>
-                        {t("pay")}
-                      </Link>
-                    </Button>
-                  ) : null}
+                  {(() => {
+                    const openBill = bills.find((bill) => bill.bookingId === b.id && billIsOpen(bill.status));
+                    if (openBill) {
+                      return (
+                        <Button size="sm" asChild>
+                          <Link to="/pay/bill/$billId" params={{ billId: openBill.id }} search={{}}>
+                            {t("pay")}
+                          </Link>
+                        </Button>
+                      );
+                    }
+                    if (b.status === "accepted" && b.paymentStatus !== "paid" && desks?.stripeLive) {
+                      return (
+                        <Button size="sm" asChild>
+                          <Link to="/pay/$bookingId" params={{ bookingId: b.id }}>
+                            {t("pay")}
+                          </Link>
+                        </Button>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </li>
             ))
@@ -124,27 +146,109 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       ) : null}
 
       {tab === "payments" ? (
-        <div className="mt-6">
-          <LedgerHonesty stripeLive={Boolean(desks?.stripeLive)} className="mb-3" />
-          <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-            {payments.length === 0 ? (
-              <li className="p-2">
-                <EmptyState title={t("noPayments")} body={t("noPaymentsLead")} action={t("emptyFindCare")} actionTo="/search" />
-              </li>
-            ) : (
-              payments.map((p) => (
-                <li key={p.id} className="flex items-center justify-between p-4 text-sm">
-                  <div>
-                    <p className="font-medium">{p.daycareName}</p>
-                    <p className="text-muted">
-                      {p.method} · {p.status === "paid" ? t("paid") : t("pending")}
-                    </p>
-                  </div>
-                  <span className="tabular-nums">{money(p.amount, locale)}</span>
+        <div className="mt-6 space-y-6">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-display text-2xl">{t("payments")}</h2>
+              {bills.filter((b) => billIsOpen(b.status)).length ? (
+                <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-medium text-primary-fg">
+                  {t("pay")} · {bills.filter((b) => billIsOpen(b.status)).length}
+                </span>
+              ) : null}
+            </div>
+            <LedgerHonesty stripeLive={Boolean(desks?.stripeLive)} className="mt-2" />
+          </div>
+          {bills.filter((b) => billIsOpen(b.status)).length ? (
+            <div>
+              <h3 className="font-display text-xl">{t("openBills")}</h3>
+              <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
+                {bills
+                  .filter((b) => billIsOpen(b.status))
+                  .map((b) => (
+                    <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium">{b.daycareName}</p>
+                          <BillStatusBadge status={b.status} />
+                        </div>
+                        <p className="text-sm text-muted">
+                          {b.childName ? `${b.childName} · ` : ""}
+                          {periodLabel(b.period, locale)}
+                          {b.dueAt ? ` · ${t("billDue")} ${b.dueAt}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-display text-xl tabular-nums">{money(billDollars(b), locale)}</span>
+                        <Button size="sm" asChild>
+                          <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}}>
+                            {t("pay")}
+                          </Link>
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
+          <div>
+            <h3 className="font-display text-xl">{t("paidBills")}</h3>
+            <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
+              {bills.filter((b) => b.status === "paid" || b.status === "refunded").length === 0 &&
+              payments.length === 0 &&
+              bills.filter((b) => billIsOpen(b.status)).length === 0 ? (
+                <li className="p-2">
+                  <EmptyState title={t("noPayments")} body={t("noPaymentsLead")} action={t("emptyFindCare")} actionTo="/search" />
                 </li>
-              ))
-            )}
-          </ul>
+              ) : (
+                <>
+                  {bills
+                    .filter((b) => b.status === "paid" || b.status === "refunded")
+                    .map((b) => (
+                      <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium">{b.daycareName}</p>
+                            <BillStatusBadge status={b.status} />
+                          </div>
+                          <p className="text-muted">
+                            {periodLabel(b.period, locale)} · {b.number}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="tabular-nums">{money(billDollars(b), locale)}</span>
+                          {b.receiptUrl ? (
+                            <Button size="sm" variant="secondary" asChild>
+                              <a href={b.receiptUrl} target="_blank" rel="noreferrer">
+                                {t("viewReceipt")}
+                              </a>
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="secondary" asChild>
+                              <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}}>
+                                {t("viewReceipt")}
+                              </Link>
+                            </Button>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  {payments
+                    .filter((p) => !bills.some((b) => b.id === p.invoiceId || b.number === p.reference))
+                    .map((p) => (
+                      <li key={p.id} className="flex items-center justify-between p-4 text-sm">
+                        <div>
+                          <p className="font-medium">{p.daycareName}</p>
+                          <p className="text-muted">
+                            {p.method} · {p.status === "paid" ? t("paid") : t("pending")}
+                          </p>
+                        </div>
+                        <span className="tabular-nums">{money(p.amount, locale)}</span>
+                      </li>
+                    ))}
+                </>
+              )}
+            </ul>
+          </div>
         </div>
       ) : null}
 
