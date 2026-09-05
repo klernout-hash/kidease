@@ -33,6 +33,7 @@ test("isSensitiveDeskPath is prefix-safe", () => {
   assert.equal(isSensitiveDeskPath("/admin-contracts"), true);
   assert.equal(isSensitiveDeskPath("/admin-contracts/"), true);
   assert.equal(isSensitiveDeskPath("/api/admin/contracts"), true);
+  assert.equal(isSensitiveDeskPath("/api/admin/media"), true);
   assert.equal(isSensitiveDeskPath("/administrator"), false);
   assert.equal(isSensitiveDeskPath("/provider"), false);
   assert.equal(isSensitiveDeskPath("/parent"), false);
