@@ -4,6 +4,8 @@ Scaffolding so a Mac with Xcode and a machine with Android Studio can produce a 
 
 This repository does **not** enroll an Apple Developer Program or Google Play Console account. It does **not** upload builds. The App Store / Play listings are **not** live — `/get-app` still says coming soon.
 
+Account enrollment, legal URLs, listing copy, and the remaining store checklist live in [`docs/store-readiness.md`](store-readiness.md).
+
 Live WebView URL: **https://www.kidease.ca**  
 Bundle / application id: **ca.daycarenearme.app**  
 App name: **KidEase**

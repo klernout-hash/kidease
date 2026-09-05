@@ -119,6 +119,17 @@ describe("mobile build docs stay honest", () => {
     assert.match(doc, /ca\.daycarenearme\.app/);
     assert.doesNotMatch(doc, /store listing is live|listed on the App Store/i);
     assert.match(doc, /not\*\* live|are \*\*not\*\* live/);
+    assert.match(doc, /store-readiness\.md/);
     assert.doesNotMatch(doc, /-----BEGIN|AuthKey_|sk_live_|AIza[0-9A-Za-z_-]{20,}/);
+  });
+
+  it("keeps the Kyle-approved store-readiness checklist", () => {
+    const checklist = read("docs/store-readiness.md");
+    assert.match(checklist, /# KidEase — App Store & Google Play readiness checklist/);
+    assert.match(checklist, /ca\.daycarenearme\.app/);
+    assert.match(checklist, /https:\/\/www\.kidease\.ca/);
+    assert.match(checklist, /\[ \] Public store listings live/);
+    assert.match(checklist, /\[ \] Apple Developer Program enrolled/);
+    assert.match(checklist, /\[x\] Get-app page shows App Store \/ Play as Coming soon/);
   });
 });
