@@ -5,7 +5,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
-import { getLabStatus, type LabStatus } from "@/lib/server/chat-scaffold.server";
+import { getLabStatus, type LabStatus } from "@/lib/server/chat-scaffold";
 import { CHAT_SCAFFOLD_MESSAGE } from "@/lib/chat-scaffold";
 
 export const Route = createFileRoute("/admin-chat")({
