@@ -53,6 +53,7 @@ test("unsigned provider desk settles the session and offers sign-in or claim", (
 test("FAQ is a real page and registry names get hyphen spacing", () => {
   const faq = src("src/routes/faq.tsx");
   assert.match(faq, /function FaqPage/);
+  assert.match(faq, /Frequently asked questions · KidEase/);
   assert.doesNotMatch(faq, /redirect\(\{ to: "\/tour-checklist" \}\)/);
   const vercel = src("vercel.json");
   assert.doesNotMatch(vercel, /"source": "\/faq"/);
