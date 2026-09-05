@@ -68,6 +68,9 @@ test("admin chat lab is registered, admin-gated, and honest", () => {
   assert.match(route, /desks\.includes\("admin"\)/);
   assert.match(route, /CHAT_SCAFFOLD_MESSAGE/);
   assert.match(route, /Scaffold/);
+  assert.match(route, /from "@\/lib\/server\/chat-scaffold"/);
+  assert.doesNotMatch(route, /\.server['"]/);
+  assert.doesNotMatch(route, /chat-scaffold\.server/);
   assert.match(tree, /from '\.\/routes\/admin-chat'/);
   assert.match(tree, /id:\s*'\/admin-chat'/);
   assert.match(send, /PUSH_SCAFFOLD_MESSAGE/);

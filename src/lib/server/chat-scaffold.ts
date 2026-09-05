@@ -25,6 +25,7 @@ export async function resolveLabStatus(): Promise<LabStatus> {
   };
 }
 
+/** Client-safe createServerFn. Do not live in a `*.server.*` file. */
 export const getLabStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
