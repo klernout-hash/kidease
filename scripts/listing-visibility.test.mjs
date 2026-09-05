@@ -58,3 +58,16 @@ test("catalogue extra file marks the ghost admin_only", () => {
   assert.equal(extra[0].visibility, "admin_only");
   assert.equal(extra[0].isTest, true);
 });
+
+test("request-guard 404s the same QA slugs the catalogue hides", () => {
+  const guard = readFileSync(new URL("./request-guard.mjs", import.meta.url), "utf8");
+  assert.match(guard, /HIDDEN_LISTING_SLUGS/);
+  assert.match(guard, /test-ghost-claim-lab/);
+  assert.match(guard, /ke-test-ghost-001/);
+  assert.match(guard, /action: "not_found"/);
+  const middleware = readFileSync(
+    new URL("../server/middleware/request-guard.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(middleware, /decision\.action === "not_found"/);
+});

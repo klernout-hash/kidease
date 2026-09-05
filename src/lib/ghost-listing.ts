@@ -1,4 +1,9 @@
-/** Clearly fake centre used only to walk Claim a listing. Not a real daycare. */
+/**
+ * Clearly fake centre used only to walk Claim a listing. Not a real daycare.
+ * Public document URLs (`/daycare/:slug`, `/book/:slug`) 404 in
+ * `scripts/request-guard.mjs`. Catalogue / search / map already drop it via
+ * `isAdminOnlyListing`. Admins still reach the row from /admin and /claim.
+ */
 export const GHOST_LISTING = {
   id: "ke-test-ghost-001",
   slug: "test-ghost-claim-lab",
