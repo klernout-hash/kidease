@@ -1,9 +1,9 @@
 /**
  * Live Sign in with Apple (Apple's own IDP at appleid.apple.com).
  *
- * The Grok auth broker only federates Google and X (`idp` must be google or
- * twitter). Apple therefore talks to Apple directly via Better Auth's social
- * provider — not the broker.
+ * The Grok auth broker only federates Google (`idp` must be google). Apple
+ * and Facebook therefore talk to their own IDPs via Better Auth's social
+ * providers — not the broker.
  *
  * Required process env (injected on the host; never commit a .env file):
  *   APPLE_CLIENT_ID   Services ID, e.g. ca.kidease.web

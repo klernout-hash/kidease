@@ -315,7 +315,7 @@ export function ShotLogin() {
             Continue with Google
           </div>
           <div className="mt-1.5 flex h-7 items-center justify-center rounded-full text-[9px]" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
-            Continue with X
+            Continue with Facebook
           </div>
           <p className="mt-2.5 text-center text-[7px] uppercase tracking-[0.14em]" style={{ color: SUBTLE }}>
             or use email
