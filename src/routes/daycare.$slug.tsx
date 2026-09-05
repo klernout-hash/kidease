@@ -22,7 +22,7 @@ import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { CompareBar } from "@/components/compare-bar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
-import { formatMonth, money, formatAgeRange, decodeHtml } from "@/lib/utils";
+import { formatMonth, money, formatAgeRange, displayCentreName } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
@@ -46,20 +46,37 @@ function Listing() {
   const [tourOpen, setTourOpen] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [missing, setMissing] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let live = true;
     setMissing(false);
     setData(null);
-    void getDaycare({ data: slug }).then((res) => {
+    const watchdog = window.setTimeout(() => {
       if (!live) return;
-      if (!res) setMissing(true);
-      else setData(res);
-    });
+      setData((cur) => {
+        if (cur) return cur;
+        setMissing(true);
+        return cur;
+      });
+    }, 12_000);
+    void getDaycare({ data: slug })
+      .then((res) => {
+        if (!live) return;
+        if (!res) setMissing(true);
+        else {
+          setMissing(false);
+          setData(res);
+        }
+      })
+      .catch(() => {
+        if (live) setMissing(true);
+      });
     return () => {
       live = false;
+      window.clearTimeout(watchdog);
     };
-  }, [slug]);
+  }, [slug, reload]);
 
   useEffect(() => {
     if (!data) return;
@@ -100,9 +117,21 @@ function Listing() {
         <main className="ke-gutter mx-auto max-w-lg py-16 text-center">
           <h1 className="font-display text-3xl">Not found</h1>
           <p className="mt-3 text-muted">This listing is not available.</p>
-          <Link to="/search" className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
-            {t("search")}
-          </Link>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link to="/search" className="inline-flex text-sm text-primary underline-offset-4 hover:underline">
+              {t("search")}
+            </Link>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setMissing(false);
+                setData(null);
+                setReload((n) => n + 1);
+              }}
+            >
+              {t("tryAgain")}
+            </Button>
+          </div>
         </main>
       </Shell>
     );
@@ -119,7 +148,7 @@ function Listing() {
   }
 
   const d = data.daycare;
-  const name = decodeHtml(locale === "fr" ? d.nameFr : d.name);
+  const name = displayCentreName(locale === "fr" ? d.nameFr : d.name);
   const desc = locale === "fr" ? d.descriptionFr : d.description;
   const hours = locale === "fr" ? d.hoursFr : d.hours;
   const spots = d.spotsInfant + d.spotsToddler + d.spotsPreschool;
@@ -148,6 +177,7 @@ function Listing() {
   }
 
   function onTour() {
+    if (!live) return;
     if (!user) {
       void navigate({ to: "/login" });
       return;
@@ -208,6 +238,11 @@ function Listing() {
                   />
                 ))}
               </div>
+            ) : null}
+            {photos[photo]?.includes("placeholder") ? (
+              <span className="pointer-events-none absolute bottom-3 left-3 z-[2] rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white">
+                {live ? t("storefrontPhoto") : t("notOnKidEase")}
+              </span>
             ) : null}
           </div>
           {photos.length > 1 ? (
@@ -453,11 +488,15 @@ function Listing() {
               )}
             </p>
             <div className="mt-4 grid gap-2">
-              <Button onClick={onTour}>{t("bookTour")}</Button>
+              {live ? (
+                <Button onClick={onTour}>{t("bookTour")}</Button>
+              ) : (
+                <Button disabled>{t("notOnKidEase")}</Button>
+              )}
               {live ? (
                 <Button variant="secondary" onClick={onRequest}>{t("book")}</Button>
               ) : (
-                <Button disabled variant="secondary">{t("notOnKidEase")}</Button>
+                <Button disabled variant="secondary">{t("requestUnavailable")}</Button>
               )}
               {live ? (
                 <Button variant="secondary" onClick={() => void onMessage()}>
@@ -512,9 +551,15 @@ function Listing() {
       {!requestOpen ? (
       <div className="fixed inset-x-0 bottom-20 z-20 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur-md [[data-channel=website]_&]:hidden">
         <div className="mx-auto flex max-w-lg items-center gap-2">
-          <Button className="flex-1" variant="secondary" onClick={onTour}>
-            {t("bookTour")}
-          </Button>
+          {live ? (
+            <Button className="flex-1" variant="secondary" onClick={onTour}>
+              {t("bookTour")}
+            </Button>
+          ) : (
+            <Button className="flex-1" disabled variant="secondary">
+              {t("notOnKidEase")}
+            </Button>
+          )}
           {live ? (
             <Button className="flex-1" onClick={onRequest}>
               {t("book")}

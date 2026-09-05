@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { authClient, authEnabled } from "./client";
 
 /** Normalized user shape used across the app, auth on or off. */
@@ -80,4 +81,23 @@ export function useCurrentUserState(): CurrentUserState {
  */
 export function useCurrentUser(): AppUser | null {
   return useCurrentUserState().user;
+}
+
+/**
+ * Same as `useCurrentUserState`, but a hung `/api/auth/get-session` must not
+ * leave public desks on “Loading” forever. After `timeoutMs`, treat as signed out.
+ */
+export function useSettledUser(timeoutMs = 8000): CurrentUserState {
+  const state = useCurrentUserState();
+  const [expired, setExpired] = useState(false);
+  useEffect(() => {
+    if (!state.isPending) {
+      setExpired(false);
+      return;
+    }
+    const t = window.setTimeout(() => setExpired(true), timeoutMs);
+    return () => window.clearTimeout(t);
+  }, [state.isPending, timeoutMs]);
+  if (state.isPending && expired) return { user: null, isPending: false };
+  return state;
 }

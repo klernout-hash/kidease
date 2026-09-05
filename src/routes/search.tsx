@@ -82,6 +82,7 @@ function SearchPage() {
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const [askLocation, setAskLocation] = useState(false);
   const [mapEnabled, setMapEnabled] = useState(false);
+  const [searchFailed, setSearchFailed] = useState(false);
   useLivePresence(locationConsent === "granted");
 
   useEffect(() => {
@@ -100,8 +101,13 @@ function SearchPage() {
     let live = true;
     const key = searchCacheKey({ lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup });
     const cached = readSearchCache(key);
-    if (cached) setItems(cached);
-    else setRefreshing(true);
+    if (cached) {
+      setItems(cached);
+      setSearchFailed(false);
+    } else {
+      setRefreshing(true);
+      setSearchFailed(false);
+    }
     const tmr = window.setTimeout(() => {
       void searchDaycares({
         data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label) },
@@ -109,19 +115,33 @@ function SearchPage() {
         .then((rows) => {
           if (!live) return;
           setItems(rows);
+          setSearchFailed(false);
           writeSearchCache(key, rows);
         })
         .catch(() => {
-          if (live && !cached) setItems([]);
+          if (live && !cached) {
+            setItems([]);
+            setSearchFailed(true);
+          }
         })
         .finally(() => {
           if (live) setRefreshing(false);
         });
     }, 160);
+    const watchdog = window.setTimeout(() => {
+      if (!live) return;
+      setItems((cur) => {
+        if (cur) return cur;
+        setSearchFailed(true);
+        return [];
+      });
+      setRefreshing(false);
+    }, 12_000);
     trackLocation("search", origin.lat, origin.lng, origin.label, { radiusKm });
     return () => {
       live = false;
       window.clearTimeout(tmr);
+      window.clearTimeout(watchdog);
     };
   }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query, origin.label]);
 
@@ -151,14 +171,33 @@ function SearchPage() {
 
   async function allowLocation() {
     setAskLocation(false);
-    setLocationConsent("granted");
     const pos = await getDeviceLocation({ precise: true });
     if (pos) {
+      setLocationConsent("granted");
       setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
       void hapticLight();
     } else {
       setLocationConsent("denied");
     }
+  }
+
+  function retrySearch() {
+    setItems(null);
+    setSearchFailed(false);
+    setRefreshing(true);
+    void searchDaycares({
+      data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label) },
+    })
+      .then((rows) => {
+        setItems(rows);
+        setSearchFailed(false);
+        writeSearchCache(searchCacheKey({ lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup }), rows);
+      })
+      .catch(() => {
+        setItems([]);
+        setSearchFailed(true);
+      })
+      .finally(() => setRefreshing(false));
   }
 
   async function runMatch() {
@@ -461,21 +500,39 @@ function SearchPage() {
         <div className={cn("mt-2", refreshing && "opacity-70")}>
           {view === "map" ? (
             mapEnabled ? (
-              <div className="mt-4 h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
-                <Suspense fallback={<div className="size-full bg-map" />}>
-                  <MapView
-                    items={list}
-                    origin={origin}
-                    radiusKm={radiusKm}
-                    activeSlug={active}
-                    onSelect={(slug) => setActive(slug)}
-                    onRelocate={(pos) => {
-                      setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
-                      void hapticLight();
-                    }}
-                    onLocate={() => void geo()}
-                  />
-                </Suspense>
+              <div className="mt-4 space-y-3">
+                <div className="h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
+                  <Suspense fallback={<div className="size-full bg-map" />}>
+                    <MapView
+                      items={list}
+                      origin={origin}
+                      radiusKm={radiusKm}
+                      activeSlug={active}
+                      onSelect={(slug) => setActive(slug)}
+                      onRelocate={(pos) => {
+                        setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
+                        void hapticLight();
+                      }}
+                      onLocate={() => void geo()}
+                    />
+                  </Suspense>
+                </div>
+                {items !== null && list.length === 0 ? (
+                  <div className="rounded-xl bg-surface p-8 text-center ring-1 ring-border">
+                    <p className="text-muted">
+                      {searchFailed
+                        ? t("noResults")
+                        : liveOnly && (items?.length ?? 0) > 0
+                          ? t("noLiveResults")
+                          : t("emptyMap")}
+                    </p>
+                    {searchFailed ? (
+                      <Button className="mt-4" onClick={retrySearch}>
+                        {t("tryAgain")}
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             ) : null
           ) : items === null ? (
@@ -485,9 +542,20 @@ function SearchPage() {
               ))}
             </div>
           ) : list.length === 0 ? (
-            <p className="mt-6 rounded-xl bg-surface p-8 text-center text-muted ring-1 ring-border">
-              {liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("noResults")}
-            </p>
+            <div className="mt-6 rounded-xl bg-surface p-8 text-center ring-1 ring-border">
+              <p className="text-muted">
+                {searchFailed
+                  ? t("noResults")
+                  : liveOnly && (items?.length ?? 0) > 0
+                    ? t("noLiveResults")
+                    : t("noResults")}
+              </p>
+              {searchFailed ? (
+                <Button className="mt-4" onClick={retrySearch}>
+                  {t("tryAgain")}
+                </Button>
+              ) : null}
+            </div>
           ) : (
             <ExploreRails items={list} onHover={setActive} />
           )}

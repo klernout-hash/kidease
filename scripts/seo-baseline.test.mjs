@@ -21,6 +21,7 @@ const PUBLIC_PATHS = [
   "/support",
   "/team",
   "/benefits",
+  "/faq",
   "/tour-checklist",
   "/get-app",
   "/claim",
