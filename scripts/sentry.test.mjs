@@ -44,6 +44,7 @@ describe("Sentry wiring", () => {
     const instrument = read("src/instrument.client.ts");
     const vite = read("vite.config.ts");
     assert.match(shared, /VITE_PUBLIC_SENTRY_DSN/);
+    assert.match(client, /import\.meta\.env\.VITE_PUBLIC_SENTRY_DSN/);
     assert.match(client, /SENTRY_PUBLIC_DSN_ENV/);
     assert.doesNotMatch(client, /process\.env\.SENTRY_DSN/);
     assert.doesNotMatch(instrument, /process\.env\.SENTRY_DSN/);

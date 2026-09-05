@@ -9,9 +9,9 @@ import {
   sentryTracesSampleRate,
 } from "@/lib/sentry-shared";
 
+/** Static `import.meta.env.VITE_*` so Vite inlines the public DSN at build time. */
 function publicDsn() {
-  const env = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env;
-  return String(env?.[SENTRY_PUBLIC_DSN_ENV] ?? "").trim();
+  return String(import.meta.env[SENTRY_PUBLIC_DSN_ENV] ?? import.meta.env.VITE_PUBLIC_SENTRY_DSN ?? "").trim();
 }
 
 function clientEnvironment() {
