@@ -346,7 +346,7 @@ export const copy = {
     bookConfidenceBody:
       "Every daycare on KidEase is provincially licensed. Live listings show real-time availability and pricing, so you know exactly what you’re requesting. Read Google reviews and message centres directly — all in one place.",
     liveMeans: "Live = actively managing availability on KidEase",
-    licensedCentreLine: "This is a licensed childcare centre.",
+    licensedCentreLine: "KidEase lists centres from provincial and territorial registries. The badge above is the current KidEase check — not a government certificate.",
     liveListingLine: "Live listing — availability and pricing updated by the provider.",
     viewOnGoogle: "View on Google",
     allCentresLicensed: "All centres are provincially licensed",
@@ -1104,7 +1104,7 @@ export const copy = {
     bookConfidenceBody:
       "Chaque garderie sur KidEase est permise par la province. Les fiches actives affichent les places et les tarifs en temps réel, pour que vous sachiez exactement ce que vous demandez. Lisez les avis Google et écrivez aux centres — au même endroit.",
     liveMeans: "En ligne = le centre gère ses places sur KidEase",
-    licensedCentreLine: "Ceci est un service de garde permis.",
+    licensedCentreLine: "KidEase inscrit des centres provenant des registres provinciaux et territoriaux. Le badge ci-dessus est la vérification KidEase — pas un certificat gouvernemental.",
     liveListingLine: "Fiche active — places et tarifs mis à jour par le fournisseur.",
     viewOnGoogle: "Voir sur Google",
     allCentresLicensed: "Tous les centres sont permis par la province",
