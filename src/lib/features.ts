@@ -21,6 +21,11 @@ export function pushEnabled(env: EnvMap = process.env): boolean {
   return envFlagOn(env.FEATURE_PUSH);
 }
 
+/** Transactional Twilio SMS (vacancy / claim / bill reminder). Default OFF. */
+export function smsEnabled(env: EnvMap = process.env): boolean {
+  return envFlagOn(env.FEATURE_SMS);
+}
+
 /** Daycare SaaS packages on the provider desk. Default OFF — admin still previews (ghost). */
 export function providerSubscriptionsEnabled(env: EnvMap = process.env): boolean {
   return envFlagOn(env.FEATURE_PROVIDER_SUBSCRIPTIONS);

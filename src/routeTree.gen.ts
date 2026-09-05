@@ -56,6 +56,7 @@ import { Route as ApiAdminSentryTestRouteImport } from './routes/api/admin.sentr
 import { Route as ApiAdminStripeCatalogRouteImport } from './routes/api/admin.stripe-catalog'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
+import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -294,6 +295,11 @@ const ApiDocusignWebhookRoute = ApiDocusignWebhookRouteImport.update({
   path: '/api/docusign/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSmsStatusRoute = ApiSmsStatusRouteImport.update({
+  id: '/api/sms/status',
+  path: '/api/sms/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
@@ -348,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -398,6 +405,7 @@ export interface FileRoutesByTo {
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesById {
@@ -449,6 +457,7 @@ export interface FileRoutesById {
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRouteTypes {
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
+    | '/api/sms/status'
     | '/api/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -551,6 +561,7 @@ export interface FileRouteTypes {
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
+    | '/api/sms/status'
     | '/api/stripe/webhook'
   id:
     | '__root__'
@@ -601,6 +612,7 @@ export interface FileRouteTypes {
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
+    | '/api/sms/status'
     | '/api/stripe/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -651,6 +663,7 @@ export interface RootRouteChildren {
   ApiAdminStripeCatalogRoute: typeof ApiAdminStripeCatalogRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
+  ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
 
@@ -985,6 +998,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDocusignWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/sms/status': {
+      id: '/api/sms/status'
+      path: '/api/sms/status'
+      fullPath: '/api/sms/status'
+      preLoaderRoute: typeof ApiSmsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
       path: '/api/stripe/webhook'
@@ -1052,6 +1072,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminStripeCatalogRoute: ApiAdminStripeCatalogRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
+  ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport

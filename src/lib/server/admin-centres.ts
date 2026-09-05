@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ADMIN_EMAIL, lookupUser, notifyPlatform } from "@/lib/server/notify";
+import { notifyClaimStatusSms } from "@/lib/server/sms";
 import { requireAdmin } from "@/lib/server/roles";
 
 export type AdminCentreRow = {
@@ -385,6 +386,21 @@ export const decideCentre = createServerFn({ method: "POST" })
     } catch (err) {
       mail = "failed";
       console.error("[kidease-mail] decision notify failed", err);
+    }
+
+    try {
+      const phoneRows = latest[0]?.user_id
+        ? await sql<{ phone: string | null }>`
+            select phone from profiles where user_id = ${latest[0].user_id} limit 1
+          `.catch(() => [] as { phone: string | null }[])
+        : [];
+      await notifyClaimStatusSms({
+        to: phoneRows[0]?.phone,
+        centreName: centre.name,
+        status: claimStatus,
+      });
+    } catch (err) {
+      console.error("[kidease-sms] claim status notify failed", err instanceof Error ? err.message : err);
     }
 
     try {
