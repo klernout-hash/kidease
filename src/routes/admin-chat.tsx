@@ -6,6 +6,7 @@ import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { getLabStatus, type LabStatus } from "@/lib/server/chat-scaffold";
+import { dryRunPush } from "@/lib/server/push-api";
 import { CHAT_SCAFFOLD_MESSAGE } from "@/lib/chat-scaffold";
 
 export const Route = createFileRoute("/admin-chat")({
@@ -22,6 +23,7 @@ function AdminChatPage() {
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
   const [lab, setLab] = useState<LabStatus | null>(null);
+  const [dryRunHint, setDryRunHint] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -82,11 +84,7 @@ function AdminChatPage() {
             <Stat
               label="FEATURE_PUSH"
               value={lab?.push.enabled ? "on" : "off"}
-              hint={
-                lab?.push.credentialsPresent
-                  ? "Env names are present. Send stub still no-ops."
-                  : "No FCM / APNs credentials. Do not invent keys."
-              }
+              hint={pushHint(lab, dryRunHint)}
             />
             <Stat
               label="FEATURE_SMS"
@@ -117,11 +115,37 @@ function AdminChatPage() {
               </Link>
               . Flag and env presence only — no secrets.
             </p>
+            <p className="mt-2">
+              Push is native-only and dry-run (<code>docs/push.md</code>). www does not prompt.
+            </p>
+            <button
+              type="button"
+              className="mt-3 rounded-full bg-fg px-4 py-2 text-sm text-bg"
+              onClick={() => {
+                void dryRunPush({ data: {} })
+                  .then((result) => {
+                    setDryRunHint(`Dry-run: ${result.tokenCount} token(s). Nothing sent.`);
+                  })
+                  .catch(() => setDryRunHint("Dry-run failed."));
+              }}
+            >
+              Dry-run push (count tokens)
+            </button>
           </div>
         </section>
       </DeskShell>
     </TwoFactorGate>
   );
+}
+
+function pushHint(lab: LabStatus | null, dryRunHint: string): string {
+  if (dryRunHint) return dryRunHint;
+  if (!lab) return "FCM / APNs env not loaded. Do not invent keys.";
+  const tokens = `${lab.push.tokenCount} stored token(s)`;
+  if (lab.push.credentialsPresent) {
+    return `${tokens}. Env names are present. Send stub still no-ops.`;
+  }
+  return `${tokens}. No FCM / APNs credentials. Do not invent keys.`;
 }
 
 function smsHint(lab: LabStatus | null): string {

@@ -3,18 +3,33 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { requireAdmin } from "@/lib/server/roles";
 import { CHAT_SCAFFOLD_MESSAGE, CHAT_SCAFFOLD_READY } from "@/lib/chat-scaffold";
 import { inAppChatEnabled, pushEnabled, smsEnabled, videoEnabled } from "@/lib/features";
-import { pushCredentialsPresent } from "@/lib/push";
+import { pushCredentialsPresent, pushEnvPresence, type PushEnvPresence } from "@/lib/push";
 import { smsCredentialsPresent, smsEnvPresence, type SmsEnvPresence } from "@/lib/sms";
 import { videoCredentialsPresent, videoEnvPresence, type VideoEnvPresence } from "@/lib/video";
 
 export type LabStatus = {
   chat: { enabled: boolean; ready: false; message: string };
-  push: { enabled: boolean; ready: false; credentialsPresent: boolean };
+  push: {
+    enabled: boolean;
+    ready: false;
+    credentialsPresent: boolean;
+    presence: PushEnvPresence;
+    tokenCount: number;
+  };
   sms: { enabled: boolean; credentialsPresent: boolean; presence: SmsEnvPresence };
   video: { enabled: boolean; credentialsPresent: boolean; presence: VideoEnvPresence };
 };
 
 export async function resolveLabStatus(): Promise<LabStatus> {
+  let tokenCount = 0;
+  try {
+    const { getSql } = await import("@/lib/db");
+    const { countPushDeviceTokens } = await import("./push-tokens");
+    const sql = await getSql();
+    tokenCount = await countPushDeviceTokens(sql);
+  } catch {
+    tokenCount = 0;
+  }
   return {
     chat: {
       enabled: inAppChatEnabled(),
@@ -25,6 +40,8 @@ export async function resolveLabStatus(): Promise<LabStatus> {
       enabled: pushEnabled(),
       ready: false,
       credentialsPresent: pushCredentialsPresent(),
+      presence: pushEnvPresence(),
+      tokenCount,
     },
     sms: {
       enabled: smsEnabled(),

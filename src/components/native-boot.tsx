@@ -11,8 +11,10 @@ import { useAppStore } from "@/lib/store";
 import type { Locale } from "@/lib/types";
 import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
+import { usePushRegistration } from "@/lib/use-push";
 
 export function NativeBoot() {
+  usePushRegistration();
   const [splash, setSplash] = useState(false);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setLocated = useAppStore((s) => s.setLocated);
