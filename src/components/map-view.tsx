@@ -352,7 +352,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
           type="button"
           onClick={() => void locateMe()}
           disabled={locating}
-          className="grid size-10 place-items-center rounded-full bg-surface text-primary shadow-card ring-1 ring-border"
+          className="grid size-11 place-items-center rounded-full bg-surface text-primary shadow-card ring-1 ring-border"
           aria-label={t("useLocation")}
         >
           <LocateFixed className={cn("size-5", locating && "animate-pulse")} />
@@ -361,7 +361,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
           <button
             type="button"
             onClick={() => bumpZoom(1)}
-            className="grid size-10 place-items-center text-fg hover:bg-surface-2"
+            className="grid size-11 place-items-center text-fg hover:bg-surface-2"
             aria-label="Zoom in"
           >
             <Plus className="size-4" strokeWidth={2.2} />
@@ -370,7 +370,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
           <button
             type="button"
             onClick={() => bumpZoom(-1)}
-            className="grid size-10 place-items-center text-fg hover:bg-surface-2"
+            className="grid size-11 place-items-center text-fg hover:bg-surface-2"
             aria-label="Zoom out"
           >
             <Minus className="size-4" strokeWidth={2.2} />

@@ -10,6 +10,21 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
+test("390px guest chrome wraps instead of forcing a horizontal page scroll", () => {
+  const css = src("src/styles.css");
+  assert.match(css, /html\[data-channel="website"\] \.ke-listings \{[\s\S]*grid-template-columns: 1fr;/);
+  assert.match(css, /overflow-x:\s*hidden/);
+  const trust = src("src/components/trust-bar.tsx");
+  assert.match(trust, /grid-cols-2/);
+  assert.doesNotMatch(trust, /min-w-\[78%\]/);
+  const map = src("src/components/map-view.tsx");
+  assert.match(map, /size-11 place-items-center rounded-full bg-surface/);
+  assert.match(map, /size-11 place-items-center text-fg/);
+  const search = src("src/routes/search.tsx");
+  assert.match(search, /sm:min-w-\[13\.5rem\]/);
+  assert.match(search, /h-11 shrink-0 rounded-full px-3/);
+});
+
 test("PWA manifest is installable and points at pin icons", () => {
   const manifest = JSON.parse(src("public/manifest.webmanifest"));
   assert.equal(manifest.name, "KidEase");
@@ -44,4 +59,8 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   const vercel = src("vercel.json");
   assert.match(vercel, /"source": "\/sw\.js"/);
   assert.match(vercel, /max-age=0, must-revalidate/);
+  const getApp = src("src/routes/get-app.tsx");
+  assert.match(getApp, /HomeScreenGuide/);
+  assert.match(getApp, /#add-to-home/);
+  assert.doesNotMatch(getApp, /\/\?install=1/);
 });
