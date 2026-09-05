@@ -6,6 +6,37 @@
     }
   ],
   "redirects": [
+    { "source": "/.well-known/change-password", "destination": "/login", "permanent": false },
+    {
+      "source": "/admin",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/admin",
+      "permanent": false
+    },
+    {
+      "source": "/admin/:path*",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/admin/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/admin-contracts",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/admin-contracts",
+      "permanent": false
+    },
+    {
+      "source": "/admin-contracts/:path*",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/admin-contracts/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/api/admin/:path*",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/api/admin/:path*",
+      "permanent": false
+    },
     { "source": "/explore", "destination": "/search", "permanent": true },
     { "source": "/childcare-benefits-program", "destination": "/benefits", "permanent": true },
     { "source": "/meet-the-team", "destination": "/team", "permanent": true },
