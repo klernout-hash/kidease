@@ -30,7 +30,8 @@ export type PlatformKind =
   | "contact"
   | "support"
   | "enroll"
-  | "chat";
+  | "chat"
+  | "review";
 
 export type ProviderJoinKind = "claim" | "signup" | "listing";
 
@@ -104,6 +105,8 @@ function defaultTitle(kind: PlatformKind) {
       return "Daycare enroll request";
     case "chat":
       return "Live Chat message";
+    case "review":
+      return "Parent review waiting";
     default:
       return "KidEase update";
   }
@@ -121,6 +124,7 @@ const KIND_LABEL: Record<string, string> = {
   support: "Support messages",
   enroll: "Daycare enrollments",
   chat: "Live Chat",
+  review: "Parent reviews",
 };
 
 function winnipegDay() {

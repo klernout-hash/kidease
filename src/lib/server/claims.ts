@@ -272,9 +272,11 @@ export const updateListing = createServerFn({ method: "POST" })
       preschoolMonthly: number;
       ageMinMonths: number;
       ageMaxMonths: number;
+      hours?: string;
       licenseNumber?: string;
       licenseExpiry?: string;
       licensedCapacity?: number;
+      touchVacancy?: boolean;
     }) => input,
   )
   .handler(async ({ context, data }) => {
@@ -298,6 +300,7 @@ export const updateListing = createServerFn({ method: "POST" })
     const minAge = Math.max(0, Math.min(216, Math.round(data.ageMinMonths)));
     const maxAge = Math.max(minAge, Math.min(216, Math.round(data.ageMaxMonths)));
     const license = asImage(data.licensePhoto);
+    const hours = (data.hours ?? "").trim();
     const licenseNumber = (data.licenseNumber ?? "").trim().slice(0, 80);
     const licenseExpiry = (data.licenseExpiry ?? "").trim().slice(0, 10) || null;
     const licensedCapacity =
@@ -324,9 +327,15 @@ export const updateListing = createServerFn({ method: "POST" })
         age_min_months = ${minAge},
         age_max_months = ${maxAge},
         ages_confirmed = 1,
+        hours = case when ${hours} = '' then hours else ${hours} end,
+        hours_fr = case when ${hours} = '' then hours_fr else ${hours} end,
         license_number = coalesce(${licenseNumber || null}, license_number),
         license_expiry = coalesce(${licenseExpiry}, license_expiry),
-        licensed_capacity = coalesce(${licensedCapacity}, licensed_capacity)
+        licensed_capacity = coalesce(${licensedCapacity}, licensed_capacity),
+        last_vacancy_updated_at = case
+          when ${Boolean(data.touchVacancy)} then now()
+          else last_vacancy_updated_at
+        end
       where id = ${data.daycareId}
     `.catch(async () => {
       await sql`
@@ -380,6 +389,24 @@ export const getMyClaims = createServerFn({ method: "GET" })
       order by c.created_at desc
     `.catch(() => []);
     return rows;
+  });
+
+export const refreshVacancy = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId: string }) => input)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const own = await sql<{ user_id: string }>`
+      select user_id from provider_daycares
+      where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+    `;
+    if (!own[0]) throw new Error("Not your listing");
+    await sql`
+      update daycares
+      set last_vacancy_updated_at = now()
+      where id = ${data.daycareId}
+    `;
+    return { ok: true as const, lastVacancyUpdatedAt: new Date().toISOString() };
   });
 
 export async function overlayClaimed<T extends { id: string }>(

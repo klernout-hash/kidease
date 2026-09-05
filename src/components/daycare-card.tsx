@@ -12,6 +12,7 @@ import { readCompare, toggleCompare } from "@/lib/compare";
 import { feeProgramBadgeKey } from "@/lib/licensing";
 import { licenseBadge } from "@/lib/trust";
 import type { CopyKey } from "@/lib/copy";
+import { vacancyLine } from "@/components/vacancy-freshness";
 
 const HEART_SAVED = "#FF385C";
 
@@ -30,7 +31,7 @@ export function DaycareCard({
   const { t, locale } = useCopy();
   const name = displayCentreName(locale === "fr" ? item.nameFr : item.name);
   const live = Boolean(item.live);
-  const known = Boolean(item.availabilityKnown || live);
+  const known = Boolean(item.availabilityKnown);
   const open = item.spotsTotal > 0;
   const feeOk = (live || Boolean(item.feeConfirmed)) && item.fromPrice > 0;
   const origin = useAppStore((s) => s.origin);
@@ -57,7 +58,15 @@ export function DaycareCard({
     item.ageMaxMonths > item.ageMinMonths ? `${item.ageMinMonths}–${item.ageMaxMonths} months` : "";
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
   const line3 = [ages, hours].filter(Boolean).join(" · ");
-  const spotsLine = !known ? "" : open ? `${item.spotsTotal} ${t("spots")}` : t("waitlist");
+  const freshness = vacancyLine(item, t, locale);
+  const incomplete = item.detailsReady === false;
+  const spotsLine = [
+    incomplete ? t("detailsIncomplete") : "",
+    known ? (open ? `${item.spotsTotal} ${t("spots")}` : t("waitlist")) : "",
+    freshness.text || t("vacancyStale"),
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const priceAmount = feeBadge === "badgeTen" ? "$10" : feeOk ? money(item.fromPrice, locale) : "";
   const priceUnit = feeBadge === "badgeTen" ? " / day" : feeOk ? t("month") : "";
 

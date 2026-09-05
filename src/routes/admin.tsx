@@ -20,8 +20,9 @@ import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
+import { AdminReviewsPanel } from "@/components/admin-reviews";
 
-type AdminDesk = "queue" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity";
+type AdminDesk = "queue" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -308,12 +309,11 @@ function AdminPage() {
         <AdminContractsPanel rows={contracts} mode={contractMode} busy={contractBusy} setBusy={setContractBusy} onRefresh={refresh} />
       ) : tab === "money" ? (
         <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} />
+      ) : tab === "reviews" ? (
+        <AdminReviewsPanel />
       ) : (
         <>
         <AdminSentryTest />
-        <ul className="mt-6 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-          {rows.length === 0 ? (
-            <li className="p-8 text-center text-muted">No activity yet.</li>
         <div className="mb-4">
           <h2 className="font-display text-2xl">Activity</h2>
           <p className="mt-1 text-sm text-muted">

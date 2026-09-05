@@ -1,5 +1,6 @@
 import type { Daycare } from "@/lib/types";
 import { isPlatformLive } from "@/lib/live";
+import { applyListingReadiness } from "@/lib/listing-readiness";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
 export type DaycareRow = {
@@ -47,6 +48,7 @@ export type DaycareRow = {
   pause_reason?: string | null;
   visibility?: string | null;
   is_test?: number | boolean | null;
+  last_vacancy_updated_at?: string | null;
   license_status?: string | null;
   license_expiry?: string | Date | null;
   licensed_capacity?: number | null;
@@ -62,7 +64,8 @@ export type DaycareRow = {
 export function mapDaycare(r: DaycareRow): Daycare {
   const listingActive = r.listing_active === 0 || r.listing_active === false ? false : true;
   const claimed = Boolean(r.claimed_at);
-  return {
+  const vacancyAt = r.last_vacancy_updated_at ?? null;
+  return applyListingReadiness({
     id: r.id,
     slug: r.slug,
     name: r.name,
@@ -110,8 +113,9 @@ export function mapDaycare(r: DaycareRow): Daycare {
       reviewCount: r.review_count,
     }),
     feeConfirmed: claimed,
-    availabilityKnown: claimed,
-    spotsUpdatedAt: r.claimed_at ?? null,
+    availabilityKnown: Boolean(vacancyAt),
+    spotsUpdatedAt: vacancyAt,
+    lastVacancyUpdatedAt: vacancyAt,
     ...defaultTrustFields(),
     licenseStatus: normalizeLicenseStatus(r.license_status),
     licenseExpiry: r.license_expiry ? String(r.license_expiry).slice(0, 10) : null,
@@ -128,7 +132,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     agesKnown: Boolean(r.ages_confirmed),
     visibility: r.visibility === "admin_only" ? "admin_only" : "public",
     isTest: r.is_test === 1 || r.is_test === true,
-  };
+  });
 }
 
 export function fromPrice(d: Daycare) {

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -61,7 +61,26 @@ function ProviderPage() {
       </Shell>
     );
   }
-  if (!user) return <Navigate to="/login" search={{ role: "provider", intent: "in", next: "/provider" }} />;
+  if (!user) {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto max-w-lg py-16">
+          <h1 className="font-display text-3xl">{t("providerGuestTitle")}</h1>
+          <p className="mt-3 text-muted">{t("providerGuestLead")}</p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/login" search={{ role: "provider", intent: "in", next: "/provider" }}>
+                {t("providerGuestSignIn")}
+              </Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link to="/claim">{t("providerGuestClaim")}</Link>
+            </Button>
+          </div>
+        </main>
+      </Shell>
+    );
+  }
 
   const waiting = requests.filter((r) => r.status === "requested" || r.status === "under_review");
   const later = requests.filter((r) => r.status !== "requested" && r.status !== "under_review");

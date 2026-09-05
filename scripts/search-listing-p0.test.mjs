@@ -37,13 +37,17 @@ test("search and listing recover from hung fetches", () => {
   assert.match(listing, /if \(!live\) return;/);
 });
 
-test("unsigned provider desk settles the session and sends guests to provider login", () => {
+test("unsigned provider desk settles the session and offers sign-in or claim", () => {
   const hook = src("src/lib/auth/use-current-user.ts");
   assert.match(hook, /export function useSettledUser/);
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /useSettledUser/);
+  assert.match(provider, /providerGuestSignIn/);
+  assert.match(provider, /providerGuestClaim/);
   assert.match(provider, /role: "provider"/);
   assert.match(provider, /next: "\/provider"/);
+  assert.match(provider, /to="\/claim"/);
+  assert.doesNotMatch(provider, /<Navigate to="\/login"/);
 });
 
 test("FAQ is a real page and registry names get hyphen spacing", () => {

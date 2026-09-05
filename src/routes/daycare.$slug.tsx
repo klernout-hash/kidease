@@ -22,6 +22,9 @@ import { rememberViewed } from "@/lib/recent";
 import { trackLocation } from "@/lib/telemetry";
 import { useAppStore } from "@/lib/store";
 import { ListingBadges } from "@/components/listing-badges";
+import { CompletenessBanner } from "@/components/listing-completeness";
+import { ListingReviewForm } from "@/components/listing-review-form";
+import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { CompareBar } from "@/components/compare-bar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -164,7 +167,7 @@ function Listing() {
   const prices = [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].filter((n): n is number => n != null && n > 0);
   const from = prices.length ? Math.min(...prices) : 0;
   const live = Boolean(d.live);
-  const known = Boolean(d.availabilityKnown || live);
+  const known = Boolean(d.availabilityKnown);
   const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
   const mapsEmbed = `https://maps.google.com/maps?q=${d.lat},${d.lng}&z=16&output=embed`;
   const mapsDir = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
@@ -281,6 +284,7 @@ function Listing() {
                 <TrustExplainer className="mt-3" />
                 <p className="mt-3 text-sm text-muted">{t("licensedCentreLine")}</p>
                 {live ? <p className="text-sm text-muted">{t("liveListingLine")}</p> : null}
+                <CompletenessBanner item={d} />
                 {!live ? (
                   <p className="mt-3 rounded-lg bg-surface p-3 text-sm text-muted ring-1 ring-border">
                     {t("unclaimedNotice")}
@@ -441,8 +445,9 @@ function Listing() {
               ) : (
                 <p className="mt-3 rounded-lg bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("availUnknownLead")}</p>
               )}
-              {live && d.spotsUpdatedAt ? (
-                <p className="mt-2 text-xs text-subtle">{t("spotsUpdated")} {d.spotsUpdatedAt.slice(0, 10)}</p>
+              <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" />
+              {!d.availabilityKnown ? (
+                <p className="mt-2 text-xs text-subtle">{t("vacancyStale")}</p>
               ) : null}
             </section>
 
@@ -480,6 +485,7 @@ function Listing() {
               ) : (
                 <p className="mt-2 text-sm text-muted">{t("noReviews")}</p>
               )}
+              <ListingReviewForm daycareId={d.id} slug={d.slug} />
             </section>
           </div>
 

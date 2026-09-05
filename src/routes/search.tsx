@@ -223,9 +223,9 @@ function SearchPage() {
   const list = useMemo(() => {
     let rows = items ?? [];
     if (liveOnly) rows = rows.filter((r) => r.live);
-    if (avail === "open") rows = rows.filter((r) => (r.live || r.availabilityKnown) && r.spotsTotal > 0);
-    if (avail === "waitlist") rows = rows.filter((r) => (r.live || r.availabilityKnown) && r.spotsTotal <= 0);
-    if (avail === "unknown") rows = rows.filter((r) => !r.live && !r.availabilityKnown);
+    if (avail === "open") rows = rows.filter((r) => r.availabilityKnown && r.spotsTotal > 0);
+    if (avail === "waitlist") rows = rows.filter((r) => r.availabilityKnown && r.spotsTotal <= 0);
+    if (avail === "unknown") rows = rows.filter((r) => !r.availabilityKnown);
     if (ten) rows = rows.filter((r) => cwelccKind(r.province) !== "ask" || hasAmenity(r.amenities, "ten-a-day") || hasAmenity(r.amenities, "funded"));
     if (meals) rows = rows.filter((r) => hasAmenity(r.amenities, "meals"));
     if (outdoor) rows = rows.filter((r) => hasAmenity(r.amenities, "outdoor") || hasAmenity(r.amenities, "yard"));
