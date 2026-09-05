@@ -22,6 +22,7 @@ import {
 } from "@/lib/server/support";
 import {
   SUPPORT_CASE_STATUSES,
+  SUPPORT_INBOX_EMAIL,
   SUPPORT_MACROS,
   canRefundUnlimited,
   stripeDashboardPaymentUrl,
@@ -105,6 +106,7 @@ export function SupportCaseView({ caseId }: { caseId: string }) {
             {c.assigneeName ? ` · ${c.assigneeName}` : " · Unassigned"}
             {c.parentEmail ? ` · ${c.parentEmail}` : ""}
             {c.centreName ? ` · ${c.centreName}` : ""}
+            {` · ${SUPPORT_INBOX_EMAIL}`}
           </p>
         </div>
         <Link to="/support" className="text-sm text-primary underline-offset-4 hover:underline">

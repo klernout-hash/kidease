@@ -33,6 +33,12 @@ export type SupportPriority = (typeof SUPPORT_PRIORITIES)[number];
 export const SUPPORT_EVENT_KINDS = ["note", "email", "sms", "status", "refund", "system"] as const;
 export type SupportEventKind = (typeof SUPPORT_EVENT_KINDS)[number];
 
+/**
+ * Canonical Support case inbox. Refunds are a billing case type on this mailbox.
+ * Person addresses (e.g. kevin@) are not the case router. Do not invent refund@.
+ */
+export const SUPPORT_INBOX_EMAIL = "support@kidease.ca";
+
 /** Default agent live-refund cap when SUPPORT_REFUND_MAX_CENTS is unset ($100 CAD). */
 export const DEFAULT_SUPPORT_REFUND_MAX_CENTS = 10_000;
 

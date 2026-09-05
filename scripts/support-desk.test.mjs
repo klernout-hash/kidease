@@ -12,6 +12,7 @@ import {
   REFUND_REHEARSED_COPY,
   refundAmountAllowed,
   refundIdempotencyKey,
+  SUPPORT_INBOX_EMAIL,
   stripeDashboardPaymentUrl,
   supportRefundMaxCents,
 } from "../src/lib/support.ts";
@@ -132,6 +133,11 @@ test("public help moved to /help; /support is the staff desk", () => {
   assert.match(docs, /\/support\*/);
   assert.match(docs, /SUPPORT_REFUND_MAX_CENTS/);
   assert.match(docs, /Cloudflare Access/);
+  assert.equal(SUPPORT_INBOX_EMAIL, "support@kidease.ca");
   assert.match(docs, /support@kidease\.ca/);
-  assert.doesNotMatch(docs, /refund@kidease\.ca/);
+  assert.match(docs, /billing/);
+  assert.match(docs, /not the case router/);
+  assert.doesNotMatch(docs, /refund@kidease\.ca as the/);
+  const desk = readFileSync(join(root, "src/components/support-desk.tsx"), "utf8");
+  assert.match(desk, /SUPPORT_INBOX_EMAIL/);
 });

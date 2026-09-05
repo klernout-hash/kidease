@@ -13,6 +13,7 @@ import {
 import {
   SUPPORT_CASE_STATUSES,
   SUPPORT_CASE_TYPES,
+  SUPPORT_INBOX_EMAIL,
   SUPPORT_PRIORITIES,
   supportStatusLabel,
   supportTypeLabel,
@@ -55,7 +56,8 @@ export function SupportDesk({ initialTab = "inbox" }: { initialTab?: Tab }) {
     <DeskShell desk="support" active={tab} onSelect={(id) => setTab(id === "new" ? "new" : "inbox")}>
       <p className="text-sm text-muted">
         One Case object and a timeline — not another scatter of admin tabs. Support desk scaffold.
-        Cases route through support@kidease.ca (refunds are a billing case, not a separate mailbox).
+        Case inbox is {SUPPORT_INBOX_EMAIL}. Refunds are a billing case type on that inbox, not a
+        separate mailbox.
       </p>
       {tab === "new" ? (
         <NewCaseForm

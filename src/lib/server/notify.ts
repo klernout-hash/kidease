@@ -15,6 +15,7 @@ import {
 } from "@/lib/server/notify-mail";
 import { sendSms } from "@/lib/server/sms";
 
+/** Owner / admin notify. Support cases route through support@kidease.ca on the desk — not this address. */
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
 const MAIL_FROM = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
 const ADMIN_SMS = (process.env.ADMIN_SMS || "+12048088398").replace(/[^\d+]/g, "");
