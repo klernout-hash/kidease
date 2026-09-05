@@ -51,10 +51,9 @@ export function isWebsite() {
 }
 
 /**
- * First-party channel boot lives at `/channel-boot.js` (CSP `'self'`).
- * Keep STOREFRONT_MIN_PX in sync with that file (1024). Do not put the boot
- * IIFE back inline — adding a CSP hash while `'unsafe-inline'` remains would
- * disable `'unsafe-inline'` for every other script (TanStack `<Scripts />`).
+ * First-party channel boot lives at `/channel-boot.js` (CSP `'self'` + nonce).
+ * Keep STOREFRONT_MIN_PX in sync with that file (1024). Production HTML
+ * scripts are nonce-stamped in `server/middleware/csp.ts`.
  */
 
 export function paintRuntime() {

@@ -109,10 +109,9 @@ describe("PostHog client wiring", () => {
     assert.equal(masked.responseHeaders, undefined);
   });
 
-  it("allowlists US PostHog hosts in CSP without adding unsafe-eval", () => {
-    const csp = JSON.parse(read("vercel.json")).headers
-      .flatMap((h) => h.headers)
-      .find((h) => h.key === "Content-Security-Policy").value;
+  it("allowlists US PostHog hosts in CSP without adding unsafe-eval", async () => {
+    const { buildContentSecurityPolicy } = await import("./csp.mjs");
+    const csp = buildContentSecurityPolicy("posthog-test");
     assert.match(csp, /script-src[^;]*https:\/\/us\.i\.posthog\.com/);
     assert.match(csp, /script-src[^;]*https:\/\/us-assets\.i\.posthog\.com/);
     assert.match(csp, /connect-src[^;]*https:\/\/us\.i\.posthog\.com/);

@@ -55,13 +55,8 @@ test("sitemap.xml lists canonical www public pages and omits admin paths", () =>
 
 test("vercel CSP does not allowlist grok.com and still keeps product hosts", () => {
   const vercel = readFileSync(join(root, "vercel.json"), "utf8");
-  assert.match(vercel, /Content-Security-Policy/);
-  assert.match(vercel, /maps\.googleapis\.com/);
-  assert.match(vercel, /js\.stripe\.com/);
-  assert.match(vercel, /challenges\.cloudflare\.com/);
-  assert.match(vercel, /us\.i\.posthog\.com/);
-  assert.match(vercel, /script-src 'self' 'unsafe-inline'/);
-  assert.match(vercel, /style-src 'self' 'unsafe-inline'/);
+  assert.doesNotMatch(vercel, /Content-Security-Policy/);
+  assert.doesNotMatch(vercel, /unsafe-inline/);
   assert.doesNotMatch(vercel, /grok\.com/);
   assert.match(vercel, /"source": "\/admin-chat"/);
   assert.match(vercel, /"source": "\/daycare\/test-ghost-claim-lab"/);

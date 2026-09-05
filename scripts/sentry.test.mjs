@@ -106,7 +106,7 @@ describe("Sentry wiring", () => {
     assert.ok(SENTRY_DENY_URLS.some((re) => re.test("moz-extension://abc/x.js")));
   });
 
-  it("gates the admin test route and allowlists ingest hosts in CSP", () => {
+  it("gates the admin test route and allowlists ingest hosts in CSP", async () => {
     const route = read("src/routes/api/admin.sentry-test.ts");
     assert.match(route, /createFileRoute\("\/api\/admin\/sentry-test"\)/);
     assert.match(route, /requireAdminCaller/);
@@ -115,9 +115,8 @@ describe("Sentry wiring", () => {
     assert.match(route, /Sentry\.captureException\(new Error\(SENTRY_TEST_MESSAGE\)\)/);
     assert.equal(SENTRY_TEST_MESSAGE, "KidEase Sentry test");
 
-    const csp = JSON.parse(read("vercel.json"))
-      .headers.flatMap((h) => h.headers)
-      .find((h) => h.key === "Content-Security-Policy").value;
+    const { buildContentSecurityPolicy } = await import("./csp.mjs");
+    const csp = buildContentSecurityPolicy("sentry-test");
     for (const host of SENTRY_CSP_CONNECT) {
       assert.match(csp, new RegExp(host.replace(/\./g, "\\.").replace(/\*/g, "\\*")));
     }
