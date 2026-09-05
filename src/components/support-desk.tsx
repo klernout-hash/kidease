@@ -55,7 +55,6 @@ export function SupportDesk({ initialTab = "inbox" }: { initialTab?: Tab }) {
   return (
     <DeskShell desk="support" active={tab} onSelect={(id) => setTab(id === "new" ? "new" : "inbox")}>
       <p className="text-sm text-muted">
-        One Case object and a timeline — not another scatter of admin tabs. Support desk scaffold.
         Case inbox is {SUPPORT_INBOX_EMAIL}. Refunds are a billing case type on that inbox, not a
         separate mailbox.
       </p>
@@ -76,6 +75,7 @@ export function SupportDesk({ initialTab = "inbox" }: { initialTab?: Tab }) {
           onStatus={setStatus}
           onType={setType}
           onScope={setScope}
+          onNew={() => setTab("new")}
         />
       )}
     </DeskShell>
@@ -91,6 +91,7 @@ function Inbox({
   onStatus,
   onType,
   onScope,
+  onNew,
 }: {
   cases: SupportCase[];
   busy: boolean;
@@ -100,6 +101,7 @@ function Inbox({
   onStatus: (v: SupportCaseStatus | "all") => void;
   onType: (v: SupportCaseType | "all") => void;
   onScope: (v: Scope) => void;
+  onNew: () => void;
 }) {
   const openish = useMemo(
     () => cases.filter((c) => c.status !== "resolved" && c.status !== "closed").length,
@@ -157,7 +159,12 @@ function Inbox({
       </p>
       {cases.length === 0 && !busy ? (
         <div className="overflow-hidden rounded-2xl bg-surface ring-1 ring-border">
-          <EmptyState title="No cases" body="Open a case from New case when a parent or centre needs help." />
+          <EmptyState
+            title="No cases"
+            body="Open a case when a parent or centre needs help."
+            action="New case"
+            onAction={onNew}
+          />
         </div>
       ) : (
         <ul className="overflow-hidden rounded-2xl bg-surface ring-1 ring-border">
@@ -247,7 +254,7 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
         <input
           required
           minLength={3}
-          className="mt-1 h-11 w-full rounded-md border border-border bg-surface px-3"
+          className="ke-input mt-1"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
         />
@@ -256,7 +263,7 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
         <label className="block text-sm font-medium">
           Type
           <select
-            className="mt-1 h-11 w-full rounded-md border border-border bg-surface px-3"
+            className="ke-input mt-1"
             value={type}
             onChange={(e) => setType(e.target.value as SupportCaseType)}
           >
@@ -270,7 +277,7 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
         <label className="block text-sm font-medium">
           Priority
           <select
-            className="mt-1 h-11 w-full rounded-md border border-border bg-surface px-3"
+            className="ke-input mt-1"
             value={priority}
             onChange={(e) => setPriority(e.target.value as SupportPriority)}
           >
@@ -285,7 +292,7 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
       <label className="block text-sm font-medium">
         Parent (optional)
         <input
-          className="mt-1 h-11 w-full rounded-md border border-border bg-surface px-3"
+          className="ke-input mt-1"
           placeholder="Search name or email"
           value={parentQ}
           onChange={(e) => {
@@ -316,7 +323,7 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
       <label className="block text-sm font-medium">
         Centre (optional)
         <input
-          className="mt-1 h-11 w-full rounded-md border border-border bg-surface px-3"
+          className="ke-input mt-1"
           placeholder="Search centre name or city"
           value={centreQ}
           onChange={(e) => {

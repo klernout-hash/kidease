@@ -46,7 +46,7 @@ test("trust badges never claim KidEase police-checks staff or invent scores", ()
   assert.match(src("src/lib/trust.ts"), /It does NOT police-check every educator/);
   assert.match(src("src/lib/copy.ts"), /trustLicensedMatched: "Licensed \(registry-matched\)"/);
   assert.match(src("src/lib/copy.ts"), /Staff screening: provider-attested/);
-  assert.match(src("src/lib/copy.ts"), /Payments: internal ledger/);
+  assert.match(src("src/lib/copy.ts"), /Payments: not charged yet/);
 });
 
 test("registry adapters stay stubs and do not scrape", () => {

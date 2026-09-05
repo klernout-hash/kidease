@@ -30,6 +30,7 @@ import { useCopy } from "@/lib/use-copy";
 import { cn, uniqueById } from "@/lib/utils";
 import { readRecent } from "@/lib/recent";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
+import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { displayDistance } from "@/lib/units";
 import type { DaycareCard as Card } from "@/lib/types";
@@ -403,9 +404,14 @@ function Home() {
               ))}
             </div>
             {shown.length === 0 ? (
-              <p className="mt-6 rounded-xl bg-bg p-8 text-center text-muted ring-1 ring-border">
-                {liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
-              </p>
+              <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
+                <EmptyState
+                  title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
+                  action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
+                  onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
+                  actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
+                />
+              </div>
             ) : null}
             <div className="mt-8">
               <Button size="lg" onClick={() => goSearch(origin.label)}>
@@ -416,7 +422,7 @@ function Home() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 py-16">
+        <section className="ke-gutter mx-auto max-w-6xl py-16">
           <h2 className="text-3xl md:text-4xl">{t("trustWhyTitle")}</h2>
           <ul className="mt-8 grid gap-4 md:grid-cols-2">
             <Why icon={BadgeCheck} text={t("trustWhy1")} />
@@ -428,7 +434,7 @@ function Home() {
         </section>
 
         <section className="bg-surface">
-          <div className="mx-auto max-w-6xl px-5 py-16">
+          <div className="ke-gutter mx-auto max-w-6xl py-16">
             <h2 className="text-3xl md:text-4xl">{t("quotesTitle")}</h2>
             <div className="mt-8 grid gap-5 md:grid-cols-3">
               <Quote body={t("quote1")} by={t("quote1By")} />
@@ -474,9 +480,14 @@ function Home() {
           <ListingRail title={t("availableNow")} items={availableNow} />
           <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
           {shown.length === 0 ? (
-            <p className="mt-6 rounded-xl bg-bg p-8 text-center text-muted ring-1 ring-border">
-              {liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
-            </p>
+            <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
+              <EmptyState
+                title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
+                action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
+                onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
+                actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
+              />
+            </div>
           ) : null}
           <div className="mt-8">
             <Button size="lg" className="w-full" onClick={() => goSearch(origin.label)}>

@@ -173,4 +173,8 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
   assert.match(notify, /ADMIN_EMAIL.*kyle@kidease\.ca/);
   assert.match(notify, /mailto:\$\{SUPPORT_INBOX_EMAIL\}/);
   assert.match(notify, /actorConfirmationReplyTo\(SUPPORT_INBOX_EMAIL\)/);
+
+  const security = readFileSync(join(root, "public/.well-known/security.txt"), "utf8");
+  assert.match(security, /^Contact: mailto:support@kidease\.ca$/m);
+  assert.doesNotMatch(security, /kyle@kidease\.ca/);
 });

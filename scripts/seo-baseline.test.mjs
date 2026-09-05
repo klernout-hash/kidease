@@ -70,7 +70,7 @@ test("vercel CSP does not allowlist grok.com and still keeps product hosts", () 
 
 test("security.txt is RFC 9116-ish and lives at /.well-known/security.txt", () => {
   assert.equal(existsSync(join(root, "public/.well-known/security.txt")), true);
-  assert.match(security, /^Contact: mailto:kyle@kidease\.ca$/m);
+  assert.match(security, /^Contact: mailto:support@kidease\.ca$/m);
   assert.match(security, /^Preferred-Languages: en, fr$/m);
   assert.match(security, /^Canonical: https:\/\/www\.kidease\.ca\/\.well-known\/security\.txt$/m);
   assert.match(security, /^Expires: 2027-09-05T00:00:00\.000Z$/m);

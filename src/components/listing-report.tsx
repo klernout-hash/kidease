@@ -66,7 +66,7 @@ export function ListingReport({ daycareId, centreName }: { daycareId: string; ce
       <label className="block">
         {t("trustReportReason")}
         <select
-          className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+          className="ke-input mt-1"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         >
@@ -80,7 +80,7 @@ export function ListingReport({ daycareId, centreName }: { daycareId: string; ce
       <label className="block">
         {t("trustReportDetail")}
         <textarea
-          className="mt-1 min-h-20 w-full rounded-md border border-border bg-bg px-3 py-2"
+          className="ke-textarea mt-1 min-h-20"
           value={detail}
           onChange={(e) => setDetail(e.target.value)}
         />
@@ -88,11 +88,11 @@ export function ListingReport({ daycareId, centreName }: { daycareId: string; ce
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
           {t("name")}
-          <input className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3" value={name} onChange={(e) => setName(e.target.value)} required />
+          <input className="ke-input mt-1" value={name} onChange={(e) => setName(e.target.value)} required />
         </label>
         <label className="block">
           {t("email")}
-          <input type="email" className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="email" className="ke-input mt-1" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </label>
       </div>
       <TurnstileField onToken={onToken} />

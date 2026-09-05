@@ -18,14 +18,14 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "trust", label: "Trust", hint: "Registries + reports" },
     { id: "mail", label: "Mail", hint: "Titan inbox" },
     { id: "contracts", label: "Contracts", hint: "Status board until DocuSign is live" },
-    { id: "money", label: "Money", hint: "Bills and fees — honest ledger" },
+    { id: "money", label: "Money", hint: "Bills and fees" },
     { id: "activity", label: "Activity", hint: "Platform log" },
     { id: "reviews", label: "Reviews", hint: "Parent reviews to approve" },
     { id: "chat", label: "Chat lab", hint: "Scaffold only", href: "/admin-chat" },
-    { id: "support", label: "Support", hint: "Support desk scaffold", href: "/support" },
+    { id: "support", label: "Support", hint: "Cases and refunds", href: "/support" },
   ],
   support: [
-    { id: "inbox", label: "Inbox", hint: "Cases — one object + timeline", href: "/support" },
+    { id: "inbox", label: "Inbox", hint: "Open cases", href: "/support" },
     { id: "new", label: "New case", hint: "Open a case" },
   ],
   daycare: [
@@ -52,7 +52,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
 
 export const DESK_META: Record<DeskId, { eyebrow: string; title: string }> = {
   admin: { eyebrow: "Operator", title: "Admin" },
-  support: { eyebrow: "Support desk scaffold", title: "Support" },
+  support: { eyebrow: "Support", title: "Cases" },
   daycare: { eyebrow: "Daycare", title: "Centre desk" },
   parent: { eyebrow: "Parent", title: "Family desk" },
 };

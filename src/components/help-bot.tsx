@@ -52,7 +52,7 @@ export function HelpBot() {
                 <p className="text-[11px] text-primary-fg/80">{t("helpBotLead")}</p>
               </div>
             </div>
-            <button type="button" className="grid size-8 place-items-center rounded-full hover:bg-white/10" onClick={() => setOpen(false)} aria-label={t("close")}>
+            <button type="button" className="grid size-11 place-items-center rounded-full hover:bg-white/10" onClick={() => setOpen(false)} aria-label={t("close")}>
               <X className="size-4" />
             </button>
           </div>

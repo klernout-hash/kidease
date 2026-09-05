@@ -47,7 +47,7 @@ export function DeskShell({
                     key={item.id}
                     to={item.href}
                     className={cn(
-                      "shrink-0 rounded-full px-3 py-2 text-sm md:rounded-xl",
+                      "min-h-11 shrink-0 rounded-full px-3 py-2 text-sm md:min-h-0 md:rounded-xl",
                       on
                         ? "bg-primary text-primary-fg"
                         : "text-muted ring-1 ring-border hover:text-fg md:ring-0 md:hover:bg-surface",
@@ -72,7 +72,7 @@ export function DeskShell({
                   type="button"
                   onClick={() => onSelect(item.id)}
                   className={cn(
-                    "shrink-0 rounded-full px-3 py-2 text-left text-sm md:rounded-xl",
+                    "min-h-11 shrink-0 rounded-full px-3 py-2 text-left text-sm md:min-h-0 md:rounded-xl",
                     on ? "bg-primary text-primary-fg" : "text-muted ring-1 ring-border hover:text-fg md:ring-0 md:hover:bg-surface",
                   )}
                 >

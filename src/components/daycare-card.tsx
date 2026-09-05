@@ -60,13 +60,8 @@ export function DaycareCard({
   const line3 = [ages, hours].filter(Boolean).join(" · ");
   const freshness = vacancyLine(item, t, locale);
   const incomplete = item.detailsReady === false;
-  const spotsLine = [
-    incomplete ? t("detailsIncomplete") : "",
-    known ? (open ? `${item.spotsTotal} ${t("spots")}` : t("waitlist")) : "",
-    freshness.text || t("vacancyStale"),
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const spotsKnown = known ? (open ? `${item.spotsTotal} ${t("spots")}` : t("waitlist")) : "";
+  const freshnessText = freshness.text || t("vacancyStale");
   const priceAmount = feeBadge === "badgeTen" ? "$10" : feeOk ? money(item.fromPrice, locale) : "";
   const priceUnit = feeBadge === "badgeTen" ? " / day" : feeOk ? t("month") : "";
 
@@ -112,7 +107,13 @@ export function DaycareCard({
             <p className="truncate text-[14px] font-normal leading-5 text-[#6A6A6A]">{item.city}</p>
           )}
           {line3 ? <p className="truncate text-[14px] font-normal leading-5 text-[#6A6A6A]">{line3}</p> : null}
-          {spotsLine ? <p className="truncate text-[14px] font-normal leading-5 text-[#6A6A6A]">{spotsLine}</p> : null}
+          {incomplete || spotsKnown || freshnessText ? (
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {incomplete ? <span className="ke-honesty">{t("detailsIncomplete")}</span> : null}
+              {spotsKnown ? <span className="ke-honesty">{spotsKnown}</span> : null}
+              {freshnessText ? <span className="ke-honesty">{freshnessText}</span> : null}
+            </div>
+          ) : null}
           {priceAmount ? (
             <p className="pt-0.5 text-[15px] leading-5 tabular-nums">
               <span className="font-semibold">{priceAmount}</span>
@@ -128,7 +129,7 @@ export function DaycareCard({
           e.stopPropagation();
           toggleCompare(item.id);
         }}
-        className="absolute right-3 top-3 z-20 grid size-8 place-items-center rounded-full"
+        className="absolute right-2 top-2 z-20 grid size-11 place-items-center rounded-full"
         aria-label={t("saved")}
       >
         <Heart
