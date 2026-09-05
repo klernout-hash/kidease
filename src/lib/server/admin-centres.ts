@@ -23,6 +23,7 @@ export type AdminCentreRow = {
   providerEmail: string | null;
   submittedAt: string | null;
   reviewedAt: string | null;
+  reviewNote: string | null;
 };
 
 export type Decision = "approve" | "decline" | "waiting";
@@ -135,6 +136,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
       provider_email: string | null;
       submitted_at: string | null;
       reviewed_at: string | null;
+      review_note: string | null;
     }>`
       select distinct on (d.id)
         d.id as daycare_id,
@@ -153,7 +155,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         u.name as provider_name,
         u.email as provider_email,
         coalesce(c.created_at, d.claimed_at) as submitted_at,
-        null::timestamptz as reviewed_at
+        c.reviewed_at,
+        c.review_note
       from daycares d
       left join listing_claims c on c.daycare_id = d.id
       left join provider_daycares pd on pd.daycare_id = d.id
@@ -189,6 +192,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         providerEmail: r.provider_email,
         submittedAt: r.submitted_at,
         reviewedAt: r.reviewed_at,
+        reviewNote: r.review_note,
       };
     });
 
