@@ -1,5 +1,6 @@
 import type { Daycare } from "@/lib/types";
 import { isPlatformLive } from "@/lib/live";
+import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
 export type DaycareRow = {
   id: string;
@@ -46,6 +47,16 @@ export type DaycareRow = {
   pause_reason?: string | null;
   visibility?: string | null;
   is_test?: number | boolean | null;
+  license_status?: string | null;
+  license_expiry?: string | Date | null;
+  licensed_capacity?: number | null;
+  registry_match_state?: string | null;
+  license_verified_at?: string | null;
+  license_verification_source?: string | null;
+  staff_screening_attested?: number | boolean | null;
+  staff_screening_attested_at?: string | null;
+  staff_screening_attested_by?: string | null;
+  stripe_identity_verified?: number | boolean | null;
 };
 
 export function mapDaycare(r: DaycareRow): Daycare {
@@ -101,7 +112,17 @@ export function mapDaycare(r: DaycareRow): Daycare {
     feeConfirmed: claimed,
     availabilityKnown: claimed,
     spotsUpdatedAt: r.claimed_at ?? null,
-    licenseStatus: claimed ? "active" : "unknown",
+    ...defaultTrustFields(),
+    licenseStatus: normalizeLicenseStatus(r.license_status),
+    licenseExpiry: r.license_expiry ? String(r.license_expiry).slice(0, 10) : null,
+    licensedCapacity: r.licensed_capacity ?? null,
+    registryMatchState: normalizeMatchState(r.registry_match_state),
+    licenseVerifiedAt: r.license_verified_at ?? null,
+    licenseVerificationSource: r.license_verification_source ?? null,
+    staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
+    staffScreeningAttestedAt: r.staff_screening_attested_at ?? null,
+    staffScreeningAttestedBy: r.staff_screening_attested_by ?? null,
+    stripeIdentityVerified: r.stripe_identity_verified === 1 || r.stripe_identity_verified === true,
     priority: Boolean(r.priority_until && Date.parse(r.priority_until) > Date.now()),
     priorityUntil: r.priority_until ?? null,
     agesKnown: Boolean(r.ages_confirmed),

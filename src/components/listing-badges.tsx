@@ -1,4 +1,5 @@
 import { PriorityPill } from "@/components/priority-pill";
+import { TrustSignals } from "@/components/trust-badge";
 import { feeProgramBadgeKey } from "@/lib/licensing";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -8,18 +9,7 @@ export function ListingBadges({
   item,
   compact = false,
 }: {
-  item: Pick<
-    Daycare,
-    | "live"
-    | "province"
-    | "amenities"
-    | "availabilityKnown"
-    | "spotsInfant"
-    | "spotsToddler"
-    | "spotsPreschool"
-    | "waitlist"
-    | "priority"
-  >;
+  item: Daycare;
   compact?: boolean;
 }) {
   const { t } = useCopy();
@@ -32,11 +22,10 @@ export function ListingBadges({
     : "rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium";
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5">
       {item.priority ? <PriorityPill /> : null}
-      <span className={pill}>{t("licensed")}</span>
+      <TrustSignals item={item} surface="parent" compact={compact} />
       {feeBadge ? <span className={cn(pill, "bg-primary text-primary-fg")}>{t(feeBadge)}</span> : null}
-      <span className={pill}>{t("badgeSubsidy")}</span>
       {live ? (
         <span className={cn(pill, "bg-ok text-primary-fg")}>{t("live")}</span>
       ) : null}

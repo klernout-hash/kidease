@@ -16,6 +16,8 @@ import type { Child, Daycare, SpotRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { CapacityForm, Field, PromotePanel } from "@/components/provider-listing-forms";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
+import { TrustSignals } from "@/components/trust-badge";
+import { ProviderTrustChecklist } from "@/components/provider-trust";
 import { listingStatusFromClaim } from "@/lib/listing-status";
 
 type DaycareDesk = "requests" | "listings" | "licence" | "contract" | "promote";
@@ -142,6 +144,7 @@ function ProviderPage() {
                     <p className="text-sm text-muted">
                       {d.address}, {d.city} · {d.licenseNumber}
                     </p>
+                    <TrustSignals item={d} surface="provider" compact className="mt-2" />
                   </div>
                   {d.priority ? <PriorityPill /> : null}
                 </div>
@@ -207,8 +210,14 @@ function ProviderPage() {
           listings.map((d) => (
             <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
               <h2 className="font-display text-2xl">{locale === "fr" ? d.nameFr : d.name}</h2>
-              <p className="mt-1 text-sm text-muted">Licence {d.licenseNumber || "number not on file yet"}</p>
-              <CapacityForm daycare={d} onSaved={() => void load()} mode="licence" />
+              <p className="mt-1 text-sm text-muted">{t("trustChecklistTitle")}</p>
+              <div className="mt-4">
+                <ProviderTrustChecklist daycare={d} onSaved={() => void load()} />
+              </div>
+              <div className="mt-6 border-t border-border pt-5">
+                <h3 className="font-display text-xl">{t("licenceRecord")}</h3>
+                <CapacityForm daycare={d} onSaved={() => void load()} mode="licence" />
+              </div>
             </section>
           ))
         )

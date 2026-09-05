@@ -24,6 +24,15 @@ export type AdminCentreRow = {
   submittedAt: string | null;
   reviewedAt: string | null;
   reviewNote: string | null;
+  licenseNumber: string | null;
+  licenseStatus: string;
+  licenseExpiry: string | null;
+  licensedCapacity: number | null;
+  registryMatchState: string;
+  licenseVerifiedAt: string | null;
+  licenseVerificationSource: string | null;
+  staffScreeningAttested: boolean;
+  staffScreeningAttestedAt: string | null;
 };
 
 export type Decision = "approve" | "decline" | "waiting";
@@ -137,6 +146,15 @@ export const listAdminCentres = createServerFn({ method: "GET" })
       submitted_at: string | null;
       reviewed_at: string | null;
       review_note: string | null;
+      license_number: string | null;
+      license_status: string | null;
+      license_expiry: string | null;
+      licensed_capacity: number | null;
+      registry_match_state: string | null;
+      license_verified_at: string | null;
+      license_verification_source: string | null;
+      staff_screening_attested: number | boolean | null;
+      staff_screening_attested_at: string | null;
     }>`
       select distinct on (d.id)
         d.id as daycare_id,
@@ -156,7 +174,16 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         u.email as provider_email,
         coalesce(c.created_at, d.claimed_at) as submitted_at,
         c.reviewed_at,
-        c.review_note
+        c.review_note,
+        d.license_number,
+        d.license_status,
+        d.license_expiry::text as license_expiry,
+        d.licensed_capacity,
+        d.registry_match_state,
+        d.license_verified_at,
+        d.license_verification_source,
+        d.staff_screening_attested,
+        d.staff_screening_attested_at
       from daycares d
       left join listing_claims c on c.daycare_id = d.id
       left join provider_daycares pd on pd.daycare_id = d.id
@@ -169,7 +196,78 @@ export const listAdminCentres = createServerFn({ method: "GET" })
          or d.license_number = 'TEST-GHOST-0001'
          or d.id = 'ke-test-ghost-001'
       order by d.id, c.created_at desc nulls last
-    `.catch(() => []);
+    `.catch(() =>
+      sql<{
+        daycare_id: string;
+        slug: string;
+        name: string;
+        address: string;
+        city: string;
+        province: string;
+        phone: string | null;
+        contact_email: string | null;
+        claim_status: string | null;
+        claimed_at: string | null;
+        claim_id: string | null;
+        claim_row_status: string | null;
+        provider_user_id: string | null;
+        provider_name: string | null;
+        provider_email: string | null;
+        submitted_at: string | null;
+        reviewed_at: string | null;
+        review_note: string | null;
+        license_number: string | null;
+        license_status: string | null;
+        license_expiry: string | null;
+        licensed_capacity: number | null;
+        registry_match_state: string | null;
+        license_verified_at: string | null;
+        license_verification_source: string | null;
+        staff_screening_attested: number | boolean | null;
+        staff_screening_attested_at: string | null;
+      }>`
+        select distinct on (d.id)
+          d.id as daycare_id,
+          d.slug,
+          d.name,
+          d.address,
+          d.city,
+          d.province,
+          d.phone,
+          d.contact_email,
+          d.claim_status,
+          d.claimed_at,
+          c.id as claim_id,
+          c.status as claim_row_status,
+          coalesce(c.user_id, pd.user_id) as provider_user_id,
+          u.name as provider_name,
+          u.email as provider_email,
+          coalesce(c.created_at, d.claimed_at) as submitted_at,
+          c.reviewed_at,
+          c.review_note,
+          d.license_number,
+          'unverified'::text as license_status,
+          null::text as license_expiry,
+          null::int as licensed_capacity,
+          'unmatched'::text as registry_match_state,
+          null::timestamptz as license_verified_at,
+          null::text as license_verification_source,
+          0 as staff_screening_attested,
+          null::timestamptz as staff_screening_attested_at
+        from daycares d
+        left join listing_claims c on c.daycare_id = d.id
+        left join provider_daycares pd on pd.daycare_id = d.id
+        left join "user" u on u.id = coalesce(c.user_id, pd.user_id)
+        where d.claimed_at is not null
+           or d.claim_status in ('pending', 'waiting', 'verified', 'approved', 'declined')
+           or c.id is not null
+           or pd.user_id is not null
+           or d.slug = 'test-ghost-claim-lab'
+           or d.license_number = 'TEST-GHOST-0001'
+           or d.id = 'ke-test-ghost-001'
+        order by d.id, c.created_at desc nulls last
+      `.catch(() => []),
+    );
 
     const mapped: AdminCentreRow[] = rows.map((r) => {
       const status = normalizeStatus(r.claim_status, r.claimed_at, r.claim_row_status);
@@ -193,6 +291,15 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         submittedAt: r.submitted_at,
         reviewedAt: r.reviewed_at,
         reviewNote: r.review_note,
+        licenseNumber: r.license_number,
+        licenseStatus: r.license_status || "unverified",
+        licenseExpiry: r.license_expiry,
+        licensedCapacity: r.licensed_capacity,
+        registryMatchState: r.registry_match_state || "unmatched",
+        licenseVerifiedAt: r.license_verified_at,
+        licenseVerificationSource: r.license_verification_source,
+        staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
+        staffScreeningAttestedAt: r.staff_screening_attested_at,
       };
     });
 
