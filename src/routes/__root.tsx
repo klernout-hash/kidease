@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
+import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { Toaster } from "sonner";
 import { CHANNEL_BOOT_SCRIPT } from "@/lib/runtime";
@@ -71,6 +72,7 @@ export const Route = createRootRoute({
         <PreviewHostBridge />
         <AuthProvider>
           <NativeBoot />
+          <PostHogBoot />
           <RoleBoot />
           <Outlet />
           <Toaster position="top-center" richColors={false} />

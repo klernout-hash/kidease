@@ -144,7 +144,10 @@ export default defineConfig(({ command, isPreview }) => ({
     allowedHosts: true,
   },
   resolve: { tsconfigPaths: true },
-  ssr: { external: ["sharp"] },
+  // POSTHOG_HOST is a public ingest URL (already on Vercel). Narrow prefix so
+  // a future POSTHOG_* secret is not inlined into the client bundle.
+  envPrefix: ["VITE_", "POSTHOG_HOST"],
+  ssr: { external: ["sharp", "posthog-js"] },
   optimizeDeps: { exclude: ["sharp"] },
   plugins: [
     pgliteBootstrapPlugin(),

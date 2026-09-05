@@ -63,7 +63,7 @@ function VerifyTwoFactorPage() {
             We sent a 6-digit code{hint ? ` to ${hint}` : ""}. Enter it to finish signing in.
           </p>
           <form
-            className="mt-6 space-y-3"
+            className="mt-6 space-y-3 ph-no-capture"
             onSubmit={(e) => {
               e.preventDefault();
               setBusy(true);

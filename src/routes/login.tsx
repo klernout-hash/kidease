@@ -211,7 +211,7 @@ function Login() {
             <span className="h-px flex-1 bg-border" />
           </div>
           ) : <div className="mt-6" />}
-          <form onSubmit={onEmail} className="space-y-3">
+          <form onSubmit={onEmail} className="space-y-3 ph-no-capture">
             {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}
@@ -266,7 +266,7 @@ function Login() {
                 Forgot password?
               </button>
               {forgotOpen ? (
-                <form onSubmit={onForgot} className="mt-3 space-y-2 rounded-md bg-bg px-3 py-3 ring-1 ring-border">
+                <form onSubmit={onForgot} className="mt-3 space-y-2 rounded-md bg-bg px-3 py-3 ring-1 ring-border ph-no-capture">
                   <p className="text-[13px] leading-snug text-muted">
                     We’ll email a reset link to the address above{operator ? ` (${OPERATOR_EMAIL})` : ""}.
                   </p>

@@ -1,5 +1,6 @@
 import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { resetPostHogIdentity } from "@/lib/posthog";
 import { isNativeSocialProvider } from "./providers";
 
 export const authClient = createAuthClient({
@@ -178,6 +179,7 @@ export async function signOut(redirectTo = "/"): Promise<void> {
     await authClient.signOut();
   } finally {
     setBearerToken(null);
+    resetPostHogIdentity();
   }
   window.location.href = redirectTo;
 }
