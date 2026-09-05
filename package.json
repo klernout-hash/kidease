@@ -14,6 +14,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test 'scripts/**/*.test.mjs'",
+    "photos:inventory": "node --experimental-strip-types scripts/migrate-photos-to-r2.mjs --inventory",
+    "photos:migrate-r2": "node --experimental-strip-types scripts/migrate-photos-to-r2.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "cap:sync": "npx cap sync",
