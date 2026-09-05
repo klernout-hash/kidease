@@ -7,7 +7,7 @@ import {
 } from "../src/lib/listing-status.ts";
 import { desksFor, landingPath, nextStoredRole, parseAppRole, primaryDesk } from "../src/lib/desks.ts";
 import { stripeChargesLive, INTERNAL_LEDGER_LABEL } from "../src/lib/stripe-live.ts";
-import { parseSentryDsn } from "../src/lib/observe.ts";
+import { parseSentryDsn } from "../src/lib/sentry-shared.ts";
 
 test("listing status words are Waiting / Live / Declined only", () => {
   assert.equal(listingStatusLabel("pending"), "Waiting");
