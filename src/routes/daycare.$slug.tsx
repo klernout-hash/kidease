@@ -12,7 +12,11 @@ import { Button } from "@/components/ui/button";
 import { getDaycare } from "@/lib/server/daycares";
 import { isSaved, openConversation, toggleSave } from "@/lib/server/family";
 import { amenityLabel } from "@/lib/amenities";
-import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind } from "@/lib/licensing";
+import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
+import { licenseBadge } from "@/lib/trust";
+import { TrustExplainer } from "@/components/trust-badge";
+import { ListingReport } from "@/components/listing-report";
+import type { CopyKey } from "@/lib/copy";
 import { readCompare, toggleCompare } from "@/lib/compare";
 import { rememberViewed } from "@/lib/recent";
 import { trackLocation } from "@/lib/telemetry";
@@ -274,6 +278,7 @@ function Listing() {
                   ) : null}
                   <ListingBadges item={d} />
                 </div>
+                <TrustExplainer className="mt-3" />
                 <p className="mt-3 text-sm text-muted">{t("licensedCentreLine")}</p>
                 {live ? <p className="text-sm text-muted">{t("liveListingLine")}</p> : null}
                 {!live ? (
@@ -310,7 +315,7 @@ function Listing() {
             <dl className="mt-6 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
               <Meta label={t("hours")} value={hours} />
               <Meta label={t("ages")} value={d.agesKnown ? formatAgeRange(d.ageMinMonths, d.ageMaxMonths) : t("agesUnknown")} />
-              <Meta label={t("license")} value={d.licenseNumber ?? "—"} />
+              <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
               <Meta
                 label={t("spotsAvailable")}
                 value={known ? (spots > 0 ? `${spots}` : t("waitlist")) : t("availUnknown")}
@@ -321,8 +326,8 @@ function Listing() {
               <h2 className="text-2xl">{t("licenceRecord")}</h2>
               <p className="mt-2 text-sm text-muted">{t("licenceRecordLead")}</p>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                <Meta label={t("license")} value={d.licenseNumber ?? "—"} />
-                <Meta label={t("licenseStatus")} value={t("licenseActive")} />
+                <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
+                <Meta label={t("licenseStatus")} value={t(licenseBadge(d).labelKey as CopyKey)} />
                 <Meta label={t("lastInspection")} value={t("seeOfficialRecord")} />
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -346,6 +351,9 @@ function Listing() {
               <p className="mt-3 text-xs text-subtle">
                 {cwelccKind(d.province) === "qc" ? t("cwelccQcNote") : t("cwelccAskNote")}
               </p>
+              <div className="mt-4">
+                <ListingReport daycareId={d.id} centreName={name} />
+              </div>
             </section>
 
             <section className="mt-8">

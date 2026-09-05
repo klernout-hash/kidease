@@ -8,6 +8,9 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
+import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
+import { AdminLicenseActions, AdminTrustPanel } from "@/components/admin-trust";
+import { JURISDICTIONS } from "@/lib/province-registry";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
 import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
 import { AdminContractsPanel } from "@/components/admin-contracts";
@@ -17,7 +20,7 @@ import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
 
-type AdminDesk = "queue" | "daycares" | "mail" | "contracts" | "money" | "activity";
+type AdminDesk = "queue" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -61,19 +64,25 @@ function AdminPage() {
   const [activityKind, setActivityKind] = useState("all");
   const [activityQ, setActivityQ] = useState("");
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
+  const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
+  const [reports, setReports] = useState<AdminReportRow[]>([]);
 
   async function refresh() {
-    const [events, list, cash, envelopes] = await Promise.all([
+    const [events, list, cash, envelopes, regs, flags] = await Promise.all([
       listPlatformEvents().catch(() => []),
       listAdminCentres().catch(() => []),
       listAdminMoney().catch(() => ({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 })),
       listAdminContracts().catch(() => ({ mode: "demo" as const, rows: [] })),
+      listJurisdictions().catch(() => []),
+      listListingReports().catch(() => []),
     ]);
     setRows(events);
     setCentres(list);
     setLedger(cash);
     setContracts(envelopes.rows);
     setContractMode(envelopes.mode);
+    setJurisdictions(regs);
+    setReports(flags);
   }
 
   useEffect(() => {
@@ -111,7 +120,7 @@ function AdminPage() {
     for (const list of map.values()) {
       list.sort((a, b) => a.city.localeCompare(b.city) || a.name.localeCompare(b.name));
     }
-    const keys = [...map.keys()].sort((a, b) => {
+    const keys = [...new Set([...PROV_ORDER, ...map.keys()])].sort((a, b) => {
       const ia = PROV_ORDER.indexOf(a);
       const ib = PROV_ORDER.indexOf(b);
       if (ia === -1 && ib === -1) return a.localeCompare(b);
@@ -119,7 +128,11 @@ function AdminPage() {
       if (ib === -1) return -1;
       return ia - ib;
     });
-    return keys.map((code) => ({ code, name: PROV_NAME[code] || code, rows: map.get(code) || [] }));
+    return keys.map((code) => ({
+      code,
+      name: PROV_NAME[code] || JURISDICTIONS.find((j) => j.code === code)?.nameEn || code,
+      rows: map.get(code) || [],
+    }));
   }, [filtered]);
 
   const counts = useMemo(() => {
@@ -167,6 +180,19 @@ function AdminPage() {
       await refresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Could not save that decision");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onLicense(daycareId: string, action: LicenseReviewAction) {
+    setBusy(`${daycareId}:${action}`);
+    try {
+      await reviewLicense({ data: { daycareId, action, note } });
+      setNote("");
+      await refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not save that licence review");
     } finally {
       setBusy(null);
     }
@@ -227,7 +253,7 @@ function AdminPage() {
               ) : (
                 <ul className="divide-y divide-white/10 border-t border-white/10">
                   {waitingOnYou.map((c) => (
-                    <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} invert />
+                    <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} onLicense={onLicense} invert />
                   ))}
                 </ul>
               )}
@@ -256,9 +282,13 @@ function AdminPage() {
                         </button>
                         {open ? (
                           <ul className="divide-y divide-border border-t border-border">
-                            {group.rows.map((c) => (
-                              <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} />
-                            ))}
+                            {group.rows.length === 0 ? (
+                              <li className="px-5 py-4 text-sm text-muted">No claims in this jurisdiction yet. Registry review stays manual.</li>
+                            ) : (
+                              group.rows.map((c) => (
+                                <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} onLicense={onLicense} />
+                              ))
+                            )}
                           </ul>
                         ) : null}
                       </div>
@@ -269,6 +299,8 @@ function AdminPage() {
             </section>
           )}
         </>
+      ) : tab === "trust" ? (
+        <AdminTrustPanel jurisdictions={jurisdictions} reports={reports} />
       ) : tab === "mail" ? (
         <AdminMailPanel />
       ) : tab === "contracts" ? (
@@ -439,11 +471,13 @@ function CentreRow({
   c,
   busy,
   onDecide,
+  onLicense,
   invert,
 }: {
   c: AdminCentreRow;
   busy: string | null;
   onDecide: (id: string, d: Decision) => void;
+  onLicense: (id: string, d: LicenseReviewAction) => void;
   invert?: boolean;
 }) {
   const muted = invert ? "text-primary-fg/70" : "text-muted";
@@ -469,6 +503,7 @@ function CentreRow({
               {c.reviewNote ? ` · ${c.reviewNote}` : ""}
             </p>
           ) : null}
+          <AdminLicenseActions item={c} busy={busy !== null} onReview={(action) => onLicense(c.daycareId, action)} />
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Button size="sm" variant={status === "live" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>

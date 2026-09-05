@@ -12,6 +12,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   admin: [
     { id: "queue", label: "Waiting on you", hint: "Claims to review" },
     { id: "daycares", label: "Daycares", hint: "By province" },
+    { id: "trust", label: "Trust", hint: "Registries + reports" },
     { id: "mail", label: "Mail", hint: "Titan inbox" },
     { id: "contracts", label: "Contracts", hint: "Status board until DocuSign is live" },
     { id: "money", label: "Money", hint: "Internal ledger — not Stripe" },
@@ -22,7 +23,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "requests", label: "Incoming requests", hint: "Approve, wait, decline" },
     { id: "listings", label: "My listings", hint: "Spots, photos, fees" },
     { id: "add", label: "Add a new Daycare listing", hint: "Another location" },
-    { id: "licence", label: "Licence", hint: "Compliance photo" },
+    { id: "licence", label: "Licence", hint: "Trust checklist + photo" },
     { id: "contract", label: "Contract", hint: "KidEase agreement" },
     { id: "promote", label: "Promote", hint: "Priority placement" },
     { id: "claim", label: "Claim a centre", href: "/claim" },

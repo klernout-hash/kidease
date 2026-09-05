@@ -5,6 +5,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { DaycareCard } from "@/components/daycare-card";
 import { StatusBadge } from "@/components/status-badge";
 import { ListingStatusBadge, LedgerHonesty } from "@/components/listing-status-badge";
+import { TrustSignals } from "@/components/trust-badge";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { ChildProfileForm } from "@/components/child-profile-form";
@@ -64,9 +65,12 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
           {saved.length ? (
             saved.map((item) => (
               <div key={item.id} className="space-y-2">
-                {item.live || (item.claimStatus && item.claimStatus !== "unclaimed") ? (
-                  <ListingStatusBadge claimStatus={item.claimStatus} live={item.live} />
-                ) : null}
+                <div className="flex flex-wrap items-center gap-2">
+                  {item.live || (item.claimStatus && item.claimStatus !== "unclaimed") ? (
+                    <ListingStatusBadge claimStatus={item.claimStatus} live={item.live} />
+                  ) : null}
+                  <TrustSignals item={item} surface="parent" compact />
+                </div>
                 <DaycareCard item={item} showDistance={false} />
               </div>
             ))

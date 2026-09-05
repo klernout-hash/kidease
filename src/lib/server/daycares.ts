@@ -10,6 +10,7 @@ import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
 import { overlayPriority, sortPriorityFirst } from "./promos";
 import { isPlatformLive } from "@/lib/live";
+import { defaultTrustFields } from "@/lib/trust";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { rememberSearch, searchMemoKey } from "./search-memo";
@@ -67,7 +68,8 @@ function toDaycare(d: CatalogDaycare): Daycare {
     feeConfirmed: Boolean(d.feeConfirmed),
     availabilityKnown: false,
     spotsUpdatedAt: null,
-    licenseStatus: "active",
+    ...defaultTrustFields(),
+    licenseVerificationSource: d.licenseNumber ? "catalog" : null,
     priority: false,
     priorityUntil: null,
     agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
