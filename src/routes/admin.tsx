@@ -413,15 +413,21 @@ function CentreRow({
           <p className={`mt-0.5 text-sm ${muted}`}>
             {c.providerName || "—"} · {c.providerEmail || c.contactEmail || "no email"}
           </p>
+          {c.reviewedAt ? (
+            <p className={`mt-0.5 text-xs ${muted}`}>
+              Reviewed {new Date(c.reviewedAt).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}
+              {c.reviewNote ? ` · ${c.reviewNote}` : ""}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Button size="sm" variant={status === "live" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
             Approve
           </Button>
-          <Button size="sm" variant={status === "waiting" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "waiting")}>
+          <Button size="sm" variant={status === "waiting" ? "primary" : "secondary"} disabled={busy !== null || status === "declined"} onClick={() => onDecide(c.daycareId, "waiting")}>
             Waiting
           </Button>
-          <Button size="sm" variant={status === "declined" ? "danger" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "decline")}>
+          <Button size="sm" variant={status === "declined" ? "danger" : "secondary"} disabled={busy !== null || status === "declined"} onClick={() => onDecide(c.daycareId, "decline")}>
             Decline
           </Button>
         </div>
