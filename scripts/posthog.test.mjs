@@ -122,7 +122,7 @@ describe("PostHog client wiring", () => {
     assert.doesNotMatch(csp, /\*\.posthog\.com/);
     const vite = read("vite.config.ts");
     assert.match(vite, /envPrefix: \["VITE_", "POSTHOG_HOST"\]/);
-    assert.match(vite, /ssr: \{ external: \["sharp", "posthog-js"\] \}/);
+    assert.match(vite, /ssr: \{ external: \["sharp", "posthog-js", "@sentry\/node"\] \}/);
     assert.match(read("package.json"), /"posthog-js"/);
   });
 

@@ -169,6 +169,13 @@ export const PRIVACY_EN: LegalDoc = {
               href: "https://posthog.com/privacy",
               hrefLabel: "PostHog Privacy Policy",
             },
+            {
+              name: "Sentry, when error monitoring is on",
+              purpose:
+                "Crash and performance reports so we can fix production bugs. We send stack traces and a route tag — not cookies, Authorization headers, emails, tokens, or child names. Sentry is not an advertising pixel.",
+              href: "https://sentry.io/privacy/",
+              hrefLabel: "Sentry Privacy Policy",
+            },
           ],
         },
         {
@@ -311,7 +318,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase is based in Winnipeg, Manitoba. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe when enabled, Cloudflare when proxied, PostHog when analytics is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
+          text: "KidEase is based in Winnipeg, Manitoba. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe when enabled, Cloudflare when proxied, PostHog when analytics is on, Sentry when error monitoring is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
         },
       ],
     },
@@ -508,6 +515,13 @@ export const PRIVACY_FR: LegalDoc = {
               href: "https://posthog.com/privacy",
               hrefLabel: "Politique de confidentialité PostHog",
             },
+            {
+              name: "Sentry, lorsque le suivi des erreurs est actif",
+              purpose:
+                "Rapports de plantage et de performance pour corriger la production. Nous envoyons des traces et une route — pas les témoins, les en-têtes Authorization, les courriels, les jetons ni les noms d’enfants. Sentry n’est pas un pixel publicitaire.",
+              href: "https://sentry.io/privacy/",
+              hrefLabel: "Politique de confidentialité Sentry",
+            },
           ],
         },
         {
@@ -650,7 +664,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase est à Winnipeg (Manitoba). Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe si activé, Cloudflare si proxifié, PostHog si l’analytique est active). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
+          text: "KidEase est à Winnipeg (Manitoba). Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe si activé, Cloudflare si proxifié, PostHog si l’analytique est active, Sentry si le suivi des erreurs est actif). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
         },
       ],
     },

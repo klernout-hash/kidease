@@ -15,6 +15,7 @@ import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib
 import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
 import { AdminContractsPanel } from "@/components/admin-contracts";
 import { AdminMailPanel } from "@/components/admin-mail";
+import { AdminSentryTest } from "@/components/admin-sentry-test";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
@@ -309,6 +310,10 @@ function AdminPage() {
         <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} />
       ) : (
         <>
+        <AdminSentryTest />
+        <ul className="mt-6 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
+          {rows.length === 0 ? (
+            <li className="p-8 text-center text-muted">No activity yet.</li>
         <div className="mb-4">
           <h2 className="font-display text-2xl">Activity</h2>
           <p className="mt-1 text-sm text-muted">

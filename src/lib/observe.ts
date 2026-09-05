@@ -1,28 +1,19 @@
 /**
- * Lightweight error hook. If SENTRY_DSN is set, post to Sentry's store API
- * (no bundler plugin). Otherwise log so Vercel error alerts can pick it up.
- *
- * Enable Vercel: Project → Logs → create an error alert on production/preview.
+ * Shared error hook. Logs always. If Sentry was initialized (DSN set),
+ * forwards to the SDK. No-op ingest when DSN is unset so local/dev still boots.
  */
 
-type ObserveContext = {
+export type ObserveContext = {
   route?: string;
   extra?: Record<string, string | number | boolean | null | undefined>;
 };
 
-function sentryIngest(dsn: string) {
-  try {
-    const url = new URL(dsn);
-    const key = url.username;
-    const project = url.pathname.replace(/^\//, "");
-    if (!key || !project) return null;
-    return {
-      store: `${url.protocol}//${url.host}/api/${project}/store/`,
-      key,
-    };
-  } catch {
-    return null;
-  }
+type Capture = (error: Error, context: ObserveContext) => void;
+
+let capture: Capture | null = null;
+
+export function registerErrorCapture(fn: Capture) {
+  capture = fn;
 }
 
 function asError(err: unknown) {
@@ -30,41 +21,25 @@ function asError(err: unknown) {
   return new Error(typeof err === "string" ? err : "Unknown error");
 }
 
+/** Redirects, 404s, and expected auth gates are not production incidents. */
+function isControlFlow(err: unknown) {
+  if (!err || typeof err !== "object") return false;
+  const flagged = err as { isRedirect?: boolean; isNotFound?: boolean; name?: string; message?: string };
+  if (flagged.isRedirect || flagged.isNotFound) return true;
+  const name = flagged.name || "";
+  const message = flagged.message || "";
+  return (
+    name === "UnauthorizedError" ||
+    name === "CrossSiteRequestError" ||
+    message === "Unauthorized" ||
+    message === "Not authorized"
+  );
+}
+
 export function reportError(err: unknown, context: ObserveContext = {}) {
+  if (isControlFlow(err)) return;
   const error = asError(err);
   const route = context.route || "app";
   console.error(`[kidease-alert] ${route}`, error.message, context.extra ?? "", error.stack ?? "");
-
-  const dsn = (typeof process !== "undefined" ? process.env.SENTRY_DSN : undefined)?.trim();
-  if (!dsn) return;
-
-  const ingest = sentryIngest(dsn);
-  if (!ingest) return;
-
-  const payload = {
-    message: error.message,
-    exception: {
-      values: [{ type: error.name, value: error.message, stacktrace: { frames: [] } }],
-    },
-    tags: { route },
-    extra: context.extra ?? {},
-    timestamp: Date.now() / 1000,
-    platform: "javascript",
-    level: "error",
-  };
-
-  void fetch(ingest.store, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Sentry-Auth": `Sentry sentry_version=7, sentry_key=${ingest.key}, sentry_client=kidease/1`,
-    },
-    body: JSON.stringify(payload),
-  }).catch((sendErr) => {
-    console.error("[kidease-alert] sentry send failed", sendErr);
-  });
-}
-
-export function parseSentryDsn(dsn: string) {
-  return sentryIngest(dsn);
+  capture?.(error, context);
 }

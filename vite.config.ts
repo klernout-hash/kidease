@@ -145,9 +145,10 @@ export default defineConfig(({ command, isPreview }) => ({
   },
   resolve: { tsconfigPaths: true },
   // POSTHOG_HOST is a public ingest URL (already on Vercel). Narrow prefix so
-  // a future POSTHOG_* secret is not inlined into the client bundle.
+  // a future POSTHOG_* / SENTRY_DSN secret is not inlined into the client bundle.
+  // Browser Sentry reads VITE_PUBLIC_SENTRY_DSN only.
   envPrefix: ["VITE_", "POSTHOG_HOST"],
-  ssr: { external: ["sharp", "posthog-js"] },
+  ssr: { external: ["sharp", "posthog-js", "@sentry/node"] },
   optimizeDeps: { exclude: ["sharp"] },
   plugins: [
     pgliteBootstrapPlugin(),

@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { stripeChargesLive, INTERNAL_LEDGER_LABEL } from "../src/lib/stripe-live.ts";
-import { parseSentryDsn } from "../src/lib/observe.ts";
+import { parseSentryDsn } from "../src/lib/sentry-shared.ts";
 
 test("listing status words are Waiting / Live / Declined only", () => {
   assert.equal(listingStatusLabel("pending"), "Waiting");
