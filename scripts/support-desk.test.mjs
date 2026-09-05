@@ -132,4 +132,6 @@ test("public help moved to /help; /support is the staff desk", () => {
   assert.match(docs, /\/support\*/);
   assert.match(docs, /SUPPORT_REFUND_MAX_CENTS/);
   assert.match(docs, /Cloudflare Access/);
+  assert.match(docs, /support@kidease\.ca/);
+  assert.doesNotMatch(docs, /refund@kidease\.ca/);
 });

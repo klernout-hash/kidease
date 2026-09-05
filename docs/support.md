@@ -23,6 +23,12 @@ update profiles set role = 'support_lead' where user_id = '…';
 
 `canAccessSupport(user)` is admin **or** `support` / `support_lead`. `/admin*` tools still call `requireAdmin` — support cannot hit them.
 
+## Inbox email
+
+Canonical Support case inbox: **support@kidease.ca**.
+
+Refunds are a **billing** case type on that inbox — not a separate `refund@` mailbox. Person mailboxes (including `kevin@kidease.ca` if it exists) are not the case router. Public Help Centre / contact still offers kyle@kidease.ca until you point visitors at support@.
+
 ## Cloudflare Access (ops)
 
 Access already guards `/admin*` on `www.kidease.ca`. **Add `/support*` to the same Access application** when you are ready (path `/support` and `/support/*`). Until then, the app gate + 2FA is the boundary.
