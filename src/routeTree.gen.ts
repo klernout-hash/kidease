@@ -48,6 +48,7 @@ import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
+import { Route as ApiAdminMediaRouteImport } from './routes/api/admin.media'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
@@ -248,6 +249,11 @@ const ApiAdminContractsRoute = ApiAdminContractsRouteImport.update({
   path: '/api/admin/contracts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminMediaRoute = ApiAdminMediaRouteImport.update({
+  id: '/api/admin/media',
+  path: '/api/admin/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/sign/$id': typeof SignIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
+  '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -348,6 +355,7 @@ export interface FileRoutesByTo {
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/sign/$id': typeof SignIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
+  '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -393,6 +401,7 @@ export interface FileRoutesById {
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/sign/$id': typeof SignIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
+  '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -439,6 +448,7 @@ export interface FileRouteTypes {
     | '/pay/$bookingId'
     | '/sign/$id'
     | '/api/admin/contracts'
+    | '/api/admin/media'
     | '/api/auth/$'
     | '/api/docusign/webhook'
     | '/api/stripe/webhook'
@@ -483,6 +493,7 @@ export interface FileRouteTypes {
     | '/pay/$bookingId'
     | '/sign/$id'
     | '/api/admin/contracts'
+    | '/api/admin/media'
     | '/api/auth/$'
     | '/api/docusign/webhook'
     | '/api/stripe/webhook'
@@ -527,6 +538,7 @@ export interface FileRouteTypes {
     | '/pay/$bookingId'
     | '/sign/$id'
     | '/api/admin/contracts'
+    | '/api/admin/media'
     | '/api/auth/$'
     | '/api/docusign/webhook'
     | '/api/stripe/webhook'
@@ -571,6 +583,7 @@ export interface RootRouteChildren {
   PayBookingIdRoute: typeof PayBookingIdRoute
   SignIdRoute: typeof SignIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
+  ApiAdminMediaRoute: typeof ApiAdminMediaRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
@@ -851,6 +864,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminContractsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/media': {
+      id: '/api/admin/media'
+      path: '/api/admin/media'
+      fullPath: '/api/admin/media'
+      preLoaderRoute: typeof ApiAdminMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -924,6 +944,7 @@ const rootRouteChildren: RootRouteChildren = {
   PayBookingIdRoute: PayBookingIdRoute,
   SignIdRoute: SignIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
+  ApiAdminMediaRoute: ApiAdminMediaRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
