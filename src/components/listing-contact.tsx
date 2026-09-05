@@ -43,7 +43,7 @@ export function ListingContact({
       setForm({ name: "", email: "", body: "" });
       setOpen(false);
     } catch {
-      toast.error("Could not send. Email kyle@kidease.ca.");
+      toast.error(t("mailSendFailed"));
     } finally {
       setBusy(false);
     }

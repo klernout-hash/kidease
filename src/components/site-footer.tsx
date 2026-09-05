@@ -5,15 +5,17 @@ import { useCopy } from "@/lib/use-copy";
 function Item({
   to,
   search,
+  hash,
   children,
 }: {
   to: string;
   search?: Record<string, string>;
+  hash?: string;
   children: React.ReactNode;
 }) {
   return (
     <li>
-      <Link to={to} search={search} className="ke-footer-link">
+      <Link to={to} search={search} hash={hash} className="ke-footer-link">
         {children}
       </Link>
     </li>
@@ -84,7 +86,7 @@ export function SiteFooter() {
               <Item to="/provider">{fr ? "Espace garderie" : "Daycare desk"}</Item>
               <Item to="/about">{t("about")}</Item>
               <Item to="/team">{t("team")}</Item>
-              <Item to="/privacy">{t("verifyListings")}</Item>
+              <Item to="/about" hash="verify">{t("verifyListings")}</Item>
               <li>
                 <a href="https://childcaresearch.gov.mb.ca/en" target="_blank" rel="noreferrer" className="ke-footer-link">
                   {t("mbChildcare")}

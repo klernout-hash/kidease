@@ -20,7 +20,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   daycare: [
     { id: "requests", label: "Incoming requests", hint: "Approve, wait, decline" },
     { id: "listings", label: "My listings", hint: "Spots, photos, fees" },
-    { id: "add", label: "Add a new Daycare listing", hint: "Another location" },
+    { id: "add", label: "Add a listing", hint: "Another location" },
     { id: "licence", label: "Licence", hint: "Compliance photo" },
     { id: "contract", label: "Contract", hint: "KidEase agreement" },
     { id: "promote", label: "Promote", hint: "Priority placement" },
@@ -28,6 +28,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "messages", label: "Messages", href: "/inbox" },
   ],
   parent: [
+    { id: "home", label: "Home", hint: "Search, saved, messages" },
     { id: "children", label: "Children", hint: "Up to 4 profiles" },
     { id: "bookings", label: "Enrolment", hint: "Per child, per centre" },
     { id: "saved", label: "Saved centres" },

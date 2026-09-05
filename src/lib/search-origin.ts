@@ -25,7 +25,7 @@ export async function bootSearchOrigin(incomingQ?: string) {
   setOrigin(here);
   setQuery(here.label);
 
-  if (useAppStore.getState().locationConsent === "denied") return;
+  if (useAppStore.getState().locationConsent !== "granted") return;
   const pos = await getDeviceLocation({ precise: true });
   if (!pos || !isInCanada(pos.lat, pos.lng)) {
     if (!isInCanada(here.lat, here.lng)) {

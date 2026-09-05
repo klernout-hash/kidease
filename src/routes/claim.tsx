@@ -243,7 +243,9 @@ function ClaimPage() {
             </p>
             <div className="rounded-lg bg-primary/10 px-3 py-3 text-sm">
               <p className="font-medium">{t("claimCodeSent")}</p>
-              <p className="mt-1 font-mono text-lg tracking-[0.2em]">{pending.code}</p>
+              {import.meta.env.DEV ? (
+                <p className="mt-1 font-mono text-lg tracking-[0.2em]">{pending.code}</p>
+              ) : null}
               <p className="mt-1 text-xs text-muted">{t("claimCodeHint")}</p>
             </div>
             <label className="block text-sm">
@@ -327,9 +329,9 @@ function ClaimPage() {
             <p className="mt-6 text-sm font-medium">{t("claimCtaSupport")}</p>
             <p className="mt-6 text-sm text-muted">
               {t("claimMissing")}{" "}
-              <Link to="/provider" className="text-primary underline-offset-4 hover:underline">
+              <a href="#enroll" className="text-primary underline-offset-4 hover:underline">
                 {t("listCentre")}
-              </Link>
+              </a>
             </p>
           </>
         )}

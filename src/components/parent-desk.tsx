@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { DeskShell } from "@/components/desk-shell";
+import { EmptyState } from "@/components/empty-state";
 import { DaycareCard } from "@/components/daycare-card";
 import { StatusBadge } from "@/components/status-badge";
 import { ListingStatusBadge, LedgerHonesty } from "@/components/listing-status-badge";
@@ -18,13 +19,26 @@ import { formatMonth, money } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
 import type { Booking, Child, DaycareCard as Card, Payment } from "@/lib/types";
 
-type ParentTab = "saved" | "bookings" | "payments" | "children";
+type ParentTab = "home" | "saved" | "bookings" | "payments" | "children";
 
 export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
+  const navigate = useNavigate();
   const { session: desks } = useSessionDesks();
-  const [tab, setTab] = useState<ParentTab>(initialTab ?? "children");
+  const [tab, setTab] = useState<ParentTab>(initialTab ?? "home");
+
+  function selectTab(id: string) {
+    const next = (id === "add" ? "home" : id) as ParentTab;
+    setTab(next);
+    const search =
+      next === "home"
+        ? {}
+        : next === "bookings"
+          ? { tab: "enrolled" as const }
+          : { tab: next };
+    void navigate({ to: "/parent", search });
+  }
   const [saved, setSaved] = useState<Card[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -55,8 +69,23 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   if (!user) return null;
 
   return (
-    <DeskShell desk="parent" active={tab} onSelect={(id) => setTab(id as ParentTab)}>
+    <DeskShell desk="parent" active={tab} onSelect={selectTab}>
       <p className="text-muted">{user.displayName ?? user.primaryEmail}</p>
+
+      {tab === "home" ? (
+        <section className="mt-6 space-y-4">
+          <div>
+            <h2 className="font-display text-2xl">{t("deskHomeTitle")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("deskHomeLead")}</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <HomeCard title={t("search")} body={t("deskHomeSearch")} href="/search" />
+            <HomeCard title={t("saved")} body={`${saved.length} · ${t("deskHomeSaved")}`} onClick={() => selectTab("saved")} />
+            <HomeCard title={t("bookings")} body={`${bookings.length} · ${t("deskHomeBookings")}`} onClick={() => selectTab("bookings")} />
+            <HomeCard title={t("inbox")} body={t("deskHomeInbox")} href="/inbox" />
+          </div>
+        </section>
+      ) : null}
 
       {tab === "saved" ? (
         <div className="ke-listings mt-6">
@@ -70,7 +99,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
               </div>
             ))
           ) : (
-            <p className="text-muted">{t("noSaved")}</p>
+            <EmptyState title={t("noSaved")} body={t("noSavedLead")} action={t("emptyFindCare")} actionTo="/search" />
           )}
         </div>
       ) : null}
@@ -78,13 +107,8 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       {tab === "bookings" ? (
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {bookings.length === 0 ? (
-            <li className="p-8 text-center">
-              <p className="text-muted">{t("noRequests")}</p>
-              <div className="mt-5">
-                <Button size="lg" className="h-14 min-h-14 px-7 text-base" asChild>
-                  <Link to="/search">{t("heroCta")}</Link>
-                </Button>
-              </div>
+            <li className="p-2">
+              <EmptyState title={t("noRequests")} body={t("deskHomeBookings")} action={t("emptyFindCare")} actionTo="/search" />
             </li>
           ) : (
             bookings.map((b) => (
@@ -128,7 +152,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
           <LedgerHonesty stripeLive={Boolean(desks?.stripeLive)} className="mb-3" />
           <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
             {payments.length === 0 ? (
-              <li className="p-8 text-center text-muted">{t("noPayments")}</li>
+              <li className="p-2">
+                <EmptyState title={t("noPayments")} body={t("noPaymentsLead")} action={t("bookings")} onAction={() => selectTab("bookings")} />
+              </li>
             ) : (
               payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between p-4 text-sm">
@@ -169,7 +195,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             <>
               <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
                 {children.length === 0 ? (
-                  <li className="p-8 text-center text-muted">{t("noChildren")}</li>
+                  <li className="p-2">
+                    <EmptyState title={t("noChildren")} body={t("noChildrenLead")} action={t("emptyAddChild")} onAction={() => setEditing("new")} />
+                  </li>
                 ) : (
                   children.map((c) => {
                     const selected = picked[c.id] ?? [];
@@ -250,7 +278,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                                 void shareChildWithCentres({ data: { childId: c.id, daycareIds: selected } })
                                   .then((res) => {
                                     toast.success(`Sent ${res.childName} to ${res.sent.length} centre${res.sent.length === 1 ? "" : "s"}.`);
-                                    setTab("bookings");
+                                    selectTab("bookings");
                                     return load();
                                   })
                                   .catch((err) => toast.error(err instanceof Error ? err.message : "Could not send"))
@@ -301,5 +329,33 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
         )}
       </section>
     </DeskShell>
+  );
+}
+
+function HomeCard({
+  title,
+  body,
+  href,
+  onClick,
+}: {
+  title: string;
+  body: string;
+  href?: "/search" | "/inbox";
+  onClick?: () => void;
+}) {
+  const className = "block rounded-xl bg-surface p-4 text-left ring-1 ring-border hover:ring-fg";
+  if (href) {
+    return (
+      <Link to={href} className={className}>
+        <p className="font-medium">{title}</p>
+        <p className="mt-1 text-sm text-muted">{body}</p>
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} className={className}>
+      <p className="font-medium">{title}</p>
+      <p className="mt-1 text-sm text-muted">{body}</p>
+    </button>
   );
 }

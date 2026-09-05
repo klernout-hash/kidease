@@ -176,6 +176,10 @@ function Home() {
   }, [shown, availableNow]);
 
   async function useLocation() {
+    if (locationConsent !== "granted") {
+      setAskLocation(true);
+      return;
+    }
     const ok = await pinHere();
     if (ok) {
       goSearch();
@@ -318,7 +322,9 @@ function Home() {
           <LocationConsentCard
             onAllow={() => {
               setAskLocation(false);
-              void pinHere();
+              void pinHere().then((ok) => {
+                if (ok) goSearch();
+              });
             }}
             onLater={() => {
               setAskLocation(false);

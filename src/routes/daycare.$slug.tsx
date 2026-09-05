@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Heart, MapPinned, MessageCircle, Phone, Star, Video } from "lucide-react";
+import { Heart, MapPinned, MessageCircle, Phone, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -22,7 +22,8 @@ import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { CompareBar } from "@/components/compare-bar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
-import { formatMonth, money, formatAgeRange, decodeHtml } from "@/lib/utils";
+import { formatMonth, money, formatAgeRange, displayCentreName } from "@/lib/utils";
+import { ListingContact } from "@/components/listing-contact";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
@@ -119,7 +120,7 @@ function Listing() {
   }
 
   const d = data.daycare;
-  const name = decodeHtml(locale === "fr" ? d.nameFr : d.name);
+  const name = displayCentreName(locale === "fr" ? d.nameFr : d.name);
   const desc = locale === "fr" ? d.descriptionFr : d.description;
   const hours = locale === "fr" ? d.hoursFr : d.hours;
   const spots = d.spotsInfant + d.spotsToddler + d.spotsPreschool;
@@ -242,9 +243,10 @@ function Listing() {
                 <p className="mt-3 text-sm text-muted">{t("licensedCentreLine")}</p>
                 {live ? <p className="text-sm text-muted">{t("liveListingLine")}</p> : null}
                 {!live ? (
-                  <p className="mt-3 rounded-lg bg-surface p-3 text-sm text-muted ring-1 ring-border">
-                    {t("unclaimedNotice")}
-                  </p>
+                  <div className="mt-3 space-y-2 rounded-lg bg-surface p-3 text-sm text-muted ring-1 ring-border">
+                    <p>{t("unclaimedNotice")}</p>
+                    <ListingContact name={name} slug={d.slug} city={d.city} />
+                  </div>
                 ) : null}
                 {!d.claimed ? (
                   <p className="mt-3 text-sm">
@@ -466,7 +468,8 @@ function Listing() {
               ) : (
                 <p className="text-xs text-muted">{t("requestUnavailable")}</p>
               )}
-              <div className="grid grid-cols-4 gap-2">
+              <ListingContact name={name} slug={d.slug} city={d.city} className="justify-center" />
+              <div className="grid grid-cols-3 gap-2">
                 <Button variant="ghost" onClick={() => void onSave()} aria-label={t("save")}>
                   <Heart className={saved ? "size-4 fill-fg" : "size-4"} />
                 </Button>
@@ -485,11 +488,6 @@ function Listing() {
                   <a href={mapsDir} target="_blank" rel="noreferrer" aria-label={t("directions")}>
                     <MapPinned className="size-4" />
                   </a>
-                </Button>
-                <Button variant="ghost" asChild>
-                  <Link to="/checkin/$id" params={{ id: d.slug }} aria-label={t("video")}>
-                    <Video className="size-4" />
-                  </Link>
                 </Button>
               </div>
             </div>

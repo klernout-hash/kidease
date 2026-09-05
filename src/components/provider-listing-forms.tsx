@@ -190,6 +190,27 @@ export function CapacityForm({
               <input type="file" accept="image/*" className="sr-only" onChange={(e) => readImage(e.target.files?.[0], "storefront")} />
             </label>
           </div>
+          <h3 className="font-display text-xl">{t("interiors")}</h3>
+          <p className="text-sm text-muted">{t("interiorPhotoNote")}</p>
+          <label className="mt-2 flex min-h-20 cursor-pointer flex-col justify-center rounded-xl border border-dashed border-border bg-bg px-4 py-3 text-sm">
+            <span className="font-medium text-primary">{t("storefrontCta")}</span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="sr-only"
+              onChange={(e) => {
+                Array.from(e.target.files ?? []).forEach((file) => readImage(file, "interiors"));
+              }}
+            />
+          </label>
+          {state.interiors.length ? (
+            <div className="flex flex-wrap gap-2">
+              {state.interiors.map((src, i) => (
+                <img key={`${i}-${src.slice(-12)}`} src={src} alt="" className="h-20 w-20 rounded-md object-cover ring-1 ring-border" />
+              ))}
+            </div>
+          ) : null}
           <h3 className="font-display text-xl">{t("businessDetails")}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={t("centreName")} value={state.name} onChange={(v) => setState({ ...state, name: v })} />
@@ -207,6 +228,10 @@ export function CapacityForm({
             <Num label={t("infantFee")} value={state.infantMonthly} onChange={(n) => setState({ ...state, infantMonthly: n })} />
             <Num label={t("toddlerFee")} value={state.toddlerMonthly} onChange={(n) => setState({ ...state, toddlerMonthly: n })} />
             <Num label={t("preschoolFee")} value={state.preschoolMonthly} onChange={(n) => setState({ ...state, preschoolMonthly: n })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Num label={t("ageMin")} value={state.ageMinMonths} onChange={(n) => setState({ ...state, ageMinMonths: n })} />
+            <Num label={t("ageMax")} value={state.ageMaxMonths} onChange={(n) => setState({ ...state, ageMaxMonths: n })} />
           </div>
           <p className="text-sm tabular-nums text-muted">
             {t("agesAccepted")}: {formatAgeRange(state.ageMinMonths, state.ageMaxMonths)}

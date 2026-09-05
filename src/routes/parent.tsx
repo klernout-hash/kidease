@@ -8,7 +8,7 @@ import { useCopy } from "@/lib/use-copy";
 export const Route = createFileRoute("/parent")({
   validateSearch: (s: Record<string, unknown>) => {
     const tab = s.tab;
-    if (tab === "saved" || tab === "enrolled" || tab === "profile") return { tab };
+    if (tab === "saved" || tab === "enrolled" || tab === "children" || tab === "payments" || tab === "home") return { tab };
     return {};
   },
   component: ParentPage,
@@ -18,7 +18,16 @@ function ParentPage() {
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
   const search = Route.useSearch();
-  const initialTab = search.tab === "saved" ? "saved" : search.tab === "enrolled" ? "bookings" : "children";
+  const initialTab =
+    search.tab === "saved"
+      ? "saved"
+      : search.tab === "enrolled"
+        ? "bookings"
+        : search.tab === "payments"
+          ? "payments"
+          : search.tab === "children"
+            ? "children"
+            : "home";
 
   if (isPending) {
     return (

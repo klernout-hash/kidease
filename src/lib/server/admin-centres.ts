@@ -3,6 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ADMIN_EMAIL, lookupUser, notifyPlatform } from "@/lib/server/notify";
 import { requireAdmin } from "@/lib/server/roles";
+import { decisionCopy, type Decision } from "@/lib/admin-decision-copy";
 
 export type AdminCentreRow = {
   daycareId: string;
@@ -25,7 +26,7 @@ export type AdminCentreRow = {
   reviewedAt: string | null;
 };
 
-export type Decision = "approve" | "decline" | "waiting";
+export type { Decision };
 
 async function requireOperator(userId: string) {
   return requireAdmin(userId);
@@ -93,25 +94,6 @@ async function deliverToProvider(to: string, subject: string, text: string) {
   return "logged";
 }
 
-function decisionCopy(decision: Decision, name: string) {
-  if (decision === "approve") {
-    return {
-      subject: `${name} is live on KidEase`,
-      text: `Hi,\n\nYour listing for ${name} has been approved and is now live on KidEase.\nParents can find you in search, request a spot, and message you in-app.\n\nOpen your dashboard: https://kidease.ca/provider\n\nIf anything on the listing needs a correction, reply to this email or update it from the provider dashboard.`,
-    };
-  }
-  if (decision === "decline") {
-    return {
-      subject: `Update on ${name} — KidEase listing`,
-      text: `Hi,\n\nWe reviewed the claim for ${name} and are not able to publish it on KidEase at this time.\nThe listing is not live for parent requests.\n\nIf you think this is a mistake, or you have a licence document to send, reply to this email and we will take another look.`,
-    };
-  }
-  return {
-    subject: `${name} is in review at KidEase`,
-    text: `Hi,\n\nYour listing for ${name} is on the KidEase review list.\nIt is not live for parent requests yet. We will email you as soon as it is approved or if we need anything else.\n\nYou can still open the provider dashboard: https://kidease.ca/provider`,
-  };
-}
-
 export const listAdminCentres = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
@@ -153,7 +135,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         u.name as provider_name,
         u.email as provider_email,
         coalesce(c.created_at, d.claimed_at) as submitted_at,
-        null::timestamptz as reviewed_at
+        c.reviewed_at as reviewed_at
       from daycares d
       left join listing_claims c on c.daycare_id = d.id
       left join provider_daycares pd on pd.daycare_id = d.id
@@ -203,7 +185,7 @@ export const decideCentre = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const actor = await requireOperator(context.userId);
     const decision = data.decision;
-    if (!["approve", "decline", "waiting"].includes(decision)) throw new Error("Invalid decision");
+    if (!["approve", "decline", "waiting", "info"].includes(decision)) throw new Error("Invalid decision");
 
     const sql = await getSql();
     const listed = await sql<{
@@ -267,7 +249,7 @@ export const decideCentre = createServerFn({ method: "POST" })
       ? await lookupUser(latest[0].user_id)
       : { email: centre.contact_email, name: null };
     const to = (owner.email || centre.contact_email || "").trim();
-    const copy = decisionCopy(decision, centre.name);
+    const copy = decisionCopy(decision, centre.name, data.note);
     let mail = "skip";
     try {
       mail = await deliverToProvider(to, copy.subject, copy.text);
@@ -284,7 +266,9 @@ export const decideCentre = createServerFn({ method: "POST" })
             ? `Approved: ${centre.name}`
             : decision === "decline"
               ? `Declined: ${centre.name}`
-              : `Waiting: ${centre.name}`,
+              : decision === "info"
+                ? `Need info: ${centre.name}`
+                : `Waiting: ${centre.name}`,
         daycareName: centre.name,
         address: centre.address,
         city: centre.city,

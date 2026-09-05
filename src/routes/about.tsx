@@ -39,6 +39,13 @@ export function About() {
           <li>{t("aboutCommit4")}</li>
           <li>{t("aboutCommit5")}</li>
         </ul>
+        <h2 id="verify" className="mt-12 scroll-mt-24 text-2xl">{t("verifyHowTitle")}</h2>
+        <ul className="mt-4 list-disc space-y-2 pl-5 text-muted">
+          <li>{t("verifyHow1")}</li>
+          <li>{t("verifyHow2")}</li>
+          <li>{t("verifyHow3")}</li>
+          <li>{t("verifyHow4")}</li>
+        </ul>
         <p className="mt-8 font-medium">{t("aboutClose")}</p>
       </main>
       <SiteFooter />

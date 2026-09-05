@@ -151,9 +151,9 @@ function SearchPage() {
 
   async function allowLocation() {
     setAskLocation(false);
-    setLocationConsent("granted");
     const pos = await getDeviceLocation({ precise: true });
     if (pos) {
+      setLocationConsent("granted");
       setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
       void hapticLight();
     } else {
@@ -173,8 +173,7 @@ function SearchPage() {
       setMatchNote(res.note);
       if (res.picks[0]) {
         setActive(res.picks[0].slug);
-        const first = items?.find((i) => res.picks.some((p) => p.slug === i.slug));
-        if (first) setOrigin({ lat: first.lat, lng: first.lng, label: first.city });
+        setView("list");
       }
     } finally {
       setMatchBusy(false);
@@ -461,21 +460,28 @@ function SearchPage() {
         <div className={cn("mt-2", refreshing && "opacity-70")}>
           {view === "map" ? (
             mapEnabled ? (
-              <div className="mt-4 h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
-                <Suspense fallback={<div className="size-full bg-map" />}>
-                  <MapView
-                    items={list}
-                    origin={origin}
-                    radiusKm={radiusKm}
-                    activeSlug={active}
-                    onSelect={(slug) => setActive(slug)}
-                    onRelocate={(pos) => {
-                      setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
-                      void hapticLight();
-                    }}
-                    onLocate={() => void geo()}
-                  />
-                </Suspense>
+              <div className="mt-4 space-y-3">
+                <div className="h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
+                  <Suspense fallback={<div className="size-full bg-map" />}>
+                    <MapView
+                      items={list}
+                      origin={origin}
+                      radiusKm={radiusKm}
+                      activeSlug={active}
+                      onSelect={(slug) => setActive(slug)}
+                      onRelocate={(pos) => {
+                        setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
+                        void hapticLight();
+                      }}
+                      onLocate={() => void geo()}
+                    />
+                  </Suspense>
+                </div>
+                {items !== null && list.length === 0 ? (
+                  <p className="rounded-xl bg-surface p-8 text-center text-muted ring-1 ring-border">
+                    {liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("emptyMap")}
+                  </p>
+                ) : null}
               </div>
             ) : null
           ) : items === null ? (

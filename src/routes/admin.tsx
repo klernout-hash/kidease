@@ -59,6 +59,8 @@ function AdminPage() {
   const [moneyQ, setMoneyQ] = useState("");
   const [moneyDir, setMoneyDir] = useState<"all" | "in" | "out">("all");
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
+  const [activityKind, setActivityKind] = useState("all");
+  const [activityQ, setActivityQ] = useState("");
 
   async function refresh() {
     const [events, list, cash, envelopes] = await Promise.all([
@@ -126,6 +128,23 @@ function AdminPage() {
     const declined = centres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "declined").length;
     return { waiting, approved, declined, all: centres.length };
   }, [centres]);
+
+  const activityRows = useMemo(() => {
+    const needle = activityQ.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (activityKind !== "all" && r.kind !== activityKind) return false;
+      if (!needle) return true;
+      return [r.kind, r.daycare_name, r.address, r.city, r.province, r.provider_name, r.provider_email, r.slug]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(needle);
+    });
+  }, [rows, activityKind, activityQ]);
+  const activityKinds = useMemo(() => {
+    const set = new Set(rows.map((r) => r.kind).filter(Boolean));
+    return ["all", ...[...set].sort()];
+  }, [rows]);
 
   const moneyRows = useMemo(() => {
     const needle = moneyQ.trim().toLowerCase();
@@ -257,11 +276,32 @@ function AdminPage() {
       ) : tab === "money" ? (
         <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} />
       ) : (
+        <>
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+          <input
+            value={activityQ}
+            onChange={(e) => setActivityQ(e.target.value)}
+            placeholder="Search activity…"
+            className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
+          />
+          <div className="flex flex-wrap gap-2">
+            {activityKinds.map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                onClick={() => setActivityKind(kind)}
+                className={activityKind === kind ? "rounded-full bg-primary px-3 py-2 text-sm text-primary-fg" : "rounded-full bg-surface px-3 py-2 text-sm ring-1 ring-border"}
+              >
+                {kind === "all" ? "All activity" : kind}
+              </button>
+            ))}
+          </div>
+        </div>
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-          {rows.length === 0 ? (
+          {activityRows.length === 0 ? (
             <li className="p-8 text-center text-muted">No activity yet.</li>
           ) : (
-            rows.map((r) => (
+            activityRows.map((r) => (
               <li key={r.id} className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -269,7 +309,7 @@ function AdminPage() {
                     <p className="font-medium">{r.daycare_name || (r.kind === "account" ? "New account" : "Activity")}</p>
                     <p className="text-sm text-muted">{[r.address, r.city, r.province].filter(Boolean).join(", ") || "—"}</p>
                     <p className="mt-1 text-sm">
-                      {r.provider_name || "—"} · {r.provider_email || "no email"}
+                      {r.kind === "claim" ? "Operator" : r.provider_name || "—"} · {r.provider_email || "no email"}
                     </p>
                   </div>
                   <div className="text-right text-xs text-muted">
@@ -286,6 +326,7 @@ function AdminPage() {
             ))
           )}
         </ul>
+        </>
       )}
     </DeskShell>
     </TwoFactorGate>
@@ -314,6 +355,7 @@ function MoneyPanel({
       <div className="mb-4">
         <h2 className="font-display text-2xl">Money</h2>
         <LedgerHonesty stripeLive={stripeLive} className="mt-1" />
+        {!stripeLive ? <p className="mt-1 text-sm text-muted">Pending totals are not settled.</p> : null}
       </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <CashStat label="In (paid)" value={ledger.inPaid} />
@@ -413,10 +455,17 @@ function CentreRow({
           <p className={`mt-0.5 text-sm ${muted}`}>
             {c.providerName || "—"} · {c.providerEmail || c.contactEmail || "no email"}
           </p>
+          {c.reviewedAt ? (
+            <p className={`mt-0.5 text-xs ${muted}`}>Reviewed {new Date(c.reviewedAt).toLocaleString()}</p>
+          ) : null}
+          {!c.contactEmail && !c.providerEmail ? <p className={`mt-0.5 text-xs ${muted}`}>Missing email</p> : null}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Button size="sm" variant={status === "live" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
             Approve
+          </Button>
+          <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => onDecide(c.daycareId, "info")}>
+            Request info
           </Button>
           <Button size="sm" variant={status === "waiting" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "waiting")}>
             Waiting

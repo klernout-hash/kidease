@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
+import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -41,7 +42,9 @@ export function InboxList() {
           {items === null ? (
             <li className="p-6 text-muted">{t("loading")}</li>
           ) : items.length === 0 ? (
-            <li className="p-8 text-center text-muted">{t("noInbox")}</li>
+            <li className="p-2">
+              <EmptyState title={t("noInbox")} body={t("noInboxLead")} action={t("emptyFindCare")} actionTo="/search" />
+            </li>
           ) : (
             items.map((c) => (
               <li key={c.id}>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { sendCentreContract, voidCentreContract, type AdminContractRow } from "@/lib/server/contracts";
 
@@ -122,7 +123,13 @@ export function AdminContractsPanel({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium">{r.name}</p>
+                    {r.slug ? (
+                      <Link to="/daycare/$slug" params={{ slug: r.slug }} className="font-medium hover:underline">
+                        {r.name}
+                      </Link>
+                    ) : (
+                      <p className="font-medium">{r.name}</p>
+                    )}
                     <StatusChip status={r.status} />
                   </div>
                   <p className="mt-1 text-sm text-muted">
@@ -132,6 +139,7 @@ export function AdminContractsPanel({
                   <p className="mt-0.5 text-sm text-muted">
                     {r.signerName || r.providerName || "—"} · {r.signerEmail || r.providerEmail || r.contactEmail || "no email"}
                   </p>
+                  {r.lastEvent ? <p className="mt-0.5 text-xs text-subtle">Last event · {r.lastEvent}</p> : null}
                   {r.sentAt ? <p className="mt-0.5 text-xs text-subtle">Sent {new Date(r.sentAt).toLocaleString()}</p> : null}
                   {r.signedAt ? <p className="mt-0.5 text-xs text-subtle">Signed {new Date(r.signedAt).toLocaleString()}</p> : null}
                 </div>

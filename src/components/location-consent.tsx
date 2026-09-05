@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
@@ -19,6 +20,12 @@ export function LocationConsentCard({
         <div className="min-w-0">
           <p className="text-sm font-semibold text-fg">{t("locationConsentTitle")}</p>
           <p className="mt-1 text-sm text-muted">{t("locationConsentBody")}</p>
+          <Link
+            to="/privacy"
+            className="mt-1 inline-block text-xs font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("locationPrivacyLink")}
+          </Link>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" className="h-10 rounded-full px-4" onClick={onAllow}>
               {t("locationConsentAllow")}

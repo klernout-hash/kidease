@@ -112,7 +112,7 @@ export function DaycareCard({
           toggleCompare(item.id);
         }}
         className="absolute right-3 top-3 z-20 grid size-8 place-items-center rounded-full"
-        aria-label={t("saved")}
+        aria-label={picked ? t("comparing") : t("addToCompare")}
       >
         <Heart
           className="size-[26px] text-white"

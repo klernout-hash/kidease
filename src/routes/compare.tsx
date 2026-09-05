@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { getDaycaresByIds } from "@/lib/server/daycares";
 import { clearCompare, readCompare, toggleCompare } from "@/lib/compare";
 import { useCopy } from "@/lib/use-copy";
-import { money } from "@/lib/utils";
+import { displayCentreName, money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
 import type { DaycareCard } from "@/lib/types";
 
@@ -33,7 +33,11 @@ function ComparePage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-4xl">{t("compareTitle")}</h1>
-            <p className="mt-2 text-muted">{t("compareEmpty")}</p>
+            <p className="mt-2 text-muted">
+              {items.length
+                ? t("compareCount").replace("{n}", String(items.length))
+                : t("compareEmpty")}
+            </p>
           </div>
           <Button variant="secondary" onClick={() => { clearCompare(); setItems([]); }}>
             {t("clearCompare")}
@@ -49,7 +53,7 @@ function ComparePage() {
                     <th key={d.id} className="p-2 align-bottom">
                       <BuildingPhoto src={listingThumb(d.photos)} className="mb-2 aspect-[4/3] w-full rounded-lg object-cover" />
                       <Link to="/daycare/$slug" params={{ slug: d.slug }} className="font-semibold hover:underline">
-                        {locale === "fr" ? d.nameFr : d.name}
+                        {displayCentreName(locale === "fr" ? d.nameFr : d.name)}
                       </Link>
                     </th>
                   ))}
@@ -73,11 +77,11 @@ function ComparePage() {
                   )}
                 />
                 <Row label={t("googleReviews")} values={items.map((d) => (d.reviewCount ? `${(d.ratingX10 / 10).toFixed(1)} (${d.reviewCount})` : "—"))} />
-                <Row label={t("license")} values={items.map((d) => d.licenseNumber ?? "—")} />
                 <tr>
                   <th className="p-2 text-fg">{t("license")}</th>
                   {items.map((d) => (
                     <td key={d.id} className="p-2">
+                      <p>{d.licenseNumber ?? "—"}</p>
                       <a href={licenseRegistryUrl(d.province)} target="_blank" rel="noreferrer" className="text-primary hover:underline">
                         {t("viewLicenceRecord")}
                       </a>

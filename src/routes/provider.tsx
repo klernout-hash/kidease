@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityPill } from "@/components/priority-pill";
@@ -10,6 +11,7 @@ import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole } from "@/lib/server/family";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
+import { getMyClaims } from "@/lib/server/claims";
 import { useCopy } from "@/lib/use-copy";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest } from "@/lib/types";
@@ -28,6 +30,7 @@ function ProviderPage() {
   const [listings, setListings] = useState<Daycare[]>([]);
   const [stats, setStats] = useState<Array<{ daycareId: string; views: number; inquiries: number; requests: number }>>([]);
   const [requests, setRequests] = useState<SpotRequest[]>([]);
+  const [claims, setClaims] = useState<Array<{ id: string; daycare_id: string; status: string; name: string }>>([]);
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -40,10 +43,11 @@ function ProviderPage() {
   });
 
   async function load() {
-    const [res, incoming] = await Promise.all([getProvider(), listDaycareIncoming()]);
+    const [res, incoming, mine] = await Promise.all([getProvider(), listDaycareIncoming(), getMyClaims().catch(() => [])]);
     setListings(res.listings);
     setStats(res.stats);
     setRequests(incoming);
+    setClaims(mine);
   }
 
   useEffect(() => {
@@ -65,7 +69,31 @@ function ProviderPage() {
 
   return (
     <TwoFactorGate next="/provider">
-    <DeskShell desk="daycare" active={desk} onSelect={(id) => setDesk(id as DaycareDesk)}>
+    <DeskShell
+      desk="daycare"
+      active={desk}
+      onSelect={(id) => {
+        if (id === "add") {
+          setDesk("listings");
+          queueMicrotask(() => document.getElementById("list-new")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+          return;
+        }
+        setDesk(id as DaycareDesk);
+      }}
+    >
+      {claims.length ? (
+        <div className="mb-6 rounded-xl bg-surface p-4 ring-1 ring-border">
+          <p className="text-sm font-medium">Claim status</p>
+          <ul className="mt-2 space-y-1 text-sm text-muted">
+            {claims.slice(0, 6).map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center gap-2">
+                <span className="font-medium text-fg">{c.name}</span>
+                <ListingStatusBadge claimStatus={c.status} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {desk === "requests" ? (
         <section className="space-y-8">
           <div>
@@ -74,9 +102,14 @@ function ProviderPage() {
               Parents who sent a child profile or asked this centre for a spot. Approve, put on waiting, or decline. The parent is notified in their inbox.
             </p>
             {listings.length === 0 ? (
-              <p className="mt-4 rounded-xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
-                Claim or list a centre first. Incoming parent requests only show for centres you own.
-              </p>
+              <div className="mt-4">
+                <EmptyState
+                  title="Claim or list a centre first."
+                  body="Incoming parent requests only show for centres you own."
+                  action={t("emptyClaimCentre")}
+                  actionTo="/claim"
+                />
+              </div>
             ) : null}
             <RequestList
               items={waiting}
@@ -150,7 +183,7 @@ function ProviderPage() {
               </section>
             );
           })}
-          <section className="rounded-xl bg-surface p-5 ring-1 ring-border">
+          <section id="list-new" className="scroll-mt-24 rounded-xl bg-surface p-5 ring-1 ring-border">
             <h2 className="font-display text-2xl">{t("listCentre")}</h2>
             <form
               className="mt-4 grid gap-3 sm:grid-cols-2"
@@ -182,9 +215,12 @@ function ProviderPage() {
 
       {desk === "licence" ? (
         listings.length === 0 ? (
-          <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
-            Claim or list a centre first, then upload the provincial licence photo here.
-          </p>
+          <EmptyState
+            title="Claim or list a centre first."
+            body="Then upload the provincial licence photo here."
+            action={t("emptyClaimCentre")}
+            actionTo="/claim"
+          />
         ) : (
           listings.map((d) => (
             <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
@@ -200,7 +236,14 @@ function ProviderPage() {
 
       {desk === "promote" ? (
         listings.length === 0 ? (
-          <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">List a centre before buying priority placement.</p>
+          <EmptyState
+            title="List a centre before buying priority placement."
+            action={t("emptyListCentre")}
+            onAction={() => {
+              setDesk("listings");
+              queueMicrotask(() => document.getElementById("list-new")?.scrollIntoView({ behavior: "smooth" }));
+            }}
+          />
         ) : (
           listings.map((d) => (
             <section key={d.id} className="mb-6">
@@ -257,9 +300,13 @@ function RequestList({
           </div>
           <ChildPacket child={r.child} allergies={r.allergies} epiPen={r.epiPen} note={r.parentNote} />
           <div className="mt-3 flex flex-wrap gap-2">
+            {r.paymentStatus ? (
+              <span className="self-center text-xs uppercase tracking-wide text-subtle">{r.paymentStatus}</span>
+            ) : null}
             <Button
               size="sm"
               variant={r.status === "accepted" ? "primary" : "secondary"}
+              disabled={r.status === "declined" || r.status === "active" || r.status === "cancelled"}
               onClick={() => void onDecide(r.id, "approve").catch((err) => toast.error(err instanceof Error ? err.message : "Could not update"))}
             >
               Approve
@@ -267,6 +314,7 @@ function RequestList({
             <Button
               size="sm"
               variant={r.status === "under_review" || r.status === "requested" ? "primary" : "secondary"}
+              disabled={r.status === "declined" || r.status === "active" || r.status === "cancelled"}
               onClick={() => void onDecide(r.id, "waiting").catch((err) => toast.error(err instanceof Error ? err.message : "Could not update"))}
             >
               Waiting
@@ -274,6 +322,7 @@ function RequestList({
             <Button
               size="sm"
               variant={r.status === "declined" ? "primary" : "secondary"}
+              disabled={r.status === "active" || r.status === "cancelled"}
               onClick={() => void onDecide(r.id, "decline").catch((err) => toast.error(err instanceof Error ? err.message : "Could not update"))}
             >
               Decline

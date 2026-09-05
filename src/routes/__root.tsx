@@ -38,7 +38,7 @@ export const Route = createRootRoute({
       { name: "application-name", content: APP_NAME },
       {
         name: "description",
-        content: "Find licensed childcare in Canada within a kilometre radius. Monthly fees, open spots, and enrolment in your pocket.",
+        content: "Find licensed childcare nearby in Canada. Monthly fees, open spots, and enrolment in your pocket.",
       },
     ],
     links: [

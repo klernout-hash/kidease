@@ -25,6 +25,7 @@ const PUBLIC_PATHS = [
   "/get-app",
   "/claim",
   "/compare",
+  "/faq",
 ];
 
 test("robots.txt keeps admin disallows and points Sitemap at the www URL", () => {
