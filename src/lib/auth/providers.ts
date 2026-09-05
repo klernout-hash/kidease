@@ -37,9 +37,6 @@ export const NATIVE_FACEBOOK: GrokProvider = {
   native: true,
 };
 
-/** @deprecated X was replaced by Facebook. Kept so leftover imports still build. */
-export const NATIVE_TWITTER = NATIVE_FACEBOOK;
-
 export const GROK_PROVIDERS: readonly GrokProvider[] = [
   { providerId: "apple", idp: "apple", label: "Apple", native: true },
   { providerId: "grok-google", idp: "google", label: "Google" },

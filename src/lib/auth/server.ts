@@ -7,21 +7,21 @@
  * The app runs its own Better Auth at `/api/auth/*`, so the session cookie stays
  * on this app's own origin. Sign-in federates to the shared **Grok auth broker**
  * (`GROK_AUTH_ISSUER`) via the `genericOAuth` plugin — the broker brokers the
- * upstream sign-in methods (Google, X, …) and holds their shared secrets; this
+ * upstream sign-in methods (Google, …) and holds their shared secrets; this
  * app only holds its own client id/secret and names the upstream it wants via
  * each provider's `idp` hint.
  *
  * Tri-mode:
  *   - Vercel production: native Google via `socialProviders.google` when
  *     `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` are set (callback
- *     `/api/auth/callback/google`), and native X via `socialProviders.twitter`
- *     when `TWITTER_CLIENT_ID` + `TWITTER_CLIENT_SECRET` are set (callback
- *     `/api/auth/callback/twitter`). Do not rely on the preview broker client.
+ *     `/api/auth/callback/google`), and native Facebook via `socialProviders.facebook`
+ *     when `FACEBOOK_CLIENT_ID` + `FACEBOOK_CLIENT_SECRET` are set (callback
+ *     `/api/auth/callback/facebook`). Do not rely on the preview broker client.
  *     Production must also set `BETTER_AUTH_SECRET` (never commit one).
  *   - Deployed with broker: the deployer injects a per-app `GROK_AUTH_*` +
  *     `BETTER_AUTH_URL` + `DATABASE_URL`, so federated auth is persisted in
- *     Postgres. Native Google/X and the broker can coexist (`google` vs
- *     `grok-google`, `twitter` vs `grok-x`).
+ *     Postgres. Native Google/Facebook and the broker can coexist (`google` vs
+ *     `grok-google`). Facebook has no broker path.
  *   - Sandbox live preview: no injection -> falls back to the shared **preview
  *     client** (`./preview`) and derives the preview's `https://*.grok-sandbox.com`
  *     origin from the request, so real sign-in works (no demo users). Sessions
@@ -52,10 +52,10 @@ import {
   googleIdpConfigured,
 } from "./google-idp";
 import {
-  TWITTER_CLIENT_ID,
-  TWITTER_CLIENT_SECRET,
-  twitterIdpConfigured,
-} from "./twitter-idp";
+  FACEBOOK_CLIENT_ID,
+  FACEBOOK_CLIENT_SECRET,
+  facebookIdpConfigured,
+} from "./facebook-idp";
 import {
   grokBrokerConfigured,
   grokClientId,
@@ -95,13 +95,13 @@ const authDisabled = env("VITE_AUTH_ENABLED") === "false";
 // Broker federation: explicit `GROK_AUTH_*` (grok.me / live preview) or the
 // shared preview client on non-Vercel hosts. Vercel production does NOT fall
 // back to the preview client — use native Google (`GOOGLE_CLIENT_*`) and/or
-// native X (`TWITTER_CLIENT_*`) there.
-/** True when real auth is enforced (broker, native Google/X, Apple, or email). */
+// native Facebook (`FACEBOOK_CLIENT_*`) there.
+/** True when real auth is enforced (broker, native Google/Facebook, Apple, or email). */
 export const authConfigured =
   !authDisabled &&
   (grokBrokerConfigured ||
     googleIdpConfigured ||
-    twitterIdpConfigured ||
+    facebookIdpConfigured ||
     appleIdpConfigured ||
     emailAndPasswordEnabled);
 
@@ -207,7 +207,7 @@ const databaseUrl = env("DATABASE_URL");
 
 // Static broker OAuth endpoints (skip OIDC discovery on every sign-in / callback).
 // Discovery would cost an extra network hop to the broker before the popup can
-// even redirect to Google/X — the live-preview popup felt stuck on the app for
+// even redirect to Google — the live-preview popup felt stuck on the app for
 // that whole round-trip. These paths match the broker's discovery document.
 const issuerBase = grokIssuer.replace(/\/+$/, "");
 const grokAuthorizationUrl = `${issuerBase}/api/auth/oauth2/authorize`;
@@ -279,11 +279,11 @@ const socialProviders = {
         },
       }
     : {}),
-  ...(twitterIdpConfigured && TWITTER_CLIENT_ID && TWITTER_CLIENT_SECRET
+  ...(facebookIdpConfigured && FACEBOOK_CLIENT_ID && FACEBOOK_CLIENT_SECRET
     ? {
-        twitter: {
-          clientId: TWITTER_CLIENT_ID,
-          clientSecret: TWITTER_CLIENT_SECRET,
+        facebook: {
+          clientId: FACEBOOK_CLIENT_ID,
+          clientSecret: FACEBOOK_CLIENT_SECRET,
         },
       }
     : {}),
@@ -303,16 +303,16 @@ export const auth = betterAuth({
   trustedOrigins,
 
   // Encrypt broker-issued OAuth tokens at rest, and treat the broker's upstreams
-  // as trusted first-party identities. The broker owns identity and X emails are
-  // synthetic/unverified, so WITHOUT this a login can fail with
+  // as trusted first-party identities. The broker owns identity and some emails
+  // can be unverified, so WITHOUT this a login can fail with
   // `account_not_linked` (Better Auth refuses to attach an untrusted, unverified
-  // identity to an existing user). Google and X carry DISTINCT emails, so this
-  // never merges them into one user — they stay separate identities.
+  // identity to an existing user). Google and Facebook carry DISTINCT emails, so
+  // this never merges them into one user — they stay separate identities.
   account: {
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
-      trustedProviders: [...GROK_PROVIDERS.map((p) => p.providerId), "apple", "google", "twitter"],
+      trustedProviders: [...GROK_PROVIDERS.map((p) => p.providerId), "apple", "google", "facebook"],
       requireLocalEmailVerified: false,
     },
   },

@@ -67,7 +67,7 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
       isNativeSocialProvider(providerId)
         ? await auth.api.signInSocial({
             body: {
-              provider: providerId as "apple" | "google" | "twitter",
+              provider: providerId as "apple" | "google" | "facebook",
               callbackURL: back,
               errorCallbackURL: `${back}&error=1`,
             },
@@ -105,7 +105,7 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
       });
     }
 
-    // 302 to the broker (which headlessly forwards to Google/X). Forward any
+    // 302 to the broker (which headlessly forwards to Google). Forward any
     // Set-Cookie (OAuth state / PKCE) so the callback can complete in this popup.
     const headers = new Headers({ location, "cache-control": "no-store" });
     for (const cookie of apiRes.headers.getSetCookie()) {

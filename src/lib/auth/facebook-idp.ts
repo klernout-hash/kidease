@@ -1,16 +1,21 @@
 /**
  * Native Sign in with Facebook (Facebook's own IDP — not the Grok auth broker).
  *
- * When FACEBOOK_CLIENT_ID + FACEBOOK_CLIENT_SECRET are set, Better Auth's
- * socialProviders.facebook talks to Facebook directly.
- * Callback path: /api/auth/callback/facebook
+ * When `FACEBOOK_CLIENT_ID` + `FACEBOOK_CLIENT_SECRET` are set, Better Auth's
+ * `socialProviders.facebook` talks to Facebook directly. Callback path is
+ * `/api/auth/callback/facebook`.
  *
- * Register these redirect URIs on the Facebook Login product:
+ * Register these redirect URIs on the Meta app (Facebook Login → Valid OAuth
+ * Redirect URIs). App ID maps to clientId; App Secret maps to clientSecret:
  *   https://kidease.ca/api/auth/callback/facebook
  *   https://www.kidease.ca/api/auth/callback/facebook
  *   https://kidease-git.vercel.app/api/auth/callback/facebook
  *
- * Server env only. Never VITE_*. Never commit secrets.
+ * Server env only. Never `VITE_*`. Never commit secrets.
+ *
+ * Required process env (injected on the host; Better Auth documented names):
+ *   FACEBOOK_CLIENT_ID
+ *   FACEBOOK_CLIENT_SECRET
  */
 const env = (key: string): string | undefined => {
   const value = process.env[key]?.trim();
