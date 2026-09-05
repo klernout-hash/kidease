@@ -27,11 +27,14 @@ import { ListingReviewForm } from "@/components/listing-review-form";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { CompareBar } from "@/components/compare-bar";
+import { EmptyState } from "@/components/empty-state";
+import { PageSkeleton } from "@/components/page-skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { formatMonth, money, formatAgeRange, displayCentreName } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
+import { ListingMap } from "@/components/listing-map";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 
 export const Route = createFileRoute("/daycare/$slug")({ component: Listing });
@@ -121,24 +124,19 @@ function Listing() {
   if (missing) {
     return (
       <Shell>
-        <main className="ke-gutter mx-auto max-w-lg py-16 text-center">
-          <h1 className="font-display text-3xl">Not found</h1>
-          <p className="mt-3 text-muted">This listing is not available.</p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/search" className="inline-flex text-sm text-primary underline-offset-4 hover:underline">
-              {t("search")}
-            </Link>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setMissing(false);
-                setData(null);
-                setReload((n) => n + 1);
-              }}
-            >
-              {t("tryAgain")}
-            </Button>
-          </div>
+        <main className="ke-gutter mx-auto max-w-lg py-16">
+          <EmptyState
+            title="Listing not available"
+            body="This centre is not on KidEase, or the link is out of date."
+            action={t("search")}
+            actionTo="/search"
+            secondary={t("tryAgain")}
+            onSecondary={() => {
+              setMissing(false);
+              setData(null);
+              setReload((n) => n + 1);
+            }}
+          />
         </main>
       </Shell>
     );
@@ -147,9 +145,7 @@ function Listing() {
   if (!data) {
     return (
       <Shell>
-        <div className="ke-gutter mx-auto max-w-5xl py-10">
-          <div className="aspect-[16/9] animate-pulse rounded-xl bg-surface-2" />
-        </div>
+        <PageSkeleton hero cards={3} />
       </Shell>
     );
   }
@@ -169,7 +165,6 @@ function Listing() {
   const live = Boolean(d.live);
   const known = Boolean(d.availabilityKnown);
   const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
-  const mapsEmbed = `https://maps.google.com/maps?q=${d.lat},${d.lng}&z=16&output=embed`;
   const mapsDir = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
@@ -234,15 +229,17 @@ function Listing() {
               <BuildingPhoto eager src={photos[photo] ?? "/photos/storefront-placeholder.jpg"} sizes="(max-width: 767px) 100vw, 720px" width={768} height={576} className="size-full object-cover" />
             )}
             {photos.length > 1 ? (
-              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-0.5">
                 {photos.map((_, i) => (
                   <button
                     key={i}
                     type="button"
                     aria-label={`Photo ${i + 1}`}
                     onClick={() => setPhoto(i)}
-                    className={i === photo ? "size-2 rounded-full bg-surface" : "size-2 rounded-full bg-surface/50"}
-                  />
+                    className="grid size-11 place-items-center"
+                  >
+                    <span className={i === photo ? "size-2 rounded-full bg-surface" : "size-2 rounded-full bg-surface/50"} />
+                  </button>
                 ))}
               </div>
             ) : null}
@@ -406,13 +403,7 @@ function Listing() {
                 </button>
               </div>
               <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
-                <iframe
-                  title={`${name} — Google Maps`}
-                  src={mapsEmbed}
-                  className="h-64 w-full border-0 md:h-80"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
+                <ListingMap lat={d.lat} lng={d.lng} title={`${name} — Google Maps`} />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button type="button" onClick={() => void openDirections(d.lat, d.lng, name)}>

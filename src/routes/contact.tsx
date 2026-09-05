@@ -124,7 +124,7 @@ export function Contact() {
             <textarea
               required
               rows={6}
-              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2"
+              className="ke-textarea mt-1"
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />

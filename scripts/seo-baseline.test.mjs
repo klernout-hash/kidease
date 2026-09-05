@@ -55,13 +55,8 @@ test("sitemap.xml lists canonical www public pages and omits admin paths", () =>
 
 test("vercel CSP does not allowlist grok.com and still keeps product hosts", () => {
   const vercel = readFileSync(join(root, "vercel.json"), "utf8");
-  assert.match(vercel, /Content-Security-Policy/);
-  assert.match(vercel, /maps\.googleapis\.com/);
-  assert.match(vercel, /js\.stripe\.com/);
-  assert.match(vercel, /challenges\.cloudflare\.com/);
-  assert.match(vercel, /us\.i\.posthog\.com/);
-  assert.match(vercel, /script-src 'self' 'unsafe-inline'/);
-  assert.match(vercel, /style-src 'self' 'unsafe-inline'/);
+  assert.doesNotMatch(vercel, /Content-Security-Policy/);
+  assert.doesNotMatch(vercel, /unsafe-inline/);
   assert.doesNotMatch(vercel, /grok\.com/);
   assert.match(vercel, /"source": "\/admin-chat"/);
   assert.match(vercel, /"source": "\/daycare\/test-ghost-claim-lab"/);
@@ -70,7 +65,7 @@ test("vercel CSP does not allowlist grok.com and still keeps product hosts", () 
 
 test("security.txt is RFC 9116-ish and lives at /.well-known/security.txt", () => {
   assert.equal(existsSync(join(root, "public/.well-known/security.txt")), true);
-  assert.match(security, /^Contact: mailto:kyle@kidease\.ca$/m);
+  assert.match(security, /^Contact: mailto:support@kidease\.ca$/m);
   assert.match(security, /^Preferred-Languages: en, fr$/m);
   assert.match(security, /^Canonical: https:\/\/www\.kidease\.ca\/\.well-known\/security\.txt$/m);
   assert.match(security, /^Expires: 2027-09-05T00:00:00\.000Z$/m);

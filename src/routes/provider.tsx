@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
+import { DeskSkeleton } from "@/components/page-skeleton";
 import { DeskShell } from "@/components/desk-shell";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
@@ -75,7 +76,7 @@ function ProviderPage() {
   if (isPending) {
     return (
       <Shell>
-        <p className="p-8 text-muted">{t("loading")}</p>
+        <DeskSkeleton />
       </Shell>
     );
   }

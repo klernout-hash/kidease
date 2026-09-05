@@ -3,7 +3,18 @@ import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { useCopy } from "@/lib/use-copy";
 
-export const Route = createFileRoute("/faq")({ component: FaqPage });
+export const Route = createFileRoute("/faq")({
+  head: () => ({
+    meta: [
+      { title: "Frequently asked questions · KidEase" },
+      {
+        name: "description",
+        content: "Short answers for parents and licensed centres. Write support@kidease.ca if you need a person.",
+      },
+    ],
+  }),
+  component: FaqPage,
+});
 
 function FaqPage() {
   const { t } = useCopy();
@@ -29,7 +40,7 @@ function FaqPage() {
         </ul>
         <p className="mt-8 text-sm">
           <Link to="/help" className="font-medium text-primary underline-offset-4 hover:underline">
-            {t("support")}
+            {t("helpTitle")}
           </Link>
           {" · "}
           <Link to="/tour-checklist" className="font-medium text-primary underline-offset-4 hover:underline">

@@ -154,6 +154,19 @@ type BeforeInstall = Event & {
 let deferredInstall: BeforeInstall | null = null;
 const installListeners = new Set<() => void>();
 
+/** Register the chrome-only service worker (web PWA, not Capacitor). */
+export function registerOfflineShell(): void {
+  if (typeof window === "undefined") return;
+  if (!("serviceWorker" in navigator)) return;
+  if (isNative()) return;
+  if (!window.isSecureContext) return;
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {
+      /* registration is best-effort */
+    });
+  });
+}
+
 export function captureInstallPrompt(): void {
   if (typeof window === "undefined") return;
   window.addEventListener("beforeinstallprompt", (event) => {

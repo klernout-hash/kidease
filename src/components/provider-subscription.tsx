@@ -342,7 +342,7 @@ export function ProviderSubscriptionPanel() {
             ? state.customerId
               ? "Open the Stripe customer portal to update the card or cancel."
               : "The portal appears after the first live checkout creates a Stripe customer on this profile."
-            : "Internal ledger only. Centre plan checkout is not charged."}
+                : "Card payments are not live yet. Centre plan checkout is not charged."}
         </p>
       </div>
     </section>

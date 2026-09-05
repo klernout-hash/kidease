@@ -276,6 +276,44 @@
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 16%, transparent);
   }
+  .ke-textarea {
+    width: 100%;
+    min-height: 8rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: 0.75rem 0.9rem;
+    font-size: 16px;
+    line-height: 1.5;
+    outline: none;
+    resize: vertical;
+  }
+  .ke-textarea:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 16%, transparent);
+  }
+  .ke-skel {
+    border-radius: var(--radius-md);
+    background: color-mix(in oklab, var(--color-surface-2) 88%, var(--color-border));
+    animation: ke-skel 1.4s ease-in-out infinite;
+  }
+  .ke-kicker {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-primary);
+  }
+  .ke-honesty {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: var(--color-surface-2);
+    padding: 0.2rem 0.55rem;
+    font-size: 12px;
+    line-height: 1.25;
+    color: var(--color-muted);
+  }
   .ke-live-pulse {
     animation: ke-live-pulse 2s ease-in-out infinite;
   }
@@ -366,9 +404,19 @@
 }
 
 html[data-channel="website"] .ke-listings {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 1.5rem 1.25rem;
   padding-block: 1rem;
+}
+@media (min-width: 640px) {
+  html[data-channel="website"] .ke-listings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  html[data-channel="website"] .ke-listings {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 html[data-channel="website"] .ke-listings-narrow {
   grid-template-columns: 1fr;
@@ -407,6 +455,16 @@ html[data-channel="website"] .ke-web-grid > article {
   }
   50% {
     box-shadow: 0 0 0 7px color-mix(in oklab, var(--color-primary) 0%, transparent);
+  }
+}
+
+@keyframes ke-skel {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
   }
 }
 

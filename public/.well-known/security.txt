@@ -1,4 +1,4 @@
-Contact: mailto:kyle@kidease.ca
+Contact: mailto:support@kidease.ca
 Preferred-Languages: en, fr
 Canonical: https://www.kidease.ca/.well-known/security.txt
 Expires: 2027-09-05T00:00:00.000Z

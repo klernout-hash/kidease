@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Mail } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -46,44 +47,57 @@ function Help() {
   }
 
   return (
-    <Shell>
-      <main className="mx-auto max-w-lg px-4 py-10">
-        <h1 className="font-display text-3xl">{t("support")}</h1>
-        <p className="mt-3 text-muted">{t("supportLead")}</p>
+    <Shell bare>
+      <main className="ke-gutter mx-auto max-w-lg py-12 md:py-16">
+        <p className="ke-kicker">{t("helpKicker")}</p>
+        <h1 className="mt-2 text-4xl md:text-5xl">{t("helpTitle")}</h1>
+        <p className="mt-6 text-muted">{t("supportLead")}</p>
+
+        <div className="mt-8 rounded-xl bg-surface p-5 ring-1 ring-border">
+          <p className="text-sm font-semibold">{t("contactDirect")}</p>
+          <a
+            href={`mailto:${SUPPORT_INBOX_EMAIL}`}
+            className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline"
+          >
+            <Mail className="size-4" />
+            {SUPPORT_INBOX_EMAIL}
+          </a>
+        </div>
+
         <form className="mt-8 space-y-3" onSubmit={send}>
-          <label className="block text-sm">
+          <label className="block text-sm font-medium">
             {t("name")}
             <input
               required
-              className="mt-1 h-11 w-full rounded-md border border-border bg-surface px-3"
+              className="ke-input mt-1"
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="name"
             />
           </label>
-          <label className="block text-sm">
+          <label className="block text-sm font-medium">
             {t("email")}
             <input
               required
               type="email"
-              className="mt-1 h-11 w-full rounded-md border border-border bg-surface px-3"
+              className="ke-input mt-1"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
             />
           </label>
-          <label className="block text-sm">
+          <label className="block text-sm font-medium">
             {t("writeMessage")}
             <textarea
               required
               rows={5}
-              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2"
+              className="ke-textarea mt-1"
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />
           </label>
           <TurnstileField onToken={onToken} />
-          <Button type="submit" className="w-full" disabled={busy}>
+          <Button type="submit" className="w-full" size="lg" disabled={busy}>
             {t("send")}
           </Button>
         </form>

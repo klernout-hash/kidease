@@ -15,6 +15,7 @@ import {
 } from "@/lib/native";
 import { STORE } from "@/lib/store-listing";
 import { useCopy } from "@/lib/use-copy";
+import { HomeScreenGuide } from "@/components/home-screen-guide";
 
 export const Route = createFileRoute("/get-app")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -83,7 +84,7 @@ function GetApp() {
                 <p className="max-w-sm text-sm text-muted">{t("installMacHint")}</p>
               ) : (
                 <Button size="lg" asChild>
-                  <a href="/?install=1">
+                  <a href="#add-to-home">
                     <Smartphone className="size-4" />
                     {t("installThisDevice")}
                   </a>
@@ -183,10 +184,12 @@ function GetApp() {
               {t("cookies")}
             </Link>
             <Link to="/help" className="underline-offset-4 hover:underline">
-              {t("support")}
+              {t("helpTitle")}
             </Link>
           </div>
         </section>
+
+        <HomeScreenGuide />
       </main>
     </Shell>
   );

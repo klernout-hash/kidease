@@ -53,7 +53,11 @@ test("unsigned provider desk settles the session and offers sign-in or claim", (
 test("FAQ is a real page and registry names get hyphen spacing", () => {
   const faq = src("src/routes/faq.tsx");
   assert.match(faq, /function FaqPage/);
+  assert.match(faq, /Frequently asked questions · KidEase/);
   assert.doesNotMatch(faq, /redirect\(\{ to: "\/tour-checklist" \}\)/);
+  const vercel = src("vercel.json");
+  assert.doesNotMatch(vercel, /"source": "\/faq"/);
+  assert.doesNotMatch(vercel, /funding-checklist/);
   const utils = src("src/lib/utils.ts");
   assert.match(utils, /\\bCetnre\\b/);
   assert.match(utils, /\\s\+-\\s\*/);
@@ -62,6 +66,20 @@ test("FAQ is a real page and registry names get hyphen spacing", () => {
   assert.match(card, /placeholder/);
   const origin = src("src/lib/search-origin.ts");
   assert.match(origin, /locationConsent !== "granted"/);
+});
+
+test("listing On the map uses Maps JS, not a broken embed iframe", () => {
+  const listing = src("src/routes/daycare.$slug.tsx");
+  const map = src("src/components/listing-map.tsx");
+  assert.match(listing, /ListingMap/);
+  assert.doesNotMatch(listing, /output=embed/);
+  assert.doesNotMatch(listing, /<iframe/);
+  assert.doesNotMatch(listing, /maps\.google\.com\/maps\?/);
+  assert.match(map, /loadGoogleMaps/);
+  assert.match(map, /listingMapConstructorOptions/);
+  assert.match(map, /ke-logo-pin/);
+  assert.doesNotMatch(map, /<iframe/);
+  assert.doesNotMatch(map, /maps\.google\.com/);
 });
 
 test("sitemap lists /faq separately from the tour checklist", () => {

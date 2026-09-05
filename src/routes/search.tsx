@@ -18,6 +18,7 @@ import { useAppStore, type SortKey } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
+import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
@@ -255,7 +256,7 @@ function SearchPage() {
         type="button"
         onClick={action}
         className={cn(
-          "rounded-full px-3.5 py-1.5 text-sm font-medium ring-1",
+          "min-h-11 rounded-full px-3.5 py-1.5 text-sm font-medium ring-1",
           on ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border",
         )}
       >
@@ -277,18 +278,18 @@ function SearchPage() {
           {shownRadius} {u}
         </span>
       </div>
-      <div className="mb-3 flex h-9 overflow-hidden rounded-full bg-bg ring-1 ring-border">
+      <div className="mb-3 flex h-11 overflow-hidden rounded-full bg-bg ring-1 ring-border">
         <button
           type="button"
           onClick={() => setDistanceUnit("km")}
-          className={cn("flex-1 text-[12px] font-semibold", distanceUnit === "km" ? "bg-fg text-bg" : "text-muted")}
+          className={cn("flex-1 text-sm font-semibold", distanceUnit === "km" ? "bg-fg text-bg" : "text-muted")}
         >
           {t("unitsKm")}
         </button>
         <button
           type="button"
           onClick={() => setDistanceUnit("mi")}
-          className={cn("flex-1 text-[12px] font-semibold", distanceUnit === "mi" ? "bg-fg text-bg" : "text-muted")}
+          className={cn("flex-1 text-sm font-semibold", distanceUnit === "mi" ? "bg-fg text-bg" : "text-muted")}
         >
           {t("unitsMi")}
         </button>
@@ -377,7 +378,7 @@ function SearchPage() {
             void applyQuery();
           }}
         >
-          <div className="flex min-h-12 items-center gap-2 rounded-full bg-surface pl-4 pr-1.5 shadow-card ring-1 ring-border">
+          <div className="flex min-h-12 min-w-0 items-center gap-1.5 rounded-full bg-surface pl-3 pr-1.5 shadow-card ring-1 ring-border sm:gap-2 sm:pl-4">
             <PlaceSearch
               value={query}
               onChange={setQuery}
@@ -386,17 +387,17 @@ function SearchPage() {
               origin={origin}
               inputClassName="h-11 min-w-0 w-full bg-transparent text-[15px] outline-none"
             />
-            <button type="button" onClick={() => void geo()} className="grid size-10 place-items-center text-muted" aria-label={t("useLocation")}>
+            <button type="button" onClick={() => void geo()} className="grid size-11 shrink-0 place-items-center text-muted" aria-label={t("useLocation")}>
               <LocateFixed className="size-5" />
             </button>
-            <Button type="submit" className="h-10 rounded-full px-5">
+            <Button type="submit" className="h-11 shrink-0 rounded-full px-3 sm:px-5">
               {t("search")}
             </Button>
           </div>
         </form>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex min-h-10 min-w-[13.5rem] flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:flex-none">
+          <div className="flex min-h-11 w-full min-w-0 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[13.5rem] sm:flex-none">
             <button
               type="button"
               onClick={() => setLiveOnly(true)}
@@ -416,7 +417,7 @@ function SearchPage() {
             type="button"
             onClick={() => setFilters((v) => !v)}
             className={cn(
-              "inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold ring-1",
+              "inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold ring-1",
               filters || extraFilters ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border",
             )}
           >
@@ -424,7 +425,7 @@ function SearchPage() {
             {t("filters")}
             {extraFilters ? <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">{extraFilters}</span> : null}
           </button>
-          <div className="flex h-10 min-w-[10rem] flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:flex-none">
+          <div className="flex h-11 w-full min-w-0 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[10rem] sm:flex-none">
             <button
               type="button"
               onClick={() => setView("list")}
@@ -450,6 +451,16 @@ function SearchPage() {
 
         {filters ? (
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold">{t("filters")}</p>
+              <button
+                type="button"
+                onClick={() => setFilters(false)}
+                className="min-h-11 rounded-full px-3 text-sm font-medium text-muted hover:text-fg"
+              >
+                {t("close")}
+              </button>
+            </div>
             {filterChips}
             {radiusSlider}
             <div className="flex flex-wrap gap-2">
@@ -458,7 +469,7 @@ function SearchPage() {
                   key={a}
                   type="button"
                   onClick={() => setAgeGroup(a === "any" ? "any" : (a as AgeGroup))}
-                  className={cn("rounded-full px-3 py-1.5 text-sm ring-1", ageGroup === a ? "bg-fg text-bg ring-fg" : "ring-border")}
+                  className={cn("min-h-11 rounded-full px-3 py-1.5 text-sm ring-1", ageGroup === a ? "bg-fg text-bg ring-fg" : "ring-border")}
                 >
                   {a === "any" ? t("anyAge") : t(a)}
                 </button>
@@ -477,7 +488,7 @@ function SearchPage() {
                   key={k}
                   type="button"
                   onClick={() => setSort(k)}
-                  className={cn("rounded-full px-3 py-1.5 text-sm ring-1", sort === k ? "bg-fg text-bg ring-fg" : "ring-border")}
+                  className={cn("min-h-11 rounded-full px-3 py-1.5 text-sm ring-1", sort === k ? "bg-fg text-bg ring-fg" : "ring-border")}
                 >
                   {label}
                 </button>
@@ -488,7 +499,7 @@ function SearchPage() {
                 <Sparkles className="size-4" />
                 {t("match")}
               </label>
-              <textarea value={need} onChange={(e) => setNeed(e.target.value)} placeholder={t("matchPh")} rows={2} className="mt-2 w-full rounded-md border border-border bg-bg p-3 text-sm" />
+              <textarea value={need} onChange={(e) => setNeed(e.target.value)} placeholder={t("matchPh")} rows={2} className="ke-textarea mt-2 min-h-[4.5rem]" />
               <Button type="button" className="mt-3" disabled={matchBusy || !need.trim()} onClick={() => void runMatch()}>
                 {t("matchGo")}
               </Button>
@@ -518,19 +529,19 @@ function SearchPage() {
                   </Suspense>
                 </div>
                 {items !== null && list.length === 0 ? (
-                  <div className="rounded-xl bg-surface p-8 text-center ring-1 ring-border">
-                    <p className="text-muted">
-                      {searchFailed
-                        ? t("noResults")
-                        : liveOnly && (items?.length ?? 0) > 0
-                          ? t("noLiveResults")
-                          : t("emptyMap")}
-                    </p>
-                    {searchFailed ? (
-                      <Button className="mt-4" onClick={retrySearch}>
-                        {t("tryAgain")}
-                      </Button>
-                    ) : null}
+                  <div className="rounded-xl bg-surface ring-1 ring-border">
+                    <EmptyState
+                      title={searchFailed ? t("noResults") : liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("emptyMap")}
+                      action={searchFailed ? t("tryAgain") : liveOnly && (items?.length ?? 0) > 0 ? t("showAll") : t("changeLocation")}
+                      onAction={
+                        searchFailed
+                          ? retrySearch
+                          : liveOnly && (items?.length ?? 0) > 0
+                            ? () => setLiveOnly(false)
+                            : undefined
+                      }
+                      actionTo={searchFailed || (liveOnly && (items?.length ?? 0) > 0) ? undefined : "/?change=1"}
+                    />
                   </div>
                 ) : null}
               </div>
@@ -538,23 +549,27 @@ function SearchPage() {
           ) : items === null ? (
             <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="aspect-[20/19] animate-pulse rounded-xl bg-surface-2" />
+                <div key={i} className="space-y-2" aria-hidden="true">
+                  <div className="ke-skel aspect-[20/19] w-full" />
+                  <div className="ke-skel h-3.5 w-4/5" />
+                  <div className="ke-skel h-3 w-1/2" />
+                </div>
               ))}
             </div>
           ) : list.length === 0 ? (
-            <div className="mt-6 rounded-xl bg-surface p-8 text-center ring-1 ring-border">
-              <p className="text-muted">
-                {searchFailed
-                  ? t("noResults")
-                  : liveOnly && (items?.length ?? 0) > 0
-                    ? t("noLiveResults")
-                    : t("noResults")}
-              </p>
-              {searchFailed ? (
-                <Button className="mt-4" onClick={retrySearch}>
-                  {t("tryAgain")}
-                </Button>
-              ) : null}
+            <div className="mt-6 rounded-xl bg-surface ring-1 ring-border">
+              <EmptyState
+                title={searchFailed ? t("noResults") : liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("noResults")}
+                action={searchFailed ? t("tryAgain") : liveOnly && (items?.length ?? 0) > 0 ? t("showAll") : t("changeLocation")}
+                onAction={
+                  searchFailed
+                    ? retrySearch
+                    : liveOnly && (items?.length ?? 0) > 0
+                      ? () => setLiveOnly(false)
+                      : undefined
+                }
+                actionTo={searchFailed || (liveOnly && (items?.length ?? 0) > 0) ? undefined : "/?change=1"}
+              />
             </div>
           ) : (
             <ExploreRails items={list} onHover={setActive} />

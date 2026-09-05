@@ -191,11 +191,12 @@ test("presigned GET is query-signed and does not embed the secret", () => {
   assert.equal(sha256Hex(""), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 });
 
-test("admin media route is registered and env example has names only", () => {
+test("admin media route is registered and env example has names only", async () => {
   const route = readFileSync(join(root, "src/routes/api/admin.media.ts"), "utf8");
   const tree = readFileSync(join(root, "src/routeTree.gen.ts"), "utf8");
   const envExample = readFileSync(join(root, ".env.example"), "utf8");
-  const csp = readFileSync(join(root, "vercel.json"), "utf8");
+  const { buildContentSecurityPolicy } = await import("./csp.mjs");
+  const csp = buildContentSecurityPolicy("r2-test");
   assert.match(route, /createFileRoute\("\/api\/admin\/media"\)/);
   assert.match(route, /requireAdmin/);
   assert.match(route, /assertSameSiteRequest/);

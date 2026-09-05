@@ -80,7 +80,7 @@ test("subscription route stays ghost-gated and checkout is live-keyed", () => {
   assert.match(panel, /not parent Plus/);
   assert.match(panel, /startProviderCheckout/);
   assert.match(panel, /startProviderBillingPortal/);
-  assert.match(panel, /Internal ledger only/);
+  assert.match(panel, /Card payments are not live yet/);
   assert.match(server, /canSeeProviderSubscriptions/);
   assert.match(server, /selected_plan/);
   assert.match(server, /stripeChargesLive\(\)/);

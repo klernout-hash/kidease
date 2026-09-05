@@ -253,7 +253,7 @@ function ClaimPage() {
                 required
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 font-mono tracking-widest"
+                className="ke-input mt-1 font-mono tracking-widest"
                 autoComplete="one-time-code"
               />
             </label>
@@ -429,7 +429,7 @@ function ClaimPage() {
             <textarea
               required
               rows={5}
-              className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+              className="ke-textarea mt-1"
               placeholder={t("enrollMessagePh")}
               value={enroll.body}
               onChange={(e) => setEnroll((s) => ({ ...s, body: e.target.value }))}

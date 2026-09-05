@@ -22,7 +22,7 @@ export const PROVIDER_CHECKOUT_STUB_MESSAGE =
   "Coming soon — checkout next. Subscribe saves the pick on this profile. No card is charged.";
 
 export const PROVIDER_CHECKOUT_REHEARSAL_MESSAGE =
-  "Internal ledger only. Subscribe saves the pick on this profile. No card is charged until Stripe live keys and price IDs are set.";
+  "Card payments are not live yet. Subscribe saves the pick on this profile. No card is charged until Stripe live keys and price IDs are set.";
 
 export const PROVIDER_CHECKOUT_LIVE_MESSAGE =
   "Live Stripe checkout. Subscribe opens Stripe. Manage billing in the customer portal after the first successful checkout.";

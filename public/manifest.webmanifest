@@ -5,8 +5,13 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#ffffff",
   "theme_color": "#1A3790",
+  "description": "Find licensed childcare in Canada. Fees, open spots, and enrolment on your phone.",
+  "lang": "en-CA",
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "utilities"],
   "icons": [
     {
       "src": "/favicon-16.png?v=20",

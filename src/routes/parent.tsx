@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
+import { DeskSkeleton } from "@/components/page-skeleton";
 import { ParentDesk } from "@/components/parent-desk";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/parent")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -19,7 +19,6 @@ export const Route = createFileRoute("/parent")({
 
 function ParentPage() {
   const { user, isPending } = useCurrentUserState();
-  const { t } = useCopy();
   const search = Route.useSearch();
   const initialTab =
     search.tab === "saved" ? "saved" : search.tab === "enrolled" ? "bookings" : search.tab === "payments" ? "payments" : "children";
@@ -27,7 +26,7 @@ function ParentPage() {
   if (isPending) {
     return (
       <Shell>
-        <p className="p-8 text-muted">{t("loading")}</p>
+        <DeskSkeleton />
       </Shell>
     );
   }

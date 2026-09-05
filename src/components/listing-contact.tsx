@@ -91,7 +91,7 @@ export function ListingContact({
               <textarea
                 required
                 rows={4}
-                className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+                className="ke-textarea mt-1 min-h-[6.5rem]"
                 value={form.body}
                 onChange={(e) => setForm((s) => ({ ...s, body: e.target.value }))}
               />

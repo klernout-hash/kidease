@@ -100,7 +100,7 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
       <label className="block text-sm">
         {t("reviewBody")}
         <textarea
-          className="mt-1 min-h-24 w-full rounded-md border border-border bg-bg px-3 py-2"
+          className="ke-textarea mt-1 min-h-24"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           required
