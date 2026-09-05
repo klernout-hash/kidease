@@ -9,6 +9,7 @@ import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import type { CopyKey } from "@/lib/copy";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 export const Route = createFileRoute("/contact")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -58,7 +59,7 @@ export function Contact() {
       setBody("");
     } catch (err) {
       console.error("[kidease-contact]", err);
-      toast.error("Could not send. Email kyle@kidease.ca directly.");
+      toast.error(`Could not send. Email ${SUPPORT_INBOX_EMAIL} directly.`);
     } finally {
       setBusy(false);
     }
@@ -137,11 +138,11 @@ export function Contact() {
         <div className="mt-10 rounded-xl bg-surface p-5 ring-1 ring-border">
           <p className="text-sm font-semibold">{t("contactDirect")}</p>
           <a
-            href="mailto:kyle@kidease.ca"
+            href={`mailto:${SUPPORT_INBOX_EMAIL}`}
             className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
           >
             <Mail className="size-4" />
-            kyle@kidease.ca
+            {SUPPORT_INBOX_EMAIL}
           </a>
           <p className="mt-3 text-sm text-muted">{t("contactResponse")}</p>
           <p className="mt-3 text-sm text-muted">{t("contactLocation")}</p>

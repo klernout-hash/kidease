@@ -1,6 +1,7 @@
 import { BENEFITS_BRIEF, matchBenefitProgram } from "@/lib/benefits-knowledge";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
-const FACTS = `KidEase (kidease.ca) is a Canada-wide finder for provincially licensed daycares only. Founders Kyle Lernout and Kevin Lamont. Email kyle@kidease.ca.
+const FACTS = `KidEase (kidease.ca) is a Canada-wide finder for provincially licensed daycares only. Founders Kyle Lernout and Kevin Lamont. Email ${SUPPORT_INBOX_EMAIL}.
 Parents: search by GPS or address/city/postal code, map + list, distance in km or miles, ages, $10-a-day / CWELCC badges, storefront photos, Request a spot, Book a tour, 💬 Contact, Save, Compare. Childcare Benefits Program at https://www.kidease.ca/benefits has every official provincial, territorial, and federal back-link. KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
 Providers: Enroll Now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages. Manual enroll form if not in the 20,000+ catalogue.
 Fees: unclaimed listings say fee not confirmed — never invent a price. Live listings (claimed centres) show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
@@ -13,7 +14,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["enroll", "provider", "claim", "listing", "centre owner", "daycare owner", "partner"],
     lines: [
-      "If you run a licensed centre, tap Enroll Now (or Claim). Search your name in our catalogue — over 20,000 licensed centres across Canada. Not listed? Choose Enter name manually and send the form. It goes to kyle@kidease.ca. Claiming is free.",
+      `If you run a licensed centre, tap Enroll Now (or Claim). Search your name in our catalogue — over 20,000 licensed centres across Canada. Not listed? Choose Enter name manually and send the form. It goes to ${SUPPORT_INBOX_EMAIL}. Claiming is free.`,
       "Providers get a free landing page, proximity so nearby parents find you first, in-app chat, and payments paid to you. Start at Enroll Now on the home page or kidease.ca/claim.",
       "To go live: claim your listing, add spots and monthly fees, and upload a storefront photo. Priority listing can pin you higher — that’s optional.",
     ],
@@ -31,7 +32,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
     lines: [
       "Open spots are only confirmed on Live listings the centre updates. Unclaimed cards say availability unknown or Waitlist — use 💬 Contact on the card and we’ll help check.",
       "Request a spot on the centre’s page, or Book a tour. Don’t trust a default number if it isn’t a Live listing.",
-      "Tap 💬 Contact on a listing and tell us the child’s age and start date. That message goes to our team at kyle@kidease.ca.",
+      `Tap 💬 Contact on a listing and tell us the child’s age and start date. That message goes to our team at ${SUPPORT_INBOX_EMAIL}.`,
     ],
   },
   {
@@ -123,4 +124,4 @@ export function localHelpReply(userText: string, priorAssistant: string[]) {
 }
 
 export const AGENT_CONFIRM =
-  "I’ve flagged a live agent. Kyle gets a text and email at kyle@kidease.ca — usually the same day, often faster. You can also write him directly. Anything else I should pass along?";
+  `I’ve flagged a live agent. Our team gets a text and email at ${SUPPORT_INBOX_EMAIL} — usually the same day, often faster. You can also write us directly. Anything else I should pass along?`;

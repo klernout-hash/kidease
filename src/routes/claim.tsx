@@ -9,6 +9,7 @@ import { searchClaimable, startClaim, submitEnrollLicense, verifyClaim, type Cla
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 export const Route = createFileRoute("/claim")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -196,7 +197,7 @@ function ClaimPage() {
       setEnroll({ name: "", email: "", centre: "", city: "", phone: "", body: "", daycareId: "" });
       setEnrollLicense("");
     } catch {
-      toast.error("Could not send. Email kyle@kidease.ca directly.");
+      toast.error(`Could not send. Email ${SUPPORT_INBOX_EMAIL} directly.`);
     } finally {
       setEnrollBusy(false);
     }

@@ -57,7 +57,7 @@ export function isActorConfirmKind(kind: string): boolean {
 }
 
 /**
- * Confirmation replies go to Kyle (ADMIN_EMAIL), not the parent/provider.
+ * Confirmation replies go to the Support inbox, not the parent/provider.
  * Opposite of the admin notify's visitor reply_to on contact/support.
  */
 export function actorConfirmationReplyTo(adminEmail: string): string {

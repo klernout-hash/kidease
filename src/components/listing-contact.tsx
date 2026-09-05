@@ -5,6 +5,7 @@ import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 export function ListingContact({
   name,
@@ -43,7 +44,7 @@ export function ListingContact({
       setForm({ name: "", email: "", body: "" });
       setOpen(false);
     } catch {
-      toast.error("Could not send. Email kyle@kidease.ca.");
+      toast.error(`Could not send. Email ${SUPPORT_INBOX_EMAIL}.`);
     } finally {
       setBusy(false);
     }

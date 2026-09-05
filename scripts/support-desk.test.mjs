@@ -141,3 +141,36 @@ test("public help moved to /help; /support is the staff desk", () => {
   const desk = readFileSync(join(root, "src/components/support-desk.tsx"), "utf8");
   assert.match(desk, /SUPPORT_INBOX_EMAIL/);
 });
+
+test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", () => {
+  const publicFacing = [
+    "src/routes/help.tsx",
+    "src/routes/contact.tsx",
+    "src/routes/claim.tsx",
+    "src/routes/__root.tsx",
+    "src/components/site-footer.tsx",
+    "src/components/legal-doc.tsx",
+    "src/components/listing-contact.tsx",
+    "src/lib/copy.ts",
+    "src/lib/help-knowledge.ts",
+  ];
+  for (const rel of publicFacing) {
+    const src = readFileSync(join(root, rel), "utf8");
+    assert.doesNotMatch(src, /kyle@kidease\.ca/, rel);
+    assert.match(src, /SUPPORT_INBOX_EMAIL/, rel);
+  }
+
+  const legal = readFileSync(join(root, "src/lib/legal-copy.ts"), "utf8");
+  assert.match(legal, /SUPPORT_INBOX_EMAIL/);
+  assert.match(legal, /Email \$\{SUPPORT_INBOX_EMAIL\} if a deposit looks wrong/);
+  assert.match(legal, /Notify kyle@kidease\.ca of new accounts/);
+  assert.match(legal, /operator mail for kyle@kidease\.ca/);
+
+  const docs = readFileSync(join(root, "docs/support.md"), "utf8");
+  assert.doesNotMatch(docs, /still offers kyle@kidease\.ca/);
+
+  const notify = readFileSync(join(root, "src/lib/server/notify.ts"), "utf8");
+  assert.match(notify, /ADMIN_EMAIL.*kyle@kidease\.ca/);
+  assert.match(notify, /mailto:\$\{SUPPORT_INBOX_EMAIL\}/);
+  assert.match(notify, /actorConfirmationReplyTo\(SUPPORT_INBOX_EMAIL\)/);
+});

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 export const Route = createFileRoute("/help")({
   head: () => ({
@@ -38,7 +39,7 @@ function Help() {
       setBody("");
     } catch (err) {
       console.error("[kidease-contact]", err);
-      toast.error("Could not send. Email kyle@kidease.ca directly.");
+      toast.error(`Could not send. Email ${SUPPORT_INBOX_EMAIL} directly.`);
     } finally {
       setBusy(false);
     }

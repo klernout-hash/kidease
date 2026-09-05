@@ -29,8 +29,8 @@ Canonical Support case inbox: **support@kidease.ca** (`SUPPORT_INBOX_EMAIL` in `
 
 - **Refunds** are a `billing` case type on that inbox. Do not stand up `refund@`.
 - **Person mailboxes** (`kevin@kidease.ca` and similar) are not the case router.
-- Public Help Centre / contact still offers kyle@kidease.ca until you point visitors at support@.
-- Platform notify for `kind: "support"` still delivers to `ADMIN_EMAIL` (kyle@) until ops points Resend/Titan at support@. Do not treat that as a second case inbox.
+- Public Help Centre, contact, footer, legal, and help-bot copy show **support@kidease.ca** (`SUPPORT_INBOX_EMAIL`).
+- Platform notify for `kind: "support"` still delivers to `ADMIN_EMAIL` (kyle@) until ops points Resend/Titan at support@. Do not treat that as a second case inbox. Visitor-facing auto-replies and confirmations use the Support inbox as Reply-To.
 
 ## Cloudflare Access (ops)
 
