@@ -308,7 +308,7 @@ function Listing() {
                   </a>
                 </div>
               ) : (
-                <p className="text-sm text-muted">{t("licensed")}</p>
+                <p className="text-sm text-muted">{t(licenseBadge(d).labelKey as CopyKey)}</p>
               )}
             </div>
 
