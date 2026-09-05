@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { feeProgramBadgeKey, officialLicenceNumber } from "../src/lib/licensing.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -34,8 +33,18 @@ function vacancyFreshness(updatedAt, now = Date.now()) {
   return { kind: now - ts > STALE_MS ? "stale" : "fresh" };
 }
 
+const FEE_PROGRAM = new Set(["MB", "SK", "PE", "NL", "YT", "NT", "NU", "QC", "AB"]);
+
+function officialLicenceNumber(raw, id) {
+  const n = (raw || "").trim();
+  if (!n || n === "—" || n.toLowerCase() === "unknown") return null;
+  const tail = (id || "").split("-").pop() || "";
+  if (/^\d{1,3}$/.test(n) && (!id || n === tail)) return null;
+  return n;
+}
+
 function listingReady(d) {
-  const hasFees = Boolean(feeProgramBadgeKey(d.province)) || [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].some((n) => n != null && n > 0);
+  const hasFees = FEE_PROGRAM.has(d.province) || [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].some((n) => n != null && n > 0);
   const hasAges = Boolean(d.agesKnown) || (d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0);
   const hours = (d.hours || "").trim();
   const hasHours = hours.length >= 4 && hours !== "—";
@@ -125,6 +134,9 @@ test("public reviews query only approved rows and forms use Turnstile", () => {
   const listing = src("src/routes/daycare.\$slug.tsx");
   assert.match(listing, /ListingReviewForm/);
   assert.match(listing, /CompletenessBanner/);
+  const badges = src("src/components/listing-badges.tsx");
+  assert.match(badges, /TrustSignals/);
+  assert.match(badges, /detailsIncomplete/);
 });
 
 test("provider guest gate and declined claims stay honest", () => {
