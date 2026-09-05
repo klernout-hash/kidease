@@ -67,7 +67,11 @@ export function ProviderMoneyPanel() {
           <p className="mt-2 text-sm text-muted">
             You can draft and Send bills so both desks can rehearse. Pay stays off — internal ledger (not charged).
           </p>
-        ) : null}
+        ) : (
+          <p className="mt-2 text-sm text-muted">
+            Live charges include a KidEase platform fee of about 3%. The parent pays the bill total; you receive the rest.
+          </p>
+        )}
       </div>
 
       <form

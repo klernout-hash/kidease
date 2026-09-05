@@ -16,6 +16,7 @@ import { listAdminContracts, type AdminContractRow } from "@/lib/server/contract
 import { AdminContractsPanel } from "@/components/admin-contracts";
 import { AdminMailPanel } from "@/components/admin-mail";
 import { AdminSentryTest } from "@/components/admin-sentry-test";
+import { AdminStripeCatalog } from "@/components/admin-stripe-catalog";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
@@ -397,7 +398,10 @@ function MoneyPanel({
         <LedgerHonesty stripeLive={stripeLive} className="mt-1" />
         {!stripeLive ? (
           <p className="mt-2 text-sm text-muted">Pending totals are not settled. There is no payout, refund, or parent Pay CTA while Stripe is off.</p>
-        ) : null}
+        ) : (
+          <p className="mt-2 text-sm text-muted">Live centre bills keep about 3% as the KidEase platform fee.</p>
+        )}
+        <AdminStripeCatalog />
       </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <CashStat label="In (paid)" value={ledger.inPaid} />

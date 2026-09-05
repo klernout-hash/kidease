@@ -2,12 +2,13 @@ import type { BillStatus } from "@/lib/bill";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
-const KEY: Record<BillStatus, "billDraft" | "billSent" | "billPaid" | "billVoid" | "billRefunded"> = {
+const KEY: Record<BillStatus, "billDraft" | "billSent" | "billPaid" | "billVoid" | "billRefunded" | "billDisputed"> = {
   draft: "billDraft",
   sent: "billSent",
   paid: "billPaid",
   void: "billVoid",
   refunded: "billRefunded",
+  disputed: "billDisputed",
 };
 
 export function BillStatusBadge({ status, className }: { status: BillStatus; className?: string }) {
@@ -35,6 +36,7 @@ function tone(status: BillStatus) {
       return "bg-surface-2 text-muted ring-border";
     case "void":
     case "refunded":
+    case "disputed":
       return "bg-danger/10 text-danger ring-danger/20";
     default:
       return "bg-surface-2 text-muted ring-border";

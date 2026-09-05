@@ -15,6 +15,12 @@ export type StripeEvent = {
       latest_charge?: string | { id?: string; receipt_url?: string | null } | null;
       charges?: { data?: Array<{ id?: string; receipt_url?: string | null }> } | null;
       receipt_url?: string | null;
+      customer?: string | { id?: string } | null;
+      subscription?: string | { id?: string } | null;
+      status?: string | null;
+      mode?: string | null;
+      charge?: string | { id?: string } | null;
+      invoice?: string | { id?: string } | null;
     };
   };
 };

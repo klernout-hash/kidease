@@ -53,6 +53,7 @@ import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
 import { Route as ApiAdminMediaRouteImport } from './routes/api/admin.media'
 import { Route as ApiAdminSentryTestRouteImport } from './routes/api/admin.sentry-test'
+import { Route as ApiAdminStripeCatalogRouteImport } from './routes/api/admin.stripe-catalog'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
@@ -278,6 +279,11 @@ const ApiAdminSentryTestRoute = ApiAdminSentryTestRouteImport.update({
   path: '/api/admin/sentry-test',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminStripeCatalogRoute = ApiAdminStripeCatalogRouteImport.update({
+  id: '/api/admin/stripe-catalog',
+  path: '/api/admin/stripe-catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -339,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
+  '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -388,6 +395,7 @@ export interface FileRoutesByTo {
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
+  '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
+  '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/sentry-test'
+    | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
     | '/api/stripe/webhook'
@@ -538,6 +548,7 @@ export interface FileRouteTypes {
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/sentry-test'
+    | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
     | '/api/stripe/webhook'
@@ -587,6 +598,7 @@ export interface FileRouteTypes {
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/sentry-test'
+    | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
     | '/api/stripe/webhook'
@@ -636,6 +648,7 @@ export interface RootRouteChildren {
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
   ApiAdminMediaRoute: typeof ApiAdminMediaRoute
   ApiAdminSentryTestRoute: typeof ApiAdminSentryTestRoute
+  ApiAdminStripeCatalogRoute: typeof ApiAdminStripeCatalogRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
@@ -951,6 +964,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminSentryTestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/stripe-catalog': {
+      id: '/api/admin/stripe-catalog'
+      path: '/api/admin/stripe-catalog'
+      fullPath: '/api/admin/stripe-catalog'
+      preLoaderRoute: typeof ApiAdminStripeCatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -1029,6 +1049,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminContractsRoute: ApiAdminContractsRoute,
   ApiAdminMediaRoute: ApiAdminMediaRoute,
   ApiAdminSentryTestRoute: ApiAdminSentryTestRoute,
+  ApiAdminStripeCatalogRoute: ApiAdminStripeCatalogRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,

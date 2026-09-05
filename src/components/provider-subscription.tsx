@@ -8,7 +8,8 @@ import {
   planPriceCad,
   planPriceHint,
   PROVIDER_ADDONS,
-  PROVIDER_CHECKOUT_STUB_MESSAGE,
+  PROVIDER_CHECKOUT_LIVE_MESSAGE,
+  PROVIDER_CHECKOUT_REHEARSAL_MESSAGE,
   PROVIDER_COMPARE,
   PROVIDER_PLANS,
   PROVIDER_SUBSCRIPTION_GHOST_MESSAGE,
@@ -19,6 +20,9 @@ import {
 import {
   getProviderSubscription,
   saveProviderSubscription,
+  startProviderAddonCheckout,
+  startProviderBillingPortal,
+  startProviderCheckout,
   type ProviderSubscriptionState,
 } from "@/lib/server/provider-subscriptions";
 
@@ -34,12 +38,15 @@ const COPY = {
     current: "Current plan",
     compare: "Compare",
     addons: "Add-ons",
-    addonsLead: "Shown now — pay later when checkout is live.",
+    addonsLead: "Pay with Stripe Checkout when live keys and price IDs are set.",
+    addonsRehearsal: "Shown now — pay later when live checkout is on.",
     once: "one-time",
     perMonth: "/ month",
-    checkout: "Coming soon — checkout next",
+    checkout: "Open Stripe checkout",
+    portal: "Manage billing",
     networkNeed: "Network is priced for 3 or more sites.",
     sites: (n: number) => (n === 1 ? "1 listed site" : `${n} listed sites`),
+    status: "Stripe status",
   },
   fr: {
     eyebrow: "SaaS garderie",
@@ -52,14 +59,24 @@ const COPY = {
     current: "Forfait actuel",
     compare: "Comparer",
     addons: "Options",
-    addonsLead: "Affichées maintenant — paiement plus tard, quand le checkout sera prêt.",
+    addonsLead: "Paiement Stripe Checkout lorsque les clés et les prix sont en place.",
+    addonsRehearsal: "Affichées maintenant — paiement plus tard, quand le checkout en direct sera prêt.",
     once: "unique",
     perMonth: "/ mois",
-    checkout: "Bientôt — checkout ensuite",
+    checkout: "Ouvrir le checkout Stripe",
+    portal: "Gérer la facturation",
     networkNeed: "Réseau est tarifé pour 3 sites ou plus.",
     sites: (n: number) => (n === 1 ? "1 site listé" : `${n} sites listés`),
+    status: "Statut Stripe",
   },
 };
+
+function priceReady(state: ProviderSubscriptionState, plan: ProviderPlanId, interval: ProviderInterval) {
+  if (plan === "free") return false;
+  if (plan === "pro") return interval === "year" ? Boolean(state.prices.pro_yearly) : Boolean(state.prices.pro_monthly);
+  if (plan === "network") return Boolean(state.prices.network_monthly);
+  return false;
+}
 
 export function ProviderSubscriptionPanel() {
   const { locale } = useCopy();
@@ -92,6 +109,7 @@ export function ProviderSubscriptionPanel() {
   if (!state) {
     return <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">Loading plans…</p>;
   }
+  const current = state;
 
   async function persist(next: { plan: ProviderPlanId; interval: ProviderInterval; addons: ProviderAddonId[] }) {
     setBusy(true);
@@ -100,13 +118,65 @@ export function ProviderSubscriptionPanel() {
       setState(saved);
       setInterval(saved.interval);
       setAddons(saved.addons);
-      toast.success(PROVIDER_CHECKOUT_STUB_MESSAGE);
+      toast.success(PROVIDER_CHECKOUT_REHEARSAL_MESSAGE);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save plan");
     } finally {
       setBusy(false);
     }
   }
+
+  async function subscribe(plan: ProviderPlanId) {
+    const next = { plan, interval, addons };
+    if (!current.stripeLive || !priceReady(current, plan, interval) || plan === "free") {
+      await persist(next);
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await startProviderCheckout({ data: next });
+      if (result.url) {
+        window.location.assign(result.url);
+        return;
+      }
+      const saved = await getProviderSubscription();
+      setState(saved);
+      toast.success("Plan saved.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start checkout");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function payAddon(addon: ProviderAddonId) {
+    setBusy(true);
+    try {
+      const result = await startProviderAddonCheckout({ data: { addon } });
+      if (result.url) {
+        window.location.assign(result.url);
+        return;
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start add-on checkout");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openPortal() {
+    setBusy(true);
+    try {
+      const { url } = await startProviderBillingPortal();
+      window.location.assign(url);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not open billing portal");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const liveCheckout = state.stripeLive && state.checkoutLive;
 
   return (
     <section className="space-y-8">
@@ -120,8 +190,15 @@ export function ProviderSubscriptionPanel() {
         {state.ghost ? (
           <p className="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{PROVIDER_SUBSCRIPTION_GHOST_MESSAGE}</p>
         ) : null}
-        <p className="mt-3 text-sm text-muted">{PROVIDER_CHECKOUT_STUB_MESSAGE}</p>
+        <p className="mt-3 text-sm text-muted">
+          {liveCheckout ? PROVIDER_CHECKOUT_LIVE_MESSAGE : PROVIDER_CHECKOUT_REHEARSAL_MESSAGE}
+        </p>
         <p className="mt-1 text-xs text-subtle">{t.sites(state.siteCount)}</p>
+        {state.subscriptionStatus ? (
+          <p className="mt-1 text-xs text-subtle">
+            {t.status}: {state.subscriptionStatus}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -143,9 +220,10 @@ export function ProviderSubscriptionPanel() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         {PROVIDER_PLANS.map((plan) => {
-          const current = state.plan === plan.id;
+          const current = state.plan === plan.id && (plan.id === "free" || state.subscriptionStatus === "active" || !state.stripeLive);
           const price = planPriceCad(plan, interval, state.siteCount);
           const hint = planPriceHint(plan, interval, loc);
+          const canCharge = plan.id !== "free" && state.stripeLive && priceReady(state, plan.id, interval);
           return (
             <article
               key={plan.id}
@@ -172,10 +250,10 @@ export function ProviderSubscriptionPanel() {
               <Button
                 className="mt-5 w-full"
                 variant={current ? "secondary" : "primary"}
-                disabled={busy || current}
-                onClick={() => void persist({ plan: plan.id, interval, addons })}
+                disabled={busy || (current && !canCharge)}
+                onClick={() => void subscribe(plan.id)}
               >
-                {current ? t.current : t.subscribe}
+                {current && !canCharge ? t.current : canCharge ? t.checkout : t.subscribe}
               </Button>
             </article>
           );
@@ -210,19 +288,24 @@ export function ProviderSubscriptionPanel() {
 
       <div>
         <h3 className="font-display text-xl">{t.addons}</h3>
-        <p className="mt-1 text-sm text-muted">{t.addonsLead}</p>
+        <p className="mt-1 text-sm text-muted">{state.stripeLive ? t.addonsLead : t.addonsRehearsal}</p>
         <ul className="mt-4 grid gap-3 sm:grid-cols-3">
           {PROVIDER_ADDONS.map((addon) => {
             const on = addons.includes(addon.id);
+            const ready = Boolean(state.prices[addon.id] || state.paymentLinks[addon.id]);
             return (
               <li key={addon.id}>
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => {
+                    if (state.stripeLive && ready) {
+                      void payAddon(addon.id);
+                      return;
+                    }
                     const next = on ? addons.filter((id) => id !== addon.id) : [...addons, addon.id];
                     setAddons(next);
-                    void persist({ plan: state.plan, interval, addons: next });
+                    void persist({ plan: current.plan, interval, addons: next });
                   }}
                   className={cn(
                     "h-full w-full rounded-xl px-4 py-4 text-left ring-1",
@@ -245,13 +328,21 @@ export function ProviderSubscriptionPanel() {
       </div>
 
       <div className="rounded-xl bg-surface px-5 py-5 ring-1 ring-border">
-        <Button disabled className="w-full sm:w-auto">
-          {t.checkout}
-        </Button>
+        {state.customerId && state.stripeLive ? (
+          <Button disabled={busy} className="w-full sm:w-auto" onClick={() => void openPortal()}>
+            {t.portal}
+          </Button>
+        ) : (
+          <Button disabled className="w-full sm:w-auto">
+            {liveCheckout ? t.portal : t.checkout}
+          </Button>
+        )}
         <p className="mt-3 text-sm text-muted">
           {state.stripeLive
-            ? "Live Stripe keys are on for parent deposits. Centre plan checkout is still a stub — this Subscribe button does not charge a card."
-            : "Internal ledger only. Centre plan checkout is not wired. No card is charged."}
+            ? state.customerId
+              ? "Open the Stripe customer portal to update the card or cancel."
+              : "The portal appears after the first live checkout creates a Stripe customer on this profile."
+            : "Internal ledger only. Centre plan checkout is not charged."}
         </p>
       </div>
     </section>

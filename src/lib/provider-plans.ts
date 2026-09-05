@@ -1,6 +1,6 @@
 /**
  * KidEase daycare SaaS packages (CAD). Not parent family payments.
- * Checkout is not live — Subscribe records intent only.
+ * Checkout runs only when stripeChargesLive() and the matching STRIPE_PRICE_* env is set.
  */
 
 export const PROVIDER_PLAN_IDS = ["free", "pro", "network"] as const;
@@ -12,13 +12,20 @@ export type ProviderInterval = (typeof PROVIDER_INTERVALS)[number];
 export const PROVIDER_ADDON_IDS = ["featured_city", "claim_boost", "job_post"] as const;
 export type ProviderAddonId = (typeof PROVIDER_ADDON_IDS)[number];
 
-export const PROVIDER_CHECKOUT_LIVE = false;
+/** Code path is wired. Real charges still require sk_live_ + STRIPE_PRICE_* env. */
+export const PROVIDER_CHECKOUT_LIVE = true;
 
 export const PROVIDER_SUBSCRIPTION_GHOST_MESSAGE =
   "Admin preview — this is what centre directors will see. Providers without admin cannot open this tab.";
 
 export const PROVIDER_CHECKOUT_STUB_MESSAGE =
   "Coming soon — checkout next. Subscribe saves the pick on this profile. No card is charged.";
+
+export const PROVIDER_CHECKOUT_REHEARSAL_MESSAGE =
+  "Internal ledger only. Subscribe saves the pick on this profile. No card is charged until Stripe live keys and price IDs are set.";
+
+export const PROVIDER_CHECKOUT_LIVE_MESSAGE =
+  "Live Stripe checkout. Subscribe opens Stripe. Manage billing in the customer portal after the first successful checkout.";
 
 type LocaleText = { en: string; fr: string };
 
