@@ -15,7 +15,7 @@ import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
 export const Route = createFileRoute("/account")({
   validateSearch: (s: Record<string, unknown>) => {
     const tab = s.tab;
-    if (tab === "saved" || tab === "enrolled" || tab === "profile") return { tab };
+    if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") return { tab };
     return {};
   },
   component: AccountPage,
@@ -59,7 +59,8 @@ function AccountPage() {
     );
   }
 
-  const initialTab = search.tab === "saved" ? "saved" : search.tab === "enrolled" ? "bookings" : "children";
+  const initialTab =
+    search.tab === "saved" ? "saved" : search.tab === "enrolled" ? "bookings" : search.tab === "payments" ? "payments" : "children";
   return (
     <TwoFactorGate next="/parent">
       <ParentDesk initialTab={initialTab} />

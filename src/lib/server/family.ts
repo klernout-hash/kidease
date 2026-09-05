@@ -24,6 +24,7 @@ import {
   systemRequestMessage,
 } from "@/lib/templates";
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
+import { stripeChargesLive } from "@/lib/stripe-live";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -114,12 +115,31 @@ export const getFamily = createServerFn({ method: "GET" })
       status: string;
       reference: string | null;
       created_at: string;
+      invoice_id: string | null;
     }>`
-      select p.id, p.daycare_id, d.name, p.amount, p.method, p.status, p.reference, p.created_at
+      select p.id, p.daycare_id, d.name, p.amount, p.method, p.status, p.reference, p.created_at, p.invoice_id
       from payments p join daycares d on d.id = p.daycare_id
       where p.user_id = ${context.userId}
       order by p.created_at desc
-    `;
+    `.catch(async () =>
+      sql<{
+        id: string;
+        daycare_id: string;
+        name: string;
+        amount: number;
+        method: PayMethod;
+        status: string;
+        reference: string | null;
+        created_at: string;
+        invoice_id: string | null;
+      }>`
+        select p.id, p.daycare_id, d.name, p.amount, p.method, p.status, p.reference, p.created_at,
+               null as invoice_id
+        from payments p join daycares d on d.id = p.daycare_id
+        where p.user_id = ${context.userId}
+        order by p.created_at desc
+      `,
+    );
     const profile = await sql<{ role: string }>`
       select role from profiles where user_id = ${context.userId}
     `;
@@ -165,6 +185,7 @@ export const getFamily = createServerFn({ method: "GET" })
         status: p.status,
         reference: p.reference,
         createdAt: String(p.created_at),
+        invoiceId: p.invoice_id,
       })),
     };
   });
@@ -950,6 +971,9 @@ export const createPayment = createServerFn({ method: "POST" })
     `;
     const b = rows[0];
     if (!b) throw new Error("Booking not found");
+    if (!stripeChargesLive()) {
+      throw new Error("Card Pay stays off until Stripe live keys are on. This is an internal ledger (not charged).");
+    }
     if (b.status !== "accepted") {
       throw new Error("Payment is available after the daycare approves your request.");
     }
@@ -1251,6 +1275,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
     await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
     await sql`delete from conversations where user_id = ${uid}`;
     await sql`delete from payments where user_id = ${uid}`;
+    await sql`delete from invoices where parent_user_id = ${uid}`.catch(() => undefined);
     await sql`delete from bookings where user_id = ${uid}`;
     await sql`delete from children where user_id = ${uid}`;
     await sql`delete from saved_daycares where user_id = ${uid}`;

@@ -48,6 +48,7 @@ import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
+import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
 import { Route as ApiAdminMediaRouteImport } from './routes/api/admin.media'
@@ -252,6 +253,11 @@ const PayBookingIdRoute = PayBookingIdRouteImport.update({
   path: '/pay/$bookingId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
+  id: '/pay/bill/$billId',
+  path: '/pay/bill/$billId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignIdRoute = SignIdRouteImport.update({
   id: '/sign/$id',
   path: '/sign/$id',
@@ -328,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/sign/$id': typeof SignIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
@@ -376,6 +383,7 @@ export interface FileRoutesByTo {
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/sign/$id': typeof SignIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
@@ -425,6 +433,7 @@ export interface FileRoutesById {
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/sign/$id': typeof SignIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
@@ -475,6 +484,7 @@ export interface FileRouteTypes {
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
+    | '/pay/bill/$billId'
     | '/sign/$id'
     | '/api/admin/contracts'
     | '/api/admin/media'
@@ -523,6 +533,7 @@ export interface FileRouteTypes {
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
+    | '/pay/bill/$billId'
     | '/sign/$id'
     | '/api/admin/contracts'
     | '/api/admin/media'
@@ -571,6 +582,7 @@ export interface FileRouteTypes {
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
+    | '/pay/bill/$billId'
     | '/sign/$id'
     | '/api/admin/contracts'
     | '/api/admin/media'
@@ -619,6 +631,7 @@ export interface RootRouteChildren {
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   PayBookingIdRoute: typeof PayBookingIdRoute
+  PayBillBillIdRoute: typeof PayBillBillIdRoute
   SignIdRoute: typeof SignIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
   ApiAdminMediaRoute: typeof ApiAdminMediaRoute
@@ -903,6 +916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PayBookingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pay/bill/$billId': {
+      id: '/pay/bill/$billId'
+      path: '/pay/bill/$billId'
+      fullPath: '/pay/bill/$billId'
+      preLoaderRoute: typeof PayBillBillIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sign/$id': {
       id: '/sign/$id'
       path: '/sign/$id'
@@ -1004,6 +1024,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   PayBookingIdRoute: PayBookingIdRoute,
+  PayBillBillIdRoute: PayBillBillIdRoute,
   SignIdRoute: SignIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
   ApiAdminMediaRoute: ApiAdminMediaRoute,

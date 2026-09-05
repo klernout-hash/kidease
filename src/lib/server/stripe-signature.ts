@@ -4,7 +4,19 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export type StripeEvent = {
   id?: string;
   type?: string;
-  data?: { object?: { id?: string } };
+  data?: {
+    object?: {
+      id?: string;
+      object?: string;
+      metadata?: Record<string, string | undefined> | null;
+      client_reference_id?: string | null;
+      payment_intent?: string | { id?: string } | null;
+      payment_status?: string | null;
+      latest_charge?: string | { id?: string; receipt_url?: string | null } | null;
+      charges?: { data?: Array<{ id?: string; receipt_url?: string | null }> } | null;
+      receipt_url?: string | null;
+    };
+  };
 };
 
 export class StripeSignatureError extends Error {

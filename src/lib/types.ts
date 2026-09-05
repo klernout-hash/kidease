@@ -214,6 +214,8 @@ export type Payment = {
   period?: string | null;
 };
 
+export type { Bill, BillStatus, BillParty } from "./bill";
+
 export type SpotRequest = Booking & {
   birthdate: string | null;
   allergies?: string;

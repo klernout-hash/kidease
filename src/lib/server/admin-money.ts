@@ -4,7 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { requireAdmin } from "@/lib/server/roles";
 
 export type MoneyDirection = "in" | "out";
-export type MoneyKind = "tuition" | "promo" | "payout" | "invoice";
+export type MoneyKind = "tuition" | "promo" | "payout" | "bill";
 
 export type AdminMoneyRow = {
   id: string;
@@ -62,6 +62,7 @@ export const listAdminMoney = createServerFn({ method: "GET" })
       platform_fee?: number | null;
       net_amount?: number | null;
       period?: string | null;
+      invoice_id?: string | null;
       daycare_name: string | null;
       slug: string | null;
       city: string | null;
@@ -71,7 +72,7 @@ export const listAdminMoney = createServerFn({ method: "GET" })
       select p.id, p.amount, p.method, p.status, p.reference, p.created_at, p.daycare_id,
              coalesce(p.platform_fee, 0) as platform_fee,
              coalesce(p.net_amount, 0) as net_amount,
-             p.period,
+             p.period, p.invoice_id,
              d.name as daycare_name, d.slug, d.city,
              u.name as payer_name, u.email as payer_email
       from payments p
@@ -106,6 +107,7 @@ export const listAdminMoney = createServerFn({ method: "GET" })
     });
 
     for (const p of payments) {
+      if ((p as { invoice_id?: string | null }).invoice_id) continue;
       const amount = Number(p.amount) || 0;
       const fee = Number((p as { platform_fee?: number }).platform_fee) || 0;
       const net = Number((p as { net_amount?: number }).net_amount) || amount - fee;
@@ -217,6 +219,67 @@ export const listAdminMoney = createServerFn({ method: "GET" })
         partyName: p.daycare_name,
         partyEmail: null,
         createdAt: String(p.paid_at || p.created_at),
+      });
+    }
+
+    const bills = await sql<{
+      id: string;
+      total: number;
+      platform_fee: number;
+      amount_cents: number | null;
+      platform_fee_cents: number | null;
+      net_cents: number | null;
+      status: string;
+      number: string | null;
+      period: string | null;
+      created_at: string;
+      paid_at: string | null;
+      daycare_id: string;
+      daycare_name: string | null;
+      slug: string | null;
+      city: string | null;
+      party_name: string | null;
+      party_email: string | null;
+    }>`
+      select i.id, i.total, i.platform_fee, i.amount_cents, i.platform_fee_cents, i.net_cents,
+             i.status, i.number, i.period, i.created_at, i.paid_at, i.daycare_id,
+             d.name as daycare_name, d.slug, d.city,
+             u.name as party_name, u.email as party_email
+      from invoices i
+      left join daycares d on d.id = i.daycare_id
+      left join "user" u on u.id = i.parent_user_id
+      where i.status <> 'draft'
+      order by coalesce(i.paid_at, i.created_at) desc
+      limit 200
+    `.catch(() => []);
+
+    for (const b of bills) {
+      const amount =
+        b.amount_cents != null ? Math.round(Number(b.amount_cents) / 100) : Number(b.total) || 0;
+      const fee =
+        b.platform_fee_cents != null
+          ? Math.round(Number(b.platform_fee_cents) / 100)
+          : Number(b.platform_fee) || 0;
+      const net =
+        b.net_cents != null ? Math.round(Number(b.net_cents) / 100) : Math.max(0, amount - fee);
+      rows.push({
+        id: b.id,
+        direction: "in",
+        kind: "bill",
+        amount,
+        fee,
+        net,
+        status: b.status,
+        method: "bill",
+        reference: b.number,
+        period: b.period,
+        daycareId: b.daycare_id,
+        daycareName: b.daycare_name,
+        slug: b.slug,
+        city: b.city,
+        partyName: b.party_name,
+        partyEmail: b.party_email,
+        createdAt: String(b.paid_at || b.created_at),
       });
     }
 
