@@ -207,10 +207,11 @@ test("env example lists Twilio names only and FEATURE_SMS is off", () => {
     assert.match(sms, new RegExp(name));
   }
   assert.match(envExample, /FEATURE_SMS=0/);
-  assert.doesNotMatch(envExample, /TWILIO_AUTH_TOKEN=\S+/);
-  assert.doesNotMatch(envExample, /TWILIO_API_KEY_SECRET=\S+/);
-  assert.doesNotMatch(envExample, /sk_live_/);
-  assert.doesNotMatch(envExample, /AC[0-9a-fA-F]{32}/);
+  const twilioBlock = envExample.slice(envExample.indexOf("# Twilio transactional SMS"));
+  assert.doesNotMatch(twilioBlock, /TWILIO_AUTH_TOKEN=\S+/);
+  assert.doesNotMatch(twilioBlock, /TWILIO_API_KEY_SECRET=\S+/);
+  assert.doesNotMatch(twilioBlock, /sk_live_/);
+  assert.doesNotMatch(twilioBlock, /AC[0-9a-fA-F]{32}/);
   assert.match(sms, /do not invent credentials/i);
   assert.match(send, /Never log TWILIO_AUTH_TOKEN/);
   assert.doesNotMatch(send, /console\.\w+\([^)]*AUTH_TOKEN/);

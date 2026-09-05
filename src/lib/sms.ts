@@ -6,9 +6,9 @@
  * Not marketing blasts. CASL consent + STOP before FEATURE_SMS=1.
  * Prefer a Canadian sender or Messaging Service. Full CRTC / carrier
  * registration is Console / Dashboard ops later.
+ *
+ * No relative imports — scripts/sms.test.mjs loads this file in Node.
  */
-
-import { envFlagOn, smsEnabled } from "./features";
 
 type EnvMap = Record<string, string | undefined>;
 
@@ -44,6 +44,17 @@ export type SmsEnvPresence = {
 
 function envStr(env: EnvMap, key: string) {
   return env[key]?.trim() || "";
+}
+
+function flagOn(raw: string | undefined | null): boolean {
+  const v = String(raw || "")
+    .trim()
+    .toLowerCase();
+  return v === "1" || v === "true" || v === "on" || v === "yes";
+}
+
+export function smsEnabled(env: EnvMap = process.env): boolean {
+  return flagOn(env.FEATURE_SMS);
 }
 
 /** ITU-T E.164: + then 8–15 digits, first digit 1–9. */
@@ -97,5 +108,3 @@ export function smsCredentialsPresent(env: EnvMap = process.env): boolean {
 export function smsLive(env: EnvMap = process.env): boolean {
   return smsEnabled(env) && smsCredentialsPresent(env);
 }
-
-export { envFlagOn, smsEnabled };

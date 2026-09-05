@@ -9,18 +9,58 @@
  * sender. CRTC / Canadian carrier registration is Dashboard ops later.
  *
  * Secrets stay in env. Never log TWILIO_AUTH_TOKEN or API key secret.
+ * No @/ or extensionless relative imports — scripts/sms.test.mjs loads this file.
+ * Flag / E.164 helpers are duplicated from src/lib/sms.ts so Node tests resolve.
  */
 
-import {
-  isE164,
-  normalizeE164,
-  SMS_CREDENTIALS_MESSAGE,
-  SMS_SCAFFOLD_MESSAGE,
-  smsEnabled,
-  smsEnvPresence,
-} from "@/lib/sms";
+const SMS_SCAFFOLD_MESSAGE =
+  "SMS is scaffolded only. FEATURE_SMS is off until Kyle adds Twilio credentials and a Canadian sender.";
+
+const SMS_CREDENTIALS_MESSAGE =
+  "Twilio credentials are not configured. Set TWILIO_ACCOUNT_SID plus TWILIO_AUTH_TOKEN or TWILIO_API_KEY_SID + TWILIO_API_KEY_SECRET, and TWILIO_FROM_NUMBER or TWILIO_MESSAGING_SERVICE_SID.";
 
 type EnvMap = Record<string, string | undefined>;
+
+function flagOn(raw: string | undefined | null): boolean {
+  const v = String(raw || "")
+    .trim()
+    .toLowerCase();
+  return v === "1" || v === "true" || v === "on" || v === "yes";
+}
+
+function smsEnabled(env: EnvMap): boolean {
+  return flagOn(env.FEATURE_SMS);
+}
+
+function envHas(env: EnvMap, key: string) {
+  return Boolean(env[key]?.trim());
+}
+
+function smsCredentialsPresent(env: EnvMap): boolean {
+  const account = envHas(env, "TWILIO_ACCOUNT_SID");
+  const auth = envHas(env, "TWILIO_AUTH_TOKEN") || (envHas(env, "TWILIO_API_KEY_SID") && envHas(env, "TWILIO_API_KEY_SECRET"));
+  const sender = envHas(env, "TWILIO_FROM_NUMBER") || envHas(env, "TWILIO_MESSAGING_SERVICE_SID");
+  return account && auth && sender;
+}
+
+function isE164(value: string): boolean {
+  return /^\+[1-9]\d{7,14}$/.test(value);
+}
+
+function normalizeE164(raw: string | null | undefined): string {
+  const trimmed = String(raw || "").trim();
+  if (!trimmed) return "";
+  const kept = trimmed.replace(/[^\d+]/g, "");
+  if (kept.startsWith("+")) {
+    const rest = kept.slice(1).replace(/\D/g, "");
+    return rest ? `+${rest}` : "";
+  }
+  const digits = kept.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  if (digits.length >= 8 && digits.length <= 15) return `+${digits}`;
+  return "";
+}
 
 export type SendSmsInput = {
   to: string;
@@ -102,8 +142,7 @@ export async function sendSms(input: SendSmsInput, options: SendSmsOptions = {})
   if (!smsEnabled(env)) {
     return { ok: false, skipped: true, error: SMS_SCAFFOLD_MESSAGE };
   }
-  const presence = smsEnvPresence(env);
-  if (!presence.credentialsPresent) {
+  if (!smsCredentialsPresent(env)) {
     return { ok: false, skipped: true, error: SMS_CREDENTIALS_MESSAGE };
   }
   const accountSid = envStr(env, "TWILIO_ACCOUNT_SID");
