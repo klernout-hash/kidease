@@ -14,6 +14,7 @@ import {
   VISITOR_AUTO_REPLY_TEXT,
 } from "@/lib/server/notify-mail";
 import { sendSms } from "@/lib/server/sms";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 /** Owner / admin notify. Support cases route through support@kidease.ca on the desk — not this address. */
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
@@ -398,11 +399,11 @@ function thanksEmailCopy(subject: string, text: string) {
   return { title: subject, text, html };
 }
 
-/** Immediate parent/provider confirmation. Reply-To is Kyle so they can reach him. */
+/** Immediate parent/provider confirmation. Reply-To is the Support inbox. */
 async function sendActorConfirmation(kind: string, to: string) {
   if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
   const { title, text, html } = thanksEmailCopy(ACTOR_CONFIRM_SUBJECT, actorConfirmationText(kind));
-  await deliverEmail(title, text, html, to, actorConfirmationReplyTo(ADMIN_EMAIL));
+  await deliverEmail(title, text, html, to, actorConfirmationReplyTo(SUPPORT_INBOX_EMAIL));
 }
 
 async function sendVisitorAutoReply(to: string, name: string) {
@@ -416,11 +417,11 @@ async function sendVisitorAutoReply(to: string, name: string) {
       <p style="margin:0;">Hi ${esc(who)},</p>
       <p>Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.</p>
       <p>Thank you</p>
-      <p style="margin:24px 0 0;">Talk soon,<br/>Kyle<br/>KidEase<br/><a href="mailto:kyle@kidease.ca" style="color:#1a3790;">kyle@kidease.ca</a></p>
+      <p style="margin:24px 0 0;">Talk soon,<br/>KidEase Support<br/><a href="mailto:${SUPPORT_INBOX_EMAIL}" style="color:#1a3790;">${SUPPORT_INBOX_EMAIL}</a></p>
     </td></tr>
   </table>
 </body></html>`;
-  await deliverEmail(VISITOR_AUTO_REPLY_SUBJECT, text, html, to, ADMIN_EMAIL);
+  await deliverEmail(VISITOR_AUTO_REPLY_SUBJECT, text, html, to, SUPPORT_INBOX_EMAIL);
 }
 
 /** Parallel to email. sendSms no-ops when FEATURE_SMS is off or Twilio env is missing. */

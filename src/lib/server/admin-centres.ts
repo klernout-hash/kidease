@@ -4,6 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { ADMIN_EMAIL, lookupUser, notifyPlatform } from "@/lib/server/notify";
 import { notifyClaimStatusSms } from "@/lib/server/sms";
 import { requireAdmin } from "@/lib/server/roles";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 export type AdminCentreRow = {
   daycareId: string;
@@ -65,7 +66,7 @@ async function deliverToProvider(to: string, subject: string, text: string) {
         .replace(/</g, "&#60;")
         .replace(/>/g, "&#62;")
         .replace(/\n/g, "<br/>")}</p>
-      <p style="margin:24px 0 0;">Kyle<br/>KidEase<br/><a href="mailto:kyle@kidease.ca" style="color:#1a3790;">kyle@kidease.ca</a></p>
+      <p style="margin:24px 0 0;">KidEase Support<br/><a href="mailto:${SUPPORT_INBOX_EMAIL}" style="color:#1a3790;">${SUPPORT_INBOX_EMAIL}</a></p>
     </td></tr>
   </table>
 </body></html>`;

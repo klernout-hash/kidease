@@ -1,6 +1,7 @@
 import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { useCopy } from "@/lib/use-copy";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 function Item({
   to,
@@ -49,8 +50,8 @@ export function SiteFooter() {
               <Item to="/cookies">{t("cookies")}</Item>
               <Item to="/account">{t("deleteAccount")}</Item>
               <li>
-                <a href="mailto:kyle@kidease.ca" className="ke-footer-link">
-                  kyle@kidease.ca
+                <a href={`mailto:${SUPPORT_INBOX_EMAIL}`} className="ke-footer-link">
+                  {SUPPORT_INBOX_EMAIL}
                 </a>
               </li>
             </ul>

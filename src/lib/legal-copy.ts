@@ -1,3 +1,5 @@
+import { SUPPORT_INBOX_EMAIL } from "./support";
+
 export type LegalProcessor = {
   name: string;
   purpose: string;
@@ -228,7 +230,7 @@ export const PRIVACY_EN: LegalDoc = {
         {
           type: "ul",
           items: [
-            "Inquire (💬 Contact): your name, email, and message, plus the listing name and link. That form goes to KidEase (kyle@kidease.ca) so we can help; we may pass it to the centre.",
+            `Inquire (💬 Contact): your name, email, and message, plus the listing name and link. That form goes to KidEase (${SUPPORT_INBOX_EMAIL}) so we can help; we may pass it to the centre.`,
             "Book a tour: parent name, child name, preferred date, optional note. This opens an in-app conversation with that centre. Birthdate is included if you enter it.",
             "Request a spot / enrol: parent name, child’s name, birthdate, start date, schedule, days, and optional message.",
             "Saved child profile: if you attach a profile that already has care details, that centre can also see allergies, epi-pen, medical notes, medications, doctor, foods, routines, emergency contacts, pickup people, and notes — because those fields help them offer safe care.",
@@ -270,7 +272,7 @@ export const PRIVACY_EN: LegalDoc = {
             "When Stripe is live: Stripe processes the card, Apple Pay, or Google Pay. KidEase never stores the full card number. We may send Stripe the amount, CAD, payment method type, and identifiers for the booking, parent, and centre — not allergy or medical notes.",
             "When Stripe is not live: the app can still show a receipt on an internal ledger. No card is charged.",
             "Interac e-Transfer and other bank methods may be added later. We will say so on the pay screen when they are on.",
-            "Refunds follow the centre’s policy. Chargebacks, when Stripe is on, go through Stripe. Email kyle@kidease.ca if a deposit looks wrong.",
+            `Refunds follow the centre’s policy. Chargebacks, when Stripe is on, go through Stripe. Email ${SUPPORT_INBOX_EMAIL} if a deposit looks wrong.`,
           ],
         },
       ],
@@ -346,7 +348,7 @@ export const PRIVACY_EN: LegalDoc = {
             "We keep account, request, message, and payment records while the account is open.",
             "Delete my account (in the app) removes your children, messages, bookings, payments, saved centres, director links, profile, and sign-in rows on KidEase. This cannot be undone.",
             "Deletion does not erase copies a centre already received, emails already sitting in kyle@kidease.ca or Titan, or records a law or chargeback requires us to keep for a time.",
-            "You can also email kyle@kidease.ca to access, correct, or delete.",
+            `You can also email ${SUPPORT_INBOX_EMAIL} to access, correct, or delete.`,
             "Security we actually use: HTTPS in transit; signed-in sessions in first-party cookies; OAuth tokens encrypted at rest; email sign-in codes; access checks on parent and director desks; payment card data (when Stripe is on) stays with Stripe; audit events do not store card numbers or medical notes.",
             "We do not claim the internet is risk-free. If a breach creates a real risk of significant harm, we will notify affected people and the Office of the Privacy Commissioner of Canada as PIPEDA requires.",
           ],
@@ -359,7 +361,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "You can access, correct, or delete your account and child profiles in the app, or email kyle@kidease.ca. You can withdraw consent by closing the account or by turning off location in the OS. For a PIPEDA complaint you can also contact the Office of the Privacy Commissioner of Canada.",
+          text: `You can access, correct, or delete your account and child profiles in the app, or email ${SUPPORT_INBOX_EMAIL}. You can withdraw consent by closing the account or by turning off location in the OS. For a PIPEDA complaint you can also contact the Office of the Privacy Commissioner of Canada.`,
         },
       ],
     },
@@ -574,7 +576,7 @@ export const PRIVACY_FR: LegalDoc = {
         {
           type: "ul",
           items: [
-            "Renseignement (💬) : nom, courriel, message, nom et lien de la fiche. Le formulaire va à KidEase (kyle@kidease.ca); nous pouvons le transmettre au centre.",
+            `Renseignement (💬) : nom, courriel, message, nom et lien de la fiche. Le formulaire va à KidEase (${SUPPORT_INBOX_EMAIL}); nous pouvons le transmettre au centre.`,
             "Visite : nom du parent, nom de l’enfant, date souhaitée, note facultative. La date de naissance est incluse si vous la saisissez.",
             "Demande de place : nom du parent, nom de l’enfant, date de naissance, date de début, horaire, jours et message facultatif.",
             "Profil enregistré : si vous joignez un profil déjà rempli, le centre peut aussi voir allergies, notes médicales, médicaments, médecin, aliments, routines, contacts d’urgence et personnes au ramassage.",
@@ -692,7 +694,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Nous gardons le compte, les demandes, les messages et les paiements tant que le compte est ouvert.",
             "Supprimer mon compte efface enfants, messages, demandes, paiements, centres enregistrés, liens de direction, profil et sessions. Irréversible.",
             "La suppression n’efface pas les copies déjà reçues par un centre, les courriels déjà reçus, ni les dossiers qu’une loi ou une rétrofacturation exige.",
-            "Vous pouvez aussi écrire à kyle@kidease.ca.",
+            `Vous pouvez aussi écrire à ${SUPPORT_INBOX_EMAIL}.`,
             "Sécurité réelle : HTTPS; sessions en témoins internes; jetons OAuth chiffrés; codes par courriel; contrôles d’accès; les cartes (si Stripe) restent chez Stripe; les journaux d’audit ne stockent pas les numéros de carte ni les notes médicales.",
             "Si une atteinte crée un risque réel de préjudice important, nous aviserons les personnes concernées et le Commissariat, comme l’exige la LPRPDE.",
           ],
@@ -705,7 +707,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "Vous pouvez consulter, corriger ou supprimer votre compte dans l’appli, ou écrire à kyle@kidease.ca. Vous pouvez retirer votre consentement en fermant le compte ou en coupant la position. Une plainte LPRPDE peut aussi aller au Commissariat à la protection de la vie privée du Canada.",
+          text: `Vous pouvez consulter, corriger ou supprimer votre compte dans l’appli, ou écrire à ${SUPPORT_INBOX_EMAIL}. Vous pouvez retirer votre consentement en fermant le compte ou en coupant la position. Une plainte LPRPDE peut aussi aller au Commissariat à la protection de la vie privée du Canada.`,
         },
       ],
     },

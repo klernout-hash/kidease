@@ -6,6 +6,7 @@ import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { Toaster } from "sonner";
 import { reportError } from "@/lib/observe";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
@@ -30,7 +31,7 @@ export const Route = createRootRoute({
         <p style={{ fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase" }}>KidEase</p>
         <h1 style={{ fontSize: 28 }}>Something went wrong</h1>
         <p>
-          Refresh the page, or go back to kidease.ca. If it keeps happening, email kyle@kidease.ca.
+          Refresh the page, or go back to kidease.ca. If it keeps happening, email {SUPPORT_INBOX_EMAIL}.
         </p>
         <p style={{ color: "#5c6578", fontSize: 13 }}>
           {error instanceof Error ? error.message : "Please try again."}

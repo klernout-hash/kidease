@@ -3,6 +3,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Shell } from "@/components/shell";
 import { useCopy } from "@/lib/use-copy";
 import type { LegalDoc, LegalBlock } from "@/lib/legal-copy";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 function Block({ block }: { block: LegalBlock }) {
   if (block.type === "p") {
@@ -137,8 +138,8 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
 
         <p className="mt-8 text-sm text-muted">
           {doc.contactLead}{" "}
-          <a href="mailto:kyle@kidease.ca" className="text-primary underline-offset-4 hover:underline">
-            kyle@kidease.ca
+          <a href={`mailto:${SUPPORT_INBOX_EMAIL}`} className="text-primary underline-offset-4 hover:underline">
+            {SUPPORT_INBOX_EMAIL}
           </a>
           {" · "}
           <Link to="/account" className="underline-offset-4 hover:underline">
