@@ -1,0 +1,41 @@
+{
+	"appId": "ca.daycarenearme.app",
+	"appName": "KidEase",
+	"webDir": "native-www",
+	"server": {
+		"androidScheme": "https",
+		"iosScheme": "https",
+		"hostname": "www.kidease.ca",
+		"url": "https://www.kidease.ca",
+		"cleartext": false
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 1400,
+			"launchAutoHide": true,
+			"backgroundColor": "#FFFFFF",
+			"androidScaleType": "CENTER_CROP",
+			"showSpinner": false,
+			"splashFullScreen": true,
+			"splashImmersive": true
+		},
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#FFFFFF"
+		},
+		"Keyboard": {
+			"resize": "body"
+		},
+		"Geolocation": {}
+	},
+	"android": {
+		"allowMixedContent": true,
+		"backgroundColor": "#FFFFFF"
+	},
+	"ios": {
+		"contentInset": "automatic",
+		"backgroundColor": "#FFFFFF",
+		"preferredContentMode": "mobile",
+		"scheme": "KidEase"
+	}
+}

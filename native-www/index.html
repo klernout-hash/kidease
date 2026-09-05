@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>KidEase</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #ffffff;
+        color: #1a3790;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      }
+      main {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+        text-align: center;
+      }
+      p {
+        max-width: 22rem;
+        line-height: 1.45;
+      }
+      a {
+        color: #1a3790;
+      }
+    </style>
+    <script>
+      (function () {
+        var live = "https://www.kidease.ca";
+        if (location.protocol === "https:" && location.hostname === "www.kidease.ca") return;
+        location.replace(live + location.pathname + location.search + location.hash);
+      })();
+    </script>
+  </head>
+  <body>
+    <main>
+      <p>Opening KidEase… If nothing happens, go to <a href="https://www.kidease.ca">www.kidease.ca</a>.</p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+App/build
+App/Pods
+App/output
+App/App/public
+DerivedData
+xcuserdata
+
+# Cordova plugins for Capacitor
+capacitor-cordova-ios-plugins
+
+# Generated Config files (keep capacitor.config.json so Archive still hits www.kidease.ca)
+App/App/config.xml
