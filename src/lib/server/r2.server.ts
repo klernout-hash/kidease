@@ -9,6 +9,7 @@ import {
   humanR2Error,
   objectUrl,
   presignS3Get,
+  R2_MAX_OBJECT_BYTES,
   R2_PRESIGN_TTL_SEC,
   resolveR2Config,
   sanitizeObjectKey,
@@ -39,7 +40,7 @@ function requireConfig(env: Record<string, string | undefined> = process.env): R
 
 async function r2Fetch(
   signed: { url: string; headers: Record<string, string> },
-  method: "GET" | "PUT",
+  method: "GET" | "PUT" | "HEAD",
   body?: Buffer | null,
 ) {
   const headers = new Headers();
@@ -52,21 +53,25 @@ async function r2Fetch(
     body: body ? new Uint8Array(body) : undefined,
   });
   if (!res.ok) {
-    const text = (await res.text().catch(() => "")).slice(0, 240);
+    const text = method === "HEAD" ? "" : (await res.text().catch(() => "")).slice(0, 240);
     throw new Error(`R2 ${res.status}${text ? `: ${text}` : ""}`);
   }
   return res;
 }
 
-export async function putR2Object(input: {
+export async function putR2ObjectBytes(input: {
   key: string;
   contentType: string;
-  bodyBase64: string;
+  body: Buffer;
 }): Promise<R2PutResult> {
   const config = requireConfig();
   const key = sanitizeObjectKey(input.key);
   const contentType = allowContentType(input.contentType);
-  const body = decodeObjectBody(input.bodyBase64);
+  const body = input.body;
+  if (!body.byteLength) throw new Error("Object body is required.");
+  if (body.byteLength > R2_MAX_OBJECT_BYTES) {
+    throw new Error(`Object is too large (max ${R2_MAX_OBJECT_BYTES} bytes).`);
+  }
   const url = objectUrl(config, key);
   const signed = signS3Request({
     method: "PUT",
@@ -89,6 +94,53 @@ export async function putR2Object(input: {
     };
   } catch (err) {
     throw new Error(humanR2Error(err, config.secretAccessKey));
+  }
+}
+
+export async function putR2Object(input: {
+  key: string;
+  contentType: string;
+  bodyBase64: string;
+}): Promise<R2PutResult> {
+  return putR2ObjectBytes({
+    key: input.key,
+    contentType: input.contentType,
+    body: decodeObjectBody(input.bodyBase64),
+  });
+}
+
+export async function headR2Object(keyInput: string): Promise<{
+  key: string;
+  exists: boolean;
+  bytes: number | null;
+  contentType: string | null;
+  etag: string | null;
+}> {
+  const config = requireConfig();
+  const key = sanitizeObjectKey(keyInput);
+  const url = objectUrl(config, key);
+  const signed = signS3Request({
+    method: "HEAD",
+    url,
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+  });
+  try {
+    const res = await r2Fetch(signed, "HEAD");
+    const length = Number(res.headers.get("content-length"));
+    return {
+      key,
+      exists: true,
+      bytes: Number.isFinite(length) ? length : null,
+      contentType: res.headers.get("content-type"),
+      etag: res.headers.get("etag"),
+    };
+  } catch (err) {
+    const message = humanR2Error(err, config.secretAccessKey);
+    if (/not found/i.test(message)) {
+      return { key, exists: false, bytes: null, contentType: null, etag: null };
+    }
+    throw new Error(message);
   }
 }
 

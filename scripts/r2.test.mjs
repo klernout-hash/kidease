@@ -6,15 +6,20 @@ import { test } from "node:test";
 import {
   allowContentType,
   amzDateParts,
+  contentTypeForPhotoPath,
   decodeObjectBody,
   deriveR2Endpoint,
   encodeS3Path,
   humanR2Error,
+  listingSrcToR2Key,
   parseR2Endpoint,
   presignS3Get,
   R2_DEFAULT_BUCKET,
+  R2_ORIGINALS_PREFIX,
   R2_SETUP_MESSAGE,
+  r2KeyToListingSrc,
   r2MissingEnv,
+  r2ReadOriginalsEnabled,
   r2StatusFromEnv,
   resolveR2Config,
   sanitizeObjectKey,
@@ -64,6 +69,23 @@ test("R2 config reads documented env names and defaults the bucket", () => {
     }).publicDelivery,
     false,
   );
+  assert.equal(
+    r2StatusFromEnv({
+      R2_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+      R2_ACCESS_KEY_ID: "test-access-key",
+      R2_SECRET_ACCESS_KEY: "test-secret-key-not-real",
+    }).readOriginals,
+    true,
+  );
+  assert.equal(
+    r2ReadOriginalsEnabled({
+      R2_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+      R2_ACCESS_KEY_ID: "test-access-key",
+      R2_SECRET_ACCESS_KEY: "test-secret-key-not-real",
+      R2_READ_ORIGINALS: "0",
+    }),
+    false,
+  );
 });
 
 test("R2_ENDPOINT wins and must be the Cloudflare S3 API host", () => {
@@ -96,6 +118,24 @@ test("object keys and image types are tightly allow-listed", () => {
   const tiny = decodeObjectBody(Buffer.from("jpeg").toString("base64"));
   assert.equal(tiny.toString(), "jpeg");
   assert.throws(() => decodeObjectBody(""), /required/);
+});
+
+test("listing /photos paths map to originals/ keys and back", () => {
+  assert.equal(R2_ORIGINALS_PREFIX, "originals");
+  assert.equal(listingSrcToR2Key("/photos/wpg/1001.jpg"), "originals/wpg/1001.jpg");
+  assert.equal(listingSrcToR2Key("/photos/buildings/mb-1014.jpg"), "originals/buildings/mb-1014.jpg");
+  assert.equal(listingSrcToR2Key("/photos/storefront/mb-1043.jpg"), "originals/storefront/mb-1043.jpg");
+  assert.equal(listingSrcToR2Key("/photos/team/kyle-lernout.jpg"), "originals/team/kyle-lernout.jpg");
+  assert.equal(listingSrcToR2Key("/photos/community.jpg"), "originals/community.jpg");
+  assert.equal(listingSrcToR2Key("/photos/wpg/1052-logo.png"), "originals/wpg/1052-logo.png");
+  assert.equal(listingSrcToR2Key("/photos/../etc/passwd"), null);
+  assert.equal(listingSrcToR2Key("https://evil.example/x.jpg"), null);
+  assert.equal(listingSrcToR2Key("/img?src=/photos/wpg/1001.jpg"), null);
+  assert.equal(r2KeyToListingSrc("originals/wpg/1001.jpg"), "/photos/wpg/1001.jpg");
+  assert.equal(r2KeyToListingSrc("other/wpg/1001.jpg"), null);
+  assert.equal(contentTypeForPhotoPath("wpg/1001.jpg"), "image/jpeg");
+  assert.equal(contentTypeForPhotoPath("wpg/1052-logo.png"), "image/png");
+  assert.equal(contentTypeForPhotoPath("playroom-1200.avif"), "image/avif");
 });
 
 test("errors never echo the secret key", () => {
@@ -166,6 +206,7 @@ test("admin media route is registered and env example has names only", () => {
   assert.match(envExample, /R2_ACCESS_KEY_ID=/);
   assert.match(envExample, /R2_SECRET_ACCESS_KEY=/);
   assert.match(envExample, /R2_ENDPOINT=/);
+  assert.match(envExample, /R2_READ_ORIGINALS=/);
   assert.doesNotMatch(envExample, /R2_SECRET_ACCESS_KEY=\S+/);
   assert.doesNotMatch(envExample, /R2_ACCESS_KEY_ID=\S+/);
   assert.match(csp, /img-src 'self' data: blob: https:/);

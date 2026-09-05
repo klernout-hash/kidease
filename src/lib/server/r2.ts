@@ -2,13 +2,14 @@
  * Cloudflare R2 (S3-compatible) helpers. No Start/DB — tests import this file.
  *
  * Private bucket `kidease-media` (Western North America). No public r2.dev URL.
- * Raw originals live here so listing JPEGs can leave Git later. Delivery /
- * optimization stays with Cloudflare Images / Stream (already Active).
+ * Git listing paths stay `/photos/…`. Migrated originals use the same suffix
+ * under `originals/…` (`/photos/wpg/1001.jpg` → `originals/wpg/1001.jpg`).
+ * `/img` reads R2 when configured, then falls back to `public/photos`.
  *
  * TODO (follow-up, not this module):
- * - Migrate `public/photos/buildings/*` originals into R2
  * - Admin / provider upload UI
- * - Point `/img` or listing thumbs at R2 / Images, not Git
+ * - Cloudflare Images / Stream delivery for thumbs
+ * - Remove Git originals only after Production dual-read is proven
  * - If a public media host is added, extend CSP `img-src` (signed URLs
  *   already match today's `img-src … https:`)
  */
@@ -22,6 +23,8 @@ export const R2_HOST_SUFFIX = ".r2.cloudflarestorage.com";
 export const R2_MAX_OBJECT_BYTES = 4 * 1024 * 1024;
 export const R2_PRESIGN_TTL_SEC = 5 * 60;
 export const R2_KEY_MAX = 512;
+export const R2_ORIGINALS_PREFIX = "originals";
+const LISTING_PHOTO_RE = /^\/photos\/[a-z0-9/_-]+\.(jpe?g|png|webp|avif|gif)$/i;
 
 export const R2_SETUP_MESSAGE =
   "R2 is not configured. Set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_ENDPOINT (or R2_ACCOUNT_ID) on the Vercel project. Bucket defaults to kidease-media.";
@@ -53,6 +56,7 @@ export type R2Status = {
   bucket: string | null;
   endpointHost: string | null;
   publicDelivery: false;
+  readOriginals: boolean;
   missing: string[];
   setupMessage: string | null;
 };
@@ -146,6 +150,12 @@ export function resolveR2Config(
   }
 }
 
+export function r2ReadOriginalsEnabled(env: EnvMap = process.env): boolean {
+  if (!resolveR2Config(env).ok) return false;
+  const flag = envStr(env, "R2_READ_ORIGINALS").toLowerCase();
+  return flag !== "0" && flag !== "false" && flag !== "off";
+}
+
 export function r2StatusFromEnv(env: EnvMap = process.env): R2Status {
   const resolved = resolveR2Config(env);
   if (!resolved.ok) {
@@ -154,6 +164,7 @@ export function r2StatusFromEnv(env: EnvMap = process.env): R2Status {
       bucket: envStr(env, "R2_BUCKET") || R2_DEFAULT_BUCKET,
       endpointHost: null,
       publicDelivery: false,
+      readOriginals: false,
       missing: resolved.missing,
       setupMessage: resolved.error,
     };
@@ -163,9 +174,38 @@ export function r2StatusFromEnv(env: EnvMap = process.env): R2Status {
     bucket: resolved.config.bucket,
     endpointHost: resolved.config.endpointHost,
     publicDelivery: false,
+    readOriginals: r2ReadOriginalsEnabled(env),
     missing: [],
     setupMessage: null,
   };
+}
+
+/** `/photos/wpg/1001.jpg` → `originals/wpg/1001.jpg`. Null if the path is not a local listing photo. */
+export function listingSrcToR2Key(src: string): string | null {
+  const path = String(src || "").trim();
+  if (!LISTING_PHOTO_RE.test(path) || path.includes("..")) return null;
+  return sanitizeObjectKey(`${R2_ORIGINALS_PREFIX}/${path.slice("/photos/".length)}`);
+}
+
+export function r2KeyToListingSrc(key: string): string | null {
+  try {
+    const safe = sanitizeObjectKey(key);
+    if (!safe.startsWith(`${R2_ORIGINALS_PREFIX}/`)) return null;
+    const src = `/photos/${safe.slice(R2_ORIGINALS_PREFIX.length + 1)}`;
+    return LISTING_PHOTO_RE.test(src) ? src : null;
+  } catch {
+    return null;
+  }
+}
+
+export function contentTypeForPhotoPath(path: string): string {
+  const ext = path.toLowerCase().split(".").pop() || "";
+  if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
+  if (ext === "png") return "image/png";
+  if (ext === "webp") return "image/webp";
+  if (ext === "avif") return "image/avif";
+  if (ext === "gif") return "image/gif";
+  throw new Error("Use a JPEG, PNG, WebP, AVIF, or GIF.");
 }
 
 export function sanitizeObjectKey(raw: string): string {
