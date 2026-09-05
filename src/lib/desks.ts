@@ -38,8 +38,9 @@ export function landingPath(desks: DeskKey[]): "/admin" | "/provider" | "/parent
 
 /**
  * Desks the signed-in user may open.
- * Header pills stay admin-only in DeskSwitcher.
- * Dual parent + daycare accounts are allowed (separate profiles).
+ * Dual parent + daycare on one Better Auth session is allowed (same email,
+ * same cookie). `profiles.role` is a single stored primary — never put role
+ * on the Better Auth session/JWT. DeskSwitcher is navigation-only.
  * A provider also keeps Parent so they can use a parent profile on the same email.
  */
 export function desksFor(input: {
@@ -59,6 +60,11 @@ export function desksFor(input: {
 
 export function canVisitDesk(desks: DeskKey[], desk: DeskKey) {
   return desks.includes(desk);
+}
+
+/** Header / menu switcher — only when this session actually has two desks. */
+export function showDeskSwitcher(desks: DeskKey[] | undefined | null) {
+  return Boolean(desks && desks.length >= 2);
 }
 
 export type SessionDesks = {

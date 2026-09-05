@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { MessageCircle } from "lucide-react";
 import { getMyDesks } from "@/lib/server/roles";
-import { DESK_LABEL, DESK_PATH, type DeskKey, type SessionDesks } from "@/lib/desks";
+import { DESK_LABEL, DESK_PATH, showDeskSwitcher, type DeskKey, type SessionDesks } from "@/lib/desks";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "@/lib/utils";
 
@@ -58,15 +58,18 @@ export function useSessionDesks() {
 export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session } = useSessionDesks();
-  // Header pills are an operator tool. Parents and daycares should not hop
-  // between backends here — they use separate profiles from the menu.
-  if (!session || session.role !== "admin") return null;
-  if (session.desks.length < 2) return null;
+  // Same Better Auth session. Pills only navigate — they do not call setRole
+  // or rewrite the session cookie. /provider still promotes via its own mount.
+  if (!session || !showDeskSwitcher(session.desks)) return null;
 
   const current = deskFromPath(pathname);
 
   return (
-    <div className={cn("flex items-center gap-1", compact ? "" : "rounded-full bg-surface/90 p-0.5 ring-1 ring-border")}>
+    <div
+      role="navigation"
+      aria-label="Switch desk"
+      className={cn("flex items-center gap-1", compact ? "" : "rounded-full bg-surface/90 p-0.5 ring-1 ring-border")}
+    >
       {session.desks.map((desk) => {
         const on = current === desk;
         return (

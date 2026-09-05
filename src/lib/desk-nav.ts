@@ -16,6 +16,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "contracts", label: "Contracts", hint: "DocuSign each centre" },
     { id: "money", label: "Money", hint: "Internal ledger" },
     { id: "activity", label: "Activity", hint: "Platform log" },
+    { id: "chat", label: "Chat lab", hint: "Scaffold only", href: "/admin-chat" },
   ],
   daycare: [
     { id: "requests", label: "Incoming requests", hint: "Approve, wait, decline" },
