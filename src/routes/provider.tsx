@@ -16,6 +16,7 @@ import type { Child, Daycare, SpotRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { CapacityForm, Field, PromotePanel } from "@/components/provider-listing-forms";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
+import { listingStatusFromClaim } from "@/lib/listing-status";
 
 type DaycareDesk = "requests" | "listings" | "licence" | "contract" | "promote";
 
@@ -65,7 +66,18 @@ function ProviderPage() {
 
   return (
     <TwoFactorGate next="/provider">
-    <DeskShell desk="daycare" active={desk} onSelect={(id) => setDesk(id as DaycareDesk)}>
+    <DeskShell
+      desk="daycare"
+      active={desk}
+      onSelect={(id) => {
+        if (id === "add") {
+          setDesk("listings");
+          queueMicrotask(() => document.getElementById("list-new")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+          return;
+        }
+        setDesk(id as DaycareDesk);
+      }}
+    >
       {desk === "requests" ? (
         <section className="space-y-8">
           <div>
@@ -116,6 +128,7 @@ function ProviderPage() {
         <>
           {listings.map((d) => {
             const st = stats.find((s) => s.daycareId === d.id);
+            const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
             return (
               <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -146,11 +159,16 @@ function ProviderPage() {
                     <dd className="font-display text-2xl tabular-nums">{st?.requests ?? 0}</dd>
                   </div>
                 </dl>
+                {declined ? (
+                  <p className="mt-4 rounded-lg bg-danger/10 p-3 text-sm text-danger">
+                    KidEase declined this listing. Parent requests and Promote stay off. Add another centre below, or wait for a re-review after Kyle asks for more.
+                  </p>
+                ) : null}
                 <CapacityForm daycare={d} onSaved={() => void load()} mode="listing" />
               </section>
             );
           })}
-          <section className="rounded-xl bg-surface p-5 ring-1 ring-border">
+          <section id="list-new" className="rounded-xl bg-surface p-5 ring-1 ring-border">
             <h2 className="font-display text-2xl">{t("listCentre")}</h2>
             <form
               className="mt-4 grid gap-3 sm:grid-cols-2"
@@ -202,12 +220,21 @@ function ProviderPage() {
         listings.length === 0 ? (
           <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">List a centre before buying priority placement.</p>
         ) : (
-          listings.map((d) => (
+          listings.map((d) => {
+            const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
+            return (
             <section key={d.id} className="mb-6">
               <h2 className="font-display text-2xl">{locale === "fr" ? d.nameFr : d.name}</h2>
-              <PromotePanel daycare={d} onSaved={() => void load()} />
+              {declined ? (
+                <p className="mt-3 rounded-xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
+                  Promote is off while this listing is declined.
+                </p>
+              ) : (
+                <PromotePanel daycare={d} onSaved={() => void load()} />
+              )}
             </section>
-          ))
+            );
+          })
         )
       ) : null}
     </DeskShell>
@@ -257,6 +284,10 @@ function RequestList({
           </div>
           <ChildPacket child={r.child} allergies={r.allergies} epiPen={r.epiPen} note={r.parentNote} />
           <div className="mt-3 flex flex-wrap gap-2">
+            {["accepted", "declined", "active", "cancelled"].includes(r.status) ? (
+              <p className="text-xs text-muted">This request is already {r.status}.</p>
+            ) : (
+              <>
             <Button
               size="sm"
               variant={r.status === "accepted" ? "primary" : "secondary"}
@@ -278,6 +309,8 @@ function RequestList({
             >
               Decline
             </Button>
+              </>
+            )}
           </div>
         </li>
       ))}

@@ -62,8 +62,13 @@ export const getAdminMailboxMessage = createServerFn({ method: "GET" })
     }
     try {
       const { getTitanMessage } = await import("@/lib/server/titan-mail.server");
-      const message = await getTitanMessage(data.uid);
-      return { ok: true, message, error: null };
+      const message = await Promise.race([
+        getTitanMessage(data.uid),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error("That Titan message timed out in KidEase.")), 8_000);
+        }),
+      ]);
+      return { ok: true, message: { ...message, text: (message.text || "").slice(0, 12_000) }, error: null };
     } catch (err) {
       reportError(err, { route: "getAdminMailboxMessage" });
       return { ok: false, message: null, error: humanTitanError(err, titanAppPassword()) };
