@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 const PATH_DESK: Array<[string, DeskKey]> = [
   ["/admin", "admin"],
+  ["/support", "support"],
   ["/provider", "provider"],
   ["/parent", "parent"],
   ["/account", "parent"],

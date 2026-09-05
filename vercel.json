@@ -49,6 +49,18 @@
       "destination": "https://www.kidease.ca/api/admin/:path*",
       "permanent": false
     },
+    {
+      "source": "/support",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/support",
+      "permanent": false
+    },
+    {
+      "source": "/support/:path*",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/support/:path*",
+      "permanent": false
+    },
     { "source": "/explore", "destination": "/search", "permanent": true },
     { "source": "/childcare-benefits-program", "destination": "/benefits", "permanent": true },
     { "source": "/meet-the-team", "destination": "/team", "permanent": true },
@@ -104,6 +116,14 @@
     },
     {
       "source": "/admin/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/support",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/support/(.*)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {

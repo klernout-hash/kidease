@@ -4,19 +4,26 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { lookupUser } from "@/lib/server/notify";
 import {
   type AppRole,
-  type DeskKey,
   type SessionDesks,
   desksFor,
+  isStaffRole,
   landingPath,
   nextStoredRole,
   parseAppRole,
 } from "@/lib/desks";
+import { canAccessSupport } from "@/lib/support";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { reportError } from "@/lib/observe";
 import { canSeeProviderSubscriptions } from "@/lib/features";
 
 export const ADMIN_PROMOTE_SQL =
   "update profiles set role = 'admin' where user_id = '…';";
+
+export const SUPPORT_PROMOTE_SQL =
+  "update profiles set role = 'support' where user_id = '…';";
+
+export const SUPPORT_LEAD_PROMOTE_SQL =
+  "update profiles set role = 'support_lead' where user_id = '…';";
 
 function bootstrapEmail() {
   return (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim().toLowerCase();
@@ -104,6 +111,31 @@ export async function requireAdmin(userId: string) {
   return lookupUser(userId);
 }
 
+/**
+ * Gate /support on admin OR profiles.role in (support, support_lead).
+ * Does not grant /admin. Extra staff:
+ *   update profiles set role = 'support' where user_id = '…';
+ *   update profiles set role = 'support_lead' where user_id = '…';
+ */
+export async function resolveSupportAccess(userId: string) {
+  const admin = await resolveAdminAccess(userId);
+  if (admin.ok) {
+    return { ok: true as const, role: "admin" as const };
+  }
+  const sql = await getSql();
+  const role = parseAppRole(await profileRole(sql, userId));
+  if (canAccessSupport(role)) {
+    return { ok: true as const, role };
+  }
+  return { ok: false as const, role };
+}
+
+export async function requireSupport(userId: string) {
+  const access = await resolveSupportAccess(userId);
+  if (!access.ok) throw new Error("Not authorized");
+  return lookupUser(userId);
+}
+
 export async function resolveSessionDesks(userId: string): Promise<SessionDesks> {
   const sql = await getSql();
   await sql`
@@ -136,8 +168,9 @@ export async function writeProfileRole(userId: string, requested: "parent" | "pr
     await sql`insert into profiles (user_id, role) values (${userId}, ${next})`;
     return { role: next, previous: null as string | null };
   }
-  if (parseAppRole(prev) === "admin") {
-    return { role: "admin" as const, previous: prev };
+  const stored = parseAppRole(prev);
+  if (isStaffRole(stored)) {
+    return { role: stored, previous: prev };
   }
   await sql`update profiles set role = ${next} where user_id = ${userId}`;
   return { role: next, previous: prev };

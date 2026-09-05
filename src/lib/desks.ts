@@ -1,14 +1,16 @@
-export type AppRole = "admin" | "provider" | "parent";
-export type DeskKey = "admin" | "provider" | "parent";
+export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent";
+export type DeskKey = "admin" | "support" | "provider" | "parent";
 
-export const DESK_PATH: Record<DeskKey, "/admin" | "/provider" | "/parent"> = {
+export const DESK_PATH: Record<DeskKey, "/admin" | "/support" | "/provider" | "/parent"> = {
   admin: "/admin",
+  support: "/support",
   provider: "/provider",
   parent: "/parent",
 };
 
 export const DESK_LABEL: Record<DeskKey, string> = {
   admin: "Admin",
+  support: "Support",
   provider: "Provider",
   parent: "Parent",
 };
@@ -16,23 +18,33 @@ export const DESK_LABEL: Record<DeskKey, string> = {
 export const ROLE_RANK: Record<AppRole, number> = {
   parent: 0,
   provider: 1,
-  admin: 2,
+  support: 2,
+  support_lead: 3,
+  admin: 4,
 };
 
 export function parseAppRole(raw: string | null | undefined): AppRole {
   const v = (raw || "").trim().toLowerCase();
   if (v === "admin") return "admin";
+  if (v === "support_lead") return "support_lead";
+  if (v === "support") return "support";
   if (v === "provider") return "provider";
   return "parent";
 }
 
+export function isStaffRole(role: AppRole | string | null | undefined): boolean {
+  const r = parseAppRole(role);
+  return r === "admin" || r === "support" || r === "support_lead";
+}
+
 export function primaryDesk(desks: DeskKey[]): DeskKey {
   if (desks.includes("admin")) return "admin";
+  if (desks.includes("support")) return "support";
   if (desks.includes("provider")) return "provider";
   return "parent";
 }
 
-export function landingPath(desks: DeskKey[]): "/admin" | "/provider" | "/parent" {
+export function landingPath(desks: DeskKey[]): "/admin" | "/support" | "/provider" | "/parent" {
   return DESK_PATH[primaryDesk(desks)];
 }
 
@@ -50,12 +62,16 @@ export function desksFor(input: {
   const desks = new Set<DeskKey>(["parent"]);
   if (input.role === "admin") {
     desks.add("admin");
+    desks.add("support");
     desks.add("provider");
+  }
+  if (input.role === "support" || input.role === "support_lead") {
+    desks.add("support");
   }
   if (input.role === "provider" || input.ownsCentre) {
     desks.add("provider");
   }
-  return (["admin", "provider", "parent"] as const).filter((d) => desks.has(d));
+  return (["admin", "support", "provider", "parent"] as const).filter((d) => desks.has(d));
 }
 
 export function canVisitDesk(desks: DeskKey[], desk: DeskKey) {
@@ -70,7 +86,7 @@ export function showDeskSwitcher(desks: DeskKey[] | undefined | null) {
 export type SessionDesks = {
   role: AppRole;
   desks: DeskKey[];
-  home: "/admin" | "/provider" | "/parent";
+  home: "/admin" | "/support" | "/provider" | "/parent";
   unread: number;
   stripeLive: boolean;
   ledgerLabel: string;
@@ -78,9 +94,11 @@ export type SessionDesks = {
   providerSubscriptions: boolean;
 };
 
-/** Never demote an admin when a page or claim writes provider/parent. */
+/** Never demote staff when a page or claim writes provider/parent. */
 export function nextStoredRole(current: AppRole | string | null | undefined, requested: AppRole): AppRole {
   const cur = parseAppRole(current);
   if (cur === "admin") return "admin";
+  if (cur === "support_lead") return "support_lead";
+  if (cur === "support") return "support";
   return requested === "admin" ? "admin" : requested;
 }

@@ -5,7 +5,7 @@ export type LegalProcessor = {
   hrefLabel?: string;
 };
 
-export type LegalPath = "/privacy" | "/terms" | "/cookies" | "/account" | "/support";
+export type LegalPath = "/privacy" | "/terms" | "/cookies" | "/account" | "/help" | "/support";
 
 export type LegalBlock =
   | { type: "p"; text: string }

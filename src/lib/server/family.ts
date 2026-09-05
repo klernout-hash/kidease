@@ -1055,7 +1055,7 @@ export const setRole = createServerFn({ method: "POST" })
   .handler(async ({ context, data: role }) => {
     const written = await writeProfileRole(context.userId, role);
     if (!written.previous) {
-      await pingNewAccount(context.userId, written.role === "admin" ? "parent" : written.role);
+      await pingNewAccount(context.userId, written.role === "provider" ? "provider" : "parent");
     } else if (role === "provider" && written.previous !== "provider" && written.role === "provider") {
       await pingNewAccount(context.userId, "provider");
     }

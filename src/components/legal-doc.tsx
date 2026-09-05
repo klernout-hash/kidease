@@ -145,7 +145,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
             {t("deleteAccount")}
           </Link>
           {" · "}
-          <Link to="/support" className="underline-offset-4 hover:underline">
+          <Link to="/help" className="underline-offset-4 hover:underline">
             {t("support")}
           </Link>
         </p>

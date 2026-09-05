@@ -1,28 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
-import { SupportDesk } from "@/components/support-desk";
+import { SupportCaseView } from "@/components/support-case";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 
-export const Route = createFileRoute("/support")({
+export const Route = createFileRoute("/support/$caseId")({
   head: () => ({
     meta: [
-      { title: "Support · KidEase" },
+      { title: "Case · Support · KidEase" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => {
-    if (s.tab === "new") return { tab: "new" as const };
-    return {};
-  },
-  component: SupportPage,
+  component: SupportCasePage,
 });
 
-function SupportPage() {
+function SupportCasePage() {
+  const { caseId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
-  const search = Route.useSearch();
   const allowed = Boolean(ready && session?.desks.includes("support"));
 
   if (isPending || !ready) {
@@ -38,18 +34,15 @@ function SupportPage() {
       <Shell>
         <main className="mx-auto max-w-lg px-4 py-16 text-center">
           <h1 className="font-display text-3xl">Not found</h1>
-          <p className="mt-3 text-muted">
-            This page is only for KidEase staff with profiles.role = admin, support, or
-            support_lead. Public help is at /help.
-          </p>
+          <p className="mt-3 text-muted">This case is only for KidEase support staff.</p>
         </main>
       </Shell>
     );
   }
 
   return (
-    <TwoFactorGate next="/support">
-      <SupportDesk initialTab={search.tab === "new" ? "new" : "inbox"} />
+    <TwoFactorGate next={`/support/${caseId}`}>
+      <SupportCaseView caseId={caseId} />
     </TwoFactorGate>
   );
 }
