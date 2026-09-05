@@ -20,8 +20,9 @@ import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
+import { AdminReviewsPanel } from "@/components/admin-reviews";
 
-type AdminDesk = "queue" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity";
+type AdminDesk = "queue" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -308,6 +309,8 @@ function AdminPage() {
         <AdminContractsPanel rows={contracts} mode={contractMode} busy={contractBusy} setBusy={setContractBusy} onRefresh={refresh} />
       ) : tab === "money" ? (
         <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} />
+      ) : tab === "reviews" ? (
+        <AdminReviewsPanel />
       ) : (
         <>
         <AdminSentryTest />

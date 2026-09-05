@@ -20,6 +20,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "contracts", label: "Contracts", hint: "Status board until DocuSign is live" },
     { id: "money", label: "Money", hint: "Bills and fees — honest ledger" },
     { id: "activity", label: "Activity", hint: "Platform log" },
+    { id: "reviews", label: "Reviews", hint: "Parent reviews to approve" },
     { id: "chat", label: "Chat lab", hint: "Scaffold only", href: "/admin-chat" },
   ],
   daycare: [

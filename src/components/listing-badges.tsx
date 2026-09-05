@@ -1,5 +1,6 @@
 import { PriorityPill } from "@/components/priority-pill";
 import { TrustSignals } from "@/components/trust-badge";
+import { vacancyLine } from "@/components/vacancy-freshness";
 import { feeProgramBadgeKey } from "@/lib/licensing";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -12,11 +13,12 @@ export function ListingBadges({
   item: Daycare;
   compact?: boolean;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const feeBadge = feeProgramBadgeKey(item.province);
   const spots = (item.spotsInfant ?? 0) + (item.spotsToddler ?? 0) + (item.spotsPreschool ?? 0);
   const live = Boolean(item.live);
-  const known = Boolean(item.availabilityKnown || live);
+  const known = Boolean(item.availabilityKnown);
+  const freshness = vacancyLine(item, t, locale);
   const pill = compact
     ? "rounded-full bg-surface/95 px-2 py-0.5 text-[11px] font-medium"
     : "rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium";
@@ -29,6 +31,7 @@ export function ListingBadges({
       {live ? (
         <span className={cn(pill, "bg-ok text-primary-fg")}>{t("live")}</span>
       ) : null}
+      {item.detailsReady === false ? <span className={cn(pill, "text-muted")}>{t("detailsIncomplete")}</span> : null}
       {known ? (
         <span className={cn(pill, spots > 0 ? "" : "bg-fg/80 text-surface")}>
           {spots > 0 ? `${spots} ${t("spots")}` : t("waitlist")}
@@ -36,6 +39,7 @@ export function ListingBadges({
       ) : (
         <span className={cn(pill, "text-muted")}>{t("availUnknown")}</span>
       )}
+      {freshness.text ? <span className={cn(pill, "text-muted")}>{freshness.text}</span> : null}
     </div>
   );
 }

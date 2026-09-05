@@ -87,6 +87,9 @@ export type Daycare = {
   feeConfirmed?: boolean;
   availabilityKnown?: boolean;
   spotsUpdatedAt?: string | null;
+  lastVacancyUpdatedAt?: string | null;
+  detailsReady?: boolean;
+  completenessMissing?: Array<"fees" | "ages" | "hours" | "license" | "photo">;
   licenseStatus?: "unverified" | "matched" | "expired" | "suspended" | "active" | "unknown";
   licenseExpiry?: string | null;
   licensedCapacity?: number | null;
@@ -112,6 +115,8 @@ export type DaycareCard = Daycare & {
   inCatchment?: boolean;
 };
 
+export type ReviewStatus = "pending" | "approved" | "rejected";
+
 export type Review = {
   id: string;
   daycareId: string;
@@ -120,6 +125,8 @@ export type Review = {
   body: string;
   bodyFr: string;
   createdAt: string;
+  status?: ReviewStatus;
+  userId?: string | null;
 };
 
 export type AvailabilityRow = {

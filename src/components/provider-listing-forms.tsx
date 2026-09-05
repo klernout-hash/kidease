@@ -3,7 +3,10 @@ import { Camera, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PriorityPill } from "@/components/priority-pill";
-import { updateListing } from "@/lib/server/claims";
+import { CompletenessChecklist } from "@/components/listing-completeness";
+import { VacancyFreshness } from "@/components/vacancy-freshness";
+import { listingCompleteness } from "@/lib/listing-readiness";
+import { refreshVacancy, updateListing } from "@/lib/server/claims";
 import { promoteListing } from "@/lib/server/promos";
 import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
 import { useCopy } from "@/lib/use-copy";
@@ -108,10 +111,29 @@ export function CapacityForm({
     preschoolMonthly: daycare.preschoolMonthly ?? 0,
     ageMinMonths: daycare.agesKnown ? daycare.ageMinMonths : 12,
     ageMaxMonths: daycare.agesKnown ? daycare.ageMaxMonths : 60,
+    hours: daycare.hours,
+    licenseNumber: daycare.licenseNumber ?? "",
     storefront: "",
     interiors: [] as string[],
     licensePhoto: "",
   });
+  const [refreshing, setRefreshing] = useState(false);
+  const draft = {
+    ...daycare,
+    hours: state.hours,
+    licenseNumber: state.licenseNumber,
+    spotsInfant: state.spotsInfant,
+    spotsToddler: state.spotsToddler,
+    spotsPreschool: state.spotsPreschool,
+    infantMonthly: state.infantMonthly,
+    toddlerMonthly: state.toddlerMonthly,
+    preschoolMonthly: state.preschoolMonthly,
+    ageMinMonths: state.ageMinMonths,
+    ageMaxMonths: state.ageMaxMonths,
+    photos: state.storefront ? [state.storefront, ...daycare.photos] : daycare.photos,
+    agesKnown: true,
+  };
+  const complete = listingCompleteness(draft);
   const preview = state.storefront || daycare.photos[0];
 
   function readImage(file: File | undefined, into: "storefront" | "interiors" | "license") {
@@ -156,6 +178,9 @@ export function CapacityForm({
             preschoolMonthly: state.preschoolMonthly,
             ageMinMonths: state.ageMinMonths,
             ageMaxMonths: state.ageMaxMonths,
+            hours: state.hours,
+            licenseNumber: state.licenseNumber,
+            touchVacancy: mode === "listing",
           },
         })
           .then(onSaved)
@@ -165,6 +190,7 @@ export function CapacityForm({
       {mode === "licence" ? (
         <>
           <p className="text-sm text-muted">Upload a clear photo or scan of the current provincial licence. Required for compliance review.</p>
+          <Field label={t("licenceNo")} value={state.licenseNumber} onChange={(v) => setState({ ...state, licenseNumber: v })} />
           <label className="block text-sm font-medium">
             Provincial licence photo
             <input type="file" accept="image/*" className="mt-2 block w-full text-sm" onChange={(e) => readImage(e.target.files?.[0], "license")} />
@@ -199,6 +225,7 @@ export function CapacityForm({
             <Field label={t("postalLabel")} value={state.postalCode} onChange={(v) => setState({ ...state, postalCode: v })} />
             <Field label={t("phoneLabel")} value={state.phone} onChange={(v) => setState({ ...state, phone: v })} />
             <Field label={t("contactEmail")} value={state.email} onChange={(v) => setState({ ...state, email: v })} />
+            <Field label={t("hours")} value={state.hours} onChange={(v) => setState({ ...state, hours: v })} />
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Num label={t("spotsInfant")} value={state.spotsInfant} onChange={(n) => setState({ ...state, spotsInfant: n })} />
@@ -211,6 +238,30 @@ export function CapacityForm({
           <p className="text-sm tabular-nums text-muted">
             {t("agesAccepted")}: {formatAgeRange(state.ageMinMonths, state.ageMaxMonths)}
           </p>
+          <div className="rounded-lg bg-bg p-4 ring-1 ring-border">
+            <VacancyFreshness item={daycare} className="text-sm" />
+            {!daycare.availabilityKnown ? <p className="text-sm text-muted">{t("vacancyStale")}</p> : null}
+            <p className="mt-2 text-sm text-muted">{t("vacancyRefreshLead")}</p>
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-3"
+              disabled={refreshing}
+              onClick={() => {
+                setRefreshing(true);
+                void refreshVacancy({ data: { daycareId: daycare.id } })
+                  .then(() => {
+                    toast.success(t("vacancyRefreshed"));
+                    onSaved();
+                  })
+                  .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
+                  .finally(() => setRefreshing(false));
+              }}
+            >
+              {t("vacancyRefresh")}
+            </Button>
+          </div>
+          <CompletenessChecklist item={{ ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
         </>
       )}
       <Button type="submit" variant="secondary">
