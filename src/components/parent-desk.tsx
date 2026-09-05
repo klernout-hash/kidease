@@ -24,6 +24,7 @@ import type { Bill } from "@/lib/bill";
 import { billDollars, billIsOpen } from "@/lib/bill";
 import { BillStatusBadge } from "@/components/bill-status";
 import { periodLabel } from "@/lib/stripe-methods";
+import { ParentPlusPanel } from "@/components/parent-plus";
 
 type ParentTab = "saved" | "bookings" | "payments" | "children";
 
@@ -157,6 +158,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
               ) : null}
             </div>
             <LedgerHonesty stripeLive={Boolean(desks?.stripeLive)} className="mt-2" />
+            <div className="mt-4">
+              <ParentPlusPanel />
+            </div>
           </div>
           {bills.filter((b) => billIsOpen(b.status)).length ? (
             <div>

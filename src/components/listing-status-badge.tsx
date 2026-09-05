@@ -39,7 +39,7 @@ export function LedgerHonesty({ stripeLive, className }: { stripeLive: boolean; 
   return (
     <p className={cn("text-sm text-muted", className)}>
       {stripeLive
-        ? "Stripe live keys are set — charges can settle."
+        ? "Stripe live keys are set — charges can settle. KidEase keeps about 3% on each centre bill (the rest goes to the daycare)."
         : "Internal ledger only. $0 here is not a Stripe balance, and parents cannot pay by card until live keys are on."}
     </p>
   );

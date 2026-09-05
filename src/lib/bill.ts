@@ -1,7 +1,7 @@
 /** KidEase bill statuses. User-facing words: Bill / Pay / Paid. */
-export type BillStatus = "draft" | "sent" | "paid" | "void" | "refunded";
+export type BillStatus = "draft" | "sent" | "paid" | "void" | "refunded" | "disputed";
 
-export const BILL_STATUSES: readonly BillStatus[] = ["draft", "sent", "paid", "void", "refunded"];
+export const BILL_STATUSES: readonly BillStatus[] = ["draft", "sent", "paid", "void", "refunded", "disputed"];
 
 export type Bill = {
   id: string;
@@ -83,6 +83,8 @@ export function billStatusLabel(status: BillStatus): string {
       return "Void";
     case "refunded":
       return "Refunded";
+    case "disputed":
+      return "Disputed";
   }
 }
 

@@ -36,7 +36,7 @@ test("provider packages match the KidEase CAD one-pager", () => {
   assert.equal(add.featured_city.amount, 29);
   assert.equal(add.claim_boost.amount, 99);
   assert.equal(add.job_post.amount, 49);
-  assert.equal(PROVIDER_CHECKOUT_LIVE, false);
+  assert.equal(PROVIDER_CHECKOUT_LIVE, true);
   assert.equal(providerPlan("nope").id, "free");
 });
 
@@ -63,7 +63,7 @@ test("Subscription nav is hidden unless the ghost/admin flag is on", () => {
   );
 });
 
-test("subscription route is admin-gated, honest, and does not charge", () => {
+test("subscription route stays ghost-gated and checkout is live-keyed", () => {
   const route = src("src/routes/provider.subscription.tsx");
   const panel = src("src/components/provider-subscription.tsx");
   const server = src("src/lib/server/provider-subscriptions.ts");
@@ -78,13 +78,14 @@ test("subscription route is admin-gated, honest, and does not charge", () => {
   assert.match(tree, /id:\s*'\/provider\/subscription'/);
   assert.match(panel, /PROVIDER_SUBSCRIPTION_GHOST_MESSAGE/);
   assert.match(panel, /not parent Plus/);
-  assert.match(panel, /Coming soon — checkout next/);
-  assert.match(panel, /disabled/);
-  assert.doesNotMatch(panel, /checkout\.stripe|stripe.redirectToCheckout/);
+  assert.match(panel, /startProviderCheckout/);
+  assert.match(panel, /startProviderBillingPortal/);
+  assert.match(panel, /Internal ledger only/);
   assert.match(server, /canSeeProviderSubscriptions/);
   assert.match(server, /selected_plan/);
-  assert.match(server, /PROVIDER_CHECKOUT_LIVE/);
-  assert.doesNotMatch(server, /sk_live_|checkout\.sessions/);
+  assert.match(server, /stripeChargesLive\(\)/);
+  assert.match(server, /createCatalogCheckoutSession/);
+  assert.doesNotMatch(server, /sk_live_[A-Za-z0-9]{8,}/);
   assert.match(shell, /visibleDeskNav/);
   assert.match(shell, /providerSubscriptions/);
   assert.equal(PROVIDER_SUBSCRIPTION_GHOST_MESSAGE.includes("Admin preview"), true);

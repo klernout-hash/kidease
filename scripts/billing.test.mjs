@@ -71,6 +71,8 @@ test("checkout metadata carries bill_id and Connect fee only when destinated", (
   assert.equal(flat["payment_intent_data[metadata][bill_id]"], "bl_1");
   assert.equal(flat["line_items[0][price_data][unit_amount]"], "120000");
   assert.equal(flat["line_items[0][price_data][currency]"], "cad");
+  assert.equal(flat["payment_intent_data[statement_descriptor_suffix]"], "KIDEASE");
+  assert.equal(flat.allow_promotion_codes, "true");
   assert.equal(flat["payment_intent_data[application_fee_amount]"], undefined);
 
   const connected = checkoutSessionBody({
@@ -128,8 +130,10 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
 
   const webhook = src("src/routes/api/stripe.webhook.ts");
   assert.match(webhook, /applyStripeBillEvent/);
+  assert.match(webhook, /applyStripeSubscriptionEvent/);
   assert.match(webhook, /payment_intent\.succeeded/);
   assert.match(webhook, /checkout\.session\.completed/);
+  assert.match(webhook, /charge\.dispute\.created/);
 
   const parent = src("src/components/parent-desk.tsx");
   assert.match(parent, /listParentBills/);
@@ -148,6 +152,7 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   const money = src("src/components/provider-money.tsx");
   assert.match(money, /youReceive/);
   assert.match(money, /internal ledger/);
+  assert.match(money, /about 3%/);
   assert.doesNotMatch(money, /Stripe Connect/);
 
   const checkout = src("src/lib/server/billing.ts");

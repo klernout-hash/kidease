@@ -2,7 +2,17 @@
  * Thin Stripe Checkout helper (no SDK). Checkout Session fits TanStack Start:
  * the parent is redirected to Stripe and returns to /pay/bill/$id.
  * Never call this with sk_test_ — stripeChargesLive() must already be true.
+ *
+ * KidEase branding: statement_descriptor_suffix is KIDEASE. Also set the
+ * Stripe Dashboard statement descriptor prefix to KidEase so card statements
+ * read clearly in CAD.
  */
+
+export const STRIPE_STATEMENT_SUFFIX = "KIDEASE";
+
+export function appOrigin(): string {
+  return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca").replace(/\/$/, "");
+}
 
 export type StripeCheckoutInput = {
   billId: string;
@@ -14,6 +24,7 @@ export type StripeCheckoutInput = {
   successUrl: string;
   cancelUrl: string;
   customerEmail?: string | null;
+  customerId?: string | null;
   /** Connect account id when the centre can receive funds. Parent never sees this. */
   destinationAccount?: string | null;
   applicationFeeCents?: number;
@@ -23,6 +34,26 @@ export type StripeCheckoutSession = {
   id: string;
   url: string | null;
   payment_intent?: string | null;
+  customer?: string | null;
+  subscription?: string | null;
+};
+
+export type CatalogCheckoutInput = {
+  mode: "subscription" | "payment";
+  priceId: string;
+  quantity?: number;
+  successUrl: string;
+  cancelUrl: string;
+  customerEmail?: string | null;
+  customerId?: string | null;
+  clientReferenceId?: string | null;
+  metadata: Record<string, string>;
+  allowPromotionCodes?: boolean;
+};
+
+export type BillingPortalInput = {
+  customerId: string;
+  returnUrl: string;
 };
 
 export function flattenStripeBody(obj: unknown, prefix = ""): Array<[string, string]> {
@@ -48,21 +79,26 @@ export function flattenStripeBody(obj: unknown, prefix = ""): Array<[string, str
   return out;
 }
 
+function allowPromotionCodes(env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = String(env.STRIPE_ALLOW_PROMOTION_CODES ?? "1").trim().toLowerCase();
+  return raw !== "0" && raw !== "false" && raw !== "off";
+}
+
 export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, unknown> {
   const currency = (input.currency || "cad").toLowerCase();
   const paymentIntent: Record<string, unknown> = {
     metadata: { bill_id: input.billId, kidease: "bill" },
+    statement_descriptor_suffix: STRIPE_STATEMENT_SUFFIX,
   };
   if (input.destinationAccount && (input.applicationFeeCents ?? 0) >= 0) {
     paymentIntent.application_fee_amount = input.applicationFeeCents ?? 0;
     paymentIntent.transfer_data = { destination: input.destinationAccount };
   }
-  return {
+  const body: Record<string, unknown> = {
     mode: "payment",
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     client_reference_id: input.billId,
-    customer_email: input.customerEmail || undefined,
     line_items: [
       {
         quantity: 1,
@@ -78,25 +114,93 @@ export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, 
     ],
     metadata: { bill_id: input.billId, kidease: "bill" },
     payment_intent_data: paymentIntent,
+    allow_promotion_codes: allowPromotionCodes() ? "true" : undefined,
   };
+  if (input.customerId) body.customer = input.customerId;
+  else if (input.customerEmail) body.customer_email = input.customerEmail;
+  return body;
+}
+
+export function catalogCheckoutBody(input: CatalogCheckoutInput): Record<string, unknown> {
+  const metadata = { ...input.metadata, kidease: input.metadata.kidease || "catalog" };
+  const body: Record<string, unknown> = {
+    mode: input.mode,
+    success_url: input.successUrl,
+    cancel_url: input.cancelUrl,
+    client_reference_id: input.clientReferenceId || undefined,
+    line_items: [{ price: input.priceId, quantity: Math.max(1, input.quantity ?? 1) }],
+    metadata,
+    allow_promotion_codes: (input.allowPromotionCodes ?? allowPromotionCodes()) ? "true" : undefined,
+    billing_address_collection: "auto",
+  };
+  if (input.customerId) body.customer = input.customerId;
+  else if (input.customerEmail) body.customer_email = input.customerEmail;
+  if (input.mode === "subscription") {
+    body.subscription_data = { metadata };
+  } else {
+    body.payment_intent_data = {
+      metadata,
+      statement_descriptor_suffix: STRIPE_STATEMENT_SUFFIX,
+    };
+  }
+  return body;
+}
+
+export async function stripeRequest<T>(
+  path: string,
+  body: Record<string, unknown>,
+  method: "POST" | "GET" = "POST",
+): Promise<T> {
+  const key = (process.env.STRIPE_SECRET_KEY || "").trim();
+  if (!key) throw new Error("Stripe is not configured");
+  const url = path.startsWith("http") ? path : `https://api.stripe.com/v1${path}`;
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${key}`,
+  };
+  let payload: string | undefined;
+  if (method === "GET") {
+    const params = new URLSearchParams();
+    for (const [k, v] of flattenStripeBody(body)) params.append(k, v);
+    const joined = params.toString();
+    const getUrl = joined ? `${url}${url.includes("?") ? "&" : "?"}${joined}` : url;
+    const res = await fetch(getUrl, { method: "GET", headers });
+    const json = (await res.json()) as T & { error?: { message?: string } };
+    if (!res.ok) throw new Error(json.error?.message || `Stripe ${path} failed (${res.status})`);
+    return json;
+  }
+  headers["Content-Type"] = "application/x-www-form-urlencoded";
+  const params = new URLSearchParams();
+  for (const [k, v] of flattenStripeBody(body)) params.append(k, v);
+  payload = params.toString();
+  const res = await fetch(url, { method: "POST", headers, body: payload });
+  const json = (await res.json()) as T & { error?: { message?: string } };
+  if (!res.ok) throw new Error(json.error?.message || `Stripe ${path} failed (${res.status})`);
+  return json;
 }
 
 export async function createStripeCheckoutSession(input: StripeCheckoutInput): Promise<StripeCheckoutSession> {
-  const key = (process.env.STRIPE_SECRET_KEY || "").trim();
-  if (!key) throw new Error("Stripe is not configured");
-  const params = new URLSearchParams();
-  for (const [k, v] of flattenStripeBody(checkoutSessionBody(input))) params.append(k, v);
-  const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: params,
-  });
-  const json = (await res.json()) as StripeCheckoutSession & { error?: { message?: string } };
-  if (!res.ok || !json.id) {
-    throw new Error(json.error?.message || `Stripe checkout failed (${res.status})`);
-  }
+  const json = await stripeRequest<StripeCheckoutSession>("/checkout/sessions", checkoutSessionBody(input));
+  if (!json.id) throw new Error("Stripe checkout failed");
   return { id: json.id, url: json.url ?? null, payment_intent: json.payment_intent ?? null };
+}
+
+export async function createCatalogCheckoutSession(input: CatalogCheckoutInput): Promise<StripeCheckoutSession> {
+  const json = await stripeRequest<StripeCheckoutSession>("/checkout/sessions", catalogCheckoutBody(input));
+  if (!json.id) throw new Error("Stripe checkout failed");
+  return {
+    id: json.id,
+    url: json.url ?? null,
+    payment_intent: json.payment_intent ?? null,
+    customer: typeof json.customer === "string" ? json.customer : null,
+    subscription: typeof json.subscription === "string" ? json.subscription : null,
+  };
+}
+
+export async function createBillingPortalSession(input: BillingPortalInput): Promise<{ url: string }> {
+  const json = await stripeRequest<{ url?: string | null }>("/billing_portal/sessions", {
+    customer: input.customerId,
+    return_url: input.returnUrl,
+  });
+  if (!json.url) throw new Error("Stripe did not return a billing portal link");
+  return { url: json.url };
 }
