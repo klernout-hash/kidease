@@ -136,7 +136,33 @@ test("public reviews query only approved rows and forms use Turnstile", () => {
   assert.match(listing, /CompletenessBanner/);
   const badges = src("src/components/listing-badges.tsx");
   assert.match(badges, /TrustSignals/);
-  assert.match(badges, /detailsIncomplete/);
+  const completeness = src("src/components/listing-completeness.tsx");
+  assert.match(completeness, /detailsIncomplete/);
+  assert.match(completeness, /completenessParentNext/);
+});
+
+test("parent listing honesty never labels unknown vacancy as stale", () => {
+  const card = src("src/components/daycare-card.tsx");
+  assert.match(card, /parentIncompleteLabel/);
+  assert.match(card, /freshness\.kind === "unknown"/);
+  assert.doesNotMatch(card, /freshness\.text \|\| t\("vacancyStale"\)/);
+  const listing = src("src/routes/daycare.\$slug.tsx");
+  assert.match(listing, /VacancyFreshness/);
+  assert.doesNotMatch(listing, /!d\.availabilityKnown[\s\S]*vacancyStale/);
+  const forms = src("src/components/provider-listing-forms.tsx");
+  assert.match(forms, /vacancyUnknownProvider/);
+  assert.match(forms, /vacancyStaleProvider/);
+  assert.doesNotMatch(forms, /availabilityKnown \?[\s\S]*vacancyStale/);
+  const search = src("src/routes/search.tsx");
+  assert.match(search, /filterConfirmedSpots/);
+  assert.match(search, /filterDetailsReady/);
+  assert.match(search, /noFilterResults/);
+  const copy = src("src/lib/copy.ts");
+  assert.match(copy, /A few details to confirm/);
+  assert.match(copy, /Ask about current spots/);
+  assert.match(copy, /KidEase does not invent availability/);
+  assert.doesNotMatch(copy, /Details incomplete/);
+  assert.doesNotMatch(copy, /Not updated recently/);
 });
 
 test("provider guest gate and declined claims stay honest", () => {

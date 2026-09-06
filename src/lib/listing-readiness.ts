@@ -1,6 +1,8 @@
 /**
  * Public listing honesty: vacancy freshness and a soft completeness gate.
- * Never invent open spots. Incomplete listings stay discoverable.
+ * Never invent open spots or a vacancy time. Incomplete listings stay discoverable.
+ * Unknown (no confirm) is not stale — parents should not see “not updated recently”
+ * unless a real timestamp is older than two weeks.
  */
 
 import { feeProgramBadgeKey, officialLicenceNumber } from "@/lib/licensing";

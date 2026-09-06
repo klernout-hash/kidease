@@ -31,7 +31,6 @@ export function ListingBadges({
       {live ? (
         <span className={cn(pill, "bg-ok text-primary-fg")}>{t("live")}</span>
       ) : null}
-      {item.detailsReady === false ? <span className={cn(pill, "text-muted")}>{t("detailsIncomplete")}</span> : null}
       {known ? (
         <span className={cn(pill, spots > 0 ? "" : "bg-fg/80 text-surface")}>
           {spots > 0 ? `${spots} ${t("spots")}` : t("waitlist")}
@@ -39,7 +38,9 @@ export function ListingBadges({
       ) : (
         <span className={cn(pill, "text-muted")}>{t("availUnknown")}</span>
       )}
-      {freshness.text ? <span className={cn(pill, "text-muted")}>{freshness.text}</span> : null}
+      {freshness.kind !== "unknown" && freshness.text ? (
+        <span className={cn(pill, "text-muted")}>{freshness.text}</span>
+      ) : null}
     </div>
   );
 }

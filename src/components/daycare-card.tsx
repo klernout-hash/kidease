@@ -13,6 +13,7 @@ import { feeProgramBadgeKey } from "@/lib/licensing";
 import { licenseBadge } from "@/lib/trust";
 import type { CopyKey } from "@/lib/copy";
 import { vacancyLine } from "@/components/vacancy-freshness";
+import { parentIncompleteLabel } from "@/components/listing-completeness";
 
 const HEART_SAVED = "#FF385C";
 
@@ -59,9 +60,9 @@ export function DaycareCard({
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
   const line3 = [ages, hours].filter(Boolean).join(" · ");
   const freshness = vacancyLine(item, t, locale);
-  const incomplete = item.detailsReady === false;
+  const incompleteLabel = parentIncompleteLabel(item, t);
   const spotsKnown = known ? (open ? `${item.spotsTotal} ${t("spots")}` : t("waitlist")) : "";
-  const freshnessText = freshness.text || t("vacancyStale");
+  const freshnessText = freshness.kind === "unknown" ? "" : freshness.text;
   const priceAmount = feeBadge === "badgeTen" ? "$10" : feeOk ? money(item.fromPrice, locale) : "";
   const priceUnit = feeBadge === "badgeTen" ? " / day" : feeOk ? t("month") : "";
 
@@ -107,9 +108,11 @@ export function DaycareCard({
             <p className="truncate text-[14px] font-normal leading-5 text-[#6A6A6A]">{item.city}</p>
           )}
           {line3 ? <p className="truncate text-[14px] font-normal leading-5 text-[#6A6A6A]">{line3}</p> : null}
-          {incomplete || spotsKnown || freshnessText ? (
+          {incompleteLabel ? (
+            <p className="truncate text-[13px] font-normal leading-5 text-[#6A6A6A]">{incompleteLabel}</p>
+          ) : null}
+          {spotsKnown || freshnessText ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {incomplete ? <span className="ke-honesty">{t("detailsIncomplete")}</span> : null}
               {spotsKnown ? <span className="ke-honesty">{spotsKnown}</span> : null}
               {freshnessText ? <span className="ke-honesty">{freshnessText}</span> : null}
             </div>

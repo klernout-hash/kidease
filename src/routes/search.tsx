@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
+import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
@@ -75,6 +76,8 @@ function SearchPage() {
   const [extended, setExtended] = useState(false);
   const [infantOnly, setInfantOnly] = useState(false);
   const [catchmentOnly, setCatchmentOnly] = useState(false);
+  const [confirmedOnly, setConfirmedOnly] = useState(false);
+  const [readyOnly, setReadyOnly] = useState(false);
   const originAt = useAppStore((s) => s.originAt);
   const originSource = useAppStore((s) => s.originSource);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
@@ -182,6 +185,21 @@ function SearchPage() {
     }
   }
 
+  function clearListingFilters() {
+    setAvail("any");
+    setTen(false);
+    setMeals(false);
+    setOutdoor(false);
+    setInclusive(false);
+    setExtended(false);
+    setInfantOnly(false);
+    setCatchmentOnly(false);
+    setConfirmedOnly(false);
+    setReadyOnly(false);
+    setLiveOnly(false);
+    setAgeGroup("any");
+  }
+
   function retrySearch() {
     setItems(null);
     setSearchFailed(false);
@@ -234,8 +252,10 @@ function SearchPage() {
     if (extended) rows = rows.filter((r) => staysLate(r.hours, r.amenities) || opensEarly(r.hours));
     if (infantOnly) rows = rows.filter((r) => r.agesKnown && r.ageMinMonths <= 18);
     if (catchmentOnly) rows = rows.filter((r) => r.inCatchment);
+    if (confirmedOnly) rows = rows.filter((r) => vacancyFreshness(vacancyTimestamp(r)).kind === "fresh");
+    if (readyOnly) rows = rows.filter((r) => r.detailsReady === true);
     return rows;
-  }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, extended, infantOnly, catchmentOnly]);
+  }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, extended, infantOnly, catchmentOnly, confirmedOnly, readyOnly]);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +
@@ -245,6 +265,8 @@ function SearchPage() {
     (extended ? 1 : 0) +
     (infantOnly ? 1 : 0) +
     (catchmentOnly ? 1 : 0) +
+    (confirmedOnly ? 1 : 0) +
+    (readyOnly ? 1 : 0) +
     (ageGroup !== "any" ? 1 : 0);
   const city = origin.label.split(",")[0];
   const fabric = areaPresence(list);
@@ -339,6 +361,8 @@ function SearchPage() {
       {chip(avail === "open", t("filterOpen"), () => setAvail((v) => (v === "open" ? "any" : "open")))}
       {chip(avail === "waitlist", t("filterWaitlist"), () => setAvail((v) => (v === "waitlist" ? "any" : "waitlist")))}
       {chip(avail === "unknown", t("filterUnknown"), () => setAvail((v) => (v === "unknown" ? "any" : "unknown")))}
+      {chip(confirmedOnly, t("filterConfirmedSpots"), () => setConfirmedOnly((v) => !v))}
+      {chip(readyOnly, t("filterDetailsReady"), () => setReadyOnly((v) => !v))}
       {chip(ten, t("filterTen"), () => setTen((v) => !v))}
       {chip(meals, t("filterMeals"), () => setMeals((v) => !v))}
       {chip(outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v))}
@@ -531,16 +555,38 @@ function SearchPage() {
                 {items !== null && list.length === 0 ? (
                   <div className="rounded-xl bg-surface ring-1 ring-border">
                     <EmptyState
-                      title={searchFailed ? t("noResults") : liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("emptyMap")}
-                      action={searchFailed ? t("tryAgain") : liveOnly && (items?.length ?? 0) > 0 ? t("showAll") : t("changeLocation")}
+                      title={
+                        searchFailed
+                          ? t("noResults")
+                          : extraFilters && (items?.length ?? 0) > 0
+                            ? t("noFilterResults")
+                            : liveOnly && (items?.length ?? 0) > 0
+                              ? t("noLiveResults")
+                              : t("emptyMap")
+                      }
+                      action={
+                        searchFailed
+                          ? t("tryAgain")
+                          : extraFilters && (items?.length ?? 0) > 0
+                            ? t("clearFilters")
+                            : liveOnly && (items?.length ?? 0) > 0
+                              ? t("showAll")
+                              : t("changeLocation")
+                      }
                       onAction={
                         searchFailed
                           ? retrySearch
-                          : liveOnly && (items?.length ?? 0) > 0
-                            ? () => setLiveOnly(false)
-                            : undefined
+                          : extraFilters && (items?.length ?? 0) > 0
+                            ? clearListingFilters
+                            : liveOnly && (items?.length ?? 0) > 0
+                              ? () => setLiveOnly(false)
+                              : undefined
                       }
-                      actionTo={searchFailed || (liveOnly && (items?.length ?? 0) > 0) ? undefined : "/?change=1"}
+                      actionTo={
+                        searchFailed || ((extraFilters || liveOnly) && (items?.length ?? 0) > 0)
+                          ? undefined
+                          : "/?change=1"
+                      }
                     />
                   </div>
                 ) : null}
@@ -559,16 +605,38 @@ function SearchPage() {
           ) : list.length === 0 ? (
             <div className="mt-6 rounded-xl bg-surface ring-1 ring-border">
               <EmptyState
-                title={searchFailed ? t("noResults") : liveOnly && (items?.length ?? 0) > 0 ? t("noLiveResults") : t("noResults")}
-                action={searchFailed ? t("tryAgain") : liveOnly && (items?.length ?? 0) > 0 ? t("showAll") : t("changeLocation")}
+                title={
+                  searchFailed
+                    ? t("noResults")
+                    : extraFilters && (items?.length ?? 0) > 0
+                      ? t("noFilterResults")
+                      : liveOnly && (items?.length ?? 0) > 0
+                        ? t("noLiveResults")
+                        : t("noResults")
+                }
+                action={
+                  searchFailed
+                    ? t("tryAgain")
+                    : extraFilters && (items?.length ?? 0) > 0
+                      ? t("clearFilters")
+                      : liveOnly && (items?.length ?? 0) > 0
+                        ? t("showAll")
+                        : t("changeLocation")
+                }
                 onAction={
                   searchFailed
                     ? retrySearch
-                    : liveOnly && (items?.length ?? 0) > 0
-                      ? () => setLiveOnly(false)
-                      : undefined
+                    : extraFilters && (items?.length ?? 0) > 0
+                      ? clearListingFilters
+                      : liveOnly && (items?.length ?? 0) > 0
+                        ? () => setLiveOnly(false)
+                        : undefined
                 }
-                actionTo={searchFailed || (liveOnly && (items?.length ?? 0) > 0) ? undefined : "/?change=1"}
+                actionTo={
+                  searchFailed || ((extraFilters || liveOnly) && (items?.length ?? 0) > 0)
+                    ? undefined
+                    : "/?change=1"
+                }
               />
             </div>
           ) : (

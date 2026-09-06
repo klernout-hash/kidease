@@ -11,6 +11,25 @@ const NEED_KEY: Record<CompletenessField, CopyKey> = {
   photo: "completeNeedPhoto",
 };
 
+const CARD_NEED_KEY: Record<CompletenessField, CopyKey> = {
+  fees: "cardNeedFees",
+  ages: "cardNeedAges",
+  hours: "cardNeedHours",
+  license: "cardNeedLicense",
+  photo: "cardNeedPhoto",
+};
+
+/** Quiet parent-facing hint. Uses the first missing fact — never invents one. */
+export function parentIncompleteLabel(
+  item: Pick<Daycare, "detailsReady" | "completenessMissing">,
+  t: (key: CopyKey) => string,
+): string | null {
+  if (item.detailsReady !== false) return null;
+  const first = item.completenessMissing?.[0];
+  if (first) return t(CARD_NEED_KEY[first]);
+  return t("detailsIncomplete");
+}
+
 export function CompletenessMark({
   ready,
   className,
@@ -36,6 +55,7 @@ export function CompletenessBanner({ item }: { item: Daycare }) {
           <li key={field}>{t(NEED_KEY[field])}</li>
         ))}
       </ul>
+      <p className="mt-2 text-muted">{t("completenessParentNext")}</p>
     </div>
   );
 }
