@@ -26,7 +26,7 @@ export type AdminReportRow = {
   createdAt: string;
 };
 
-async function writeTrustEvent(
+export async function writeTrustEvent(
   sql: Awaited<ReturnType<typeof getSql>>,
   input: { daycareId: string; actorUserId?: string | null; kind: string; note?: string | null; payload?: string | null },
 ) {

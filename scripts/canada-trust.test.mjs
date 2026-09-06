@@ -42,11 +42,15 @@ test("trust badges never claim KidEase police-checks staff or invent scores", ()
   assert.match(src("src/lib/trust.ts"), /tone: "neutral"/);
   assert.match(src("src/lib/trust.ts"), /id: "license_unverified"/);
   assert.match(src("src/lib/trust.ts"), /id: "license_matched"/);
-  assert.match(src("src/lib/trust.ts"), /surface === "card"\) return \[license\]/);
+  assert.match(src("src/lib/trust.ts"), /claim\.id === "claim_verified"/);
   assert.match(src("src/lib/trust.ts"), /It does NOT police-check every educator/);
-  assert.match(src("src/lib/copy.ts"), /trustLicensedMatched: "Licensed \(registry-matched\)"/);
-  assert.match(src("src/lib/copy.ts"), /Staff screening: provider-attested/);
+  assert.match(src("src/lib/copy.ts"), /trustLicensedMatched: "Licensed"/);
+  assert.match(src("src/lib/copy.ts"), /trustLicenseUnverified: "Unverified"/);
+  assert.match(src("src/lib/copy.ts"), /trustClaimVerified: "Claim verified"/);
+  assert.match(src("src/lib/copy.ts"), /trustStaffAttested: "Staff attested"/);
   assert.match(src("src/lib/copy.ts"), /Payments: not charged yet/);
+  assert.doesNotMatch(src("src/lib/copy.ts"), /KidEase background-checked/);
+  assert.doesNotMatch(src("src/lib/copy.ts"), /Background checked by KidEase/);
 });
 
 test("registry adapters stay stubs and do not scrape", () => {

@@ -252,18 +252,34 @@ export function paymentBadge(item: TrustListing, stripeLive = stripeChargesLive(
 
 export type TrustSurface = "card" | "parent" | "provider" | "admin";
 
-/** Which badges each role sees. Cards stay to one licence signal. */
+/**
+ * Same Kyle-approved labels on every desk: licensed, unverified, claim verified, staff attested.
+ * Cards stay compact: licence always, plus claim/staff only when those facts are true.
+ * Provider and admin also see operational claim/staff/pay states.
+ */
 export function trustBadgesFor(item: TrustListing, surface: TrustSurface, stripeLive?: boolean): TrustBadge[] {
   const license = licenseBadge(item);
-  if (surface === "card") return [license];
+  const claim = claimBadge(item);
+  const staff = staffBadge(item);
 
-  const badges = [license, claimBadge(item)];
-  if (surface === "parent") {
-    badges.push(staffBadge(item));
+  if (surface === "card") {
+    const badges = [license];
+    if (claim.id === "claim_verified") badges.push(claim);
+    if (staff.id === "staff_attested") badges.push(staff);
     return badges;
   }
-  badges.push(staffBadge(item), paymentBadge(item, stripeLive));
-  return badges;
+
+  if (surface === "parent") {
+    const badges = [license, claim];
+    if (staff.id === "staff_attested") badges.push(staff);
+    return badges;
+  }
+
+  return [license, claim, staff, paymentBadge(item, stripeLive)];
+}
+
+export function isClaimVerified(item: TrustListing) {
+  return claimVerificationState(item) === "verified";
 }
 
 export function displayLicenceNumber(raw?: string | null, id?: string | null) {

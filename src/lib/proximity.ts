@@ -1,5 +1,11 @@
 import { CITIES, PROVINCES, geocode, haversineKm, reverseGeocode, type LatLng } from "@/lib/geo";
+import { listingQualityScore } from "@/lib/listing-readiness";
 import type { DaycareCard } from "@/lib/types";
+
+/** Modest, transparent preference. Distance still dominates; incomplete listings stay in the set. */
+export function listingQualityBoost(card: DaycareCard) {
+  return listingQualityScore(card) * 0.012;
+}
 
 export const MAX_SEARCH_RADIUS_KM = 50;
 export const MIN_SEARCH_RADIUS_KM = 1;
@@ -96,6 +102,7 @@ export function proximityScore(card: DaycareCard) {
   if (card.spotsTotal > 0) score += Math.min(0.1, card.spotsTotal * 0.02);
   if (card.priority) score += 0.22;
   if (card.ratingX10 > 0) score += (card.ratingX10 / 50) * 0.08;
+  score += listingQualityBoost(card);
   return score;
 }
 

@@ -23,6 +23,7 @@ import { LocationConsentCard } from "@/components/location-consent";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
+import { isClaimVerified } from "@/lib/trust";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
@@ -78,6 +79,7 @@ function SearchPage() {
   const [catchmentOnly, setCatchmentOnly] = useState(false);
   const [confirmedOnly, setConfirmedOnly] = useState(false);
   const [readyOnly, setReadyOnly] = useState(false);
+  const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(false);
   const originAt = useAppStore((s) => s.originAt);
   const originSource = useAppStore((s) => s.originSource);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
@@ -196,6 +198,7 @@ function SearchPage() {
     setCatchmentOnly(false);
     setConfirmedOnly(false);
     setReadyOnly(false);
+    setClaimVerifiedOnly(false);
     setLiveOnly(false);
     setAgeGroup("any");
   }
@@ -254,8 +257,9 @@ function SearchPage() {
     if (catchmentOnly) rows = rows.filter((r) => r.inCatchment);
     if (confirmedOnly) rows = rows.filter((r) => vacancyFreshness(vacancyTimestamp(r)).kind === "fresh");
     if (readyOnly) rows = rows.filter((r) => r.detailsReady === true);
+    if (claimVerifiedOnly) rows = rows.filter((r) => isClaimVerified(r));
     return rows;
-  }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, extended, infantOnly, catchmentOnly, confirmedOnly, readyOnly]);
+  }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, extended, infantOnly, catchmentOnly, confirmedOnly, readyOnly, claimVerifiedOnly]);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +
@@ -267,6 +271,7 @@ function SearchPage() {
     (catchmentOnly ? 1 : 0) +
     (confirmedOnly ? 1 : 0) +
     (readyOnly ? 1 : 0) +
+    (claimVerifiedOnly ? 1 : 0) +
     (ageGroup !== "any" ? 1 : 0);
   const city = origin.label.split(",")[0];
   const fabric = areaPresence(list);
@@ -363,6 +368,7 @@ function SearchPage() {
       {chip(avail === "unknown", t("filterUnknown"), () => setAvail((v) => (v === "unknown" ? "any" : "unknown")))}
       {chip(confirmedOnly, t("filterConfirmedSpots"), () => setConfirmedOnly((v) => !v))}
       {chip(readyOnly, t("filterDetailsReady"), () => setReadyOnly((v) => !v))}
+      {chip(claimVerifiedOnly, t("filterClaimVerified"), () => setClaimVerifiedOnly((v) => !v))}
       {chip(ten, t("filterTen"), () => setTen((v) => !v))}
       {chip(meals, t("filterMeals"), () => setMeals((v) => !v))}
       {chip(outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v))}
@@ -502,6 +508,7 @@ function SearchPage() {
             <div className="flex flex-wrap gap-2">
               {(
                 [
+                  ["recommended", t("sortRecommended")],
                   ["distance", t("sortDistance")],
                   ["price", t("sortPrice")],
                   ["rating", t("sortRating")],
@@ -518,6 +525,7 @@ function SearchPage() {
                 </button>
               ))}
             </div>
+            {sort === "recommended" ? <p className="text-xs text-muted">{t("sortRecommendedLead")}</p> : null}
             <div>
               <label className="inline-flex items-center gap-1.5 text-sm font-medium text-fg">
                 <Sparkles className="size-4" />

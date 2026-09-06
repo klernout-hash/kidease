@@ -6,6 +6,7 @@
  */
 
 import { feeProgramBadgeKey, officialLicenceNumber } from "@/lib/licensing";
+import { isClaimVerified, type TrustListing } from "@/lib/trust";
 import type { Daycare } from "@/lib/types";
 
 export const COMPLETENESS_FIELDS = ["fees", "ages", "hours", "license", "photo"] as const;
@@ -165,4 +166,94 @@ export function applyListingReadiness<T extends Daycare>(d: T): T {
     completenessMissing: complete.missing,
     feeConfirmed: hasListedFees(d),
   };
+}
+
+/** Centre-desk health fields. Vacancy is missing until a real confirm timestamp exists. */
+export const HEALTH_FIELDS = ["fees", "ages", "photo", "hours", "vacancy"] as const;
+export type HealthField = (typeof HEALTH_FIELDS)[number];
+
+export type ListingHealth = {
+  score: number;
+  total: number;
+  percent: number;
+  missing: HealthField[];
+  vacancyAt: string | null;
+};
+
+export function listingHealth(
+  d: Pick<
+    Daycare,
+    | "id"
+    | "province"
+    | "infantMonthly"
+    | "toddlerMonthly"
+    | "preschoolMonthly"
+    | "partTimeMonthly"
+    | "agesKnown"
+    | "ageMinMonths"
+    | "ageMaxMonths"
+    | "hours"
+    | "photos"
+    | "lastVacancyUpdatedAt"
+    | "spotsUpdatedAt"
+  >,
+): ListingHealth {
+  const vacancyAt = vacancyTimestamp(d);
+  const missing: HealthField[] = [];
+  if (!hasFeeOrProgram(d)) missing.push("fees");
+  if (!hasConfirmedAges(d)) missing.push("ages");
+  if (!hasRealPhoto(d)) missing.push("photo");
+  if (!hasListedHours(d.hours)) missing.push("hours");
+  if (!vacancyAt) missing.push("vacancy");
+  const total = HEALTH_FIELDS.length;
+  const score = total - missing.length;
+  return {
+    score,
+    total,
+    percent: Math.round((score / total) * 100),
+    missing,
+    vacancyAt,
+  };
+}
+
+export const HEALTH_FIELD_ANCHOR: Record<HealthField, string> = {
+  fees: "listing-health-fees",
+  ages: "listing-health-ages",
+  photo: "listing-health-photo",
+  hours: "listing-health-hours",
+  vacancy: "listing-health-vacancy",
+};
+
+/**
+ * Transparent quality preference. Incomplete listings stay in the set.
+ * Does not invent vacancy times — only a real confirm can boost freshness.
+ */
+export function listingQualityScore(
+  item: TrustListing &
+    Pick<
+      Daycare,
+      | "id"
+      | "province"
+      | "infantMonthly"
+      | "toddlerMonthly"
+      | "preschoolMonthly"
+      | "partTimeMonthly"
+      | "agesKnown"
+      | "ageMinMonths"
+      | "ageMaxMonths"
+      | "hours"
+      | "licenseNumber"
+      | "photos"
+      | "lastVacancyUpdatedAt"
+      | "spotsUpdatedAt"
+      | "priority"
+    >,
+): number {
+  let score = 0;
+  if (isClaimVerified(item)) score += 3;
+  const vacancy = vacancyFreshness(vacancyTimestamp(item));
+  if (vacancy.kind === "fresh") score += 2;
+  score += listingCompleteness(item).score;
+  if (item.priority) score += 1;
+  return score;
 }

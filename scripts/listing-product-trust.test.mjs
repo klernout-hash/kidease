@@ -173,7 +173,7 @@ test("provider guest gate and declined claims stay honest", () => {
   const forms = src("src/components/provider-listing-forms.tsx");
   assert.match(forms, /refreshVacancy/);
   assert.match(forms, /vacancyRefresh/);
-  assert.match(forms, /CompletenessChecklist/);
+  assert.match(forms, /ListingHealthPanel/);
   const copy = src("src/lib/copy.ts");
   assert.doesNotMatch(copy, /Background checked by KidEase/);
   assert.match(copy, /KidEase does not invent availability/);

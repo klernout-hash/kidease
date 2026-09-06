@@ -10,6 +10,7 @@ import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
 import { applyStorefrontPhoto } from "@/lib/listing-photo";
+import { writeTrustEvent } from "@/lib/server/trust";
 
 export type ClaimHit = {
   id: string;
@@ -124,6 +125,12 @@ export const startClaim = createServerFn({ method: "POST" })
     await sql`
       update daycares set claim_status = 'pending' where id = ${daycareId} and claimed_at is null
     `;
+    await writeTrustEvent(sql, {
+      daycareId,
+      actorUserId: context.userId,
+      kind: "claim_pending",
+      note: pending[0] ? "Existing pending claim reused" : "Provider started a claim",
+    });
     await writeProfileRole(context.userId, "provider");
     return {
       alreadyOwned: false as const,
@@ -170,6 +177,12 @@ export const verifyClaim = createServerFn({ method: "POST" })
       set claim_status = 'waiting'
       where id = ${data.daycareId} and claimed_at is null
     `;
+    await writeTrustEvent(sql, {
+      daycareId: data.daycareId,
+      actorUserId: context.userId,
+      kind: "claim_waiting",
+      note: "Provider submitted licence photo. Claim waiting on KidEase review.",
+    });
     await writeProfileRole(context.userId, "provider");
     const actor = await lookupUser(context.userId);
     const listedAfter = await catalogByIdGet(data.daycareId);

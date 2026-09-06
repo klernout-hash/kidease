@@ -6,7 +6,7 @@ import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { nearbyListings, type NearbyListing } from "./nearby";
 import { callerIsAdmin } from "./public-listing";
 import { upsertDaycare } from "./seed";
-import { applyListingReadiness } from "@/lib/listing-readiness";
+import { applyListingReadiness, listingQualityScore } from "@/lib/listing-readiness";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
 import { overlayPriority, sortPriorityFirst } from "./promos";
@@ -21,7 +21,7 @@ type SearchInput = {
   lat: number;
   lng: number;
   radiusKm: number;
-  sort: "distance" | "price" | "rating" | "availability";
+  sort: "distance" | "price" | "rating" | "availability" | "recommended";
   ageGroup: "any" | AgeGroup;
   fsa?: string;
 };
@@ -192,6 +192,11 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   }
   cards.sort((a, b) => {
     if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
+    if (data.sort === "recommended") {
+      const delta = listingQualityScore(b) - listingQualityScore(a);
+      if (delta !== 0) return delta;
+      return a.distanceKm - b.distanceKm;
+    }
     if (data.sort === "price") return (a.fromPrice || 9e6) - (b.fromPrice || 9e6);
     if (data.sort === "rating") return b.ratingX10 - a.ratingX10;
     if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
