@@ -10,7 +10,7 @@
     }
   ],
   "redirects": [
-    { "source": "/.well-known/change-password", "destination": "/login", "permanent": false },
+    { "source": "/.well-known/change-password", "destination": "/forgot-password", "permanent": false },
     {
       "source": "/admin",
       "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],

@@ -4,6 +4,7 @@ import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
+import { PasswordField } from "@/components/password-field";
 import { Shell } from "@/components/shell";
 import { PasswordRules } from "@/components/password-rules";
 import { PASSWORD_POLICY_HINT, passwordMeetsPolicy } from "@/lib/password-policy";
@@ -71,35 +72,34 @@ function ResetPassword() {
                 Back to sign in
               </Link>
             </>
+          ) : !token ? (
+            <>
+              <p className="mt-3 text-sm text-danger">This reset link is missing or expired. Request a new one from the sign-in page.</p>
+              <Link to="/forgot-password" className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
+                Email a new reset link
+              </Link>
+            </>
           ) : (
             <>
               <p className="mt-2 text-sm text-muted">This works for Parent, Daycare, and Operator accounts.</p>
               <form onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
-                <label className="block text-sm">
-                  New password
-                  <input
-                    type="password"
-                    required
-                    minLength={8}
-                    className="ke-input mt-1"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                  />
-                </label>
+                <PasswordField
+                  label="New password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
                 <PasswordRules password={password} />
-                <label className="block text-sm">
-                  Confirm password
-                  <input
-                    type="password"
-                    required
-                    minLength={8}
-                    className="ke-input mt-1"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    autoComplete="new-password"
-                  />
-                </label>
+                <PasswordField
+                  label="Confirm password"
+                  required
+                  minLength={8}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  autoComplete="new-password"
+                />
                 {confirm && confirm !== password ? (
                   <p className="text-[13px] text-danger">Those passwords do not match.</p>
                 ) : null}

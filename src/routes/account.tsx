@@ -184,7 +184,7 @@ function ProfilePane() {
               Email
               <input className="ke-input mt-1 bg-bg" value={email} readOnly autoComplete="email" />
             </label>
-            <p className="text-[12px] text-subtle">Email is the address you sign in with. Use Forgot password on the login page to recover it.</p>
+            <p className="text-[12px] text-subtle">Email is the address you sign in with. Use Forgot password on the sign-in page to recover it.</p>
             <label className="block text-sm">
               Bio
               <textarea

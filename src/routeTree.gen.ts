@@ -35,6 +35,7 @@ import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SupportRouteImport } from './routes/support'
@@ -194,6 +195,11 @@ const ProviderRoute = ProviderRouteImport.update({
 const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
   id: '/provider/subscription',
   path: '/provider/subscription',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -369,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/support': typeof SupportRoute
@@ -426,6 +433,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/support': typeof SupportRoute
@@ -484,6 +492,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/support': typeof SupportRoute
@@ -543,6 +552,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/provider'
     | '/provider/subscription'
+    | '/forgot-password'
     | '/reset-password'
     | '/search'
     | '/support'
@@ -600,6 +610,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/provider'
     | '/provider/subscription'
+    | '/forgot-password'
     | '/reset-password'
     | '/search'
     | '/support'
@@ -657,6 +668,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/provider'
     | '/provider/subscription'
+    | '/forgot-password'
     | '/reset-password'
     | '/search'
     | '/support'
@@ -715,6 +727,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProviderRoute: typeof ProviderRoute
   ProviderSubscriptionRoute: typeof ProviderSubscriptionRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
   SupportRoute: typeof SupportRoute
@@ -927,6 +940,13 @@ declare module '@tanstack/react-router' {
       path: '/provider/subscription'
       fullPath: '/provider/subscription'
       preLoaderRoute: typeof ProviderSubscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -1172,6 +1192,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProviderRoute: ProviderRoute,
   ProviderSubscriptionRoute: ProviderSubscriptionRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
   SupportRoute: SupportRoute,

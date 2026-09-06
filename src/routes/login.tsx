@@ -5,6 +5,7 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
+import { PasswordField } from "@/components/password-field";
 import { Shell } from "@/components/shell";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
@@ -62,9 +63,6 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [forgotOpen, setForgotOpen] = useState(false);
-  const [forgotBusy, setForgotBusy] = useState(false);
-  const [forgotNote, setForgotNote] = useState<string | null>(null);
   const { token, onToken } = useTurnstileToken();
 
   useEffect(() => {
@@ -126,28 +124,6 @@ function Login() {
     } finally {
       setBusy(false);
     }
-  }
-
-  async function onForgot(e: React.FormEvent) {
-    e.preventDefault();
-    const target = (operator ? OPERATOR_EMAIL : email).trim().toLowerCase();
-    if (!target || !target.includes("@")) {
-      setForgotNote("Enter the email on the account first.");
-      return;
-    }
-    setForgotBusy(true);
-    setForgotNote(null);
-    try {
-      await authClient.forgetPassword({
-        email: target,
-        redirectTo: "/reset-password",
-        fetchOptions: turnstileFetchOptions(token),
-      });
-    } catch {
-      /* generic note only — do not leak whether the inbox exists */
-    }
-    setForgotNote("If that email is registered with KidEase, we sent a reset link. Check the inbox and junk folder.");
-    setForgotBusy(false);
   }
 
   async function onSocial(providerId: string) {
@@ -250,18 +226,14 @@ function Login() {
                 readOnly={operator}
               />
             </label>
-            <label className="block text-sm">
-              {t("password")}
-              <input
-                type="password"
-                required
-                minLength={8}
-                className="ke-input mt-1"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={mode === "up" ? "new-password" : "current-password"}
-              />
-            </label>
+            <PasswordField
+              label={t("password")}
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === "up" ? "new-password" : "current-password"}
+            />
             <TurnstileField onToken={onToken} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
             <Button type="submit" className="w-full" disabled={busy}>
@@ -270,27 +242,13 @@ function Login() {
           </form>
           {mode === "in" ? (
             <div className="mt-3">
-              <button
-                type="button"
+              <Link
+                to="/forgot-password"
+                search={{ email: (operator ? OPERATOR_EMAIL : email).trim() }}
                 className="text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
-                onClick={() => {
-                  setForgotOpen((open) => !open);
-                  setForgotNote(null);
-                }}
               >
                 Forgot password?
-              </button>
-              {forgotOpen ? (
-                <form onSubmit={onForgot} className="mt-3 space-y-2 rounded-md bg-bg px-3 py-3 ring-1 ring-border ph-no-capture">
-                  <p className="text-[13px] leading-snug text-muted">
-                    We’ll email a reset link to the address above{operator ? ` (${OPERATOR_EMAIL})` : ""}.
-                  </p>
-                  <Button type="submit" variant="secondary" className="w-full" disabled={forgotBusy}>
-                    {forgotBusy ? "Sending…" : "Email reset link"}
-                  </Button>
-                  {forgotNote ? <p className="text-[13px] leading-snug text-muted">{forgotNote}</p> : null}
-                </form>
-              ) : null}
+              </Link>
             </div>
           ) : null}
           {!operator ? (

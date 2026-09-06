@@ -11,8 +11,8 @@
 
 export const CANONICAL_ORIGIN = "https://www.kidease.ca";
 export const CHANGE_PASSWORD_PATH = "/.well-known/change-password";
-/** No in-app change-password page exists; forgot-password lives on /login. */
-export const CHANGE_PASSWORD_DESTINATION = "/login";
+/** Password managers land here; the in-app form is /forgot-password. */
+export const CHANGE_PASSWORD_DESTINATION = "/forgot-password";
 
 export function hostnameOf(hostHeader) {
   const first = String(hostHeader ?? "")
