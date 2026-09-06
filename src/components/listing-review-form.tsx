@@ -4,30 +4,41 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { getMyListingReview, submitListingReview } from "@/lib/server/reviews";
+import { getListingReviewAccess, submitListingReview } from "@/lib/server/reviews";
+import { isPublicReviewStatus, normalizeReviewStatus } from "@/lib/review-gate";
 import { useCopy } from "@/lib/use-copy";
 import type { Review } from "@/lib/types";
+
+type Access = {
+  canWrite: boolean;
+  reason: string;
+  mine: Review | null;
+};
 
 export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug: string }) {
   const { t, locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const { token, onToken } = useTurnstileToken();
-  const [mine, setMine] = useState<Review | null | undefined>(undefined);
+  const [access, setAccess] = useState<Access | null>(null);
   const [rating, setRating] = useState(0);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (isPending || !user) {
-      setMine(null);
+      setAccess(null);
       return;
     }
-    void getMyListingReview({ data: daycareId })
-      .then(setMine)
-      .catch(() => setMine(null));
+    void getListingReviewAccess({ data: daycareId })
+      .then(setAccess)
+      .catch(() => setAccess({ canWrite: false, reason: "none", mine: null }));
   }, [daycareId, user, isPending]);
 
-  if (!user && !isPending) {
+  if (isPending || (user && access === null)) {
+    return null;
+  }
+
+  if (!user) {
     return (
       <p className="mt-4 text-sm text-muted">
         {t("reviewNeedSignIn")}{" "}
@@ -38,14 +49,23 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
     );
   }
 
-  if (mine?.status === "pending") {
+  const mine = access?.mine ?? null;
+  const status = mine ? normalizeReviewStatus(mine.status) : null;
+  if (status === "pending") {
     return <p className="mt-4 rounded-lg bg-surface p-3 text-sm text-muted ring-1 ring-border">{t("reviewPending")}</p>;
   }
-  if (mine?.status === "approved") {
+  if (mine && isPublicReviewStatus(mine.status)) {
     return <p className="mt-4 text-sm text-muted">{t("reviewApproved")}</p>;
   }
-  if (mine?.status === "rejected") {
+  if (status === "hidden") {
     return <p className="mt-4 text-sm text-muted">{t("reviewRejected")}</p>;
+  }
+  if (access && !access.canWrite) {
+    return (
+      <p className="mt-4 rounded-lg bg-surface p-3 text-sm text-muted ring-1 ring-border">
+        {access.reason === "centre_owner" ? t("reviewCentreBlocked") : t("reviewNeedRelationship")}
+      </p>
+    );
   }
 
   return (
@@ -63,15 +83,19 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
         })
           .then(() => {
             toast.success(t("reviewSent"));
-            setMine({
-              id: "pending",
-              daycareId,
-              author: user?.displayName || "Parent",
-              rating,
-              body,
-              bodyFr: locale === "fr" ? body : "",
-              createdAt: new Date().toISOString(),
-              status: "pending",
+            setAccess({
+              canWrite: true,
+              reason: access?.reason ?? "enrolment",
+              mine: {
+                id: "pending",
+                daycareId,
+                author: user?.displayName || "Parent",
+                rating,
+                body,
+                bodyFr: locale === "fr" ? body : "",
+                createdAt: new Date().toISOString(),
+                status: "pending",
+              },
             });
             setBody("");
           })
@@ -109,7 +133,7 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
         />
       </label>
       <TurnstileField onToken={onToken} />
-      <Button type="submit" size="sm" disabled={busy || isPending}>
+      <Button type="submit" size="sm" disabled={busy || isPending || !access?.canWrite}>
         {t("submit")}
       </Button>
     </form>

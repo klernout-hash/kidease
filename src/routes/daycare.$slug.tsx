@@ -456,6 +456,15 @@ function Listing() {
 
             <section className="mt-8">
               <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
+              {(d.parentReviewCount ?? 0) > 0 && (d.parentRatingX10 ?? 0) > 0 ? (
+                <p className="mt-2 inline-flex items-center gap-2 text-sm">
+                  <Star className="size-3.5 fill-fg" />
+                  <span className="font-medium tabular-nums">{((d.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
+                  <span className="text-muted">
+                    ({d.parentReviewCount} {t("reviews")})
+                  </span>
+                </p>
+              ) : null}
               {data.reviews.length ? (
                 <ul className="mt-3 space-y-4">
                   {data.reviews.map((r) => (
