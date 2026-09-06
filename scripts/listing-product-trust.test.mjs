@@ -170,6 +170,17 @@ test("provider guest gate and declined claims stay honest", () => {
   assert.match(provider, /providerGuestLead/);
   assert.match(provider, /declined/);
   assert.match(provider, /Promote is off while this listing is declined/);
+  assert.match(provider, /VacancyConfirmLoop/);
+  const loop = src("src/components/vacancy-confirm.tsx");
+  assert.match(loop, /refreshVacancy/);
+  assert.match(loop, /vacancyConfirmTitle/);
+  assert.match(loop, /vacancyNeverConfirmed/);
+  assert.match(loop, /last_vacancy_updated_at/);
+  assert.doesNotMatch(loop, /spotsInfant|spotsToddler|Math\.random/);
+  const claims = src("src/lib/server/claims.ts");
+  assert.match(claims, /set last_vacancy_updated_at = now\(\)/);
+  const search = src("src/routes/search.tsx");
+  assert.match(search, /vacancyFreshness\(vacancyTimestamp\(r\)\)\.kind === "fresh"/);
   const forms = src("src/components/provider-listing-forms.tsx");
   assert.match(forms, /refreshVacancy/);
   assert.match(forms, /vacancyRefresh/);

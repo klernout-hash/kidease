@@ -151,7 +151,7 @@ export function NavDrawer({
             <>
               <Link
                 to="/login"
-                search={{ role: "parent", intent: "in", next: "/parent" }}
+                search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
                 onClick={onClose}
                 className="flex min-h-12 items-center justify-center rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
               >
@@ -159,7 +159,7 @@ export function NavDrawer({
               </Link>
               <Link
                 to="/login"
-                search={{ role: "provider", intent: "in", next: "/provider" }}
+                search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
                 onClick={onClose}
                 className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
               >

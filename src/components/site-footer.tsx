@@ -55,7 +55,7 @@ export function SiteFooter() {
               <p className="ke-footer-title">Parents</p>
               <ul className="ke-footer-list">
                 <Item to="/search">{t("search")}</Item>
-                <Item to="/login" search={{ role: "parent", intent: "in", next: "/parent" }}>
+                <Item to="/login" search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}>
                   {t("parentSignIn")}
                 </Item>
                 <Item to="/parent">{fr ? "Espace parent" : "Parent desk"}</Item>
@@ -73,7 +73,7 @@ export function SiteFooter() {
               <p className="ke-footer-title">{fr ? "Garderies" : "Daycares"}</p>
               <ul className="ke-footer-list">
                 <Item to="/claim">{t("claimCta")}</Item>
-                <Item to="/login" search={{ role: "provider", intent: "in", next: "/provider" }}>
+                <Item to="/login" search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}>
                   {t("providerLogin")}
                 </Item>
                 <Item to="/provider">{fr ? "Espace garderie" : "Daycare desk"}</Item>
@@ -123,7 +123,7 @@ export function SiteFooter() {
               </p>
               <Link
                 to="/login"
-                search={{ role: "admin", intent: "in", next: "/admin" }}
+                search={{ role: "admin", desk: "admin", intent: "in", next: "/admin" }}
                 className="ke-footer-operator"
               >
                 {t("operatorSignIn")}

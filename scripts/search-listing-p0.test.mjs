@@ -45,7 +45,7 @@ test("unsigned provider desk settles the session and offers sign-in or claim", (
   assert.match(provider, /providerGuestSignIn/);
   assert.match(provider, /providerGuestClaim/);
   assert.match(provider, /role: "provider"/);
-  assert.match(provider, /next: "\/provider"/);
+  assert.match(provider, /next: search\.desk \? `\/provider\?desk=\$\{search\.desk\}` : "\/provider"/);
   assert.match(provider, /to="\/claim"/);
   assert.doesNotMatch(provider, /<Navigate to="\/login"/);
 });

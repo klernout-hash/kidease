@@ -24,6 +24,7 @@ import { ProviderTrustChecklist } from "@/components/provider-trust";
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import { ProviderMoneyPanel } from "@/components/provider-money";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
+import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
 
 type DaycareDesk = "requests" | "money" | "listings" | "licence" | "contract" | "promote";
 
@@ -97,7 +98,15 @@ function ProviderPage() {
           <p className="mt-3 text-muted">{t("providerGuestLead")}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild>
-              <Link to="/login" search={{ role: "provider", intent: "in", next: "/provider" }}>
+              <Link
+                to="/login"
+                search={{
+                  role: "provider",
+                  desk: "director",
+                  intent: "in",
+                  next: search.desk ? `/provider?desk=${search.desk}` : "/provider",
+                }}
+              >
                 {t("providerGuestSignIn")}
               </Link>
             </Button>
@@ -114,7 +123,7 @@ function ProviderPage() {
   const later = requests.filter((r) => r.status !== "requested" && r.status !== "under_review");
 
   return (
-    <TwoFactorGate next="/provider">
+    <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
     {search.preview === "support" ? <SupportPreviewBanner /> : null}
     <DeskShell
       desk="daycare"
@@ -128,6 +137,7 @@ function ProviderPage() {
         setDesk(id as DaycareDesk);
       }}
     >
+      <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
       {desk === "requests" ? (
         <section className="space-y-8">
           <div>

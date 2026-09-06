@@ -11,9 +11,94 @@ export const DESK_PATH: Record<DeskKey, "/admin" | "/support" | "/provider" | "/
 export const DESK_LABEL: Record<DeskKey, string> = {
   admin: "Admin",
   support: "Support",
-  provider: "Provider",
+  provider: "Director (Centre)",
   parent: "Parent",
 };
+
+/** Public deep-link aliases for `?desk=`. Provider tabs (listings, money, …) are not desks. */
+export const DESK_QUERY_ALIASES: Record<string, DeskKey> = {
+  parent: "parent",
+  director: "provider",
+  centre: "provider",
+  center: "provider",
+  daycare: "provider",
+  provider: "provider",
+  admin: "admin",
+  support: "support",
+};
+
+export const PROVIDER_TAB_KEYS = ["requests", "money", "listings", "licence", "license", "contract", "promote"] as const;
+
+export const STICKY_DESK_KEY = "kidease-desk";
+
+const PATH_DESK: Array<[string, DeskKey]> = [
+  ["/admin", "admin"],
+  ["/support", "support"],
+  ["/provider", "provider"],
+  ["/parent", "parent"],
+  ["/account", "parent"],
+];
+
+export function parseDeskQuery(raw: string | null | undefined): DeskKey | null {
+  const v = (raw || "").trim().toLowerCase();
+  return DESK_QUERY_ALIASES[v] ?? null;
+}
+
+export function isProviderTabKey(raw: string | null | undefined): boolean {
+  const v = (raw || "").trim().toLowerCase();
+  return (PROVIDER_TAB_KEYS as readonly string[]).includes(v);
+}
+
+/** Canonical `?desk=` value for a role desk (director, not provider). */
+export function deskQueryValue(desk: DeskKey): "parent" | "director" | "admin" | "support" {
+  if (desk === "provider") return "director";
+  return desk;
+}
+
+export function loginRoleFromDesk(desk: DeskKey): "parent" | "provider" | "admin" {
+  if (desk === "admin") return "admin";
+  if (desk === "provider") return "provider";
+  return "parent";
+}
+
+export function deskFromPathname(pathname: string): DeskKey | null {
+  for (const [prefix, desk] of PATH_DESK) {
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) return desk;
+  }
+  return null;
+}
+
+export function pickLandingDesk(desks: DeskKey[], preferred?: DeskKey | null): DeskKey {
+  if (preferred && desks.includes(preferred)) return preferred;
+  return primaryDesk(desks);
+}
+
+export function readStickyDesk(): DeskKey | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return parseDeskQuery(window.sessionStorage.getItem(STICKY_DESK_KEY));
+  } catch {
+    return null;
+  }
+}
+
+export function writeStickyDesk(desk: DeskKey): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(STICKY_DESK_KEY, deskQueryValue(desk));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearStickyDesk(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(STICKY_DESK_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 export const ROLE_RANK: Record<AppRole, number> = {
   parent: 0,

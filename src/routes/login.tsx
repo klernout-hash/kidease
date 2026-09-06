@@ -9,17 +9,21 @@ import { Shell } from "@/components/shell";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { getMyDesks } from "@/lib/server/roles";
+import { DESK_PATH, deskQueryValue, loginRoleFromDesk, parseDeskQuery, pickLandingDesk, readStickyDesk, writeStickyDesk } from "@/lib/desks";
 import { useCopy } from "@/lib/use-copy";
 
 type Role = "parent" | "provider" | "admin";
+type DeskAlias = "parent" | "director" | "centre" | "admin" | "support" | "provider";
 const OPERATOR_EMAIL = "kyle@kidease.ca";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => {
-    const out: { next?: string; role?: Role; intent?: "in" | "up" } = {};
+    const out: { next?: string; role?: Role; intent?: "in" | "up"; desk?: DeskAlias } = {};
     if (typeof s.next === "string" && s.next.startsWith("/")) out.next = s.next;
     if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
     if (s.intent === "in" || s.intent === "up") out.intent = s.intent;
+    const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
+    if (desk) out.desk = deskQueryValue(desk);
     return out;
   },
   loader: async () => {
@@ -38,17 +42,20 @@ function Login() {
   const { t } = useCopy();
   const { providers } = Route.useLoaderData();
   const search = Route.useSearch();
-  const role = search.role;
+  const deskHint = parseDeskQuery(search.desk);
+  const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
   const operator = role === "admin";
   const dest = search.next && search.next.startsWith("/")
     ? search.next
-    : role === "provider"
-      ? "/provider"
-      : role === "admin"
-        ? "/admin"
-        : role === "parent"
-          ? "/parent"
-          : "/";
+    : deskHint
+      ? DESK_PATH[deskHint]
+      : role === "provider"
+        ? "/provider"
+        : role === "admin"
+          ? "/admin"
+          : role === "parent"
+            ? "/parent"
+            : "/";
   const [mode, setMode] = useState<"in" | "up">(operator ? "in" : search.intent === "up" ? "up" : "in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState(operator ? OPERATOR_EMAIL : "");
@@ -62,7 +69,8 @@ function Login() {
 
   useEffect(() => {
     if (role === "parent" || role === "provider") rememberRole(role);
-  }, [role]);
+    if (deskHint) writeStickyDesk(deskHint);
+  }, [role, deskHint]);
 
   async function finish() {
     try {
@@ -78,12 +86,13 @@ function Login() {
       }
     }
     let destUrl = dest.startsWith("/") ? dest : "/";
-    if (!search.next) {
+    if (!search.next && !operator) {
       try {
         const session = await getMyDesks();
-        destUrl = session.home;
+        const preferred = deskHint ?? readStickyDesk();
+        destUrl = DESK_PATH[pickLandingDesk(session.desks, preferred)];
       } catch {
-        /* keep dest from the login role */
+        /* keep dest from the login role / desk */
       }
     }
     window.location.assign(twoFactorUrl(destUrl));

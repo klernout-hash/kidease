@@ -1,74 +1,34 @@
-import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { MessageCircle } from "lucide-react";
-import { getMyDesks } from "@/lib/server/roles";
-import { DESK_LABEL, DESK_PATH, showDeskSwitcher, type DeskKey, type SessionDesks } from "@/lib/desks";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { DESK_PATH, deskFromPathname, showDeskSwitcher, writeStickyDesk, type DeskKey } from "@/lib/desks";
+import { useSessionDesks } from "@/components/session-desks";
+import { useCopy } from "@/lib/use-copy";
+import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 
-const PATH_DESK: Array<[string, DeskKey]> = [
-  ["/admin", "admin"],
-  ["/support", "support"],
-  ["/provider", "provider"],
-  ["/parent", "parent"],
-  ["/account", "parent"],
-];
+export { useSessionDesks } from "@/components/session-desks";
 
-function deskFromPath(pathname: string): DeskKey | null {
-  for (const [prefix, desk] of PATH_DESK) {
-    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) return desk;
-  }
-  return null;
-}
-
-export function useSessionDesks() {
-  const { user, isPending } = useCurrentUserState();
-  const [session, setSession] = useState<SessionDesks | null>(null);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (isPending) return;
-    if (!user) {
-      setSession(null);
-      setError(false);
-      setReady(true);
-      return;
-    }
-    let cancelled = false;
-    setError(false);
-    void getMyDesks()
-      .then((s) => {
-        if (cancelled) return;
-        setSession(s);
-        setReady(true);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setError(true);
-        setReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, isPending]);
-
-  return { session, ready, error };
-}
+const DESK_COPY: Record<DeskKey, CopyKey> = {
+  parent: "deskParent",
+  provider: "deskDirector",
+  admin: "deskAdmin",
+  support: "deskSupport",
+};
 
 export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
+  const { t } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session } = useSessionDesks();
   // Same Better Auth session. Pills only navigate — they do not call setRole
   // or rewrite the session cookie. /provider still promotes via its own mount.
   if (!session || !showDeskSwitcher(session.desks)) return null;
 
-  const current = deskFromPath(pathname);
+  const current = deskFromPathname(pathname);
 
   return (
     <div
       role="navigation"
-      aria-label="Switch desk"
+      aria-label={t("deskSwitcherLabel")}
       className={cn("flex items-center gap-1", compact ? "" : "rounded-full bg-surface/90 p-0.5 ring-1 ring-border")}
     >
       {session.desks.map((desk) => {
@@ -77,12 +37,13 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
           <Link
             key={desk}
             to={DESK_PATH[desk]}
+            onClick={() => writeStickyDesk(desk)}
             className={cn(
               "inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium leading-none",
               on ? "bg-primary text-primary-fg" : "text-muted hover:text-fg",
             )}
           >
-            {DESK_LABEL[desk]}
+            {t(DESK_COPY[desk])}
           </Link>
         );
       })}
