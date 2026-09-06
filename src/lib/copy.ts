@@ -597,6 +597,8 @@ export const copy = {
     verifyListings: "How we verify listings",
     mbChildcare: "Manitoba Child Care",
     neverSell: "We respect your privacy. Your data is never sold.",
+    comingSoon: "Coming soon",
+    operatorSignIn: "Operator sign-in",
     aboutTitle: "About KidEase",
     aboutHero:
       "KidEase is a Canada-wide app that helps parents find licensed daycare near them — quickly, clearly, and with confidence.",
@@ -1435,6 +1437,8 @@ export const copy = {
     verifyListings: "Comment nous vérifions les fiches",
     mbChildcare: "Garde d’enfants au Manitoba",
     neverSell: "Nous respectons votre vie privée. Vos données ne sont jamais vendues.",
+    comingSoon: "Bientôt",
+    operatorSignIn: "Connexion opérateur",
     aboutTitle: "À propos de KidEase",
     aboutHero:
       "KidEase est une appli pancanadienne qui aide les parents à trouver une garderie permise près de chez eux — rapidement, clairement et en confiance.",
