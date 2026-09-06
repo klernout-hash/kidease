@@ -249,7 +249,7 @@ export const SUPPORT_MACROS: SupportMacro[] = [
   {
     id: "vacancy_update",
     label: "How to update vacancy",
-    body: "On the centre desk, open My listings and save spots. Vacancy freshness is the last time a provider confirmed — after two weeks parents see it as stale. KidEase does not invent open spots.",
+    body: "On the centre desk, open My listings and confirm today’s open spots. After two weeks without a confirm, parents see “Ask about current spots” — not a made-up vacancy. KidEase does not invent open spots.",
   },
   {
     id: "parent_plus",

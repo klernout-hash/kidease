@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { getDaycaresByIds } from "@/lib/server/daycares";
 import { clearCompare, readCompare, toggleCompare } from "@/lib/compare";
 import { useCopy } from "@/lib/use-copy";
+import { vacancyLine } from "@/components/vacancy-freshness";
+import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
 import type { DaycareCard } from "@/lib/types";
@@ -65,12 +67,24 @@ function ComparePage() {
                 <Row
                   label={t("availability")}
                   values={items.map((d) =>
-                    d.live || d.availabilityKnown
+                    d.availabilityKnown
                       ? d.spotsTotal > 0
                         ? `${d.spotsTotal} ${t("spots")}`
                         : t("waitlist")
                       : t("availUnknown"),
                   )}
+                />
+                <Row
+                  label={t("spotsUpdated")}
+                  values={items.map((d) => {
+                    const line = vacancyLine(d, t, locale);
+                    if (line.kind === "unknown") return t("availUnknown");
+                    return line.kind === "stale" ? line.detail || line.text : line.text;
+                  })}
+                />
+                <Row
+                  label={t("detailsIncomplete")}
+                  values={items.map((d) => parentIncompleteLabel(d, t) ?? t("detailsReady"))}
                 />
                 <Row label={t("googleReviews")} values={items.map((d) => (d.reviewCount ? `${(d.ratingX10 / 10).toFixed(1)} (${d.reviewCount})` : "—"))} />
                 <Row label={t("license")} values={items.map((d) => d.licenseNumber ?? "—")} />

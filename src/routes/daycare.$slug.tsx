@@ -436,10 +436,7 @@ function Listing() {
               ) : (
                 <p className="mt-3 rounded-lg bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("availUnknownLead")}</p>
               )}
-              <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" />
-              {!d.availabilityKnown ? (
-                <p className="mt-2 text-xs text-subtle">{t("vacancyStale")}</p>
-              ) : null}
+              <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
             </section>
 
             <section className="mt-8">

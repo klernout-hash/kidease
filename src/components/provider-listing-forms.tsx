@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PriorityPill } from "@/components/priority-pill";
 import { CompletenessChecklist } from "@/components/listing-completeness";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
-import { listingCompleteness } from "@/lib/listing-readiness";
+import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
 import { promoteListing } from "@/lib/server/promos";
 import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
@@ -148,6 +148,7 @@ export function CapacityForm({
     agesKnown: true,
   };
   const complete = listingCompleteness(draft);
+  const vacancy = vacancyFreshness(vacancyTimestamp(daycare));
   const preview = state.storefront || daycare.photos[0];
 
   function readImage(file: File | undefined, into: "storefront" | "interiors" | "license") {
@@ -250,7 +251,8 @@ export function CapacityForm({
           </p>
           <div className="rounded-lg bg-bg p-4 ring-1 ring-border">
             <VacancyFreshness item={daycare} className="text-sm" />
-            {!daycare.availabilityKnown ? <p className="text-sm text-muted">{t("vacancyStale")}</p> : null}
+            {vacancy.kind === "unknown" ? <p className="text-sm text-muted">{t("vacancyUnknownProvider")}</p> : null}
+            {vacancy.kind === "stale" ? <p className="text-sm text-muted">{t("vacancyStaleProvider")}</p> : null}
             <p className="mt-2 text-sm text-muted">{t("vacancyRefreshLead")}</p>
             <Button
               type="button"
