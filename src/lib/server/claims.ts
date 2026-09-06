@@ -9,6 +9,7 @@ import { callerIsAdmin } from "./public-listing";
 import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
+import { applyStorefrontPhoto } from "@/lib/listing-photo";
 
 export type ClaimHit = {
   id: string;
@@ -287,11 +288,7 @@ export const updateListing = createServerFn({ method: "POST" })
     `;
     if (!own[0]) throw new Error("Not your listing");
     const current = await sql<{ photos: string }>`select photos from daycares where id = ${data.daycareId}`;
-    let photos = current[0]?.photos ?? "";
-    if (data.storefront?.startsWith("data:image") || data.storefront?.startsWith("/")) {
-      const rest = photos.split(",").filter((p) => p && p !== data.storefront);
-      photos = [data.storefront, ...rest].join(",");
-    }
+    let photos = applyStorefrontPhoto(current[0]?.photos ?? "", data.storefront);
     const extras = (data.interiors ?? []).filter((p) => p.startsWith("data:image") || p.startsWith("/"));
     if (extras.length) {
       const cur = photos.split(",").filter(Boolean);

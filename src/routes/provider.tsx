@@ -15,7 +15,7 @@ import { useCopy } from "@/lib/use-copy";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
-import { CapacityForm, Field, PromotePanel } from "@/components/provider-listing-forms";
+import { CapacityForm, Field, PromotePanel, readListingImage } from "@/components/provider-listing-forms";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
@@ -55,6 +55,7 @@ function ProviderPage() {
     infantMonthly: 1200,
     toddlerMonthly: 1100,
     preschoolMonthly: 1000,
+    storefront: "",
   });
 
   async function load() {
@@ -219,6 +220,7 @@ function ProviderPage() {
                 void createListing({ data: form })
                   .then(() => {
                     toast.success(t("createListing"));
+                    setForm((s) => ({ ...s, storefront: "" }));
                     return load();
                   })
                   .catch((err) => toast.error(err instanceof Error ? err.message : "Error"));
@@ -232,6 +234,33 @@ function ProviderPage() {
               <Field label={`${t("infantFee")} CAD`} value={String(form.infantMonthly)} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
               <Field label={`${t("toddlerFee")} CAD`} value={String(form.toddlerMonthly)} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
               <Field label={`${t("preschoolFee")} CAD`} value={String(form.preschoolMonthly)} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />
+              <div className="sm:col-span-2">
+                <p className="text-sm font-medium">{t("storefrontPhoto")}</p>
+                <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
+                  {form.storefront ? (
+                    <img src={form.storefront} alt="" className="h-36 w-full max-w-xs rounded-xl object-cover ring-1 ring-border sm:h-28 sm:w-40" />
+                  ) : (
+                    <div className="grid h-36 w-full max-w-xs place-items-center rounded-xl bg-bg text-sm text-muted ring-1 ring-dashed ring-border sm:h-28 sm:w-40">
+                      {t("storefrontPhoto")}
+                    </div>
+                  )}
+                  <label className="flex min-h-28 flex-1 cursor-pointer flex-col items-start justify-center gap-2 rounded-xl border border-dashed border-border bg-bg px-4 py-3 text-sm">
+                    <span className="font-medium text-primary">{t("storefrontCta")}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) =>
+                        readListingImage(
+                          e.target.files?.[0],
+                          (value) => setForm((s) => ({ ...s, storefront: value })),
+                          () => toast.error(t("photoTooBig")),
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
               <div className="sm:col-span-2">
                 <Button type="submit">{t("createListing")}</Button>
               </div>

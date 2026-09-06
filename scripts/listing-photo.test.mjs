@@ -5,7 +5,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   LISTING_PLACEHOLDER,
+  STOCK_CREATE_PHOTOS,
+  applyStorefrontPhoto,
   isOfficialBuildingPhoto,
+  isStockListingPhoto,
   listingPhotosFor,
   listingThumb,
   resolveListingStorefront,
@@ -105,6 +108,20 @@ describe("listing photos prefer official buildings over /photos/wpg/", () => {
     assert.equal(listingThumb(["/photos/wpg/1052-logo.png"]), LISTING_PLACEHOLDER);
     assert.ok(isOfficialBuildingPhoto("/photos/buildings/mb-1206.jpg"));
     assert.equal(isOfficialBuildingPhoto("/photos/wpg/1206.jpg"), false);
+  });
+
+  it("applyStorefrontPhoto prepends a real photo and drops stock placeholders", () => {
+    const uploaded = "data:image/jpeg;base64,abc";
+    assert.equal(applyStorefrontPhoto(STOCK_CREATE_PHOTOS), STOCK_CREATE_PHOTOS);
+    assert.equal(applyStorefrontPhoto(STOCK_CREATE_PHOTOS, ""), STOCK_CREATE_PHOTOS);
+    assert.equal(applyStorefrontPhoto(STOCK_CREATE_PHOTOS, uploaded), uploaded);
+    assert.equal(
+      applyStorefrontPhoto("/photos/community.jpg,/photos/playroom.jpg,/photos/buildings/mb-1.jpg", uploaded),
+      `${uploaded},/photos/buildings/mb-1.jpg`,
+    );
+    assert.equal(isStockListingPhoto("/photos/community.jpg"), true);
+    assert.equal(isStockListingPhoto("/photos/storefront-placeholder-480.webp"), true);
+    assert.equal(isStockListingPhoto("/photos/buildings/mb-1.jpg"), false);
   });
 
   it("DaycareCard and catalog both call listingThumb / listingPhotosFor", () => {

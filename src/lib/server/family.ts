@@ -25,6 +25,7 @@ import {
 } from "@/lib/templates";
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { stripeChargesLive } from "@/lib/stripe-live";
+import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto } from "@/lib/listing-photo";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -1182,6 +1183,7 @@ export const createListing = createServerFn({ method: "POST" })
       infantMonthly: number;
       toddlerMonthly: number;
       preschoolMonthly: number;
+      storefront?: string;
     }) => input,
   )
   .handler(async ({ context, data }) => {
@@ -1192,6 +1194,7 @@ export const createListing = createServerFn({ method: "POST" })
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")
       .slice(0, 40) + "-" + id.slice(-4);
+    const photos = applyStorefrontPhoto(STOCK_CREATE_PHOTOS, data.storefront);
     await sql`
       insert into daycares (
         id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
@@ -1211,7 +1214,7 @@ export const createListing = createServerFn({ method: "POST" })
         ${6}, ${72}, ${data.infantMonthly}, ${data.toddlerMonthly}, ${data.preschoolMonthly},
         ${Math.round(data.toddlerMonthly * 0.6)}, 2, 2, 2, 0, 40, 0,
         ${data.licenseNumber}, ${"en"}, ${"meals,inclusive"},
-        ${"/photos/community.jpg,/photos/playroom.jpg"}, 0
+        ${photos}, 0
       )
     `;
     await sql`insert into provider_daycares (user_id, daycare_id) values (${context.userId}, ${id})`;
