@@ -11,7 +11,7 @@ This is email + in-app scaffolding. **It does not send FCM / APNs.** `FEATURE_PU
 - Matching uses the same PostGIS `ST_DWithin` + `st_makepoint(lng, lat)` pattern as `nearby.ts`. Origins are the lat/lng the parent already used in search. **KidEase never invents coordinates.**
 - Cron stub `GET|POST /api/search-alerts` (same `CRON_SECRET` / `DIGEST_SECRET` as `/api/digest`) logs candidates. First pass baselines without notifying.
 
-## Migration `0028_saved_search_alerts.sql`
+## Migration `0029_saved_search_alerts.sql`
 
 Applied on deploy by `npm run db:migrate` (`scripts/migrate.mjs`) when `DATABASE_URL` is set. PGLite preview applies the same file at startup (it is not PostGIS — no `CREATE EXTENSION`).
 

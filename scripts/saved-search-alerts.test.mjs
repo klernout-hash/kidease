@@ -86,7 +86,7 @@ test("filters parse PR #59 honesty chips and age-band matches search", () => {
 });
 
 test("migration stores saved searches and alert prefs without push tokens", () => {
-  const sql = src("migrations/0028_saved_search_alerts.sql");
+  const sql = src("migrations/0029_saved_search_alerts.sql");
   assert.match(sql, /create table if not exists saved_searches/);
   assert.match(sql, /center_lat/);
   assert.match(sql, /center_lng/);
