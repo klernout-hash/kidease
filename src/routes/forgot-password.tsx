@@ -8,15 +8,16 @@ import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
 
 export const Route = createFileRoute("/forgot-password")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    email: typeof s.email === "string" ? s.email : "",
-  }),
+  validateSearch: (s: Record<string, unknown>) => {
+    const email = typeof s.email === "string" ? s.email.trim() : "";
+    return email ? { email } : {};
+  },
   component: ForgotPassword,
 });
 
 function ForgotPassword() {
   const search = Route.useSearch();
-  const [email, setEmail] = useState(search.email);
+  const [email, setEmail] = useState(search.email ?? "");
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,7 +35,7 @@ function ForgotPassword() {
     setError(null);
     setNote(null);
     try {
-      const res = await authClient.forgetPassword({
+      const res = await authClient.requestPasswordReset({
         email: target,
         redirectTo: "/reset-password",
         fetchOptions: turnstileFetchOptions(token),

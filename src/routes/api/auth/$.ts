@@ -8,6 +8,7 @@ const TURNSTILE_AUTH_PATHS = [
   "/sign-in/email",
   "/sign-up/email",
   "/forget-password",
+  "/request-password-reset",
   "/reset-password",
 ];
 
@@ -21,7 +22,7 @@ async function handleAuth(request: Request) {
     if (request.method === "POST") {
       const url = new URL(request.url);
       const path = url.pathname.replace(/\/+$/, "");
-      if (path.endsWith("/forget-password")) {
+      if (path.endsWith("/forget-password") || path.endsWith("/request-password-reset")) {
         try {
           assertResetMailConfigured();
         } catch (err) {

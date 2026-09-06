@@ -32,7 +32,7 @@ describe("forgot-password flow", () => {
     const routeFile = read("src/routes/forgot-password.tsx");
     const routeTree = read("src/routeTree.gen.ts");
     assert.match(routeFile, /createFileRoute\("\/forgot-password"\)/);
-    assert.match(routeFile, /authClient\.forgetPassword/);
+    assert.match(routeFile, /authClient\.requestPasswordReset/);
     assert.match(routeFile, /redirectTo:\s*"\/reset-password"/);
     assert.match(routeTree, /from '\.\/routes\/forgot-password'/);
     assert.match(routeTree, /id:\s*'\/forgot-password'/);
@@ -46,6 +46,7 @@ describe("forgot-password flow", () => {
     assert.match(login, /to="\/forgot-password"/);
     assert.match(login, /Forgot password\?/);
     assert.doesNotMatch(login, /setForgotOpen/);
+    assert.doesNotMatch(login, /authClient\.requestPasswordReset/);
     assert.doesNotMatch(login, /authClient\.forgetPassword/);
   });
 
@@ -80,7 +81,7 @@ describe("forgot-password flow", () => {
     assert.match(config, /RESET_MAIL_NOT_CONFIGURED/);
     assert.doesNotMatch(mail, /kidease-reset/);
     assert.match(authApi, /assertResetMailConfigured/);
-    assert.match(authApi, /\/forget-password/);
+    assert.match(authApi, /\/request-password-reset/);
     assert.match(authApi, /status: 503/);
   });
 
