@@ -170,8 +170,8 @@
   }
   .ke-footer-cols {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.15rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem 1.25rem;
   }
   @media (min-width: 640px) {
     .ke-footer-cols {

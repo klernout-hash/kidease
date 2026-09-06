@@ -41,6 +41,7 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
 
 test("footer CSS clusters columns instead of stretching full width", () => {
   assert.match(css, /\.ke-footer-inner \{[\s\S]*?max-width: 44rem;/);
+  assert.match(css, /grid-template-columns: 1fr 1fr;/);
   assert.match(css, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.doesNotMatch(css, /gap: 3rem 4rem/);
 });
