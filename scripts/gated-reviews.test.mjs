@@ -83,13 +83,13 @@ test("listing and search cards show published parent-review summary", () => {
   assert.match(admin, /grantListingReviewer/);
 });
 
-test("migration 0028 documents the enrolment/attendance/grant gate", () => {
-  const migration = src("migrations/0028_gated_parent_reviews.sql");
+test("migration 0030 documents the enrolment/attendance/grant gate", () => {
+  const migration = src("migrations/0030_gated_parent_reviews.sql");
   assert.match(migration, /bookings.status in \('accepted', 'active'\)/);
   assert.match(migration, /attendance.parent_user_id/);
   assert.match(migration, /reviewer_grants/);
   assert.match(migration, /provider_daycares/);
   assert.match(migration, /pending → published \| hidden/);
-  assert.match(migration, /There is no tour-completed table/);
+  assert.match(migration, /tour_requests from 0028 are not enrolment/);
   assert.doesNotMatch(migration, /KidEase background-checked/);
 });

@@ -221,6 +221,6 @@ test("admin reviews tab is first-class and migration is 0024", () => {
   assert.match(migration, /last_vacancy_updated_at/);
   assert.match(migration, /Never backfilled from claimed_at/);
   assert.match(migration, /status in \('pending', 'approved', 'rejected'\)/);
-  const gated = src("migrations/0028_gated_parent_reviews.sql");
+  const gated = src("migrations/0030_gated_parent_reviews.sql");
   assert.match(gated, /status in \('pending', 'published', 'hidden'\)/);
 });

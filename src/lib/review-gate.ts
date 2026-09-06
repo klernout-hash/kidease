@@ -10,7 +10,7 @@
  *   3. Admin grant — reviewer_grants row (tour completed offline, or manual)
  *
  * A centre account (provider_daycares) cannot review its own listing.
- * Spot requests, waitlist, and tour inquiries are not enough.
+ * Spot requests, waitlist, and tour_requests (0028) are not enrolment.
  *
  * Public display uses status = published only. Admin hide → hidden.
  * Legacy rows may still say approved / rejected; treat those as published / hidden.

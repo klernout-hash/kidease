@@ -8,7 +8,7 @@
 --        (confirmed in-care relationship)
 --     3. reviewer_grants row for that parent + centre
 --        (admin-granted: tour completed offline, or a relationship KidEase
---        cannot see yet. There is no tour-completed table.)
+--        cannot see yet. tour_requests from 0028 are not enrolment.)
 --   A user in provider_daycares for that centre cannot write a review.
 --
 -- Moderation: pending → published | hidden. Admin hide is first-class.
