@@ -7,7 +7,7 @@ import { writeDistanceUnit, type DistanceUnit } from "./units";
 import { writeLocationConsent, type LocationConsent } from "./location-consent";
 import { clampRadiusKm } from "./proximity";
 
-export type SortKey = "distance" | "price" | "rating" | "availability";
+export type SortKey = "distance" | "price" | "rating" | "availability" | "recommended";
 
 type Origin = { lat: number; lng: number; label: string };
 

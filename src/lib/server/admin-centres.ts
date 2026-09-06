@@ -4,6 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { ADMIN_EMAIL, lookupUser, notifyPlatform } from "@/lib/server/notify";
 import { notifyClaimStatusSms } from "@/lib/server/sms";
 import { requireAdmin } from "@/lib/server/roles";
+import { writeTrustEvent } from "@/lib/server/trust";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 export type AdminCentreRow = {
@@ -425,6 +426,14 @@ export const decideCentre = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-mail] decision admin event failed", err);
     }
+
+    await writeTrustEvent(sql, {
+      daycareId: data.daycareId,
+      actorUserId: context.userId,
+      kind: `claim_${claimStatus}`,
+      note: data.note?.trim() || null,
+      payload: JSON.stringify({ decision, claimStatus, mailed: mail }),
+    });
 
     return { ok: true as const, status: claimStatus, mailed: mail, to: to || null };
   });

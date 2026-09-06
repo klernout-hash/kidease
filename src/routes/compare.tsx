@@ -10,6 +10,7 @@ import { clearCompare, readCompare, toggleCompare } from "@/lib/compare";
 import { useCopy } from "@/lib/use-copy";
 import { vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
+import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
 import type { DaycareCard } from "@/lib/types";
@@ -58,6 +59,14 @@ function ComparePage() {
                 </tr>
               </thead>
               <tbody className="text-muted">
+                <tr className="border-t border-border">
+                  <th className="p-2 font-medium text-fg">{t("compareTrust")}</th>
+                  {items.map((d) => (
+                    <td key={d.id} className="p-2">
+                      <TrustSignals item={d} surface="parent" compact />
+                    </td>
+                  ))}
+                </tr>
                 <Row label={t("cityLabel")} values={items.map((d) => d.city)} />
                 <Row label={t("hours")} values={items.map((d) => d.hours)} />
                 <Row

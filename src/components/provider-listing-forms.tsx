@@ -3,7 +3,7 @@ import { Camera, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PriorityPill } from "@/components/priority-pill";
-import { CompletenessChecklist } from "@/components/listing-completeness";
+import { ListingHealthPanel } from "@/components/listing-health";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
@@ -210,7 +210,8 @@ export function CapacityForm({
         </>
       ) : (
         <>
-          <h3 className="font-display text-xl">{t("storefrontPhoto")}</h3>
+          <ListingHealthPanel item={{ ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
+          <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
             {preview ? (
               <img src={preview} alt="" className="h-36 w-full max-w-xs rounded-xl object-cover ring-1 ring-border sm:h-28 sm:w-40" />
@@ -236,9 +237,11 @@ export function CapacityForm({
             <Field label={t("postalLabel")} value={state.postalCode} onChange={(v) => setState({ ...state, postalCode: v })} />
             <Field label={t("phoneLabel")} value={state.phone} onChange={(v) => setState({ ...state, phone: v })} />
             <Field label={t("contactEmail")} value={state.email} onChange={(v) => setState({ ...state, email: v })} />
-            <Field label={t("hours")} value={state.hours} onChange={(v) => setState({ ...state, hours: v })} />
+            <div id="listing-health-hours">
+              <Field label={t("hours")} value={state.hours} onChange={(v) => setState({ ...state, hours: v })} />
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div id="listing-health-fees" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Num label={t("spotsInfant")} value={state.spotsInfant} onChange={(n) => setState({ ...state, spotsInfant: n })} />
             <Num label={t("spotsToddler")} value={state.spotsToddler} onChange={(n) => setState({ ...state, spotsToddler: n })} />
             <Num label={t("spotsPreschool")} value={state.spotsPreschool} onChange={(n) => setState({ ...state, spotsPreschool: n })} />
@@ -246,10 +249,14 @@ export function CapacityForm({
             <Num label={t("toddlerFee")} value={state.toddlerMonthly} onChange={(n) => setState({ ...state, toddlerMonthly: n })} />
             <Num label={t("preschoolFee")} value={state.preschoolMonthly} onChange={(n) => setState({ ...state, preschoolMonthly: n })} />
           </div>
-          <p className="text-sm tabular-nums text-muted">
-            {t("agesAccepted")}: {formatAgeRange(state.ageMinMonths, state.ageMaxMonths)}
-          </p>
-          <div className="rounded-lg bg-bg p-4 ring-1 ring-border">
+          <div id="listing-health-ages" className="grid gap-3 sm:grid-cols-2">
+            <Num label={t("ageMin")} value={state.ageMinMonths} onChange={(n) => setState({ ...state, ageMinMonths: n })} />
+            <Num label={t("ageMax")} value={state.ageMaxMonths} onChange={(n) => setState({ ...state, ageMaxMonths: n })} />
+            <p className="text-sm tabular-nums text-muted sm:col-span-2">
+              {t("agesAccepted")}: {formatAgeRange(state.ageMinMonths, state.ageMaxMonths)}
+            </p>
+          </div>
+          <div id="listing-health-vacancy" className="rounded-lg bg-bg p-4 ring-1 ring-border">
             <VacancyFreshness item={daycare} className="text-sm" />
             {vacancy.kind === "unknown" ? <p className="text-sm text-muted">{t("vacancyUnknownProvider")}</p> : null}
             {vacancy.kind === "stale" ? <p className="text-sm text-muted">{t("vacancyStaleProvider")}</p> : null}
@@ -273,7 +280,6 @@ export function CapacityForm({
               {t("vacancyRefresh")}
             </Button>
           </div>
-          <CompletenessChecklist item={{ ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
         </>
       )}
       <Button type="submit" variant="secondary">

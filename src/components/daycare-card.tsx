@@ -14,6 +14,7 @@ import { licenseBadge } from "@/lib/trust";
 import type { CopyKey } from "@/lib/copy";
 import { vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
+import { TrustSignals } from "@/components/trust-badge";
 
 const HEART_SAVED = "#FF385C";
 
@@ -98,6 +99,15 @@ export function DaycareCard({
                 <span className="font-normal text-[#6A6A6A]">({item.reviewCount})</span>
               </span>
             ) : null}
+          </div>
+          <div
+            className="pt-0.5"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <TrustSignals item={item} surface="card" compact />
           </div>
           {showDistance ? (
             <p className="truncate text-[14px] font-normal leading-5 text-[#6A6A6A]">
