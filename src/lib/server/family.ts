@@ -618,24 +618,16 @@ export const getThread = createServerFn({ method: "GET" })
   .validator((conversationId: string) => conversationId)
   .handler(async ({ context, data: conversationId }) => {
     const sql = await getSql();
-    const conv = await sql<{
-      id: string;
-      user_id: string;
-      daycare_id: string;
-      name: string;
-      slug: string;
-      photos: string;
-      phone: string | null;
-    }>`
-      select c.id, c.user_id, c.daycare_id, d.name, d.slug, d.photos, d.phone
-      from conversations c join daycares d on d.id = c.daycare_id
-      where c.id = ${conversationId}
-        and (
-          c.user_id = ${context.userId}
-          or exists (select 1 from profiles where user_id = ${context.userId} and role in ('provider', 'admin'))
-        )
-      limit 1
-    `;
+    const { requireConversationRead, markConversationRead } = await import("@/lib/server/thread-access");
+    const { listToursForConversation } = await import("@/lib/server/tours");
+    let access;
+    try {
+      access = await requireConversationRead(sql, conversationId, context.userId);
+    } catch {
+      return null;
+    }
+    const conv = [access.conversation];
+    await markConversationRead(sql, conversationId, context.userId);
     if (!conv[0]) return null;
     const messages = await sql<{
       id: string;
@@ -746,6 +738,8 @@ export const getThread = createServerFn({ method: "GET" })
         : null,
       child,
       messages: mapped,
+      tours: await listToursForConversation(sql, conversationId),
+      canWrite: access.canWrite,
     };
   });
 
@@ -778,19 +772,13 @@ export const sendMessage = createServerFn({ method: "POST" })
   .validator((input: { conversationId: string; body: string }) => input)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const conv = await sql<{ id: string; user_id: string; name: string }>`
-      select c.id, c.user_id, d.name from conversations c
-      join daycares d on d.id = c.daycare_id
-      where c.id = ${data.conversationId}
-        and (
-          c.user_id = ${context.userId}
-          or exists (select 1 from profiles where user_id = ${context.userId} and role in ('provider', 'admin'))
-        )
-    `;
+    const { requireConversationWrite } = await import("@/lib/server/thread-access");
+    const access = await requireConversationWrite(sql, data.conversationId, context.userId);
+    const conv = [access.conversation];
     if (!conv[0]) throw new Error("Conversation not found");
     const body = data.body.trim();
     if (!body) return { ok: false };
-    const sender = conv[0].user_id === context.userId ? "parent" : "provider";
+    const sender = access.role === "parent" ? "parent" : "provider";
     await sql`
       insert into messages (id, conversation_id, sender, body, kind)
       values (${nid("msg")}, ${data.conversationId}, ${sender}, ${body}, ${"chat"})

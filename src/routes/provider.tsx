@@ -11,9 +11,11 @@ import { TwoFactorGate } from "@/lib/auth/gates";
 import { useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole } from "@/lib/server/family";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
+import { listTourRequests } from "@/lib/server/tours";
+import { TourCard } from "@/components/tour-card";
 import { useCopy } from "@/lib/use-copy";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
-import type { Child, Daycare, SpotRequest } from "@/lib/types";
+import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { CapacityForm, Field, PromotePanel, readListingImage } from "@/components/provider-listing-forms";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
@@ -46,6 +48,7 @@ function ProviderPage() {
   const [listings, setListings] = useState<Daycare[]>([]);
   const [stats, setStats] = useState<Array<{ daycareId: string; views: number; inquiries: number; requests: number }>>([]);
   const [requests, setRequests] = useState<SpotRequest[]>([]);
+  const [tours, setTours] = useState<TourRequest[]>([]);
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -59,10 +62,15 @@ function ProviderPage() {
   });
 
   async function load() {
-    const [res, incoming] = await Promise.all([getProvider(), listDaycareIncoming()]);
+    const [res, incoming, tourRows] = await Promise.all([
+      getProvider(),
+      listDaycareIncoming(),
+      listTourRequests({ data: { desk: "centre" } }).catch(() => [] as TourRequest[]),
+    ]);
     setListings(res.listings);
     setStats(res.stats);
     setRequests(incoming);
+    setTours(tourRows);
   }
 
   useEffect(() => {
@@ -122,6 +130,23 @@ function ProviderPage() {
     >
       {desk === "requests" ? (
         <section className="space-y-8">
+          <div>
+            <h2 className="font-display text-2xl">{t("pendingTours")}</h2>
+            <p className="mt-1 text-sm text-muted">
+              Parents who asked to visit. Accept or decline with a note — they see it in the thread.
+            </p>
+            {tours.length === 0 ? (
+              <p className="mt-4 rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("noTours")}</p>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {tours.map((tour) => (
+                  <li key={tour.id}>
+                    <TourCard tour={tour} canRespond onChanged={() => void load()} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <div>
             <h2 className="font-display text-2xl">Waiting on you</h2>
             <p className="mt-1 text-sm text-muted">

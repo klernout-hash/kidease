@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { ChildProfileForm } from "@/components/child-profile-form";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { deleteAccount, getFamily } from "@/lib/server/family";
+import { listTourRequests } from "@/lib/server/tours";
+import { TourCard } from "@/components/tour-card";
 import { listParentBills } from "@/lib/server/billing";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { hasCareDetails } from "@/lib/child-profile";
@@ -19,7 +21,7 @@ import { signOut } from "@/lib/auth/client";
 import { formatAgeLabel } from "@/lib/templates";
 import { formatMonth, money } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
-import type { Booking, Child, DaycareCard as Card, Payment } from "@/lib/types";
+import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
 import type { Bill } from "@/lib/bill";
 import { billDollars, billIsOpen } from "@/lib/bill";
 import { BillStatusBadge } from "@/components/bill-status";
@@ -38,6 +40,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
+  const [tours, setTours] = useState<TourRequest[]>([]);
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -45,12 +48,17 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [picked, setPicked] = useState<Record<string, string[]>>({});
 
   async function load() {
-    const [f, billed] = await Promise.all([getFamily(), listParentBills().catch(() => ({ bills: [] as Bill[] }))]);
+    const [f, billed, tourRows] = await Promise.all([
+      getFamily(),
+      listParentBills().catch(() => ({ bills: [] as Bill[] })),
+      listTourRequests({ data: { desk: "parent" } }).catch(() => [] as TourRequest[]),
+    ]);
     setSaved(f.saved);
     setBookings(f.bookings);
     setPayments(f.payments);
     setBills(billed.bills);
     setChildren(f.children);
+    setTours(tourRows);
   }
 
   useEffect(() => {
@@ -89,7 +97,20 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       ) : null}
 
       {tab === "bookings" ? (
-        <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
+        <div className="mt-6 space-y-8">
+        {tours.length ? (
+          <section>
+            <h2 className="font-display text-2xl">{t("pendingTours")}</h2>
+            <ul className="mt-4 space-y-3">
+              {tours.map((tour) => (
+                <li key={tour.id}>
+                  <TourCard tour={tour} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+        <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {bookings.length === 0 ? (
             <li className="p-8 text-center">
               <EmptyState title={t("noRequests")} body={t("noSavedLead")} action={t("emptyFindCare")} actionTo="/search" />
@@ -144,6 +165,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             ))
           )}
         </ul>
+        </div>
       ) : null}
 
       {tab === "payments" ? (

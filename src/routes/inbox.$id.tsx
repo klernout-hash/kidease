@@ -12,8 +12,9 @@ import { sendConnectedMessage } from "@/lib/server/inbox";
 import { formatAgeLabel, formatStart, pushNewRequest, scheduleLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { TourCard } from "@/components/tour-card";
 import { cn, money } from "@/lib/utils";
-import type { BookingStatus, Child, Message, Schedule } from "@/lib/types";
+import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib/types";
 
 export const Route = createFileRoute("/inbox/$id")({ component: ThreadPage });
 
@@ -45,6 +46,8 @@ function ThreadPage() {
   const [booking, setBooking] = useState<BookingInfo | null>(null);
   const [child, setChild] = useState<Child | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [tours, setTours] = useState<TourRequest[]>([]);
+  const [canWrite, setCanWrite] = useState(true);
   const [body, setBody] = useState("");
   const [sendError, setSendError] = useState("");
 
@@ -87,11 +90,17 @@ function ThreadPage() {
     setBooking(next);
     setChild(kid);
     setMessages(res.messages);
+    setTours(res.tours ?? []);
+    setCanWrite(res.canWrite !== false);
   }
 
   useEffect(() => {
     if (!user) return;
     void load();
+    const tick = window.setInterval(() => {
+      void load();
+    }, 12_000);
+    return () => window.clearInterval(tick);
   }, [user, id]);
 
   if (isPending) {
@@ -117,7 +126,6 @@ function ThreadPage() {
   }
 
   const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : undefined;
-  const closed = booking?.status === "declined" || booking?.status === "cancelled";
   const notice = booking
     ? pushNewRequest(
         {
@@ -168,7 +176,14 @@ function ThreadPage() {
           </div>
         </div>
 
-        <p className="mt-2 text-xs text-subtle">Same thread for the parent and this centre after a spot request.</p>
+        <p className="mt-2 text-xs text-subtle">{t("threadLead")}</p>
+        {tours.length ? (
+          <div className="mt-3 space-y-3">
+            {tours.map((tour) => (
+              <TourCard key={tour.id} tour={tour} canRespond={!isParent && canWrite} onChanged={() => void load()} />
+            ))}
+          </div>
+        ) : null}
         {notice && isParent ? (
           <div className="mt-3 rounded-lg bg-primary px-3 py-2 text-sm text-primary-fg">
             <p className="font-medium">{notice.title}</p>
@@ -231,9 +246,7 @@ function ThreadPage() {
               </li>
             ))}
         </ul>
-        {closed ? (
-          <p className="mt-4 rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">This enrolment is closed. Messaging is off.</p>
-        ) : (
+        {canWrite ? (
           <form id="reply" onSubmit={onSend} className="sticky bottom-20 mt-4 flex flex-col gap-2 bg-bg py-2 md:bottom-0">
             {sendError ? <p className="text-sm text-danger">{sendError}</p> : null}
             <div className="flex gap-2">
@@ -241,6 +254,8 @@ function ThreadPage() {
               <Button type="submit">{t("send")}</Button>
             </div>
           </form>
+        ) : (
+          <p className="mt-4 rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">{t("threadLead")}</p>
         )}
       </main>
     </Shell>

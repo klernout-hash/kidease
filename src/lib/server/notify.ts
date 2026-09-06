@@ -34,7 +34,8 @@ export type PlatformKind =
   | "support"
   | "enroll"
   | "chat"
-  | "review";
+  | "review"
+  | "tour_request";
 
 export type ProviderJoinKind = "claim" | "signup" | "listing";
 
@@ -110,6 +111,8 @@ function defaultTitle(kind: PlatformKind) {
       return "Live Chat message";
     case "review":
       return "Parent review waiting";
+    case "tour_request":
+      return "New tour request";
     default:
       return "KidEase update";
   }
@@ -128,6 +131,7 @@ const KIND_LABEL: Record<string, string> = {
   enroll: "Daycare enrollments",
   chat: "Live Chat",
   review: "Parent reviews",
+  tour_request: "Tour requests",
 };
 
 function winnipegDay() {
@@ -542,6 +546,57 @@ export async function notifyProviderJoined(p: ProviderJoinPayload) {
     actorName: p.providerName,
     actorEmail: p.providerEmail,
   });
+}
+
+/**
+ * Parent or centre notice for a thread / tour update.
+ * Uses Resend/SendGrid when wired; otherwise logs (same as bills).
+ */
+export async function notifyThreadParty(p: {
+  to?: string | null;
+  name?: string | null;
+  subject: string;
+  preview: string;
+  threadUrl: string;
+  daycareName: string;
+}) {
+  const to = (p.to || "").trim();
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    console.info("[kidease-thread] no recipient email — in-app notice only", p.daycareName, p.subject);
+    return { status: "skipped" as const };
+  }
+  const who = (p.name || "there").split(" ")[0] || "there";
+  const text = [
+    `Hi ${who},`,
+    "",
+    p.preview,
+    "",
+    `Open the thread: ${p.threadUrl}`,
+    "",
+    "Talk soon,",
+    "KidEase",
+  ].join("\n");
+  const html = `<!doctype html>
+<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
+    <tr><td style="padding:28px;">
+      <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
+      <h1 style="margin:12px 0 0;font-size:24px;line-height:1.2;">${esc(p.subject)}</h1>
+      <p style="margin:16px 0 0;">Hi ${esc(who)},</p>
+      <p style="margin:16px 0 0;">${esc(p.preview)}</p>
+      <p style="margin:24px 0 0;">
+        <a href="${esc(p.threadUrl)}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">Open thread</a>
+      </p>
+    </td></tr>
+  </table>
+</body></html>`;
+  try {
+    const status = await deliverEmail(p.subject, text, html, to, ADMIN_EMAIL);
+    return { status };
+  } catch (err) {
+    console.error("[kidease-thread] mail failed", err);
+    return { status: "failed" as const };
+  }
 }
 
 /** Parent notice when a centre Sends a bill. Uses Resend/SendGrid when wired; otherwise logs. */

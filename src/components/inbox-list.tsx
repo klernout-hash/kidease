@@ -35,9 +35,7 @@ export function InboxList() {
       <main className="mx-auto max-w-2xl px-4 py-8">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Message centre</p>
         <h1 className="mt-2 font-display text-3xl">{t("inbox")}</h1>
-        <p className="mt-2 text-sm text-muted">
-          Threads open when a parent requests a spot. There is no separate admin chat console — Kyle still uses Mail for Titan and the listing for public pages.
-        </p>
+        <p className="mt-2 text-sm text-muted">{t("noInboxLead")}</p>
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {items === null ? (
             <li className="p-6 text-muted">{t("loading")}</li>
@@ -54,6 +52,9 @@ export function InboxList() {
                     <div className="flex items-center gap-2">
                       <p className="truncate font-medium">{c.daycareName}</p>
                       {c.status ? <StatusBadge status={c.status} /> : null}
+                      {c.unread ? (
+                        <span className="grid size-2 shrink-0 place-items-center rounded-full bg-danger" aria-label="Unread" />
+                      ) : null}
                     </div>
                     <p className="truncate text-sm text-muted">{c.lastBody}</p>
                   </div>

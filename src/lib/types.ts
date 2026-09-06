@@ -198,6 +198,31 @@ export type Conversation = {
   lastBody: string;
   status: BookingStatus | null;
   phone: string | null;
+  unread?: boolean;
+};
+
+export type TourStatus = "pending" | "accepted" | "declined";
+
+export type PreferredTime = {
+  date: string;
+  time: string;
+};
+
+export type TourRequest = {
+  id: string;
+  conversationId: string;
+  daycareId: string;
+  daycareName: string;
+  daycareSlug: string;
+  childId: string | null;
+  childName: string | null;
+  parentName: string | null;
+  preferredTimes: PreferredTime[];
+  parentNote: string | null;
+  status: TourStatus;
+  centreNote: string | null;
+  createdAt: string;
+  respondedAt: string | null;
 };
 
 export type Message = {

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { DaycareCard } from "@/components/daycare-card";
 import { RequestSpotSheet } from "@/components/request-spot";
+import { RequestTourSheet } from "@/components/request-tour";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { LISTING_PLACEHOLDER, isOfficialBuildingPhoto } from "@/lib/listing-photo";
@@ -589,7 +590,7 @@ function Listing() {
       ) : null}
 
       <RequestSpotSheet daycare={d} open={requestOpen} intent="spot" onClose={() => setRequestOpen(false)} />
-      <RequestSpotSheet daycare={d} open={tourOpen} intent="tour" onClose={() => setTourOpen(false)} />
+      <RequestTourSheet daycare={d} open={tourOpen} onClose={() => setTourOpen(false)} />
       <CompareBar />
     </Shell>
   );
