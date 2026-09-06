@@ -120,17 +120,20 @@ test("real photos exclude placeholders, logos, and street-view stock", () => {
   assert.match(readiness, /-logo/);
 });
 
-test("public reviews query only approved rows and forms use Turnstile", () => {
+test("public reviews query only published gated rows and forms use Turnstile", () => {
   const daycares = src("src/lib/server/daycares.ts");
-  assert.match(daycares, /coalesce\(status, 'approved'\) = 'approved'/);
+  assert.match(daycares, /status in \('published', 'approved'\)/);
+  assert.match(daycares, /coalesce\(user_id, ''\) <> ''/);
   const reviews = src("src/lib/server/reviews.ts");
   assert.match(reviews, /assertTurnstileToken/);
   assert.match(reviews, /'pending'/);
   assert.match(reviews, /MAX_SUBMISSIONS_PER_DAY = 3/);
+  assert.match(reviews, /evaluateReviewWriteAccess/);
   assert.doesNotMatch(reviews, /Background checked/);
   const form = src("src/components/listing-review-form.tsx");
   assert.match(form, /TurnstileField/);
   assert.match(form, /writeReviewLead/);
+  assert.match(form, /reviewNeedRelationship/);
   const listing = src("src/routes/daycare.\$slug.tsx");
   assert.match(listing, /ListingReviewForm/);
   assert.match(listing, /CompletenessBanner/);
@@ -218,4 +221,6 @@ test("admin reviews tab is first-class and migration is 0024", () => {
   assert.match(migration, /last_vacancy_updated_at/);
   assert.match(migration, /Never backfilled from claimed_at/);
   assert.match(migration, /status in \('pending', 'approved', 'rejected'\)/);
+  const gated = src("migrations/0028_gated_parent_reviews.sql");
+  assert.match(gated, /status in \('pending', 'published', 'hidden'\)/);
 });

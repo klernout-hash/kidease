@@ -71,6 +71,8 @@ export type Daycare = {
   waitlist: number;
   ratingX10: number;
   reviewCount: number;
+  parentRatingX10?: number;
+  parentReviewCount?: number;
   googlePlaceId?: string | null;
   licenseNumber: string | null;
   languages: string;
@@ -115,7 +117,8 @@ export type DaycareCard = Daycare & {
   inCatchment?: boolean;
 };
 
-export type ReviewStatus = "pending" | "approved" | "rejected";
+export type ReviewStatus = "pending" | "published" | "hidden" | "approved" | "rejected";
+export type ReviewGateReason = "enrolment" | "attendance" | "grant";
 
 export type Review = {
   id: string;
@@ -127,6 +130,7 @@ export type Review = {
   createdAt: string;
   status?: ReviewStatus;
   userId?: string | null;
+  gateReason?: ReviewGateReason | null;
 };
 
 export type AvailabilityRow = {

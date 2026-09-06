@@ -92,7 +92,13 @@ export function DaycareCard({
         <div className="mt-2.5 space-y-[3px] text-[#222]">
           <div className="flex items-start justify-between gap-3">
             <h3 className="min-w-0 truncate text-[15px] font-semibold leading-[1.2] tracking-[-0.2px]">{name}</h3>
-            {item.ratingX10 > 0 && item.reviewCount > 0 ? (
+            {item.parentReviewCount && item.parentReviewCount > 0 && (item.parentRatingX10 ?? 0) > 0 ? (
+              <span className="mt-px inline-flex shrink-0 items-center gap-1 text-[14px] leading-none tabular-nums" title={t("parentReviews")}>
+                <Star className="size-3 fill-[#222] text-[#222]" strokeWidth={0} />
+                <span className="font-semibold">{((item.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
+                <span className="font-normal text-[#6A6A6A]">({item.parentReviewCount})</span>
+              </span>
+            ) : item.ratingX10 > 0 && item.reviewCount > 0 ? (
               <span className="mt-px inline-flex shrink-0 items-center gap-1 text-[14px] leading-none tabular-nums">
                 <Star className="size-3 fill-[#222] text-[#222]" strokeWidth={0} />
                 <span className="font-semibold">{(item.ratingX10 / 10).toFixed(2)}</span>
