@@ -45,6 +45,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
+import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
@@ -245,6 +246,11 @@ const ApiDigestRoute = ApiDigestRouteImport.update({
   path: '/api/digest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSearchAlertsRoute = ApiSearchAlertsRouteImport.update({
+  id: '/api/search-alerts',
+  path: '/api/search-alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookSlugRoute = BookSlugRouteImport.update({
   id: '/book/$slug',
   path: '/book/$slug',
@@ -373,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/tour-checklist': typeof TourChecklistRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
@@ -429,6 +436,7 @@ export interface FileRoutesByTo {
   '/tour-checklist': typeof TourChecklistRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
@@ -486,6 +494,7 @@ export interface FileRoutesById {
   '/tour-checklist': typeof TourChecklistRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
@@ -544,6 +553,7 @@ export interface FileRouteTypes {
     | '/tour-checklist'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/search-alerts'
     | '/book/$slug'
     | '/checkin/$id'
     | '/video/$roomId'
@@ -600,6 +610,7 @@ export interface FileRouteTypes {
     | '/tour-checklist'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/search-alerts'
     | '/book/$slug'
     | '/checkin/$id'
     | '/video/$roomId'
@@ -656,6 +667,7 @@ export interface FileRouteTypes {
     | '/tour-checklist'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/search-alerts'
     | '/book/$slug'
     | '/checkin/$id'
     | '/video/$roomId'
@@ -713,6 +725,7 @@ export interface RootRouteChildren {
   TourChecklistRoute: typeof TourChecklistRoute
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
+  ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
@@ -986,6 +999,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/search-alerts': {
+      id: '/api/search-alerts'
+      path: '/api/search-alerts'
+      fullPath: '/api/search-alerts'
+      preLoaderRoute: typeof ApiSearchAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/$slug': {
       id: '/book/$slug'
       path: '/book/$slug'
@@ -1162,6 +1182,7 @@ const rootRouteChildren: RootRouteChildren = {
   TourChecklistRoute: TourChecklistRoute,
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
+  ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,

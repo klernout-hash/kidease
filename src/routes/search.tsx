@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LocateFixed, SlidersHorizontal, Sparkles } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { ExploreRails } from "@/components/explore-rails";
@@ -25,6 +26,14 @@ import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { saveSearch } from "@/lib/server/saved-searches";
+import {
+  defaultSearchName,
+  takeSavedSearchToApply,
+  type AgeBand,
+  type SavedSearchFilters,
+} from "@/lib/saved-search";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
 const CompareBar = lazy(() => import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })));
@@ -47,6 +56,7 @@ function unitLabel(unit: DistanceUnit, t: (k: "km" | "mi") => string) {
 
 function SearchPage() {
   const { t } = useCopy();
+  const { user } = useCurrentUserState();
   const incoming = Route.useSearch();
   const origin = useAppStore((s) => s.origin);
   const setOrigin = useAppStore((s) => s.setOrigin);
@@ -80,6 +90,9 @@ function SearchPage() {
   const [confirmedOnly, setConfirmedOnly] = useState(false);
   const [readyOnly, setReadyOnly] = useState(false);
   const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [saveBusy, setSaveBusy] = useState(false);
   const originAt = useAppStore((s) => s.originAt);
   const originSource = useAppStore((s) => s.originSource);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
@@ -98,6 +111,28 @@ function SearchPage() {
   useEffect(() => {
     void bootSearchOrigin(incoming.q);
   }, [incoming.q]);
+
+  useEffect(() => {
+    const saved = takeSavedSearchToApply();
+    if (!saved) return;
+    setOrigin({ lat: saved.centerLat, lng: saved.centerLng, label: saved.centerLabel });
+    setRadiusKm(saved.radiusKm);
+    setAgeGroup(saved.ageBand === "any" ? "any" : saved.ageBand);
+    setQuery(saved.centerLabel);
+    setLiveOnly(saved.filters.liveOnly);
+    setAvail(saved.filters.avail);
+    setTen(saved.filters.ten);
+    setMeals(saved.filters.meals);
+    setOutdoor(saved.filters.outdoor);
+    setInclusive(saved.filters.inclusive);
+    setExtended(saved.filters.extended);
+    setInfantOnly(saved.filters.infantOnly);
+    setCatchmentOnly(saved.filters.catchmentOnly);
+    setConfirmedOnly(saved.filters.confirmedOnly);
+    setReadyOnly(saved.filters.readyOnly);
+    setClaimVerifiedOnly(saved.filters.claimVerifiedOnly);
+    setFilters(true);
+  }, [setOrigin, setRadiusKm, setAgeGroup, setQuery, setLiveOnly]);
 
   useEffect(() => {
     if (radiusKm > MAX_SEARCH_RADIUS_KM) setRadiusKm(MAX_SEARCH_RADIUS_KM);
@@ -201,6 +236,52 @@ function SearchPage() {
     setClaimVerifiedOnly(false);
     setLiveOnly(false);
     setAgeGroup("any");
+  }
+
+  function currentFilters(): SavedSearchFilters {
+    return {
+      avail,
+      liveOnly,
+      ten,
+      meals,
+      outdoor,
+      inclusive,
+      extended,
+      infantOnly,
+      catchmentOnly,
+      confirmedOnly,
+      readyOnly,
+      claimVerifiedOnly,
+    };
+  }
+
+  function openSaveSearch() {
+    const band: AgeBand = ageGroup === "any" ? "any" : ageGroup;
+    setSaveName(defaultSearchName(origin.label, radiusKm, band));
+    setSaveOpen(true);
+  }
+
+  function submitSaveSearch() {
+    if (!user) return;
+    setSaveBusy(true);
+    const band: AgeBand = ageGroup === "any" ? "any" : ageGroup;
+    void saveSearch({
+      data: {
+        name: saveName,
+        centerLat: origin.lat,
+        centerLng: origin.lng,
+        centerLabel: origin.label,
+        radiusKm,
+        ageBand: band,
+        filters: currentFilters(),
+      },
+    })
+      .then(() => {
+        toast.success(t("saveSearchSaved"));
+        setSaveOpen(false);
+      })
+      .catch((err) => toast.error(err instanceof Error ? err.message : t("saveSearch")))
+      .finally(() => setSaveBusy(false));
   }
 
   function retrySearch() {
@@ -396,10 +477,48 @@ function SearchPage() {
               <p className="mt-1 text-xs font-medium text-ok">{t("liveInArea").replace("{n}", String(fabric.live))}</p>
             ) : null}
           </div>
-          <Link to="/" search={{ change: "1" }} className="shrink-0 pb-0.5 text-sm font-medium text-primary">
-            {t("changeLocation")}
-          </Link>
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <Link to="/" search={{ change: "1" }} className="pb-0.5 text-sm font-medium text-primary">
+              {t("changeLocation")}
+            </Link>
+            {user ? (
+              <button type="button" onClick={openSaveSearch} className="text-sm font-medium text-primary">
+                {t("saveSearch")}
+              </button>
+            ) : (
+              <Link to="/login" search={{ next: "/search", role: "parent" }} className="text-sm font-medium text-primary">
+                {t("saveSearchNeedSignIn")}
+              </Link>
+            )}
+          </div>
         </div>
+
+        {saveOpen ? (
+          <div className="mt-3 rounded-xl bg-surface p-4 ring-1 ring-border">
+            <p className="text-sm font-semibold">{t("saveSearch")}</p>
+            <p className="mt-1 text-sm text-muted">{t("saveSearchLead")}</p>
+            <label className="mt-3 block text-sm">
+              <span className="font-medium">{t("saveSearchName")}</span>
+              <input
+                className="ke-input mt-1 w-full"
+                value={saveName}
+                maxLength={80}
+                onChange={(e) => setSaveName(e.target.value)}
+              />
+            </label>
+            <p className="mt-2 text-xs text-subtle">
+              {origin.label} · {shownRadius} {u} · {ageGroup === "any" ? t("anyAge") : t(ageGroup)}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button type="button" size="sm" disabled={saveBusy || !saveName.trim()} onClick={submitSaveSearch}>
+                {t("save")}
+              </Button>
+              <Button type="button" size="sm" variant="secondary" onClick={() => setSaveOpen(false)}>
+                {t("close")}
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
         <form
           className="mt-4"

@@ -14,7 +14,9 @@ export type SecurityKind =
   | "webhook_accept"
   | "webhook_reject"
   | "digest_denied"
-  | "digest_run";
+  | "digest_run"
+  | "search_alerts_denied"
+  | "search_alerts_run";
 
 /** Insert-only audit row. Never pass secrets, card data, or medical notes. */
 export async function logSecurityEvent(input: {
