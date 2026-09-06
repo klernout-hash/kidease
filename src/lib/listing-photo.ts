@@ -2,6 +2,24 @@
 
 export const LISTING_PLACEHOLDER = "/photos/storefront-placeholder-480.webp";
 
+/** Default photos for a newly listed centre before a real storefront is uploaded. */
+export const STOCK_CREATE_PHOTOS = "/photos/community.jpg,/photos/playroom.jpg";
+
+const STOCK_CREATE_SET = new Set(STOCK_CREATE_PHOTOS.split(","));
+
+export function isStockListingPhoto(src: string) {
+  return STOCK_CREATE_SET.has(src) || src.includes("storefront-placeholder");
+}
+
+/** Same persist rule as updateListing: real storefront first; drop stock placeholders. */
+export function applyStorefrontPhoto(current: string, storefront?: string) {
+  if (!storefront || !(storefront.startsWith("data:image") || storefront.startsWith("/"))) {
+    return current;
+  }
+  const rest = current.split(",").filter((p) => p && p !== storefront && !isStockListingPhoto(p));
+  return [storefront, ...rest].join(",");
+}
+
 export function isOfficialBuildingPhoto(src: string | undefined): boolean {
   return Boolean(src && src.startsWith("/photos/buildings/") && !src.includes("..") && !src.includes("-logo"));
 }

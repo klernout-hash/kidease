@@ -85,6 +85,20 @@ export function Field({ label, value, onChange }: { label: string; value: string
   );
 }
 
+/** Shared FileReader + size cap for storefront / licence uploads. */
+export const LISTING_PHOTO_MAX_BYTES = 1_800_000;
+
+export function readListingImage(file: File | undefined, onReady: (dataUrl: string) => void, onTooBig: () => void) {
+  if (!file) return;
+  if (file.size > LISTING_PHOTO_MAX_BYTES) {
+    onTooBig();
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => onReady(String(reader.result ?? ""));
+  reader.readAsDataURL(file);
+}
+
 export function CapacityForm({
   daycare,
   onSaved,
@@ -137,19 +151,15 @@ export function CapacityForm({
   const preview = state.storefront || daycare.photos[0];
 
   function readImage(file: File | undefined, into: "storefront" | "interiors" | "license") {
-    if (!file) return;
-    if (file.size > 1_800_000) {
-      toast.error(t("photoTooBig"));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const value = String(reader.result ?? "");
-      if (into === "storefront") setState((s) => ({ ...s, storefront: value }));
-      else if (into === "license") setState((s) => ({ ...s, licensePhoto: value }));
-      else setState((s) => ({ ...s, interiors: [...s.interiors, value].slice(0, 5) }));
-    };
-    reader.readAsDataURL(file);
+    readListingImage(
+      file,
+      (value) => {
+        if (into === "storefront") setState((s) => ({ ...s, storefront: value }));
+        else if (into === "license") setState((s) => ({ ...s, licensePhoto: value }));
+        else setState((s) => ({ ...s, interiors: [...s.interiors, value].slice(0, 5) }));
+      },
+      () => toast.error(t("photoTooBig")),
+    );
   }
 
   return (
