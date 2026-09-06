@@ -25,8 +25,9 @@ import { billDollars, billIsOpen } from "@/lib/bill";
 import { BillStatusBadge } from "@/components/bill-status";
 import { periodLabel } from "@/lib/stripe-methods";
 import { ParentPlusPanel } from "@/components/parent-plus";
+import { SavedSearchesPanel } from "@/components/saved-searches-panel";
 
-type ParentTab = "saved" | "bookings" | "payments" | "children";
+type ParentTab = "saved" | "bookings" | "payments" | "children" | "alerts";
 
 export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const { user } = useCurrentUserState();
@@ -87,6 +88,8 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
           )}
         </div>
       ) : null}
+
+      {tab === "alerts" ? <SavedSearchesPanel /> : null}
 
       {tab === "bookings" ? (
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
