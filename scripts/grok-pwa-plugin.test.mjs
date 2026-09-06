@@ -393,6 +393,8 @@ test("filters non-document paths", () => {
   assert.equal(isDocumentPath("/api/thing"), false);
   assert.equal(isDocumentPath("/__grok/install/styles.css"), false);
   assert.equal(isDocumentPath("/logo.png"), false);
+  assert.equal(isDocumentPath("/.well-known/apple-app-site-association"), false);
+  assert.equal(isDocumentPath("/.well-known/assetlinks.json"), false);
 });
 
 test("strips install params from the app link", () => {

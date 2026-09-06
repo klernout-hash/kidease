@@ -131,5 +131,7 @@ describe("mobile build docs stay honest", () => {
     assert.match(checklist, /\[ \] Public store listings live/);
     assert.match(checklist, /\[ \] Apple Developer Program enrolled/);
     assert.match(checklist, /\[x\] Get-app page shows App Store \/ Play as Coming soon/);
+    assert.match(checklist, /apple-app-site-association/);
+    assert.match(checklist, /assetlinks\.json/);
   });
 });
