@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PriorityPill } from "@/components/priority-pill";
 import { ListingHealthPanel } from "@/components/listing-health";
+import { QualityIssuesPanel } from "@/components/quality-issues";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
@@ -210,6 +211,7 @@ export function CapacityForm({
         </>
       ) : (
         <>
+          <QualityIssuesPanel item={{ ...daycare, ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
           <ListingHealthPanel item={{ ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
           <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">

@@ -10,6 +10,7 @@ import { clearCompare, readCompare, toggleCompare } from "@/lib/compare";
 import { useCopy } from "@/lib/use-copy";
 import { vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
+import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
@@ -64,6 +65,14 @@ function ComparePage() {
                   {items.map((d) => (
                     <td key={d.id} className="p-2">
                       <TrustSignals item={d} surface="parent" compact />
+                    </td>
+                  ))}
+                </tr>
+                <tr className="border-t border-border">
+                  <th className="p-2 font-medium text-fg">{t("guestFavorite")}</th>
+                  {items.map((d) => (
+                    <td key={d.id} className="p-2">
+                      {d.guestFavorite ? <GuestFavoriteBadge item={d} compact /> : t("qualityNotFavorite")}
                     </td>
                   ))}
                 </tr>

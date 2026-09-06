@@ -225,7 +225,8 @@ export const HEALTH_FIELD_ANCHOR: Record<HealthField, string> = {
 };
 
 /**
- * Transparent quality preference. Incomplete listings stay in the set.
+ * Legacy ranking points (claim + freshness + completeness). Incomplete listings stay in the set.
+ * Public 0–100 score lives in src/lib/quality.ts.
  * Does not invent vacancy times — only a real confirm can boost freshness.
  */
 export function listingQualityScore(
