@@ -2,10 +2,11 @@
  * Future first-party in-app messaging (not Stream, not Sendbird).
  *
  * Production parent ↔ centre threads stay on `conversations` / `messages`
- * and the /inbox UI. That path is booking-gated and is the live product.
+ * and the /inbox UI. That path is the live product (text only; poll/reload).
+ * Tours live on `tour_requests` and are not enrolment bookings.
  *
- * This module is a typed stub only. Do not treat it as a working chat.
- * Do not add SQL tables until Kyle turns FEATURE_INAPP_CHAT on for a real build.
+ * This module is a typed stub for extra kinds (parent/admin). Do not treat
+ * FEATURE_INAPP_CHAT as a Stream/Sendbird purchase.
  *
  * Suggested later (not applied):
  *   chat_threads (id, kind, created_at)

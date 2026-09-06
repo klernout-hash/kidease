@@ -68,9 +68,10 @@ async function unreadInboxCount(sql: Awaited<ReturnType<typeof getSql>>, userId:
         where m.conversation_id = c.id
           and m.sender <> 'system'
           and m.sender <> case when c.user_id = ${userId} then 'parent' else 'provider' end
-          and m.created_at = (
-            select max(m2.created_at) from messages m2
-            where m2.conversation_id = c.id and m2.sender <> 'system'
+          and m.created_at > coalesce(
+            (select r.last_read_at from conversation_reads r
+             where r.conversation_id = c.id and r.user_id = ${userId}),
+            '1970-01-01'::timestamptz
           )
       )
   `.catch(() => [{ n: 0 }]);

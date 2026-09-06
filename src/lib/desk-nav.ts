@@ -38,14 +38,14 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "promote", label: "Promote", hint: "Priority placement" },
     { id: "subscription", label: "Subscription", hint: "Centre plans", icon: "credit-card", href: "/provider/subscription" },
     { id: "claim", label: "Claim a centre", href: "/claim" },
-    { id: "messages", label: "Messages", href: "/inbox" },
+    { id: "messages", label: "Messages", hint: "Parent threads + tours", href: "/inbox" },
   ],
   parent: [
     { id: "children", label: "Children", hint: "Up to 4 profiles" },
     { id: "bookings", label: "Enrolment", hint: "Per child, per centre" },
     { id: "saved", label: "Saved centres" },
     { id: "payments", label: "Pay", hint: "Bills from your centre" },
-    { id: "messages", label: "Messages", href: "/inbox" },
+    { id: "messages", label: "Messages", hint: "Centre threads + tours", href: "/inbox" },
     { id: "search", label: "Find care", href: "/search" },
   ],
 };

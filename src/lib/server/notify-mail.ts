@@ -26,7 +26,7 @@ export const VISITOR_AUTO_REPLY_TEXT =
 export const ACTOR_CONFIRM_SUBJECT = "We got your request — KidEase";
 
 /** Parent signup, provider signup, Enroll Now, new listing, claim, spot request. */
-export const ACTOR_CONFIRM_KINDS = ["account", "signup", "enroll", "listing", "claim", "spot_request"] as const;
+export const ACTOR_CONFIRM_KINDS = ["account", "signup", "enroll", "listing", "claim", "spot_request", "tour_request"] as const;
 
 export type ActorConfirmKind = (typeof ACTOR_CONFIRM_KINDS)[number];
 
@@ -39,6 +39,7 @@ const ACTOR_CONFIRM_FIRST_LINE: Record<ActorConfirmKind, string> = {
   listing: "Thanks for sending your daycare listing to KidEase.",
   claim: "Thanks for sending your listing claim to KidEase.",
   spot_request: "Thanks for sending your spot request to KidEase.",
+  tour_request: "Thanks for sending your tour request to KidEase.",
 };
 
 /**
