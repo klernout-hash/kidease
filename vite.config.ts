@@ -6,6 +6,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 // @ts-expect-error JS plugin alongside the TS vite config
 import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
+// @ts-expect-error JS plugin alongside the TS vite config
+import { wellKnownAppLinksPlugin } from "./scripts/well-known-app-links.mjs";
 
 /**
  * Finish PGLite bootstrap during dev-server setup (before traffic). Vite awaits
@@ -152,6 +154,8 @@ export default defineConfig(({ command, isPreview }) => ({
   optimizeDeps: { exclude: ["sharp"] },
   plugins: [
     pgliteBootstrapPlugin(),
+    // Before tanstackStart so AASA / assetlinks never fall through to the SPA.
+    wellKnownAppLinksPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
     authPopupPlugin(),
     // PWA head + ?install=1 tutorial page; runs before Start/Nitro.

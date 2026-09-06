@@ -136,6 +136,7 @@ export function isDocumentPath(pathname) {
     !path.startsWith("/api/") &&
     !path.startsWith("/@") &&
     !path.startsWith("/node_modules") &&
+    !path.startsWith("/.well-known/") &&
     !/\.[a-z0-9]+$/i.test(path)
   );
 }

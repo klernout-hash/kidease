@@ -22,6 +22,7 @@ Goal: soft launch via **TestFlight** + **Play internal testing**, then public li
 - [ ] TestFlight build uploaded
 - [ ] Play internal AAB uploaded
 - [ ] Public store listings live
+- [x] Well-known AASA + Digital Asset Links served (placeholder Team ID / empty Play SHA-256 until enroll)
 
 ---
 
@@ -93,6 +94,66 @@ Goal: soft launch via **TestFlight** + **Play internal testing**, then public li
 - [ ] Scaffold OK with `FEATURE_PUSH=0`
 - [ ] If promising vacancy alerts in store copy, enable FCM + APNs first
 - [ ] Otherwise omit push claims from listing until live
+
+### Universal / App Links (www.kidease.ca)
+
+Store and OS probes hit these URLs. They must be **HTTP 200** `application/json` — not the SPA HTML shell, not a redirect.
+
+| Path | After deploy |
+| --- | --- |
+| `https://www.kidease.ca/.well-known/apple-app-site-association` | AASA JSON (also served at `…/apple-app-site-association.json`) |
+| `https://www.kidease.ca/.well-known/assetlinks.json` | Digital Asset Links JSON |
+
+Expected AASA shape (bundle id is already `ca.daycarenearme.app`):
+
+```json
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "XXXXXXXXXX.ca.daycarenearme.app",
+        "paths": ["*"],
+        "appIDs": ["XXXXXXXXXX.ca.daycarenearme.app"],
+        "components": [{ "/": "/*" }]
+      }
+    ]
+  },
+  "webcredentials": { "apps": ["XXXXXXXXXX.ca.daycarenearme.app"] }
+}
+```
+
+`XXXXXXXXXX` is a **placeholder Team ID**, not a real Apple team. After Apple Developer enroll, set `APPLE_TEAM_ID` (or `APNS_TEAM_ID`) on Vercel — same 10-character id as Sign in with Apple / APNs. Then confirm `appID` / `appIDs` become `TEAMID.ca.daycarenearme.app`.
+
+Expected `assetlinks.json` shape:
+
+```json
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ca.daycarenearme.app",
+      "sha256_cert_fingerprints": []
+    }
+  }
+]
+```
+
+`sha256_cert_fingerprints` stays **empty on purpose** until Play App Signing exists. After Play Console enroll: App integrity → App signing → copy the **App signing** certificate SHA-256 (and the upload cert if shown). Set `ANDROID_SHA256_CERT_FINGERPRINTS` on Vercel (comma-separated if both). Do not invent a hash.
+
+Xcode: add Associated Domains `applinks:www.kidease.ca` and `applinks:kidease.ca` when the Team is selected. Android: add an `https` VIEW / BROWSABLE intent-filter with `android:autoVerify="true"` for those hosts when you next touch the manifest.
+
+Verify after deploy (must be 200, not 3xx):
+
+```bash
+curl -sI https://www.kidease.ca/.well-known/apple-app-site-association
+curl -sI https://www.kidease.ca/.well-known/assetlinks.json
+```
+
+- [ ] `APPLE_TEAM_ID` set on Vercel after Apple enroll
+- [ ] `ANDROID_SHA256_CERT_FINGERPRINTS` set on Vercel after Play App Signing
+- [ ] Associated Domains + Android App Links intent-filter on the store binaries
 
 ### Quality gates before upload
 - [ ] Typecheck / build green

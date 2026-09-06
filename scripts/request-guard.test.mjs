@@ -129,6 +129,18 @@ test("spoofed sibling host does not look like vercel.app", () => {
   );
 });
 
+test("AASA and assetlinks are not redirected or 404'd by the request guard", () => {
+  for (const host of ["www.kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
+    for (const pathname of [
+      "/.well-known/apple-app-site-association",
+      "/.well-known/apple-app-site-association.json",
+      "/.well-known/assetlinks.json",
+    ]) {
+      assert.deepEqual(decideRequest({ host, pathname }), { action: "next" });
+    }
+  }
+});
+
 test("/.well-known/change-password redirects to /login on every host", () => {
   for (const host of ["www.kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
     assert.deepEqual(decideRequest({ host, pathname: CHANGE_PASSWORD_PATH }), {
