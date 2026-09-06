@@ -5,7 +5,21 @@ import {
   listingStatusLabel,
   isWaitingClaim,
 } from "../src/lib/listing-status.ts";
-import { desksFor, landingPath, nextStoredRole, parseAppRole, primaryDesk, showDeskSwitcher } from "../src/lib/desks.ts";
+import {
+  DESK_LABEL,
+  DESK_PATH,
+  desksFor,
+  deskFromPathname,
+  deskQueryValue,
+  landingPath,
+  loginRoleFromDesk,
+  nextStoredRole,
+  parseAppRole,
+  parseDeskQuery,
+  pickLandingDesk,
+  primaryDesk,
+  showDeskSwitcher,
+} from "../src/lib/desks.ts";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,6 +65,26 @@ test("desk switcher is for any multi-desk session, not admin-only", () => {
   assert.match(src, /showDeskSwitcher/);
   assert.doesNotMatch(src, /session\.role !== "admin"/);
   assert.match(src, /do not call setRole/);
+  assert.match(src, /writeStickyDesk/);
+  assert.match(src, /deskDirector/);
+});
+
+test("?desk= aliases map to role desks without colliding with provider tabs", () => {
+  assert.equal(parseDeskQuery("parent"), "parent");
+  assert.equal(parseDeskQuery("director"), "provider");
+  assert.equal(parseDeskQuery("centre"), "provider");
+  assert.equal(parseDeskQuery("admin"), "admin");
+  assert.equal(parseDeskQuery("listings"), null);
+  assert.equal(parseDeskQuery("money"), null);
+  assert.equal(deskQueryValue("provider"), "director");
+  assert.equal(loginRoleFromDesk("provider"), "provider");
+  assert.equal(loginRoleFromDesk("admin"), "admin");
+  assert.equal(deskFromPathname("/provider"), "provider");
+  assert.equal(deskFromPathname("/admin/queue"), "admin");
+  assert.equal(pickLandingDesk(["provider", "parent"], "parent"), "parent");
+  assert.equal(pickLandingDesk(["parent"], "admin"), "parent");
+  assert.equal(DESK_PATH[pickLandingDesk(["admin", "provider", "parent"], "provider")], "/provider");
+  assert.equal(DESK_LABEL.provider, "Director (Centre)");
 });
 
 test("setRole never demotes staff", () => {

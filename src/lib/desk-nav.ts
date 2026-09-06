@@ -54,7 +54,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
 export const DESK_META: Record<DeskId, { eyebrow: string; title: string }> = {
   admin: { eyebrow: "Operator", title: "Admin" },
   support: { eyebrow: "Support", title: "Cases" },
-  daycare: { eyebrow: "Daycare", title: "Centre desk" },
+  daycare: { eyebrow: "Director", title: "Centre desk" },
   parent: { eyebrow: "Parent", title: "Family desk" },
 };
 

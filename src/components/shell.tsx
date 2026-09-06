@@ -97,7 +97,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                 <>
                   <Link
                     to="/login"
-                    search={{ role: "provider", intent: "in", next: "/provider" }}
+                    search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
                     className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-normal text-muted hover:text-fg"
                   >
                     {t("providerLogin")}
@@ -105,7 +105,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
                   <Link
                     to="/login"
-                    search={{ role: "parent", intent: "in", next: "/parent" }}
+                    search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
                     className="inline-flex h-11 items-center justify-center rounded-full px-3 text-xs leading-normal text-muted hover:text-fg"
                   >
                     {t("parentSignIn")}
@@ -268,7 +268,7 @@ function HeaderProfile({
           <Link
             role="menuitem"
             to="/login"
-            search={{ role: "parent", intent: "in", next: "/parent" }}
+            search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
             onClick={() => setOpen(false)}
             className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
           >
@@ -277,7 +277,7 @@ function HeaderProfile({
           <Link
             role="menuitem"
             to="/login"
-            search={{ role: "provider", intent: "in", next: "/provider" }}
+            search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
             onClick={() => setOpen(false)}
             className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
           >
@@ -357,22 +357,26 @@ function AccountMenu({
           >
             {accountLabel}
           </Link>
-          <Link
-            role="menuitem"
-            to="/parent"
-            onClick={() => setOpen(false)}
-            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
-          >
-            Parent desk
-          </Link>
-          <Link
-            role="menuitem"
-            to="/provider"
-            onClick={() => setOpen(false)}
-            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
-          >
-            Provider desk
-          </Link>
+          {desks.includes("parent") ? (
+            <Link
+              role="menuitem"
+              to="/parent"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+            >
+              Parent desk
+            </Link>
+          ) : null}
+          {desks.includes("provider") ? (
+            <Link
+              role="menuitem"
+              to="/provider"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
+            >
+              Director (Centre)
+            </Link>
+          ) : null}
           {desks.includes("admin") ? (
             <Link
               role="menuitem"

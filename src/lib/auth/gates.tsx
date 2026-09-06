@@ -1,8 +1,9 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { Navigate } from "@tanstack/react-router";
+import { Navigate, useRouterState } from "@tanstack/react-router";
 import { authEnabled, signOut } from "./client";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
+import { deskFromPathname, deskQueryValue, loginRoleFromDesk, parseDeskQuery } from "@/lib/desks";
 
 /** Where `RedirectToSignIn` sends signed-out visitors. Create this route. */
 export const SIGN_IN_PATH = "/login";
@@ -24,7 +25,27 @@ export function SignedOut({ children }: { children: ReactNode }) {
 }
 
 export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
-  return <Navigate to={to} />;
+  const loc = useRouterState({
+    select: (s) => ({ pathname: s.location.pathname, searchStr: s.location.searchStr ?? "" }),
+  });
+  if (loc.pathname === SIGN_IN_PATH || loc.pathname.startsWith(`${SIGN_IN_PATH}/`)) {
+    return null;
+  }
+  if (to !== SIGN_IN_PATH) return <Navigate to={to} />;
+  const qs = loc.searchStr.startsWith("?") ? loc.searchStr : loc.searchStr ? `?${loc.searchStr}` : "";
+  const next = `${loc.pathname}${qs}`;
+  const params = new URLSearchParams(qs.startsWith("?") ? qs.slice(1) : qs);
+  const desk = parseDeskQuery(params.get("desk")) ?? deskFromPathname(loc.pathname);
+  return (
+    <Navigate
+      to="/login"
+      search={{
+        intent: "in" as const,
+        next: next.startsWith("/") ? next : "/",
+        ...(desk ? { desk: deskQueryValue(desk), role: loginRoleFromDesk(desk) } : {}),
+      }}
+    />
+  );
 }
 
 /** Password/social session plus the email verification code. */

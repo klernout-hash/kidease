@@ -1,5 +1,6 @@
 import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { clearStickyDesk } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
 import { isNativeSocialProvider } from "./providers";
 
@@ -180,6 +181,7 @@ export async function signOut(redirectTo = "/"): Promise<void> {
   } finally {
     setBearerToken(null);
     resetPostHogIdentity();
+    clearStickyDesk();
   }
   window.location.href = redirectTo;
 }

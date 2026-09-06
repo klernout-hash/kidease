@@ -118,7 +118,7 @@ function ClaimPage() {
     if (name) setQ(name);
     setOpen(false);
     if (!user) {
-      void navigate({ to: "/login", search: { next: `/claim?id=${daycareId}`, role: "provider", intent: "in" } });
+      void navigate({ to: "/login", search: { next: `/claim?id=${daycareId}`, role: "provider", desk: "director", intent: "in" } });
       return;
     }
     setBusy(true);

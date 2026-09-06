@@ -46,7 +46,7 @@ function AccountPage() {
           <p className="mt-3 text-muted">{t("loginLead")}</p>
           <div className="mt-8 flex flex-col gap-3">
             <Button size="lg" className="h-14 min-h-14 w-full px-7 text-base" asChild>
-              <Link to="/login" search={{ role: "parent", intent: "in", next: "/account?tab=profile" }}>
+              <Link to="/login" search={{ role: "parent", desk: "parent", intent: "in", next: "/account?tab=profile" }}>
                 {t("parentSignIn")}
               </Link>
             </Button>
@@ -161,7 +161,7 @@ function ProfilePane() {
             </Button>
           ) : (
             <Button className="mt-6" size="lg" asChild>
-              <Link to="/login" search={{ role: "parent", intent: "in", next: "/account?tab=profile" }}>
+              <Link to="/login" search={{ role: "parent", desk: "parent", intent: "in", next: "/account?tab=profile" }}>
                 Sign in to add a photo
               </Link>
             </Button>
