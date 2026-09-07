@@ -118,4 +118,8 @@ test("Nitro owns CSP; vercel.json no longer ships a static policy", () => {
   assert.doesNotMatch(src("scripts/csp.mjs"), /style-src 'self' 'unsafe-inline'/);
   assert.match(src("SECURITY.md"), /style-src-attr.*unsafe-inline/);
   assert.match(src("src/styles.css"), /ke-sheet\[data-snap="peek"\]/);
+  const rootHtml = src("src/routes/__root.tsx");
+  assert.match(rootHtml, /data-ke-style-nonce/);
+  assert.equal(rootHtml.includes(STYLE_NONCE_BOOT), true);
+  assert.doesNotMatch(rootHtml, /channel-boot\.js[\s\S]*data-ke-style-nonce/);
 });

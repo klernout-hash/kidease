@@ -97,6 +97,13 @@ export const Route = createRootRoute({
       suppressHydrationWarning
     >
       <head>
+        <script
+          data-ke-style-nonce=""
+          dangerouslySetInnerHTML={{
+            __html:
+              '(function(){var n=document.currentScript&&document.currentScript.nonce;if(!n)return;var c=Document.prototype.createElement;Document.prototype.createElement=function(t,o){var e=c.call(this,t,o);if(String(t).toLowerCase()==="style")e.setAttribute("nonce",n);return e;}})();',
+          }}
+        />
         <style
           dangerouslySetInnerHTML={{
             __html:
