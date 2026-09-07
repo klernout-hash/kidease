@@ -44,12 +44,12 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   assert.equal(existsSync(join(root, "public/offline.html")), true);
   const sw = src("public/sw.js");
   assert.match(sw, /\/offline\.html/);
-  assert.match(sw, /kidease-shell-v2/);
+  assert.match(sw, /kidease-shell-v3/);
   assert.match(sw, /request\.mode === "navigate"/);
   assert.match(sw, /startsWith\("\/api\/"\)/);
+  assert.match(sw, /startsWith\("\/assets\/"\)/);
   assert.match(sw, /NAVIGATE_MS/);
   assert.match(sw, /fetchWithTimeout/);
-  assert.match(sw, /Network first/);
   assert.doesNotMatch(sw, /if \(cached\) return cached/);
   assert.doesNotMatch(sw, /us\.i\.posthog\.com|js\.stripe\.com|maps\.googleapis\.com/);
   const offline = src("public/offline.html");
@@ -58,7 +58,7 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   assert.doesNotMatch(offline, /kyle@kidease\.ca/);
   const native = src("src/lib/native.ts");
   assert.match(native, /registerOfflineShell/);
-  assert.match(native, /serviceWorker\.register\("\/sw\.js"/);
+  assert.match(native, /\.register\("\/sw\.js"/);
   assert.match(src("src/components/native-boot.tsx"), /registerOfflineShell/);
   const vercel = src("vercel.json");
   assert.match(vercel, /"source": "\/sw\.js"/);

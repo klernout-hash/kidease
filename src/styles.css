@@ -73,6 +73,12 @@
     overflow-x: hidden;
     overscroll-behavior-x: none;
   }
+  [data-ke-mark] img {
+    display: block;
+    object-fit: contain;
+    max-width: 80px;
+    max-height: 80px;
+  }
   h1,
   h2,
   h3,

@@ -161,9 +161,14 @@ export function registerOfflineShell(): void {
   if (isNative()) return;
   if (!window.isSecureContext) return;
   window.addEventListener("load", () => {
-    void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {
-      /* registration is best-effort */
-    });
+    void navigator.serviceWorker
+      .register("/sw.js", { scope: "/", updateViaCache: "none" })
+      .then((reg) => {
+        void reg.update();
+      })
+      .catch(() => {
+        /* registration is best-effort */
+      });
   });
 }
 

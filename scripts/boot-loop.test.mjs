@@ -20,11 +20,12 @@ describe("boot settle helpers", () => {
 });
 
 describe("home / session / splash cannot stay pending forever", () => {
-  it("root and index use BootPending (skeleton, then honest error — not BrandMark)", () => {
+  it("root does not replace the document with pending UI; index pending is a skeleton", () => {
     const rootRoute = src("src/routes/__root.tsx");
     const index = src("src/routes/index.tsx");
     const pending = src("src/components/boot-pending.tsx");
-    assert.match(rootRoute, /pendingComponent: BootPending/);
+    assert.doesNotMatch(rootRoute, /pendingComponent/);
+    assert.match(rootRoute, /data-ke-mark/);
     assert.match(index, /pendingComponent: BootPending/);
     assert.match(index, /withTimeoutFallback/);
     assert.match(index, /kidease-desk-landed/);
@@ -32,6 +33,15 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(pending, /BOOT_SETTLE_MS/);
     assert.match(pending, /PageSkeleton/);
     assert.doesNotMatch(pending, /<BrandMark/);
+  });
+
+  it("BrandMark pins width/height so a 673×893 PNG cannot cover the page", () => {
+    const mark = src("src/components/brand-mark.tsx");
+    assert.match(mark, /MARK_PX/);
+    assert.match(mark, /width=\{px\}/);
+    assert.match(mark, /height=\{px\}/);
+    assert.match(mark, /maxWidth: px/);
+    assert.match(mark, /data-ke-mark/);
   });
 
   it("useSession times out so desks do not sit on Loading", () => {
@@ -58,22 +68,25 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(rank, /getSqlWithin/);
   });
 
-  it("NativeBoot records splash before the timer so remounts cannot loop the logo", () => {
+  it("NativeBoot never mounts a full-screen BrandMark", () => {
     const boot = src("src/components/native-boot.tsx");
-    assert.match(boot, /splashArmed/);
-    assert.match(boot, /markSplashed\(\)/);
-    const markAt = boot.indexOf("markSplashed()");
-    const timerAt = boot.indexOf("setTimeout");
-    assert.ok(markAt > 0 && timerAt > markAt, "session flag must be set before the hide timer");
-    assert.match(boot, /1600/);
+    assert.doesNotMatch(boot, /<BrandMark/);
+    assert.doesNotMatch(boot, /brand-mark/);
+    assert.doesNotMatch(boot, /setSplash|splashArmed/);
+    assert.match(boot, /hideNativeSplash/);
+    assert.match(boot, /return null/);
   });
 
-  it("service worker is network-first and times out navigations", () => {
+  it("service worker does not intercept /assets/ or serve HTML as CSS", () => {
     const sw = src("public/sw.js");
-    assert.match(sw, /kidease-shell-v2/);
+    assert.match(sw, /kidease-shell-v3/);
     assert.match(sw, /NAVIGATE_MS = 8000/);
     assert.match(sw, /fetchWithTimeout/);
+    assert.match(sw, /startsWith\("\/assets\/"\)/);
     assert.doesNotMatch(sw, /if \(cached\) return cached/);
+    const assetCatch = sw.indexOf("if (!isChromeAsset(url)) return;");
+    const after = sw.slice(assetCatch);
+    assert.doesNotMatch(after, /caches\.match\("\/offline\.html"\)/);
   });
 
   it("shared apex cookie Domain is kidease.ca, never www, never on __Host-", () => {

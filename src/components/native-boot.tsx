@@ -1,5 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
-import { BrandMark } from "@/components/brand-mark";
+import { useEffect, useLayoutEffect } from "react";
 import {
   captureInstallPrompt,
   getDeviceLocation,
@@ -21,30 +20,13 @@ import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
 import { usePushRegistration } from "@/lib/use-push";
 
-const SPLASH_KEY = "dn-splashed";
-/** Survives remounts in the same JS world so a 900ms timer cannot be reset forever. */
-let splashArmed = false;
-
-function readSplashed() {
-  try {
-    return sessionStorage.getItem(SPLASH_KEY) === "1";
-  } catch {
-    return splashArmed;
-  }
-}
-
-function markSplashed() {
-  splashArmed = true;
-  try {
-    sessionStorage.setItem(SPLASH_KEY, "1");
-  } catch {
-    /* ignore */
-  }
-}
-
+/**
+ * Web boot must never paint a full-screen BrandMark. The logo PNG is 673×893;
+ * without CSS that overlay (or an in-flow mark) covers the home page. Capacitor
+ * already has its own splash — we only hide it here.
+ */
 export function NativeBoot() {
   usePushRegistration();
-  const [splash, setSplash] = useState(false);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setLocated = useAppStore((s) => s.setLocated);
   const setLocale = useAppStore((s) => s.setLocale);
@@ -66,37 +48,15 @@ export function NativeBoot() {
     }
   }, [setLocale, setLiveOnly, setDistanceUnit, setLocationConsent]);
 
+  useLayoutEffect(() => {
+    void hideNativeSplash();
+  }, []);
+
   useEffect(() => {
     captureInstallPrompt();
     registerOfflineShell();
     void paintStatusBar();
-    const already = readSplashed();
-    if (already) {
-      setSplash(false);
-      void hideNativeSplash();
-      return undefined;
-    }
-    if (isStandalone()) {
-      // Record first so a remount (StrictMode, desk bounce, SW reclaim) cannot
-      // restart the full-screen logo. The timer only hides it.
-      markSplashed();
-      setSplash(true);
-      const t = window.setTimeout(() => {
-        setSplash(false);
-        void hideNativeSplash();
-      }, 900);
-      const hard = window.setTimeout(() => {
-        setSplash(false);
-        void hideNativeSplash();
-      }, 1600);
-      return () => {
-        window.clearTimeout(t);
-        window.clearTimeout(hard);
-      };
-    }
-    markSplashed();
     void hideNativeSplash();
-    return undefined;
   }, []);
 
   useEffect(() => {
@@ -146,15 +106,5 @@ export function NativeBoot() {
     };
   }, [setOrigin, setLocated]);
 
-  if (!splash) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-[80] grid place-items-center bg-bg text-primary"
-      role="status"
-      aria-label="KidEase"
-    >
-      <BrandMark size="lg" />
-    </div>
-  );
+  return null;
 }

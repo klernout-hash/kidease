@@ -1,6 +1,5 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
-import { BootPending } from "@/components/boot-pending";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
 import { PostHogBoot } from "@/components/posthog-boot";
@@ -15,8 +14,6 @@ const ICON_VER = "20";
 const APP_ICON = `/icon-512.png?v=${ICON_VER}`;
 
 export const Route = createRootRoute({
-  pendingMs: 200,
-  pendingComponent: BootPending,
   errorComponent: ({ error }) => {
     reportError(error, {
       route: typeof window !== "undefined" ? window.location.pathname : "root",
@@ -97,6 +94,16 @@ export const Route = createRootRoute({
       suppressHydrationWarning
     >
       <head>
+        <style
+          dangerouslySetInnerHTML={{
+            __html:
+              "[data-ke-mark]{display:inline-flex;flex-direction:column}" +
+              "[data-ke-mark] img{display:block;object-fit:contain;max-width:80px;max-height:80px}" +
+              "[data-ke-mark=sm] img{width:36px;height:36px}" +
+              "[data-ke-mark=md] img{width:64px;height:64px}" +
+              "[data-ke-mark=lg] img{width:80px;height:80px}",
+          }}
+        />
         <script src="/channel-boot.js" />
         <HeadContent />
       </head>

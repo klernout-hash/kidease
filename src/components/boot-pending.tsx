@@ -4,9 +4,9 @@ import { BOOT_SETTLE_MS } from "@/lib/timeout";
 import { PageSkeleton } from "@/components/page-skeleton";
 
 /**
- * First-load pending UI. Must never be a remounting full-screen logo —
- * NativeBoot already owns the standalone splash, and a pending BrandMark
- * plus a hung loader is the production “logo loop”.
+ * Index-route pending UI only (never on the root document). Must never be a
+ * BrandMark — a hung loader plus a logo is the production “logo loop”, and
+ * replacing `<html>` with pending UI drops the stylesheet.
  */
 export function BootPending() {
   const [failed, setFailed] = useState(false);
