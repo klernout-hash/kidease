@@ -110,7 +110,7 @@ export async function resolveAdminAccess(userId: string) {
 export async function requireAdmin(userId: string) {
   const access = await resolveAdminAccess(userId);
   if (!access.ok) throw new Error("Not authorized");
-  const { assertTwoFactorVerified } = await import("@/lib/server/two-factor");
+  const { assertTwoFactorVerified } = await import("@/lib/server/two-factor.server");
   assertTwoFactorVerified(userId);
   return lookupUser(userId);
 }
@@ -137,7 +137,7 @@ export async function resolveSupportAccess(userId: string) {
 export async function requireSupport(userId: string) {
   const access = await resolveSupportAccess(userId);
   if (!access.ok) throw new Error("Not authorized");
-  const { assertTwoFactorVerified } = await import("@/lib/server/two-factor");
+  const { assertTwoFactorVerified } = await import("@/lib/server/two-factor.server");
   assertTwoFactorVerified(userId);
   return lookupUser(userId);
 }

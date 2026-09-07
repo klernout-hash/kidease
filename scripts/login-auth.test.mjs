@@ -134,7 +134,7 @@ describe("apex/www session cookies", () => {
   it("auth handler aliases inbound cookies and shares outbound ones", () => {
     const authApi = read("src/routes/api/auth/$.ts");
     const server = read("src/lib/auth/server.ts");
-    const twoFa = read("src/lib/server/two-factor.ts");
+    const twoFa = read("src/lib/server/two-factor.server.ts");
     assert.match(authApi, /requestWithAliasedAuthCookies/);
     assert.match(authApi, /applySharedAuthCookies/);
     assert.match(server, /SHARED_SESSION_TOKEN_COOKIE/);

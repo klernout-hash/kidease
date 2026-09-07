@@ -64,9 +64,16 @@ test("requireAdmin checks verified 2FA and fails closed", () => {
   const roles = src("src/lib/server/roles.ts");
   assert.match(roles, /assertTwoFactorVerified/);
   assert.match(roles, /emailVerified/);
-  const twoFa = src("src/lib/server/two-factor.ts");
+  const twoFa = src("src/lib/server/two-factor.server.ts");
   assert.match(twoFa, /Two-factor verification required/);
   assert.match(twoFa, /fail closed|Fail closed/);
+  assert.match(twoFa, /getCookie/);
+  const twoFaClient = src("src/lib/server/two-factor.ts");
+  // Client-reachable createServerFn module must not import the server specifier.
+  assert.doesNotMatch(twoFaClient, /@tanstack\/react-start\/server/);
+  assert.doesNotMatch(twoFaClient, /function twoFactorCookieRaw/);
+  assert.doesNotMatch(twoFaClient, /export function assertTwoFactorVerified/);
+  assert.match(twoFaClient, /two-factor\.server/);
   const gates = src("src/lib/auth/gates.tsx");
   assert.match(gates, /staffTwoFactorRequired\(next\) \? "need" : "ok"/);
 });
