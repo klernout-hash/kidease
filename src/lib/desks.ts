@@ -11,7 +11,7 @@ export const DESK_PATH: Record<DeskKey, "/admin" | "/support" | "/provider" | "/
 export const DESK_LABEL: Record<DeskKey, string> = {
   admin: "Admin",
   support: "Support",
-  provider: "Director (Centre)",
+  provider: "Daycare",
   parent: "Parent",
 };
 
@@ -163,9 +163,20 @@ export function canVisitDesk(desks: DeskKey[], desk: DeskKey) {
   return desks.includes(desk);
 }
 
+/**
+ * Header pills. Admin (kyle@kidease.ca) sees Admin / Parent / Daycare so he
+ * can jump desks on one session. Support stays in the account menu + /admin.
+ */
+export function headerDesks(desks: DeskKey[]): DeskKey[] {
+  if (desks.includes("admin")) {
+    return (["admin", "parent", "provider"] as const).filter((d) => desks.includes(d));
+  }
+  return desks;
+}
+
 /** Header / menu switcher — only when this session actually has two desks. */
 export function showDeskSwitcher(desks: DeskKey[] | undefined | null) {
-  return Boolean(desks && desks.length >= 2);
+  return Boolean(desks && headerDesks(desks).length >= 2);
 }
 
 export type SessionDesks = {

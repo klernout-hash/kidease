@@ -374,7 +374,7 @@ function AccountMenu({
               onClick={() => setOpen(false)}
               className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
             >
-              Director (Centre)
+              Daycare desk
             </Link>
           ) : null}
           {desks.includes("admin") ? (

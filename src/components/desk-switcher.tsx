@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { MessageCircle } from "lucide-react";
-import { DESK_PATH, deskFromPathname, showDeskSwitcher, writeStickyDesk, type DeskKey } from "@/lib/desks";
+import { DESK_PATH, deskFromPathname, headerDesks, showDeskSwitcher, writeStickyDesk, type DeskKey } from "@/lib/desks";
 import { useSessionDesks } from "@/components/session-desks";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
@@ -31,7 +31,7 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
       aria-label={t("deskSwitcherLabel")}
       className={cn("flex items-center gap-1", compact ? "" : "rounded-full bg-surface/90 p-0.5 ring-1 ring-border")}
     >
-      {session.desks.map((desk) => {
+      {headerDesks(session.desks).map((desk) => {
         const on = current === desk;
         return (
           <Link
