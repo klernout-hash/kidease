@@ -90,6 +90,7 @@ function SearchPage() {
   const [confirmedOnly, setConfirmedOnly] = useState(false);
   const [readyOnly, setReadyOnly] = useState(false);
   const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(false);
+  const [needBy, setNeedBy] = useState("");
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saveBusy, setSaveBusy] = useState(false);
@@ -140,7 +141,7 @@ function SearchPage() {
 
   useEffect(() => {
     let live = true;
-    const key = searchCacheKey({ lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup });
+    const key = searchCacheKey({ lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, startDate: needBy || null });
     const cached = readSearchCache(key);
     if (cached) {
       setItems(cached);
@@ -151,7 +152,7 @@ function SearchPage() {
     }
     const tmr = window.setTimeout(() => {
       void searchDaycares({
-        data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label) },
+        data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label), startDate: needBy || null },
       })
         .then((rows) => {
           if (!live) return;
@@ -184,7 +185,7 @@ function SearchPage() {
       window.clearTimeout(tmr);
       window.clearTimeout(watchdog);
     };
-  }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query, origin.label]);
+  }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query, origin.label, needBy]);
 
   function applyPlace(place: { lat: number; lng: number; label: string }) {
     setOrigin(place);
@@ -289,12 +290,12 @@ function SearchPage() {
     setSearchFailed(false);
     setRefreshing(true);
     void searchDaycares({
-      data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label) },
+      data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label), startDate: needBy || null },
     })
       .then((rows) => {
         setItems(rows);
         setSearchFailed(false);
-        writeSearchCache(searchCacheKey({ lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup }), rows);
+        writeSearchCache(searchCacheKey({ lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, startDate: needBy || null }), rows);
       })
       .catch(() => {
         setItems([]);
@@ -627,6 +628,8 @@ function SearchPage() {
             <div className="flex flex-wrap gap-2">
               {(
                 [
+                  ["match", t("sortMatch")],
+                  ["urgency", t("sortUrgency")],
                   ["recommended", t("sortRecommended")],
                   ["distance", t("sortDistance")],
                   ["price", t("sortPrice")],
@@ -645,6 +648,18 @@ function SearchPage() {
               ))}
             </div>
             {sort === "recommended" ? <p className="text-xs text-muted">{t("sortRecommendedLead")}</p> : null}
+            {sort === "match" ? <p className="text-xs text-muted">{t("sortMatchLead")}</p> : null}
+            {sort === "urgency" ? <p className="text-xs text-muted">{t("sortUrgencyLead")}</p> : null}
+            <label className="block text-sm">
+              <span className="font-medium">{t("needBy")}</span>
+              <input
+                type="date"
+                className="ke-input mt-1 w-full max-w-xs"
+                value={needBy}
+                onChange={(e) => setNeedBy(e.target.value)}
+              />
+              <span className="mt-1 block text-xs text-subtle">{needBy ? needBy : t("needByAny")}</span>
+            </label>
             <div>
               <label className="inline-flex items-center gap-1.5 text-sm font-medium text-fg">
                 <Sparkles className="size-4" />

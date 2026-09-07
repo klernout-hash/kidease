@@ -11,9 +11,12 @@ import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
 import { overlayParentReviews } from "./reviews";
 import { overlayQuality } from "./quality";
+import { overlayParentRank } from "./rank";
 import { overlayPriority } from "./promos";
 import { overlayFeaturedCity } from "@/lib/server/provider-entitlements";
 import { sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
+import { compareParentMatch } from "@/lib/parent-match";
+import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
 import { isPlatformLive } from "@/lib/live";
 import { defaultTrustFields } from "@/lib/trust";
@@ -26,9 +29,10 @@ type SearchInput = {
   lat: number;
   lng: number;
   radiusKm: number;
-  sort: "distance" | "price" | "rating" | "availability" | "recommended";
+  sort: "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency";
   ageGroup: "any" | AgeGroup;
   fsa?: string;
+  startDate?: string | null;
 };
 
 function toDaycare(d: CatalogDaycare): Daycare {
@@ -213,6 +217,13 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   cards = await overlayClaimed(cards, mergeClaimedCard);
   cards = await overlayParentReviews(cards);
   cards = await overlayQuality(cards);
+  const rankPrefs = {
+    ageGroup: data.ageGroup,
+    radiusKm: data.radiusKm,
+    distanceKnown: true,
+    startDate: data.startDate || null,
+  };
+  cards = await overlayParentRank(cards, rankPrefs);
   cards = await overlayPriority(cards);
   cards = await overlayFeaturedCity(cards);
   if (data.ageGroup !== "any") {
@@ -224,6 +235,8 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     });
   }
   cards.sort((a, b) => {
+    if (data.sort === "match") return compareParentMatch(a, b, rankPrefs);
+    if (data.sort === "urgency") return compareParentUrgency(a, b, rankPrefs);
     if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
     if (Boolean(a.featuredCity) !== Boolean(b.featuredCity)) return a.featuredCity ? -1 : 1;
     if (data.sort === "recommended") {
@@ -352,5 +365,6 @@ export const getDaycaresByIds = createServerFn({ method: "POST" })
         .filter((d): d is CatalogDaycare => Boolean(d))
         .map((d) => toCard(d, origin)),
     );
-    return overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
+    const claimed = await overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
+    return overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" });
   });

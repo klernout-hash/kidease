@@ -27,6 +27,7 @@ import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto } from "@/lib/listing-photo";
 import { overlayQuality } from "./quality";
+import { overlayDemandSnapshots, overlayParentRank } from "./rank";
 import {
   analyticsSinceDate,
   centreCanAcceptInquiry,
@@ -159,12 +160,19 @@ export const getFamily = createServerFn({ method: "GET" })
         | "provider"
         | "admin",
       children: children.map(mapChild),
-      saved: saved
-        .map((r) => {
-          const d = mapDaycare(r);
-          return { ...d, spotsTotal: spotsTotal(d), fromPrice: fromPrice(d), distanceKm: 0 };
-        })
-        .filter((d) => admin || !isAdminOnlyListing(d)),
+      saved: (
+        await overlayParentRank(
+          await overlayQuality(
+            saved
+              .map((r) => {
+                const d = mapDaycare(r);
+                return { ...d, spotsTotal: spotsTotal(d), fromPrice: fromPrice(d), distanceKm: 0 };
+              })
+              .filter((d) => admin || !isAdminOnlyListing(d)),
+          ),
+          { distanceKnown: false, ageGroup: "any" },
+        )
+      ),
       bookings: bookings.map((b) => ({
         id: b.id,
         daycareId: b.daycare_id,
@@ -1087,7 +1095,9 @@ export const getProvider = createServerFn({ method: "GET" })
     `;
     const entitlements = await loadProfileEntitlements(sql, context.userId);
     const since = analyticsSinceDate(entitlements.analyticsDays);
-    const listings = await overlayFeaturedCity(await overlayQuality(owned.map(mapDaycare)));
+    const listings = await overlayDemandSnapshots(
+      await overlayFeaturedCity(await overlayQuality(owned.map(mapDaycare))),
+    );
     const stats = [];
     for (const d of listings) {
       const views = await sql<{ n: number }>`
@@ -1110,6 +1120,7 @@ export const getProvider = createServerFn({ method: "GET" })
         views: views[0]?.n ?? 0,
         inquiries: inquiries[0]?.n ?? 0,
         requests: requests[0]?.n ?? 0,
+        demand: d.demand,
       });
     }
     const inquiryUsed = (
