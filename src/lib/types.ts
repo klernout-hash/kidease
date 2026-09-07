@@ -73,6 +73,8 @@ export type Daycare = {
   reviewCount: number;
   parentRatingX10?: number;
   parentReviewCount?: number;
+  qualityScore?: number;
+  guestFavorite?: boolean;
   googlePlaceId?: string | null;
   licenseNumber: string | null;
   languages: string;

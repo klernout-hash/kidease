@@ -25,6 +25,7 @@ import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { listingThumb } from "@/lib/listing-photo";
 import { PriorityPill } from "@/components/priority-pill";
+import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { TrustSignals } from "@/components/trust-badge";
 import { feeBadgeKey, licenseRecordUrl } from "@/lib/licensing";
 import { displayDistance } from "@/lib/units";
@@ -417,7 +418,10 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
                   {t(feeBadgeKey(selected.province))}
                 </span>
               </p>
-              <TrustSignals item={selected} surface="card" compact className="mt-1.5" />
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <GuestFavoriteBadge item={selected} compact />
+                <TrustSignals item={selected} surface="card" compact />
+              </div>
               <div className="mt-1">
                 <GoogleRating item={selected} ratingX10={selected.ratingX10} reviewCount={selected.reviewCount} compact />
               </div>

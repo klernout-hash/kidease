@@ -59,6 +59,9 @@ export type DaycareRow = {
   staff_screening_attested_at?: string | null;
   staff_screening_attested_by?: string | null;
   stripe_identity_verified?: number | boolean | null;
+  quality_score?: number | null;
+  quality_scored_at?: string | null;
+  guest_favorite?: number | boolean | null;
 };
 
 export function mapDaycare(r: DaycareRow): Daycare {
@@ -132,6 +135,8 @@ export function mapDaycare(r: DaycareRow): Daycare {
     agesKnown: Boolean(r.ages_confirmed),
     visibility: r.visibility === "admin_only" ? "admin_only" : "public",
     isTest: r.is_test === 1 || r.is_test === true,
+    qualityScore: typeof r.quality_score === "number" ? r.quality_score : undefined,
+    guestFavorite: r.guest_favorite === 1 || r.guest_favorite === true,
   });
 }
 

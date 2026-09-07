@@ -137,11 +137,13 @@ export async function loadParentReviewStats(
   const out = new Map<string, ParentReviewStats>();
   if (!daycareIds.length) return out;
   const wanted = new Set(daycareIds);
-  const rows = await sql<{ daycare_id: string; rating: number }>`
-    select daycare_id, rating from reviews
-    where status in ('published', 'approved')
-      and coalesce(user_id, '') <> ''
-  `.catch(() => [] as Array<{ daycare_id: string; rating: number }>);
+  const rows = await sql.query<{ daycare_id: string; rating: number }>(
+    `select daycare_id, rating from reviews
+     where status in ('published', 'approved')
+       and coalesce(user_id, '') <> ''
+       and daycare_id = any($1::text[])`,
+    [daycareIds],
+  ).catch(() => [] as Array<{ daycare_id: string; rating: number }>);
   const grouped = new Map<string, number[]>();
   for (const row of rows) {
     if (!wanted.has(row.daycare_id)) continue;

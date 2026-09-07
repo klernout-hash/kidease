@@ -1,15 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
-import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, fsaOf } from "@/lib/proximity";
+import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, fsaOf, recommendedRank } from "@/lib/proximity";
 import { getPublicCatalog, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { nearbyListings, type NearbyListing } from "./nearby";
 import { callerIsAdmin } from "./public-listing";
 import { upsertDaycare } from "./seed";
-import { applyListingReadiness, listingQualityScore } from "@/lib/listing-readiness";
+import { applyListingReadiness } from "@/lib/listing-readiness";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
 import { overlayParentReviews } from "./reviews";
+import { overlayQuality } from "./quality";
 import { overlayPriority, sortPriorityFirst } from "./promos";
 import { parentReviewSummary } from "@/lib/review-gate";
 import { isPlatformLive } from "@/lib/live";
@@ -165,6 +166,26 @@ function mapReviews(
   }));
 }
 
+function withQualityCards<T extends { id: string; qualityScore?: number; guestFavorite?: boolean }>(
+  cards: DaycareCard[],
+  scored: T[],
+): DaycareCard[] {
+  const byId = new Map(scored.map((item) => [item.id, item]));
+  return cards.map((card) => {
+    const hit = byId.get(card.id);
+    if (!hit) return card;
+    return {
+      ...card,
+      ...hit,
+      distanceKm: card.distanceKm,
+      spotsTotal: card.spotsTotal,
+      fromPrice: card.fromPrice,
+      qualityScore: hit.qualityScore,
+      guestFavorite: hit.guestFavorite,
+    };
+  });
+}
+
 function slimCard(card: DaycareCard): DaycareCard {
   return {
     ...card,
@@ -188,6 +209,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   }
   cards = await overlayClaimed(cards, mergeClaimedCard);
   cards = await overlayParentReviews(cards);
+  cards = await overlayQuality(cards);
   cards = await overlayPriority(cards);
   if (data.ageGroup !== "any") {
     cards = cards.filter((c) => {
@@ -200,8 +222,8 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   cards.sort((a, b) => {
     if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
     if (data.sort === "recommended") {
-      const delta = listingQualityScore(b) - listingQualityScore(a);
-      if (delta !== 0) return delta;
+      const delta = recommendedRank(b) - recommendedRank(a);
+      if (Math.abs(delta) > 1e-6) return delta;
       return a.distanceKm - b.distanceKm;
     }
     if (data.sort === "price") return (a.fromPrice || 9e6) - (b.fromPrice || 9e6);
@@ -228,7 +250,7 @@ export const featuredDaycares = createServerFn({ method: "POST" })
       nearby.push(toCard(d, origin));
     }
     nearby.sort(compareProximity);
-    const merged = await overlayParentReviews(await overlayClaimed(nearby, mergeClaimedCard));
+    const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(nearby, mergeClaimedCard)));
     const ranked = sortPriorityFirst(await overlayPriority(merged));
     return uniqueById(ranked).slice(0, 12).map(slimCard);
   });
@@ -239,18 +261,25 @@ export const getDaycare = createServerFn({ method: "GET" })
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
     if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
+    const origin = { lat: found.lat, lng: found.lng };
     const nearby = uniqueById(
-      (await catalogNear({ lat: found.lat, lng: found.lng }, 15))
+      (await catalogNear(origin, 15))
         .filter((d) => d.id !== found.id)
-        .map((d) => toCard(d, { lat: found.lat, lng: found.lng })),
+        .map((d) => toCard(d, origin)),
     ).slice(0, 4);
+    const metroPeers = uniqueById(
+      (await catalogNear(origin, 40))
+        .filter((d) => d.id !== found.id)
+        .map((d) => toCard(d, origin)),
+    );
     const catalogDaycare = toDaycare(found);
     catalogDaycare.live = isPlatformLive(catalogDaycare.id, Boolean(catalogDaycare.claimed));
+    const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
     const catalogPayload = {
-      daycare: catalogDaycare,
+      daycare: catalogScored[0] ?? catalogDaycare,
       reviews: [] as Review[],
       availability: catalogAvailability(found),
-      nearby,
+      nearby: withQualityCards(nearby, catalogScored),
     };
     try {
       const sql = await Promise.race([getSql(), rejectAfter(6000, "listing-sql-timeout")]);
@@ -289,11 +318,15 @@ export const getDaycare = createServerFn({ method: "GET" })
         on conflict (daycare_id, viewed_on)
         do update set count = daycare_views.count + 1
       `.catch(() => undefined);
+      const overlayed = await overlayQuality([daycare, ...metroPeers], {
+        persist: true,
+        persistIds: [daycare.id],
+      });
       return {
-        daycare,
+        daycare: overlayed[0] ?? daycare,
         reviews: mapReviews(reviews),
         availability,
-        nearby: await overlayParentReviews(nearby),
+        nearby: withQualityCards(nearby, overlayed),
       };
     } catch {
       return catalogPayload;
@@ -312,5 +345,5 @@ export const getDaycaresByIds = createServerFn({ method: "POST" })
         .filter((d): d is CatalogDaycare => Boolean(d))
         .map((d) => toCard(d, origin)),
     );
-    return overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard));
+    return overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
   });

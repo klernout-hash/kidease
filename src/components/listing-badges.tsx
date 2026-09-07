@@ -1,3 +1,4 @@
+import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { PriorityPill } from "@/components/priority-pill";
 import { TrustSignals } from "@/components/trust-badge";
 import { vacancyLine } from "@/components/vacancy-freshness";
@@ -26,6 +27,7 @@ export function ListingBadges({
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {item.priority ? <PriorityPill /> : null}
+      <GuestFavoriteBadge item={item} compact={compact} />
       <TrustSignals item={item} surface="parent" compact={compact} />
       {feeBadge ? <span className={cn(pill, "bg-primary text-primary-fg")}>{t(feeBadge)}</span> : null}
       {live ? (

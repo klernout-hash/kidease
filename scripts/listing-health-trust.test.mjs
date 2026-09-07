@@ -158,7 +158,7 @@ test("quality ranking prefers claim verified, fresh vacancy, completeness — in
   assert.match(search, /sortRecommended/);
   assert.match(search, /isClaimVerified/);
   const daycares = src("src/lib/server/daycares.ts");
-  assert.match(daycares, /listingQualityScore/);
+  assert.match(daycares, /recommendedRank/);
   assert.match(daycares, /recommended/);
   assert.match(src("src/lib/proximity.ts"), /listingQualityBoost/);
   assert.match(src("src/lib/listing-readiness.ts"), /Incomplete listings stay in the set/);

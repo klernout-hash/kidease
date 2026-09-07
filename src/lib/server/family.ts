@@ -26,6 +26,7 @@ import {
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto } from "@/lib/listing-photo";
+import { overlayQuality } from "./quality";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -1061,7 +1062,7 @@ export const getProvider = createServerFn({ method: "GET" })
       join provider_daycares p on p.daycare_id = d.id
       where p.user_id = ${context.userId}
     `;
-    const listings = owned.map(mapDaycare);
+    const listings = await overlayQuality(owned.map(mapDaycare));
     const stats = [];
     for (const d of listings) {
       const views = await sql<{ n: number }>`

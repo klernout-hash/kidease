@@ -15,6 +15,7 @@ import type { CopyKey } from "@/lib/copy";
 import { vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { TrustSignals } from "@/components/trust-badge";
+import { GuestFavoriteBadge } from "@/components/guest-favorite";
 
 const HEART_SAVED = "#FF385C";
 
@@ -77,9 +78,12 @@ export function DaycareCard({
             rounded="rounded-[14px]"
             className={cn("bg-[#EBEBEB]", compact ? "aspect-[20/19]" : "aspect-[4/3]")}
           />
-          <div className="pointer-events-none absolute left-3 top-3 z-[2]">
+          <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-col items-start gap-1.5">
             <span className="inline-flex rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-semibold leading-none text-[#222] shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/5 backdrop-blur-[8px]">
               {item.priority ? `✦ ${pill}` : pill}
+            </span>
+            <span className="pointer-events-auto">
+              <GuestFavoriteBadge item={item} compact surface="photo" />
             </span>
           </div>
           {photos.length === 0 || photos.every((p) => p.includes("placeholder")) ? (
