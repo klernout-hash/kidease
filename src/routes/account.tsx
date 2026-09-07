@@ -11,6 +11,9 @@ import { useCopy } from "@/lib/use-copy";
 import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { authClient } from "@/lib/auth/client";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
+import { CaslConsentFields } from "@/components/casl-consent-fields";
+import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent";
+import type { CaslPrefs } from "@/lib/casl";
 
 export const Route = createFileRoute("/account")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -70,7 +73,7 @@ function AccountPage() {
 
 function ProfilePane() {
   const { user } = useCurrentUserState();
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -78,6 +81,11 @@ function ProfilePane() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(user?.primaryEmail ?? "");
   const [bio, setBio] = useState("");
+  const [consents, setConsents] = useState<CaslPrefs>({
+    smsService: false,
+    emailService: false,
+    emailCommercial: false,
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -93,6 +101,15 @@ function ProfilePane() {
       .catch(() => {
         /* keep session name/email */
       });
+    void getMyCaslConsents()
+      .then((row) => {
+        setConsents({
+          smsService: row.smsService,
+          emailService: row.emailService,
+          emailCommercial: row.emailCommercial,
+        });
+      })
+      .catch(() => undefined);
   }, [user?.id]);
 
   async function onSave(e: React.FormEvent) {
@@ -105,6 +122,16 @@ function ProfilePane() {
       setPhone(saved.phone);
       setEmail(saved.email || email);
       setBio(saved.bio);
+      const nextConsent = await saveMyCaslConsents({
+        data: {
+          ...consents,
+          phone,
+          email: saved.email || email,
+          locale,
+          method: "profile_checkbox",
+        },
+      });
+      setConsents(nextConsent);
       if (saved.name) {
         try {
           await authClient.updateUser({ name: saved.name });
@@ -196,6 +223,7 @@ function ProfilePane() {
               />
             </label>
             <p className="text-right text-[12px] text-subtle">{bio.length}/400</p>
+            <CaslConsentFields value={consents} onChange={setConsents} />
             <Button type="submit" className="w-full" disabled={saving}>
               {saving ? t("loading") : "Save details"}
             </Button>

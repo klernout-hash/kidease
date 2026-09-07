@@ -19,6 +19,8 @@ const SMS_SCAFFOLD_MESSAGE =
 const SMS_CREDENTIALS_MESSAGE =
   "Twilio credentials are not configured. Set TWILIO_ACCOUNT_SID plus TWILIO_AUTH_TOKEN or TWILIO_API_KEY_SID + TWILIO_API_KEY_SECRET, and TWILIO_FROM_NUMBER or TWILIO_MESSAGING_SERVICE_SID.";
 
+export const CASL_NO_CONSENT_MESSAGE = "CASL: no stored express consent for this recipient.";
+
 type EnvMap = Record<string, string | undefined>;
 
 function flagOn(raw: string | undefined | null): boolean {
@@ -65,6 +67,13 @@ function normalizeE164(raw: string | null | undefined): string {
 export type SendSmsInput = {
   to: string;
   body: string;
+  /**
+   * Parent/provider SMS must pass consentGranted after a casl_consents check.
+   * Admin/ops (Kyle's ADMIN_SMS) may set audience "internal".
+   * Default is user + no consent → skip. Fail closed.
+   */
+  audience?: "internal" | "user";
+  consentGranted?: boolean;
 };
 
 export type SendSmsResult =
@@ -145,6 +154,10 @@ export async function sendSms(input: SendSmsInput, options: SendSmsOptions = {})
   if (!smsCredentialsPresent(env)) {
     return { ok: false, skipped: true, error: SMS_CREDENTIALS_MESSAGE };
   }
+  const audience = input.audience === "internal" ? "internal" : "user";
+  if (audience !== "internal" && !input.consentGranted) {
+    return { ok: false, skipped: true, error: CASL_NO_CONSENT_MESSAGE };
+  }
   const accountSid = envStr(env, "TWILIO_ACCOUNT_SID");
   const auth = resolveAuth(env);
   if ("error" in auth) return { ok: false, skipped: true, error: auth.error };
@@ -208,6 +221,7 @@ export async function notifyClaimStatusSms(input: {
   to?: string | null;
   centreName: string;
   status: string;
+  consentGranted?: boolean;
   env?: EnvMap;
   fetchImpl?: typeof fetch;
 }): Promise<SendSmsResult> {
@@ -217,7 +231,12 @@ export async function notifyClaimStatusSms(input: {
   }
   try {
     return await sendSms(
-      { to, body: claimStatusSmsBody(input.centreName, input.status) },
+      {
+        to,
+        body: claimStatusSmsBody(input.centreName, input.status),
+        audience: "user",
+        consentGranted: Boolean(input.consentGranted),
+      },
       { env: input.env, fetchImpl: input.fetchImpl },
     );
   } catch (err) {

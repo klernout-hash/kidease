@@ -59,6 +59,7 @@ export function SiteFooter() {
                 <Item to="/privacy">{t("privacy")}</Item>
                 <Item to="/terms">{t("terms")}</Item>
                 <Item to="/cookies">{t("cookies")}</Item>
+                <Item to="/unsubscribe">{t("unsubscribe")}</Item>
               </ul>
             </section>
 

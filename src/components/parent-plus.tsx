@@ -5,6 +5,9 @@ import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { PLUS_FEATURES, plusPriceHint, type PlusInterval } from "@/lib/parent-plus";
 import { getParentPlus, startParentPlusCheckout, startParentPlusPortal, type ParentPlusState } from "@/lib/server/parent-plus";
+import { CaslConsentFields } from "@/components/casl-consent-fields";
+import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent";
+import type { CaslPrefs } from "@/lib/casl";
 import { openStripeCheckout } from "@/lib/wallets";
 
 function plusMoney(amount: number, locale: "en" | "fr") {
@@ -22,12 +25,26 @@ export function ParentPlusPanel() {
   const [state, setState] = useState<ParentPlusState | null>(null);
   const [interval, setInterval] = useState<PlusInterval>("month");
   const [busy, setBusy] = useState(false);
+  const [consents, setConsents] = useState<CaslPrefs>({
+    smsService: false,
+    emailService: false,
+    emailCommercial: false,
+  });
 
   useEffect(() => {
     void getParentPlus()
       .then((s) => {
         setState(s);
         setInterval(s.interval);
+      })
+      .catch(() => undefined);
+    void getMyCaslConsents()
+      .then((row) => {
+        setConsents({
+          smsService: row.smsService,
+          emailService: row.emailService,
+          emailCommercial: row.emailCommercial,
+        });
       })
       .catch(() => undefined);
   }, []);
@@ -40,6 +57,9 @@ export function ParentPlusPanel() {
   async function start() {
     setBusy(true);
     try {
+      await saveMyCaslConsents({
+        data: { ...consents, locale: loc, method: "checkout_checkbox" },
+      }).catch(() => undefined);
       const { url } = await startParentPlusCheckout({ data: { interval } });
       await openStripeCheckout(url);
     } catch (err) {
@@ -88,6 +108,9 @@ export function ParentPlusPanel() {
           <li key={f.en}>{f[loc]}</li>
         ))}
       </ul>
+      <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
+        <CaslConsentFields value={consents} onChange={setConsents} showEmailService={false} />
+      </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {live ? (
           <Button disabled={busy || current} onClick={() => void start()}>

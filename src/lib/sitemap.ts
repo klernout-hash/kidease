@@ -25,6 +25,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/get-app",
   "/claim",
   "/compare",
+  "/unsubscribe",
 ] as const;
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;

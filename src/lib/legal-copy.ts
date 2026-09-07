@@ -36,8 +36,8 @@ export type LegalDoc = {
   disclaimer: string;
 };
 
-const UPDATED_EN = "Effective 4 September 2026 · KidEase · Winnipeg, Manitoba";
-const UPDATED_FR = "En vigueur le 4 septembre 2026 · KidEase · Winnipeg (Manitoba)";
+const UPDATED_EN = "Effective 7 September 2026 · KidEase · Winnipeg, Manitoba";
+const UPDATED_FR = "En vigueur le 7 septembre 2026 · KidEase · Winnipeg (Manitoba)";
 
 const DISCLAIMER_EN =
   "This page explains how KidEase handles personal information and how the service works. It is draft copy for Kyle and counsel to review. It is not legal advice. Official PIPEDA text lives on the Privacy Commissioner of Canada website.";
@@ -332,7 +332,8 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "Transactional mail we send without a marketing opt-in: sign-in codes, password reset, claim codes, request and support notices, and similar service mail. These are not promotional.",
-            "We do not send promotional KidEase campaigns today. If we ever do, we will include an unsubscribe and send only to people who consented, as CASL requires.",
+            "Search-alert email and any future KidEase news or offers need an unchecked-by-default CASL checkbox. We store who consented, when, the wording they saw, and the email or mobile. Unsubscribe at kidease.ca/unsubscribe, in alert or profile settings, or by replying STOP / ARRÊT to a text.",
+            "We do not send promotional KidEase campaigns today. FEATURE_SMS stays off until express SMS consent is on file. When SMS is on, we will only text a parent or provider who granted consent, and we honour STOP immediately.",
             "Push or lock-screen alerts, when we enable them, will be opt-in on the device. You can turn them off in the operating system. We will not use push for ads.",
           ],
         },
@@ -678,7 +679,8 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Courriels transactionnels sans consentement marketing : codes, réinitialisation, codes de revendication, avis de demande et de soutien.",
-            "Nous n’envoyons pas de campagnes promotionnelles aujourd’hui. Le cas échéant, un désabonnement et un consentement LCAP s’appliqueront.",
+            "Les alertes de recherche et toute nouvelle ou offre KidEase exigent une case LCAP non cochée par défaut. Nous enregistrons qui a consenti, quand, le texte vu, et le courriel ou le cellulaire. Désabonnement à kidease.ca/unsubscribe, dans le profil, ou en répondant STOP / ARRÊT.",
+            "Nous n’envoyons pas de campagnes promotionnelles aujourd’hui. FEATURE_SMS reste fermé tant qu’un consentement texto n’est pas au dossier. Une fois activé, nous n’enverrons un texto qu’à une personne qui a consenti, et nous honorons STOP tout de suite.",
             "Les notifications push, lorsqu’elles seront activées, seront facultatives sur l’appareil. Pas de publicité par push.",
           ],
         },
