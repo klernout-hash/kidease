@@ -29,6 +29,11 @@ android/app/release
 android/captures
 android/local.properties
 android/key.properties
+android/app/google-services.json
+**/google-services.json
+**/GoogleService-Info.plist
+**/*.p8
+**/AuthKey_*.p8
 android/*.iml
 android/*.keystore
 android/*.jks

@@ -1,5 +1,5 @@
 /**
- * Device-token register + dry-run send. No live FCM / APNs HTTP.
+ * Device-token register + dry-run counts. Live FCM / APNs lives in push-send.ts.
  * Flag / token helpers are duplicated from src/lib/push.ts so Node tests resolve.
  *
  * FEATURE_PUSH defaults off. Register refuses to persist when the flag is off.

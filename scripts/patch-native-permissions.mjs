@@ -104,6 +104,25 @@ export async function patchNativePermissions() {
       /\s*<key>UIBackgroundModes<\/key>\s*<array>[\s\S]*?<string>location<\/string>[\s\S]*?<\/array>/,
       "",
     );
+    plist = plist.replace(/\s*<string>location<\/string>/g, "");
+    if (!plist.includes("<string>remote-notification</string>")) {
+      if (plist.includes("<key>UIBackgroundModes</key>")) {
+        plist = plist.replace(
+          /<key>UIBackgroundModes<\/key>\s*<array>/,
+          "<key>UIBackgroundModes</key>\n\t<array>\n\t\t<string>remote-notification</string>",
+        );
+      } else {
+        plist = plist.replace(
+          "</dict>\n</plist>",
+          `\t<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+</dict>
+</plist>`,
+        );
+      }
+    }
     await writeFile(infoPlist, plist);
     console.log("[native-permissions] patched ios Info.plist");
 
@@ -126,6 +145,7 @@ export async function patchNativePermissions() {
     let manifest = await readFile(manifestPath, "utf8");
     manifest = ensureAndroidPermission(manifest, "android.permission.ACCESS_COARSE_LOCATION");
     manifest = ensureAndroidPermission(manifest, "android.permission.ACCESS_FINE_LOCATION");
+    manifest = ensureAndroidPermission(manifest, "android.permission.POST_NOTIFICATIONS");
     manifest = stripAndroidPermission(manifest, "android.permission.ACCESS_BACKGROUND_LOCATION");
     if (!manifest.includes("android.hardware.location.gps")) {
       manifest = manifest.replace(

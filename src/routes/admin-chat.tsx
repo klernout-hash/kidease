@@ -119,7 +119,8 @@ function AdminChatPage() {
               . Flag and env presence only — no secrets.
             </p>
             <p className="mt-2">
-              Push is native-only and dry-run (<code>docs/push.md</code>). www does not prompt.
+              Push is native-only (<code>docs/push.md</code>). www does not prompt.
+              Live FCM / APNs stays off until <code>FEATURE_PUSH=1</code> and credentials exist.
             </p>
             <button
               type="button"
@@ -146,7 +147,7 @@ function pushHint(lab: LabStatus | null, dryRunHint: string): string {
   if (!lab) return "FCM / APNs env not loaded. Do not invent keys.";
   const tokens = `${lab.push.tokenCount} stored token(s)`;
   if (lab.push.credentialsPresent) {
-    return `${tokens}. Env names are present. Send stub still no-ops.`;
+    return `${tokens}. Env names are present. Send stays off until FEATURE_PUSH=1.`;
   }
   return `${tokens}. No FCM / APNs credentials. Do not invent keys.`;
 }
