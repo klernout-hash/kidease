@@ -1,19 +1,9 @@
-import { createHash, createHmac, randomInt } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie, getRequest, setCookie } from "@tanstack/react-start/server";
-import {
-  isKideasePublicHost,
-  KIDEASE_COOKIE_DOMAIN,
-  SHARED_TWO_FACTOR_COOKIE,
-  TWO_FACTOR_COOKIE,
-} from "@/lib/auth/cookies";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
-import { isTwoFactorVerified } from "@/lib/two-factor-cookie";
 import { nid } from "@/lib/utils";
 import { ADMIN_EMAIL, lookupUser } from "@/lib/server/notify";
-
-export { TWO_FACTOR_COOKIE, SHARED_TWO_FACTOR_COOKIE } from "@/lib/auth/cookies";
 
 const TTL_MS = 10 * 60 * 1000;
 const DEVICE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -25,12 +15,6 @@ function secret() {
 
 function hashCode(code: string) {
   return createHash("sha256").update(`${secret()}:${code}`).digest("hex");
-}
-
-function signDevice(userId: string, exp: number) {
-  const body = `${userId}.${exp}`;
-  const sig = createHmac("sha256", secret()).update(body).digest("hex");
-  return `${body}.${sig}`;
 }
 
 async function ensureTable() {
@@ -101,10 +85,8 @@ async function sendCodeEmail(to: string, code: string) {
 export const getTwoFactorStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    // getCookie must stay inside this handler. A module-level helper is an
-    // import-protection error because verify-2fa / TwoFactorGate import this file.
-    const raw = getCookie(TWO_FACTOR_COOKIE) ?? getCookie(SHARED_TWO_FACTOR_COOKIE) ?? null;
-    return { verified: isTwoFactorVerified(context.userId, raw, secret()) };
+    const { isCurrentUserTwoFactorVerified } = await import("./two-factor.server");
+    return { verified: isCurrentUserTwoFactorVerified(context.userId) };
   });
 
 export const startTwoFactor = createServerFn({ method: "POST" })
@@ -185,26 +167,7 @@ export const verifyTwoFactor = createServerFn({ method: "POST" })
       throw new Error("That code is not correct.");
     }
     await sql`delete from login_challenges where user_id = ${context.userId}`;
-    const exp = Date.now() + DEVICE_MS;
-    const value = signDevice(context.userId, exp);
-    const expires = new Date(exp);
-    setCookie(TWO_FACTOR_COOKIE, value, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      expires,
-    });
-    const host = getRequest()?.headers.get("x-forwarded-host") || getRequest()?.headers.get("host");
-    if (isKideasePublicHost(host)) {
-      setCookie(SHARED_TWO_FACTOR_COOKIE, value, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        path: "/",
-        domain: KIDEASE_COOKIE_DOMAIN,
-        expires,
-      });
-    }
+    const { writeTwoFactorDeviceCookie } = await import("./two-factor.server");
+    writeTwoFactorDeviceCookie(context.userId, DEVICE_MS);
     return { ok: true as const };
   });
