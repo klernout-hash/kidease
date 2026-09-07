@@ -14,8 +14,9 @@ import { listJurisdictions, listListingReports, reviewLicense, type AdminReportR
 import { AdminLicenseActions, AdminTrustPanel } from "@/components/admin-trust";
 import { JURISDICTIONS } from "@/lib/province-registry";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
-import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
-import { AdminContractsPanel } from "@/components/admin-contracts";
+import { listAdminContracts, type AdminContractRow, type AdminPackRow } from "@/lib/server/contracts";
+import { AdminContractsPanel, CentrePackChips } from "@/components/admin-contracts";
+import type { DocusignTemplateOption } from "@/lib/docusign-packs";
 import { AdminMailPanel } from "@/components/admin-mail";
 import { AdminSentryTest } from "@/components/admin-sentry-test";
 import { AdminStripeCatalog } from "@/components/admin-stripe-catalog";
@@ -61,6 +62,11 @@ function AdminPage() {
   const [centres, setCentres] = useState<AdminCentreRow[]>([]);
   const [contracts, setContracts] = useState<AdminContractRow[]>([]);
   const [contractMode, setContractMode] = useState<"live" | "demo">("demo");
+  const [contractTemplates, setContractTemplates] = useState<DocusignTemplateOption[]>([]);
+  const [contractDefaults, setContractDefaults] = useState<{
+    provider_agreement: string | null;
+    enrolment_pack: string | null;
+  }>({ provider_agreement: null, enrolment_pack: null });
   const [contractBusy, setContractBusy] = useState<string | null>(null);
   const [ledger, setLedger] = useState<AdminMoneyLedger>({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 });
   const [busy, setBusy] = useState<string | null>(null);
@@ -79,7 +85,13 @@ function AdminPage() {
       listPlatformEvents().catch(() => []),
       listAdminCentres().catch(() => []),
       listAdminMoney().catch(() => ({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 })),
-      listAdminContracts().catch(() => ({ mode: "demo" as const, rows: [] })),
+      listAdminContracts().catch(() => ({
+        mode: "demo" as const,
+        rows: [],
+        templates: [],
+        defaultTemplateIds: { provider_agreement: null, enrolment_pack: null },
+        templateRole: "Provider",
+      })),
       listJurisdictions().catch(() => []),
       listListingReports().catch(() => []),
     ]);
@@ -88,6 +100,8 @@ function AdminPage() {
     setLedger(cash);
     setContracts(envelopes.rows);
     setContractMode(envelopes.mode);
+    setContractTemplates(envelopes.templates || []);
+    setContractDefaults(envelopes.defaultTemplateIds || { provider_agreement: null, enrolment_pack: null });
     setJurisdictions(regs);
     setReports(flags);
   }
@@ -270,7 +284,7 @@ function AdminPage() {
             ) : (
               <ul className="divide-y divide-border border-t border-border">
                 {verifyQueue.map((c) => (
-                  <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} onLicense={onLicense} />
+                  <CentreRow key={c.daycareId} c={c} packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs} busy={busy} onDecide={onDecide} onLicense={onLicense} />
                 ))}
               </ul>
             )}
@@ -302,7 +316,7 @@ function AdminPage() {
               ) : (
                 <ul className="divide-y divide-white/10 border-t border-white/10">
                   {waitingOnYou.map((c) => (
-                    <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} onLicense={onLicense} invert />
+                    <CentreRow key={c.daycareId} c={c} packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs} busy={busy} onDecide={onDecide} onLicense={onLicense} invert />
                   ))}
                 </ul>
               )}
@@ -335,7 +349,7 @@ function AdminPage() {
                               <li className="px-5 py-4 text-sm text-muted">No claims in this jurisdiction yet. Registry review stays manual.</li>
                             ) : (
                               group.rows.map((c) => (
-                                <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} onLicense={onLicense} />
+                                <CentreRow key={c.daycareId} c={c} packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs} busy={busy} onDecide={onDecide} onLicense={onLicense} />
                               ))
                             )}
                           </ul>
@@ -353,7 +367,15 @@ function AdminPage() {
       ) : tab === "mail" ? (
         <AdminMailPanel />
       ) : tab === "contracts" ? (
-        <AdminContractsPanel rows={contracts} mode={contractMode} busy={contractBusy} setBusy={setContractBusy} onRefresh={refresh} />
+        <AdminContractsPanel
+          rows={contracts}
+          mode={contractMode}
+          templates={contractTemplates}
+          defaultTemplateIds={contractDefaults}
+          busy={contractBusy}
+          setBusy={setContractBusy}
+          onRefresh={refresh}
+        />
       ) : tab === "money" ? (
         <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} />
       ) : tab === "reviews" ? (
@@ -524,12 +546,14 @@ function Stat({ label, value, accent }: { label: string; value: number; accent?:
 
 function CentreRow({
   c,
+  packs,
   busy,
   onDecide,
   onLicense,
   invert,
 }: {
   c: AdminCentreRow;
+  packs?: AdminPackRow[];
   busy: string | null;
   onDecide: (id: string, d: Decision) => void;
   onLicense: (id: string, d: LicenseReviewAction) => void;
@@ -552,6 +576,7 @@ function CentreRow({
           <p className={`mt-0.5 text-sm ${muted}`}>
             {c.providerName || "—"} · {c.providerEmail || c.contactEmail || "no email"}
           </p>
+          {packs?.length ? <CentrePackChips packs={packs} /> : null}
           {c.licensePhoto || c.storefrontPhoto ? (
             <div className="mt-3 flex flex-wrap gap-3">
               {c.licensePhoto ? (

@@ -4,12 +4,16 @@ import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { signedPdfPath } from "@/lib/docusign-packs";
+import { ds } from "@/lib/docusign-copy";
+import { useCopy } from "@/lib/use-copy";
 import { getSignContract, signCentreContract } from "@/lib/server/contracts";
 
 export const Route = createFileRoute("/sign/$id")({ component: SignPage });
 
 function SignPage() {
   const { id } = Route.useParams();
+  const { locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const [doc, setDoc] = useState<Awaited<ReturnType<typeof getSignContract>> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +38,7 @@ function SignPage() {
   return (
     <Shell>
       <main className="mx-auto max-w-2xl px-4 py-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">KidEase agreement</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{ds(locale, "signKicker")}</p>
         <h1 className="mt-2 font-display text-3xl">{doc?.documentName || "Centre contract"}</h1>
         {doc ? (
           <p className="mt-2 text-sm text-muted">
@@ -49,7 +53,14 @@ function SignPage() {
             </pre>
             <div className="mt-6 flex flex-wrap gap-2">
               {doc.status === "signed" ? (
-                <p className="rounded-full bg-ok/15 px-3 py-2 text-sm text-ok">Already signed</p>
+                <>
+                  <p className="rounded-full bg-ok/15 px-3 py-2 text-sm text-ok">{ds(locale, "alreadySigned")}</p>
+                  {doc.hasSignedPdf ? (
+                    <Button variant="secondary" asChild>
+                      <a href={signedPdfPath(doc.id)}>{ds(locale, "download")}</a>
+                    </Button>
+                  ) : null}
+                </>
               ) : doc.demo ? (
                 <Button
                   disabled={busy}
@@ -61,17 +72,17 @@ function SignPage() {
                       .finally(() => setBusy(false));
                   }}
                 >
-                  Sign this agreement
+                  {ds(locale, "signInApp")}
                 </Button>
               ) : doc.signingUrl ? (
                 <Button asChild>
-                  <a href={doc.signingUrl}>Continue in DocuSign</a>
+                  <a href={doc.signingUrl}>{ds(locale, "continueDocusign")}</a>
                 </Button>
               ) : (
-                <p className="text-sm text-muted">Waiting on DocuSign. Ask KidEase to resend the envelope.</p>
+                <p className="text-sm text-muted">{ds(locale, "waitingDocusign")}</p>
               )}
               <Button variant="secondary" asChild>
-                <Link to="/provider">Back to centre desk</Link>
+                <Link to="/provider">{ds(locale, "backDesk")}</Link>
               </Button>
             </div>
           </>

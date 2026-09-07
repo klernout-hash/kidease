@@ -62,6 +62,8 @@ import { Route as ApiAdminSentryTestRouteImport } from './routes/api/admin.sentr
 import { Route as ApiAdminStripeCatalogRouteImport } from './routes/api/admin.stripe-catalog'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
+import { Route as ApiDocusignPollRouteImport } from './routes/api/docusign.poll'
+import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
 import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
@@ -332,6 +334,16 @@ const ApiDocusignWebhookRoute = ApiDocusignWebhookRouteImport.update({
   path: '/api/docusign/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDocusignPollRoute = ApiDocusignPollRouteImport.update({
+  id: '/api/docusign/poll',
+  path: '/api/docusign/poll',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContractsIdPdfRoute = ApiContractsIdPdfRouteImport.update({
+  id: '/api/contracts/$id/pdf',
+  path: '/api/contracts/$id/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPushRegisterRoute = ApiPushRegisterRouteImport.update({
   id: '/api/push/register',
   path: '/api/push/register',
@@ -402,6 +414,8 @@ export interface FileRoutesByFullPath {
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/docusign/poll': typeof ApiDocusignPollRoute
+  '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -460,6 +474,8 @@ export interface FileRoutesByTo {
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/docusign/poll': typeof ApiDocusignPollRoute
+  '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -519,6 +535,8 @@ export interface FileRoutesById {
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/docusign/poll': typeof ApiDocusignPollRoute
+  '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -579,6 +597,8 @@ export interface FileRouteTypes {
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
+    | '/api/docusign/poll'
+    | '/api/contracts/$id/pdf'
     | '/api/push/register'
     | '/api/sms/status'
     | '/api/stripe/webhook'
@@ -637,6 +657,8 @@ export interface FileRouteTypes {
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
+    | '/api/docusign/poll'
+    | '/api/contracts/$id/pdf'
     | '/api/push/register'
     | '/api/sms/status'
     | '/api/stripe/webhook'
@@ -695,6 +717,8 @@ export interface FileRouteTypes {
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
     | '/api/docusign/webhook'
+    | '/api/docusign/poll'
+    | '/api/contracts/$id/pdf'
     | '/api/push/register'
     | '/api/sms/status'
     | '/api/stripe/webhook'
@@ -753,6 +777,8 @@ export interface RootRouteChildren {
   ApiAdminStripeCatalogRoute: typeof ApiAdminStripeCatalogRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
+  ApiDocusignPollRoute: typeof ApiDocusignPollRoute
+  ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
   ApiPushRegisterRoute: typeof ApiPushRegisterRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
@@ -1131,6 +1157,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDocusignWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/docusign/poll': {
+      id: '/api/docusign/poll'
+      path: '/api/docusign/poll'
+      fullPath: '/api/docusign/poll'
+      preLoaderRoute: typeof ApiDocusignPollRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/contracts/$id/pdf': {
+      id: '/api/contracts/$id/pdf'
+      path: '/api/contracts/$id/pdf'
+      fullPath: '/api/contracts/$id/pdf'
+      preLoaderRoute: typeof ApiContractsIdPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/push/register': {
       id: '/api/push/register'
       path: '/api/push/register'
@@ -1218,6 +1258,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminStripeCatalogRoute: ApiAdminStripeCatalogRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
+  ApiDocusignPollRoute: ApiDocusignPollRoute,
+  ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
   ApiPushRegisterRoute: ApiPushRegisterRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,

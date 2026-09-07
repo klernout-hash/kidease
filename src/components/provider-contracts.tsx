@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { signedPdfPath } from "@/lib/docusign-packs";
+import { ds } from "@/lib/docusign-copy";
+import { useCopy } from "@/lib/use-copy";
 import { listProviderContracts, type ProviderContractRow } from "@/lib/server/contracts";
 
 export function ProviderContractsPanel() {
+  const { locale } = useCopy();
   const [rows, setRows] = useState<ProviderContractRow[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -18,10 +22,8 @@ export function ProviderContractsPanel() {
   if (rows.length === 0) {
     return (
       <section className="rounded-xl bg-surface px-5 py-8 text-center ring-1 ring-border">
-        <h2 className="font-display text-2xl">Centre agreement</h2>
-        <p className="mt-2 text-sm text-muted">
-          When KidEase sends the licensed centre agreement, it will show up here for you to sign.
-        </p>
+        <h2 className="font-display text-2xl">{ds(locale, "providerTitle")}</h2>
+        <p className="mt-2 text-sm text-muted">{ds(locale, "providerEmpty")}</p>
       </section>
     );
   }
@@ -34,20 +36,30 @@ export function ProviderContractsPanel() {
             <div>
               <h2 className="font-display text-2xl">{r.daycareName}</h2>
               <p className="mt-1 text-sm text-muted">
+                {r.packKind === "enrolment_pack" ? ds(locale, "packEnrolment") : ds(locale, "packAgreement")}
+                {" · "}
                 {r.documentName} · {r.status}
                 {r.signedAt ? ` · signed ${new Date(r.signedAt).toLocaleDateString()}` : ""}
               </p>
             </div>
             {r.status === "signed" ? (
-              <span className="rounded-full bg-ok/15 px-3 py-1 text-sm text-ok">Signed</span>
+              <span className="rounded-full bg-ok/15 px-3 py-1 text-sm text-ok">{ds(locale, "providerSigned")}</span>
             ) : (
               <Button size="sm" asChild>
                 <Link to="/sign/$id" params={{ id: r.id }}>
-                  Review and sign
+                  {ds(locale, "providerReview")}
                 </Link>
               </Button>
             )}
           </div>
+          {r.status === "signed" && r.hasSignedPdf ? (
+            <p className="mt-3 text-sm">
+              <a className="text-primary underline" href={signedPdfPath(r.id)}>
+                {ds(locale, "download")}
+              </a>
+              <span className="ml-2 text-muted">{ds(locale, "reviewOnProfile")}</span>
+            </p>
+          ) : null}
           <pre className="mt-4 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-bg p-3 text-sm leading-relaxed">
             {r.body}
           </pre>
