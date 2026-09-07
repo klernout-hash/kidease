@@ -1,4 +1,4 @@
-import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
+import { photoFreshness, photoTimestamp, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { useCopy } from "@/lib/use-copy";
 import type { Daycare } from "@/lib/types";
 
@@ -30,6 +30,20 @@ export function vacancyLine(
   }
   const text = `${t("vacancyUpdated")} ${formatAgo(locale, state.age)}`;
   return { kind: "fresh" as const, text, detail: text };
+}
+
+export function photoLine(
+  item: Pick<Daycare, "lastPhotoUpdatedAt">,
+  t: (key: "photoUpdated" | "photoStale") => string,
+  locale: string,
+) {
+  const state = photoFreshness(photoTimestamp(item));
+  if (state.kind === "unknown" || !state.age) return { kind: "unknown" as const, text: "" };
+  const ago = formatAgo(locale, state.age);
+  if (state.kind === "stale") {
+    return { kind: "stale" as const, text: ago ? `${t("photoStale")} · ${ago}` : t("photoStale") };
+  }
+  return { kind: "fresh" as const, text: ago ? `${t("photoUpdated")} ${ago}` : t("photoUpdated") };
 }
 
 export function VacancyFreshness({

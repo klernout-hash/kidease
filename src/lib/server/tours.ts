@@ -24,7 +24,8 @@ import {
   tourSystemBody,
   type PreferredTime,
 } from "@/lib/threads";
-import type { TourRequest, TourStatus } from "@/lib/types";
+import { nextTourPipeline, tourStatusFromBooking } from "@/lib/tour-pipeline";
+import type { BookingStatus, TourRequest, TourStatus } from "@/lib/types";
 
 type TourRow = {
   id: string;
@@ -345,4 +346,90 @@ export const getThreadTours = createServerFn({ method: "GET" })
     const sql = await getSql();
     await requireConversationRead(sql, conversationId, context.userId);
     return listToursForConversation(sql, conversationId);
+  });
+
+export async function syncToursFromBooking(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  conversationId: string | null,
+  bookingStatus: BookingStatus,
+) {
+  if (!conversationId) return;
+  const next = tourStatusFromBooking(bookingStatus);
+  if (!next) return;
+  const rows = await sql<{ id: string; status: string }>`
+    select id, status from tour_requests
+    where conversation_id = ${conversationId}
+    order by created_at desc
+  `.catch(() => []);
+  for (const row of rows) {
+    if (!nextTourPipeline(row.status, next) && row.status !== next) {
+      if (next === "enrolled" && (row.status === "accepted" || row.status === "completed" || row.status === "pending")) {
+        /* fall through */
+      } else if (next === "lost" && (row.status === "pending" || row.status === "accepted" || row.status === "completed")) {
+        /* fall through */
+      } else {
+        continue;
+      }
+    }
+    await sql`
+      update tour_requests
+      set status = ${next}, responded_at = coalesce(responded_at, now())
+      where id = ${row.id} and status <> ${next}
+    `.catch(() => undefined);
+  }
+}
+
+export const advanceTourRequest = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { tourId: string; status: "completed" | "enrolled" | "lost"; note?: string }) => input)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const rows = await sql<{
+      id: string;
+      status: string;
+      conversation_id: string;
+      user_id: string;
+      daycare_id: string;
+      daycare_name: string;
+      slug: string;
+    }>`
+      select t.id, t.status, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug
+      from tour_requests t
+      join daycares d on d.id = t.daycare_id
+      where t.id = ${data.tourId}
+      limit 1
+    `.catch(() => []);
+    const tour = rows[0];
+    if (!tour) throw new Error("Tour request not found");
+
+    const owned = await isCentreOwner(sql, context.userId, tour.daycare_id);
+    const isParent = tour.user_id === context.userId;
+    if (!owned && !(isParent && data.status === "completed")) throw new Error("Not authorized");
+
+    const next = nextTourPipeline(tour.status, data.status);
+    if (!next) throw new Error("This tour cannot move to that status");
+
+    const note = (data.note || "").trim() || null;
+    await sql`
+      update tour_requests
+      set status = ${next},
+          centre_note = coalesce(${note}, centre_note),
+          responded_by = ${context.userId},
+          responded_at = coalesce(responded_at, now())
+      where id = ${tour.id}
+    `;
+
+    const body = tourStatusBody({
+      status: next,
+      daycareName: tour.daycare_name,
+      note,
+    });
+    await sql`
+      insert into messages (id, conversation_id, sender, body, kind)
+      values (${nid("msg")}, ${tour.conversation_id}, ${"system"}, ${body}, ${"status"})
+    `;
+    await sql`update conversations set last_at = now() where id = ${tour.conversation_id}`;
+    await markConversationRead(sql, tour.conversation_id, context.userId);
+
+    return { ok: true as const, status: next, conversationId: tour.conversation_id };
   });

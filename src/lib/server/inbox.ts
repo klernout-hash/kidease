@@ -4,7 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "./notify";
 import { listCentreOwnerEmails, markConversationRead, requireConversationWrite } from "./thread-access";
-import type { BookingStatus, Conversation } from "@/lib/types";
+import type { BookingStatus, Conversation, TourStatus } from "@/lib/types";
 
 export const listInbox = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -22,6 +22,7 @@ export const listInbox = createServerFn({ method: "GET" })
       parent_name: string | null;
       parent_email: string | null;
       status: BookingStatus | null;
+      tour_status: string | null;
       unread: number | null;
     }>`
       select c.id, c.daycare_id, c.user_id as parent_user_id,
@@ -33,6 +34,11 @@ export const listInbox = createServerFn({ method: "GET" })
                   or (b.user_id = c.user_id and b.daycare_id = c.daycare_id)
                order by b.created_at desc limit 1
              ) as status,
+             (
+               select t.status from tour_requests t
+               where t.conversation_id = c.id
+               order by t.created_at desc limit 1
+             ) as tour_status,
              (
                select case when exists (
                  select 1 from messages m
@@ -72,6 +78,7 @@ export const listInbox = createServerFn({ method: "GET" })
         lastAt: String(r.last_at),
         lastBody: last[0]?.body ?? "",
         status: r.status,
+        tourStatus: (r.tour_status as TourStatus | null) ?? null,
         phone: r.phone,
         unread: Number(r.unread) > 0,
       });

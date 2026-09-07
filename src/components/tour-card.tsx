@@ -2,29 +2,14 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { respondTourRequest } from "@/lib/server/tours";
+import { advanceTourRequest, respondTourRequest } from "@/lib/server/tours";
 import { formatPreferredTimes } from "@/lib/threads";
+import { PipelineBadge } from "@/components/pipeline-badge";
 import { useCopy } from "@/lib/use-copy";
-import { cn } from "@/lib/utils";
 import type { TourRequest, TourStatus } from "@/lib/types";
 
 export function TourStatusPill({ status }: { status: TourStatus }) {
-  const { t } = useCopy();
-  const label = status === "pending" ? t("tourPending") : status === "accepted" ? t("tourAccepted") : t("tourDeclined");
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset",
-        status === "pending"
-          ? "bg-primary/10 text-primary ring-primary/20"
-          : status === "accepted"
-            ? "bg-ok/10 text-ok ring-ok/20"
-            : "bg-danger/10 text-danger ring-danger/20",
-      )}
-    >
-      {label}
-    </span>
-  );
+  return <PipelineBadge tourStatus={status} />;
 }
 
 export function TourCard({
@@ -38,13 +23,28 @@ export function TourCard({
 }) {
   const { t, locale } = useCopy();
   const [note, setNote] = useState("");
-  const [busy, setBusy] = useState<"accepted" | "declined" | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
 
   async function respond(status: "accepted" | "declined") {
     setBusy(status);
     try {
       await respondTourRequest({ data: { tourId: tour.id, status, note: note.trim() || undefined } });
-      toast.success(status === "accepted" ? t("tourAccepted") : t("tourDeclined"));
+      toast.success(status === "accepted" ? t("pipelineConfirmed") : t("pipelineLost"));
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function advance(status: "completed" | "enrolled" | "lost") {
+    setBusy(status);
+    try {
+      await advanceTourRequest({ data: { tourId: tour.id, status, note: note.trim() || undefined } });
+      toast.success(
+        status === "completed" ? t("pipelineCompleted") : status === "enrolled" ? t("pipelineEnrolled") : t("pipelineLost"),
+      );
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -74,7 +74,7 @@ export function TourCard({
           {t("tourCentreNote")}: {tour.centreNote}
         </p>
       ) : null}
-      {canRespond && tour.status === "pending" ? (
+      {canRespond && (tour.status === "pending" || tour.status === "accepted" || tour.status === "completed") ? (
         <div className="mt-3 space-y-2">
           <textarea
             rows={2}
@@ -84,12 +84,36 @@ export function TourCard({
             onChange={(e) => setNote(e.target.value)}
           />
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" disabled={busy !== null} onClick={() => void respond("accepted")}>
-              {busy === "accepted" ? t("loading") : t("acceptTour")}
-            </Button>
-            <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => void respond("declined")}>
-              {busy === "declined" ? t("loading") : t("declineTour")}
-            </Button>
+            {tour.status === "pending" ? (
+              <>
+                <Button size="sm" disabled={busy !== null} onClick={() => void respond("accepted")}>
+                  {busy === "accepted" ? t("loading") : t("confirmTour")}
+                </Button>
+                <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => void respond("declined")}>
+                  {busy === "declined" ? t("loading") : t("markTourLost")}
+                </Button>
+              </>
+            ) : null}
+            {tour.status === "accepted" ? (
+              <>
+                <Button size="sm" disabled={busy !== null} onClick={() => void advance("completed")}>
+                  {busy === "completed" ? t("loading") : t("markTourCompleted")}
+                </Button>
+                <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => void advance("lost")}>
+                  {busy === "lost" ? t("loading") : t("markTourLost")}
+                </Button>
+              </>
+            ) : null}
+            {tour.status === "completed" ? (
+              <>
+                <Button size="sm" disabled={busy !== null} onClick={() => void advance("enrolled")}>
+                  {busy === "enrolled" ? t("loading") : t("markTourEnrolled")}
+                </Button>
+                <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => void advance("lost")}>
+                  {busy === "lost" ? t("loading") : t("markTourLost")}
+                </Button>
+              </>
+            ) : null}
             <Button size="sm" variant="ghost" asChild>
               <Link to="/inbox/$id" params={{ id: tour.conversationId }}>
                 {t("openChat")}
@@ -99,6 +123,11 @@ export function TourCard({
         </div>
       ) : (
         <div className="mt-3 flex flex-wrap gap-2">
+          {!canRespond && tour.status === "accepted" ? (
+            <Button size="sm" disabled={busy !== null} onClick={() => void advance("completed")}>
+              {busy === "completed" ? t("loading") : t("markTourCompleted")}
+            </Button>
+          ) : null}
           {tour.conversationId ? (
             <Button size="sm" variant="secondary" asChild>
               <Link to="/inbox/$id" params={{ id: tour.conversationId }}>

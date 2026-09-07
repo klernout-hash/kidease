@@ -9,8 +9,7 @@ import { callerIsAdmin } from "./public-listing";
 import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
-import { applyStorefrontPhoto, isStockListingPhoto } from "@/lib/listing-photo";
-import { isRealListingPhoto } from "@/lib/listing-readiness";
+import { applyStorefrontPhoto, listingPhotosChanged } from "@/lib/listing-photo";
 import { writeTrustEvent } from "@/lib/server/trust";
 
 export type ClaimHit = {
@@ -302,17 +301,14 @@ export const updateListing = createServerFn({ method: "POST" })
     `;
     if (!own[0]) throw new Error("Not your listing");
     const current = await sql<{ photos: string }>`select photos from daycares where id = ${data.daycareId}`;
-    const prevPhotos = current[0]?.photos ?? "";
-    let photos = applyStorefrontPhoto(prevPhotos, data.storefront);
+    const previousPhotos = current[0]?.photos ?? "";
+    let photos = applyStorefrontPhoto(current[0]?.photos ?? "", data.storefront);
     const extras = (data.interiors ?? []).filter((p) => p.startsWith("data:image") || p.startsWith("/"));
     if (extras.length) {
       const cur = photos.split(",").filter(Boolean);
       photos = [...cur, ...extras].join(",");
     }
-    const prevSet = new Set(prevPhotos.split(",").filter(Boolean));
-    const photoTouched = photos
-      .split(",")
-      .some((p) => p && isRealListingPhoto(p) && !isStockListingPhoto(p) && !prevSet.has(p));
+    const photosChanged = listingPhotosChanged(previousPhotos, photos);
     const minAge = Math.max(0, Math.min(216, Math.round(data.ageMinMonths)));
     const maxAge = Math.max(minAge, Math.min(216, Math.round(data.ageMaxMonths)));
     const license = asImage(data.licensePhoto);
@@ -353,7 +349,7 @@ export const updateListing = createServerFn({ method: "POST" })
           else last_vacancy_updated_at
         end,
         last_photo_updated_at = case
-          when ${photoTouched} then now()
+          when ${photosChanged} then now()
           else last_photo_updated_at
         end
       where id = ${data.daycareId}

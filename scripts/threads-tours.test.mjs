@@ -102,7 +102,7 @@ test("tour copy stays text-only and names the centre", () => {
   assert.match(system, /Bright Start/);
   assert.match(system, /After drop-off/);
   const accepted = tourStatusBody({ status: "accepted", daycareName: "Bright Start", note: "Tue 9:30" });
-  assert.match(accepted, /accepted/);
+  assert.match(accepted, /confirmed/);
   assert.match(accepted, /Tue 9:30/);
   const declined = tourStatusBody({ status: "declined", daycareName: "Bright Start" });
   assert.match(declined, /declined/);

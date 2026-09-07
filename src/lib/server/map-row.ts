@@ -69,6 +69,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
   const listingActive = r.listing_active === 0 || r.listing_active === false ? false : true;
   const claimed = Boolean(r.claimed_at);
   const vacancyAt = r.last_vacancy_updated_at ?? null;
+  const photoAt = r.last_photo_updated_at ?? null;
   return applyListingReadiness({
     id: r.id,
     slug: r.slug,
@@ -120,7 +121,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     availabilityKnown: Boolean(vacancyAt),
     spotsUpdatedAt: vacancyAt,
     lastVacancyUpdatedAt: vacancyAt,
-    lastPhotoUpdatedAt: r.last_photo_updated_at ?? null,
+    lastPhotoUpdatedAt: photoAt,
     ...defaultTrustFields(),
     licenseStatus: normalizeLicenseStatus(r.license_status),
     licenseExpiry: r.license_expiry ? String(r.license_expiry).slice(0, 10) : null,

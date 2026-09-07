@@ -38,7 +38,8 @@ function listingHealth(d) {
   if (!vacancyAt) missing.push("vacancy");
   const total = 5;
   const score = total - missing.length;
-  return { score, total, percent: Math.round((score / total) * 100), missing, vacancyAt };
+  const photoAt = d.lastPhotoUpdatedAt ?? null;
+  return { score, total, percent: Math.round((score / total) * 100), missing, vacancyAt, photoAt };
 }
 
 function vacancyFreshness(updatedAt, now = Date.now()) {
@@ -66,6 +67,7 @@ const empty = {
   photos: [],
   lastVacancyUpdatedAt: null,
   spotsUpdatedAt: null,
+  lastPhotoUpdatedAt: null,
 };
 
 test("Kyle-approved trust labels are the only public badge words", () => {
@@ -102,6 +104,7 @@ test("listing health scores real fields and never invents a vacancy time", () =>
   assert.equal(blank.percent, 0);
   assert.deepEqual(blank.missing, ["fees", "ages", "photo", "hours", "vacancy"]);
   assert.equal(blank.vacancyAt, null);
+  assert.equal(blank.photoAt, null);
   assert.equal(vacancyFreshness(null).kind, "unknown");
 
   const filled = listingHealth({
@@ -121,7 +124,10 @@ test("listing health scores real fields and never invents a vacancy time", () =>
   const readiness = src("src/lib/listing-readiness.ts");
   assert.match(readiness, /HEALTH_FIELDS = \["fees", "ages", "photo", "hours", "vacancy"\]/);
   assert.match(readiness, /if \(!vacancyAt\) missing\.push\("vacancy"\)/);
+  assert.match(readiness, /PHOTO_STALE_MS/);
+  assert.match(readiness, /photoFreshness/);
   assert.doesNotMatch(readiness, /lastVacancyUpdatedAt: new Date/);
+  assert.doesNotMatch(readiness, /lastPhotoUpdatedAt: new Date/);
 
   const forms = src("src/components/provider-listing-forms.tsx");
   assert.match(forms, /ListingHealthPanel/);

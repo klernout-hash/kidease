@@ -207,19 +207,19 @@ function completenessPoints(item: QualityInput): { score: number; issues: Qualit
 
 function freshnessPoints(item: QualityInput): { score: number; issues: QualityIssue[] } {
   const vacancy = vacancyFreshness(vacancyTimestamp(item));
+  const photo = photoFreshness(photoTimestamp(item));
   const issues: QualityIssue[] = [];
   let score = 0;
-  if (vacancy.kind === "fresh") {
-    score = QUALITY_WEIGHTS.freshness;
-  } else if (vacancy.kind === "stale") {
-    score = 4;
+  if (vacancy.kind === "fresh") score += 10;
+  else if (vacancy.kind === "stale") {
+    score += 4;
     issues.push(makeIssue("vacancy_stale"));
   } else {
     issues.push(makeIssue("vacancy_unknown"));
   }
-  const photo = photoFreshness(photoTimestamp(item));
-  if (photo.kind === "stale") {
-    score = Math.max(0, score - 3);
+  if (photo.kind === "fresh") score += 5;
+  else if (photo.kind === "stale") {
+    score += 2;
     issues.push(makeIssue("photo_stale"));
   }
   return { score: clampScore(score, QUALITY_WEIGHTS.freshness), issues };

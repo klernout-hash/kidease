@@ -210,11 +210,12 @@ export type Conversation = {
   lastAt: string;
   lastBody: string;
   status: BookingStatus | null;
+  tourStatus?: TourStatus | null;
   phone: string | null;
   unread?: boolean;
 };
 
-export type TourStatus = "pending" | "accepted" | "declined";
+export type TourStatus = "pending" | "accepted" | "completed" | "enrolled" | "declined" | "lost";
 
 export type PreferredTime = {
   date: string;

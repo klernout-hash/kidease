@@ -12,7 +12,7 @@ Computed server-side in `src/lib/quality.ts`. Missing signals add **zero**. Inco
 | --- | ---: | --- |
 | Claim / licence trust | 25 | +15 claim verified, +10 licence matched to a registry record. Expired or suspended licence scores 0 for the licence slice. |
 | Listing completeness | 25 | Fees or fee program, ages, hours, real licence number, real building photo (`listingCompleteness`). |
-| Vacancy freshness | 15 | 15 if a provider confirm is under 14 days old. 4 if that timestamp is stale. 0 if no confirm exists (unknown is not treated as stale). A storefront older than 90 days (`last_photo_updated_at`) subtracts 3 from this slice and blocks Guest Favorites. Unknown photo age is not stale and is never invented. |
+| Freshness | 15 | Vacancy confirm (up to 10): 10 if under 14 days, 4 if stale, 0 if unknown. Photo timestamp (up to 5): 5 if a real upload is under 90 days, 2 if that timestamp is stale. Missing photo dates stay unknown and add zero — KidEase never invents a photo date. A known-stale storefront also blocks Guest Favorites. |
 | Gated parent reviews | 20 | Published reviews from enrolment / attendance / admin grant only (PR #64). Needs **at least 3** reviews. Uses average × volume (`count / 8`, capped). Google ratings are **not** used. |
 | Reply / tour rates | 15 | Tour accept rate after **5** accepted or declined tours (up to 8 pts). Reply rate after **5** parent threads (up to 7 pts). Hidden until those samples exist. |
 

@@ -271,8 +271,9 @@ async function loadFeatured(origin: { lat: number; lng: number }): Promise<Dayca
   }
   nearby.sort(compareProximity);
   const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(nearby, mergeClaimedCard)));
+  const scored = await overlayParentRank(merged, { distanceKnown: true, radiusKm: 40, ageGroup: "any" });
   const ranked = sortFeaturedCityAfterPriority(
-    await overlayFeaturedCity(await overlayPriority(merged)),
+    await overlayFeaturedCity(await overlayPriority(scored)),
   );
   return uniqueById(ranked).slice(0, 12).map(slimCard);
 }

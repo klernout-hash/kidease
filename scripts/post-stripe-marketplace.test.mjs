@@ -132,7 +132,7 @@ test("admin verify, alerts, demotion, and CRM stay code-only and honest", () => 
   assert.match(readiness, /lastPhotoUpdatedAt/);
   assert.doesNotMatch(readiness, /if \(item\.priority\) score \+= 1/);
   assert.match(src("src/lib/quality.ts"), /photo_stale/);
-  assert.match(src("src/lib/quality.ts"), /score - 3/);
+  assert.match(src("src/lib/quality.ts"), /score \+= 5/);
   assert.doesNotMatch(src("src/lib/quality.ts"), /item\.priority/);
   assert.match(src("migrations/0032_photo_freshness.sql"), /last_photo_updated_at/);
   assert.match(src("migrations/0032_photo_freshness.sql"), /Never invented/);

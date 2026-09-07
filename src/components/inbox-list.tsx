@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
 import { EmptyState } from "@/components/empty-state";
-import { StatusBadge } from "@/components/status-badge";
+import { PipelineBadge } from "@/components/pipeline-badge";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listInbox } from "@/lib/server/inbox";
@@ -51,7 +51,9 @@ export function InboxList() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate font-medium">{c.daycareName}</p>
-                      {c.status ? <StatusBadge status={c.status} /> : null}
+                      {c.tourStatus || c.status ? (
+                        <PipelineBadge tourStatus={c.tourStatus} bookingStatus={c.status} />
+                      ) : null}
                       {c.unread ? (
                         <span className="grid size-2 shrink-0 place-items-center rounded-full bg-danger" aria-label="Unread" />
                       ) : null}
