@@ -58,6 +58,7 @@ test("push stubs do not invent credentials and env example has names only", () =
     "APNS_TEAM_ID",
     "APNS_BUNDLE_ID",
     "APNS_KEY",
+    "APNS_PRODUCTION",
     "VITE_FCM_VAPID_PUBLIC_KEY",
   ]) {
     assert.match(envExample, new RegExp(`${name}=`));
@@ -89,6 +90,7 @@ test("admin chat lab is registered, admin-gated, and honest", () => {
   assert.match(tree, /id:\s*'\/admin-chat'/);
   assert.match(send, /PUSH_SCAFFOLD_MESSAGE/);
   assert.doesNotMatch(send, /fcm\.googleapis\.com|api\.push\.apple\.com/);
+  assert.match(readFileSync(join(root, "src/lib/server/push-send.ts"), "utf8"), /fcm\.googleapis\.com/);
   assert.match(client, /registerPushDevice/);
   assert.match(readFileSync(join(root, "docs/push.md"), "utf8"), /FEATURE_PUSH/);
   assert.match(readFileSync(join(root, "src/lib/chat-scaffold.ts"), "utf8"), /not Stream, not Sendbird/);

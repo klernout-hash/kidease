@@ -128,5 +128,5 @@ Do not restyle the pin. Same pipeline as the PWA home-screen icons.
 - Apple Developer enrollment, certificates, or TestFlight upload.
 - Google Play Console signup, Play App Signing, or production track.
 - Claiming the App Store / Play listing is live.
-- Push (APNs / FCM) — still `FEATURE_PUSH=0`.
+- Push (APNs / FCM) — send helper is wired; `FEATURE_PUSH` stays `0` until Firebase + APNs exist. See `docs/push.md`.
 - Shipping a production AAB/IPA from CI.

@@ -1,7 +1,7 @@
 /**
  * Push notification env names and client/server stubs.
- * Real Firebase / Apple credentials come later — do not invent keys.
- * Capacitor PushNotifications is wired on native only and gated by FEATURE_PUSH.
+ * FCM HTTP v1 / APNs send is wired behind FEATURE_PUSH + env credentials.
+ * Capacitor PushNotifications is native-only. Do not invent keys.
  *
  * No relative imports — scripts/push.test.mjs loads this file in Node.
  */
@@ -17,6 +17,7 @@ export const PUSH_ENV_NAMES = [
   "APNS_TEAM_ID",
   "APNS_BUNDLE_ID",
   "APNS_KEY",
+  "APNS_PRODUCTION",
   "VITE_FCM_VAPID_PUBLIC_KEY",
 ] as const;
 
