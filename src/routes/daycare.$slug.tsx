@@ -61,6 +61,10 @@ function Listing() {
   const [comparing, setComparing] = useState(false);
   const [missing, setMissing] = useState(false);
   const [reload, setReload] = useState(0);
+  const origin = useAppStore((s) => s.origin);
+  const located = useAppStore((s) => s.located);
+  const radiusKm = useAppStore((s) => s.radiusKm);
+  const ageGroup = useAppStore((s) => s.ageGroup);
 
   useEffect(() => {
     let live = true;
@@ -155,10 +159,6 @@ function Listing() {
   }
 
   const d = data.daycare;
-  const origin = useAppStore((s) => s.origin);
-  const located = useAppStore((s) => s.located);
-  const radiusKm = useAppStore((s) => s.radiusKm);
-  const ageGroup = useAppStore((s) => s.ageGroup);
   const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
   const ranked = {
     ...d,

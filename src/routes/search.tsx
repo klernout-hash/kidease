@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { ExploreRails } from "@/components/explore-rails";
+import { DaycareCard } from "@/components/daycare-card";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
 import { reverseGeocode } from "@/lib/geo";
@@ -782,7 +783,28 @@ function SearchPage() {
               />
             </div>
           ) : (
-            <ExploreRails items={list} onHover={setActive} />
+            sort === "match" || sort === "urgency" ? (
+              <section
+                className="mt-6"
+                onMouseOver={(e) => {
+                  const node = (e.target as HTMLElement).closest("[data-slug]");
+                  const slug = node?.getAttribute("data-slug");
+                  if (slug) setActive(slug);
+                }}
+              >
+                <h2 className="text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
+                  {sort === "match" ? t("sortMatch") : t("sortUrgency")}
+                </h2>
+                <p className="mt-1 text-xs text-muted">{sort === "match" ? t("sortMatchLead") : t("sortUrgencyLead")}</p>
+                <div className="ke-listings mt-4">
+                  {list.map((item, i) => (
+                    <DaycareCard key={item.id} item={item} eager={i < 4} />
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <ExploreRails items={list} onHover={setActive} />
+            )
           )}
         </div>
       </div>
