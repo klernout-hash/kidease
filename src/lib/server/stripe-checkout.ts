@@ -8,7 +8,7 @@
  * read clearly in CAD.
  */
 
-import { checkoutCurrency, checkoutLocale, checkoutPaymentMethodTypes } from "../stripe-wallets";
+import { checkoutCurrency, checkoutLocale, checkoutPaymentMethodTypes } from "../stripe-wallets.ts";
 
 export const STRIPE_STATEMENT_SUFFIX = "KIDEASE";
 

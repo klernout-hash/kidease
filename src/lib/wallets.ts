@@ -7,7 +7,7 @@
  * hosted Checkout must open in the system browser there.
  */
 
-import { isNative, nativePlatform, type NativePlatform } from "./native";
+import { isNative, nativePlatform, type NativePlatform } from "./native.ts";
 
 export type WalletAvailability = {
   applePay: boolean;
