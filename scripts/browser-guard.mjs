@@ -9,6 +9,11 @@ import { resolve, sep } from "node:path";
 
 const LOOPBACK_HOSTNAMES = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
 
+/** Agent (/workspace), CI tmp, and the repo checkout (cwd). */
+export function smokeAllowedOutputDirs(cwd = process.cwd()) {
+  return ["/workspace", "/tmp", cwd];
+}
+
 /** http/https loopback only, else exit 1. `BROWSER_ALLOW_EXTERNAL_HOST=1` opts out. */
 export function checkedUrl(url) {
   let parsed;
