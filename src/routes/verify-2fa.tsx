@@ -30,16 +30,27 @@ function VerifyTwoFactorPage() {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     void getTwoFactorStatus()
       .then((s) => {
+        if (cancelled) return;
         if (s.verified) setVerified(true);
         else {
-          return startTwoFactor().then((res) => setHint(res.emailed));
+          return startTwoFactor({ data: { force: false } }).then((res) => {
+            if (!cancelled) setHint(res.emailed);
+          });
         }
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Could not send a code"))
-      .finally(() => setReady(true));
-  }, [user]);
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Could not send a code");
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   if (isPending) {
     return (
@@ -103,7 +114,7 @@ function VerifyTwoFactorPage() {
             onClick={() => {
               setBusy(true);
               setError(null);
-              void startTwoFactor()
+              void startTwoFactor({ data: { force: true } })
                 .then((res) => setHint(res.emailed))
                 .catch((err) => setError(err instanceof Error ? err.message : "Could not send a code"))
                 .finally(() => setBusy(false));

@@ -31,3 +31,20 @@ test("regenerating the tree did not drop /get-app", () => {
   assert.match(routeTree, /from '\.\/routes\/get-app'/);
   assert.match(routeTree, /id:\s*'\/get-app'/);
 });
+
+test("verify-2fa auto-start keys off user.id and does not remint while waiting", () => {
+  assert.match(routeFile, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false\s*\}\s*\}\)/);
+  assert.match(routeFile, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*true\s*\}\s*\}\)/);
+  assert.match(routeFile, /let cancelled = false/);
+  assert.match(routeFile, /\[\s*user\?\.id\s*\]/);
+  assert.doesNotMatch(routeFile, /useEffect\(\(\) => \{[\s\S]*?\}, \[user\]\)/);
+});
+
+test("startTwoFactor reuses an unexpired challenge unless force is set", () => {
+  const twoFa = readFileSync(join(root, "src/lib/server/two-factor.ts"), "utf8");
+  assert.match(twoFa, /force\?:\s*boolean/);
+  assert.match(twoFa, /!data\.force/);
+  assert.match(twoFa, /expires_at/);
+  assert.match(twoFa, /attempts < MAX_ATTEMPTS/);
+  assert.match(twoFa, /reused:\s*true/);
+});
