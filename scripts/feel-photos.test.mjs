@@ -38,4 +38,9 @@ test("marketing feel photos stay on existing /photos paths", () => {
   assert.match(home, /\[\[data-channel=app\]/);
   assert.match(home, /\/photos\/hero\.jpg/);
   assert.doesNotMatch(home, /login\.tsx/);
+
+  assert.match(readFileSync(join(root, "src/routes/claim.tsx"), "utf8"), /FeelBanner/);
+  assert.match(readFileSync(join(root, "src/routes/help.tsx"), "utf8"), /FeelBanner/);
+  assert.match(readFileSync(join(root, "src/routes/claim.tsx"), "utf8"), /\/photos\/brick\.jpg/);
+  assert.match(readFileSync(join(root, "src/routes/help.tsx"), "utf8"), /\/photos\/cottage\.jpg/);
 });

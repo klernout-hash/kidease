@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { ListingRail } from "@/components/listing-rail";
 import { useCopy } from "@/lib/use-copy";
 import { useAppStore } from "@/lib/store";
@@ -45,7 +46,7 @@ function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        "min-h-9 rounded-full px-3 py-1 text-sm font-medium ring-1",
+        "min-h-11 rounded-full px-3.5 py-2 text-sm font-medium ring-1",
         on ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border hover:bg-surface-2",
       )}
     >
@@ -95,7 +96,13 @@ export function ParentDeskRails({
     };
   }, [age, care, items, prefs]);
 
-  if (!items.length) return null;
+  if (!items.length) {
+    return (
+      <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
+        <EmptyState title={t("noResults")} action={t("emptyFindCare")} actionTo="/search" />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-4">
@@ -111,32 +118,38 @@ export function ParentDeskRails({
           <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
             {t("railByAge")}
           </h2>
+          <a
+            href={parentRailSearchHref({ age })}
+            className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("seeAll")}
+          </a>
         </div>
         <div className="mb-3 flex flex-wrap gap-2">
           {RAIL_AGES.map((band) => (
             <Chip key={band} on={age === band} label={t(AGE_COPY[band])} onClick={() => setAge(band)} />
           ))}
         </div>
-        <ListingRail
-          title={t(AGE_COPY[age])}
-          items={rails.age}
-          seeAllHref={parentRailSearchHref({ age })}
-        />
+        <ListingRail title={t(AGE_COPY[age])} hideTitle className="mt-0 first:mt-0 md:mt-0" items={rails.age} />
       </section>
       <section className="mt-8 md:mt-10">
-        <h2 className="mb-3 min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
-          {t("railByCare")}
-        </h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
+            {t("railByCare")}
+          </h2>
+          <a
+            href={parentRailSearchHref({ care })}
+            className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("seeAll")}
+          </a>
+        </div>
         <div className="mb-3 flex flex-wrap gap-2">
           {CARE_TYPES.map((kind) => (
             <Chip key={kind} on={care === kind} label={t(CARE_COPY[kind])} onClick={() => setCare(kind)} />
           ))}
         </div>
-        <ListingRail
-          title={t(CARE_COPY[care])}
-          items={rails.care}
-          seeAllHref={parentRailSearchHref({ care })}
-        />
+        <ListingRail title={t(CARE_COPY[care])} hideTitle className="mt-0 first:mt-0 md:mt-0" items={rails.care} />
       </section>
     </div>
   );

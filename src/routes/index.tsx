@@ -308,7 +308,7 @@ function Home() {
   const featuredSearch = (
     <>
       <form
-        className="mt-8 flex flex-col gap-2 lg:flex-row lg:items-center"
+        className="mt-5 flex flex-col gap-2 lg:mt-8 lg:flex-row lg:items-center"
         onSubmit={(e) => {
           e.preventDefault();
           void applyPlace(place);
@@ -450,22 +450,25 @@ function Home() {
             {featuredSearch}
             {user && role !== "admin" && role !== "provider" ? (
               <ParentDeskRails items={explore.length ? explore : shown} children={familyKids} bookings={familyBookings} />
-            ) : null}
-            <div className="ke-web-grid mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {shown.slice(0, 9).map((item, i) => (
-                <DaycareCard key={item.id} item={item} eager={i < 3} />
-              ))}
-            </div>
-            {shown.length === 0 ? (
-              <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
-                <EmptyState
-                  title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
-                  action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
-                  onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
-                  actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
-                />
-              </div>
-            ) : null}
+            ) : (
+              <>
+                <div className="ke-web-grid mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                  {shown.slice(0, 9).map((item, i) => (
+                    <DaycareCard key={item.id} item={item} eager={i < 3} />
+                  ))}
+                </div>
+                {shown.length === 0 ? (
+                  <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
+                    <EmptyState
+                      title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
+                      action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
+                      onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
+                      actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
+                    />
+                  </div>
+                ) : null}
+              </>
+            )}
             <div className="mt-8">
               <Button size="lg" onClick={() => goSearch(origin.label)}>
                 <Search className="size-5" />
@@ -524,14 +527,19 @@ function Home() {
             <FeelPhoto src="/photos/hero.jpg" eager className="aspect-[16/9] w-full object-cover" />
           </div>
           <h1 className="mt-4 font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{t("tagline")}</h1>
-          <div className="mt-4 flex flex-col gap-2">
-            <Button size="lg" className="min-h-12 w-full" onClick={() => void useLocation()} disabled={busy}>
-              <Search className="size-5" />
-              {busy ? t("loading") : t("useLocation")}
-            </Button>
-            {locationForm}
-          </div>
           {featuredSearch}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {CITY_CHIPS.map((c) => (
+              <button
+                key={c.q}
+                type="button"
+                onClick={() => void applyPlace(c.q)}
+                className="min-h-11 rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border hover:text-fg"
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
           {user ? (
             <ParentDeskRails items={explore.length ? explore : shown} children={familyKids} bookings={familyBookings} />
           ) : (
@@ -539,18 +547,18 @@ function Home() {
               <ListingRail title={t("recentlyViewed")} items={recent} />
               <ListingRail title={t("availableNow")} items={availableNow} />
               <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
+              {shown.length === 0 ? (
+                <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
+                  <EmptyState
+                    title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
+                    action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
+                    onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
+                    actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
+                  />
+                </div>
+              ) : null}
             </>
           )}
-          {shown.length === 0 ? (
-            <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
-              <EmptyState
-                title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
-                action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
-                onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
-                actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
-              />
-            </div>
-          ) : null}
           <div className="mt-8">
             <Button size="lg" className="w-full" onClick={() => goSearch(origin.label)}>
               <Search className="size-5" />
