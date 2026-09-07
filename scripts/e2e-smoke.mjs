@@ -9,6 +9,8 @@
  * Does not charge Stripe or submit OTPs. See docs/e2e.md.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
+import http from "node:http";
+import https from "node:https";
 import { spawn } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -74,10 +76,19 @@ async function waitForOrigin(url, ms) {
 }
 
 function startPreview() {
+  // The Nitro `vercel` preset sets production-like paths. Without DATABASE_URL,
+  // the bundled server must not boot PGLite (it looks for a missing
+  // pglite.data). VERCEL=1 selects the same `none` SQL backend as Vercel
+  // preview/production — catalogue pages still render. See docs/e2e.md.
+  const env = { ...process.env };
+  if (!String(env.DATABASE_URL || "").trim()) {
+    env.VERCEL = env.VERCEL || "1";
+  }
   previewChild = spawn("npm", ["run", "preview"], {
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"],
-    env: process.env,
+    env,
+    detached: true,
   });
   previewChild.stdout.on("data", (buf) => process.stdout.write(buf));
   previewChild.stderr.on("data", (buf) => process.stderr.write(buf));
@@ -89,8 +100,26 @@ function startPreview() {
 }
 
 function stopPreview() {
-  if (!previewChild || previewChild.killed) return;
-  previewChild.kill("SIGTERM");
+  if (!previewChild?.pid) return;
+  const pid = previewChild.pid;
+  previewChild.stdout?.destroy();
+  previewChild.stderr?.destroy();
+  try {
+    process.kill(-pid, "SIGTERM");
+  } catch {
+    try {
+      previewChild.kill("SIGTERM");
+    } catch {
+      /* already gone */
+    }
+  }
+  setTimeout(() => {
+    try {
+      process.kill(-pid, "SIGKILL");
+    } catch {
+      /* already gone */
+    }
+  }, 2000).unref();
 }
 
 async function runBrowserSmoke(url) {
@@ -107,23 +136,42 @@ async function runBrowserSmoke(url) {
   });
 }
 
+function requestWithHost(url, host) {
+  const parsed = new URL(url);
+  const lib = parsed.protocol === "https:" ? https : http;
+  return new Promise((resolve, reject) => {
+    const req = lib.request(
+      {
+        hostname: parsed.hostname,
+        port: parsed.port || (parsed.protocol === "https:" ? 443 : 80),
+        path: `${parsed.pathname}${parsed.search}`,
+        method: "GET",
+        headers: { host },
+      },
+      (res) => {
+        resolve({ status: res.statusCode ?? 0, location: res.headers.location || "" });
+        res.resume();
+      },
+    );
+    req.on("error", reject);
+    req.end();
+  });
+}
+
 async function adminHttpGate(base) {
   const adminUrl = new URL(SMOKE_PATHS.admin, base).href;
   try {
-    const res = await fetch(adminUrl, {
-      redirect: "manual",
-      headers: { host: "kidease-git.vercel.app" },
-    });
-    const location = res.headers.get("location") || "";
+    const res = await requestWithHost(adminUrl, "kidease-git.vercel.app");
     const gate = classifyAdminGate({
       status: res.status,
-      locationHeader: location,
-      finalUrl: res.url,
+      locationHeader: res.location,
     });
-    if (gate.ok) {
-      record("admin-access-header", true, { note: gate.kind, status: res.status, location });
-      return;
-    }
+    record("admin-access-header", gate.ok, {
+      note: gate.ok ? gate.kind : gate.reason,
+      status: res.status,
+      location: res.location,
+    });
+    return;
   } catch {
     /* Host override is best-effort; Playwright guest gate is the CI assertion. */
   }
@@ -157,7 +205,7 @@ try {
     waitUntil: "domcontentloaded",
     timeout: timeoutMs,
   });
-  await page.getByRole("heading", { name: /Find licensed daycare near you|KidEase/i }).waitFor({
+  await page.getByRole("heading", { level: 1, name: /Find licensed daycare near you/i }).waitFor({
     timeout: timeoutMs,
   });
   const home = homepageLooksLive({
@@ -172,6 +220,7 @@ try {
     waitUntil: "domcontentloaded",
     timeout: timeoutMs,
   });
+  await page.getByRole("heading", { level: 1, name: /Sign in/i }).waitFor({ timeout: timeoutMs });
   const email = page.locator('input[type="email"]');
   await email.waitFor({ timeout: timeoutMs });
   const login = loginPageLooksLive({

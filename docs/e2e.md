@@ -16,10 +16,12 @@ The suite never opens `/pay/*`, never fills a password or OTP, and never calls S
 
 Preview port is **8081** (`vite.config.ts`). Dev server stays on **8080**.
 
+`vite preview` serves the Nitro **vercel** build. That bundle cannot boot the in-memory PGLite file. `npm run e2e:preview` sets `VERCEL=1` (same SQL backend as a Vercel deploy without `DATABASE_URL`) so catalogue pages still render. Set a real `DATABASE_URL` if you need Neon instead.
+
 ```bash
 npx playwright install chromium   # once per machine
 npm run build                     # migrate no-ops without DATABASE_URL
-npm run e2e:preview               # starts `vite preview`, then smokes it
+npm run e2e:preview               # starts `vite preview` with VERCEL=1, then smokes it
 ```
 
 Or point at an already-running preview:

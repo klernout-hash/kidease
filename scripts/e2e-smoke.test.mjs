@@ -138,6 +138,9 @@ test("smoke paths never include pay or 2FA submit", () => {
   assert.match(runner, /scripts\/browser-smoke\.mjs/);
   assert.match(runner, /args\.startPreview/);
   assert.match(runner, /skipReason/);
+  assert.match(runner, /env\.VERCEL = env\.VERCEL \|\| "1"/);
+  assert.match(runner, /requestWithHost/);
+  assert.match(runner, /kidease-git\.vercel\.app/);
 });
 
 test("package.json wires e2e scripts to the smoke runner and browser-smoke", () => {
