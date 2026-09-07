@@ -64,9 +64,13 @@ test("requireAdmin checks verified 2FA and fails closed", () => {
   const roles = src("src/lib/server/roles.ts");
   assert.match(roles, /assertTwoFactorVerified/);
   assert.match(roles, /emailVerified/);
-  const twoFa = src("src/lib/server/two-factor.ts");
+  const twoFa = src("src/lib/server/two-factor.server.ts");
   assert.match(twoFa, /Two-factor verification required/);
   assert.match(twoFa, /fail closed|Fail closed/);
+  assert.match(twoFa, /getCookie/);
+  // Client-imported createServerFn module must not call getCookie outside handlers.
+  assert.doesNotMatch(src("src/lib/server/two-factor.ts"), /function twoFactorCookieRaw/);
+  assert.doesNotMatch(src("src/lib/server/two-factor.ts"), /export function assertTwoFactorVerified/);
   const gates = src("src/lib/auth/gates.tsx");
   assert.match(gates, /staffTwoFactorRequired\(next\) \? "need" : "ok"/);
 });

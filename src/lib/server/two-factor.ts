@@ -33,22 +33,6 @@ function signDevice(userId: string, exp: number) {
   return `${body}.${sig}`;
 }
 
-function twoFactorCookieRaw(): string | null {
-  return getCookie(TWO_FACTOR_COOKIE) ?? getCookie(SHARED_TWO_FACTOR_COOKIE) ?? null;
-}
-
-/** Fail closed: missing/invalid cookie or a thrown status check blocks staff. */
-export function assertTwoFactorVerified(userId: string) {
-  try {
-    if (!isTwoFactorVerified(userId, twoFactorCookieRaw(), secret())) {
-      throw new Error("Two-factor verification required");
-    }
-  } catch (err) {
-    if (err instanceof Error && err.message === "Two-factor verification required") throw err;
-    throw new Error("Two-factor verification required");
-  }
-}
-
 async function ensureTable() {
   const sql = await getSql();
   await sql
@@ -117,7 +101,10 @@ async function sendCodeEmail(to: string, code: string) {
 export const getTwoFactorStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    return { verified: isTwoFactorVerified(context.userId, twoFactorCookieRaw(), secret()) };
+    // getCookie must stay inside this handler. A module-level helper is an
+    // import-protection error because verify-2fa / TwoFactorGate import this file.
+    const raw = getCookie(TWO_FACTOR_COOKIE) ?? getCookie(SHARED_TWO_FACTOR_COOKIE) ?? null;
+    return { verified: isTwoFactorVerified(context.userId, raw, secret()) };
   });
 
 export const startTwoFactor = createServerFn({ method: "POST" })
