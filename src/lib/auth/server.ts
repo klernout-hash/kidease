@@ -260,6 +260,9 @@ if (process.env.VERCEL && !betterAuthSecret) {
       "Do not commit a secret. Without it, sessions cannot be verified across serverless instances.",
   );
 }
+// Better Auth reads BETTER_AUTH_SECRET only — AUTH_SECRET is unused.
+// Rotating the secret drops cookies/JWTs and OAuth token encryption, not
+// password hashes (account.password is scrypt/bcrypt, not keyed by this).
 
 const socialProviders = {
   ...(appleIdpConfigured && APPLE_CLIENT_ID
@@ -294,7 +297,8 @@ export const auth = betterAuth({
   baseURL,
   // Deployed apps must set BETTER_AUTH_SECRET. Preview: process-stable secret on
   // globalThis so HMR doesn't invalidate PGLite-backed sessions (see above).
-  // Do not mint a production secret in the repo.
+  // Do not mint a production secret in the repo. AUTH_SECRET is not read.
+  // Password hashes in account.password are not signed with this secret.
   secret: betterAuthSecret ?? previewAuthSecret(),
   database,
 

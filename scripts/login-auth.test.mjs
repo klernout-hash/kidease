@@ -8,7 +8,10 @@ import {
   friendlyAuthError,
   messageForEmailAccount,
   oauthOnlyMessage,
+  resolveSocialSignInRedirect,
+  socialSignInFailedMessage,
 } from "../src/lib/auth/login-errors.ts";
+import { NATIVE_APPLE, visibleSignInProviders } from "../src/lib/auth/providers.ts";
 import {
   aliasInboundAuthCookies,
   applySharedAuthCookies,
@@ -49,6 +52,38 @@ describe("password sign-in errors", () => {
     assert.equal(classifyEmailAccounts([{ providerId: "credential", password: "hash" }]), "has_password");
     assert.match(messageForEmailAccount({ kind: "missing", providers: [] }), /No KidEase account/);
     assert.match(oauthOnlyMessage(["apple"]), /Apple/);
+    assert.match(friendlyAuthError("provider not found"), /not configured/);
+    assert.match(friendlyAuthError(socialSignInFailedMessage("apple")), /Apple/);
+  });
+
+  it("throws when social sign-in returns no URL (Apple dead-button)", () => {
+    assert.throws(() => resolveSocialSignInRedirect({ data: {}, error: null }, "apple"), /Apple/);
+    assert.throws(() => resolveSocialSignInRedirect({ data: { url: "  " }, error: null }, "apple"), /Apple/);
+    assert.throws(() => resolveSocialSignInRedirect({ error: { message: "" } }, "apple"), /Apple/);
+    assert.throws(() => resolveSocialSignInRedirect({ error: { message: "provider not found" } }, "google"), /provider not found/);
+    assert.equal(
+      resolveSocialSignInRedirect({ data: { url: "https://appleid.apple.com/auth" } }, "apple"),
+      "https://appleid.apple.com/auth",
+    );
+  });
+
+  it("hides Apple unless nativeApple is on; login does not fall back to a dead Apple button", () => {
+    assert.equal(visibleSignInProviders({ nativeGoogle: false, broker: false }).some((p) => p.idp === "apple"), false);
+    assert.deepEqual(
+      visibleSignInProviders({ nativeApple: true, nativeGoogle: false, broker: false }),
+      [NATIVE_APPLE],
+    );
+    const login = read("src/routes/login.tsx");
+    const loader = read("src/lib/server/sign-in-providers.ts");
+    const client = read("src/lib/auth/client.ts");
+    assert.match(loader, /APPLE_CLIENT_ID/);
+    assert.match(loader, /APPLE_TEAM_ID/);
+    assert.match(loader, /APPLE_KEY_ID/);
+    assert.match(loader, /APPLE_PRIVATE_KEY/);
+    assert.match(loader, /nativeApple/);
+    assert.doesNotMatch(login, /GROK_PROVIDERS/);
+    assert.match(login, /getSignInProviders\(\)\.catch\(\(\) => \[\]\)/);
+    assert.match(client, /resolveSocialSignInRedirect/);
   });
 
   it("login uses the shared mapper and classifies the account after a failed password", () => {

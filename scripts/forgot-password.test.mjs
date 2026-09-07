@@ -34,6 +34,9 @@ describe("forgot-password flow", () => {
     assert.match(routeFile, /createFileRoute\("\/forgot-password"\)/);
     assert.match(routeFile, /authClient\.requestPasswordReset/);
     assert.match(routeFile, /redirectTo:\s*"\/reset-password"/);
+    assert.match(routeFile, /getResetMailReady/);
+    assert.match(routeFile, /mailReady/);
+    assert.match(routeFile, /RESEND_API_KEY or SENDGRID_API_KEY/);
     assert.match(routeTree, /from '\.\/routes\/forgot-password'/);
     assert.match(routeTree, /id:\s*'\/forgot-password'/);
     assert.match(routeTree, /path:\s*'\/forgot-password'/);
@@ -77,6 +80,7 @@ describe("forgot-password flow", () => {
     const config = read("src/lib/server/reset-mail-config.ts");
     const authApi = read("src/routes/api/auth/$.ts");
     assert.match(mail, /assertResetMailConfigured/);
+    assert.match(mail, /getResetMailReady/);
     assert.match(mail, /RESEND_API_KEY/);
     assert.match(mail, /SENDGRID_API_KEY/);
     assert.match(config, /RESET_MAIL_NOT_CONFIGURED/);

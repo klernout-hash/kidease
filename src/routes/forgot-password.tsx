@@ -3,6 +3,7 @@ import { useState } from "react";
 import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
 import { friendlyResetMailError } from "@/lib/auth/reset-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import { getResetMailReady } from "@/lib/server/reset-mail";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
@@ -12,10 +13,15 @@ export const Route = createFileRoute("/forgot-password")({
     const email = typeof s.email === "string" ? s.email.trim() : "";
     return email ? { email } : {};
   },
+  loader: async () => {
+    const mailReady = await getResetMailReady().catch(() => true);
+    return { mailReady };
+  },
   component: ForgotPassword,
 });
 
 function ForgotPassword() {
+  const { mailReady } = Route.useLoaderData();
   const search = Route.useSearch();
   const [email, setEmail] = useState(search.email ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +73,12 @@ function ForgotPassword() {
             Enter the email on the account. If it is registered, we email a reset link that expires in about an hour.
             Use this if the password hash is stale or none of the passwords you remember work.
           </p>
+          {mailReady ? null : (
+            <p className="mt-3 text-sm text-danger">
+              This environment cannot send reset emails yet (missing RESEND_API_KEY or SENDGRID_API_KEY).
+              If the account was created with Apple or Google, use that button on the sign-in page.
+            </p>
+          )}
           <form onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
             <label className="block text-sm">
               Email

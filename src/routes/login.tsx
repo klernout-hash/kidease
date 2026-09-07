@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { GROK_PROVIDERS, authClient, authEnabled, signIn, turnstileFetchOptions } from "@/lib/auth/client";
+import { authClient, authEnabled, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { explainEmailSignInFailure } from "@/lib/server/email-sign-in";
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/login")({
     return out;
   },
   loader: async () => {
-    const providers = await getSignInProviders().catch(() => [...GROK_PROVIDERS]);
+    const providers = await getSignInProviders().catch(() => []);
     return { providers };
   },
   component: Login,
@@ -143,7 +143,8 @@ function Login() {
     try {
       await signIn(providerId, { callbackURL: twoFactorUrl(dest), errorCallbackURL: "/login" });
     } catch (err) {
-      setError(err instanceof Error ? friendlyAuthError(err.message) : "Sign-in failed");
+      const message = err instanceof Error ? friendlyAuthError(err.message) : "Sign-in failed";
+      setError(message.trim() || "Sign-in failed");
       setBusy(false);
     }
   }

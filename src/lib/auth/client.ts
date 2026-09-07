@@ -2,6 +2,7 @@ import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { clearStickyDesk } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
+import { resolveSocialSignInRedirect } from "./login-errors";
 import { isNativeSocialProvider } from "./providers";
 
 export const authClient = createAuthClient({
@@ -103,8 +104,7 @@ export async function signIn(
       callbackURL,
       errorCallbackURL,
     });
-    if (error) throw new Error(error.message ?? "Sign-in failed");
-    if (data?.url) window.location.href = data.url;
+    window.location.href = resolveSocialSignInRedirect({ data, error }, providerId);
     return;
   }
 
@@ -133,8 +133,7 @@ export async function signIn(
     callbackURL,
     errorCallbackURL,
   });
-  if (error) throw new Error(error.message ?? "Sign-in failed");
-  if (data?.url) window.location.href = data.url;
+  window.location.href = resolveSocialSignInRedirect({ data, error }, providerId);
 }
 
 function openSignInPopup(providerId: string): Window | null {

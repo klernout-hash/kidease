@@ -37,8 +37,15 @@ export const NATIVE_FACEBOOK: GrokProvider = {
   native: true,
 };
 
+export const NATIVE_APPLE: GrokProvider = {
+  providerId: "apple",
+  idp: "apple",
+  label: "Apple",
+  native: true,
+};
+
 export const GROK_PROVIDERS: readonly GrokProvider[] = [
-  { providerId: "apple", idp: "apple", label: "Apple", native: true },
+  NATIVE_APPLE,
   { providerId: "grok-google", idp: "google", label: "Google" },
 ];
 
@@ -53,11 +60,13 @@ export function visibleSignInProviders(opts: {
   broker: boolean;
   preferNativeGoogle?: boolean;
   nativeFacebook?: boolean;
+  nativeApple?: boolean;
 }): GrokProvider[] {
-  const apple = GROK_PROVIDERS.find((p) => p.providerId === "apple");
   const brokerGoogle = GROK_PROVIDERS.find((p) => p.providerId === "grok-google");
   const out: GrokProvider[] = [];
-  if (apple) out.push(apple);
+  // Hide Apple unless APPLE_* is set — a visible button with no socialProviders.apple
+  // disables, then re-enables, with no picker and no error.
+  if (opts.nativeApple) out.push(NATIVE_APPLE);
 
   const google = pickGoogle(opts, brokerGoogle);
   if (google) out.push(google);

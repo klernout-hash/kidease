@@ -52,6 +52,30 @@ export function messageForEmailAccount(explanation: EmailSignInExplanation): str
   return "Email or password is incorrect.";
 }
 
+export function socialSignInFailedMessage(providerId?: string): string {
+  const label = providerId ? SOCIAL_LABEL[providerId] : "";
+  if (label) return `Could not start ${label} sign-in. Use email, or try again.`;
+  return "Could not start social sign-in. Use email, or try again.";
+}
+
+/** Better Auth social/oauth2 must return a URL. Empty success is a dead button. */
+export function resolveSocialSignInRedirect(
+  result: {
+    data?: { url?: string | null } | null;
+    error?: { message?: string | null } | null;
+  },
+  providerId?: string,
+): string {
+  if (result.error) {
+    throw new Error(result.error.message?.trim() || socialSignInFailedMessage(providerId));
+  }
+  const url = result.data?.url?.trim();
+  if (!url) {
+    throw new Error(socialSignInFailedMessage(providerId));
+  }
+  return url;
+}
+
 export function friendlyAuthError(
   message?: string | null,
   explanation?: EmailSignInExplanation | null,
@@ -97,11 +121,14 @@ export function friendlyAuthError(
   if (raw.includes("popup")) {
     return "Pop-up blocked — allow pop-ups for KidEase, then try again.";
   }
+  if (raw.includes("could not start") && raw.includes("sign-in")) {
+    return message?.trim() || socialSignInFailedMessage();
+  }
   if (
     (raw.includes("client_id") || (raw.includes("apple") && raw.includes("secret"))) ||
     (raw.includes("provider") && raw.includes("not found"))
   ) {
-    return "Social sign-in is not configured on this host. Set GOOGLE_CLIENT_* or FACEBOOK_CLIENT_* (server env), or use email.";
+    return "That sign-in method is not configured on this host. Use email or Google.";
   }
   if (
     raw.includes("not configured") ||
