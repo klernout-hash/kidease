@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { BuildingPhoto } from "@/components/building-photo";
 import { listingThumb } from "@/lib/listing-photo";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty-state";
 import { getDaycaresByIds } from "@/lib/server/daycares";
 import { clearCompare, readCompare, toggleCompare } from "@/lib/compare";
 import { useCopy } from "@/lib/use-copy";
@@ -46,7 +47,7 @@ function ComparePage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-4xl">{t("compareTitle")}</h1>
-            <p className="mt-2 text-muted">{t("compareEmpty")}</p>
+            {items.length ? <p className="mt-2 text-muted">{t("compareEmpty")}</p> : null}
           </div>
           <Button variant="secondary" onClick={() => { clearCompare(); setItems([]); }}>
             {t("clearCompare")}
@@ -162,9 +163,9 @@ function ComparePage() {
             </table>
           </div>
         ) : (
-          <p className="mt-10 rounded-xl bg-surface p-8 text-center text-muted ring-1 ring-border">
-            <Link to="/search" className="text-primary hover:underline">{t("explore")}</Link>
-          </p>
+          <div className="mt-10 rounded-xl bg-surface ring-1 ring-border">
+            <EmptyState title={t("noCompare")} body={t("compareEmpty")} action={t("emptyFindCare")} actionTo="/search" />
+          </div>
         )}
       </main>
       <SiteFooter />

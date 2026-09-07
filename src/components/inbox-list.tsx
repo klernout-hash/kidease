@@ -33,9 +33,9 @@ export function InboxList() {
   return (
     <Shell>
       <main className="mx-auto max-w-2xl px-4 py-8">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Message centre</p>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t("messages")}</p>
         <h1 className="mt-2 font-display text-3xl">{t("inbox")}</h1>
-        <p className="mt-2 text-sm text-muted">{t("noInboxLead")}</p>
+        {items && items.length ? <p className="mt-2 text-sm text-muted">{t("noInboxLead")}</p> : null}
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {items === null ? (
             <li className="p-6 text-muted">{t("loading")}</li>

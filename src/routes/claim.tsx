@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { CalendarCheck, Globe, MapPin, Megaphone, MessageCircle, Smartphone, TrendingUp, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
@@ -210,6 +211,7 @@ function ClaimPage() {
         <h1 className="mt-3 font-display text-4xl">{t("claimTitle")}</h1>
         <p className="mt-3 max-w-xl text-muted">{t("providerDiscover")}</p>
         <p className="mt-2 max-w-xl text-sm text-subtle">{t("claimLead")}</p>
+        <FeelBanner src="/photos/brick.jpg" className="mt-8" />
 
         <h2 className="mt-10 font-display text-2xl">{t("partnerPerksTitle")}</h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2">

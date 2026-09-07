@@ -3,7 +3,7 @@ import { Heart, MapPinned, MessageCircle, Phone, Star, Video } from "lucide-reac
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
-import { DaycareCard } from "@/components/daycare-card";
+import { ListingRail } from "@/components/listing-rail";
 import { RequestSpotSheet } from "@/components/request-spot";
 import { RequestTourSheet } from "@/components/request-tour";
 import { GoogleRating } from "@/components/google-rating";
@@ -134,8 +134,8 @@ function Listing() {
       <Shell>
         <main className="ke-gutter mx-auto max-w-lg py-16">
           <EmptyState
-            title="Listing not available"
-            body="This centre is not on KidEase, or the link is out of date."
+            title={t("listingMissing")}
+            body={t("listingMissingLead")}
             action={t("search")}
             actionTo="/search"
             secondary={t("tryAgain")}
@@ -456,19 +456,21 @@ function Listing() {
               <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
             </section>
 
-            <section className="mt-8">
-              <h2 className="font-display text-2xl">{t("amenities")}</h2>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {d.amenities
-                  .split(",")
-                  .filter(Boolean)
-                  .map((key) => (
-                    <li key={key} className="rounded-full bg-surface px-3 py-1 text-sm ring-1 ring-border">
-                      {amenityLabel(key, locale)}
-                    </li>
-                  ))}
-              </ul>
-            </section>
+            {d.amenities.split(",").filter(Boolean).length ? (
+              <section className="mt-8">
+                <h2 className="font-display text-2xl">{t("amenities")}</h2>
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {d.amenities
+                    .split(",")
+                    .filter(Boolean)
+                    .map((key) => (
+                      <li key={key} className="rounded-full bg-surface px-3 py-1 text-sm ring-1 ring-border">
+                        {amenityLabel(key, locale)}
+                      </li>
+                    ))}
+                </ul>
+              </section>
+            ) : null}
 
             <section className="mt-8">
               <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
@@ -565,14 +567,7 @@ function Listing() {
         </div>
 
         {data.nearby.length ? (
-          <section className="mt-12">
-            <h2 className="font-display text-2xl">{t("similar")}</h2>
-            <div className="ke-listings mt-4">
-              {data.nearby.map((item) => (
-                <DaycareCard key={item.id} item={item} showDistance={false} />
-              ))}
-            </div>
-          </section>
+          <ListingRail title={t("similar")} items={data.nearby} seeAllHref="/search" className="mt-12 first:mt-12" />
         ) : null}
       </article>
 

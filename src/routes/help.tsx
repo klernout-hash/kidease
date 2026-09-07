@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Mail } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ function Help() {
         <p className="ke-kicker">{t("helpKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("helpTitle")}</h1>
         <p className="mt-6 text-muted">{t("supportLead")}</p>
+        <FeelBanner src="/photos/cottage.jpg" className="mt-8" />
 
         <div className="mt-8 rounded-xl bg-surface p-5 ring-1 ring-border">
           <p className="text-sm font-semibold">{t("contactDirect")}</p>
