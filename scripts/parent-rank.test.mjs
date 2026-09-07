@@ -194,7 +194,7 @@ test("server overlay, search sorts, desks, and docs stay honest", () => {
   const demand = src("src/lib/demand-heat.ts");
   assert.match(demand, /DEMAND_WINDOW_DAYS = 28/);
   assert.match(demand, /MIN_DEMAND_REPLY_SAMPLE = MIN_THREAD_SAMPLE/);
-  assert.match(demand, /Paid analytics windows do not change/);
+  assert.match(demand, /Paid analytics windows \(7 vs 90 days\) do not change these bands/);
   assert.match(demand, /never invents volume/);
 
   const server = src("src/lib/server/rank.ts");
@@ -232,5 +232,5 @@ test("server overlay, search sorts, desks, and docs stay honest", () => {
   assert.match(docs, /never.*inflate Match or Urgency/i);
   assert.match(docs, /quality score/);
   assert.match(docs, /28-day/);
-  assert.match(docs, /never invents volume/);
+  assert.match(docs, /not invented warmth/);
 });
