@@ -64,6 +64,7 @@ import {
 } from "./broker-env";
 import { pgliteDialect } from "./pglite-dialect";
 import { PREVIEW_ALLOWED_HOSTS } from "./preview";
+import { SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE } from "./cookies";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
 void ensureDbReady();
@@ -152,7 +153,7 @@ const baseURL = {
     "[::1]",
   ],
   protocol: "auto" as const,
-  fallback: explicitBaseURL ?? "https://kidease.ca",
+  fallback: explicitBaseURL ?? "https://www.kidease.ca",
 };
 
 function requestOrigin(request?: Request): string | undefined {
@@ -225,7 +226,7 @@ const database = databaseUrl
     : { dialect: pgliteDialect(() => getPglite()), type: "postgres" as const };
 
 /** Session token cookie name — also read by the live-preview popup completion page. */
-export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
+export { SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE } from "./cookies";
 
 // Built separately so the `betterAuth({...})` call stays easy to edit without
 // breaking brackets (models often trip on the conditional plugin spread).
@@ -366,7 +367,7 @@ export const auth = betterAuth({
 });
 
 export function readSessionToken(): string | null {
-  return getCookie(SESSION_TOKEN_COOKIE) ?? null;
+  return getCookie(SESSION_TOKEN_COOKIE) ?? getCookie(SHARED_SESSION_TOKEN_COOKIE) ?? null;
 }
 
 // Re-exported for convenience; the array lives in the dependency-free

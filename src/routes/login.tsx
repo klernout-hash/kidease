@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn, turnstileFetchOptions } from "@/lib/auth/client";
+import { friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import { explainEmailSignInFailure } from "@/lib/server/email-sign-in";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
@@ -63,7 +65,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const { token, onToken } = useTurnstileToken();
+  const { token, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
 
   useEffect(() => {
     if (role === "parent" || role === "provider") rememberRole(role);
@@ -71,10 +73,11 @@ function Login() {
   }, [role, deskHint]);
 
   async function finish() {
-    try {
-      await authClient.getSession();
-    } catch {
-      /* session store will catch up */
+    const session = await authClient.getSession().catch(() => ({ data: null }));
+    if (!session?.data?.user) {
+      throw new Error(
+        "Signed in, but the browser did not keep the session cookie. Open https://www.kidease.ca/login and try again.",
+      );
     }
     if (role === "parent" || role === "provider") {
       try {
@@ -104,6 +107,9 @@ function Login() {
       if (operator && email.trim().toLowerCase() !== OPERATOR_EMAIL) {
         throw new Error("Operator sign-in is only for the KidEase owner account.");
       }
+      if (turnstileRequired && !token.trim()) {
+        throw new Error("Please complete the security check, then try again.");
+      }
       if (mode === "up") {
         const res = await authClient.signUp.email({
           email,
@@ -115,12 +121,16 @@ function Login() {
         rememberToken(res.data);
       } else {
         const res = await authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(token) });
-        if (res.error) throw new Error(friendlyAuthError(res.error.message));
+        if (res.error) {
+          const explanation = await explainEmailSignInFailure({ data: { email } }).catch(() => null);
+          throw new Error(friendlyAuthError(res.error.message, explanation));
+        }
         rememberToken(res.data);
       }
       await finish();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign-in failed");
+      resetTurnstile();
     } finally {
       setBusy(false);
     }
@@ -234,9 +244,9 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={mode === "up" ? "new-password" : "current-password"}
             />
-            <TurnstileField onToken={onToken} />
+            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
-            <Button type="submit" className="w-full" disabled={busy}>
+            <Button type="submit" className="w-full" disabled={busy || (turnstileRequired && !token.trim())}>
               {mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
           </form>
@@ -249,6 +259,10 @@ function Login() {
               >
                 Forgot password?
               </Link>
+              <p className="mt-2 text-[13px] text-muted">
+                If none of the passwords you remember work, reset from that page. The link is emailed to the
+                inbox on the account and expires in about an hour.
+              </p>
             </div>
           ) : null}
           {!operator ? (
@@ -282,26 +296,6 @@ function Login() {
       </main>
     </Shell>
   );
-}
-
-function friendlyAuthError(message?: string | null) {
-  const raw = (message || "").toLowerCase();
-  if (raw.includes("invalid origin") || raw.includes("invalid_origin")) {
-    return "This sign-in page needs a refresh — try again, or use email.";
-  }
-  if (raw.includes("invalid password") || raw.includes("invalid_password") || raw.includes("invalid email")) {
-    return "Email or password is incorrect.";
-  }
-  if (raw.includes("user already exists") || raw.includes("already exists")) {
-    return "An account with that email already exists. Sign in instead.";
-  }
-  if (raw.includes("popup")) {
-    return "Pop-up blocked — allow pop-ups for KidEase, then try again.";
-  }
-  if ((raw.includes("client_id") || raw.includes("apple") && raw.includes("secret")) || (raw.includes("provider") && raw.includes("not found"))) {
-    return "Social sign-in is not configured on this host. Set GOOGLE_CLIENT_* or FACEBOOK_CLIENT_* (server env), or use email.";
-  }
-  return message || "Sign-in failed";
 }
 
 function rememberToken(data: { token?: string | null } | null | undefined) {

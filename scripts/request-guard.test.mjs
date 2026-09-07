@@ -9,9 +9,11 @@ import {
   CHANGE_PASSWORD_PATH,
   decideRequest,
   HIDDEN_LISTING_SLUGS,
+  isApexKideaseHost,
   isHiddenListingPath,
   isSensitiveDeskPath,
   isVercelAppHost,
+  shouldCanonicalizeApexPath,
 } from "./request-guard.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -114,12 +116,43 @@ test("admin desks on vercel.app 302 to www so Cloudflare Access applies", () => 
   });
 });
 
-test("admin on www / apex / localhost is not redirected by this guard", () => {
-  for (const host of ["www.kidease.ca", "kidease.ca", "localhost:8080"]) {
+test("admin on www / localhost is not redirected by this guard", () => {
+  for (const host of ["www.kidease.ca", "localhost:8080"]) {
     assert.deepEqual(decideRequest({ host, pathname: "/admin" }), { action: "next" });
     assert.deepEqual(decideRequest({ host, pathname: "/admin-contracts" }), { action: "next" });
     assert.deepEqual(decideRequest({ host, pathname: "/admin-chat" }), { action: "next" });
   }
+});
+
+test("apex document GETs canonicalize to www so __Host- login is not split", () => {
+  assert.equal(isApexKideaseHost("kidease.ca"), true);
+  assert.equal(isApexKideaseHost("www.kidease.ca"), false);
+  assert.equal(shouldCanonicalizeApexPath("/login"), true);
+  assert.equal(shouldCanonicalizeApexPath("/api/auth/sign-in/email"), false);
+  assert.equal(shouldCanonicalizeApexPath("/.well-known/apple-app-site-association"), false);
+  assert.deepEqual(decideRequest({ host: "kidease.ca", pathname: "/login", method: "GET" }), {
+    action: "redirect",
+    status: 308,
+    location: `${CANONICAL_ORIGIN}/login`,
+  });
+  assert.deepEqual(decideRequest({ host: "kidease.ca", pathname: "/forgot-password", search: "?email=a@b.c" }), {
+    action: "redirect",
+    status: 308,
+    location: `${CANONICAL_ORIGIN}/forgot-password?email=a@b.c`,
+  });
+  assert.deepEqual(decideRequest({ host: "kidease.ca", pathname: "/admin" }), {
+    action: "redirect",
+    status: 308,
+    location: `${CANONICAL_ORIGIN}/admin`,
+  });
+  assert.deepEqual(
+    decideRequest({ host: "kidease.ca", pathname: "/api/auth/sign-in/email", method: "POST" }),
+    { action: "next" },
+  );
+  assert.deepEqual(
+    decideRequest({ host: "kidease.ca", pathname: "/.well-known/apple-app-site-association" }),
+    { action: "next" },
+  );
 });
 
 test("spoofed sibling host does not look like vercel.app", () => {

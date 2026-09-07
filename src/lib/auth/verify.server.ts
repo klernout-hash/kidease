@@ -1,4 +1,5 @@
 import { getRequest } from "@tanstack/react-start/server";
+import { aliasInboundAuthCookies, isKideasePublicHost } from "./cookies";
 import { auth, authConfigured } from "./server";
 
 /**
@@ -60,8 +61,16 @@ export async function getSessionUser(
   const request = getRequest();
   if (!request) return null;
   let headers = request.headers;
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  if (isKideasePublicHost(host)) {
+    const aliased = aliasInboundAuthCookies(request.headers.get("cookie"));
+    if (aliased !== (request.headers.get("cookie") || "")) {
+      headers = new Headers(headers);
+      headers.set("cookie", aliased);
+    }
+  }
   if (bearerToken) {
-    headers = new Headers(request.headers);
+    headers = new Headers(headers);
     headers.set("Authorization", `Bearer ${bearerToken}`);
   }
   const session = await auth.api.getSession({ headers });

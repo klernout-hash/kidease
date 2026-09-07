@@ -1,7 +1,8 @@
 /**
  * Nitro request middleware: hide admin desks on `*.vercel.app` (Cloudflare
- * Access only sits on www.kidease.ca), 404 QA ghost-listing document URLs,
- * and serve `/.well-known/change-password`.
+ * Access only sits on www.kidease.ca), send apex document GETs to www so
+ * login is not split across `__Host-` cookies, 404 QA ghost-listing
+ * document URLs, and serve `/.well-known/change-password`.
  *
  * Uses the `Host` header, not `X-Forwarded-Host`, so a spoofed forwarded host
  * cannot un-gate a vercel.app request. `www.kidease.ca` keeps serving /admin
@@ -23,6 +24,7 @@ export default async function requestGuardMiddleware(
     host: event.req.headers.get("host") ?? event.url.host,
     pathname: event.url.pathname,
     search: event.url.search,
+    method: event.req.method,
   });
 
   if (decision.action === "redirect") {

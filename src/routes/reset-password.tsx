@@ -23,7 +23,7 @@ function ResetPassword() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
-  const { token: challenge, onToken } = useTurnstileToken();
+  const { token: challenge, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
   const ready = passwordMeetsPolicy(password) && password === confirm && Boolean(token);
 
   async function onSubmit(e: React.FormEvent) {
@@ -40,6 +40,10 @@ function ResetPassword() {
       setError("This reset link is missing or expired. Request a new one from the sign-in page.");
       return;
     }
+    if (turnstileRequired && !challenge.trim()) {
+      setError("Please complete the security check, then try again.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -52,6 +56,7 @@ function ResetPassword() {
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not reset the password.");
+      resetTurnstile();
     } finally {
       setBusy(false);
     }
@@ -103,9 +108,9 @@ function ResetPassword() {
                 {confirm && confirm !== password ? (
                   <p className="text-[13px] text-danger">Those passwords do not match.</p>
                 ) : null}
-                <TurnstileField onToken={onToken} />
+                <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
                 {error ? <p className="text-sm text-danger">{error}</p> : null}
-                <Button type="submit" className="w-full" disabled={busy || !ready}>
+                <Button type="submit" className="w-full" disabled={busy || !ready || (turnstileRequired && !challenge.trim())}>
                   Save new password
                 </Button>
               </form>

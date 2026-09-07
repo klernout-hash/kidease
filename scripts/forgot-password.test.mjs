@@ -45,6 +45,7 @@ describe("forgot-password flow", () => {
     const login = read("src/routes/login.tsx");
     assert.match(login, /to="\/forgot-password"/);
     assert.match(login, /Forgot password\?/);
+    assert.match(login, /If none of the passwords you remember work/);
     assert.doesNotMatch(login, /setForgotOpen/);
     assert.doesNotMatch(login, /authClient\.requestPasswordReset/);
     assert.doesNotMatch(login, /authClient\.forgetPassword/);

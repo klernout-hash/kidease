@@ -1,12 +1,19 @@
 import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie, setCookie } from "@tanstack/react-start/server";
+import { getCookie, getRequest, setCookie } from "@tanstack/react-start/server";
+import {
+  isKideasePublicHost,
+  KIDEASE_COOKIE_DOMAIN,
+  SHARED_TWO_FACTOR_COOKIE,
+  TWO_FACTOR_COOKIE,
+} from "@/lib/auth/cookies";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { ADMIN_EMAIL, lookupUser } from "@/lib/server/notify";
 
-export const TWO_FACTOR_COOKIE = "__Host-kidease.2fa";
+export { TWO_FACTOR_COOKIE, SHARED_TWO_FACTOR_COOKIE } from "@/lib/auth/cookies";
+
 const TTL_MS = 10 * 60 * 1000;
 const DEVICE_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -107,7 +114,7 @@ async function sendCodeEmail(to: string, code: string) {
 export const getTwoFactorStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const device = readDevice(getCookie(TWO_FACTOR_COOKIE) ?? null);
+    const device = readDevice(getCookie(TWO_FACTOR_COOKIE) ?? getCookie(SHARED_TWO_FACTOR_COOKIE) ?? null);
     return { verified: device?.userId === context.userId };
   });
 
@@ -175,12 +182,25 @@ export const verifyTwoFactor = createServerFn({ method: "POST" })
     }
     await sql`delete from login_challenges where user_id = ${context.userId}`;
     const exp = Date.now() + DEVICE_MS;
-    setCookie(TWO_FACTOR_COOKIE, signDevice(context.userId, exp), {
+    const value = signDevice(context.userId, exp);
+    const expires = new Date(exp);
+    setCookie(TWO_FACTOR_COOKIE, value, {
       httpOnly: true,
       secure: true,
       sameSite: "lax",
       path: "/",
-      expires: new Date(exp),
+      expires,
     });
+    const host = getRequest()?.headers.get("x-forwarded-host") || getRequest()?.headers.get("host");
+    if (isKideasePublicHost(host)) {
+      setCookie(SHARED_TWO_FACTOR_COOKIE, value, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+        domain: KIDEASE_COOKIE_DOMAIN,
+        expires,
+      });
+    }
     return { ok: true as const };
   });

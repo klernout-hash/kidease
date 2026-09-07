@@ -17,7 +17,8 @@
  * `client.ts` (`signIn` → `openSignInPopup`).
  */
 import { isNativeSocialProvider } from "./providers";
-import { auth, SESSION_TOKEN_COOKIE } from "./server";
+import { readSessionTokenFromHeader } from "./cookies";
+import { auth } from "./server";
 
 /** Message shape the popup posts to the opener (must match `client.ts`). */
 type PopupMessage = {
@@ -36,7 +37,7 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
 
   if (done) {
     const errored = url.searchParams.has("error");
-    const token = errored ? null : readCookie(request, SESSION_TOKEN_COOKIE);
+    const token = errored ? null : readSessionTokenFromHeader(request.headers.get("cookie"));
     const message: PopupMessage = {
       source: "grok-auth-popup",
       token,
@@ -167,22 +168,3 @@ function completionHtml(message: PopupMessage): string {
 </html>`;
 }
 
-/** Read a single cookie value from the request (handles `=` inside values). */
-function readCookie(request: Request, name: string): string | null {
-  const header = request.headers.get("cookie");
-  if (!header) return null;
-  for (const part of header.split(";")) {
-    const trimmed = part.trim();
-    if (!trimmed) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq <= 0) continue;
-    if (trimmed.slice(0, eq) !== name) continue;
-    const raw = trimmed.slice(eq + 1);
-    try {
-      return decodeURIComponent(raw);
-    } catch {
-      return raw;
-    }
-  }
-  return null;
-}

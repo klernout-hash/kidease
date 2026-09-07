@@ -21,13 +21,18 @@ function ForgotPassword() {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const { token, onToken } = useTurnstileToken();
+  const { token, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const target = email.trim().toLowerCase();
     if (!target || !target.includes("@")) {
       setError("Enter the email on the account first.");
+      setNote(null);
+      return;
+    }
+    if (turnstileRequired && !token.trim()) {
+      setError("Please complete the security check, then try again.");
       setNote(null);
       return;
     }
@@ -44,6 +49,7 @@ function ForgotPassword() {
       setNote("If that email is registered with KidEase, we sent a reset link. Check the inbox and junk folder.");
     } catch (err) {
       setError(err instanceof Error ? friendlyResetMailError(err.message) : "Could not send a reset email.");
+      resetTurnstile();
     } finally {
       setBusy(false);
     }
@@ -59,6 +65,7 @@ function ForgotPassword() {
           <h1 className="mt-6 font-display text-3xl">Forgot password</h1>
           <p className="mt-2 text-sm text-muted">
             Enter the email on the account. If it is registered, we email a reset link that expires in about an hour.
+            Use this if the password hash is stale or none of the passwords you remember work.
           </p>
           <form onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
             <label className="block text-sm">
@@ -72,10 +79,10 @@ function ForgotPassword() {
                 autoComplete="email"
               />
             </label>
-            <TurnstileField onToken={onToken} />
+            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
             {note ? <p className="text-sm text-muted">{note}</p> : null}
-            <Button type="submit" className="w-full" disabled={busy}>
+            <Button type="submit" className="w-full" disabled={busy || (turnstileRequired && !token.trim())}>
               {busy ? "Sending…" : "Email reset link"}
             </Button>
           </form>
