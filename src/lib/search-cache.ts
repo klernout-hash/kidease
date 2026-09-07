@@ -8,6 +8,7 @@ export function searchCacheKey(input: {
   radiusKm: number;
   sort: string;
   ageGroup: string;
+  startDate?: string | null;
 }) {
   return [
     input.lat.toFixed(3),
@@ -15,6 +16,7 @@ export function searchCacheKey(input: {
     input.radiusKm,
     input.sort,
     input.ageGroup,
+    input.startDate || "",
   ].join(":");
 }
 

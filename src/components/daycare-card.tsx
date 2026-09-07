@@ -16,6 +16,7 @@ import { vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
+import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 
 const HEART_SAVED = "#FF385C";
 
@@ -131,10 +132,12 @@ export function DaycareCard({
           {incompleteLabel ? (
             <p className="truncate text-[13px] font-normal leading-5 text-[#6A6A6A]">{incompleteLabel}</p>
           ) : null}
-          {spotsKnown || freshnessText ? (
+          {spotsKnown || freshnessText || typeof item.matchScore === "number" || (item.urgencyScore ?? 0) > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
               {spotsKnown ? <span className="ke-honesty">{spotsKnown}</span> : null}
               {freshnessText ? <span className="ke-honesty">{freshnessText}</span> : null}
+              <MatchCue score={item.matchScore} compact />
+              <UrgencyCue score={item.urgencyScore} compact />
             </div>
           ) : null}
           {priceAmount ? (

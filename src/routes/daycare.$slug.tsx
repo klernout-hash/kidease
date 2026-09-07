@@ -22,6 +22,9 @@ import { readCompare, toggleCompare } from "@/lib/compare";
 import { rememberViewed } from "@/lib/recent";
 import { trackLocation } from "@/lib/telemetry";
 import { useAppStore } from "@/lib/store";
+import { parentMatchScore } from "@/lib/parent-match";
+import { parentUrgencyScore } from "@/lib/parent-urgency";
+import { distanceKm } from "@/lib/proximity";
 import { ListingBadges } from "@/components/listing-badges";
 import { CompletenessBanner } from "@/components/listing-completeness";
 import { ListingReviewForm } from "@/components/listing-review-form";
@@ -58,6 +61,10 @@ function Listing() {
   const [comparing, setComparing] = useState(false);
   const [missing, setMissing] = useState(false);
   const [reload, setReload] = useState(0);
+  const origin = useAppStore((s) => s.origin);
+  const located = useAppStore((s) => s.located);
+  const radiusKm = useAppStore((s) => s.radiusKm);
+  const ageGroup = useAppStore((s) => s.ageGroup);
 
   useEffect(() => {
     let live = true;
@@ -152,6 +159,15 @@ function Listing() {
   }
 
   const d = data.daycare;
+  const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
+  const ranked = {
+    ...d,
+    matchScore: parentMatchScore(
+      { ...d, distanceKm: km },
+      { ageGroup, radiusKm, distanceKnown: located },
+    ),
+    urgencyScore: parentUrgencyScore(d, { ageGroup }),
+  };
   const name = displayCentreName(locale === "fr" ? d.nameFr : d.name);
   const desc = locale === "fr" ? d.descriptionFr : d.description;
   const hours = locale === "fr" ? d.hoursFr : d.hours;
@@ -277,7 +293,7 @@ function Listing() {
                   {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
                     <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
                   ) : null}
-                  <ListingBadges item={d} />
+                  <ListingBadges item={ranked} />
                 </div>
                 <TrustExplainer className="mt-3" />
                 <p className="mt-3 text-sm text-muted">{t("licensedCentreLine")}</p>

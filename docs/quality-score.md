@@ -40,6 +40,8 @@ If the metro sample is too thin, **nobody** in that city gets the badge.
 
 Migration `0031_quality_guest_favorites.sql` adds `quality_score`, `quality_scored_at`, and `guest_favorite` on `daycares`. Listing detail may write the last computed values. Search always recomputes from current signals.
 
+Parent **Match** and **Urgency** (and centre demand heat) compose with this score — see `docs/parent-rank.md`. Paid pins still do not enter quality.
+
 ## Out of scope
 
 Photo authenticity ML, licence OCR, auto-removal, Stripe, Facebook.

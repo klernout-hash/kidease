@@ -11,6 +11,11 @@ import { useCopy } from "@/lib/use-copy";
 import { vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
+import { MatchCue, UrgencyCue } from "@/components/rank-cues";
+import { parentMatchScore } from "@/lib/parent-match";
+import { parentUrgencyScore } from "@/lib/parent-urgency";
+import { useAppStore } from "@/lib/store";
+import { distanceKm } from "@/lib/proximity";
 import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
@@ -20,6 +25,10 @@ export const Route = createFileRoute("/compare")({ component: ComparePage });
 
 function ComparePage() {
   const { t, locale } = useCopy();
+  const origin = useAppStore((s) => s.origin);
+  const located = useAppStore((s) => s.located);
+  const radiusKm = useAppStore((s) => s.radiusKm);
+  const ageGroup = useAppStore((s) => s.ageGroup);
   const [items, setItems] = useState<DaycareCard[]>([]);
 
   useEffect(() => {
@@ -65,6 +74,29 @@ function ComparePage() {
                   {items.map((d) => (
                     <td key={d.id} className="p-2">
                       <TrustSignals item={d} surface="parent" compact />
+                    </td>
+                  ))}
+                </tr>
+                <tr className="border-t border-border">
+                  <th className="p-2 font-medium text-fg">{t("matchScore")}</th>
+                  {items.map((d) => {
+                    const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
+                    const score = parentMatchScore(
+                      { ...d, distanceKm: km },
+                      { ageGroup, radiusKm, distanceKnown: located },
+                    );
+                    return (
+                      <td key={d.id} className="p-2">
+                        <MatchCue score={score} />
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr className="border-t border-border">
+                  <th className="p-2 font-medium text-fg">{t("urgencyScore")}</th>
+                  {items.map((d) => (
+                    <td key={d.id} className="p-2">
+                      <UrgencyCue score={parentUrgencyScore(d, { ageGroup })} showZero />
                     </td>
                   ))}
                 </tr>

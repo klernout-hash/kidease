@@ -1,4 +1,5 @@
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
+import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 import { PriorityPill } from "@/components/priority-pill";
 import { TrustSignals } from "@/components/trust-badge";
 import { vacancyLine } from "@/components/vacancy-freshness";
@@ -43,6 +44,8 @@ export function ListingBadges({
       {freshness.kind !== "unknown" && freshness.text ? (
         <span className={cn(pill, "text-muted")}>{freshness.text}</span>
       ) : null}
+      <MatchCue score={item.matchScore} compact={compact} />
+      <UrgencyCue score={item.urgencyScore} compact={compact} />
     </div>
   );
 }

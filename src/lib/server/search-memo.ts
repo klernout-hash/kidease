@@ -12,6 +12,7 @@ export function searchMemoKey(input: {
   sort: string;
   ageGroup: string;
   fsa?: string;
+  startDate?: string | null;
 }) {
   return [
     input.lat.toFixed(3),
@@ -20,6 +21,7 @@ export function searchMemoKey(input: {
     input.sort,
     input.ageGroup,
     input.fsa || "",
+    input.startDate || "",
   ].join(":");
 }
 

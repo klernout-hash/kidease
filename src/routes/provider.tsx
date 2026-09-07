@@ -26,6 +26,8 @@ import { ProviderMoneyPanel } from "@/components/provider-money";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
 import { ProviderPlanBanner } from "@/components/provider-plan-banner";
+import { DemandCues } from "@/components/rank-cues";
+import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
 
 type DaycareDesk = "requests" | "money" | "listings" | "licence" | "contract" | "promote";
@@ -49,7 +51,9 @@ function ProviderPage() {
   const search = Route.useSearch();
   const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? "requests");
   const [listings, setListings] = useState<Daycare[]>([]);
-  const [stats, setStats] = useState<Array<{ daycareId: string; views: number; inquiries: number; requests: number }>>([]);
+  const [stats, setStats] = useState<
+    Array<{ daycareId: string; views: number; inquiries: number; requests: number; demand?: DemandSnapshot }>
+  >([]);
   const [requests, setRequests] = useState<SpotRequest[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [subscription, setSubscription] = useState<{
@@ -262,6 +266,7 @@ function ProviderPage() {
                     <dd className="font-display text-2xl tabular-nums">{st?.requests ?? 0}</dd>
                   </div>
                 </dl>
+                <DemandCues snapshot={st?.demand} />
                 {declined ? (
                   <p className="mt-4 rounded-lg bg-danger/10 p-3 text-sm text-danger">
                     KidEase declined this listing. Parent requests and Promote stay off. Add another centre below, or wait for a re-review after Kyle asks for more.

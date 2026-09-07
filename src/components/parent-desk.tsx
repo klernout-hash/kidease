@@ -19,7 +19,7 @@ import { hasCareDetails } from "@/lib/child-profile";
 import { useCopy } from "@/lib/use-copy";
 import { signOut } from "@/lib/auth/client";
 import { formatAgeLabel } from "@/lib/templates";
-import { formatMonth, money } from "@/lib/utils";
+import { ageGroupFromMonths, formatMonth, money, monthsBetween } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
 import type { Bill } from "@/lib/bill";
@@ -28,6 +28,10 @@ import { BillStatusBadge } from "@/components/bill-status";
 import { periodLabel } from "@/lib/stripe-methods";
 import { ParentPlusPanel } from "@/components/parent-plus";
 import { SavedSearchesPanel } from "@/components/saved-searches-panel";
+import { parentMatchScore } from "@/lib/parent-match";
+import { parentUrgencyScore, soonestStartDate } from "@/lib/parent-urgency";
+import { distanceKm } from "@/lib/proximity";
+import { useAppStore } from "@/lib/store";
 
 type ParentTab = "saved" | "bookings" | "payments" | "children" | "alerts";
 
@@ -35,6 +39,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
   const { session: desks } = useSessionDesks();
+  const origin = useAppStore((s) => s.origin);
+  const located = useAppStore((s) => s.located);
+  const radiusKm = useAppStore((s) => s.radiusKm);
   const [tab, setTab] = useState<ParentTab>(initialTab ?? "children");
   const [saved, setSaved] = useState<Card[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -80,7 +87,24 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       {tab === "saved" ? (
         <div className="ke-listings mt-6">
           {saved.length ? (
-            saved.map((item) => (
+            [...saved]
+              .map((item) => {
+                const child = children[0];
+                const ageGroup = child?.birthdate ? ageGroupFromMonths(monthsBetween(child.birthdate)) : "any";
+                const startDate = soonestStartDate(bookings.filter((b) => b.daycareId === item.id));
+                const km = distanceKm(origin, { lat: item.lat, lng: item.lng });
+                return {
+                  ...item,
+                  distanceKm: km,
+                  matchScore: parentMatchScore(
+                    { ...item, distanceKm: km },
+                    { ageGroup, radiusKm, distanceKnown: located },
+                  ),
+                  urgencyScore: parentUrgencyScore(item, { ageGroup, startDate }),
+                };
+              })
+              .sort((a, b) => (b.urgencyScore - a.urgencyScore) || (b.matchScore - a.matchScore))
+              .map((item) => (
               <div key={item.id} className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   {item.live || (item.claimStatus && item.claimStatus !== "unclaimed") ? (
@@ -88,9 +112,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                   ) : null}
                   <TrustSignals item={item} surface="parent" compact />
                 </div>
-                <DaycareCard item={item} showDistance={false} />
+                <DaycareCard item={item} showDistance={located} />
               </div>
-            ))
+              ))
           ) : (
             <EmptyState title={t("noSaved")} body={t("noSavedLead")} action={t("emptyFindCare")} actionTo="/search" />
           )}
