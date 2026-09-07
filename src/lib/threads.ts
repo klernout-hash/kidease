@@ -6,7 +6,7 @@
  * Do not buy Stream or Sendbird.
  */
 
-export const TOUR_STATUSES = ["pending", "accepted", "declined"] as const;
+export const TOUR_STATUSES = ["pending", "accepted", "completed", "enrolled", "declined", "lost"] as const;
 export type TourStatus = (typeof TOUR_STATUSES)[number];
 
 export const MIN_TOUR_SLOTS = 1;
@@ -144,22 +144,28 @@ export function tourSystemBody(input: {
 }
 
 export function tourStatusBody(input: {
-  status: "accepted" | "declined";
+  status: "accepted" | "declined" | "completed" | "enrolled" | "lost";
   daycareName: string;
   note?: string | null;
   locale?: "en" | "fr" | string;
 }): string {
   const note = (input.note || "").trim();
-  if (input.locale === "fr") {
-    const head =
-      input.status === "accepted"
-        ? `${input.daycareName} a accepté la visite.`
-        : `${input.daycareName} a décliné la visite.`;
-    return note ? `${head}\nNote : ${note}` : head;
-  }
-  const head =
-    input.status === "accepted"
-      ? `${input.daycareName} accepted the tour request.`
-      : `${input.daycareName} declined the tour request.`;
-  return note ? `${head}\nNote: ${note}` : head;
+  const fr = input.locale === "fr";
+  const head = (() => {
+    if (input.status === "accepted") {
+      return fr ? `${input.daycareName} a confirmé la visite.` : `${input.daycareName} confirmed the tour.`;
+    }
+    if (input.status === "completed") {
+      return fr ? `Visite effectuée à ${input.daycareName}.` : `Tour completed at ${input.daycareName}.`;
+    }
+    if (input.status === "enrolled") {
+      return fr ? `Inscription confirmée à ${input.daycareName}.` : `Enrolled at ${input.daycareName}.`;
+    }
+    if (input.status === "lost") {
+      return fr ? `La visite à ${input.daycareName} n’a pas abouti.` : `The tour at ${input.daycareName} did not lead to enrolment.`;
+    }
+    return fr ? `${input.daycareName} a décliné la visite.` : `${input.daycareName} declined the tour request.`;
+  })();
+  if (!note) return head;
+  return fr ? `${head}\nNote : ${note}` : `${head}\nNote: ${note}`;
 }

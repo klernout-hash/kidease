@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
+import { vacancyConfirmPriority } from "@/lib/director-nudges";
 import { refreshVacancy } from "@/lib/server/claims";
 import { useCopy } from "@/lib/use-copy";
 import type { Daycare } from "@/lib/types";
@@ -42,13 +43,14 @@ export function VacancyConfirmLoop({
   const [busyId, setBusyId] = useState<string | null>(null);
 
   if (!listings.length) return null;
+  const ordered = vacancyConfirmPriority(listings);
 
   return (
     <section className="mb-8 rounded-xl bg-surface p-5 ring-1 ring-border">
       <h2 className="font-display text-2xl">{t("vacancyConfirmTitle")}</h2>
       <p className="mt-1 text-sm text-muted">{t("vacancyRefreshLead")}</p>
       <ul className="mt-4 space-y-3">
-        {listings.map((d) => {
+        {ordered.map((d) => {
           const name = locale === "fr" && d.nameFr ? d.nameFr : d.name;
           return (
             <li

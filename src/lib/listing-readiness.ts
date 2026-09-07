@@ -15,6 +15,9 @@ export type CompletenessField = (typeof COMPLETENESS_FIELDS)[number];
 /** Parents should treat vacancy as stale after two weeks without a provider confirm. */
 export const VACANCY_STALE_MS = 14 * 24 * 60 * 60 * 1000;
 
+/** Storefront photos go stale after 90 days. Missing dates stay unknown — never invented. */
+export const PHOTO_STALE_MS = 90 * 24 * 60 * 60 * 1000;
+
 export type RelativeAge = {
   unit: "now" | "minute" | "hour" | "day" | "month";
   count: number;
@@ -23,6 +26,8 @@ export type RelativeAge = {
 export type VacancyFreshness =
   | { kind: "unknown"; age: null }
   | { kind: "fresh" | "stale"; age: RelativeAge; updatedAt: string };
+
+export type PhotoFreshness = VacancyFreshness;
 
 export type Completeness = {
   ready: boolean;
@@ -153,14 +158,33 @@ export function vacancyTimestamp(d: Pick<Daycare, "lastVacancyUpdatedAt" | "spot
   return d.lastVacancyUpdatedAt ?? d.spotsUpdatedAt ?? null;
 }
 
-/** Stamp derived honesty fields. Does not invent a vacancy time. */
+export function photoTimestamp(d: Pick<Daycare, "lastPhotoUpdatedAt">) {
+  return d.lastPhotoUpdatedAt ?? null;
+}
+
+export function photoFreshness(updatedAt?: string | null, now = Date.now()): PhotoFreshness {
+  if (!updatedAt) return { kind: "unknown", age: null };
+  const ts = Date.parse(updatedAt);
+  if (!Number.isFinite(ts)) return { kind: "unknown", age: null };
+  const ageMs = now - ts;
+  const age = relativeAge(ageMs);
+  return {
+    kind: ageMs > PHOTO_STALE_MS ? "stale" : "fresh",
+    age,
+    updatedAt,
+  };
+}
+
+/** Stamp derived honesty fields. Does not invent a vacancy or photo time. */
 export function applyListingReadiness<T extends Daycare>(d: T): T {
   const complete = listingCompleteness(d);
   const vacancyAt = vacancyTimestamp(d);
+  const photoAt = photoTimestamp(d);
   return {
     ...d,
     lastVacancyUpdatedAt: vacancyAt,
     spotsUpdatedAt: vacancyAt,
+    lastPhotoUpdatedAt: photoAt,
     availabilityKnown: Boolean(vacancyAt),
     detailsReady: complete.ready,
     completenessMissing: complete.missing,
@@ -178,6 +202,7 @@ export type ListingHealth = {
   percent: number;
   missing: HealthField[];
   vacancyAt: string | null;
+  photoAt: string | null;
 };
 
 export function listingHealth(
@@ -196,9 +221,11 @@ export function listingHealth(
     | "photos"
     | "lastVacancyUpdatedAt"
     | "spotsUpdatedAt"
+    | "lastPhotoUpdatedAt"
   >,
 ): ListingHealth {
   const vacancyAt = vacancyTimestamp(d);
+  const photoAt = photoTimestamp(d);
   const missing: HealthField[] = [];
   if (!hasFeeOrProgram(d)) missing.push("fees");
   if (!hasConfirmedAges(d)) missing.push("ages");
@@ -213,6 +240,7 @@ export function listingHealth(
     percent: Math.round((score / total) * 100),
     missing,
     vacancyAt,
+    photoAt,
   };
 }
 
@@ -247,6 +275,7 @@ export function listingQualityScore(
       | "photos"
       | "lastVacancyUpdatedAt"
       | "spotsUpdatedAt"
+      | "lastPhotoUpdatedAt"
       | "priority"
     >,
 ): number {
@@ -254,6 +283,8 @@ export function listingQualityScore(
   if (isClaimVerified(item)) score += 3;
   const vacancy = vacancyFreshness(vacancyTimestamp(item));
   if (vacancy.kind === "fresh") score += 2;
+  const photo = photoFreshness(photoTimestamp(item));
+  if (photo.kind === "fresh") score += 1;
   score += listingCompleteness(item).score;
   if (item.priority) score += 1;
   return score;

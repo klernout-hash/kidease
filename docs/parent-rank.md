@@ -42,6 +42,7 @@ Sort **Need soon** also ignores paid pins.
 
 - Search cards + Best match / Need soon sorts + optional need-by date
 - Compare, listing detail, parent saved list (Match / Urgency)
-- Centre desk listings (demand heat / fill-risk / SLA)
+- Signed-in parent home + Family desk **For you** rails (Match, Need soon, Guest Favorites, age, care type)
+- Centre desk listings (demand heat / fill-risk / SLA) and action nudges
 
-Search always recomputes. No new secrets. No migration.
+Search always recomputes. Paid pins never enter Match, Urgency, or Guest Favorites. Photo freshness is a separate listing-health / quality cue (migration `0032`).

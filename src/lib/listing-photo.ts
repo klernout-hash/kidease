@@ -20,6 +20,17 @@ export function applyStorefrontPhoto(current: string, storefront?: string) {
   return [storefront, ...rest].join(",");
 }
 
+/** True only when the persisted photo list actually changed. Never invents a date. */
+export function listingPhotosChanged(before: string, after: string): boolean {
+  const norm = (raw: string) =>
+    raw
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .join(",");
+  return norm(before) !== norm(after);
+}
+
 export function isOfficialBuildingPhoto(src: string | undefined): boolean {
   return Boolean(src && src.startsWith("/photos/buildings/") && !src.includes("..") && !src.includes("-logo"));
 }

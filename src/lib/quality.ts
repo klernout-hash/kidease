@@ -14,6 +14,8 @@
 
 import {
   listingCompleteness,
+  photoFreshness,
+  photoTimestamp,
   vacancyFreshness,
   vacancyTimestamp,
   type CompletenessField,
@@ -65,6 +67,7 @@ export type QualityIssueId =
   | "incomplete_photo"
   | "vacancy_unknown"
   | "vacancy_stale"
+  | "photo_stale"
   | "reviews_thin"
   | "tours_low"
   | "replies_low";
@@ -104,6 +107,7 @@ export type QualityInput = TrustListing &
     | "photos"
     | "lastVacancyUpdatedAt"
     | "spotsUpdatedAt"
+    | "lastPhotoUpdatedAt"
     | "parentRatingX10"
     | "parentReviewCount"
   > & {
@@ -132,6 +136,7 @@ const ISSUE_ANCHOR: Partial<Record<QualityIssueId, string>> = {
   incomplete_license: "listing-health-license",
   vacancy_unknown: "listing-health-vacancy",
   vacancy_stale: "listing-health-vacancy",
+  photo_stale: "listing-health-photo",
 };
 
 const ISSUE_CTA: Record<QualityIssueId, QualityIssueCta> = {
@@ -146,6 +151,7 @@ const ISSUE_CTA: Record<QualityIssueId, QualityIssueCta> = {
   incomplete_photo: "edit_photo",
   vacancy_unknown: "confirm_spots",
   vacancy_stale: "confirm_spots",
+  photo_stale: "edit_photo",
   reviews_thin: "inbox",
   tours_low: "inbox",
   replies_low: "inbox",
@@ -200,13 +206,22 @@ function completenessPoints(item: QualityInput): { score: number; issues: Qualit
 
 function freshnessPoints(item: QualityInput): { score: number; issues: QualityIssue[] } {
   const vacancy = vacancyFreshness(vacancyTimestamp(item));
-  if (vacancy.kind === "fresh") {
-    return { score: QUALITY_WEIGHTS.freshness, issues: [] };
+  const photo = photoFreshness(photoTimestamp(item));
+  const issues: QualityIssue[] = [];
+  let score = 0;
+  if (vacancy.kind === "fresh") score += 10;
+  else if (vacancy.kind === "stale") {
+    score += 4;
+    issues.push(makeIssue("vacancy_stale"));
+  } else {
+    issues.push(makeIssue("vacancy_unknown"));
   }
-  if (vacancy.kind === "stale") {
-    return { score: 4, issues: [makeIssue("vacancy_stale")] };
+  if (photo.kind === "fresh") score += 5;
+  else if (photo.kind === "stale") {
+    score += 2;
+    issues.push(makeIssue("photo_stale"));
   }
-  return { score: 0, issues: [makeIssue("vacancy_unknown")] };
+  return { score: clampScore(score, QUALITY_WEIGHTS.freshness), issues };
 }
 
 function reviewPoints(item: QualityInput): { score: number; issues: QualityIssue[] } {

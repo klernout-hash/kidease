@@ -44,6 +44,7 @@ export type ParentMatchInput = Pick<
   | "photos"
   | "lastVacancyUpdatedAt"
   | "spotsUpdatedAt"
+  | "lastPhotoUpdatedAt"
   | "parentRatingX10"
   | "parentReviewCount"
   | "claimStatus"

@@ -27,6 +27,7 @@ import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
+import { isCareType, isRailAge, matchesCareType, matchesRailAge, type CareType, type RailAge } from "@/lib/care-type";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { saveSearch } from "@/lib/server/saved-searches";
 import {
@@ -41,8 +42,22 @@ const CompareBar = lazy(() => import("@/components/compare-bar").then((m) => ({ 
 
 export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>) => {
-    const q = typeof s.q === "string" ? s.q : "";
-    return q ? { q } : {};
+    const out: {
+      q?: string;
+      sort?: SortKey;
+      age?: RailAge;
+      care?: CareType;
+      favorites?: "1";
+    } = {};
+    if (typeof s.q === "string" && s.q) out.q = s.q;
+    const sort = typeof s.sort === "string" ? s.sort : "";
+    if (["distance", "price", "rating", "availability", "recommended", "match", "urgency"].includes(sort)) {
+      out.sort = sort as SortKey;
+    }
+    if (typeof s.age === "string" && isRailAge(s.age)) out.age = s.age;
+    if (typeof s.care === "string" && isCareType(s.care)) out.care = s.care;
+    if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
+    return out;
   },
   component: SearchPage,
 });
@@ -92,6 +107,9 @@ function SearchPage() {
   const [readyOnly, setReadyOnly] = useState(false);
   const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(false);
   const [needBy, setNeedBy] = useState("");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [careType, setCareType] = useState<CareType | "any">("any");
+  const [schoolAgeOnly, setSchoolAgeOnly] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saveBusy, setSaveBusy] = useState(false);
@@ -113,6 +131,19 @@ function SearchPage() {
   useEffect(() => {
     void bootSearchOrigin(incoming.q);
   }, [incoming.q]);
+
+  useEffect(() => {
+    if (incoming.sort) setSort(incoming.sort);
+    if (incoming.age === "school-age") {
+      setSchoolAgeOnly(true);
+      setAgeGroup("any");
+    } else if (incoming.age) {
+      setSchoolAgeOnly(false);
+      setAgeGroup(incoming.age);
+    }
+    if (incoming.care) setCareType(incoming.care);
+    if (incoming.favorites === "1") setFavoritesOnly(true);
+  }, [incoming.sort, incoming.age, incoming.care, incoming.favorites, setSort, setAgeGroup]);
 
   useEffect(() => {
     const saved = takeSavedSearchToApply();
@@ -238,6 +269,9 @@ function SearchPage() {
     setClaimVerifiedOnly(false);
     setLiveOnly(false);
     setAgeGroup("any");
+    setFavoritesOnly(false);
+    setCareType("any");
+    setSchoolAgeOnly(false);
   }
 
   function currentFilters(): SavedSearchFilters {
@@ -341,8 +375,11 @@ function SearchPage() {
     if (confirmedOnly) rows = rows.filter((r) => vacancyFreshness(vacancyTimestamp(r)).kind === "fresh");
     if (readyOnly) rows = rows.filter((r) => r.detailsReady === true);
     if (claimVerifiedOnly) rows = rows.filter((r) => isClaimVerified(r));
+    if (favoritesOnly) rows = rows.filter((r) => r.guestFavorite === true);
+    if (careType !== "any") rows = rows.filter((r) => matchesCareType(r, careType));
+    if (schoolAgeOnly) rows = rows.filter((r) => matchesRailAge(r, "school-age"));
     return rows;
-  }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, extended, infantOnly, catchmentOnly, confirmedOnly, readyOnly, claimVerifiedOnly]);
+  }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, extended, infantOnly, catchmentOnly, confirmedOnly, readyOnly, claimVerifiedOnly, favoritesOnly, careType, schoolAgeOnly]);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +
@@ -355,7 +392,10 @@ function SearchPage() {
     (confirmedOnly ? 1 : 0) +
     (readyOnly ? 1 : 0) +
     (claimVerifiedOnly ? 1 : 0) +
-    (ageGroup !== "any" ? 1 : 0);
+    (ageGroup !== "any" ? 1 : 0) +
+    (favoritesOnly ? 1 : 0) +
+    (careType !== "any" ? 1 : 0) +
+    (schoolAgeOnly ? 1 : 0);
   const city = origin.label.split(",")[0];
   const fabric = areaPresence(list);
   const freshness = presenceFreshness(originAt, originSource);
@@ -459,6 +499,10 @@ function SearchPage() {
       {chip(extended, t("filterExtended"), () => setExtended((v) => !v))}
       {chip(infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v))}
       {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
+      {chip(favoritesOnly, t("filterFavorites"), () => setFavoritesOnly((v) => !v))}
+      {chip(careType === "centre", t("filterCareCentre"), () => setCareType((v) => (v === "centre" ? "any" : "centre")))}
+      {chip(careType === "home", t("filterCareHome"), () => setCareType((v) => (v === "home" ? "any" : "home")))}
+      {chip(careType === "before-after", t("filterCareBeforeAfter"), () => setCareType((v) => (v === "before-after" ? "any" : "before-after")))}
     </div>
   );
 
@@ -619,12 +663,25 @@ function SearchPage() {
                 <button
                   key={a}
                   type="button"
-                  onClick={() => setAgeGroup(a === "any" ? "any" : (a as AgeGroup))}
-                  className={cn("min-h-11 rounded-full px-3 py-1.5 text-sm ring-1", ageGroup === a ? "bg-fg text-bg ring-fg" : "ring-border")}
+                  onClick={() => {
+                    setSchoolAgeOnly(false);
+                    setAgeGroup(a === "any" ? "any" : (a as AgeGroup));
+                  }}
+                  className={cn("min-h-11 rounded-full px-3 py-1.5 text-sm ring-1", !schoolAgeOnly && ageGroup === a ? "bg-fg text-bg ring-fg" : "ring-border")}
                 >
                   {a === "any" ? t("anyAge") : t(a)}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setSchoolAgeOnly((v) => !v);
+                  if (!schoolAgeOnly) setAgeGroup("any");
+                }}
+                className={cn("min-h-11 rounded-full px-3 py-1.5 text-sm ring-1", schoolAgeOnly ? "bg-fg text-bg ring-fg" : "ring-border")}
+              >
+                {t("schoolAge")}
+              </button>
             </div>
             <div className="flex flex-wrap gap-2">
               {(

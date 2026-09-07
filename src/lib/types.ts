@@ -96,6 +96,7 @@ export type Daycare = {
   availabilityKnown?: boolean;
   spotsUpdatedAt?: string | null;
   lastVacancyUpdatedAt?: string | null;
+  lastPhotoUpdatedAt?: string | null;
   detailsReady?: boolean;
   completenessMissing?: Array<"fees" | "ages" | "hours" | "license" | "photo">;
   licenseStatus?: "unverified" | "matched" | "expired" | "suspended" | "active" | "unknown";
@@ -209,11 +210,12 @@ export type Conversation = {
   lastAt: string;
   lastBody: string;
   status: BookingStatus | null;
+  tourStatus?: TourStatus | null;
   phone: string | null;
   unread?: boolean;
 };
 
-export type TourStatus = "pending" | "accepted" | "declined";
+export type TourStatus = "pending" | "accepted" | "completed" | "enrolled" | "declined" | "lost";
 
 export type PreferredTime = {
   date: string;

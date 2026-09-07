@@ -12,7 +12,7 @@ import { readCompare, toggleCompare } from "@/lib/compare";
 import { feeProgramBadgeKey } from "@/lib/licensing";
 import { licenseBadge } from "@/lib/trust";
 import type { CopyKey } from "@/lib/copy";
-import { vacancyLine } from "@/components/vacancy-freshness";
+import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
@@ -63,9 +63,11 @@ export function DaycareCard({
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
   const line3 = [ages, hours].filter(Boolean).join(" · ");
   const freshness = vacancyLine(item, t, locale);
+  const photosAge = photoLine(item, t, locale);
   const incompleteLabel = parentIncompleteLabel(item, t);
   const spotsKnown = known ? (open ? `${item.spotsTotal} ${t("spots")}` : t("waitlist")) : "";
   const freshnessText = freshness.kind === "unknown" ? "" : freshness.text;
+  const photoText = photosAge.kind === "unknown" ? "" : photosAge.text;
   const priceAmount = feeBadge === "badgeTen" ? "$10" : feeOk ? money(item.fromPrice, locale) : "";
   const priceUnit = feeBadge === "badgeTen" ? " / day" : feeOk ? t("month") : "";
 
@@ -132,10 +134,11 @@ export function DaycareCard({
           {incompleteLabel ? (
             <p className="truncate text-[13px] font-normal leading-5 text-[#6A6A6A]">{incompleteLabel}</p>
           ) : null}
-          {spotsKnown || freshnessText || typeof item.matchScore === "number" || (item.urgencyScore ?? 0) > 0 ? (
+          {spotsKnown || freshnessText || photoText || typeof item.matchScore === "number" || (item.urgencyScore ?? 0) > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
               {spotsKnown ? <span className="ke-honesty">{spotsKnown}</span> : null}
               {freshnessText ? <span className="ke-honesty">{freshnessText}</span> : null}
+              {photoText ? <span className="ke-honesty">{photoText}</span> : null}
               <MatchCue score={item.matchScore} compact />
               <UrgencyCue score={item.urgencyScore} compact />
             </div>

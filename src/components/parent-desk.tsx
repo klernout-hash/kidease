@@ -32,8 +32,13 @@ import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore, soonestStartDate } from "@/lib/parent-urgency";
 import { distanceKm } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
+import { ParentDeskRails } from "@/components/parent-desk-rails";
+import { PipelineBadge } from "@/components/pipeline-badge";
+import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
+import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
+import { WINNIPEG } from "@/lib/geo";
 
-type ParentTab = "saved" | "bookings" | "payments" | "children" | "alerts";
+type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "alerts";
 
 export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const { user } = useCurrentUserState();
@@ -42,7 +47,8 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
-  const [tab, setTab] = useState<ParentTab>(initialTab ?? "children");
+  const [tab, setTab] = useState<ParentTab>(initialTab ?? "explore");
+  const [explore, setExplore] = useState<Card[]>([]);
   const [saved, setSaved] = useState<Card[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -67,6 +73,22 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
     setBills(billed.bills);
     setChildren(f.children);
     setTours(tourRows);
+    const loc = origin.lat ? origin : WINNIPEG;
+    const rows = await withTimeoutFallback(
+      searchDaycares({
+        data: {
+          lat: loc.lat,
+          lng: loc.lng,
+          radiusKm,
+          sort: "match",
+          ageGroup: "any",
+          startDate: soonestStartDate(f.bookings),
+        },
+      }),
+      LOADER_SETTLE_MS,
+      [] as Card[],
+    );
+    setExplore(rows.length ? rows : await withTimeoutFallback(featuredDaycares({ data: loc }), LOADER_SETTLE_MS, [] as Card[]));
   }
 
   useEffect(() => {
@@ -83,6 +105,14 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   return (
     <DeskShell desk="parent" active={tab} onSelect={(id) => setTab(id as ParentTab)}>
       <p className="text-muted">{user.displayName ?? user.primaryEmail}</p>
+
+      {tab === "explore" ? (
+        <div className="mt-6">
+          <h2 className="font-display text-2xl">{t("exploreForYou")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("sortMatchLead")}</p>
+          <ParentDeskRails items={explore} children={children} bookings={bookings} />
+        </div>
+      ) : null}
 
       {tab === "saved" ? (
         <div className="ke-listings mt-6">
@@ -110,6 +140,10 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                   {item.live || (item.claimStatus && item.claimStatus !== "unclaimed") ? (
                     <ListingStatusBadge claimStatus={item.claimStatus} live={item.live} />
                   ) : null}
+                  <PipelineBadge
+                    tourStatus={tours.find((tour) => tour.daycareId === item.id)?.status}
+                    bookingStatus={bookings.find((b) => b.daycareId === item.id)?.status ?? null}
+                  />
                   <TrustSignals item={item} surface="parent" compact />
                 </div>
                 <DaycareCard item={item} showDistance={located} />

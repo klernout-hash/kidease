@@ -14,15 +14,16 @@ import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import { BrandMark } from "@/components/brand-mark";
 import { ListingRail } from "@/components/listing-rail";
+import { ParentDeskRails } from "@/components/parent-desk-rails";
 import { DaycareCard } from "@/components/daycare-card";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
 import { HeroPlayroom } from "@/components/building-photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { getMyRole } from "@/lib/server/family";
+import { getFamily, getMyRole } from "@/lib/server/family";
 import type { AppRole } from "@/lib/desks";
-import { featuredDaycares } from "@/lib/server/daycares";
+import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { BootPending } from "@/components/boot-pending";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { geocode, reverseGeocode, WINNIPEG } from "@/lib/geo";
@@ -35,7 +36,7 @@ import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { displayDistance } from "@/lib/units";
-import type { DaycareCard as Card } from "@/lib/types";
+import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 
 const CompareBar = lazy(() => import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })));
 
@@ -91,15 +92,26 @@ function Home() {
   const [featured, setFeatured] = useState<Card[]>(boot.featured ?? []);
   const [recent, setRecent] = useState<Card[]>([]);
   const [enrollOpen, setEnrollOpen] = useState(false);
+  const [familyKids, setFamilyKids] = useState<Child[]>([]);
+  const [familyBookings, setFamilyBookings] = useState<Booking[]>([]);
+  const [explore, setExplore] = useState<Card[]>(boot.featured ?? []);
 
   useEffect(() => {
     if (!user) {
       setRole(null);
+      setFamilyKids([]);
+      setFamilyBookings([]);
       return;
     }
     void getMyRole()
       .then((r) => setRole(r.role))
       .catch(() => setRole("parent"));
+    void getFamily()
+      .then((f) => {
+        setFamilyKids(f.children);
+        setFamilyBookings(f.bookings);
+      })
+      .catch(() => undefined);
   }, [user]);
 
   useEffect(() => {
@@ -113,9 +125,24 @@ function Home() {
     const loc = origin.lat ? origin : WINNIPEG;
     setPlace(origin.label);
     void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng } })
-      .then((rows) => setFeatured(uniqueById(rows)))
+      .then((rows) => {
+        const next = uniqueById(rows);
+        setFeatured(next);
+        setExplore((cur) => (cur.length ? cur : next));
+      })
       .catch(() => setFeatured([]));
-  }, [origin.lat, origin.lng, origin.label]);
+    void withTimeoutFallback(
+      searchDaycares({
+        data: { lat: loc.lat, lng: loc.lng, radiusKm, sort: "match", ageGroup: "any" },
+      }),
+      LOADER_SETTLE_MS,
+      [] as Card[],
+    )
+      .then((rows) => {
+        if (rows.length) setExplore(uniqueById(rows));
+      })
+      .catch(() => undefined);
+  }, [origin.lat, origin.lng, origin.label, radiusKm]);
 
   function goSearch(label?: string) {
     void navigate({ to: "/search", search: label ? { q: label } : {} });
@@ -421,6 +448,9 @@ function Home() {
             <h2 className="mt-12 text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
             <p className="mt-3 max-w-2xl text-muted">{t("featuredBody")}</p>
             {featuredSearch}
+            {user && role !== "admin" && role !== "provider" ? (
+              <ParentDeskRails items={explore.length ? explore : shown} children={familyKids} bookings={familyBookings} />
+            ) : null}
             <div className="ke-web-grid mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {shown.slice(0, 9).map((item, i) => (
                 <DaycareCard key={item.id} item={item} eager={i < 3} />
@@ -499,9 +529,15 @@ function Home() {
             {locationForm}
           </div>
           {featuredSearch}
-          <ListingRail title={t("recentlyViewed")} items={recent} />
-          <ListingRail title={t("availableNow")} items={availableNow} />
-          <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
+          {user ? (
+            <ParentDeskRails items={explore.length ? explore : shown} children={familyKids} bookings={familyBookings} />
+          ) : (
+            <>
+              <ListingRail title={t("recentlyViewed")} items={recent} />
+              <ListingRail title={t("availableNow")} items={availableNow} />
+              <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
+            </>
+          )}
           {shown.length === 0 ? (
             <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
               <EmptyState

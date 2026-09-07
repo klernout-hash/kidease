@@ -25,7 +25,7 @@ import {
 } from "@/lib/templates";
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { stripeChargesLive } from "@/lib/stripe-live";
-import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto } from "@/lib/listing-photo";
+import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto, isStockListingPhoto } from "@/lib/listing-photo";
 import { overlayQuality } from "./quality";
 import { overlayDemandSnapshots, overlayParentRank } from "./rank";
 import {
@@ -897,6 +897,10 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
       `;
       cid = existing[0]?.id ?? null;
     }
+    if (cid) {
+      const { syncToursFromBooking } = await import("@/lib/server/tours");
+      await syncToursFromBooking(sql, cid, data.status).catch(() => undefined);
+    }
     if (cid && data.status !== "requested") {
       const locale = "en" as const;
       const copy = {
@@ -1242,13 +1246,16 @@ export const createListing = createServerFn({ method: "POST" })
       .replace(/^-|-$/g, "")
       .slice(0, 40) + "-" + id.slice(-4);
     const photos = applyStorefrontPhoto(STOCK_CREATE_PHOTOS, data.storefront);
+    const photoAt =
+      data.storefront && !isStockListingPhoto(data.storefront) ? new Date().toISOString() : null;
     await sql`
       insert into daycares (
         id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
         address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
         age_min_months, age_max_months, infant_monthly, toddler_monthly, preschool_monthly,
         part_time_monthly, spots_infant, spots_toddler, spots_preschool, waitlist,
-        rating_x10, review_count, license_number, languages, amenities, photos, verified
+        rating_x10, review_count, license_number, languages, amenities, photos, verified,
+        last_photo_updated_at
       ) values (
         ${id}, ${slug}, ${data.name}, ${data.name},
         ${"Newly listed licensed centre."}, ${"Nouveau centre permis."},
@@ -1261,9 +1268,32 @@ export const createListing = createServerFn({ method: "POST" })
         ${6}, ${72}, ${data.infantMonthly}, ${data.toddlerMonthly}, ${data.preschoolMonthly},
         ${Math.round(data.toddlerMonthly * 0.6)}, 2, 2, 2, 0, 40, 0,
         ${data.licenseNumber}, ${"en"}, ${"meals,inclusive"},
-        ${photos}, 0
+        ${photos}, 0, ${photoAt}
       )
-    `;
+    `.catch(async () => {
+      await sql`
+        insert into daycares (
+          id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
+          address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
+          age_min_months, age_max_months, infant_monthly, toddler_monthly, preschool_monthly,
+          part_time_monthly, spots_infant, spots_toddler, spots_preschool, waitlist,
+          rating_x10, review_count, license_number, languages, amenities, photos, verified
+        ) values (
+          ${id}, ${slug}, ${data.name}, ${data.name},
+          ${"Newly listed licensed centre."}, ${"Nouveau centre permis."},
+          ${"This centre was listed by a provider on KidEase. Update the description from the provider dashboard."},
+          ${"Ce centre a été inscrit par un fournisseur. Mettez à jour la description."},
+          ${data.address}, ${data.city}, ${"MB"}, ${data.postalCode},
+          ${49.8951}, ${-97.1384}, ${null},
+          ${"7:30 a.m. – 5:30 p.m., Monday to Friday"},
+          ${"7 h 30 – 17 h 30, du lundi au vendredi"},
+          ${6}, ${72}, ${data.infantMonthly}, ${data.toddlerMonthly}, ${data.preschoolMonthly},
+          ${Math.round(data.toddlerMonthly * 0.6)}, 2, 2, 2, 0, 40, 0,
+          ${data.licenseNumber}, ${"en"}, ${"meals,inclusive"},
+          ${photos}, 0
+        )
+      `;
+    });
     await sql`insert into provider_daycares (user_id, daycare_id) values (${context.userId}, ${id})`;
     await writeProfileRole(context.userId, "provider");
     const actor = await lookupUser(context.userId);

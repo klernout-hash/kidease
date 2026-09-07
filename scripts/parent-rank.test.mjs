@@ -238,4 +238,8 @@ test("server overlay, search sorts, desks, and docs stay honest", () => {
   assert.match(docs, /quality score/);
   assert.match(docs, /28-day/);
   assert.match(docs, /not invented warmth/);
+  assert.match(docs, /For you/);
+  assert.match(src("src/lib/parent-rails.ts"), /Paid Pro \/ Network/);
+  assert.match(src("src/components/parent-desk-rails.tsx"), /railBestMatch/);
+  assert.doesNotMatch(src("src/lib/parent-rails.ts"), /priority \?/);
 });

@@ -25,6 +25,7 @@ import { listingStatusFromClaim } from "@/lib/listing-status";
 import { ProviderMoneyPanel } from "@/components/provider-money";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
+import { DirectorNudgeQueue } from "@/components/director-nudges";
 import { ProviderPlanBanner } from "@/components/provider-plan-banner";
 import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
@@ -157,6 +158,7 @@ function ProviderPage() {
         setDesk(id as DaycareDesk);
       }}
     >
+      <DirectorNudgeQueue listings={listings} stats={stats} onConfirmed={() => void load()} />
       <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
       {subscription ? <ProviderPlanBanner subscription={subscription} /> : null}
       {desk === "requests" ? (

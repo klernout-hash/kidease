@@ -3,7 +3,7 @@ import { MapPinned, Phone, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/status-badge";
+import { PipelineBadge } from "@/components/pipeline-badge";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { ChildCareCard } from "@/components/child-care-card";
@@ -154,7 +154,9 @@ function ThreadPage() {
               {photo ? <img src={photo} alt="" className="size-10 rounded-md object-cover" /> : null}
               <div className="min-w-0">
                 <h1 className="truncate font-display text-2xl">{isParent ? name : booking?.parentName || name}</h1>
-                {booking ? <StatusBadge status={booking.status} /> : null}
+                {tours[0] || booking ? (
+                  <PipelineBadge tourStatus={tours[0]?.status} bookingStatus={booking?.status ?? null} />
+                ) : null}
               </div>
             </div>
           </div>

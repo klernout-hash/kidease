@@ -41,6 +41,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "messages", label: "Messages", hint: "Parent threads + tours", href: "/inbox" },
   ],
   parent: [
+    { id: "explore", label: "For you", hint: "Matches near you" },
     { id: "children", label: "Children", hint: "Up to 4 profiles" },
     { id: "bookings", label: "Enrolment", hint: "Per child, per centre" },
     { id: "saved", label: "Saved centres" },

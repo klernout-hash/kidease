@@ -1,4 +1,4 @@
-import { listingHealth, vacancyFreshness, HEALTH_FIELDS, HEALTH_FIELD_ANCHOR, type HealthField } from "@/lib/listing-readiness";
+import { listingHealth, photoFreshness, vacancyFreshness, HEALTH_FIELDS, HEALTH_FIELD_ANCHOR, type HealthField } from "@/lib/listing-readiness";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare } from "@/lib/types";
@@ -28,6 +28,7 @@ export function ListingHealthPanel({ item }: { item: Daycare }) {
   const health = listingHealth(item);
   const vacancy = vacancyFreshness(health.vacancyAt);
   const vacancyAge = vacancyLine(item, t, locale);
+  const photo = photoFreshness(health.photoAt);
 
   return (
     <div className="mt-4 rounded-lg bg-bg p-4 text-sm ring-1 ring-border">
@@ -59,7 +60,11 @@ export function ListingHealthPanel({ item }: { item: Daycare }) {
                   ? t("healthNeedVacancy")
                   : vacancyAge.detail || vacancyAge.text || t("healthNeedVacancy")
                 : t("healthNeedVacancyMissing")
-              : null;
+              : field === "photo" && photo.kind !== "unknown"
+                ? photo.kind === "stale"
+                  ? t("photoStale")
+                  : t("healthNeedPhotoFresh")
+                : null;
           return (
             <li key={field} className="flex flex-wrap items-center justify-between gap-2">
               <span className={ok ? "text-muted" : "text-fg"}>
@@ -67,7 +72,7 @@ export function ListingHealthPanel({ item }: { item: Daycare }) {
                 {t(NEED_KEY[field])}
                 {vacancyDetail ? <span className="mt-0.5 block pl-6 text-xs text-subtle">{vacancyDetail}</span> : null}
               </span>
-              {ok && field !== "vacancy" ? null : (
+              {ok && field !== "vacancy" && !(field === "photo" && photo.kind === "stale") ? null : (
                 <button
                   type="button"
                   className="rounded-full px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-border hover:bg-surface"

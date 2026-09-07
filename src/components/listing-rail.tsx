@@ -2,16 +2,20 @@ import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { DaycareCard } from "@/components/daycare-card";
+import { useCopy } from "@/lib/use-copy";
 
 export function ListingRail({
   title,
   items,
   limit = 12,
+  seeAllHref,
 }: {
   title: string;
   items: Card[];
   limit?: number;
+  seeAllHref?: string;
 }) {
+  const { t } = useCopy();
   const scroller = useRef<HTMLDivElement>(null);
   const shown = items.slice(0, limit);
   if (!shown.length) return null;
@@ -26,26 +30,36 @@ export function ListingRail({
         <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
           {title}
         </h2>
-        {shown.length > 3 ? (
-          <div className="hidden shrink-0 items-center gap-2 sm:flex">
-            <button
-              type="button"
-              aria-label="Previous"
-              onClick={() => go(-1)}
-              className="grid size-8 place-items-center rounded-full bg-surface text-fg ring-1 ring-border hover:bg-surface-2"
+        <div className="flex shrink-0 items-center gap-2">
+          {seeAllHref ? (
+            <a
+              href={seeAllHref}
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
             >
-              <ChevronLeft className="size-4" strokeWidth={2} />
-            </button>
-            <button
-              type="button"
-              aria-label="Next"
-              onClick={() => go(1)}
-              className="grid size-8 place-items-center rounded-full bg-surface text-fg ring-1 ring-border hover:bg-surface-2"
-            >
-              <ChevronRight className="size-4" strokeWidth={2} />
-            </button>
-          </div>
-        ) : null}
+              {t("seeAll")}
+            </a>
+          ) : null}
+          {shown.length > 3 ? (
+            <div className="hidden items-center gap-2 sm:flex">
+              <button
+                type="button"
+                aria-label="Previous"
+                onClick={() => go(-1)}
+                className="grid size-8 place-items-center rounded-full bg-surface text-fg ring-1 ring-border hover:bg-surface-2"
+              >
+                <ChevronLeft className="size-4" strokeWidth={2} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next"
+                onClick={() => go(1)}
+                className="grid size-8 place-items-center rounded-full bg-surface text-fg ring-1 ring-border hover:bg-surface-2"
+              >
+                <ChevronRight className="size-4" strokeWidth={2} />
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
       <div ref={scroller} className="ke-rail">
         {shown.map((item, i) => (
