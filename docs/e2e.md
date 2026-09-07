@@ -9,6 +9,7 @@ Minimal Playwright checks that run without Stripe live keys, Twilio/Resend OTPs,
 | Homepage `/` | HTTP ok (not 4xx/5xx), KidEase identity (`Find licensed daycare near you` or title) |
 | Login `/login` | Email field and **Sign in** copy. The suite does not submit the form. |
 | `/admin` | Guest gate: client redirect to `/login`, or Access-ish 302 to `https://www.kidease.ca/admin` on `*.vercel.app` hosts. A Cloudflare Access interstitial is also accepted. |
+| `/api/admin/sentry-test`, `/api/admin/stripe-catalog` | Guest fetch is 401/403, login/Access redirect, or `{ ok: false }`. A 200 admin JSON payload fails the suite. |
 
 The suite never opens `/pay/*`, never fills a password or OTP, and never calls Stripe Checkout.
 

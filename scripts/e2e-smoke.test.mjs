@@ -6,6 +6,8 @@ import test from "node:test";
 import { CANONICAL_ORIGIN } from "./request-guard.mjs";
 import { smokeAllowedOutputDirs } from "./browser-guard.mjs";
 import {
+  ADMIN_API_SMOKE_PATHS,
+  classifyAdminApiGate,
   classifyAdminGate,
   DEFAULT_PREVIEW_ORIGIN,
   e2eScriptMustStayChargeFree,
@@ -127,6 +129,15 @@ test("vercel.app /admin decision matches Access-ish 302 to www", () => {
   assert.equal(decision.status, 302);
   assert.equal(decision.location, expectedAccessLocation("/admin"));
   assert.equal(expectedAccessLocation(), `${CANONICAL_ORIGIN}/admin`);
+});
+
+test("guest admin API gate: 401/403/redirect, never a 200 payload", () => {
+  assert.equal(classifyAdminApiGate({ status: 401 }).kind, "denied");
+  assert.equal(classifyAdminApiGate({ status: 403 }).kind, "denied");
+  assert.equal(classifyAdminApiGate({ status: 302, locationHeader: "https://www.kidease.ca/login" }).ok, true);
+  assert.equal(classifyAdminApiGate({ status: 200, bodyText: JSON.stringify({ ok: false, error: "Not authorized" }) }).ok, true);
+  assert.equal(classifyAdminApiGate({ status: 200, bodyText: JSON.stringify({ ok: true, prices: {} }) }).ok, false);
+  assert.deepEqual([...ADMIN_API_SMOKE_PATHS], ["/api/admin/sentry-test", "/api/admin/stripe-catalog"]);
 });
 
 test("smoke paths never include pay or 2FA submit", () => {

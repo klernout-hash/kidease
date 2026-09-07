@@ -17,6 +17,12 @@ export const SMOKE_PATHS = Object.freeze({
   admin: "/admin",
 });
 
+/** Guest fetches only — prove /api/admin/* is not an open JSON desk. */
+export const ADMIN_API_SMOKE_PATHS = Object.freeze([
+  "/api/admin/sentry-test",
+  "/api/admin/stripe-catalog",
+]);
+
 export function parseE2eArgs(argv = [], env = {}) {
   const positional = [];
   let url = "";
@@ -157,6 +163,56 @@ export function classifyAdminGate({
     ok: false,
     kind: "unknown",
     reason: `unsigned /admin did not redirect to login or Access (status ${status}, url ${url || "(none)"})`,
+  };
+}
+
+/**
+ * Guest /api/admin/* must not return a successful admin payload.
+ * 401/403, login/Access redirect, or a JSON { ok: false } error are fine.
+ */
+export function classifyAdminApiGate({
+  status = 0,
+  locationHeader = "",
+  bodyText = "",
+  finalUrl = "",
+} = {}) {
+  const location = String(locationHeader || "");
+  const url = String(finalUrl || "");
+  const body = String(bodyText || "");
+  if (status >= 400 && status < 500) {
+    return { ok: true, kind: "denied" };
+  }
+  if (status >= 300 && status < 400) {
+    if (/\/login|cloudflareaccess|kidease\.ca/i.test(`${location}\n${url}`)) {
+      return { ok: true, kind: "redirect" };
+    }
+    return { ok: true, kind: "redirect" };
+  }
+  if (/cloudflareaccess\.com|Cloudflare Access/i.test(`${url}\n${body}`)) {
+    return { ok: true, kind: "cloudflare-access" };
+  }
+  if (/\/login(?:\/|$|\?)/.test(url) || /Sign in/i.test(body)) {
+    return { ok: true, kind: "login" };
+  }
+  let json = null;
+  try {
+    json = body ? JSON.parse(body) : null;
+  } catch {
+    json = null;
+  }
+  if (json && json.ok === false) {
+    return { ok: true, kind: "denied" };
+  }
+  if (status === 200 && json && (json.ok === true || json.prices || json.dsn || json.rows)) {
+    return { ok: false, kind: "open", reason: "guest /api/admin returned admin JSON" };
+  }
+  if (status === 200) {
+    return { ok: false, kind: "open", reason: "guest /api/admin returned HTTP 200" };
+  }
+  return {
+    ok: false,
+    kind: "unknown",
+    reason: `guest /api/admin unexpected status ${status}`,
   };
 }
 

@@ -17,6 +17,8 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { checkedOutputPath, checkedUrl, smokeAllowedOutputDirs } from "./browser-guard.mjs";
 import {
+  ADMIN_API_SMOKE_PATHS,
+  classifyAdminApiGate,
   classifyAdminGate,
   DEFAULT_PREVIEW_ORIGIN,
   homepageLooksLive,
@@ -254,6 +256,22 @@ try {
   });
 
   await adminHttpGate(base);
+
+  for (const apiPath of ADMIN_API_SMOKE_PATHS) {
+    const apiResp = await page.request.get(new URL(apiPath, base).href).catch(() => null);
+    const apiStatus = apiResp?.status() ?? 0;
+    const apiBody = (await apiResp?.text().catch(() => "")) || "";
+    const apiGate = classifyAdminApiGate({
+      status: apiStatus,
+      locationHeader: apiResp?.headers()?.location ?? "",
+      bodyText: apiBody,
+      finalUrl: apiResp?.url() ?? "",
+    });
+    record(`admin-api-guest:${apiPath}`, apiGate.ok, {
+      note: apiGate.kind === "unknown" || apiGate.kind === "open" ? apiGate.reason : apiGate.kind,
+      status: apiStatus,
+    });
+  }
 
   if (args.browserSmoke) {
     await runBrowserSmoke(base);

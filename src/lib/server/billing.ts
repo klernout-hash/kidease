@@ -12,6 +12,7 @@ import {
   parentCanSeeBill,
   parseBillStatus,
 } from "@/lib/bill";
+import { canCheckoutBill, canCreateBillForCentre, canReadBill } from "@/lib/access-control";
 import { extractStripeBillRef, type StripeBillObject } from "@/lib/stripe-bill-event";
 import { createStripeCheckoutSession } from "@/lib/server/stripe-checkout";
 import { notifyParentBill, notifyPlatform } from "@/lib/server/notify";
@@ -419,7 +420,7 @@ export const createBill = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    if (!(await ownsCentre(sql, context.userId, data.daycareId))) {
+    if (!(await ownsCentre(sql, context.userId, data.daycareId)) || !canCreateBillForCentre([data.daycareId], data.daycareId)) {
       throw new Error("Not your listing");
     }
     const amountCad = Math.round(Number(data.amountCad));
@@ -542,10 +543,15 @@ export const getBill = createServerFn({ method: "GET" })
     if (!row) throw new Error("Bill not found");
     const bill = mapBill(row);
     const provider = await ownsCentre(sql, context.userId, bill.daycareId);
-    const parent = bill.parentUserId === context.userId;
-    if (!provider && !parent) throw new Error("Bill not found");
-    if (parent && !parentCanSeeBill(bill.status)) throw new Error("Bill not found");
-    return { bill, stripeLive: stripeChargesLive(), role: provider ? ("provider" as const) : ("parent" as const) };
+    const access = canReadBill({
+      actorUserId: context.userId,
+      parentUserId: bill.parentUserId,
+      daycareId: bill.daycareId,
+      ownedDaycareIds: provider ? [bill.daycareId] : [],
+      status: bill.status,
+    });
+    if (!access.ok) throw new Error("Bill not found");
+    return { bill, stripeLive: stripeChargesLive(), role: access.role };
   });
 
 export const createBillCheckout = createServerFn({ method: "POST" })
@@ -561,7 +567,9 @@ export const createBillCheckout = createServerFn({ method: "POST" })
     const bill = mapBill(row);
     if (bill.parentUserId !== context.userId) throw new Error("Bill not found");
     if (bill.status === "paid") return { url: null as string | null, alreadyPaid: true as const };
-    if (bill.status !== "sent") throw new Error("This bill is not open to Pay");
+    if (!canCheckoutBill({ actorUserId: context.userId, parentUserId: bill.parentUserId, status: bill.status })) {
+      throw new Error("This bill is not open to Pay");
+    }
     const connect = await sql<{ stripe_account_id: string | null; charges_enabled: number }>`
       select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
     `.catch(() => []);

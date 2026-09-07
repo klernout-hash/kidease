@@ -41,6 +41,9 @@ import {
   loadProfileEntitlements,
   overlayFeaturedCity,
 } from "@/lib/server/provider-entitlements";
+import { accessDeniedMessage, canUpdateBookingStatus } from "@/lib/access-control";
+import { isCentreOwner } from "@/lib/server/thread-access";
+import { resolveAdminAccess } from "@/lib/server/roles";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -879,7 +882,20 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
       limit 1
     `;
     const b = rows[0];
-    if (!b) throw new Error("Request not found");
+    if (!b) throw new Error(accessDeniedMessage("request"));
+    const owned = await isCentreOwner(sql, context.userId, b.daycare_id);
+    const admin = await resolveAdminAccess(context.userId)
+      .then((a) => a.ok)
+      .catch(() => false);
+    if (
+      !canUpdateBookingStatus({
+        daycareId: b.daycare_id,
+        ownedDaycareIds: owned ? [b.daycare_id] : [],
+        role: admin ? "admin" : "parent",
+      })
+    ) {
+      throw new Error(accessDeniedMessage("request"));
+    }
     const prev = b.status;
     await sql`update bookings set status = ${data.status} where id = ${b.id}`;
 
@@ -1182,7 +1198,6 @@ export const getProvider = createServerFn({ method: "GET" })
       join daycares d on d.id = b.daycare_id
       left join children ch on ch.id = b.child_id
       where exists (select 1 from provider_daycares p where p.user_id = ${context.userId} and p.daycare_id = b.daycare_id)
-         or not exists (select 1 from provider_daycares p where p.user_id = ${context.userId})
       order by b.created_at desc
       limit 40
     `;
