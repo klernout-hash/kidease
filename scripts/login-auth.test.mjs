@@ -33,15 +33,15 @@ describe("password sign-in errors", () => {
   it("tells missing / oauth-only / wrong-password / turnstile / mail apart", () => {
     assert.match(
       friendlyAuthError("Invalid email or password", { kind: "missing", providers: [] }),
-      /No KidEase account/,
+      /Email or password is incorrect/,
     );
     assert.match(
       friendlyAuthError("Invalid email or password", { kind: "oauth_only", providers: ["google"] }),
-      /Google/,
+      /Email or password is incorrect/,
     );
     assert.match(
       friendlyAuthError("Invalid email or password", { kind: "has_password", providers: [] }),
-      /Wrong password/,
+      /Email or password is incorrect/,
     );
     assert.match(friendlyAuthError("Please complete the security check."), /security check/);
     assert.match(friendlyAuthError("Security check failed. Refresh and try again."), /Refresh/);
@@ -86,10 +86,10 @@ describe("password sign-in errors", () => {
     assert.match(client, /resolveSocialSignInRedirect/);
   });
 
-  it("login uses the shared mapper and classifies the account after a failed password", () => {
+  it("login uses the shared mapper and does not enumerate accounts after a failed password", () => {
     const login = read("src/routes/login.tsx");
     assert.match(login, /friendlyAuthError/);
-    assert.match(login, /explainEmailSignInFailure/);
+    assert.doesNotMatch(login, /explainEmailSignInFailure/);
     assert.match(login, /resetTurnstile/);
     assert.match(login, /turnstileRequired && !token\.trim\(\)/);
     assert.match(login, /www\.kidease\.ca\/login/);

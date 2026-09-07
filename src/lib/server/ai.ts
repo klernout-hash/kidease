@@ -1,11 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
+import { authMiddleware } from "@/lib/auth/middleware";
+import { allowAiSpend } from "@/lib/ai-spend";
 import { getPublicCatalog } from "@/lib/catalog";
 import { AGENT_CONFIRM, KIDEASE_SYSTEM, localHelpReply, wantsLiveAgent } from "@/lib/help-knowledge";
 import { notifyPlatform } from "@/lib/server/notify";
 
 export const matchCentres = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
   .validator((prompt: string) => prompt.trim().slice(0, 500))
-  .handler(async ({ data: prompt }) => {
+  .handler(async ({ context, data: prompt }) => {
+    if (!allowAiSpend(context.userId)) return { ok: false as const, error: "rate_limit" };
     const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) return { ok: false as const, error: "unavailable" };
     const tokens = prompt.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
@@ -74,14 +78,18 @@ export const matchCentres = createServerFn({ method: "POST" })
   });
 
 export const askKidEase = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
   .validator((input: { messages: Array<{ role: "user" | "assistant"; text: string }> }) => ({
     messages: input.messages.slice(-8).map((m) => ({
       role: m.role,
       text: m.text.trim().slice(0, 800),
     })),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ context, data }) => {
     try {
+      if (!allowAiSpend(context.userId)) {
+        return { ok: true as const, live: false as const, reply: localHelpReply(data.messages.filter((m) => m.role === "user").at(-1)?.text || "", []) };
+      }
       const last = data.messages.filter((m) => m.role === "user").at(-1)?.text;
       if (!last) return { ok: true as const, reply: "How can I help you find licensed care?" };
       const transcript = data.messages

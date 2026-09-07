@@ -11,6 +11,7 @@ import {
   parentRailSearchHref,
   scoreParentRailItems,
   urgencyRail,
+  type ParentRailPrefs,
 } from "@/lib/parent-rails";
 import { CARE_TYPES, RAIL_AGES, type CareType, type RailAge } from "@/lib/care-type";
 import type { CopyKey } from "@/lib/copy";
@@ -76,7 +77,7 @@ export function ParentDeskRails({
 
   const prefs = useMemo(() => {
     const startDate = soonestStartDate(bookings);
-    const ageGroup = age === "school-age" ? "any" : age;
+    const ageGroup: ParentRailPrefs["ageGroup"] = age === "school-age" ? "any" : age;
     return {
       ageGroup,
       radiusKm,

@@ -246,5 +246,6 @@ test("nitro middleware and vercel.json stay wired to the guard", () => {
   assert.match(vercel, /"destination": "https:\/\/www\.kidease\.ca\/admin"/);
   assert.match(vercel, /"source": "\/admin-contracts"/);
   assert.match(vercel, /\\\\.vercel\\\\.app/);
-  assert.doesNotMatch(vercel, /"source": "\/"/);
+  assert.match(vercel, /"source": "\/"/);
+  assert.match(vercel, /max-age=0, must-revalidate/);
 });

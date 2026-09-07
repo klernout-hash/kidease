@@ -74,8 +74,8 @@ export function isPaidSubscriptionStatus(raw: string | null | undefined): boolea
 }
 
 export function normalizeProviderAddons(raw: readonly string[] | string | null | undefined): ProviderAddonId[] {
-  if (Array.isArray(raw)) return parseProviderAddons(raw.join(","));
-  return parseProviderAddons(raw);
+  const serialized = Array.isArray(raw) ? raw.join(",") : typeof raw === "string" ? raw : "";
+  return parseProviderAddons(serialized);
 }
 
 /**

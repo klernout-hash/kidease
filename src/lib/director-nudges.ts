@@ -30,10 +30,8 @@ export type DirectorNudge = {
   count?: number;
 };
 
-export type NudgeListing = Pick<
-  Daycare,
-  "id" | "name" | "nameFr" | "photos" | "lastVacancyUpdatedAt" | "spotsUpdatedAt" | "lastPhotoUpdatedAt"
->;
+export type NudgeListing = Pick<Daycare, "id" | "name" | "nameFr" | "lastVacancyUpdatedAt" | "spotsUpdatedAt"> &
+  Partial<Pick<Daycare, "photos" | "lastPhotoUpdatedAt">>;
 
 function vacancyNeedsConfirm(item: NudgeListing): "missing" | "stale" | null {
   const state = vacancyFreshness(vacancyTimestamp(item));

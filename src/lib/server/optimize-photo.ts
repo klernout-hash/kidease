@@ -24,16 +24,12 @@ export async function optimizePhoto(request: Request): Promise<Response> {
     : 480;
 
   const accept = request.headers.get("accept") || "";
-  const format: "avif" | "webp" | "jpeg" = accept.includes("image/avif")
-    ? "avif"
-    : accept.includes("image/webp")
-      ? "webp"
-      : "webp";
+  const format: "avif" | "webp" = accept.includes("image/avif") ? "avif" : "webp";
 
   const cacheKey = `${src}|${width}|${format}`;
   const cached = mem.get(cacheKey);
   if (cached) {
-    return new Response(cached.body, {
+    return new Response(new Uint8Array(cached.body), {
       status: 200,
       headers: {
         "content-type": cached.type,
@@ -53,16 +49,15 @@ export async function optimizePhoto(request: Request): Promise<Response> {
       withoutEnlargement: true,
     });
     if (format === "avif") pipeline = pipeline.avif({ quality: 42 });
-    else if (format === "webp") pipeline = pipeline.webp({ quality: 62 });
-    else pipeline = pipeline.jpeg({ quality: 68, mozjpeg: true });
+    else pipeline = pipeline.webp({ quality: 62 });
     const out = await pipeline.toBuffer();
-    const type = format === "jpeg" ? "image/jpeg" : `image/${format}`;
+    const type = `image/${format}`;
     mem.set(cacheKey, { body: out, type });
     if (mem.size > MEM_MAX) {
       const first = mem.keys().next().value;
       if (typeof first === "string") mem.delete(first);
     }
-    return new Response(out, {
+    return new Response(new Uint8Array(out), {
       status: 200,
       headers: {
         "content-type": type,

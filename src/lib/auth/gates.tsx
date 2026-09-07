@@ -3,7 +3,13 @@ import { Navigate, useRouterState } from "@tanstack/react-router";
 import { authEnabled, signOut } from "./client";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
-import { deskFromPathname, deskQueryValue, loginRoleFromDesk, parseDeskQuery } from "@/lib/desks";
+import {
+  deskFromPathname,
+  deskQueryValue,
+  loginRoleFromDesk,
+  parseDeskQuery,
+  staffTwoFactorRequired,
+} from "@/lib/desks";
 
 /** Where `RedirectToSignIn` sends signed-out visitors. Create this route. */
 export const SIGN_IN_PATH = "/login";
@@ -61,13 +67,14 @@ export function TwoFactorGate({ next, children }: { next: string; children: Reac
         if (!cancelled) setState(s.verified ? "ok" : "need");
       })
       .catch(() => {
-        // A flaky mobile request must not bounce admin into /verify-2fa forever.
-        if (!cancelled) setState("ok");
+        // Admin / support fail closed. Parent / provider mobile may fail open
+        // so a flaky status check does not loop /verify-2fa.
+        if (!cancelled) setState(staffTwoFactorRequired(next) ? "need" : "ok");
       });
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, next]);
 
   if (isPending || (user && state === "load")) return null;
   if (!user) return <RedirectToSignIn />;

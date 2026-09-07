@@ -74,7 +74,7 @@ test("listing and search cards show published parent-review summary", () => {
   const card = src("src/components/daycare-card.tsx");
   assert.match(card, /parentReviewCount/);
   assert.match(card, /parentRatingX10/);
-  const listing = src("src/routes/daycare.\$slug.tsx");
+  const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /parentReviewCount/);
   assert.match(listing, /ListingReviewForm/);
   const admin = src("src/components/admin-reviews.tsx");

@@ -37,9 +37,11 @@ test("Titan webmail is an external tab and message open has a timeout", () => {
 test("pay CTAs stay off when Stripe is not live", () => {
   const parent = src("src/components/parent-desk.tsx");
   assert.match(parent, /desks\?\.stripeLive/);
-  const pay = src("src/routes/pay.\$bookingId.tsx");
-  assert.match(pay, /stripeLive && booking/);
-  const inbox = src("src/routes/inbox.\$id.tsx");
+  const pay = src("src/routes/pay.$bookingId.tsx");
+  assert.match(pay, /stripeLive/);
+  assert.match(pay, /bookingPayDisabled/);
+  assert.match(pay, /LedgerHonesty/);
+  const inbox = src("src/routes/inbox.$id.tsx");
   assert.match(inbox, /desks\?\.stripeLive/);
 });
 

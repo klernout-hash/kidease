@@ -80,8 +80,9 @@ async function unreadInboxCount(sql: Awaited<ReturnType<typeof getSql>>, userId:
 
 /**
  * Gate /admin on profiles.role = 'admin'.
- * The owner email (ADMIN_EMAIL / kyle@kidease.ca) is always promoted to admin.
- * Extra staff: update profiles set role = 'admin' where user_id = '…';
+ * The owner email (ADMIN_EMAIL / kyle@kidease.ca) is promoted only when
+ * Better Auth marks that email verified. Extra staff:
+ *   update profiles set role = 'admin' where user_id = '…';
  */
 export async function resolveAdminAccess(userId: string) {
   const sql = await getSql();
@@ -97,9 +98,9 @@ export async function resolveAdminAccess(userId: string) {
 
   const actor = await lookupUser(userId);
   const email = (actor.email || "").trim().toLowerCase();
-  // Owner email is always staff, even if another admin row already exists
-  // or this account first signed in through Daycare / Parent.
-  if (email && email === bootstrapEmail()) {
+  // Owner email is staff only after the mailbox is verified. An unverified
+  // signup that spoofs ADMIN_EMAIL must not inherit the admin desk.
+  if (email && email === bootstrapEmail() && actor.emailVerified) {
     await sql`update profiles set role = 'admin' where user_id = ${userId}`;
     return { ok: true as const, role: "admin" as const, bootstrapped: true };
   }
@@ -109,6 +110,8 @@ export async function resolveAdminAccess(userId: string) {
 export async function requireAdmin(userId: string) {
   const access = await resolveAdminAccess(userId);
   if (!access.ok) throw new Error("Not authorized");
+  const { assertTwoFactorVerified } = await import("@/lib/server/two-factor");
+  assertTwoFactorVerified(userId);
   return lookupUser(userId);
 }
 
@@ -134,6 +137,8 @@ export async function resolveSupportAccess(userId: string) {
 export async function requireSupport(userId: string) {
   const access = await resolveSupportAccess(userId);
   if (!access.ok) throw new Error("Not authorized");
+  const { assertTwoFactorVerified } = await import("@/lib/server/two-factor");
+  assertTwoFactorVerified(userId);
   return lookupUser(userId);
 }
 

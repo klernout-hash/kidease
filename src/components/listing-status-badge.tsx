@@ -1,4 +1,5 @@
 import { listingStatusFromClaim, listingStatusLabel } from "@/lib/listing-status";
+import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
 export function ListingStatusBadge({
@@ -35,12 +36,33 @@ export function ListingStatusBadge({
   );
 }
 
-export function LedgerHonesty({ stripeLive, className }: { stripeLive: boolean; className?: string }) {
-  return (
-    <p className={cn("text-sm text-muted", className)}>
-      {stripeLive
-        ? "Stripe live keys are set — charges can settle. KidEase keeps about 3% on each centre bill (the rest goes to the daycare)."
-        : "Card payments are not live yet. Amounts you see here are not charged until KidEase turns on live payments."}
-    </p>
-  );
+export type LedgerSurface = "money" | "parent" | "booking" | "bill";
+
+export function LedgerHonesty({
+  stripeLive,
+  className,
+  surface = "money",
+}: {
+  stripeLive: boolean;
+  className?: string;
+  surface?: LedgerSurface;
+}) {
+  const { t } = useCopy();
+  const text =
+    surface === "parent"
+      ? stripeLive
+        ? t("ledgerLiveParent")
+        : t("ledgerOffParent")
+      : surface === "booking"
+        ? stripeLive
+          ? t("ledgerLiveBooking")
+          : t("ledgerOffBooking")
+        : surface === "bill"
+          ? stripeLive
+            ? t("ledgerLiveBill")
+            : t("ledgerOffBill")
+          : stripeLive
+            ? t("ledgerLiveMoney")
+            : t("ledgerOffMoney");
+  return <p className={cn("text-sm text-muted", className)}>{text}</p>;
 }

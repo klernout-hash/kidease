@@ -19,7 +19,7 @@ async function run(request: Request) {
   try {
     const result = await applyEnvelopeEvent(parsed);
     await logSecurityEvent({ kind: "webhook_accept", detail: "docusign envelope", ip });
-    return Response.json({ ok: true, ...result });
+    return Response.json(result);
   } catch (err) {
     return Response.json({ ok: false, error: "apply failed" }, { status: 500 });
   }

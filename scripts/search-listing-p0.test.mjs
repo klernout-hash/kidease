@@ -29,7 +29,7 @@ test("search and listing recover from hung fetches", () => {
   assert.match(search, /searchFailed/);
   assert.match(search, /12_000/);
   assert.match(search, /retrySearch/);
-  const listing = src("src/routes/daycare.\$slug.tsx");
+  const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /\.catch\(/);
   assert.match(listing, /12_000/);
   assert.match(listing, /tryAgain/);

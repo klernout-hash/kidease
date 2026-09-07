@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomInt } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie, getRequest, setCookie } from "@tanstack/react-start/server";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth/cookies";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { isTwoFactorVerified } from "@/lib/two-factor-cookie";
 import { nid } from "@/lib/utils";
 import { ADMIN_EMAIL, lookupUser } from "@/lib/server/notify";
 
@@ -32,18 +33,20 @@ function signDevice(userId: string, exp: number) {
   return `${body}.${sig}`;
 }
 
-function readDevice(raw: string | null): { userId: string; exp: number } | null {
-  if (!raw) return null;
-  const parts = raw.split(".");
-  if (parts.length !== 3) return null;
-  const [userId, expRaw, sig] = parts;
-  const exp = Number(expRaw);
-  if (!userId || !Number.isFinite(exp) || exp < Date.now()) return null;
-  const expected = createHmac("sha256", secret()).update(`${userId}.${exp}`).digest("hex");
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-  return { userId, exp };
+function twoFactorCookieRaw(): string | null {
+  return getCookie(TWO_FACTOR_COOKIE) ?? getCookie(SHARED_TWO_FACTOR_COOKIE) ?? null;
+}
+
+/** Fail closed: missing/invalid cookie or a thrown status check blocks staff. */
+export function assertTwoFactorVerified(userId: string) {
+  try {
+    if (!isTwoFactorVerified(userId, twoFactorCookieRaw(), secret())) {
+      throw new Error("Two-factor verification required");
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message === "Two-factor verification required") throw err;
+    throw new Error("Two-factor verification required");
+  }
 }
 
 async function ensureTable() {
@@ -114,8 +117,7 @@ async function sendCodeEmail(to: string, code: string) {
 export const getTwoFactorStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const device = readDevice(getCookie(TWO_FACTOR_COOKIE) ?? getCookie(SHARED_TWO_FACTOR_COOKIE) ?? null);
-    return { verified: device?.userId === context.userId };
+    return { verified: isTwoFactorVerified(context.userId, twoFactorCookieRaw(), secret()) };
   });
 
 export const startTwoFactor = createServerFn({ method: "POST" })

@@ -1,6 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Check, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
@@ -11,11 +10,10 @@ import { useCopy } from "@/lib/use-copy";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { money } from "@/lib/utils";
-import type { Booking, PayMethod } from "@/lib/types";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import type { Booking } from "@/lib/types";
 
 export const Route = createFileRoute("/pay/$bookingId")({ component: PayPage });
-
-const METHODS: PayMethod[] = ["apple", "google", "card", "interac", "paypal"];
 
 function PayPage() {
   const { bookingId } = Route.useParams();
@@ -23,9 +21,7 @@ function PayPage() {
   const { t, locale } = useCopy();
   const { session: desks } = useSessionDesks();
   const stripeLive = Boolean(desks?.stripeLive);
-  const navigate = useNavigate();
   const [booking, setBooking] = useState<Booking | null>(null);
-  const [method, setMethod] = useState<PayMethod>("apple");
   const [result, setResult] = useState<{ id: string; status: string; reference: string | null; amount: number } | null>(
     null,
   );
@@ -54,18 +50,33 @@ function PayPage() {
   }
   if (!user) return <RedirectToSignIn />;
 
-  const canPay = Boolean(stripeLive && booking?.status === "accepted" && booking.paymentStatus !== "paid");
   const alreadyPaid = booking?.status === "active" || booking?.paymentStatus === "paid" || result?.status === "paid";
+  const canStartInterac = Boolean(booking?.status === "accepted" && booking.paymentStatus !== "paid" && !result);
 
-  async function pay() {
-    if (!canPay) return;
+  async function startInterac() {
+    if (!canStartInterac) return;
     setBusy(true);
     try {
-      const res = await createPayment({ data: { bookingId, method, locale } });
+      const res = await createPayment({ data: { bookingId, method: "interac", locale } });
       setResult(res);
-      if (res.status === "paid") toast.success(t("paid"));
+      if (res.status === "paid") toast.error(t("interacPendingReview"));
+      else toast.success(t("interacPendingReview"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("notApprovedPay"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reportSent() {
+    if (!result?.id) return;
+    setBusy(true);
+    try {
+      const res = await confirmInterac({ data: { paymentId: result.id, locale } });
+      setResult({ ...result, status: res.status || "pending_review" });
+      toast.success(t("interacPendingReview"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("interacPendingReview"));
     } finally {
       setBusy(false);
     }
@@ -78,13 +89,9 @@ function PayPage() {
           ← {t("account")}
         </Link>
         <h1 className="mt-3 font-display text-3xl">{alreadyPaid ? t("receiptTitle") : t("payTitle")}</h1>
-        <p className="mt-2 text-sm text-muted">{alreadyPaid ? t("receiptLead") : t("payLead")}</p>
-        <LedgerHonesty stripeLive={stripeLive} className="mt-3" />
-        {booking && !stripeLive && !alreadyPaid ? (
-          <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-muted ring-1 ring-border">
-            Card, Apple Pay, and Google Pay stay off until Stripe live keys are on. This page will not take a charge.
-          </p>
-        ) : null}
+        <p className="mt-2 text-sm text-muted">{alreadyPaid ? t("receiptLead") : t("bookingPayLeadHonest")}</p>
+        <LedgerHonesty stripeLive={stripeLive} surface="booking" className="mt-3" />
+        <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("bookingPayDisabled")}</p>
 
         {booking ? (
           <div className="mt-6 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
@@ -101,54 +108,32 @@ function PayPage() {
           </div>
         ) : null}
 
-        {booking && !canPay && !alreadyPaid ? (
+        {booking && !canStartInterac && !alreadyPaid && !result ? (
           <p className="mt-6 rounded-xl bg-surface-2 p-4 text-sm text-muted">{t("notApprovedPay")}</p>
         ) : null}
 
-        {canPay && !result ? (
+        {canStartInterac ? (
           <div className="mt-6 space-y-4 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
-            <p className="text-sm font-medium">{t("method")}</p>
-            <div className="grid gap-2">
-              {METHODS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMethod(m)}
-                  className={
-                    method === m
-                      ? "rounded-md bg-primary px-3 py-3 text-left text-sm text-primary-fg"
-                      : "rounded-md px-3 py-3 text-left text-sm ring-1 ring-border"
-                  }
-                >
-                  {t(m)}
-                </button>
-              ))}
-            </div>
-            {method === "card" ? (
-              <div className="grid gap-2">
-                <input className="ke-input" placeholder={t("cardNumber")} autoComplete="cc-number" />
-                <div className="grid grid-cols-2 gap-2">
-                  <input className="ke-input" placeholder={t("expiry")} autoComplete="cc-exp" />
-                  <input className="ke-input" placeholder={t("cvc")} autoComplete="cc-csc" />
-                </div>
-              </div>
-            ) : null}
-            {method === "interac" ? <p className="text-sm text-muted">{t("interacHint")}</p> : null}
-            <Button className="w-full" disabled={busy} onClick={() => void pay()}>
-              <Lock className="size-4" />
-              {t("payNow")} · {booking ? money(booking.monthlyAmount, locale) : ""}
+            <p className="text-sm font-medium">{t("interac")}</p>
+            <p className="text-sm text-muted">{t("interacHint")}</p>
+            <Button className="w-full" disabled={busy} onClick={() => void startInterac()}>
+              {t("interacSentCta")}
             </Button>
-            <p className="text-center text-xs text-subtle">{t("stripeMark")}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" asChild>
+                <Link to="/parent">{t("payUseBill")}</Link>
+              </Button>
+              <Button variant="secondary" asChild>
+                <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>{SUPPORT_INBOX_EMAIL}</a>
+              </Button>
+            </div>
           </div>
         ) : null}
 
-        {result ? (
+        {result && !alreadyPaid ? (
           <div className="mt-6 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
-            <span className="grid size-12 place-items-center rounded-full bg-ok text-primary-fg">
-              <Check className="size-6" />
-            </span>
-            <p className="mt-3 font-display text-2xl">{result.status === "paid" ? t("paid") : t("pending")}</p>
-            <p className="mt-1 text-sm text-muted">{t("receiptLead")}</p>
+            <p className="font-display text-2xl">{t("pending")}</p>
+            <p className="mt-1 text-sm text-muted">{t("interacPendingReview")}</p>
             {result.reference ? (
               <p className="mt-3 text-sm">
                 {t("receiptNo")} <span className="font-medium tabular-nums">{result.reference}</span>
@@ -156,29 +141,30 @@ function PayPage() {
             ) : null}
             {booking ? (
               <p className="mt-1 text-sm text-muted">
-                {t("paidTo")} {booking.daycareName} · {money(result.amount, locale)}
+                {booking.daycareName} · {money(result.amount, locale)}
               </p>
             ) : null}
-            {result.status === "pending" ? (
-              <Button
-                className="mt-4"
-                onClick={() =>
-                  void confirmInterac({ data: { paymentId: result.id, locale } }).then(() => {
-                    setResult({ ...result, status: "paid" });
-                    toast.success(t("paid"));
-                  })
-                }
-              >
-                {t("paid")}
+            <Button className="mt-4" disabled={busy} onClick={() => void reportSent()}>
+              {t("interacSentCta")}
+            </Button>
+          </div>
+        ) : null}
+
+        {alreadyPaid && result ? (
+          <div className="mt-6 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
+            <p className="font-display text-2xl">{t("paid")}</p>
+            <p className="mt-1 text-sm text-muted">{t("receiptLead")}</p>
+            {result.reference ? (
+              <p className="mt-3 text-sm">
+                {t("receiptNo")} <span className="font-medium tabular-nums">{result.reference}</span>
+              </p>
+            ) : null}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button onClick={() => window.print()}>{t("printReceipt")}</Button>
+              <Button variant="secondary" asChild>
+                <Link to="/account">{t("account")}</Link>
               </Button>
-            ) : (
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button onClick={() => window.print()}>{t("printReceipt")}</Button>
-                <Button variant="secondary" onClick={() => void navigate({ to: "/account" })}>
-                  {t("account")}
-                </Button>
-              </div>
-            )}
+            </div>
           </div>
         ) : null}
       </main>

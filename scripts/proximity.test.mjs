@@ -99,12 +99,13 @@ describe("precise location is when-in-use only", () => {
 describe("dual chrome and map clustering stay in place", () => {
   it("keeps app sheet + website side-by-side and existing clusters", () => {
     const search = read("src/routes/search.tsx");
-    assert.match(search, /data-channel=app/);
-    assert.match(search, /ExploreSheet/);
+    const shell = read("src/components/shell.tsx");
+    assert.match(search, /ExploreRails/);
+    assert.match(shell, /data-channel=app/);
     assert.match(search, /ke-gutter mx-auto max-w-7xl/);
     const map = read("src/components/map-view.tsx");
     assert.match(map, /clusterItems/);
-    assert.match(map, /ke-count-cluster/);
+    assert.match(map, /ke-logo-cluster/);
     assert.match(map, /listingMapConstructorOptions/);
     assert.match(map, /googleMapsMapId\(\)/);
     assert.doesNotMatch(map, /mapId:\s*["'`]/);

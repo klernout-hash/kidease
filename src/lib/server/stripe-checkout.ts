@@ -159,7 +159,6 @@ export async function stripeRequest<T>(
     Authorization: `Bearer ${key}`,
   };
   if (opts?.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
-  let payload: string | undefined;
   if (method === "GET") {
     const params = new URLSearchParams();
     for (const [k, v] of flattenStripeBody(body)) params.append(k, v);
@@ -173,7 +172,7 @@ export async function stripeRequest<T>(
   headers["Content-Type"] = "application/x-www-form-urlencoded";
   const params = new URLSearchParams();
   for (const [k, v] of flattenStripeBody(body)) params.append(k, v);
-  payload = params.toString();
+  const payload = params.toString();
   const res = await fetch(url, { method: "POST", headers, body: payload });
   const json = (await res.json()) as T & { error?: { message?: string } };
   if (!res.ok) throw new Error(json.error?.message || `Stripe ${path} failed (${res.status})`);

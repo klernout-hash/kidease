@@ -99,21 +99,14 @@ export function friendlyAuthError(
   if (
     raw.includes("credential_account_not_found") ||
     raw.includes("credential account not found") ||
-    raw.includes("no password")
-  ) {
-    return oauthOnlyMessage(explanation?.providers);
-  }
-  if (
+    raw.includes("no password") ||
     raw.includes("invalid password") ||
     raw.includes("invalid_password") ||
     raw.includes("invalid email") ||
     raw.includes("invalid_email_or_password") ||
     raw.includes("invalid email or password")
   ) {
-    if (explanation && explanation.kind !== "unknown") {
-      return messageForEmailAccount(explanation);
-    }
-    return "Email or password is incorrect. If the hash is stale, reset it from Forgot password.";
+    return "Email or password is incorrect. If you use Apple, Google, or Facebook, try that button, or reset from Forgot password.";
   }
   if (raw.includes("user already exists") || raw.includes("already exists")) {
     return "An account with that email already exists. Sign in instead.";

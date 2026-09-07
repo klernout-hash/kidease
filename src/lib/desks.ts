@@ -61,6 +61,18 @@ export function loginRoleFromDesk(desk: DeskKey): "parent" | "provider" | "admin
   return "parent";
 }
 
+/** Admin / support desks fail closed when 2FA status cannot be read. */
+export function staffTwoFactorRequired(next: string): boolean {
+  const path = (next.split("?")[0] || next).trim();
+  return (
+    path === "/admin" ||
+    path.startsWith("/admin/") ||
+    path.startsWith("/admin-") ||
+    path === "/support" ||
+    path.startsWith("/support/")
+  );
+}
+
 export function deskFromPathname(pathname: string): DeskKey | null {
   for (const [prefix, desk] of PATH_DESK) {
     if (pathname === prefix || pathname.startsWith(`${prefix}/`)) return desk;

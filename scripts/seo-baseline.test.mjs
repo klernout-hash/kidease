@@ -37,6 +37,7 @@ test("robots.txt keeps admin disallows and points Sitemap at the www URL", () =>
   assert.match(robots, /^Disallow: \/daycare\/test-ghost-claim-lab$/m);
   assert.match(robots, /^Disallow: \/book\/test-ghost-claim-lab$/m);
   assert.match(robots, /^Sitemap: https:\/\/www\.kidease\.ca\/sitemap\.xml$/m);
+  assert.match(robots, /^Sitemap: https:\/\/www\.kidease\.ca\/sitemap-listings\.xml$/m);
   assert.doesNotMatch(robots, /Sitemap: https:\/\/kidease\.ca\/sitemap\.xml/);
 });
 
@@ -47,6 +48,7 @@ test("sitemap.xml lists canonical www public pages and omits admin paths", () =>
     const loc = `https://www.kidease.ca${path === "/" ? "/" : path}`;
     assert.match(sitemap, new RegExp(`<loc>${loc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}</loc>`));
   }
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\//);
   assert.doesNotMatch(sitemap, /https:\/\/kidease\.ca\//);
   assert.doesNotMatch(sitemap, /\/admin/);
   assert.doesNotMatch(sitemap, /\/provider\/subscription/);
@@ -61,6 +63,26 @@ test("vercel CSP does not allowlist grok.com and still keeps product hosts", () 
   assert.match(vercel, /"source": "\/admin-chat"/);
   assert.match(vercel, /"source": "\/daycare\/test-ghost-claim-lab"/);
   assert.match(vercel, /"source": "\/book\/test-ghost-claim-lab"/);
+});
+
+test("sitemap generation includes public listing URLs and drops the ghost", async () => {
+  const { publicSitemapSlugs, renderSitemapXml, isSafeSitemapSlug } = await import("../src/lib/sitemap.ts");
+  assert.equal(isSafeSitemapSlug("test-ghost-claim-lab"), false);
+  const slugs = publicSitemapSlugs(
+    [
+      { slug: "test-ghost-claim-lab", visibility: "admin_only", isTest: true },
+      { slug: "not a slug" },
+      { slug: "sunny-side-child-care" },
+    ],
+    50,
+  );
+  assert.deepEqual(slugs, ["sunny-side-child-care"]);
+  const xml = renderSitemapXml({ listingSlugs: slugs });
+  assert.match(xml, /https:\/\/www\.kidease\.ca\/daycare\/sunny-side-child-care/);
+  assert.doesNotMatch(xml, /test-ghost-claim-lab/);
+  const middleware = readFileSync(join(root, "server/middleware/sitemap.ts"), "utf8");
+  assert.match(middleware, /SITEMAP_LISTINGS_PATH/);
+  assert.match(middleware, /publicSitemapSlugs/);
 });
 
 test("security.txt is RFC 9116-ish and lives at /.well-known/security.txt", () => {

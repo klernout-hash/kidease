@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { authClient, authEnabled, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
-import { explainEmailSignInFailure } from "@/lib/server/email-sign-in";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
@@ -123,8 +122,7 @@ function Login() {
       } else {
         const res = await authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(token) });
         if (res.error) {
-          const explanation = await explainEmailSignInFailure({ data: { email } }).catch(() => null);
-          throw new Error(friendlyAuthError(res.error.message, explanation));
+          throw new Error(friendlyAuthError(res.error.message));
         }
         rememberToken(res.data);
       }
