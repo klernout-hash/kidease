@@ -1,8 +1,13 @@
 # R2 photo migrate (one-shot)
 
 Copy Git listing originals into the private Cloudflare R2 bucket `kidease-media`
-(Western North America). **Do not delete `public/photos` in the same change.**
-`/img` already dual-reads: R2 when `R2_*` is set, then Git / public paths.
+(Western North America) under `originals/…`. **Do not delete `public/photos` in
+the same change.** `/img` already dual-reads: R2 when `R2_*` is set, then Git /
+public paths.
+
+Public media delivery (`photos/…` keys, same catalogue paths, host
+`https://media.kidease.ca`) is a separate sync: `scripts/r2-public-photos.md` /
+`npm run photos:sync-r2`.
 
 This environment cannot see Vercel Production secrets. Kyle (or CI with those
 env vars) runs `--apply` once.

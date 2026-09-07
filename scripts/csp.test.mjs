@@ -37,7 +37,7 @@ test("nonce CSP drops script-src unsafe-inline and keeps product hosts", () => {
   assert.match(csp, /connect-src[^;]*https:\/\/challenges\.cloudflare\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/us\.i\.posthog\.com/);
   assert.match(csp, /worker-src 'self' blob: data:/);
-  assert.match(csp, /img-src 'self' data: blob: https:/);
+  assert.match(csp, /img-src 'self' data: blob: https: https:\/\/media\.kidease\.ca https:\/\/pub-9e5f137809844fcdb6d6671cd909f312\.r2\.dev https:\/\/\*\.r2\.dev/);
   assert.doesNotMatch(csp, /script-src[^;]*'unsafe-inline'/);
   assert.doesNotMatch(csp, /(?:^|; )style-src [^;]*'unsafe-inline'/);
   assert.doesNotMatch(csp, /unsafe-eval/);

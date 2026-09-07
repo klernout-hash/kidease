@@ -1,6 +1,7 @@
 export const CSP_SCRIPT_HOSTS: string[];
 export const CSP_CONNECT_HOSTS: string[];
 export const CSP_FRAME_HOSTS: string[];
+export const CSP_IMG_HOSTS: string[];
 export const STYLE_NONCE_BOOT: string;
 export const HTML_DOCUMENT_CACHE_CONTROL: string;
 export function generateNonce(): string;

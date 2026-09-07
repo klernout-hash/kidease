@@ -22,6 +22,7 @@
     "test": "node --experimental-strip-types --test 'scripts/**/*.test.mjs'",
     "photos:inventory": "node --experimental-strip-types scripts/migrate-photos-to-r2.mjs --inventory",
     "photos:migrate-r2": "node --experimental-strip-types scripts/migrate-photos-to-r2.mjs",
+    "photos:sync-r2": "node --experimental-strip-types scripts/sync-photos-to-r2.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "icons": "node scripts/make-app-icons.mjs",
