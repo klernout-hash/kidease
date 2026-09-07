@@ -8,6 +8,8 @@
  * read clearly in CAD.
  */
 
+import { checkoutCurrency, checkoutLocale, checkoutPaymentMethodTypes } from "../stripe-wallets.ts";
+
 export const STRIPE_STATEMENT_SUFFIX = "KIDEASE";
 
 export function appOrigin(): string {
@@ -25,6 +27,7 @@ export type StripeCheckoutInput = {
   cancelUrl: string;
   customerEmail?: string | null;
   customerId?: string | null;
+  locale?: string | null;
   /** Connect account id when the centre can receive funds. Parent never sees this. */
   destinationAccount?: string | null;
   applicationFeeCents?: number;
@@ -47,6 +50,7 @@ export type CatalogCheckoutInput = {
   customerEmail?: string | null;
   customerId?: string | null;
   clientReferenceId?: string | null;
+  locale?: string | null;
   metadata: Record<string, string>;
   allowPromotionCodes?: boolean;
 };
@@ -85,7 +89,7 @@ function allowPromotionCodes(env: NodeJS.ProcessEnv = process.env): boolean {
 }
 
 export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, unknown> {
-  const currency = (input.currency || "cad").toLowerCase();
+  const currency = checkoutCurrency(input.currency);
   const paymentIntent: Record<string, unknown> = {
     metadata: { bill_id: input.billId, kidease: "bill" },
     statement_descriptor_suffix: STRIPE_STATEMENT_SUFFIX,
@@ -96,6 +100,8 @@ export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, 
   }
   const body: Record<string, unknown> = {
     mode: "payment",
+    locale: checkoutLocale(input.locale),
+    payment_method_types: checkoutPaymentMethodTypes(),
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     client_reference_id: input.billId,
@@ -125,6 +131,8 @@ export function catalogCheckoutBody(input: CatalogCheckoutInput): Record<string,
   const metadata = { ...input.metadata, kidease: input.metadata.kidease || "catalog" };
   const body: Record<string, unknown> = {
     mode: input.mode,
+    locale: checkoutLocale(input.locale),
+    payment_method_types: checkoutPaymentMethodTypes(),
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     client_reference_id: input.clientReferenceId || undefined,

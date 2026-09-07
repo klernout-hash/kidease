@@ -63,6 +63,8 @@ Goal: soft launch via **TestFlight** + **Play internal testing**, then public li
 - [ ] Decide: Stripe Checkout / web subscriptions (current path) vs native IAP
 - [ ] If using Stripe web only: do **not** imply App Store subscriptions; Prefer Parent Plus / provider plans via Safari or in-app browser if required by guideline interpretation
 - [ ] No broken Pay buttons that 404
+- [ ] Hosted Checkout sessions request `card` so Apple Pay / Google Pay can appear on checkout.stripe.com (CAD). Native Capacitor opens Checkout in the system browser — wallets usually fail inside the WebView
+- [ ] Hosted Checkout does **not** need a kidease.ca Apple Pay domain file. After Stripe account verification (parked): Dashboard → Settings → Payment methods → Apple Pay → Add domain `www.kidease.ca` only if wallets will ever render on this origin. Then paste Stripe’s file into `STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION` on Vercel. Do not invent the file. Do not change Connect `ca_` / director verification here
 
 ### Broken UX that can fail review
 - [ ] Fix listing “On the map” embed (or remove embed, keep Directions link)
@@ -103,6 +105,7 @@ Store and OS probes hit these URLs. They must be **HTTP 200** `application/json`
 | --- | --- |
 | `https://www.kidease.ca/.well-known/apple-app-site-association` | AASA JSON (also served at `…/apple-app-site-association.json`) |
 | `https://www.kidease.ca/.well-known/assetlinks.json` | Digital Asset Links JSON |
+| `https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-association` | Apple Pay domain file — **404 until** `STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION` is set (hosted Checkout does not need it) |
 
 Expected AASA shape (bundle id is already `ca.daycarenearme.app`):
 
@@ -149,6 +152,7 @@ Verify after deploy (must be 200, not 3xx):
 ```bash
 curl -sI https://www.kidease.ca/.well-known/apple-app-site-association
 curl -sI https://www.kidease.ca/.well-known/assetlinks.json
+curl -sI https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-association
 ```
 
 - [ ] `APPLE_TEAM_ID` set on Vercel after Apple enroll

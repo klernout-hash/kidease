@@ -90,6 +90,8 @@ test("catalog checkout is CAD subscription or payment with KidEase metadata", ()
   });
   const flat = Object.fromEntries(flattenStripeBody(sub));
   assert.equal(flat.mode, "subscription");
+  assert.equal(flat["payment_method_types[0]"], "card");
+  assert.equal(flat.locale, "auto");
   assert.equal(flat["line_items[0][price]"], "price_pro");
   assert.equal(flat["line_items[0][quantity]"], "3");
   assert.equal(flat["metadata[kidease]"], "provider_sub");

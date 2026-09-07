@@ -25,6 +25,7 @@ import {
   startProviderCheckout,
   type ProviderSubscriptionState,
 } from "@/lib/server/provider-subscriptions";
+import { openStripeCheckout } from "@/lib/wallets";
 
 const COPY = {
   en: {
@@ -152,7 +153,7 @@ export function ProviderSubscriptionPanel() {
     try {
       const result = await startProviderCheckout({ data: next });
       if (result.url) {
-        window.location.assign(result.url);
+        await openStripeCheckout(result.url);
         return;
       }
       const saved = await getProviderSubscription();
@@ -170,7 +171,7 @@ export function ProviderSubscriptionPanel() {
     try {
       const result = await startProviderAddonCheckout({ data: { addon } });
       if (result.url) {
-        window.location.assign(result.url);
+        await openStripeCheckout(result.url);
         return;
       }
     } catch (err) {
@@ -184,7 +185,7 @@ export function ProviderSubscriptionPanel() {
     setBusy(true);
     try {
       const { url } = await startProviderBillingPortal();
-      window.location.assign(url);
+      await openStripeCheckout(url);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not open billing portal");
     } finally {

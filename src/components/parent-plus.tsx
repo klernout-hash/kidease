@@ -5,6 +5,7 @@ import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { PLUS_FEATURES, plusPriceHint, type PlusInterval } from "@/lib/parent-plus";
 import { getParentPlus, startParentPlusCheckout, startParentPlusPortal, type ParentPlusState } from "@/lib/server/parent-plus";
+import { openStripeCheckout } from "@/lib/wallets";
 
 function plusMoney(amount: number, locale: "en" | "fr") {
   return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
@@ -40,7 +41,7 @@ export function ParentPlusPanel() {
     setBusy(true);
     try {
       const { url } = await startParentPlusCheckout({ data: { interval } });
-      window.location.assign(url);
+      await openStripeCheckout(url);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not start Plus checkout");
     } finally {

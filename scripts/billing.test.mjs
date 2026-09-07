@@ -71,6 +71,8 @@ test("checkout metadata carries bill_id and Connect fee only when destinated", (
   assert.equal(flat["payment_intent_data[metadata][bill_id]"], "bl_1");
   assert.equal(flat["line_items[0][price_data][unit_amount]"], "120000");
   assert.equal(flat["line_items[0][price_data][currency]"], "cad");
+  assert.equal(flat["payment_method_types[0]"], "card");
+  assert.equal(flat.locale, "auto");
   assert.equal(flat["payment_intent_data[statement_descriptor_suffix]"], "KIDEASE");
   assert.equal(flat.allow_promotion_codes, "true");
   assert.equal(flat["payment_intent_data[application_fee_amount]"], undefined);
@@ -144,6 +146,8 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   assert.match(pay, /billInternalPay/);
   assert.match(pay, /createBillCheckout/);
   assert.match(pay, /stripeLive && bill/);
+  assert.match(pay, /openStripeCheckout/);
+  assert.match(pay, /WalletMethodHints/);
 
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /ProviderMoneyPanel/);

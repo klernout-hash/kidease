@@ -1,5 +1,6 @@
 /**
- * Serve Apple AASA + Android Digital Asset Links as application/json.
+ * Serve Apple AASA + Android Digital Asset Links as application/json,
+ * and the Apple Pay domain-association file when the env body is set.
  *
  * Must short-circuit before TanStack Start's document handler so these
  * paths are not the SPA HTML shell (live probes were 404 / catch-all).
@@ -7,7 +8,7 @@
  */
 import {
   wellKnownAppLinksHeaders,
-  wellKnownAppLinksPayload,
+  wellKnownStaticPayload,
 } from "../../scripts/well-known-app-links.mjs";
 
 interface WellKnownEvent {
@@ -22,7 +23,7 @@ export default async function wellKnownAppLinksMiddleware(
   const method = (event.req.method ?? "GET").toUpperCase();
   if (method !== "GET" && method !== "HEAD") return next();
 
-  const payload = wellKnownAppLinksPayload(event.url.pathname);
+  const payload = wellKnownStaticPayload(event.url.pathname);
   if (!payload) return next();
 
   return new Response(method === "HEAD" ? null : payload.body, {

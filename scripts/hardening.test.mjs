@@ -138,6 +138,8 @@ test("parent Pay / Start Plus copy does not contradict live Stripe", () => {
   assert.doesNotMatch(copy, /Stripe live keys are set — charges can settle/);
   assert.match(copy, /ledgerLiveParent/);
   assert.match(copy, /Start Plus uses Stripe Checkout/);
+  assert.match(copy, /payWalletsHint/);
+  assert.match(copy, /Canadian dollars \(CAD\)/);
   const honesty = src("src/components/listing-status-badge.tsx");
   assert.doesNotMatch(honesty, /Stripe live keys are set/);
   assert.match(honesty, /surface = "money"/);

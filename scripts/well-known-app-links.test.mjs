@@ -111,7 +111,7 @@ test("public/.well-known files match the placeholder builders", () => {
 
 test("Nitro middleware, Vite plugin, and vercel.json keep these paths off the SPA", () => {
   const middleware = read("server/middleware/well-known-app-links.ts");
-  assert.match(middleware, /wellKnownAppLinksPayload/);
+  assert.match(middleware, /wellKnownStaticPayload/);
   assert.match(middleware, /application\/json|payload\.contentType/);
   assert.match(middleware, /HEAD/);
 
@@ -122,12 +122,17 @@ test("Nitro middleware, Vite plugin, and vercel.json keep these paths off the SP
   const vercel = read("vercel.json");
   assert.match(vercel, /"source": "\/\.well-known\/apple-app-site-association"/);
   assert.match(vercel, /"source": "\/\.well-known\/assetlinks\.json"/);
+  assert.match(vercel, /"source": "\/\.well-known\/apple-developer-merchantid-domain-association"/);
   assert.match(vercel, /application\/json/);
   assert.doesNotMatch(
     vercel,
     /"source": "\/\.well-known\/apple-app-site-association"[\s\S]*"destination"/,
   );
   assert.doesNotMatch(vercel, /"source": "\/\.well-known\/assetlinks\.json"[\s\S]{0,80}"destination"/);
+  assert.doesNotMatch(
+    vercel,
+    /"source": "\/\.well-known\/apple-developer-merchantid-domain-association"[\s\S]{0,80}"destination"/,
+  );
 
   const guard = read("scripts/request-guard.mjs");
   assert.match(guard, /CHANGE_PASSWORD_PATH/);
@@ -145,6 +150,7 @@ test("env example documents Team ID and fingerprint fill-in without fake hashes"
   const docs = read("docs/store-readiness.md");
   assert.match(docs, /apple-app-site-association/);
   assert.match(docs, /assetlinks\.json/);
+  assert.match(docs, /apple-developer-merchantid-domain-association/);
   assert.match(docs, /ANDROID_SHA256_CERT_FINGERPRINTS/);
   assert.match(docs, /application\/json/);
 });

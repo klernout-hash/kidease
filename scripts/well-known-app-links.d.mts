@@ -9,4 +9,8 @@ export function wellKnownAppLinksPayload(
   pathname: string,
   env?: NodeJS.ProcessEnv,
 ): { path: string; body: string; contentType: string } | null;
+export function wellKnownStaticPayload(
+  pathname: string,
+  env?: NodeJS.ProcessEnv,
+): { path: string; body: string; contentType: string } | null;
 export function wellKnownAppLinksHeaders(contentType?: string): Record<string, string>;
