@@ -19,24 +19,27 @@ export const Route = createRootRoute({
       route: typeof window !== "undefined" ? window.location.pathname : "root",
     });
     return (
-      <div
-        style={{
-          fontFamily: "Plus Jakarta Sans, Segoe UI, sans-serif",
-          background: "#f6f3ee",
-          color: "#1c2438",
-          padding: 48,
-          minHeight: "100vh",
-        }}
-      >
-        <p style={{ fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase" }}>KidEase</p>
-        <h1 style={{ fontSize: 28 }}>Something went wrong</h1>
-        <p>
-          Refresh the page, or go back to kidease.ca. If it keeps happening, email {SUPPORT_INBOX_EMAIL}.
-        </p>
-        <p style={{ color: "#5c6578", fontSize: 13 }}>
-          {error instanceof Error ? error.message : "Please try again."}
-        </p>
-      </div>
+      <>
+        <style
+          dangerouslySetInnerHTML={{
+            __html:
+              ".ke-crash{font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:48px;min-height:100vh}" +
+              ".ke-crash-kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase}" +
+              ".ke-crash-title{font-size:28px}" +
+              ".ke-crash-detail{color:#5c6578;font-size:13px}",
+          }}
+        />
+        <div className="ke-crash">
+          <p className="ke-crash-kicker">KidEase</p>
+          <h1 className="ke-crash-title">Something went wrong</h1>
+          <p>
+            Refresh the page, or go back to kidease.ca. If it keeps happening, email {SUPPORT_INBOX_EMAIL}.
+          </p>
+          <p className="ke-crash-detail">
+            {error instanceof Error ? error.message : "Please try again."}
+          </p>
+        </div>
+      </>
     );
   },
   head: () => ({

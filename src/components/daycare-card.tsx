@@ -162,10 +162,12 @@ export function DaycareCard({
         aria-label={t("saved")}
       >
         <Heart
-          className="size-[26px] text-white"
+          className={cn(
+            "size-[26px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]",
+            picked ? "text-[#FF385C]" : "text-white",
+          )}
           strokeWidth={1.7}
           fill={picked ? HEART_SAVED : "rgba(0,0,0,0.28)"}
-          style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.45))", color: picked ? HEART_SAVED : "#fff" }}
         />
       </button>
     </article>

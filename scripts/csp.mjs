@@ -10,9 +10,14 @@
  * scripts (channel-boot, TanStack <Scripts />) can load Maps / Stripe /
  * Turnstile / PostHog. Those SDKs append scripts with createElement.
  *
- * style-src keeps 'unsafe-inline' for React style={{}} and component libraries.
- * That is the leftover health-check WARN. style-src-elem-only would break
- * Radix / Sonner injected <style> tags.
+ * style-src is nonce-only (no 'unsafe-inline'). SSR <style> tags are stamped
+ * after render. Radix / Sonner / Maps inject <style> at runtime — a nonce'd
+ * boot script copies document.currentScript.nonce onto createElement("style").
+ *
+ * style-src-attr keeps 'unsafe-inline' for React style={{}} (BrandMark pin,
+ * Sonner, Floating UI / Radix position, dynamic meters, marketing mocks).
+ * Attribute XSS is not a script gadget in current browsers; dropping this
+ * would break TanStack / Radix without a CSS-variable rewrite of popovers.
  */
 
 export const CSP_SCRIPT_HOSTS = [
@@ -43,6 +48,10 @@ export const CSP_FRAME_HOSTS = [
   "https://challenges.cloudflare.com",
 ];
 
+/** Classic script: copies its own nonce onto runtime-created <style> tags. */
+export const STYLE_NONCE_BOOT =
+  '(function(){var n=document.currentScript&&document.currentScript.nonce;if(!n)return;var c=Document.prototype.createElement;Document.prototype.createElement=function(t,o){var e=c.call(this,t,o);if(String(t).toLowerCase()==="style")e.setAttribute("nonce",n);return e;}})();';
+
 export function generateNonce() {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
@@ -57,10 +66,12 @@ export function buildContentSecurityPolicy(nonce) {
   if (/['\s;]/.test(token)) throw new Error("CSP nonce contains unsafe characters");
 
   const scriptSrc = ["'self'", `'nonce-${token}'`, "'strict-dynamic'", ...CSP_SCRIPT_HOSTS].join(" ");
+  const styleSrc = ["'self'", `'nonce-${token}'`].join(" ");
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline'",
+    `style-src ${styleSrc}`,
+    "style-src-attr 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     `connect-src 'self' ${CSP_CONNECT_HOSTS.join(" ")}`,
@@ -81,6 +92,33 @@ export function applyScriptNonces(html, nonce) {
     if (/\bnonce\s*=/i.test(attrs)) return full;
     return `<script nonce="${token}"${attrs}>`;
   });
+}
+
+/** Stamp nonce onto every <style> that does not already have one. */
+export function applyStyleNonces(html, nonce) {
+  const token = String(nonce ?? "").trim();
+  if (!token) return String(html ?? "");
+  return String(html ?? "").replace(/<style\b([^>]*)>/gi, (full, attrs) => {
+    if (/\bnonce\s*=/i.test(attrs)) return full;
+    return `<style nonce="${token}"${attrs}>`;
+  });
+}
+
+/** Inject the runtime style-nonce boot as the first child of <head>. */
+export function applyStyleNonceBoot(html, nonce) {
+  const token = String(nonce ?? "").trim();
+  const source = String(html ?? "");
+  if (!token) return source;
+  if (/\bdata-ke-style-nonce\b/.test(source)) return source;
+  const tag = `<script data-ke-style-nonce nonce="${token}">${STYLE_NONCE_BOOT}</script>`;
+  if (/<head\b/i.test(source)) {
+    return source.replace(/<head\b[^>]*>/i, (open) => `${open}${tag}`);
+  }
+  return tag + source;
+}
+
+export function applyDocumentNonces(html, nonce) {
+  return applyStyleNonces(applyScriptNonces(applyStyleNonceBoot(html, nonce), nonce), nonce);
 }
 
 export function isHtmlResponse(contentType) {

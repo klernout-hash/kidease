@@ -2,12 +2,13 @@
  * Per-request Content-Security-Policy.
  *
  * Must wrap `next()` so it sees HTML after grok-pwa head injection, then
- * stamps a nonce onto every <script> and sets the header. Filename sorts
- * before grok-pwa.ts / request-guard.ts so this middleware is outermost.
+ * stamps a nonce onto every <script> and <style>, injects the runtime
+ * style-nonce boot, and sets the header. Filename sorts before grok-pwa.ts
+ * / request-guard.ts so this middleware is outermost.
  */
 import {
+  applyDocumentNonces,
   applyHtmlDocumentCacheHeaders,
-  applyScriptNonces,
   buildContentSecurityPolicy,
   generateNonce,
   isHtmlResponse,
@@ -41,7 +42,7 @@ export default async function cspMiddleware(
     });
   }
 
-  const stamped = applyScriptNonces(await result.text(), nonce);
+  const stamped = applyDocumentNonces(await result.text(), nonce);
   headers.delete("content-length");
   return new Response(stamped, {
     status: result.status,

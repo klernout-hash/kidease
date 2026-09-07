@@ -4,12 +4,16 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
+  applyDocumentNonces,
   applyHtmlDocumentCacheHeaders,
   applyScriptNonces,
+  applyStyleNonceBoot,
+  applyStyleNonces,
   buildContentSecurityPolicy,
   generateNonce,
   HTML_DOCUMENT_CACHE_CONTROL,
   isHtmlResponse,
+  STYLE_NONCE_BOOT,
 } from "./csp.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,7 +30,8 @@ test("nonce CSP drops script-src unsafe-inline and keeps product hosts", () => {
   assert.match(csp, /script-src[^;]*https:\/\/challenges\.cloudflare\.com/);
   assert.match(csp, /script-src[^;]*https:\/\/us\.i\.posthog\.com/);
   assert.match(csp, /script-src[^;]*https:\/\/us-assets\.i\.posthog\.com/);
-  assert.match(csp, /style-src 'self' 'unsafe-inline'/);
+  assert.match(csp, /style-src 'self' 'nonce-abc\+123\/XYZ='/);
+  assert.match(csp, /style-src-attr 'unsafe-inline'/);
   assert.match(csp, /connect-src[^;]*https:\/\/maps\.googleapis\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/api\.stripe\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/challenges\.cloudflare\.com/);
@@ -34,6 +39,7 @@ test("nonce CSP drops script-src unsafe-inline and keeps product hosts", () => {
   assert.match(csp, /worker-src 'self' blob: data:/);
   assert.match(csp, /img-src 'self' data: blob: https:/);
   assert.doesNotMatch(csp, /script-src[^;]*'unsafe-inline'/);
+  assert.doesNotMatch(csp, /(?:^|; )style-src [^;]*'unsafe-inline'/);
   assert.doesNotMatch(csp, /unsafe-eval/);
   assert.doesNotMatch(csp, /grok\.com/);
   assert.doesNotMatch(csp, /r2\.cloudflarestorage\.com/);
@@ -61,6 +67,34 @@ test("applyScriptNonces stamps tags without double-noncing", () => {
   assert.notEqual(generateNonce(), token);
 });
 
+test("applyStyleNonces stamps style tags without double-noncing", () => {
+  const html = [
+    "<style>.a{color:red}</style>",
+    '<style type="text/css">.b{color:blue}</style>',
+    '<style nonce="keep-me">.c{color:green}</style>',
+  ].join("");
+  const out = applyStyleNonces(html, "s1");
+  assert.match(out, /<style nonce="s1">\.a\{color:red\}<\/style>/);
+  assert.match(out, /<style nonce="s1" type="text\/css">\.b\{color:blue\}<\/style>/);
+  assert.match(out, /<style nonce="keep-me">\.c\{color:green\}<\/style>/);
+  assert.equal((out.match(/nonce="s1"/g) ?? []).length, 2);
+});
+
+test("applyDocumentNonces injects style-nonce boot and stamps script plus style", () => {
+  const html =
+    "<html><head><style>.x{}</style><script src=\"/channel-boot.js\"></script></head><body></body></html>";
+  const out = applyDocumentNonces(html, "n1");
+  assert.match(out, /<head><script data-ke-style-nonce nonce="n1">/);
+  assert.match(out, /<style nonce="n1">\.x\{\}<\/style>/);
+  assert.match(out, /<script nonce="n1" src="\/channel-boot\.js">/);
+  assert.match(out, /Document\.prototype\.createElement/);
+  assert.equal(out.includes(STYLE_NONCE_BOOT), true);
+  const again = applyStyleNonceBoot(out, "n1");
+  assert.equal((again.match(/data-ke-style-nonce/g) ?? []).length, 1);
+  assert.match(STYLE_NONCE_BOOT, /document\.currentScript/);
+  assert.doesNotMatch(STYLE_NONCE_BOOT, /<\/script>/);
+});
+
 test("HTML documents are not cached so they cannot point at deleted asset hashes", () => {
   const headers = new Headers({ "content-type": "text/html" });
   applyHtmlDocumentCacheHeaders(headers);
@@ -80,6 +114,8 @@ test("Nitro owns CSP; vercel.json no longer ships a static policy", () => {
   assert.doesNotMatch(vercel, /unsafe-inline/);
   assert.doesNotMatch(vercel, /grok\.com/);
   assert.match(src("server/middleware/csp.ts"), /buildContentSecurityPolicy/);
-  assert.match(src("server/middleware/csp.ts"), /applyScriptNonces/);
-  assert.match(src("SECURITY.md"), /style-src.*unsafe-inline/);
+  assert.match(src("server/middleware/csp.ts"), /applyDocumentNonces/);
+  assert.doesNotMatch(src("scripts/csp.mjs"), /style-src 'self' 'unsafe-inline'/);
+  assert.match(src("SECURITY.md"), /style-src-attr.*unsafe-inline/);
+  assert.match(src("src/styles.css"), /ke-sheet\[data-snap="peek"\]/);
 });
