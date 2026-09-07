@@ -7,6 +7,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
 import { AdminContractsPanel } from "@/components/admin-contracts";
+import type { DocusignTemplateOption } from "@/lib/docusign-packs";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { canSeeAdminDesk } from "@/lib/desks";
 
@@ -26,12 +27,25 @@ function AdminContractsPage() {
   const { session, ready } = useSessionDesks();
   const [rows, setRows] = useState<AdminContractRow[]>([]);
   const [mode, setMode] = useState<"live" | "demo">("demo");
+  const [templates, setTemplates] = useState<DocusignTemplateOption[]>([]);
+  const [defaults, setDefaults] = useState<{
+    provider_agreement: string | null;
+    enrolment_pack: string | null;
+  }>({ provider_agreement: null, enrolment_pack: null });
   const [busy, setBusy] = useState<string | null>(null);
 
   async function refresh() {
-    const res = await listAdminContracts().catch(() => ({ mode: "demo" as const, rows: [] }));
+    const res = await listAdminContracts().catch(() => ({
+      mode: "demo" as const,
+      rows: [],
+      templates: [],
+      defaultTemplateIds: { provider_agreement: null, enrolment_pack: null },
+      templateRole: "Provider",
+    }));
     setRows(res.rows);
     setMode(res.mode);
+    setTemplates(res.templates || []);
+    setDefaults(res.defaultTemplateIds || { provider_agreement: null, enrolment_pack: null });
   }
 
   const admin = Boolean(ready && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
@@ -72,7 +86,15 @@ function AdminContractsPage() {
     <DeskShell desk="admin" active="contracts" onSelect={(id) => {
       if (id !== "contracts" && typeof window !== "undefined") window.location.assign("/admin");
     }}>
-      <AdminContractsPanel rows={rows} mode={mode} busy={busy} setBusy={setBusy} onRefresh={refresh} />
+      <AdminContractsPanel
+        rows={rows}
+        mode={mode}
+        templates={templates}
+        defaultTemplateIds={defaults}
+        busy={busy}
+        setBusy={setBusy}
+        onRefresh={refresh}
+      />
     </DeskShell>
     </TwoFactorGate>
   );

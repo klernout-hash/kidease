@@ -3,16 +3,43 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { lookupUser, notifyPlatform } from "@/lib/server/notify";
 import { requireAdmin, resolveAdminAccess } from "@/lib/server/roles";
-import { CENTRE_AGREEMENT_TITLE, centreAgreementBody } from "@/lib/contracts";
+import {
+  CENTRE_AGREEMENT_TITLE,
+  packDocumentBody,
+  packTitle,
+  parsePackKind,
+  type PackKind,
+} from "@/lib/contracts";
 import { nid } from "@/lib/utils";
 import {
   applyEnvelopeEvent,
   createCentreEnvelope,
+  defaultTemplateIds,
   docusignMode,
+  getEnvelopeStatus,
+  listDocusignTemplates,
+  persistSignedPdf,
   voidCentreEnvelope,
 } from "@/lib/server/docusign";
+import type { DocusignTemplateOption } from "@/lib/docusign-packs";
 
 export type ContractStatus = "draft" | "sent" | "viewed" | "signed" | "declined" | "voided";
+
+export type AdminPackRow = {
+  packKind: PackKind;
+  contractId: string | null;
+  status: ContractStatus | "none";
+  signerName: string | null;
+  signerEmail: string | null;
+  envelopeId: string | null;
+  signingUrl: string | null;
+  templateId: string | null;
+  documentName: string;
+  sentAt: string | null;
+  signedAt: string | null;
+  lastEvent: string | null;
+  hasSignedPdf: boolean;
+};
 
 export type AdminContractRow = {
   daycareId: string;
@@ -26,15 +53,7 @@ export type AdminContractRow = {
   providerName: string | null;
   providerEmail: string | null;
   contactEmail: string | null;
-  contractId: string | null;
-  status: ContractStatus | "none";
-  signerName: string | null;
-  signerEmail: string | null;
-  envelopeId: string | null;
-  signingUrl: string | null;
-  sentAt: string | null;
-  signedAt: string | null;
-  lastEvent: string | null;
+  packs: AdminPackRow[];
 };
 
 export type ProviderContractRow = {
@@ -42,6 +61,7 @@ export type ProviderContractRow = {
   daycareId: string;
   daycareName: string;
   city: string;
+  packKind: PackKind;
   status: string;
   signerName: string | null;
   signerEmail: string;
@@ -49,7 +69,16 @@ export type ProviderContractRow = {
   documentName: string;
   sentAt: string | null;
   signedAt: string | null;
+  hasSignedPdf: boolean;
   body: string;
+};
+
+export type AdminContractsPayload = {
+  mode: "live" | "demo";
+  templates: DocusignTemplateOption[];
+  defaultTemplateIds: { provider_agreement: string | null; enrolment_pack: string | null };
+  templateRole: string;
+  rows: AdminContractRow[];
 };
 
 async function requireOperator(userId: string) {
@@ -65,12 +94,30 @@ function validEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function emptyPack(kind: PackKind): AdminPackRow {
+  return {
+    packKind: kind,
+    contractId: null,
+    status: "none",
+    signerName: null,
+    signerEmail: null,
+    envelopeId: null,
+    signingUrl: null,
+    templateId: null,
+    documentName: packTitle(kind),
+    sentAt: null,
+    signedAt: null,
+    lastEvent: null,
+    hasSignedPdf: false,
+  };
+}
+
 export const listAdminContracts = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<AdminContractsPayload> => {
     await requireOperator(context.userId);
     const sql = await getSql();
-    const rows = await sql<{
+    const centres = await sql<{
       daycare_id: string;
       slug: string;
       name: string;
@@ -82,15 +129,6 @@ export const listAdminContracts = createServerFn({ method: "GET" })
       provider_name: string | null;
       provider_email: string | null;
       contact_email: string | null;
-      contract_id: string | null;
-      status: string | null;
-      signer_name: string | null;
-      signer_email: string | null;
-      envelope_id: string | null;
-      signing_url: string | null;
-      sent_at: string | null;
-      signed_at: string | null;
-      last_event: string | null;
     }>`
       select distinct on (d.id)
         d.id as daycare_id,
@@ -103,62 +141,119 @@ export const listAdminContracts = createServerFn({ method: "GET" })
         coalesce(pd.user_id, c.user_id) as provider_user_id,
         u.name as provider_name,
         u.email as provider_email,
-        d.contact_email,
-        dc.id as contract_id,
-        dc.status,
-        dc.signer_name,
-        dc.signer_email,
-        dc.envelope_id,
-        dc.signing_url,
-        dc.sent_at,
-        dc.signed_at,
-        dc.last_event
+        d.contact_email
       from daycares d
       left join provider_daycares pd on pd.daycare_id = d.id
       left join listing_claims c on c.daycare_id = d.id
       left join "user" u on u.id = coalesce(pd.user_id, c.user_id)
-      left join daycare_contracts dc on dc.daycare_id = d.id
       where d.claimed_at is not null
          or d.claim_status in ('pending', 'waiting', 'verified', 'approved')
          or pd.user_id is not null
          or c.id is not null
-      order by d.id, dc.created_at desc nulls last
+      order by d.id
     `.catch(() => []);
 
-    const mapped: AdminContractRow[] = rows.map((r) => ({
-      daycareId: r.daycare_id,
-      slug: r.slug,
-      name: r.name,
-      address: r.address,
-      city: r.city,
-      province: r.province,
-      licence: r.licence,
-      providerUserId: r.provider_user_id,
-      providerName: r.provider_name,
-      providerEmail: r.provider_email,
-      contactEmail: r.contact_email,
-      contractId: r.contract_id,
-      status: (r.status as ContractStatus) || "none",
-      signerName: r.signer_name,
-      signerEmail: r.signer_email,
-      envelopeId: r.envelope_id,
-      signingUrl: r.signing_url,
-      sentAt: r.sent_at,
-      signedAt: r.signed_at,
-      lastEvent: r.last_event,
-    }));
+    const contracts = await sql<{
+      id: string;
+      daycare_id: string;
+      pack_kind: string | null;
+      status: string | null;
+      signer_name: string | null;
+      signer_email: string | null;
+      envelope_id: string | null;
+      signing_url: string | null;
+      template_id: string | null;
+      document_name: string | null;
+      sent_at: string | null;
+      signed_at: string | null;
+      last_event: string | null;
+      signed_pdf_key: string | null;
+    }>`
+      select distinct on (dc.daycare_id, coalesce(dc.pack_kind, 'provider_agreement'))
+        dc.id, dc.daycare_id, dc.pack_kind, dc.status, dc.signer_name, dc.signer_email,
+        dc.envelope_id, dc.signing_url, dc.template_id, dc.document_name,
+        dc.sent_at, dc.signed_at, dc.last_event, dc.signed_pdf_key
+      from daycare_contracts dc
+      order by dc.daycare_id, coalesce(dc.pack_kind, 'provider_agreement'), dc.created_at desc
+    `.catch(() => []);
 
-    const rank = (s: string) =>
-      s === "none" || s === "draft" ? 0 : s === "sent" || s === "viewed" ? 1 : s === "declined" ? 2 : 3;
-    mapped.sort((a, b) => rank(a.status) - rank(b.status) || a.name.localeCompare(b.name));
-    return { mode: docusignMode(), rows: mapped };
+    const byCentre = new Map<string, AdminPackRow[]>();
+    for (const row of contracts) {
+      const kind = parsePackKind(row.pack_kind);
+      const pack: AdminPackRow = {
+        packKind: kind,
+        contractId: row.id,
+        status: (row.status as ContractStatus) || "none",
+        signerName: row.signer_name,
+        signerEmail: row.signer_email,
+        envelopeId: row.envelope_id,
+        signingUrl: row.signing_url,
+        templateId: row.template_id,
+        documentName: row.document_name || packTitle(kind),
+        sentAt: row.sent_at,
+        signedAt: row.signed_at,
+        lastEvent: row.last_event,
+        hasSignedPdf: Boolean(row.signed_pdf_key) || row.status === "signed",
+      };
+      const list = byCentre.get(row.daycare_id) || [];
+      list.push(pack);
+      byCentre.set(row.daycare_id, list);
+    }
+
+    const mapped: AdminContractRow[] = centres.map((r) => {
+      const found = byCentre.get(r.daycare_id) || [];
+      const packs: AdminPackRow[] = [
+        found.find((p) => p.packKind === "provider_agreement") || emptyPack("provider_agreement"),
+        found.find((p) => p.packKind === "enrolment_pack") || emptyPack("enrolment_pack"),
+      ];
+      return {
+        daycareId: r.daycare_id,
+        slug: r.slug,
+        name: r.name,
+        address: r.address,
+        city: r.city,
+        province: r.province,
+        licence: r.licence,
+        providerUserId: r.provider_user_id,
+        providerName: r.provider_name,
+        providerEmail: r.provider_email,
+        contactEmail: r.contact_email,
+        packs,
+      };
+    });
+
+    const packRank = (row: AdminContractRow) => {
+      const statuses = row.packs.map((p) => p.status);
+      if (statuses.some((s) => s === "none" || s === "draft" || s === "declined" || s === "voided")) return 0;
+      if (statuses.some((s) => s === "sent" || s === "viewed")) return 1;
+      return 2;
+    };
+    mapped.sort((a, b) => packRank(a) - packRank(b) || a.name.localeCompare(b.name));
+
+    const templates = docusignMode() === "live" ? await listDocusignTemplates() : [];
+    return {
+      mode: docusignMode(),
+      templates,
+      defaultTemplateIds: defaultTemplateIds(),
+      templateRole: (process.env.DOCUSIGN_TEMPLATE_ROLE || "Provider").trim() || "Provider",
+      rows: mapped,
+    };
   });
 
 export const sendCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { daycareId: string; signerName?: string; signerEmail?: string }) => input)
+  .validator(
+    (input: {
+      daycareId: string;
+      packKind?: PackKind;
+      templateId?: string;
+      signerName?: string;
+      signerEmail?: string;
+    }) => input,
+  )
   .handler(async ({ context, data }) => {
     const actor = await requireOperator(context.userId);
+    const packKind = parsePackKind(data.packKind);
     const sql = await getSql();
     const listed = await sql<{
       id: string;
@@ -192,7 +287,9 @@ export const sendCentreContract = createServerFn({ method: "POST" })
 
     const open = await sql<{ id: string; envelope_id: string | null }>`
       select id, envelope_id from daycare_contracts
-      where daycare_id = ${data.daycareId} and status in ('draft', 'sent', 'viewed')
+      where daycare_id = ${data.daycareId}
+        and coalesce(pack_kind, 'provider_agreement') = ${packKind}
+        and status in ('draft', 'sent', 'viewed')
       order by created_at desc
     `.catch(() => []);
     for (const row of open) {
@@ -209,7 +306,7 @@ export const sendCentreContract = createServerFn({ method: "POST" })
     }
 
     const contractId = nid("ct");
-    const body = centreAgreementBody({
+    const body = packDocumentBody(packKind, {
       centreName: centre.name,
       address: centre.address,
       city: centre.city,
@@ -218,20 +315,26 @@ export const sendCentreContract = createServerFn({ method: "POST" })
       signerName,
       signerEmail,
     });
+    const documentName = packKind === "enrolment_pack" ? packTitle(packKind) : CENTRE_AGREEMENT_TITLE;
+    const templateId = (data.templateId || defaultTemplateIds()[packKind] || "").trim() || null;
 
     const envelope = await createCentreEnvelope({
       contractId,
-      documentName: CENTRE_AGREEMENT_TITLE,
+      packKind,
+      documentName,
       body,
       signerName,
       signerEmail,
+      templateId,
+      centreName: centre.name,
     });
 
     await sql.query(
       `insert into daycare_contracts (
         id, daycare_id, provider_user_id, signer_name, signer_email, status,
-        envelope_id, signing_url, document_name, sent_at, last_event
-      ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),$10)`,
+        envelope_id, signing_url, document_name, sent_at, last_event,
+        pack_kind, template_id
+      ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),$10,$11,$12)`,
       [
         contractId,
         centre.id,
@@ -241,8 +344,10 @@ export const sendCentreContract = createServerFn({ method: "POST" })
         envelope.status === "sent" ? "sent" : envelope.status,
         envelope.envelopeId,
         envelope.signingUrl,
-        CENTRE_AGREEMENT_TITLE,
+        documentName,
         envelope.mode,
+        packKind,
+        templateId,
       ],
     );
 
@@ -257,7 +362,7 @@ export const sendCentreContract = createServerFn({ method: "POST" })
         slug: centre.slug,
         actorName: actor.name,
         actorEmail: actor.email,
-        detail: `KidEase agreement sent to ${signerName} <${signerEmail}> via ${envelope.mode === "live" ? "DocuSign" : "in-app signing"}.`,
+        detail: `${documentName} sent to ${signerName} <${signerEmail}> via ${envelope.mode === "live" ? "DocuSign" : "in-app signing"}.`,
       });
     } catch (err) {
       console.error("[contracts] notify failed", err);
@@ -270,6 +375,7 @@ export const sendCentreContract = createServerFn({ method: "POST" })
       signingUrl: envelope.signingUrl,
       mode: envelope.mode,
       signerEmail,
+      packKind,
     };
   });
 
@@ -295,6 +401,37 @@ export const voidCentreContract = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export const syncCentreContract = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { contractId: string }) => input)
+  .handler(async ({ context, data }) => {
+    await requireOperator(context.userId);
+    const sql = await getSql();
+    const rows = await sql<{
+      id: string;
+      daycare_id: string;
+      envelope_id: string | null;
+      status: string;
+      signed_pdf_key: string | null;
+    }>`
+      select id, daycare_id, envelope_id, status, signed_pdf_key
+      from daycare_contracts where id = ${data.contractId} limit 1
+    `;
+    const row = rows[0];
+    if (!row) throw new Error("Contract not found");
+    if (!row.envelope_id) return { ok: true as const, status: row.status };
+    const remote = await getEnvelopeStatus(row.envelope_id);
+    if (remote) await applyEnvelopeEvent(remote);
+    if ((remote?.status === "signed" || row.status === "signed") && !row.signed_pdf_key) {
+      await persistSignedPdf({
+        contractId: row.id,
+        daycareId: row.daycare_id,
+        envelopeId: row.envelope_id,
+      });
+    }
+    return { ok: true as const, status: remote?.status || row.status };
+  });
+
 export const listProviderContracts = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
@@ -304,6 +441,7 @@ export const listProviderContracts = createServerFn({ method: "GET" })
       daycare_id: string;
       daycare_name: string;
       city: string;
+      pack_kind: string | null;
       status: string;
       signer_name: string | null;
       signer_email: string;
@@ -311,13 +449,15 @@ export const listProviderContracts = createServerFn({ method: "GET" })
       document_name: string;
       sent_at: string | null;
       signed_at: string | null;
+      signed_pdf_key: string | null;
       address: string;
       province: string;
       licence: string | null;
     }>`
-      select dc.id, dc.daycare_id, d.name as daycare_name, d.city, dc.status,
-             dc.signer_name, dc.signer_email, dc.signing_url, dc.document_name,
-             dc.sent_at, dc.signed_at, d.address, d.province, d.license_number as licence
+      select dc.id, dc.daycare_id, d.name as daycare_name, d.city,
+             dc.pack_kind, dc.status, dc.signer_name, dc.signer_email, dc.signing_url,
+             dc.document_name, dc.sent_at, dc.signed_at, dc.signed_pdf_key,
+             d.address, d.province, d.license_number as licence
       from daycare_contracts dc
       join daycares d on d.id = dc.daycare_id
       join provider_daycares pd on pd.daycare_id = dc.daycare_id and pd.user_id = ${context.userId}
@@ -325,35 +465,39 @@ export const listProviderContracts = createServerFn({ method: "GET" })
       order by dc.created_at desc
     `.catch(() => []);
 
-    return rows.map((r) => ({
-      id: r.id,
-      daycareId: r.daycare_id,
-      daycareName: r.daycare_name,
-      city: r.city,
-      status: r.status,
-      signerName: r.signer_name,
-      signerEmail: r.signer_email,
-      signingUrl: r.signing_url,
-      documentName: r.document_name,
-      sentAt: r.sent_at,
-      signedAt: r.signed_at,
-      body: centreAgreementBody({
-        centreName: r.daycare_name,
-        address: r.address,
+    return rows.map((r) => {
+      const packKind = parsePackKind(r.pack_kind);
+      return {
+        id: r.id,
+        daycareId: r.daycare_id,
+        daycareName: r.daycare_name,
         city: r.city,
-        province: r.province,
-        licence: r.licence || undefined,
-        signerName: r.signer_name || undefined,
+        packKind,
+        status: r.status,
+        signerName: r.signer_name,
         signerEmail: r.signer_email,
-      }),
-    })) satisfies ProviderContractRow[];
+        signingUrl: r.signing_url,
+        documentName: r.document_name,
+        sentAt: r.sent_at,
+        signedAt: r.signed_at,
+        hasSignedPdf: Boolean(r.signed_pdf_key) || r.status === "signed",
+        body: packDocumentBody(packKind, {
+          centreName: r.daycare_name,
+          address: r.address,
+          city: r.city,
+          province: r.province,
+          licence: r.licence || undefined,
+          signerName: r.signer_name || undefined,
+          signerEmail: r.signer_email,
+        }),
+      };
+    }) satisfies ProviderContractRow[];
   });
 
 export const getSignContract = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
-    const actor = await lookupUser(context.userId);
     const admin = await isOperator(context.userId);
     const sql = await getSql();
     const rows = await sql<{
@@ -364,6 +508,7 @@ export const getSignContract = createServerFn({ method: "GET" })
       city: string;
       province: string;
       licence: string | null;
+      pack_kind: string | null;
       status: string;
       signer_name: string | null;
       signer_email: string;
@@ -371,10 +516,11 @@ export const getSignContract = createServerFn({ method: "GET" })
       envelope_id: string | null;
       document_name: string;
       provider_user_id: string | null;
+      signed_pdf_key: string | null;
     }>`
       select dc.id, dc.daycare_id, d.name as daycare_name, d.address, d.city, d.province,
-             d.license_number as licence, dc.status, dc.signer_name, dc.signer_email,
-             dc.signing_url, dc.envelope_id, dc.document_name, dc.provider_user_id
+             d.license_number as licence, dc.pack_kind, dc.status, dc.signer_name, dc.signer_email,
+             dc.signing_url, dc.envelope_id, dc.document_name, dc.provider_user_id, dc.signed_pdf_key
       from daycare_contracts dc
       join daycares d on d.id = dc.daycare_id
       where dc.id = ${data.contractId}
@@ -390,17 +536,20 @@ export const getSignContract = createServerFn({ method: "GET" })
     if (!admin && !owned[0] && row.provider_user_id !== context.userId) {
       throw new Error("Not authorized");
     }
+    const packKind = parsePackKind(row.pack_kind);
     return {
       id: row.id,
       daycareName: row.daycare_name,
+      packKind,
       status: row.status,
       signerName: row.signer_name,
       signerEmail: row.signer_email,
       signingUrl: row.signing_url,
       documentName: row.document_name,
       envelopeId: row.envelope_id,
+      hasSignedPdf: Boolean(row.signed_pdf_key) || row.status === "signed",
       demo: !row.envelope_id || row.envelope_id.startsWith("demo_"),
-      body: centreAgreementBody({
+      body: packDocumentBody(packKind, {
         centreName: row.daycare_name,
         address: row.address,
         city: row.city,
@@ -461,7 +610,7 @@ export const signCentreContract = createServerFn({ method: "POST" })
         daycareName: row.daycare_name,
         actorName: actor.name,
         actorEmail: actor.email,
-        detail: `${row.signer_name || actor.name} signed the KidEase centre agreement.`,
+        detail: `${row.signer_name || actor.name} signed KidEase paperwork.`,
       });
     } catch (err) {
       console.error("[contracts] signed notify failed", err);

@@ -21,8 +21,10 @@ function packKeys(text, pack) {
 
 test("DocuSign Send is disabled when keys are not live", () => {
   const contracts = src("src/components/admin-contracts.tsx");
-  assert.match(contracts, /Send \(DocuSign off\)/);
+  const copy = src("src/lib/docusign-copy.ts");
+  assert.match(copy, /Send \(DocuSign off\)/);
   assert.match(contracts, /mode === "live"/);
+  assert.match(contracts, /sendOff/);
 });
 
 test("Titan webmail is an external tab and message open has a timeout", () => {

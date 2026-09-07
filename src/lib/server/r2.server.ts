@@ -5,10 +5,12 @@
 
 import {
   allowContentType,
+  allowContractPdfType,
   decodeObjectBody,
   humanR2Error,
   objectUrl,
   presignS3Get,
+  R2_CONTRACT_MAX_BYTES,
   R2_MAX_OBJECT_BYTES,
   R2_PRESIGN_TTL_SEC,
   resolveR2Config,
@@ -107,6 +109,41 @@ export async function putR2Object(input: {
     contentType: input.contentType,
     body: decodeObjectBody(input.bodyBase64),
   });
+}
+
+export async function putContractPdf(input: { key: string; body: Buffer }): Promise<R2PutResult> {
+  const config = requireConfig();
+  const key = sanitizeObjectKey(input.key);
+  if (!key.startsWith("contracts/")) throw new Error("Signed PDF key must stay under contracts/.");
+  const contentType = allowContractPdfType("application/pdf");
+  const body = input.body;
+  if (!body.byteLength) throw new Error("Object body is required.");
+  if (body.byteLength > R2_CONTRACT_MAX_BYTES) {
+    throw new Error(`Signed PDF is too large (max ${R2_CONTRACT_MAX_BYTES} bytes).`);
+  }
+  const url = objectUrl(config, key);
+  const signed = signS3Request({
+    method: "PUT",
+    url,
+    headers: {
+      "content-type": contentType,
+      "content-length": String(body.byteLength),
+    },
+    body,
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+  });
+  try {
+    const res = await r2Fetch(signed, "PUT", body);
+    return {
+      key,
+      bytes: body.byteLength,
+      contentType,
+      etag: res.headers.get("etag"),
+    };
+  } catch (err) {
+    throw new Error(humanR2Error(err, config.secretAccessKey));
+  }
 }
 
 export async function headR2Object(keyInput: string): Promise<{

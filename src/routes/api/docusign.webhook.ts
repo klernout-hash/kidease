@@ -1,16 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { applyEnvelopeEvent, authorizedWebhook, docusignMode, parseConnectPayload } from "@/lib/server/docusign";
+import { applyEnvelopeEvent } from "@/lib/server/docusign";
+import { authorizedWebhook, parseConnectPayload, webhookUrlHasSecret } from "@/lib/server/docusign-connect";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 
 async function run(request: Request) {
   const raw = await request.text();
   const secret = (process.env.DOCUSIGN_WEBHOOK_SECRET || "").trim();
   const ip = requestIp(request);
+  if (webhookUrlHasSecret(request)) {
+    await logSecurityEvent({ kind: "webhook_reject", detail: "docusign query secret", ip });
+    return new Response("Unauthorized", { status: 401 });
+  }
   if (!secret) {
     await logSecurityEvent({ kind: "webhook_reject", detail: "docusign secret missing", ip });
     return new Response("Unauthorized", { status: 401 });
   }
-  if (!authorizedWebhook(request, raw)) {
+  if (!authorizedWebhook(request, raw, secret)) {
     await logSecurityEvent({ kind: "webhook_reject", detail: "docusign signature", ip });
     return new Response("Unauthorized", { status: 401 });
   }
@@ -20,7 +25,7 @@ async function run(request: Request) {
     const result = await applyEnvelopeEvent(parsed);
     await logSecurityEvent({ kind: "webhook_accept", detail: "docusign envelope", ip });
     return Response.json(result);
-  } catch (err) {
+  } catch {
     return Response.json({ ok: false, error: "apply failed" }, { status: 500 });
   }
 }

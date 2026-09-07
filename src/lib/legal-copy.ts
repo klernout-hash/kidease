@@ -165,6 +165,13 @@ export const PRIVACY_EN: LegalDoc = {
               hrefLabel: "Stripe Privacy Policy",
             },
             {
+              name: "DocuSign, when centre paperwork is sent",
+              purpose:
+                "eSignature for the licensed centre agreement and enrolment paperwork packs. KidEase sends the provider’s name and email, the document or template, and the envelope status. The signed PDF is stored on that daycare’s KidEase profile for the operator and KidEase admin. Until DocuSign keys are set, centres can still sign the in-app document.",
+              href: "https://www.docusign.com/privacy",
+              hrefLabel: "DocuSign Privacy Policy",
+            },
+            {
               name: "PostHog, when product analytics is on",
               purpose:
                 "Page views, in-app clicks, feature flags, and privacy-masked session replay so we can improve KidEase. We send a random visitor id or your account id — not your password, email, or child-profile fields. Session replay masks form inputs and on-screen text. PostHog is not an advertising or remarketing pixel.",
@@ -320,7 +327,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase is based in Winnipeg, Manitoba. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe when enabled, Cloudflare when proxied, PostHog when analytics is on, Sentry when error monitoring is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
+          text: "KidEase is based in Winnipeg, Manitoba. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe when enabled, DocuSign when centre paperwork is sent, Cloudflare when proxied, PostHog when analytics is on, Sentry when error monitoring is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
         },
       ],
     },
@@ -512,6 +519,13 @@ export const PRIVACY_FR: LegalDoc = {
               hrefLabel: "Politique de confidentialité Stripe",
             },
             {
+              name: "DocuSign, lorsque les documents du centre sont envoyés",
+              purpose:
+                "Signature électronique de l’entente du centre permis et des trousses d’inscription. KidEase envoie le nom et le courriel du fournisseur, le document ou le modèle, et le statut de l’enveloppe. Le PDF signé est déposé sur le profil KidEase de cette garderie pour l’exploitant et l’admin. Tant que les clés DocuSign ne sont pas définies, le centre peut signer dans l’appli.",
+              href: "https://www.docusign.com/privacy",
+              hrefLabel: "Politique de confidentialité DocuSign",
+            },
+            {
               name: "PostHog, lorsque l’analytique produit est active",
               purpose:
                 "Pages vues, clics, drapeaux de fonctionnalité et replay de session masqué pour améliorer KidEase. Nous envoyons un identifiant anonyme ou l’identifiant de compte — pas le mot de passe, le courriel ni les profils d’enfants. Les champs de formulaire et le texte à l’écran sont masqués. Ce n’est pas un pixel publicitaire.",
@@ -667,7 +681,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase est à Winnipeg (Manitoba). Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe si activé, Cloudflare si proxifié, PostHog si l’analytique est active, Sentry si le suivi des erreurs est actif). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
+          text: "KidEase est à Winnipeg (Manitoba). Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe si activé, DocuSign si les documents du centre sont envoyés, Cloudflare si proxifié, PostHog si l’analytique est active, Sentry si le suivi des erreurs est actif). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
         },
       ],
     },

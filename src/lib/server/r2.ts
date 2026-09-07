@@ -24,6 +24,9 @@ export const R2_REGION = "auto";
 export const R2_SERVICE = "s3";
 export const R2_HOST_SUFFIX = ".r2.cloudflarestorage.com";
 export const R2_MAX_OBJECT_BYTES = 4 * 1024 * 1024;
+/** Signed DocuSign packs are larger than listing photos. */
+export const R2_CONTRACT_MAX_BYTES = 15 * 1024 * 1024;
+export const R2_CONTRACT_PREFIX = "contracts";
 export const R2_PRESIGN_TTL_SEC = 5 * 60;
 export const R2_KEY_MAX = 512;
 export const R2_ORIGINALS_PREFIX = "originals";
@@ -233,6 +236,16 @@ export function allowContentType(raw: string): string {
   if (!type || !(R2_ALLOWED_TYPES as readonly string[]).includes(type)) {
     throw new Error("Use a JPEG, PNG, WebP, AVIF, or GIF.");
   }
+  return type;
+}
+
+export function allowContractPdfType(raw: string): string {
+  const type = String(raw || "")
+    .trim()
+    .toLowerCase()
+    .split(";")[0]
+    ?.trim();
+  if (type !== "application/pdf") throw new Error("Signed copies must be PDF.");
   return type;
 }
 

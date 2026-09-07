@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { listAdminContracts, sendCentreContract, voidCentreContract } from "@/lib/server/contracts";
+import { parsePackKind } from "@/lib/docusign-packs";
+import { listAdminContracts, sendCentreContract, syncCentreContract, voidCentreContract } from "@/lib/server/contracts";
 
 async function readJson(request: Request) {
   try {
@@ -36,11 +37,19 @@ export const Route = createFileRoute("/api/admin/contracts")({
             const data = await voidCentreContract({ data: { contractId } });
             return Response.json({ ...data, ok: true as const });
           }
+          if (action === "sync") {
+            const contractId = String(body.contractId || "");
+            if (!contractId) return fail(new Error("contractId is required"));
+            const data = await syncCentreContract({ data: { contractId } });
+            return Response.json({ ...data, ok: true as const });
+          }
           const daycareId = String(body.daycareId || "");
           if (!daycareId) return fail(new Error("daycareId is required"));
           const data = await sendCentreContract({
             data: {
               daycareId,
+              packKind: parsePackKind(body.packKind),
+              templateId: typeof body.templateId === "string" ? body.templateId : undefined,
               signerName: typeof body.signerName === "string" ? body.signerName : undefined,
               signerEmail: typeof body.signerEmail === "string" ? body.signerEmail : undefined,
             },

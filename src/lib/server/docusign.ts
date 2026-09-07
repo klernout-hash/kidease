@@ -1,5 +1,19 @@
-import { createHmac, createPrivateKey, createSign } from "node:crypto";
+import { createPrivateKey, createSign } from "node:crypto";
 import { getSql } from "@/lib/db";
+import {
+  contractPdfKey,
+  defaultTemplateId,
+  packEmailBlurb,
+  packEmailSubject,
+  parsePackKind,
+  templateRoleName,
+  type PackKind,
+} from "@/lib/docusign-packs";
+import {
+  authorizedWebhook,
+  mapEnvelopeStatus,
+  parseConnectPayload,
+} from "@/lib/server/docusign-connect";
 
 export type DocusignMode = "live" | "demo";
 
@@ -8,6 +22,11 @@ export type EnvelopeResult = {
   envelopeId: string;
   signingUrl: string | null;
   status: string;
+};
+
+export type DocusignTemplate = {
+  templateId: string;
+  name: string;
 };
 
 type JwtConfig = {
@@ -40,7 +59,10 @@ export function docusignConfig(): JwtConfig | null {
     accountId,
     privateKey,
     authBase: env("DOCUSIGN_AUTH_BASE") || (demo ? "https://account-d.docusign.com" : "https://account.docusign.com"),
-    baseUri: (env("DOCUSIGN_BASE_URI") || (demo ? "https://demo.docusign.net" : "https://na4.docusign.net")).replace(/\/$/, ""),
+    baseUri: (env("DOCUSIGN_BASE_URI") || (demo ? "https://demo.docusign.net" : "https://na4.docusign.net")).replace(
+      /\/$/,
+      "",
+    ),
   };
 }
 
@@ -49,7 +71,14 @@ export function docusignMode(): DocusignMode {
 }
 
 export function appOrigin() {
-  return (env("APP_ORIGIN") || env("VITE_APP_URL") || "https://kidease.ca").replace(/\/$/, "");
+  return (env("APP_ORIGIN") || env("VITE_APP_URL") || "https://www.kidease.ca").replace(/\/$/, "");
+}
+
+export function defaultTemplateIds() {
+  return {
+    provider_agreement: defaultTemplateId("provider_agreement"),
+    enrolment_pack: defaultTemplateId("enrolment_pack"),
+  };
 }
 
 function b64url(input: string | Buffer) {
@@ -72,7 +101,7 @@ async function accessToken(cfg: JwtConfig) {
       sub: cfg.userId,
       aud: cfg.authBase.replace(/^https?:\/\//, ""),
       iat: now,
-      exp: now + 3600,
+      exp: now + 3500,
       scope: "signature impersonation",
     },
     cfg.privateKey,
@@ -92,26 +121,88 @@ async function accessToken(cfg: JwtConfig) {
 }
 
 async function ds<T>(cfg: JwtConfig, token: string, path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
+  if (!headers.has("Content-Type") && init?.body && !(init.body instanceof Uint8Array)) {
+    headers.set("Content-Type", "application/json");
+  }
   const res = await fetch(`${cfg.baseUri}/restapi/v2.1/accounts/${cfg.accountId}${path}`, {
     ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...(init?.headers || {}),
-    },
+    headers,
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`DocuSign ${res.status}: ${text.slice(0, 500)}`);
   return (text ? JSON.parse(text) : {}) as T;
 }
 
+async function dsBytes(cfg: JwtConfig, token: string, path: string) {
+  const res = await fetch(`${cfg.baseUri}/restapi/v2.1/accounts/${cfg.accountId}${path}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/pdf",
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`DocuSign ${res.status}: ${text.slice(0, 500)}`);
+  }
+  return Buffer.from(await res.arrayBuffer());
+}
+
+function webhookNotification() {
+  return {
+    url: `${appOrigin()}/api/docusign/webhook`,
+    loggingEnabled: "true",
+    requireAcknowledgment: "true",
+    includeDocuments: "false",
+    envelopeEvents: [
+      { envelopeEventStatusCode: "sent" },
+      { envelopeEventStatusCode: "delivered" },
+      { envelopeEventStatusCode: "completed" },
+      { envelopeEventStatusCode: "declined" },
+      { envelopeEventStatusCode: "voided" },
+    ],
+    eventData: {
+      version: "restv2.1",
+      format: "json",
+      includeData: ["recipients"],
+    },
+  };
+}
+
+export async function listDocusignTemplates(): Promise<DocusignTemplate[]> {
+  const cfg = docusignConfig();
+  if (!cfg) return [];
+  try {
+    const token = await accessToken(cfg);
+    const json = await ds<{ envelopeTemplates?: { templateId?: string; name?: string }[] }>(
+      cfg,
+      token,
+      "/templates?count=80",
+    );
+    return (json.envelopeTemplates || [])
+      .filter((row) => row.templateId)
+      .map((row) => ({
+        templateId: String(row.templateId),
+        name: (row.name || row.templateId || "Template").trim(),
+      }));
+  } catch (err) {
+    console.error("[docusign] list templates failed", err);
+    return [];
+  }
+}
+
 export async function createCentreEnvelope(input: {
   contractId: string;
+  packKind?: PackKind;
   documentName: string;
   body: string;
   signerName: string;
   signerEmail: string;
+  templateId?: string | null;
+  centreName?: string;
 }): Promise<EnvelopeResult> {
+  const packKind = parsePackKind(input.packKind);
   const cfg = docusignConfig();
   if (!cfg) {
     return {
@@ -123,78 +214,67 @@ export async function createCentreEnvelope(input: {
   }
 
   const token = await accessToken(cfg);
-  const documentBase64 = Buffer.from(input.body, "utf8").toString("base64");
-  const created = await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
-    method: "POST",
-    body: JSON.stringify({
-      emailSubject: `Please sign: ${input.documentName}`,
-      emailBlurb: "KidEase needs the licensed centre agreement signed before the listing stays live for parent requests.",
-      documents: [
-        {
-          documentBase64,
-          name: input.documentName,
-          fileExtension: "txt",
-          documentId: "1",
-        },
-      ],
-      recipients: {
-        signers: [
-          {
-            email: input.signerEmail,
-            name: input.signerName,
-            recipientId: "1",
-            clientUserId: input.contractId,
-            tabs: {
-              signHereTabs: [
-                {
-                  anchorString: "By signing in DocuSign",
-                  anchorUnits: "pixels",
-                  anchorXOffset: "0",
-                  anchorYOffset: "20",
-                },
-              ],
+  const subject = packEmailSubject(packKind, input.centreName || input.documentName);
+  const templateId = (input.templateId || "").trim();
+  const created = templateId
+    ? await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
+        method: "POST",
+        body: JSON.stringify({
+          emailSubject: subject,
+          emailBlurb: packEmailBlurb(packKind),
+          templateId,
+          templateRoles: [
+            {
+              email: input.signerEmail,
+              name: input.signerName,
+              roleName: templateRoleName(),
             },
+          ],
+          eventNotification: webhookNotification(),
+          status: "sent",
+        }),
+      })
+    : await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
+        method: "POST",
+        body: JSON.stringify({
+          emailSubject: subject,
+          emailBlurb: packEmailBlurb(packKind),
+          documents: [
+            {
+              documentBase64: Buffer.from(input.body, "utf8").toString("base64"),
+              name: input.documentName,
+              fileExtension: "txt",
+              documentId: "1",
+            },
+          ],
+          recipients: {
+            signers: [
+              {
+                email: input.signerEmail,
+                name: input.signerName,
+                recipientId: "1",
+                tabs: {
+                  signHereTabs: [
+                    {
+                      anchorString: "By signing in DocuSign",
+                      anchorUnits: "pixels",
+                      anchorXOffset: "0",
+                      anchorYOffset: "20",
+                    },
+                  ],
+                },
+              },
+            ],
           },
-        ],
-      },
-      eventNotification: {
-        url: `${appOrigin()}/api/docusign/webhook`,
-        loggingEnabled: "true",
-        requireAcknowledgment: "true",
-        envelopeEvents: [
-          { envelopeEventStatusCode: "sent" },
-          { envelopeEventStatusCode: "delivered" },
-          { envelopeEventStatusCode: "completed" },
-          { envelopeEventStatusCode: "declined" },
-          { envelopeEventStatusCode: "voided" },
-        ],
-      },
-      status: "sent",
-    }),
-  });
-
-  let signingUrl: string | null = null;
-  try {
-    const view = await ds<{ url?: string }>(cfg, token, `/envelopes/${created.envelopeId}/views/recipient`, {
-      method: "POST",
-      body: JSON.stringify({
-        returnUrl: `${appOrigin()}/sign/${input.contractId}`,
-        authenticationMethod: "none",
-        email: input.signerEmail,
-        userName: input.signerName,
-        clientUserId: input.contractId,
-      }),
-    });
-    signingUrl = view.url ?? null;
-  } catch (err) {
-    console.error("[docusign] recipient view failed", err);
-    signingUrl = `${appOrigin()}/sign/${input.contractId}`;
-  }
+          eventNotification: webhookNotification(),
+          status: "sent",
+        }),
+      });
 
   return {
     mode: "live",
     envelopeId: created.envelopeId,
-    signingUrl,
+    signingUrl: null,
     status: created.status || "sent",
   };
 }
@@ -209,47 +289,56 @@ export async function voidCentreEnvelope(envelopeId: string, reason = "Supersede
   });
 }
 
-export function mapEnvelopeStatus(raw: string) {
-  const s = raw.trim().toLowerCase();
-  if (s === "completed" || s === "signed") return "signed";
-  if (s === "delivered" || s === "viewed") return "viewed";
-  if (s === "declined") return "declined";
-  if (s === "voided") return "voided";
-  if (s === "sent" || s === "created") return "sent";
-  return s || "sent";
+export async function getEnvelopeStatus(envelopeId: string) {
+  const cfg = docusignConfig();
+  if (!cfg || envelopeId.startsWith("demo_")) return null;
+  const token = await accessToken(cfg);
+  const json = await ds<{ status?: string; envelopeId?: string }>(cfg, token, `/envelopes/${envelopeId}`);
+  return {
+    envelopeId: json.envelopeId || envelopeId,
+    status: mapEnvelopeStatus(json.status || ""),
+    event: json.status || "poll",
+  };
 }
 
-export function authorizedWebhook(request: Request, rawBody: string) {
-  const secret = env("DOCUSIGN_WEBHOOK_SECRET");
-  if (!secret) return true;
-  const header =
-    request.headers.get("x-docusign-signature-1") ||
-    request.headers.get("x-authorization-digest") ||
-    "";
-  if (!header) return false;
-  const digest = createHmac("sha256", secret).update(rawBody).digest("base64");
-  return header.replace(/^sha256=/i, "").trim() === digest;
+export async function downloadCombinedPdf(envelopeId: string) {
+  const cfg = docusignConfig();
+  if (!cfg || envelopeId.startsWith("demo_")) return null;
+  const token = await accessToken(cfg);
+  const body = await dsBytes(cfg, token, `/envelopes/${envelopeId}/documents/combined`);
+  if (!body.byteLength) return null;
+  return body;
 }
 
-export function parseConnectPayload(raw: string): { envelopeId: string; status: string; event: string } | null {
+export async function persistSignedPdf(input: {
+  contractId: string;
+  daycareId: string;
+  envelopeId: string;
+}): Promise<{ key: string; bytes: number } | null> {
+  if (!input.envelopeId || input.envelopeId.startsWith("demo_")) return null;
+  const pdf = await downloadCombinedPdf(input.envelopeId);
+  if (!pdf) return null;
+  const key = contractPdfKey(input.daycareId, input.contractId);
   try {
-    const json = JSON.parse(raw) as {
-      event?: string;
-      envelopeId?: string;
-      status?: string;
-      data?: { envelopeId?: string; envelopeSummary?: { status?: string; envelopeId?: string } };
-    };
-    const envelopeId = json.data?.envelopeId || json.data?.envelopeSummary?.envelopeId || json.envelopeId;
-    const status = json.data?.envelopeSummary?.status || json.status || "";
-    if (envelopeId) return { envelopeId, status: mapEnvelopeStatus(status || json.event || ""), event: json.event || status || "" };
-  } catch {
-    /* XML Connect payload */
+    const { putContractPdf } = await import("@/lib/server/r2.server");
+    const stored = await putContractPdf({ key, body: pdf });
+    const sql = await getSql();
+    await sql.query(
+      `update daycare_contracts
+          set signed_pdf_key = $2,
+              signed_pdf_bytes = $3,
+              updated_at = now()
+        where id = $1`,
+      [input.contractId, stored.key, stored.bytes],
+    );
+    return { key: stored.key, bytes: stored.bytes };
+  } catch (err) {
+    console.error("[docusign] store signed pdf failed", err);
+    return null;
   }
-  const id = raw.match(/<EnvelopeID>([^<]+)<\/EnvelopeID>/i)?.[1];
-  const status = raw.match(/<Status>([^<]+)<\/Status>/i)?.[1];
-  if (!id) return null;
-  return { envelopeId: id, status: mapEnvelopeStatus(status || ""), event: status || "connect" };
 }
+
+export { authorizedWebhook, mapEnvelopeStatus, parseConnectPayload };
 
 export async function applyEnvelopeEvent(input: { envelopeId: string; status: string; event: string }) {
   const sql = await getSql();
@@ -268,5 +357,97 @@ export async function applyEnvelopeEvent(input: { envelopeId: string; status: st
      where envelope_id = $1`,
     [input.envelopeId, status, input.event.slice(0, 80), viewed, signed, declined],
   );
+  if (signed) {
+    const rows = await sql
+      .query<{ id: string; daycare_id: string; signed_pdf_key: string | null }>(
+        `select id, daycare_id, signed_pdf_key from daycare_contracts where envelope_id = $1 limit 1`,
+        [input.envelopeId],
+      )
+      .catch(() => []);
+    const row = rows[0];
+    if (row && !row.signed_pdf_key) {
+      await persistSignedPdf({
+        contractId: row.id,
+        daycareId: row.daycare_id,
+        envelopeId: input.envelopeId,
+      }).catch((err) => console.error("[docusign] persist after event failed", err));
+    }
+  }
   return { ok: true as const, envelopeId: input.envelopeId, status };
+}
+
+export async function pollOpenEnvelopes(limit = 25) {
+  const cfg = docusignConfig();
+  if (!cfg) return { ok: true as const, checked: 0, updated: 0, stored: 0 };
+  const sql = await getSql();
+  const rows = await sql
+    .query<{ id: string; daycare_id: string; envelope_id: string; status: string; signed_pdf_key: string | null }>(
+      `select id, daycare_id, envelope_id, status, signed_pdf_key
+         from daycare_contracts
+        where envelope_id is not null
+          and envelope_id not like 'demo_%'
+          and (
+            status in ('sent', 'viewed')
+            or (status = 'signed' and signed_pdf_key is null)
+          )
+        order by updated_at asc
+        limit $1`,
+      [limit],
+    )
+    .catch(() => []);
+
+  let updated = 0;
+  let stored = 0;
+  for (const row of rows) {
+    try {
+      const remote = await getEnvelopeStatus(row.envelope_id);
+      if (remote && remote.status !== row.status) {
+        await applyEnvelopeEvent(remote);
+        updated += 1;
+      } else if (row.status === "signed" && !row.signed_pdf_key) {
+        const saved = await persistSignedPdf({
+          contractId: row.id,
+          daycareId: row.daycare_id,
+          envelopeId: row.envelope_id,
+        });
+        if (saved) stored += 1;
+      } else if (remote?.status === "signed" && !row.signed_pdf_key) {
+        const saved = await persistSignedPdf({
+          contractId: row.id,
+          daycareId: row.daycare_id,
+          envelopeId: row.envelope_id,
+        });
+        if (saved) stored += 1;
+      }
+    } catch (err) {
+      console.error("[docusign] poll envelope failed", row.envelope_id, err);
+    }
+  }
+  return { ok: true as const, checked: rows.length, updated, stored };
+}
+
+export async function loadSignedPdfBytes(input: {
+  contractId: string;
+  daycareId: string;
+  envelopeId: string | null;
+  signedPdfKey: string | null;
+}): Promise<{ body: Buffer; filename: string } | null> {
+  if (input.signedPdfKey) {
+    try {
+      const { getR2Object } = await import("@/lib/server/r2.server");
+      const object = await getR2Object(input.signedPdfKey);
+      return { body: object.body, filename: `${input.contractId}.pdf` };
+    } catch (err) {
+      console.error("[docusign] r2 signed pdf miss", err);
+    }
+  }
+  if (!input.envelopeId || input.envelopeId.startsWith("demo_")) return null;
+  const pdf = await downloadCombinedPdf(input.envelopeId);
+  if (!pdf) return null;
+  await persistSignedPdf({
+    contractId: input.contractId,
+    daycareId: input.daycareId,
+    envelopeId: input.envelopeId,
+  }).catch((err) => console.error("[docusign] cache after download failed", err));
+  return { body: pdf, filename: `${input.contractId}.pdf` };
 }
