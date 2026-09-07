@@ -6,6 +6,7 @@ import { catalogByIdGet } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { upsertDaycare } from "@/lib/server/seed";
+import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
 import {
   isCentreOwner,
@@ -143,6 +144,8 @@ export const createTourRequest = createServerFn({ method: "POST" })
       }
     }
 
+    const gate = await centreCanAcceptInquiry(sql, data.daycareId);
+    if (!gate.ok) throw new Error(gate.error);
     const cid = await ensureConversation(sql, context.userId, data.daycareId);
     const tourId = nid("tr");
     const note = (data.note || "").trim() || null;

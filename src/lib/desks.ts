@@ -175,7 +175,7 @@ export type SessionDesks = {
   unread: number;
   stripeLive: boolean;
   ledgerLabel: string;
-  /** Subscription tab on the provider desk (admin ghost, or flag on). */
+  /** Subscription tab on the centre desk (live for directors; admin always). */
   providerSubscriptions: boolean;
 };
 

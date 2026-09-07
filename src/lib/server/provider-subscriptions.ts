@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { resolveSessionDesks } from "@/lib/server/roles";
-import { canSeeProviderSubscriptions, providerSubscriptionsEnabled } from "@/lib/features";
+import { providerSubscriptionsEnabled } from "@/lib/features";
+import { resolveProviderEntitlements, type ProviderEntitlements } from "@/lib/provider-entitlements";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import {
   isProviderInterval,
@@ -34,6 +35,7 @@ export type ProviderSubscriptionState = {
   addons: ProviderAddonId[];
   siteCount: number;
   ghost: boolean;
+  entitlements: ProviderEntitlements;
   checkoutLive: boolean;
   stripeLive: boolean;
   selectedAt: string | null;
@@ -46,7 +48,7 @@ export type ProviderSubscriptionState = {
 
 async function requireSubscriptionAccess(userId: string) {
   const session = await resolveSessionDesks(userId);
-  if (!canSeeProviderSubscriptions(session.role)) {
+  if (!session.providerSubscriptions) {
     throw new Error("Not authorized");
   }
   return session;
@@ -88,17 +90,25 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
   const row = rows[0];
   const stripeLive = stripeChargesLive();
   const prices = catalogStatus();
+  const addons = parseProviderAddons(row?.selected_addons);
+  const plan = isProviderPlanId(row?.selected_plan) ? row.selected_plan : "free";
   const paymentLinks: Partial<Record<ProviderAddonId, string>> = {};
   for (const addon of ["featured_city", "claim_boost", "job_post"] as const) {
     const link = envPaymentLink(addon);
     if (link) paymentLinks[addon] = link;
   }
   return {
-    plan: isProviderPlanId(row?.selected_plan) ? row.selected_plan : "free",
+    plan,
     interval: isProviderInterval(row?.selected_interval) ? row.selected_interval : "month",
-    addons: parseProviderAddons(row?.selected_addons),
+    addons,
     siteCount: await siteCountFor(userId),
     ghost: !providerSubscriptionsEnabled(),
+    entitlements: resolveProviderEntitlements({
+      plan,
+      status: row?.stripe_subscription_status,
+      addons,
+      stripeLive,
+    }),
     checkoutLive:
       stripeLive && PROVIDER_CHECKOUT_LIVE && (prices.pro_monthly || prices.pro_yearly || prices.network_monthly),
     stripeLive,

@@ -157,7 +157,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     unread,
     stripeLive,
     ledgerLabel: stripeLive ? "Stripe live" : "Internal ledger (not charged)",
-    providerSubscriptions: canSeeProviderSubscriptions(stored),
+    providerSubscriptions: canSeeProviderSubscriptions(stored, process.env, owned),
   };
 }
 

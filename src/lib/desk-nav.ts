@@ -58,7 +58,7 @@ export const DESK_META: Record<DeskId, { eyebrow: string; title: string }> = {
   parent: { eyebrow: "Parent", title: "Family desk" },
 };
 
-/** Hide ghost provider Subscription unless admin (or FEATURE_PROVIDER_SUBSCRIPTIONS). */
+/** Hide Subscription only when the live director flag is off. */
 export function visibleDeskNav(
   desk: DeskId,
   opts?: { providerSubscriptions?: boolean },

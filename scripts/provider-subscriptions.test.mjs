@@ -48,7 +48,7 @@ test("addon parse keeps only known ids and a stable order", () => {
   assert.equal(serializeProviderAddons(["job_post", "featured_city", "x"]), "featured_city,job_post");
 });
 
-test("Subscription nav is hidden unless the ghost/admin flag is on", () => {
+test("Subscription nav is on the centre desk when the live flag is on", () => {
   const hidden = visibleDeskNav("daycare", { providerSubscriptions: false }).map((i) => i.id);
   const shown = visibleDeskNav("daycare", { providerSubscriptions: true }).map((i) => i.id);
   assert.equal(hidden.includes("subscription"), false);
@@ -63,7 +63,7 @@ test("Subscription nav is hidden unless the ghost/admin flag is on", () => {
   );
 });
 
-test("subscription route stays ghost-gated and checkout is live-keyed", () => {
+test("subscription route is live for directors and checkout is live-keyed", () => {
   const route = src("src/routes/provider.subscription.tsx");
   const panel = src("src/components/provider-subscription.tsx");
   const server = src("src/lib/server/provider-subscriptions.ts");
@@ -71,17 +71,17 @@ test("subscription route stays ghost-gated and checkout is live-keyed", () => {
   const shell = src("src/components/desk-shell.tsx");
   assert.match(route, /createFileRoute\("\/provider\/subscription"\)/);
   assert.match(route, /session\?\.providerSubscriptions/);
-  assert.match(route, /profiles\.role = admin/);
-  assert.match(route, /FEATURE_PROVIDER_SUBSCRIPTIONS/);
+  assert.match(route, /directors/);
   assert.match(route, /noindex/);
   assert.match(tree, /from '\.\/routes\/provider\.subscription'/);
   assert.match(tree, /id:\s*'\/provider\/subscription'/);
-  assert.match(panel, /PROVIDER_SUBSCRIPTION_GHOST_MESSAGE/);
   assert.match(panel, /not parent Plus/);
   assert.match(panel, /startProviderCheckout/);
   assert.match(panel, /startProviderBillingPortal/);
   assert.match(panel, /Card payments are not live yet/);
-  assert.match(server, /canSeeProviderSubscriptions/);
+  assert.match(panel, /entitlements\.entitledPlan/);
+  assert.match(server, /providerSubscriptions/);
+  assert.match(server, /resolveProviderEntitlements/);
   assert.match(server, /selected_plan/);
   assert.match(server, /stripeChargesLive\(\)/);
   assert.match(server, /createCatalogCheckoutSession/);

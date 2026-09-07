@@ -47,6 +47,10 @@ const COPY = {
     networkNeed: "Network is priced for 3 or more sites.",
     sites: (n: number) => (n === 1 ? "1 listed site" : `${n} listed sites`),
     status: "Stripe status",
+    entitled: "Active entitlements",
+    entitledFree: "Free basics — listing, vacancy, claim, licence.",
+    blocked: "Checkout is blocked until this plan’s Stripe price ID is set on Vercel.",
+    savedFree: "You are on Free. Listing tools stay on.",
   },
   fr: {
     eyebrow: "SaaS garderie",
@@ -68,6 +72,10 @@ const COPY = {
     networkNeed: "Réseau est tarifé pour 3 sites ou plus.",
     sites: (n: number) => (n === 1 ? "1 site listé" : `${n} sites listés`),
     status: "Statut Stripe",
+    entitled: "Droits actifs",
+    entitledFree: "Base gratuite — fiche, places, réclamation, permis.",
+    blocked: "Le checkout reste fermé tant que l’identifiant de prix Stripe n’est pas sur Vercel.",
+    savedFree: "Vous êtes sur Gratuit. Les outils de fiche restent ouverts.",
   },
 };
 
@@ -102,7 +110,7 @@ export function ProviderSubscriptionPanel() {
   if (loadError) {
     return (
       <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">
-        Could not load centre plans. This tab is a staff preview until FEATURE_PROVIDER_SUBSCRIPTIONS is on.
+        Could not load centre plans. Sign in as a director and try again.
       </p>
     );
   }
@@ -118,7 +126,7 @@ export function ProviderSubscriptionPanel() {
       setState(saved);
       setInterval(saved.interval);
       setAddons(saved.addons);
-      toast.success(PROVIDER_CHECKOUT_REHEARSAL_MESSAGE);
+      toast.success(next.plan === "free" ? t.savedFree : PROVIDER_CHECKOUT_REHEARSAL_MESSAGE);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save plan");
     } finally {
@@ -128,8 +136,16 @@ export function ProviderSubscriptionPanel() {
 
   async function subscribe(plan: ProviderPlanId) {
     const next = { plan, interval, addons };
-    if (!current.stripeLive || !priceReady(current, plan, interval) || plan === "free") {
+    if (plan === "free") {
       await persist(next);
+      return;
+    }
+    if (!current.stripeLive) {
+      await persist(next);
+      return;
+    }
+    if (!priceReady(current, plan, interval)) {
+      toast.error(t.blocked);
       return;
     }
     setBusy(true);
@@ -193,6 +209,11 @@ export function ProviderSubscriptionPanel() {
         <p className="mt-3 text-sm text-muted">
           {liveCheckout ? PROVIDER_CHECKOUT_LIVE_MESSAGE : PROVIDER_CHECKOUT_REHEARSAL_MESSAGE}
         </p>
+        <p className="mt-2 text-sm">
+          <span className="font-medium">{t.entitled}: </span>
+          <span className="capitalize">{state.entitlements.entitledPlan}</span>
+          {!state.entitlements.paid ? ` — ${t.entitledFree}` : null}
+        </p>
         <p className="mt-1 text-xs text-subtle">{t.sites(state.siteCount)}</p>
         {state.subscriptionStatus ? (
           <p className="mt-1 text-xs text-subtle">
@@ -220,10 +241,13 @@ export function ProviderSubscriptionPanel() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         {PROVIDER_PLANS.map((plan) => {
-          const current = state.plan === plan.id && (plan.id === "free" || state.subscriptionStatus === "active" || !state.stripeLive);
+          const entitled = state.entitlements.entitledPlan === plan.id;
+          const selected = state.plan === plan.id;
+          const current = entitled || (selected && !state.stripeLive);
           const price = planPriceCad(plan, interval, state.siteCount);
           const hint = planPriceHint(plan, interval, loc);
           const canCharge = plan.id !== "free" && state.stripeLive && priceReady(state, plan.id, interval);
+          const blockedPaid = plan.id !== "free" && state.stripeLive && !priceReady(state, plan.id, interval);
           return (
             <article
               key={plan.id}
@@ -253,7 +277,7 @@ export function ProviderSubscriptionPanel() {
                 disabled={busy || (current && !canCharge)}
                 onClick={() => void subscribe(plan.id)}
               >
-                {current && !canCharge ? t.current : canCharge ? t.checkout : t.subscribe}
+                {blockedPaid ? t.blocked : current && !canCharge ? t.current : canCharge ? t.checkout : t.subscribe}
               </Button>
             </article>
           );

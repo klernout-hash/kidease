@@ -106,6 +106,8 @@ export type Daycare = {
   stripeIdentityVerified?: boolean;
   priority?: boolean;
   priorityUntil?: string | null;
+  /** Paid placement pin (Pro / featured-city add-on). Never part of quality score. */
+  featuredCity?: boolean;
   agesKnown?: boolean;
   visibility?: "public" | "admin_only";
   isTest?: boolean;

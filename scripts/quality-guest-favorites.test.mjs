@@ -228,5 +228,7 @@ test("server overlay, cards, desk, and docs stay honest", () => {
   assert.match(docs, /0–100/);
   assert.match(docs, /top 10%/);
   assert.match(docs, /soft demotion/);
+  assert.match(docs, /Pro \/ Network/);
   assert.doesNotMatch(docs, /background checked/i);
+  assert.doesNotMatch(quality, /selected_plan/);
 });
