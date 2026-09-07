@@ -19,7 +19,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 describe("listing photos prefer official buildings over /photos/wpg/", () => {
   const official = JSON.parse(readFileSync(join(root, "src/lib/data/real-storefronts.json"), "utf8"));
   const wpg = JSON.parse(readFileSync(join(root, "src/lib/data/storefronts.json"), "utf8"));
-  const catalog = readFileSync(join(root, "src/lib/catalog.ts"), "utf8");
+  const catalog = `${readFileSync(join(root, "src/lib/catalog.ts"), "utf8")}\n${readFileSync(join(root, "src/lib/catalog-hydrate.ts"), "utf8")}`;
 
   it("maps all official Winnipeg IDs in real-storefronts.json", () => {
     const ids = Object.keys(official);
@@ -75,7 +75,7 @@ describe("listing photos prefer official buildings over /photos/wpg/", () => {
 
   it("DaycareCard and catalog both call listingThumb / listingPhotosFor", () => {
     const card = readFileSync(join(root, "src/components/daycare-card.tsx"), "utf8");
-    const catalog = readFileSync(join(root, "src/lib/catalog.ts"), "utf8");
+    const catalog = `${readFileSync(join(root, "src/lib/catalog.ts"), "utf8")}\n${readFileSync(join(root, "src/lib/catalog-hydrate.ts"), "utf8")}`;
     const map = readFileSync(join(root, "src/components/map-view.tsx"), "utf8");
     assert.match(card, /PhotoCarousel/);
     assert.match(catalog, /listingPhotosFor/);

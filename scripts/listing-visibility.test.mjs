@@ -45,7 +45,7 @@ test("Turnstile enforces only in Vercel production when both keys are set", () =
 });
 
 test("nearby SQL excludes admin-only and test rows so map pins stay clean", () => {
-  const nearby = readFileSync(new URL("../src/lib/server/nearby.ts", import.meta.url), "utf8");
+  const nearby = readFileSync(new URL("../src/lib/server/catalog-neon.ts", import.meta.url), "utf8");
   assert.match(nearby, /coalesce\(visibility, 'public'\) = 'public'/);
   assert.match(nearby, /coalesce\(is_test, 0\) = 0/);
 });

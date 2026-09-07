@@ -36,9 +36,11 @@ describe("distance units default to km for Canada", () => {
 describe("nearby uses PostGIS ST_DWithin with a catalogue fallback", () => {
   it("SQL is geography + ST_DWithin and never hardcodes a key", () => {
     const nearby = read("src/lib/server/nearby.ts");
-    assert.match(nearby, /st_dwithin/i);
-    assert.match(nearby, /st_makepoint\(\$1, \$2\)/);
-    assert.match(nearby, /postgis/);
+    const neon = read("src/lib/server/catalog-neon.ts");
+    assert.match(neon, /st_dwithin/i);
+    assert.match(neon, /st_makepoint\(\$1, \$2\)/);
+    assert.match(neon, /postgis/);
+    assert.match(nearby, /NEARBY_SQL/);
     const migration = read("migrations/0011_listing_geography.sql");
     assert.match(migration, /create extension if not exists postgis/i);
     assert.match(migration, /geography\(Point, 4326\)/);
@@ -50,9 +52,10 @@ describe("nearby uses PostGIS ST_DWithin with a catalogue fallback", () => {
     const search = read("src/lib/server/daycares.ts");
     const nearby = read("src/lib/server/nearby.ts");
     assert.match(search, /nearbyListings/);
-    assert.match(nearby, /catalogNear/);
+    assert.match(nearby, /catalogNearFromJson/);
     assert.match(nearby, /dbSource === "neon"/);
     assert.match(nearby, /importCatalogSlice/);
+    assert.match(nearby, /isNeonCatalogPreferred/);
   });
 
   it("PGLite skips the PostGIS migration; Neon migrate.mjs still applies it", () => {

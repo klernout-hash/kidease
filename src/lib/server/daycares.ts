@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, fsaOf, recommendedRank } from "@/lib/proximity";
-import { getPublicCatalog, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
+import { catalogByIdsGet, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { nearbyListings, type NearbyListing } from "./nearby";
 import { callerIsAdmin } from "./public-listing";
@@ -366,14 +366,8 @@ export const getDaycaresByIds = createServerFn({ method: "POST" })
   .validator((ids: string[]) => ids)
   .handler(async ({ data: ids }) => {
     const origin = { lat: 49.8951, lng: -97.1384 };
-    const catalog = await getPublicCatalog();
-    const byId = new Map(catalog.map((d) => [d.id, d]));
-    const cards = uniqueById(
-      ids
-        .map((id) => byId.get(id))
-        .filter((d): d is CatalogDaycare => Boolean(d))
-        .map((d) => toCard(d, origin)),
-    );
+    const found = await catalogByIdsGet(ids);
+    const cards = uniqueById(found.map((d) => toCard(d, origin)));
     const claimed = await overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
     return overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" });
   });

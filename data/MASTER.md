@@ -25,3 +25,25 @@ git add KidEase_Canada_Master_23927_20260902.csv
 git commit -m "Add frozen master 2026-09-02 (23927 rows, 19005 phones)"
 git push
 ```
+
+## Seed Production (public catalogue → Neon)
+
+The public app ships `centres.json` + extras (~20 846 licensed rows, no master
+emails). Neon is the runtime source of truth after those rows are upserted.
+Do **not** run this on `npm run build`.
+
+```bash
+# After migrations. Uses Production DATABASE_URL. Idempotent; skips claimed rows.
+DATABASE_URL='postgresql://…' npm run ops:seed-catalog
+```
+
+Optional blank-only phones / emails / websites from this private CSV:
+
+```bash
+MASTER_CSV_PATH=./KidEase_Canada_Master_23927_20260902.csv \
+DATABASE_URL='postgresql://…' \
+npm run ops:seed-catalog
+```
+
+Chunked HTTP alternative (Bearer `CRON_SECRET` only): `POST /api/seed-catalog`.
+See `docs/catalog-source.md`.

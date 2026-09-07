@@ -16,7 +16,9 @@ export type SecurityKind =
   | "digest_denied"
   | "digest_run"
   | "search_alerts_denied"
-  | "search_alerts_run";
+  | "search_alerts_run"
+  | "seed_catalog_denied"
+  | "seed_catalog_run";
 
 /** Insert-only audit row. Never pass secrets, card data, or medical notes. */
 export async function logSecurityEvent(input: {

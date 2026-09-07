@@ -12,6 +12,7 @@
     "build": "vite build && node scripts/check-ssr-bundle.mjs && npm run db:migrate",
     "db:migrate": "node scripts/migrate.mjs",
     "ops:operator-password": "node --experimental-strip-types scripts/set-operator-password.mjs",
+    "ops:seed-catalog": "node --experimental-strip-types scripts/seed-catalog-to-neon.mjs",
     "stripe:catalog": "node --experimental-strip-types scripts/stripe-catalog.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
