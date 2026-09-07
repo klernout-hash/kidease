@@ -60,9 +60,9 @@ test("tour advances only along the real pipeline", () => {
 });
 
 test("pipeline is visible on parent shortlist, inbox, and centre desk", () => {
-  const mig = src("migrations/0032_tour_pipeline_photo_freshness.sql");
+  const mig = src("migrations/0033_tour_pipeline.sql");
   assert.match(mig, /completed.*enrolled.*lost/s);
-  assert.match(mig, /Never invented/);
+  assert.match(mig, /Never invent/);
 
   assert.match(src("src/components/tour-card.tsx"), /advanceTourRequest/);
   assert.match(src("src/components/tour-card.tsx"), /PipelineBadge/);

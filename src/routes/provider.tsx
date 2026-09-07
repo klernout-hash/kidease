@@ -12,6 +12,9 @@ import { useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole } from "@/lib/server/family";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
 import { listTourRequests } from "@/lib/server/tours";
+import { listCentrePipeline } from "@/lib/server/crm-pipeline";
+import { CentrePipeline } from "@/components/centre-pipeline";
+import type { PipelineCard } from "@/lib/crm-pipeline";
 import { TourCard } from "@/components/tour-card";
 import { useCopy } from "@/lib/use-copy";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
@@ -57,6 +60,7 @@ function ProviderPage() {
   >([]);
   const [requests, setRequests] = useState<SpotRequest[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
+  const [pipeline, setPipeline] = useState<PipelineCard[]>([]);
   const [subscription, setSubscription] = useState<{
     selectedPlan: ProviderEntitlements["selectedPlan"];
     entitledPlan: ProviderEntitlements["entitledPlan"];
@@ -83,16 +87,18 @@ function ProviderPage() {
   });
 
   async function load() {
-    const [res, incoming, tourRows] = await Promise.all([
+    const [res, incoming, tourRows, pipelineRows] = await Promise.all([
       getProvider(),
       listDaycareIncoming(),
       listTourRequests({ data: { desk: "centre" } }).catch(() => [] as TourRequest[]),
+      listCentrePipeline().catch(() => [] as PipelineCard[]),
     ]);
     setListings(res.listings);
     setStats(res.stats);
     setSubscription(res.subscription);
     setRequests(incoming);
     setTours(tourRows);
+    setPipeline(pipelineRows);
   }
 
   useEffect(() => {
@@ -163,6 +169,7 @@ function ProviderPage() {
       {subscription ? <ProviderPlanBanner subscription={subscription} /> : null}
       {desk === "requests" ? (
         <section className="space-y-8">
+          <CentrePipeline cards={pipeline} />
           <div>
             <h2 className="font-display text-2xl">{t("pendingTours")}</h2>
             <p className="mt-1 text-sm text-muted">

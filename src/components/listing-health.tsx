@@ -62,7 +62,7 @@ export function ListingHealthPanel({ item }: { item: Daycare }) {
                 : t("healthNeedVacancyMissing")
               : field === "photo" && photo.kind !== "unknown"
                 ? photo.kind === "stale"
-                  ? t("photoStale")
+                  ? t("healthNeedPhotoStale")
                   : t("healthNeedPhotoFresh")
                 : null;
           return (

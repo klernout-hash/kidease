@@ -1,8 +1,10 @@
 /**
- * Public listing honesty: vacancy freshness and a soft completeness gate.
- * Never invent open spots or a vacancy time. Does not invent a vacancy time. Incomplete listings stay discoverable.
- * Unknown (no confirm) is not stale — parents should not see “not updated recently”
- * unless a real timestamp is older than two weeks.
+ * Public listing honesty: vacancy freshness, photo freshness, and a soft completeness gate.
+ * Never invent open spots, a vacancy time, or a photo date. Does not invent a vacancy time.
+ * Incomplete listings stay discoverable.
+ * Unknown (no confirm / no photo stamp) is not stale — parents should not see “not updated recently”
+ * unless a real timestamp is older than two weeks (vacancy) or 90 days (photo).
+ * Paid priority never enters listingQualityScore.
  */
 
 import { feeProgramBadgeKey, officialLicenceNumber } from "@/lib/licensing";
@@ -276,7 +278,6 @@ export function listingQualityScore(
       | "lastVacancyUpdatedAt"
       | "spotsUpdatedAt"
       | "lastPhotoUpdatedAt"
-      | "priority"
     >,
 ): number {
   let score = 0;
@@ -285,7 +286,7 @@ export function listingQualityScore(
   if (vacancy.kind === "fresh") score += 2;
   const photo = photoFreshness(photoTimestamp(item));
   if (photo.kind === "fresh") score += 1;
+  else if (photo.kind === "stale") score = Math.max(0, score - 1);
   score += listingCompleteness(item).score;
-  if (item.priority) score += 1;
   return score;
 }

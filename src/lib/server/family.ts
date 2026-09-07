@@ -26,6 +26,7 @@ import {
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto, isStockListingPhoto } from "@/lib/listing-photo";
+import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { overlayQuality } from "./quality";
 import { overlayDemandSnapshots, overlayParentRank } from "./rank";
 import {
@@ -1247,7 +1248,9 @@ export const createListing = createServerFn({ method: "POST" })
       .slice(0, 40) + "-" + id.slice(-4);
     const photos = applyStorefrontPhoto(STOCK_CREATE_PHOTOS, data.storefront);
     const photoAt =
-      data.storefront && !isStockListingPhoto(data.storefront) ? new Date().toISOString() : null;
+      data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)
+        ? new Date().toISOString()
+        : null;
     await sql`
       insert into daycares (
         id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
@@ -1295,6 +1298,9 @@ export const createListing = createServerFn({ method: "POST" })
       `;
     });
     await sql`insert into provider_daycares (user_id, daycare_id) values (${context.userId}, ${id})`;
+    if (data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)) {
+      await sql`update daycares set last_photo_updated_at = now() where id = ${id}`.catch(() => undefined);
+    }
     await writeProfileRole(context.userId, "provider");
     const actor = await lookupUser(context.userId);
     try {

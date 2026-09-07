@@ -115,12 +115,17 @@ test("matcher uses ST_DWithin like nearby.ts (lng, lat)", () => {
   assert.match(alerts, /does NOT send FCM/);
 });
 
-test("email path uses Resend when wired and stubs with a TODO otherwise", () => {
+test("email path uses Resend when wired and stubs honestly otherwise", () => {
   const alerts = src("src/lib/server/search-alerts.ts");
   assert.match(alerts, /RESEND_API_KEY/);
-  assert.match(alerts, /TODO: wire Resend/);
-  assert.match(alerts, /email stub/);
+  assert.match(alerts, /email stub — no RESEND_API_KEY/);
   assert.match(alerts, /sendSearchAlertEmail/);
+  assert.match(alerts, /text\/html/);
+  assert.match(alerts, /emailConfigured/);
+  assert.doesNotMatch(alerts, /TODO: wire Resend/);
+  const prefs = src("src/lib/server/saved-searches.ts");
+  assert.match(prefs, /emailConfigured: resetMailConfigured/);
+  assert.match(src("src/components/saved-searches-panel.tsx"), /alertEmailStub/);
 });
 
 test("cron stub is wired next to digest and does not enable FEATURE_PUSH", () => {

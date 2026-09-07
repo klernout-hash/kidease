@@ -3,6 +3,7 @@ import { Check, Download, Laptop, MapPinned, ShieldCheck, Smartphone, Wallet } f
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { Shell } from "@/components/shell";
 import { BrandMark } from "@/components/brand-mark";
+import { FeelBanner } from "@/components/building-photo";
 import { Button } from "@/components/ui/button";
 import { ShotHome, ShotListing, ShotLogin, ShotSearch } from "@/components/app-shots";
 import {
@@ -101,6 +102,8 @@ function GetApp() {
             <ShotSearch />
           </DeviceFrame>
         </section>
+
+        <FeelBanner src="/photos/community.jpg" className="mt-14" photoClassName="aspect-[21/9] max-md:aspect-[16/9]" />
 
         {mac ? (
           <section className="mt-10 rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">

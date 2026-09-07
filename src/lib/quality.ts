@@ -3,6 +3,7 @@
  *
  * Built from real KidEase signals only:
  *   claim / licence trust, listing completeness, vacancy freshness,
+ *   photo freshness (stale storefront demotes; unknown age is not stale),
  *   gated parent-review average + count, reply / tour-accept rates
  *   when the sample is large enough.
  *
@@ -276,6 +277,7 @@ export function guestFavoriteEligible(item: QualityInput, breakdown?: QualityBre
   if (!isClaimVerified(item)) return false;
   if (!listingCompleteness(item).ready) return false;
   if (vacancyFreshness(vacancyTimestamp(item)).kind !== "fresh") return false;
+  if (photoFreshness(photoTimestamp(item)).kind === "stale") return false;
   if ((item.parentReviewCount ?? 0) < GUEST_FAVORITE_MIN_REVIEWS) return false;
   if ((item.parentRatingX10 ?? 0) <= 0) return false;
   const license = normalizeLicenseStatus(item.licenseStatus);

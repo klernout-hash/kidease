@@ -16,3 +16,16 @@ test("declined claims keep Approve and hide Waiting/Decline as live actions", ()
   assert.match(server, /c\.review_note/);
   assert.doesNotMatch(server, /null::timestamptz as reviewed_at/);
 });
+
+test("admin queue shows licence and storefront photos for review", () => {
+  const ui = readFileSync(join(root, "src/routes/admin.tsx"), "utf8");
+  assert.match(ui, /c\.licensePhoto/);
+  assert.match(ui, /c\.storefrontPhoto/);
+  assert.match(ui, /Licence and photo review/);
+  assert.match(ui, /needsVerification/);
+  const nav = readFileSync(join(root, "src/lib/desk-nav.ts"), "utf8");
+  assert.match(nav, /id: "verify"/);
+  const server = readFileSync(join(root, "src/lib/server/admin-centres.ts"), "utf8");
+  assert.match(server, /license_photo/);
+  assert.match(server, /storefrontPhoto/);
+});

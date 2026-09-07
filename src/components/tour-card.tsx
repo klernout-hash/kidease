@@ -121,20 +121,29 @@ export function TourCard({
             </Button>
           </div>
         </div>
-      ) : tour.conversationId ? (
+      ) : (
         <div className="mt-3 flex flex-wrap gap-2">
           {!canRespond && tour.status === "accepted" ? (
             <Button size="sm" disabled={busy !== null} onClick={() => void advance("completed")}>
               {busy === "completed" ? t("loading") : t("markTourCompleted")}
             </Button>
           ) : null}
-          <Button size="sm" variant="secondary" asChild>
-            <Link to="/inbox/$id" params={{ id: tour.conversationId }}>
-              {t("openChat")}
-            </Link>
-          </Button>
+          {tour.conversationId ? (
+            <Button size="sm" variant="secondary" asChild>
+              <Link to="/inbox/$id" params={{ id: tour.conversationId }}>
+                {t("openChat")}
+              </Link>
+            </Button>
+          ) : null}
+          {tour.status === "accepted" && !canRespond ? (
+            <Button size="sm" asChild>
+              <Link to="/book/$slug" params={{ slug: tour.daycareSlug }}>
+                {t("book")}
+              </Link>
+            </Button>
+          ) : null}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

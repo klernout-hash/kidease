@@ -16,6 +16,7 @@ import {
   type SearchAlertPrefs,
 } from "@/lib/saved-search";
 import { nid } from "@/lib/utils";
+import { resetMailConfigured } from "@/lib/server/reset-mail-config";
 
 type SavedSearchRow = {
   id: string;
@@ -227,13 +228,15 @@ export const getSearchAlertPrefs = createServerFn({ method: "GET" })
       limit 1
     `.catch(() => []);
     const row = rows[0];
+    const emailConfigured = resetMailConfigured();
     if (!row) {
-      return { emailEnabled: true, inAppEnabled: true, updatedAt: null };
+      return { emailEnabled: true, inAppEnabled: true, updatedAt: null, emailConfigured };
     }
     return {
       emailEnabled: row.email_enabled !== 0 && row.email_enabled !== false,
       inAppEnabled: row.in_app_enabled !== 0 && row.in_app_enabled !== false,
       updatedAt: iso(row.updated_at),
+      emailConfigured,
     };
   });
 
@@ -257,6 +260,7 @@ export const saveSearchAlertPrefs = createServerFn({ method: "POST" })
       emailEnabled: data.emailEnabled,
       inAppEnabled: data.inAppEnabled,
       updatedAt: new Date().toISOString(),
+      emailConfigured: resetMailConfigured(),
     };
   });
 

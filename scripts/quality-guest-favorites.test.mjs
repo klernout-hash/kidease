@@ -195,7 +195,9 @@ test("server overlay, cards, desk, and docs stay honest", () => {
   assert.match(quality, /soft-demoted only/);
   assert.match(quality, /photo_stale/);
   assert.match(quality, /photoFreshness/);
+  assert.match(quality, /lastPhotoUpdatedAt/);
   assert.doesNotMatch(quality, /[Bb]ackground checked/);
+  assert.doesNotMatch(quality, /item\.priority/);
 
   const server = src("src/lib/server/quality.ts");
   assert.match(server, /loadEngagementStats/);

@@ -130,7 +130,7 @@ test("centre desk shows nudges and photo freshness without inventing dates", () 
   assert.match(src("src/lib/server/claims.ts"), /last_photo_updated_at/);
   assert.match(src("src/lib/listing-readiness.ts"), /PHOTO_STALE_MS/);
   assert.doesNotMatch(src("src/lib/listing-readiness.ts"), /lastPhotoUpdatedAt: new Date/);
-  assert.match(src("migrations/0032_tour_pipeline_photo_freshness.sql"), /Never invented/);
+  assert.match(src("migrations/0032_photo_freshness.sql"), /Never invented/);
   const nudges = src("src/lib/director-nudges.ts");
   assert.match(nudges, /never invent/);
   assert.match(nudges, /vacancy_stale/);

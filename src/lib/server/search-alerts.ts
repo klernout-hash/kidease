@@ -6,11 +6,12 @@
  *
  * Delivery:
  *   - in-app notices when search_alert_prefs.in_app_enabled
- *   - email via Resend/SendGrid when wired; otherwise stub + TODO
+ *   - email via Resend/SendGrid when those keys exist; otherwise an honest stub
  *   - does NOT send FCM / APNs. FEATURE_PUSH stays off-by-default.
  */
 import { getSql, dbSource, type Sql } from "@/lib/db";
 import { lookupUser } from "@/lib/server/notify";
+import { resetMailConfigured } from "@/lib/server/reset-mail-config";
 import { nearbyListings } from "@/lib/server/nearby";
 import { overlayClaimed } from "@/lib/server/claims";
 import { catchmentMatch, clampRadiusKm, distanceKm } from "@/lib/proximity";
@@ -341,6 +342,8 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
   let logged = 0;
   let notified = 0;
   let skippedInvalidOrigin = 0;
+  let emailSent = 0;
+  let emailStubbed = 0;
   const kinds: Record<SearchAlertKind, number> = { new_centre: 0, vacancy_reconfirmed: 0 };
 
   for (const search of searches) {
@@ -462,11 +465,18 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
         }
       }
       if (emailOn) {
-        await sendSearchAlertEmail({
-          userId: search.user_id,
-          searchName: search.name,
-          events,
-        });
+        try {
+          const mail = await sendSearchAlertEmail({
+            userId: search.user_id,
+            searchName: search.name,
+            events,
+          });
+          if (mail.via === "stub") emailStubbed += 1;
+          else emailSent += 1;
+        } catch (err) {
+          emailStubbed += 1;
+          console.error("[kidease-search-alerts] email failed", err);
+        }
       }
       notified += events.length;
     }
@@ -487,6 +497,9 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
     notified,
     skippedInvalidOrigin,
     kinds,
+    emailSent,
+    emailStubbed,
+    emailConfigured: resetMailConfigured(),
     // Push is intentionally not invoked. FEATURE_PUSH stays off-by-default.
     push: "skipped" as const,
   };
@@ -494,10 +507,54 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
   return result;
 }
 
+function escMail(s: string) {
+  return [...s]
+    .map((ch) => {
+      if (ch === "&") return "&#38;";
+      if (ch === "<") return "&#60;";
+      if (ch === ">") return "&#62;";
+      if (ch === '"') return "&#34;";
+      return ch;
+    })
+    .join("");
+}
+
+function searchAlertCopy(searchName: string, events: Array<{ name: string; city: string; kind: SearchAlertKind; distanceKm: number }>) {
+  const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
+  const deskUrl = `${origin}/parent?tab=alerts`;
+  const lines = events.slice(0, 8).map((ev) => {
+    const kind = ev.kind === "vacancy_reconfirmed" ? "spots reconfirmed" : "new centre";
+    return `• ${ev.name} (${ev.city}, ${ev.distanceKm} km) — ${kind}`;
+  });
+  const subject = `KidEase: updates for “${searchName}”`;
+  const text = `A saved search on KidEase has a match.\n\n${lines.join("\n")}\n\nOpen your family desk: ${deskUrl}\n`;
+  const items = events
+    .slice(0, 8)
+    .map((ev) => {
+      const kind = ev.kind === "vacancy_reconfirmed" ? "Spots reconfirmed" : "New centre";
+      return `<li style="margin:0 0 8px;"><strong>${escMail(ev.name)}</strong> · ${escMail(ev.city)} · ${ev.distanceKm} km<br/><span style="color:#5c6578;">${kind}</span></li>`;
+    })
+    .join("");
+  const html = `<!doctype html>
+<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
+    <tr><td style="padding:28px;">
+      <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
+      <h1 style="margin:12px 0 0;font-size:22px;line-height:1.25;">Updates for ${escMail(searchName)}</h1>
+      <ul style="margin:16px 0 0;padding-left:18px;">${items}</ul>
+      <p style="margin:24px 0 0;">
+        <a href="${deskUrl}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">Open family desk</a>
+      </p>
+    </td></tr>
+  </table>
+</body></html>`;
+  return { subject, text, html };
+}
+
 /**
  * Email delivery for saved-search alerts.
- * Uses Resend (or SendGrid) when the existing keys are present.
- * TODO: when RESEND_API_KEY is missing, this stubs (logs) and still persists the preference.
+ * Uses Resend or SendGrid when those keys exist.
+ * When they are missing, logs an honest stub and still keeps email_enabled.
  * Do not add FCM / APNs here.
  */
 export async function sendSearchAlertEmail(payload: {
@@ -507,15 +564,7 @@ export async function sendSearchAlertEmail(payload: {
 }) {
   const actor = await lookupUser(payload.userId);
   const to = actor.email?.trim();
-  const lines = payload.events
-    .slice(0, 8)
-    .map((ev) => {
-      const kind = ev.kind === "vacancy_reconfirmed" ? "spots reconfirmed" : "new centre";
-      return `• ${ev.name} (${ev.city}, ${ev.distanceKm} km) — ${kind}`;
-    })
-    .join("\n");
-  const subject = `KidEase: updates for “${payload.searchName}”`;
-  const text = `A saved search on KidEase has a match.\n\n${lines}\n\nOpen your family desk: https://kidease.ca/parent?tab=alerts\n`;
+  const { subject, text, html } = searchAlertCopy(payload.searchName, payload.events);
 
   if (!to) {
     console.info("[kidease-search-alerts] email stub — no parent email", payload.searchName);
@@ -532,6 +581,7 @@ export async function sendSearchAlertEmail(payload: {
         to: [to],
         subject,
         text,
+        html,
       }),
     });
     if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
@@ -540,22 +590,24 @@ export async function sendSearchAlertEmail(payload: {
 
   const sendgrid = process.env.SENDGRID_API_KEY?.trim();
   if (sendgrid) {
+    const fromMatch = MAIL_FROM.match(/^(.*)<([^>]+)>$/);
     const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${sendgrid}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: "kyle@kidease.ca", name: "KidEase" },
+        from: { email: fromMatch?.[2]?.trim() || "kyle@kidease.ca", name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
         subject,
-        content: [{ type: "text/plain", value: text }],
+        content: [
+          { type: "text/plain", value: text },
+          { type: "text/html", value: html },
+        ],
       }),
     });
     if (!res.ok) throw new Error(`SendGrid ${res.status}: ${await res.text()}`);
     return { ok: true as const, via: "sendgrid" as const };
   }
 
-  // TODO: wire Resend (RESEND_API_KEY) or SendGrid for saved-search alert mail.
-  // Preference is stored on search_alert_prefs.email_enabled regardless.
   console.info("[kidease-search-alerts] email stub — no RESEND_API_KEY / SENDGRID_API_KEY", to, subject, "\n", text);
   return { ok: true as const, via: "stub" as const };
 }

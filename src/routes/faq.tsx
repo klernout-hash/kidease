@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { useCopy } from "@/lib/use-copy";
@@ -30,6 +31,7 @@ function FaqPage() {
         <p className="text-sm font-semibold tracking-wide text-primary">FAQ</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("faqTitle")}</h1>
         <p className="mt-6 text-lg text-muted">{t("faqLead")}</p>
+        <FeelBanner src="/photos/infant.jpg" className="mt-8" />
         <ul className="mt-10 space-y-6">
           {items.map((item) => (
             <li key={item.q} className="rounded-xl bg-surface p-5 ring-1 ring-border">
