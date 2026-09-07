@@ -39,7 +39,7 @@ export function SiteFooter() {
   }, []);
 
   return (
-    <footer className="ke-site-footer [[data-channel=app]_&]:hidden">
+    <footer className="ke-site-footer ke-web-only [[data-channel=app]_&]:hidden">
       <div className="ke-gutter">
         <div className="ke-footer-inner">
           <nav className="ke-footer-cols" aria-label="KidEase">

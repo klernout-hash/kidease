@@ -77,12 +77,14 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(boot, /return null/);
   });
 
-  it("service worker does not intercept /assets/ or serve HTML as CSS", () => {
+  it("service worker does not intercept documents or /assets/", () => {
     const sw = src("public/sw.js");
-    assert.match(sw, /kidease-shell-v3/);
-    assert.match(sw, /NAVIGATE_MS = 8000/);
-    assert.match(sw, /fetchWithTimeout/);
+    assert.match(sw, /kidease-shell-v4/);
     assert.match(sw, /startsWith\("\/assets\/"\)/);
+    assert.match(sw, /request\.mode === "navigate"/);
+    assert.match(sw, /destination === "document"/);
+    assert.doesNotMatch(sw, /NAVIGATE_MS/);
+    assert.doesNotMatch(sw, /fetchWithTimeout/);
     assert.doesNotMatch(sw, /if \(cached\) return cached/);
     const assetCatch = sw.indexOf("if (!isChromeAsset(url)) return;");
     const after = sw.slice(assetCatch);
@@ -96,6 +98,29 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(cookies, /never `www\.kidease\.ca`/);
     const extra = src("scripts/login-auth.test.mjs");
     assert.match(extra, /Domain=kidease\.ca/);
+  });
+
+  it("closed overlays cannot sit on the page and eat clicks", () => {
+    const drawer = src("src/components/nav-drawer.tsx");
+    const css = src("src/styles.css");
+    const root = src("src/routes/__root.tsx");
+    const index = src("src/routes/index.tsx");
+    const shell = src("src/components/shell.tsx");
+    const footer = src("src/components/site-footer.tsx");
+    const help = src("src/components/help-bot.tsx");
+    assert.match(drawer, /typeof document === "undefined" \|\| !open/);
+    assert.doesNotMatch(drawer, /hidden=\{!open\}/);
+    assert.match(css, /html\[data-channel="website"\] \.ke-app-only/);
+    assert.match(css, /html\[data-channel="app"\] \.ke-web-only/);
+    assert.match(css, /\[hidden\]/);
+    assert.match(css, /\[data-sonner-toaster\]/);
+    assert.match(root, /pointerEvents: "none"/);
+    assert.match(index, /ke-web-only/);
+    assert.match(index, /ke-app-only/);
+    assert.match(shell, /ke-app-only/);
+    assert.match(footer, /ke-web-only/);
+    assert.match(help, /width=\{44\}/);
+    assert.match(help, /maxWidth: 44/);
   });
 
   it("admin beforeLoad timeout goes to login, not home, so desk bounce cannot loop", () => {

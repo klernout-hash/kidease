@@ -4,9 +4,11 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
+  applyHtmlDocumentCacheHeaders,
   applyScriptNonces,
   buildContentSecurityPolicy,
   generateNonce,
+  HTML_DOCUMENT_CACHE_CONTROL,
   isHtmlResponse,
 } from "./csp.mjs";
 
@@ -57,6 +59,19 @@ test("applyScriptNonces stamps tags without double-noncing", () => {
   const token = generateNonce();
   assert.match(token, /^[A-Za-z0-9+/]+=*$/);
   assert.notEqual(generateNonce(), token);
+});
+
+test("HTML documents are not cached so they cannot point at deleted asset hashes", () => {
+  const headers = new Headers({ "content-type": "text/html" });
+  applyHtmlDocumentCacheHeaders(headers);
+  assert.equal(headers.get("Cache-Control"), HTML_DOCUMENT_CACHE_CONTROL);
+  assert.equal(headers.get("CDN-Cache-Control"), HTML_DOCUMENT_CACHE_CONTROL);
+  assert.match(HTML_DOCUMENT_CACHE_CONTROL, /max-age=0/);
+  assert.match(src("server/middleware/csp.ts"), /applyHtmlDocumentCacheHeaders/);
+  const vercel = src("vercel.json");
+  assert.match(vercel, /"source": "\/"/);
+  assert.match(vercel, /"source": "\/asset-recover\.js"/);
+  assert.match(vercel, /"source": "\/assets\/\(\.\*\)"/);
 });
 
 test("Nitro owns CSP; vercel.json no longer ships a static policy", () => {

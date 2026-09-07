@@ -105,6 +105,7 @@ export const Route = createRootRoute({
           }}
         />
         <script src="/channel-boot.js" />
+        <script src="/asset-recover.js" />
         <HeadContent />
       </head>
       <body>
@@ -114,7 +115,12 @@ export const Route = createRootRoute({
           <PostHogBoot />
           <RoleBoot />
           <Outlet />
-          <Toaster position="top-center" richColors={false} />
+          <Toaster
+            position="top-center"
+            richColors={false}
+            style={{ pointerEvents: "none" }}
+            toastOptions={{ style: { pointerEvents: "auto" } }}
+          />
         </AuthProvider>
         <Scripts />
       </body>

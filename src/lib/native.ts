@@ -154,6 +154,12 @@ type BeforeInstall = Event & {
 let deferredInstall: BeforeInstall | null = null;
 const installListeners = new Set<() => void>();
 
+function hashedStylesheetsApplied(): boolean {
+  const sheets = document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href*="/assets/"]');
+  if (!sheets.length) return true;
+  return [...sheets].every((link) => Boolean(link.sheet));
+}
+
 /** Register the chrome-only service worker (web PWA, not Capacitor). */
 export function registerOfflineShell(): void {
   if (typeof window === "undefined") return;
@@ -161,6 +167,9 @@ export function registerOfflineShell(): void {
   if (isNative()) return;
   if (!window.isSecureContext) return;
   window.addEventListener("load", () => {
+    // A 404 stylesheet means this document is stale. Do not re-register a
+    // worker that can keep serving it — asset-recover.js will reload once.
+    if (!hashedStylesheetsApplied()) return;
     void navigator.serviceWorker
       .register("/sw.js", { scope: "/", updateViaCache: "none" })
       .then((reg) => {

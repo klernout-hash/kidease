@@ -159,7 +159,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       </div>
       {hideFooter || bare ? null : <SiteFooter />}
       {hideTabs ? null : (
-        <nav className="fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
+        <nav className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
           <div className="mx-auto grid max-w-lg grid-cols-5 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
             <Tab
               to="/"

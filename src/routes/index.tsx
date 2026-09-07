@@ -360,7 +360,7 @@ function Home() {
 
   return (
     <Shell bare>
-      <div className="[[data-channel=app]_&]:hidden">
+      <div className="ke-web-only [[data-channel=app]_&]:hidden">
         <section className="relative overflow-hidden bg-gradient-to-b from-[#eef2fb] via-bg to-bg">
           <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20 xl:py-24">
             <div>
@@ -488,7 +488,7 @@ function Home() {
         <SiteFooter />
       </div>
 
-      <div className="hidden [[data-channel=app]_&]:block">
+      <div className="ke-app-only hidden [[data-channel=app]_&]:block">
         <section className="ke-gutter mx-auto max-w-6xl pb-6 pt-5">
           <h1 className="font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{t("tagline")}</h1>
           <div className="mt-4 flex flex-col gap-2">
