@@ -13,6 +13,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import pg from "pg";
+import { applyOperatorCredentialFromEnv } from "./set-operator-password.mjs";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -66,6 +67,10 @@ async function main() {
       count += 1;
     }
     console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
+    const credential = await applyOperatorCredentialFromEnv(databaseUrl);
+    if (credential !== "skipped") {
+      console.log(`[migrate] ${credential} — unset OPERATOR_RESET_PASSWORD after sign-in works`);
+    }
   } finally {
     client.release();
     await pool.end();

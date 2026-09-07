@@ -26,7 +26,7 @@ function VerifyTwoFactorPage() {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [verified, setVerified] = useState(false);
-  const { token, onToken } = useTurnstileToken();
+  const { token, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
 
   useEffect(() => {
     if (!user) return;
@@ -70,7 +70,10 @@ function VerifyTwoFactorPage() {
               setError(null);
               void verifyTwoFactor({ data: { code, remember: true, turnstileToken: token } })
                 .then(() => setVerified(true))
-                .catch((err) => setError(err instanceof Error ? err.message : "Could not verify"))
+                .catch((err) => {
+                  setError(err instanceof Error ? err.message : "Could not verify");
+                  resetTurnstile();
+                })
                 .finally(() => setBusy(false));
             }}
           >
@@ -87,9 +90,9 @@ function VerifyTwoFactorPage() {
                 maxLength={6}
               />
             </label>
-            <TurnstileField onToken={onToken} />
+            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
-            <Button type="submit" className="w-full" disabled={busy || !ready || code.length !== 6}>
+            <Button type="submit" className="w-full" disabled={busy || !ready || code.length !== 6 || (turnstileRequired && !token.trim())}>
               Verify and continue
             </Button>
           </form>

@@ -8,8 +8,11 @@ import { useSessionDesks } from "@/components/desk-switcher";
 import { getLabStatus, type LabStatus } from "@/lib/server/chat-scaffold";
 import { dryRunPush } from "@/lib/server/push-api";
 import { CHAT_SCAFFOLD_MESSAGE } from "@/lib/chat-scaffold";
+import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
+import { canSeeAdminDesk } from "@/lib/desks";
 
 export const Route = createFileRoute("/admin-chat")({
+  beforeLoad: beforeLoadAdminDesk,
   head: () => ({
     meta: [
       { title: "Chat lab · KidEase" },
@@ -25,14 +28,14 @@ function AdminChatPage() {
   const [lab, setLab] = useState<LabStatus | null>(null);
   const [dryRunHint, setDryRunHint] = useState("");
 
+  const admin = Boolean(ready && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
+
   useEffect(() => {
-    if (!user) return;
+    if (!user || !admin) return;
     void getLabStatus()
       .then(setLab)
       .catch(() => setLab(null));
-  }, [user]);
-
-  const admin = Boolean(ready && session?.desks.includes("admin"));
+  }, [user, admin]);
 
   if (isPending) {
     return (

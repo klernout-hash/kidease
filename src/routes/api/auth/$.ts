@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { applySharedAuthCookies, requestWithAliasedAuthCookies } from "@/lib/auth/cookies";
 import { auth } from "@/lib/auth/server";
 import { reportError } from "@/lib/observe";
 import { assertResetMailConfigured } from "@/lib/server/reset-mail-config";
@@ -39,7 +40,8 @@ async function handleAuth(request: Request) {
         }
       }
     }
-    return await auth.handler(request);
+    const incoming = requestWithAliasedAuthCookies(request);
+    return applySharedAuthCookies(incoming, await auth.handler(incoming));
   } catch (err) {
     reportError(err, { route: "/api/auth" });
     throw err;

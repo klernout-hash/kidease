@@ -1,7 +1,13 @@
+import { createServerFn } from "@tanstack/react-start";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
-import { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured } from "@/lib/server/reset-mail-config";
+import { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
 
 export { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
+
+/** Public boolean only — never leak which mail key is set. */
+export const getResetMailReady = createServerFn({ method: "GET" }).handler(() => {
+  return resetMailConfigured();
+});
 
 function fromAddress() {
   return (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();

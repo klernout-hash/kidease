@@ -11,7 +11,7 @@ export const DESK_PATH: Record<DeskKey, "/admin" | "/support" | "/provider" | "/
 export const DESK_LABEL: Record<DeskKey, string> = {
   admin: "Admin",
   support: "Support",
-  provider: "Director (Centre)",
+  provider: "Daycare",
   parent: "Parent",
 };
 
@@ -159,13 +159,32 @@ export function desksFor(input: {
   return (["admin", "support", "provider", "parent"] as const).filter((d) => desks.has(d));
 }
 
-export function canVisitDesk(desks: DeskKey[], desk: DeskKey) {
+/** Admin pill + /admin — only profiles.role = admin. Parent/Daycare never. */
+export function canSeeAdminDesk(role: AppRole | string | null | undefined) {
+  return parseAppRole(role) === "admin";
+}
+
+export function canVisitDesk(desks: DeskKey[], desk: DeskKey, role?: AppRole | null) {
+  if (desk === "admin") return desks.includes("admin") && (role == null || canSeeAdminDesk(role));
   return desks.includes(desk);
+}
+
+/**
+ * Header pills. Admin-role users (kyle@kidease.ca) see Admin / Parent / Daycare
+ * on one session. Parent and Daycare accounts never get the Admin pill — even
+ * if a stale desk list included it. Support stays in the account menu.
+ */
+export function headerDesks(desks: DeskKey[], role?: AppRole | null): DeskKey[] {
+  const visible = desks.filter((desk) => desk !== "admin" || canSeeAdminDesk(role));
+  if (visible.includes("admin")) {
+    return (["admin", "parent", "provider"] as const).filter((d) => visible.includes(d));
+  }
+  return visible;
 }
 
 /** Header / menu switcher — only when this session actually has two desks. */
 export function showDeskSwitcher(desks: DeskKey[] | undefined | null) {
-  return Boolean(desks && desks.length >= 2);
+  return Boolean(desks && headerDesks(desks).length >= 2);
 }
 
 export type SessionDesks = {

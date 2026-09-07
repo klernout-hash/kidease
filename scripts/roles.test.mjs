@@ -18,6 +18,8 @@ import {
   parseDeskQuery,
   pickLandingDesk,
   primaryDesk,
+  headerDesks,
+  canSeeAdminDesk,
   showDeskSwitcher,
 } from "../src/lib/desks.ts";
 import { readFileSync } from "node:fs";
@@ -57,6 +59,21 @@ test("admin role unlocks all four desks; provider also gets parent", () => {
   assert.equal(showDeskSwitcher(["parent"]), false);
   assert.equal(showDeskSwitcher(["provider", "parent"]), true);
   assert.equal(showDeskSwitcher(["admin", "support", "provider", "parent"]), true);
+  assert.deepEqual(headerDesks(["admin", "support", "provider", "parent"], "admin"), [
+    "admin",
+    "parent",
+    "provider",
+  ]);
+  assert.deepEqual(headerDesks(["admin", "parent", "provider"], "parent"), ["parent", "provider"]);
+  assert.deepEqual(headerDesks(["provider", "parent"], "provider"), ["provider", "parent"]);
+  assert.deepEqual(headerDesks(["support", "parent"], "support"), ["support", "parent"]);
+  assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("admin"), false);
+  assert.equal(headerDesks(desksFor({ role: "provider" }), "provider").includes("admin"), false);
+  assert.equal(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent").includes("admin"), false);
+  assert.equal(canSeeAdminDesk("parent"), false);
+  assert.equal(canSeeAdminDesk("provider"), false);
+  assert.equal(canSeeAdminDesk("support"), false);
+  assert.equal(canSeeAdminDesk("admin"), true);
 });
 
 test("desk switcher is for any multi-desk session, not admin-only", () => {
@@ -67,6 +84,7 @@ test("desk switcher is for any multi-desk session, not admin-only", () => {
   assert.match(src, /do not call setRole/);
   assert.match(src, /writeStickyDesk/);
   assert.match(src, /deskDirector/);
+  assert.match(src, /headerDesks/);
 });
 
 test("?desk= aliases map to role desks without colliding with provider tabs", () => {
@@ -84,7 +102,7 @@ test("?desk= aliases map to role desks without colliding with provider tabs", ()
   assert.equal(pickLandingDesk(["provider", "parent"], "parent"), "parent");
   assert.equal(pickLandingDesk(["parent"], "admin"), "parent");
   assert.equal(DESK_PATH[pickLandingDesk(["admin", "provider", "parent"], "provider")], "/provider");
-  assert.equal(DESK_LABEL.provider, "Director (Centre)");
+  assert.equal(DESK_LABEL.provider, "Daycare");
 });
 
 test("setRole never demotes staff", () => {

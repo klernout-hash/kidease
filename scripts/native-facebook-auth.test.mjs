@@ -7,6 +7,7 @@ import {
   visibleSignInProviders,
   NATIVE_GOOGLE,
   NATIVE_FACEBOOK,
+  NATIVE_APPLE,
   GROK_PROVIDERS,
 } from "../src/lib/auth/providers.ts";
 
@@ -130,6 +131,8 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
 
     const none = visibleSignInProviders({ nativeGoogle: false, broker: false });
     assert.equal(none.some((p) => p.idp === "facebook"), false);
+    assert.equal(none.some((p) => p.idp === "apple"), false);
+    assert.deepEqual(none, []);
 
     const hiddenOnBroker = visibleSignInProviders({
       nativeGoogle: false,
@@ -169,6 +172,26 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.match(loader, /FACEBOOK_CLIENT_ID/);
     assert.match(loader, /FACEBOOK_CLIENT_SECRET/);
     assert.doesNotMatch(loader, /nativeFacebook\s*=\s*true/);
+  });
+
+  it("hides Apple unless nativeApple is on (same dead-button rule as Facebook)", () => {
+    assert.equal(NATIVE_APPLE.providerId, "apple");
+    const hidden = visibleSignInProviders({ nativeGoogle: false, broker: false });
+    assert.equal(hidden.some((p) => p.idp === "apple"), false);
+    const shown = visibleSignInProviders({
+      nativeApple: true,
+      nativeGoogle: false,
+      broker: false,
+    });
+    assert.deepEqual(
+      shown.filter((p) => p.idp === "apple"),
+      [NATIVE_APPLE],
+    );
+    const loader = read("src/lib/server/sign-in-providers.ts");
+    assert.match(loader, /APPLE_CLIENT_ID/);
+    assert.match(loader, /APPLE_PRIVATE_KEY/);
+    assert.doesNotMatch(loader, /nativeApple\s*=\s*true/);
+    assert.doesNotMatch(loader, /from ["']@\/lib\/auth\/apple-idp/);
   });
 
   it("does not commit Facebook, Google, or Better Auth secrets", () => {

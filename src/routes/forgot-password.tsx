@@ -3,6 +3,7 @@ import { useState } from "react";
 import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
 import { friendlyResetMailError } from "@/lib/auth/reset-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import { getResetMailReady } from "@/lib/server/reset-mail";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
@@ -12,22 +13,32 @@ export const Route = createFileRoute("/forgot-password")({
     const email = typeof s.email === "string" ? s.email.trim() : "";
     return email ? { email } : {};
   },
+  loader: async () => {
+    const mailReady = await getResetMailReady().catch(() => true);
+    return { mailReady };
+  },
   component: ForgotPassword,
 });
 
 function ForgotPassword() {
+  const { mailReady } = Route.useLoaderData();
   const search = Route.useSearch();
   const [email, setEmail] = useState(search.email ?? "");
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const { token, onToken } = useTurnstileToken();
+  const { token, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const target = email.trim().toLowerCase();
     if (!target || !target.includes("@")) {
       setError("Enter the email on the account first.");
+      setNote(null);
+      return;
+    }
+    if (turnstileRequired && !token.trim()) {
+      setError("Please complete the security check, then try again.");
       setNote(null);
       return;
     }
@@ -44,6 +55,7 @@ function ForgotPassword() {
       setNote("If that email is registered with KidEase, we sent a reset link. Check the inbox and junk folder.");
     } catch (err) {
       setError(err instanceof Error ? friendlyResetMailError(err.message) : "Could not send a reset email.");
+      resetTurnstile();
     } finally {
       setBusy(false);
     }
@@ -59,7 +71,14 @@ function ForgotPassword() {
           <h1 className="mt-6 font-display text-3xl">Forgot password</h1>
           <p className="mt-2 text-sm text-muted">
             Enter the email on the account. If it is registered, we email a reset link that expires in about an hour.
+            Use this if the password hash is stale or none of the passwords you remember work.
           </p>
+          {mailReady ? null : (
+            <p className="mt-3 text-sm text-danger">
+              This environment cannot send reset emails yet (missing RESEND_API_KEY or SENDGRID_API_KEY).
+              If the account was created with Apple or Google, use that button on the sign-in page.
+            </p>
+          )}
           <form onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
             <label className="block text-sm">
               Email
@@ -72,10 +91,10 @@ function ForgotPassword() {
                 autoComplete="email"
               />
             </label>
-            <TurnstileField onToken={onToken} />
+            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
             {note ? <p className="text-sm text-muted">{note}</p> : null}
-            <Button type="submit" className="w-full" disabled={busy}>
+            <Button type="submit" className="w-full" disabled={busy || (turnstileRequired && !token.trim())}>
               {busy ? "Sending…" : "Email reset link"}
             </Button>
           </form>

@@ -90,9 +90,26 @@ export function isHiddenListingPath(pathname) {
   return false;
 }
 
+export function isApexKideaseHost(hostHeader) {
+  return hostnameOf(hostHeader) === "kidease.ca";
+}
+
+function isSafeDocumentMethod(method) {
+  const verb = String(method || "GET").toUpperCase();
+  return verb === "GET" || verb === "HEAD";
+}
+
+/** Keep AASA / assetlinks and auth APIs on the host that received them. */
+export function shouldCanonicalizeApexPath(pathname) {
+  const path = normalizePath(pathname);
+  if (path.startsWith("/.well-known")) return false;
+  if (path.startsWith("/api/")) return false;
+  return true;
+}
+
 /**
- * @param {{ host?: string | null, pathname?: string | null, search?: string | null }} input
- * @returns {{ action: "next" } | { action: "redirect", status: 302, location: string } | { action: "not_found", status: 404 }}
+ * @param {{ host?: string | null, pathname?: string | null, search?: string | null, method?: string | null }} input
+ * @returns {{ action: "next" } | { action: "redirect", status: 302 | 308, location: string } | { action: "not_found", status: 404 }}
  */
 export function decideRequest(input = {}) {
   const path = normalizePath(input.pathname);
@@ -113,6 +130,18 @@ export function decideRequest(input = {}) {
     return {
       action: "redirect",
       status: 302,
+      location: `${CANONICAL_ORIGIN}${path}${queryString(input.search)}`,
+    };
+  }
+
+  if (
+    isApexKideaseHost(input.host) &&
+    isSafeDocumentMethod(input.method) &&
+    shouldCanonicalizeApexPath(path)
+  ) {
+    return {
+      action: "redirect",
+      status: 308,
       location: `${CANONICAL_ORIGIN}${path}${queryString(input.search)}`,
     };
   }

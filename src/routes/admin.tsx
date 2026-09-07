@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
@@ -6,6 +7,7 @@ import { ListingStatusBadge, LedgerHonesty } from "@/components/listing-status-b
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { canSeeAdminDesk } from "@/lib/desks";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
@@ -26,6 +28,7 @@ import { AdminReviewsPanel } from "@/components/admin-reviews";
 type AdminDesk = "queue" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
 
 export const Route = createFileRoute("/admin")({
+  beforeLoad: beforeLoadAdminDesk,
   head: () => ({
     meta: [
       { title: "Admin · KidEase" },
@@ -88,12 +91,12 @@ function AdminPage() {
     setReports(flags);
   }
 
-  useEffect(() => {
-    if (!user) return;
-    void refresh();
-  }, [user]);
+  const admin = Boolean(ready && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
 
-  const admin = Boolean(ready && session?.desks.includes("admin"));
+  useEffect(() => {
+    if (!user || !admin) return;
+    void refresh();
+  }, [user, admin]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();

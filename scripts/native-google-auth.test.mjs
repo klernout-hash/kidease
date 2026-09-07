@@ -83,6 +83,7 @@ describe("native Google auth (Better Auth socialProviders.google)", () => {
 
     const none = visibleSignInProviders({ nativeGoogle: false, broker: false });
     assert.equal(none.some((p) => p.idp === "google"), false);
+    assert.equal(none.some((p) => p.idp === "apple"), false);
 
     const nativeOnly = visibleSignInProviders({ nativeGoogle: true, broker: false });
     assert.deepEqual(

@@ -13,6 +13,7 @@ import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { canSeeAdminDesk } from "@/lib/desks";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
 
@@ -374,10 +375,10 @@ function AccountMenu({
               onClick={() => setOpen(false)}
               className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
             >
-              Director (Centre)
+              Daycare desk
             </Link>
           ) : null}
-          {desks.includes("admin") ? (
+          {canSeeAdminDesk(session?.role) && desks.includes("admin") ? (
             <Link
               role="menuitem"
               to="/admin"

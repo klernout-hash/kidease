@@ -187,3 +187,11 @@ export const getMyDesks = createServerFn({ method: "GET" })
       throw err;
     }
   });
+
+/** Document GET /admin* — session + profiles.role = admin. Not a desk hint. */
+export const assertAdminDesk = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.userId);
+    return { ok: true as const };
+  });
