@@ -9,3 +9,4 @@ Disallow: /daycare/test-ghost-claim-lab
 Disallow: /book/test-ghost-claim-lab
 
 Sitemap: https://www.kidease.ca/sitemap.xml
+Sitemap: https://www.kidease.ca/sitemap-listings.xml

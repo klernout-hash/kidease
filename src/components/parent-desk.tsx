@@ -240,7 +240,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                 </span>
               ) : null}
             </div>
-            <LedgerHonesty stripeLive={Boolean(desks?.stripeLive)} className="mt-2" />
+            <LedgerHonesty stripeLive={Boolean(desks?.stripeLive)} surface="parent" className="mt-2" />
             <div className="mt-4">
               <ParentPlusPanel />
             </div>

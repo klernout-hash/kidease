@@ -90,7 +90,7 @@ function PayPage() {
         </Link>
         <h1 className="mt-3 font-display text-3xl">{alreadyPaid ? t("receiptTitle") : t("payTitle")}</h1>
         <p className="mt-2 text-sm text-muted">{alreadyPaid ? t("receiptLead") : t("bookingPayLeadHonest")}</p>
-        <LedgerHonesty stripeLive={stripeLive} className="mt-3" />
+        <LedgerHonesty stripeLive={stripeLive} surface="booking" className="mt-3" />
         <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("bookingPayDisabled")}</p>
 
         {booking ? (
