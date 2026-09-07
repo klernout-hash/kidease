@@ -226,10 +226,7 @@ function DeviceFrame({ device, children }: { device: "iphone" | "android"; child
   const bezel = 4;
   const innerR = outerR - bezel;
   return (
-    <div
-      className="relative mx-auto w-full max-w-[220px] select-none"
-      style={{ filter: "drop-shadow(0 14px 18px rgba(8,16,40,0.28))" }}
-    >
+    <div className="relative mx-auto w-full max-w-[220px] select-none drop-shadow-[0_14px_18px_rgba(8,16,40,0.28)]">
       <div className={iphone ? "relative aspect-[9/19.5] w-full" : "relative aspect-[9/19.4] w-full"}>
         {iphone ? (
           <>
@@ -285,26 +282,20 @@ function DeviceFrame({ device, children }: { device: "iphone" | "android"; child
             strokeWidth="1"
           />
         </svg>
-        <div className="absolute inset-0 overflow-hidden bg-[#f6f3ee]" style={{ borderRadius: outerR }}>
+        <div
+          className={
+            iphone
+              ? "absolute inset-0 overflow-hidden rounded-[32px] bg-[#f6f3ee]"
+              : "absolute inset-0 overflow-hidden rounded-[22px] bg-[#f6f3ee]"
+          }
+        >
           {children}
           {iphone ? (
             <span className="pointer-events-none absolute left-1/2 top-[8px] z-20 flex h-[21px] w-[78px] -translate-x-1/2 items-center justify-end rounded-full bg-[#0b0c0f] pr-[8px]">
-              <span
-                className="size-[7px] rounded-full"
-                style={{
-                  background: "radial-gradient(circle at 34% 32%, #3a4660 0%, #161a22 58%, #0b0c0f 100%)",
-                  boxShadow: "inset 0 0 0 0.5px rgba(255,255,255,0.2)",
-                }}
-              />
+              <span className="ke-device-lens ke-device-lens-ios size-[7px] rounded-full" />
             </span>
           ) : (
-            <span
-              className="pointer-events-none absolute left-1/2 top-[8px] z-20 size-[8px] -translate-x-1/2 rounded-full"
-              style={{
-                background: "radial-gradient(circle at 34% 32%, #3a4660 0%, #161a22 58%, #0b0c0f 100%)",
-                boxShadow: "0 0 0 2px #0b0c0f, 0 0 0 2.5px rgba(255,255,255,0.12)",
-              }}
-            />
+            <span className="ke-device-lens ke-device-lens-android pointer-events-none absolute left-1/2 top-[8px] z-20 size-[8px] -translate-x-1/2 rounded-full" />
           )}
           <span
             className={

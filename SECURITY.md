@@ -25,6 +25,14 @@ Document HTML is stamped in Nitro (`server/middleware/csp.ts`) with a per-reques
 
 `script-src` is `'self' 'nonce-…' 'strict-dynamic'` plus Maps / Stripe / Turnstile / PostHog hosts (fallback for browsers that ignore `strict-dynamic`). First-party `<script>` tags (including TanStack `<Scripts />` hydration) get the nonce after render. Maps, Stripe.js, Turnstile, and PostHog load further scripts with `createElement`, which `strict-dynamic` allows.
 
-Do **not** add `grok.com` to the allowlist.
+`style-src` is `'self' 'nonce-…'` (no `'unsafe-inline'`). Document `<style>` tags are stamped after render. A nonce'd boot script (`data-ke-style-nonce` in the root `<head>`, also injected if a document lacks it) copies that nonce onto `document.createElement("style")` so Radix, Sonner, and Maps can inject styles at runtime.
 
-Leftover WARN: `style-src` keeps `'unsafe-inline'` for React `style={{}}` and injected `<style>` from Radix / Sonner. Dropping it needs `'unsafe-hashes'` or a CSS-only pass — not this PR.
+`style-src-attr` keeps `'unsafe-inline'`. Required leftovers:
+
+- BrandMark / help-bot logo pin (`maxWidth` inline) — `#72` / `#73` boot safety when CSS fails to load. Do not remove.
+- Sonner `Toaster` `pointerEvents` (also asserted in boot-loop tests).
+- Radix / Floating UI `style={{ top, left, transform }}` positioning.
+- Dynamic meter widths (`listing-health`, `quality-issues`).
+- Marketing mocks (`app-shots.tsx`) that still use `style={{}}` for static colors.
+
+Do **not** add `grok.com` to the allowlist. Do **not** put `'unsafe-inline'` back on `script-src` or `style-src`.

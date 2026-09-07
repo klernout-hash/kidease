@@ -3,12 +3,6 @@ import { cn } from "@/lib/utils";
 
 export type SheetSnap = "peek" | "mid" | "full";
 
-const HEIGHT: Record<SheetSnap, string> = {
-  peek: "38dvh",
-  mid: "58dvh",
-  full: "86dvh",
-};
-
 const ORDER: SheetSnap[] = ["peek", "mid", "full"];
 
 export function ExploreSheet({
@@ -26,10 +20,7 @@ export function ExploreSheet({
   const startSnap = useRef<SheetSnap>(snap);
 
   return (
-    <div
-      className="ke-sheet pointer-events-auto"
-      style={{ height: HEIGHT[snap] }}
-    >
+    <div className="ke-sheet pointer-events-auto" data-snap={snap}>
       <div
         className="flex shrink-0 cursor-grab touch-none flex-col items-center pb-2 pt-2 active:cursor-grabbing"
         onPointerDown={(e) => {
