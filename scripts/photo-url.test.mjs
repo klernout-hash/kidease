@@ -10,6 +10,7 @@ import {
 } from "../src/lib/listing-photo.ts";
 import {
   R2_PUBLIC_DEV_ORIGIN,
+  R2_PUBLIC_MEDIA_ORIGIN,
   normalizeR2PublicBase,
   photoSrcSet,
   photoUrl,
@@ -22,10 +23,13 @@ const official = JSON.parse(readFileSync(join(root, "src/lib/data/real-storefron
 const wpg = JSON.parse(readFileSync(join(root, "src/lib/data/storefronts.json"), "utf8"));
 
 const PUBLIC = {
-  R2_PUBLIC_BASE_URL: R2_PUBLIC_DEV_ORIGIN,
+  R2_PUBLIC_BASE_URL: R2_PUBLIC_MEDIA_ORIGIN,
 };
 const VITE_PUBLIC = {
-  VITE_R2_PUBLIC_BASE_URL: `${R2_PUBLIC_DEV_ORIGIN}/`,
+  VITE_R2_PUBLIC_BASE_URL: `${R2_PUBLIC_MEDIA_ORIGIN}/`,
+};
+const DEV_PUBLIC = {
+  R2_PUBLIC_BASE_URL: R2_PUBLIC_DEV_ORIGIN,
 };
 
 describe("public R2 photo URL helper", () => {
@@ -42,19 +46,25 @@ describe("public R2 photo URL helper", () => {
   });
 
   it("prefixes /photos paths when R2_PUBLIC_BASE_URL or VITE_R2_PUBLIC_BASE_URL is set", () => {
-    assert.equal(r2PublicBaseUrl(PUBLIC), R2_PUBLIC_DEV_ORIGIN);
-    assert.equal(r2PublicBaseUrl(VITE_PUBLIC), R2_PUBLIC_DEV_ORIGIN);
+    assert.equal(R2_PUBLIC_MEDIA_ORIGIN, "https://media.kidease.ca");
+    assert.equal(r2PublicBaseUrl(PUBLIC), R2_PUBLIC_MEDIA_ORIGIN);
+    assert.equal(r2PublicBaseUrl(VITE_PUBLIC), R2_PUBLIC_MEDIA_ORIGIN);
+    assert.equal(r2PublicBaseUrl(DEV_PUBLIC), R2_PUBLIC_DEV_ORIGIN);
     assert.equal(
       publicPhotoUrl("/photos/buildings/mb-1001.jpg", PUBLIC),
-      `${R2_PUBLIC_DEV_ORIGIN}/photos/buildings/mb-1001.jpg`,
+      `${R2_PUBLIC_MEDIA_ORIGIN}/photos/buildings/mb-1001.jpg`,
     );
     assert.equal(
       publicPhotoUrl("/photos/wpg/1001.jpg", VITE_PUBLIC),
+      `${R2_PUBLIC_MEDIA_ORIGIN}/photos/wpg/1001.jpg`,
+    );
+    assert.equal(
+      publicPhotoUrl("/photos/wpg/1001.jpg", DEV_PUBLIC),
       `${R2_PUBLIC_DEV_ORIGIN}/photos/wpg/1001.jpg`,
     );
     assert.equal(
       photoUrl("/photos/buildings/mb-1001.jpg", 768, PUBLIC),
-      `${R2_PUBLIC_DEV_ORIGIN}/photos/buildings/mb-1001.jpg`,
+      `${R2_PUBLIC_MEDIA_ORIGIN}/photos/buildings/mb-1001.jpg`,
     );
     assert.equal(photoSrcSet("/photos/wpg/1001.jpg", [320, 480], PUBLIC), undefined);
   });
@@ -67,16 +77,23 @@ describe("public R2 photo URL helper", () => {
     assert.equal(resolveListingStorefront("mb-100034", official, wpg), "/photos/wpg/100034.jpg");
     const mapped = listingPhotosFor("mb-1001", [], official, wpg)[0];
     assert.equal(mapped, "/photos/buildings/mb-1001.jpg");
-    assert.equal(publicPhotoUrl(mapped, PUBLIC), `${R2_PUBLIC_DEV_ORIGIN}/photos/buildings/mb-1001.jpg`);
+    assert.equal(publicPhotoUrl(mapped, PUBLIC), `${R2_PUBLIC_MEDIA_ORIGIN}/photos/buildings/mb-1001.jpg`);
     assert.deepEqual(listingPhotosFor("mb-unknown", [], official, {}), [LISTING_PLACEHOLDER]);
   });
 
-  it("rejects non-https, non-r2.dev, and S3 API hosts", () => {
+  it("rejects non-https, random domains, other kidease hosts, and S3 API hosts", () => {
+    assert.equal(normalizeR2PublicBase("https://media.kidease.ca"), R2_PUBLIC_MEDIA_ORIGIN);
+    assert.equal(normalizeR2PublicBase("https://media.kidease.ca/"), R2_PUBLIC_MEDIA_ORIGIN);
+    assert.equal(normalizeR2PublicBase(R2_PUBLIC_DEV_ORIGIN), R2_PUBLIC_DEV_ORIGIN);
+    assert.equal(normalizeR2PublicBase("http://media.kidease.ca"), "");
     assert.equal(normalizeR2PublicBase("http://pub-x.r2.dev"), "");
     assert.equal(normalizeR2PublicBase("https://evil.example/photos"), "");
+    assert.equal(normalizeR2PublicBase("https://www.kidease.ca"), "");
+    assert.equal(normalizeR2PublicBase("https://kidease.ca"), "");
+    assert.equal(normalizeR2PublicBase("https://cdn.kidease.ca"), "");
     assert.equal(normalizeR2PublicBase("https://acct.r2.cloudflarestorage.com"), "");
-    assert.equal(normalizeR2PublicBase("https://user:pass@pub-x.r2.dev"), "");
-    assert.equal(normalizeR2PublicBase("https://pub-x.r2.dev/photos"), "");
+    assert.equal(normalizeR2PublicBase("https://user:pass@media.kidease.ca"), "");
+    assert.equal(normalizeR2PublicBase("https://media.kidease.ca/photos"), "");
     assert.equal(normalizeR2PublicBase("https://r2.dev"), "");
     assert.equal(publicPhotoUrl("/photos/wpg/1001.jpg", { R2_PUBLIC_BASE_URL: "https://evil.example" }), "/photos/wpg/1001.jpg");
     assert.equal(publicPhotoUrl("https://cdn.example/x.jpg", PUBLIC), "https://cdn.example/x.jpg");

@@ -5,9 +5,10 @@
  * Git listing paths stay `/photos/…`. Migrated originals use the same suffix
  * under `originals/…` (`/photos/wpg/1001.jpg` → `originals/wpg/1001.jpg`).
  * `/img` reads R2 when configured, then falls back to `public/photos`.
- * Public r2.dev delivery is a separate prefix (`publicPhotoUrl` in `photo.ts`)
+ * Public delivery is a separate prefix (`publicPhotoUrl` in `photo.ts`)
  * when `R2_PUBLIC_BASE_URL` / `VITE_R2_PUBLIC_BASE_URL` is set. CSP `img-src`
- * allows `*.r2.dev`. Do not allow this S3 API host in the browser.
+ * allows `https://media.kidease.ca` and optional `*.r2.dev`. Do not allow
+ * this S3 API host in the browser.
  *
  * TODO (follow-up, not this module):
  * - Admin / provider upload UI

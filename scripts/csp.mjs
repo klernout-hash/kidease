@@ -48,8 +48,9 @@ export const CSP_FRAME_HOSTS = [
   "https://challenges.cloudflare.com",
 ];
 
-/** Public listing photos on r2.dev. Do not allow the S3 API host. */
+/** Public listing photos. Production is media.kidease.ca; r2.dev is optional/dev. */
 export const CSP_IMG_HOSTS = [
+  "https://media.kidease.ca",
   "https://pub-9e5f137809844fcdb6d6671cd909f312.r2.dev",
   "https://*.r2.dev",
 ];

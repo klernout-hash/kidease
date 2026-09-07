@@ -5,8 +5,9 @@ Copy Git listing originals into the private Cloudflare R2 bucket `kidease-media`
 the same change.** `/img` already dual-reads: R2 when `R2_*` is set, then Git /
 public paths.
 
-Public r2.dev delivery (`photos/…` keys, same catalogue paths) is a separate
-sync: `scripts/r2-public-photos.md` / `npm run photos:sync-r2`.
+Public media delivery (`photos/…` keys, same catalogue paths, host
+`https://media.kidease.ca`) is a separate sync: `scripts/r2-public-photos.md` /
+`npm run photos:sync-r2`.
 
 This environment cannot see Vercel Production secrets. Kyle (or CI with those
 env vars) runs `--apply` once.

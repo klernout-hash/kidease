@@ -3,7 +3,9 @@ export const CARD_SIZES = "(max-width: 767px) 172px, (max-width: 1023px) 44vw, 3
 export const HERO_SIZES = "(max-width: 767px) 100vw, 560px";
 export const DETAIL_SIZES = "(max-width: 767px) 100vw, 720px";
 
-/** Production public r2.dev host for listing originals. Not a secret. */
+/** Production custom domain on bucket kidease-media. Not a secret. r2.dev returns 401. */
+export const R2_PUBLIC_MEDIA_ORIGIN = "https://media.kidease.ca";
+/** Optional/dev-only r2.dev pub host. Production uses media.kidease.ca. */
 export const R2_PUBLIC_DEV_ORIGIN = "https://pub-9e5f137809844fcdb6d6671cd909f312.r2.dev";
 
 export const R2_PUBLIC_BASE_ENV = "R2_PUBLIC_BASE_URL";
@@ -26,7 +28,13 @@ function processEnv(name: string): string {
   return String(process.env[name] ?? "").trim();
 }
 
-/** Accept only https://*.r2.dev origins. Never the S3 API host. */
+function isAllowedPublicPhotoHost(host: string): boolean {
+  if (host === "media.kidease.ca") return true;
+  if (host.endsWith(".r2.dev") && host !== "r2.dev" && !host.includes("..")) return true;
+  return false;
+}
+
+/** Accept https://media.kidease.ca or https://*.r2.dev. Never the S3 API host. */
 export function normalizeR2PublicBase(raw: string): string {
   const value = String(raw ?? "").trim();
   if (!value) return "";
@@ -41,7 +49,7 @@ export function normalizeR2PublicBase(raw: string): string {
   if (url.search || url.hash) return "";
   if (url.pathname && url.pathname !== "/") return "";
   const host = url.hostname.toLowerCase();
-  if (!host.endsWith(".r2.dev") || host === "r2.dev" || host.includes("..")) return "";
+  if (!isAllowedPublicPhotoHost(host)) return "";
   if (!/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/.test(host)) return "";
   return url.origin;
 }

@@ -79,6 +79,7 @@ test("runbook and env example list public R2 names only", () => {
   const envExample = readFileSync(join(root, ".env.example"), "utf8");
   const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
   assert.match(runbook, /aws s3 sync public\/photos/);
+  assert.match(runbook, /https:\/\/media\.kidease\.ca/);
   assert.match(runbook, /R2_ACCESS_KEY_ID/);
   assert.match(runbook, /Do not delete `public\/photos`/);
   assert.match(runbook, /listingPhotosFor/);

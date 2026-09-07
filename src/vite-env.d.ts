@@ -7,7 +7,7 @@ interface ImportMetaEnv {
   readonly POSTHOG_HOST?: string;
   /** Same DSN as server `SENTRY_DSN`, public so the browser SDK can init. */
   readonly VITE_PUBLIC_SENTRY_DSN?: string;
-  /** Public r2.dev origin for listing /photos/… paths. Not a secret. */
+  /** Public media origin for listing /photos/… paths (media.kidease.ca). Not a secret. */
   readonly VITE_R2_PUBLIC_BASE_URL?: string;
 }
 
