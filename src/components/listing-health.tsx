@@ -1,4 +1,4 @@
-import { listingHealth, vacancyFreshness, HEALTH_FIELDS, HEALTH_FIELD_ANCHOR, type HealthField } from "@/lib/listing-readiness";
+import { listingHealth, photoFreshness, photoTimestamp, vacancyFreshness, HEALTH_FIELDS, HEALTH_FIELD_ANCHOR, type HealthField } from "@/lib/listing-readiness";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare } from "@/lib/types";
@@ -28,6 +28,7 @@ export function ListingHealthPanel({ item }: { item: Daycare }) {
   const health = listingHealth(item);
   const vacancy = vacancyFreshness(health.vacancyAt);
   const vacancyAge = vacancyLine(item, t, locale);
+  const photoAge = photoFreshness(photoTimestamp(item));
 
   return (
     <div className="mt-4 rounded-lg bg-bg p-4 text-sm ring-1 ring-border">
@@ -59,7 +60,9 @@ export function ListingHealthPanel({ item }: { item: Daycare }) {
                   ? t("healthNeedVacancy")
                   : vacancyAge.detail || vacancyAge.text || t("healthNeedVacancy")
                 : t("healthNeedVacancyMissing")
-              : null;
+              : field === "photo" && photoAge.kind === "stale"
+                ? t("healthNeedPhotoStale")
+                : null;
           return (
             <li key={field} className="flex flex-wrap items-center justify-between gap-2">
               <span className={ok ? "text-muted" : "text-fg"}>

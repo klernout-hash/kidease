@@ -1,4 +1,4 @@
-import { listingCompleteness, type CompletenessField } from "@/lib/listing-readiness";
+import { listingCompleteness, photoFreshness, photoTimestamp, type CompletenessField } from "@/lib/listing-readiness";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare } from "@/lib/types";
@@ -21,10 +21,13 @@ const CARD_NEED_KEY: Record<CompletenessField, CopyKey> = {
 
 /** Quiet parent-facing hint. Uses the first missing fact — never invents one. */
 export function parentIncompleteLabel(
-  item: Pick<Daycare, "detailsReady" | "completenessMissing">,
+  item: Pick<Daycare, "detailsReady" | "completenessMissing" | "lastPhotoUpdatedAt">,
   t: (key: CopyKey) => string,
 ): string | null {
-  if (item.detailsReady !== false) return null;
+  if (item.detailsReady !== false) {
+    if (photoFreshness(photoTimestamp(item)).kind === "stale") return t("cardPhotoStale");
+    return null;
+  }
   const first = item.completenessMissing?.[0];
   if (first) return t(CARD_NEED_KEY[first]);
   return t("detailsIncomplete");

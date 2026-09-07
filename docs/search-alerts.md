@@ -42,9 +42,7 @@ No new geography column. Matching reads `daycares.location` from `0011_listing_g
 6. Later runs: `new_centre` (not seen before) and `vacancy_reconfirmed` (`last_vacancy_updated_at` after `last_checked_at`).
 7. In-app insert when prefs allow. Email via Resend/SendGrid when those keys exist.
 
-```
-TODO: when RESEND_API_KEY is missing, sendSearchAlertEmail stubs (logs) and still persists the preference.
-```
+When `RESEND_API_KEY` and `SENDGRID_API_KEY` are missing, `sendSearchAlertEmail` logs an honest stub and still persists `email_enabled`. The family desk says mail will not leave the box until a key is set. The job reports `emailConfigured`, `emailSent`, and `emailStubbed`.
 
 Vercel cron (hourly):
 

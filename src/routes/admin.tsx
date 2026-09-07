@@ -23,9 +23,10 @@ import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
+import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
 import { AdminReviewsPanel } from "@/components/admin-reviews";
 
-type AdminDesk = "queue" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
+type AdminDesk = "queue" | "verify" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: beforeLoadAdminDesk,
@@ -112,6 +113,14 @@ function AdminPage() {
 
   const waitingOnYou = useMemo(
     () => filtered.filter((c) => isQueued(c.claimStatus)).sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || "")),
+    [filtered],
+  );
+
+  const verifyQueue = useMemo(
+    () =>
+      filtered
+        .filter((c) => needsVerification(c))
+        .sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || "") || a.name.localeCompare(b.name)),
     [filtered],
   );
 
@@ -233,7 +242,41 @@ function AdminPage() {
   return (
     <TwoFactorGate next="/admin">
     <DeskShell desk="admin" active={tab} onSelect={(id) => setTab(id as AdminDesk)}>
-      {tab === "queue" || tab === "daycares" ? (
+      {tab === "verify" ? (
+        <>
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Needs a look" value={verifyQueue.length} accent />
+            <Stat label="Licence review" value={filtered.filter((c) => needsLicenseReview(c)).length} />
+            <Stat label="Photo review" value={filtered.filter((c) => needsPhotoReview(c)).length} />
+            <Stat label="Waiting claims" value={waitingOnYou.length} />
+          </dl>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+          </div>
+          <section className="mt-8 overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-border">
+            <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-subtle">Verify</p>
+                <h2 className="mt-1 font-display text-2xl">Licence and photo review</h2>
+              </div>
+              <p className="text-sm text-muted">{verifyQueue.length === 0 ? "Caught up" : `${verifyQueue.length} to review`}</p>
+            </div>
+            <p className="border-t border-border px-5 py-3 text-sm text-muted">
+              Open the uploaded licence and storefront. Mark the registry match. This is not an inspection score.
+            </p>
+            {verifyQueue.length === 0 ? (
+              <p className="border-t border-border px-5 py-8 text-sm text-muted">No claims or licence photos are waiting.</p>
+            ) : (
+              <ul className="divide-y divide-border border-t border-border">
+                {verifyQueue.map((c) => (
+                  <CentreRow key={c.daycareId} c={c} busy={busy} onDecide={onDecide} onLicense={onLicense} />
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      ) : tab === "queue" || tab === "daycares" ? (
         <>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="Waiting on you" value={counts.waiting} accent />
@@ -509,6 +552,26 @@ function CentreRow({
           <p className={`mt-0.5 text-sm ${muted}`}>
             {c.providerName || "—"} · {c.providerEmail || c.contactEmail || "no email"}
           </p>
+          {c.licensePhoto || c.storefrontPhoto ? (
+            <div className="mt-3 flex flex-wrap gap-3">
+              {c.licensePhoto ? (
+                <figure className="space-y-1">
+                  <img src={c.licensePhoto} alt={`Licence for ${c.name}`} className="h-24 w-36 rounded-lg object-cover ring-1 ring-black/10" />
+                  <figcaption className={`text-[11px] ${muted}`}>Licence photo</figcaption>
+                </figure>
+              ) : null}
+              {c.storefrontPhoto ? (
+                <figure className="space-y-1">
+                  <img src={c.storefrontPhoto} alt={`Storefront for ${c.name}`} className="h-24 w-36 rounded-lg object-cover ring-1 ring-black/10" />
+                  <figcaption className={`text-[11px] ${muted}`}>Storefront</figcaption>
+                </figure>
+              ) : (
+                <p className={`mt-2 text-xs ${muted}`}>No storefront photo uploaded yet.</p>
+              )}
+            </div>
+          ) : (
+            <p className={`mt-2 text-xs ${muted}`}>No licence or storefront photo on this claim yet.</p>
+          )}
           {c.reviewedAt ? (
             <p className={`mt-0.5 text-xs ${muted}`}>
               Reviewed {new Date(c.reviewedAt).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}
@@ -518,6 +581,11 @@ function CentreRow({
           <AdminLicenseActions item={c} busy={busy !== null} onReview={(action) => onLicense(c.daycareId, action)} />
         </div>
         <div className="flex flex-wrap justify-end gap-2">
+          <Button size="sm" variant="ghost" asChild>
+            <Link to="/daycare/$slug" params={{ slug: c.slug }}>
+              View listing
+            </Link>
+          </Button>
           <Button size="sm" variant={status === "live" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
             Approve
           </Button>

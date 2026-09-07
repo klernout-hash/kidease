@@ -6,6 +6,19 @@ import { notifyClaimStatusSms } from "@/lib/server/sms";
 import { requireAdmin } from "@/lib/server/roles";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { isRealListingPhoto } from "@/lib/listing-readiness";
+
+function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
+  const license = (licensePhoto || "").trim();
+  const storefront = (photos || "")
+    .split(",")
+    .map((p) => p.trim())
+    .find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
+  return {
+    licensePhoto: license || null,
+    storefrontPhoto: storefront || null,
+  };
+}
 
 export type AdminCentreRow = {
   daycareId: string;
@@ -36,6 +49,8 @@ export type AdminCentreRow = {
   licenseVerificationSource: string | null;
   staffScreeningAttested: boolean;
   staffScreeningAttestedAt: string | null;
+  licensePhoto: string | null;
+  storefrontPhoto: string | null;
 };
 
 export type Decision = "approve" | "decline" | "waiting";
@@ -158,6 +173,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
       license_verification_source: string | null;
       staff_screening_attested: number | boolean | null;
       staff_screening_attested_at: string | null;
+      license_photo: string | null;
+      photos: string | null;
     }>`
       select distinct on (d.id)
         d.id as daycare_id,
@@ -186,7 +203,9 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         d.license_verified_at,
         d.license_verification_source,
         d.staff_screening_attested,
-        d.staff_screening_attested_at
+        d.staff_screening_attested_at,
+        coalesce(c.license_photo, d.license_photo) as license_photo,
+        d.photos
       from daycares d
       left join listing_claims c on c.daycare_id = d.id
       left join provider_daycares pd on pd.daycare_id = d.id
@@ -228,6 +247,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         license_verification_source: string | null;
         staff_screening_attested: number | boolean | null;
         staff_screening_attested_at: string | null;
+        license_photo: string | null;
+        photos: string | null;
       }>`
         select distinct on (d.id)
           d.id as daycare_id,
@@ -256,7 +277,9 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           null::timestamptz as license_verified_at,
           null::text as license_verification_source,
           0 as staff_screening_attested,
-          null::timestamptz as staff_screening_attested_at
+          null::timestamptz as staff_screening_attested_at,
+          null::text as license_photo,
+          d.photos
         from daycares d
         left join listing_claims c on c.daycare_id = d.id
         left join provider_daycares pd on pd.daycare_id = d.id
@@ -303,6 +326,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         licenseVerificationSource: r.license_verification_source,
         staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
         staffScreeningAttestedAt: r.staff_screening_attested_at,
+        ...firstReviewPhoto(r.photos, r.license_photo),
       };
     });
 

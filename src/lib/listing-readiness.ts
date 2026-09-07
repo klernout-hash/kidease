@@ -1,8 +1,9 @@
 /**
- * Public listing honesty: vacancy freshness and a soft completeness gate.
- * Never invent open spots or a vacancy time. Incomplete listings stay discoverable.
- * Unknown (no confirm) is not stale — parents should not see “not updated recently”
- * unless a real timestamp is older than two weeks.
+ * Public listing honesty: vacancy freshness, photo freshness, and a soft completeness gate.
+ * Never invent open spots, a vacancy time, or a photo date. Incomplete listings stay discoverable.
+ * Unknown (no confirm / no photo stamp) is not stale — parents should not see “not updated recently”
+ * unless a real timestamp is older than two weeks (vacancy) or 90 days (photo).
+ * Paid priority never enters listingQualityScore.
  */
 
 import { feeProgramBadgeKey, officialLicenceNumber } from "@/lib/licensing";
@@ -15,6 +16,9 @@ export type CompletenessField = (typeof COMPLETENESS_FIELDS)[number];
 /** Parents should treat vacancy as stale after two weeks without a provider confirm. */
 export const VACANCY_STALE_MS = 14 * 24 * 60 * 60 * 1000;
 
+/** Storefront photos go stale after 90 days without a real provider upload. Unknown age is not stale. */
+export const PHOTO_STALE_MS = 90 * 24 * 60 * 60 * 1000;
+
 export type RelativeAge = {
   unit: "now" | "minute" | "hour" | "day" | "month";
   count: number;
@@ -23,6 +27,8 @@ export type RelativeAge = {
 export type VacancyFreshness =
   | { kind: "unknown"; age: null }
   | { kind: "fresh" | "stale"; age: RelativeAge; updatedAt: string };
+
+export type PhotoFreshness = VacancyFreshness;
 
 export type Completeness = {
   ready: boolean;
@@ -153,6 +159,23 @@ export function vacancyTimestamp(d: Pick<Daycare, "lastVacancyUpdatedAt" | "spot
   return d.lastVacancyUpdatedAt ?? d.spotsUpdatedAt ?? null;
 }
 
+export function photoFreshness(updatedAt?: string | null, now = Date.now()): PhotoFreshness {
+  if (!updatedAt) return { kind: "unknown", age: null };
+  const ts = Date.parse(updatedAt);
+  if (!Number.isFinite(ts)) return { kind: "unknown", age: null };
+  const ageMs = now - ts;
+  const age = relativeAge(ageMs);
+  return {
+    kind: ageMs > PHOTO_STALE_MS ? "stale" : "fresh",
+    age,
+    updatedAt,
+  };
+}
+
+export function photoTimestamp(d: Pick<Daycare, "lastPhotoUpdatedAt">) {
+  return d.lastPhotoUpdatedAt ?? null;
+}
+
 /** Stamp derived honesty fields. Does not invent a vacancy time. */
 export function applyListingReadiness<T extends Daycare>(d: T): T {
   const complete = listingCompleteness(d);
@@ -161,6 +184,7 @@ export function applyListingReadiness<T extends Daycare>(d: T): T {
     ...d,
     lastVacancyUpdatedAt: vacancyAt,
     spotsUpdatedAt: vacancyAt,
+    lastPhotoUpdatedAt: d.lastPhotoUpdatedAt ?? null,
     availabilityKnown: Boolean(vacancyAt),
     detailsReady: complete.ready,
     completenessMissing: complete.missing,
@@ -247,7 +271,7 @@ export function listingQualityScore(
       | "photos"
       | "lastVacancyUpdatedAt"
       | "spotsUpdatedAt"
-      | "priority"
+      | "lastPhotoUpdatedAt"
     >,
 ): number {
   let score = 0;
@@ -255,6 +279,7 @@ export function listingQualityScore(
   const vacancy = vacancyFreshness(vacancyTimestamp(item));
   if (vacancy.kind === "fresh") score += 2;
   score += listingCompleteness(item).score;
-  if (item.priority) score += 1;
+  const photo = photoFreshness(photoTimestamp(item));
+  if (photo.kind === "stale") score = Math.max(0, score - 1);
   return score;
 }
