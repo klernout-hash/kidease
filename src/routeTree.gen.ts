@@ -43,6 +43,7 @@ import { Route as HelpRouteImport } from './routes/help'
 import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
@@ -64,7 +65,9 @@ import { Route as ApiAdminStripeCatalogRouteImport } from './routes/api/admin.st
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
 import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
+import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
+import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -238,6 +241,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TourChecklistRoute = TourChecklistRouteImport.update({
   id: '/tour-checklist',
   path: '/tour-checklist',
@@ -343,9 +351,19 @@ const ApiPushRegisterRoute = ApiPushRegisterRouteImport.update({
   path: '/api/push/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSmsInboundRoute = ApiSmsInboundRouteImport.update({
+  id: '/api/sms/inbound',
+  path: '/api/sms/inbound',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSmsStatusRoute = ApiSmsStatusRouteImport.update({
   id: '/api/sms/status',
   path: '/api/sms/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
+  id: '/api/unsubscribe',
+  path: '/api/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
@@ -389,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/support/$caseId': typeof SupportCaseIdRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
@@ -411,6 +430,8 @@ export interface FileRoutesByFullPath {
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
+  '/api/sms/inbound': typeof ApiSmsInboundRoute
+  '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -448,6 +469,7 @@ export interface FileRoutesByTo {
   '/support/$caseId': typeof SupportCaseIdRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
@@ -470,6 +492,8 @@ export interface FileRoutesByTo {
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
+  '/api/sms/inbound': typeof ApiSmsInboundRoute
+  '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesById {
@@ -508,6 +532,7 @@ export interface FileRoutesById {
   '/support/$caseId': typeof SupportCaseIdRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
@@ -530,6 +555,8 @@ export interface FileRoutesById {
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
+  '/api/sms/inbound': typeof ApiSmsInboundRoute
+  '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRouteTypes {
@@ -569,6 +596,7 @@ export interface FileRouteTypes {
     | '/support/$caseId'
     | '/team'
     | '/terms'
+    | '/unsubscribe'
     | '/tour-checklist'
     | '/verify-2fa'
     | '/api/digest'
@@ -591,6 +619,8 @@ export interface FileRouteTypes {
     | '/api/docusign/webhook'
     | '/api/push/register'
     | '/api/sms/status'
+    | '/api/sms/inbound'
+    | '/api/unsubscribe'
     | '/api/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -628,6 +658,7 @@ export interface FileRouteTypes {
     | '/support/$caseId'
     | '/team'
     | '/terms'
+    | '/unsubscribe'
     | '/tour-checklist'
     | '/verify-2fa'
     | '/api/digest'
@@ -650,6 +681,8 @@ export interface FileRouteTypes {
     | '/api/docusign/webhook'
     | '/api/push/register'
     | '/api/sms/status'
+    | '/api/sms/inbound'
+    | '/api/unsubscribe'
     | '/api/stripe/webhook'
   id:
     | '__root__'
@@ -687,6 +720,7 @@ export interface FileRouteTypes {
     | '/support/$caseId'
     | '/team'
     | '/terms'
+    | '/unsubscribe'
     | '/tour-checklist'
     | '/verify-2fa'
     | '/api/digest'
@@ -709,6 +743,8 @@ export interface FileRouteTypes {
     | '/api/docusign/webhook'
     | '/api/push/register'
     | '/api/sms/status'
+    | '/api/sms/inbound'
+    | '/api/unsubscribe'
     | '/api/stripe/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -747,6 +783,7 @@ export interface RootRouteChildren {
   SupportCaseIdRoute: typeof SupportCaseIdRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   TourChecklistRoute: typeof TourChecklistRoute
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
@@ -768,6 +805,8 @@ export interface RootRouteChildren {
   ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
   ApiPushRegisterRoute: typeof ApiPushRegisterRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
+  ApiSmsInboundRoute: typeof ApiSmsInboundRoute
+  ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
 
@@ -1011,6 +1050,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tour-checklist': {
       id: '/tour-checklist'
       path: '/tour-checklist'
@@ -1158,11 +1204,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPushRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/sms/inbound': {
+      id: '/api/sms/inbound'
+      path: '/api/sms/inbound'
+      fullPath: '/api/sms/inbound'
+      preLoaderRoute: typeof ApiSmsInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/sms/status': {
       id: '/api/sms/status'
       path: '/api/sms/status'
       fullPath: '/api/sms/status'
       preLoaderRoute: typeof ApiSmsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/unsubscribe': {
+      id: '/api/unsubscribe'
+      path: '/api/unsubscribe'
+      fullPath: '/api/unsubscribe'
+      preLoaderRoute: typeof ApiUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/stripe/webhook': {
@@ -1220,6 +1280,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportCaseIdRoute: SupportCaseIdRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   TourChecklistRoute: TourChecklistRoute,
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
@@ -1240,7 +1301,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
   ApiPushRegisterRoute: ApiPushRegisterRoute,
+  ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
+  ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport

@@ -465,17 +465,29 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
         }
       }
       if (emailOn) {
-        try {
-          const mail = await sendSearchAlertEmail({
-            userId: search.user_id,
-            searchName: search.name,
-            events,
-          });
-          if (mail.via === "stub") emailStubbed += 1;
-          else emailSent += 1;
-        } catch (err) {
-          emailStubbed += 1;
-          console.error("[kidease-search-alerts] email failed", err);
+        const { evaluateCaslSend } = await import("@/lib/server/casl-consent");
+        const actor = await lookupUser(search.user_id);
+        const casl = await evaluateCaslSend({
+          userId: search.user_id,
+          channel: "email",
+          purpose: "service",
+          address: actor.email,
+        });
+        if (!casl.ok) {
+          console.info("[kidease-search-alerts] email skipped — no CASL consent", search.user_id);
+        } else {
+          try {
+            const mail = await sendSearchAlertEmail({
+              userId: search.user_id,
+              searchName: search.name,
+              events,
+            });
+            if (mail.via === "stub") emailStubbed += 1;
+            else emailSent += 1;
+          } catch (err) {
+            emailStubbed += 1;
+            console.error("[kidease-search-alerts] email failed", err);
+          }
         }
       }
       notified += events.length;
@@ -519,7 +531,11 @@ function escMail(s: string) {
     .join("");
 }
 
-function searchAlertCopy(searchName: string, events: Array<{ name: string; city: string; kind: SearchAlertKind; distanceKm: number }>) {
+function searchAlertCopy(
+  searchName: string,
+  events: Array<{ name: string; city: string; kind: SearchAlertKind; distanceKm: number }>,
+  unsubUrl?: string | null,
+) {
   const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
   const deskUrl = `${origin}/parent?tab=alerts`;
   const lines = events.slice(0, 8).map((ev) => {
@@ -527,7 +543,10 @@ function searchAlertCopy(searchName: string, events: Array<{ name: string; city:
     return `• ${ev.name} (${ev.city}, ${ev.distanceKm} km) — ${kind}`;
   });
   const subject = `KidEase: updates for “${searchName}”`;
-  const text = `A saved search on KidEase has a match.\n\n${lines.join("\n")}\n\nOpen your family desk: ${deskUrl}\n`;
+  const unsubLine = unsubUrl
+    ? `\nUnsubscribe: ${unsubUrl}\nKidEase · Winnipeg, Manitoba · support@kidease.ca\n`
+    : `\nUnsubscribe: ${origin}/unsubscribe\nKidEase · Winnipeg, Manitoba · support@kidease.ca\n`;
+  const text = `A saved search on KidEase has a match.\n\n${lines.join("\n")}\n\nOpen your family desk: ${deskUrl}\n${unsubLine}`;
   const items = events
     .slice(0, 8)
     .map((ev) => {
@@ -545,6 +564,7 @@ function searchAlertCopy(searchName: string, events: Array<{ name: string; city:
       <p style="margin:24px 0 0;">
         <a href="${deskUrl}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">Open family desk</a>
       </p>
+      <p style="margin:24px 0 0;font-size:12px;color:#5c6578;">KidEase · Winnipeg, Manitoba · <a href="${escMail(unsubUrl || `${origin}/unsubscribe`)}" style="color:#1a3790;">Unsubscribe</a></p>
     </td></tr>
   </table>
 </body></html>`;
@@ -564,13 +584,27 @@ export async function sendSearchAlertEmail(payload: {
 }) {
   const actor = await lookupUser(payload.userId);
   const to = actor.email?.trim();
-  const { subject, text, html } = searchAlertCopy(payload.searchName, payload.events);
+  const { caslOneClickUrl, caslUnsubscribeUrl } = await import("@/lib/server/casl-consent");
+  const unsubUrl = caslUnsubscribeUrl({
+    userId: payload.userId,
+    channel: "email",
+    purpose: "service",
+    address: to,
+  });
+  const oneClick = caslOneClickUrl({
+    userId: payload.userId,
+    channel: "email",
+    purpose: "service",
+    address: to,
+  });
+  const { subject, text, html } = searchAlertCopy(payload.searchName, payload.events, unsubUrl);
 
   if (!to) {
     console.info("[kidease-search-alerts] email stub — no parent email", payload.searchName);
     return { ok: true as const, via: "stub" as const };
   }
 
+  const listUnsub = oneClick ? `<${oneClick}>` : unsubUrl ? `<${unsubUrl}>` : undefined;
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
     const res = await fetch("https://api.resend.com/emails", {
@@ -582,6 +616,9 @@ export async function sendSearchAlertEmail(payload: {
         subject,
         text,
         html,
+        headers: listUnsub
+          ? { "List-Unsubscribe": listUnsub, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+          : undefined,
       }),
     });
     if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
@@ -602,6 +639,9 @@ export async function sendSearchAlertEmail(payload: {
           { type: "text/plain", value: text },
           { type: "text/html", value: html },
         ],
+        headers: listUnsub
+          ? { "List-Unsubscribe": listUnsub, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+          : undefined,
       }),
     });
     if (!res.ok) throw new Error(`SendGrid ${res.status}: ${await res.text()}`);

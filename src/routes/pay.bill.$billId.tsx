@@ -15,6 +15,9 @@ import { periodLabel } from "@/lib/stripe-methods";
 import { type Bill, billDollars } from "@/lib/bill";
 import { WalletMethodHints } from "@/components/wallet-methods";
 import { openStripeCheckout } from "@/lib/wallets";
+import { CaslConsentFields } from "@/components/casl-consent-fields";
+import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent";
+import type { CaslPrefs } from "@/lib/casl";
 
 export const Route = createFileRoute("/pay/bill/$billId")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -33,6 +36,11 @@ function PayBillPage() {
   const [stripeLive, setStripeLive] = useState(false);
   const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
+  const [consents, setConsents] = useState<CaslPrefs>({
+    smsService: false,
+    emailService: false,
+    emailCommercial: false,
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -47,6 +55,16 @@ function PayBillPage() {
       .catch(() => {
         if (!cancelled) setMissing(true);
       });
+    void getMyCaslConsents()
+      .then((row) => {
+        if (cancelled) return;
+        setConsents({
+          smsService: row.smsService,
+          emailService: row.emailService,
+          emailCommercial: row.emailCommercial,
+        });
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -81,6 +99,9 @@ function PayBillPage() {
     if (!canPay || !bill) return;
     setBusy(true);
     try {
+      await saveMyCaslConsents({
+        data: { ...consents, locale: locale === "fr" ? "fr" : "en", method: "checkout_checkbox" },
+      }).catch(() => undefined);
       const res = await createBillCheckout({ data: bill.id });
       if (res.alreadyPaid) {
         toast.success(t("paid"));
@@ -159,6 +180,7 @@ function PayBillPage() {
 
         {canPay ? (
           <div className="mt-6 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
+            <CaslConsentFields value={consents} onChange={setConsents} showEmailService={false} />
             <Button className="w-full" disabled={busy} onClick={() => void pay()}>
               <Lock className="size-4" />
               {t("pay")} · {money(billDollars(bill!), locale)}

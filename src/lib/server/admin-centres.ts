@@ -420,10 +420,21 @@ export const decideCentre = createServerFn({ method: "POST" })
             select phone from profiles where user_id = ${latest[0].user_id} limit 1
           `.catch(() => [] as { phone: string | null }[])
         : [];
+      const claimantId = latest[0]?.user_id || "";
+      const { evaluateCaslSend } = await import("@/lib/server/casl-consent");
+      const casl = claimantId
+        ? await evaluateCaslSend({
+            userId: claimantId,
+            channel: "sms",
+            purpose: "service",
+            address: phoneRows[0]?.phone,
+          })
+        : { ok: false as const, skipped: true as const, error: "CASL: no stored express consent for this recipient." };
       await notifyClaimStatusSms({
         to: phoneRows[0]?.phone,
         centreName: centre.name,
         status: claimStatus,
+        consentGranted: casl.ok,
       });
     } catch (err) {
       console.error("[kidease-sms] claim status notify failed", err instanceof Error ? err.message : err);

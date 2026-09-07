@@ -440,7 +440,7 @@ async function deliverSms(kind: PlatformKind, title: string, detail?: string) {
   if (!SMS_KINDS.has(kind)) return "skip";
   const snippet = (detail || title).replace(/\s+/g, " ").slice(0, 120);
   const body = `KidEase ${kind === "chat" ? "Live Chat" : title}: ${snippet}`;
-  const result = await sendSms({ to: ADMIN_SMS, body });
+  const result = await sendSms({ to: ADMIN_SMS, body, audience: "internal" });
   if (result.ok) return "sent";
   if (result.skipped) {
     console.info("[kidease-sms]", result.error);

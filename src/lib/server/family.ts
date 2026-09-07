@@ -1387,6 +1387,8 @@ export const deleteAccount = createServerFn({ method: "POST" })
     await sql`delete from children where user_id = ${uid}`;
     await sql`delete from saved_daycares where user_id = ${uid}`;
     await sql`delete from provider_daycares where user_id = ${uid}`;
+    await sql`delete from casl_consent_events where user_id = ${uid}`.catch(() => undefined);
+    await sql`delete from casl_consents where user_id = ${uid}`.catch(() => undefined);
     await sql`delete from profiles where user_id = ${uid}`;
     await sql`delete from "session" where "userId" = ${uid}`;
     await sql`delete from "account" where "userId" = ${uid}`;

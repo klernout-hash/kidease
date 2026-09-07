@@ -229,12 +229,23 @@ export const getSearchAlertPrefs = createServerFn({ method: "GET" })
     `.catch(() => []);
     const row = rows[0];
     const emailConfigured = resetMailConfigured();
+    const { listConsents } = await import("@/lib/server/casl-consent");
+    const consents = await listConsents(context.userId);
     if (!row) {
-      return { emailEnabled: true, inAppEnabled: true, updatedAt: null, emailConfigured };
+      return {
+        emailEnabled: consents.emailService,
+        inAppEnabled: true,
+        smsEnabled: consents.smsService,
+        emailCommercial: consents.emailCommercial,
+        updatedAt: null,
+        emailConfigured,
+      };
     }
     return {
-      emailEnabled: row.email_enabled !== 0 && row.email_enabled !== false,
+      emailEnabled: consents.emailService,
       inAppEnabled: row.in_app_enabled !== 0 && row.in_app_enabled !== false,
+      smsEnabled: consents.smsService,
+      emailCommercial: consents.emailCommercial,
       updatedAt: iso(row.updated_at),
       emailConfigured,
     };
@@ -242,9 +253,18 @@ export const getSearchAlertPrefs = createServerFn({ method: "GET" })
 
 export const saveSearchAlertPrefs = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { emailEnabled?: boolean; inAppEnabled?: boolean }) => ({
+  .validator((input: {
+    emailEnabled?: boolean;
+    inAppEnabled?: boolean;
+    smsEnabled?: boolean;
+    emailCommercial?: boolean;
+    locale?: string;
+  }) => ({
     emailEnabled: Boolean(input?.emailEnabled),
     inAppEnabled: Boolean(input?.inAppEnabled),
+    smsEnabled: Boolean(input?.smsEnabled),
+    emailCommercial: Boolean(input?.emailCommercial),
+    locale: input?.locale === "fr" ? ("fr" as const) : ("en" as const),
   }))
   .handler(async ({ context, data }): Promise<SearchAlertPrefs> => {
     const sql = await getSql();
@@ -256,9 +276,44 @@ export const saveSearchAlertPrefs = createServerFn({ method: "POST" })
         in_app_enabled = excluded.in_app_enabled,
         updated_at = now()
     `;
+    const { lookupUser } = await import("@/lib/server/notify");
+    const { setConsent } = await import("@/lib/server/casl-consent");
+    const actor = await lookupUser(context.userId);
+    const phoneRows = await sql<{ phone: string | null }>`
+      select phone from profiles where user_id = ${context.userId} limit 1
+    `.catch(() => [] as { phone: string | null }[]);
+    await setConsent({
+      userId: context.userId,
+      channel: "email",
+      purpose: "service",
+      granted: data.emailEnabled,
+      method: "alerts_settings",
+      address: actor.email,
+      locale: data.locale,
+    });
+    await setConsent({
+      userId: context.userId,
+      channel: "sms",
+      purpose: "service",
+      granted: data.smsEnabled,
+      method: "alerts_settings",
+      address: phoneRows[0]?.phone,
+      locale: data.locale,
+    });
+    await setConsent({
+      userId: context.userId,
+      channel: "email",
+      purpose: "commercial",
+      granted: data.emailCommercial,
+      method: "alerts_settings",
+      address: actor.email,
+      locale: data.locale,
+    });
     return {
       emailEnabled: data.emailEnabled,
       inAppEnabled: data.inAppEnabled,
+      smsEnabled: data.smsEnabled,
+      emailCommercial: data.emailCommercial,
       updatedAt: new Date().toISOString(),
       emailConfigured: resetMailConfigured(),
     };

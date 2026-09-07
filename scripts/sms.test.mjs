@@ -21,6 +21,7 @@ import {
   notifyClaimStatusSms,
   sendSms,
   vacancySmsBody,
+  CASL_NO_CONSENT_MESSAGE,
 } from "../src/lib/server/sms.ts";
 import {
   parseTwilioForm,
@@ -121,7 +122,7 @@ test("sendSms posts to Twilio with Messaging Service when configured", async () 
     });
   };
   const result = await sendSms(
-    { to: "+12045550199", body: "KidEase claim update" },
+    { to: "+12045550199", body: "KidEase claim update", consentGranted: true },
     {
       env: {
         FEATURE_SMS: "1",
@@ -146,6 +147,22 @@ test("sendSms posts to Twilio with Messaging Service when configured", async () 
   const auth = calls[0].init.headers.Authorization;
   assert.match(auth, /^Basic /);
   assert.doesNotMatch(auth, /api_key_secret_not_real/);
+});
+
+test("sendSms skips user audience without stored consent and does not call Twilio", async () => {
+  let called = 0;
+  const result = await sendSms(
+    { to: "+12045550199", body: "KidEase claim update" },
+    {
+      env: LIVE_ENV,
+      fetchImpl: async () => {
+        called += 1;
+        return new Response("nope");
+      },
+    },
+  );
+  assert.equal(called, 0);
+  assert.deepEqual(result, { ok: false, skipped: true, error: CASL_NO_CONSENT_MESSAGE });
 });
 
 test("notifyClaimStatusSms skips when there is no mobile", async () => {
@@ -247,4 +264,25 @@ test("status webhook route is registered and not a *.server.* client import", ()
   assert.match(tree, /id:\s*'\/api\/sms\/status'/);
   assert.match(lab, /smsEnabled/);
   assert.doesNotMatch(lab, /sms\.server/);
+});
+
+test("inbound STOP and public unsubscribe routes are registered", () => {
+  const inbound = readFileSync(join(root, "src/routes/api/sms.inbound.ts"), "utf8");
+  const unsub = readFileSync(join(root, "src/routes/unsubscribe.tsx"), "utf8");
+  const api = readFileSync(join(root, "src/routes/api/unsubscribe.ts"), "utf8");
+  const tree = readFileSync(join(root, "src/routeTree.gen.ts"), "utf8");
+  assert.match(inbound, /createFileRoute\("\/api\/sms\/inbound"\)/);
+  assert.match(inbound, /parseInboundOptOut/);
+  assert.match(unsub, /createFileRoute\("\/unsubscribe"\)/);
+  assert.match(api, /createFileRoute\("\/api\/unsubscribe"\)/);
+  assert.match(tree, /id:\s*'\/api\/sms\/inbound'/);
+  assert.match(tree, /id:\s*'\/unsubscribe'/);
+  assert.match(tree, /id:\s*'\/api\/unsubscribe'/);
+});
+
+test("FEATURE_SMS stays off in env example after CASL landing", () => {
+  const envExample = readFileSync(join(root, ".env.example"), "utf8");
+  assert.match(envExample, /^FEATURE_SMS=0$/m);
+  assert.doesNotMatch(envExample, /^FEATURE_SMS=1$/m);
+  assert.match(readFileSync(join(root, "docs/sms.md"), "utf8"), /casl_consents/);
 });

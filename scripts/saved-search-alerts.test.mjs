@@ -123,6 +123,8 @@ test("email path uses Resend when wired and stubs honestly otherwise", () => {
   assert.match(alerts, /sendSearchAlertEmail/);
   assert.match(alerts, /text\/html/);
   assert.match(alerts, /emailConfigured/);
+  assert.match(alerts, /evaluateCaslSend/);
+  assert.match(alerts, /List-Unsubscribe/);
   assert.doesNotMatch(alerts, /TODO: wire Resend/);
   const prefs = src("src/lib/server/saved-searches.ts");
   assert.match(prefs, /emailConfigured: resetMailConfigured/);

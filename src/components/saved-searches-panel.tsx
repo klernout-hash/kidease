@@ -25,12 +25,14 @@ import { useCopy } from "@/lib/use-copy";
 import { clampRadiusKm } from "@/lib/proximity";
 
 export function SavedSearchesPanel() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const navigate = useNavigate();
   const [searches, setSearches] = useState<SavedSearch[] | null>(null);
   const [prefs, setPrefs] = useState<SearchAlertPrefs>({
-    emailEnabled: true,
+    emailEnabled: false,
     inAppEnabled: true,
+    smsEnabled: false,
+    emailCommercial: false,
     updatedAt: null,
     emailConfigured: true,
   });
@@ -66,18 +68,45 @@ export function SavedSearchesPanel() {
         <h2 className="font-display text-2xl">{t("alertPrefs")}</h2>
         <p className="mt-1 text-sm text-muted">{t("alertPrefsLead")}</p>
         <div className="mt-3 space-y-2 rounded-xl bg-surface p-4 ring-1 ring-border">
-          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
             <input
               type="checkbox"
-              className="size-4 accent-primary"
+              className="mt-1 size-4 accent-primary"
               checked={prefs.emailEnabled}
               onChange={(e) => setPrefs((cur) => ({ ...cur, emailEnabled: e.target.checked }))}
             />
-            <span>{t("alertEmail")}</span>
+            <span>
+              <span>{t("alertEmail")}</span>
+              <span className="mt-1 block text-[12px] text-muted">{t("caslEmailServiceLabel")}. {t("caslNotRequired")}</span>
+            </span>
           </label>
           {prefs.emailEnabled && !prefs.emailConfigured ? (
             <p className="text-xs text-muted">{t("alertEmailStub")}</p>
           ) : null}
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 accent-primary"
+              checked={prefs.smsEnabled}
+              onChange={(e) => setPrefs((cur) => ({ ...cur, smsEnabled: e.target.checked }))}
+            />
+            <span>
+              <span>{t("caslSmsLabel")}</span>
+              <span className="mt-1 block text-[12px] text-muted">{t("caslNotRequired")}</span>
+            </span>
+          </label>
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 accent-primary"
+              checked={prefs.emailCommercial}
+              onChange={(e) => setPrefs((cur) => ({ ...cur, emailCommercial: e.target.checked }))}
+            />
+            <span>
+              <span>{t("caslEmailCommercialLabel")}</span>
+              <span className="mt-1 block text-[12px] text-muted">{t("caslNotRequired")}</span>
+            </span>
+          </label>
           <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
             <input
               type="checkbox"
@@ -88,12 +117,21 @@ export function SavedSearchesPanel() {
             <span>{t("alertInApp")}</span>
           </label>
           <p className="text-xs text-subtle">{t("alertPushOff")}</p>
+          <p className="text-xs text-subtle">{t("caslWithdrawHint")}</p>
           <Button
             size="sm"
             disabled={savingPrefs}
             onClick={() => {
               setSavingPrefs(true);
-              void saveSearchAlertPrefs({ data: { emailEnabled: prefs.emailEnabled, inAppEnabled: prefs.inAppEnabled } })
+              void saveSearchAlertPrefs({
+                data: {
+                  emailEnabled: prefs.emailEnabled,
+                  inAppEnabled: prefs.inAppEnabled,
+                  smsEnabled: prefs.smsEnabled,
+                  emailCommercial: prefs.emailCommercial,
+                  locale,
+                },
+              })
                 .then((next) => {
                   setPrefs(next);
                   toast.success(t("alertPrefsSaved"));
