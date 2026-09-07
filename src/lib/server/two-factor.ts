@@ -120,19 +120,34 @@ export const getTwoFactorStatus = createServerFn({ method: "GET" })
 
 export const startTwoFactor = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
+  .validator((input: { force?: boolean } = {}) => ({
+    force: Boolean(input?.force),
+  }))
+  .handler(async ({ context, data }) => {
     const actor = await lookupUser(context.userId);
     const email = (actor.email || "").trim().toLowerCase();
+    const emailed = email.replace(/(^.).*(@.*$)/, "$1•••$2");
     if (!email) throw new Error("This account has no email for a verification code.");
     await ensureTable();
     const sql = await getSql();
-    const recent = await sql<{ created_at: string }>`
-      select created_at from login_challenges
+    const recent = await sql<{ created_at: string; expires_at: string; attempts: number }>`
+      select created_at, expires_at, attempts from login_challenges
       where user_id = ${context.userId}
       order by created_at desc limit 1
     `.catch(() => []);
-    if (recent[0] && Date.now() - new Date(recent[0].created_at).getTime() < 45_000) {
-      return { ok: true as const, emailed: email.replace(/(^.).*(@.*$)/, "$1•••$2"), wait: true as const };
+    const last = recent[0];
+    if (last && Date.now() - new Date(last.created_at).getTime() < 45_000) {
+      return { ok: true as const, emailed, wait: true as const };
+    }
+    // After the 45s wait window, keep the live code unless the user asked for a new one.
+    // Verify only reads the latest challenge — reminting here invalidates Titan mail still in flight.
+    if (
+      last &&
+      !data.force &&
+      new Date(last.expires_at).getTime() > Date.now() &&
+      last.attempts < MAX_ATTEMPTS
+    ) {
+      return { ok: true as const, emailed, wait: true as const, reused: true as const };
     }
     const code = String(randomInt(100000, 999999));
     const id = nid("2fa");
@@ -143,7 +158,7 @@ export const startTwoFactor = createServerFn({ method: "POST" })
     const status = await sendCodeEmail(email, code);
     return {
       ok: true as const,
-      emailed: email.replace(/(^.).*(@.*$)/, "$1•••$2"),
+      emailed,
       status,
     };
   });
