@@ -1,5 +1,5 @@
-/* Lightweight KidEase PWA shell. Caches app chrome only — not the catalogue. */
-const VERSION = "kidease-shell-v2";
+/* Lightweight KidEase PWA shell. Caches app chrome only — not CSS/JS bundles. */
+const VERSION = "kidease-shell-v3";
 const PRECACHE = [
   "/offline.html",
   "/manifest.webmanifest",
@@ -35,7 +35,6 @@ function sameOrigin(url) {
 function isChromeAsset(url) {
   const path = url.pathname;
   return (
-    path.startsWith("/assets/") ||
     path.startsWith("/fonts/") ||
     path.startsWith("/icons/") ||
     path.startsWith("/favicon") ||
@@ -50,7 +49,15 @@ function isChromeAsset(url) {
 function shouldBypass(url) {
   if (!sameOrigin(url)) return true;
   const path = url.pathname;
-  return path.startsWith("/api/") || path === "/img" || path.startsWith("/img?") || path === "/sw.js";
+  // Never intercept hashed CSS/JS — a failed fetch used to fall back to
+  // offline.html, which the browser then parsed as the stylesheet.
+  return (
+    path.startsWith("/api/") ||
+    path.startsWith("/assets/") ||
+    path === "/img" ||
+    path.startsWith("/img?") ||
+    path === "/sw.js"
+  );
 }
 
 function fetchWithTimeout(request, ms) {
@@ -74,7 +81,6 @@ self.addEventListener("fetch", (event) => {
 
   if (!isChromeAsset(url)) return;
 
-  // Network first so a deploy cannot pin visitors on a stale hashed shell.
   event.respondWith(
     fetch(request)
       .then((response) => {
@@ -84,6 +90,6 @@ self.addEventListener("fetch", (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match("/offline.html"))),
+      .catch(() => caches.match(request)),
   );
 });
