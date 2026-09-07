@@ -302,7 +302,7 @@ export const updateListing = createServerFn({ method: "POST" })
     if (!own[0]) throw new Error("Not your listing");
     const current = await sql<{ photos: string }>`select photos from daycares where id = ${data.daycareId}`;
     const previousPhotos = current[0]?.photos ?? "";
-    let photos = applyStorefrontPhoto(previousPhotos, data.storefront);
+    let photos = applyStorefrontPhoto(current[0]?.photos ?? "", data.storefront);
     const extras = (data.interiors ?? []).filter((p) => p.startsWith("data:image") || p.startsWith("/"));
     if (extras.length) {
       const cur = photos.split(",").filter(Boolean);

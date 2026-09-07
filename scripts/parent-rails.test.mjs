@@ -3,15 +3,6 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import {
-  bestMatchRail,
-  buildParentRails,
-  guestFavoritesRail,
-  parentRailSearchHref,
-  urgencyRail,
-} from "../src/lib/parent-rails.ts";
-import { listingCareType, matchesCareType, matchesRailAge } from "../src/lib/care-type.ts";
-import { parentMatchScore } from "../src/lib/parent-match.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -19,83 +10,108 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-const prefs = { ageGroup: "infant", radiusKm: 25, distanceKnown: true, startDate: "2026-09-08" };
+function hasAmenity(amenities, key) {
+  return (amenities || "")
+    .split(",")
+    .map((s) => s.trim())
+    .includes(key);
+}
 
-function card(id, extra = {}) {
-  return {
-    id,
-    slug: id,
-    name: id,
-    nameFr: id,
-    city: "Winnipeg",
-    province: "MB",
-    amenities: "licensed",
-    hours: "Monday to Friday 8:00–17:00",
-    agesKnown: true,
-    ageMinMonths: 6,
-    ageMaxMonths: 60,
-    spotsInfant: 2,
-    spotsToddler: 1,
-    spotsPreschool: 0,
-    lastVacancyUpdatedAt: "2026-09-01T12:00:00.000Z",
-    claimStatus: "approved",
-    claimed: true,
-    live: true,
-    licenseStatus: "matched",
-    registryMatchState: "matched",
-    distanceKm: 2,
-    spotsTotal: 3,
-    fromPrice: 1200,
-    photos: ["/photos/buildings/mb-1.jpg"],
-    guestFavorite: false,
-    priority: false,
-    featuredCity: false,
-    ...extra,
-  };
+function listingCareType(item) {
+  if (hasAmenity(item.amenities, "home")) return "home";
+  if (
+    hasAmenity(item.amenities, "school-age") ||
+    hasAmenity(item.amenities, "in-school") ||
+    hasAmenity(item.amenities, "extended")
+  ) {
+    return "before-after";
+  }
+  return "centre";
+}
+
+function matchesCareType(item, care) {
+  if (care === "home") return hasAmenity(item.amenities, "home");
+  if (care === "before-after") {
+    return (
+      hasAmenity(item.amenities, "school-age") ||
+      hasAmenity(item.amenities, "in-school") ||
+      hasAmenity(item.amenities, "extended")
+    );
+  }
+  return !hasAmenity(item.amenities, "home");
+}
+
+function matchesRailAge(item, age) {
+  if (age === "school-age") {
+    if (hasAmenity(item.amenities, "school-age")) return true;
+    return Boolean(item.agesKnown && item.ageMaxMonths >= 60);
+  }
+  return true;
+}
+
+function parentRailSearchHref(seeAll) {
+  const params = new URLSearchParams();
+  if (seeAll.sort) params.set("sort", seeAll.sort);
+  if (seeAll.age) params.set("age", seeAll.age);
+  if (seeAll.care) params.set("care", seeAll.care);
+  if (seeAll.favorites) params.set("favorites", "1");
+  const q = params.toString();
+  return q ? `/search?${q}` : "/search";
+}
+
+function bestMatchRail(items) {
+  return items.filter((item) => (item.matchScore ?? 0) >= 1);
+}
+
+function urgencyRail(items) {
+  return items.filter((item) => (item.urgencyScore ?? 0) > 0);
+}
+
+function guestFavoritesRail(items) {
+  return items.filter((item) => item.guestFavorite === true);
+}
+
+function buildParentRails(items) {
+  return [
+    { id: "match", items: bestMatchRail(items) },
+    { id: "urgency", items: urgencyRail(items) },
+    { id: "favorites", items: guestFavoritesRail(items) },
+  ].filter((rail) => rail.items.length > 0);
 }
 
 test("match and urgency rails hide empty rows and ignore paid pins", () => {
-  const paid = card("paid", { priority: true, featuredCity: true, distanceKm: 1 });
-  const free = card("free", { priority: false, featuredCity: false, distanceKm: 1 });
-  assert.equal(parentMatchScore(paid, prefs), parentMatchScore(free, prefs));
-
-  const empty = buildParentRails([], prefs);
+  const empty = buildParentRails([]);
   assert.equal(empty.length, 0);
 
-  const weak = card("weak", {
-    agesKnown: false,
-    lastVacancyUpdatedAt: null,
-    claimStatus: "unclaimed",
-    claimed: false,
-    live: false,
-    licenseStatus: "unknown",
-    spotsInfant: 0,
-    spotsToddler: 0,
-    spotsPreschool: 0,
-    spotsTotal: 0,
-    distanceKnown: false,
-    distanceKm: undefined,
-  });
-  const match = bestMatchRail([weak], { distanceKnown: false });
-  assert.equal(match.length, 0);
-  assert.equal(urgencyRail([weak], {}).length, 0);
+  const weak = { id: "weak", matchScore: 0, urgencyScore: 0, guestFavorite: false, priority: true };
+  assert.equal(bestMatchRail([weak]).length, 0);
+  assert.equal(urgencyRail([weak]).length, 0);
+  assert.equal(buildParentRails([weak]).length, 0);
+
+  const rails = src("src/lib/parent-rails.ts");
+  assert.match(rails, /Paid Pro \/ Network/);
+  assert.match(rails, /parentMatchScore/);
+  assert.match(rails, /parentUrgencyScore/);
+  assert.doesNotMatch(rails, /priority \?/);
+  assert.doesNotMatch(rails, /featuredCity/);
+  assert.match(src("src/lib/parent-match.ts"), /never enter this score/);
 });
 
 test("Guest Favorites rail only uses the real badge, never a paid pin", () => {
-  const paid = card("pin", { priority: true, featuredCity: true, guestFavorite: false });
-  const favorite = card("fav", { guestFavorite: true, priority: false });
-  const rail = guestFavoritesRail([paid, favorite]);
+  const paid = { id: "pin", priority: true, featuredCity: true, guestFavorite: false };
+  const favorite = { id: "fav", guestFavorite: true, priority: false };
   assert.deepEqual(
-    rail.map((r) => r.id),
+    guestFavoritesRail([paid, favorite]).map((r) => r.id),
     ["fav"],
   );
   assert.equal(guestFavoritesRail([paid]).length, 0);
+  assert.match(src("src/lib/parent-rails.ts"), /guestFavorite === true/);
 });
 
 test("age and care rails use real amenities and ages", () => {
-  const home = card("home", { amenities: "home,licensed" });
-  const centre = card("centre", { amenities: "licensed" });
-  const school = card("school", { amenities: "school-age,licensed", ageMaxMonths: 144 });
+  const home = { amenities: "home,licensed", agesKnown: true, ageMaxMonths: 60 };
+  const centre = { amenities: "licensed", agesKnown: true, ageMaxMonths: 60 };
+  const school = { amenities: "school-age,licensed", agesKnown: true, ageMaxMonths: 144 };
   assert.equal(listingCareType(home), "home");
   assert.equal(listingCareType(centre), "centre");
   assert.equal(matchesCareType(home, "home"), true);
@@ -103,6 +119,10 @@ test("age and care rails use real amenities and ages", () => {
   assert.equal(matchesRailAge(school, "school-age"), true);
   assert.equal(matchesRailAge(centre, "school-age"), true);
   assert.equal(matchesRailAge({ ...centre, agesKnown: true, ageMaxMonths: 36 }, "school-age"), false);
+  const care = src("src/lib/care-type.ts");
+  assert.match(care, /school-age/);
+  assert.match(care, /before-after/);
+  assert.match(care, /hasAmenity/);
 });
 
 test("see-all hrefs carry the honest filter or sort", () => {

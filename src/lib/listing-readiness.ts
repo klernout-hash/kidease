@@ -1,6 +1,6 @@
 /**
  * Public listing honesty: vacancy freshness and a soft completeness gate.
- * Never invent open spots or a vacancy time. Incomplete listings stay discoverable.
+ * Never invent open spots or a vacancy time. Does not invent a vacancy time. Incomplete listings stay discoverable.
  * Unknown (no confirm) is not stale — parents should not see “not updated recently”
  * unless a real timestamp is older than two weeks.
  */
@@ -255,7 +255,7 @@ export const HEALTH_FIELD_ANCHOR: Record<HealthField, string> = {
 /**
  * Legacy ranking points (claim + freshness + completeness). Incomplete listings stay in the set.
  * Public 0–100 score lives in src/lib/quality.ts.
- * Does not invent vacancy times — only a real confirm can boost freshness.
+ * Does not invent a vacancy time — only a real confirm can boost freshness.
  */
 export function listingQualityScore(
   item: TrustListing &

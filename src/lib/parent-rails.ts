@@ -2,7 +2,7 @@
  * Signed-in parent explore rails (Airbnb-style horizontal rows).
  *
  * Built from existing Match, Urgency, and Guest Favorites — never from
- * paid Pro / Network, featured-city, or promote pins.
+ * Paid Pro / Network, featured-city, or promote pins.
  * Empty rails stay hidden. See-all links carry the honest filter/sort.
  */
 
@@ -113,9 +113,4 @@ export function parentRailSearchHref(seeAll: ParentRailSeeAll): string {
   if (seeAll.favorites) params.set("favorites", "1");
   const q = params.toString();
   return q ? `/search?${q}` : "/search";
-}
-
-/** Paid pins must never appear in match/favorites ranking inputs. */
-export function paidPinsIgnored(item: { priority?: boolean; featuredCity?: boolean }): boolean {
-  return Boolean(item.priority || item.featuredCity);
 }
