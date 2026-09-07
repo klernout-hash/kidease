@@ -22,6 +22,7 @@ import { isPlatformLive } from "@/lib/live";
 import { defaultTrustFields } from "@/lib/trust";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
+import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { rememberSearch, searchMemoKey } from "./search-memo";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
 
@@ -257,23 +258,30 @@ export const searchDaycares = createServerFn({ method: "POST" })
     ...input,
     radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
   }))
-  .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => runSearch(data)));
+  .handler(async ({ data }) =>
+    rememberSearch(searchMemoKey(data), () =>
+      withTimeoutFallback(runSearch(data), LOADER_SETTLE_MS, []),
+    ),
+  );
+
+async function loadFeatured(origin: { lat: number; lng: number }): Promise<DaycareCard[]> {
+  const nearby: DaycareCard[] = [];
+  for (const d of await nearbyListings(origin, 40)) {
+    nearby.push(toCard(d, origin));
+  }
+  nearby.sort(compareProximity);
+  const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(nearby, mergeClaimedCard)));
+  const ranked = sortFeaturedCityAfterPriority(
+    await overlayFeaturedCity(await overlayPriority(merged)),
+  );
+  return uniqueById(ranked).slice(0, 12).map(slimCard);
+}
 
 export const featuredDaycares = createServerFn({ method: "POST" })
   .validator((input: { lat: number; lng: number }) => input)
-  .handler(async ({ data }) => {
-    const origin = { lat: data.lat, lng: data.lng };
-    const nearby: DaycareCard[] = [];
-    for (const d of await nearbyListings(origin, 40)) {
-      nearby.push(toCard(d, origin));
-    }
-    nearby.sort(compareProximity);
-    const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(nearby, mergeClaimedCard)));
-    const ranked = sortFeaturedCityAfterPriority(
-      await overlayFeaturedCity(await overlayPriority(merged)),
-    );
-    return uniqueById(ranked).slice(0, 12).map(slimCard);
-  });
+  .handler(async ({ data }) =>
+    withTimeoutFallback(loadFeatured({ lat: data.lat, lng: data.lng }), LOADER_SETTLE_MS, []),
+  );
 
 export const getDaycare = createServerFn({ method: "GET" })
   .validator((slug: string) => slug)

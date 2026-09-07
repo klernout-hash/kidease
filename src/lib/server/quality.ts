@@ -1,4 +1,4 @@
-import { getSql, type Sql } from "@/lib/db";
+import { getSqlWithin, type Sql } from "@/lib/db";
 import { loadParentReviewStats } from "@/lib/server/reviews";
 import {
   applyQualityFields,
@@ -95,7 +95,7 @@ export async function overlayQuality<T extends QualityInput>(
 ): Promise<Array<T & { qualityScore: number; guestFavorite: boolean }>> {
   if (!items.length) return items.map((item) => applyQualityFields(item));
   try {
-    const sql = await getSql();
+    const sql = await getSqlWithin();
     const ids = [...new Set(items.map((item) => item.id).filter(Boolean))];
     const [engagement, reviews] = await Promise.all([
       loadEngagementStats(sql, ids),

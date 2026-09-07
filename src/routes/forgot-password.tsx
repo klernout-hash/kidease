@@ -4,6 +4,7 @@ import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
 import { friendlyResetMailError } from "@/lib/auth/reset-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { getResetMailReady } from "@/lib/server/reset-mail";
+import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/forgot-password")({
     return email ? { email } : {};
   },
   loader: async () => {
-    const mailReady = await getResetMailReady().catch(() => true);
+    const mailReady = await withTimeoutFallback(getResetMailReady(), LOADER_SETTLE_MS, true);
     return { mailReady };
   },
   component: ForgotPassword,

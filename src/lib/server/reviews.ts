@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getSql, type Sql } from "@/lib/db";
+import { getSql, getSqlWithin, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { assertTurnstileToken } from "@/lib/server/turnstile";
@@ -161,7 +161,7 @@ export async function loadParentReviewStats(
 export async function overlayParentReviews<T extends { id: string }>(items: T[]): Promise<T[]> {
   if (!items.length) return items;
   try {
-    const sql = await getSql();
+    const sql = await getSqlWithin();
     const stats = await loadParentReviewStats(
       sql,
       [...new Set(items.map((item) => item.id))],

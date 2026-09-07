@@ -21,6 +21,27 @@ import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
 import { usePushRegistration } from "@/lib/use-push";
 
+const SPLASH_KEY = "dn-splashed";
+/** Survives remounts in the same JS world so a 900ms timer cannot be reset forever. */
+let splashArmed = false;
+
+function readSplashed() {
+  try {
+    return sessionStorage.getItem(SPLASH_KEY) === "1";
+  } catch {
+    return splashArmed;
+  }
+}
+
+function markSplashed() {
+  splashArmed = true;
+  try {
+    sessionStorage.setItem(SPLASH_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
 export function NativeBoot() {
   usePushRegistration();
   const [splash, setSplash] = useState(false);
@@ -49,16 +70,31 @@ export function NativeBoot() {
     captureInstallPrompt();
     registerOfflineShell();
     void paintStatusBar();
-    const already = sessionStorage.getItem("dn-splashed") === "1";
-    if (!already && isStandalone()) {
+    const already = readSplashed();
+    if (already) {
+      setSplash(false);
+      void hideNativeSplash();
+      return undefined;
+    }
+    if (isStandalone()) {
+      // Record first so a remount (StrictMode, desk bounce, SW reclaim) cannot
+      // restart the full-screen logo. The timer only hides it.
+      markSplashed();
       setSplash(true);
       const t = window.setTimeout(() => {
         setSplash(false);
-        sessionStorage.setItem("dn-splashed", "1");
         void hideNativeSplash();
       }, 900);
-      return () => window.clearTimeout(t);
+      const hard = window.setTimeout(() => {
+        setSplash(false);
+        void hideNativeSplash();
+      }, 1600);
+      return () => {
+        window.clearTimeout(t);
+        window.clearTimeout(hard);
+      };
     }
+    markSplashed();
     void hideNativeSplash();
     return undefined;
   }, []);

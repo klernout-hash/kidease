@@ -1,4 +1,5 @@
 import { getRequest } from "@tanstack/react-start/server";
+import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import { aliasInboundAuthCookies, isKideasePublicHost } from "./cookies";
 import { auth, authConfigured } from "./server";
 
@@ -73,7 +74,11 @@ export async function getSessionUser(
     headers = new Headers(headers);
     headers.set("Authorization", `Bearer ${bearerToken}`);
   }
-  const session = await auth.api.getSession({ headers });
+  const session = await withTimeout(
+    auth.api.getSession({ headers }),
+    SQL_SETTLE_MS,
+    "get-session-timeout",
+  ).catch(() => null);
   if (!session?.user) return null;
   return { id: session.user.id, email: session.user.email ?? null };
 }

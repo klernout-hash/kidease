@@ -23,6 +23,8 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMyRole } from "@/lib/server/family";
 import type { AppRole } from "@/lib/desks";
 import { featuredDaycares } from "@/lib/server/daycares";
+import { BootPending } from "@/components/boot-pending";
+import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { geocode, reverseGeocode, WINNIPEG } from "@/lib/geo";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
@@ -43,9 +45,15 @@ export const Route = createFileRoute("/")({
     return change ? { change: "1" as const } : {};
   },
   loader: async () => {
-    const featured = await featuredDaycares({ data: { lat: WINNIPEG.lat, lng: WINNIPEG.lng } }).catch(() => [] as Card[]);
+    const featured = await withTimeoutFallback(
+      featuredDaycares({ data: { lat: WINNIPEG.lat, lng: WINNIPEG.lng } }),
+      LOADER_SETTLE_MS,
+      [] as Card[],
+    );
     return { featured };
   },
+  pendingMs: 200,
+  pendingComponent: BootPending,
   component: Home,
 });
 
@@ -189,9 +197,24 @@ function Home() {
 
   useEffect(() => {
     if (isPending) return;
+    try {
+      if (sessionStorage.getItem("kidease-desk-landed") === "1") return;
+    } catch {
+      /* ignore */
+    }
     if (user && role === "admin") {
+      try {
+        sessionStorage.setItem("kidease-desk-landed", "1");
+      } catch {
+        /* ignore */
+      }
       void navigate({ to: "/admin" });
     } else if (user && role === "provider") {
+      try {
+        sessionStorage.setItem("kidease-desk-landed", "1");
+      } catch {
+        /* ignore */
+      }
       void navigate({ to: "/provider" });
     }
   }, [isPending, user, role, navigate]);
