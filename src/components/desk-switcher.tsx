@@ -31,7 +31,7 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
       aria-label={t("deskSwitcherLabel")}
       className={cn("flex items-center gap-1", compact ? "" : "rounded-full bg-surface/90 p-0.5 ring-1 ring-border")}
     >
-      {headerDesks(session.desks).map((desk) => {
+      {headerDesks(session.desks, session.role).map((desk) => {
         const on = current === desk;
         return (
           <Link

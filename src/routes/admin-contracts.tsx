@@ -7,8 +7,11 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
 import { AdminContractsPanel } from "@/components/admin-contracts";
+import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
+import { canSeeAdminDesk } from "@/lib/desks";
 
 export const Route = createFileRoute("/admin-contracts")({
+  beforeLoad: beforeLoadAdminDesk,
   head: () => ({
     meta: [
       { title: "Admin contracts · KidEase" },
@@ -31,12 +34,12 @@ function AdminContractsPage() {
     setMode(res.mode);
   }
 
-  useEffect(() => {
-    if (!user) return;
-    void refresh();
-  }, [user]);
+  const admin = Boolean(ready && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
 
-  const admin = Boolean(ready && session?.desks.includes("admin"));
+  useEffect(() => {
+    if (!user || !admin) return;
+    void refresh();
+  }, [user, admin]);
 
   if (isPending) {
     return (
