@@ -105,12 +105,14 @@ test("?desk= aliases map to role desks without colliding with provider tabs", ()
   assert.equal(DESK_LABEL.provider, "Daycare");
 });
 
-test("setRole never demotes staff", () => {
+test("setRole never demotes staff and never elevates parent/provider to admin", () => {
   assert.equal(nextStoredRole("admin", "provider"), "admin");
   assert.equal(nextStoredRole("admin", "parent"), "admin");
   assert.equal(nextStoredRole("support", "provider"), "support");
   assert.equal(nextStoredRole("support_lead", "parent"), "support_lead");
   assert.equal(nextStoredRole("parent", "provider"), "provider");
+  assert.equal(nextStoredRole("parent", "admin"), "parent");
+  assert.equal(nextStoredRole("provider", "admin"), "provider");
   assert.equal(parseAppRole("ADMIN"), "admin");
   assert.equal(parseAppRole("support_lead"), "support_lead");
 });

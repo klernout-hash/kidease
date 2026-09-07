@@ -198,11 +198,16 @@ export type SessionDesks = {
   providerSubscriptions: boolean;
 };
 
-/** Never demote staff when a page or claim writes provider/parent. */
+/**
+ * Never demote staff when a page or claim writes provider/parent.
+ * Never elevate parent/provider to admin or support via setRole — only
+ * resolveAdminAccess (owner email / stored profiles.role = admin) grants Admin.
+ */
 export function nextStoredRole(current: AppRole | string | null | undefined, requested: AppRole): AppRole {
   const cur = parseAppRole(current);
   if (cur === "admin") return "admin";
   if (cur === "support_lead") return "support_lead";
   if (cur === "support") return "support";
-  return requested === "admin" ? "admin" : requested;
+  if (requested === "admin" || requested === "support" || requested === "support_lead") return cur;
+  return requested;
 }

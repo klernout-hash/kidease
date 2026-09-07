@@ -1,6 +1,7 @@
 import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { useCopy } from "@/lib/use-copy";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
 function Item({
   to,
@@ -22,7 +23,11 @@ function Item({
 
 export function SiteFooter() {
   const { t, locale } = useCopy();
+  const { user, isPending } = useCurrentUserState();
   const fr = locale === "fr";
+  // Guest-only login deep-link. Signed-in Parent / Daycare must not see an
+  // Admin path in the footer. Wait out isPending so it never flashes.
+  const showOperatorSignIn = !isPending && !user;
 
   useLayoutEffect(() => {
     const all = document.querySelectorAll("footer.ke-site-footer");
@@ -121,13 +126,15 @@ export function SiteFooter() {
                 </span>
                 {t("comingSoon")}
               </p>
-              <Link
-                to="/login"
-                search={{ role: "admin", desk: "admin", intent: "in", next: "/admin" }}
-                className="ke-footer-operator"
-              >
-                {t("operatorSignIn")}
-              </Link>
+              {showOperatorSignIn ? (
+                <Link
+                  to="/login"
+                  search={{ role: "admin", desk: "admin", intent: "in", next: "/admin" }}
+                  className="ke-footer-operator"
+                >
+                  {t("operatorSignIn")}
+                </Link>
+              ) : null}
             </div>
           </div>
         </div>
