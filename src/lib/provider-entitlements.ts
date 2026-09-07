@@ -14,7 +14,7 @@ import {
   parseProviderAddons,
   type ProviderAddonId,
   type ProviderPlanId,
-} from "@/lib/provider-plans";
+} from "./provider-plans.ts";
 
 export const FREE_INQUIRY_CAP = 10;
 export const FREE_ANALYTICS_DAYS = 7;

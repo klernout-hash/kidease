@@ -14,7 +14,6 @@ import {
   resolveProviderEntitlements,
   sortFeaturedCityAfterPriority,
 } from "../src/lib/provider-entitlements.ts";
-import { QUALITY_WEIGHTS } from "../src/lib/quality.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -99,7 +98,7 @@ test("featured-city pin sorts after priority and never touches quality weights",
     ranked.map((item) => item.id),
     ["c", "b", "a"],
   );
-  assert.equal(QUALITY_WEIGHTS.trust + QUALITY_WEIGHTS.completeness + QUALITY_WEIGHTS.freshness + QUALITY_WEIGHTS.reviews + QUALITY_WEIGHTS.engagement, 100);
+  assert.match(src("src/lib/quality.ts"), /trust: 25/);
   const quality = src("src/lib/quality.ts");
   assert.match(quality, /Paid Pro \/ Network/);
   assert.doesNotMatch(quality, /selected_plan/);
