@@ -354,6 +354,8 @@ function SearchPage() {
         const first = items?.find((i) => res.picks.some((p) => p.slug === i.slug));
         if (first) setOrigin({ lat: first.lat, lng: first.lng, label: first.city });
       }
+    } catch {
+      setMatchNote(t("aiUnavailable"));
     } finally {
       setMatchBusy(false);
     }

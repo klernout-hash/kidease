@@ -34,7 +34,7 @@ export const Route = createFileRoute("/api/admin/contracts")({
             const contractId = String(body.contractId || "");
             if (!contractId) return fail(new Error("contractId is required"));
             const data = await voidCentreContract({ data: { contractId } });
-            return Response.json({ ok: true, ...data });
+            return Response.json({ ...data, ok: true as const });
           }
           const daycareId = String(body.daycareId || "");
           if (!daycareId) return fail(new Error("daycareId is required"));
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/api/admin/contracts")({
               signerEmail: typeof body.signerEmail === "string" ? body.signerEmail : undefined,
             },
           });
-          return Response.json({ ok: true, ...data });
+          return Response.json({ ...data, ok: true as const });
         } catch (err) {
           return fail(err);
         }

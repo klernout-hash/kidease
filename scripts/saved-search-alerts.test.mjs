@@ -131,7 +131,8 @@ test("email path uses Resend when wired and stubs honestly otherwise", () => {
 test("cron stub is wired next to digest and does not enable FEATURE_PUSH", () => {
   const cron = src("src/routes/api/search-alerts.ts");
   assert.match(cron, /runSearchAlertJob/);
-  assert.match(cron, /CRON_SECRET/);
+  assert.match(cron, /cronAuthorized/);
+  assert.match(src("src/lib/cron-auth.ts"), /CRON_SECRET/);
   const vercel = src("vercel.json");
   assert.match(vercel, /\/api\/search-alerts/);
   assert.match(src(".env.example"), /FEATURE_PUSH=0/);

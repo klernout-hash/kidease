@@ -407,7 +407,7 @@ export const advanceTourRequest = createServerFn({ method: "POST" })
     if (!owned && !(isParent && data.status === "completed")) throw new Error("Not authorized");
 
     const next = nextTourPipeline(tour.status, data.status);
-    if (!next) throw new Error("This tour cannot move to that status");
+    if (!next || next === "pending") throw new Error("This tour cannot move to that status");
 
     const note = (data.note || "").trim() || null;
     await sql`

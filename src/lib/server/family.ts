@@ -24,7 +24,12 @@ import {
   systemRequestMessage,
 } from "@/lib/templates";
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
-import { stripeChargesLive } from "@/lib/stripe-live";
+import {
+  BOOKING_CARD_PAY_DISABLED,
+  INTERAC_SELF_CONFIRM_DISABLED,
+  bookingPayInsertStatus,
+  canParentMarkBookingPaid,
+} from "@/lib/booking-pay";
 import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto, isStockListingPhoto } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { overlayQuality } from "./quality";
@@ -997,39 +1002,38 @@ export const createPayment = createServerFn({ method: "POST" })
     `;
     const b = rows[0];
     if (!b) throw new Error("Booking not found");
-    if (!stripeChargesLive()) {
-      throw new Error("Card Pay stays off until Stripe live keys are on. This is an internal ledger (not charged).");
+    if (canParentMarkBookingPaid()) {
+      throw new Error(BOOKING_CARD_PAY_DISABLED);
     }
+    const status = bookingPayInsertStatus(data.method);
     if (b.status !== "accepted") {
       throw new Error("Payment is available after the daycare approves your request.");
     }
     const existing = await sql<{ id: string; status: string; reference: string | null; amount: number }>`
       select id, status, reference, amount from payments
-      where booking_id = ${b.id} and user_id = ${context.userId} and status in ('paid','pending')
+      where booking_id = ${b.id} and user_id = ${context.userId} and status in ('paid','pending','pending_review')
       order by created_at desc limit 1
     `;
     if (existing[0]?.status === "paid") {
       return { id: existing[0].id, status: existing[0].status, reference: existing[0].reference, amount: existing[0].amount };
     }
+    if (existing[0] && existing[0].status !== "paid") {
+      return { id: existing[0].id, status: existing[0].status, reference: existing[0].reference, amount: existing[0].amount };
+    }
     const id = nid("pay");
     const reference = `KE-${id.slice(-8).toUpperCase()}`;
-    const status = data.method === "interac" ? "pending" : "paid";
     await sql`
       insert into payments (id, user_id, booking_id, daycare_id, amount, method, status, reference)
       values (${id}, ${context.userId}, ${b.id}, ${b.daycare_id}, ${b.monthly_amount}, ${data.method}, ${status}, ${reference})
     `;
-    if (status === "paid") {
-      await sql`update bookings set status = 'active' where id = ${b.id} and user_id = ${context.userId}`;
-      await postSpotConfirmed(sql, b.id, data.locale === "fr" ? "fr" : "en");
-      const actor = await lookupUser(context.userId);
-      void notifyPlatform({
-        kind: "payment",
-        daycareName: b.daycare_id,
-        actorName: actor.name,
-        actorEmail: actor.email,
-        detail: `Amount: $${b.monthly_amount} · ${data.method} · ${reference}`,
-      });
-    }
+    const actor = await lookupUser(context.userId);
+    void notifyPlatform({
+      kind: "payment",
+      daycareName: b.daycare_id,
+      actorName: actor.name,
+      actorEmail: actor.email,
+      detail: `Interac pending review · $${b.monthly_amount} · ${reference}`,
+    });
     return { id, status, reference, amount: b.monthly_amount };
   });
 
@@ -1045,19 +1049,21 @@ export const confirmInterac = createServerFn({ method: "POST" })
       select booking_id from payments where id = ${paymentId} and user_id = ${context.userId}
     `;
     if (!rows[0]) throw new Error("Payment not found");
-    await sql`update payments set status = 'paid' where id = ${paymentId} and user_id = ${context.userId}`;
-    if (rows[0].booking_id) {
-      await sql`update bookings set status = 'active' where id = ${rows[0].booking_id} and user_id = ${context.userId}`;
-      await postSpotConfirmed(sql, rows[0].booking_id, data.locale === "fr" ? "fr" : "en");
-      const actor = await lookupUser(context.userId);
-      void notifyPlatform({
-        kind: "payment",
-        actorName: actor.name,
-        actorEmail: actor.email,
-        detail: `Interac confirmed · payment ${paymentId}`,
-      });
+    if (canParentMarkBookingPaid()) {
+      throw new Error(INTERAC_SELF_CONFIRM_DISABLED);
     }
-    return { ok: true };
+    await sql`
+      update payments set status = 'pending_review'
+      where id = ${paymentId} and user_id = ${context.userId} and status <> 'paid'
+    `;
+    const actor = await lookupUser(context.userId);
+    void notifyPlatform({
+      kind: "payment",
+      actorName: actor.name,
+      actorEmail: actor.email,
+      detail: `Interac awaiting staff · payment ${paymentId}`,
+    });
+    return { ok: true as const, status: "pending_review" as const };
   });
 
 export const getMyRole = createServerFn({ method: "GET" })

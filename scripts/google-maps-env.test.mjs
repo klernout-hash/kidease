@@ -152,7 +152,7 @@ describe("listing map uses browser Google Maps key, not Carto/Leaflet", () => {
     assert.match(src, /PIN_SVG/);
     assert.match(src, /listingMapConstructorOptions/);
     assert.match(src, /loadAdvancedMarkerElement/);
-    assert.match(src, /maps\.Marker/);
+    assert.match(src, /AdvancedMarker/);
     assert.doesNotMatch(src, /mapId:\s*["'`]/);
   });
 

@@ -14,7 +14,7 @@ function cleanName(value: unknown) {
 }
 
 function cleanPhone(value: unknown) {
-  return String(value ?? "").replace(/[^0-9+()\-\.\s]/g, "").trim().slice(0, 32);
+  return String(value ?? "").replace(/[^0-9+()\-.\s]/g, "").trim().slice(0, 32);
 }
 
 function cleanBio(value: unknown) {

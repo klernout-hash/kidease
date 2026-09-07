@@ -14,6 +14,21 @@ If neither is set, the app boots and skips ingest. Events drop cookies, `Authori
 Admin-only check: signed-in staff on `www.kidease.ca` can `GET /api/admin/sentry-test` (session + `profiles.role = admin` + same-site, same gate as other `/api/admin/*`) to send `KidEase Sentry test`.
 
 Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, or `support_lead`). It does **not** weaken `/admin*` admin-only tools. Public Help Centre is `/help`. Cloudflare Access can later include `/support*` (see `docs/support.md`).
+
+## Auth bootstrap
+
+`requireAdmin` / `requireSupport` and `/api/admin/*` require a verified 2FA cookie (same device token as TwoFactorGate). A thrown status check fails closed for those desks.
+
+`ADMIN_EMAIL` / `kyle@kidease.ca` is auto-promoted to `profiles.role = admin` only when Better Auth `user.emailVerified` is true. Remaining risk: if an identity provider marks that mailbox verified without a real mailbox check, the first such session still becomes admin. Extra staff should be promoted with SQL, not a second env flag.
+
+## Payments
+
+`/pay/$bookingId` (`createPayment` / `confirmInterac`) cannot mark a booking or payment `paid`. Card / wallet PAN fields are refused. Interac is `pending_review` until staff confirm. Live card charges stay on invoice Stripe Checkout and Parent Plus Checkout.
+
+## Cron
+
+`/api/digest` and `/api/search-alerts` accept `Authorization: Bearer $CRON_SECRET` only (Vercel Cron sends this when `CRON_SECRET` is set). Query-string `?secret=` is rejected.
+
 ## Production notes
 
 - QA ghost listing (`/daycare/test-ghost-claim-lab` and `/book/test-ghost-claim-lab`) must **404** for public document GETs. Robots `Disallow` alone is not enough. Admin claim/search still works from `/admin` and `/claim`.

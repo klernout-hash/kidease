@@ -212,7 +212,7 @@ function Home() {
     return shown.filter((r) => !top.has(r.id)).slice(0, 18);
   }, [shown, availableNow]);
 
-  async function useLocation() {
+  async function requestDeviceLocation() {
     const ok = await pinHere();
     if (ok) {
       goSearch();
@@ -398,7 +398,7 @@ function Home() {
                 <Button
                   size="lg"
                   className="h-14 min-h-14 w-full px-7 text-base sm:w-auto"
-                  onClick={() => void useLocation()}
+                  onClick={() => void requestDeviceLocation()}
                   disabled={busy}
                 >
                   <Search className="size-5" />

@@ -134,7 +134,7 @@ test("public reviews query only published gated rows and forms use Turnstile", (
   assert.match(form, /TurnstileField/);
   assert.match(form, /writeReviewLead/);
   assert.match(form, /reviewNeedRelationship/);
-  const listing = src("src/routes/daycare.\$slug.tsx");
+  const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /ListingReviewForm/);
   assert.match(listing, /CompletenessBanner/);
   const badges = src("src/components/listing-badges.tsx");
@@ -149,7 +149,7 @@ test("parent listing honesty never labels unknown vacancy as stale", () => {
   assert.match(card, /parentIncompleteLabel/);
   assert.match(card, /freshness\.kind === "unknown"/);
   assert.doesNotMatch(card, /freshness\.text \|\| t\("vacancyStale"\)/);
-  const listing = src("src/routes/daycare.\$slug.tsx");
+  const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /VacancyFreshness/);
   assert.doesNotMatch(listing, /!d\.availabilityKnown[\s\S]*vacancyStale/);
   const forms = src("src/components/provider-listing-forms.tsx");

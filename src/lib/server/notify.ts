@@ -70,9 +70,16 @@ function appOrigin() {
 export async function lookupUser(userId: string) {
   const sql = await getSql();
   const rows = await sql
-    .query<{ email: string | null; name: string | null }>(`select email, name from "user" where id = $1 limit 1`, [userId])
-    .catch(() => [] as { email: string | null; name: string | null }[]);
-  return { email: rows[0]?.email ?? null, name: rows[0]?.name ?? null };
+    .query<{ email: string | null; name: string | null; emailVerified: boolean | null }>(
+      `select email, name, "emailVerified" from "user" where id = $1 limit 1`,
+      [userId],
+    )
+    .catch(() => [] as { email: string | null; name: string | null; emailVerified: boolean | null }[]);
+  return {
+    email: rows[0]?.email ?? null,
+    name: rows[0]?.name ?? null,
+    emailVerified: Boolean(rows[0]?.emailVerified),
+  };
 }
 
 function listingUrl(slug?: string) {

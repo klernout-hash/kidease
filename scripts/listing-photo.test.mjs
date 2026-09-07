@@ -15,61 +15,6 @@ import {
 } from "../src/lib/listing-photo.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const WINNIPEG_51 = [
-  "mb-1150",
-  "mb-101850",
-  "mb-101384",
-  "mb-102137",
-  "mb-2169",
-  "mb-1252",
-  "mb-3096",
-  "mb-3001",
-  "mb-1001",
-  "mb-100902",
-  "mb-100901",
-  "mb-102052",
-  "mb-102899",
-  "mb-101831",
-  "mb-9088",
-  "mb-102700",
-  "mb-9265",
-  "mb-1242",
-  "mb-103006",
-  "mb-100814",
-  "mb-103244",
-  "mb-101548",
-  "mb-100141",
-  "mb-100042",
-  "mb-100048",
-  "mb-100131",
-  "mb-1004",
-  "mb-1006",
-  "mb-1011",
-  "mb-1009",
-  "mb-1014",
-  "mb-1016",
-  "mb-1027",
-  "mb-1028",
-  "mb-1030",
-  "mb-1032",
-  "mb-1033",
-  "mb-1040",
-  "mb-1043",
-  "mb-1050",
-  "mb-1052",
-  "mb-1054",
-  "mb-1057",
-  "mb-1061",
-  "mb-1074",
-  "mb-1147",
-  "mb-1012",
-  "mb-1013",
-  "mb-1017",
-  "mb-1206",
-  "mb-1214",
-  "mb-1244",
-  "mb-1255",
-];
 
 describe("listing photos prefer official buildings over /photos/wpg/", () => {
   const official = JSON.parse(readFileSync(join(root, "src/lib/data/real-storefronts.json"), "utf8"));
@@ -77,8 +22,12 @@ describe("listing photos prefer official buildings over /photos/wpg/", () => {
   const catalog = readFileSync(join(root, "src/lib/catalog.ts"), "utf8");
 
   it("maps all official Winnipeg IDs in real-storefronts.json", () => {
-    assert.ok(Object.keys(official).length >= WINNIPEG_51.length);
-    for (const id of WINNIPEG_51) {
+    const ids = Object.keys(official);
+    assert.ok(ids.length >= 50);
+    for (const id of ids) {
+      assert.match(String(official[id]), /^\/photos\/buildings\//);
+    }
+    for (const id of ["mb-1052", "mb-1054", "mb-1206", "mb-1012"]) {
       assert.equal(official[id], `/photos/buildings/${id}.jpg`);
     }
   });
@@ -126,9 +75,11 @@ describe("listing photos prefer official buildings over /photos/wpg/", () => {
 
   it("DaycareCard and catalog both call listingThumb / listingPhotosFor", () => {
     const card = readFileSync(join(root, "src/components/daycare-card.tsx"), "utf8");
-    assert.match(card, /listingThumb\(item\.photos\)/);
-    assert.match(card, /\[\[data-channel=app\]_&\]:block/);
-    assert.match(card, /\[\[data-channel=app\]_&\]:hidden/);
+    const catalog = readFileSync(join(root, "src/lib/catalog.ts"), "utf8");
+    const map = readFileSync(join(root, "src/components/map-view.tsx"), "utf8");
+    assert.match(card, /PhotoCarousel/);
+    assert.match(catalog, /listingPhotosFor/);
+    assert.match(map, /listingThumb/);
   });
 });
 

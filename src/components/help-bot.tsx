@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { AGENT_CONFIRM } from "@/lib/help-knowledge";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +9,7 @@ type ChatMsg = { role: "user" | "assistant"; text: string };
 
 export function HelpBot() {
   const { t } = useCopy();
+  const { user } = useCurrentUserState();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState("");
@@ -27,6 +29,10 @@ export function HelpBot() {
     setDraft("");
     setBusy(true);
     try {
+      if (!user) {
+        setMsgs((m) => [...m, { role: "assistant", text: t("helpBotSignIn") }]);
+        return;
+      }
       const { askKidEase } = await import("@/lib/server/ai");
       const res = await askKidEase({ data: { messages: next } });
       const reply = res?.reply?.trim() || (agent ? AGENT_CONFIRM : t("helpBotFail"));

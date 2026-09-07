@@ -1,39 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getSql } from "@/lib/db";
-import {
-  classifyEmailAccounts,
-  type EmailSignInExplanation,
-} from "@/lib/auth/login-errors";
+import { type EmailSignInExplanation } from "@/lib/auth/login-errors";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-/**
- * After a failed password sign-in, say whether the email is missing, OAuth-only,
- * or has a credential hash. Never returns hashes or user ids.
- */
-export async function explainEmailSignInFailureFor(email: string): Promise<EmailSignInExplanation> {
-  const target = normalizeEmail(email);
-  if (!target || !target.includes("@")) return { kind: "unknown", providers: [] };
-  try {
-    const sql = await getSql();
-    const users = await sql<{ id: string }>`
-      select id from "user" where lower(email) = ${target} limit 1
-    `;
-    const user = users[0];
-    if (!user) return { kind: "missing", providers: [] };
-    const accounts = await sql<{ providerId: string; password: string | null }>`
-      select "providerId", password from account where "userId" = ${user.id}
-    `;
-    const kind = classifyEmailAccounts(accounts);
-    const providers = accounts
-      .map((row) => row.providerId)
-      .filter((id) => id && id !== "credential" && id !== "email");
-    return { kind, providers };
-  } catch {
-    return { kind: "unknown", providers: [] };
+const oracleHits = new Map<string, { n: number; reset: number }>();
+
+function allowOracle(email: string): boolean {
+  const key = email || "unknown";
+  const now = Date.now();
+  const row = oracleHits.get(key);
+  if (!row || row.reset <= now) {
+    oracleHits.set(key, { n: 1, reset: now + 60_000 });
+    return true;
   }
+  if (row.n >= 8) return false;
+  row.n += 1;
+  return true;
 }
 
 export const explainEmailSignInFailure = createServerFn({ method: "POST" })
@@ -41,5 +25,7 @@ export const explainEmailSignInFailure = createServerFn({ method: "POST" })
     email: normalizeEmail(String(input?.email || "")),
   }))
   .handler(async ({ data }): Promise<EmailSignInExplanation> => {
-    return explainEmailSignInFailureFor(data.email);
+    // Unauthenticated callers must not learn missing vs oauth-only vs has-password.
+    if (!allowOracle(data.email)) return { kind: "unknown", providers: [] };
+    return { kind: "unknown", providers: [] };
   });

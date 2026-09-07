@@ -2,6 +2,7 @@ import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 function Item({
   to,
@@ -47,6 +48,11 @@ export function SiteFooter() {
               <p className="ke-footer-title">{t("support")}</p>
               <ul className="ke-footer-list">
                 <Item to="/help">{t("helpTitle")}</Item>
+                <li>
+                  <a href={`mailto:${SUPPORT_INBOX_EMAIL}`} className="ke-footer-link">
+                    {SUPPORT_INBOX_EMAIL}
+                  </a>
+                </li>
                 <Item to="/contact">{t("contact")}</Item>
                 <Item to="/faq">FAQ</Item>
                 <Item to="/how-it-works">{t("howItWorksCta")}</Item>

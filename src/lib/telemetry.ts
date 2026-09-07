@@ -3,7 +3,7 @@ import { ingestTelemetry, type TelemetryHit, type TelemetryKind } from "@/lib/se
 
 const MAX_BATCH = 12;
 const FLUSH_MS = 8000;
-let queue: TelemetryHit[] = [];
+const queue: TelemetryHit[] = [];
 let timer: number | null = null;
 let lastHash = "";
 let lastSent = 0;

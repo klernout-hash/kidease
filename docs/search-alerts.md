@@ -50,7 +50,7 @@ Vercel cron (hourly):
 { "path": "/api/search-alerts", "schedule": "20 * * * *" }
 ```
 
-Authorize with `Authorization: Bearer $CRON_SECRET` or `?secret=`. `?dryRun=1` logs without writing notices or sending mail.
+Authorize with `Authorization: Bearer $CRON_SECRET` only (Vercel Cron sends this header). Query `?secret=` is rejected. `?dryRun=1` logs without writing notices or sending mail.
 
 ## Out of scope
 
