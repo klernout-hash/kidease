@@ -141,7 +141,7 @@ test("AASA and assetlinks are not redirected or 404'd by the request guard", () 
   }
 });
 
-test("/.well-known/change-password redirects to /login on every host", () => {
+test("/.well-known/change-password redirects to /forgot-password on every host", () => {
   for (const host of ["www.kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
     assert.deepEqual(decideRequest({ host, pathname: CHANGE_PASSWORD_PATH }), {
       action: "redirect",
@@ -154,7 +154,7 @@ test("/.well-known/change-password redirects to /login on every host", () => {
       location: CHANGE_PASSWORD_DESTINATION,
     });
   }
-  assert.equal(CHANGE_PASSWORD_DESTINATION, "/login");
+  assert.equal(CHANGE_PASSWORD_DESTINATION, "/forgot-password");
 });
 
 test("hidden listing slugs include the QA ghost id and slug", () => {
@@ -208,7 +208,7 @@ test("nitro middleware and vercel.json stay wired to the guard", () => {
 
   const vercel = readFileSync(join(root, "vercel.json"), "utf8");
   assert.match(vercel, /"source": "\/\.well-known\/change-password"/);
-  assert.match(vercel, /"destination": "\/login"/);
+  assert.match(vercel, /"destination": "\/forgot-password"/);
   assert.match(vercel, /"source": "\/admin"/);
   assert.match(vercel, /"destination": "https:\/\/www\.kidease\.ca\/admin"/);
   assert.match(vercel, /"source": "\/admin-contracts"/);

@@ -1,4 +1,7 @@
 import { ADMIN_EMAIL } from "@/lib/server/notify";
+import { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured } from "@/lib/server/reset-mail-config";
+
+export { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
 
 function fromAddress() {
   return (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
@@ -8,6 +11,7 @@ function fromAddress() {
 export async function sendPasswordResetEmail(input: { to: string; url: string }) {
   const to = input.to.trim().toLowerCase();
   if (!to || !to.includes("@")) throw new Error("A registered email is required.");
+  assertResetMailConfigured();
   const subject = "Reset your KidEase password";
   const text = `Reset your KidEase password using this link:\n\n${input.url}\n\nThis link expires in about 1 hour. If you did not ask for a reset, you can ignore this email.`;
   const html = `<!doctype html>
@@ -54,7 +58,5 @@ export async function sendPasswordResetEmail(input: { to: string; url: string })
     if (!res.ok) throw new Error(`Email could not be sent (${res.status}).`);
     return "sent" as const;
   }
-  if (process.env.VERCEL_ENV === "production") throw new Error("Email is not configured");
-  console.info("[kidease-reset] sent to registered inbox");
-  return "logged" as const;
+  throw new Error(RESET_MAIL_NOT_CONFIGURED);
 }

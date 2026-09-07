@@ -127,6 +127,7 @@ describe("PostHog client wiring", () => {
 
   it("keeps passwords out of session replay on auth forms", () => {
     assert.match(read("src/routes/login.tsx"), /ph-no-capture/);
+    assert.match(read("src/routes/forgot-password.tsx"), /ph-no-capture/);
     assert.match(read("src/routes/reset-password.tsx"), /ph-no-capture/);
     assert.match(read("src/routes/verify-2fa.tsx"), /ph-no-capture/);
   });
