@@ -53,9 +53,9 @@ export const JURISDICTIONS: Jurisdiction[] = [
     nameFr: "Manitoba",
     registryUrl: "https://childcaresearch.gov.mb.ca/en",
     subsidyUrl: "https://direct3.gov.mb.ca/daycare/see/see.nsf/see?ReadForm#/en-ca",
-    adapterStatus: "manual",
+    adapterStatus: "adapter_ready",
     adapterNotes:
-      "Manitoba has a public childcare search. Operators review claims against that registry. Live scraper is a follow-up, not a half-UI.",
+      "Local KidEase catalogue match for bundled Manitoba licence numbers. Not a live scrape of childcaresearch.gov.mb.ca — official search stays the source of truth for inspections.",
   },
   {
     code: "ON",

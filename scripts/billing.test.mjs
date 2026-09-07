@@ -158,6 +158,8 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   const checkout = src("src/lib/server/billing.ts");
   assert.match(checkout, /stripeChargesLive\(\)/);
   assert.match(checkout, /status <> 'draft'/);
+  assert.match(checkout, /canReadBill/);
+  assert.match(checkout, /canCheckoutBill/);
 
   const nav = src("src/lib/desk-nav.ts");
   assert.match(nav, /label: "Money"/);

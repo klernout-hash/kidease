@@ -28,7 +28,7 @@ export function AdminTrustPanel({
       <section>
         <h2 className="font-display text-2xl">Jurisdictions</h2>
         <p className="mt-1 text-sm text-muted">
-          All Canadian provinces and territories. Adapters are stubs except Manitoba manual review. Live scrapers are a follow-up — this list does not pretend a sync ran.
+          All Canadian provinces and territories. Manitoba can match a licence against the bundled KidEase catalogue. Other adapters stay stubs. Live government scrapers are a follow-up — this list does not pretend a scrape ran.
         </p>
         <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {rows.map((j) => (
