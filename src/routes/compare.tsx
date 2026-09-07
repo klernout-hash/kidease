@@ -49,9 +49,11 @@ function ComparePage() {
             <h1 className="text-4xl">{t("compareTitle")}</h1>
             {items.length ? <p className="mt-2 text-muted">{t("compareEmpty")}</p> : null}
           </div>
-          <Button variant="secondary" onClick={() => { clearCompare(); setItems([]); }}>
-            {t("clearCompare")}
-          </Button>
+          {items.length ? (
+            <Button variant="secondary" onClick={() => { clearCompare(); setItems([]); }}>
+              {t("clearCompare")}
+            </Button>
+          ) : null}
         </div>
         {items.length ? (
           <div className="mt-8 overflow-x-auto">

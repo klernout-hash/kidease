@@ -57,6 +57,7 @@ test("listing nearby uses a rail; compare and missing listing use EmptyState cop
   const compare = src("src/routes/compare.tsx");
   assert.match(compare, /EmptyState/);
   assert.match(compare, /noCompare/);
+  assert.match(compare, /items.length \? \(/);
 
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /listingMissing: "Listing not available"/);
