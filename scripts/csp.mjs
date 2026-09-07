@@ -48,6 +48,12 @@ export const CSP_FRAME_HOSTS = [
   "https://challenges.cloudflare.com",
 ];
 
+/** Public listing photos on r2.dev. Do not allow the S3 API host. */
+export const CSP_IMG_HOSTS = [
+  "https://pub-9e5f137809844fcdb6d6671cd909f312.r2.dev",
+  "https://*.r2.dev",
+];
+
 /** Classic script: copies its own nonce onto runtime-created <style> tags. */
 export const STYLE_NONCE_BOOT =
   '(function(){var n=document.currentScript&&document.currentScript.nonce;if(!n)return;var c=Document.prototype.createElement;Document.prototype.createElement=function(t,o){var e=c.call(this,t,o);if(String(t).toLowerCase()==="style")e.setAttribute("nonce",n);return e;}})();';
@@ -72,7 +78,7 @@ export function buildContentSecurityPolicy(nonce) {
     `script-src ${scriptSrc}`,
     `style-src ${styleSrc}`,
     "style-src-attr 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
+    `img-src 'self' data: blob: https: ${CSP_IMG_HOSTS.join(" ")}`,
     "font-src 'self' data:",
     `connect-src 'self' ${CSP_CONNECT_HOSTS.join(" ")}`,
     "worker-src 'self' blob: data:",

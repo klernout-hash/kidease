@@ -50,4 +50,6 @@ Document HTML is stamped in Nitro (`server/middleware/csp.ts`) with a per-reques
 - Dynamic meter widths (`listing-health`, `quality-issues`).
 - Marketing mocks (`app-shots.tsx`) that still use `style={{}}` for static colors.
 
+`img-src` keeps `'self' data: blob: https:` and also lists the public listing-photo host `https://pub-9e5f137809844fcdb6d6671cd909f312.r2.dev` plus `https://*.r2.dev`. Do **not** add the private S3 API host `*.r2.cloudflarestorage.com`.
+
 Do **not** add `grok.com` to the allowlist. Do **not** put `'unsafe-inline'` back on `script-src` or `style-src`.

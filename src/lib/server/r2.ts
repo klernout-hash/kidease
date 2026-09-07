@@ -1,20 +1,22 @@
 /**
  * Cloudflare R2 (S3-compatible) helpers. No Start/DB — tests import this file.
  *
- * Private bucket `kidease-media` (Western North America). No public r2.dev URL.
+ * Private bucket `kidease-media` (Western North America).
  * Git listing paths stay `/photos/…`. Migrated originals use the same suffix
  * under `originals/…` (`/photos/wpg/1001.jpg` → `originals/wpg/1001.jpg`).
  * `/img` reads R2 when configured, then falls back to `public/photos`.
+ * Public r2.dev delivery is a separate prefix (`publicPhotoUrl` in `photo.ts`)
+ * when `R2_PUBLIC_BASE_URL` / `VITE_R2_PUBLIC_BASE_URL` is set. CSP `img-src`
+ * allows `*.r2.dev`. Do not allow this S3 API host in the browser.
  *
  * TODO (follow-up, not this module):
  * - Admin / provider upload UI
  * - Cloudflare Images / Stream delivery for thumbs
  * - Remove Git originals only after Production dual-read is proven
- * - If a public media host is added, extend CSP `img-src` (signed URLs
- *   already match today's `img-src … https:`)
  */
 
 import { createHash, createHmac } from "node:crypto";
+import { r2PublicBaseUrl } from "../photo.ts";
 
 export const R2_DEFAULT_BUCKET = "kidease-media";
 export const R2_REGION = "auto";
@@ -55,7 +57,7 @@ export type R2Status = {
   configured: boolean;
   bucket: string | null;
   endpointHost: string | null;
-  publicDelivery: false;
+  publicDelivery: boolean;
   readOriginals: boolean;
   missing: string[];
   setupMessage: string | null;
@@ -163,7 +165,7 @@ export function r2StatusFromEnv(env: EnvMap = process.env): R2Status {
       configured: false,
       bucket: envStr(env, "R2_BUCKET") || R2_DEFAULT_BUCKET,
       endpointHost: null,
-      publicDelivery: false,
+      publicDelivery: Boolean(r2PublicBaseUrl(env)),
       readOriginals: false,
       missing: resolved.missing,
       setupMessage: resolved.error,
@@ -173,7 +175,7 @@ export function r2StatusFromEnv(env: EnvMap = process.env): R2Status {
     configured: true,
     bucket: resolved.config.bucket,
     endpointHost: resolved.config.endpointHost,
-    publicDelivery: false,
+    publicDelivery: Boolean(r2PublicBaseUrl(env)),
     readOriginals: r2ReadOriginalsEnabled(env),
     missing: [],
     setupMessage: null,
