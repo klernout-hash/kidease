@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
+import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ export function Contact() {
         <p className="text-sm font-semibold tracking-wide text-primary">{t("contact")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{isParent ? t("parentContactTitle") : t("contactTitle")}</h1>
         <p className="mt-6 text-muted">{isParent ? t("parentContactIntro") : t("contactIntro")}</p>
+        <FeelBanner src={isParent ? "/photos/cottage.jpg" : "/photos/brick.jpg"} className="mt-8" />
 
         {isParent ? null : (
           <div className="mt-8 rounded-xl bg-surface p-5 text-center ring-1 ring-border">

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BadgeCheck, Camera, MapPin, ListChecks } from "lucide-react";
+import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { useCopy } from "@/lib/use-copy";
@@ -15,6 +16,7 @@ export function About() {
         <h1 className="mt-2 text-4xl md:text-5xl">{t("aboutTitle")}</h1>
         <p className="mt-6 text-lg text-muted">{t("aboutHero")}</p>
         <p className="mt-4 text-muted">{t("aboutIntro")}</p>
+        <FeelBanner src="/photos/community.jpg" className="mt-8" />
 
         <h2 className="mt-12 text-2xl">{t("aboutMissionT")}</h2>
         <p className="mt-3 text-muted">{t("aboutMission")}</p>
