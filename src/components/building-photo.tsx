@@ -79,20 +79,103 @@ export function BuildingPhoto({
   );
 }
 
-export function HeroPlayroom({ className }: { className?: string }) {
+/** Pre-sized marketing stills already in /public/photos. Prefer these paths over new assets. */
+const FEEL_SOURCES: Record<
+  string,
+  { avif?: string; webp?: string; jpg: string; width: number; height: number }
+> = {
+  "/photos/hero.jpg": {
+    avif: "/photos/hero-1200.avif",
+    webp: "/photos/hero-1200.webp",
+    jpg: "/photos/hero-1200.jpg",
+    width: 1200,
+    height: 900,
+  },
+  "/photos/playroom.jpg": {
+    avif: "/photos/playroom-1200.avif",
+    webp: "/photos/playroom-1200.webp",
+    jpg: "/photos/playroom-1200.jpg",
+    width: 1200,
+    height: 900,
+  },
+  "/photos/playroom-1200.jpg": {
+    avif: "/photos/playroom-1200.avif",
+    webp: "/photos/playroom-1200.webp",
+    jpg: "/photos/playroom-1200.jpg",
+    width: 1200,
+    height: 900,
+  },
+};
+
+export function FeelPhoto({
+  src,
+  className,
+  eager = false,
+  sizes,
+  width,
+  height,
+}: {
+  src: string;
+  className?: string;
+  eager?: boolean;
+  sizes?: string;
+  width?: number;
+  height?: number;
+}) {
+  const feel = FEEL_SOURCES[src];
+  if (feel) {
+    return (
+      <picture>
+        {feel.avif ? <source type="image/avif" srcSet={feel.avif} /> : null}
+        {feel.webp ? <source type="image/webp" srcSet={feel.webp} /> : null}
+        <img
+          src={feel.jpg}
+          alt=""
+          width={width ?? feel.width}
+          height={height ?? feel.height}
+          fetchPriority={eager ? "high" : undefined}
+          loading={eager ? "eager" : "lazy"}
+          decoding="async"
+          className={cn("w-full object-cover", className)}
+        />
+      </picture>
+    );
+  }
+
   return (
-    <picture>
-      <source type="image/avif" srcSet="/photos/playroom-1200.avif" />
-      <source type="image/webp" srcSet="/photos/playroom-1200.webp" />
-      <img
-        src="/photos/playroom-1200.jpg"
-        alt=""
-        width={1200}
-        height={900}
-        fetchPriority="high"
-        decoding="async"
-        className={cn("aspect-[4/3] w-full object-cover", className)}
-      />
-    </picture>
+    <BuildingPhoto
+      src={src}
+      className={className}
+      eager={eager}
+      sizes={sizes}
+      width={width ?? 768}
+      height={height ?? 576}
+    />
   );
+}
+
+export function FeelBanner({
+  src,
+  className,
+  photoClassName = "aspect-[16/9]",
+  eager = false,
+}: {
+  src: string;
+  className?: string;
+  photoClassName?: string;
+  eager?: boolean;
+}) {
+  return (
+    <div className={cn("overflow-hidden rounded-xl shadow-lift ring-1 ring-border", className)}>
+      <FeelPhoto src={src} eager={eager} className={cn("w-full object-cover", photoClassName)} />
+    </div>
+  );
+}
+
+export function HeroPlayroom({ className }: { className?: string }) {
+  return <FeelPhoto src="/photos/playroom.jpg" eager className={cn("aspect-[4/3] w-full object-cover", className)} />;
+}
+
+export function HeroYard({ className }: { className?: string }) {
+  return <FeelPhoto src="/photos/hero.jpg" eager className={cn("aspect-[4/3] w-full object-cover", className)} />;
 }

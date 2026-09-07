@@ -18,7 +18,7 @@ import { DaycareCard } from "@/components/daycare-card";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
-import { HeroPlayroom } from "@/components/building-photo";
+import { FeelPhoto, HeroYard } from "@/components/building-photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMyRole } from "@/lib/server/family";
 import type { AppRole } from "@/lib/desks";
@@ -391,7 +391,7 @@ function Home() {
             </div>
             <div className="relative">
               <div className="overflow-hidden rounded-xl shadow-lift ring-1 ring-border">
-                <HeroPlayroom />
+                <HeroYard />
               </div>
             </div>
           </div>
@@ -406,9 +406,9 @@ function Home() {
         <section id="how" className="ke-gutter mx-auto max-w-6xl py-16">
           <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Step n="1" icon={MapPin} title={t("how1t")} body={t("how1")} />
-            <Step n="2" icon={ListChecks} title={t("how2t")} body={t("how2")} />
-            <Step n="3" icon={MessageCircle} title={t("how3t")} body={t("how3")} />
+            <Step n="1" icon={MapPin} title={t("how1t")} body={t("how1")} photo="/photos/cottage.jpg" />
+            <Step n="2" icon={ListChecks} title={t("how2t")} body={t("how2")} photo="/photos/playroom.jpg" />
+            <Step n="3" icon={MessageCircle} title={t("how3t")} body={t("how3")} photo="/photos/kitchen.jpg" />
           </div>
         </section>
 
@@ -490,7 +490,10 @@ function Home() {
 
       <div className="hidden [[data-channel=app]_&]:block">
         <section className="ke-gutter mx-auto max-w-6xl pb-6 pt-5">
-          <h1 className="font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{t("tagline")}</h1>
+          <div className="overflow-hidden rounded-xl shadow-card ring-1 ring-border">
+            <FeelPhoto src="/photos/hero.jpg" eager className="aspect-[16/9] w-full object-cover" />
+          </div>
+          <h1 className="mt-4 font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{t("tagline")}</h1>
           <div className="mt-4 flex flex-col gap-2">
             <Button size="lg" className="min-h-12 w-full" onClick={() => void useLocation()} disabled={busy}>
               <Search className="size-5" />
@@ -534,21 +537,26 @@ function Step({
   icon: Icon,
   title,
   body,
+  photo,
 }: {
   n: string;
   icon: typeof MapPin;
   title: string;
   body: string;
+  photo: string;
 }) {
   return (
-    <div className="rounded-xl bg-surface p-6 shadow-card ring-1 ring-border">
-      <div className="flex items-center gap-3">
-        <span className="grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
-          <Icon className="size-5" />
-        </span>
+    <div className="overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
+      <FeelPhoto src={photo} className="aspect-[16/9] w-full object-cover" />
+      <div className="p-6">
+        <div className="flex items-center gap-3">
+          <span className="grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
+            <Icon className="size-5" />
+          </span>
+        </div>
+        <h3 className="mt-4 text-xl">{title}</h3>
+        <p className="mt-2 text-sm text-muted">{body}</p>
       </div>
-      <h3 className="mt-4 text-xl">{title}</h3>
-      <p className="mt-2 text-sm text-muted">{body}</p>
     </div>
   );
 }

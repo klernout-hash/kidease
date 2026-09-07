@@ -119,14 +119,18 @@ function TabBar({ active }: { active: "search" | "profile" }) {
   );
 }
 
-function Storefront({ tall = false, badge = "$10-a-day" }: { tall?: boolean; badge?: string }) {
+function Storefront({
+  tall = false,
+  badge = "$10-a-day",
+  photo = "/photos/cottage.jpg",
+}: {
+  tall?: boolean;
+  badge?: string;
+  photo?: string;
+}) {
   return (
     <div className={`relative overflow-hidden rounded-lg ${tall ? "h-full" : "aspect-[4/3]"}`} style={{ background: "#d4e0f6" }}>
-      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,#c3d4f2 0%,#e7eef8 48%,#9eb4d6 100%)" }} />
-      <div className="absolute inset-x-3 bottom-2 top-5 rounded-sm" style={{ background: "#8aa0c2" }} />
-      <div className="absolute inset-x-6 bottom-2 top-9" style={{ background: "#f4efe6" }} />
-      <div className="absolute left-8 right-8 top-11 h-5 rounded-sm" style={{ background: NAVY }} />
-      <div className="absolute bottom-2 left-1/2 h-6 w-7 -translate-x-1/2 rounded-t-sm" style={{ background: "#5c6f8c" }} />
+      <img src={photo} alt="" className="absolute inset-0 size-full object-cover" />
       <span className="absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[7px] font-semibold text-white" style={{ background: NAVY }}>
         {badge}
       </span>
@@ -150,7 +154,10 @@ export function ShotHome() {
     <AppChrome>
       <div className="flex h-full flex-col">
         <div className="flex-1 px-3.5 pt-1">
-          <h1 className="font-display text-[17px] leading-[1.15] tracking-tight">
+          <div className="overflow-hidden rounded-lg">
+            <img src="/photos/hero-1200.jpg" alt="" className="aspect-[16/9] w-full object-cover" />
+          </div>
+          <h1 className="mt-2 font-display text-[17px] leading-[1.15] tracking-tight">
             Find licensed
             <br />
             daycare near you
@@ -176,8 +183,8 @@ export function ShotHome() {
           </p>
           <h2 className="mt-1 font-display text-[13px]">Daycares available</h2>
           <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-            <Storefront />
-            <Storefront />
+            <Storefront photo="/photos/cottage.jpg" />
+            <Storefront photo="/photos/brick.jpg" />
           </div>
         </div>
         <TabBar active="search" />
@@ -230,7 +237,7 @@ export function ShotSearch() {
             <div className="mx-auto mb-1.5 h-1 w-8 rounded-full" style={{ background: LINE }} />
             <p className="text-center text-[11px] font-semibold">462 centres · 16 km</p>
             <div className="mt-1.5 h-24 overflow-hidden rounded-xl">
-              <Storefront tall badge="Licensed" />
+              <Storefront tall badge="Licensed" photo="/photos/community.jpg" />
             </div>
           </div>
         </div>
@@ -246,7 +253,7 @@ export function ShotListing() {
       <div className="flex h-full flex-col">
         <div className="min-h-0 flex-1 overflow-hidden px-3 pb-2">
           <div className="h-[108px] overflow-hidden rounded-xl">
-            <Storefront tall />
+            <Storefront tall photo="/photos/playroom-1200.jpg" />
           </div>
           <p className="mt-1.5 text-[8px]" style={{ color: MUTED }}>
             123 Osborne St, Winnipeg, MB

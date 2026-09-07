@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { useCopy } from "@/lib/use-copy";
@@ -14,6 +15,7 @@ export function TourChecklist() {
         <p className="text-sm font-semibold tracking-wide text-primary">{t("bookTour")}</p>
         <h1 className="mt-2 text-4xl">{t("tourChecklist")}</h1>
         <p className="mt-4 text-muted">{t("tourChecklistLead")}</p>
+        <FeelBanner src="/photos/playroom.jpg" className="mt-8" />
         <ol className="mt-8 space-y-4">
           {items.map((key, i) => (
             <li key={key} className="flex gap-3 rounded-xl bg-surface p-4 ring-1 ring-border">

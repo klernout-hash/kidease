@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
+import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { useCopy } from "@/lib/use-copy";
@@ -33,6 +34,7 @@ function BenefitsPage() {
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t("benefitsShort")}</p>
         <h1 className="mt-2 text-4xl">{t("benefitsTitle")}</h1>
         <p className="mt-4 max-w-2xl text-muted">{t("benefitsLead")}</p>
+        <FeelBanner src="/photos/nature.jpg" className="mt-8" />
         <section className="mt-8 rounded-xl bg-surface p-5 ring-1 ring-border md:p-6">
           <h2 className="font-display text-2xl">
             {fr
