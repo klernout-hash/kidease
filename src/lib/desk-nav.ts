@@ -14,6 +14,7 @@ export type DeskItem = {
 export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   admin: [
     { id: "queue", label: "Waiting on you", hint: "Claims to review" },
+    { id: "verify", label: "Licence & photos", hint: "Review uploads" },
     { id: "daycares", label: "Daycares", hint: "By province" },
     { id: "trust", label: "Trust", hint: "Registries + reports" },
     { id: "mail", label: "Mail", hint: "Titan inbox" },
@@ -29,7 +30,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "new", label: "New case", hint: "Open a case" },
   ],
   daycare: [
-    { id: "requests", label: "Incoming requests", hint: "Approve, wait, decline" },
+    { id: "requests", label: "Incoming requests", hint: "Pipeline, tours, enrol" },
     { id: "money", label: "Money", hint: "Bills you send" },
     { id: "listings", label: "My listings", hint: "Spots, photos, fees" },
     { id: "add", label: "Add a new Daycare listing", hint: "Another location" },

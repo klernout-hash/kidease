@@ -12,11 +12,11 @@ Computed server-side in `src/lib/quality.ts`. Missing signals add **zero**. Inco
 | --- | ---: | --- |
 | Claim / licence trust | 25 | +15 claim verified, +10 licence matched to a registry record. Expired or suspended licence scores 0 for the licence slice. |
 | Listing completeness | 25 | Fees or fee program, ages, hours, real licence number, real building photo (`listingCompleteness`). |
-| Vacancy freshness | 15 | 15 if a provider confirm is under 14 days old. 4 if that timestamp is stale. 0 if no confirm exists (unknown is not treated as stale). |
+| Vacancy freshness | 15 | 15 if a provider confirm is under 14 days old. 4 if that timestamp is stale. 0 if no confirm exists (unknown is not treated as stale). A storefront older than 90 days (`last_photo_updated_at`) subtracts 3 from this slice and blocks Guest Favorites. Unknown photo age is not stale and is never invented. |
 | Gated parent reviews | 20 | Published reviews from enrolment / attendance / admin grant only (PR #64). Needs **at least 3** reviews. Uses average × volume (`count / 8`, capped). Google ratings are **not** used. |
 | Reply / tour rates | 15 | Tour accept rate after **5** accepted or declined tours (up to 8 pts). Reply rate after **5** parent threads (up to 7 pts). Hidden until those samples exist. |
 
-Paid priority placement, daycare Pro / Network, and featured-city pins are separate. They do **not** inflate the quality score or Guest Favorites. Free trust signals (claim, licence, vacancy, listing completeness) stay on every plan.
+Paid priority placement, daycare Pro / Network, and featured-city pins are separate. They do **not** inflate the quality score, Guest Favorites, or the legacy `listingQualityScore` helper. Free trust signals (claim, licence, vacancy, listing completeness, photo freshness) stay on every plan.
 
 ## Guest Favorites
 

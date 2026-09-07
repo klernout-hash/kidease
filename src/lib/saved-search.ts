@@ -72,6 +72,8 @@ export type SearchAlertPrefs = {
   emailEnabled: boolean;
   inAppEnabled: boolean;
   updatedAt: string | null;
+  /** Honest: email alerts only leave the box when Resend or SendGrid is configured. */
+  emailConfigured: boolean;
 };
 
 export type SearchAlertNotice = {

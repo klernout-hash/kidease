@@ -28,7 +28,12 @@ export function SavedSearchesPanel() {
   const { t } = useCopy();
   const navigate = useNavigate();
   const [searches, setSearches] = useState<SavedSearch[] | null>(null);
-  const [prefs, setPrefs] = useState<SearchAlertPrefs>({ emailEnabled: true, inAppEnabled: true, updatedAt: null });
+  const [prefs, setPrefs] = useState<SearchAlertPrefs>({
+    emailEnabled: true,
+    inAppEnabled: true,
+    updatedAt: null,
+    emailConfigured: true,
+  });
   const [notices, setNotices] = useState<SearchAlertNotice[]>([]);
   const [editing, setEditing] = useState<SavedSearch | null>(null);
   const [savingPrefs, setSavingPrefs] = useState(false);
@@ -70,6 +75,9 @@ export function SavedSearchesPanel() {
             />
             <span>{t("alertEmail")}</span>
           </label>
+          {prefs.emailEnabled && !prefs.emailConfigured ? (
+            <p className="text-xs text-muted">{t("alertEmailStub")}</p>
+          ) : null}
           <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
             <input
               type="checkbox"

@@ -17,6 +17,7 @@ const ISSUE_KEY: Record<QualityIssueId, CopyKey> = {
   incomplete_photo: "completeNeedPhoto",
   vacancy_unknown: "qualityIssueVacancyUnknown",
   vacancy_stale: "qualityIssueVacancyStale",
+  photo_stale: "qualityIssuePhotoStale",
   reviews_thin: "qualityIssueReviews",
   tours_low: "qualityIssueTours",
   replies_low: "qualityIssueReplies",

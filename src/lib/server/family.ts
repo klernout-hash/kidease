@@ -25,7 +25,8 @@ import {
 } from "@/lib/templates";
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { stripeChargesLive } from "@/lib/stripe-live";
-import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto } from "@/lib/listing-photo";
+import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto, isStockListingPhoto } from "@/lib/listing-photo";
+import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { overlayQuality } from "./quality";
 import { overlayDemandSnapshots, overlayParentRank } from "./rank";
 import {
@@ -1265,6 +1266,9 @@ export const createListing = createServerFn({ method: "POST" })
       )
     `;
     await sql`insert into provider_daycares (user_id, daycare_id) values (${context.userId}, ${id})`;
+    if (data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)) {
+      await sql`update daycares set last_photo_updated_at = now() where id = ${id}`.catch(() => undefined);
+    }
     await writeProfileRole(context.userId, "provider");
     const actor = await lookupUser(context.userId);
     try {

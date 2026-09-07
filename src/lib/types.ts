@@ -96,6 +96,7 @@ export type Daycare = {
   availabilityKnown?: boolean;
   spotsUpdatedAt?: string | null;
   lastVacancyUpdatedAt?: string | null;
+  lastPhotoUpdatedAt?: string | null;
   detailsReady?: boolean;
   completenessMissing?: Array<"fees" | "ages" | "hours" | "license" | "photo">;
   licenseStatus?: "unverified" | "matched" | "expired" | "suspended" | "active" | "unknown";

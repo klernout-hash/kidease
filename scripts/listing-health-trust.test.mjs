@@ -135,6 +135,10 @@ test("listing health scores real fields and never invents a vacancy time", () =>
   assert.match(panel, /listingHealthEdit/);
   assert.match(panel, /listingHealthConfirmSpots/);
   assert.match(panel, /scrollIntoView/);
+  assert.match(panel, /healthNeedPhotoStale/);
+  assert.match(readiness, /PHOTO_STALE_MS/);
+  assert.match(readiness, /lastPhotoUpdatedAt/);
+  assert.doesNotMatch(readiness, /if \(item\.priority\) score \+= 1/);
 });
 
 test("quality ranking prefers claim verified, fresh vacancy, completeness — incomplete stay searchable", () => {
