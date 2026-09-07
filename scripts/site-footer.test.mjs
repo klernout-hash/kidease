@@ -33,6 +33,8 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.match(footer, /t\("googlePlay"\)/);
   assert.match(footer, /t\("comingSoon"\)/);
   assert.match(footer, /t\("operatorSignIn"\)/);
+  assert.match(footer, /showOperatorSignIn/);
+  assert.match(footer, /!isPending && !user/);
   assert.match(copy, /comingSoon: "Coming soon"/);
   assert.match(copy, /comingSoon: "Bientôt"/);
   assert.match(copy, /operatorSignIn: "Operator sign-in"/);
