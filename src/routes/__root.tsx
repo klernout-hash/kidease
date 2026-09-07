@@ -114,7 +114,12 @@ export const Route = createRootRoute({
           <PostHogBoot />
           <RoleBoot />
           <Outlet />
-          <Toaster position="top-center" richColors={false} />
+          <Toaster
+            position="top-center"
+            richColors={false}
+            style={{ pointerEvents: "none" }}
+            toastOptions={{ style: { pointerEvents: "auto" } }}
+          />
         </AuthProvider>
         <Scripts />
       </body>

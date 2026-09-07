@@ -4,7 +4,6 @@ import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { LanguageSelect } from "@/components/language-select";
-import { cn } from "@/lib/utils";
 
 type Item = { to: string; label: string; search?: Record<string, string> };
 
@@ -65,18 +64,16 @@ export function NavDrawer({
     };
   }, [open, onClose]);
 
-  if (typeof document === "undefined") return null;
+  // Never leave a closed `fixed inset-0` portal in the DOM. After CSS loads,
+  // an opacity-0 backdrop still sits at z-[80] and eats every click if
+  // `hidden` / `pointer-events-none` fail (Safari + display:none + fixed).
+  if (typeof document === "undefined" || !open) return null;
 
   return createPortal(
-    <div className={cn(open ? "pointer-events-auto" : "pointer-events-none")} hidden={!open}>
+    <div className="pointer-events-auto">
       <button
         type="button"
-        tabIndex={open ? 0 : -1}
-        aria-hidden={!open}
-        className={cn(
-          "fixed inset-0 z-[80] bg-fg/40 backdrop-blur-[2px] transition-opacity duration-300",
-          open ? "opacity-100" : "opacity-0",
-        )}
+        className="fixed inset-0 z-[80] bg-fg/40 backdrop-blur-[2px]"
         onClick={onClose}
       />
       <aside
@@ -85,10 +82,7 @@ export function NavDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={cn(
-          "fixed inset-y-0 right-0 z-[90] flex w-[min(86vw,24rem)] flex-col bg-bg shadow-lift ring-1 ring-border transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          open ? "translate-x-0" : "translate-x-full",
-        )}
+        className="fixed inset-y-0 right-0 z-[90] flex w-[min(86vw,24rem)] flex-col bg-bg shadow-lift ring-1 ring-border"
       >
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <BrandMark size="sm" align="start" />

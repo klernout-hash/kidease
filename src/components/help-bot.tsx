@@ -46,7 +46,14 @@ export function HelpBot() {
         <div className="mb-3 flex h-[min(28rem,70dvh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl bg-surface shadow-lift ring-1 ring-border">
           <div className="flex items-center justify-between bg-primary px-4 py-3 text-primary-fg">
             <div className="flex items-center gap-2">
-              <img src="/logo-transparent.png?v=2" alt="" className="size-8 rounded-full bg-surface object-contain p-0.5" />
+              <img
+                src="/logo-transparent.png?v=16"
+                alt=""
+                width={32}
+                height={32}
+                className="size-8 rounded-full bg-surface object-contain p-0.5"
+                style={{ width: 32, height: 32, maxWidth: 32, maxHeight: 32, objectFit: "contain" }}
+              />
               <div>
                 <p className="text-sm font-semibold">{t("liveChat")}</p>
                 <p className="text-[11px] text-primary-fg/80">{t("helpBotLead")}</p>
@@ -104,7 +111,14 @@ export function HelpBot() {
         {open ? (
           <X className="size-7 text-primary" />
         ) : (
-          <img src="/logo-transparent.png?v=2" alt="" className="size-11 object-contain" />
+          <img
+            src="/logo-transparent.png?v=16"
+            alt=""
+            width={44}
+            height={44}
+            className="size-11 object-contain"
+            style={{ width: 44, height: 44, maxWidth: 44, maxHeight: 44, objectFit: "contain" }}
+          />
         )}
         <span className="text-[11px] font-semibold leading-none text-primary">{t("liveChat")}</span>
       </button>

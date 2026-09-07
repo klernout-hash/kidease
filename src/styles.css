@@ -64,6 +64,27 @@
     max-width: 100%;
     background: var(--color-bg);
     color: var(--color-fg);
+    pointer-events: auto;
+  }
+  /* Closed portals / inactive channel chrome must never catch clicks.
+     `display:none` + fixed descendants can still hit-test in some WebKits. */
+  [hidden] {
+    display: none !important;
+    pointer-events: none !important;
+  }
+  html[data-channel="website"] .ke-app-only {
+    display: none !important;
+    pointer-events: none !important;
+  }
+  html[data-channel="app"] .ke-web-only {
+    display: none !important;
+    pointer-events: none !important;
+  }
+  [data-sonner-toaster] {
+    pointer-events: none !important;
+  }
+  [data-sonner-toaster] [data-sonner-toast] {
+    pointer-events: auto !important;
   }
   body {
     font-family: var(--font-sans);
@@ -380,6 +401,15 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    max-width: min(22rem, calc(100vw - 1.5rem));
+    pointer-events: auto;
+  }
+  .ke-help-bot img {
+    width: 44px;
+    height: 44px;
+    max-width: 44px;
+    max-height: 44px;
+    object-fit: contain;
   }
   html[data-channel="app"] .ke-help-bot {
     bottom: calc(5.5rem + env(safe-area-inset-bottom));
