@@ -105,6 +105,7 @@ export const Route = createRootRoute({
           }}
         />
         <script src="/channel-boot.js" />
+        <script src="/asset-recover.js" />
         <HeadContent />
       </head>
       <body>

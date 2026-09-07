@@ -6,6 +6,7 @@
  * before grok-pwa.ts / request-guard.ts so this middleware is outermost.
  */
 import {
+  applyHtmlDocumentCacheHeaders,
   applyScriptNonces,
   buildContentSecurityPolicy,
   generateNonce,
@@ -27,6 +28,10 @@ export default async function cspMiddleware(
 
   const headers = new Headers(result.headers);
   headers.set("Content-Security-Policy", buildContentSecurityPolicy(nonce));
+
+  if (isHtmlResponse(headers.get("content-type"))) {
+    applyHtmlDocumentCacheHeaders(headers);
+  }
 
   if (!isHtmlResponse(headers.get("content-type")) || !result.body) {
     return new Response(result.body, {

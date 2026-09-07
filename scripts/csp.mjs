@@ -86,3 +86,12 @@ export function applyScriptNonces(html, nonce) {
 export function isHtmlResponse(contentType) {
   return /text\/html/i.test(String(contentType ?? ""));
 }
+
+/** Documents must revalidate so HTML never points at deleted hashed /assets/*. */
+export const HTML_DOCUMENT_CACHE_CONTROL = "public, max-age=0, must-revalidate";
+
+export function applyHtmlDocumentCacheHeaders(headers) {
+  headers.set("Cache-Control", HTML_DOCUMENT_CACHE_CONTROL);
+  headers.set("CDN-Cache-Control", HTML_DOCUMENT_CACHE_CONTROL);
+  headers.set("Cloudflare-CDN-Cache-Control", HTML_DOCUMENT_CACHE_CONTROL);
+}

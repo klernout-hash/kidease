@@ -77,12 +77,14 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(boot, /return null/);
   });
 
-  it("service worker does not intercept /assets/ or serve HTML as CSS", () => {
+  it("service worker does not intercept documents or /assets/", () => {
     const sw = src("public/sw.js");
-    assert.match(sw, /kidease-shell-v3/);
-    assert.match(sw, /NAVIGATE_MS = 8000/);
-    assert.match(sw, /fetchWithTimeout/);
+    assert.match(sw, /kidease-shell-v4/);
     assert.match(sw, /startsWith\("\/assets\/"\)/);
+    assert.match(sw, /request\.mode === "navigate"/);
+    assert.match(sw, /destination === "document"/);
+    assert.doesNotMatch(sw, /NAVIGATE_MS/);
+    assert.doesNotMatch(sw, /fetchWithTimeout/);
     assert.doesNotMatch(sw, /if \(cached\) return cached/);
     const assetCatch = sw.indexOf("if (!isChromeAsset(url)) return;");
     const after = sw.slice(assetCatch);
