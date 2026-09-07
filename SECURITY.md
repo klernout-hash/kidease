@@ -23,7 +23,7 @@ Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, 
 
 ## Payments
 
-`/pay/$bookingId` (`createPayment` / `confirmInterac`) cannot mark a booking or payment `paid`. Card / wallet PAN fields are refused. Interac is `pending_review` until staff confirm. Live card charges stay on invoice Stripe Checkout and Parent Plus Checkout.
+`/pay/$bookingId` (`createPayment` / `confirmInterac`) cannot mark a booking or payment `paid`. Card / wallet PAN fields are refused. Interac is `pending_review` until staff confirm. Live card charges stay on invoice Stripe Checkout and Parent Plus Checkout. Those Checkout sessions request `card` (Apple Pay / Google Pay ride on card) in CAD. Native Capacitor opens Checkout in the system browser so wallets can appear.
 
 ## Cron
 

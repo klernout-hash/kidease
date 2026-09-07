@@ -21,8 +21,11 @@
  * Vite (dev/preview) uses wellKnownAppLinksPlugin(); Nitro production uses
  * server/middleware/well-known-app-links.ts. Both call these builders so the
  * SPA catch-all cannot return HTML for these paths.
+ *
+ * Apple Pay domain association is composed here too (env-only; 404 when unset).
  */
 import { CAP_APP_ID, CAP_PROD_HOSTNAME } from "./native-permissions.mjs";
+import { applePayDomainAssociationPayload } from "./well-known-apple-pay.mjs";
 
 export { CAP_APP_ID, CAP_PROD_HOSTNAME };
 
@@ -110,6 +113,10 @@ export function buildAssetLinks(env = process.env) {
   ];
 }
 
+export function wellKnownStaticPayload(pathname, env = process.env) {
+  return wellKnownAppLinksPayload(pathname, env) || applePayDomainAssociationPayload(pathname, env);
+}
+
 export function wellKnownAppLinksPayload(pathname, env = process.env) {
   const path = normalizeWellKnownPath(pathname);
   if (path === AASA_PATH || path === AASA_JSON_PATH) {
@@ -144,7 +151,7 @@ export function serveWellKnownAppLinks(req, res, next) {
     return;
   }
   const pathOnly = String(req.url ?? "").split("?", 1)[0] ?? "";
-  const payload = wellKnownAppLinksPayload(pathOnly);
+  const payload = wellKnownStaticPayload(pathOnly);
   if (!payload) {
     next();
     return;

@@ -13,6 +13,8 @@ import { useCopy } from "@/lib/use-copy";
 import { money } from "@/lib/utils";
 import { periodLabel } from "@/lib/stripe-methods";
 import { type Bill, billDollars } from "@/lib/bill";
+import { WalletMethodHints } from "@/components/wallet-methods";
+import { openStripeCheckout } from "@/lib/wallets";
 
 export const Route = createFileRoute("/pay/bill/$billId")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -88,7 +90,7 @@ function PayBillPage() {
         return;
       }
       if (res.url) {
-        window.location.assign(res.url);
+        await openStripeCheckout(res.url);
         return;
       }
       toast.error("Pay link was not ready.");
@@ -132,18 +134,23 @@ function PayBillPage() {
               <span className="text-sm text-muted">{t("amount")}</span>
               <span className="font-display text-2xl tabular-nums">{money(billDollars(bill), locale)}</span>
             </div>
-            <p className="mt-1 text-xs text-subtle">{bill.number}</p>
+            <p className="mt-1 text-xs text-subtle">
+              {t("payCadNote")} · {bill.number}
+            </p>
           </div>
         ) : null}
 
         {bill && !canPay && !alreadyPaid ? (
-          <p className="mt-6 rounded-xl bg-surface-2 p-4 text-sm text-muted">
-            {bill.status === "void"
-              ? "This bill was voided."
-              : bill.status === "refunded"
-                ? "This bill was refunded."
-                : t("billInternalPay")}
-          </p>
+          <div className="mt-6 space-y-3 rounded-xl bg-surface-2 p-4">
+            <p className="text-sm text-muted">
+              {bill.status === "void"
+                ? "This bill was voided."
+                : bill.status === "refunded"
+                  ? "This bill was refunded."
+                  : t("billInternalPay")}
+            </p>
+            {!stripeLive ? <WalletMethodHints stripeLive={false} /> : null}
+          </div>
         ) : null}
 
         {search.paid && bill?.status === "sent" ? (
@@ -156,6 +163,7 @@ function PayBillPage() {
               <Lock className="size-4" />
               {t("pay")} · {money(billDollars(bill!), locale)}
             </Button>
+            <WalletMethodHints stripeLive={stripeLive} />
             <p className="text-center text-xs text-subtle">{t("stripeMark")}</p>
           </div>
         ) : null}

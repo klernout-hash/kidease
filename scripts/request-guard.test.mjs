@@ -168,6 +168,7 @@ test("AASA and assetlinks are not redirected or 404'd by the request guard", () 
       "/.well-known/apple-app-site-association",
       "/.well-known/apple-app-site-association.json",
       "/.well-known/assetlinks.json",
+      "/.well-known/apple-developer-merchantid-domain-association",
     ]) {
       assert.deepEqual(decideRequest({ host, pathname }), { action: "next" });
     }
