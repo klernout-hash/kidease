@@ -16,7 +16,7 @@ Computed server-side in `src/lib/quality.ts`. Missing signals add **zero**. Inco
 | Gated parent reviews | 20 | Published reviews from enrolment / attendance / admin grant only (PR #64). Needs **at least 3** reviews. Uses average × volume (`count / 8`, capped). Google ratings are **not** used. |
 | Reply / tour rates | 15 | Tour accept rate after **5** accepted or declined tours (up to 8 pts). Reply rate after **5** parent threads (up to 7 pts). Hidden until those samples exist. |
 
-Paid priority placement is a separate pin. It does **not** inflate the quality score.
+Paid priority placement, daycare Pro / Network, and featured-city pins are separate. They do **not** inflate the quality score or Guest Favorites. Free trust signals (claim, licence, vacancy, listing completeness) stay on every plan.
 
 ## Guest Favorites
 

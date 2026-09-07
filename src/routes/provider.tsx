@@ -25,6 +25,8 @@ import { listingStatusFromClaim } from "@/lib/listing-status";
 import { ProviderMoneyPanel } from "@/components/provider-money";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
+import { ProviderPlanBanner } from "@/components/provider-plan-banner";
+import type { ProviderEntitlements } from "@/lib/provider-entitlements";
 
 type DaycareDesk = "requests" | "money" | "listings" | "licence" | "contract" | "promote";
 
@@ -50,6 +52,19 @@ function ProviderPage() {
   const [stats, setStats] = useState<Array<{ daycareId: string; views: number; inquiries: number; requests: number }>>([]);
   const [requests, setRequests] = useState<SpotRequest[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
+  const [subscription, setSubscription] = useState<{
+    selectedPlan: ProviderEntitlements["selectedPlan"];
+    entitledPlan: ProviderEntitlements["entitledPlan"];
+    stripeLive: boolean;
+    paid: boolean;
+    analyticsDays: number;
+    orgDashboard: boolean;
+    unlimitedInquiries: boolean;
+    featuredCity: boolean;
+    inquiryCap: number | null;
+    inquiryUsed: number;
+    siteCount: number;
+  } | null>(null);
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -70,6 +85,7 @@ function ProviderPage() {
     ]);
     setListings(res.listings);
     setStats(res.stats);
+    setSubscription(res.subscription);
     setRequests(incoming);
     setTours(tourRows);
   }
@@ -138,6 +154,7 @@ function ProviderPage() {
       }}
     >
       <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
+      {subscription ? <ProviderPlanBanner subscription={subscription} /> : null}
       {desk === "requests" ? (
         <section className="space-y-8">
           <div>
@@ -222,8 +239,16 @@ function ProviderPage() {
                     <TrustSignals item={d} surface="provider" compact className="mt-2" />
                   </div>
                   {d.priority ? <PriorityPill /> : null}
+                  {d.featuredCity ? (
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                      {t("planPro")} · featured
+                    </span>
+                  ) : null}
                 </div>
-                <dl className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
+                <p className="mt-3 text-xs text-subtle">
+                  {subscription?.analyticsDays === 90 ? t("analytics90") : t("analytics")}
+                </p>
+                <dl className="mt-2 grid grid-cols-3 gap-3 text-center text-sm">
                   <div className="rounded-md bg-bg p-3">
                     <dt className="text-muted">{t("views")}</dt>
                     <dd className="font-display text-2xl tabular-nums">{st?.views ?? 0}</dd>
@@ -246,6 +271,39 @@ function ProviderPage() {
               </section>
             );
           })}
+          {subscription && subscription.siteCount >= 3 && !subscription.orgDashboard ? (
+            <p className="mb-6 rounded-xl bg-primary/10 px-5 py-4 text-sm text-primary ring-1 ring-primary/20">
+              {t("planOrgLocked")}{" "}
+              <Link to="/provider/subscription" className="font-medium underline">
+                {t("planUpgrade")}
+              </Link>
+            </p>
+          ) : null}
+          {subscription?.orgDashboard && subscription.siteCount >= 3 ? (
+            <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
+              <h2 className="font-display text-2xl">{t("planOrgLive")}</h2>
+              <dl className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
+                <div className="rounded-md bg-bg p-3">
+                  <dt className="text-muted">{t("views")}</dt>
+                  <dd className="font-display text-2xl tabular-nums">
+                    {stats.reduce((sum, s) => sum + s.views, 0)}
+                  </dd>
+                </div>
+                <div className="rounded-md bg-bg p-3">
+                  <dt className="text-muted">{t("inquiries")}</dt>
+                  <dd className="font-display text-2xl tabular-nums">
+                    {stats.reduce((sum, s) => sum + s.inquiries, 0)}
+                  </dd>
+                </div>
+                <div className="rounded-md bg-bg p-3">
+                  <dt className="text-muted">{t("conversion")}</dt>
+                  <dd className="font-display text-2xl tabular-nums">
+                    {stats.reduce((sum, s) => sum + s.requests, 0)}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          ) : null}
           <section id="list-new" className="rounded-xl bg-surface p-5 ring-1 ring-border">
             <h2 className="font-display text-2xl">{t("listCentre")}</h2>
             <form

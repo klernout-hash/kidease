@@ -27,6 +27,13 @@ import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto } from "@/lib/listing-photo";
 import { overlayQuality } from "./quality";
+import {
+  analyticsSinceDate,
+  centreCanAcceptInquiry,
+  countCentreInquiriesThisMonth,
+  loadProfileEntitlements,
+  overlayFeaturedCity,
+} from "@/lib/server/provider-entitlements";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -359,6 +366,13 @@ export const createBooking = createServerFn({ method: "POST" })
           ? d.spotsToddler
           : d.spotsPreschool;
     const status = spots > 0 ? "accepted" : "waitlist";
+    const existingConvo = await sql<{ id: string }>`
+      select id from conversations where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+    `;
+    if (!existingConvo[0]) {
+      const gate = await centreCanAcceptInquiry(sql, data.daycareId);
+      if (!gate.ok) throw new Error(gate.error);
+    }
     const id = nid("bk");
     await sql`
       insert into bookings (
@@ -494,6 +508,13 @@ export const createSpotRequest = createServerFn({ method: "POST" })
       note: data.message?.trim() || null,
     };
 
+    const existingConvo = await sql<{ id: string }>`
+      select id from conversations where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+    `;
+    if (!existingConvo[0]) {
+      const gate = await centreCanAcceptInquiry(sql, data.daycareId);
+      if (!gate.ok) throw new Error(gate.error);
+    }
     const convoId = nid("cv");
     await sql`
       insert into conversations (id, user_id, daycare_id)
@@ -758,6 +779,8 @@ export const openConversation = createServerFn({ method: "POST" })
       select id from conversations where user_id = ${context.userId} and daycare_id = ${daycareId}
     `;
     if (existing[0]) return { id: existing[0].id };
+    const gate = await centreCanAcceptInquiry(sql, daycareId);
+    if (!gate.ok) throw new Error(gate.error);
     const id = nid("cv");
     await sql`insert into conversations (id, user_id, daycare_id) values (${id}, ${context.userId}, ${daycareId})`;
     const d = await sql<{ name: string }>`select name from daycares where id = ${daycareId}`;
@@ -1062,17 +1085,25 @@ export const getProvider = createServerFn({ method: "GET" })
       join provider_daycares p on p.daycare_id = d.id
       where p.user_id = ${context.userId}
     `;
-    const listings = await overlayQuality(owned.map(mapDaycare));
+    const entitlements = await loadProfileEntitlements(sql, context.userId);
+    const since = analyticsSinceDate(entitlements.analyticsDays);
+    const listings = await overlayFeaturedCity(await overlayQuality(owned.map(mapDaycare)));
     const stats = [];
     for (const d of listings) {
       const views = await sql<{ n: number }>`
-        select coalesce(sum(count),0)::int as n from daycare_views where daycare_id = ${d.id}
+        select coalesce(sum(count),0)::int as n
+        from daycare_views
+        where daycare_id = ${d.id} and viewed_on >= ${since}
       `;
       const inquiries = await sql<{ n: number }>`
-        select count(*)::int as n from conversations where daycare_id = ${d.id}
+        select count(*)::int as n
+        from conversations
+        where daycare_id = ${d.id} and last_at >= ${since}::timestamptz
       `;
       const requests = await sql<{ n: number }>`
-        select count(*)::int as n from bookings where daycare_id = ${d.id}
+        select count(*)::int as n
+        from bookings
+        where daycare_id = ${d.id} and created_at >= ${since}::timestamptz
       `;
       stats.push({
         daycareId: d.id,
@@ -1081,6 +1112,9 @@ export const getProvider = createServerFn({ method: "GET" })
         requests: requests[0]?.n ?? 0,
       });
     }
+    const inquiryUsed = (
+      await Promise.all(listings.map((d) => countCentreInquiriesThisMonth(sql, d.id)))
+    ).reduce((sum, n) => sum + n, 0);
     const inbox = await sql<{
       id: string;
       user_id: string;
@@ -1133,6 +1167,19 @@ export const getProvider = createServerFn({ method: "GET" })
     return {
       listings,
       stats,
+      subscription: {
+        selectedPlan: entitlements.selectedPlan,
+        entitledPlan: entitlements.entitledPlan,
+        stripeLive: entitlements.stripeLive,
+        paid: entitlements.paid,
+        analyticsDays: entitlements.analyticsDays,
+        orgDashboard: entitlements.orgDashboard,
+        unlimitedInquiries: entitlements.unlimitedInquiries,
+        featuredCity: entitlements.featuredCity,
+        inquiryCap: entitlements.inquiryCap,
+        inquiryUsed,
+        siteCount: listings.length,
+      },
       inbox,
       requests: requests.map((b) => ({
         id: b.id,

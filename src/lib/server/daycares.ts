@@ -11,7 +11,9 @@ import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
 import { overlayParentReviews } from "./reviews";
 import { overlayQuality } from "./quality";
-import { overlayPriority, sortPriorityFirst } from "./promos";
+import { overlayPriority } from "./promos";
+import { overlayFeaturedCity } from "@/lib/server/provider-entitlements";
+import { sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
 import { parentReviewSummary } from "@/lib/review-gate";
 import { isPlatformLive } from "@/lib/live";
 import { defaultTrustFields } from "@/lib/trust";
@@ -79,6 +81,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
     licenseVerificationSource: d.licenseNumber ? "catalog" : null,
     priority: false,
     priorityUntil: null,
+    featuredCity: false,
     agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
     visibility: d.visibility,
     isTest: d.isTest,
@@ -211,6 +214,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   cards = await overlayParentReviews(cards);
   cards = await overlayQuality(cards);
   cards = await overlayPriority(cards);
+  cards = await overlayFeaturedCity(cards);
   if (data.ageGroup !== "any") {
     cards = cards.filter((c) => {
       if (!c.agesKnown) return false;
@@ -221,6 +225,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   }
   cards.sort((a, b) => {
     if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
+    if (Boolean(a.featuredCity) !== Boolean(b.featuredCity)) return a.featuredCity ? -1 : 1;
     if (data.sort === "recommended") {
       const delta = recommendedRank(b) - recommendedRank(a);
       if (Math.abs(delta) > 1e-6) return delta;
@@ -251,7 +256,9 @@ export const featuredDaycares = createServerFn({ method: "POST" })
     }
     nearby.sort(compareProximity);
     const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(nearby, mergeClaimedCard)));
-    const ranked = sortPriorityFirst(await overlayPriority(merged));
+    const ranked = sortFeaturedCityAfterPriority(
+      await overlayFeaturedCity(await overlayPriority(merged)),
+    );
     return uniqueById(ranked).slice(0, 12).map(slimCard);
   });
 

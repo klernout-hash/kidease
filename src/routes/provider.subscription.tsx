@@ -42,8 +42,8 @@ function ProviderSubscriptionPage() {
         <main className="mx-auto max-w-lg px-4 py-16 text-center">
           <h1 className="font-display text-3xl">Not found</h1>
           <p className="mt-3 text-muted">
-            Subscription is a staff preview of centre plans. It is only for profiles.role = admin until
-            FEATURE_PROVIDER_SUBSCRIPTIONS is on.
+            Centre plans are for directors. Sign in on the centre desk, or ask KidEase staff if this tab is
+            turned off.
           </p>
         </main>
       </Shell>

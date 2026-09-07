@@ -9,6 +9,7 @@
  * KidEase never invents ratings, vacancy times, or a Guest Favorites badge.
  * Incomplete or stale listings stay searchable — they are soft-demoted only.
  * Never claim KidEase police-checks educators.
+ * Paid Pro / Network, featured-city, and promote pins never enter this score.
  */
 
 import {

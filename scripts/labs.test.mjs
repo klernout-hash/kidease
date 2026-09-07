@@ -28,11 +28,15 @@ test("feature flags default off and only accept explicit on values", () => {
   assert.equal(smsEnabled({ FEATURE_SMS: "1" }), true);
   assert.equal(videoEnabled({}), false);
   assert.equal(videoEnabled({ FEATURE_VIDEO: "1" }), true);
-  assert.equal(providerSubscriptionsEnabled({}), false);
+  assert.equal(providerSubscriptionsEnabled({}), true);
   assert.equal(providerSubscriptionsEnabled({ FEATURE_PROVIDER_SUBSCRIPTIONS: "1" }), true);
+  assert.equal(providerSubscriptionsEnabled({ FEATURE_PROVIDER_SUBSCRIPTIONS: "0" }), false);
   assert.equal(canSeeProviderSubscriptions("admin", {}), true);
-  assert.equal(canSeeProviderSubscriptions("provider", {}), false);
-  assert.equal(canSeeProviderSubscriptions("provider", { FEATURE_PROVIDER_SUBSCRIPTIONS: "1" }), true);
+  assert.equal(canSeeProviderSubscriptions("admin", { FEATURE_PROVIDER_SUBSCRIPTIONS: "0" }), true);
+  assert.equal(canSeeProviderSubscriptions("provider", {}), true);
+  assert.equal(canSeeProviderSubscriptions("provider", { FEATURE_PROVIDER_SUBSCRIPTIONS: "0" }), false);
+  assert.equal(canSeeProviderSubscriptions("provider", {}, true), true);
+  assert.equal(canSeeProviderSubscriptions("parent", {}, true), true);
   assert.equal(canSeeProviderSubscriptions("parent", { FEATURE_PROVIDER_SUBSCRIPTIONS: "1" }), false);
   assert.equal(CHAT_SCAFFOLD_READY, false);
 });
@@ -62,7 +66,7 @@ test("push stubs do not invent credentials and env example has names only", () =
   assert.doesNotMatch(envExample, /APNS_KEY=\S+/);
   assert.match(envExample, /FEATURE_INAPP_CHAT=0/);
   assert.match(envExample, /FEATURE_PUSH=0/);
-  assert.match(envExample, /FEATURE_PROVIDER_SUBSCRIPTIONS=0/);
+  assert.match(envExample, /FEATURE_PROVIDER_SUBSCRIPTIONS=1/);
   assert.match(envExample, /FEATURE_SMS=0/);
   assert.match(envExample, /FEATURE_VIDEO=0/);
 });
