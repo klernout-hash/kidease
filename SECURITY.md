@@ -27,7 +27,7 @@ Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, 
 
 ## Cron
 
-`/api/digest` and `/api/search-alerts` accept `Authorization: Bearer $CRON_SECRET` only (Vercel Cron sends this when `CRON_SECRET` is set). Query-string `?secret=` is rejected.
+`/api/digest`, `/api/search-alerts`, and `/api/seed-catalog` accept `Authorization: Bearer $CRON_SECRET` only (Vercel Cron sends this when `CRON_SECRET` is set). Query-string `?secret=` is rejected. `/api/seed-catalog` upserts a chunk of `centres.json` into Neon; it is not on the deploy build and is not a Vercel cron by default.
 
 ## Production notes
 

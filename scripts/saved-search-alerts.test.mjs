@@ -105,10 +105,11 @@ test("migration stores saved searches and alert prefs without push tokens", () =
 test("matcher uses ST_DWithin like nearby.ts (lng, lat)", () => {
   const alerts = src("src/lib/server/search-alerts.ts");
   const nearby = src("src/lib/server/nearby.ts");
+  const neon = src("src/lib/server/catalog-neon.ts");
   assert.match(alerts, /SEARCH_ALERT_MATCH_SQL/);
   assert.match(alerts, /st_dwithin/i);
   assert.match(alerts, /st_makepoint\(\$1, \$2\)/);
-  assert.match(nearby, /st_makepoint\(\$1, \$2\)/);
+  assert.match(`${nearby}\n${neon}`, /st_makepoint\(\$1, \$2\)/);
   assert.match(alerts, /last_vacancy_updated_at/);
   assert.match(alerts, /FEATURE_PUSH stays off/);
   assert.doesNotMatch(alerts, /sendPushNotification/);
