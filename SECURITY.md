@@ -25,7 +25,7 @@ Document HTML is stamped in Nitro (`server/middleware/csp.ts`) with a per-reques
 
 `script-src` is `'self' 'nonce-…' 'strict-dynamic'` plus Maps / Stripe / Turnstile / PostHog hosts (fallback for browsers that ignore `strict-dynamic`). First-party `<script>` tags (including TanStack `<Scripts />` hydration) get the nonce after render. Maps, Stripe.js, Turnstile, and PostHog load further scripts with `createElement`, which `strict-dynamic` allows.
 
-`style-src` is `'self' 'nonce-…'` (no `'unsafe-inline'`). Document `<style>` tags are stamped after render. A nonce'd boot script (`data-ke-style-nonce`) copies that nonce onto `document.createElement("style")` so Radix, Sonner, and Maps can inject styles at runtime.
+`style-src` is `'self' 'nonce-…'` (no `'unsafe-inline'`). Document `<style>` tags are stamped after render. A nonce'd boot script (`data-ke-style-nonce` in the root `<head>`, also injected if a document lacks it) copies that nonce onto `document.createElement("style")` so Radix, Sonner, and Maps can inject styles at runtime.
 
 `style-src-attr` keeps `'unsafe-inline'`. Required leftovers:
 
