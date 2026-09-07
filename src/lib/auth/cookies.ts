@@ -16,6 +16,7 @@ export const SHARED_SESSION_TOKEN_COOKIE = "__Secure-kidease.session_token";
 export const TWO_FACTOR_COOKIE = "__Host-kidease.2fa";
 export const SHARED_TWO_FACTOR_COOKIE = "__Secure-kidease.2fa";
 
+/** Registrable domain only — never `www.kidease.ca` (that would not share with apex). */
 export const KIDEASE_COOKIE_DOMAIN = "kidease.ca";
 
 const HOST_TO_SHARED: Record<string, string> = {

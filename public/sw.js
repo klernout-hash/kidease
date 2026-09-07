@@ -1,5 +1,5 @@
 /* Lightweight KidEase PWA shell. Caches app chrome only — not the catalogue. */
-const VERSION = "kidease-shell-v1";
+const VERSION = "kidease-shell-v2";
 const PRECACHE = [
   "/offline.html",
   "/manifest.webmanifest",
@@ -8,6 +8,7 @@ const PRECACHE = [
   "/fonts/plus-jakarta-sans-latin.woff2",
   "/channel-boot.js",
 ];
+const NAVIGATE_MS = 8000;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -49,7 +50,13 @@ function isChromeAsset(url) {
 function shouldBypass(url) {
   if (!sameOrigin(url)) return true;
   const path = url.pathname;
-  return path.startsWith("/api/") || path === "/img" || path.startsWith("/img?");
+  return path.startsWith("/api/") || path === "/img" || path.startsWith("/img?") || path === "/sw.js";
+}
+
+function fetchWithTimeout(request, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(request, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
 
 self.addEventListener("fetch", (event) => {
@@ -59,22 +66,24 @@ self.addEventListener("fetch", (event) => {
   if (shouldBypass(url)) return;
 
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).catch(() => caches.match("/offline.html")));
+    event.respondWith(
+      fetchWithTimeout(request, NAVIGATE_MS).catch(() => caches.match("/offline.html")),
+    );
     return;
   }
 
   if (!isChromeAsset(url)) return;
 
+  // Network first so a deploy cannot pin visitors on a stale hashed shell.
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
         if (response.ok) {
           const copy = response.clone();
           void caches.open(VERSION).then((cache) => cache.put(request, copy));
         }
         return response;
-      });
-    }),
+      })
+      .catch(() => caches.match(request).then((cached) => cached || caches.match("/offline.html"))),
   );
 });

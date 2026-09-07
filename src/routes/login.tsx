@@ -5,6 +5,7 @@ import { friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { explainEmailSignInFailure } from "@/lib/server/email-sign-in";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
+import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { PasswordField } from "@/components/password-field";
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/login")({
     return out;
   },
   loader: async () => {
-    const providers = await getSignInProviders().catch(() => []);
+    const providers = await withTimeoutFallback(getSignInProviders(), LOADER_SETTLE_MS, []);
     return { providers };
   },
   component: Login,

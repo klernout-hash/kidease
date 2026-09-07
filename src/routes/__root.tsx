@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
+import { BootPending } from "@/components/boot-pending";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
 import { PostHogBoot } from "@/components/posthog-boot";
@@ -14,6 +15,8 @@ const ICON_VER = "20";
 const APP_ICON = `/icon-512.png?v=${ICON_VER}`;
 
 export const Route = createRootRoute({
+  pendingMs: 200,
+  pendingComponent: BootPending,
   errorComponent: ({ error }) => {
     reportError(error, {
       route: typeof window !== "undefined" ? window.location.pathname : "root",

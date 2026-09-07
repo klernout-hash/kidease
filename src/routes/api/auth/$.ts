@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/server";
 import { reportError } from "@/lib/observe";
 import { assertResetMailConfigured } from "@/lib/server/reset-mail-config";
 import { assertTurnstileToken } from "@/lib/server/turnstile";
+import { SQL_SETTLE_MS, resolveAfter } from "@/lib/timeout";
 
 const TURNSTILE_AUTH_PATHS = [
   "/sign-in/email",
@@ -41,7 +42,18 @@ async function handleAuth(request: Request) {
       }
     }
     const incoming = requestWithAliasedAuthCookies(request);
-    return applySharedAuthCookies(incoming, await auth.handler(incoming));
+    const path = new URL(incoming.url).pathname.replace(/\/+$/, "");
+    const handled = auth.handler(incoming);
+    // useSession() stays isPending until this returns. A wedged Neon or
+    // Cloudflare HTML challenge must not pin the client on the boot logo.
+    const response =
+      incoming.method === "GET" && path.endsWith("/get-session")
+        ? await Promise.race([
+            handled,
+            resolveAfter(SQL_SETTLE_MS, Response.json({ session: null, user: null })),
+          ])
+        : await handled;
+    return applySharedAuthCookies(incoming, response);
   } catch (err) {
     reportError(err, { route: "/api/auth" });
     throw err;

@@ -211,6 +211,20 @@ export function getSql(): Promise<Sql> {
   return sqlPromise;
 }
 
+function rejectSqlAfter(ms: number, message: string) {
+  return new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(message)), ms);
+  });
+}
+
+/**
+ * Same as `getSql()`, but ranking / featured overlays must not block the
+ * document forever when Neon is wedged. Callers catch and degrade.
+ */
+export function getSqlWithin(ms = 6000): Promise<Sql> {
+  return Promise.race([getSql(), rejectSqlAfter(ms, "sql-timeout")]);
+}
+
 /**
  * The shared PGLite instance (preview only), with `migrations/*.sql` applied.
  * Lets Better Auth persist to the SAME embedded DB as app data in preview (via a

@@ -1,4 +1,4 @@
-import { getSql, type Sql } from "@/lib/db";
+import { getSqlWithin, type Sql } from "@/lib/db";
 import {
   demandSnapshot,
   median,
@@ -189,7 +189,7 @@ export async function overlayParentRank<T extends Daycare>(
 > {
   if (!items.length) return items.map((item) => applyRankFields(item, undefined, prefs));
   try {
-    const sql = await getSql();
+    const sql = await getSqlWithin();
     const ids = [...new Set(items.map((item) => item.id).filter(Boolean))];
     const signals = await loadRankSignals(sql, ids);
     return items.map((item) => applyRankFields(item, signals.get(item.id), prefs));
@@ -224,7 +224,7 @@ export async function overlayDemandSnapshots<T extends Daycare>(
 ): Promise<Array<T & { demand: DemandSnapshot }>> {
   if (!items.length) return items.map((item) => ({ ...item, demand: snapshotFromSignals(item) }));
   try {
-    const sql = await getSql();
+    const sql = await getSqlWithin();
     const ids = [...new Set(items.map((item) => item.id).filter(Boolean))];
     const signals = await loadRankSignals(sql, ids);
     return items.map((item) => ({

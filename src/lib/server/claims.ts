@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getSql } from "@/lib/db";
+import { getSql, getSqlWithin } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getCatalog, catalogByIdGet } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
@@ -425,7 +425,7 @@ export async function overlayClaimed<T extends { id: string }>(
 ) {
   if (!items.length) return items;
   try {
-    const sql = await getSql();
+    const sql = await getSqlWithin();
     const rows = await sql<DaycareRow>`
       select * from daycares where claimed_at is not null
     `.catch(() => [] as DaycareRow[]);
