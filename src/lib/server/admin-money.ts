@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { requireAdmin } from "@/lib/server/roles";
+import { compareTimeDesc } from "@/lib/sort-time";
 
 export type MoneyDirection = "in" | "out";
 export type MoneyKind = "tuition" | "promo" | "payout" | "bill";
@@ -283,7 +284,7 @@ export const listAdminMoney = createServerFn({ method: "GET" })
       });
     }
 
-    rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    rows.sort((a, b) => compareTimeDesc(a.createdAt, b.createdAt));
 
     const ledger: AdminMoneyLedger = {
       rows,
