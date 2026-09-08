@@ -113,8 +113,8 @@ describe("dual chrome and map clustering stay in place", () => {
     const map = read("src/components/map-view.tsx");
     assert.match(map, /clusterItems/);
     assert.match(map, /ke-logo-cluster/);
-    assert.match(map, /listingMapConstructorOptions/);
-    assert.match(map, /googleMapsMapId\(\)/);
+    assert.match(map, /createKidEaseMap/);
+    assert.match(map, /loadAdvancedMarkerElement/);
     assert.doesNotMatch(map, /mapId:\s*["'`]/);
   });
 });

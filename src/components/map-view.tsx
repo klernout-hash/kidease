@@ -9,13 +9,12 @@ import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { MAP_RADIUS_FIT_PAD, mapZoomForRadius, openDirections, readMapBase, writeMapBase, type MapBase } from "@/lib/maps";
 import { bboxFromRadius } from "@/lib/proximity";
 import {
+  createKidEaseMap,
   createListingOverlayFactory,
   createYouAreHereDot,
   googleMapTypeId,
-  googleMapsMapId,
   GOOGLE_MAPS_BROWSER_ENV,
   hasGoogleMapsBrowserKey,
-  listingMapConstructorOptions,
   loadAdvancedMarkerElement,
   loadGoogleMaps,
   type AdvancedMarkerCtor,
@@ -81,6 +80,7 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
   const distanceUnit = useAppStore((s) => s.distanceUnit);
   const { t } = useCopy();
   const [ready, setReady] = useState(false);
+  const [basemapReady, setBasemapReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(() =>
     hasGoogleMapsBrowserKey() ? null : `${GOOGLE_MAPS_BROWSER_ENV} is not set`,
   );
@@ -114,34 +114,32 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
         const maps = await loadGoogleMaps();
         if (cancelled || !el) return;
         el.innerHTML = "";
-        const mapId = googleMapsMapId();
-        map = new maps.Map(
-          el,
-          listingMapConstructorOptions({
-            maps,
-            center: { lat: origin.lat, lng: origin.lng },
-            zoom: mapZoomForRadius(radiusKm),
-            mapTypeId: googleMapTypeId(readMapBase()),
-            mapId,
-          }),
-        );
+        const created = await createKidEaseMap(maps, el, {
+          center: { lat: origin.lat, lng: origin.lng },
+          zoom: mapZoomForRadius(radiusKm),
+          mapTypeId: googleMapTypeId(readMapBase()),
+        });
+        if (cancelled) return;
+        map = created.map;
         map.addListener("zoom_changed", () => {
           const next = map?.getZoom();
           if (typeof next === "number") setZoom(next);
         });
         const startZoom = map.getZoom();
         if (typeof startZoom === "number") setZoom(startZoom);
-        const AdvancedMarker = await loadAdvancedMarkerElement(maps, mapId);
+        const AdvancedMarker = await loadAdvancedMarkerElement(maps, created.usedMapId);
         if (cancelled) return;
         mapRef.current = map;
         mapsApiRef.current = maps;
         advancedMarkerRef.current = AdvancedMarker;
         overlayFactoryRef.current = createListingOverlayFactory(maps, AdvancedMarker);
         setLoadError(null);
+        setBasemapReady(true);
         setReady(true);
       } catch (err) {
         if (!cancelled) {
           setLoadError(err instanceof Error ? err.message : "Google Maps failed to load");
+          setBasemapReady(false);
           setReady(false);
         }
       }
@@ -150,6 +148,7 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
     return () => {
       cancelled = true;
       setReady(false);
+      setBasemapReady(false);
       if (map) {
         window.google?.maps?.event.clearInstanceListeners(map);
       }
@@ -376,13 +375,21 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
 
   return (
     <div className="relative size-full min-h-[280px] overflow-hidden rounded-lg bg-map">
-      <div ref={host} className="absolute inset-0" />
+      <div ref={host} className="ke-map-host absolute inset-0" />
 
       {loadError ? (
         <div className="absolute inset-0 z-[1] grid place-items-center bg-map px-6 text-center">
           <p className="max-w-sm text-sm text-muted">
             Map is temporarily unavailable. Licensed daycares are still listed on this page.
           </p>
+        </div>
+      ) : !basemapReady ? (
+        <div
+          className="ke-map-skel pointer-events-none absolute inset-0 z-[1] grid place-items-center px-6 text-center"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="text-sm font-medium text-muted">{t("mapLoading")}</p>
         </div>
       ) : null}
 

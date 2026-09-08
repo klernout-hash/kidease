@@ -8,9 +8,10 @@
  * Set `VITE_GOOGLE_MAPS_API_KEY` on Vercel (same key value as the server
  * Maps/Places key). Maps JavaScript API must stay enabled on the GCP project.
  *
- * Optional `VITE_GOOGLE_MAPS_MAP_ID` (public Cloud Map ID) turns on vector
- * tiles, cloud styling, and Advanced Markers. Leave it empty to keep the
- * classic raster path — weekly/vector without a Map ID paints a gray canvas.
+ * Optional `VITE_GOOGLE_MAPS_MAP_ID` (public Cloud Map ID) is only used for
+ * Advanced Markers / cloud styling. Search always sets `renderingType: RASTER`.
+ * A vector Map ID without Map Tiles API (or Safari + `color-scheme: dark`)
+ * paints a gray canvas while pins and controls still work.
  */
 export const GOOGLE_MAPS_BROWSER_ENV = "VITE_GOOGLE_MAPS_API_KEY";
 export const GOOGLE_MAPS_MAP_ID_ENV = "VITE_GOOGLE_MAPS_MAP_ID";
@@ -49,7 +50,7 @@ export const GOOGLE_MAPS_SCRIPT_VERSION = "quarterly";
 let mapsPromise: Promise<typeof google.maps> | null = null;
 
 export function googleMapsScriptSrc(key: string, mapId = googleMapsMapId()): string {
-  const base = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=${GOOGLE_MAPS_SCRIPT_VERSION}`;
+  const base = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=${GOOGLE_MAPS_SCRIPT_VERSION}&loading=async`;
   return mapId ? `${base}&libraries=marker` : base;
 }
 
@@ -67,14 +68,14 @@ export const ROAD_STYLES: google.maps.MapTypeStyle[] = [
 ];
 
 /**
- * Vector (Cloud Map ID) vs raster extras for `new maps.Map`.
- * Empty / whitespace Map ID keeps raster so Search never ships a gray canvas.
+ * Cloud Map ID (Advanced Markers) vs JSON styles.
+ * Always raster — `renderingType` overrides a vector Map ID in Cloud Console.
  */
 export function listingMapRendererExtras(mapId: string):
-  | { mapId: string }
+  | { mapId: string; renderingType: "RASTER" }
   | { styles: typeof ROAD_STYLES; renderingType: "RASTER" } {
   const id = mapId.trim();
-  if (id) return { mapId: id };
+  if (id) return { mapId: id, renderingType: "RASTER" };
   return { styles: ROAD_STYLES, renderingType: "RASTER" };
 }
 
@@ -98,15 +99,82 @@ export function listingMapConstructorOptions(input: {
     gestureHandling: "greedy",
     clickableIcons: false,
   };
+  const renderingType = googleMapsRasterRenderingType(input.maps);
   if ("mapId" in extras) {
-    return { ...shared, mapId: extras.mapId };
+    return { ...shared, mapId: extras.mapId, renderingType };
   }
   return {
     ...shared,
     styles: extras.styles,
-    // Raster only when no Map ID — vector without mapId is a gray canvas.
-    renderingType: googleMapsRasterRenderingType(input.maps),
+    renderingType,
   } as google.maps.MapOptions;
+}
+
+/** How long to wait for the first `tilesloaded` before dropping a Map ID. */
+export const MAP_TILES_WAIT_MS = 2500;
+
+const TILE_HOST_RE = /googleapis\.com|gstatic\.com|ggpht\.com|google\.com\/maps|\/maps\/vt/;
+
+export function mapHostHasRasterTiles(
+  root: { querySelectorAll: (selector: string) => ArrayLike<{ src?: string; currentSrc?: string }> } | null | undefined,
+): boolean {
+  if (!root) return false;
+  const imgs = root.querySelectorAll(".gm-style img[src]");
+  for (let i = 0; i < imgs.length; i++) {
+    const src = String(imgs[i]?.currentSrc || imgs[i]?.src || "");
+    if (TILE_HOST_RE.test(src)) return true;
+  }
+  return false;
+}
+
+export function waitForMapTiles(
+  map: { addListener: (name: string, handler: () => void) => unknown },
+  root: Parameters<typeof mapHostHasRasterTiles>[0],
+  maps: { event?: { removeListener?: (listener: never) => void } },
+  timeoutMs = MAP_TILES_WAIT_MS,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (mapHostHasRasterTiles(root)) {
+      resolve(true);
+      return;
+    }
+    let settled = false;
+    function finish(ok: boolean) {
+      if (settled) return;
+      settled = true;
+      globalThis.clearTimeout(timer);
+      try {
+        maps.event?.removeListener?.(listener as never);
+      } catch {
+        /* listener already gone */
+      }
+      resolve(ok);
+    }
+    const listener = map.addListener("tilesloaded", () => finish(true));
+    const timer = globalThis.setTimeout(() => finish(mapHostHasRasterTiles(root)), timeoutMs);
+  });
+}
+
+export async function createKidEaseMap(
+  maps: typeof google.maps,
+  el: HTMLElement,
+  input: Omit<Parameters<typeof listingMapConstructorOptions>[0], "maps">,
+  tileWaitMs = MAP_TILES_WAIT_MS,
+): Promise<{ map: google.maps.Map; usedMapId: string; tilesReady: boolean }> {
+  const preferredId = String(input.mapId ?? googleMapsMapId()).trim();
+  const build = (mapId: string) =>
+    new maps.Map(el, listingMapConstructorOptions({ ...input, maps, mapId }));
+
+  let usedMapId = preferredId;
+  let map = build(usedMapId);
+  let tilesReady = await waitForMapTiles(map, el, maps, tileWaitMs);
+  if (!tilesReady && usedMapId) {
+    el.innerHTML = "";
+    usedMapId = "";
+    map = build("");
+    tilesReady = await waitForMapTiles(map, el, maps, tileWaitMs);
+  }
+  return { map, usedMapId, tilesReady };
 }
 
 export function loadGoogleMaps(): Promise<typeof google.maps> {

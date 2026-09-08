@@ -655,9 +655,29 @@ html[data-channel="website"] .ke-web-grid > article {
   }
 }
 
+/* Safari + document color-scheme:dark can leave Maps tiles unpainted (gray canvas). */
+.ke-map-host,
+.ke-map-host .gm-style,
+.gm-style {
+  color-scheme: only light;
+}
+
 .gm-style img,
-.gm-style map img {
+.gm-style map img,
+.ke-map-host img {
   max-width: none !important;
+  max-height: none !important;
+  height: unset !important;
+}
+
+.gm-style canvas,
+.ke-map-host canvas {
+  max-width: none !important;
+}
+
+.ke-map-skel {
+  background: color-mix(in oklab, var(--color-map) 82%, var(--color-surface-2));
+  animation: ke-skel 1.4s ease-in-out infinite;
 }
 
 .gm-bundled-control,
