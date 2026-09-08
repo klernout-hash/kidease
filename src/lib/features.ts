@@ -6,6 +6,12 @@
 
 type EnvMap = Record<string, string | undefined>;
 
+function envMap(env?: EnvMap): EnvMap {
+  if (env) return env;
+  if (typeof process !== "undefined" && process.env) return process.env;
+  return {};
+}
+
 export function envFlagOn(raw: string | undefined | null): boolean {
   const v = String(raw || "")
     .trim()
@@ -13,22 +19,22 @@ export function envFlagOn(raw: string | undefined | null): boolean {
   return v === "1" || v === "true" || v === "on" || v === "yes";
 }
 
-export function inAppChatEnabled(env: EnvMap = process.env): boolean {
-  return envFlagOn(env.FEATURE_INAPP_CHAT);
+export function inAppChatEnabled(env?: EnvMap): boolean {
+  return envFlagOn(envMap(env).FEATURE_INAPP_CHAT);
 }
 
-export function pushEnabled(env: EnvMap = process.env): boolean {
-  return envFlagOn(env.FEATURE_PUSH);
+export function pushEnabled(env?: EnvMap): boolean {
+  return envFlagOn(envMap(env).FEATURE_PUSH);
 }
 
 /** Transactional Twilio SMS (vacancy / claim / bill reminder). Default OFF. */
-export function smsEnabled(env: EnvMap = process.env): boolean {
-  return envFlagOn(env.FEATURE_SMS);
+export function smsEnabled(env?: EnvMap): boolean {
+  return envFlagOn(envMap(env).FEATURE_SMS);
 }
 
 /** Parent ↔ centre Twilio Video tours (Parent Plus). Default OFF. */
-export function videoEnabled(env: EnvMap = process.env): boolean {
-  return envFlagOn(env.FEATURE_VIDEO);
+export function videoEnabled(env?: EnvMap): boolean {
+  return envFlagOn(envMap(env).FEATURE_VIDEO);
 }
 
 /**
@@ -36,8 +42,8 @@ export function videoEnabled(env: EnvMap = process.env): boolean {
  * Set FEATURE_PROVIDER_SUBSCRIPTIONS=0 only to hide the tab from directors
  * (admin can still preview — ghost).
  */
-export function providerSubscriptionsEnabled(env: EnvMap = process.env): boolean {
-  const raw = env.FEATURE_PROVIDER_SUBSCRIPTIONS;
+export function providerSubscriptionsEnabled(env?: EnvMap): boolean {
+  const raw = envMap(env).FEATURE_PROVIDER_SUBSCRIPTIONS;
   if (raw == null || String(raw).trim() === "") return true;
   return envFlagOn(raw);
 }
@@ -49,7 +55,7 @@ export function providerSubscriptionsEnabled(env: EnvMap = process.env): boolean
  */
 export function canSeeProviderSubscriptions(
   role: string | null | undefined,
-  env: EnvMap = process.env,
+  env?: EnvMap,
   ownsCentre = false,
 ): boolean {
   const r = String(role || "")

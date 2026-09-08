@@ -8,6 +8,7 @@ import { signOut } from "@/lib/auth/client";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
+import { HeaderSocial } from "@/components/header-social";
 import { LanguageSelect } from "@/components/language-select";
 import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
@@ -67,9 +68,12 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     <div className="min-h-dvh bg-bg text-fg">
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
         <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 py-2">
-          <Link to="/" className="shrink-0" aria-label="KidEase">
-            <BrandMark size="sm" />
-          </Link>
+          <div className="flex min-w-0 items-center gap-0.5">
+            <Link to="/" className="shrink-0" aria-label="KidEase">
+              <BrandMark size="sm" />
+            </Link>
+            <HeaderSocial />
+          </div>
           <nav className="hidden items-center gap-6 text-[13px] font-medium text-muted [[data-channel=website]_&]:xl:flex">
             {desktopNav.map((item) => {
               const on = item.match.some((p) => pathname === p || pathname.startsWith(`${p}/`));

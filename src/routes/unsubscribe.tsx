@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
-import { applyPublicUnsubscribe } from "@/lib/server/casl-consent";
+import { applyPublicUnsubscribe } from "@/lib/server/casl-consent-api";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/unsubscribe")({

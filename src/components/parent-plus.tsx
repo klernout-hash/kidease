@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { PLUS_FEATURES, plusPriceHint, type PlusInterval } from "@/lib/parent-plus";
 import { getParentPlus, startParentPlusCheckout, startParentPlusPortal, type ParentPlusState } from "@/lib/server/parent-plus";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
-import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent";
+import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
 import { openStripeCheckout } from "@/lib/wallets";
 

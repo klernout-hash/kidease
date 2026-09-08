@@ -103,23 +103,29 @@ export function resetNeonCatalogCache() {
   neonAllCache = null;
 }
 
+export function catalogRowRenderable(row: Pick<CatalogDbRow, "id" | "slug">): boolean {
+  return Boolean(String(row.id || "").trim() && String(row.slug || "").trim());
+}
+
 export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
   const photos = String(row.photos || "")
     .split(",")
     .map((p) => p.trim())
     .filter(Boolean);
-  const name = row.name;
+  const id = String(row.id || "").trim();
+  const slug = String(row.slug || "").trim() || id;
+  const name = String(row.name || "").trim() || slug || id || "Licensed centre";
   const visibility = listingVisibilityOf({
-    id: row.id,
-    slug: row.slug,
+    id,
+    slug,
     name,
     licenseNumber: row.license_number,
     visibility: row.visibility,
     isTest: row.is_test,
   });
   return {
-    id: row.id,
-    slug: row.slug,
+    id,
+    slug,
     name,
     nameFr: row.name_fr || name,
     tagline: row.tagline || "",
@@ -208,7 +214,7 @@ export async function loadNeonCatalogIfPreferred(): Promise<CatalogDaycare[] | n
     if (!(await isNeonCatalogPreferred(sql))) return null;
     if (neonAllCache) return neonAllCache;
     const rows = await sql.query<CatalogDbRow>(`select ${CATALOG_SELECT} from daycares`);
-    neonAllCache = rows.map(catalogRowToListing);
+    neonAllCache = rows.filter(catalogRowRenderable).map(catalogRowToListing);
     return neonAllCache;
   } catch {
     return null;
@@ -224,7 +230,7 @@ export async function neonCatalogBySlug(slug: string): Promise<CatalogDaycare | 
       `select ${CATALOG_SELECT} from daycares where slug = $1 limit 1`,
       [slug],
     );
-    return rows[0] ? catalogRowToListing(rows[0]) : null;
+    return rows[0] && catalogRowRenderable(rows[0]) ? catalogRowToListing(rows[0]) : null;
   } catch {
     return null;
   }
@@ -239,7 +245,7 @@ export async function neonCatalogById(id: string): Promise<CatalogDaycare | null
       `select ${CATALOG_SELECT} from daycares where id = $1 limit 1`,
       [id],
     );
-    return rows[0] ? catalogRowToListing(rows[0]) : null;
+    return rows[0] && catalogRowRenderable(rows[0]) ? catalogRowToListing(rows[0]) : null;
   } catch {
     return null;
   }
@@ -256,7 +262,9 @@ export async function neonCatalogByIds(ids: string[]): Promise<CatalogDaycare[] 
       `select ${CATALOG_SELECT} from daycares where id = any($1::text[])`,
       [wanted],
     );
-    const byId = new Map(rows.map((row) => [row.id, catalogRowToListing(row)]));
+    const byId = new Map(
+      rows.filter(catalogRowRenderable).map((row) => [String(row.id).trim(), catalogRowToListing(row)]),
+    );
     return wanted.map((id) => byId.get(id)).filter((d): d is CatalogDaycare => Boolean(d));
   } catch {
     return null;
@@ -277,7 +285,7 @@ export async function queryNeonNearby(
       client.query<CatalogDbRow>(NEON_NEAR_SQL, [origin.lng, origin.lat, meters]),
       rejectAfter(6000, "nearby-dwithin-timeout"),
     ]);
-    return rows.map((row) => ({
+    return rows.filter(catalogRowRenderable).map((row) => ({
       ...catalogRowToListing(row),
       distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
     }));

@@ -17,10 +17,10 @@ export function uniqueById<T extends { id: string }>(rows: T[]) {
 }
 
 /** Decode leftover HTML entities in listing names. */
-export function decodeHtml(value: string) {
-  if (!value) return value;
-  if (!value.includes("&")) return value;
-  return value
+export function decodeHtml(value: string | null | undefined) {
+  const text = String(value ?? "");
+  if (!text.includes("&")) return text;
+  return text
     .replace(/&amp;/gi, "&")
     .replace(/&apos;/gi, "'")
     .replace(/&#39;/g, "'")
@@ -30,7 +30,7 @@ export function decodeHtml(value: string) {
 }
 
 /** Registry typos we refuse to show on parent-facing cards. */
-export function displayCentreName(value: string) {
+export function displayCentreName(value: string | null | undefined) {
   return decodeHtml(value)
     .replace(/\bCetnre\b/g, "Centre")
     .replace(/\bCetnres\b/g, "Centres")

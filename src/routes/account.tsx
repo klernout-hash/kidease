@@ -12,7 +12,7 @@ import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { authClient } from "@/lib/auth/client";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
-import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent";
+import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
 
 export const Route = createFileRoute("/account")({
