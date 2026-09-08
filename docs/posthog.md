@@ -56,9 +56,36 @@ Default **20%** of web sessions, after the project toggle and `session-replay-we
 
 You can also add URL / event trigger groups in [Replay settings](https://us.posthog.com/project/594559/replay/settings) later. Do not record `/login`, `/reset-password`, or child-profile routes at 100% without keeping the masks above.
 
+## Login → desk funnel
+
+Mobile UX scorecard target is **>95%** of sign-ins that start on `/login` landing on a desk (`/parent`, `/provider`, `/admin`, `/support`). Pageviews alone under-count: many parents return to `/search` or a listing, and `/verify-2fa` is an extra hop.
+
+After this instrumentation, measure **`login_funnel`** (not `$pageview`) in [Insights → Funnel](https://us.posthog.com/project/594559/insights):
+
+1. `login_funnel` where `step` = `submitted`
+2. `login_funnel` where `step` = `succeeded` **or** `two_factor_skipped` **or** `two_factor_verified`
+3. `login_funnel` where `step` = `desk_landed`
+
+Conversion window: **30 minutes**. Break down by `desk`, `method` (`email` / `social` / `session`), `reason`, and `$device_type`. Filter website visitors who never granted analytics (those events never fire).
+
+| `step` | When |
+| --- | --- |
+| `viewed` | `/login` mounted |
+| `submitted` | Email/social submit |
+| `succeeded` | Password/sign-up created a session |
+| `failed` | Mapped reason only (`credentials`, `turnstile`, `cloudflare`, `session`, `rate_limit`, `popup`, `other`) — never the raw error |
+| `dest_resolved` | Post-login path chosen (`dest_kind`, `dest_path`, `desk`) |
+| `two_factor_viewed` / `_skipped` / `_verified` / `_failed` | Email-code page |
+| `desk_landed` | Parent / Daycare / Admin / Support desk painted after 2FA |
+
+`dest_path` is a coarse label (`/parent`, `/search`, `/daycare`, `/other`) — never a listing slug or query string. Identify stays Better Auth user id only.
+
+Pageview fallback (pre-event data): `/login` → `/verify-2fa` → `/parent`|`/provider`|`/admin`|`/support` within 30 minutes.
+
 ## What is wired
 
-- `src/lib/posthog.ts` — init, sample rate, consent gate, native gate, masking.
+- `src/lib/posthog.ts` — init, sample rate, consent gate, native gate, masking, `capturePostHogEvent`.
+- `src/lib/auth/login-funnel.ts` — login → desk steps.
 - `src/components/posthog-boot.tsx` — once in the root shell.
 - CSP allowlist: `us.i.posthog.com` + `us-assets.i.posthog.com` (no `*.posthog.com`).
 - Client flag helper `isPostHogFlagEnabled`. Server SMS / push / video gates stay on `docs/flags.md`.

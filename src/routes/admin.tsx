@@ -5,6 +5,7 @@ import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { ListingStatusBadge, LedgerHonesty } from "@/components/listing-status-badge";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
+import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canSeeAdminDesk } from "@/lib/desks";
@@ -272,6 +273,7 @@ function AdminPage() {
 
   return (
     <TwoFactorGate next="/admin">
+    <LoginFunnelDeskLand desk="admin" />
     <DeskShell desk="admin" active={tab} onSelect={(id) => setTab(id as AdminDesk)}>
       {tab === "verify" ? (
         <>

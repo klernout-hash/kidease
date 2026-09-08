@@ -3,11 +3,15 @@ import { Navigate, useRouterState } from "@tanstack/react-router";
 import { authEnabled, signOut } from "./client";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
+import { Shell } from "@/components/shell";
+import { DeskSkeleton } from "@/components/page-skeleton";
 import {
   deskFromPathname,
   deskQueryValue,
+  isAuthLoopPath,
   loginRoleFromDesk,
   parseDeskQuery,
+  sanitizePostLoginNext,
   staffTwoFactorRequired,
 } from "@/lib/desks";
 
@@ -47,7 +51,9 @@ export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
       to="/login"
       search={{
         intent: "in" as const,
-        next: next.startsWith("/") ? next : "/",
+        next:
+          sanitizePostLoginNext(next) ??
+          (next.startsWith("/") && !next.startsWith("//") && !isAuthLoopPath(next) ? next : "/"),
         ...(desk ? { desk: deskQueryValue(desk), role: loginRoleFromDesk(desk) } : {}),
       }}
     />
@@ -85,9 +91,20 @@ export function TwoFactorGate({
     };
   }, [user?.id, next]);
 
-  if (isPending || (user && state === "load")) return pending ?? null;
+  if (isPending || (user && state === "load")) {
+    return (
+      pending ?? (
+        <Shell>
+          <DeskSkeleton />
+        </Shell>
+      )
+    );
+  }
   if (!user) return <RedirectToSignIn />;
-  if (state === "need") return <Navigate to="/verify-2fa" search={{ next }} />;
+  if (state === "need") {
+    const safeNext = sanitizePostLoginNext(next) ?? (staffTwoFactorRequired(next) ? "/admin" : "/parent");
+    return <Navigate to="/verify-2fa" search={{ next: safeNext }} />;
+  }
   return <>{children}</>;
 }
 

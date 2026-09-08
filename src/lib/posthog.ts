@@ -186,6 +186,13 @@ export function getPostHog(): PostHog | null {
   return client;
 }
 
+/** Capture a product event. No-op until the client is live. Properties are scrubbed. */
+export function capturePostHogEvent(event: string, properties: Record<string, unknown> = {}): void {
+  const name = event.trim();
+  if (!name || !client) return;
+  client.capture(name, sanitizePostHogProperties(properties, name));
+}
+
 /**
  * Client-side PostHog flag read. `undefined` until the browser client is live.
  * Send gates (SMS / push / video) use `src/lib/flags.ts` on the server — env

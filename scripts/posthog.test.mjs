@@ -28,6 +28,7 @@ import {
   POSTHOG_US_ASSETS,
   POSTHOG_US_INGEST,
   applyPostHogRecordingGate,
+  capturePostHogEvent,
   identifyPostHogUser,
   maskCapturedNetworkRequest,
   parseReplaySampleRate,
@@ -72,6 +73,9 @@ describe("PostHog client wiring", () => {
     assert.equal(DEFAULT_POSTHOG_HOST, "https://us.i.posthog.com");
     assert.equal(POSTHOG_US_INGEST, "https://us.i.posthog.com");
     assert.equal(POSTHOG_US_ASSETS, "https://us-assets.i.posthog.com");
+    assert.match(src, /capturePostHogEvent/);
+    resetPostHogClientForTests();
+    assert.doesNotThrow(() => capturePostHogEvent("login_funnel", { email: "hidden", step: "viewed" }));
     assert.match(src, /VITE_PUBLIC_POSTHOG_KEY/);
     assert.match(src, /POSTHOG_HOST/);
     assert.doesNotMatch(src, /phc_[A-Za-z0-9]+/);
