@@ -117,7 +117,7 @@ test("client-reachable CASL server-fns do not statically import node:crypto", ()
   assert.doesNotMatch(server, /createServerFn/);
   assert.match(src("src/routes/account.tsx"), /casl-consent-api/);
   assert.match(src("src/components/parent-plus.tsx"), /casl-consent-api/);
-  assert.match(src("src/routes/pay.bill.\$billId.tsx"), /casl-consent-api/);
+  assert.match(src("src/routes/pay.bill.$billId.tsx"), /casl-consent-api/);
   assert.match(src("src/routes/unsubscribe.tsx"), /casl-consent-api/);
   assert.doesNotMatch(src("src/routes/account.tsx"), /from "@\/lib\/server\/casl-consent"/);
   assert.doesNotMatch(src("src/routes/api/unsubscribe.ts"), /casl-consent-api/);
