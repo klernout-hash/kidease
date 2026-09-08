@@ -37,7 +37,8 @@ import { uniqueById } from "@/lib/utils";
 import { readRecent } from "@/lib/recent";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
-import { compactExploreSearch } from "@/lib/explore-search";
+import { CITY_HUB_DEFS } from "@/lib/city-hubs";
+import { compactExploreSearch, guestHeroSearch } from "@/lib/explore-search";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { RateKidEasePrompt } from "@/components/rate-kidease";
@@ -86,14 +87,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const CITY_CHIPS = [
-  { q: "Winnipeg", label: "Winnipeg" },
-  { q: "Toronto", label: "Toronto" },
-  { q: "Montréal", label: "Montréal" },
-  { q: "Vancouver", label: "Vancouver" },
-  { q: "Calgary", label: "Calgary" },
-  { q: "Ottawa", label: "Ottawa" },
-];
+const CITY_CHIPS = CITY_HUB_DEFS.map((hub) => ({ q: hub.city, label: hub.city }));
 
 function Home() {
   const { t } = useCopy();
@@ -207,7 +201,8 @@ function Home() {
   async function applyCity(raw: string) {
     const hit = (await resolveLocationQuery(raw)) ?? geocode(raw);
     if (hit) setOrigin(hit);
-    goSearch(hit?.label ?? raw);
+    const fields = guestHeroSearch(raw, hit);
+    goSearch(fields.q, { name: fields.name });
   }
 
   async function applyPlace(raw: string) {
@@ -321,7 +316,7 @@ function Home() {
         >
           {denied ? (
             <p className="mb-2 text-sm text-muted">
-              Location is off. Enter a city or postal code to find licensed centres nearby.
+              Location is off. Enter a city, postal code, or daycare name to find licensed centres nearby.
             </p>
           ) : null}
           <PlaceSearch
@@ -345,7 +340,6 @@ function Home() {
             {t("search")}
           </Button>
           {cityChips}
-          <CityHubLinks className="mt-4" />
         </form>
       ) : (
         <button
@@ -454,7 +448,7 @@ function Home() {
                 </Button>
               </div>
               {locationForm}
-              <CityHubLinks className="mt-5" />
+              {!manual ? <CityHubLinks className="mt-5" /> : null}
               <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>
             </div>
             <div className="relative">
@@ -626,7 +620,6 @@ function Home() {
               </ChipButton>
             ))}
           </div>
-          <CityHubLinks className="mt-4" />
           {user ? (
             <ParentDeskRails
               items={explore.length ? explore : shown}

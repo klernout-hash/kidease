@@ -199,7 +199,7 @@ export function ShotSearch() {
       <div className="flex h-full flex-col">
         <div className="px-2.5 pb-1.5">
           <div className="flex h-7 items-center rounded-full px-2.5 text-[9px]" style={{ background: PAPER, color: SUBTLE, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
-            Address, city, or postal code
+            Address, city, postal code, or daycare
           </div>
           <div className="mt-1.5 flex items-center gap-1">
             <span className="flex h-6 flex-1 items-center justify-center rounded-full text-[8px] font-medium text-white" style={{ background: NAVY }}>

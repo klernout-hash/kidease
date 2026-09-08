@@ -6,6 +6,7 @@ import { test } from "node:test";
 import {
   compactExploreSearch,
   formatExploreDateRange,
+  guestHeroSearch,
   isIsoDate,
   matchesDaycareName,
   parseExploreSearchFields,
@@ -72,4 +73,21 @@ test("Explore search bar is an Airbnb-style pill wired to /search params", () =>
   assert.match(copy, /searchWhereHint: "City Province"/);
   assert.match(copy, /searchWhenHint: "Add dates"/);
   assert.match(copy, /searchDaycareHint: "Search by name"/);
+});
+
+test("guest hero treats unresolved text as a daycare name search", () => {
+  assert.deepEqual(guestHeroSearch("  Winnipeg, MB  ", { label: "Winnipeg, MB" }), {
+    q: "Winnipeg, MB",
+  });
+  assert.deepEqual(guestHeroSearch("Anne Ross Day Nursery", null), {
+    name: "Anne Ross Day Nursery",
+  });
+  assert.deepEqual(guestHeroSearch("   ", null), {});
+
+  const home = src("src/routes/index.tsx");
+  const copy = src("src/lib/copy.ts");
+  assert.match(home, /guestHeroSearch/);
+  assert.match(home, /name: fields\.name/);
+  assert.match(copy, /locationPh: "Address, city, postal code, or daycare"/);
+  assert.match(copy, /locationPh: "Adresse, ville, code postal ou garderie"/);
 });
