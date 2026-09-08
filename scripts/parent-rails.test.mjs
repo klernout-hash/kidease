@@ -146,10 +146,15 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
   assert.match(rails, /railNeedSoon/);
   assert.match(rails, /railGuestFavorites/);
   assert.match(rails, /railByAge/);
-  assert.match(rails, /railByCare/);
+  assert.match(rails, /FacilityTypeRails/);
   assert.match(rails, /school-age/);
-  assert.match(rails, /FACILITY_TYPES/);
-  assert.match(rails, /careNursery/);
+  assert.match(rails, /careTypeRail/);
+  assert.doesNotMatch(rails, /railByCare/);
+  const typeRails = src("src/components/facility-type-rails.tsx");
+  assert.match(typeRails, /railDaycareCentres/);
+  assert.match(typeRails, /railNursery/);
+  assert.match(typeRails, /railHome/);
+  assert.match(typeRails, /matchesFacilityType/);
   assert.doesNotMatch(rails, /priority \?/);
   assert.doesNotMatch(rails, /featuredCity/);
 
@@ -161,6 +166,7 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
   assert.match(parent, /LOADER_SETTLE_MS/);
 
   const home = src("src/routes/index.tsx");
+  assert.match(home, /FacilityTypeRails/);
   assert.match(home, /ParentDeskRails/);
   assert.match(home, /searchDaycares/);
   assert.match(home, /withTimeoutFallback/);

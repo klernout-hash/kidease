@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { ListingRail } from "@/components/listing-rail";
+import { FacilityTypeRails, facilityTypeRailItems } from "@/components/facility-type-rails";
 import { uniqueById } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
 import { readRecent } from "@/lib/recent";
@@ -51,9 +52,6 @@ export function ExploreRails({
       .filter((r) => (r.live || r.availabilityKnown) && r.spotsTotal > 0)
       .sort((a, b) => b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm);
     const nextMonth = items.filter((r) => !available.slice(0, 6).some((x) => x.id === r.id));
-    const rated = items
-      .filter((r) => r.ratingX10 > 0 && r.reviewCount > 0)
-      .sort((a, b) => b.ratingX10 - a.ratingX10 || b.reviewCount - a.reviewCount);
     const priority = items.filter((r) => r.priority).sort((a, b) => a.distanceKm - b.distanceKm);
     const liveNear = take(
       items.filter((r) => r.live).sort((a, b) => a.distanceKm - b.distanceKm),
@@ -64,8 +62,9 @@ export function ExploreRails({
       firstTitle: liveNear.length ? "live" : recentHits.length ? "recent" : "priority",
       available: fill(available, byDistance),
       nextMonth: fill(nextMonth, byDistance),
-      near: take(byDistance),
-      rated: fill(rated, byDistance),
+      centre: facilityTypeRailItems(items, "centre"),
+      nursery: facilityTypeRailItems(items, "nursery"),
+      home: facilityTypeRailItems(items, "home"),
     };
   }, [items, recent]);
 
@@ -94,11 +93,7 @@ export function ExploreRails({
       <ListingRail title={firstTitle} items={rows.first} />
       <ListingRail title={t("availableNow")} items={rows.available} />
       <ListingRail title={t("availableNextMonth")} items={rows.nextMonth} />
-      <ListingRail
-        title={fr ? `Garderies près de ${city}` : `Popular daycares near ${city}`}
-        items={rows.near}
-      />
-      <ListingRail title={fr ? "Mieux notées" : "Highest rated"} items={rows.rated} />
+      <FacilityTypeRails rows={rows} />
     </div>
   );
 }

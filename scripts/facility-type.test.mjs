@@ -69,4 +69,16 @@ test("Explore wires three facility-type categories and listing copy", () => {
   const care = src("src/lib/care-type.ts");
   assert.match(care, /nursery/);
   assert.match(care, /classifyFacilityType/);
+  const explore = src("src/components/explore-rails.tsx");
+  assert.match(explore, /FacilityTypeRails/);
+  assert.doesNotMatch(explore, /Popular daycares/);
+  assert.doesNotMatch(explore, /Highest rated/);
+  assert.doesNotMatch(explore, /Garderies près/);
+  assert.doesNotMatch(explore, /Mieux notées/);
+  const copy = src("src/lib/copy.ts");
+  assert.match(copy, /railDaycareCentres: "Daycare Centres"/);
+  assert.match(copy, /railNursery: "Nursery"/);
+  assert.match(copy, /railHome: "Home"/);
+  assert.match(copy, /railDaycareCentres: "Centres de garde"/);
+  assert.match(copy, /railHome: "Milieux familiaux"/);
 });
