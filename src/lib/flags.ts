@@ -60,6 +60,47 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PROVIDER_SUBSCRIPTIONS: true,
 };
 
+/** Staff-facing catalog. Names match env / PostHog keys exactly. */
+export type FeatureFlagCatalogRow = {
+  key: FeatureFlagKey;
+  defaultOn: boolean;
+  docs: string;
+  summary: string;
+};
+
+export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
+  {
+    key: "FEATURE_INAPP_CHAT",
+    defaultOn: false,
+    docs: "docs/chat.md",
+    summary: "Extra parent/admin chat kinds. Composer stays disabled. Live threads stay on /inbox.",
+  },
+  {
+    key: "FEATURE_PUSH",
+    defaultOn: false,
+    docs: "docs/push.md",
+    summary: "FCM HTTP v1 / APNs. Native-only. Dry-run counts tokens. Nothing is sent while off.",
+  },
+  {
+    key: "FEATURE_SMS",
+    defaultOn: false,
+    docs: "docs/sms.md",
+    summary: "Transactional Twilio SMS (Canada). Needs CASL + STOP before enable.",
+  },
+  {
+    key: "FEATURE_VIDEO",
+    defaultOn: false,
+    docs: "docs/video.md",
+    summary: "Parent Plus Twilio Video tours. SDK not attached. Does not charge.",
+  },
+  {
+    key: "FEATURE_PROVIDER_SUBSCRIPTIONS",
+    defaultOn: true,
+    docs: "docs/flags.md",
+    summary: "Director Subscription tab. Live by default. Checkout still needs Stripe live keys.",
+  },
+];
+
 let cache: RemoteFlagSnapshot | null = null;
 let inflight: Promise<RemoteFlagSnapshot> | null = null;
 

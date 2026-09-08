@@ -44,7 +44,8 @@ Do **not** put `sk_live_` or Twilio secrets in git.
 - Plus gate in `src/lib/video.ts`: live Stripe + `plus_plan=plus` and `plus_status` `active`/`trialing` for parents; providers and admins skip Plus.
 - `/video/$roomId` — Join mints a room + token server-side, then shows **scaffold — connect Twilio Video SDK next**. The JWT is not painted on the page.
 - Inbox thread Video icon → `/video/{conversationId}` (paywall CTA when the parent is not Plus).
-- Admin → Chat lab shows FEATURE_VIDEO on/off, source (env / PostHog), and whether env names are present (no secret values). Staff can open `/video/lab`.
+- Admin → Chat lab shows FEATURE_VIDEO on/off, source (env / PostHog), env-name presence (no secret values), a coming-soon / flag-off state, and the Twilio Video next-build checklist. Staff can open `/video/lab`. See `docs/chat.md`.
+- `/video/$roomId` shows **coming soon** when `FEATURE_VIDEO` is off, or an honest credentials-missing card. It does not attach the camera SDK or charge Plus.
 - `/checkin/$id` stays the local camera preview on a listing. It is not Twilio Video.
 
 ## Later (not this PR)

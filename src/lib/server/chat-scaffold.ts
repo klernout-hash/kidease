@@ -1,16 +1,34 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { requireAdmin } from "@/lib/server/roles";
-import { CHAT_SCAFFOLD_MESSAGE, CHAT_SCAFFOLD_READY } from "@/lib/chat-scaffold";
+import {
+  CHAT_SCAFFOLD_MESSAGE,
+  chatComposerState,
+  refuseScaffoldChatSend,
+  type ChatComposerState,
+  type ChatScaffoldSendInput,
+} from "@/lib/chat-scaffold";
 import { describeFeatureFlag } from "@/lib/features";
 import {
   refreshRemoteFlags,
   type FlagSource,
   type RemoteFlagSnapshot,
 } from "@/lib/flags";
-import { pushCredentialsPresent, pushEnvPresence, type PushEnvPresence } from "@/lib/push";
+import {
+  FCM_LAB_NEXT_STEPS,
+  pushCredentialsPresent,
+  pushEnvPresence,
+  type PushEnvPresence,
+  type PushLabNextStep,
+} from "@/lib/push";
 import { smsCredentialsPresent, smsEnvPresence, type SmsEnvPresence } from "@/lib/sms";
-import { videoCredentialsPresent, videoEnvPresence, type VideoEnvPresence } from "@/lib/video";
+import {
+  TWILIO_VIDEO_LAB_NEXT_STEPS,
+  videoCredentialsPresent,
+  videoEnvPresence,
+  type VideoEnvPresence,
+  type VideoLabNextStep,
+} from "@/lib/video";
 
 export type FlagLab = {
   enabled: boolean;
@@ -26,15 +44,21 @@ export type LabStatus = {
     ok: boolean;
     error?: string;
   };
-  chat: FlagLab & { ready: false; message: string };
+  chat: FlagLab & { ready: false; message: string; composer: ChatComposerState };
   push: FlagLab & {
     ready: false;
     credentialsPresent: boolean;
     presence: PushEnvPresence;
     tokenCount: number;
+    nextSteps: readonly PushLabNextStep[];
   };
   sms: FlagLab & { credentialsPresent: boolean; presence: SmsEnvPresence };
-  video: FlagLab & { credentialsPresent: boolean; presence: VideoEnvPresence };
+  video: FlagLab & {
+    credentialsPresent: boolean;
+    presence: VideoEnvPresence;
+    sdkWired: false;
+    nextSteps: readonly VideoLabNextStep[];
+  };
   subscriptions: FlagLab;
 };
 
@@ -59,6 +83,7 @@ export async function resolveLabStatus(): Promise<LabStatus> {
   } catch {
     tokenCount = 0;
   }
+  const chatFlag = toFlagLab("FEATURE_INAPP_CHAT");
   return {
     remote: {
       configured: remote.provider === "posthog",
@@ -67,9 +92,10 @@ export async function resolveLabStatus(): Promise<LabStatus> {
       error: remote.error,
     },
     chat: {
-      ...toFlagLab("FEATURE_INAPP_CHAT"),
+      ...chatFlag,
       ready: false,
       message: CHAT_SCAFFOLD_MESSAGE,
+      composer: chatComposerState(chatFlag.enabled),
     },
     push: {
       ...toFlagLab("FEATURE_PUSH"),
@@ -77,6 +103,7 @@ export async function resolveLabStatus(): Promise<LabStatus> {
       credentialsPresent: pushCredentialsPresent(),
       presence: pushEnvPresence(),
       tokenCount,
+      nextSteps: FCM_LAB_NEXT_STEPS,
     },
     sms: {
       ...toFlagLab("FEATURE_SMS"),
@@ -87,6 +114,8 @@ export async function resolveLabStatus(): Promise<LabStatus> {
       ...toFlagLab("FEATURE_VIDEO"),
       credentialsPresent: videoCredentialsPresent(),
       presence: videoEnvPresence(),
+      sdkWired: false,
+      nextSteps: TWILIO_VIDEO_LAB_NEXT_STEPS,
     },
     subscriptions: toFlagLab("FEATURE_PROVIDER_SUBSCRIPTIONS"),
   };
@@ -101,11 +130,8 @@ export const getLabStatus = createServerFn({ method: "GET" })
   });
 
 /** Stub — never sends. Kept so a later client can call one function name. */
-export async function sendScaffoldChatMessage(_input: {
-  threadId: string;
-  body: string;
-}): Promise<{ ok: false; error: string }> {
-  void _input;
-  void CHAT_SCAFFOLD_READY;
-  return { ok: false, error: CHAT_SCAFFOLD_MESSAGE };
+export async function sendScaffoldChatMessage(
+  input: ChatScaffoldSendInput,
+): Promise<{ ok: false; error: string }> {
+  return refuseScaffoldChatSend(input);
 }

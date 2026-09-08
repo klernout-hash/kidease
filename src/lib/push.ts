@@ -37,6 +37,37 @@ export const PUSH_DRY_RUN_MESSAGE =
 export const PUSH_WEB_BLOCKED_MESSAGE =
   "Push registration is native-only (iOS / Android). www does not collect tokens.";
 
+export const PUSH_FLAG_OFF_MESSAGE =
+  "Coming soon — FEATURE_PUSH is off. Dry-run can count stored tokens. Nothing is sent to FCM or APNs.";
+
+export type PushLabNextStep = {
+  id: "credentials" | "native" | "flag";
+  title: string;
+  detail: string;
+};
+
+/** Next-build checklist. Does not enable send or invent credentials. */
+export const FCM_LAB_NEXT_STEPS: readonly PushLabNextStep[] = [
+  {
+    id: "credentials",
+    title: "FCM / APNs env names",
+    detail:
+      "Set FCM_PROJECT_ID, FCM_CLIENT_EMAIL, FCM_PRIVATE_KEY and/or APNS_KEY_ID, APNS_TEAM_ID, APNS_BUNDLE_ID, APNS_KEY on Vercel. Do not invent keys. Values stay server-only.",
+  },
+  {
+    id: "native",
+    title: "Native binary",
+    detail:
+      "Ship a TestFlight / Play build with @capacitor/push-notifications and the Push Notifications entitlement. www never registers tokens.",
+  },
+  {
+    id: "flag",
+    title: "FEATURE_PUSH stays off",
+    detail:
+      "Leave FEATURE_PUSH=0 until a dry-run token count on Admin → Chat lab looks right. Then enable in PostHog. Nothing is sent while the flag is off.",
+  },
+];
+
 export type PushPlatform = "ios" | "android";
 export type PushProvider = "fcm" | "apns";
 

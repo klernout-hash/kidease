@@ -51,6 +51,9 @@ function VideoRoomPage() {
   if (!user) return <RedirectToSignIn />;
 
   const paywall = status?.reason === "plus_required" || status?.reason === "plus_required_billing_not_live";
+  const featureOff = status?.reason === "feature_off";
+  const noCredentials = status?.reason === "no_credentials";
+  const blockedScaffold = Boolean(featureOff || noCredentials);
   const canMint = Boolean(status?.gateOk);
 
   async function onJoin() {
@@ -86,8 +89,21 @@ function VideoRoomPage() {
         <p className="mt-2 text-xs text-subtle">{t("videoNoRecording")}</p>
         <p className="mt-1 text-xs text-subtle">{t("videoMinutesNote")}</p>
 
-        {status?.error && !paywall && !joined ? <p className="mt-4 text-sm text-danger">{status.error}</p> : null}
-        {error ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
+        {blockedScaffold && !joined ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">{t("comingSoon")}</p>
+            <p className="mt-2 font-medium">{featureOff ? t("videoFeatureOffTitle") : t("videoNoCredentialsTitle")}</p>
+            <p className="mt-2 text-sm text-muted">{featureOff ? t("videoFeatureOff") : t("videoNoCredentials")}</p>
+            <Button variant="secondary" asChild className="mt-4">
+              <Link to="/inbox">{t("inbox")}</Link>
+            </Button>
+          </div>
+        ) : null}
+
+        {status?.error && !paywall && !blockedScaffold && !joined ? (
+          <p className="mt-4 text-sm text-danger">{status.error}</p>
+        ) : null}
+        {error && !blockedScaffold ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
 
         {paywall ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">

@@ -12,7 +12,14 @@ import {
   smsEnabled,
   videoEnabled,
 } from "../src/lib/features.ts";
-import { CHAT_SCAFFOLD_READY } from "../src/lib/chat-scaffold.ts";
+import {
+  CHAT_SCAFFOLD_READY,
+  chatComposerState,
+  refuseScaffoldChatSend,
+} from "../src/lib/chat-scaffold.ts";
+import { FEATURE_FLAG_CATALOG, FLAG_DEFAULTS } from "../src/lib/flags.ts";
+import { FCM_LAB_NEXT_STEPS } from "../src/lib/push.ts";
+import { TWILIO_VIDEO_LAB_NEXT_STEPS, VIDEO_SDK_WIRED } from "../src/lib/video.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -39,6 +46,21 @@ test("feature flags default off and only accept explicit on values", () => {
   assert.equal(canSeeProviderSubscriptions("parent", {}, true), true);
   assert.equal(canSeeProviderSubscriptions("parent", { FEATURE_PROVIDER_SUBSCRIPTIONS: "1" }), false);
   assert.equal(CHAT_SCAFFOLD_READY, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_PUSH, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_VIDEO, false);
+  assert.equal(VIDEO_SDK_WIRED, false);
+  const off = chatComposerState(false);
+  const on = chatComposerState(true);
+  assert.equal(off.disabled, true);
+  assert.equal(off.enabled, false);
+  assert.equal(off.reason, "feature_off");
+  assert.match(off.message, /FEATURE_INAPP_CHAT is off/);
+  assert.equal(on.disabled, true);
+  assert.equal(on.enabled, false);
+  assert.equal(on.reason, "scaffold_not_ready");
+  const refused = refuseScaffoldChatSend({ threadId: "t1", body: "hi" });
+  assert.equal(refused.ok, false);
+  assert.match(refused.error, /does not send/i);
 });
 
 test("push stubs do not invent credentials and env example has names only", () => {
@@ -65,11 +87,21 @@ test("push stubs do not invent credentials and env example has names only", () =
   }
   assert.doesNotMatch(envExample, /FCM_PRIVATE_KEY=\S+/);
   assert.doesNotMatch(envExample, /APNS_KEY=\S+/);
-  assert.match(envExample, /FEATURE_INAPP_CHAT=0/);
-  assert.match(envExample, /FEATURE_PUSH=0/);
+  assert.match(envExample, /^FEATURE_INAPP_CHAT=0$/m);
+  assert.match(envExample, /^FEATURE_PUSH=0$/m);
   assert.match(envExample, /FEATURE_PROVIDER_SUBSCRIPTIONS=1/);
-  assert.match(envExample, /FEATURE_SMS=0/);
-  assert.match(envExample, /FEATURE_VIDEO=0/);
+  assert.match(envExample, /^FEATURE_SMS=0$/m);
+  assert.match(envExample, /^FEATURE_VIDEO=0$/m);
+  assert.doesNotMatch(envExample, /^FEATURE_PUSH=1$/m);
+  assert.doesNotMatch(envExample, /^FEATURE_VIDEO=1$/m);
+  assert.equal(FCM_LAB_NEXT_STEPS.length, 3);
+  assert.equal(TWILIO_VIDEO_LAB_NEXT_STEPS.length, 3);
+  assert.equal(
+    FEATURE_FLAG_CATALOG.map((row) => row.key).join(","),
+    "FEATURE_INAPP_CHAT,FEATURE_PUSH,FEATURE_SMS,FEATURE_VIDEO,FEATURE_PROVIDER_SUBSCRIPTIONS",
+  );
+  assert.equal(FEATURE_FLAG_CATALOG.find((row) => row.key === "FEATURE_PUSH")?.defaultOn, false);
+  assert.equal(FEATURE_FLAG_CATALOG.find((row) => row.key === "FEATURE_VIDEO")?.defaultOn, false);
 });
 
 test("admin chat lab is registered, admin-gated, and honest", () => {
@@ -83,6 +115,11 @@ test("admin chat lab is registered, admin-gated, and honest", () => {
   assert.match(route, /FEATURE_SMS/);
   assert.match(route, /FEATURE_VIDEO/);
   assert.match(route, /Scaffold/);
+  assert.match(route, /Coming soon/);
+  assert.match(route, /Chat composer \(disabled\)/);
+  assert.match(route, /FEATURE_FLAG_CATALOG/);
+  assert.match(route, /FCM_LAB_NEXT_STEPS/);
+  assert.match(route, /TWILIO_VIDEO_LAB_NEXT_STEPS/);
   assert.match(route, /from "@\/lib\/server\/chat-scaffold"/);
   assert.doesNotMatch(route, /\.server['"]/);
   assert.doesNotMatch(route, /chat-scaffold\.server/);
@@ -94,6 +131,8 @@ test("admin chat lab is registered, admin-gated, and honest", () => {
   assert.match(client, /registerPushDevice/);
   assert.match(readFileSync(join(root, "docs/push.md"), "utf8"), /FEATURE_PUSH/);
   assert.match(readFileSync(join(root, "docs/flags.md"), "utf8"), /POSTHOG_FLAGS_KEY/);
+  assert.match(readFileSync(join(root, "docs/chat.md"), "utf8"), /disabled composer/i);
   assert.match(route, /docs\/flags\.md/);
+  assert.match(route, /docs\/chat\.md/);
   assert.match(readFileSync(join(root, "src/lib/chat-scaffold.ts"), "utf8"), /not Stream, not Sendbird/);
 });

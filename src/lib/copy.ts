@@ -560,6 +560,12 @@ export const copy = {
     videoTourFailed: "Could not start the video room.",
     videoNoRecording: "This version does not record calls.",
     videoMinutesNote: "Monthly minute limits are not enforced yet.",
+    videoFeatureOffTitle: "Feature flag off",
+    videoFeatureOff:
+      "Coming soon. FEATURE_VIDEO is off. This page does not start a live Twilio Video call or charge Plus.",
+    videoNoCredentialsTitle: "Credentials not set",
+    videoNoCredentials:
+      "Twilio Video env names are missing. KidEase will not invent SID or secret values, and the camera SDK is not attached.",
     checkInTitle: "Check-in room",
     checkInLead: "A private room with the centre. Your camera stays on this device. The centre feed is the classroom overview they published — never a hidden camera on a child.",
     mute: "Mute",
@@ -1797,6 +1803,12 @@ export const copy = {
     videoTourFailed: "Impossible de démarrer la salle vidéo.",
     videoNoRecording: "Cette version n’enregistre pas les appels.",
     videoMinutesNote: "Les plafonds de minutes mensuels ne sont pas encore appliqués.",
+    videoFeatureOffTitle: "Indicateur désactivé",
+    videoFeatureOff:
+      "Bientôt. FEATURE_VIDEO est désactivé. Cette page ne démarre pas d’appel Twilio Video en direct et ne facture pas Plus.",
+    videoNoCredentialsTitle: "Identifiants absents",
+    videoNoCredentials:
+      "Les variables Twilio Video ne sont pas configurées. KidEase n’invente pas de SID ni de secret, et le SDK caméra n’est pas branché.",
     checkInTitle: "Salle de visio",
     checkInLead: "Une salle privée avec le centre. Votre caméra reste sur cet appareil. Le flux du centre est la vue d'ensemble qu'il a publiée — jamais une caméra cachée sur un enfant.",
     mute: "Muet",
