@@ -108,7 +108,7 @@ export function PlaceSearch({
   }
 
   return (
-    <div ref={wrap} className={cn("relative min-w-0 flex-1", className)}>
+    <div ref={wrap} className={cn("relative isolate min-w-0 flex-1 contain-layout", className)}>
       <input
         id={id}
         value={value}

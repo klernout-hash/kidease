@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  scheduleAnalyticsConsentBannerReveal,
   shouldShowAnalyticsConsentBanner,
   writeAnalyticsConsent,
 } from "@/lib/analytics-consent";
@@ -18,7 +19,8 @@ export function CookieConsentBanner() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setOpen(shouldShowAnalyticsConsentBanner());
+    if (!shouldShowAnalyticsConsentBanner()) return;
+    return scheduleAnalyticsConsentBannerReveal(() => setOpen(true));
   }, []);
 
   function choose(value: "granted" | "denied") {
@@ -36,18 +38,18 @@ export function CookieConsentBanner() {
       role="region"
       aria-labelledby="ke-cookie-consent-title"
       aria-describedby="ke-cookie-consent-body"
-      className="fixed inset-x-0 bottom-0 z-[60] px-[clamp(1rem,4vw,2rem)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(5.25rem+env(safe-area-inset-bottom))]"
+      className="ke-cookie-consent fixed inset-x-0 bottom-0 z-[60] px-[clamp(1rem,4vw,2rem)] py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(5.25rem+env(safe-area-inset-bottom))]"
     >
-      <div className="mx-auto max-w-3xl rounded-xl bg-surface/95 p-4 shadow-lift ring-1 ring-border backdrop-blur-md">
-        <div className="flex items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-            <Cookie className="size-5" aria-hidden />
+      <div className="mx-auto max-w-3xl rounded-xl bg-surface/95 p-3 shadow-lift ring-1 ring-border backdrop-blur-md">
+        <div className="flex items-start gap-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+            <Cookie className="size-4" aria-hidden />
           </span>
           <div className="min-w-0">
-            <p id="ke-cookie-consent-title" className="text-sm font-semibold text-fg">
+            <p id="ke-cookie-consent-title" className="text-xs font-semibold text-fg">
               {t("cookieConsentTitle")}
             </p>
-            <p id="ke-cookie-consent-body" className="mt-1 text-sm leading-6 text-muted">
+            <p id="ke-cookie-consent-body" className="mt-0.5 text-[11px] leading-4 text-muted">
               {t("cookieConsentBody")}{" "}
               <Link to="/cookies" className="font-medium text-primary underline-offset-4 hover:underline">
                 {t("cookies")}

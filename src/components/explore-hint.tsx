@@ -5,13 +5,13 @@ const STORAGE_KEY = "kidease-explore-hint";
 
 export function ExploreHint() {
   const { t } = useCopy();
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
 
   useEffect(() => {
     try {
-      setShow(window.localStorage.getItem(STORAGE_KEY) !== "1");
+      if (window.localStorage.getItem(STORAGE_KEY) === "1") setShow(false);
     } catch {
-      setShow(true);
+      /* keep first-paint slot so /search results do not jump in */
     }
   }, []);
 
