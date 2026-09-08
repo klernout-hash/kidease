@@ -22,7 +22,9 @@ test("footer keeps Support / Parents / Daycares groups without a duplicate legal
   assert.match(footer, /Daycares/);
   assert.doesNotMatch(footer, /aria-label=\{fr \? "Juridique" : "Legal"\}/);
   const privacyLinks = footer.match(/to="\/privacy"/g) ?? [];
-  assert.equal(privacyLinks.length, 2, "privacy lives in Support plus verify-listings, not a third legal row");
+  assert.equal(privacyLinks.length, 1, "privacy lives in Support only; verify-listings goes to About");
+  assert.match(footer, /to="\/about"/);
+  assert.match(footer, /verifyListings/);
 });
 
 test("footer legal bar stays compact and uses FR-CA copy keys", () => {

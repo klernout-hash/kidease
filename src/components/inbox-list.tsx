@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
 import { EmptyState } from "@/components/empty-state";
+import { DeskSkeleton } from "@/components/page-skeleton";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -24,7 +25,7 @@ export function InboxList() {
   if (isPending) {
     return (
       <Shell>
-        <p className="p-8 text-muted">{t("loading")}</p>
+        <DeskSkeleton />
       </Shell>
     );
   }
@@ -38,7 +39,11 @@ export function InboxList() {
         {items && items.length ? <p className="mt-2 text-sm text-muted">{t("noInboxLead")}</p> : null}
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {items === null ? (
-            <li className="p-6 text-muted">{t("loading")}</li>
+            <li className="space-y-3 p-4" aria-hidden="true">
+              <div className="ke-skel h-14 w-full rounded-xl" />
+              <div className="ke-skel h-14 w-full rounded-xl" />
+              <div className="ke-skel h-14 w-full rounded-xl" />
+            </li>
           ) : items.length === 0 ? (
             <li className="p-2">
               <EmptyState title={t("noInbox")} body={t("noInboxLead")} action={t("emptyFindCare")} actionTo="/search" />

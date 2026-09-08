@@ -3,10 +3,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getWaitlistInterest, setWaitlistInterest } from "@/lib/server/waitlist-api";
+import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 
-export function WaitlistOptIn({ daycareId }: { daycareId: string }) {
+export function WaitlistOptIn({ daycareId, next }: { daycareId: string; next?: string }) {
   const { t } = useCopy();
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
@@ -33,7 +34,7 @@ export function WaitlistOptIn({ daycareId }: { daycareId: string }) {
 
   function onToggle() {
     if (!user) {
-      void navigate({ to: "/login" });
+      void navigate({ to: "/login", search: parentLoginSearch(next ?? "/search") });
       return;
     }
     setBusy(true);
@@ -44,7 +45,7 @@ export function WaitlistOptIn({ daycareId }: { daycareId: string }) {
       })
       .catch((err) => {
         toast.error(err instanceof Error ? err.message : t("needSignIn"));
-        void navigate({ to: "/login" });
+        void navigate({ to: "/login", search: parentLoginSearch(next ?? "/search") });
       })
       .finally(() => setBusy(false));
   }

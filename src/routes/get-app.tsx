@@ -91,6 +91,12 @@ function GetApp() {
                   </a>
                 </Button>
               )}
+              <Button size="lg" variant="secondary" asChild>
+                <Link to="/search">
+                  <MapPinned className="size-4" />
+                  {t("getAppBrowse")}
+                </Link>
+              </Button>
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
               <StoreBadge store="apple" label={locale === "fr" ? "App Store \u00b7 Bient\u00f4t" : "App Store \u00b7 Coming soon"} />

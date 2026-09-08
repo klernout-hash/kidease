@@ -2,6 +2,7 @@ import type { ErrorComponentProps } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 import { reportError } from "@/lib/observe";
+import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 function isStaleChunk(error: unknown) {
   const msg = error instanceof Error ? error.message : String(error ?? "");
@@ -40,20 +41,31 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
       </span>
       <h1 className="font-display text-lg">Something went wrong</h1>
       <p className="max-w-md text-sm break-words text-muted">{publicErrorMessage(error)}</p>
-      <button
-        type="button"
-        className="mt-2 min-h-11 rounded-full bg-fg px-5 text-sm font-semibold text-bg"
-        onClick={() => {
-          try {
-            sessionStorage.removeItem("kidease-chunk-reload");
-          } catch {
-            /* ignore */
-          }
-          window.location.assign("/search");
-        }}
-      >
-        Reload Explore
-      </button>
+      <div className="mt-3 flex flex-col items-center gap-2 sm:flex-row">
+        <button
+          type="button"
+          className="min-h-11 rounded-full bg-fg px-5 text-sm font-semibold text-bg"
+          onClick={() => {
+            try {
+              sessionStorage.removeItem("kidease-chunk-reload");
+            } catch {
+              /* ignore */
+            }
+            window.location.assign("/search");
+          }}
+        >
+          Reload Explore
+        </button>
+        <a
+          href="/"
+          className="inline-flex min-h-11 items-center rounded-full px-5 text-sm font-semibold text-fg ring-1 ring-border"
+        >
+          Back to home
+        </a>
+        <a href={`mailto:${SUPPORT_INBOX_EMAIL}`} className="text-sm font-medium text-muted underline-offset-4 hover:underline">
+          Email support
+        </a>
+      </div>
     </main>
   );
 }
