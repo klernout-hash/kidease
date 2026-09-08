@@ -345,7 +345,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
   let skippedInvalidOrigin = 0;
   let emailSent = 0;
   let emailStubbed = 0;
-  const kinds: Record<SearchAlertKind, number> = { new_centre: 0, vacancy_reconfirmed: 0 };
+  const kinds: Record<SearchAlertKind, number> = { new_centre: 0, vacancy_reconfirmed: 0, waitlist_pulse: 0 };
 
   for (const search of searches) {
     const lat = Number(search.center_lat);

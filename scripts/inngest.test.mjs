@@ -8,6 +8,7 @@ import {
   INNGEST_ENV_NAMES,
   SEARCH_ALERTS_CRON,
   SEARCH_ALERTS_EVENT,
+  WAITLIST_PULSE_EVENT,
   inngestConfigured,
   shouldDeferSearchAlertsToInngest,
 } from "../src/lib/inngest.ts";
@@ -62,8 +63,12 @@ test("TanStack Start serve route uses inngest/edge and wraps search-alerts", () 
   assert.match(fns, /runSearchAlertJob/);
   assert.match(fns, /SEARCH_ALERTS_CRON/);
   assert.match(fns, /SEARCH_ALERTS_EVENT/);
+  assert.match(fns, /waitlist-pulse/);
+  assert.match(fns, /runWaitlistPulseJob/);
+  assert.match(fns, /WAITLIST_PULSE_EVENT/);
   assert.equal(SEARCH_ALERTS_CRON, "TZ=America/Winnipeg 20 * * * *");
   assert.equal(SEARCH_ALERTS_EVENT, "kidease/search-alerts.run");
+  assert.equal(WAITLIST_PULSE_EVENT, "kidease/waitlist.pulse");
   assert.match(src("src/lib/inngest.ts"), /TZ=America\/Winnipeg 20 \* \* \* \*/);
   assert.match(fns, /FEATURE_PUSH stays off/);
   assert.match(cron, /shouldDeferSearchAlertsToInngest/);

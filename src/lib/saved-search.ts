@@ -19,7 +19,7 @@ export type AgeBand = (typeof AGE_BANDS)[number];
 export const AVAIL_FILTERS = ["any", "open", "waitlist", "unknown"] as const;
 export type AvailFilter = (typeof AVAIL_FILTERS)[number];
 
-export const ALERT_KINDS = ["new_centre", "vacancy_reconfirmed"] as const;
+export const ALERT_KINDS = ["new_centre", "vacancy_reconfirmed", "waitlist_pulse"] as const;
 export type SearchAlertKind = (typeof ALERT_KINDS)[number];
 
 /** Listing-side filters from search (includes PR #59 honesty chips when present). */

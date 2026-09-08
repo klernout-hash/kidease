@@ -72,7 +72,12 @@ function mapNotice(row: NoticeRow): SearchAlertNotice {
     id: row.id,
     savedSearchId: row.saved_search_id,
     daycareId: row.daycare_id,
-    kind: row.kind === "vacancy_reconfirmed" ? "vacancy_reconfirmed" : "new_centre",
+    kind:
+      row.kind === "vacancy_reconfirmed"
+        ? "vacancy_reconfirmed"
+        : row.kind === "waitlist_pulse"
+          ? "waitlist_pulse"
+          : "new_centre",
     title: row.title,
     body: row.body || "",
     readAt: iso(row.read_at),

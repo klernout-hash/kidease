@@ -1,6 +1,6 @@
 # Inngest (background jobs)
 
-KidEase uses [Inngest](https://www.inngest.com) for durable background work. This PR is foundation only: the serve endpoint plus one real job (saved-search alerts). Later: SMS digests, waitlist pulse, DocuSign follow-ups.
+KidEase uses [Inngest](https://www.inngest.com) for durable background work. Jobs today: saved-search alerts (hourly) and **waitlist pulse** (`kidease/waitlist.pulse`). Later: SMS digests, DocuSign follow-ups.
 
 TanStack Start on Vercel — **not** a Next.js `app/api` route. The handler is `src/routes/api/inngest.ts` (`createFileRoute` + `inngest/edge`).
 
@@ -27,7 +27,7 @@ Absent keys = the Next/Vite app still boots. `/api/inngest` exists but Cloud can
 3. Sync:
    - Production: `https://www.kidease.ca/api/inngest`
    - Preview: `https://<preview>.vercel.app/api/inngest`
-4. After a successful sync you should see **Search alerts (hourly)** (`search-alerts-hourly`).
+4. After a successful sync you should see **Search alerts (hourly)** (`search-alerts-hourly`) and **Waitlist pulse** (`waitlist-pulse`).
 5. Local: `npx inngest-cli@latest dev` and `npm run dev`. Dev Server discovers `http://localhost:8080/api/inngest`. Local keys are not required.
 
 If Preview has Vercel Deployment Protection, enable **Protection Bypass for Automation** and add that secret in the Inngest Vercel integration so Cloud can reach `/api/inngest`.
@@ -44,8 +44,14 @@ If Preview has Vercel Deployment Protection, enable **Protection Bypass for Auto
 
 Event `kidease/search-alerts.run` can invoke the same function from the Inngest dashboard.
 
+## Waitlist pulse
+
+`waitlist-pulse` fans out one “spot open” event. Event `kidease/waitlist.pulse` with `data.pulseId`. Idempotent on that id.
+
+When Inngest keys are unset, `enqueueWaitlistPulse` runs `runWaitlistPulseJob()` inline. SMS still requires `FEATURE_SMS` + CASL. `FEATURE_PUSH` stays off. See `docs/waitlist-pulse.md`.
+
 ## Later (not this PR)
 
 - Daily digest (`/api/digest`) as an Inngest cron.
 - DocuSign poll / follow-ups.
-- Waitlist pulse and SMS digests (`FEATURE_SMS` stays `0` until Kyle flips it).
+- SMS digests (`FEATURE_SMS` stays `0` until Kyle flips it).
