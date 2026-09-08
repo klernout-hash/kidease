@@ -85,7 +85,7 @@ export function SiteFooter() {
                 <Item to="/provider">{fr ? "Espace garderie" : "Daycare desk"}</Item>
                 <Item to="/about">{t("about")}</Item>
                 <Item to="/team">{t("team")}</Item>
-                <Item to="/about">{t("verifyListings")}</Item>
+                <Item to="/verify">{t("verifyListings")}</Item>
                 <li>
                   <a
                     href="https://childcaresearch.gov.mb.ca/en"

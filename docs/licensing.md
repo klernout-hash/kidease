@@ -6,8 +6,10 @@ unlicensed. KidEase never invents a licence number.
 
 ## What parents see
 
-- **Listing cards** and **listing detail** show a compact Licensed badge (tooltip
-  + `aria-label`) when `license_status` or `registry_match_state` is `matched`.
+- **Listing cards** and **listing detail** show a compact **Catalogue-matched**
+  badge (tooltip + `aria-label`) when Manitoba hits the bundled snapshot, or
+  **Registry-checked** after an operator marks a match. Stub provinces never
+  light `license_matched` as a live government match.
 - Expired or suspended licences show those words instead. They are never painted
   as Licensed.
 - Unverified listings show no Licensed badge. The licence record section still
@@ -36,7 +38,9 @@ not a live government scrape. Official inspections stay on
 snapshot), `manual` for Ontario, Alberta, British Columbia, Saskatchewan, and
 Québec (documented stub adapters that fail closed to operator review), and
 `stub` for every other province and territory. No status except Manitoba
-`adapter_ready` may light a Licensed badge on its own.
+`adapter_ready` (local catalogue) or an operator `admin` / `provider` review
+may light a match badge. Stub adapters never flip `license_status` to
+`matched` on their own.
 
 ## Manitoba path (safe, no scrape)
 
@@ -79,8 +83,9 @@ Use official **open data** or a documented API. Do not scrape a search HTML UI.
 3. Set `adapter_status` to `adapter_ready` in `src/lib/province-registry.ts` and
    `migrations/0023_canada_trust.sql` (or a follow-up migration).
 4. Leave `stub` notes pointing at the official registry URL.
-5. The same Licensed badge lights up when `license_status` / `registry_match_state`
-   become `matched`. No UI fork per province is required.
+5. Catalogue-matched (Manitoba snapshot) or Registry-checked (operator review)
+   lights when `license_status` / `registry_match_state` become `matched`. Stub
+   adapters never do that on their own. No UI fork per province is required.
 
 Until that feed exists, the adapter stays a stub and the badge stays off.
 

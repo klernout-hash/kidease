@@ -534,6 +534,7 @@ function Home() {
         <section className="bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">
             <h2 className="text-3xl md:text-4xl">{t("quotesTitle")}</h2>
+            <p className="mt-4 max-w-2xl text-muted">{t("quotesLead")}</p>
             <div className="mt-8 grid gap-5 md:grid-cols-3">
               <Quote body={t("quote1")} by={t("quote1By")} />
               <Quote body={t("quote2")} by={t("quote2By")} />

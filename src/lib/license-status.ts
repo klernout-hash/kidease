@@ -21,3 +21,15 @@ export function normalizeMatchState(raw?: string | null): RegistryMatchState {
   if (v === "mismatch") return "mismatch";
   return "unmatched";
 }
+
+/** Operator / admin review — the only way a stub province may stay matched. */
+export const OPERATOR_LICENSE_SOURCES = ["admin", "provider"] as const;
+
+export function isOperatorLicenseSource(source?: string | null) {
+  const v = (source || "").trim().toLowerCase();
+  return (OPERATOR_LICENSE_SOURCES as readonly string[]).includes(v);
+}
+
+export function isLocalCatalogSource(source?: string | null) {
+  return (source || "").trim().toLowerCase() === "local_catalog";
+}

@@ -10,7 +10,11 @@
  */
 
 import { lookupRegistry, registryLookupIsLive } from "./registry-adapters.ts";
-import { normalizeLicenseStatus, normalizeMatchState } from "../license-status.ts";
+import {
+  isOperatorLicenseSource,
+  normalizeLicenseStatus,
+  normalizeMatchState,
+} from "../license-status.ts";
 
 export type LicenseMatchListing = {
   id?: string;
@@ -43,23 +47,35 @@ export function applyLocalRegistryTrust<T extends LicenseMatchInput>(item: T): T
   const status = normalizeLicenseStatus(item.licenseStatus);
   if (status === "expired" || status === "suspended") return item;
   if (normalizeMatchState(item.registryMatchState) === "mismatch") return item;
-  if (status === "matched" || item.registryMatchState === "matched") {
+
+  const lookup = lookupRegistry(item.province || "", item.licenseNumber);
+  if (registryLookupIsLive(lookup)) {
     return {
       ...item,
       licenseStatus: "matched",
       registryMatchState: "matched",
+      licenseVerificationSource: item.licenseVerificationSource || lookup.match?.source || LOCAL_CATALOG_SOURCE,
     };
   }
 
-  const lookup = lookupRegistry(item.province || "", item.licenseNumber);
-  if (!registryLookupIsLive(lookup)) return item;
+  if (status === "matched" || item.registryMatchState === "matched") {
+    // Fail closed: stub / leftover matched rows never stay green unless an
+    // operator recorded a manual review. Live MB catalogue hits already returned.
+    if (isOperatorLicenseSource(item.licenseVerificationSource)) {
+      return {
+        ...item,
+        licenseStatus: "matched",
+        registryMatchState: "matched",
+      };
+    }
+    return {
+      ...item,
+      licenseStatus: "unverified",
+      registryMatchState: "unmatched",
+    };
+  }
 
-  return {
-    ...item,
-    licenseStatus: "matched",
-    registryMatchState: "matched",
-    licenseVerificationSource: item.licenseVerificationSource || lookup.match?.source || LOCAL_CATALOG_SOURCE,
-  };
+  return item;
 }
 
 export function localCatalogMatchIds(

@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
   "/terms",
   "/login",
   "/about",
+  "/verify",
   "/search",
   "/contact",
   "/help",

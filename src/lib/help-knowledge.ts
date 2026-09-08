@@ -15,7 +15,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
     keys: ["enroll", "provider", "claim", "listing", "centre owner", "daycare owner", "partner"],
     lines: [
       `If you run a licensed centre, tap Enroll Now (or Claim). Search your name in our catalogue — over 20,000 licensed centres across Canada. Not listed? Choose Enter name manually and send the form. It goes to ${SUPPORT_INBOX_EMAIL}. Claiming is free.`,
-      "Providers get a free landing page, proximity so nearby parents find you first, in-app chat, and payments paid to you. Start at Enroll Now on the home page or kidease.ca/claim.",
+      "Providers get a free landing page, proximity so nearby parents find you first, and in-app chat. Bank payouts stay off until Stripe finishes review. Start at Enroll Now on the home page or kidease.ca/claim.",
       "To go live: claim your listing, add spots and monthly fees, and upload a storefront photo. Priority listing can pin you higher — that’s optional.",
     ],
   },
@@ -46,7 +46,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
     keys: ["licen", "inspect", "safe", "legal"],
     lines: [
       "Every centre on KidEase is from a provincial licensed-care register. Each card has a licence record link. We don’t list unlicensed care.",
-      "Look for the Licensed badge and open the official licence record from the listing. That record is the government source of truth.",
+      "Look for Catalogue-matched or Registry-checked — never treat a stub province as a live government match. Open the official licence record from the listing. That record is the government source of truth.",
     ],
   },
   {

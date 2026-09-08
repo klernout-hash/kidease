@@ -14,7 +14,7 @@ export const LISTING_SITEMAP_CAP = 5000;
 /** Hard stop for the bundled slug list — Google's per-sitemap URL ceiling. */
 export const LISTING_SITEMAP_TOTAL_CAP = 50_000;
 export const SITEMAP_LISTINGS_PATH = "/sitemap-listings.xml";
-export const SITEMAP_LASTMOD = "2026-09-07";
+export const SITEMAP_LASTMOD = "2026-09-08";
 const BLOCKED_SITEMAP_SLUGS = new Set(["test-ghost-claim-lab"]);
 const LISTING_SITEMAP_PAGE_RE = /^\/sitemap-listings-([1-9]\d*)\.xml$/;
 
@@ -25,6 +25,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/terms",
   "/login",
   "/about",
+  "/verify",
   "/search",
   "/contact",
   "/help",

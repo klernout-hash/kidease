@@ -11,8 +11,10 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { stripePayoutsLive } from "@/lib/stripe-live";
 
 export const Route = createFileRoute("/claim")({
+  loader: () => ({ payoutsLive: stripePayoutsLive() }),
   validateSearch: (s: Record<string, unknown>) => {
     const q = typeof s.q === "string" ? s.q : "";
     const id = typeof s.id === "string" ? s.id : "";
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/claim")({
 });
 
 function ClaimPage() {
+  const { payoutsLive } = Route.useLoaderData();
   const search = Route.useSearch();
   const q0 = search.q ?? "";
   const id0 = search.id ?? "";
@@ -224,7 +227,7 @@ function ClaimPage() {
               [MessageCircle, "perkChat"],
               [MapPin, "perkNear"],
               [Smartphone, "perkMobile"],
-              [Wallet, "perkPay"],
+              [Wallet, payoutsLive ? "perkPayLive" : "perkPay"],
               [TrendingUp, "perkGrow"],
             ] as const
           ).map(([Icon, key]) => (
