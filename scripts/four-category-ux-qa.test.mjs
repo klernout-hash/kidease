@@ -22,7 +22,7 @@ test("Guest: live vs all counts, empty-search lead, and listing login handoff", 
   assert.match(search, /noLiveResultsLead/);
   assert.match(search, /areaPresence\(catalog\)/);
   assert.match(search, /parentLoginSearch\("\/search"\)/);
-  const listing = src("src/routes/daycare.\$slug.tsx");
+  const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /needSignInTour/);
   assert.match(listing, /guestListingTrust/);
   assert.match(listing, /guestBrowse/);
