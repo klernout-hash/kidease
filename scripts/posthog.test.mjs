@@ -5,8 +5,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   ANALYTICS_CONSENT_KEY,
+  analyticsConsentAllowsCapture,
   analyticsConsentAllowsReplay,
+  analyticsConsentApplies,
   readAnalyticsConsent,
+  shouldShowAnalyticsConsentBanner,
+  shouldStartPostHog,
   writeAnalyticsConsent,
 } from "../src/lib/analytics-consent.ts";
 import {
@@ -80,7 +84,7 @@ describe("PostHog client wiring", () => {
   });
 
   it("masks session replay inputs and all on-screen text, and keeps flags on", () => {
-    const options = posthogInitOptions({ native: false, consent: "unset" });
+    const options = posthogInitOptions({ native: false, consent: "granted" });
     assert.equal(options.capture_pageview, "history_change");
     assert.equal(options.autocapture, true);
     assert.equal(options.disable_session_recording, false);
@@ -102,7 +106,7 @@ describe("PostHog client wiring", () => {
     assert.equal(parseReplaySampleRate("20"), 0.2);
     assert.equal(parseReplaySampleRate("1"), 1);
     assert.equal(parseReplaySampleRate("nope"), DEFAULT_REPLAY_SAMPLE_RATE);
-    assert.equal(sessionReplayEnabled({ native: false, consent: "unset" }), true);
+    assert.equal(sessionReplayEnabled({ native: false, consent: "unset" }), false);
     assert.equal(sessionReplayEnabled({ native: false, consent: "granted" }), true);
     assert.equal(sessionReplayEnabled({ native: false, consent: "denied" }), false);
     assert.equal(sessionReplayEnabled({ native: true, consent: "unset" }), false);
@@ -124,29 +128,74 @@ describe("PostHog client wiring", () => {
     );
     const sampled = posthogInitOptions({
       native: false,
-      consent: "unset",
+      consent: "granted",
       env: { [POSTHOG_REPLAY_SAMPLE_ENV]: "0.1" },
     });
     assert.equal(sampled.session_recording?.sampleRate, 0.1);
     assert.equal(sampled.disable_session_recording, false);
     const denied = posthogInitOptions({ native: false, consent: "denied" });
     assert.equal(denied.disable_session_recording, true);
+    const pending = posthogInitOptions({ native: false, consent: "unset" });
+    assert.equal(pending.disable_session_recording, true);
     const native = posthogInitOptions({ native: true, consent: "unset" });
     assert.equal(native.disable_session_recording, true);
   });
 
-  it("treats missing cookie-banner consent as allowed and respects denied", () => {
+  it("requires Allow before website PostHog and hides the banner in Capacitor", () => {
     assert.equal(ANALYTICS_CONSENT_KEY, "kidease-analytics-consent");
     assert.equal(readAnalyticsConsent(memoryStorage()), "unset");
-    assert.equal(analyticsConsentAllowsReplay("unset"), true);
+    assert.equal(analyticsConsentAllowsReplay("unset"), false);
+    assert.equal(analyticsConsentAllowsCapture("unset"), false);
     assert.equal(analyticsConsentAllowsReplay("granted"), true);
     assert.equal(analyticsConsentAllowsReplay("denied"), false);
+    assert.equal(shouldShowAnalyticsConsentBanner({ native: false, consent: "unset" }), true);
+    assert.equal(shouldShowAnalyticsConsentBanner({ native: false, consent: "granted" }), false);
+    assert.equal(shouldShowAnalyticsConsentBanner({ native: false, consent: "denied" }), false);
+    assert.equal(shouldShowAnalyticsConsentBanner({ native: true, consent: "unset" }), false);
+    assert.equal(analyticsConsentApplies({ native: true }), false);
+    assert.equal(shouldStartPostHog({ native: false, consent: "unset" }), false);
+    assert.equal(shouldStartPostHog({ native: false, consent: "denied" }), false);
+    assert.equal(shouldStartPostHog({ native: false, consent: "granted" }), true);
+    assert.equal(shouldStartPostHog({ native: true, consent: "unset" }), true);
     const store = memoryStorage();
     writeAnalyticsConsent("denied", store);
     assert.equal(readAnalyticsConsent(store), "denied");
+    writeAnalyticsConsent("granted", store);
+    assert.equal(readAnalyticsConsent(store), "granted");
     writeAnalyticsConsent("unset", store);
     assert.equal(readAnalyticsConsent(store), "unset");
+    assert.equal(readAnalyticsConsent(memoryStorage({ [ANALYTICS_CONSENT_KEY]: "allow" })), "granted");
+    assert.equal(readAnalyticsConsent(memoryStorage({ [ANALYTICS_CONSENT_KEY]: "essential" })), "denied");
     applyPostHogRecordingGate(null);
+
+    const banner = read("src/components/cookie-consent-banner.tsx");
+    const rootRoute = read("src/routes/__root.tsx");
+    const start = read("src/lib/posthog.ts");
+    const legal = read("src/lib/legal-copy.ts");
+    const help = read("src/lib/help-knowledge.ts");
+    const copy = read("src/lib/copy.ts");
+    assert.match(rootRoute, /CookieConsentBanner/);
+    assert.match(banner, /shouldShowAnalyticsConsentBanner/);
+    assert.match(banner, /writeAnalyticsConsent\(value\)/);
+    assert.match(banner, /choose\("granted"\)/);
+    assert.match(banner, /choose\("denied"\)/);
+    assert.match(banner, /startPostHog/);
+    assert.match(banner, /to="\/cookies"/);
+    assert.match(banner, /to="\/privacy"/);
+    assert.match(banner, /cookieConsentEssential/);
+    assert.match(banner, /cookieConsentAllow/);
+    assert.match(banner, /role="region"/);
+    assert.doesNotMatch(banner, /\[\[data-channel=app\]_&\]:hidden/);
+    assert.match(start, /shouldStartPostHog\(\)/);
+    assert.match(copy, /cookieConsentEssential: "Essential"/);
+    assert.match(copy, /cookieConsentAllow: "Allow analytics"/);
+    assert.match(copy, /cookieConsentEssential: "Essentiel"/);
+    assert.match(copy, /cookieConsentAllow: "Autoriser l’analytique"/);
+    assert.match(legal, /Allow analytics/);
+    assert.match(legal, /Autoriser l’analytique/);
+    assert.doesNotMatch(legal, /does not show a cookie banner/);
+    assert.doesNotMatch(help, /so no cookie banner/);
+    assert.doesNotMatch(read("docs/posthog.md"), /no cookie banner/);
   });
 
   it("identifies by Better Auth user id and never sends email", () => {

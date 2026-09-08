@@ -15,7 +15,7 @@ If neither is set, the app boots and skips ingest. Events drop cookies, `Authori
 
 Browser `posthog-js` only. Public project key `VITE_PUBLIC_POSTHOG_KEY` (same class as a pixel — already on Vercel Production). `POSTHOG_HOST` defaults to `https://us.i.posthog.com`.
 
-If the key is unset, the app boots and skips ingest. Session replay is **web-only**, sampled (default 20%), and privacy-masked: all inputs and on-screen text, no network bodies, no canvas. Child-profile and inbox surfaces use `ph-no-capture`. Capacitor stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE=1`. Identify uses the Better Auth user id — not email. See `docs/posthog.md`.
+If the key is unset, the app boots and skips ingest. On the website, PostHog loads only after the visitor allows analytics (`kidease-analytics-consent`). Session replay is **web-only**, sampled (default 20%), and privacy-masked: all inputs and on-screen text, no network bodies, no canvas. Child-profile and inbox surfaces use `ph-no-capture`. Capacitor stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE=1` and does not show the cookie banner. Identify uses the Better Auth user id — not email. See `docs/posthog.md`.
 
 Admin-only check: signed-in staff on `www.kidease.ca` can `GET /api/admin/sentry-test` (session + `profiles.role = admin` + same-site, same gate as other `/api/admin/*`) to send `KidEase Sentry test`.
 

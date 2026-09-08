@@ -34,7 +34,7 @@ Recordings are for product UX, not for reading medical notes or family messages.
 | Event property scrub | Keys that look like email, phone, child name, allergy, medical, birthdate are dropped. |
 | Identify | Better Auth user id only. No email, no name. `dev-user` is skipped. |
 
-There is **no cookie banner** today (no advertising cookies). Replay follows first-party product-analytics disclosure on `/privacy` and `/cookies`. If a banner ships later, write `granted` or `denied` to `localStorage` key `kidease-analytics-consent` and call `applyPostHogRecordingGate()`. Denied stops recording and opts out of capture.
+The **website** shows an Essential vs Allow analytics banner. Until the visitor taps **Allow analytics**, `posthog-js` is not loaded (no pageviews, no replay). **Essential** stores `denied` and keeps required cookies only. The choice is saved in `localStorage` as `kidease-analytics-consent` (`granted` / `denied`). The Capacitor app does **not** show this banner. Denied calls `applyPostHogRecordingGate()` and opts out of capture.
 
 ## Vercel env (kidease-git)
 

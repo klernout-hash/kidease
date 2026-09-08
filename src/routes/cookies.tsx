@@ -5,7 +5,7 @@ import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/cookies")({
   head: () => ({
-    meta: [{ title: "Cookies · KidEase" }, { name: "description", content: "KidEase cookie policy — essential storage only, no advertising trackers." }],
+    meta: [{ title: "Cookies · KidEase" }, { name: "description", content: "KidEase cookie policy — essential cookies, optional analytics only after you allow." }],
   }),
   component: Cookies,
 });

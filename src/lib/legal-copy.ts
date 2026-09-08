@@ -221,7 +221,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "We use cookies and similar storage to keep you signed in and remember search settings. We do not use advertising pixels or ad-tech trackers. There is no cookie banner because we do not run non-essential marketing cookies.",
+          text: "We use cookies and similar storage to keep you signed in and remember search settings. We do not use advertising pixels or ad-tech trackers. On the website, a banner asks you to choose Essential (required cookies only) or Allow analytics before we load PostHog or session replay. The native iPhone and Android app does not show this banner.",
         },
         { type: "link", to: "/cookies", label: "Read the Cookie Policy" },
       ],
@@ -575,7 +575,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "Nous utilisons des témoins et un stockage similaire pour vous garder connecté et mémoriser la recherche. Pas de pixels publicitaires. Pas de bannière de témoins, car nous n’avons pas de témoins marketing non essentiels.",
+          text: "Nous utilisons des témoins et un stockage similaire pour vous garder connecté et mémoriser la recherche. Pas de pixels publicitaires. Sur le site web, une bannière vous demande de choisir Essentiel (témoins nécessaires seulement) ou Autoriser l’analytique avant de charger PostHog ou le replay. L’appli iPhone et Android n’affiche pas cette bannière.",
         },
         { type: "link", to: "/cookies", label: "Lire la politique sur les témoins" },
       ],
@@ -759,7 +759,7 @@ export const COOKIES_EN: LegalDoc = {
   updated: UPDATED_EN,
   intro: [
     "This page lists the cookies and similar storage KidEase uses. It is part of our Privacy notice.",
-    "We do not use advertising cookies, ad pixels, or third-party marketing trackers. Because those non-essential trackers are not present, KidEase does not show a cookie banner.",
+    "We do not use advertising cookies, ad pixels, or third-party marketing trackers. On the website, optional product analytics (PostHog, including privacy-masked session replay) loads only after you tap Allow analytics. Essential cookies still work if you choose Essential. We remember your choice in this browser. The iPhone and Android app does not show this banner.",
   ],
   sections: [
     {
@@ -793,7 +793,8 @@ export const COOKIES_EN: LegalDoc = {
             "Recent centres you opened, and a short-lived search cache.",
             "A random session id for first-party search telemetry (coarse geohash only).",
             "A sign-in token in session storage on some preview hosts — not used for ads.",
-            "When product analytics is on, PostHog may keep a first-party visitor id so page views and masked session replay stay on one browser.",
+            "Your analytics choice (Essential or Allow) so we do not ask every visit.",
+            "If you allowed analytics, PostHog may keep a first-party visitor id so page views and masked session replay stay on one browser.",
           ],
         },
       ],
@@ -814,7 +815,7 @@ export const COOKIES_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "When analytics is enabled in production, PostHog records page views, in-app clicks, and privacy-masked session replay so we can see how KidEase is used. It may set a first-party cookie on this site and talk to us.i.posthog.com / us-assets.i.posthog.com. Passwords and form fields are masked. This is not an advertising or remarketing cookie.",
+          text: "On the website, PostHog loads only after you tap Allow analytics. Until then — or if you choose Essential — we do not initialize PostHog or session replay. If you allow it, PostHog records page views, in-app clicks, and privacy-masked session replay. It may set a first-party cookie on this site and talk to us.i.posthog.com / us-assets.i.posthog.com. Passwords and form fields are masked. This is not an advertising or remarketing cookie.",
         },
       ],
     },
@@ -824,7 +825,7 @@ export const COOKIES_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase does not set advertising, social, or cross-site marketing cookies. We do not run a Facebook pixel, Google Ads tag, or similar. If that ever changes, we will update this page before turning it on — and we would then need a consent banner for those non-essential cookies.",
+          text: "KidEase does not set advertising, social, or cross-site marketing cookies. We do not run a Facebook pixel, Google Ads tag, or similar. Optional product analytics is not advertising; the website banner is how you allow or decline it.",
         },
       ],
     },
@@ -835,6 +836,7 @@ export const COOKIES_EN: LegalDoc = {
         {
           type: "ul",
           items: [
+            "Analytics on the website: tap Essential or Allow analytics on the banner. To choose again, clear this site’s data for kidease.ca.",
             "Browser settings: block or delete cookies and site data for kidease.ca.",
             "Location: OS or browser permission, or “Not now” in the app. Details are in Privacy → Location.",
             "Account: Delete my account removes server-side data; it does not clear cookies already on this phone until you sign out or clear site data.",
@@ -854,7 +856,7 @@ export const COOKIES_FR: LegalDoc = {
   updated: UPDATED_FR,
   intro: [
     "Cette page dresse la liste des témoins et du stockage similaire. Elle complète l’avis de confidentialité.",
-    "Nous n’utilisons pas de témoins publicitaires, de pixels ni de traceurs marketing. Comme ces témoins non essentiels sont absents, KidEase n’affiche pas de bannière de témoins.",
+    "Nous n’utilisons pas de témoins publicitaires, de pixels ni de traceurs marketing. Sur le site web, l’analytique facultative (PostHog, y compris le replay masqué) se charge seulement après Autoriser l’analytique. Les témoins essentiels fonctionnent si vous choisissez Essentiel. Nous gardons votre choix dans ce navigateur. L’appli iPhone et Android n’affiche pas cette bannière.",
   ],
   sections: [
     {
@@ -888,7 +890,8 @@ export const COOKIES_FR: LegalDoc = {
             "Centres récemment ouverts et cache de recherche temporaire.",
             "Un identifiant de session pour la télémétrie de recherche (géohachage grossier seulement).",
             "Un jeton de connexion en stockage de session sur certains hôtes d’aperçu.",
-            "Lorsque l’analytique produit est active, PostHog peut garder un identifiant de visiteur pour relier les pages vues et le replay masqué.",
+            "Votre choix d’analytique (Essentiel ou Autoriser) pour ne pas redemander à chaque visite.",
+            "Si vous avez autorisé l’analytique, PostHog peut garder un identifiant de visiteur pour relier les pages vues et le replay masqué.",
           ],
         },
       ],
@@ -909,7 +912,7 @@ export const COOKIES_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "Lorsque l’analytique est active en production, PostHog enregistre les pages vues, les clics et un replay de session masqué. Il peut déposer un témoin de première partie et parler à us.i.posthog.com / us-assets.i.posthog.com. Les mots de passe et les champs de formulaire sont masqués. Ce n’est pas un témoin publicitaire.",
+          text: "Sur le site web, PostHog se charge seulement après Autoriser l’analytique. Avant cela — ou si vous choisissez Essentiel — nous n’initialisons ni PostHog ni le replay. Si vous l’autorisez, PostHog enregistre les pages vues, les clics et un replay masqué. Il peut déposer un témoin de première partie et parler à us.i.posthog.com / us-assets.i.posthog.com. Les mots de passe et les champs de formulaire sont masqués. Ce n’est pas un témoin publicitaire.",
         },
       ],
     },
@@ -919,7 +922,7 @@ export const COOKIES_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase ne dépose pas de témoins publicitaires, sociaux ou marketing intersites. Pas de pixel Facebook ni de balise Google Ads. Si cela change, nous mettrons cette page à jour avant — et une bannière de consentement serait alors nécessaire.",
+          text: "KidEase ne dépose pas de témoins publicitaires, sociaux ou marketing intersites. Pas de pixel Facebook ni de balise Google Ads. L’analytique produit n’est pas de la publicité; la bannière du site sert à l’autoriser ou à la refuser.",
         },
       ],
     },
@@ -930,6 +933,7 @@ export const COOKIES_FR: LegalDoc = {
         {
           type: "ul",
           items: [
+            "Analytique sur le site : Essentiel ou Autoriser l’analytique sur la bannière. Pour choisir de nouveau, effacez les données de kidease.ca.",
             "Réglages du navigateur : bloquer ou supprimer les témoins de kidease.ca.",
             "Position : permission du système ou « Pas maintenant ». Détails dans Confidentialité → Position.",
             "Compte : supprimer le compte efface les données côté serveur; les témoins sur cet appareil restent jusqu’à la déconnexion ou l’effacement du site.",
