@@ -441,9 +441,14 @@ export async function overlayClaimed<T extends { id: string }>(
   if (!items.length) return items;
   try {
     const sql = await getSqlWithin();
-    const rows = await sql<DaycareRow>`
-      select * from daycares where claimed_at is not null
-    `.catch(() => [] as DaycareRow[]);
+    const ids = items.map((item) => item.id).filter(Boolean);
+    if (!ids.length) return items;
+    const rows = await sql
+      .query<DaycareRow>(
+        `select * from daycares where claimed_at is not null and id = any($1::text[])`,
+        [ids],
+      )
+      .catch(() => [] as DaycareRow[]);
     if (!rows.length) return items;
     const byId = new Map(rows.map((r) => [r.id, mapDaycare(r)]));
     return items.map((item) => {

@@ -633,9 +633,9 @@ function SearchPage() {
               body: t("noLiveResultsLead") as string | undefined,
               action: t("showAll"),
               onAction: () => setLiveOnly(false),
-              secondary: t("widenRadius"),
-              onSecondary: widenSearchRadius,
-              secondaryTo: undefined as string | undefined,
+              secondary: t("noLiveResultsClaim"),
+              onSecondary: undefined as (() => void) | undefined,
+              secondaryTo: "/claim",
             }
           : dualEmpty
             ? {
@@ -806,7 +806,13 @@ function SearchPage() {
                 </span>
               ) : (
                 <>
-                  {list.length === 1 ? t("searchResultCountOne") : t("searchResultCount").replace("{n}", String(list.length))}
+                  {liveOnly
+                    ? (fabric.live > 0 ? t("searchLiveCount") : t("searchLiveEmptyCount"))
+                        .replace("{live}", String(fabric.live))
+                        .replace("{n}", String(catalog.length))
+                    : list.length === 1
+                      ? t("searchResultCountOne")
+                      : t("searchResultCount").replace("{n}", String(list.length))}
                   {DOT}
                   {shownRadius} {u}
                   {DOT}
@@ -939,7 +945,9 @@ function SearchPage() {
                 liveOnly ? "bg-ok text-primary-fg" : "text-muted",
               )}
             >
-              {t("liveOnly")} · {fabric.live}
+              {items !== null && fabric.live > 0
+                ? t("liveToggleCount").replace("{n}", String(fabric.live))
+                : t("liveOnly")}
             </button>
             <button
               type="button"
@@ -949,7 +957,7 @@ function SearchPage() {
                 !liveOnly ? "bg-fg text-bg" : "text-muted",
               )}
             >
-              {t("showAll")} · {catalog.length}
+              {items !== null ? t("allToggleCount").replace("{n}", String(catalog.length)) : t("showAll")}
             </button>
           </div>
           <button

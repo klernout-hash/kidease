@@ -47,6 +47,8 @@ export type CatalogDbRow = {
   amenities: string | null;
   photos: string | null;
   claimed_at: string | null;
+  claim_status?: string | null;
+  listing_active?: number | boolean | null;
   visibility: string | null;
   is_test: number | boolean | null;
   google_place_id?: string | null;
@@ -62,7 +64,7 @@ age_min_months, age_max_months, infant_monthly, toddler_monthly,
 preschool_monthly, part_time_monthly, spots_infant, spots_toddler,
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
-languages, amenities, photos, claimed_at, visibility, is_test,
+languages, amenities, photos, claimed_at, claim_status, listing_active, visibility, is_test,
 google_place_id, contact_email, website
 `;
 
@@ -187,6 +189,10 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     reviews: [],
     googlePlaceId: row.google_place_id ?? null,
     feeConfirmed: Boolean(row.claimed_at),
+    claimed: Boolean(row.claimed_at),
+    claimedAt: row.claimed_at ? String(row.claimed_at) : null,
+    claimStatus: row.claim_status ?? null,
+    listingActive: row.listing_active === 0 || row.listing_active === false ? false : true,
     visibility,
     isTest: row.is_test === 1 || row.is_test === true || visibility === "admin_only",
     contactEmail: row.contact_email || "",

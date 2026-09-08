@@ -14,7 +14,13 @@ import { BuildingPhoto } from "@/components/building-photo";
 import { LISTING_PLACEHOLDER, isOfficialBuildingPhoto } from "@/lib/listing-photo";
 import { DETAIL_SIZES } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
-import { getDaycare } from "@/lib/server/daycares";
+import { getDaycare, getListingSeo } from "@/lib/server/daycares";
+import {
+  listingCanonicalUrl,
+  listingJsonLdScript,
+  listingPageTitle as listingSeoPageTitle,
+  listingSeoHeadTags,
+} from "@/lib/listing-seo";
 import { isSaved, openConversation, toggleSave } from "@/lib/server/family";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
@@ -48,20 +54,47 @@ import { ListingMap } from "@/components/listing-map";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 
 export const Route = createFileRoute("/daycare/$slug")({
-  head: ({ params }) => {
-    const meta = listingPageMeta({ slug: params.slug });
+  loader: async ({ params }) => {
+    try {
+      return await getListingSeo({ data: params.slug });
+    } catch {
+      return null;
+    }
+  },
+  head: ({ params, loaderData }) => {
+    if (loaderData) {
+      const canonical = listingCanonicalUrl(loaderData.slug);
+      return {
+        meta: listingSeoHeadTags(loaderData),
+        links: canonical ? [{ rel: "canonical", href: canonical }] : [],
+      };
+    }
+    const fallback = listingPageMeta({ slug: params.slug });
     return {
       meta: [
-        { title: meta.title },
-        { name: "description", content: meta.description },
+        { title: fallback.title },
+        { name: "description", content: fallback.description },
       ],
     };
   },
   component: Listing,
 });
 
+function ListingJsonLd({
+  src,
+  locale,
+}: {
+  src: Parameters<typeof listingJsonLdScript>[0] | null | undefined;
+  locale: "en" | "fr";
+}) {
+  const json = src ? listingJsonLdScript(src, locale) : "";
+  if (!json) return null;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />;
+}
+
 function Listing() {
   const { slug } = Route.useParams();
+  const seo = Route.useLoaderData();
   const { t, locale } = useCopy();
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
@@ -144,12 +177,16 @@ function Listing() {
     });
     const origin = useAppStore.getState().origin;
     trackLocation("view", origin.lat, origin.lng, origin.label, { slug: d.slug });
-    document.title = listingPageTitle(d);
-  }, [data]);
+    document.title = listingSeoPageTitle(d, locale === "fr" ? "fr" : "en") || listingPageTitle(d);
+  }, [data, locale]);
+
+  const seoLocale = locale === "fr" ? "fr" : "en";
+  const jsonLdSrc = data?.daycare ?? seo;
 
   if (missing) {
     return (
       <Shell>
+        <ListingJsonLd src={seo} locale={seoLocale} />
         <main className="ke-gutter mx-auto max-w-lg py-16">
           <EmptyState
             title={t("listingMissing")}
@@ -171,6 +208,7 @@ function Listing() {
   if (!data) {
     return (
       <Shell>
+        <ListingJsonLd src={seo} locale={seoLocale} />
         <PageSkeleton hero cards={3} />
       </Shell>
     );
@@ -291,6 +329,7 @@ function Listing() {
 
   return (
     <Shell>
+      <ListingJsonLd src={jsonLdSrc} locale={seoLocale} />
       <article className="ke-gutter mx-auto max-w-5xl overflow-x-hidden py-6 pb-28 md:pb-10">
         <Link
           to="/search"

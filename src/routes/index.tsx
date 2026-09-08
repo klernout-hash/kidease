@@ -212,6 +212,7 @@ function Home() {
     window.addEventListener("kidease-recent", sync);
     return () => window.removeEventListener("kidease-recent", sync);
   }, []);
+  const liveCount = useMemo(() => featured.filter((r) => r.live).length, [featured]);
   const shown = useMemo(
     () => uniqueById(liveOnly ? featured.filter((r) => r.live) : featured),
     [featured, liveOnly],
@@ -355,7 +356,7 @@ function Home() {
             liveOnly ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border",
           )}
         >
-          {t("liveOnly")} · {featured.filter((r) => r.live).length}
+          {liveCount > 0 ? t("liveToggleCount").replace("{n}", String(liveCount)) : t("liveOnly")}
         </button>
         <button
           type="button"
@@ -365,7 +366,7 @@ function Home() {
             !liveOnly ? "bg-fg text-bg ring-fg" : "bg-bg text-fg ring-border",
           )}
         >
-          {t("showAll")} · {featured.length}
+          {t("allToggleCount").replace("{n}", String(featured.length))}
         </button>
       </div>
 
@@ -503,6 +504,8 @@ function Home() {
                         liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined
                       }
                       actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
+                      secondary={liveOnly && featured.length > 0 ? t("noLiveResultsClaim") : undefined}
+                      secondaryTo={liveOnly && featured.length > 0 ? "/claim" : undefined}
                     />
                   </div>
                 ) : null}
@@ -602,6 +605,8 @@ function Home() {
                       action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
                       onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
                       actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
+                      secondary={liveOnly && featured.length > 0 ? t("noLiveResultsClaim") : undefined}
+                      secondaryTo={liveOnly && featured.length > 0 ? "/claim" : undefined}
                     />
                 </div>
               ) : null}
