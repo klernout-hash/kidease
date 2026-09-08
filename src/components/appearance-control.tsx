@@ -14,9 +14,11 @@ const THEME_LABEL: Record<ThemePreference, CopyKey> = {
 export function AppearanceControl({
   variant = "segmented",
   className = "",
+  compact = false,
 }: {
   variant?: "segmented" | "select";
   className?: string;
+  compact?: boolean;
 }) {
   const { t } = useCopy();
   const theme = useAppStore((s) => s.theme);
@@ -31,12 +33,23 @@ export function AppearanceControl({
 
   if (variant === "select") {
     return (
-      <label className={cn("inline-flex h-11 min-w-[7.25rem] items-center justify-center overflow-visible", className)}>
+      <label
+        className={cn(
+          "inline-flex items-center justify-center overflow-visible",
+          compact ? "h-8" : "h-11 min-w-[7.25rem]",
+          className,
+        )}
+      >
         <span className="sr-only">{t("appearance")}</span>
         <select
           value={theme}
           onChange={(e) => setTheme(e.target.value as ThemePreference)}
-          className="ke-lang-select h-11 min-h-11 w-full cursor-pointer rounded-full border-0 bg-transparent px-3.5 text-center text-[15px] font-medium text-muted hover:text-fg"
+          className={cn(
+            "ke-lang-select w-full cursor-pointer rounded-full border-0 bg-transparent text-center font-medium text-muted hover:text-fg",
+            compact
+              ? "ke-header-chrome h-8 min-h-8 px-2.5 text-[11px] leading-none"
+              : "h-11 min-h-11 px-3.5 text-[15px]",
+          )}
           aria-label={t("appearance")}
         >
           {THEME_PREFERENCES.map((pref) => (
