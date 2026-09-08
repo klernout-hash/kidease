@@ -57,10 +57,10 @@ Do **not** put `sk_live_` or Twilio secrets in git.
 - `POST /api/sms/status` validates Twilio signatures (needs `TWILIO_AUTH_TOKEN`) and returns `204`. No delivery table yet.
 - `POST /api/sms/inbound` persists STOP / START. `/unsubscribe` and `GET|POST /api/unsubscribe` honour email one-click.
 - Admin → Chat lab shows FEATURE_SMS on/off, source (env / PostHog), and whether env names are present (no secret values).
+- Waitlist pulse (`docs/waitlist-pulse.md`) texts matched parents only after a stored CASL grant. The job still no-ops while `FEATURE_SMS` is off.
 
 ## Later (not this PR)
 
-- Vacancy SMS to waitlisted parents (need stored mobiles + the consent this PR stores).
 - Bill / pay reminder SMS (do not mix into Stripe webhook apply).
 - Persist status-callback rows.
 - Street mailing address on CASL copy if Kyle adds one (today: KidEase, Winnipeg, Manitoba + support@kidease.ca).

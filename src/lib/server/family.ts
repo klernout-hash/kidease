@@ -1361,6 +1361,16 @@ export const updateCapacity = createServerFn({ method: "POST" })
       where user_id = ${context.userId} and daycare_id = ${data.daycareId}
     `;
     if (!own[0]) throw new Error("Not your listing");
+    const before = await sql<{
+      spots_infant: number;
+      spots_toddler: number;
+      spots_preschool: number;
+    }>`
+      select spots_infant, spots_toddler, spots_preschool
+      from daycares
+      where id = ${data.daycareId}
+      limit 1
+    `;
     await sql`
       update daycares set
         spots_infant = ${data.spotsInfant},
@@ -1371,6 +1381,44 @@ export const updateCapacity = createServerFn({ method: "POST" })
         preschool_monthly = ${data.preschoolMonthly}
       where id = ${data.daycareId}
     `;
+    const prevTotal =
+      (Number(before[0]?.spots_infant) || 0) +
+      (Number(before[0]?.spots_toddler) || 0) +
+      (Number(before[0]?.spots_preschool) || 0);
+    const nextTotal = data.spotsInfant + data.spotsToddler + data.spotsPreschool;
+    if (nextTotal > prevTotal) {
+      try {
+        const { pulseRateLimited } = await import("@/lib/waitlist-pulse");
+        const last = await sql<{ created_at: string | Date }>`
+          select created_at from waitlist_pulses
+          where daycare_id = ${data.daycareId}
+          order by created_at desc
+          limit 1
+        `.catch(() => []);
+        const lastIso =
+          last[0]?.created_at instanceof Date
+            ? last[0].created_at.toISOString()
+            : last[0]?.created_at
+              ? String(last[0].created_at)
+              : null;
+        if (!pulseRateLimited(lastIso)) {
+          const { insertWaitlistPulse, enqueueWaitlistPulse } = await import("@/lib/server/waitlist-pulse");
+          const { pulseId } = await insertWaitlistPulse({
+            daycareId: data.daycareId,
+            actorUserId: context.userId,
+            spots: {
+              infant: data.spotsInfant,
+              toddler: data.spotsToddler,
+              preschool: data.spotsPreschool,
+            },
+            source: "capacity",
+          });
+          await enqueueWaitlistPulse({ pulseId, daycareId: data.daycareId });
+        }
+      } catch (err) {
+        console.error("[kidease-waitlist-pulse] capacity pulse skipped", err);
+      }
+    }
     return { ok: true };
   });
 
@@ -1387,6 +1435,8 @@ export const deleteAccount = createServerFn({ method: "POST" })
     await sql`delete from children where user_id = ${uid}`;
     await sql`delete from saved_daycares where user_id = ${uid}`;
     await sql`delete from provider_daycares where user_id = ${uid}`;
+    await sql`delete from waitlist_interests where user_id = ${uid}`.catch(() => undefined);
+    await sql`delete from waitlist_pulse_deliveries where user_id = ${uid}`.catch(() => undefined);
     await sql`delete from casl_consent_events where user_id = ${uid}`.catch(() => undefined);
     await sql`delete from casl_consents where user_id = ${uid}`.catch(() => undefined);
     await sql`delete from profiles where user_id = ${uid}`;

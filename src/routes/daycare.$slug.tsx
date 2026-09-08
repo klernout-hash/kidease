@@ -7,6 +7,7 @@ import { Shell } from "@/components/shell";
 import { ListingRail } from "@/components/listing-rail";
 import { RequestSpotSheet } from "@/components/request-spot";
 import { RequestTourSheet } from "@/components/request-tour";
+import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { LISTING_PLACEHOLDER, isOfficialBuildingPhoto } from "@/lib/listing-photo";
@@ -464,6 +465,11 @@ function Listing() {
                 <p className="mt-3 rounded-lg bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("availUnknownLead")}</p>
               )}
               <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
+              {live ? (
+                <div className="mt-4">
+                  <WaitlistOptIn daycareId={d.id} />
+                </div>
+              ) : null}
             </section>
 
             {d.amenities.split(",").filter(Boolean).length ? (

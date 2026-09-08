@@ -17,6 +17,9 @@ export const SEARCH_ALERTS_CRON = "TZ=America/Winnipeg 20 * * * *";
 
 export const SEARCH_ALERTS_EVENT = "kidease/search-alerts.run";
 
+/** Director / capacity "spot open" — one event per pulse row (idempotent). */
+export const WAITLIST_PULSE_EVENT = "kidease/waitlist.pulse";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }

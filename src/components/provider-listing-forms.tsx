@@ -8,6 +8,7 @@ import { QualityIssuesPanel } from "@/components/quality-issues";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
+import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { promoteListing } from "@/lib/server/promos";
 import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
 import { useCopy } from "@/lib/use-copy";
@@ -281,6 +282,7 @@ export function CapacityForm({
             >
               {t("vacancyRefresh")}
             </Button>
+            <WaitlistPulseButton daycareId={daycare.id} onPulsed={onSaved} />
           </div>
         </>
       )}

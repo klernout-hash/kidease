@@ -245,7 +245,11 @@ export function SavedSearchesPanel() {
               <li key={n.id} className="flex flex-wrap items-start justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <p className={n.readAt ? "text-sm text-muted" : "text-sm font-medium"}>
-                    {n.kind === "vacancy_reconfirmed" ? t("alertVacancy") : t("alertNewCentre")}
+                    {n.kind === "waitlist_pulse"
+                      ? t("alertWaitlistPulse")
+                      : n.kind === "vacancy_reconfirmed"
+                        ? t("alertVacancy")
+                        : t("alertNewCentre")}
                   </p>
                   <p className="font-medium">{n.title}</p>
                   {n.body ? <p className="text-sm text-muted">{n.body}</p> : null}

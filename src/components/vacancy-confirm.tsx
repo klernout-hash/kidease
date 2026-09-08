@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { vacancyConfirmPriority } from "@/lib/director-nudges";
 import { refreshVacancy } from "@/lib/server/claims";
+import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { useCopy } from "@/lib/use-copy";
 import type { Daycare } from "@/lib/types";
 
@@ -61,23 +62,26 @@ export function VacancyConfirmLoop({
                 <p className="font-medium">{name}</p>
                 <p className="mt-0.5 text-sm text-muted">{lastConfirmedLabel(d, t, locale)}</p>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                disabled={busyId === d.id}
-                onClick={() => {
-                  setBusyId(d.id);
-                  void refreshVacancy({ data: { daycareId: d.id } })
-                    .then(() => {
-                      toast.success(t("vacancyRefreshed"));
-                      return onConfirmed();
-                    })
-                    .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
-                    .finally(() => setBusyId(null));
-                }}
-              >
-                {t("vacancyRefresh")}
-              </Button>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={busyId === d.id}
+                  onClick={() => {
+                    setBusyId(d.id);
+                    void refreshVacancy({ data: { daycareId: d.id } })
+                      .then(() => {
+                        toast.success(t("vacancyRefreshed"));
+                        return onConfirmed();
+                      })
+                      .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
+                      .finally(() => setBusyId(null));
+                  }}
+                >
+                  {t("vacancyRefresh")}
+                </Button>
+                <WaitlistPulseButton daycareId={d.id} compact onPulsed={onConfirmed} />
+              </div>
             </li>
           );
         })}

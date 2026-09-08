@@ -1,5 +1,6 @@
-import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT } from "@/lib/inngest";
+import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, WAITLIST_PULSE_EVENT } from "@/lib/inngest";
 import { runSearchAlertJob } from "@/lib/server/search-alerts";
+import { runWaitlistPulseJob } from "@/lib/server/waitlist-pulse";
 import { inngest } from "./client";
 
 /**
@@ -27,4 +28,26 @@ export const searchAlertsHourly = inngest.createFunction(
   },
 );
 
-export const functions = [searchAlertsHourly];
+/**
+ * Waitlist pulse: one durable fan-out per spot-open event.
+ * Idempotent on pulseId. FEATURE_PUSH stays off (job never calls FCM / APNs).
+ * SMS still requires FEATURE_SMS + stored CASL consent inside the job.
+ */
+export const waitlistPulse = inngest.createFunction(
+  {
+    id: "waitlist-pulse",
+    name: "Waitlist pulse",
+    triggers: [{ event: WAITLIST_PULSE_EVENT }],
+    idempotency: "event.data.pulseId",
+  },
+  async ({ event, step }) => {
+    const data = event && typeof event === "object" && "data" in event ? event.data : undefined;
+    const pulseId =
+      data && typeof data === "object" && "pulseId" in data ? String(data.pulseId || "").trim() : "";
+    const dryRun = Boolean(data && typeof data === "object" && "dryRun" in data && data.dryRun);
+    if (!pulseId) return { ok: false as const, error: "missing pulseId" };
+    return step.run("fan-out-waitlist-pulse", () => runWaitlistPulseJob({ pulseId, dryRun }));
+  },
+);
+
+export const functions = [searchAlertsHourly, waitlistPulse];
