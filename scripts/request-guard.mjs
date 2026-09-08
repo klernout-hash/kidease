@@ -105,6 +105,7 @@ function isSafeDocumentMethod(method) {
 export function shouldCanonicalizeApexPath(pathname) {
   const path = normalizePath(pathname);
   if (path.startsWith("/.well-known")) return false;
+  // Apple's root AASA fallback must 200 on the host that received it (no 308).
   if (path === "/apple-app-site-association") return false;
   if (path.startsWith("/api/")) return false;
   return true;

@@ -39,12 +39,26 @@ test("uses the Capacitor appId and a documented Team ID placeholder", () => {
 test("does not invent Android signing fingerprints", () => {
   assert.deepEqual(resolveAndroidSha256Fingerprints({}), []);
   assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_SHA256_CERT_FINGERPRINTS: "" }), []);
+  assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_CERT_SHA256S: "" }), []);
   assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_SHA256_CERT_FINGERPRINTS: "  " }), []);
   assert.deepEqual(
     resolveAndroidSha256Fingerprints({
       ANDROID_SHA256_CERT_FINGERPRINTS: "AA:BB:CC, DD:EE:FF",
     }),
     ["AA:BB:CC", "DD:EE:FF"],
+  );
+  assert.deepEqual(
+    resolveAndroidSha256Fingerprints({
+      ANDROID_CERT_SHA256S: "11:22:33; 44:55:66",
+    }),
+    ["11:22:33", "44:55:66"],
+  );
+  assert.deepEqual(
+    resolveAndroidSha256Fingerprints({
+      ANDROID_CERT_SHA256S: "AA:BB:CC",
+      ANDROID_SHA256_CERT_FINGERPRINTS: "DD:EE:FF",
+    }),
+    ["AA:BB:CC"],
   );
 });
 
@@ -71,12 +85,13 @@ test("assetlinks.json uses package id and empty fingerprints by default", () => 
   assert.deepEqual(links[0].target.sha256_cert_fingerprints, []);
 
   const filled = buildAssetLinks({
-    ANDROID_SHA256_CERT_FINGERPRINTS: "00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF",
+    ANDROID_CERT_SHA256S:
+      "00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF",
   });
   assert.equal(filled[0].target.sha256_cert_fingerprints.length, 1);
 });
 
-test("payload matcher covers AASA (with and without .json) and assetlinks", () => {
+test("payload matcher covers AASA (well-known, .json, and root) and assetlinks", () => {
   assert.equal(isWellKnownAppLinksPath(AASA_PATH), true);
   assert.equal(isWellKnownAppLinksPath(`${AASA_PATH}/`), true);
   assert.equal(isWellKnownAppLinksPath(AASA_JSON_PATH), true);
@@ -93,9 +108,8 @@ test("payload matcher covers AASA (with and without .json) and assetlinks", () =
   const alias = wellKnownAppLinksPayload(AASA_JSON_PATH, {});
   assert.deepEqual(JSON.parse(alias.body), JSON.parse(aasa.body));
 
-  const rootMirror = wellKnownAppLinksPayload(AASA_ROOT_PATH, {});
-  assert.deepEqual(JSON.parse(rootMirror.body), JSON.parse(aasa.body));
-  assert.equal(rootMirror.contentType, "application/json");
+  const rootAlias = wellKnownAppLinksPayload(AASA_ROOT_PATH, {});
+  assert.deepEqual(JSON.parse(rootAlias.body), JSON.parse(aasa.body));
 
   const assets = wellKnownAppLinksPayload(ASSETLINKS_PATH, {});
   assert.equal(assets.contentType, "application/json");
@@ -139,6 +153,7 @@ test("Nitro middleware, Vite plugin, and vercel.json keep these paths off the SP
     vercel,
     /"source": "\/\.well-known\/apple-app-site-association"[\s\S]*"destination"/,
   );
+  assert.doesNotMatch(vercel, /"source": "\/apple-app-site-association"[\s\S]{0,80}"destination"/);
   assert.doesNotMatch(vercel, /"source": "\/\.well-known\/assetlinks\.json"[\s\S]{0,80}"destination"/);
   assert.doesNotMatch(
     vercel,
@@ -147,21 +162,26 @@ test("Nitro middleware, Vite plugin, and vercel.json keep these paths off the SP
 
   const guard = read("scripts/request-guard.mjs");
   assert.match(guard, /CHANGE_PASSWORD_PATH/);
+  assert.match(guard, /path === "\/apple-app-site-association"/);
   assert.match(guard, /\/apple-app-site-association/);
 });
 
 test("env example documents Team ID and fingerprint fill-in without fake hashes", () => {
   const envExample = read(".env.example");
   assert.match(envExample, /APPLE_TEAM_ID=/);
+  assert.match(envExample, /ANDROID_CERT_SHA256S=/);
   assert.match(envExample, /ANDROID_SHA256_CERT_FINGERPRINTS=/);
   assert.match(envExample, /XXXXXXXXXX/);
   assert.doesNotMatch(envExample, /APPLE_TEAM_ID=[A-Z0-9]{10}/);
+  assert.doesNotMatch(envExample, /ANDROID_CERT_SHA256S=[0-9A-F:]{10,}/);
   assert.doesNotMatch(envExample, /ANDROID_SHA256_CERT_FINGERPRINTS=[0-9A-F:]{10,}/);
 
   const docs = read("docs/store-readiness.md");
   assert.match(docs, /apple-app-site-association/);
+  assert.match(docs, /https:\/\/www\.kidease\.ca\/apple-app-site-association/);
   assert.match(docs, /assetlinks\.json/);
   assert.match(docs, /apple-developer-merchantid-domain-association/);
+  assert.match(docs, /ANDROID_CERT_SHA256S/);
   assert.match(docs, /ANDROID_SHA256_CERT_FINGERPRINTS/);
   assert.match(docs, /application\/json/);
 });

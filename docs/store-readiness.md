@@ -23,7 +23,7 @@ Goal: soft launch via **TestFlight** + **Play internal testing**, then public li
 - [ ] TestFlight build uploaded
 - [ ] Play internal AAB uploaded
 - [ ] Public store listings live
-- [x] Well-known AASA + Digital Asset Links served (placeholder Team ID / empty Play SHA-256 until enroll)
+- [x] Well-known AASA + Digital Asset Links served (placeholder Team ID / empty Play SHA-256 until enroll). Root `/apple-app-site-association` is the same JSON.
 
 ---
 
@@ -105,6 +105,7 @@ Store and OS probes hit these URLs. They must be **HTTP 200** `application/json`
 | Path | After deploy |
 | --- | --- |
 | `https://www.kidease.ca/.well-known/apple-app-site-association` | AASA JSON (also served at `…/apple-app-site-association.json`) |
+| `https://www.kidease.ca/apple-app-site-association` | Same AASA JSON — Apple's root fallback (no redirect) |
 | `https://www.kidease.ca/apple-app-site-association` | Same AASA JSON at the site root for older Apple clients |
 | `https://www.kidease.ca/.well-known/assetlinks.json` | Digital Asset Links JSON |
 | `https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-association` | Apple Pay domain file — **404 until** `STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION` is set (hosted Checkout does not need it) |
@@ -128,7 +129,7 @@ Expected AASA shape (bundle id is already `ca.daycarenearme.app`):
 }
 ```
 
-`XXXXXXXXXX` is a **placeholder Team ID**, not a real Apple team. After Apple Developer enroll, set `APPLE_TEAM_ID` (or `APNS_TEAM_ID`) on Vercel — same 10-character id as Sign in with Apple / APNs. Then confirm `appID` / `appIDs` become `TEAMID.ca.daycarenearme.app`.
+`XXXXXXXXXX` is a **placeholder Team ID**, not a real Apple team. After Apple Developer enroll, set `APPLE_TEAM_ID` (or `APNS_TEAM_ID`) on Vercel — same 10-character id as Sign in with Apple / APNs. Then confirm `appID` / `appIDs` become `TEAMID.ca.daycarenearme.app`. Do not invent a Team ID.
 
 Expected `assetlinks.json` shape:
 
@@ -145,9 +146,22 @@ Expected `assetlinks.json` shape:
 ]
 ```
 
-`sha256_cert_fingerprints` stays **empty on purpose** until Play App Signing exists. After Play Console enroll: App integrity → App signing → copy the **App signing** certificate SHA-256 (and the upload cert if shown). Set `ANDROID_SHA256_CERT_FINGERPRINTS` on Vercel (comma-separated if both). Do not invent a hash.
+`sha256_cert_fingerprints` stays **empty on purpose** until Play App Signing exists. After Play Console enroll: App integrity → App signing → copy the **App signing** certificate SHA-256 (and the upload cert if shown). Set `ANDROID_CERT_SHA256S` on Vercel (comma-separated if both). `ANDROID_SHA256_CERT_FINGERPRINTS` is still accepted as an alias. Do not invent a hash.
 
 Xcode: add Associated Domains `applinks:www.kidease.ca` and `applinks:kidease.ca` when the Team is selected. Android: add an `https` VIEW / BROWSABLE intent-filter with `android:autoVerify="true"` for those hosts when you next touch the manifest.
+
+#### Kyle — paste on Vercel Production (`kidease-git`) once the store apps exist
+
+Leave both vars **blank** until Apple / Play assign real values. Then paste exactly these names. Redeploy after setting. Do not invent values.
+
+| Name | Where to copy from | Paste format |
+| --- | --- | --- |
+| `APPLE_TEAM_ID` | Apple Developer → Membership details → **Team ID** (same 10 characters as Sign in with Apple / APNs) | 10 alphanumeric characters, no spaces. Never invent one. |
+| `ANDROID_CERT_SHA256S` | Play Console → KidEase (`ca.daycarenearme.app`) → Test and release → App integrity → App signing → **App signing key certificate** SHA-256. If Play also shows an **Upload key certificate**, paste both. | Colon hex, comma-separated if two: `AA:BB:…:FF, 11:22:…:99` |
+
+Optional alias (do not set both unless they match): `ANDROID_SHA256_CERT_FINGERPRINTS`. `APNS_TEAM_ID` is used only when `APPLE_TEAM_ID` is empty.
+
+After the redeploy, `appID` must read `<TeamID>.ca.daycarenearme.app` (not `XXXXXXXXXX.…`) and `sha256_cert_fingerprints` must be a non-empty array of the pasted hashes.
 
 Verify after deploy (must be 200, not 3xx):
 
@@ -159,7 +173,7 @@ curl -sI https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-as
 ```
 
 - [ ] `APPLE_TEAM_ID` set on Vercel after Apple enroll
-- [ ] `ANDROID_SHA256_CERT_FINGERPRINTS` set on Vercel after Play App Signing
+- [ ] `ANDROID_CERT_SHA256S` set on Vercel after Play App Signing
 - [ ] Associated Domains + Android App Links intent-filter on the store binaries
 
 ### Quality gates before upload

@@ -173,7 +173,7 @@ test("spoofed sibling host does not look like vercel.app", () => {
 });
 
 test("AASA and assetlinks are not redirected or 404'd by the request guard", () => {
-  for (const host of ["www.kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
+  for (const host of ["www.kidease.ca", "kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
     for (const pathname of [
       "/.well-known/apple-app-site-association",
       "/.well-known/apple-app-site-association.json",
