@@ -7,6 +7,7 @@ import { lookupUser, notifyPlatform } from "@/lib/server/notify";
 import { JURISDICTIONS } from "@/lib/province-registry";
 import { lookupRegistry } from "@/lib/server/registry-adapters";
 import { type LicenseStatus, type RegistryMatchState } from "@/lib/trust";
+import { assertCanMutateListing } from "@/lib/access-control";
 
 const REPORT_REASONS = new Set(["license", "unlicensed", "ownership", "photo", "other"]);
 
@@ -53,7 +54,7 @@ export const attestStaffScreening = createServerFn({ method: "POST" })
       where user_id = ${context.userId} and daycare_id = ${data.daycareId}
       limit 1
     `;
-    if (!own[0]) throw new Error("Not your listing");
+    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
     await sql`
       update daycares
       set staff_screening_attested = 1,
@@ -80,7 +81,7 @@ export const saveLicenseFields = createServerFn({ method: "POST" })
       where user_id = ${context.userId} and daycare_id = ${data.daycareId}
       limit 1
     `;
-    if (!own[0]) throw new Error("Not your listing");
+    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
     const number = data.licenseNumber.trim().slice(0, 80);
     const expiry = (data.licenseExpiry || "").trim().slice(0, 10) || null;
     const capacity =

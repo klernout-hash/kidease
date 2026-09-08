@@ -12,7 +12,7 @@ import {
   parentCanSeeBill,
   parseBillStatus,
 } from "@/lib/bill";
-import { canCheckoutBill, canCreateBillForCentre, canReadBill } from "@/lib/access-control";
+import { canCreateBillForCentre, canReadBill, decideBillCheckout, resolveConnectDestination } from "@/lib/access-control";
 import { extractStripeBillRef, type StripeBillObject } from "@/lib/stripe-bill-event";
 import { createStripeCheckoutSession } from "@/lib/server/stripe-checkout";
 import { notifyParentBill, notifyPlatform } from "@/lib/server/notify";
@@ -560,23 +560,24 @@ export const createBillCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((billId: string) => billId)
   .handler(async ({ context, data: billId }) => {
-    if (!stripeChargesLive()) {
-      throw new Error("Card Pay stays off until Stripe live keys are on. This bill is on the internal ledger (not charged).");
-    }
     const sql = await getSql();
-    const row = await loadInvoice(sql, billId);
-    if (!row) throw new Error("Bill not found");
-    const bill = mapBill(row);
-    if (bill.parentUserId !== context.userId) throw new Error("Bill not found");
-    if (bill.status === "paid") return { url: null as string | null, alreadyPaid: true as const };
-    if (!canCheckoutBill({ actorUserId: context.userId, parentUserId: bill.parentUserId, status: bill.status })) {
-      throw new Error("This bill is not open to Pay");
-    }
+    const row = stripeChargesLive() ? await loadInvoice(sql, billId) : null;
+    const bill = row ? mapBill(row) : null;
+    const gate = decideBillCheckout({
+      actorUserId: context.userId,
+      bill: bill ? { parentUserId: bill.parentUserId, status: bill.status } : null,
+      stripeLive: stripeChargesLive(),
+    });
+    if (!gate.ok) throw new Error(gate.error);
+    if (gate.alreadyPaid) return { url: null as string | null, alreadyPaid: true as const };
+    if (!bill) throw new Error("Bill not found");
     const connect = await sql<{ stripe_account_id: string | null; charges_enabled: number }>`
       select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
     `.catch(() => []);
-    const destination =
-      connect[0]?.charges_enabled && connect[0].stripe_account_id ? connect[0].stripe_account_id : null;
+    const destination = resolveConnectDestination({
+      stripeAccountId: connect[0]?.stripe_account_id,
+      chargesEnabled: connect[0]?.charges_enabled,
+    });
     const origin = appOrigin();
     const session = await createStripeCheckoutSession({
       billId: bill.id,

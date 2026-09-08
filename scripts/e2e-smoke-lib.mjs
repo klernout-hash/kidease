@@ -15,6 +15,8 @@ export const SMOKE_PATHS = Object.freeze({
   home: "/",
   login: "/login",
   admin: "/admin",
+  parent: "/parent",
+  provider: "/provider",
 });
 
 /** Guest fetches only — prove /api/admin/* is not an open JSON desk. */
@@ -182,6 +184,62 @@ export function classifyAdminGate({
     ok: false,
     kind: "unknown",
     reason: `unsigned /admin did not redirect to login or Access (status ${status}, url ${url || "(none)"})`,
+  };
+}
+
+/**
+ * Guest /parent must not render the signed-in parent desk.
+ * Client RedirectToSignIn → /login is the local preview path.
+ */
+export function classifyParentGuestGate({
+  finalUrl = "",
+  status = 0,
+  bodyText = "",
+  locationHeader = "",
+} = {}) {
+  const url = String(finalUrl || "");
+  const location = String(locationHeader || "");
+  const body = String(bodyText || "");
+  if (status >= 400 && status < 500) return { ok: true, kind: "denied" };
+  if (/\/login(?:\/|$|\?)/.test(`${url}\n${location}`) || /Sign in/i.test(body)) {
+    return { ok: true, kind: "login" };
+  }
+  if (/Saved centres|Your children|Parent Plus|tab=payments/i.test(body) && !/Sign in/i.test(body)) {
+    return { ok: false, kind: "open", reason: "unsigned /parent rendered the parent desk" };
+  }
+  return {
+    ok: false,
+    kind: "unknown",
+    reason: `unsigned /parent did not redirect to login (status ${status}, url ${url || "(none)"})`,
+  };
+}
+
+/**
+ * Guest /provider is a public landing with a sign-in CTA.
+ * The centre write desk (tours, money, listings) must not appear.
+ */
+export function classifyProviderGuestGate({
+  finalUrl = "",
+  status = 0,
+  bodyText = "",
+  locationHeader = "",
+} = {}) {
+  const url = String(finalUrl || "");
+  const location = String(locationHeader || "");
+  const body = String(bodyText || "");
+  if (status >= 400 && status < 500) return { ok: true, kind: "denied" };
+  if (/\/login(?:\/|$|\?)/.test(`${url}\n${location}`)) return { ok: true, kind: "login" };
+  if (/Sign in to the centre desk|Sign in to manage spots/i.test(body)) {
+    return { ok: true, kind: "guest-landing" };
+  }
+  if (/Tour requests|ProviderMoney|Vacancy confirm/i.test(body) && !/Sign in/i.test(body)) {
+    return { ok: false, kind: "open", reason: "unsigned /provider rendered the centre write desk" };
+  }
+  if (/Sign in/i.test(body)) return { ok: true, kind: "login" };
+  return {
+    ok: false,
+    kind: "unknown",
+    reason: `unsigned /provider missing guest sign-in CTA (status ${status}, url ${url || "(none)"})`,
   };
 }
 

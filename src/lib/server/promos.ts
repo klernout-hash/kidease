@@ -4,6 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { promoPlan, type PromoPlanId } from "@/lib/promos";
 import { lookupUser, notifyPlatform } from "./notify";
+import { assertCanMutateListing } from "@/lib/access-control";
 
 export async function overlayPriority<T extends { id: string; priority?: boolean; priorityUntil?: string | null }>(
   items: T[],
@@ -45,7 +46,7 @@ export const promoteListing = createServerFn({ method: "POST" })
       select user_id from provider_daycares
       where user_id = ${context.userId} and daycare_id = ${data.daycareId}
     `;
-    if (!own[0]) throw new Error("Not your listing");
+    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
     const current = await sql<{ priority_until: string | null }>`
       select priority_until from daycares where id = ${data.daycareId}
     `.catch(() => [] as { priority_until: string | null }[]);
