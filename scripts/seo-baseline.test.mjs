@@ -83,6 +83,7 @@ test("sitemap generation includes public listing URLs and drops the ghost", asyn
   assert.doesNotMatch(xml, /test-ghost-claim-lab/);
   const middleware = readFileSync(join(root, "server/middleware/sitemap.ts"), "utf8");
   assert.match(middleware, /SITEMAP_LISTINGS_PATH/);
+  assert.match(middleware, /listingSitemapXmlForPath/);
   assert.match(middleware, /safeListingSitemapXml/);
   assert.match(middleware, /sitemap-listing-slugs\.json/);
   assert.doesNotMatch(middleware, /readFileSync/);
@@ -102,6 +103,41 @@ test("listing sitemap stays valid XML when slugs are missing or corrupt", async 
   assert.doesNotMatch(xml, /test-ghost-claim-lab/);
 });
 
+test("listings sitemap paginates past the 5000-URL file cap", async () => {
+  const {
+    LISTING_SITEMAP_CAP,
+    listingSitemapXmlForPath,
+    listingSitemapNeedsIndex,
+    listingSitemapPageCount,
+    listingSitemapPagePath,
+  } = await import("../src/lib/sitemap.ts");
+  const overflow = Array.from({ length: LISTING_SITEMAP_CAP + 3 }, (_, i) => `public-centre-${i + 1}`);
+  assert.equal(listingSitemapNeedsIndex(overflow.length), true);
+  assert.equal(listingSitemapPageCount(overflow.length), 2);
+
+  const index = listingSitemapXmlForPath(overflow, "/sitemap-listings.xml");
+  assert.match(index, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(index, /https:\/\/www\.kidease\.ca\/sitemap-listings-1\.xml/);
+  assert.match(index, /https:\/\/www\.kidease\.ca\/sitemap-listings-2\.xml/);
+  assert.doesNotMatch(index, /<urlset /);
+
+  const page1 = listingSitemapXmlForPath(overflow, listingSitemapPagePath(1));
+  const page2 = listingSitemapXmlForPath(overflow, listingSitemapPagePath(2));
+  assert.match(page1, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-1/);
+  assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-5000/);
+  assert.doesNotMatch(page1, /public-centre-5001/);
+  assert.match(page2, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-5001/);
+  assert.match(page2, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-5003/);
+  assert.equal((page1.match(/<url>/g) || []).length, LISTING_SITEMAP_CAP);
+  assert.equal((page2.match(/<url>/g) || []).length, 3);
+
+  const empty = listingSitemapXmlForPath(overflow, "/sitemap-listings-9.xml");
+  assert.match(empty, /<urlset /);
+  assert.doesNotMatch(empty, /<loc>/);
+  assert.equal(listingSitemapXmlForPath(overflow, "/robots.txt"), null);
+});
+
 test("listings sitemap middleware returns HTTP 200 XML without reading centres.json", async () => {
   const slugsPath = join(root, "src/lib/data/sitemap-listing-slugs.json");
   assert.equal(existsSync(slugsPath), true);
@@ -109,13 +145,22 @@ test("listings sitemap middleware returns HTTP 200 XML without reading centres.j
   assert.ok(Array.isArray(slugs) && slugs.length > 0);
   assert.ok(!slugs.includes("test-ghost-claim-lab"));
 
+  const { LISTING_SITEMAP_CAP } = await import("../src/lib/sitemap.ts");
   const { default: sitemapListingsMiddleware, listingSitemapXml } = await import(
     "../server/middleware/sitemap.ts"
   );
   const xml = listingSitemapXml();
   assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
-  assert.match(xml, /https:\/\/www\.kidease\.ca\/daycare\//);
   assert.doesNotMatch(xml, /test-ghost-claim-lab/);
+  if (slugs.length > LISTING_SITEMAP_CAP) {
+    assert.match(xml, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+    assert.match(xml, /https:\/\/www\.kidease\.ca\/sitemap-listings-1\.xml/);
+    const page1 = listingSitemapXml("/sitemap-listings-1.xml");
+    assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\//);
+    assert.match(page1, /<urlset /);
+  } else {
+    assert.match(xml, /https:\/\/www\.kidease\.ca\/daycare\//);
+  }
 
   const passed = { next: false };
   const res = await sitemapListingsMiddleware(
@@ -131,6 +176,16 @@ test("listings sitemap middleware returns HTTP 200 XML without reading centres.j
   assert.match(String(res.headers.get("content-type")), /application\/xml/);
   const body = await res.text();
   assert.equal(body, xml);
+
+  if (slugs.length > LISTING_SITEMAP_CAP) {
+    const pageRes = await sitemapListingsMiddleware(
+      { url: new URL("https://www.kidease.ca/sitemap-listings-1.xml"), req: { method: "GET" } },
+      () => "fell-through",
+    );
+    assert.ok(pageRes instanceof Response);
+    assert.equal(pageRes.status, 200);
+    assert.match(await pageRes.text(), /https:\/\/www\.kidease\.ca\/daycare\//);
+  }
 
   const skipped = await sitemapListingsMiddleware(
     { url: new URL("https://www.kidease.ca/sitemap.xml"), req: { method: "GET" } },

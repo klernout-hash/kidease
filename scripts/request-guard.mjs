@@ -105,6 +105,7 @@ function isSafeDocumentMethod(method) {
 export function shouldCanonicalizeApexPath(pathname) {
   const path = normalizePath(pathname);
   if (path.startsWith("/.well-known")) return false;
+  if (path === "/apple-app-site-association") return false;
   if (path.startsWith("/api/")) return false;
   return true;
 }

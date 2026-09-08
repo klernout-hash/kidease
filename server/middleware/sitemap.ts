@@ -1,10 +1,13 @@
 /**
  * Full public listing sitemap. Static marketing URLs stay in public/sitemap.xml.
  * Slugs are Vite-bundled (Vercel functions cannot read src/lib/data/*.json).
- * Generation is capped; the handler never throws — empty urlset on failure.
+ * More than LISTING_SITEMAP_CAP listings → sitemap index + paginated urlsets.
+ * Generation never throws — empty urlset on failure.
  */
 import listingSlugs from "../../src/lib/data/sitemap-listing-slugs.json" with { type: "json" };
 import {
+  isListingSitemapPath,
+  listingSitemapXmlForPath,
   safeListingSitemapXml,
   SITEMAP_LISTINGS_PATH,
 } from "../../src/lib/sitemap.ts";
@@ -14,12 +17,14 @@ const XML_HEADERS = {
   "cache-control": "public, max-age=3600",
 };
 
-let cachedXml: string | null = null;
+const cachedXml = new Map<string, string>();
 
-export function listingSitemapXml(): string {
-  if (cachedXml) return cachedXml;
-  cachedXml = safeListingSitemapXml(listingSlugs);
-  return cachedXml;
+export function listingSitemapXml(pathname = SITEMAP_LISTINGS_PATH): string {
+  const cached = cachedXml.get(pathname);
+  if (cached) return cached;
+  const xml = listingSitemapXmlForPath(listingSlugs, pathname) ?? safeListingSitemapXml([]);
+  cachedXml.set(pathname, xml);
+  return xml;
 }
 
 interface SitemapEvent {
@@ -40,9 +45,9 @@ export default async function sitemapListingsMiddleware(
 ): Promise<unknown> {
   const method = (event.req.method ?? "GET").toUpperCase();
   if (method !== "GET" && method !== "HEAD") return next();
-  if (event.url.pathname !== SITEMAP_LISTINGS_PATH) return next();
+  if (!isListingSitemapPath(event.url.pathname)) return next();
   try {
-    return xmlResponse(method, listingSitemapXml());
+    return xmlResponse(method, listingSitemapXml(event.url.pathname));
   } catch {
     return xmlResponse(method, safeListingSitemapXml([]));
   }
