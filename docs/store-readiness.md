@@ -12,6 +12,7 @@ Goal: soft launch via **TestFlight** + **Play internal testing**, then public li
 
 ## 0) Current status (2026-09-05)
 
+- [x] Capacitor In-App Review plugin + Rate KidEase menu (placeholders for store IDs — see `docs/store-review.md`)
 - [x] Capacitor shell configured (`ca.daycarenearme.app`)
 - [x] Icons / splash pipeline (pin fill pass)
 - [x] Geolocation while-using only (good for review)

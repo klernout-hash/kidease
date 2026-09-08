@@ -17,6 +17,7 @@ import type { CaslPrefs } from "@/lib/casl";
 import { PlaceSearch } from "@/components/place-search";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
 import { useAppStore } from "@/lib/store";
+import { RateKidEaseButton } from "@/components/rate-kidease";
 
 export const Route = createFileRoute("/account")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -268,6 +269,10 @@ function ProfilePane() {
         ) : (
           <p className="mt-8 text-center text-sm text-muted">Sign in as a parent, daycare, or admin to add your contact details.</p>
         )}
+        <div className="mt-8">
+          <RateKidEaseButton className="w-full" />
+          <p className="mt-2 text-center text-xs text-subtle">{t("writeStoreReview")}</p>
+        </div>
       </main>
     </Shell>
   );

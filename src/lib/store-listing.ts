@@ -16,6 +16,18 @@ export const STORE = {
   supportPath: "/help",
   termsPath: "/terms",
   cookiesPath: "/cookies",
+  /**
+   * Numeric App Store ID from App Store Connect (the digits in
+   * `https://apps.apple.com/app/idNNNNNNNNNN`). Empty until Apple assigns one.
+   * Do not invent a number. Override with `VITE_APPLE_APP_STORE_ID`.
+   */
+  appleAppStoreId: "",
+  /**
+   * Google Play application id. Same as the Capacitor `appId` — not a made-up
+   * Play listing number. Override with `VITE_PLAY_PACKAGE_NAME` only if the
+   * Play package ever differs from `ca.daycarenearme.app`.
+   */
+  playPackageName: "ca.daycarenearme.app",
   keywords:
     "daycare,childcare,Canada,licensed,preschool,infant,$10-a-day,garde,garderie,province",
   /** Google Play short description — max 80 characters. */

@@ -32,6 +32,7 @@ import { isClaimVerified } from "@/lib/trust";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
 import { isCareType, isRailAge, matchesCareType, matchesRailAge, type CareType, type RailAge } from "@/lib/care-type";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { noteHappyMoment } from "@/lib/store-review";
 import { saveSearch } from "@/lib/server/saved-searches";
 import {
   defaultSearchName,
@@ -389,6 +390,7 @@ function SearchPage() {
       .then(() => {
         toast.success(t("saveSearchSaved"));
         setSaveOpen(false);
+        noteHappyMoment("saved_search");
       })
       .catch((err) => toast.error(err instanceof Error ? err.message : t("saveSearch")))
       .finally(() => setSaveBusy(false));

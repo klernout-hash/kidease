@@ -111,6 +111,7 @@ Install a **debug** or internal build on a real phone (not a simulator-only pass
 - [ ] Deep link / custom scheme `KidEase://` is registered (optional check from Notes).
 - [ ] Android back button leaves a listing without exiting the WebView shell.
 - [ ] Rotate / keyboard on search does not cover the field.
+- [ ] Cold start does not show an App Store / Play review sheet. Menu → Rate KidEase is present (store write-review when IDs exist; see [`store-review.md`](store-review.md)).
 
 If the WebView is stuck on the `native-www` fallback page, `server.url` was lost — re-run `npm run cap:sync` without `CAP_SERVER_URL` and rebuild.
 
@@ -130,3 +131,4 @@ Do not restyle the pin. Same pipeline as the PWA home-screen icons.
 - Claiming the App Store / Play listing is live.
 - Push (APNs / FCM) — send helper is wired; `FEATURE_PUSH` stays `0` until Firebase + APNs exist. See `docs/push.md`.
 - Shipping a production AAB/IPA from CI.
+- Inventing an App Store numeric ID. In-app review + write-review links: [`store-review.md`](store-review.md).

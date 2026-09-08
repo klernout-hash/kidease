@@ -6,6 +6,7 @@ import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { RateKidEaseMenuRow } from "@/components/rate-kidease";
 import { showDeskSwitcher } from "@/lib/desks";
 
 export const Route = createFileRoute("/menu")({
@@ -75,6 +76,7 @@ function MenuPage() {
           <Row to="/benefits" label={t("benefitsTab")} />
           <Row to="/get-app" label={t("getApp")} />
           <ShareKidEaseButton appearance="row" />
+          <RateKidEaseMenuRow />
           <Row to="/about" label={t("about")} />
           <Row to="/team" label={t("team")} />
           <Row to="/contact" label={t("contact")} />
