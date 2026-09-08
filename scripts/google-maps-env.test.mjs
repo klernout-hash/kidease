@@ -4,7 +4,6 @@ import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { listingMapRendererExtras, ROAD_STYLES } from "../src/lib/google-maps.ts";
-import { MAP_RADIUS_FIT_PAD, mapZoomForRadius } from "../src/lib/maps.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -158,11 +157,11 @@ describe("listing map uses browser Google Maps key, not Carto/Leaflet", () => {
   });
 
   it("fits the map to the search radius, not a city-wide pad", () => {
-    assert.equal(mapZoomForRadius(16), 11);
-    assert.equal(mapZoomForRadius(25), 10);
-    assert.equal(MAP_RADIUS_FIT_PAD.bottom, 28);
-    assert.ok(MAP_RADIUS_FIT_PAD.bottom < 80);
+    const maps = read("src/lib/maps.ts");
     const view = read("src/components/map-view.tsx");
+    assert.match(maps, /if \(radiusKm <= 18\) return 11;/);
+    assert.match(maps, /if \(radiusKm <= 32\) return 10;/);
+    assert.match(maps, /MAP_RADIUS_FIT_PAD = \{ top: 72, right: 64, bottom: 28, left: 16 \}/);
     assert.match(view, /bboxFromRadius/);
     assert.match(view, /MAP_RADIUS_FIT_PAD/);
     assert.match(view, /mapSearchRadius/);
