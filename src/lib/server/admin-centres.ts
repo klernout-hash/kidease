@@ -6,6 +6,7 @@ import { notifyClaimStatusSms } from "@/lib/server/sms";
 import { requireAdmin } from "@/lib/server/roles";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { splitPhotoList } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { asIsoString, compareTimeDesc } from "@/lib/sort-time";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
@@ -13,10 +14,7 @@ import { transactionalMailFrom } from "@/lib/mail-from";
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
   const license = (licensePhoto || "").trim();
-  const storefront = (photos || "")
-    .split(",")
-    .map((p) => p.trim())
-    .find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
+  const storefront = splitPhotoList(photos).find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
   return {
     licensePhoto: license || null,
     storefrontPhoto: storefront || null,

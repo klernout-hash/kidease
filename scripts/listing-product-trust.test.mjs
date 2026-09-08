@@ -212,6 +212,10 @@ test("create listing form can attach a storefront before publish", () => {
   assert.match(forms, /readAsDataURL/);
   assert.match(forms, /mode === "listing"/);
   assert.match(forms, /storefrontCta/);
+  assert.match(forms, /interiorCta/);
+  assert.match(forms, /interiorPhotoNote/);
+  assert.match(forms, /MAX_INTERIOR_PHOTOS/);
+  assert.match(claims, /applyInteriorPhotos\(photos, data\.interiors\)/);
 });
 
 test("admin reviews tab is first-class and migration is 0024", () => {

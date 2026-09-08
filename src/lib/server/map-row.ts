@@ -1,3 +1,4 @@
+import { splitPhotoList } from "@/lib/listing-photo";
 import type { Daycare } from "@/lib/types";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
@@ -106,7 +107,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     licenseNumber: r.license_number,
     languages: r.languages,
     amenities: r.amenities,
-    photos: r.photos ? r.photos.split(",").filter(Boolean) : [],
+    photos: splitPhotoList(r.photos),
     verified: Boolean(r.verified),
     contactEmail: r.contact_email ?? null,
     claimed,
