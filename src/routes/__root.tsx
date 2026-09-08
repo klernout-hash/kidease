@@ -95,6 +95,7 @@ export const Route = createRootRoute({
         type: "font/woff2",
         crossOrigin: "anonymous",
       },
+      { rel: "preload", href: "/logo-transparent.svg?v=17", as: "image", type: "image/svg+xml" },
       { rel: "preconnect", href: "https://maps.googleapis.com" },
       { rel: "preconnect", href: "https://maps.gstatic.com" },
     ],

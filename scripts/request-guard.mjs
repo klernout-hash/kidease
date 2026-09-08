@@ -108,6 +108,7 @@ export function shouldCanonicalizeApexPath(pathname) {
   // Apple's root AASA fallback must 200 on the host that received it (no 308).
   if (path === "/apple-app-site-association") return false;
   if (path.startsWith("/api/")) return false;
+  if (path === "/ingest" || path.startsWith("/ingest/")) return false;
   return true;
 }
 

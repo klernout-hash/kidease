@@ -82,15 +82,21 @@ export const TurnstileField = memo(function TurnstileField({
 
   useEffect(() => {
     let cancelled = false;
-    void getTurnstileSiteKey()
-      .then((key) => {
-        if (!cancelled) setSiteKey(key);
-      })
-      .catch(() => {
-        if (!cancelled) setSiteKey(null);
-      });
+    const start = () => {
+      void getTurnstileSiteKey()
+        .then((key) => {
+          if (!cancelled) setSiteKey(key);
+        })
+        .catch(() => {
+          if (!cancelled) setSiteKey(null);
+        });
+    };
+    const ric = typeof requestIdleCallback === "function" ? requestIdleCallback : null;
+    const id = ric ? ric(start, { timeout: 1500 }) : window.setTimeout(start, 0);
     return () => {
       cancelled = true;
+      if (ric) cancelIdleCallback(id);
+      else window.clearTimeout(id);
     };
   }, []);
 

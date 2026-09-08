@@ -64,6 +64,7 @@ function shouldBypass(url, request) {
   if (request.mode === "navigate" || request.destination === "document") return true;
   return (
     path.startsWith("/api/") ||
+    path.startsWith("/ingest") ||
     path.startsWith("/assets/") ||
     path === "/img" ||
     path.startsWith("/img?") ||

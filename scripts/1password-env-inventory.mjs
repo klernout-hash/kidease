@@ -328,14 +328,14 @@ export const GROUPS = [
         concealed: false,
         vercel: "both",
         required: false,
-        notes: "https://us.i.posthog.com — Vite inlines this prefix.",
+        notes: "Upstream US ingest for /ingest rewrite + server flags.",
       },
       {
         name: "VITE_PUBLIC_POSTHOG_HOST",
         concealed: false,
         vercel: "both",
         required: false,
-        notes: "Optional client override if POSTHOG_HOST is not inlined.",
+        notes: "Optional client override. Leave unset so the browser uses /ingest.",
       },
       {
         name: "POSTHOG_FLAGS_KEY",

@@ -100,10 +100,18 @@ export function shouldShowAnalyticsConsentBanner(
   return consent === "unset";
 }
 
-/** Wait for `load` this long, then idle-reveal so `/search` content can win LCP. */
+/** Wait for `load` this long, then idle-arm so `/search` content can win LCP. */
 export const ANALYTICS_CONSENT_BANNER_LOAD_CAP_MS = 2500;
-/** Idle timeout after first paint / load so the banner is not the LCP node. */
+/** Idle timeout after first paint / load before we listen for first input. */
 export const ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS = 2000;
+/** First input finalizes LCP, then we paint the banner so `/menu` is not 2.5s LCP. */
+export const ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS = [
+  "pointerdown",
+  "keydown",
+  "touchstart",
+  "scroll",
+  "focusin",
+] as const;
 
 type IdleCallback = (deadline?: { didTimeout: boolean; timeRemaining: () => number }) => void;
 
@@ -114,6 +122,7 @@ export type ConsentBannerScheduleEnv = {
   setTimeout?: (cb: () => void, ms: number) => number;
   clearTimeout?: (id: number) => void;
   addLoadListener?: (cb: () => void) => () => void;
+  addInteractionListener?: (cb: () => void) => () => void;
 };
 
 /**
@@ -130,6 +139,7 @@ export function scheduleAnalyticsConsentBannerReveal(
   let fallbackId = 0;
   let capId = 0;
   let removeLoad: (() => void) | undefined;
+  let removeInteraction: (() => void) | undefined;
 
   const setT = env.setTimeout ?? ((cb: () => void, ms: number) => globalThis.setTimeout(cb, ms) as unknown as number);
   const clearT = env.clearTimeout ?? ((id: number) => globalThis.clearTimeout(id));
@@ -147,7 +157,29 @@ export function scheduleAnalyticsConsentBannerReveal(
   const reveal = () => {
     if (cancelled || revealed) return;
     revealed = true;
+    removeInteraction?.();
+    removeInteraction = undefined;
     show();
+  };
+
+  const defaultInteractionListen = (cb: () => void) => {
+    if (typeof window === "undefined") return () => undefined;
+    const opts = { once: true, passive: true, capture: true } as const;
+    const onEvent = () => cb();
+    for (const name of ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS) {
+      window.addEventListener(name, onEvent, opts);
+    }
+    return () => {
+      for (const name of ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS) {
+        window.removeEventListener(name, onEvent, opts);
+      }
+    };
+  };
+
+  const armInteraction = () => {
+    if (cancelled || revealed) return;
+    const listen = env.addInteractionListener ?? defaultInteractionListen;
+    removeInteraction = listen(reveal);
   };
 
   const armIdle = () => {
@@ -155,10 +187,10 @@ export function scheduleAnalyticsConsentBannerReveal(
     clearT(capId);
     capId = 0;
     if (ric) {
-      idleId = ric(reveal, { timeout: ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS });
+      idleId = ric(armInteraction, { timeout: ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS });
       return;
     }
-    fallbackId = setT(reveal, ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS);
+    fallbackId = setT(armInteraction, ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS);
   };
 
   const ready = env.readyState ?? (typeof document !== "undefined" ? document.readyState : "loading");
@@ -177,6 +209,7 @@ export function scheduleAnalyticsConsentBannerReveal(
   return () => {
     cancelled = true;
     removeLoad?.();
+    removeInteraction?.();
     if (idleId && cancelRic) cancelRic(idleId);
     clearT(fallbackId);
     clearT(capId);

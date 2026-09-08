@@ -34,6 +34,8 @@ export function BrandMark({
         alt=""
         width={px}
         height={px}
+        fetchPriority="high"
+        decoding="async"
         className={cn(logo, "bg-transparent object-contain")}
         style={{ width: px, height: px, maxWidth: px, maxHeight: px, objectFit: "contain" }}
       />

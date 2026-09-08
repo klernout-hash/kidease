@@ -44,6 +44,71 @@ function pgliteBootstrapPlugin(): Plugin {
  * and returns the 302 / completion HTML. Deployed apps do not use the popup
  * (full-page OAuth redirect), so `apply: "serve"` is enough.
  */
+/**
+ * Dev-only `/ingest` reverse proxy. Production uses vercel.json rewrites;
+ * `vite preview` uses server/middleware/ingest-proxy.ts.
+ */
+function posthogIngestPlugin(): Plugin {
+  return {
+    name: "app-builder:posthog-ingest",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const rawUrl = req.url ?? "";
+        const pathOnly = rawUrl.split("?", 1)[0] ?? "";
+        if (pathOnly !== "/ingest" && !pathOnly.startsWith("/ingest/")) {
+          next();
+          return;
+        }
+        try {
+          const host = String(req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost:8080");
+          const proto = String(
+            req.headers["x-forwarded-proto"] ??
+              ((req.socket as { encrypted?: boolean } | undefined)?.encrypted ? "https" : "http"),
+          );
+          const requestHeaders = new Headers();
+          for (const [key, value] of Object.entries(req.headers)) {
+            if (value === undefined) continue;
+            if (Array.isArray(value)) {
+              for (const v of value) requestHeaders.append(key, v);
+            } else {
+              requestHeaders.set(key, value);
+            }
+          }
+          const chunks: Buffer[] = [];
+          for await (const chunk of req) chunks.push(Buffer.from(chunk));
+          const body = chunks.length ? Buffer.concat(chunks) : undefined;
+          const request = new Request(`${proto}://${host}${rawUrl}`, {
+            method: (req.method ?? "GET").toUpperCase(),
+            headers: requestHeaders,
+            body: body && (req.method ?? "GET") !== "GET" && (req.method ?? "GET") !== "HEAD" ? body : undefined,
+          });
+          const mod = (await server.ssrLoadModule("/src/lib/server/posthog-proxy.ts")) as {
+            proxyPosthogRequest: (req: Request) => Promise<Response>;
+          };
+          const response = await mod.proxyPosthogRequest(request);
+          res.statusCode = response.status;
+          response.headers.forEach((value, key) => {
+            if (key.toLowerCase() === "set-cookie") return;
+            res.setHeader(key, value);
+          });
+          const setCookies =
+            typeof response.headers.getSetCookie === "function" ? response.headers.getSetCookie() : [];
+          for (const cookie of setCookies) res.appendHeader("set-cookie", cookie);
+          res.end(Buffer.from(await response.arrayBuffer()));
+        } catch (err) {
+          console.error("[app-builder] /ingest proxy failed:", err);
+          if (!res.headersSent) {
+            res.statusCode = 502;
+            res.setHeader("content-type", "text/plain; charset=utf-8");
+            res.end("ingest proxy failed");
+          }
+        }
+      });
+    },
+  };
+}
+
 function authPopupPlugin(): Plugin {
   return {
     name: "app-builder:auth-popup",
@@ -163,6 +228,7 @@ export default defineConfig(({ command, isPreview }) => ({
     wellKnownAppLinksPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
     authPopupPlugin(),
+    posthogIngestPlugin(),
     // PWA head + ?install=1 tutorial page; runs before Start/Nitro.
     grokPwaPlugin(),
     tailwindcss(),

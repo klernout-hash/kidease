@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS,
+  ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS,
   ANALYTICS_CONSENT_BANNER_LOAD_CAP_MS,
   ANALYTICS_CONSENT_KEY,
   analyticsConsentAllowsCapture,
@@ -25,6 +26,8 @@ import {
   POSTHOG_REPLAY_FLAG,
   POSTHOG_REPLAY_NATIVE_ENV,
   POSTHOG_REPLAY_SAMPLE_ENV,
+  POSTHOG_PROXY_PATH,
+  POSTHOG_UI_HOST,
   POSTHOG_US_ASSETS,
   POSTHOG_US_INGEST,
   applyPostHogRecordingGate,
@@ -87,11 +90,23 @@ describe("PostHog client wiring", () => {
     resetPostHogClientForTests();
     assert.equal(posthogProjectKey(), "");
     assert.equal(posthogEnabled(), false);
-    assert.equal(posthogApiHost(), DEFAULT_POSTHOG_HOST);
+    assert.equal(posthogApiHost(), POSTHOG_PROXY_PATH);
+    assert.equal(POSTHOG_PROXY_PATH, "/ingest");
+    assert.equal(POSTHOG_UI_HOST, "https://us.posthog.com");
+    assert.equal(
+      posthogApiHost({ POSTHOG_HOST: "https://us.i.posthog.com" }),
+      POSTHOG_PROXY_PATH,
+    );
+    assert.equal(
+      posthogApiHost({ VITE_PUBLIC_POSTHOG_HOST: "https://ph.example.com" }),
+      "https://ph.example.com",
+    );
   });
 
   it("masks session replay inputs and all on-screen text, and keeps flags on", () => {
     const options = posthogInitOptions({ native: false, consent: "granted" });
+    assert.equal(options.api_host, POSTHOG_PROXY_PATH);
+    assert.equal(options.ui_host, POSTHOG_UI_HOST);
     assert.equal(options.capture_pageview, "history_change");
     assert.equal(options.autocapture, true);
     assert.equal(options.disable_session_recording, false);
@@ -146,6 +161,7 @@ describe("PostHog client wiring", () => {
     assert.equal(pending.disable_session_recording, true);
     const native = posthogInitOptions({ native: true, consent: "unset" });
     assert.equal(native.disable_session_recording, true);
+    assert.equal(native.api_host, DEFAULT_POSTHOG_HOST);
   });
 
   it("requires Allow before website PostHog and hides the banner in Capacitor", () => {
@@ -212,15 +228,18 @@ describe("PostHog client wiring", () => {
     assert.doesNotMatch(read("docs/posthog.md"), /no cookie banner/);
   });
 
-  it("defers the cookie banner until after load idle so it is not LCP", () => {
+  it("defers the cookie banner until after load idle and first input so it is not LCP", () => {
     assert.equal(ANALYTICS_CONSENT_BANNER_LOAD_CAP_MS, 2500);
     assert.equal(ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS, 2000);
+    assert.ok(ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS.includes("pointerdown"));
+    assert.ok(ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS.includes("scroll"));
 
     let shown = 0;
     const timeouts = new Map();
     let nextId = 1;
     let idleCb = null;
     let loadCb = null;
+    let interactCb = null;
 
     const cancel = scheduleAnalyticsConsentBannerReveal(() => {
       shown += 1;
@@ -248,6 +267,12 @@ describe("PostHog client wiring", () => {
           loadCb = null;
         };
       },
+      addInteractionListener: (cb) => {
+        interactCb = cb;
+        return () => {
+          interactCb = null;
+        };
+      },
     });
 
     assert.equal(shown, 0);
@@ -259,9 +284,12 @@ describe("PostHog client wiring", () => {
     loadCb();
     assert.equal(typeof idleCb, "function");
     idleCb();
+    assert.equal(shown, 0);
+    assert.equal(typeof interactCb, "function");
+    interactCb();
     assert.equal(shown, 1);
 
-    idleCb();
+    interactCb?.();
     assert.equal(shown, 1);
     cancel();
   });
@@ -316,6 +344,36 @@ describe("PostHog client wiring", () => {
     assert.equal(masked.responseBody, undefined);
     assert.equal(masked.requestHeaders, undefined);
     assert.equal(masked.responseHeaders, undefined);
+  });
+
+  it("proxies first-party /ingest to US PostHog and keeps session cookies off that hop", async () => {
+    const { isPosthogProxyPath, posthogUpstreamUrl } = await import("../src/lib/posthog-proxy.ts");
+    assert.equal(isPosthogProxyPath("/ingest"), true);
+    assert.equal(isPosthogProxyPath("/ingest/e"), true);
+    assert.equal(isPosthogProxyPath("/parent"), false);
+    assert.equal(posthogUpstreamUrl("/ingest/e", "?ip=1"), "https://us.i.posthog.com/e?ip=1");
+    assert.equal(
+      posthogUpstreamUrl("/ingest/static/array.js"),
+      "https://us-assets.i.posthog.com/static/array.js",
+    );
+    assert.equal(
+      posthogUpstreamUrl("/ingest/array/flags"),
+      "https://us-assets.i.posthog.com/array/flags",
+    );
+    const vercel = read("vercel.json");
+    assert.match(vercel, /"source": "\/ingest\/static\/:path\(\.\*\)"/);
+    assert.match(vercel, /"destination": "https:\/\/us-assets\.i\.posthog\.com\/static\/:path"/);
+    assert.match(vercel, /"source": "\/ingest\/array\/:path\(\.\*\)"/);
+    assert.match(vercel, /"source": "\/ingest\/:path\(\.\*\)"/);
+    assert.match(vercel, /"destination": "https:\/\/us\.i\.posthog\.com\/:path"/);
+    const proxy = read("src/lib/server/posthog-proxy.ts");
+    assert.match(proxy, /headers\.delete\("cookie"\)|key === "cookie"/);
+    assert.match(proxy, /authorization/);
+    assert.match(read("server/middleware/ingest-proxy.ts"), /proxyPosthogRequest/);
+    assert.match(read("vite.config.ts"), /posthogIngestPlugin/);
+    assert.match(read("vite.config.ts"), /app-builder:posthog-ingest/);
+    assert.match(read("docs/posthog.md"), /Reverse proxy/);
+    assert.match(read("src/lib/legal-copy.ts"), /\/ingest path/);
   });
 
   it("allowlists US PostHog hosts in CSP without adding unsafe-eval", async () => {

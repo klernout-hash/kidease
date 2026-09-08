@@ -19,6 +19,8 @@ test("parent desk defers heavy tab content so nav highlight paints first", () =>
   assert.match(desk, /contentTab === "explore"/);
   assert.match(desk, /contentTab === "saved"/);
   assert.match(desk, /scheduleIdle/);
+  assert.match(desk, /yieldToMain/);
+  assert.match(desk, /SAVED_EAGER_CARDS/);
   assert.match(desk, /requestIdleCallback/);
   assert.match(desk, /withTimeoutFallback/);
   assert.match(desk, /LOADER_SETTLE_MS/);
@@ -59,6 +61,7 @@ test("verify-2fa keeps OTP state under Shell and never silently ignores a Verify
   assert.match(route, /disabled=\{busy\}/);
   assert.match(route, /aria-busy=\{busy\}/);
   assert.doesNotMatch(route, /disabled=\{busy \|\| !ready \|\| code\.length !== 6/);
+  assert.match(route, /yieldToMain/);
   assert.match(route, /OtpCodeField/);
   assert.match(src("src/lib/auth/gates.tsx"), /pending\?:/);
   assert.match(src("src/routes/parent.tsx"), /pending=\{/);
@@ -72,4 +75,5 @@ test("rail cards skip offscreen paint and listing cards are memoized", () => {
   assert.match(src("src/components/turnstile-field.tsx"), /export const TurnstileField = memo\(/);
   assert.match(src("src/components/turnstile-field.tsx"), /min-h-\[65px\]/);
   assert.match(src("src/components/turnstile-field.tsx"), /size: "flexible"/);
+  assert.match(src("src/components/turnstile-field.tsx"), /requestIdleCallback/);
 });

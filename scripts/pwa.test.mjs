@@ -52,6 +52,7 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   assert.match(sw, /request\.mode === "navigate"/);
   assert.match(sw, /destination === "document"/);
   assert.match(sw, /startsWith\("\/api\/"\)/);
+  assert.match(sw, /startsWith\("\/ingest"\)/);
   assert.match(sw, /startsWith\("\/assets\/"\)/);
   assert.match(sw, /asset-recover\.js/);
   assert.doesNotMatch(sw, /NAVIGATE_MS/);
