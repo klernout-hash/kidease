@@ -3,6 +3,7 @@ import { Heart, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { PhotoCarousel } from "@/components/photo-carousel";
+import { ShareListingButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
 import { cn, displayCentreName, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
@@ -151,6 +152,12 @@ export function DaycareCard({
           ) : null}
         </div>
       </Link>
+      <ShareListingButton
+        slug={item.slug}
+        name={name}
+        appearance="photo"
+        className="absolute right-12 top-2 z-20"
+      />
       <button
         type="button"
         onClick={(e) => {

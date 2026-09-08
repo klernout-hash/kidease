@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Heart, MapPinned, MessageCircle, Phone, Star, Video } from "lucide-react";
+import { ShareListingButton } from "@/components/share-button";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -362,6 +363,7 @@ function Listing() {
                 <Button type="button" variant="ghost" onClick={() => toggleCompare(d.id)}>
                   {comparing ? t("comparing") : t("addToCompare")}
                 </Button>
+                <ShareListingButton slug={d.slug} name={name} appearance="labeled" />
                 <Button asChild variant="ghost">
                   <Link to="/tour-checklist">{t("tourChecklist")}</Link>
                 </Button>
@@ -535,6 +537,7 @@ function Listing() {
               ) : (
                 <p className="text-xs text-muted">{t("requestUnavailable")}</p>
               )}
+              <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full hover:bg-surface-2/70" />
               <div className="grid grid-cols-4 gap-2">
                 <Button variant="ghost" onClick={() => void onSave()} aria-label={t("save")}>
                   <Heart className={saved ? "size-4 fill-fg" : "size-4"} />
@@ -605,6 +608,7 @@ function Listing() {
               <MapPinned className="size-5" />
             </a>
           </Button>
+          <ShareListingButton slug={d.slug} name={name} appearance="icon" className="bg-surface text-fg ring-1 ring-border hover:bg-surface-2" />
         </div>
       </div>
       ) : null}

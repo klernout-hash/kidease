@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { Shell } from "@/components/shell";
+import { ShareKidEaseButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
@@ -73,6 +74,7 @@ function MenuPage() {
           <Row to="/search" label={t("explore")} />
           <Row to="/benefits" label={t("benefitsTab")} />
           <Row to="/get-app" label={t("getApp")} />
+          <ShareKidEaseButton appearance="row" />
           <Row to="/about" label={t("about")} />
           <Row to="/team" label={t("team")} />
           <Row to="/contact" label={t("contact")} />

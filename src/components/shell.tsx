@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Heart, ClipboardCheck, Menu, MessageCircle, Search } from "lucide-react";
+import { ShareKidEaseButton } from "@/components/share-button";
 import { SignedIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
@@ -79,6 +80,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                 </Link>
               );
             })}
+            <ShareKidEaseButton appearance="nav" />
           </nav>
           <div className="flex items-center gap-1.5">
             {user ? <DeskSwitcher /> : null}
@@ -284,6 +286,7 @@ function HeaderProfile({
           >
             {providerLabel}
           </Link>
+          <ShareKidEaseButton appearance="menu" onDone={() => setOpen(false)} />
         </div>
       ) : null}
     </div>
@@ -398,6 +401,7 @@ function AccountMenu({
               Support desk
             </Link>
           ) : null}
+          <ShareKidEaseButton appearance="menu" onDone={() => setOpen(false)} />
           <button
             type="button"
             role="menuitem"

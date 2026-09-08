@@ -108,21 +108,32 @@ export async function hapticLight(): Promise<void> {
   }
 }
 
-export async function shareText(title: string, text: string, url?: string): Promise<boolean> {
+export type ShareAttempt = "shared" | "cancelled" | "unavailable";
+
+export function isShareCancellation(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const name = "name" in err ? String((err as { name?: unknown }).name) : "";
+  const message = "message" in err ? String((err as { message?: unknown }).message) : "";
+  if (name === "AbortError") return true;
+  return /cancel|abort|dismiss/i.test(message);
+}
+
+export async function shareText(title: string, text: string, url?: string): Promise<ShareAttempt> {
   try {
     if (isNative()) {
       const { Share } = await import("@capacitor/share");
       await Share.share({ title, text, url });
-      return true;
+      return "shared";
     }
-    if (navigator.share) {
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       await navigator.share({ title, text, url });
-      return true;
+      return "shared";
     }
-  } catch {
-    return false;
+  } catch (err) {
+    if (isShareCancellation(err)) return "cancelled";
+    return "unavailable";
   }
-  return false;
+  return "unavailable";
 }
 
 export async function hideNativeSplash(): Promise<void> {
