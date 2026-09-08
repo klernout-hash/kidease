@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { getTurnstileSiteKey } from "@/lib/server/turnstile";
 
 type TurnstileApi = {
@@ -12,6 +12,7 @@ type TurnstileApi = {
       "error-callback"?: () => void;
       retry?: "auto" | "never";
       "refresh-expired"?: "auto" | "manual" | "never";
+      size?: "normal" | "flexible" | "compact";
     },
   ) => string;
   reset: (id: string) => void;
@@ -61,7 +62,7 @@ function resetWidget(widgetId: string | null, onToken: (token: string) => void) 
   onToken("");
 }
 
-export function TurnstileField({
+export const TurnstileField = memo(function TurnstileField({
   onToken,
   resetSignal = 0,
   onRequired,
@@ -109,6 +110,7 @@ export function TurnstileField({
         if (cancelled || !api || !host.current || widgetId.current) return;
         widgetId.current = api.render(host.current, {
           sitekey: siteKey,
+          size: "flexible",
           retry: "auto",
           "refresh-expired": "auto",
           callback: (token) => {
@@ -163,12 +165,12 @@ export function TurnstileField({
 
   if (siteKey === undefined || siteKey === null) return null;
   return (
-    <div>
+    <div className="min-h-[65px]">
       <div ref={host} className="cf-turnstile" />
       {loadError ? <p className="mt-2 text-sm text-danger">{loadError}</p> : null}
     </div>
   );
-}
+});
 
 export function useTurnstileToken() {
   const [token, setToken] = useState("");

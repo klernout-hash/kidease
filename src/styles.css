@@ -384,6 +384,8 @@
     max-width: var(--ke-card-w, 11.25rem);
     min-width: var(--ke-card-w, 11.25rem);
     scroll-snap-align: start;
+    content-visibility: auto;
+    contain-intrinsic-size: var(--ke-card-w, 11.25rem) 260px;
   }
   .ke-card {
     width: 100%;

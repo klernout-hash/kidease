@@ -55,7 +55,16 @@ export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
 }
 
 /** Password/social session plus the email verification code. */
-export function TwoFactorGate({ next, children }: { next: string; children: ReactNode }) {
+export function TwoFactorGate({
+  next,
+  children,
+  pending,
+}: {
+  next: string;
+  children: ReactNode;
+  /** Shown while the 2FA status check is in flight so the route does not go blank (rage-click bait). */
+  pending?: ReactNode;
+}) {
   const { user, isPending } = useCurrentUserState();
   const [state, setState] = useState<"load" | "ok" | "need">("load");
 
@@ -76,7 +85,7 @@ export function TwoFactorGate({ next, children }: { next: string; children: Reac
     };
   }, [user?.id, next]);
 
-  if (isPending || (user && state === "load")) return null;
+  if (isPending || (user && state === "load")) return pending ?? null;
   if (!user) return <RedirectToSignIn />;
   if (state === "need") return <Navigate to="/verify-2fa" search={{ next }} />;
   return <>{children}</>;
