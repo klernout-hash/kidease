@@ -2,12 +2,22 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
+import { Button } from "@/components/ui/button";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { getLabStatus, type LabStatus } from "@/lib/server/chat-scaffold";
 import { dryRunPush } from "@/lib/server/push-api";
-import { CHAT_SCAFFOLD_EMPTY, CHAT_SCAFFOLD_MESSAGE } from "@/lib/chat-scaffold";
+import {
+  CHAT_COMING_SOON_TITLE,
+  CHAT_COMPOSER_PLACEHOLDER,
+  CHAT_SCAFFOLD_EMPTY,
+  CHAT_SCAFFOLD_MESSAGE,
+  chatComposerState,
+} from "@/lib/chat-scaffold";
+import { FEATURE_FLAG_CATALOG } from "@/lib/flags";
+import { FCM_LAB_NEXT_STEPS } from "@/lib/push";
+import { TWILIO_VIDEO_LAB_NEXT_STEPS } from "@/lib/video";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { canSeeAdminDesk } from "@/lib/desks";
 
@@ -63,6 +73,10 @@ function AdminChatPage() {
     );
   }
 
+  const composer = lab?.chat.composer ?? chatComposerState(false);
+  const pushSteps = lab?.push.nextSteps ?? FCM_LAB_NEXT_STEPS;
+  const videoSteps = lab?.video.nextSteps ?? TWILIO_VIDEO_LAB_NEXT_STEPS;
+
   return (
     <TwoFactorGate next="/admin-chat">
       <DeskShell
@@ -79,63 +93,109 @@ function AdminChatPage() {
             <p className="mt-2 max-w-xl text-sm text-muted">{CHAT_SCAFFOLD_MESSAGE}</p>
             {lab === null ? <p className="mt-3 text-sm text-warn">{CHAT_SCAFFOLD_EMPTY}</p> : null}
           </div>
+
+          <div className="rounded-2xl bg-surface px-5 py-5 ring-1 ring-border">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">{CHAT_COMING_SOON_TITLE}</p>
+            <p className="mt-2 font-medium">
+              {lab?.chat.enabled ? "FEATURE_INAPP_CHAT on · not live" : "FEATURE_INAPP_CHAT off"}
+            </p>
+            <p className="mt-2 text-sm text-muted">{composer.message}</p>
+            <form
+              aria-disabled="true"
+              aria-label="In-app chat composer (disabled)"
+              className="mt-4 flex flex-col gap-2"
+              onSubmit={(event) => event.preventDefault()}
+            >
+              <div className="flex gap-2">
+                <input
+                  disabled
+                  readOnly
+                  value=""
+                  placeholder={CHAT_COMPOSER_PLACEHOLDER}
+                  aria-label="Chat composer (disabled)"
+                  className="h-12 flex-1 rounded-md border border-border bg-surface-2 px-3 text-muted"
+                />
+                <Button type="submit" disabled>
+                  Send
+                </Button>
+              </div>
+              <p className="text-xs text-subtle">No delivery. This form cannot send, store, or fake a thread.</p>
+            </form>
+          </div>
+
           <dl className="grid gap-3 sm:grid-cols-2">
             <Stat
               label="FEATURE_INAPP_CHAT"
               value={flagValue(lab?.chat.enabled)}
+              state={flagState(lab?.chat.enabled, false)}
               hint={`${sourceHint(lab?.chat.source)}Flag only. Composer and delivery are not built.`}
             />
             <Stat
               label="FEATURE_PUSH"
               value={flagValue(lab?.push.enabled)}
+              state={flagState(lab?.push.enabled, false)}
               hint={pushHint(lab, dryRunHint)}
             />
             <Stat
               label="FEATURE_SMS"
               value={flagValue(lab?.sms.enabled)}
+              state={flagState(lab?.sms.enabled, false)}
               hint={smsHint(lab)}
             />
             <Stat
               label="FEATURE_VIDEO"
               value={flagValue(lab?.video.enabled)}
+              state={flagState(lab?.video.enabled, false)}
               hint={videoHint(lab)}
             />
             <Stat
               label="FEATURE_PROVIDER_SUBSCRIPTIONS"
               value={flagValue(lab?.subscriptions.enabled)}
+              state={flagState(lab?.subscriptions.enabled, true)}
               hint={`${sourceHint(lab?.subscriptions.source)}Directors see the Subscription tab when on.`}
             />
           </dl>
-          <div className="rounded-2xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
-            <p>
-              Live parent ↔ centre messages stay on{" "}
-              <Link to="/inbox" className="text-fg underline">
-                /inbox
-              </Link>
-              .
+
+          <div className="rounded-2xl bg-surface px-5 py-6 text-sm ring-1 ring-border">
+            <h3 className="font-display text-xl">Flag names</h3>
+            <p className="mt-2 text-muted">
+              Keys must match env and PostHog exactly. See <code>docs/flags.md</code> and{" "}
+              <code>docs/chat.md</code>. Secret values are never shown.
             </p>
-            <p className="mt-2">
-              No Stream or Sendbird. Types live in <code>src/lib/chat-scaffold.ts</code>.
+            <ul className="mt-4 space-y-3">
+              {FEATURE_FLAG_CATALOG.map((row) => (
+                <li key={row.key} className="rounded-xl bg-surface-2 px-4 py-3">
+                  <p className="font-mono text-sm">
+                    {row.key}
+                    <span className="ml-2 text-xs text-muted">
+                      default {row.defaultOn ? "on" : "off"} · {row.docs}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-muted">{row.summary}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-muted">Flags: {remoteHint(lab)}. Kyle flips them in PostHog without a redeploy.</p>
+          </div>
+
+          <div className="rounded-2xl bg-surface px-5 py-6 text-sm ring-1 ring-border">
+            <h3 className="font-display text-xl">Push · FCM / APNs</h3>
+            <p className="mt-2 text-muted">
+              {lab?.push.enabled
+                ? "FEATURE_PUSH is on. Live send still needs credentials and a native binary. Dry-run does not send."
+                : "Coming soon — FEATURE_PUSH is off. Dry-run counts tokens only. www does not prompt."}
             </p>
-            <p className="mt-2">
-              Parent Plus video tours:{" "}
-              <Link to="/video/$roomId" params={{ roomId: "lab" }} className="text-fg underline">
-                /video/lab
-              </Link>
-              . Flag and env presence only — no secrets.
-            </p>
-            <p className="mt-2">
-              Push is native-only (<code>docs/push.md</code>). www does not prompt.
-              Live FCM / APNs stays off until the flag is on and credentials exist.
-            </p>
-            <p className="mt-2">
-              Flags: {remoteHint(lab)}. Kyle flips them in PostHog without a redeploy —
-              see <code>docs/flags.md</code>. <code>FEATURE_PUSH</code> and{" "}
-              <code>FEATURE_SMS</code> stay off until you enable them.
-            </p>
-            <button
+            <ol className="mt-4 list-decimal space-y-2 pl-5 text-muted">
+              {pushSteps.map((step) => (
+                <li key={step.id}>
+                  <span className="font-medium text-fg">{step.title}.</span> {step.detail}
+                </li>
+              ))}
+            </ol>
+            <Button
               type="button"
-              className="mt-3 rounded-full bg-fg px-4 py-2 text-sm text-bg"
+              variant="secondary"
+              className="mt-4"
               onClick={() => {
                 void dryRunPush({ data: {} })
                   .then((result) => {
@@ -145,7 +205,44 @@ function AdminChatPage() {
               }}
             >
               Dry-run push (count tokens)
-            </button>
+            </Button>
+            {dryRunHint ? <p className="mt-2 text-xs text-muted">{dryRunHint}</p> : null}
+          </div>
+
+          <div className="rounded-2xl bg-surface px-5 py-6 text-sm ring-1 ring-border">
+            <h3 className="font-display text-xl">Video · Twilio Video</h3>
+            <p className="mt-2 text-muted">
+              {lab?.video.enabled
+                ? "FEATURE_VIDEO is on. The browser SDK is still not attached — /video/lab does not start a live call or charge."
+                : "Coming soon — FEATURE_VIDEO is off. Flag and env presence only. No secrets. No charge."}
+            </p>
+            <ol className="mt-4 list-decimal space-y-2 pl-5 text-muted">
+              {videoSteps.map((step) => (
+                <li key={step.id}>
+                  <span className="font-medium text-fg">{step.title}.</span> {step.detail}
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 text-muted">
+              Lab room:{" "}
+              <Link to="/video/$roomId" params={{ roomId: "lab" }} className="text-fg underline">
+                /video/lab
+              </Link>
+              . Live parent ↔ centre messages stay on{" "}
+              <Link to="/inbox" className="text-fg underline">
+                /inbox
+              </Link>
+              .
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
+            <p>No Stream or Sendbird. Types live in <code>src/lib/chat-scaffold.ts</code>.</p>
+            <p className="mt-2">
+              Push is native-only (<code>docs/push.md</code>). Video SDK attach is later (
+              <code>docs/video.md</code>). <code>FEATURE_PUSH</code> and <code>FEATURE_VIDEO</code> stay off
+              until you enable them.
+            </p>
           </div>
         </section>
       </DeskShell>
@@ -156,6 +253,12 @@ function AdminChatPage() {
 function flagValue(enabled: boolean | undefined): string {
   if (enabled == null) return "…";
   return enabled ? "on" : "off";
+}
+
+function flagState(enabled: boolean | undefined, liveWhenOn: boolean): string {
+  if (enabled == null) return "";
+  if (!enabled) return "Coming soon · feature flag off";
+  return liveWhenOn ? "Live when Stripe keys exist" : "Flag on · not a live product";
 }
 
 function sourceHint(source: LabStatus["chat"]["source"] | undefined): string {
@@ -200,17 +303,29 @@ function videoHint(lab: LabStatus | null): string {
   const p = lab.video.presence;
   const key = p.apiKey ? "API key present" : "no API key (tokens need TWILIO_API_KEY_SID + SECRET)";
   const source = sourceHint(lab.video.source);
+  const sdk = lab.video.sdkWired ? "SDK wired." : "Twilio Video SDK not attached.";
   if (lab.video.credentialsPresent) {
-    return `${source}${key}. Account SID present. Values are not shown.`;
+    return `${source}${key}. Account SID present. ${sdk} Values are not shown.`;
   }
-  return `${source}No Twilio Video credentials (${key}; SID ${p.accountSid ? "present" : "missing"}). Do not invent SID or secret values.`;
+  return `${source}No Twilio Video credentials (${key}; SID ${p.accountSid ? "present" : "missing"}). ${sdk} Do not invent SID or secret values.`;
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
+function Stat({
+  label,
+  value,
+  hint,
+  state,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  state: string;
+}) {
   return (
     <div className="rounded-2xl bg-surface px-5 py-4 ring-1 ring-border">
       <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-subtle">{label}</dt>
       <dd className="mt-2 font-display text-2xl">{value}</dd>
+      {state ? <p className="mt-1 text-xs font-medium text-fg">{state}</p> : null}
       <p className="mt-1 text-xs text-muted">{hint}</p>
     </div>
   );

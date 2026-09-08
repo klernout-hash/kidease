@@ -48,6 +48,37 @@ export const VIDEO_TOKEN_TTL_SECONDS = 900;
 
 export const VIDEO_SDK_WIRED = false;
 
+export const VIDEO_FLAG_OFF_MESSAGE =
+  "Coming soon — FEATURE_VIDEO is off. This path does not start a live Twilio Video call or charge Plus.";
+
+export type VideoLabNextStep = {
+  id: "credentials" | "flag" | "sdk";
+  title: string;
+  detail: string;
+};
+
+/** Next-build checklist. Does not mint rooms or attach the camera SDK. */
+export const TWILIO_VIDEO_LAB_NEXT_STEPS: readonly VideoLabNextStep[] = [
+  {
+    id: "credentials",
+    title: "Twilio Video API key",
+    detail:
+      "Reuse TWILIO_ACCOUNT_SID. Add TWILIO_API_KEY_SID + TWILIO_API_KEY_SECRET (Standard or Main, US1). Do not invent SID or secret values.",
+  },
+  {
+    id: "flag",
+    title: "FEATURE_VIDEO stays off",
+    detail:
+      "Leave FEATURE_VIDEO=0 until credentials exist. Enable in PostHog only after Vercel has the API key. No Stripe charge is created here.",
+  },
+  {
+    id: "sdk",
+    title: "Attach Twilio Video SDK later",
+    detail:
+      "Join mints a room + token when the flag and credentials are on. /video/$roomId does not attach @twilio/video or the camera. Add Twilio hosts to CSP then.",
+  },
+];
+
 export type VideoSourceKind = "thread" | "booking" | "claim" | "admin";
 
 export type VideoEnvPresence = {

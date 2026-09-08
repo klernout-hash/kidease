@@ -79,7 +79,7 @@ www never calls `Notification.requestPermission()`. `Permissions-Policy: notific
 - `registerPushToken` / `getPushClientStatus` server functions — same rules, used by `usePushRegistration`.
 - `POST /api/admin/push-dry-run` and `dryRunPush` — admin only. Counts tokens. **Does not send.**
 - `sendPushNotification` / `sendPushToDevices` — FCM HTTP v1 and APNs HTTP/2 when the flag **and** credentials are present. Otherwise skip / dry-run. Invalid tokens (UNREGISTERED / 410) are deleted.
-- Admin → Chat lab shows FEATURE_PUSH on/off, source (env / PostHog), and whether env names are present (no secret values). Staff can run a dry-run.
+- Admin → Chat lab shows FEATURE_PUSH on/off, source (env / PostHog), env-name presence (no secret values), a coming-soon / flag-off state, and the FCM next-build checklist. Staff can run a dry-run. See `docs/chat.md`.
 
 ## How to turn it on later
 

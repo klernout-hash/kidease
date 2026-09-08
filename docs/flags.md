@@ -34,8 +34,8 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | --- | --- | --- |
 | `FEATURE_SMS` | no | Default **off**. Leave `0` until Twilio + CASL are ready. |
 | `FEATURE_PUSH` | no | Default **off**. Leave `0` until FCM / APNs + a native binary exist. |
-| `FEATURE_VIDEO` | no | Default **off**. |
-| `FEATURE_INAPP_CHAT` | no | Default **off**. |
+| `FEATURE_VIDEO` | no | Default **off**. Leave `0` until Twilio Video credentials exist. |
+| `FEATURE_INAPP_CHAT` | no | Default **off**. Chat lab composer stays disabled even if set to `1`. |
 | `FEATURE_PROVIDER_SUBSCRIPTIONS` | no | Default **on** when unset. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |
@@ -46,7 +46,7 @@ The app **boots with no remote keys**. Do not invent a personal API key or a sec
 
 - `evaluateFeatureFlag` / `smsEnabled` / `pushEnabled` / `videoEnabled` / `inAppChatEnabled` / `providerSubscriptionsEnabled`.
 - Send / register / mint paths in `src/lib/server/sms.ts`, `push-send.ts`, `push-tokens.ts`, `video.ts`.
-- Admin → Chat lab shows on/off **and** source (env / PostHog / default).
+- Admin → Chat lab (`/admin-chat`) shows on/off **and** source (env / PostHog / default), plus a disabled composer and the flag-name catalog. See `docs/chat.md`.
 - Client `isPostHogFlagEnabled` is analytics-only. Server flags are the source of truth for SMS / push / video send gates.
 - Web session replay uses a separate client flag, `session-replay-web` (kill switch). See `docs/posthog.md`.
 

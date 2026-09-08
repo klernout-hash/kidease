@@ -148,8 +148,13 @@ test("docs and env example stay placeholders; SMS and push stay off", () => {
   assert.match(envExample, /# POSTHOG_FLAGS_HOST=/);
   assert.match(envExample, /^FEATURE_PUSH=0$/m);
   assert.match(envExample, /^FEATURE_SMS=0$/m);
+  assert.match(envExample, /^FEATURE_VIDEO=0$/m);
+  assert.match(envExample, /^FEATURE_INAPP_CHAT=0$/m);
   assert.doesNotMatch(envExample, /^FEATURE_PUSH=1$/m);
   assert.doesNotMatch(envExample, /^FEATURE_SMS=1$/m);
+  assert.doesNotMatch(envExample, /^FEATURE_VIDEO=1$/m);
+  assert.match(flags, /FEATURE_FLAG_CATALOG/);
+  assert.match(docs, /docs\/chat\.md/);
   assert.doesNotMatch(envExample, /phc_/);
   assert.doesNotMatch(flags, /phc_[A-Za-z0-9]+/);
   assert.doesNotMatch(flags, /POSTHOG_PERSONAL/);

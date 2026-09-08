@@ -278,6 +278,10 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   assert.match(tree, /id:\s*'\/video\/\$roomId'/);
   assert.match(lab, /FEATURE_VIDEO/);
   assert.match(admin, /FEATURE_VIDEO/);
+  assert.match(admin, /TWILIO_VIDEO_LAB_NEXT_STEPS/);
   assert.match(join, /await import\("\.\/video"\)/);
   assert.match(src("docs/video.md"), /Vercel env checklist/);
+  assert.match(route, /videoFeatureOff/);
+  assert.match(route, /comingSoon/);
+  assert.match(src("src/lib/copy.ts"), /FEATURE_VIDEO is off/);
 });
