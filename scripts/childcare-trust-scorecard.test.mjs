@@ -88,7 +88,7 @@ test("search SSR loader seeds first paint instead of an empty null list", () => 
   const search = src("src/routes/search.tsx");
   assert.match(search, /loader: async/);
   assert.match(search, /searchDaycares/);
-  assert.match(search, /WINNIPEG/);
+  assert.match(search, /resolveRequestSearchOrigin/);
   assert.match(search, /pendingComponent: BootPending/);
   assert.match(search, /boot\.items\.length > 0 \? boot\.items : null/);
   assert.match(search, /items === null \? \(/);

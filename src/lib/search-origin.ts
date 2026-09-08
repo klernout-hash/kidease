@@ -1,11 +1,11 @@
-import { canadaOriginOrWinnipeg, isInCanada } from "@/lib/canada-origin";
-import { geocode, reverseGeocode, WINNIPEG } from "@/lib/geo";
+import { resolveLocationQuery } from "@/components/place-search";
+import { resolveDefaultSearchOrigin, type SearchOrigin } from "@/lib/default-origin";
+import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { getDeviceLocation } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
-import { resolveLocationQuery } from "@/components/place-search";
 
-/** Empty /search lands on the parent if we have a Canadian fix, otherwise Winnipeg. */
-export async function bootSearchOrigin(incomingQ?: string) {
+/** Empty /search: precise Canada GPS, else saved / SSR IP, else Winnipeg. Typed q stays multi-city. */
+export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOrigin | null) {
   const setOrigin = useAppStore.getState().setOrigin;
   const setQuery = useAppStore.getState().setQuery;
 
@@ -21,20 +21,17 @@ export async function bootSearchOrigin(incomingQ?: string) {
     return;
   }
 
-  const here = canadaOriginOrWinnipeg(useAppStore.getState().origin);
-  setOrigin(here);
-  setQuery(here.label);
-
-  if (useAppStore.getState().locationConsent !== "granted") return;
-  const pos = await getDeviceLocation({ precise: true });
-  if (!pos || !isInCanada(pos.lat, pos.lng)) {
-    if (!isInCanada(here.lat, here.lng)) {
-      setOrigin(WINNIPEG);
-      setQuery(WINNIPEG.label);
-    }
-    return;
-  }
-  const label = reverseGeocode(pos.lat, pos.lng);
-  setOrigin({ lat: pos.lat, lng: pos.lng, label }, "gps");
+  const consent = useAppStore.getState().locationConsent;
+  const gpsAllowed = consent === "granted";
+  const pos = gpsAllowed ? await getDeviceLocation({ precise: true }) : null;
+  const resolved = resolveDefaultSearchOrigin({
+    saved: readSavedOrigin(),
+    gps: pos,
+    gpsAllowed,
+    fallback: ssrOrigin,
+  });
+  const label =
+    resolved.source === "gps" && pos ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
+  setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
   setQuery(label);
 }

@@ -24,8 +24,10 @@ import { homeLandPath, readStickyDesk, type AppRole } from "@/lib/desks";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { BootPending } from "@/components/boot-pending";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
-import { geocode, reverseGeocode, WINNIPEG } from "@/lib/geo";
+import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
+import { originFromDeviceFix } from "@/lib/default-origin";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
+import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { uniqueById } from "@/lib/utils";
@@ -48,12 +50,13 @@ export const Route = createFileRoute("/")({
     return change ? { change: "1" as const } : {};
   },
   loader: async () => {
+    const origin = await resolveRequestSearchOrigin();
     const featured = await withTimeoutFallback(
-      featuredDaycares({ data: { lat: WINNIPEG.lat, lng: WINNIPEG.lng } }),
+      featuredDaycares({ data: { lat: origin.lat, lng: origin.lng } }),
       LOADER_SETTLE_MS,
       [] as Card[],
     );
-    return { featured };
+    return { featured, origin };
   },
   pendingMs: 200,
   pendingComponent: BootPending,
@@ -140,7 +143,18 @@ function Home() {
   }, [locationConsent]);
 
   useEffect(() => {
-    const loc = origin.lat ? origin : WINNIPEG;
+    if (readSavedOrigin()) return;
+    const source = useAppStore.getState().originSource;
+    if (source === "gps" || source === "manual") return;
+    setOrigin(
+      { lat: boot.origin.lat, lng: boot.origin.lng, label: boot.origin.label },
+      boot.origin.source,
+    );
+    setPlace(boot.origin.label);
+  }, [boot.origin.lat, boot.origin.lng, boot.origin.label, boot.origin.source, setOrigin]);
+
+  useEffect(() => {
+    const loc = origin.lat ? origin : boot.origin;
     setPlace(origin.label);
     void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng } })
       .then((rows) => {
@@ -160,7 +174,7 @@ function Home() {
         if (rows.length) setExplore(uniqueById(rows));
       })
       .catch(() => undefined);
-  }, [origin.lat, origin.lng, origin.label, radiusKm]);
+  }, [origin.lat, origin.lng, origin.label, radiusKm, boot.origin]);
 
   function goSearch(label?: string, extra?: { name?: string; from?: string; to?: string }) {
     const fields = compactExploreSearch({
@@ -204,8 +218,9 @@ function Home() {
     setBusy(false);
     if (pos) {
       setLocationConsent("granted");
-      const label = reverseGeocode(pos.lat, pos.lng);
-      setOrigin({ lat: pos.lat, lng: pos.lng, label }, "gps");
+      const resolved = originFromDeviceFix(pos, boot.origin);
+      const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
+      setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
       setPlace(label);
       void hapticLight();
       return true;
