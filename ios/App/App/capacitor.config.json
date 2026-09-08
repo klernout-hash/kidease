@@ -26,7 +26,8 @@
 		"Keyboard": {
 			"resize": "body"
 		},
-		"Geolocation": {}
+		"Geolocation": {},
+		"InAppReview": {}
 	},
 	"android": {
 		"allowMixedContent": true,
@@ -43,6 +44,7 @@
 		"CAPBrowserPlugin",
 		"GeolocationPlugin",
 		"HapticsPlugin",
+		"InAppReviewPlugin",
 		"KeyboardPlugin",
 		"PreferencesPlugin",
 		"SharePlugin",

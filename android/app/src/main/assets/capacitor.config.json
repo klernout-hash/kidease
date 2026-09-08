@@ -26,7 +26,8 @@
 		"Keyboard": {
 			"resize": "body"
 		},
-		"Geolocation": {}
+		"Geolocation": {},
+		"InAppReview": {}
 	},
 	"android": {
 		"allowMixedContent": true,

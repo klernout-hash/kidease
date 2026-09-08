@@ -2,6 +2,7 @@ import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { hapticLight } from "@/lib/native";
 import { appSharePayload, listingSharePayload, shareOrCopy, type SharePayload } from "@/lib/share";
+import { noteHappyMoment } from "@/lib/store-review";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ async function runShare(payload: SharePayload, messages: { copied: string; faile
   }
   if (outcome === "shared") {
     void hapticLight();
+    noteHappyMoment("share");
     return;
   }
   if (outcome === "failed") toast.error(messages.failed);

@@ -7,6 +7,7 @@ import { createSpotRequest, getFamily } from "@/lib/server/family";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
+import { noteHappyMoment } from "@/lib/store-review";
 import type { Child, Daycare, Schedule } from "@/lib/types";
 
 const DAYS = [
@@ -87,6 +88,7 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
         },
       });
       toast.success(t("requestSentTitle"));
+      noteHappyMoment("booking");
       setDone({ conversationId: res.conversationId });
       window.setTimeout(() => {
         void navigate({ to: "/inbox/$id", params: { id: res.conversationId } });

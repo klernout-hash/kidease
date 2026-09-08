@@ -8,6 +8,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getDaycare } from "@/lib/server/daycares";
 import { createSpotRequest } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
+import { noteHappyMoment } from "@/lib/store-review";
 import type { Daycare, Schedule } from "@/lib/types";
 
 export const Route = createFileRoute("/book/$slug")({ component: BookPage });
@@ -84,6 +85,7 @@ function BookPage() {
         },
       });
       toast.success(t("requestSentTitle"));
+      noteHappyMoment("booking");
       void navigate({ to: "/inbox/$id", params: { id: res.conversationId } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("needSignIn"));
