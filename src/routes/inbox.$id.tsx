@@ -229,7 +229,7 @@ function ThreadPage() {
             {t("directions")}
           </Link>
         ) : null}
-        <ul className="mt-4 flex-1 space-y-3">
+        <ul className="ph-no-capture mt-4 flex-1 space-y-3">
           {messages
             .filter((m) => m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system"))
             .map((m) => (

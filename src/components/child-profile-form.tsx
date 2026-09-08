@@ -42,7 +42,7 @@ export function ChildProfileForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-6">
+    <form onSubmit={submit} className="space-y-6 ph-no-capture">
       <Section title={t("childIdentity")}>
         <Field label={t("childFullName")}>
           <input

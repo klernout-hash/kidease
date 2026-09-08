@@ -48,6 +48,7 @@ The app **boots with no remote keys**. Do not invent a personal API key or a sec
 - Send / register / mint paths in `src/lib/server/sms.ts`, `push-send.ts`, `push-tokens.ts`, `video.ts`.
 - Admin → Chat lab shows on/off **and** source (env / PostHog / default).
 - Client `isPostHogFlagEnabled` is analytics-only. Server flags are the source of truth for SMS / push / video send gates.
+- Web session replay uses a separate client flag, `session-replay-web` (kill switch). See `docs/posthog.md`.
 
 ## Later (not this PR)
 

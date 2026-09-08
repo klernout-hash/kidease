@@ -369,7 +369,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                   children.map((c) => {
                     const selected = picked[c.id] ?? [];
                     return (
-                    <li key={c.id} className="p-4">
+                    <li key={c.id} className="ph-no-capture p-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-medium">

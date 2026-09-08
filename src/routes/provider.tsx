@@ -533,7 +533,7 @@ function ChildPacket({
     return <p className="mt-3 text-sm text-subtle">Child profile attached — limited details so far.</p>;
   }
   return (
-    <ul className="mt-3 flex flex-wrap gap-1.5">
+    <ul className="ph-no-capture mt-3 flex flex-wrap gap-1.5">
       {bits.map((b) => (
         <li key={b} className="rounded-full bg-bg px-2.5 py-1 text-xs text-muted ring-1 ring-border">
           {b}
