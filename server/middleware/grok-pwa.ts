@@ -97,6 +97,8 @@ export default async function grokPwaMiddleware(
   }
 
   if (!isDocumentPath(path)) return next();
+  // Listing pages own title / OG / JSON-LD. Do not overwrite with the KidEase shell card.
+  if (path === "/daycare" || path.startsWith("/daycare/")) return next();
 
   const result = await next();
   if (

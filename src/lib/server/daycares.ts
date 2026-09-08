@@ -85,8 +85,17 @@ function toDaycare(d: CatalogDaycare): Daycare {
     amenities: d.amenities,
     photos: d.photos,
     verified: true,
-    claimed: false,
-    live: isPlatformLive(d.id, false),
+    claimed: Boolean(d.claimed || d.claimedAt),
+    claimedAt: d.claimedAt ?? null,
+    claimStatus: d.claimStatus ?? null,
+    listingActive: d.listingActive !== false,
+    live: isPlatformLive(d.id, Boolean(d.claimed || d.claimedAt), {
+      listingActive: d.listingActive,
+      ratingX10: d.ratingX10,
+      reviewCount: d.reviewCount,
+      claimStatus: d.claimStatus,
+      claimedAt: d.claimedAt,
+    }),
     contactEmail: null,
     feeConfirmed: Boolean(d.feeConfirmed),
     availabilityKnown: false,
@@ -330,7 +339,6 @@ export const getDaycare = createServerFn({ method: "GET" })
         .map((d) => toCard(d, origin)),
     );
     const catalogDaycare = toDaycare(found);
-    catalogDaycare.live = isPlatformLive(catalogDaycare.id, Boolean(catalogDaycare.claimed));
     const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
     const catalogPayload = {
       daycare: catalogScored[0] ?? catalogDaycare,
@@ -345,7 +353,6 @@ export const getDaycare = createServerFn({ method: "GET" })
         select * from daycares where id = ${found.id} and claimed_at is not null limit 1
       `.catch(() => [] as DaycareRow[]);
       const daycare = claimedRow[0] ? mapDaycare(claimedRow[0]) : toDaycare(found);
-      daycare.live = isPlatformLive(daycare.id, Boolean(daycare.claimed));
       if (!daycare.reviewCount) {
         daycare.ratingX10 = found.ratingX10;
         daycare.reviewCount = found.reviewCount;
@@ -388,6 +395,29 @@ export const getDaycare = createServerFn({ method: "GET" })
     } catch {
       return catalogPayload;
     }
+  });
+
+/** Slim catalogue snapshot for listing <head> / JSON-LD. No view increment. */
+export const getListingSeo = createServerFn({ method: "GET" })
+  .validator((slug: string) => slug)
+  .handler(async ({ data: slug }) => {
+    const found = await catalogBySlugGet(slug);
+    if (!found) return null;
+    if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
+    return {
+      slug: found.slug,
+      name: found.name,
+      nameFr: found.nameFr,
+      city: found.city,
+      province: found.province,
+      address: found.address,
+      postalCode: found.postalCode,
+      phone: found.phone || null,
+      agesKnown: found.ageMaxMonths > found.ageMinMonths && found.ageMaxMonths > 0,
+      ageMinMonths: found.ageMinMonths,
+      ageMaxMonths: found.ageMaxMonths,
+      photos: found.photos,
+    };
   });
 
 export const getDaycaresByIds = createServerFn({ method: "POST" })

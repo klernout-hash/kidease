@@ -24,12 +24,28 @@ export function canAppearOnPlatform(d: {
   return meetsRatingFloor(d.ratingX10 ?? 0, d.reviewCount ?? 0);
 }
 
-export function isPlatformLive(
-  _id: string,
-  claimed = false,
-  extra?: { listingActive?: boolean | null; ratingX10?: number; reviewCount?: number },
-) {
-  if (!claimed) return false;
+/** Claim tokens that mean the listing is live on KidEase. Pending / unverified stay off. */
+const LIVE_CLAIM_STATUS = new Set(["approved", "live", "active", "published"]);
+const DEAD_CLAIM_STATUS = new Set(["declined", "rejected", "denied"]);
+
+export type PlatformLiveExtra = {
+  listingActive?: boolean | null;
+  ratingX10?: number;
+  reviewCount?: number;
+  claimStatus?: string | null;
+  claimedAt?: string | null;
+};
+
+/**
+ * Live = a real claim (claimed_at / approved claim_status) and the listing is
+ * still active. Never invents live from catalogue size or a missing rating.
+ */
+export function isPlatformLive(_id: string, claimed = false, extra?: PlatformLiveExtra) {
+  const status = (extra?.claimStatus || "").trim().toLowerCase();
+  if (DEAD_CLAIM_STATUS.has(status)) return false;
+  const approved = LIVE_CLAIM_STATUS.has(status);
+  const hasClaim = claimed || Boolean(extra?.claimedAt) || approved;
+  if (!hasClaim) return false;
   if (extra && extra.listingActive === false) return false;
   if (extra && !meetsRatingFloor(extra.ratingX10 ?? 0, extra.reviewCount ?? 0)) return false;
   return true;

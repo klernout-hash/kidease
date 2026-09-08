@@ -53,6 +53,11 @@ export type CatalogDaycare = {
   reviews: Array<{ author: string; rating: number; body: string; bodyFr: string }>;
   googlePlaceId: string | null;
   feeConfirmed?: boolean;
+  /** From Neon claimed_at. JSON catalogue rows stay unclaimed — never invented. */
+  claimed?: boolean;
+  claimedAt?: string | null;
+  claimStatus?: string | null;
+  listingActive?: boolean;
   visibility: ListingVisibility;
   isTest: boolean;
   contactEmail?: string;
