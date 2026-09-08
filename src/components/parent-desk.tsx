@@ -1,4 +1,4 @@
-import { lazy, startTransition, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { DeskShell } from "@/components/desk-shell";
@@ -87,11 +87,14 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
+  const [accountToolsReady, setAccountToolsReady] = useState(false);
 
   const selectTab = useCallback((id: string) => {
     const next = id as ParentTab;
     setTab(next);
-    startTransition(() => setContentTab(next));
+    void yieldToMain().then(() => {
+      startTransition(() => setContentTab(next));
+    });
   }, []);
 
   const loadExplore = useCallback(
@@ -200,9 +203,15 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
     startTransition(() => setContentTab(initialTab));
   }, [initialTab]);
 
+  useEffect(() => {
+    if (!exploreReady) return;
+    return scheduleIdle(() => setAccountToolsReady(true));
+  }, [exploreReady]);
+
+  const deferredSaved = useDeferredValue(saved);
   const rankedSaved = useMemo(() => {
     if (contentTab !== "saved") return [] as Array<Card & { matchScore: number; urgencyScore: number; distanceKm: number }>;
-    return [...saved]
+    return [...deferredSaved]
       .map((item) => {
         const child = children[0];
         const ageGroup = child?.birthdate ? ageGroupFromMonths(monthsBetween(child.birthdate)) : "any";
@@ -216,7 +225,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
         };
       })
       .sort((a, b) => b.urgencyScore - a.urgencyScore || b.matchScore - a.matchScore);
-  }, [bookings, children, contentTab, located, origin, radiusKm, saved]);
+  }, [bookings, children, contentTab, deferredSaved, located, origin, radiusKm]);
 
   if (!user) return null;
 
@@ -601,6 +610,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
         </div>
       ) : null}
 
+      {accountToolsReady ? (
       <section className="mt-14 rounded-xl bg-surface p-5 ring-1 ring-border">
         <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
         <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
@@ -628,6 +638,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
           </Button>
         )}
       </section>
+      ) : null}
     </DeskShell>
   );
 }

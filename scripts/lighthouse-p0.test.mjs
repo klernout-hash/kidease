@@ -86,6 +86,11 @@ test("brand mark ships the SVG, and logos get a long cache hint", () => {
   assert.doesNotMatch(mark, /\/logo-transparent\.png/);
   assert.match(src("src/routes/__root.tsx"), /logo-transparent\.svg\?v=17/);
   assert.match(src("src/routes/menu.tsx"), /\[font-family:system-ui,Segoe_UI,sans-serif\]/);
+  assert.match(src("src/routes/menu.tsx"), /ke-menu-main/);
+  assert.match(src("src/routes/menu.tsx"), /ke-menu-chevron/);
+  assert.match(src("src/routes/menu.tsx"), /ke-menu-group/);
+  assert.match(src("src/styles.css"), /\.ke-menu-main h1/);
+  assert.match(src("src/lib/analytics-consent.ts"), /ANALYTICS_CONSENT_BANNER_REVEAL_YIELD_MS/);
   const svg = statSync(join(root, "public/logo-transparent.svg")).size;
   const png = statSync(join(root, "public/logo-transparent.png")).size;
   assert.ok(svg < 2_000, "vector logo should be a small SVG");

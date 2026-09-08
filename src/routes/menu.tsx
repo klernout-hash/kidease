@@ -1,14 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
+import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
-import { ShareKidEaseButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
-import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
-import { RateKidEaseMenuRow } from "@/components/rate-kidease";
+import { useSessionDesks } from "@/components/desk-switcher";
 import { canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
-import { AppearanceControl } from "@/components/appearance-control";
+
+const ShareKidEaseButton = lazy(() =>
+  import("@/components/share-button").then((m) => ({ default: m.ShareKidEaseButton })),
+);
+const RateKidEaseMenuRow = lazy(() =>
+  import("@/components/rate-kidease").then((m) => ({ default: m.RateKidEaseMenuRow })),
+);
+const AppearanceControl = lazy(() =>
+  import("@/components/appearance-control").then((m) => ({ default: m.AppearanceControl })),
+);
+const DeskSwitcher = lazy(() =>
+  import("@/components/desk-switcher").then((m) => ({ default: m.DeskSwitcher })),
+);
 
 export const Route = createFileRoute("/menu")({
   component: MenuPage,
@@ -27,25 +37,34 @@ function Row({
 }) {
   const className =
     "flex min-h-14 items-center justify-between gap-3 border-b border-border px-1 text-[15px] text-fg last:border-b-0";
+  const chevron = <span className="ke-menu-chevron" aria-hidden />;
   if (href) {
     return (
       <a href={href} target="_blank" rel="noreferrer" className={className}>
         {label}
-        <ChevronRight className="size-4 text-muted" />
+        {chevron}
       </a>
     );
   }
   return (
     <Link to={to ?? "/"} search={search} className={className}>
       {label}
-      <ChevronRight className="size-4 text-muted" />
+      {chevron}
     </Link>
   );
 }
 
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
+function Group({
+  title,
+  children,
+  defer = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defer?: boolean;
+}) {
   return (
-    <section className="mt-7">
+    <section className={defer ? "ke-menu-group mt-7" : "mt-7"}>
       <h2 className="px-1 text-[15px] font-bold text-fg">{title}</h2>
       <div className="mt-2">{children}</div>
     </section>
@@ -62,7 +81,7 @@ function MenuPage() {
 
   return (
     <Shell>
-      <main className="ke-gutter mx-auto max-w-lg pb-8 pt-5">
+      <main className="ke-menu-main ke-gutter mx-auto max-w-lg pb-8 pt-5">
         <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">
           {fr ? "Menu" : "Menu"}
         </h1>
@@ -70,7 +89,9 @@ function MenuPage() {
         {multiDesk ? (
           <Group title={fr ? "Vos espaces" : "Your desks"}>
             <div className="px-1 py-2">
-              <DeskSwitcher />
+              <Suspense fallback={<div className="ke-skel h-11 rounded-full" aria-hidden="true" />}>
+                <DeskSwitcher />
+              </Suspense>
             </div>
           </Group>
         ) : null}
@@ -86,22 +107,26 @@ function MenuPage() {
 
         <Group title={fr ? "Réglages" : "Settings"}>
           <div className="px-1 py-2">
-            <AppearanceControl />
+            <Suspense fallback={<div className="ke-skel h-11 rounded-full" aria-hidden="true" />}>
+              <AppearanceControl />
+            </Suspense>
           </div>
         </Group>
 
-        <Group title="KidEase">
+        <Group title="KidEase" defer>
           <Row to="/search" label={t("explore")} />
           <Row to="/benefits" label={t("benefitsTab")} />
           <Row to="/get-app" label={t("getApp")} />
-          <ShareKidEaseButton appearance="row" />
-          <RateKidEaseMenuRow />
+          <Suspense fallback={null}>
+            <ShareKidEaseButton appearance="row" />
+            <RateKidEaseMenuRow />
+          </Suspense>
           <Row to="/about" label={t("about")} />
           <Row to="/team" label={t("team")} />
           <Row to="/contact" label={t("contact")} />
         </Group>
 
-        <Group title={fr ? "Soutien" : "Support"}>
+        <Group title={fr ? "Soutien" : "Support"} defer>
           <Row to="/help" label={fr ? "Centre d’aide" : "Help Centre"} />
           <Row to="/faq" label="FAQ" />
           <Row to="/how-it-works" label={t("howItWorksCta")} />
@@ -111,7 +136,7 @@ function MenuPage() {
           <Row to="/account" label={t("deleteAccount")} />
         </Group>
 
-        <Group title="Parents">
+        <Group title="Parents" defer>
           <Row to="/login" search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }} label={t("parentSignIn")} />
           <Row to="/parent" label={fr ? "Espace parent" : "Parent desk"} />
           <Row to="/account" search={{ tab: "profile", desk: "parent" }} label={t("profile")} />
@@ -120,7 +145,7 @@ function MenuPage() {
           <Row to="/parent" search={{ tab: "saved" }} label={t("saved")} />
         </Group>
 
-        <Group title={fr ? "Garderies" : "Daycares"}>
+        <Group title={fr ? "Garderies" : "Daycares"} defer>
           <Row to="/claim" label={t("claimCta")} />
           <Row to="/login" search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }} label={t("providerLogin")} />
           <Row to="/provider" label={fr ? "Espace garderie" : "Daycare desk"} />

@@ -50,6 +50,9 @@ export default tseslint.config(
       // fail `npx eslint .` and inflate CI fail-rate. typescript-eslint
       // owns the rule and keeps leftovers as warnings.
       "no-unused-vars": "off",
+      // Route fixtures and test strings trip this on first-push agent PRs
+      // (TanStack `$` filenames, regex samples). Keep it visible, not red.
+      "no-useless-escape": "warn",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

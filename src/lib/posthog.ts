@@ -70,14 +70,27 @@ function isDefaultUsIngest(host: string): boolean {
  * `POSTHOG_HOST` / `VITE_PUBLIC_POSTHOG_HOST` stay the *upstream* (US ingest)
  * unless they point at a non-default host (managed proxy, EU).
  * Capacitor keeps the public US host — the WebView origin is not kidease.ca.
+ *
+ * On the website, prefer an absolute same-origin URL (`https://www.kidease.ca/ingest`)
+ * so posthog-js sets `$lib_custom_api_host` and the reverse_proxy health check
+ * can clear. A bare `/ingest` path is not treated as a custom host.
  */
-export function posthogApiHost(env: EnvMap = viteEnv(), native?: boolean): string {
+export function posthogApiHost(
+  env: EnvMap = viteEnv(),
+  native?: boolean,
+  origin?: string,
+): string {
   const host =
     envString(POSTHOG_PUBLIC_HOST_ENV, env) || envString(POSTHOG_HOST_ENV, env) || "";
   const cleaned = host.replace(/\/$/, "");
   if (cleaned && !isDefaultUsIngest(cleaned)) return cleaned;
   const onNative = native ?? (typeof window !== "undefined" && isNative());
   if (onNative) return DEFAULT_POSTHOG_HOST;
+  const loc =
+    origin ??
+    (typeof window !== "undefined" && window.location?.origin ? window.location.origin : "");
+  const base = String(loc).replace(/\/$/, "");
+  if (base && /^https?:\/\//i.test(base)) return `${base}${POSTHOG_PROXY_PATH}`;
   return POSTHOG_PROXY_PATH;
 }
 

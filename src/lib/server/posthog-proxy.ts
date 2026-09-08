@@ -29,6 +29,12 @@ export async function proxyPosthogRequest(request: Request): Promise<Response> {
     headers.set(key, value);
   });
   headers.set("host", new URL(dest).host);
+  const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
+  const forwardedProto = request.headers.get("x-forwarded-proto") || url.protocol.replace(":", "") || "https";
+  const forwardedFor = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "";
+  if (forwardedHost) headers.set("x-forwarded-host", forwardedHost.split(",")[0].trim());
+  if (forwardedProto) headers.set("x-forwarded-proto", forwardedProto.split(",")[0].trim());
+  if (forwardedFor) headers.set("x-forwarded-for", forwardedFor);
 
   const init: RequestInit & { duplex?: "half" } = {
     method: request.method,

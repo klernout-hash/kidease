@@ -104,7 +104,7 @@ Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) wh
 
 ## What is wired
 
-- `src/lib/posthog.ts` — init, sample rate, consent gate, native gate, masking, `capturePostHogEvent`, first-party `api_host` `/ingest` + `ui_host`.
+- `src/lib/posthog.ts` — init, sample rate, consent gate, native gate, masking, `capturePostHogEvent`, first-party `api_host` (`https://www.kidease.ca/ingest` in the browser) + `ui_host`.
 - `src/lib/posthog-proxy.ts` + `server/middleware/ingest-proxy.ts` — Nitro fallback proxy (preview / if the rewrite is skipped).
 - `vite.config.ts` `posthogIngestPlugin` — local `vite dev` `/ingest` proxy.
 - `vercel.json` rewrites — `/ingest/static|array` → `us-assets.i.posthog.com`, `/ingest/*` → `us.i.posthog.com`.
@@ -115,7 +115,9 @@ Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) wh
 
 ## Reverse proxy
 
-PostHog health flags **No reverse proxy detected** when the SDK talks to `us.i.posthog.com` directly. After this deploy, consented browsers send events to `https://www.kidease.ca/ingest` (and preview hosts). Capacitor keeps the public US host. Consent is unchanged: website PostHog still starts only after **Allow analytics**.
+PostHog health flags **No reverse proxy detected** when `$lib_custom_api_host` is unset (a relative `/ingest` path does not count). Consented browsers now set `api_host` to the absolute same-origin URL (`https://www.kidease.ca/ingest` on production, preview origin + `/ingest` on Vercel). `ui_host` stays `https://us.posthog.com`. Capacitor keeps the public US host. Consent is unchanged: website PostHog still starts only after **Allow analytics**.
 
-Verify after production traffic: [Project health](https://us.posthog.com/project/594559/health) should clear `reverse_proxy`. In insights, `$lib_custom_api_host` on new `$pageview` / `$web_vitals` events should be `/ingest` or the site origin + `/ingest`.
+The Nitro / Vite proxy also forwards `X-Forwarded-Host`, `X-Forwarded-Proto`, and `X-Forwarded-For`, and still strips `Cookie` / `Authorization`.
+
+Verify after production traffic: [Project health](https://us.posthog.com/project/594559/health) should clear `reverse_proxy`. In insights, `$lib_custom_api_host` on new `$pageview` / `$web_vitals` events should be `https://www.kidease.ca/ingest` (not unset, not `us.i.posthog.com`).
 - Client flag helper `isPostHogFlagEnabled`. Server SMS / push / video gates stay on `docs/flags.md`.

@@ -209,13 +209,19 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         <div className="flex justify-center">
           <BrandMark size="md" />
         </div>
-        <h1 className="mt-6 font-display text-3xl">Check your email</h1>
+        <h1 className="mt-6 text-3xl font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">
+          Check your email
+        </h1>
         <p className="mt-2 text-sm text-muted">
           We sent a 6-digit code{hint ? ` to ${hint}` : ""}. Enter it to finish signing in.
         </p>
         <form ref={formRef} className="mt-6 space-y-3 ph-no-capture" onSubmit={onSubmit}>
           <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} />
-          <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
+          {ready ? (
+            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
+          ) : (
+            <div className="min-h-[65px]" aria-hidden="true" />
+          )}
           {error ? <p className="text-sm text-danger" data-ke="auth-error">{error}</p> : null}
           {notice && !error ? <p className="text-sm text-muted">{notice}</p> : null}
           {stalled ? (
