@@ -2,7 +2,11 @@ import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { clearStickyDesk } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
-import { resolveSocialSignInRedirect } from "./login-errors";
+import {
+  CLOUDFLARE_AUTH_BLOCK_MESSAGE,
+  looksLikeCloudflareAuthBlock,
+  resolveSocialSignInRedirect,
+} from "./login-errors";
 import { isNativeSocialProvider } from "./providers";
 
 export const authClient = createAuthClient({
@@ -16,6 +20,25 @@ export const authClient = createAuthClient({
     onSuccess(ctx) {
       const header = ctx.response.headers.get("set-auth-token");
       if (header) setBearerToken(header);
+    },
+    onError(ctx) {
+      const extra = ctx as typeof ctx & { responseText?: string };
+      const headers = extra.response?.headers;
+      if (
+        looksLikeCloudflareAuthBlock({
+          status: extra.error?.status ?? extra.response?.status,
+          statusText: extra.error?.statusText ?? extra.response?.statusText,
+          message: extra.error?.message,
+          body: extra.responseText,
+          server: headers?.get("server"),
+          cfRay: headers?.get("cf-ray"),
+          cfMitigated: headers?.get("cf-mitigated"),
+          code: typeof extra.error?.code === "string" ? extra.error.code : null,
+        })
+      ) {
+        extra.error.message = CLOUDFLARE_AUTH_BLOCK_MESSAGE;
+        extra.error.code = "CLOUDFLARE_BLOCK";
+      }
     },
   },
 });

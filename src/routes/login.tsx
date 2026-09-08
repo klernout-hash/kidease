@@ -245,7 +245,12 @@ function Login() {
               autoComplete={mode === "up" ? "new-password" : "current-password"}
             />
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-            {error ? <p className="text-sm text-danger">{error}</p> : null}
+            {error ? <p className="text-sm text-danger" data-ke="auth-error">{error}</p> : null}
+            {authEnabled && providers.length === 0 && !operator ? (
+              <p className="text-xs text-muted">
+                Sign-in methods could not load. If this keeps happening, a security filter may be blocking KidEase.
+              </p>
+            ) : null}
             <Button type="submit" className="w-full" disabled={busy || (turnstileRequired && !token.trim())}>
               {mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>

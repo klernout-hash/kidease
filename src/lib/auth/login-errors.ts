@@ -1,5 +1,53 @@
 /** Map Better Auth / Turnstile / mail failures to copy we can show on login. */
 
+/** Cloudflare WAF/Bot Fight HTML 403 — not a Better Auth JSON error. */
+export const CLOUDFLARE_AUTH_BLOCK_MESSAGE =
+  "Security filter blocked sign-in — try again or contact support";
+
+export function isCloudflareBlockText(text?: string | null): boolean {
+  const raw = (text || "").toLowerCase();
+  if (!raw) return false;
+  return (
+    raw.includes("attention required") ||
+    raw.includes("sorry, you have been blocked") ||
+    raw.includes("you have been blocked") ||
+    (raw.includes("cloudflare") &&
+      (raw.includes("blocked") || raw.includes("attention required") || raw.includes("cf-error"))) ||
+    raw.includes("cf-browser-verification") ||
+    raw.includes("cf-chl-bypass") ||
+    (raw.includes("<!doctype html") && raw.includes("cloudflare"))
+  );
+}
+
+export function looksLikeCloudflareAuthBlock(input: {
+  status?: number | null;
+  statusText?: string | null;
+  message?: string | null;
+  body?: string | null;
+  server?: string | null;
+  cfRay?: string | null;
+  cfMitigated?: string | null;
+  code?: string | null;
+}): boolean {
+  if (input.code === "CLOUDFLARE_BLOCK") return true;
+  if (isCloudflareBlockText(input.message) || isCloudflareBlockText(input.body) || isCloudflareBlockText(input.statusText)) {
+    return true;
+  }
+  const status = input.status ?? 0;
+  const authCode = (input.code || "").toUpperCase();
+  if (authCode === "INVALID_ORIGIN" || authCode === "MISSING_OR_NULL_ORIGIN") return false;
+  const message = (input.message || "").trim();
+  const server = (input.server || "").toLowerCase();
+  const mitigated = (input.cfMitigated || "").trim();
+  if (status === 403 && (mitigated || server.includes("cloudflare") || input.cfRay)) {
+    return !message || isCloudflareBlockText(message);
+  }
+  if (status === 403 && !message && /forbidden/i.test(input.statusText || "")) {
+    return true;
+  }
+  return false;
+}
+
 export type EmailAccountKind = "missing" | "oauth_only" | "has_password" | "unknown";
 
 export type EmailSignInExplanation = {
@@ -84,6 +132,13 @@ export function friendlyAuthError(
   if (!raw && explanation && explanation.kind !== "unknown") {
     return messageForEmailAccount(explanation);
   }
+  if (
+    isCloudflareBlockText(message) ||
+    raw.includes("security filter blocked") ||
+    raw === "cloudflare_block"
+  ) {
+    return CLOUDFLARE_AUTH_BLOCK_MESSAGE;
+  }
   if (raw.includes("please complete the security check")) {
     return "Please complete the security check, then try again.";
   }
@@ -142,18 +197,42 @@ export function friendlyAuthError(
 /** Better Auth / fetch error shapes → a string friendlyAuthError can map. */
 export function authClientErrorMessage(error: unknown): string {
   if (!error) return "";
-  if (typeof error === "string") return error;
-  if (error instanceof Error) return error.message;
+  if (typeof error === "string") {
+    return isCloudflareBlockText(error) ? CLOUDFLARE_AUTH_BLOCK_MESSAGE : error;
+  }
+  if (error instanceof Error) {
+    return isCloudflareBlockText(error.message) ? CLOUDFLARE_AUTH_BLOCK_MESSAGE : error.message;
+  }
   if (typeof error !== "object") return "";
   const row = error as {
     message?: unknown;
+    status?: unknown;
     statusText?: unknown;
     code?: unknown;
     error?: { message?: unknown; code?: unknown } | string;
     data?: { message?: unknown };
   };
+  if (typeof row.error === "string" && isCloudflareBlockText(row.error)) {
+    return CLOUDFLARE_AUTH_BLOCK_MESSAGE;
+  }
   const nested = typeof row.error === "object" && row.error ? row.error : null;
-  const parts = [row.message, row.statusText, row.data?.message, nested?.message, row.code, nested?.code];
+  const message =
+    [row.message, row.data?.message, nested?.message].find((part) => typeof part === "string" && part.trim()) ?? "";
+  const code = [row.code, nested?.code].find((part) => typeof part === "string" && part.trim()) ?? "";
+  const statusText = typeof row.statusText === "string" ? row.statusText : "";
+  const status = typeof row.status === "number" ? row.status : undefined;
+  if (
+    looksLikeCloudflareAuthBlock({
+      status,
+      statusText,
+      message: String(message || ""),
+      body: String(message || ""),
+      code: String(code || ""),
+    })
+  ) {
+    return CLOUDFLARE_AUTH_BLOCK_MESSAGE;
+  }
+  const parts = [message, statusText, code];
   for (const part of parts) {
     if (typeof part === "string" && part.trim()) return part.trim();
   }

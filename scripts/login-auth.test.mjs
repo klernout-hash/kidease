@@ -4,14 +4,18 @@ import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  CLOUDFLARE_AUTH_BLOCK_MESSAGE,
   authClientErrorMessage,
   classifyEmailAccounts,
   friendlyAuthError,
+  isCloudflareBlockText,
+  looksLikeCloudflareAuthBlock,
   messageForEmailAccount,
   oauthOnlyMessage,
   resolveSocialSignInRedirect,
   socialSignInFailedMessage,
 } from "../src/lib/auth/login-errors.ts";
+import { friendlyResetMailError } from "../src/lib/auth/reset-errors.ts";
 import { NATIVE_APPLE, visibleSignInProviders } from "../src/lib/auth/providers.ts";
 import {
   aliasInboundAuthCookies,
@@ -49,6 +53,37 @@ describe("password sign-in errors", () => {
     assert.match(friendlyAuthError("Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY)"), /RESEND_API_KEY/);
     assert.match(friendlyAuthError("Too many requests"), /Wait a minute/);
     assert.match(friendlyAuthError("Too many requests. Please try again later."), /Wait a minute/);
+    assert.equal(isCloudflareBlockText("Attention Required! | Cloudflare"), true);
+    assert.equal(
+      looksLikeCloudflareAuthBlock({
+        status: 403,
+        statusText: "Forbidden",
+        body: "<!DOCTYPE html><title>Attention Required! | Cloudflare</title><p>Sorry, you have been blocked.</p>",
+      }),
+      true,
+    );
+    assert.equal(
+      looksLikeCloudflareAuthBlock({ status: 403, statusText: "Forbidden", message: "" }),
+      true,
+    );
+    assert.equal(
+      looksLikeCloudflareAuthBlock({
+        status: 403,
+        statusText: "Forbidden",
+        message: "Invalid origin",
+        code: "INVALID_ORIGIN",
+      }),
+      false,
+    );
+    assert.equal(
+      authClientErrorMessage({ status: 403, statusText: "Forbidden" }),
+      CLOUDFLARE_AUTH_BLOCK_MESSAGE,
+    );
+    assert.match(friendlyAuthError(authClientErrorMessage({ status: 403, statusText: "Forbidden" })), /Security filter blocked/);
+    assert.equal(
+      friendlyResetMailError("<html><title>Attention Required! | Cloudflare</title>Sorry, you have been blocked.</html>"),
+      CLOUDFLARE_AUTH_BLOCK_MESSAGE,
+    );
     assert.match(friendlyAuthError("Missing or null Origin"), /refresh/);
     assert.match(friendlyAuthError("Failed to create session"), /session could not be saved/);
     assert.equal(authClientErrorMessage({ status: 429, statusText: "Too Many Requests" }), "Too Many Requests");
@@ -167,6 +202,11 @@ describe("production email sign-in is not globally rate-limited", () => {
     const client = read("src/lib/auth/client.ts");
     assert.match(client, /Content-Type": "application\/json"/);
     assert.match(client, /x-turnstile-token/);
+    assert.match(client, /CLOUDFLARE_AUTH_BLOCK_MESSAGE/);
+    assert.match(read("docs/cloudflare.md"), /\/api\/auth\/\*/);
+    assert.match(read("docs/cloudflare.md"), /\/_serverFn\/\*/);
+    assert.match(read("src/routes/login.tsx"), /security filter may be blocking/i);
+    assert.match(read("src/routes/forgot-password.tsx"), /authClientErrorMessage/);
   });
 });
 

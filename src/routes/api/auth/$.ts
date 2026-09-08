@@ -1,3 +1,9 @@
+/**
+ * Cloudflare WAF / Bot Fight on kidease.ca must skip `/api/auth/*`
+ * (and `/_serverFn/*`). A CF HTML 403 never reaches this handler — the
+ * browser only sees "Sign-in failed" unless the client maps that HTML.
+ * See docs/cloudflare.md.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { applySharedAuthCookies, requestWithAliasedAuthCookies } from "@/lib/auth/cookies";
 import { auth } from "@/lib/auth/server";

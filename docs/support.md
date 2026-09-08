@@ -36,6 +36,8 @@ Canonical Support case inbox: **support@kidease.ca** (`SUPPORT_INBOX_EMAIL` in `
 
 Access already guards `/admin*` on `www.kidease.ca`. **Add `/support*` to the same Access application** when you are ready (path `/support` and `/support/*`). Until then, the app gate + 2FA is the boundary.
 
+Do **not** put Access, Bot Fight, or a WAF **Block** on `/api/auth/*` or `/_serverFn/*` — that returns Cloudflare HTML 403 and every password sign-in shows “Sign-in failed.” See `docs/cloudflare.md`.
+
 Preview hosts (`*.vercel.app`) 302 `/support*` to `https://www.kidease.ca/support*` so Access can apply on the canonical host — same pattern as `/admin*`. Public `/help` stays on the preview host.
 
 ## Refunds
