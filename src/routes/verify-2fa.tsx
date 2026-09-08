@@ -26,7 +26,7 @@ function VerifyTwoFactorPage() {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [verified, setVerified] = useState(false);
-  const { token, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
+  const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
 
   useEffect(() => {
     if (!user) return;
@@ -79,7 +79,7 @@ function VerifyTwoFactorPage() {
               e.preventDefault();
               setBusy(true);
               setError(null);
-              void verifyTwoFactor({ data: { code, remember: true, turnstileToken: token } })
+              void verifyTwoFactor({ data: { code, remember: true, turnstileToken: takeChallenge() } })
                 .then(() => setVerified(true))
                 .catch((err) => {
                   setError(err instanceof Error ? err.message : "Could not verify");

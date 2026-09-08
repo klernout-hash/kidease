@@ -8,7 +8,10 @@ type TurnstileApi = {
       sitekey: string;
       callback: (token: string) => void;
       "expired-callback"?: () => void;
+      "timeout-callback"?: () => void;
       "error-callback"?: () => void;
+      retry?: "auto" | "never";
+      "refresh-expired"?: "auto" | "manual" | "never";
     },
   ) => string;
   reset: (id: string) => void;
@@ -44,6 +47,18 @@ function loadTurnstile(): Promise<TurnstileApi | null> {
     document.head.appendChild(script);
   });
   return scriptPromise;
+}
+
+function resetWidget(widgetId: string | null, onToken: (token: string) => void) {
+  const api = typeof window !== "undefined" ? window.turnstile : undefined;
+  if (widgetId && api) {
+    try {
+      api.reset(widgetId);
+    } catch {
+      /* widget already gone */
+    }
+  }
+  onToken("");
 }
 
 export function TurnstileField({
@@ -89,38 +104,49 @@ export function TurnstileField({
   useEffect(() => {
     if (!siteKey || !host.current) return;
     let cancelled = false;
-    void loadTurnstile().then((api) => {
-      if (cancelled || !api || !host.current) return;
-      if (widgetId.current) {
-        try {
-          api.reset(widgetId.current);
-        } catch {
-          /* widget already gone */
+    void loadTurnstile()
+      .then((api) => {
+        if (cancelled || !api || !host.current || widgetId.current) return;
+        widgetId.current = api.render(host.current, {
+          sitekey: siteKey,
+          retry: "auto",
+          "refresh-expired": "auto",
+          callback: (token) => {
+            setLoadError(null);
+            onTokenRef.current(token);
+          },
+          "expired-callback": () => onTokenRef.current(""),
+          "timeout-callback": () => onTokenRef.current(""),
+          "error-callback": () => {
+            onTokenRef.current("");
+            setLoadError("Security check failed. Refresh and try again.");
+          },
+        });
+      })
+      .then(() => {
+        if (!cancelled && siteKey && !window.turnstile && !widgetId.current) {
+          setLoadError("Security check could not load. Refresh the page.");
         }
-        onTokenRef.current("");
-        return;
-      }
-      widgetId.current = api.render(host.current, {
-        sitekey: siteKey,
-        callback: (token) => {
-          setLoadError(null);
-          onTokenRef.current(token);
-        },
-        "expired-callback": () => onTokenRef.current(""),
-        "error-callback": () => {
-          onTokenRef.current("");
-          setLoadError("Security check failed. Refresh and try again.");
-        },
       });
-    }).then(() => {
-      if (!cancelled && siteKey && !window.turnstile && !widgetId.current) {
-        setLoadError("Security check could not load. Refresh the page.");
-      }
-    });
     return () => {
       cancelled = true;
     };
-  }, [siteKey, resetSignal]);
+  }, [siteKey]);
+
+  useEffect(() => {
+    if (!resetSignal) return;
+    resetWidget(widgetId.current, (token) => onTokenRef.current(token));
+  }, [resetSignal]);
+
+  useEffect(() => {
+    const onPageShow = (event: Event) => {
+      const persisted = "persisted" in event && Boolean((event as PageTransitionEvent).persisted);
+      if (!persisted) return;
+      resetWidget(widgetId.current, (token) => onTokenRef.current(token));
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -152,5 +178,11 @@ export function useTurnstileToken() {
     setToken("");
     setResetSignal((n) => n + 1);
   };
-  return { token, setToken, onToken: setToken, reset, resetSignal, required, onRequired: setRequired };
+  /** Capture the current token and remint so a retry cannot reuse it. */
+  const takeChallenge = () => {
+    const challenge = token.trim();
+    if (challenge) reset();
+    return challenge;
+  };
+  return { token, setToken, onToken: setToken, reset, takeChallenge, resetSignal, required, onRequired: setRequired };
 }
