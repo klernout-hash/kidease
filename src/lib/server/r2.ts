@@ -10,9 +10,12 @@
  * allows `https://media.kidease.ca` and optional `*.r2.dev`. Do not allow
  * this S3 API host in the browser.
  *
+ * Public thumbs: Cloudflare Image Transformations on media.kidease.ca
+ * (`cfImageTransformUrl` in `photo.ts`) when CF_IMAGE_RESIZE is set.
+ * Originals stay at ${base}/photos/…. See docs/image-resizing.md.
+ *
  * TODO (follow-up, not this module):
  * - Admin / provider upload UI
- * - Cloudflare Images / Stream delivery for thumbs
  * - Remove Git originals only after Production dual-read is proven
  */
 

@@ -433,6 +433,9 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
             <BuildingPhoto
               src={listingThumb(selected.photos)}
               className="size-16 shrink-0 rounded-md object-cover"
+              sizes="64px"
+              width={160}
+              height={160}
             />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">

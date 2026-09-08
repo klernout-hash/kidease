@@ -10,6 +10,7 @@ import { RequestTourSheet } from "@/components/request-tour";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { LISTING_PLACEHOLDER, isOfficialBuildingPhoto } from "@/lib/listing-photo";
+import { DETAIL_SIZES } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
 import { getDaycare } from "@/lib/server/daycares";
 import { isSaved, openConversation, toggleSave } from "@/lib/server/family";
@@ -246,7 +247,7 @@ function Listing() {
                 className="size-full object-contain bg-surface p-10"
               />
             ) : (
-              <BuildingPhoto eager src={photos[photo] ?? "/photos/storefront-placeholder.jpg"} sizes="(max-width: 767px) 100vw, 720px" width={768} height={576} className="size-full object-cover" />
+              <BuildingPhoto eager src={photos[photo] ?? "/photos/storefront-placeholder.jpg"} sizes={DETAIL_SIZES} width={768} height={576} className="size-full object-cover" />
             )}
             {photos.length > 1 ? (
               <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-0.5">

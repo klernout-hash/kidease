@@ -1,4 +1,8 @@
 export const PHOTO_WIDTHS = [320, 480, 768, 1200] as const;
+/** Airbnb-density Explore tiles (~184–200px CSS; 320/480 cover 1x–2x). */
+export const CARD_WIDTHS = [320, 480, 768] as const;
+/** Listing detail hero (~720px CSS; 1200 covers 1.5–2x). */
+export const HERO_WIDTHS = [480, 768, 1200] as const;
 export const CARD_SIZES = "(max-width: 767px) 172px, (max-width: 1023px) 30vw, 200px";
 export const HERO_SIZES = "(max-width: 767px) 100vw, 560px";
 export const DETAIL_SIZES = "(max-width: 767px) 100vw, 720px";
@@ -10,6 +14,11 @@ export const R2_PUBLIC_DEV_ORIGIN = "https://pub-9e5f137809844fcdb6d6671cd909f31
 
 export const R2_PUBLIC_BASE_ENV = "R2_PUBLIC_BASE_URL";
 export const VITE_R2_PUBLIC_BASE_ENV = "VITE_R2_PUBLIC_BASE_URL";
+/** Opt-in Cloudflare Image Transformations on the media host. Default off. */
+export const CF_IMAGE_RESIZE_ENV = "CF_IMAGE_RESIZE";
+export const VITE_CF_IMAGE_RESIZE_ENV = "VITE_CF_IMAGE_RESIZE";
+/** Stable /cdn-cgi/image/ options. Width is appended per request. */
+export const CF_IMAGE_TRANSFORM_OPTS = "quality=75,format=auto,fit=scale-down";
 
 export type PhotoEnv = Record<string, string | undefined>;
 
@@ -65,9 +74,48 @@ export function r2PublicBaseUrl(env?: PhotoEnv): string {
   return normalizeR2PublicBase(raw);
 }
 
+function envFlagOn(raw: string): boolean {
+  const v = raw.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "on" || v === "yes";
+}
+
+function readEnvValue(env: PhotoEnv | undefined, viteName: string, name: string): string {
+  if (env) return String(env[name] || env[viteName] || "").trim();
+  return readImportMeta(viteName) || readImportMeta(name) || processEnv(name) || processEnv(viteName);
+}
+
+/** True when Kyle set CF_IMAGE_RESIZE / VITE_CF_IMAGE_RESIZE. Absent env = off. */
+export function cfImageResizeEnabled(env?: PhotoEnv): boolean {
+  return envFlagOn(readEnvValue(env, VITE_CF_IMAGE_RESIZE_ENV, CF_IMAGE_RESIZE_ENV));
+}
+
+/** Transformations run on media.kidease.ca only. r2.dev has no /cdn-cgi/image/. */
+export function canCfTransformBase(base: string): boolean {
+  if (!base) return false;
+  try {
+    return new URL(base).hostname.toLowerCase() === "media.kidease.ca";
+  } catch {
+    return false;
+  }
+}
+
+export function isCfImageTransformUrl(url: string): boolean {
+  if (!url) return false;
+  try {
+    return new URL(url, R2_PUBLIC_MEDIA_ORIGIN).pathname.startsWith("/cdn-cgi/image/");
+  } catch {
+    return false;
+  }
+}
+
+export function srcsetWidthsFor(displayWidth: number): readonly number[] {
+  return displayWidth >= 720 ? HERO_WIDTHS : CARD_WIDTHS;
+}
+
 /**
  * Prefix a catalogue `/photos/…` path with the public R2 origin.
  * Does not invent paths — listingPhotosFor still owns id→path maps.
+ * Never wraps /cdn-cgi/image/ — originals stay at ${base}/photos/….
  */
 export function publicPhotoUrl(src: string, env?: PhotoEnv): string {
   if (!src) return src;
@@ -81,17 +129,32 @@ function nearestWidth(width: number) {
   return PHOTO_WIDTHS.find((n) => n >= width) ?? 1200;
 }
 
+/** Same-origin CF transform. Source path is the catalogue /photos/… key. */
+export function cfImageTransformUrl(src: string, width: number, base: string): string {
+  const w = nearestWidth(width);
+  return `${base}/cdn-cgi/image/width=${w},${CF_IMAGE_TRANSFORM_OPTS}${src}`;
+}
+
 export function photoUrl(src: string, width: number, env?: PhotoEnv) {
   if (!src) return publicPhotoUrl("/photos/storefront-placeholder-480.webp", env);
+  if (src.includes("storefront-placeholder")) {
+    const placeholder = publicPhotoUrl(src, env);
+    if (!isLocalPhoto(placeholder)) return placeholder;
+    return "/photos/storefront-placeholder-480.webp";
+  }
+  const base = r2PublicBaseUrl(env);
+  if (base && isLocalPhoto(src) && cfImageResizeEnabled(env) && canCfTransformBase(base)) {
+    return cfImageTransformUrl(src, width, base);
+  }
   const delivered = publicPhotoUrl(src, env);
   if (!isLocalPhoto(delivered)) return delivered;
-  if (src.includes("storefront-placeholder")) return "/photos/storefront-placeholder-480.webp";
   return `/img?src=${encodeURIComponent(src)}&w=${nearestWidth(width)}`;
 }
 
 export function photoSrcSet(src: string, widths: readonly number[] = PHOTO_WIDTHS, env?: PhotoEnv) {
   if (!isLocalPhoto(src) || src.includes("storefront-placeholder")) return undefined;
-  if (r2PublicBaseUrl(env)) return undefined;
+  const base = r2PublicBaseUrl(env);
+  if (base && !(cfImageResizeEnabled(env) && canCfTransformBase(base))) return undefined;
   return widths.map((w) => `${photoUrl(src, w, env)} ${w}w`).join(", ");
 }
 

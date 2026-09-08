@@ -77,6 +77,10 @@ CSP `img-src` already allows `https://media.kidease.ca` and optional
 `https://*.r2.dev`. The S3 API host (`*.r2.cloudflarestorage.com`) stays off
 the browser allowlist.
 
+Optional card / hero resizing on this same host is
+`docs/image-resizing.md` (`CF_IMAGE_RESIZE`). Leave that flag unset until
+Cloudflare Transformations are enabled. Original `/photos/…` URLs stay valid.
+
 ## Secrets
 
 Never commit `.env`, `.env.production.local`, or real `R2_*` values.

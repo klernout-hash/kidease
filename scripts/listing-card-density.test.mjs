@@ -56,5 +56,6 @@ test("rails, search skeletons, and featured grids share the tighter footprint", 
   assert.match(search, /lg:grid-cols-5 xl:grid-cols-6/);
   assert.match(home, /ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5/);
   assert.match(photo, /200px/);
+  assert.match(photo, /CARD_WIDTHS = \[320, 480, 768\]/);
   assert.doesNotMatch(photo, /, 320px"/);
 });

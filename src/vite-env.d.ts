@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_PUBLIC_SENTRY_DSN?: string;
   /** Public media origin for listing /photos/… paths (media.kidease.ca). Not a secret. */
   readonly VITE_R2_PUBLIC_BASE_URL?: string;
+  /** Opt-in Cloudflare Image Transformations on media.kidease.ca. Default off. */
+  readonly VITE_CF_IMAGE_RESIZE?: string;
 }
 
 interface ImportMeta {
