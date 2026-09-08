@@ -41,6 +41,7 @@ import { EmptyState } from "@/components/empty-state";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { listingPageMeta, listingPageTitle } from "@/lib/listing-meta";
 import { formatMonth, money, formatAgeRange, displayCentreName } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
@@ -163,6 +164,7 @@ function Listing() {
     });
     const origin = useAppStore.getState().origin;
     trackLocation("view", origin.lat, origin.lng, origin.label, { slug: d.slug });
+    document.title = listingPageTitle(d);
   }, [data]);
 
   const seoLocale = locale === "fr" ? "fr" : "en";

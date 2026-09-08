@@ -77,6 +77,7 @@ export function DualAnchorBar({
             onResolved={onWorkResolved}
             placeholder={t("anchorWorkPh")}
             origin={home}
+            className="h-11 min-h-11"
             inputClassName="h-11 min-w-0 w-full bg-transparent text-[15px] outline-none"
           />
           {work ? (

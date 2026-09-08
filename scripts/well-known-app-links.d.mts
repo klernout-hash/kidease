@@ -1,6 +1,7 @@
 export const PLACEHOLDER_APPLE_TEAM_ID: string;
 export const AASA_PATH: string;
 export const AASA_JSON_PATH: string;
+export const AASA_ROOT_PATH: string;
 export const ASSETLINKS_PATH: string;
 export const WELL_KNOWN_APP_LINK_PATHS: string[];
 export function normalizeWellKnownPath(pathname: string | null | undefined): string;

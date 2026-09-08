@@ -4,6 +4,7 @@
  * Served at:
  *   /.well-known/apple-app-site-association
  *   /.well-known/apple-app-site-association.json  (same body; Vercel-friendly alias)
+ *   /apple-app-site-association                  (root mirror for older Apple clients)
  *   /.well-known/assetlinks.json
  *
  * Bundle / application id is the Capacitor appId already in the repo
@@ -34,9 +35,11 @@ export const PLACEHOLDER_APPLE_TEAM_ID = "XXXXXXXXXX";
 
 export const AASA_PATH = "/.well-known/apple-app-site-association";
 export const AASA_JSON_PATH = "/.well-known/apple-app-site-association.json";
+/** Older Apple clients still probe the site root (same JSON as .well-known). */
+export const AASA_ROOT_PATH = "/apple-app-site-association";
 export const ASSETLINKS_PATH = "/.well-known/assetlinks.json";
 
-export const WELL_KNOWN_APP_LINK_PATHS = [AASA_PATH, AASA_JSON_PATH, ASSETLINKS_PATH];
+export const WELL_KNOWN_APP_LINK_PATHS = [AASA_PATH, AASA_JSON_PATH, AASA_ROOT_PATH, ASSETLINKS_PATH];
 
 const JSON_CONTENT_TYPE = "application/json";
 
@@ -119,7 +122,7 @@ export function wellKnownStaticPayload(pathname, env = process.env) {
 
 export function wellKnownAppLinksPayload(pathname, env = process.env) {
   const path = normalizeWellKnownPath(pathname);
-  if (path === AASA_PATH || path === AASA_JSON_PATH) {
+  if (path === AASA_PATH || path === AASA_JSON_PATH || path === AASA_ROOT_PATH) {
     return {
       path,
       body: `${JSON.stringify(buildAppleAppSiteAssociation(env), null, 2)}\n`,

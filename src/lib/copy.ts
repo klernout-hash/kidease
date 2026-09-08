@@ -730,6 +730,7 @@ export const copy = {
     cookieConsentTitle: "Cookies and analytics",
     cookieConsentBody:
       "Essential cookies keep you signed in and remember your search. They are required. Optional analytics (PostHog) records page views and a privacy-masked session replay so we can improve KidEase — not ads, and not required to use the site.",
+    cookieConsentBannerLead: "Analytics stay off until Allow.",
     cookieConsentEssential: "Essential",
     cookieConsentAllow: "Allow analytics",
     support: "Support",
@@ -1989,6 +1990,7 @@ export const copy = {
     cookieConsentTitle: "Témoins et analytique",
     cookieConsentBody:
       "Les témoins essentiels vous gardent connecté et mémorisent la recherche. Ils sont nécessaires. L’analytique facultative (PostHog) enregistre les pages vues et un replay de session masqué pour améliorer KidEase — pas de publicité, et pas exigé pour utiliser le site.",
+    cookieConsentBannerLead: "L’analytique reste off jusqu’à Autoriser.",
     cookieConsentEssential: "Essentiel",
     cookieConsentAllow: "Autoriser l’analytique",
     support: "Soutien",

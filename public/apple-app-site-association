@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "XXXXXXXXXX.ca.daycarenearme.app",
+        "paths": ["*"],
+        "appIDs": ["XXXXXXXXXX.ca.daycarenearme.app"],
+        "components": [
+          {
+            "/": "/*",
+            "comment": "Open KidEase https URLs in the Capacitor app"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["XXXXXXXXXX.ca.daycarenearme.app"]
+  }
+}

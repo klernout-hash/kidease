@@ -53,7 +53,9 @@ test("rails, search skeletons, and featured grids share the tighter footprint", 
   const home = src("src/routes/index.tsx");
   const photo = src("src/lib/photo.ts");
   assert.match(rail, /scrollBy\(\{ left: dir \* 208/);
-  assert.match(search, /lg:grid-cols-5 xl:grid-cols-6/);
+  assert.match(search, /ke-rail-card/);
+  assert.match(search, /aspect-\[20\/19\]/);
+  assert.doesNotMatch(search, /lg:grid-cols-5 xl:grid-cols-6/);
   assert.match(home, /ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5/);
   assert.match(photo, /200px/);
   assert.match(photo, /CARD_WIDTHS = \[320, 480, 768\]/);

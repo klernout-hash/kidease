@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { transactionalMailFrom } from "@/lib/mail-from";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { requireAdmin } from "@/lib/server/roles";
 import { reportError } from "@/lib/observe";
@@ -8,7 +9,6 @@ import {
   adminMailStatusFromEnv,
   humanTitanError,
   mailboxAddress,
-  mailFromHeader,
   titanAppPassword,
   type AdminMailStatus,
   type TitanListItem,
@@ -108,7 +108,7 @@ export const sendAdminMail = createServerFn({ method: "POST" })
       }
     }
 
-    const from = mailFromHeader();
+    const from = transactionalMailFrom();
     const resend = process.env.RESEND_API_KEY?.trim();
     if (resend) {
       const res = await fetch("https://api.resend.com/emails", {

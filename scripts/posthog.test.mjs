@@ -4,11 +4,14 @@ import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS,
+  ANALYTICS_CONSENT_BANNER_LOAD_CAP_MS,
   ANALYTICS_CONSENT_KEY,
   analyticsConsentAllowsCapture,
   analyticsConsentAllowsReplay,
   analyticsConsentApplies,
   readAnalyticsConsent,
+  scheduleAnalyticsConsentBannerReveal,
   shouldShowAnalyticsConsentBanner,
   shouldStartPostHog,
   writeAnalyticsConsent,
@@ -176,6 +179,13 @@ describe("PostHog client wiring", () => {
     const copy = read("src/lib/copy.ts");
     assert.match(rootRoute, /CookieConsentBanner/);
     assert.match(banner, /shouldShowAnalyticsConsentBanner/);
+    assert.match(banner, /scheduleAnalyticsConsentBannerReveal/);
+    assert.match(banner, /ke-cookie-consent-body/);
+    assert.match(banner, /cookieConsentBannerLead/);
+    assert.match(banner, /sr-only/);
+    assert.match(banner, /text-\[11px\] leading-4/);
+    assert.match(copy, /cookieConsentBannerLead:/);
+    assert.doesNotMatch(banner, /setOpen\(shouldShowAnalyticsConsentBanner\(\)\)/);
     assert.match(banner, /writeAnalyticsConsent\(value\)/);
     assert.match(banner, /choose\("granted"\)/);
     assert.match(banner, /choose\("denied"\)/);
@@ -196,6 +206,60 @@ describe("PostHog client wiring", () => {
     assert.doesNotMatch(legal, /does not show a cookie banner/);
     assert.doesNotMatch(help, /so no cookie banner/);
     assert.doesNotMatch(read("docs/posthog.md"), /no cookie banner/);
+  });
+
+  it("defers the cookie banner until after load idle so it is not LCP", () => {
+    assert.equal(ANALYTICS_CONSENT_BANNER_LOAD_CAP_MS, 2500);
+    assert.equal(ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS, 2000);
+
+    let shown = 0;
+    const timeouts = new Map();
+    let nextId = 1;
+    let idleCb = null;
+    let loadCb = null;
+
+    const cancel = scheduleAnalyticsConsentBannerReveal(() => {
+      shown += 1;
+    }, {
+      readyState: "loading",
+      requestIdleCallback: (cb, opts) => {
+        assert.equal(opts?.timeout, ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS);
+        idleCb = cb;
+        return 99;
+      },
+      cancelIdleCallback: (id) => {
+        if (id === 99) idleCb = null;
+      },
+      setTimeout: (cb, ms) => {
+        const id = nextId++;
+        timeouts.set(id, { cb, ms });
+        return id;
+      },
+      clearTimeout: (id) => {
+        timeouts.delete(id);
+      },
+      addLoadListener: (cb) => {
+        loadCb = cb;
+        return () => {
+          loadCb = null;
+        };
+      },
+    });
+
+    assert.equal(shown, 0);
+    assert.equal(idleCb, null);
+    assert.ok(loadCb);
+    const cap = [...timeouts.values()].find((row) => row.ms === ANALYTICS_CONSENT_BANNER_LOAD_CAP_MS);
+    assert.ok(cap);
+
+    loadCb();
+    assert.equal(typeof idleCb, "function");
+    idleCb();
+    assert.equal(shown, 1);
+
+    idleCb();
+    assert.equal(shown, 1);
+    cancel();
   });
 
   it("identifies by Better Auth user id and never sends email", () => {

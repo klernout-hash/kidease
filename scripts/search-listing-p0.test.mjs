@@ -36,6 +36,27 @@ test("search count stays on a loading state instead of flashing 0 centres", () =
   assert.match(copy, /searchCountLoading: "Chargement des centres…"/);
 });
 
+test("search reserves rail space so Priority listings and the form do not shift", () => {
+  const search = src("src/routes/search.tsx");
+  const place = src("src/components/place-search.tsx");
+  const bar = src("src/components/explore-search-bar.tsx");
+  const rails = src("src/components/explore-rails.tsx");
+  const hint = src("src/components/explore-hint.tsx");
+  assert.match(search, /ke-search-results/);
+  assert.match(search, /min-h-\[22rem\]/);
+  assert.match(search, /ke-rail-card/);
+  assert.match(search, /ke-skel mb-3 h-7 w-44/);
+  assert.doesNotMatch(search, /grid grid-cols-2 gap-x-3 gap-y-4/);
+  assert.match(search, /min-h-5/);
+  assert.match(search, /min-h-4/);
+  assert.match(place, /relative isolate min-w-0 flex-1 contain-layout/);
+  assert.match(bar, /min-h-\[12\.75rem\]/);
+  assert.match(bar, /min-h-\[4\.25rem\]/);
+  assert.match(bar, /className="min-h-6"/);
+  assert.match(rails, /min-h-\[22rem\]/);
+  assert.match(hint, /useState\(true\)/);
+});
+
 test("search and listing recover from hung fetches", () => {
   const search = src("src/routes/search.tsx");
   assert.match(search, /searchFailed/);

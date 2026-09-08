@@ -65,8 +65,8 @@ export function ExploreSearchBar({
 
   function segmentClass(field: Field, index: number) {
     return cn(
-      "relative flex min-w-0 flex-1 flex-col justify-center px-5 py-3 text-left transition-colors",
-      "lg:min-h-[4.25rem] lg:px-6",
+      "relative flex min-h-[4.25rem] min-w-0 flex-1 flex-col justify-center px-5 py-3 text-left transition-colors contain-layout",
+      "lg:px-6",
       index === 0 && "rounded-t-[2rem] lg:rounded-none lg:rounded-l-full",
       index === 2 && "rounded-b-[2rem] lg:rounded-none lg:rounded-r-full",
       index > 0 &&
@@ -86,7 +86,7 @@ export function ExploreSearchBar({
         onSubmit();
       }}
     >
-      <div className="relative z-20 flex flex-col divide-y divide-border rounded-[2rem] bg-surface shadow-lift ring-1 ring-border/80 lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
+      <div className="relative z-20 flex flex-col min-h-[12.75rem] divide-y divide-border rounded-[2rem] bg-surface shadow-lift ring-1 ring-border/80 contain-layout lg:min-h-[4.25rem] lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
         <div className={segmentClass("where", 0)} onClick={() => setActive("where")}>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
@@ -108,7 +108,8 @@ export function ExploreSearchBar({
                 placeholder={t("searchWhereHint")}
                 origin={origin}
                 ariaLabelledBy={whereLabelId}
-                inputClassName="mt-0.5 w-full bg-transparent text-base text-fg outline-none placeholder:text-muted"
+                className="min-h-6"
+                inputClassName="mt-0.5 h-6 w-full bg-transparent text-base leading-6 text-fg outline-none placeholder:text-muted"
               />
             </div>
             {onLocate ? (
@@ -140,7 +141,7 @@ export function ExploreSearchBar({
             </span>
             <span
               className={cn(
-                "mt-0.5 block truncate text-base",
+                "mt-0.5 block h-6 truncate text-base leading-6",
                 dateLabel ? "text-fg" : "text-muted",
               )}
             >
@@ -216,7 +217,7 @@ export function ExploreSearchBar({
                 placeholder={t("searchDaycareHint")}
                 aria-labelledby={nameLabelId}
                 autoComplete="off"
-                className="mt-0.5 w-full bg-transparent text-base text-fg outline-none placeholder:text-muted"
+                className="mt-0.5 h-6 w-full bg-transparent text-base leading-6 text-fg outline-none placeholder:text-muted"
               />
             </div>
             <button
