@@ -24,6 +24,7 @@ import { AdminStripeCatalog } from "@/components/admin-stripe-catalog";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
+import { useCopy } from "@/lib/use-copy";
 import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
 import { AdminReviewsPanel } from "@/components/admin-reviews";
@@ -507,6 +508,7 @@ function MoneyPanel({
   stripeLive: boolean;
   ready?: boolean;
 }) {
+  const { t } = useCopy();
   return (
     <>
       <div className="mb-4">
@@ -516,7 +518,7 @@ function MoneyPanel({
           <p className="mt-2 text-sm text-muted">Pending totals are not settled. There is no payout, refund, or parent Pay CTA while Stripe is off.</p>
         ) : null}
         {ready && stripeLive ? (
-          <p className="mt-2 text-sm text-muted">Live centre bills keep about 3% as the KidEase platform fee.</p>
+          <p className="mt-2 text-sm text-muted">{t("connectFeeAdminLive")}</p>
         ) : null}
         <AdminStripeCatalog />
       </div>

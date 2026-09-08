@@ -10,6 +10,8 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { ChildCareCard } from "@/components/child-care-card";
 import { getFamily, getThread, updateRequestStatus } from "@/lib/server/family";
+import { listParentBills } from "@/lib/server/billing";
+import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
 import { sendConnectedMessage } from "@/lib/server/inbox";
 import { formatAgeLabel, formatStart, pushNewRequest, scheduleLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
@@ -58,6 +60,7 @@ function ThreadPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [canWrite, setCanWrite] = useState(true);
+  const [openBill, setOpenBill] = useState<Bill | null>(null);
   const [body, setBody] = useState("");
   const [sendError, setSendError] = useState("");
 
@@ -102,6 +105,13 @@ function ThreadPage() {
     setMessages(res.messages);
     setTours(res.tours ?? []);
     setCanWrite(res.canWrite !== false);
+    if (res.isParent && next) {
+      const billed = await listParentBills().catch(() => ({ bills: [] as Bill[] }));
+      const match = billed.bills.find((bill) => bill.bookingId === next.id && billIsOpen(bill.status)) ?? null;
+      setOpenBill(match);
+    } else {
+      setOpenBill(null);
+    }
   }
 
   useEffect(() => {
@@ -209,11 +219,18 @@ function ThreadPage() {
         ) : null}
         {isParent && desks?.stripeLive && booking?.status === "accepted" && booking.paymentStatus !== "paid" ? (
           <div className="mt-3 rounded-xl bg-primary p-4 text-primary-fg">
-            <p className="font-medium">{t("payTitle")}</p>
+            <p className="font-medium">{openBill ? t("payBillTitle") : t("awaitingCentreBill")}</p>
+            {openBill ? <p className="mt-1 text-sm text-primary-fg/90">{t("connectFeeParentPay")}</p> : null}
             <Button size="sm" variant="secondary" className="mt-3" asChild>
-              <Link to="/pay/$bookingId" params={{ bookingId: booking.id }}>
-                {t("pay")} · {money(booking.monthlyAmount, locale)}
-              </Link>
+              {openBill ? (
+                <Link to="/pay/bill/$billId" params={{ billId: openBill.id }} search={{}}>
+                  {t("pay")} · {money(billDollars(openBill), locale)}
+                </Link>
+              ) : (
+                <Link to="/parent" search={{ tab: "payments" }}>
+                  {t("payUseBill")}
+                </Link>
+              )}
             </Button>
           </div>
         ) : null}

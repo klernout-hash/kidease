@@ -92,6 +92,7 @@ function PayPage() {
         <p className="mt-2 text-sm text-muted">{alreadyPaid ? t("receiptLead") : t("bookingPayLeadHonest")}</p>
         <LedgerHonesty stripeLive={stripeLive} surface="booking" className="mt-3" />
         <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("bookingPayDisabled")}</p>
+        <p className="mt-3 text-sm text-muted">{t("connectFeeParentPay")}</p>
 
         {booking ? (
           <div className="mt-6 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
