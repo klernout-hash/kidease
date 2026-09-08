@@ -43,8 +43,18 @@ test("verify-2fa auto-start keys off user.id and does not remint while waiting",
 test("startTwoFactor reuses an unexpired challenge unless force is set", () => {
   const twoFa = readFileSync(join(root, "src/lib/server/two-factor.ts"), "utf8");
   assert.match(twoFa, /force\?:\s*boolean/);
-  assert.match(twoFa, /!data\.force/);
+  assert.match(twoFa, /decideTwoFactorStart/);
   assert.match(twoFa, /expires_at/);
-  assert.match(twoFa, /attempts < MAX_ATTEMPTS/);
   assert.match(twoFa, /reused:\s*true/);
+  assert.doesNotMatch(
+    twoFa,
+    /if \(last && Date\.now\(\) - new Date\(last\.created_at\)\.getTime\(\) < 45_000\)/,
+  );
+});
+
+test("Send a new code surfaces wait or send failure instead of a silent success", () => {
+  assert.match(routeFile, /if \(!res\.sent\)/);
+  assert.match(routeFile, /Please wait a moment, then try Send a new code again/);
+  assert.match(routeFile, /A new code is on its way/);
+  assert.match(routeFile, /setNotice\(null\)/);
 });
