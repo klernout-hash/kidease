@@ -2,10 +2,9 @@ import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffe
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { DeskShell } from "@/components/desk-shell";
-import { DaycareCard } from "@/components/daycare-card";
+import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
-import { ListingStatusBadge, LedgerHonesty } from "@/components/listing-status-badge";
-import { TrustSignals } from "@/components/trust-badge";
+import { LedgerHonesty } from "@/components/listing-status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -30,13 +29,10 @@ import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore, soonestStartDate } from "@/lib/parent-urgency";
 import { distanceKm } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
-import { PipelineBadge } from "@/components/pipeline-badge";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
-
-const SAVED_EAGER_CARDS = 4;
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -216,6 +212,14 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
     return scheduleIdle(() => setAccountToolsReady(true));
   }, [exploreReady]);
 
+  useEffect(() => {
+    function refresh() {
+      void loadFamily().catch(() => undefined);
+    }
+    window.addEventListener("kidease-shortlist", refresh);
+    return () => window.removeEventListener("kidease-shortlist", refresh);
+  }, [loadFamily]);
+
   const deferredSaved = useDeferredValue(saved);
   const rankedSaved = useMemo(() => {
     if (contentTab !== "saved") return [] as Array<Card & { matchScore: number; urgencyScore: number; distanceKm: number }>;
@@ -259,27 +263,13 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       ) : null}
 
       {contentTab === "saved" ? (
-        <div className="ke-listings mt-6">
-          {rankedSaved.length ? (
-            (savedReady ? rankedSaved : rankedSaved.slice(0, SAVED_EAGER_CARDS)).map((item) => (
-              <div key={item.id} className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  {item.live || (item.claimStatus && item.claimStatus !== "unclaimed") ? (
-                    <ListingStatusBadge claimStatus={item.claimStatus} live={item.live} />
-                  ) : null}
-                  <PipelineBadge
-                    tourStatus={tours.find((tour) => tour.daycareId === item.id)?.status}
-                    bookingStatus={bookings.find((b) => b.daycareId === item.id)?.status ?? null}
-                  />
-                  <TrustSignals item={item} surface="parent" compact />
-                </div>
-                <DaycareCard item={item} showDistance={located} />
-              </div>
-            ))
-          ) : (
-            <EmptyState title={t("noSaved")} body={t("noSavedLead")} action={t("emptyFindCare")} actionTo="/search" />
-          )}
-        </div>
+        <ParentShortlist
+          items={rankedSaved}
+          ready={savedReady}
+          located={located}
+          tours={tours}
+          bookings={bookings}
+        />
       ) : null}
 
       {contentTab === "alerts" ? (

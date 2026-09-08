@@ -348,6 +348,44 @@ export const isSaved = createServerFn({ method: "GET" })
     return { saved: (rows[0]?.n ?? 0) > 0 };
   });
 
+export const listSavedIds = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const rows = await sql<{ daycare_id: string }>`
+      select daycare_id from saved_daycares where user_id = ${context.userId}
+    `;
+    return rows.map((r) => r.daycare_id);
+  });
+
+/** Insert-only save so a guest's pending intent never unsaves an existing row. */
+export const saveDaycare = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((daycareId: string) => daycareId)
+  .handler(async ({ context, data: daycareId }) => {
+    const sql = await getSql();
+    const listed = await catalogByIdGet(daycareId);
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+      throw new Error("Listing not found");
+    }
+    if (listed) await upsertDaycare(sql, listed);
+    await sql`
+      insert into saved_daycares (user_id, daycare_id)
+      values (${context.userId}, ${daycareId})
+      on conflict (user_id, daycare_id) do nothing
+    `;
+    return { saved: true as const };
+  });
+
+export const unsaveDaycare = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((daycareId: string) => daycareId)
+  .handler(async ({ context, data: daycareId }) => {
+    const sql = await getSql();
+    await sql`delete from saved_daycares where user_id = ${context.userId} and daycare_id = ${daycareId}`;
+    return { saved: false as const };
+  });
+
 export const createBooking = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(

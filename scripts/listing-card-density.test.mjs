@@ -37,12 +37,14 @@ test("app channel keeps a readable phone tile, not a tiny grid", () => {
 
 test("listing card copy stays a compact single stack with 44px save target", () => {
   const card = src("src/components/daycare-card.tsx");
+  const save = src("src/components/save-listing-button.tsx");
   assert.match(card, /truncate text-\[13px\] font-semibold/);
   assert.match(card, /truncate text-\[13px\] font-normal leading-4/);
   assert.match(card, /text-\[13px\] leading-4 tabular-nums/);
   assert.match(card, /aspect-\[20\/19\]/);
   assert.match(card, /aspect-\[4\/3\]/);
-  assert.match(card, /grid size-11 place-items-center rounded-full/);
+  assert.match(card, /SaveListingButton/);
+  assert.match(save, /grid size-11 place-items-center rounded-full/);
   assert.doesNotMatch(card, /Guest favourite/);
   assert.doesNotMatch(card, /text-\[15px\] font-semibold leading-\[1\.2\]/);
 });

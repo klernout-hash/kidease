@@ -171,7 +171,7 @@ test("guest parent desk redirects to login; provider stays a sign-in landing", (
     classifyParentGuestGate({
       finalUrl: "http://127.0.0.1:8081/parent",
       status: 200,
-      bodyText: "Saved centres\nYour children",
+      bodyText: "My shortlist\nYour children",
     }).ok,
     false,
   );

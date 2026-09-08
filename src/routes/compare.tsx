@@ -17,6 +17,13 @@ import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore } from "@/lib/parent-urgency";
 import { useAppStore } from "@/lib/store";
 import { distanceKm } from "@/lib/proximity";
+import {
+  formatListingAges,
+  formatListingCulture,
+  formatListingLanguages,
+  listingIsVerified,
+} from "@/lib/shortlist";
+import { displayDistance } from "@/lib/units";
 import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
@@ -34,6 +41,7 @@ function ComparePage() {
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const ageGroup = useAppStore((s) => s.ageGroup);
+  const distanceUnit = useAppStore((s) => s.distanceUnit);
   const [items, setItems] = useState<DaycareCard[]>([]);
 
   useEffect(() => {
@@ -115,8 +123,37 @@ function ComparePage() {
                     </td>
                   ))}
                 </tr>
+                <tr className="border-t border-border">
+                  <th className="p-2 font-medium text-fg">{t("compareVerified")}</th>
+                  {items.map((d) => (
+                    <td key={d.id} className="p-2">
+                      {listingIsVerified(d) ? t("compareVerified") : t("trustNotVerified")}
+                    </td>
+                  ))}
+                </tr>
                 <Row label={t("cityLabel")} values={items.map((d) => d.city)} />
-                <Row label={t("hours")} values={items.map((d) => d.hours)} />
+                <Row
+                  label={t("ages")}
+                  values={items.map((d) => formatListingAges(d) || t("agesUnknown"))}
+                />
+                <Row label={t("hours")} values={items.map((d) => d.hours || t("noneListed"))} />
+                <Row
+                  label={t("compareDistance")}
+                  values={items.map((d) => {
+                    if (!located) return t("noneListed");
+                    const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
+                    if (!Number.isFinite(km)) return t("noneListed");
+                    return `${displayDistance(km, distanceUnit)} ${distanceUnit === "mi" ? t("miAway") : t("kmAway")}`;
+                  })}
+                />
+                <Row
+                  label={t("language")}
+                  values={items.map((d) => formatListingLanguages(d.languages, locale === "fr" ? "fr" : "en") || t("noneListed"))}
+                />
+                <Row
+                  label={t("compareCulture")}
+                  values={items.map((d) => formatListingCulture(d.amenities, locale === "fr" ? "fr" : "en") || t("noneListed"))}
+                />
                 <Row
                   label={t("pricing")}
                   values={items.map((d) => (d.live && d.fromPrice > 0 ? money(d.fromPrice, locale) : t("feeUnknown")))}

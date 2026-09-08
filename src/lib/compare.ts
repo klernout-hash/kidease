@@ -1,5 +1,5 @@
 const KEY = "kidease-compare";
-const MAX = 3;
+const MAX = 5;
 
 export function readCompare(): string[] {
   if (typeof window === "undefined") return [];

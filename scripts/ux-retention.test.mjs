@@ -71,11 +71,12 @@ test("error surfaces and get-app offer a next step instead of a dead end", () =>
   assert.match(getApp, /to="\/search"/);
 });
 
-test("listing cards label the heart as compare, not save", () => {
+test("listing cards use the heart to save to the parent shortlist", () => {
   const card = src("src/components/daycare-card.tsx");
-  assert.match(card, /addToCompare/);
-  assert.match(card, /comparing/);
-  assert.doesNotMatch(card, /aria-label=\{t\("saved"\)\}/);
+  assert.match(card, /SaveListingButton/);
+  assert.match(card, /daycareId=\{item\.id\}/);
+  assert.doesNotMatch(card, /toggleCompare/);
+  assert.doesNotMatch(card, /addToCompare/);
 });
 
 test("home offers a resume CTA and records a sanitized last path", () => {

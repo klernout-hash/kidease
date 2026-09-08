@@ -1,15 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, Star } from "lucide-react";
-import { memo, useEffect, useState } from "react";
+import { Star } from "lucide-react";
+import { memo } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { PhotoCarousel } from "@/components/photo-carousel";
+import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
 import { cn, displayCentreName, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
-import { readCompare, toggleCompare } from "@/lib/compare";
 import { feeProgramBadgeKey } from "@/lib/licensing";
 import { listingPill } from "@/lib/listing-card";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
@@ -21,8 +21,6 @@ import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { TrustBadge, TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
-
-const HEART_SAVED = "#FF385C";
 
 export const DaycareCard = memo(function DaycareCard({
   item,
@@ -46,19 +44,9 @@ export const DaycareCard = memo(function DaycareCard({
   const located = useAppStore((s) => s.located);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
   const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
-  const [picked, setPicked] = useState(false);
   const feeBadge = feeProgramBadgeKey(item.province);
   const away = located ? `${displayDistance(distanceKm, distanceUnit)} ${distanceUnit === "mi" ? t("miAway") : t("kmAway")}` : "";
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
-
-  useEffect(() => {
-    function sync() {
-      setPicked(readCompare().includes(item.id));
-    }
-    sync();
-    window.addEventListener("kidease-compare", sync);
-    return () => window.removeEventListener("kidease-compare", sync);
-  }, [item.id]);
 
   const license = publicLicenseBadge(item);
   const cardTrust = trustBadgesFor(item, "card");
@@ -185,27 +173,7 @@ export const DaycareCard = memo(function DaycareCard({
         appearance="photo"
         className="pointer-events-auto absolute right-12 top-2 z-20"
       />
-      <button
-        type="button"
-        onPointerDown={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggleCompare(item.id);
-        }}
-        className="pointer-events-auto absolute right-2 top-2 z-20 grid size-11 place-items-center rounded-full"
-        aria-label={picked ? t("comparing") : t("addToCompare")}
-      >
-        <Heart
-          className={cn(
-            "size-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]",
-            picked ? "text-[#FF385C]" : "text-white",
-          )}
-          strokeWidth={1.7}
-          fill={picked ? HEART_SAVED : "rgba(0,0,0,0.28)"}
-        />
-      </button>
+      <SaveListingButton daycareId={item.id} />
     </article>
   );
 });
