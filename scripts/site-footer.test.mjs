@@ -67,6 +67,28 @@ test("Support column drops the inbox email and uses Contact Us copy", () => {
   assert.match(copy, /contactTitle: "Nous joindre"/);
 });
 
+test("Support column includes About and Meet the Team before legal links", () => {
+  const support = footer.slice(footer.indexOf('t("support")'), footer.indexOf(">Parents<"));
+  assert.match(support, /to="\/about"/);
+  assert.match(support, /to="\/team"/);
+  assert.match(support, /t\("about"\)/);
+  assert.match(support, /t\("team"\)/);
+  const aboutAt = support.indexOf('to="/about"');
+  const teamAt = support.indexOf('to="/team"');
+  const privacyAt = support.indexOf('to="/privacy"');
+  assert.ok(aboutAt > 0 && teamAt > aboutAt && privacyAt > teamAt, "About then Team, then legal");
+});
+
+test("Daycares column keeps verify listings and drops About, Team, and Manitoba Child Care", () => {
+  const daycares = footer.slice(footer.indexOf("Garderies"));
+  assert.match(daycares, /to="\/verify"/);
+  assert.match(daycares, /verifyListings/);
+  assert.doesNotMatch(daycares, /to="\/about"/);
+  assert.doesNotMatch(daycares, /to="\/team"/);
+  assert.doesNotMatch(footer, /mbChildcare/);
+  assert.doesNotMatch(footer, /childcaresearch\.gov\.mb\.ca/);
+});
+
 test("Parents column keeps product links and omits city hubs", () => {
   const parents = footer.slice(footer.indexOf(">Parents<"), footer.indexOf("Garderies"));
   assert.match(parents, /to="\/search"/);
