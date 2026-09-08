@@ -177,6 +177,9 @@ test("listing cards and listing detail share the centre deep link", () => {
   const button = src("src/components/share-button.tsx");
   assert.match(card, /ShareListingButton/);
   assert.match(card, /appearance="photo"/);
+  assert.match(card, /pointer-events-auto/);
+  assert.match(button, /onPointerDown/);
+  assert.match(button, /stopPropagation/);
   assert.match(listing, /ShareListingButton/);
   assert.match(listing, /d\.slug/);
   assert.match(button, /listingSharePayload/);

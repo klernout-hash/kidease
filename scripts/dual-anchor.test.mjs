@@ -125,7 +125,17 @@ describe("search stack keeps single-anchor and adds dual PostGIS", () => {
     const copy = read("src/lib/copy.ts");
     const map = read("src/components/map-view.tsx");
     assert.match(page, /DualAnchorBar/);
-    assert.match(read("src/components/dual-anchor-bar.tsx"), /resolveLocationQuery/);
+    const bar = read("src/components/dual-anchor-bar.tsx");
+    assert.match(bar, /resolveLocationQuery/);
+    assert.match(bar, /PlaceSearch/);
+    assert.match(bar, /anchorWorkMiss/);
+    assert.match(bar, /overflow-visible/);
+    const places = read("src/components/place-search.tsx");
+    assert.match(places, /createPortal/);
+    assert.match(places, /suggestPlacesBrowser/);
+    assert.match(places, /geocodeWithBrowser/);
+    assert.match(places, /suggestLocalPlaces/);
+    assert.match(read("src/lib/copy.ts"), /anchorWorkMiss: "We couldn’t find that address/);
     assert.match(page, /noDualResults/);
     assert.match(page, /secondOrigin/);
     assert.match(page, /getMySearchAnchors/);

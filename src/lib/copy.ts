@@ -113,6 +113,7 @@ export const copy = {
     anchorHomeHint: "Centres near you.",
     anchorWorkHint: "Centres near work.",
     anchorNeedWork: "Add a work or school address to search both places.",
+    anchorWorkMiss: "We couldn’t find that address. Try a street, city, or postal code.",
     noDualResults: "No centres sit inside both circles.",
     noDualResultsBody:
       "A centre has to be within your radius of both places. If home and work are far apart, widen the radius or search one place at a time.",
@@ -1449,6 +1450,7 @@ export const copy = {
     anchorHomeHint: "Centres près de vous.",
     anchorWorkHint: "Centres près du travail.",
     anchorNeedWork: "Ajoutez une adresse de travail ou d’école pour chercher les deux lieux.",
+    anchorWorkMiss: "Adresse introuvable. Essayez une rue, une ville ou un code postal.",
     noDualResults: "Aucun centre dans les deux cercles.",
     noDualResultsBody:
       "Un centre doit être dans votre rayon des deux lieux. Si la maison et le travail sont éloignés, élargissez le rayon ou cherchez un lieu à la fois.",
