@@ -1,5 +1,7 @@
 /** Titan IMAP/SMTP helpers for Admin Mail. No Start/DB — tests import this file. */
 
+import { isResendSendFrom } from "../mail-from";
+
 export const TITAN_WEB_INBOX = "https://app.titan.email";
 export const TITAN_DEFAULT_MAILBOX = "kyle@kidease.ca";
 export const TITAN_DEFAULT_IMAP_HOST = "imap.titan.email";
@@ -70,7 +72,11 @@ export function mailboxAddress(env: EnvMap = process.env): string {
 }
 
 export function mailFromHeader(env: EnvMap = process.env): string {
-  return envStr(env, "MAIL_FROM") || `KidEase <${mailboxAddress(env)}>`;
+  const from = envStr(env, "MAIL_FROM");
+  // Production MAIL_FROM is the Resend send subdomain. Titan SMTP must stay
+  // on the kyle@ mailbox — do not send as login@send.kidease.ca via Titan.
+  if (from && !isResendSendFrom(from)) return from;
+  return `KidEase <${mailboxAddress(env)}>`;
 }
 
 export function parseFromHeader(from: string): { name: string; email: string } {

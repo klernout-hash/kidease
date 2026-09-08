@@ -43,6 +43,19 @@ test("missing TITAN_APP_PASSWORD is a clear Admin setup message", () => {
   assert.doesNotMatch(resolved.error, /hunter2|password123|secret/i);
 });
 
+test("Titan SMTP From stays on kyle@ when MAIL_FROM is the Resend send subdomain", () => {
+  const resolved = resolveTitanConfig({
+    TITAN_APP_PASSWORD: "not-a-real-password",
+    ADMIN_EMAIL: "kyle@kidease.ca",
+    MAIL_FROM: "KidEase <login@send.kidease.ca>",
+  });
+  assert.equal(resolved.ok, true);
+  if (!resolved.ok) return;
+  assert.equal(resolved.config.fromEmail, "kyle@kidease.ca");
+  assert.equal(resolved.config.fromHeader, "KidEase <kyle@kidease.ca>");
+  assert.equal(resolved.config.user, "kyle@kidease.ca");
+});
+
 test("Titan config reuses mailbox env and Titan hosts", () => {
   const resolved = resolveTitanConfig({
     TITAN_APP_PASSWORD: "not-a-real-password",

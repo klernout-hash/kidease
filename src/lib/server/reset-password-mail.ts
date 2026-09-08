@@ -1,5 +1,6 @@
+import { transactionalMailFrom } from "@/lib/mail-from";
+
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
-const MAIL_FROM = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
 
 export async function sendResetPasswordMail(input: {
   to: string;
@@ -29,7 +30,7 @@ export async function sendResetPasswordMail(input: {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: MAIL_FROM, to: [to], reply_to: ADMIN_EMAIL, subject, text, html }),
+      body: JSON.stringify({ from: transactionalMailFrom(), to: [to], reply_to: ADMIN_EMAIL, subject, text, html }),
     });
     if (!res.ok) throw new Error(`Could not send reset email (${res.status})`);
     return "sent" as const;
@@ -37,7 +38,7 @@ export async function sendResetPasswordMail(input: {
 
   const sendgrid = process.env.SENDGRID_API_KEY?.trim();
   if (sendgrid) {
-    const fromMatch = MAIL_FROM.match(/^(.*)<([^>]+)>$/);
+    const fromMatch = transactionalMailFrom().match(/^(.*)<([^>]+)>$/);
     const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${sendgrid}`, "Content-Type": "application/json" },

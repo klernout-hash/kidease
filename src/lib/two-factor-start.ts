@@ -1,16 +1,18 @@
+import { DEFAULT_TRANSACTIONAL_MAIL_FROM, transactionalMailFrom } from "./mail-from";
+
 /** Auto-start / remount cooldown. Does not apply to an explicit "Send a new code". */
 export const TWO_FACTOR_AUTO_COOLDOWN_MS = 45_000;
 export const TWO_FACTOR_MAX_ATTEMPTS = 5;
 
 /**
  * Resend-aligned 2FA From. Apex `kyle@kidease.ca` fails SPF (Titan-only `-all`),
- * so Outlook quarantines OTPs. Override with MAIL_FROM after `send.kidease.ca`
- * SPF + DKIM + bounce MX verify. Reply-To stays ADMIN_EMAIL / kyle@.
+ * so Outlook quarantines OTPs. MAIL_FROM on send.kidease.ca still wins;
+ * leftover Production MAIL_FROM=kyle@ is ignored. Reply-To stays ADMIN_EMAIL.
  */
-export const TWO_FACTOR_DEFAULT_MAIL_FROM = "KidEase <login@send.kidease.ca>";
+export const TWO_FACTOR_DEFAULT_MAIL_FROM = DEFAULT_TRANSACTIONAL_MAIL_FROM;
 
 export function twoFactorMailFrom(mailFrom = process.env.MAIL_FROM): string {
-  return (mailFrom || "").trim() || TWO_FACTOR_DEFAULT_MAIL_FROM;
+  return transactionalMailFrom(mailFrom);
 }
 
 /** Resend `{ id }` only — never log API keys or message bodies. */

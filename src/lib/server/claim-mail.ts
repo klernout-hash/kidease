@@ -1,7 +1,8 @@
+import { transactionalMailFrom } from "@/lib/mail-from";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 
 function fromAddress() {
-  return (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
+  return transactionalMailFrom();
 }
 
 function maskEmail(email: string) {
