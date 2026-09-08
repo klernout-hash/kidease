@@ -19,6 +19,12 @@ If the key is unset, the app boots and skips ingest. Session replay is **web-onl
 
 Admin-only check: signed-in staff on `www.kidease.ca` can `GET /api/admin/sentry-test` (session + `profiles.role = admin` + same-site, same gate as other `/api/admin/*`) to send `KidEase Sentry test`.
 
+## Uptime (Better Stack)
+
+Public `GET` / `HEAD` `/api/health` is the readiness probe for Better Stack (and Cloudflare). No auth. No `BETTERSTACK_*` key is required to boot. The JSON payload never includes connection strings, heartbeat URLs, or tokens.
+
+Dashboard monitors should hit `https://www.kidease.ca/` and `https://www.kidease.ca/api/health`, with email to **kyle@kidease.ca**. Optional `BETTERSTACK_HEARTBEAT_URL` is server-only and must be a Better Stack host (`uptime.betterstack.com` or `betteruptime.com`). See `docs/uptime.md`.
+
 Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, or `support_lead`). It does **not** weaken `/admin*` admin-only tools. Public Help Centre is `/help`. Cloudflare Access can later include `/support*` (see `docs/support.md`).
 
 ## Auth bootstrap

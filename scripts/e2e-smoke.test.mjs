@@ -9,6 +9,8 @@ import {
   ADMIN_API_SMOKE_PATHS,
   classifyAdminApiGate,
   classifyAdminGate,
+  classifyPublicHealth,
+  HEALTH_SMOKE_PATH,
   DEFAULT_PREVIEW_ORIGIN,
   e2eScriptMustStayChargeFree,
   expectedAccessLocation,
@@ -138,6 +140,20 @@ test("guest admin API gate: 401/403/redirect, never a 200 payload", () => {
   assert.equal(classifyAdminApiGate({ status: 200, bodyText: JSON.stringify({ ok: false, error: "Not authorized" }) }).ok, true);
   assert.equal(classifyAdminApiGate({ status: 200, bodyText: JSON.stringify({ ok: true, prices: {} }) }).ok, false);
   assert.deepEqual([...ADMIN_API_SMOKE_PATHS], ["/api/admin/sentry-test", "/api/admin/stripe-catalog"]);
+});
+
+test("public /api/health is a guest 200 probe", () => {
+  assert.equal(HEALTH_SMOKE_PATH, "/api/health");
+  assert.equal(
+    classifyPublicHealth({
+      status: 200,
+      bodyText: JSON.stringify({ ok: true, service: "kidease", checks: { app: "ok", database: "skipped" } }),
+    }).ok,
+    true,
+  );
+  assert.equal(classifyPublicHealth({ status: 503, bodyText: '{"ok":false,"service":"kidease"}' }).ok, false);
+  assert.match(src("scripts/e2e-smoke.mjs"), /HEALTH_SMOKE_PATH/);
+  assert.match(src("scripts/e2e-smoke.mjs"), /api-health/);
 });
 
 test("smoke paths never include pay or 2FA submit", () => {

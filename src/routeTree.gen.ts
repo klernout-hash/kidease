@@ -45,6 +45,7 @@ import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
@@ -254,6 +255,11 @@ const ApiDigestRoute = ApiDigestRouteImport.update({
   path: '/api/digest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInngestRoute = ApiInngestRouteImport.update({
   id: '/api/inngest',
   path: '/api/inngest',
@@ -427,6 +433,7 @@ export interface FileRoutesByFullPath {
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -492,6 +499,7 @@ export interface FileRoutesByTo {
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -558,6 +566,7 @@ export interface FileRoutesById {
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -625,6 +634,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/health'
     | '/api/inngest'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -690,6 +700,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/health'
     | '/api/inngest'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -755,6 +766,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/health'
     | '/api/inngest'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -821,6 +833,7 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
@@ -1101,6 +1114,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/inngest': {
       id: '/api/inngest'
       path: '/api/inngest'
@@ -1363,6 +1383,7 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
