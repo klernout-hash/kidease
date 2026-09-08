@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PlaceSearch, type ResolvedPlace } from "@/components/place-search";
+import { PlaceSearch, resolveLocationQuery, type ResolvedPlace } from "@/components/place-search";
 import type { AnchorMode } from "@/lib/dual-anchor";
 import { cn } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
@@ -62,7 +62,15 @@ export function DualAnchorBar({
         ))}
       </div>
       {showWork ? (
-        <div className="flex min-h-12 min-w-0 items-center gap-1.5 rounded-full bg-surface pl-3 pr-1.5 shadow-card ring-1 ring-border">
+        <form
+          className="flex min-h-12 min-w-0 items-center gap-1.5 rounded-full bg-surface pl-3 pr-1.5 shadow-card ring-1 ring-border"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void resolveLocationQuery(workQuery).then((hit) => {
+              if (hit) onWorkResolved(hit);
+            });
+          }}
+        >
           <PlaceSearch
             value={workQuery}
             onChange={onWorkQuery}
@@ -75,8 +83,12 @@ export function DualAnchorBar({
             <button type="button" onClick={onClearWork} className="shrink-0 px-2 text-xs font-semibold text-muted">
               {t("anchorClearWork")}
             </button>
-          ) : null}
-        </div>
+          ) : (
+            <button type="submit" className="shrink-0 px-2 text-xs font-semibold text-primary">
+              {t("search")}
+            </button>
+          )}
+        </form>
       ) : (
         <button
           type="button"
