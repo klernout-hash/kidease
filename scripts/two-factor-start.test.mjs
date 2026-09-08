@@ -5,9 +5,12 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   TWO_FACTOR_AUTO_COOLDOWN_MS,
+  TWO_FACTOR_DEFAULT_MAIL_FROM,
   TWO_FACTOR_MAX_ATTEMPTS,
   decideTwoFactorStart,
   friendlyTwoFactorMailError,
+  resendMessageId,
+  twoFactorMailFrom,
 } from "../src/lib/two-factor-start.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -105,4 +108,34 @@ test("startTwoFactor sends before inserting so a failed resend keeps the previou
   assert.ok(sendAt < insertAt, "email must be sent before the new challenge is persisted");
   assert.match(twoFa, /sent:\s*true as const/);
   assert.match(twoFa, /sent:\s*false as const/);
+});
+
+test("2FA From defaults to the Resend send subdomain, not Titan apex", () => {
+  assert.equal(TWO_FACTOR_DEFAULT_MAIL_FROM, "KidEase <login@send.kidease.ca>");
+  assert.equal(twoFactorMailFrom(""), TWO_FACTOR_DEFAULT_MAIL_FROM);
+  assert.equal(twoFactorMailFrom("   "), TWO_FACTOR_DEFAULT_MAIL_FROM);
+  assert.equal(twoFactorMailFrom("KidEase <alerts@send.kidease.ca>"), "KidEase <alerts@send.kidease.ca>");
+  assert.match(TWO_FACTOR_DEFAULT_MAIL_FROM, /@send\.kidease\.ca>/);
+  assert.doesNotMatch(TWO_FACTOR_DEFAULT_MAIL_FROM, /kyle@kidease\.ca/);
+});
+
+test("Resend message id is extracted without treating other payload fields as ids", () => {
+  assert.equal(resendMessageId({ id: "49a3999c-0ce1-4ea6-ab68-afcd6dc2e794" }), "49a3999c-0ce1-4ea6-ab68-afcd6dc2e794");
+  assert.equal(resendMessageId({ id: "  msg_123  " }), "msg_123");
+  assert.equal(resendMessageId({ id: "" }), undefined);
+  assert.equal(resendMessageId({ id: 12 }), undefined);
+  assert.equal(resendMessageId({ object: "email" }), undefined);
+  assert.equal(resendMessageId(null), undefined);
+});
+
+test("sendCodeEmail uses aligned From, reply_to ADMIN_EMAIL, and logs Resend id", () => {
+  const twoFa = readFileSync(join(root, "src/lib/server/two-factor.ts"), "utf8");
+  const sendBlock = twoFa.slice(twoFa.indexOf("async function sendCodeEmail"), twoFa.indexOf("export const getTwoFactorStatus"));
+  assert.match(sendBlock, /twoFactorMailFrom\(\)/);
+  assert.match(sendBlock, /reply_to:\s*ADMIN_EMAIL/);
+  assert.match(sendBlock, /reply_to:\s*\{\s*email:\s*ADMIN_EMAIL\s*\}/);
+  assert.match(sendBlock, /\[kidease-2fa\] resend/);
+  assert.match(sendBlock, /resendMessageId/);
+  assert.doesNotMatch(sendBlock, /kyle@kidease\.ca/);
+  assert.doesNotMatch(sendBlock, /re_[A-Za-z0-9]/);
 });

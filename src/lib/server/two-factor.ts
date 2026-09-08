@@ -8,6 +8,8 @@ import {
   TWO_FACTOR_MAX_ATTEMPTS,
   decideTwoFactorStart,
   friendlyTwoFactorMailError,
+  resendMessageId,
+  twoFactorMailFrom,
 } from "@/lib/two-factor-start";
 
 const TTL_MS = 10 * 60 * 1000;
@@ -52,7 +54,7 @@ async function sendCodeEmail(to: string, code: string) {
     </td></tr>
   </table>
 </body></html>`;
-  const from = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
+  const from = twoFactorMailFrom();
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
     const res = await fetch("https://api.resend.com/emails", {
@@ -61,6 +63,8 @@ async function sendCodeEmail(to: string, code: string) {
       body: JSON.stringify({ from, to: [to], reply_to: ADMIN_EMAIL, subject, text, html }),
     });
     if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
+    const messageId = resendMessageId(await res.json().catch(() => null));
+    if (messageId) console.info("[kidease-2fa] resend", messageId);
     return "sent" as const;
   }
   const sendgrid = process.env.SENDGRID_API_KEY?.trim();

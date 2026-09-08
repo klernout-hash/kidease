@@ -2,6 +2,26 @@
 export const TWO_FACTOR_AUTO_COOLDOWN_MS = 45_000;
 export const TWO_FACTOR_MAX_ATTEMPTS = 5;
 
+/**
+ * Resend-aligned 2FA From. Apex `kyle@kidease.ca` fails SPF (Titan-only `-all`),
+ * so Outlook quarantines OTPs. Override with MAIL_FROM after `send.kidease.ca`
+ * SPF + DKIM + bounce MX verify. Reply-To stays ADMIN_EMAIL / kyle@.
+ */
+export const TWO_FACTOR_DEFAULT_MAIL_FROM = "KidEase <login@send.kidease.ca>";
+
+export function twoFactorMailFrom(mailFrom = process.env.MAIL_FROM): string {
+  return (mailFrom || "").trim() || TWO_FACTOR_DEFAULT_MAIL_FROM;
+}
+
+/** Resend `{ id }` only — never log API keys or message bodies. */
+export function resendMessageId(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const id = (payload as { id?: unknown }).id;
+  if (typeof id !== "string") return undefined;
+  const trimmed = id.trim();
+  return trimmed || undefined;
+}
+
 export type TwoFactorChallengeSnapshot = {
   createdAtMs: number;
   expiresAtMs: number;
