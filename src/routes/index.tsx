@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
 import { FeelPhoto, HeroYard } from "@/components/building-photo";
+import { HERO_SIZES, STEP_SIZES } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily, getMyRole } from "@/lib/server/family";
 import { homeLandPath, readStickyDesk, type AppRole } from "@/lib/desks";
@@ -569,7 +570,7 @@ function Home() {
       <div className="ke-app-only hidden [[data-channel=app]_&]:block">
         <section className="ke-gutter mx-auto max-w-6xl pb-6 pt-5">
           <div className="overflow-hidden rounded-xl shadow-card ring-1 ring-border">
-            <FeelPhoto src="/photos/hero.jpg" eager className="aspect-[16/9] w-full object-cover" />
+            <FeelPhoto src="/photos/hero.jpg" eager sizes={HERO_SIZES} className="aspect-[16/9] w-full object-cover" />
           </div>
           <h1 className="mt-4 font-display text-[1.65rem] leading-tight tracking-[-0.03em]">
             {t("tagline")}
@@ -645,7 +646,7 @@ function Step({
 }) {
   return (
     <div className="overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-      <FeelPhoto src={photo} className="aspect-[16/9] w-full object-cover" />
+      <FeelPhoto src={photo} sizes={STEP_SIZES} className="aspect-[16/9] w-full object-cover" />
       <div className="p-6">
         <div className="flex items-center gap-3">
           <span className="grid size-10 place-items-center rounded-full bg-primary/10 text-primary">

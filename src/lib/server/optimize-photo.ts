@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
-import { PHOTO_WIDTHS } from "../photo";
+import { PHOTO_WIDTHS, canCfTransformBase, publicPhotoUrl, r2PublicBaseUrl } from "../photo";
 import { listingSrcToR2Key, r2ReadOriginalsEnabled } from "./r2";
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -72,8 +72,10 @@ export async function optimizePhoto(request: Request): Promise<Response> {
 
 /**
  * Dual-read: private R2 originals first (when configured), then Git `public/`,
- * then the same-origin `/photos/` static file. A miss or R2 error falls through
- * so listing cards keep working before and after the one-shot migrate.
+ * then the public media host (`https://media.kidease.ca/photos/…`), then the
+ * same-origin `/photos/` static file. A miss or R2 error falls through so
+ * listing cards keep working before and after the one-shot migrate.
+ * Catalogue paths stay `/photos/…` — this only reads the original object.
  */
 export async function readListingOriginal(src: string, request?: Request): Promise<Buffer | null> {
   const key = listingSrcToR2Key(src);
@@ -96,6 +98,8 @@ export async function readListingOriginal(src: string, request?: Request): Promi
   try {
     return await readFile(join(process.cwd(), "public", src.slice(1)));
   } catch {
+    const remote = await readPublicMediaOriginal(src);
+    if (remote) return remote;
     if (!request) return null;
     try {
       const origin = new URL(request.url).origin;
@@ -107,5 +111,22 @@ export async function readListingOriginal(src: string, request?: Request): Promi
     } catch {
       return null;
     }
+  }
+}
+
+/** Fetch the unchanged public object at media.kidease.ca/photos/…. Never r2.dev. */
+async function readPublicMediaOriginal(src: string): Promise<Buffer | null> {
+  const base = r2PublicBaseUrl();
+  if (!base || !canCfTransformBase(base)) return null;
+  const url = publicPhotoUrl(src);
+  if (!url.startsWith("https://media.kidease.ca/photos/")) return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const ab = await res.arrayBuffer();
+    if (ab.byteLength > MAX_BYTES) return null;
+    return Buffer.from(ab);
+  } catch {
+    return null;
   }
 }

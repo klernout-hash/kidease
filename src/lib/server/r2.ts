@@ -4,15 +4,16 @@
  * Private bucket `kidease-media` (Western North America).
  * Git listing paths stay `/photos/…`. Migrated originals use the same suffix
  * under `originals/…` (`/photos/wpg/1001.jpg` → `originals/wpg/1001.jpg`).
- * `/img` reads R2 when configured, then falls back to `public/photos`.
+ * `/img` reads R2 when configured, then Git `public/photos`, then the
+ * public media host (`https://media.kidease.ca/photos/…`).
  * Public delivery is a separate prefix (`publicPhotoUrl` in `photo.ts`)
  * when `R2_PUBLIC_BASE_URL` / `VITE_R2_PUBLIC_BASE_URL` is set. CSP `img-src`
  * allows `https://media.kidease.ca` and optional `*.r2.dev`. Do not allow
  * this S3 API host in the browser.
  *
- * Public thumbs: Cloudflare Image Transformations on media.kidease.ca
- * (`cfImageTransformUrl` in `photo.ts`) when CF_IMAGE_RESIZE is set.
- * Originals stay at ${base}/photos/…. See docs/image-resizing.md.
+ * Cards request sized AVIF/WebP via `/img?src=&w=` (or CF transforms when
+ * `CF_IMAGE_RESIZE` is on). Originals stay at ${base}/photos/….
+ * See docs/image-resizing.md.
  *
  * TODO (follow-up, not this module):
  * - Admin / provider upload UI

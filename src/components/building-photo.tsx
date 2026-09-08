@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   CARD_SIZES,
-  isCfImageTransformUrl,
+  DETAIL_SIZES,
+  HERO_SIZES,
+  isResizedPhotoUrl,
   photoSrcSet,
   photoUrl,
   publicPhotoUrl,
@@ -82,7 +84,7 @@ export function BuildingPhoto({
       decoding="async"
       fetchPriority={eager ? "high" : "low"}
       onError={() => {
-        if (ready && !skipTransform && isCfImageTransformUrl(photoUrl(ready, width))) {
+        if (ready && !skipTransform && isResizedPhotoUrl(photoUrl(ready, width))) {
           setSkipTransform(true);
           return;
         }
@@ -93,33 +95,56 @@ export function BuildingPhoto({
   );
 }
 
+type FeelVariant = { width: number; avif?: string; webp?: string; jpg: string };
+
 /** Pre-sized marketing stills already in /public/photos. Prefer these paths over new assets. */
-const FEEL_SOURCES: Record<
-  string,
-  { avif?: string; webp?: string; jpg: string; width: number; height: number }
-> = {
+const FEEL_SOURCES: Record<string, { variants: FeelVariant[]; width: number; height: number }> = {
   "/photos/hero.jpg": {
-    avif: "/photos/hero-1200.avif",
-    webp: "/photos/hero-1200.webp",
-    jpg: "/photos/hero-1200.jpg",
+    variants: [
+      { width: 1200, avif: "/photos/hero-1200.avif", webp: "/photos/hero-1200.webp", jpg: "/photos/hero-1200.jpg" },
+    ],
     width: 1200,
     height: 900,
   },
   "/photos/playroom.jpg": {
-    avif: "/photos/playroom-1200.avif",
-    webp: "/photos/playroom-1200.webp",
-    jpg: "/photos/playroom-1200.jpg",
+    variants: [
+      { width: 1200, avif: "/photos/playroom-1200.avif", webp: "/photos/playroom-1200.webp", jpg: "/photos/playroom-1200.jpg" },
+    ],
     width: 1200,
     height: 900,
   },
   "/photos/playroom-1200.jpg": {
-    avif: "/photos/playroom-1200.avif",
-    webp: "/photos/playroom-1200.webp",
-    jpg: "/photos/playroom-1200.jpg",
+    variants: [
+      { width: 1200, avif: "/photos/playroom-1200.avif", webp: "/photos/playroom-1200.webp", jpg: "/photos/playroom-1200.jpg" },
+    ],
+    width: 1200,
+    height: 900,
+  },
+  "/photos/cottage.jpg": {
+    variants: [
+      { width: 768, avif: "/photos/cottage-768.avif", webp: "/photos/cottage-768.webp", jpg: "/photos/cottage-768.jpg" },
+      { width: 1200, avif: "/photos/cottage-1200.avif", webp: "/photos/cottage-1200.webp", jpg: "/photos/cottage-1200.jpg" },
+    ],
+    width: 1200,
+    height: 900,
+  },
+  "/photos/kitchen.jpg": {
+    variants: [
+      { width: 768, avif: "/photos/kitchen-768.avif", webp: "/photos/kitchen-768.webp", jpg: "/photos/kitchen-768.jpg" },
+      { width: 1200, avif: "/photos/kitchen-1200.avif", webp: "/photos/kitchen-1200.webp", jpg: "/photos/kitchen-1200.jpg" },
+    ],
     width: 1200,
     height: 900,
   },
 };
+
+function feelSrcSet(variants: FeelVariant[], kind: "avif" | "webp" | "jpg") {
+  const parts = variants.flatMap((v) => {
+    const href = v[kind];
+    return href ? [`${href} ${v.width}w`] : [];
+  });
+  return parts.length ? parts.join(", ") : undefined;
+}
 
 export function FeelPhoto({
   src,
@@ -138,12 +163,18 @@ export function FeelPhoto({
 }) {
   const feel = FEEL_SOURCES[src];
   if (feel) {
+    const fallback = feel.variants[feel.variants.length - 1];
+    const avif = feelSrcSet(feel.variants, "avif");
+    const webp = feelSrcSet(feel.variants, "webp");
+    const jpg = feelSrcSet(feel.variants, "jpg");
     return (
       <picture>
-        {feel.avif ? <source type="image/avif" srcSet={feel.avif} /> : null}
-        {feel.webp ? <source type="image/webp" srcSet={feel.webp} /> : null}
+        {avif ? <source type="image/avif" srcSet={avif} sizes={sizes} /> : null}
+        {webp ? <source type="image/webp" srcSet={webp} sizes={sizes} /> : null}
         <img
-          src={feel.jpg}
+          src={fallback.jpg}
+          srcSet={jpg && feel.variants.length > 1 ? jpg : undefined}
+          sizes={sizes}
           alt=""
           width={width ?? feel.width}
           height={height ?? feel.height}
@@ -181,15 +212,29 @@ export function FeelBanner({
 }) {
   return (
     <div className={cn("overflow-hidden rounded-xl shadow-lift ring-1 ring-border", className)}>
-      <FeelPhoto src={src} eager={eager} className={cn("w-full object-cover", photoClassName)} />
+      <FeelPhoto src={src} eager={eager} sizes={DETAIL_SIZES} className={cn("w-full object-cover", photoClassName)} />
     </div>
   );
 }
 
 export function HeroPlayroom({ className }: { className?: string }) {
-  return <FeelPhoto src="/photos/playroom.jpg" eager className={cn("aspect-[4/3] w-full object-cover", className)} />;
+  return (
+    <FeelPhoto
+      src="/photos/playroom.jpg"
+      eager
+      sizes={HERO_SIZES}
+      className={cn("aspect-[4/3] w-full object-cover", className)}
+    />
+  );
 }
 
 export function HeroYard({ className }: { className?: string }) {
-  return <FeelPhoto src="/photos/hero.jpg" eager className={cn("aspect-[4/3] w-full object-cover", className)} />;
+  return (
+    <FeelPhoto
+      src="/photos/hero.jpg"
+      eager
+      sizes={HERO_SIZES}
+      className={cn("aspect-[4/3] w-full object-cover", className)}
+    />
+  );
 }

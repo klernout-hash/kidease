@@ -36,7 +36,7 @@ test("BuildingPhoto falls back to the original R2 URL when a transform 404s", ()
   const map = src("src/components/map-view.tsx");
   assert.match(photo, /skipTransform/);
   assert.match(photo, /publicPhotoUrl/);
-  assert.match(photo, /isCfImageTransformUrl/);
+  assert.match(photo, /isResizedPhotoUrl/);
   assert.match(photo, /srcsetWidthsFor/);
   assert.match(detail, /DETAIL_SIZES/);
   assert.match(detail, /width=\{768\}/);

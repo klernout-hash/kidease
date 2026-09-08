@@ -25,9 +25,10 @@ upsizes a small original. Widths are the existing allow-list
 | Explore / search cards | 172–200px (`CARD_SIZES`) | 320, 480, 768 |
 | Listing detail hero | 100vw / 720px (`DETAIL_SIZES`) | 480, 768, 1200 |
 
-Leave the flag **unset** to keep today’s original R2 URL (no `srcset` on
-the public host). `/img` still resizes when the public base is unset
-(local / Git fallback).
+Leave the flag **unset** so cards use same-origin `/img?src=&w=` (AVIF /
+WebP from `Accept`, widths `320 / 480 / 768 / 1200`). Original R2 URLs
+stay valid at `https://media.kidease.ca/photos/…` and are the `onError`
+fallback. `/cdn-cgi/image/` is only requested when the flag is on.
 
 ## Why not Cloudflare Images (hosted)
 
@@ -80,19 +81,27 @@ browser bundle).
 | --- | --- | --- |
 | `R2_PUBLIC_BASE_URL` | `https://media.kidease.ca` | Already required for public photos. |
 | `VITE_R2_PUBLIC_BASE_URL` | `https://media.kidease.ca` | Same origin, client. |
-| `CF_IMAGE_RESIZE` | `1` | Server / SSR. Leave blank or `0` to keep originals. |
+| `CF_IMAGE_RESIZE` | `1` | Server / SSR. Leave blank or `0` to keep `/img` + original fallback. |
 | `VITE_CF_IMAGE_RESIZE` | `1` | Client. Must match `CF_IMAGE_RESIZE`. |
 
 Names only in `.env.example`. Never commit real values.
 
 ## Fallback
 
-- Flag unset / `0` / `false` → `https://media.kidease.ca/photos/…` (today).
-- Flag on but public base missing → same-origin `/img?src=&w=` (Git / R2 dual-read).
-- Flag on + `*.r2.dev` public base → original r2.dev URL (no `/cdn-cgi/`).
-- Browser `onError` on a transform URL → original R2 URL, then the
-  storefront placeholder. Cards do not stay broken if Kyle enables the
-  flag a day early.
+- Flag unset / `0` / `false` → same-origin `/img?src=&w=` (AVIF/WebP, sized).
+  `/img` reads private R2 originals, then Git, then the public
+  `https://media.kidease.ca/photos/…` object. Catalogue paths stay `/photos/…`.
+- Flag on + `media.kidease.ca` → `/cdn-cgi/image/width=…,format=auto/…`.
+- Flag on but public base missing → `/img?src=&w=` (Git / R2 dual-read).
+- Flag on + `*.r2.dev` public base → `/img?src=&w=` (no `/cdn-cgi/` on r2.dev).
+- Browser `onError` on `/img` or a transform URL → original
+  `https://media.kidease.ca/photos/…` URL, then the storefront placeholder.
+  Cards do not stay broken if `/img` misses or Kyle enables the CF flag early.
+
+Home How-it-works stills (`cottage.jpg`, `kitchen.jpg`) ship pre-encoded
+AVIF/WebP at 768 and 1200 (`scripts/encode-feel-photos.mjs`). Hero and
+playroom already have 1200 variants. Re-run the encoder after replacing a
+source JPEG.
 
 `listingPhotosFor` / `real-storefronts.json` / `storefronts.json` are
 unchanged. Do not delete `public/photos`.

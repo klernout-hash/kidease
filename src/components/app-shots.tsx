@@ -122,7 +122,7 @@ function TabBar({ active }: { active: "search" | "profile" }) {
 function Storefront({
   tall = false,
   badge = "$10-a-day",
-  photo = "/photos/cottage.jpg",
+  photo = "/photos/cottage-768.webp",
 }: {
   tall?: boolean;
   badge?: string;
@@ -130,7 +130,7 @@ function Storefront({
 }) {
   return (
     <div className={`relative overflow-hidden rounded-lg ${tall ? "h-full" : "aspect-[4/3]"}`} style={{ background: "#d4e0f6" }}>
-      <img src={photo} alt="" className="absolute inset-0 size-full object-cover" />
+      <img src={photo} alt="" className="absolute inset-0 size-full object-cover" width={768} height={576} />
       <span className="absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[7px] font-semibold text-white" style={{ background: NAVY }}>
         {badge}
       </span>
@@ -183,7 +183,7 @@ export function ShotHome() {
           </p>
           <h2 className="mt-1 font-display text-[13px]">Daycares available</h2>
           <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-            <Storefront photo="/photos/cottage.jpg" />
+            <Storefront photo="/photos/cottage-768.webp" />
             <Storefront photo="/photos/brick.jpg" />
           </div>
         </div>
