@@ -49,6 +49,8 @@ export function TrustBadge({
           compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs",
           invert ? TONE_INVERT[badge.tone] : TONE[badge.tone],
         )}
+        data-license-badge={badge.id}
+        title={tip}
         aria-label={`${label}. ${tip}`}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}

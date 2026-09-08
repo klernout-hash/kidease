@@ -4,6 +4,7 @@
  */
 
 import { DAYCARE_UPSERT_SQL, daycareUpsertParams, type CatalogUpsertInput } from "./catalog-upsert.ts";
+import { localCatalogMatchIds, persistLocalLicenseMatches } from "./server/license-match.ts";
 
 export type SeedSql = {
   query: (text: string, params?: unknown[]) => Promise<unknown>;
@@ -51,6 +52,14 @@ export async function seedCatalogChunk(
     for (const result of results) {
       if (result.status === "fulfilled") upserted += 1;
       else failed += 1;
+    }
+  }
+  const matchedIds = localCatalogMatchIds(slice);
+  if (matchedIds.length > 0) {
+    try {
+      await persistLocalLicenseMatches(sql, matchedIds);
+    } catch {
+      /* Read-time overlay still badges MB matches. Persist is best-effort. */
     }
   }
   const nextOffset = offset + slice.length;

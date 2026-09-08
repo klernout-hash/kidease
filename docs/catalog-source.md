@@ -35,6 +35,10 @@ one chunk so the function stays under the serverless time budget.
 The upsert is idempotent. Claimed listings (`claimed_at`) are never overwritten.
 Filled `phone`, `contact_email`, and `website` are never replaced with blank.
 
+Licence verification (Manitoba local snapshot, no scrape) is documented in
+[licensing.md](./licensing.md). The Licensed badge is derived at read time from
+`license_number` + the bundled MB index, and optionally persisted on seed.
+
 ## When runtime prefers Neon
 
 - `CATALOG_SOURCE=auto` (default): Neon when public `daycares` ≥ 10 000.

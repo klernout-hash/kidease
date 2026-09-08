@@ -1,6 +1,7 @@
 import type { Daycare } from "@/lib/types";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
+import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
 export type DaycareRow = {
@@ -70,7 +71,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
   const claimed = Boolean(r.claimed_at);
   const vacancyAt = r.last_vacancy_updated_at ?? null;
   const photoAt = r.last_photo_updated_at ?? null;
-  return applyListingReadiness({
+  return applyLocalRegistryTrust(applyListingReadiness({
     id: r.id,
     slug: r.slug,
     name: r.name,
@@ -140,7 +141,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     isTest: r.is_test === 1 || r.is_test === true,
     qualityScore: typeof r.quality_score === "number" ? r.quality_score : undefined,
     guestFavorite: r.guest_favorite === 1 || r.guest_favorite === true,
-  });
+  }));
 }
 
 export function fromPrice(d: Daycare) {

@@ -16,7 +16,8 @@ import { isSaved, openConversation, toggleSave } from "@/lib/server/family";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
 import { licenseBadge } from "@/lib/trust";
-import { TrustExplainer } from "@/components/trust-badge";
+import { publicLicenseBadge } from "@/lib/license-verify";
+import { TrustBadge, TrustExplainer } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
 import type { CopyKey } from "@/lib/copy";
 import { readCompare, toggleCompare } from "@/lib/compare";
@@ -182,6 +183,7 @@ function Listing() {
   const from = prices.length ? Math.min(...prices) : 0;
   const live = Boolean(d.live);
   const known = Boolean(d.availabilityKnown);
+  const licensed = publicLicenseBadge(d);
   const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
   const mapsDir = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
@@ -288,7 +290,10 @@ function Listing() {
                 <p className="text-sm text-muted">
                   {d.address}, {d.city}, {d.province} {d.postalCode}
                 </p>
-                <h1 className="mt-1 font-display text-3xl md:text-4xl">{name}</h1>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <h1 className="font-display text-3xl md:text-4xl">{name}</h1>
+                  {licensed ? <TrustBadge badge={licensed} /> : null}
+                </div>
                 <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
@@ -342,7 +347,10 @@ function Listing() {
             </dl>
 
             <section className="mt-8 rounded-xl bg-surface p-5 ring-1 ring-border">
-              <h2 className="text-2xl">{t("licenceRecord")}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-2xl">{t("licenceRecord")}</h2>
+                {licensed ? <TrustBadge badge={licensed} compact /> : null}
+              </div>
               <p className="mt-2 text-sm text-muted">{t("licenceRecordLead")}</p>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />

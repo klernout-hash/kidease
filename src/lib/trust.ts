@@ -49,6 +49,7 @@ export type TrustBadge = {
 export type TrustCopyKey =
   | "trustLicensedMatched"
   | "trustLicensedMatchedTip"
+  | "trustLicensedMatchedMbTip"
   | "trustLicenseUnverified"
   | "trustLicenseUnverifiedTip"
   | "trustLicenseExpired"
@@ -74,6 +75,7 @@ export type TrustCopyKey =
 
 export type TrustListing = {
   id?: string;
+  province?: string | null;
   licenseNumber?: string | null;
   licenseStatus?: LicenseStatus | "active" | "unknown" | null;
   licenseExpiry?: string | null;
@@ -167,11 +169,12 @@ export function licenseBadge(item: TrustListing): TrustBadge {
     };
   }
   if (status === "matched" || item.registryMatchState === "matched") {
+    const mb = (item.province || "").trim().toUpperCase() === "MB";
     return {
       id: "license_matched",
       tone: "ok",
       labelKey: "trustLicensedMatched",
-      tipKey: "trustLicensedMatchedTip",
+      tipKey: mb ? "trustLicensedMatchedMbTip" : "trustLicensedMatchedTip",
     };
   }
   return {
@@ -254,7 +257,8 @@ export type TrustSurface = "card" | "parent" | "provider" | "admin";
 
 /**
  * Same Kyle-approved labels on every desk: licensed, unverified, claim verified, staff attested.
- * Cards stay compact: licence always, plus claim/staff only when those facts are true.
+ * Parent cards stay compact: Licensed (or expired/suspended) only when we know,
+ * plus claim/staff only when those facts are true. Unverified is not a badge.
  * Provider and admin also see operational claim/staff/pay states.
  */
 export function trustBadgesFor(item: TrustListing, surface: TrustSurface, stripeLive?: boolean): TrustBadge[] {
@@ -263,14 +267,14 @@ export function trustBadgesFor(item: TrustListing, surface: TrustSurface, stripe
   const staff = staffBadge(item);
 
   if (surface === "card") {
-    const badges = [license];
+    const badges = license.id === "license_unverified" ? [] : [license];
     if (claim.id === "claim_verified") badges.push(claim);
     if (staff.id === "staff_attested") badges.push(staff);
     return badges;
   }
 
   if (surface === "parent") {
-    const badges = [license, claim];
+    const badges = license.id === "license_unverified" ? [claim] : [license, claim];
     if (staff.id === "staff_attested") badges.push(staff);
     return badges;
   }

@@ -1075,7 +1075,10 @@ export const copy = {
     reviewerGranted: "Reviewer flag saved.",
     reviewDecisionNote: "Optional note on next decision",
     trustLicensedMatched: "Licensed",
-    trustLicensedMatchedTip: "KidEase matched this licence number to the official provincial or territorial registry.",
+    trustLicensedMatchedTip:
+      "KidEase matched this licence number to a trusted provincial catalogue record. This is not a live government scrape — confirm inspections on the official registry.",
+    trustLicensedMatchedMbTip:
+      "KidEase matched this Manitoba licence number to the bundled registry snapshot. Official inspections stay on childcaresearch.gov.mb.ca.",
     trustLicenseUnverified: "Unverified",
     trustLicenseUnverifiedTip: "KidEase has not confirmed this licence against the official registry yet. This is not a green check.",
     trustLicenseExpired: "License expired",
@@ -2197,7 +2200,10 @@ export const copy = {
     reviewerGranted: "Autorisation enregistrée.",
     reviewDecisionNote: "Note facultative pour la prochaine décision",
     trustLicensedMatched: "Permis",
-    trustLicensedMatchedTip: "KidEase a apparié ce numéro de permis au registre officiel provincial ou territorial.",
+    trustLicensedMatchedTip:
+      "KidEase a apparié ce numéro de permis à un enregistrement de catalogue provincial de confiance. Ce n’est pas une collecte en direct — confirmez les inspections sur le registre officiel.",
+    trustLicensedMatchedMbTip:
+      "KidEase a apparié ce numéro de permis manitobain à l’instantané local du registre. Les inspections officielles restent sur childcaresearch.gov.mb.ca.",
     trustLicenseUnverified: "Non vérifié",
     trustLicenseUnverifiedTip: "KidEase n’a pas encore confirmé ce permis auprès du registre officiel. Ce n’est pas une validation.",
     trustLicenseExpired: "Permis expiré",
