@@ -93,8 +93,14 @@ export function friendlyAuthError(
   if (raw.includes("too many") || raw.includes("rate limit") || raw.includes("429")) {
     return "Too many sign-in tries. Wait a minute, then try again.";
   }
-  if (raw.includes("invalid origin") || raw.includes("invalid_origin")) {
+  if (raw.includes("missing or null origin") || raw.includes("missing_or_null_origin")) {
     return "This sign-in page needs a refresh — try again, or use email.";
+  }
+  if (raw.includes("invalid origin") || raw.includes("invalid_origin") || raw.includes("cross-site navigation")) {
+    return "This sign-in page needs a refresh — try again, or use email.";
+  }
+  if (raw.includes("failed to create session") || raw.includes("failed_to_create_session")) {
+    return "Signed in, but the session could not be saved. Refresh and try again.";
   }
   if (
     raw.includes("credential_account_not_found") ||
@@ -130,5 +136,26 @@ export function friendlyAuthError(
   ) {
     return "Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY).";
   }
-  return message || "Sign-in failed";
+  return (message || "").trim() || "Sign-in failed";
+}
+
+/** Better Auth / fetch error shapes → a string friendlyAuthError can map. */
+export function authClientErrorMessage(error: unknown): string {
+  if (!error) return "";
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
+  if (typeof error !== "object") return "";
+  const row = error as {
+    message?: unknown;
+    statusText?: unknown;
+    code?: unknown;
+    error?: { message?: unknown; code?: unknown } | string;
+    data?: { message?: unknown };
+  };
+  const nested = typeof row.error === "object" && row.error ? row.error : null;
+  const parts = [row.message, row.statusText, row.data?.message, nested?.message, row.code, nested?.code];
+  for (const part of parts) {
+    if (typeof part === "string" && part.trim()) return part.trim();
+  }
+  return "";
 }

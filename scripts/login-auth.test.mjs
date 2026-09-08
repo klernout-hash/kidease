@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  authClientErrorMessage,
   classifyEmailAccounts,
   friendlyAuthError,
   messageForEmailAccount,
@@ -47,6 +48,12 @@ describe("password sign-in errors", () => {
     assert.match(friendlyAuthError("Security check failed. Refresh and try again."), /Refresh/);
     assert.match(friendlyAuthError("Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY)"), /RESEND_API_KEY/);
     assert.match(friendlyAuthError("Too many requests"), /Wait a minute/);
+    assert.match(friendlyAuthError("Too many requests. Please try again later."), /Wait a minute/);
+    assert.match(friendlyAuthError("Missing or null Origin"), /refresh/);
+    assert.match(friendlyAuthError("Failed to create session"), /session could not be saved/);
+    assert.equal(authClientErrorMessage({ status: 429, statusText: "Too Many Requests" }), "Too Many Requests");
+    assert.equal(authClientErrorMessage({ message: "" }), "");
+    assert.match(friendlyAuthError(authClientErrorMessage({ statusText: "Too Many Requests" })), /Wait a minute/);
     assert.equal(classifyEmailAccounts([]), "missing");
     assert.equal(classifyEmailAccounts([{ providerId: "google", password: null }]), "oauth_only");
     assert.equal(classifyEmailAccounts([{ providerId: "credential", password: "hash" }]), "has_password");
@@ -89,6 +96,7 @@ describe("password sign-in errors", () => {
   it("login uses the shared mapper and does not enumerate accounts after a failed password", () => {
     const login = read("src/routes/login.tsx");
     assert.match(login, /friendlyAuthError/);
+    assert.match(login, /authClientErrorMessage/);
     assert.doesNotMatch(login, /explainEmailSignInFailure/);
     assert.match(login, /resetTurnstile/);
     assert.match(login, /turnstileRequired && !token\.trim\(\)/);
@@ -140,6 +148,25 @@ describe("apex/www session cookies", () => {
     assert.match(server, /SHARED_SESSION_TOKEN_COOKIE/);
     assert.match(twoFa, /SHARED_TWO_FACTOR_COOKIE/);
     assert.match(twoFa, /KIDEASE_COOKIE_DOMAIN/);
+  });
+});
+
+describe("production email sign-in is not globally rate-limited", () => {
+  it("reads Cloudflare/Vercel client IP and raises /sign-in/email above 3/10s", () => {
+    const server = read("src/lib/auth/server.ts");
+    const authApi = read("src/routes/api/auth/$.ts");
+    const pkg = JSON.parse(read("package.json"));
+    assert.match(pkg.dependencies["better-auth"], /^~?1\.6\./);
+    assert.match(server, /cf-connecting-ip/);
+    assert.match(server, /"\/sign-in\/email"/);
+    assert.match(server, /max:\s*30/);
+    assert.match(server, /emailAndPassword:\s*emailAndPasswordConfig/);
+    assert.match(authApi, /code: "AUTH_HANDLER_ERROR"/);
+    assert.match(authApi, /return Response\.json\(\{ message/);
+    assert.doesNotMatch(authApi, /throw err/);
+    const client = read("src/lib/auth/client.ts");
+    assert.match(client, /Content-Type": "application\/json"/);
+    assert.match(client, /x-turnstile-token/);
   });
 });
 

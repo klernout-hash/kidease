@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { authClient, authEnabled, signIn, turnstileFetchOptions } from "@/lib/auth/client";
-import { friendlyAuthError } from "@/lib/auth/login-errors";
+import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
@@ -117,18 +117,18 @@ function Login() {
           name: name || email.split("@")[0],
           fetchOptions: turnstileFetchOptions(token),
         });
-        if (res.error) throw new Error(friendlyAuthError(res.error.message));
+        if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
         rememberToken(res.data);
       } else {
         const res = await authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(token) });
         if (res.error) {
-          throw new Error(friendlyAuthError(res.error.message));
+          throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
         }
         rememberToken(res.data);
       }
       await finish();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign-in failed");
+      setError(friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed");
       resetTurnstile();
     } finally {
       setBusy(false);

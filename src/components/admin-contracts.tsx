@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signedPdfPath, type DocusignTemplateOption } from "@/lib/docusign-packs";
 import { ds } from "@/lib/docusign-copy";
+import type { DocusignConnectIssue } from "@/lib/docusign-errors";
 import { useCopy } from "@/lib/use-copy";
 import type { Locale } from "@/lib/types";
 import {
@@ -17,6 +18,7 @@ export function AdminContractsPanel({
   mode,
   templates = [],
   defaultTemplateIds = { provider_agreement: null, enrolment_pack: null },
+  docusignError = null,
   busy,
   setBusy,
   onRefresh,
@@ -25,6 +27,7 @@ export function AdminContractsPanel({
   mode: "live" | "demo";
   templates?: DocusignTemplateOption[];
   defaultTemplateIds?: { provider_agreement: string | null; enrolment_pack: string | null };
+  docusignError?: DocusignConnectIssue | null;
   busy: string | null;
   setBusy: (v: string | null) => void;
   onRefresh: () => Promise<void>;
@@ -69,7 +72,15 @@ export function AdminContractsPanel({
         <Stat label={ds(locale, "centres")} value={counts.all} />
       </dl>
       <p className="mt-4 text-sm text-muted">{mode === "live" ? ds(locale, "leadLive") : ds(locale, "leadOff")}</p>
-      {mode !== "live" ? (
+      {docusignError ? (
+        <p
+          role="status"
+          data-ke="docusign-consent-banner"
+          className="mt-3 rounded-xl bg-primary/10 px-5 py-4 text-sm text-fg ring-1 ring-border"
+        >
+          {docusignError.message || ds(locale, "consentBanner")}
+        </p>
+      ) : mode !== "live" ? (
         <p className="mt-3 rounded-xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border">{ds(locale, "envHint")}</p>
       ) : null}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">

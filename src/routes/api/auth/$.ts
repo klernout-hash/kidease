@@ -37,7 +37,7 @@ async function handleAuth(request: Request) {
           await assertTurnstileToken(request.headers.get("x-turnstile-token"));
         } catch (err) {
           const message = err instanceof Error ? err.message : "Security check failed";
-          return Response.json({ message }, { status: 400 });
+          return Response.json({ message, code: "SECURITY_CHECK" }, { status: 400 });
         }
       }
     }
@@ -56,7 +56,8 @@ async function handleAuth(request: Request) {
     return applySharedAuthCookies(incoming, response);
   } catch (err) {
     reportError(err, { route: "/api/auth" });
-    throw err;
+    const message = err instanceof Error && err.message.trim() ? err.message : "Sign-in failed";
+    return Response.json({ message, code: "AUTH_HANDLER_ERROR" }, { status: 500 });
   }
 }
 

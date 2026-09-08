@@ -329,6 +329,20 @@ export const auth = betterAuth({
   // limit (494 REQUEST_HEADER_TOO_LARGE) in Safari.
   session: { cookieCache: { enabled: false } },
 
+  // Production enables rate limits (3 / 10s on /sign-in/*). Cloudflare + Vercel
+  // send a multi-hop X-Forwarded-For; without a single-IP header Better Auth
+  // falls back to one shared bucket and every parent/daycare/admin POST fails.
+  rateLimit: {
+    window: 60,
+    max: 120,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 30 },
+      "/sign-up/email": { window: 60, max: 15 },
+      "/forget-password": { window: 60, max: 8 },
+      "/request-password-reset": { window: 60, max: 8 },
+    },
+  },
+
   // Local email/password — toggled only via `./email-password` (not a plugin).
   // Must pass the full config so forget-password can email a reset link.
   ...(emailAndPasswordEnabled ? { emailAndPassword: emailAndPasswordConfig } : {}),
@@ -343,6 +357,9 @@ export const auth = betterAuth({
   advanced: {
     useSecureCookies: false,
     defaultCookieAttributes: { secure: true, sameSite: "lax", path: "/" },
+    ipAddress: {
+      ipAddressHeaders: ["cf-connecting-ip", "x-real-ip", "x-vercel-forwarded-for", "x-forwarded-for"],
+    },
     cookies: {
       session_token: { name: SESSION_TOKEN_COOKIE },
       session_data: { name: "__Host-grok-auth.session_data" },
