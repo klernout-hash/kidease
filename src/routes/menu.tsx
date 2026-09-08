@@ -126,16 +126,6 @@ function MenuPage() {
           <Row to="/contact" label={t("contact")} />
         </Group>
 
-        <Group title={fr ? "Soutien" : "Support"} defer>
-          <Row to="/help" label={fr ? "Centre d’aide" : "Help Centre"} />
-          <Row to="/faq" label="FAQ" />
-          <Row to="/how-it-works" label={t("howItWorksCta")} />
-          <Row to="/privacy" label={t("privacy")} />
-          <Row to="/terms" label={t("terms")} />
-          <Row to="/cookies" label={t("cookies")} />
-          <Row to="/account" label={t("deleteAccount")} />
-        </Group>
-
         <Group title="Parents" defer>
           <Row to="/login" search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }} label={t("parentSignIn")} />
           <Row to="/parent" label={fr ? "Espace parent" : "Parent desk"} />
@@ -151,6 +141,16 @@ function MenuPage() {
           <Row to="/provider" label={fr ? "Espace garderie" : "Daycare desk"} />
           <Row to="/account" search={{ tab: "profile", desk: "director" }} label={t("account")} />
           <Row href="https://childcaresearch.gov.mb.ca/en" label={t("mbChildcare")} />
+        </Group>
+
+        <Group title={fr ? "Soutien" : "Support"} defer>
+          <Row to="/help" label={fr ? "Centre d’aide" : "Help Centre"} />
+          <Row to="/faq" label="FAQ" />
+          <Row to="/how-it-works" label={t("howItWorksCta")} />
+          <Row to="/privacy" label={t("privacy")} />
+          <Row to="/terms" label={t("terms")} />
+          <Row to="/cookies" label={t("cookies")} />
+          <Row to="/account" label={t("deleteAccount")} />
         </Group>
 
         {user ? (
