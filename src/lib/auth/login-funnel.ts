@@ -1,6 +1,10 @@
 /**
- * Login → 2FA → desk continue helpers and PostHog funnel events.
+ * Login → 2FA → dest continue helpers and PostHog funnel events.
  * Properties are dest kinds / desk keys only — never email, codes, or raw next.
+ *
+ * Remeasure with `login_funnel` steps `submitted` → `continued`.
+ * `desk_landed` confirms a desk painted; public next (/search, /daycare)
+ * completes on `continued` so listing/search returns are not scored as stalls.
  */
 import { useEffect, useRef } from "react";
 import {
@@ -18,12 +22,14 @@ import {
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getMyDesks } from "@/lib/server/roles";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
-import { withTimeout } from "@/lib/timeout";
+import { withTimeout, withTimeoutFallback } from "@/lib/timeout";
 
 export { loginErrorCallbackUrl, twoFactorPageUrl } from "@/lib/desks";
 
 export const LOGIN_FUNNEL_EVENT = "login_funnel";
 export const TWO_FACTOR_STATUS_MS = 4000;
+export const DESK_RESOLVE_MS = 4000;
+export const LOGIN_STALL_MS = 8000;
 
 export type LoginFunnelStep =
   | "viewed"
@@ -31,6 +37,8 @@ export type LoginFunnelStep =
   | "succeeded"
   | "failed"
   | "dest_resolved"
+  | "dest_failed"
+  | "continued"
   | "two_factor_viewed"
   | "two_factor_skipped"
   | "two_factor_verified"
@@ -58,6 +66,23 @@ export function captureLoginFunnel(props: LoginFunnelProps): void {
   capturePostHogEvent(LOGIN_FUNNEL_EVENT, payload);
 }
 
+function funnelDestMeta(dest: string) {
+  const desk = deskFromPathname(dest);
+  return {
+    dest_kind: postLoginDestKind(dest),
+    dest_path: funnelDestPath(dest),
+    desk: desk ?? undefined,
+  };
+}
+
+export function markContinued(dest: string, extra?: Pick<LoginFunnelProps, "method" | "reason" | "native">): void {
+  captureLoginFunnel({
+    step: "continued",
+    ...funnelDestMeta(dest),
+    ...extra,
+  });
+}
+
 export async function resolveContinueDest(input: {
   next?: string | null;
   desk?: DeskKey | null;
@@ -67,11 +92,13 @@ export async function resolveContinueDest(input: {
   const next = sanitizePostLoginNext(input.next);
   let desks: DeskKey[] | null = null;
   if (!next) {
-    try {
-      desks = (await getMyDesks()).desks;
-    } catch {
-      desks = null;
-    }
+    desks = await withTimeoutFallback(
+      getMyDesks()
+        .then((row) => row.desks)
+        .catch(() => null),
+      DESK_RESOLVE_MS,
+      null,
+    );
   }
   const dest = resolvePostLoginPath({
     next,
@@ -84,9 +111,7 @@ export async function resolveContinueDest(input: {
   if (desk) writeStickyDesk(desk);
   captureLoginFunnel({
     step: "dest_resolved",
-    dest_kind: postLoginDestKind(dest),
-    dest_path: funnelDestPath(dest),
-    desk: desk ?? undefined,
+    ...funnelDestMeta(dest),
   });
   return dest;
 }
@@ -98,9 +123,7 @@ export async function shouldOpenTwoFactorPage(dest: string): Promise<boolean> {
       captureLoginFunnel({
         step: "two_factor_skipped",
         reason: "already_verified",
-        dest_kind: postLoginDestKind(dest),
-        dest_path: funnelDestPath(dest),
-        desk: deskFromPathname(dest) ?? undefined,
+        ...funnelDestMeta(dest),
       });
       return false;
     }
@@ -110,9 +133,7 @@ export async function shouldOpenTwoFactorPage(dest: string): Promise<boolean> {
     captureLoginFunnel({
       step: "two_factor_skipped",
       reason: "status_unavailable",
-      dest_kind: postLoginDestKind(dest),
-      dest_path: funnelDestPath(dest),
-      desk: deskFromPathname(dest) ?? undefined,
+      ...funnelDestMeta(dest),
     });
     return false;
   }
@@ -124,20 +145,44 @@ export function assignPostAuthDest(dest: string): void {
   window.location.assign(url.startsWith("/") && !url.startsWith("//") ? url : "/parent");
 }
 
+function fallbackDest(input: {
+  next?: string | null;
+  desk?: DeskKey | null;
+  role?: "parent" | "provider" | "admin" | null;
+  sticky?: DeskKey | null;
+}): string {
+  return resolvePostLoginPath({
+    next: input.next,
+    desk: input.desk,
+    role: input.role,
+    sticky: input.sticky,
+  });
+}
+
 export async function continueAfterSignIn(input: {
   next?: string | null;
   desk?: DeskKey | null;
   role?: "parent" | "provider" | "admin" | null;
   sticky?: DeskKey | null;
   method: "email" | "social" | "session";
-}): Promise<void> {
-  const dest = await resolveContinueDest(input);
-  const needTwoFactor = await shouldOpenTwoFactorPage(dest);
-  if (needTwoFactor) {
-    window.location.assign(twoFactorPageUrl(dest));
-    return;
+}): Promise<string> {
+  try {
+    const dest = await resolveContinueDest(input);
+    const needTwoFactor = await shouldOpenTwoFactorPage(dest);
+    markContinued(dest, { method: input.method });
+    if (needTwoFactor) {
+      window.location.assign(twoFactorPageUrl(dest));
+      return dest;
+    }
+    assignPostAuthDest(dest);
+    return dest;
+  } catch {
+    captureLoginFunnel({ step: "dest_failed", method: input.method, reason: "continue_failed" });
+    const dest = fallbackDest(input);
+    markContinued(dest, { method: input.method, reason: "fallback" });
+    assignPostAuthDest(dest);
+    return dest;
   }
-  assignPostAuthDest(dest);
 }
 
 /** Fire `desk_landed` once per mount when a signed-in desk paints. */

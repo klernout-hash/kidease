@@ -1,11 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
-import { ParentDesk } from "@/components/parent-desk";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+
+const ParentDesk = lazy(() =>
+  import("@/components/parent-desk").then((m) => ({ default: m.ParentDesk })),
+);
 
 export const Route = createFileRoute("/parent")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -56,7 +60,9 @@ function ParentPage() {
     >
       <LoginFunnelDeskLand desk="parent" />
       {search.preview === "support" ? <SupportPreviewBanner /> : null}
-      <ParentDesk initialTab={initialTab} />
+      <Suspense fallback={<DeskSkeleton />}>
+        <ParentDesk initialTab={initialTab} />
+      </Suspense>
     </TwoFactorGate>
   );
 }

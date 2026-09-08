@@ -13,7 +13,7 @@ import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
 import { deskQueryValue, loginRoleFromDesk, parseDeskQuery, readStickyDesk, resolvePostLoginPath, sanitizePostLoginNext, writeStickyDesk } from "@/lib/desks";
-import { captureLoginFunnel, continueAfterSignIn, loginErrorCallbackUrl, twoFactorPageUrl } from "@/lib/auth/login-funnel";
+import { captureLoginFunnel, continueAfterSignIn, LOGIN_STALL_MS, loginErrorCallbackUrl, twoFactorPageUrl } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
@@ -68,6 +68,7 @@ function Login() {
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
   const submitLock = useRef(false);
   const continued = useRef(false);
+  const [stalled, setStalled] = useState(false);
 
   useEffect(() => {
     if (role === "parent" || role === "provider") rememberRole(role);
@@ -77,6 +78,15 @@ function Login() {
   useEffect(() => {
     captureLoginFunnel({ step: "viewed", native: isNative() });
   }, []);
+
+  useEffect(() => {
+    if (!busy) {
+      setStalled(false);
+      return;
+    }
+    const id = window.setTimeout(() => setStalled(true), LOGIN_STALL_MS);
+    return () => window.clearTimeout(id);
+  }, [busy]);
 
   useEffect(() => {
     if (sessionPending || !user || busy || continued.current || error) return;
@@ -90,7 +100,7 @@ function Login() {
       method: "session",
     }).catch(() => {
       continued.current = false;
-      setError("Could not open your desk. Try signing in again.");
+      setError("Could not open your desk. Use Retry, or open the Parent desk.");
       setBusy(false);
     });
   }, [sessionPending, user, dest, busy, search.next, deskHint, role, error]);
@@ -293,6 +303,25 @@ function Login() {
             />
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger" data-ke="auth-error">{error}</p> : null}
+            {stalled || error ? (
+              <div className="flex flex-wrap gap-3 text-sm" data-ke="login-recovery">
+                <button
+                  type="button"
+                  className="min-h-11 font-medium text-primary underline-offset-4 hover:underline"
+                  onClick={() => {
+                    continued.current = false;
+                    setError(null);
+                    setStalled(false);
+                    setBusy(false);
+                  }}
+                >
+                  Retry
+                </button>
+                <a href="/parent" className="min-h-11 font-medium text-muted underline-offset-4 hover:underline">
+                  Open Parent desk
+                </a>
+              </div>
+            ) : null}
             {authEnabled && providers.length === 0 && !operator ? (
               <p className="text-xs text-muted">
                 Sign-in methods could not load. If this keeps happening, a security filter may be blocking KidEase.

@@ -38,6 +38,7 @@ import { compactExploreSearch } from "@/lib/explore-search";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { RateKidEasePrompt } from "@/components/rate-kidease";
+import { ResumeVisitCard } from "@/components/resume-visit";
 import { displayDistance } from "@/lib/units";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 
@@ -498,6 +499,7 @@ function Home() {
             <h2 className="mt-12 text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
             <p className="mt-3 max-w-2xl text-muted">{t("featuredBody")}</p>
             {featuredSearch}
+            <ResumeVisitCard />
             {user && role !== "admin" && role !== "provider" ? (
               <ParentDeskRails
                 items={explore.length ? explore : shown}
@@ -605,6 +607,7 @@ function Home() {
             {t("tagline")}
           </h1>
           {featuredSearch}
+          <ResumeVisitCard />
           <div className="mt-4 flex flex-wrap gap-2">
             {CITY_CHIPS.map((c) => (
               <ChipButton key={c.q} onClick={() => void applyPlace(c.q)}>

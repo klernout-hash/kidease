@@ -63,10 +63,15 @@ Mobile UX scorecard target is **>95%** of sign-ins that start on `/login` landin
 After this instrumentation, measure **`login_funnel`** (not `$pageview`) in [Insights → Funnel](https://us.posthog.com/project/594559/insights):
 
 1. `login_funnel` where `step` = `submitted`
-2. `login_funnel` where `step` = `succeeded` **or** `two_factor_skipped` **or** `two_factor_verified`
+2. `login_funnel` where `step` = `continued`
+
+`continued` fires immediately before the browser leaves `/login` or `/verify-2fa` for the resolved dest (desk **or** public `/search` / `/daycare`). Pre-#141 pageview funnels that required `/parent` scored listing/search returns as drop-off (the 10→2 Critical reading).
+
+Optional confirmation (desk dests only):
+
 3. `login_funnel` where `step` = `desk_landed`
 
-Conversion window: **30 minutes**. Break down by `desk`, `method` (`email` / `social` / `session`), `reason`, and `$device_type`. Filter website visitors who never granted analytics (those events never fire).
+Conversion window: **30 minutes**. Break down by `desk`, `dest_kind`, `method` (`email` / `social` / `session`), `reason`, and `$device_type`. Filter website visitors who never granted analytics (those events never fire).
 
 | `step` | When |
 | --- | --- |
@@ -75,17 +80,33 @@ Conversion window: **30 minutes**. Break down by `desk`, `method` (`email` / `so
 | `succeeded` | Password/sign-up created a session |
 | `failed` | Mapped reason only (`credentials`, `turnstile`, `cloudflare`, `session`, `rate_limit`, `popup`, `other`) — never the raw error |
 | `dest_resolved` | Post-login path chosen (`dest_kind`, `dest_path`, `desk`) |
+| `dest_failed` | Dest resolve / leave threw; a fallback dest still continues |
+| `continued` | Browser assigned onward (desk or public next) |
 | `two_factor_viewed` / `_skipped` / `_verified` / `_failed` | Email-code page |
 | `desk_landed` | Parent / Daycare / Admin / Support desk painted after 2FA |
 
 `dest_path` is a coarse label (`/parent`, `/search`, `/daycare`, `/other`) — never a listing slug or query string. Identify stays Better Auth user id only.
 
-Pageview fallback (pre-event data): `/login` → `/verify-2fa` → `/parent`|`/provider`|`/admin`|`/support` within 30 minutes.
+Pageview fallback (pre-event data): `/login` → `/verify-2fa` → `/parent`|`/provider`|`/admin`|`/support` **or** `/search`|`/daycare/*` within 30 minutes.
+
+## Day-7 retention (thin cohorts)
+
+Do not treat a week of `$pageview` unique users as a growth redesign. After this slice, measure **`retention_touch`** (one event per browser session, after analytics consent):
+
+- `returning` — last visit was ≥ 6 hours ago
+- `days_since_last` — `0` / `1` / `2-6` / `7-13` / `14-29` / `30+`
+- `tenure` — same buckets since first visit on this device
+- `has_resume` — a sanitized last path exists (`/search`, `/daycare/{slug}`, `/parent`)
+
+Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) when `kidease-resume-path` is set. Paths never include auth loops or query PII.
+
+[Retention insight](https://us.posthog.com/project/594559/insights): first event `$pageview` or `retention_touch`, returning event `retention_touch` or `$pageview`, 7-day window. Expect thin cohorts until more parents grant analytics.
 
 ## What is wired
 
 - `src/lib/posthog.ts` — init, sample rate, consent gate, native gate, masking, `capturePostHogEvent`.
-- `src/lib/auth/login-funnel.ts` — login → desk steps.
+- `src/lib/auth/login-funnel.ts` — login → dest steps (`continued` / `desk_landed`).
+- `src/lib/retention.ts` — `retention_touch` + sanitized resume path.
 - `src/components/posthog-boot.tsx` — once in the root shell.
 - CSP allowlist: `us.i.posthog.com` + `us-assets.i.posthog.com` (no `*.posthog.com`).
 - Client flag helper `isPostHogFlagEnabled`. Server SMS / push / video gates stay on `docs/flags.md`.

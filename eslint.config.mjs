@@ -46,6 +46,10 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      // js recommended treats unused vars as errors; leftover imports then
+      // fail `npx eslint .` and inflate CI fail-rate. typescript-eslint
+      // owns the rule and keeps leftovers as warnings.
+      "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

@@ -16,9 +16,12 @@ Checkly stays a later option if we want as-code browser checks beyond the existi
 
 ## What is wired in the repo
 
-- Public `GET` / `HEAD` [`/api/health`](https://www.kidease.ca/api/health) — `{ ok, status, service: "kidease", checks: { app, database } }`.
+- Public `GET` / `HEAD` [`/api/health`](https://www.kidease.ca/api/health) — `{ ok, status, service: "kidease", signal: "production_health", checks: { app, database }, runtime, revision? }`.
+  - `signal` is always `production_health`. This is the production change-failure / deploy-health probe. **GitHub Actions fail-rate is not CFR.**
   - `app` is `ok` when the serverless handler runs.
   - `database` is `ok` after `select 1` (Neon / local PGLite), `skipped` when `DATABASE_URL` is unset on Vercel (catalogue still renders), `error` → HTTP 503.
+  - `runtime` is `vercel` when `VERCEL` is set, otherwise `local`.
+  - `revision` is the first 7 chars of `VERCEL_GIT_COMMIT_SHA` when Vercel inlines it. Never a secret.
   - No auth. `Cache-Control: no-store`. `X-Robots-Tag: noindex`.
   - Does not leak connection strings or Better Stack secrets.
 - Optional `BETTERSTACK_HEARTBEAT_URL` — only `https://uptime.betterstack.com/…` or `https://betteruptime.com/…`. Unset = no-op. The HTTP monitors do **not** need this.
@@ -51,6 +54,22 @@ Set on **Production** only if you use a heartbeat. Preview does not need these. 
 | `BETTERSTACK_UPTIME_API_TOKEN` | no | Not used by the app. Paste in Better Stack if you use their API later. |
 
 HTTP monitors need **no** Vercel secret. The site stays up without them.
+
+## CI fail-rate is not production CFR
+
+Scorecards that treat “~30% of the last 40 GitHub Actions runs failed” as change-failure rate are measuring **pipeline noise** (first-push lint/tsc on agent PRs, superseded runs, eslint leftovers). That is not production CFR.
+
+| Signal | What it is | Where |
+| --- | --- | --- |
+| GitHub Actions `CI` | Lint + unit tests + Playwright smoke on PRs / main | `.github/workflows/ci.yml` — cancelled overlapping runs do not count as failures |
+| Production health | Live www + `/api/health` (`signal: production_health`) | Better Stack monitors in this doc |
+| Production CFR | Failed **production** deploys / Better Stack incidents after a Vercel Production deploy | Better Stack + Vercel Production, not Actions |
+
+How to read deploy health:
+
+1. Better Stack HTTP monitor on `https://www.kidease.ca/api/health` stays **200** with `"ok":true` and `"signal":"production_health"`.
+2. After a Production deploy, compare `revision` (short SHA) to the Vercel deployment SHA. A 503 `database: error` is a real change-failure candidate. A red Actions `check` job on a draft PR is not.
+3. Optional heartbeat (`BETTERSTACK_HEARTBEAT_URL`) is a cron liveness ping, not CFR.
 
 ## Later (not this PR)
 
