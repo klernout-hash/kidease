@@ -23,6 +23,7 @@ import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { DualAnchorBar } from "@/components/dual-anchor-bar";
+import { ExploreHint } from "@/components/explore-hint";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
 import { resolveSearchAnchors } from "@/lib/dual-anchor";
@@ -396,6 +397,12 @@ function SearchPage() {
       .finally(() => setSaveBusy(false));
   }
 
+  function widenSearchRadius() {
+    const current = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
+    const next = (distanceUnit === "mi" ? PRESETS_MI : PRESETS_KM).find((n) => n > current) ?? (distanceUnit === "mi" ? MAX_RADIUS_MI : MAX_SEARCH_RADIUS_KM);
+    setRadiusKm(distanceUnit === "mi" ? miToKm(next) : next);
+  }
+
   function retrySearch() {
     setItems(null);
     setSearchFailed(false);
@@ -476,6 +483,54 @@ function SearchPage() {
     (schoolAgeOnly ? 1 : 0);
   const anchors = resolveSearchAnchors({ home: origin, work: workOrigin, mode: anchorMode });
   const dualEmpty = anchors.intersect && !searchFailed && (items?.length ?? 0) === 0;
+  const emptyState = searchFailed
+    ? {
+        title: t("searchFailedTitle"),
+        body: t("searchFailedLead"),
+        action: t("tryAgain"),
+        onAction: retrySearch,
+        secondary: t("changeLocation"),
+        secondaryTo: "/?change=1",
+      }
+    : extraFilters && (items?.length ?? 0) > 0
+      ? {
+          title: t("noFilterResults"),
+          body: undefined as string | undefined,
+          action: t("clearFilters"),
+          onAction: clearListingFilters,
+          secondary: undefined as string | undefined,
+          secondaryTo: undefined as string | undefined,
+          onSecondary: undefined as (() => void) | undefined,
+        }
+      : liveOnly && (items?.length ?? 0) > 0
+        ? {
+            title: t("noLiveResults"),
+            body: undefined as string | undefined,
+            action: t("showAll"),
+            onAction: () => setLiveOnly(false),
+            secondary: t("widenRadius"),
+            onSecondary: widenSearchRadius,
+            secondaryTo: undefined as string | undefined,
+          }
+        : dualEmpty
+          ? {
+              title: t("noDualResults"),
+              body: t("noDualResultsBody"),
+              action: t("anchorHome"),
+              onAction: () => setAnchorMode("home"),
+              secondary: t("anchorWork"),
+              onSecondary: () => setAnchorMode("work"),
+              secondaryTo: undefined as string | undefined,
+            }
+          : {
+              title: view === "map" ? t("emptyMap") : t("noResults"),
+              body: t("noResultsLead"),
+              action: t("widenRadius"),
+              onAction: widenSearchRadius,
+              secondary: t("changeLocation"),
+              secondaryTo: "/?change=1",
+              onSecondary: undefined as (() => void) | undefined,
+            };
   const city =
     anchors.mode === "both" && workOrigin
       ? `${origin.label.split(",")[0]} + ${workOrigin.label.split(",")[0]}`
@@ -753,6 +808,8 @@ function SearchPage() {
           </div>
         ) : null}
 
+        <ExploreHint />
+
         {filters ? (
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
             <div className="flex items-center justify-between gap-3">
@@ -846,7 +903,7 @@ function SearchPage() {
             mapEnabled ? (
               <div className="mt-4 space-y-3">
                 <div className="h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
-                  <Suspense fallback={<div className="size-full bg-map" />}>
+                  <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={list}
                       origin={mapOrigin}
@@ -865,49 +922,13 @@ function SearchPage() {
                 {items !== null && list.length === 0 ? (
                   <div className="rounded-xl bg-surface ring-1 ring-border">
                     <EmptyState
-                      title={
-                        searchFailed
-                          ? t("noResults")
-                          : extraFilters && (items?.length ?? 0) > 0
-                            ? t("noFilterResults")
-                            : liveOnly && (items?.length ?? 0) > 0
-                              ? t("noLiveResults")
-                              : dualEmpty
-                                ? t("noDualResults")
-                                : t("emptyMap")
-                      }
-                      body={dualEmpty ? t("noDualResultsBody") : undefined}
-                      action={
-                        searchFailed
-                          ? t("tryAgain")
-                          : extraFilters && (items?.length ?? 0) > 0
-                            ? t("clearFilters")
-                            : liveOnly && (items?.length ?? 0) > 0
-                              ? t("showAll")
-                              : dualEmpty
-                                ? t("anchorHome")
-                                : t("changeLocation")
-                      }
-                      onAction={
-                        searchFailed
-                          ? retrySearch
-                          : extraFilters && (items?.length ?? 0) > 0
-                            ? clearListingFilters
-                            : liveOnly && (items?.length ?? 0) > 0
-                              ? () => setLiveOnly(false)
-                              : dualEmpty
-                                ? () => setAnchorMode("home")
-                                : undefined
-                      }
-                      secondary={dualEmpty ? t("anchorWork") : undefined}
-                      onSecondary={dualEmpty ? () => setAnchorMode("work") : undefined}
-                      actionTo={
-                        searchFailed ||
-                        ((extraFilters || liveOnly) && (items?.length ?? 0) > 0) ||
-                        dualEmpty
-                          ? undefined
-                          : "/?change=1"
-                      }
+                      title={emptyState.title}
+                      body={emptyState.body}
+                      action={emptyState.action}
+                      onAction={emptyState.onAction}
+                      secondary={emptyState.secondary}
+                      onSecondary={emptyState.onSecondary}
+                      secondaryTo={emptyState.secondaryTo}
                     />
                   </div>
                 ) : null}
@@ -926,49 +947,13 @@ function SearchPage() {
           ) : list.length === 0 ? (
             <div className="mt-6 rounded-xl bg-surface ring-1 ring-border">
               <EmptyState
-                title={
-                  searchFailed
-                    ? t("noResults")
-                    : extraFilters && (items?.length ?? 0) > 0
-                      ? t("noFilterResults")
-                      : liveOnly && (items?.length ?? 0) > 0
-                        ? t("noLiveResults")
-                        : dualEmpty
-                          ? t("noDualResults")
-                          : t("noResults")
-                }
-                body={dualEmpty ? t("noDualResultsBody") : undefined}
-                action={
-                  searchFailed
-                    ? t("tryAgain")
-                    : extraFilters && (items?.length ?? 0) > 0
-                      ? t("clearFilters")
-                      : liveOnly && (items?.length ?? 0) > 0
-                        ? t("showAll")
-                        : dualEmpty
-                          ? t("anchorHome")
-                          : t("changeLocation")
-                }
-                onAction={
-                  searchFailed
-                    ? retrySearch
-                    : extraFilters && (items?.length ?? 0) > 0
-                      ? clearListingFilters
-                      : liveOnly && (items?.length ?? 0) > 0
-                        ? () => setLiveOnly(false)
-                        : dualEmpty
-                          ? () => setAnchorMode("home")
-                          : undefined
-                }
-                secondary={dualEmpty ? t("anchorWork") : undefined}
-                onSecondary={dualEmpty ? () => setAnchorMode("work") : undefined}
-                actionTo={
-                  searchFailed ||
-                  ((extraFilters || liveOnly) && (items?.length ?? 0) > 0) ||
-                  dualEmpty
-                    ? undefined
-                    : "/?change=1"
-                }
+                title={emptyState.title}
+                body={emptyState.body}
+                action={emptyState.action}
+                onAction={emptyState.onAction}
+                secondary={emptyState.secondary}
+                onSecondary={emptyState.onSecondary}
+                secondaryTo={emptyState.secondaryTo}
               />
             </div>
           ) : (

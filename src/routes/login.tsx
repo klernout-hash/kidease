@@ -275,9 +275,12 @@ function Login() {
           </button>
           ) : null}
           <p className="mt-6 text-center text-xs text-subtle">
-            <Link to="/" className="underline-offset-4 hover:underline">
+            <a
+              href={search.next && search.next.startsWith("/") ? search.next : "/"}
+              className="underline-offset-4 hover:underline"
+            >
               {t("back")}
-            </Link>
+            </a>
             {" · "}
             <Link to="/privacy" className="underline-offset-4 hover:underline">
               {t("privacy")}

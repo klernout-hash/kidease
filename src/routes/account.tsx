@@ -3,6 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { ParentDesk } from "@/components/parent-desk";
+import { DeskSkeleton } from "@/components/page-skeleton";
+import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { TwoFactorGate } from "@/lib/auth/gates";
@@ -36,7 +38,7 @@ function AccountPage() {
   if (isPending) {
     return (
       <Shell>
-        <p className="p-8 text-muted">{t("loading")}</p>
+        <DeskSkeleton />
       </Shell>
     );
   }
@@ -53,7 +55,12 @@ function AccountPage() {
           <p className="mt-3 text-muted">{t("loginLead")}</p>
           <div className="mt-8 flex flex-col gap-3">
             <Button size="lg" className="h-14 min-h-14 w-full px-7 text-base" asChild>
-              <Link to="/login" search={{ role: "parent", desk: "parent", intent: "in", next: "/account?tab=profile" }}>
+              <Link
+                to="/login"
+                search={parentLoginSearch(
+                  search.tab === "enrolled" ? "/account?tab=enrolled" : "/account?tab=saved",
+                )}
+              >
                 {t("parentSignIn")}
               </Link>
             </Button>
@@ -207,7 +214,7 @@ function ProfilePane() {
             </Button>
           ) : (
             <Button className="mt-6" size="lg" asChild>
-              <Link to="/login" search={{ role: "parent", desk: "parent", intent: "in", next: "/account?tab=profile" }}>
+              <Link to="/login" search={parentLoginSearch("/account?tab=profile")}>
                 Sign in to add a photo
               </Link>
             </Button>

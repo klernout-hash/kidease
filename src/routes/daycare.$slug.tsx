@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Heart, MapPinned, MessageCircle, Phone, Star, Video } from "lucide-react";
+import { Heart, MapPinned, MessageCircle, Phone, Star } from "lucide-react";
+import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { ShareListingButton } from "@/components/share-button";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -191,10 +192,14 @@ function Listing() {
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
 
+  function goLogin() {
+    void navigate({ to: "/login", search: parentLoginSearch(`/daycare/${slug}`) });
+  }
+
   function onRequest() {
     if (!live) return;
     if (!user) {
-      void navigate({ to: "/login" });
+      goLogin();
       return;
     }
     setRequestOpen(true);
@@ -203,7 +208,7 @@ function Listing() {
   function onTour() {
     if (!live) return;
     if (!user) {
-      void navigate({ to: "/login" });
+      goLogin();
       return;
     }
     setTourOpen(true);
@@ -211,20 +216,20 @@ function Listing() {
 
   async function onSave() {
     if (!user) {
-      void navigate({ to: "/login" });
+      goLogin();
       return;
     }
     try {
       const res = await toggleSave({ data: d.id });
       setSaved(res.saved);
     } catch {
-      void navigate({ to: "/login" });
+      goLogin();
     }
   }
 
   async function onMessage() {
     if (!user) {
-      void navigate({ to: "/login" });
+      goLogin();
       return;
     }
     try {
@@ -232,13 +237,53 @@ function Listing() {
       void navigate({ to: "/inbox/$id", params: { id: res.id } });
     } catch {
       toast.error(t("needSignIn"));
-      void navigate({ to: "/login" });
+      goLogin();
     }
+  }
+
+  const waitlisted = known && spots <= 0;
+
+  function ListingActions() {
+    return (
+      <>
+        {live ? (
+          <Button onClick={onTour}>{t("bookTour")}</Button>
+        ) : (
+          <Button asChild>
+            <Link to="/search">{t("searchNearby")}</Link>
+          </Button>
+        )}
+        {live ? (
+          <Button variant="secondary" onClick={onRequest}>
+            {t("book")}
+          </Button>
+        ) : !d.claimed ? (
+          <Button asChild variant="secondary">
+            <Link to="/claim" search={{ q: d.name }}>
+              {t("claimCta")}
+            </Link>
+          </Button>
+        ) : (
+          <p className="text-xs text-muted">{t("requestUnavailable")}</p>
+        )}
+        {live ? (
+          <Button variant="secondary" onClick={() => void onMessage()}>
+            <MessageCircle className="size-4" /> {t("message")}
+          </Button>
+        ) : null}
+      </>
+    );
   }
 
   return (
     <Shell>
       <article className="ke-gutter mx-auto max-w-5xl overflow-x-hidden py-6 pb-28 md:pb-10">
+        <Link
+          to="/search"
+          className="mb-4 inline-flex min-h-11 items-center text-sm font-medium text-muted hover:text-fg hover:underline"
+        >
+          ← {t("backToExplore")}
+        </Link>
         <div className="overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
           <div className="relative aspect-[16/10] bg-surface-2 md:aspect-[2/1]">
             {photos[photo]?.includes("-logo") ? (
@@ -336,6 +381,12 @@ function Listing() {
               ) : (
                 <p className="text-sm text-muted">{t(licenseBadge(d).labelKey as CopyKey)}</p>
               )}
+            </div>
+
+            <div className="mt-6 grid gap-2 rounded-xl bg-surface p-4 ring-1 ring-border lg:hidden">
+              <p className="text-sm text-muted">{t("listingCtaLead")}</p>
+              <ListingActions />
+              {live && waitlisted ? <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
             </div>
 
             <dl className="mt-6 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
@@ -468,7 +519,7 @@ function Listing() {
               <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
               {live ? (
                 <div className="mt-4">
-                  <WaitlistOptIn daycareId={d.id} />
+                  <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}`} />
                 </div>
               ) : null}
             </section>
@@ -534,26 +585,12 @@ function Listing() {
                 <span className="text-xl">{t("feeUnknown")}</span>
               )}
             </p>
+            <p className="mt-3 text-sm text-muted">{t("listingCtaLead")}</p>
             <div className="mt-4 grid gap-2">
-              {live ? (
-                <Button onClick={onTour}>{t("bookTour")}</Button>
-              ) : (
-                <Button disabled>{t("notOnKidEase")}</Button>
-              )}
-              {live ? (
-                <Button variant="secondary" onClick={onRequest}>{t("book")}</Button>
-              ) : (
-                <Button disabled variant="secondary">{t("requestUnavailable")}</Button>
-              )}
-              {live ? (
-                <Button variant="secondary" onClick={() => void onMessage()}>
-                  <MessageCircle className="size-4" /> {t("message")}
-                </Button>
-              ) : (
-                <p className="text-xs text-muted">{t("requestUnavailable")}</p>
-              )}
+              <ListingActions />
+              {live && waitlisted ? <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
               <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full hover:bg-surface-2/70" />
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <Button variant="ghost" onClick={() => void onSave()} aria-label={t("save")}>
                   <Heart className={saved ? "size-4 fill-fg" : "size-4"} />
                 </Button>
@@ -573,11 +610,6 @@ function Listing() {
                     <MapPinned className="size-4" />
                   </a>
                 </Button>
-                <Button variant="ghost" asChild>
-                  <Link to="/checkin/$id" params={{ id: d.slug }} aria-label={t("video")}>
-                    <Video className="size-4" />
-                  </Link>
-                </Button>
               </div>
             </div>
             <p className="mt-3 text-xs text-subtle">{t("privacyNote")}</p>
@@ -590,20 +622,26 @@ function Listing() {
       </article>
 
       {!requestOpen ? (
-      <div className="fixed inset-x-0 bottom-20 z-20 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur-md [[data-channel=website]_&]:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden [[data-channel=app]_&]:bottom-20">
         <div className="mx-auto flex max-w-lg items-center gap-2">
           {live ? (
-            <Button className="flex-1" variant="secondary" onClick={onTour}>
+            <Button className="flex-1" onClick={onTour}>
               {t("bookTour")}
             </Button>
           ) : (
-            <Button className="flex-1" disabled variant="secondary">
-              {t("notOnKidEase")}
+            <Button className="flex-1" asChild>
+              <Link to="/search">{t("searchNearby")}</Link>
             </Button>
           )}
           {live ? (
-            <Button className="flex-1" onClick={onRequest}>
+            <Button className="flex-1" variant="secondary" onClick={onRequest}>
               {t("book")}
+            </Button>
+          ) : !d.claimed ? (
+            <Button className="flex-1" variant="secondary" asChild>
+              <Link to="/claim" search={{ q: d.name }}>
+                {t("claimCta")}
+              </Link>
             </Button>
           ) : null}
           {live ? (

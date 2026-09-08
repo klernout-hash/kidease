@@ -35,6 +35,15 @@ export const Route = createRootRoute({
           <p>
             Refresh the page, or go back to kidease.ca. If it keeps happening, email {SUPPORT_INBOX_EMAIL}.
           </p>
+          <p className="ke-crash-actions" style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "16px" }}>
+            <a href="/search" style={{ fontWeight: 600 }}>
+              Explore
+            </a>
+            <a href="/" style={{ fontWeight: 600 }}>
+              Home
+            </a>
+            <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>Email support</a>
+          </p>
           <p className="ke-crash-detail">
             {error instanceof Error ? error.message : "Please try again."}
           </p>

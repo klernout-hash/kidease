@@ -17,7 +17,8 @@ export function NavDrawer({
   providerLabel,
   signedIn,
   accountLabel,
-  accountHref = "/parent",
+  accountHref = "/account",
+  accountSearch,
   isAdmin = false,
   onSignOut,
 }: {
@@ -30,6 +31,7 @@ export function NavDrawer({
   signedIn: boolean;
   accountLabel: string;
   accountHref?: string;
+  accountSearch?: Record<string, string>;
   isAdmin?: boolean;
   onSignOut: () => void;
 }) {
@@ -118,6 +120,7 @@ export function NavDrawer({
             <>
               <Link
                 to={accountHref}
+                search={accountSearch}
                 onClick={onClose}
                 className="flex min-h-12 items-center rounded-xl bg-primary px-3 text-base font-medium text-primary-fg"
               >

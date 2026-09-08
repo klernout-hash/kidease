@@ -158,6 +158,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         providerLabel={t("providerLogin")}
         signedIn={Boolean(user)}
         accountLabel={t("account")}
+        accountHref="/account"
+        accountSearch={{ tab: "profile" }}
         onSignOut={() => void signOut("/")}
       />
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"}>
