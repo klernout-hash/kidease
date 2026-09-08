@@ -84,12 +84,15 @@ test("Support column includes About and Meet the Team before legal links", () =>
   const support = footer.slice(footer.indexOf('t("support")'), footer.indexOf("ke-footer-legal"));
   assert.match(support, /to="\/about"/);
   assert.match(support, /to="\/team"/);
+  assert.match(support, /to="\/verify"/);
   assert.match(support, /t\("about"\)/);
   assert.match(support, /t\("team"\)/);
+  assert.match(support, /verifyListings/);
   const aboutAt = support.indexOf('to="/about"');
   const teamAt = support.indexOf('to="/team"');
+  const verifyAt = support.indexOf('to="/verify"');
   const privacyAt = support.indexOf('to="/privacy"');
-  assert.ok(aboutAt > 0 && teamAt > aboutAt && privacyAt > teamAt, "About then Team, then legal");
+  assert.ok(aboutAt > 0 && teamAt > aboutAt && verifyAt > teamAt && privacyAt > verifyAt, "About then Team, then verify, then legal");
 });
 
 test("Daycares column keeps verify listings and drops About, Team, and Manitoba Child Care", () => {

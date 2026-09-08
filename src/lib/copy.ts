@@ -274,6 +274,7 @@ export const copy = {
     exploreHintDismiss: "Got it",
     backToExplore: "Back to Explore",
     searchNearby: "Search nearby centres",
+    searchNearbyShort: "Search nearby",
     listingCtaLead: "Book a tour or request a spot — sign in only if you continue.",
     guestListingTrust: "Licensed details come from public records. Live centres can take a tour or spot request now.",
     guestSignInReturn: "You'll come back to this listing after you sign in.",
@@ -342,6 +343,7 @@ export const copy = {
     contactEmail: "Business email",
     businessDetails: "Business details",
     claimCta: "Claim your daycare",
+    claimCtaShort: "Claim daycare",
     claimCtaLead: "If you run a licensed centre already on KidEase, claim the listing and set your spots and monthly fees.",
     isThisYours: "Is this your centre?",
     claimedBadge: "Claimed",
@@ -1018,6 +1020,15 @@ export const copy = {
       "Parent card payments and centre bank payouts stay off while Stripe is in review. KidEase does not say centres are paid quickly until payouts actually clear.",
     verifyOfficial:
       "The official provincial or territorial registry is always the source of truth for inspections, complaints, and licence status.",
+    listingsVerify: "Listings & verification",
+    listingsVerifyLead:
+      "Listing pages stay short on purpose. Facility type, claim status, and licence badges are KidEase checks — not a government certificate. The explanations live here.",
+    verifyFacilityTitle: "Centre, nursery, and home",
+    verifyUnclaimedTitle: "Unclaimed listings",
+    verifyUnclaimedBody:
+      "Unclaimed means no operator has proven they run this centre on KidEase yet. Facts may come from the public registry. The listing stays searchable. Claimed or Claim verified means the operator, not that KidEase police-checked staff.",
+    learnMore: "Learn more",
+    unclaimedWhatMeans: "What does unclaimed mean?",
     mbChildcare: "Manitoba Child Care",
     neverSell: "We respect your privacy. Your data is never sold.",
     comingSoon: "Coming soon",
@@ -1668,6 +1679,7 @@ export const copy = {
     exploreHintDismiss: "Compris",
     backToExplore: "Retour à Explorer",
     searchNearby: "Chercher des centres près d’ici",
+    searchNearbyShort: "Chercher près d’ici",
     listingCtaLead: "Réservez une visite ou demandez une place — connexion seulement si vous continuez.",
     guestListingTrust: "Les détails permis viennent des registres publics. Les centres actifs peuvent recevoir une visite ou une demande de place maintenant.",
     guestSignInReturn: "Vous reviendrez à cette fiche après vous être connecté.",
@@ -1736,6 +1748,7 @@ export const copy = {
     contactEmail: "Courriel d’affaires",
     businessDetails: "Coordonnées",
     claimCta: "Réclamez votre garderie",
+    claimCtaShort: "Réclamer",
     claimCtaLead: "Si vous dirigez un centre déjà sur KidEase, réclamez la fiche et indiquez vos places et tarifs mensuels.",
     isThisYours: "C’est votre centre ?",
     claimedBadge: "Réclamée",
@@ -2414,6 +2427,15 @@ export const copy = {
       "Les paiements par carte des parents et les versements bancaires aux centres restent fermés pendant l’examen Stripe. KidEase ne dit pas que les centres sont payés rapidement tant que les versements ne sont pas ouverts.",
     verifyOfficial:
       "Le registre provincial ou territorial officiel reste toujours la source de vérité pour les inspections, les plaintes et le statut du permis.",
+    listingsVerify: "Fiches et vérification",
+    listingsVerifyLead:
+      "Les fiches restent courtes volontairement. Le type d’établissement, le statut de réclamation et les badges de permis sont des vérifications KidEase — pas un certificat gouvernemental. Les explications sont ici.",
+    verifyFacilityTitle: "Centre, nursery et milieu familial",
+    verifyUnclaimedTitle: "Fiches non réclamées",
+    verifyUnclaimedBody:
+      "Non réclamée signifie qu’aucun exploitant n’a encore prouvé qu’il dirige ce centre sur KidEase. Les faits peuvent venir du registre public. La fiche reste trouvable. Réclamée ou Réclamation vérifiée désigne l’exploitant, pas une vérification policière du personnel.",
+    learnMore: "En savoir plus",
+    unclaimedWhatMeans: "Que signifie non réclamée ?",
     mbChildcare: "Garde d’enfants au Manitoba",
     neverSell: "Nous respectons votre vie privée. Vos données ne sont jamais vendues.",
     comingSoon: "Bientôt",

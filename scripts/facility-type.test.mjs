@@ -61,8 +61,11 @@ test("Explore wires three facility-type categories and listing copy", () => {
   assert.match(search, /showHomes/);
   assert.match(search, /FACILITY_TYPES/);
   assert.match(search, /noFacilityTypeResults/);
-  assert.match(src("src/routes/daycare.$slug.tsx"), /FacilityTypeBlurb/);
-  assert.match(src("src/routes/daycare.$slug.tsx"), /facilityTypeLeadNursery/);
+  assert.match(src("src/components/listing-badges.tsx"), /data-facility-type/);
+  assert.doesNotMatch(src("src/routes/daycare.$slug.tsx"), /FacilityTypeBlurb/);
+  assert.doesNotMatch(src("src/routes/daycare.$slug.tsx"), /facilityTypeLeadNursery/);
+  assert.match(src("src/routes/verify.tsx"), /facilityTypeLeadNursery/);
+  assert.match(src("src/routes/verify.tsx"), /verifyFacilityTitle/);
   assert.match(src("src/lib/copy.ts"), /Show Centres/);
   assert.match(src("src/lib/copy.ts"), /Afficher les nurseries/);
   assert.match(src("src/routes/admin.tsx"), /data-facility-type-taxonomy/);
