@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, Star } from "lucide-react";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { ShareListingButton } from "@/components/share-button";
@@ -22,7 +22,7 @@ import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 
 const HEART_SAVED = "#FF385C";
 
-export function DaycareCard({
+export const DaycareCard = memo(function DaycareCard({
   item,
   showDistance = true,
   compact = false,
@@ -192,4 +192,4 @@ export function DaycareCard({
       </button>
     </article>
   );
-}
+});

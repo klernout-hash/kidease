@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, startTransition, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { DeskShell } from "@/components/desk-shell";
@@ -8,7 +8,6 @@ import { ListingStatusBadge, LedgerHonesty } from "@/components/listing-status-b
 import { TrustSignals } from "@/components/trust-badge";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
-import { ChildProfileForm } from "@/components/child-profile-form";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { deleteAccount, getFamily } from "@/lib/server/family";
 import { listTourRequests } from "@/lib/server/tours";
@@ -26,8 +25,6 @@ import type { Bill } from "@/lib/bill";
 import { billDollars, billIsOpen } from "@/lib/bill";
 import { BillStatusBadge } from "@/components/bill-status";
 import { periodLabel } from "@/lib/stripe-methods";
-import { ParentPlusPanel } from "@/components/parent-plus";
-import { SavedSearchesPanel } from "@/components/saved-searches-panel";
 import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore, soonestStartDate } from "@/lib/parent-urgency";
 import { distanceKm } from "@/lib/proximity";
@@ -37,6 +34,26 @@ import { PipelineBadge } from "@/components/pipeline-badge";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
+
+const ParentPlusPanel = lazy(() =>
+  import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
+);
+const SavedSearchesPanel = lazy(() =>
+  import("@/components/saved-searches-panel").then((m) => ({ default: m.SavedSearchesPanel })),
+);
+const ChildProfileForm = lazy(() =>
+  import("@/components/child-profile-form").then((m) => ({ default: m.ChildProfileForm })),
+);
+
+function scheduleIdle(work: () => void): () => void {
+  const ric = typeof requestIdleCallback === "function" ? requestIdleCallback : null;
+  if (ric) {
+    const id = ric(work, { timeout: 400 });
+    return () => cancelIdleCallback(id);
+  }
+  const id = window.setTimeout(work, 0);
+  return () => window.clearTimeout(id);
+}
 
 type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "alerts";
 
@@ -48,7 +65,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const [tab, setTab] = useState<ParentTab>(initialTab ?? "explore");
+  const [contentTab, setContentTab] = useState<ParentTab>(initialTab ?? "explore");
   const [explore, setExplore] = useState<Card[]>([]);
+  const [exploreReady, setExploreReady] = useState(false);
   const [saved, setSaved] = useState<Card[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -61,7 +80,42 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
 
-  async function load() {
+  const selectTab = useCallback((id: string) => {
+    const next = id as ParentTab;
+    setTab(next);
+    startTransition(() => setContentTab(next));
+  }, []);
+
+  const loadExplore = useCallback(
+    async (startBookings: Booking[]) => {
+      try {
+        const loc = origin.lat ? origin : WINNIPEG;
+        const rows = await withTimeoutFallback(
+          searchDaycares({
+            data: {
+              lat: loc.lat,
+              lng: loc.lng,
+              radiusKm,
+              sort: "match",
+              ageGroup: "any",
+              startDate: soonestStartDate(startBookings),
+            },
+          }),
+          LOADER_SETTLE_MS,
+          [] as Card[],
+        );
+        const next = rows.length
+          ? rows
+          : await withTimeoutFallback(featuredDaycares({ data: loc }), LOADER_SETTLE_MS, [] as Card[]);
+        startTransition(() => setExplore(next));
+      } finally {
+        startTransition(() => setExploreReady(true));
+      }
+    },
+    [origin, radiusKm],
+  );
+
+  const loadFamily = useCallback(async () => {
     const [f, billed, tourRows] = await Promise.all([
       getFamily(),
       listParentBills().catch(() => ({ bills: [] as Bill[] })),
@@ -73,68 +127,83 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
     setBills(billed.bills);
     setChildren(f.children);
     setTours(tourRows);
-    const loc = origin.lat ? origin : WINNIPEG;
-    const rows = await withTimeoutFallback(
-      searchDaycares({
-        data: {
-          lat: loc.lat,
-          lng: loc.lng,
-          radiusKm,
-          sort: "match",
-          ageGroup: "any",
-          startDate: soonestStartDate(f.bookings),
-        },
-      }),
-      LOADER_SETTLE_MS,
-      [] as Card[],
-    );
-    setExplore(rows.length ? rows : await withTimeoutFallback(featuredDaycares({ data: loc }), LOADER_SETTLE_MS, [] as Card[]));
+    return f;
+  }, []);
+
+  async function load() {
+    const f = await loadFamily();
+    await loadExplore(f.bookings);
   }
 
   useEffect(() => {
     if (!user) return;
-    void load().catch(() => undefined);
-  }, [user]);
+    let cancelled = false;
+    let cancelIdle: (() => void) | undefined;
+    void loadFamily()
+      .then((f) => {
+        if (cancelled) return;
+        cancelIdle = scheduleIdle(() => {
+          if (!cancelled) void loadExplore(f.bookings).catch(() => undefined);
+        });
+      })
+      .catch(() => {
+        startTransition(() => setExploreReady(true));
+      });
+    return () => {
+      cancelled = true;
+      cancelIdle?.();
+    };
+  }, [user, loadFamily, loadExplore]);
 
   useEffect(() => {
-    if (initialTab) setTab(initialTab);
+    if (!initialTab) return;
+    setTab(initialTab);
+    startTransition(() => setContentTab(initialTab));
   }, [initialTab]);
+
+  const rankedSaved = useMemo(() => {
+    if (contentTab !== "saved") return [] as Array<Card & { matchScore: number; urgencyScore: number; distanceKm: number }>;
+    return [...saved]
+      .map((item) => {
+        const child = children[0];
+        const ageGroup = child?.birthdate ? ageGroupFromMonths(monthsBetween(child.birthdate)) : "any";
+        const startDate = soonestStartDate(bookings.filter((b) => b.daycareId === item.id));
+        const km = distanceKm(origin, { lat: item.lat, lng: item.lng });
+        return {
+          ...item,
+          distanceKm: km,
+          matchScore: parentMatchScore({ ...item, distanceKm: km }, { ageGroup, radiusKm, distanceKnown: located }),
+          urgencyScore: parentUrgencyScore(item, { ageGroup, startDate }),
+        };
+      })
+      .sort((a, b) => b.urgencyScore - a.urgencyScore || b.matchScore - a.matchScore);
+  }, [bookings, children, contentTab, located, origin, radiusKm, saved]);
 
   if (!user) return null;
 
   return (
-    <DeskShell desk="parent" active={tab} onSelect={(id) => setTab(id as ParentTab)}>
+    <DeskShell desk="parent" active={tab} onSelect={selectTab}>
       <p className="text-muted">{user.displayName ?? user.primaryEmail}</p>
 
-      {tab === "explore" ? (
+      {contentTab === "explore" ? (
         <div className="mt-6">
           <h2 className="font-display text-2xl">{t("exploreForYou")}</h2>
           <p className="mt-1 text-sm text-muted">{t("sortMatchLead")}</p>
-          <ParentDeskRails items={explore} children={children} bookings={bookings} />
+          {exploreReady ? (
+            <ParentDeskRails items={explore} children={children} bookings={bookings} />
+          ) : (
+            <div className="mt-6 space-y-3" aria-busy="true" aria-live="polite">
+              <div className="ke-skel h-40 rounded-xl" />
+              <div className="ke-skel h-40 rounded-xl" />
+            </div>
+          )}
         </div>
       ) : null}
 
-      {tab === "saved" ? (
+      {contentTab === "saved" ? (
         <div className="ke-listings mt-6">
-          {saved.length ? (
-            [...saved]
-              .map((item) => {
-                const child = children[0];
-                const ageGroup = child?.birthdate ? ageGroupFromMonths(monthsBetween(child.birthdate)) : "any";
-                const startDate = soonestStartDate(bookings.filter((b) => b.daycareId === item.id));
-                const km = distanceKm(origin, { lat: item.lat, lng: item.lng });
-                return {
-                  ...item,
-                  distanceKm: km,
-                  matchScore: parentMatchScore(
-                    { ...item, distanceKm: km },
-                    { ageGroup, radiusKm, distanceKnown: located },
-                  ),
-                  urgencyScore: parentUrgencyScore(item, { ageGroup, startDate }),
-                };
-              })
-              .sort((a, b) => (b.urgencyScore - a.urgencyScore) || (b.matchScore - a.matchScore))
-              .map((item) => (
+          {rankedSaved.length ? (
+            rankedSaved.map((item) => (
               <div key={item.id} className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   {item.live || (item.claimStatus && item.claimStatus !== "unclaimed") ? (
@@ -148,16 +217,20 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                 </div>
                 <DaycareCard item={item} showDistance={located} />
               </div>
-              ))
+            ))
           ) : (
             <EmptyState title={t("noSaved")} body={t("noSavedLead")} action={t("emptyFindCare")} actionTo="/search" />
           )}
         </div>
       ) : null}
 
-      {tab === "alerts" ? <SavedSearchesPanel /> : null}
+      {contentTab === "alerts" ? (
+        <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
+          <SavedSearchesPanel />
+        </Suspense>
+      ) : null}
 
-      {tab === "bookings" ? (
+      {contentTab === "bookings" ? (
         <div className="mt-6 space-y-8">
         {tours.length ? (
           <section>
@@ -232,7 +305,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
         </div>
       ) : null}
 
-      {tab === "payments" ? (
+      {contentTab === "payments" ? (
         <div className="mt-6 space-y-6">
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -251,7 +324,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             />
             <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
             <div className="mt-4">
-              <ParentPlusPanel />
+              <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
+                <ParentPlusPanel />
+              </Suspense>
             </div>
           </div>
           {bills.filter((b) => billIsOpen(b.status)).length ? (
@@ -348,7 +423,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
         </div>
       ) : null}
 
-      {tab === "children" ? (
+      {contentTab === "children" ? (
         <div className="mt-6 space-y-4">
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
@@ -358,14 +433,16 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
           </div>
           {editing ? (
             <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
-              <ChildProfileForm
-                initial={editing === "new" ? null : editing}
-                onSaved={() => {
-                  setEditing(null);
-                  void load();
-                }}
-                onCancel={() => setEditing(null)}
-              />
+              <Suspense fallback={<div className="ke-skel h-48 rounded-xl" aria-hidden="true" />}>
+                <ChildProfileForm
+                  initial={editing === "new" ? null : editing}
+                  onSaved={() => {
+                    setEditing(null);
+                    void load();
+                  }}
+                  onCancel={() => setEditing(null)}
+                />
+              </Suspense>
             </div>
           ) : (
             <>
@@ -458,7 +535,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                                         .replace("{name}", res.childName)
                                         .replace("{n}", String(res.sent.length)),
                                     );
-                                    setTab("bookings");
+                                    selectTab("bookings");
                                     return load();
                                   })
                                   .catch((err) => toast.error(err instanceof Error ? err.message : "Could not send"))

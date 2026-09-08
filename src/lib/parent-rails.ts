@@ -44,6 +44,16 @@ function takeHonest(rows: DaycareCard[], n = PARENT_RAIL_LIMIT): DaycareCard[] {
   return out;
 }
 
+function alreadyScored(item: DaycareCard): boolean {
+  return typeof item.matchScore === "number" && typeof item.urgencyScore === "number";
+}
+
+/** Reuse scores from a prior `scoreParentRailItems` pass so chip/tab clicks do not redo Match + Urgency. */
+export function scoredParentRailItems(items: DaycareCard[], prefs: ParentRailPrefs = {}): DaycareCard[] {
+  if (items.length > 0 && items.every(alreadyScored)) return items;
+  return scoreParentRailItems(items, prefs);
+}
+
 /** Score a pool for rails. Paid pins are ignored by the score functions. */
 export function scoreParentRailItems(items: DaycareCard[], prefs: ParentRailPrefs = {}): DaycareCard[] {
   return items.map((item) => ({
@@ -54,14 +64,14 @@ export function scoreParentRailItems(items: DaycareCard[], prefs: ParentRailPref
 }
 
 export function bestMatchRail(items: DaycareCard[], prefs: ParentRailPrefs = {}): DaycareCard[] {
-  const scored = scoreParentRailItems(items, prefs)
+  const scored = scoredParentRailItems(items, prefs)
     .filter((item) => (item.matchScore ?? 0) >= PARENT_RAIL_MIN_MATCH)
     .sort((a, b) => compareParentMatch(a, b, prefs));
   return takeHonest(scored);
 }
 
 export function urgencyRail(items: DaycareCard[], prefs: ParentRailPrefs = {}): DaycareCard[] {
-  const scored = scoreParentRailItems(items, prefs)
+  const scored = scoredParentRailItems(items, prefs)
     .filter((item) => (item.urgencyScore ?? 0) > 0)
     .sort((a, b) => compareParentUrgency(a, b, prefs));
   return takeHonest(scored);
@@ -76,17 +86,19 @@ export function guestFavoritesRail(items: DaycareCard[]): DaycareCard[] {
 }
 
 export function ageGroupRail(items: DaycareCard[], age: RailAge, prefs: ParentRailPrefs = {}): DaycareCard[] {
+  const agePrefs: ParentRailPrefs = { ...prefs, ageGroup: age === "school-age" ? "any" : age };
   const scored = scoreParentRailItems(
     items.filter((item) => matchesRailAge(item, age)),
-    { ...prefs, ageGroup: age === "school-age" ? "any" : age },
-  ).sort((a, b) => compareParentMatch(a, b, { ...prefs, ageGroup: age === "school-age" ? "any" : age }));
+    agePrefs,
+  ).sort((a, b) => compareParentMatch(a, b, agePrefs));
   return takeHonest(scored);
 }
 
 export function careTypeRail(items: DaycareCard[], care: CareType, prefs: ParentRailPrefs = {}): DaycareCard[] {
-  const scored = scoreParentRailItems(items.filter((item) => matchesCareType(item, care)), prefs).sort((a, b) =>
-    compareParentMatch(a, b, prefs),
-  );
+  const scored = scoredParentRailItems(
+    items.filter((item) => matchesCareType(item, care)),
+    prefs,
+  ).sort((a, b) => compareParentMatch(a, b, prefs));
   return takeHonest(scored);
 }
 
