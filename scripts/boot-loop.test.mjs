@@ -103,7 +103,6 @@ describe("home / session / splash cannot stay pending forever", () => {
   it("closed overlays cannot sit on the page and eat clicks", () => {
     const drawer = src("src/components/nav-drawer.tsx");
     const css = src("src/styles.css");
-    const root = src("src/routes/__root.tsx");
     const index = src("src/routes/index.tsx");
     const shell = src("src/components/shell.tsx");
     const footer = src("src/components/site-footer.tsx");
@@ -114,7 +113,7 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(css, /html\[data-channel="app"\] \.ke-web-only/);
     assert.match(css, /\[hidden\]/);
     assert.match(css, /\[data-sonner-toaster\]/);
-    assert.match(root, /pointerEvents: "none"/);
+    assert.match(src("src/components/kidease-toaster.tsx"), /pointerEvents: "none"/);
     assert.match(index, /ke-web-only/);
     assert.match(index, /ke-app-only/);
     assert.match(shell, /ke-app-only/);

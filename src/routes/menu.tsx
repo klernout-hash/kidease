@@ -8,6 +8,7 @@ import { signOut } from "@/lib/auth/client";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { RateKidEaseMenuRow } from "@/components/rate-kidease";
 import { showDeskSwitcher } from "@/lib/desks";
+import { AppearanceControl } from "@/components/appearance-control";
 
 export const Route = createFileRoute("/menu")({
   component: MenuPage,
@@ -70,6 +71,12 @@ function MenuPage() {
             </div>
           </Group>
         ) : null}
+
+        <Group title={fr ? "Réglages" : "Settings"}>
+          <div className="px-1 py-2">
+            <AppearanceControl />
+          </div>
+        </Group>
 
         <Group title="KidEase">
           <Row to="/search" label={t("explore")} />

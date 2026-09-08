@@ -188,12 +188,15 @@ export async function hideNativeSplash(): Promise<void> {
   }
 }
 
-export async function paintStatusBar(): Promise<void> {
+export async function paintStatusBar(resolved?: "light" | "dark"): Promise<void> {
   if (!isNative()) return;
   try {
     const { StatusBar, Style } = await import("@capacitor/status-bar");
-    await StatusBar.setStyle({ style: Style.Dark });
-    await StatusBar.setBackgroundColor({ color: "#FFFFFF" });
+    const dark =
+      resolved === "dark" ||
+      (resolved !== "light" && document.documentElement.dataset.resolvedTheme === "dark");
+    await StatusBar.setStyle({ style: dark ? Style.Light : Style.Dark });
+    await StatusBar.setBackgroundColor({ color: dark ? "#14161c" : "#f6f3ee" });
   } catch {
     /* ios/android variant */
   }

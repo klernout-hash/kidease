@@ -2,10 +2,11 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
+import { ThemeBoot } from "@/components/theme-boot";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
-import { Toaster } from "sonner";
+import { KidEaseToaster } from "@/components/kidease-toaster";
 import { reportError } from "@/lib/observe";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import appCss from "../styles.css?url";
@@ -104,6 +105,7 @@ export const Route = createRootRoute({
       className="antialiased"
       data-channel="website"
       data-runtime="web"
+      data-theme="system"
       suppressHydrationWarning
     >
       <head>
@@ -125,23 +127,20 @@ export const Route = createRootRoute({
           }}
         />
         <script src="/channel-boot.js" />
+        <script src="/theme-boot.js" />
         <script src="/asset-recover.js" />
         <HeadContent />
       </head>
       <body>
         <PreviewHostBridge />
         <AuthProvider>
+          <ThemeBoot />
           <NativeBoot />
           <PostHogBoot />
           <RoleBoot />
           <Outlet />
           <CookieConsentBanner />
-          <Toaster
-            position="top-center"
-            richColors={false}
-            style={{ pointerEvents: "none" }}
-            toastOptions={{ style: { pointerEvents: "auto" } }}
-          />
+          <KidEaseToaster />
         </AuthProvider>
         <Scripts />
       </body>

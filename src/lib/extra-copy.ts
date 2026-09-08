@@ -5,6 +5,11 @@ type Pack = Partial<Record<CopyKey, string>>;
 
 const zh: Pack = {
   language: "语言",
+  appearance: "外观",
+  appearanceLight: "浅色",
+  appearanceDark: "深色",
+  appearanceSystem: "系统",
+  appearanceHint: "浅色、深色，或跟随此设备。",
   roleHeadline: "找到附近最合适的托儿所",
   imParent: "我是家长",
   imProvider: "我是托儿机构",
@@ -146,6 +151,11 @@ const zh: Pack = {
 
 const yue: Pack = {
   language: "語言",
+  appearance: "外觀",
+  appearanceLight: "淺色",
+  appearanceDark: "深色",
+  appearanceSystem: "系統",
+  appearanceHint: "淺色、深色，或跟隨此裝置。",
   tagline: "持牌託兒，離家更近。",
   search: "搜尋",
   explore: "探索",
@@ -241,6 +251,11 @@ const yue: Pack = {
 
 const pa: Pack = {
   language: "ਭਾਸ਼ਾ",
+  appearance: "ਦਿੱਖ",
+  appearanceLight: "ਹਲਕਾ",
+  appearanceDark: "ਗੂੜ੍ਹਾ",
+  appearanceSystem: "ਸਿਸਟਮ",
+  appearanceHint: "ਹਲਕਾ, ਗੂੜ੍ਹਾ, ਜਾਂ ਇਸ ਡਿਵਾਈਸ ਦੀ ਪਾਲਣਾ ਕਰੋ।",
   tagline: "ਲਾਇਸੰਸਸ਼ੁਦਾ ਦੇਖਭਾਲ, ਘਰ ਦੇ ਨੇੜੇ।",
   search: "ਖੋਜ",
   explore: "ਵੇਖੋ",
@@ -335,6 +350,11 @@ const pa: Pack = {
 
 const es: Pack = {
   language: "Idioma",
+  appearance: "Apariencia",
+  appearanceLight: "Claro",
+  appearanceDark: "Oscuro",
+  appearanceSystem: "Sistema",
+  appearanceHint: "Claro, oscuro, o seguir este dispositivo.",
   tagline: "Cuidado con licencia, cerca de casa.",
   search: "Buscar",
   explore: "Explorar",
@@ -451,6 +471,11 @@ const es: Pack = {
 
 const ar: Pack = {
   language: "اللغة",
+  appearance: "المظهر",
+  appearanceLight: "فاتح",
+  appearanceDark: "داكن",
+  appearanceSystem: "النظام",
+  appearanceHint: "فاتح أو داكن أو اتبع هذا الجهاز.",
   tagline: "رعاية مرخّصة، قريبة من المنزل.",
   search: "بحث",
   explore: "استكشاف",
@@ -567,6 +592,11 @@ const ar: Pack = {
 
 const tl: Pack = {
   language: "Wika",
+  appearance: "Hitsura",
+  appearanceLight: "Maliwanag",
+  appearanceDark: "Madilim",
+  appearanceSystem: "Sistema",
+  appearanceHint: "Maliwanag, madilim, o sundan ang device na ito.",
   tagline: "Lisensyadong pangangalaga, malapit sa bahay.",
   search: "Maghanap",
   explore: "Tuklasin",
@@ -661,6 +691,11 @@ const tl: Pack = {
 
 const it: Pack = {
   language: "Lingua",
+  appearance: "Aspetto",
+  appearanceLight: "Chiaro",
+  appearanceDark: "Scuro",
+  appearanceSystem: "Sistema",
+  appearanceHint: "Chiaro, scuro, o segui questo dispositivo.",
   tagline: "Nidi autorizzati, vicino a casa.",
   search: "Cerca",
   explore: "Esplora",
@@ -755,6 +790,11 @@ const it: Pack = {
 
 const de: Pack = {
   language: "Sprache",
+  appearance: "Erscheinungsbild",
+  appearanceLight: "Hell",
+  appearanceDark: "Dunkel",
+  appearanceSystem: "System",
+  appearanceHint: "Hell, dunkel, oder diesem Gerät folgen.",
   tagline: "Lizenzierte Betreuung, nah am Zuhause.",
   search: "Suchen",
   explore: "Entdecken",
