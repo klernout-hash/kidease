@@ -11,6 +11,12 @@ Production uses the official `@sentry/node` (SSR / API) and `@sentry/react` (bro
 
 If neither is set, the app boots and skips ingest. Events drop cookies, `Authorization` headers, emails, tokens, and child-name fields. Common browser-extension errors are ignored.
 
+## Product analytics (PostHog)
+
+Browser `posthog-js` only. Public project key `VITE_PUBLIC_POSTHOG_KEY` (same class as a pixel — already on Vercel Production). `POSTHOG_HOST` defaults to `https://us.i.posthog.com`.
+
+If the key is unset, the app boots and skips ingest. Session replay is **web-only**, sampled (default 20%), and privacy-masked: all inputs and on-screen text, no network bodies, no canvas. Child-profile and inbox surfaces use `ph-no-capture`. Capacitor stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE=1`. Identify uses the Better Auth user id — not email. See `docs/posthog.md`.
+
 Admin-only check: signed-in staff on `www.kidease.ca` can `GET /api/admin/sentry-test` (session + `profiles.role = admin` + same-site, same gate as other `/api/admin/*`) to send `KidEase Sentry test`.
 
 Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, or `support_lead`). It does **not** weaken `/admin*` admin-only tools. Public Help Centre is `/help`. Cloudflare Access can later include `/support*` (see `docs/support.md`).

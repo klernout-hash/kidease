@@ -34,7 +34,7 @@ export function ChildCareCard({
   }
 
   return (
-    <section className="rounded-lg bg-surface ring-1 ring-border">
+    <section className="ph-no-capture rounded-lg bg-surface ring-1 ring-border">
       <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border px-3 py-2">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted">{t("childCareCard")}</p>

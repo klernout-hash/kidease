@@ -4,8 +4,9 @@ import { identifyPostHogUser, resetPostHogIdentity, startPostHog } from "@/lib/p
 
 /**
  * Mount once in the root shell. Initializes PostHog on the client (pageviews,
- * autocapture, masked session replay, feature flags) and identifies the Better
- * Auth user by account id when a real session is present.
+ * autocapture, privacy-masked web session replay, feature flags) and identifies
+ * the Better Auth user by account id when a real session is present.
+ * Missing VITE_PUBLIC_POSTHOG_KEY is a no-op — the app still boots.
  */
 export function PostHogBoot() {
   const { user, isPending } = useCurrentUserState();
