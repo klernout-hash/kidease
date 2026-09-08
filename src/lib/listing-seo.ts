@@ -4,6 +4,7 @@
  * Relative .ts imports so Node tests can load this file.
  */
 
+import { classifyFacilityType, facilityTypeSeoKind } from "./facility-type.ts";
 import { cityHubCityName, cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 import { breadcrumbJsonLd, breadcrumbJsonLdScript } from "./page-seo.ts";
@@ -39,6 +40,7 @@ export type ListingSeoSource = {
   ageMinMonths?: number | null;
   ageMaxMonths?: number | null;
   photos?: string[] | null;
+  amenities?: string | null;
 };
 
 export type ListingSeoMeta = {
@@ -128,14 +130,16 @@ export function listingMetaDescription(src: ListingSeoSource, locale: ListingSeo
   if (!name) return "";
   const area = listingAreaLine(src);
   const ages = agePhrase(src, locale);
+  const type = classifyFacilityType({ amenities: src.amenities, name: src.name }).type;
+  const kind = facilityTypeSeoKind(type, locale);
   if (locale === "fr") {
     const where = area ? ` à ${area}` : "";
     const ageBit = ages ? ` Âges ${ages}.` : "";
-    return `Garde d’enfants permise chez ${name}${where}.${ageBit} Consultez les heures et les places sur KidEase.`;
+    return `${kind} chez ${name}${where}.${ageBit} Consultez les heures et les places sur KidEase.`;
   }
   const where = area ? ` in ${area}` : "";
   const ageBit = ages ? ` Ages ${ages}.` : "";
-  return `Licensed childcare at ${name}${where}.${ageBit} See hours and spots on KidEase.`;
+  return `${kind} at ${name}${where}.${ageBit} See hours and spots on KidEase.`;
 }
 
 export function listingSeoMeta(src: ListingSeoSource, locale: ListingSeoLocale = "en"): ListingSeoMeta | null {
@@ -203,12 +207,14 @@ export function listingJsonLd(src: ListingSeoSource, locale: ListingSeoLocale = 
   if (province) address.addressRegion = province;
   if (postal) address.postalCode = postal;
 
+  const type = classifyFacilityType({ amenities: src.amenities, name: src.name }).type;
   const node: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": ["ChildCare", "LocalBusiness"],
     name,
     url,
     address,
+    description: facilityTypeSeoKind(type, locale),
   };
   const otherName = clean(locale === "fr" ? src.name : src.nameFr);
   if (otherName && otherName !== name) node.alternateName = otherName;

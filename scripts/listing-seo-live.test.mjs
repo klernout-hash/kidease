@@ -54,7 +54,7 @@ test("listing SEO title and description use name, city, province, ages", () => {
   assert.match(title, /12–60 months/);
   assert.match(title, /KidEase/);
   const desc = listingMetaDescription(centre, "en");
-  assert.match(desc, /Sunny Side Child Care/);
+  assert.match(desc, /Licensed centre at Sunny Side Child Care/);
   assert.match(desc, /Winnipeg/);
   assert.doesNotMatch(desc, /\$10/);
   assert.doesNotMatch(desc, /4\.8/);

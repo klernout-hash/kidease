@@ -7,6 +7,7 @@ import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } f
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import { BrandMark } from "@/components/brand-mark";
+import { FacilityTypeRails } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
 import { ParentDeskRails } from "@/components/parent-desk-rails";
 import { DaycareCard } from "@/components/daycare-card";
@@ -636,6 +637,7 @@ function Home() {
               <ListingRail title={t("recentlyViewed")} items={recent} eagerThumbs={false} />
               <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} />
               <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} />
+              <FacilityTypeRails items={shown} />
               {shown.length === 0 ? (
                 <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
                     <EmptyState

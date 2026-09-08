@@ -417,6 +417,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
       ageMinMonths: found.ageMinMonths,
       ageMaxMonths: found.ageMaxMonths,
       photos: found.photos,
+      amenities: found.amenities,
     };
   });
 

@@ -87,6 +87,7 @@ export function TrustSignals({
 }) {
   const { locale } = useCopy();
   const badges = trustBadgesFor(item, surface, stripeLive);
+  if (!badges.length) return null;
   return (
     <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
       {badges.map((badge) => (

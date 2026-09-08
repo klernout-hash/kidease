@@ -33,7 +33,7 @@ test("name and city win over the slug fallback", () => {
       province: "MB",
       slug: "harrow-house-99",
     }),
-    "Harrow House · Daycare in Winnipeg, MB · KidEase",
+    "Harrow House · Centre in Winnipeg, MB · KidEase",
   );
   assert.match(
     listingPageDescription({
@@ -43,7 +43,16 @@ test("name and city win over the slug fallback", () => {
     }),
     /Harrow House in Winnipeg, MB/,
   );
-  assert.equal(listingPageTitle({ name: "Harrow House" }), "Harrow House · Licensed daycare · KidEase");
+  assert.equal(listingPageTitle({ name: "Harrow House" }), "Harrow House · Licensed centre · KidEase");
+  assert.match(
+    listingPageTitle({
+      name: "Alonsa Nursery School",
+      city: "Alonsa",
+      province: "MB",
+      amenities: "licensed,nursery",
+    }),
+    /Nursery in Alonsa, MB/,
+  );
 });
 
 test("daycare route exposes unique title and description hooks", () => {

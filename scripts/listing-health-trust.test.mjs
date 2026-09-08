@@ -93,6 +93,8 @@ test("badge meaning is shared: cards, listing, compare, provider, admin", () => 
   assert.match(trust, /claim\.id === "claim_verified"/);
   assert.match(trust, /staff\.id === "staff_attested"/);
   assert.match(src("src/components/daycare-card.tsx"), /surface="card"/);
+  assert.match(src("src/lib/trust.ts"), /isCatalogueMatchedBadge/);
+  assert.match(src("src/lib/listing-card.ts"), /isCatalogueMatchedBadge/);
   assert.match(src("src/routes/compare.tsx"), /TrustSignals/);
   assert.match(src("src/routes/compare.tsx"), /compareTrust/);
   assert.match(src("src/components/listing-badges.tsx"), /TrustSignals/);

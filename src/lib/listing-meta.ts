@@ -5,6 +5,7 @@
  * file the same way they load sitemap.ts.
  */
 
+import { classifyFacilityType, facilityTypeSeoKind, type FacilityType } from "./facility-type.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 
 export const LISTING_META_BRAND = "KidEase";
@@ -14,7 +15,14 @@ export type ListingMetaInput = {
   city?: string | null;
   province?: string | null;
   slug?: string | null;
+  amenities?: string | null;
 };
+
+function listingKind(input: ListingMetaInput): { type: FacilityType; label: string } {
+  const type = classifyFacilityType({ amenities: input.amenities, name: input.name }).type;
+  const noun = type === "nursery" ? "Nursery" : type === "home" ? "Home" : "Centre";
+  return { type, label: noun };
+}
 
 /** "bonnie-bairns-childcare-services-1" → "Bonnie Bairns Childcare Services". */
 export function listingLabelFromSlug(slug: string | null | undefined): string {
@@ -52,8 +60,9 @@ function placeLabel(input: ListingMetaInput): string {
 export function listingPageTitle(input: ListingMetaInput): string {
   const name = listingDisplayName(input.name);
   const place = placeLabel(input);
-  if (name && place) return `${name} · Daycare in ${place} · ${LISTING_META_BRAND}`;
-  if (name) return `${name} · Licensed daycare · ${LISTING_META_BRAND}`;
+  const kind = listingKind(input);
+  if (name && place) return `${name} · ${kind.label} in ${place} · ${LISTING_META_BRAND}`;
+  if (name) return `${name} · ${facilityTypeSeoKind(kind.type)} · ${LISTING_META_BRAND}`;
   const fromSlug = listingLabelFromSlug(input.slug);
   if (fromSlug) return `${fromSlug} · Licensed daycare · ${LISTING_META_BRAND}`;
   return `Licensed daycare · ${LISTING_META_BRAND}`;
@@ -62,11 +71,13 @@ export function listingPageTitle(input: ListingMetaInput): string {
 export function listingPageDescription(input: ListingMetaInput): string {
   const name = listingDisplayName(input.name);
   const place = placeLabel(input);
+  const kind = listingKind(input);
+  const typed = facilityTypeSeoKind(kind.type);
   if (name && place) {
-    return `See hours, fees, and open spots at ${name} in ${place}. Licensed childcare on ${LISTING_META_BRAND}.`;
+    return `See hours, fees, and open spots at ${name} in ${place}. ${typed} on ${LISTING_META_BRAND}.`;
   }
   if (name) {
-    return `See hours, fees, and open spots at ${name}. Licensed childcare on ${LISTING_META_BRAND}.`;
+    return `See hours, fees, and open spots at ${name}. ${typed} on ${LISTING_META_BRAND}.`;
   }
   const fromSlug = listingLabelFromSlug(input.slug);
   if (fromSlug) {

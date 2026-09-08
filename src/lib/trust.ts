@@ -275,11 +275,16 @@ export function paymentBadge(item: TrustListing, stripeLive = stripeChargesLive(
 
 export type TrustSurface = "card" | "parent" | "provider" | "admin";
 
+/** Catalogue-matched is operator jargon — keep it off guest/parent Explore cards. */
+export function isCatalogueMatchedBadge(badge: Pick<TrustBadge, "labelKey">): boolean {
+  return badge.labelKey === "trustCatalogueMatched";
+}
+
 /**
  * Same Kyle-approved labels on every desk: catalogue-matched, registry-checked,
  * unverified, claim verified, staff attested.
- * Parent cards stay compact: Catalogue-matched / Registry-checked (or expired/suspended) only when we know,
- * plus claim/staff only when those facts are true. Unverified is not a badge.
+ * Guest/parent Explore cards omit Catalogue-matched (internal matching jargon).
+ * Registry-checked and expired/suspended still show when we know. Unverified is not a badge.
  * Provider and admin also see operational claim/staff/pay states.
  */
 export function trustBadgesFor(item: TrustListing, surface: TrustSurface, stripeLive?: boolean): TrustBadge[] {
@@ -288,7 +293,8 @@ export function trustBadgesFor(item: TrustListing, surface: TrustSurface, stripe
   const staff = staffBadge(item);
 
   if (surface === "card") {
-    const badges = license.id === "license_unverified" ? [] : [license];
+    const badges =
+      license.id === "license_unverified" || isCatalogueMatchedBadge(license) ? [] : [license];
     if (claim.id === "claim_verified") badges.push(claim);
     if (staff.id === "staff_attested") badges.push(staff);
     return badges;

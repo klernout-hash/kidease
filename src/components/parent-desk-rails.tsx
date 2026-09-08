@@ -1,5 +1,6 @@
 import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
+import { FacilityTypeRails } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
 import { useCopy } from "@/lib/use-copy";
 import { useAppStore } from "@/lib/store";
@@ -13,7 +14,7 @@ import {
   urgencyRail,
   type ParentRailPrefs,
 } from "@/lib/parent-rails";
-import { CARE_TYPES, RAIL_AGES, type CareType, type RailAge } from "@/lib/care-type";
+import { RAIL_AGES, type RailAge } from "@/lib/care-type";
 import type { CopyKey } from "@/lib/copy";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
@@ -25,12 +26,6 @@ const AGE_COPY: Record<RailAge, CopyKey> = {
   toddler: "toddler",
   preschool: "preschool",
   "school-age": "schoolAge",
-};
-
-const CARE_COPY: Record<CareType, CopyKey> = {
-  centre: "careCentre",
-  home: "careHome",
-  "before-after": "careBeforeAfter",
 };
 
 function Chip({
@@ -66,9 +61,7 @@ export function ParentDeskRails({
   const defaultAge: RailAge =
     childMonths == null ? "preschool" : childMonths >= 60 ? "school-age" : ageGroupFromMonths(childMonths);
   const [age, setAge] = useState<RailAge>(defaultAge);
-  const [care, setCare] = useState<CareType>("centre");
   const deferredAge = useDeferredValue(age);
-  const deferredCare = useDeferredValue(care);
   const [extraReady, setExtraReady] = useState(false);
 
   const matchPrefs = useMemo(() => {
@@ -94,7 +87,14 @@ export function ParentDeskRails({
     };
     return ageGroupRail(items, deferredAge, agePrefs);
   }, [deferredAge, items, matchPrefs]);
-  const careRail = useMemo(() => careTypeRail(pool, deferredCare, matchPrefs), [deferredCare, matchPrefs, pool]);
+  const facilityRails = useMemo(
+    () => ({
+      centre: careTypeRail(pool, "centre", matchPrefs),
+      nursery: careTypeRail(pool, "nursery", matchPrefs),
+      home: careTypeRail(pool, "home", matchPrefs),
+    }),
+    [matchPrefs, pool],
+  );
 
   useEffect(() => {
     if (!items.length) {
@@ -163,36 +163,7 @@ export function ParentDeskRails({
               eagerThumbs={false}
             />
           </section>
-          <section className="mt-8 md:mt-10">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
-                {t("railByCare")}
-              </h2>
-              <a
-                href={parentRailSearchHref({ care })}
-                className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-              >
-                {t("seeAll")}
-              </a>
-            </div>
-            <div className="mb-3 flex flex-wrap gap-2">
-              {CARE_TYPES.map((kind) => (
-                <Chip
-                  key={kind}
-                  on={care === kind}
-                  label={t(CARE_COPY[kind])}
-                  onClick={() => setCare(kind)}
-                />
-              ))}
-            </div>
-            <ListingRail
-              title={t(CARE_COPY[deferredCare])}
-              hideTitle
-              className="mt-0 first:mt-0 md:mt-0"
-              items={careRail}
-              eagerThumbs={false}
-            />
-          </section>
+          <FacilityTypeRails rows={facilityRails} />
         </>
       ) : null}
     </div>

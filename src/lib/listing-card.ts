@@ -1,7 +1,7 @@
 import type { DaycareCard } from "@/lib/types";
 import { feeProgramBadgeKey } from "@/lib/licensing";
 import { listingThumb } from "@/lib/listing-photo";
-import { licenseBadge, type TrustCopyKey } from "@/lib/trust";
+import { isCatalogueMatchedBadge, licenseBadge, type TrustCopyKey } from "@/lib/trust";
 
 /** One pill max, Airbnb-style top-left. Licensed only when we actually know. */
 export function listingPill(item: Pick<DaycareCard, "province" | "live" | "priority" | "licenseStatus" | "registryMatchState">): {
@@ -11,7 +11,7 @@ export function listingPill(item: Pick<DaycareCard, "province" | "live" | "prior
   if (fee) return { labelKey: fee };
   if (item.live) return { labelKey: "live" };
   const license = licenseBadge(item);
-  if (license.id === "license_unverified") return null;
+  if (license.id === "license_unverified" || isCatalogueMatchedBadge(license)) return null;
   return { labelKey: license.labelKey };
 }
 

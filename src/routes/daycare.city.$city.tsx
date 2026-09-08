@@ -22,7 +22,7 @@ export const Route = createFileRoute("/daycare/city/$city")({
   head: ({ loaderData }) => {
     if (!loaderData) return {};
     const title = `Licensed daycare in ${loaderData.city}, ${loaderData.province} · KidEase`;
-    const description = `Browse ${loaderData.count} licensed childcare centres in ${loaderData.city}, ${loaderData.province}. Free to search on KidEase — no nannies or sitters.`;
+    const description = `Browse ${loaderData.count} licensed centres, nurseries, and homes in ${loaderData.city}, ${loaderData.province}. Free to search on KidEase — no nannies or sitters.`;
     return pageSeoHead({
       title,
       description,
@@ -45,8 +45,8 @@ function CityHubPage() {
         ? `KidEase liste-t-il des nounous à ${cityName}?`
         : `Does KidEase list nannies in ${cityName}?`,
       a: fr
-        ? "Non. KidEase répertorie seulement les garderies permises par la province ou le territoire. Pas de nounous, de gardiennes non permises, ni de babysitting."
-        : "No. KidEase lists provincially or territorially licensed childcare centres only — not nannies, sitters, or unlicensed care.",
+        ? "Non. KidEase répertorie seulement les centres, nurseries et milieux familiaux permis par la province ou le territoire. Pas de nounous, de gardiennes non permises, ni de babysitting."
+        : "No. KidEase lists provincially or territorially licensed centres, nurseries, and homes only — not nannies, sitters, or unlicensed care.",
     },
     {
       q: fr ? "Comment obtenir une subvention?" : "How do childcare subsidies work?",
@@ -88,8 +88,8 @@ function CityHubPage() {
         </h1>
         <p className="mt-6 text-lg text-muted">
           {fr
-            ? `KidEase répertorie ${hub.count} centres permis à ${cityName}. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`
-            : `KidEase lists ${hub.count} licensed childcare centres in ${cityName}. Search is free. We do not list nannies or sitters.`}
+            ? `KidEase répertorie ${hub.count} établissements permis à ${cityName} — centres, nurseries et milieux familiaux. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`
+            : `KidEase lists ${hub.count} licensed centres, nurseries, and homes in ${cityName}. Search is free. We do not list nannies or sitters.`}
         </p>
         <p className="mt-4 text-sm text-muted">
           <Link to="/search" className="font-medium text-primary underline-offset-4 hover:underline">
@@ -106,7 +106,7 @@ function CityHubPage() {
         </p>
 
         <h2 className="mt-12 text-2xl">
-          {fr ? `Centres à ${cityName}` : `Centres in ${cityName}`}
+          {fr ? `Établissements à ${cityName}` : `Licensed listings in ${cityName}`}
         </h2>
         <p className="mt-2 text-sm text-muted">
           {hub.listings.length < hub.count

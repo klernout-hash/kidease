@@ -369,6 +369,9 @@ function AdminPage() {
                     Catalogue SoT · {catalogHealth.runtime === "neon" ? "Neon" : "JSON fallback"}
                   </span>
                   <span className="mt-1 block">{catalogHealth.reason}</span>
+                  <span className="mt-2 block" data-facility-type-taxonomy>
+                    Facility types: Centre (fallback), Nursery (`nursery` amenity from Manitoba Facility Type), Home (`home` amenity). Name tokens are an admin gap only — never assigned at random.
+                  </span>
                 </p>
               ) : null}
               <h2 className="font-display text-2xl">By province</h2>
