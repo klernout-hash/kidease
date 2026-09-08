@@ -5,6 +5,8 @@
  * file the same way they load sitemap.ts.
  */
 
+import { normalizeListingSlug } from "./listing-slug.ts";
+
 export const LISTING_META_BRAND = "KidEase";
 
 export type ListingMetaInput = {
@@ -19,7 +21,7 @@ export function listingLabelFromSlug(slug: string | null | undefined): string {
   const raw = (slug || "").trim().replace(/^\/+|\/+$/g, "");
   const segment = raw.split("/").filter(Boolean).pop() ?? "";
   if (!segment) return "";
-  const withoutId = segment.replace(/-\d+$/, "");
+  const withoutId = normalizeListingSlug(segment).replace(/-\d+$/, "");
   return withoutId
     .split("-")
     .filter(Boolean)

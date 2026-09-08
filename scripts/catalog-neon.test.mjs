@@ -189,7 +189,7 @@ describe("null catalog rows stay renderable", () => {
     assert.match(utils, /String\(value \?\? ""\)/);
     assert.match(neon, /export function catalogRowRenderable/);
     assert.match(neon, /rows\.filter\(catalogRowRenderable\)/);
-    assert.match(neon, /String\(row\.name \|\| ""\)\.trim\(\) \|\| slug/);
+    assert.match(neon, /correctCentreNameTypos\(String\(row\.name \|\| ""\)\.trim\(\)\) \|\| slug/);
     assert.match(neon, /Licensed centre/);
   });
 });

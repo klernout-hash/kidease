@@ -6,6 +6,7 @@
  */
 
 import { isAdminOnlyListing } from "./listing-visibility.ts";
+import { normalizeListingSlug } from "./listing-slug.ts";
 
 export const SITEMAP_ORIGIN = "https://www.kidease.ca";
 export const SITEMAP_LISTING_CAP = 500;
@@ -67,7 +68,7 @@ export function publicSitemapSlugs(
   const seen = new Set<string>();
   const out: string[] = [];
   for (const row of rows) {
-    const slug = (row.slug || "").trim();
+    const slug = normalizeListingSlug((row.slug || "").trim());
     if (!isSafeSitemapSlug(slug)) continue;
     if (isAdminOnlyListing(row)) continue;
     const key = slug.toLowerCase();
