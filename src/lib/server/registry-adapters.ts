@@ -4,8 +4,12 @@
  * Manitoba has a **local catalogue** path: licence numbers that already exist
  * in the bundled KidEase MB index can be matched. That is not a live scrape of
  * childcaresearch.gov.mb.ca — do not add a "Sync now" button that pretends one
- * ran. Other provinces and territories stay documented stubs until a stable
- * official API or open data feed exists.
+ * ran.
+ *
+ * Ontario, Alberta, British Columbia, Saskatchewan, and Québec have documented
+ * stub adapters. They always fail closed to operator manual review. They never
+ * return a live match. There is no official open-data feed or documented public
+ * API for those registries, and we will not scrape their HTML search UIs.
  *
  * Remaining stubs stay stubs because:
  * - No committed licence snapshot (unlike MB centres.json)
@@ -13,10 +17,15 @@
  * - Scraping would invent matches and hide behind a green "adapter" badge
  */
 
-import { JURISDICTIONS, type AdapterStatus } from "../province-registry.ts";
+import {
+  isManualStubAdapter,
+  JURISDICTIONS,
+  type AdapterStatus,
+  type Jurisdiction,
+} from "../province-registry.ts";
 import mbIndexJson from "../data/mb-registry-index.json" with { type: "json" };
 
-export { adapterStatusLabel } from "../province-registry.ts";
+export { adapterStatusLabel, isManualStubAdapter, MANUAL_STUB_ADAPTER_CODES } from "../province-registry.ts";
 
 export type ManitobaRegistryRow = {
   id: string;
@@ -97,6 +106,30 @@ function stubLookup(status: AdapterStatus, reason: RegistryLookup["reason"], not
   return { ok: false, status, reason, notes, registryUrl };
 }
 
+const FAIL_CLOSED_NO_NUMBER =
+  "No licence number on file. This adapter is a stub and fails closed to operator manual review. Not a live registry match.";
+
+/**
+ * Documented stub adapter for ON / AB / BC / SK / QC.
+ * Always `ok: false`. A licence number on file still fails closed — operators
+ * review the official registry. Never invents a match.
+ */
+export function lookupManualStubAdapter(
+  code: string,
+  licenseNumber?: string | null,
+  jurisdiction?: Jurisdiction,
+): RegistryLookup {
+  const j = jurisdiction ?? JURISDICTIONS.find((row) => row.code === code.toUpperCase());
+  if (!j || !isManualStubAdapter(j.code)) {
+    return stubLookup("stub", "stub", "Unknown stub adapter. KidEase does not invent a registry match.", null);
+  }
+  const number = (licenseNumber || "").trim();
+  if (!number) {
+    return stubLookup("manual", "missing_number", FAIL_CLOSED_NO_NUMBER, j.registryUrl);
+  }
+  return stubLookup("manual", "manual", j.adapterNotes, j.registryUrl);
+}
+
 export function lookupRegistry(
   code: string,
   licenseNumber?: string | null,
@@ -111,7 +144,9 @@ export function lookupRegistry(
     return stubLookup(
       j.adapterStatus,
       "missing_number",
-      "No licence number on file. Mark unverified until the operator or an adapter supplies one.",
+      j.code === "MB"
+        ? "No licence number on file. Mark unverified until the operator or an adapter supplies one."
+        : FAIL_CLOSED_NO_NUMBER,
       j.registryUrl,
     );
   }
@@ -141,6 +176,10 @@ export function lookupRegistry(
       `${MB_STUB_NOTES} Licence ${number} is not in the bundled Manitoba snapshot.`,
       j.registryUrl,
     );
+  }
+
+  if (isManualStubAdapter(j.code)) {
+    return lookupManualStubAdapter(j.code, number, j);
   }
 
   return stubLookup(

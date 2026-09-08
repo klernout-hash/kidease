@@ -33,7 +33,10 @@ not a live government scrape. Official inspections stay on
 | `licensed_capacity` / `license_expiry` | Optional facts; never guessed |
 
 `ca_jurisdictions.adapter_status` is `adapter_ready` for Manitoba (local
-snapshot) and `stub` for every other province and territory.
+snapshot), `manual` for Ontario, Alberta, British Columbia, Saskatchewan, and
+Québec (documented stub adapters that fail closed to operator review), and
+`stub` for every other province and territory. No status except Manitoba
+`adapter_ready` may light a Licensed badge on its own.
 
 ## Manitoba path (safe, no scrape)
 
@@ -47,6 +50,24 @@ snapshot) and `stub` for every other province and territory.
    rows, expired/suspended, and admin `mismatch` are left alone.
 
 Do not add a “Sync now” button that pretends a live scrape ran.
+
+## Stub adapters (ON, AB, BC, SK, QC)
+
+These five provinces have first-class stub adapters in
+`lookupManualStubAdapter` / `lookupRegistry`. They exist so Admin Trust can
+label the review path honestly. They do **not** call a government API, scrape
+HTML, or invent a match.
+
+- Status: `manual` → Admin Trust badge **Manual review — no live adapter**.
+- Lookup always returns `ok: false`. A licence number on file still fails
+  closed (`reason: "manual"`).
+- `registryLookupIsLive` stays false. `applyLocalRegistryTrust` will not
+  flip `license_status` to `matched`.
+- Operators review the official registry URL stored on the jurisdiction, then
+  use **Mark registry-matched** (or mismatch / expired / suspended) by hand.
+
+Remaining provinces and territories stay generic `stub` adapters with the
+same fail-closed contract and **Adapter stub — manual review** labeling.
 
 ## Extending to another province
 

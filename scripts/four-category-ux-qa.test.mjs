@@ -104,10 +104,15 @@ test("Admin P1: QA fixtures are opt-in on staff queues", () => {
 test("Admin: registry stub labels and chat/activity guidance", () => {
   assert.match(adapterStatusLabel("stub"), /Adapter stub/);
   assert.match(adapterStatusLabel("stub"), /manual review/i);
+  assert.match(adapterStatusLabel("manual"), /Manual review/);
+  assert.match(adapterStatusLabel("manual"), /no live adapter/i);
   assert.match(adapterStatusLabel("adapter_ready"), /not a live scrape/i);
   assert.match(adapterStatusHint("stub"), /No live government scrape/);
+  assert.match(adapterStatusHint("manual"), /Fail closed/);
   const trust = src("src/components/admin-trust.tsx");
   assert.match(trust, /adapterStatusHint/);
+  assert.match(trust, /fail closed to operator manual review/);
+  assert.match(trust, /Ontario, Alberta, British Columbia, Saskatchewan, and Québec/);
   assert.match(CHAT_SCAFFOLD_MESSAGE, /not a chat product/i);
   assert.match(CHAT_SCAFFOLD_EMPTY, /\/inbox/);
   const activity = src("src/routes/admin.tsx");
