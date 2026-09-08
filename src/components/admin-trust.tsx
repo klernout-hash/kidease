@@ -28,7 +28,7 @@ export function AdminTrustPanel({
       <section>
         <h2 className="font-display text-2xl">Jurisdictions</h2>
         <p className="mt-1 text-sm text-muted">
-          All Canadian provinces and territories. Manitoba can match a licence against the bundled KidEase catalogue. Other adapters stay stubs. Live government scrapers are a follow-up — this list does not pretend a scrape ran.
+          All Canadian provinces and territories. Manitoba can match a licence against the bundled KidEase catalogue. Ontario, Alberta, British Columbia, Saskatchewan, and Québec have documented adapter stubs that fail closed to operator manual review — not live registry matches. Other jurisdictions stay adapter stubs. This list does not pretend a scrape ran.
         </p>
         <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {rows.map((j) => (

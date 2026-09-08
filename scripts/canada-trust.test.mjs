@@ -22,7 +22,9 @@ test("all 13 provinces and territories are first-class", () => {
   assert.match(registry, /nameFr:/);
   assert.match(registry, /adapterStatus: "adapter_ready"/);
   assert.match(registry, /adapterStatus: "stub"/);
+  assert.match(registry, /adapterStatus: "manual"/);
   assert.match(registry, /code: "MB"[\s\S]*adapterStatus: "adapter_ready"/);
+  assert.match(registry, /MANUAL_STUB_ADAPTER_CODES/);
   assert.match(registry, /code: "NU"[\s\S]*subsidyUrl: null/);
 });
 
@@ -58,6 +60,8 @@ test("registry adapters do not scrape; stubs stay non-live", () => {
   const adapters = src("src/lib/server/registry-adapters.ts");
   assert.match(adapters, /Not a live scrape/);
   assert.match(adapters, /Remaining stubs stay stubs/);
+  assert.match(adapters, /lookupManualStubAdapter/);
+  assert.match(adapters, /fail closed to operator manual review/);
   assert.match(adapters, /reason: "stub"/);
   assert.match(adapters, /reason: "local_catalog"/);
   assert.match(adapters, /mb-registry-index\.json/);

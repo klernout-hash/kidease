@@ -2,8 +2,9 @@
  * Apply trusted local registry matches at read / seed time.
  *
  * Manitoba: in-memory lookup against the bundled snapshot
- * (`mb-registry-index.json`). Not a live scrape. Other provinces stay
- * unmatched until an official open-data adapter is wired.
+ * (`mb-registry-index.json`). Not a live scrape. ON / AB / BC / SK / QC have
+ * documented stub adapters that fail closed to manual review. Other provinces
+ * stay unmatched until an official open-data adapter is wired.
  *
  * Never writes a licence number. Never blocks listing load on the network.
  */

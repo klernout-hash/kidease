@@ -4,9 +4,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
+  isManualStubAdapter,
   loadManitobaRegistryIndex,
   lookupManitobaLicense,
+  lookupManualStubAdapter,
   lookupRegistry,
+  MANUAL_STUB_ADAPTER_CODES,
   registryLookupIsLive,
 } from "../src/lib/server/registry-adapters.ts";
 import { JURISDICTIONS } from "../src/lib/province-registry.ts";
@@ -57,13 +60,49 @@ test("committed Manitoba index is a real local path for a known licence", () => 
   assert.equal(live.match?.province, "MB");
 });
 
-test("non-Manitoba adapters stay stubs and never return a live match", () => {
+test("ON AB BC SK QC stub adapters fail closed to manual review", () => {
+  assert.deepEqual([...MANUAL_STUB_ADAPTER_CODES], ["ON", "AB", "BC", "SK", "QC"]);
+  for (const code of MANUAL_STUB_ADAPTER_CODES) {
+    const j = JURISDICTIONS.find((row) => row.code === code);
+    assert.ok(j, code);
+    assert.equal(j.adapterStatus, "manual", code);
+    assert.equal(isManualStubAdapter(code), true);
+    assert.match(j.adapterNotes, /Fail closed/);
+    assert.match(j.adapterNotes, /Not a live registry match/);
+    assert.doesNotMatch(j.adapterNotes, /TODO:/);
+
+    const hit = lookupRegistry(code, "FAKE-LICENCE-1");
+    assert.equal(hit.ok, false, code);
+    assert.equal(hit.status, "manual", code);
+    assert.equal(hit.reason, "manual", code);
+    assert.equal(registryLookupIsLive(hit), false, code);
+    assert.equal(hit.match, undefined, code);
+    assert.ok(hit.registryUrl, code);
+
+    const viaHelper = lookupManualStubAdapter(code, "FAKE-LICENCE-1");
+    assert.equal(viaHelper.ok, false, code);
+    assert.equal(viaHelper.reason, "manual", code);
+
+    const blank = lookupRegistry(code, "  ");
+    assert.equal(blank.ok, false, code);
+    assert.equal(blank.reason, "missing_number", code);
+    assert.match(blank.notes, /fails closed/i);
+  }
+});
+
+test("non-Manitoba leftover adapters stay stubs and never return a live match", () => {
   for (const j of JURISDICTIONS) {
     if (j.code === "MB") {
       assert.equal(j.adapterStatus, "adapter_ready");
       continue;
     }
+    if (isManualStubAdapter(j.code)) {
+      assert.equal(j.adapterStatus, "manual", j.code);
+      continue;
+    }
     assert.equal(j.adapterStatus, "stub", j.code);
+    assert.match(j.adapterNotes, /Fail closed/);
+    assert.doesNotMatch(j.adapterNotes, /TODO:/);
     const result = lookupRegistry(j.code, "FAKE-LICENCE-1");
     assert.equal(result.ok, false, j.code);
     assert.equal(result.reason, "stub", j.code);
@@ -84,4 +123,12 @@ test("adapters never scrape and UI copy does not claim a government sync", () =>
   const sql = src("migrations/0034_mb_registry_local.sql");
   assert.match(sql, /adapter_status = 'adapter_ready'/);
   assert.match(sql, /Not a live scrape/);
+  const stubs = src("migrations/0040_provincial_registry_stubs.sql");
+  for (const code of ["ON", "AB", "BC", "SK", "QC"]) {
+    assert.match(stubs, new RegExp(`where code = '${code}'`));
+  }
+  assert.match(stubs, /adapter_status = 'manual'/);
+  assert.match(stubs, /Fail closed to operator manual review/);
+  assert.match(stubs, /Manitoba stays adapter_ready/);
+  assert.doesNotMatch(stubs, /TODO:/);
 });

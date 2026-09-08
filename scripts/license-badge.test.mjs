@@ -38,6 +38,19 @@ test("Manitoba catalogue numbers become Licensed; other provinces stay unverifie
   });
   assert.equal(on.licenseStatus, "unverified");
   assert.equal(on.registryMatchState, "unmatched");
+
+  for (const province of ["AB", "BC", "SK", "QC"]) {
+    const row = applyLocalRegistryTrust({
+      id: `${province.toLowerCase()}-1`,
+      province,
+      licenseNumber: "FAKE-LICENCE-1",
+      licenseStatus: "unverified",
+      registryMatchState: "unmatched",
+    });
+    assert.equal(row.licenseStatus, "unverified", province);
+    assert.equal(row.registryMatchState, "unmatched", province);
+    assert.equal(row.licenseNumber, "FAKE-LICENCE-1", province);
+  }
 });
 
 test("never invents a licence number and never overrides expired, suspended, or mismatch", () => {

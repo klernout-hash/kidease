@@ -9,6 +9,10 @@
 export const ADAPTER_STATUSES = ["stub", "manual", "adapter_ready"] as const;
 export type AdapterStatus = (typeof ADAPTER_STATUSES)[number];
 
+/** First-class stub adapters: documented review path, never a live match. */
+export const MANUAL_STUB_ADAPTER_CODES = ["ON", "AB", "BC", "SK", "QC"] as const;
+export type ManualStubAdapterCode = (typeof MANUAL_STUB_ADAPTER_CODES)[number];
+
 export type Jurisdiction = {
   code: string;
   nameEn: string;
@@ -19,6 +23,19 @@ export type Jurisdiction = {
   adapterNotes: string;
 };
 
+export function isManualStubAdapter(code?: string | null): code is ManualStubAdapterCode {
+  const v = (code || "").trim().toUpperCase();
+  return (MANUAL_STUB_ADAPTER_CODES as readonly string[]).includes(v);
+}
+
+function manualStubNotes(registry: string) {
+  return `Adapter stub. No official open-data feed or documented public API. Fail closed to operator manual review against ${registry}. Not a live registry match.`;
+}
+
+function leftoverStubNotes(registry: string, extra?: string) {
+  return `Adapter stub. Fail closed to operator manual review against ${registry}. No official open-data feed.${extra ? ` ${extra}` : ""} Not a live registry match.`;
+}
+
 export const JURISDICTIONS: Jurisdiction[] = [
   {
     code: "BC",
@@ -26,8 +43,8 @@ export const JURISDICTIONS: Jurisdiction[] = [
     nameFr: "Colombie-Britannique",
     registryUrl: "https://www2.gov.bc.ca/gov/content/family-social-supports/caring-for-young-children/finding-child-care",
     subsidyUrl: "https://www.gov.bc.ca/affordablechildcarebenefit",
-    adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against the BC childcare finder until a sync is wired.",
+    adapterStatus: "manual",
+    adapterNotes: manualStubNotes("the BC childcare finder"),
   },
   {
     code: "AB",
@@ -35,8 +52,8 @@ export const JURISDICTIONS: Jurisdiction[] = [
     nameFr: "Alberta",
     registryUrl: "https://www.alberta.ca/lookup-child-care",
     subsidyUrl: "https://www.alberta.ca/child-care-subsidy",
-    adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against Alberta Lookup Child Care.",
+    adapterStatus: "manual",
+    adapterNotes: manualStubNotes("Alberta Lookup Child Care"),
   },
   {
     code: "SK",
@@ -44,8 +61,8 @@ export const JURISDICTIONS: Jurisdiction[] = [
     nameFr: "Saskatchewan",
     registryUrl: "https://www.saskatchewan.ca/residents/family-and-social-support/child-care",
     subsidyUrl: "https://www.saskatchewan.ca/residents/family-and-social-support/child-care",
-    adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against the Saskatchewan child care pages.",
+    adapterStatus: "manual",
+    adapterNotes: manualStubNotes("the Saskatchewan child care pages"),
   },
   {
     code: "MB",
@@ -63,8 +80,8 @@ export const JURISDICTIONS: Jurisdiction[] = [
     nameFr: "Ontario",
     registryUrl: "https://www.ontario.ca/page/licensed-child-care",
     subsidyUrl: "https://www.ontario.ca/page/child-care-subsidies",
-    adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against Ontario licensed child care.",
+    adapterStatus: "manual",
+    adapterNotes: manualStubNotes("Ontario licensed child care"),
   },
   {
     code: "QC",
@@ -72,8 +89,8 @@ export const JURISDICTIONS: Jurisdiction[] = [
     nameFr: "Québec",
     registryUrl: "https://www.mfa.gouv.qc.ca/en/services-de-garde/Parents/Pages/default.aspx",
     subsidyUrl: "https://www.revenuquebec.ca/en/citizens/tax-credits/tax-credit-for-childcare-expenses/",
-    adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against Québec services de garde.",
+    adapterStatus: "manual",
+    adapterNotes: manualStubNotes("Québec services de garde"),
   },
   {
     code: "NB",
@@ -83,7 +100,7 @@ export const JURISDICTIONS: Jurisdiction[] = [
     subsidyUrl:
       "https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/information-for-families/guide.html",
     adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against New Brunswick ELCC.",
+    adapterNotes: leftoverStubNotes("New Brunswick ELCC"),
   },
   {
     code: "NS",
@@ -92,7 +109,7 @@ export const JURISDICTIONS: Jurisdiction[] = [
     registryUrl: "https://childcarenovascotia.ca/",
     subsidyUrl: "https://childcarenovascotia.ca/families/child-care-subsidy",
     adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against Child Care Nova Scotia.",
+    adapterNotes: leftoverStubNotes("Child Care Nova Scotia"),
   },
   {
     code: "PE",
@@ -102,7 +119,7 @@ export const JURISDICTIONS: Jurisdiction[] = [
       "https://www.princeedwardisland.ca/en/information/education-and-early-years/licensed-early-learning-and-child-care",
     subsidyUrl: "https://peichildcareregistry.com/calculator.php",
     adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against PEI licensed ELCC.",
+    adapterNotes: leftoverStubNotes("PEI licensed ELCC"),
   },
   {
     code: "NL",
@@ -111,7 +128,7 @@ export const JURISDICTIONS: Jurisdiction[] = [
     registryUrl: "https://www.gov.nl.ca/education/childcare/",
     subsidyUrl: "https://www.gov.nl.ca/education/childcare/childcaresubsidy/",
     adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against NL child care.",
+    adapterNotes: leftoverStubNotes("NL child care"),
   },
   {
     code: "YT",
@@ -120,7 +137,7 @@ export const JURISDICTIONS: Jurisdiction[] = [
     registryUrl: "https://yukon.ca/en/find-child-care",
     subsidyUrl: "https://yukon.ca/en/universal-child-care",
     adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against Yukon Find child care.",
+    adapterNotes: leftoverStubNotes("Yukon Find child care"),
   },
   {
     code: "NT",
@@ -129,7 +146,7 @@ export const JURISDICTIONS: Jurisdiction[] = [
     registryUrl: "https://www.ece.gov.nt.ca/en/services/early-learning-and-child-care",
     subsidyUrl: "https://www.ece.gov.nt.ca/en/average-10-day-child-care",
     adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Manual review against NWT early learning and child care.",
+    adapterNotes: leftoverStubNotes("NWT early learning and child care"),
   },
   {
     code: "NU",
@@ -138,7 +155,7 @@ export const JURISDICTIONS: Jurisdiction[] = [
     registryUrl: "https://www.gov.nu.ca/en/education-and-schools/early-learning-and-child-care",
     subsidyUrl: null,
     adapterStatus: "stub",
-    adapterNotes: "TODO: live registry adapter. Subsidy URL left null rather than guess a dead path.",
+    adapterNotes: leftoverStubNotes("Nunavut early learning and child care", "Subsidy URL left null rather than guess a dead path."),
   },
 ];
 
@@ -169,6 +186,9 @@ export function adapterStatusLabel(status: AdapterStatus) {
 export function adapterStatusHint(status: AdapterStatus) {
   if (status === "adapter_ready") {
     return "Matches the bundled KidEase catalogue. Staff still verify the licence photo. No live government scrape.";
+  }
+  if (status === "manual") {
+    return "Documented adapter stub. Fail closed — no live match. Verify the licence against the official registry before approving a claim.";
   }
   return "No live government scrape. Verify the licence manually before approving a claim.";
 }
