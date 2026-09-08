@@ -73,8 +73,8 @@ test("public rails and search drop TEST / ghost leftover rows", () => {
 test("Share KidEase always surfaces a toast on copy or share", () => {
   const button = src("src/components/share-button.tsx");
   assert.match(button, /toast\.success\(messages\.copied\)/);
-  assert.match(button, /toast\.success\(messages\.shared\)/);
-  assert.match(button, /t\("shareDone"\)/);
+  assert.match(button, /toast\.success\(messages\.started\)/);
+  assert.match(button, /t\("shareStarted"\)/);
   assert.match(src("src/lib/native.ts"), /preferOsShare/);
   assert.match(src("src/lib/share.ts"), /copyText/);
 });

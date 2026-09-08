@@ -3,13 +3,14 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { isShareCancellation, preferOsShare } from "../src/lib/native.ts";
+import { isShareCancellation, preferOsShare, shouldOfferWebShare } from "../src/lib/native.ts";
 import {
   SHARE_APP_URL,
   appSharePayload,
   copyText,
   listingSharePayload,
   listingShareUrl,
+  shareFeedbackKey,
   shareOrCopy,
 } from "../src/lib/share.ts";
 
@@ -17,6 +18,21 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 function src(rel) {
   return readFileSync(join(root, rel), "utf8");
+}
+
+function installMatchMedia(coarse) {
+  if (typeof globalThis.window === "undefined") globalThis.window = globalThis;
+  globalThis.window.matchMedia = (q) => ({
+    matches: Boolean(coarse && String(q).includes("pointer: coarse")),
+    media: q,
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent() {
+      return false;
+    },
+  });
 }
 
 test("share URLs stay on the public www origin without store IDs", () => {
@@ -61,10 +77,29 @@ test("preferOsShare is mobile/native only — desktop falls through to clipboard
   Object.defineProperty(globalThis, "navigator", { configurable: true, value: original });
 });
 
+test("share feedback names copied, started, and fallback outcomes", () => {
+  assert.equal(shareFeedbackKey("shared"), "shareStarted");
+  assert.equal(shareFeedbackKey("copied"), "shareCopiedFallback");
+  assert.equal(shareFeedbackKey("failed"), "shareFailed");
+  assert.equal(shareFeedbackKey("cancelled"), null);
+});
+
+test("desktop Chrome skips a phantom Web Share sheet", () => {
+  installMatchMedia(false);
+  const desktop = { share: async () => undefined, userAgent: "Mozilla/5.0 Chrome/129.0.0.0" };
+  Object.defineProperty(globalThis, "navigator", { configurable: true, value: desktop });
+  assert.equal(shouldOfferWebShare({ url: "https://www.kidease.ca" }), false);
+  installMatchMedia(true);
+  const phone = { share: async () => undefined, userAgent: "Mozilla/5.0 iPhone" };
+  Object.defineProperty(globalThis, "navigator", { configurable: true, value: phone });
+  assert.equal(shouldOfferWebShare({ url: "https://www.kidease.ca" }), true);
+});
+
 test("shareOrCopy uses Web Share when available and copies the link otherwise", async () => {
   const originalShare = globalThis.navigator?.share;
   const originalClipboard = globalThis.navigator?.clipboard;
   const payload = appSharePayload({ title: "KidEase", text: "Find licensed childcare near you on KidEase" });
+  installMatchMedia(true);
 
   const sharedNav = {
     share: async () => undefined,
@@ -94,6 +129,18 @@ test("shareOrCopy uses Web Share when available and copies the link otherwise", 
   assert.equal(await shareOrCopy(payload), "copied");
   assert.equal(copied, "https://www.kidease.ca");
   assert.equal(await copyText("https://www.kidease.ca/daycare/demo"), true);
+
+  installMatchMedia(false);
+  let desktopCopied = "";
+  const desktopShareNav = {
+    share: async () => assert.fail("desktop Chrome should copy instead of Web Share"),
+    clipboard: { writeText: async (value) => { desktopCopied = value; } },
+    userAgent: "Mozilla/5.0 Chrome/129.0.0.0",
+  };
+  Object.defineProperty(globalThis, "navigator", { configurable: true, value: desktopShareNav });
+  assert.equal(await shareOrCopy(payload), "copied");
+  assert.equal(desktopCopied, "https://www.kidease.ca");
+  installMatchMedia(true);
 
   const failNav = {
     clipboard: {
@@ -133,10 +180,11 @@ test("listing cards and listing detail share the centre deep link", () => {
   assert.match(listing, /ShareListingButton/);
   assert.match(listing, /d\.slug/);
   assert.match(button, /listingSharePayload/);
-  assert.match(button, /linkCopied/);
-  assert.match(button, /shareDone/);
+  assert.match(button, /shareCopiedFallback/);
+  assert.match(button, /shareStarted/);
+  assert.match(button, /aria-live="polite"/);
   assert.match(button, /shareListingAria/);
-  assert.match(button, /aria-label=\{ariaLabel\}/);
+  assert.match(button, /aria-label=\{feedback \? feedback : ariaLabel\}/);
 });
 
 test("share copy is present in English and French", () => {
@@ -147,6 +195,10 @@ test("share copy is present in English and French", () => {
   assert.match(copy, /shareKidEaseText: "Trouvez une garde d’enfants permise près de chez vous sur KidEase"/);
   assert.match(copy, /linkCopied: "Link copied"/);
   assert.match(copy, /linkCopied: "Lien copié"/);
+  assert.match(copy, /shareStarted: "Share started"/);
+  assert.match(copy, /shareStarted: "Partage lancé"/);
+  assert.match(copy, /shareCopiedFallback: "Link copied — share isn’t available on this browser"/);
+  assert.match(copy, /shareCopiedFallback: "Lien copié — le partage n’est pas disponible dans ce navigateur"/);
 });
 
 test("share v1 does not touch OAuth buttons or invent store IDs", () => {

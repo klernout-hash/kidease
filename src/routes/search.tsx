@@ -651,14 +651,23 @@ function SearchPage() {
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>
-            <p className="mt-0.5 text-sm text-muted">
-              {list.length} {list.length === 1 ? "centre" : "centres"}
-              {DOT}
-              {shownRadius} {u}
-              {DOT}
-              {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
+            <p className="mt-0.5 text-sm text-muted" aria-live="polite">
+              {items === null ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="ke-skel inline-block h-3.5 w-28" aria-hidden="true" />
+                  <span>{t("searchCountLoading")}</span>
+                </span>
+              ) : (
+                <>
+                  {list.length} {list.length === 1 ? "centre" : "centres"}
+                  {DOT}
+                  {shownRadius} {u}
+                  {DOT}
+                  {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
+                </>
+              )}
             </p>
-            {fabric.live > 0 ? (
+            {items !== null && fabric.live > 0 ? (
               <p className="mt-1 text-xs font-medium text-ok">{t("liveInArea").replace("{n}", String(fabric.live))}</p>
             ) : null}
           </div>

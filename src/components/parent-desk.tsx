@@ -43,7 +43,7 @@ type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "a
 export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
-  const { session: desks } = useSessionDesks();
+  const { session: desks, ready: desksReady } = useSessionDesks();
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
@@ -240,7 +240,12 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                 </span>
               ) : null}
             </div>
-            <LedgerHonesty stripeLive={Boolean(desks?.stripeLive)} surface="parent" className="mt-2" />
+            <LedgerHonesty
+              stripeLive={Boolean(desks?.stripeLive)}
+              surface="parent"
+              className="mt-2"
+              ready={desksReady}
+            />
             <div className="mt-4">
               <ParentPlusPanel />
             </div>

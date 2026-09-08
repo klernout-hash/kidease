@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { listingMapRendererExtras, ROAD_STYLES } from "../src/lib/google-maps.ts";
+import { MAP_RADIUS_FIT_PAD, mapZoomForRadius } from "../src/lib/maps.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -154,6 +155,18 @@ describe("listing map uses browser Google Maps key, not Carto/Leaflet", () => {
     assert.match(src, /loadAdvancedMarkerElement/);
     assert.match(src, /AdvancedMarker/);
     assert.doesNotMatch(src, /mapId:\s*["'`]/);
+  });
+
+  it("fits the map to the search radius, not a city-wide pad", () => {
+    assert.equal(mapZoomForRadius(16), 11);
+    assert.equal(mapZoomForRadius(25), 10);
+    assert.equal(MAP_RADIUS_FIT_PAD.bottom, 28);
+    assert.ok(MAP_RADIUS_FIT_PAD.bottom < 80);
+    const view = read("src/components/map-view.tsx");
+    assert.match(view, /bboxFromRadius/);
+    assert.match(view, /MAP_RADIUS_FIT_PAD/);
+    assert.match(view, /mapSearchRadius/);
+    assert.doesNotMatch(view, /bottom:\s*240/);
   });
 
   it("does not constrain Google Maps raster tile images", () => {
