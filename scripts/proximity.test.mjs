@@ -82,8 +82,10 @@ describe("Places autocomplete stays on the server key", () => {
   });
 
   it("search and home use PlaceSearch", () => {
-    assert.match(read("src/routes/search.tsx"), /PlaceSearch/);
+    assert.match(read("src/routes/search.tsx"), /ExploreSearchBar/);
+    assert.match(read("src/routes/index.tsx"), /ExploreSearchBar/);
     assert.match(read("src/routes/index.tsx"), /PlaceSearch/);
+    assert.match(read("src/components/explore-search-bar.tsx"), /PlaceSearch/);
   });
 });
 
