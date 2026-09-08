@@ -82,7 +82,60 @@ test("sitemap generation includes public listing URLs and drops the ghost", asyn
   assert.doesNotMatch(xml, /test-ghost-claim-lab/);
   const middleware = readFileSync(join(root, "server/middleware/sitemap.ts"), "utf8");
   assert.match(middleware, /SITEMAP_LISTINGS_PATH/);
-  assert.match(middleware, /publicSitemapSlugs/);
+  assert.match(middleware, /safeListingSitemapXml/);
+  assert.match(middleware, /sitemap-listing-slugs\.json/);
+  assert.doesNotMatch(middleware, /readFileSync/);
+});
+
+test("listing sitemap stays valid XML when slugs are missing or corrupt", async () => {
+  const { safeListingSitemapXml } = await import("../src/lib/sitemap.ts");
+  for (const source of [null, undefined, "nope", { slug: "x" }, [null, 1, { slug: "not a slug" }]]) {
+    const xml = safeListingSitemapXml(source);
+    assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
+    assert.match(xml, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+    assert.match(xml, /<\/urlset>/);
+    assert.doesNotMatch(xml, /<loc>/);
+  }
+  const xml = safeListingSitemapXml(["sunny-side-child-care", "test-ghost-claim-lab"]);
+  assert.match(xml, /https:\/\/www\.kidease\.ca\/daycare\/sunny-side-child-care/);
+  assert.doesNotMatch(xml, /test-ghost-claim-lab/);
+});
+
+test("listings sitemap middleware returns HTTP 200 XML without reading centres.json", async () => {
+  const slugsPath = join(root, "src/lib/data/sitemap-listing-slugs.json");
+  assert.equal(existsSync(slugsPath), true);
+  const slugs = JSON.parse(readFileSync(slugsPath, "utf8"));
+  assert.ok(Array.isArray(slugs) && slugs.length > 0);
+  assert.ok(!slugs.includes("test-ghost-claim-lab"));
+
+  const { default: sitemapListingsMiddleware, listingSitemapXml } = await import(
+    "../server/middleware/sitemap.ts"
+  );
+  const xml = listingSitemapXml();
+  assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
+  assert.match(xml, /https:\/\/www\.kidease\.ca\/daycare\//);
+  assert.doesNotMatch(xml, /test-ghost-claim-lab/);
+
+  const passed = { next: false };
+  const res = await sitemapListingsMiddleware(
+    { url: new URL("https://www.kidease.ca/sitemap-listings.xml"), req: { method: "GET" } },
+    () => {
+      passed.next = true;
+      return new Response("next");
+    },
+  );
+  assert.equal(passed.next, false);
+  assert.ok(res instanceof Response);
+  assert.equal(res.status, 200);
+  assert.match(String(res.headers.get("content-type")), /application\/xml/);
+  const body = await res.text();
+  assert.equal(body, xml);
+
+  const skipped = await sitemapListingsMiddleware(
+    { url: new URL("https://www.kidease.ca/sitemap.xml"), req: { method: "GET" } },
+    () => "fell-through",
+  );
+  assert.equal(skipped, "fell-through");
 });
 
 test("security.txt is RFC 9116-ish and lives at /.well-known/security.txt", () => {
