@@ -11,8 +11,8 @@ import {
 import { locateHere } from "@/lib/proximity";
 import { startChannelListener } from "@/lib/runtime";
 import { startWebVitals } from "@/lib/web-vitals";
-import { canadaOriginOrWinnipeg, isInCanada } from "@/lib/canada-origin";
-import { readSavedOrigin, WINNIPEG } from "@/lib/geo";
+import { resolveDefaultSearchOrigin } from "@/lib/default-origin";
+import { readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
 import { LANGUAGES } from "@/lib/languages";
 import { useAppStore } from "@/lib/store";
@@ -83,7 +83,7 @@ export function NativeBoot() {
 
   useEffect(() => {
     const saved = readSavedOrigin();
-    setOrigin(canadaOriginOrWinnipeg(saved));
+    if (saved) setOrigin(resolveDefaultSearchOrigin({ saved }), "saved");
     setLocated(true);
     let cancelled = false;
     const consent = readLocationConsent();
@@ -95,18 +95,23 @@ export function NativeBoot() {
     }
     void getDeviceLocation({ precise: true }).then((pos) => {
       if (cancelled) return;
-      if (pos && isInCanada(pos.lat, pos.lng)) {
-        const here = locateHere(pos.lat, pos.lng);
+      const resolved = resolveDefaultSearchOrigin({
+        saved,
+        gps: pos,
+        gpsAllowed: true,
+      });
+      if (resolved.source === "gps") {
+        const here = locateHere(resolved.lat, resolved.lng);
         setOrigin(
           {
             lat: here.lat,
             lng: here.lng,
-            label: here.label,
+            label: here.label || reverseGeocode(here.lat, here.lng),
           },
           "gps",
         );
-      } else if (!saved || !isInCanada(saved.lat, saved.lng)) {
-        setOrigin(WINNIPEG);
+      } else if (saved) {
+        setOrigin(resolved, "saved");
       }
       setLocated(true);
     });

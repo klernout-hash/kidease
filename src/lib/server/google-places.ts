@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { catalogByIdGet } from "@/lib/catalog";
+import { placesBiasOrigin } from "@/lib/default-origin";
 
 const KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY || "";
 
@@ -9,7 +10,8 @@ type PlaceHit = { placeId: string; ratingX10: number; reviewCount: number };
 export type PlaceSuggestion = { placeId: string; label: string; secondary: string };
 export type ResolvedPlace = { lat: number; lng: number; label: string };
 
-const NA_COMPONENTS = "country:ca|country:us|country:mx";
+/** Canadian product. Bias is not a hard bound — typed Toronto / Vancouver still resolve. */
+const CA_COMPONENTS = "country:ca";
 
 function placesKey() {
   return KEY;
@@ -24,18 +26,17 @@ export const suggestPlaces = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }): Promise<PlaceSuggestion[]> => {
     if (!placesKey() || data.q.length < 2) return [];
+    const bias = placesBiasOrigin({ lat: data.lat, lng: data.lng });
     const params = new URLSearchParams({
       input: data.q,
       key: placesKey(),
       types: "geocode",
-      components: NA_COMPONENTS,
+      components: CA_COMPONENTS,
       language: "en",
+      location: `${bias.lat},${bias.lng}`,
+      radius: "50000",
     });
     if (data.session) params.set("sessiontoken", data.session);
-    if (data.lat != null && data.lng != null) {
-      params.set("location", `${data.lat},${data.lng}`);
-      params.set("radius", "50000");
-    }
     const res = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`);
     if (!res.ok) return [];
     const json = (await res.json()) as {
@@ -90,10 +91,13 @@ export const geocodePlace = createServerFn({ method: "POST" })
   .validator((q: string) => String(q ?? "").trim().slice(0, 160))
   .handler(async ({ data }): Promise<ResolvedPlace | null> => {
     if (!placesKey() || !data) return null;
+    const bias = placesBiasOrigin();
     const params = new URLSearchParams({
       address: data,
       key: placesKey(),
-      components: NA_COMPONENTS,
+      components: CA_COMPONENTS,
+      region: "ca",
+      bounds: `${bias.lat - 0.4},${bias.lng - 0.6}|${bias.lat + 0.4},${bias.lng + 0.6}`,
     });
     const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params}`);
     if (!res.ok) return null;

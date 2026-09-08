@@ -62,7 +62,9 @@ export const useAppStore = create<SearchState>()((set) => ({
   },
   origin: { lat: WINNIPEG.lat, lng: WINNIPEG.lng, label: WINNIPEG.label },
   setOrigin: (origin, source = "manual") => {
-    writeSavedOrigin(origin);
+    if (source === "manual" || source === "gps" || source === "saved") {
+      writeSavedOrigin(origin);
+    }
     set({ origin, located: true, originSource: source, originAt: Date.now() });
   },
   workOrigin: null,

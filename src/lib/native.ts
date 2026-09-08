@@ -40,8 +40,19 @@ export function isMac(): boolean {
   return mac && !iPad && !/iPhone|iPod/.test(ua);
 }
 
+export type DeviceLocation = { lat: number; lng: number; accuracyM?: number };
+
+function fromCoords(coords: { latitude: number; longitude: number; accuracy?: number }): DeviceLocation {
+  const accuracy = coords.accuracy;
+  return {
+    lat: coords.latitude,
+    lng: coords.longitude,
+    accuracyM: typeof accuracy === "number" && Number.isFinite(accuracy) ? accuracy : undefined,
+  };
+}
+
 /** Precise location while the app is in use. Never request background location. */
-export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<{ lat: number; lng: number } | null> {
+export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<DeviceLocation | null> {
   const enableHighAccuracy = opts?.precise !== false;
   if (isNative()) {
     try {
@@ -50,7 +61,7 @@ export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<{
         enableHighAccuracy,
         timeout: 12000,
       });
-      return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      return fromCoords(pos.coords);
     } catch {
       return null;
     }
@@ -58,14 +69,14 @@ export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<{
   if (typeof navigator === "undefined" || !navigator.geolocation) return null;
   return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (pos) => resolve(fromCoords(pos.coords)),
       () => resolve(null),
       { enableHighAccuracy, timeout: 12000, maximumAge: enableHighAccuracy ? 8_000 : 60_000 },
     );
   });
 }
 
-export function watchDeviceLocation(onFix: (pos: { lat: number; lng: number }) => void): () => void {
+export function watchDeviceLocation(onFix: (pos: DeviceLocation) => void): () => void {
   let stopped = false;
   if (isNative()) {
     let watchId: string | undefined;
@@ -73,7 +84,7 @@ export function watchDeviceLocation(onFix: (pos: { lat: number; lng: number }) =
       if (stopped) return;
       void Geolocation.watchPosition({ enableHighAccuracy: true, timeout: 12000 }, (pos) => {
         if (stopped || !pos) return;
-        onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        onFix(fromCoords(pos.coords));
       }).then((id) => {
         watchId = id;
       });
@@ -88,7 +99,7 @@ export function watchDeviceLocation(onFix: (pos: { lat: number; lng: number }) =
   }
   if (typeof navigator === "undefined" || !navigator.geolocation) return () => {};
   const id = navigator.geolocation.watchPosition(
-    (pos) => onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    (pos) => onFix(fromCoords(pos.coords)),
     () => {},
     { enableHighAccuracy: true, timeout: 12000, maximumAge: 8_000 },
   );
