@@ -4,6 +4,7 @@
  * Served at:
  *   /.well-known/apple-app-site-association
  *   /.well-known/apple-app-site-association.json  (same body; Vercel-friendly alias)
+ *   /apple-app-site-association                  (Apple's root fallback)
  *   /.well-known/assetlinks.json
  *
  * Bundle / application id is the Capacitor appId already in the repo
@@ -13,10 +14,11 @@
  * TODO (Kyle, after Apple Developer + Play Console enroll):
  *   1. Set APPLE_TEAM_ID (or APNS_TEAM_ID) on Vercel — 10-char Team ID.
  *      Until then the JSON uses the documented placeholder XXXXXXXXXX.
- *   2. Set ANDROID_SHA256_CERT_FINGERPRINTS to the Play App Signing cert
- *      (and the upload cert if Play shows both), colon-separated hex,
- *      comma-separated if more than one. Until then sha256_cert_fingerprints
- *      is an empty array so we do not publish a fake hash.
+ *   2. Set ANDROID_CERT_SHA256S (alias ANDROID_SHA256_CERT_FINGERPRINTS) to
+ *      the Play App Signing cert (and the upload cert if Play shows both),
+ *      colon-separated hex, comma-separated if more than one. Until then
+ *      sha256_cert_fingerprints is an empty array so we do not publish a
+ *      fake hash.
  *
  * Vite (dev/preview) uses wellKnownAppLinksPlugin(); Nitro production uses
  * server/middleware/well-known-app-links.ts. Both call these builders so the
@@ -34,9 +36,12 @@ export const PLACEHOLDER_APPLE_TEAM_ID = "XXXXXXXXXX";
 
 export const AASA_PATH = "/.well-known/apple-app-site-association";
 export const AASA_JSON_PATH = "/.well-known/apple-app-site-association.json";
+/** Apple also probes the site root (no .well-known, no file extension). */
+export const AASA_ROOT_PATH = "/apple-app-site-association";
 export const ASSETLINKS_PATH = "/.well-known/assetlinks.json";
 
-export const WELL_KNOWN_APP_LINK_PATHS = [AASA_PATH, AASA_JSON_PATH, ASSETLINKS_PATH];
+export const AASA_PATHS = [AASA_PATH, AASA_JSON_PATH, AASA_ROOT_PATH];
+export const WELL_KNOWN_APP_LINK_PATHS = [...AASA_PATHS, ASSETLINKS_PATH];
 
 const JSON_CONTENT_TYPE = "application/json";
 
@@ -63,16 +68,20 @@ export function resolveAppleTeamId(env = process.env) {
 }
 
 /**
- * Parse ANDROID_SHA256_CERT_FINGERPRINTS (comma / whitespace separated).
- * Returns [] when unset — never invent a Play signing hash.
+ * Parse ANDROID_CERT_SHA256S, then ANDROID_SHA256_CERT_FINGERPRINTS
+ * (comma / semicolon / newline separated). Returns [] when unset —
+ * never invent a Play signing hash.
  */
 export function resolveAndroidSha256Fingerprints(env = process.env) {
-  const raw = String(env?.ANDROID_SHA256_CERT_FINGERPRINTS ?? "").trim();
-  if (!raw) return [];
-  return raw
-    .split(/[,;\n]+/)
-    .map((part) => part.trim())
-    .filter(Boolean);
+  for (const key of ["ANDROID_CERT_SHA256S", "ANDROID_SHA256_CERT_FINGERPRINTS"]) {
+    const raw = String(env?.[key] ?? "").trim();
+    if (!raw) continue;
+    return raw
+      .split(/[,;\n]+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 export function buildAppleAppSiteAssociation(env = process.env) {
@@ -119,7 +128,7 @@ export function wellKnownStaticPayload(pathname, env = process.env) {
 
 export function wellKnownAppLinksPayload(pathname, env = process.env) {
   const path = normalizeWellKnownPath(pathname);
-  if (path === AASA_PATH || path === AASA_JSON_PATH) {
+  if (AASA_PATHS.includes(path)) {
     return {
       path,
       body: `${JSON.stringify(buildAppleAppSiteAssociation(env), null, 2)}\n`,

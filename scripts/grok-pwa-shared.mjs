@@ -137,6 +137,7 @@ export function isDocumentPath(pathname) {
     !path.startsWith("/@") &&
     !path.startsWith("/node_modules") &&
     !path.startsWith("/.well-known/") &&
+    path !== "/apple-app-site-association" &&
     !/\.[a-z0-9]+$/i.test(path)
   );
 }

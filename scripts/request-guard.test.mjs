@@ -135,6 +135,7 @@ test("apex document GETs canonicalize to www so __Host- login is not split", () 
   assert.equal(shouldCanonicalizeApexPath("/login"), true);
   assert.equal(shouldCanonicalizeApexPath("/api/auth/sign-in/email"), false);
   assert.equal(shouldCanonicalizeApexPath("/.well-known/apple-app-site-association"), false);
+  assert.equal(shouldCanonicalizeApexPath("/apple-app-site-association"), false);
   assert.deepEqual(decideRequest({ host: "kidease.ca", pathname: "/login", method: "GET" }), {
     action: "redirect",
     status: 308,
@@ -158,6 +159,10 @@ test("apex document GETs canonicalize to www so __Host- login is not split", () 
     decideRequest({ host: "kidease.ca", pathname: "/.well-known/apple-app-site-association" }),
     { action: "next" },
   );
+  assert.deepEqual(
+    decideRequest({ host: "kidease.ca", pathname: "/apple-app-site-association" }),
+    { action: "next" },
+  );
 });
 
 test("spoofed sibling host does not look like vercel.app", () => {
@@ -168,10 +173,11 @@ test("spoofed sibling host does not look like vercel.app", () => {
 });
 
 test("AASA and assetlinks are not redirected or 404'd by the request guard", () => {
-  for (const host of ["www.kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
+  for (const host of ["www.kidease.ca", "kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
     for (const pathname of [
       "/.well-known/apple-app-site-association",
       "/.well-known/apple-app-site-association.json",
+      "/apple-app-site-association",
       "/.well-known/assetlinks.json",
       "/.well-known/apple-developer-merchantid-domain-association",
     ]) {
