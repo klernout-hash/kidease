@@ -86,7 +86,7 @@ export function guestFavoritesRail(items: DaycareCard[]): DaycareCard[] {
 }
 
 export function ageGroupRail(items: DaycareCard[], age: RailAge, prefs: ParentRailPrefs = {}): DaycareCard[] {
-  const agePrefs = { ...prefs, ageGroup: age === "school-age" ? "any" : age };
+  const agePrefs: ParentRailPrefs = { ...prefs, ageGroup: age === "school-age" ? "any" : age };
   const scored = scoreParentRailItems(
     items.filter((item) => matchesRailAge(item, age)),
     agePrefs,
