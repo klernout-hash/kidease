@@ -27,6 +27,7 @@ import {
   SHARED_SESSION_TOKEN_COOKIE,
   shareOutboundAuthCookies,
 } from "../src/lib/auth/cookies.ts";
+import { requestWithLegacyOAuthCallback } from "../src/lib/auth/legacy-oauth-callback.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -183,6 +184,28 @@ describe("apex/www session cookies", () => {
     assert.match(server, /SHARED_SESSION_TOKEN_COOKIE/);
     assert.match(twoFa, /SHARED_TWO_FACTOR_COOKIE/);
     assert.match(twoFa, /KIDEASE_COOKIE_DOMAIN/);
+  });
+
+  it("Better Auth 1.7 uses signIn.social and keeps the broker oauth2 callback path", () => {
+    const client = read("src/lib/auth/client.ts");
+    const popup = read("src/lib/auth/popup.server.ts");
+    const server = read("src/lib/auth/server.ts");
+    const authApi = read("src/routes/api/auth/$.ts");
+    assert.doesNotMatch(client, /genericOAuthClient/);
+    assert.doesNotMatch(client, /signIn\.oauth2/);
+    assert.doesNotMatch(popup, /signInWithOAuth2/);
+    assert.match(client, /signIn\.social/);
+    assert.match(popup, /signInSocial/);
+    assert.match(server, /callbackPath: `\/oauth2\/callback\/\$\{provider\.id\}`/);
+    assert.match(authApi, /requestWithLegacyOAuthCallback/);
+    const rewritten = requestWithLegacyOAuthCallback(
+      new Request("https://www.kidease.ca/api/auth/oauth2/callback/grok-google?code=1"),
+    );
+    assert.equal(new URL(rewritten.url).pathname, "/api/auth/callback/grok-google");
+    const native = requestWithLegacyOAuthCallback(
+      new Request("https://www.kidease.ca/api/auth/callback/google?code=1"),
+    );
+    assert.equal(new URL(native.url).pathname, "/api/auth/callback/google");
   });
 });
 
