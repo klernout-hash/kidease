@@ -50,6 +50,8 @@ export function SiteFooter() {
                 <Item to="/contact">{t("contactTitle")}</Item>
                 <Item to="/faq">FAQ</Item>
                 <Item to="/how-it-works">{t("howItWorksCta")}</Item>
+                <Item to="/about">{t("about")}</Item>
+                <Item to="/team">{t("team")}</Item>
                 <Item to="/privacy">{t("privacy")}</Item>
                 <Item to="/terms">{t("terms")}</Item>
                 <Item to="/cookies">{t("cookies")}</Item>
@@ -85,19 +87,7 @@ export function SiteFooter() {
                   {t("providerLogin")}
                 </Item>
                 <Item to="/provider">{fr ? "Espace garderie" : "Daycare desk"}</Item>
-                <Item to="/about">{t("about")}</Item>
-                <Item to="/team">{t("team")}</Item>
                 <Item to="/verify">{t("verifyListings")}</Item>
-                <li>
-                  <a
-                    href="https://childcaresearch.gov.mb.ca/en"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="ke-footer-link"
-                  >
-                    {t("mbChildcare")}
-                  </a>
-                </li>
               </ul>
             </section>
           </nav>
