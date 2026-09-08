@@ -1,15 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import {
-  BadgeCheck,
-  Camera,
-  LocateFixed,
-  Lock,
-  MapPin,
-  MessageCircle,
-  Search,
-  ListChecks,
-} from "lucide-react";
+import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import { BrandMark } from "@/components/brand-mark";
@@ -32,13 +23,17 @@ import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn, uniqueById } from "@/lib/utils";
 import { readRecent } from "@/lib/recent";
+import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
+import { compactExploreSearch } from "@/lib/explore-search";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { displayDistance } from "@/lib/units";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 
-const CompareBar = lazy(() => import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })));
+const CompareBar = lazy(() =>
+  import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })),
+);
 
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -85,6 +80,9 @@ function Home() {
   const [role, setRole] = useState<AppRole | null>(null);
   const [q, setQ] = useState("");
   const [place, setPlace] = useState(origin.label);
+  const [homeName, setHomeName] = useState("");
+  const [homeFrom, setHomeFrom] = useState("");
+  const [homeTo, setHomeTo] = useState("");
   const [manual, setManual] = useState(Boolean(search.change) || locationConsent === "denied");
   const [denied, setDenied] = useState(locationConsent === "denied");
   const [askLocation, setAskLocation] = useState(false);
@@ -144,8 +142,22 @@ function Home() {
       .catch(() => undefined);
   }, [origin.lat, origin.lng, origin.label, radiusKm]);
 
-  function goSearch(label?: string) {
-    void navigate({ to: "/search", search: label ? { q: label } : {} });
+  function goSearch(label?: string, extra?: { name?: string; from?: string; to?: string }) {
+    const fields = compactExploreSearch({
+      q: label,
+      name: extra?.name,
+      from: extra?.from,
+      to: extra?.to,
+    });
+    void navigate({
+      to: "/search",
+      search: {
+        q: fields.q,
+        name: fields.name,
+        from: fields.from,
+        to: fields.to,
+      },
+    });
   }
 
   async function applyCity(raw: string) {
@@ -160,9 +172,10 @@ function Home() {
       setOrigin(hit);
       setPlace(hit.label);
       setQuery(hit.label);
-    } else if (raw.trim()) {
-      setQuery(raw.trim());
+      return hit;
     }
+    if (raw.trim()) setQuery(raw.trim());
+    return null;
   }
 
   async function pinHere() {
@@ -288,7 +301,12 @@ function Home() {
             origin={origin}
             inputClassName="ke-input w-full min-h-12"
           />
-          <Button type="submit" variant="secondary" className="mt-2 min-h-12 w-full" disabled={!q.trim()}>
+          <Button
+            type="submit"
+            variant="secondary"
+            className="mt-2 min-h-12 w-full"
+            disabled={!q.trim()}
+          >
             {t("search")}
           </Button>
           {cityChips}
@@ -307,40 +325,32 @@ function Home() {
 
   const featuredSearch = (
     <>
-      <form
-        className="mt-5 flex flex-col gap-2 lg:mt-8 lg:flex-row lg:items-center"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void applyPlace(place);
+      <ExploreSearchBar
+        className="mt-5 lg:mt-8"
+        values={{ where: place, name: homeName, from: homeFrom, to: homeTo }}
+        origin={origin}
+        onWhereChange={setPlace}
+        onWhereResolved={(hit) => {
+          setOrigin(hit);
+          setPlace(hit.label);
+          setQuery(hit.label);
         }}
-      >
-        <div className="flex min-h-12 flex-1 items-center gap-2 rounded-full bg-bg px-4 shadow-card ring-1 ring-border">
-          <MapPin className="size-4 shrink-0 text-primary" />
-          <PlaceSearch
-            value={place}
-            onChange={setPlace}
-            onResolved={(hit) => {
-              setOrigin(hit);
-              setPlace(hit.label);
-              setQuery(hit.label);
-            }}
-            placeholder={t("locationPh")}
-            origin={origin}
-            inputClassName="h-11 w-full bg-transparent text-sm outline-none"
-          />
-          <button
-            type="button"
-            onClick={() => void pinLocation()}
-            className="grid size-11 place-items-center text-muted hover:text-fg"
-            aria-label={t("useLocation")}
-          >
-            <LocateFixed className="size-5" />
-          </button>
-        </div>
-        <Button type="submit" className="min-h-12 w-full lg:w-auto">
-          {t("search")}
-        </Button>
-      </form>
+        onNameChange={setHomeName}
+        onDatesChange={({ from, to }) => {
+          setHomeFrom(from);
+          setHomeTo(to);
+        }}
+        onLocate={() => void pinLocation()}
+        onSubmit={() => {
+          void applyPlace(place).then((hit) => {
+            goSearch(hit?.label || place.trim() || origin.label, {
+              name: homeName,
+              from: homeFrom,
+              to: homeTo,
+            });
+          });
+        }}
+      />
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button
@@ -380,7 +390,8 @@ function Home() {
         </div>
       ) : null}
       <p className="mt-3 text-sm text-muted">
-        {origin.label.split(",")[0]} · {displayDistance(radiusKm, distanceUnit)} {distanceUnit === "mi" ? t("mi") : t("km")}
+        {origin.label.split(",")[0]} · {displayDistance(radiusKm, distanceUnit)}{" "}
+        {distanceUnit === "mi" ? t("mi") : t("km")}
       </p>
     </>
   );
@@ -392,7 +403,9 @@ function Home() {
           <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20 xl:py-24">
             <div>
               <BrandMark size="md" align="start" />
-              <h1 className="mt-8 max-w-xl text-[clamp(2rem,6vw,3.25rem)] text-fg">{t("tagline")}</h1>
+              <h1 className="mt-8 max-w-xl text-[clamp(2rem,6vw,3.25rem)] text-fg">
+                {t("tagline")}
+              </h1>
               <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch">
                 <Button
@@ -408,7 +421,11 @@ function Home() {
                   size="lg"
                   variant="secondary"
                   className="h-14 min-h-14 w-full px-7 text-base sm:w-auto"
-                  onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  onClick={() =>
+                    document
+                      .getElementById("how")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }
                 >
                   {t("howItWorksCta")}
                 </Button>
@@ -433,23 +450,48 @@ function Home() {
         <section id="how" className="ke-gutter mx-auto max-w-6xl py-16">
           <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Step n="1" icon={MapPin} title={t("how1t")} body={t("how1")} photo="/photos/cottage.jpg" />
-            <Step n="2" icon={ListChecks} title={t("how2t")} body={t("how2")} photo="/photos/playroom.jpg" />
-            <Step n="3" icon={MessageCircle} title={t("how3t")} body={t("how3")} photo="/photos/kitchen.jpg" />
+            <Step
+              n="1"
+              icon={MapPin}
+              title={t("how1t")}
+              body={t("how1")}
+              photo="/photos/cottage.jpg"
+            />
+            <Step
+              n="2"
+              icon={ListChecks}
+              title={t("how2t")}
+              body={t("how2")}
+              photo="/photos/playroom.jpg"
+            />
+            <Step
+              n="3"
+              icon={MessageCircle}
+              title={t("how3t")}
+              body={t("how3")}
+              photo="/photos/kitchen.jpg"
+            />
           </div>
         </section>
 
         <section id="featured" className="bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">
             <div id="enroll">
-              <RoleEnrollChooser heading="h2" className="rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8" />
+              <RoleEnrollChooser
+                heading="h2"
+                className="rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8"
+              />
             </div>
 
             <h2 className="mt-12 text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
             <p className="mt-3 max-w-2xl text-muted">{t("featuredBody")}</p>
             {featuredSearch}
             {user && role !== "admin" && role !== "provider" ? (
-              <ParentDeskRails items={explore.length ? explore : shown} children={familyKids} bookings={familyBookings} />
+              <ParentDeskRails
+                items={explore.length ? explore : shown}
+                children={familyKids}
+                bookings={familyBookings}
+              />
             ) : (
               <>
                 <div className="ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5">
@@ -463,7 +505,9 @@ function Home() {
                       title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
                       body={liveOnly && featured.length > 0 ? t("noLiveResultsLead") : t("noResultsLead")}
                       action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
-                      onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
+                      onAction={
+                        liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined
+                      }
                       actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
                     />
                   </div>
@@ -511,7 +555,9 @@ function Home() {
               className="mt-8 h-14 min-h-14 px-7 text-base"
               onClick={() => {
                 setEnrollOpen(true);
-                document.getElementById("enroll")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                document
+                  .getElementById("enroll")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
             >
               {t("enrollNow")}
@@ -527,7 +573,9 @@ function Home() {
           <div className="overflow-hidden rounded-xl shadow-card ring-1 ring-border">
             <FeelPhoto src="/photos/hero.jpg" eager className="aspect-[16/9] w-full object-cover" />
           </div>
-          <h1 className="mt-4 font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{t("tagline")}</h1>
+          <h1 className="mt-4 font-display text-[1.65rem] leading-tight tracking-[-0.03em]">
+            {t("tagline")}
+          </h1>
           {featuredSearch}
           <div className="mt-4 flex flex-wrap gap-2">
             {CITY_CHIPS.map((c) => (
@@ -542,7 +590,11 @@ function Home() {
             ))}
           </div>
           {user ? (
-            <ParentDeskRails items={explore.length ? explore : shown} children={familyKids} bookings={familyBookings} />
+            <ParentDeskRails
+              items={explore.length ? explore : shown}
+              children={familyKids}
+              bookings={familyBookings}
+            />
           ) : (
             <>
               <ListingRail title={t("recentlyViewed")} items={recent} />

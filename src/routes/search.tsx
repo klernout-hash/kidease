@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { LocateFixed, SlidersHorizontal, Sparkles } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { SlidersHorizontal, Sparkles } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -24,14 +24,27 @@ import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { DualAnchorBar } from "@/components/dual-anchor-bar";
 import { ExploreHint } from "@/components/explore-hint";
-import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
+import { ExploreSearchBar } from "@/components/explore-search-bar";
+import { resolveLocationQuery } from "@/components/place-search";
+import {
+  compactExploreSearch,
+  matchesDaycareName,
+  parseExploreSearchFields,
+} from "@/lib/explore-search";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
 import { resolveSearchAnchors } from "@/lib/dual-anchor";
 import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
-import { isCareType, isRailAge, matchesCareType, matchesRailAge, type CareType, type RailAge } from "@/lib/care-type";
+import {
+  isCareType,
+  isRailAge,
+  matchesCareType,
+  matchesRailAge,
+  type CareType,
+  type RailAge,
+} from "@/lib/care-type";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { noteHappyMoment } from "@/lib/store-review";
@@ -44,20 +57,29 @@ import {
 } from "@/lib/saved-search";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
-const CompareBar = lazy(() => import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })));
+const CompareBar = lazy(() =>
+  import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })),
+);
 
 export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>) => {
+    const fields = parseExploreSearchFields(s);
     const out: {
       q?: string;
+      name?: string;
+      from?: string;
+      to?: string;
       sort?: SortKey;
       age?: RailAge;
       care?: CareType;
       favorites?: "1";
-    } = {};
-    if (typeof s.q === "string" && s.q) out.q = s.q;
+    } = { ...fields };
     const sort = typeof s.sort === "string" ? s.sort : "";
-    if (["distance", "price", "rating", "availability", "recommended", "match", "urgency"].includes(sort)) {
+    if (
+      ["distance", "price", "rating", "availability", "recommended", "match", "urgency"].includes(
+        sort,
+      )
+    ) {
       out.sort = sort as SortKey;
     }
     if (typeof s.age === "string" && isRailAge(s.age)) out.age = s.age;
@@ -79,6 +101,7 @@ function unitLabel(unit: DistanceUnit, t: (k: "km" | "mi") => string) {
 function SearchPage() {
   const { t } = useCopy();
   const { user } = useCurrentUserState();
+  const navigate = useNavigate({ from: "/search" });
   const incoming = Route.useSearch();
   const origin = useAppStore((s) => s.origin);
   const setOrigin = useAppStore((s) => s.setOrigin);
@@ -116,7 +139,9 @@ function SearchPage() {
   const [confirmedOnly, setConfirmedOnly] = useState(false);
   const [readyOnly, setReadyOnly] = useState(false);
   const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(false);
-  const [needBy, setNeedBy] = useState("");
+  const [needBy, setNeedBy] = useState(incoming.from ?? "");
+  const [needUntil, setNeedUntil] = useState(incoming.to ?? "");
+  const [nameQuery, setNameQuery] = useState(incoming.name ?? "");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [careType, setCareType] = useState<CareType | "any">("any");
   const [schoolAgeOnly, setSchoolAgeOnly] = useState(false);
@@ -156,6 +181,15 @@ function SearchPage() {
     if (incoming.care) setCareType(incoming.care);
     if (incoming.favorites === "1") setFavoritesOnly(true);
   }, [incoming.sort, incoming.age, incoming.care, incoming.favorites, setSort, setAgeGroup]);
+
+  useEffect(() => {
+    setNameQuery(incoming.name ?? "");
+  }, [incoming.name]);
+
+  useEffect(() => {
+    setNeedBy(incoming.from ?? "");
+    setNeedUntil(incoming.to ?? "");
+  }, [incoming.from, incoming.to]);
 
   useEffect(() => {
     const saved = takeSavedSearchToApply();
@@ -222,7 +256,17 @@ function SearchPage() {
       }).catch(() => undefined);
     }, 400);
     return () => window.clearTimeout(tmr);
-  }, [user?.id, anchorsHydrated, origin.lat, origin.lng, origin.label, workOrigin?.lat, workOrigin?.lng, workOrigin?.label, anchorMode]);
+  }, [
+    user?.id,
+    anchorsHydrated,
+    origin.lat,
+    origin.lng,
+    origin.label,
+    workOrigin?.lat,
+    workOrigin?.lng,
+    workOrigin?.label,
+    anchorMode,
+  ]);
 
   const searchData = {
     lat: origin.lat,
@@ -294,16 +338,52 @@ function SearchPage() {
       window.clearTimeout(tmr);
       window.clearTimeout(watchdog);
     };
-  }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query, origin.label, needBy, workOrigin?.lat, workOrigin?.lng, anchorMode]);
+  }, [
+    origin.lat,
+    origin.lng,
+    radiusKm,
+    sort,
+    ageGroup,
+    query,
+    origin.label,
+    needBy,
+    workOrigin?.lat,
+    workOrigin?.lng,
+    anchorMode,
+  ]);
 
   function applyPlace(place: { lat: number; lng: number; label: string }) {
     setOrigin(place);
     setQuery(place.label);
   }
 
+  function writeExploreSearch(next: { q?: string; name?: string; from?: string; to?: string }) {
+    const fields = compactExploreSearch(next);
+    void navigate({
+      search: {
+        q: fields.q,
+        name: fields.name,
+        from: fields.from,
+        to: fields.to,
+        sort: incoming.sort,
+        age: incoming.age,
+        care: incoming.care,
+        favorites: incoming.favorites,
+      },
+    });
+  }
+
   async function applyQuery() {
-    const hit = await resolveLocationQuery(query);
-    if (hit) applyPlace(hit);
+    const label = query.trim();
+    let nextQ = label;
+    if (label) {
+      const hit = await resolveLocationQuery(label);
+      if (hit) {
+        applyPlace(hit);
+        nextQ = hit.label;
+      }
+    }
+    writeExploreSearch({ q: nextQ, name: nameQuery, from: needBy, to: needUntil });
   }
 
   async function geo() {
@@ -400,7 +480,9 @@ function SearchPage() {
 
   function widenSearchRadius() {
     const current = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
-    const next = (distanceUnit === "mi" ? PRESETS_MI : PRESETS_KM).find((n) => n > current) ?? (distanceUnit === "mi" ? MAX_RADIUS_MI : MAX_SEARCH_RADIUS_KM);
+    const next =
+      (distanceUnit === "mi" ? PRESETS_MI : PRESETS_KM).find((n) => n > current) ??
+      (distanceUnit === "mi" ? MAX_RADIUS_MI : MAX_SEARCH_RADIUS_KM);
     setRadiusKm(distanceUnit === "mi" ? miToKm(next) : next);
   }
 
@@ -451,21 +533,50 @@ function SearchPage() {
     if (avail === "open") rows = rows.filter((r) => r.availabilityKnown && r.spotsTotal > 0);
     if (avail === "waitlist") rows = rows.filter((r) => r.availabilityKnown && r.spotsTotal <= 0);
     if (avail === "unknown") rows = rows.filter((r) => !r.availabilityKnown);
-    if (ten) rows = rows.filter((r) => cwelccKind(r.province) !== "ask" || hasAmenity(r.amenities, "ten-a-day") || hasAmenity(r.amenities, "funded"));
+    if (ten)
+      rows = rows.filter(
+        (r) =>
+          cwelccKind(r.province) !== "ask" ||
+          hasAmenity(r.amenities, "ten-a-day") ||
+          hasAmenity(r.amenities, "funded"),
+      );
     if (meals) rows = rows.filter((r) => hasAmenity(r.amenities, "meals"));
-    if (outdoor) rows = rows.filter((r) => hasAmenity(r.amenities, "outdoor") || hasAmenity(r.amenities, "yard"));
+    if (outdoor)
+      rows = rows.filter(
+        (r) => hasAmenity(r.amenities, "outdoor") || hasAmenity(r.amenities, "yard"),
+      );
     if (inclusive) rows = rows.filter((r) => hasAmenity(r.amenities, "inclusive"));
     if (extended) rows = rows.filter((r) => staysLate(r.hours, r.amenities) || opensEarly(r.hours));
     if (infantOnly) rows = rows.filter((r) => r.agesKnown && r.ageMinMonths <= 18);
     if (catchmentOnly) rows = rows.filter((r) => r.inCatchment);
-    if (confirmedOnly) rows = rows.filter((r) => vacancyFreshness(vacancyTimestamp(r)).kind === "fresh");
+    if (confirmedOnly)
+      rows = rows.filter((r) => vacancyFreshness(vacancyTimestamp(r)).kind === "fresh");
     if (readyOnly) rows = rows.filter((r) => r.detailsReady === true);
     if (claimVerifiedOnly) rows = rows.filter((r) => isClaimVerified(r));
     if (favoritesOnly) rows = rows.filter((r) => r.guestFavorite === true);
     if (careType !== "any") rows = rows.filter((r) => matchesCareType(r, careType));
     if (schoolAgeOnly) rows = rows.filter((r) => matchesRailAge(r, "school-age"));
+    if (nameQuery.trim()) rows = rows.filter((r) => matchesDaycareName(r, nameQuery));
     return rows;
-  }, [items, liveOnly, avail, ten, meals, outdoor, inclusive, extended, infantOnly, catchmentOnly, confirmedOnly, readyOnly, claimVerifiedOnly, favoritesOnly, careType, schoolAgeOnly]);
+  }, [
+    items,
+    liveOnly,
+    avail,
+    ten,
+    meals,
+    outdoor,
+    inclusive,
+    extended,
+    infantOnly,
+    catchmentOnly,
+    confirmedOnly,
+    readyOnly,
+    claimVerifiedOnly,
+    favoritesOnly,
+    careType,
+    schoolAgeOnly,
+    nameQuery,
+  ]);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +
@@ -493,45 +604,58 @@ function SearchPage() {
         secondary: t("changeLocation"),
         secondaryTo: "/?change=1",
       }
-    : extraFilters && (items?.length ?? 0) > 0
+    : nameQuery.trim() && (items?.length ?? 0) > 0
       ? {
-          title: t("noFilterResults"),
-          body: t("noFilterResultsLead") as string | undefined,
-          action: t("clearFilters"),
-          onAction: clearListingFilters,
-          secondary: t("showAll"),
+          title: t("noNameResults"),
+          body: undefined as string | undefined,
+          action: t("clearNameSearch"),
+          onAction: () => {
+            setNameQuery("");
+            writeExploreSearch({ q: query, name: "", from: needBy, to: needUntil });
+          },
+          secondary: undefined as string | undefined,
           secondaryTo: undefined as string | undefined,
-          onSecondary: () => setLiveOnly(false),
+          onSecondary: undefined as (() => void) | undefined,
         }
-      : liveOnly && (items?.length ?? 0) > 0
+      : extraFilters && (items?.length ?? 0) > 0
         ? {
-            title: t("noLiveResults"),
-            body: t("noLiveResultsLead") as string | undefined,
-            action: t("showAll"),
-            onAction: () => setLiveOnly(false),
-            secondary: t("widenRadius"),
-            onSecondary: widenSearchRadius,
+            title: t("noFilterResults"),
+            body: t("noFilterResultsLead") as string | undefined,
+            action: t("clearFilters"),
+            onAction: clearListingFilters,
+            secondary: t("showAll"),
             secondaryTo: undefined as string | undefined,
+            onSecondary: () => setLiveOnly(false),
           }
-        : dualEmpty
+        : liveOnly && (items?.length ?? 0) > 0
           ? {
-              title: t("noDualResults"),
-              body: t("noDualResultsBody"),
-              action: t("anchorHome"),
-              onAction: () => setAnchorMode("home"),
-              secondary: t("anchorWork"),
-              onSecondary: () => setAnchorMode("work"),
+              title: t("noLiveResults"),
+              body: t("noLiveResultsLead") as string | undefined,
+              action: t("showAll"),
+              onAction: () => setLiveOnly(false),
+              secondary: t("widenRadius"),
+              onSecondary: widenSearchRadius,
               secondaryTo: undefined as string | undefined,
             }
-          : {
-              title: view === "map" ? t("emptyMap") : t("noResults"),
-              body: t("noResultsLead"),
-              action: t("widenRadius"),
-              onAction: widenSearchRadius,
-              secondary: t("changeLocation"),
-              secondaryTo: "/?change=1",
-              onSecondary: undefined as (() => void) | undefined,
-            };
+          : dualEmpty
+            ? {
+                title: t("noDualResults"),
+                body: t("noDualResultsBody"),
+                action: t("anchorHome"),
+                onAction: () => setAnchorMode("home"),
+                secondary: t("anchorWork"),
+                onSecondary: () => setAnchorMode("work"),
+                secondaryTo: undefined as string | undefined,
+              }
+            : {
+                title: view === "map" ? t("emptyMap") : t("noResults"),
+                body: t("noResultsLead"),
+                action: t("widenRadius"),
+                onAction: widenSearchRadius,
+                secondary: t("changeLocation"),
+                secondaryTo: "/?change=1",
+                onSecondary: undefined as (() => void) | undefined,
+              };
   const city =
     anchors.mode === "both" && workOrigin
       ? `${origin.label.split(",")[0]} + ${workOrigin.label.split(",")[0]}`
@@ -573,14 +697,20 @@ function SearchPage() {
         <button
           type="button"
           onClick={() => setDistanceUnit("km")}
-          className={cn("flex-1 text-sm font-semibold", distanceUnit === "km" ? "bg-fg text-bg" : "text-muted")}
+          className={cn(
+            "flex-1 text-sm font-semibold",
+            distanceUnit === "km" ? "bg-fg text-bg" : "text-muted",
+          )}
         >
           {t("unitsKm")}
         </button>
         <button
           type="button"
           onClick={() => setDistanceUnit("mi")}
-          className={cn("flex-1 text-sm font-semibold", distanceUnit === "mi" ? "bg-fg text-bg" : "text-muted")}
+          className={cn(
+            "flex-1 text-sm font-semibold",
+            distanceUnit === "mi" ? "bg-fg text-bg" : "text-muted",
+          )}
         >
           {t("unitsMi")}
         </button>
@@ -615,7 +745,10 @@ function SearchPage() {
               key={n}
               type="button"
               onClick={() => setRadiusKm(distanceUnit === "mi" ? miToKm(n) : n)}
-              className={cn("rounded-full px-3 py-1 text-xs ring-1", current === n ? "bg-fg text-bg ring-fg" : "ring-border")}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs ring-1",
+                current === n ? "bg-fg text-bg ring-fg" : "ring-border",
+              )}
             >
               {n} {u}
             </button>
@@ -627,9 +760,15 @@ function SearchPage() {
 
   const filterChips = (
     <div className="flex flex-wrap gap-2">
-      {chip(avail === "open", t("filterOpen"), () => setAvail((v) => (v === "open" ? "any" : "open")))}
-      {chip(avail === "waitlist", t("filterWaitlist"), () => setAvail((v) => (v === "waitlist" ? "any" : "waitlist")))}
-      {chip(avail === "unknown", t("filterUnknown"), () => setAvail((v) => (v === "unknown" ? "any" : "unknown")))}
+      {chip(avail === "open", t("filterOpen"), () =>
+        setAvail((v) => (v === "open" ? "any" : "open")),
+      )}
+      {chip(avail === "waitlist", t("filterWaitlist"), () =>
+        setAvail((v) => (v === "waitlist" ? "any" : "waitlist")),
+      )}
+      {chip(avail === "unknown", t("filterUnknown"), () =>
+        setAvail((v) => (v === "unknown" ? "any" : "unknown")),
+      )}
       {chip(confirmedOnly, t("filterConfirmedSpots"), () => setConfirmedOnly((v) => !v))}
       {chip(readyOnly, t("filterDetailsReady"), () => setReadyOnly((v) => !v))}
       {chip(claimVerifiedOnly, t("filterClaimVerified"), () => setClaimVerifiedOnly((v) => !v))}
@@ -641,9 +780,15 @@ function SearchPage() {
       {chip(infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v))}
       {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
       {chip(favoritesOnly, t("filterFavorites"), () => setFavoritesOnly((v) => !v))}
-      {chip(careType === "centre", t("filterCareCentre"), () => setCareType((v) => (v === "centre" ? "any" : "centre")))}
-      {chip(careType === "home", t("filterCareHome"), () => setCareType((v) => (v === "home" ? "any" : "home")))}
-      {chip(careType === "before-after", t("filterCareBeforeAfter"), () => setCareType((v) => (v === "before-after" ? "any" : "before-after")))}
+      {chip(careType === "centre", t("filterCareCentre"), () =>
+        setCareType((v) => (v === "centre" ? "any" : "centre")),
+      )}
+      {chip(careType === "home", t("filterCareHome"), () =>
+        setCareType((v) => (v === "home" ? "any" : "home")),
+      )}
+      {chip(careType === "before-after", t("filterCareBeforeAfter"), () =>
+        setCareType((v) => (v === "before-after" ? "any" : "before-after")),
+      )}
     </div>
   );
 
@@ -676,7 +821,11 @@ function SearchPage() {
             ) : null}
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <Link to="/" search={{ change: "1" }} className="pb-0.5 text-sm font-medium text-primary">
+            <Link
+              to="/"
+              search={{ change: "1" }}
+              className="pb-0.5 text-sm font-medium text-primary"
+            >
               {t("changeLocation")}
             </Link>
             {user ? (
@@ -713,40 +862,40 @@ function SearchPage() {
               {origin.label} · {shownRadius} {u} · {ageGroup === "any" ? t("anyAge") : t(ageGroup)}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button type="button" size="sm" disabled={saveBusy || !saveName.trim()} onClick={submitSaveSearch}>
+              <Button
+                type="button"
+                size="sm"
+                disabled={saveBusy || !saveName.trim()}
+                onClick={submitSaveSearch}
+              >
                 {t("save")}
               </Button>
-              <Button type="button" size="sm" variant="secondary" onClick={() => setSaveOpen(false)}>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => setSaveOpen(false)}
+              >
                 {t("close")}
               </Button>
             </div>
           </div>
         ) : null}
 
-        <form
+        <ExploreSearchBar
           className="mt-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void applyQuery();
+          values={{ where: query, name: nameQuery, from: needBy, to: needUntil }}
+          origin={origin}
+          onWhereChange={setQuery}
+          onWhereResolved={applyPlace}
+          onNameChange={setNameQuery}
+          onDatesChange={({ from, to }) => {
+            setNeedBy(from);
+            setNeedUntil(to);
           }}
-        >
-          <div className="flex min-h-12 min-w-0 items-center gap-1.5 rounded-full bg-surface pl-3 pr-1.5 shadow-card ring-1 ring-border sm:gap-2 sm:pl-4">
-            <PlaceSearch
-              value={query}
-              onChange={setQuery}
-              onResolved={applyPlace}
-              placeholder={t("locationPh")}
-              origin={origin}
-              inputClassName="h-11 min-w-0 w-full bg-transparent text-[15px] outline-none"
-            />
-            <button type="button" onClick={() => void geo()} className="grid size-11 shrink-0 place-items-center text-muted" aria-label={t("useLocation")}>
-              <LocateFixed className="size-5" />
-            </button>
-            <Button type="submit" className="h-11 shrink-0 rounded-full px-3 sm:px-5">
-              {t("search")}
-            </Button>
-          </div>
-        </form>
+          onLocate={() => void geo()}
+          onSubmit={() => void applyQuery()}
+        />
         <DualAnchorBar
           mode={anchorMode}
           onMode={setAnchorMode}
@@ -778,14 +927,20 @@ function SearchPage() {
             <button
               type="button"
               onClick={() => setLiveOnly(true)}
-              className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", liveOnly ? "bg-ok text-primary-fg" : "text-muted")}
+              className={cn(
+                "flex-1 rounded-full px-4 text-[13px] font-semibold",
+                liveOnly ? "bg-ok text-primary-fg" : "text-muted",
+              )}
             >
               {t("liveOnly")} · {fabric.live}
             </button>
             <button
               type="button"
               onClick={() => setLiveOnly(false)}
-              className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", !liveOnly ? "bg-fg text-bg" : "text-muted")}
+              className={cn(
+                "flex-1 rounded-full px-4 text-[13px] font-semibold",
+                !liveOnly ? "bg-fg text-bg" : "text-muted",
+              )}
             >
               {t("showAll")} · {catalog.length}
             </button>
@@ -800,20 +955,30 @@ function SearchPage() {
           >
             <SlidersHorizontal className="size-3.5" />
             {t("filters")}
-            {extraFilters ? <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">{extraFilters}</span> : null}
+            {extraFilters ? (
+              <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">
+                {extraFilters}
+              </span>
+            ) : null}
           </button>
           <div className="flex h-11 w-full min-w-0 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[10rem] sm:flex-none">
             <button
               type="button"
               onClick={() => setView("list")}
-              className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", view === "list" ? "bg-fg text-bg" : "text-muted")}
+              className={cn(
+                "flex-1 rounded-full px-4 text-[13px] font-semibold",
+                view === "list" ? "bg-fg text-bg" : "text-muted",
+              )}
             >
               {t("explore")}
             </button>
             <button
               type="button"
               onClick={() => setView("map")}
-              className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", view === "map" ? "bg-fg text-bg" : "text-muted")}
+              className={cn(
+                "flex-1 rounded-full px-4 text-[13px] font-semibold",
+                view === "map" ? "bg-fg text-bg" : "text-muted",
+              )}
             >
               {t("map")}
             </button>
@@ -822,7 +987,10 @@ function SearchPage() {
 
         {askLocation ? (
           <div className="mt-3">
-            <LocationConsentCard onAllow={() => void allowLocation()} onLater={() => setAskLocation(false)} />
+            <LocationConsentCard
+              onAllow={() => void allowLocation()}
+              onLater={() => setAskLocation(false)}
+            />
           </div>
         ) : null}
 
@@ -851,7 +1019,10 @@ function SearchPage() {
                     setSchoolAgeOnly(false);
                     setAgeGroup(a === "any" ? "any" : (a as AgeGroup));
                   }}
-                  className={cn("min-h-11 rounded-full px-3 py-1.5 text-sm ring-1", !schoolAgeOnly && ageGroup === a ? "bg-fg text-bg ring-fg" : "ring-border")}
+                  className={cn(
+                    "min-h-11 rounded-full px-3 py-1.5 text-sm ring-1",
+                    !schoolAgeOnly && ageGroup === a ? "bg-fg text-bg ring-fg" : "ring-border",
+                  )}
                 >
                   {a === "any" ? t("anyAge") : t(a)}
                 </button>
@@ -862,7 +1033,10 @@ function SearchPage() {
                   setSchoolAgeOnly((v) => !v);
                   if (!schoolAgeOnly) setAgeGroup("any");
                 }}
-                className={cn("min-h-11 rounded-full px-3 py-1.5 text-sm ring-1", schoolAgeOnly ? "bg-fg text-bg ring-fg" : "ring-border")}
+                className={cn(
+                  "min-h-11 rounded-full px-3 py-1.5 text-sm ring-1",
+                  schoolAgeOnly ? "bg-fg text-bg ring-fg" : "ring-border",
+                )}
               >
                 {t("schoolAge")}
               </button>
@@ -883,15 +1057,22 @@ function SearchPage() {
                   key={k}
                   type="button"
                   onClick={() => setSort(k)}
-                  className={cn("min-h-11 rounded-full px-3 py-1.5 text-sm ring-1", sort === k ? "bg-fg text-bg ring-fg" : "ring-border")}
+                  className={cn(
+                    "min-h-11 rounded-full px-3 py-1.5 text-sm ring-1",
+                    sort === k ? "bg-fg text-bg ring-fg" : "ring-border",
+                  )}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            {sort === "recommended" ? <p className="text-xs text-muted">{t("sortRecommendedLead")}</p> : null}
+            {sort === "recommended" ? (
+              <p className="text-xs text-muted">{t("sortRecommendedLead")}</p>
+            ) : null}
             {sort === "match" ? <p className="text-xs text-muted">{t("sortMatchLead")}</p> : null}
-            {sort === "urgency" ? <p className="text-xs text-muted">{t("sortUrgencyLead")}</p> : null}
+            {sort === "urgency" ? (
+              <p className="text-xs text-muted">{t("sortUrgencyLead")}</p>
+            ) : null}
             <label className="block text-sm">
               <span className="font-medium">{t("needBy")}</span>
               <input
@@ -900,15 +1081,28 @@ function SearchPage() {
                 value={needBy}
                 onChange={(e) => setNeedBy(e.target.value)}
               />
-              <span className="mt-1 block text-xs text-subtle">{needBy ? needBy : t("needByAny")}</span>
+              <span className="mt-1 block text-xs text-subtle">
+                {needBy ? needBy : t("needByAny")}
+              </span>
             </label>
             <div>
               <label className="inline-flex items-center gap-1.5 text-sm font-medium text-fg">
                 <Sparkles className="size-4" />
                 {t("match")}
               </label>
-              <textarea value={need} onChange={(e) => setNeed(e.target.value)} placeholder={t("matchPh")} rows={2} className="ke-textarea mt-2 min-h-[4.5rem]" />
-              <Button type="button" className="mt-3" disabled={matchBusy || !need.trim()} onClick={() => void runMatch()}>
+              <textarea
+                value={need}
+                onChange={(e) => setNeed(e.target.value)}
+                placeholder={t("matchPh")}
+                rows={2}
+                className="ke-textarea mt-2 min-h-[4.5rem]"
+              />
+              <Button
+                type="button"
+                className="mt-3"
+                disabled={matchBusy || !need.trim()}
+                onClick={() => void runMatch()}
+              >
                 {t("matchGo")}
               </Button>
               {matchNote ? <p className="mt-3 text-sm text-muted">{matchNote}</p> : null}
@@ -930,7 +1124,10 @@ function SearchPage() {
                       activeSlug={active}
                       onSelect={(slug) => setActive(slug)}
                       onRelocate={(pos) => {
-                        setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
+                        setOrigin(
+                          { lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) },
+                          "gps",
+                        );
                         void hapticLight();
                       }}
                       onLocate={() => void geo()}
@@ -974,29 +1171,29 @@ function SearchPage() {
                 secondaryTo={emptyState.secondaryTo}
               />
             </div>
+          ) : sort === "match" || sort === "urgency" ? (
+            <section
+              className="mt-6"
+              onMouseOver={(e) => {
+                const node = (e.target as HTMLElement).closest("[data-slug]");
+                const slug = node?.getAttribute("data-slug");
+                if (slug) setActive(slug);
+              }}
+            >
+              <h2 className="text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
+                {sort === "match" ? t("sortMatch") : t("sortUrgency")}
+              </h2>
+              <p className="mt-1 text-xs text-muted">
+                {sort === "match" ? t("sortMatchLead") : t("sortUrgencyLead")}
+              </p>
+              <div className="ke-listings mt-4">
+                {list.map((item, i) => (
+                  <DaycareCard key={item.id} item={item} eager={i < 4} />
+                ))}
+              </div>
+            </section>
           ) : (
-            sort === "match" || sort === "urgency" ? (
-              <section
-                className="mt-6"
-                onMouseOver={(e) => {
-                  const node = (e.target as HTMLElement).closest("[data-slug]");
-                  const slug = node?.getAttribute("data-slug");
-                  if (slug) setActive(slug);
-                }}
-              >
-                <h2 className="text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
-                  {sort === "match" ? t("sortMatch") : t("sortUrgency")}
-                </h2>
-                <p className="mt-1 text-xs text-muted">{sort === "match" ? t("sortMatchLead") : t("sortUrgencyLead")}</p>
-                <div className="ke-listings mt-4">
-                  {list.map((item, i) => (
-                    <DaycareCard key={item.id} item={item} eager={i < 4} />
-                  ))}
-                </div>
-              </section>
-            ) : (
-              <ExploreRails items={list} onHover={setActive} />
-            )
+            <ExploreRails items={list} onHover={setActive} />
           )}
         </div>
       </div>

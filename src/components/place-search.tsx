@@ -1,6 +1,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { geocode } from "@/lib/geo";
-import { geocodePlace, resolvePlaceId, suggestPlaces, type PlaceSuggestion } from "@/lib/server/google-places";
+import {
+  geocodePlace,
+  resolvePlaceId,
+  suggestPlaces,
+  type PlaceSuggestion,
+} from "@/lib/server/google-places";
 import { cn } from "@/lib/utils";
 
 export type ResolvedPlace = { lat: number; lng: number; label: string };
@@ -26,6 +31,9 @@ export function PlaceSearch({
   className,
   inputClassName,
   origin,
+  id,
+  ariaLabel,
+  ariaLabelledBy,
 }: {
   value: string;
   onChange: (q: string) => void;
@@ -34,6 +42,9 @@ export function PlaceSearch({
   className?: string;
   inputClassName?: string;
   origin?: { lat: number; lng: number };
+  id?: string;
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
 }) {
   const listId = useId();
   const wrap = useRef<HTMLDivElement>(null);
@@ -82,7 +93,9 @@ export function PlaceSearch({
   }, []);
 
   async function pick(hit: PlaceSuggestion) {
-    const resolved = await resolvePlaceId({ data: { placeId: hit.placeId, session: session.current } });
+    const resolved = await resolvePlaceId({
+      data: { placeId: hit.placeId, session: session.current },
+    });
     session.current = newSession();
     setOpen(false);
     setHits([]);
@@ -97,6 +110,7 @@ export function PlaceSearch({
   return (
     <div ref={wrap} className={cn("relative min-w-0 flex-1", className)}>
       <input
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -105,6 +119,8 @@ export function PlaceSearch({
         aria-expanded={open}
         aria-controls={listId}
         aria-autocomplete="list"
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         autoComplete="off"
         onFocus={() => {
           if (hits.length) setOpen(true);
