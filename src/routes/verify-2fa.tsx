@@ -11,6 +11,8 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import {
   assignPostAuthDest,
   captureLoginFunnel,
+  LOGIN_STALL_MS,
+  markContinued,
   resolveContinueDest,
 } from "@/lib/auth/login-funnel";
 import { readStickyDesk, sanitizePostLoginNext, staffTwoFactorRequired } from "@/lib/desks";
@@ -78,11 +80,19 @@ const OtpCodeField = memo(function OtpCodeField({
 });
 
 async function leave(rawDest: string) {
-  const resolved = await resolveContinueDest({
-    next: rawDest,
-    sticky: readStickyDesk(),
-  });
-  assignPostAuthDest(resolved);
+  try {
+    const resolved = await resolveContinueDest({
+      next: rawDest,
+      sticky: readStickyDesk(),
+    });
+    markContinued(resolved);
+    assignPostAuthDest(resolved);
+  } catch {
+    captureLoginFunnel({ step: "dest_failed", reason: "verify_leave" });
+    const fallback = sanitizePostLoginNext(rawDest) ?? "/parent";
+    markContinued(fallback, { reason: "fallback" });
+    assignPostAuthDest(fallback);
+  }
 }
 
 function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string }) {
@@ -94,6 +104,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [canSkip, setCanSkip] = useState(false);
+  const [stalled, setStalled] = useState(false);
   const submitLock = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
@@ -102,6 +113,15 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   useEffect(() => {
     captureLoginFunnel({ step: "two_factor_viewed", native: isNative() });
   }, []);
+
+  useEffect(() => {
+    if (!busy) {
+      setStalled(false);
+      return;
+    }
+    const id = window.setTimeout(() => setStalled(true), LOGIN_STALL_MS);
+    return () => window.clearTimeout(id);
+  }, [busy]);
 
   useEffect(() => {
     if (!userId) return;
@@ -123,7 +143,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
           captureLoginFunnel({ step: "two_factor_skipped", reason: "status_unavailable" });
           return leave(dest);
         }
-        setError(err instanceof Error ? err.message : "Could not send a code");
+        setError(err instanceof Error ? err.message : "Could not send a code. Use Send a new code, or go back to sign in.");
         setCanSkip(false);
       })
       .finally(() => {
@@ -132,7 +152,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, dest, staff]);
 
   function explainBlocker(): string | null {
     if (!ready) return "Still sending your code. Try again in a moment.";
@@ -190,8 +210,13 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         <form ref={formRef} className="mt-6 space-y-3 ph-no-capture" onSubmit={onSubmit}>
           <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} />
           <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-          {error ? <p className="text-sm text-danger">{error}</p> : null}
+          {error ? <p className="text-sm text-danger" data-ke="auth-error">{error}</p> : null}
           {notice && !error ? <p className="text-sm text-muted">{notice}</p> : null}
+          {stalled ? (
+            <p className="text-sm text-muted" data-ke="verify-stall">
+              Still opening your desk. You can send a new code, or continue below.
+            </p>
+          ) : null}
           <Button type="submit" className="w-full min-h-12" disabled={busy} aria-busy={busy}>
             {busy ? "Opening your desk…" : "Verify and continue"}
           </Button>
@@ -228,13 +253,13 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         >
           Send a new code
         </button>
-        {canSkip && !staff ? (
+        {(canSkip || stalled) && !staff ? (
           <button
             type="button"
-            className="mt-3 block text-sm font-medium text-primary underline-offset-4 hover:underline"
-            disabled={busy}
+            className="mt-3 block min-h-11 text-sm font-medium text-primary underline-offset-4 hover:underline"
+            disabled={busy && !stalled}
             onClick={() => {
-              captureLoginFunnel({ step: "two_factor_skipped", reason: "continue_without_code" });
+              captureLoginFunnel({ step: "two_factor_skipped", reason: stalled ? "stall_continue" : "continue_without_code" });
               void leave(dest);
             }}
           >

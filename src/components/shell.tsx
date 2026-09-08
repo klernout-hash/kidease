@@ -21,6 +21,7 @@ import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
 import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { rememberResumePath } from "@/lib/retention";
 
 export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
   const { t, locale } = useCopy();
@@ -36,6 +37,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
 
   useEffect(() => {
     setOpen(false);
+    rememberResumePath(pathname);
   }, [pathname]);
 
   const close = useCallback(() => {

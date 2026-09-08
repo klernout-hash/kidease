@@ -15,8 +15,11 @@ import {
   classifyPublicHealth,
   healthHeaders,
   healthHttpStatus,
+  healthRevision,
+  healthRuntime,
   isAllowedHeartbeatUrl,
   pingBetterStackHeartbeat,
+  PRODUCTION_HEALTH_SIGNAL,
 } from "../src/lib/uptime.ts";
 import { decideRequest } from "./request-guard.mjs";
 
@@ -51,6 +54,9 @@ describe("uptime / Better Stack", () => {
     assert.match(docs, /https:\/\/www\.kidease\.ca\//);
     assert.match(docs, /\/api\/health/);
     assert.match(docs, /Do \*\*not\*\* paste real tokens into git/);
+    assert.match(docs, /production_health/);
+    assert.match(docs, /CI fail-rate is not production CFR/);
+    assert.match(docs, /pipeline noise/);
 
     const security = read("SECURITY.md");
     assert.match(security, /Better Stack/);
@@ -59,17 +65,31 @@ describe("uptime / Better Stack", () => {
   });
 
   it("health payload is 200 unless the database check errors", () => {
-    assert.deepEqual(buildHealthPayload({ app: "ok", database: "ok" }), {
+    assert.deepEqual(buildHealthPayload({ app: "ok", database: "ok" }, {}), {
       ok: true,
       status: "ok",
       service: "kidease",
+      signal: PRODUCTION_HEALTH_SIGNAL,
       checks: { app: "ok", database: "ok" },
+      runtime: "local",
     });
     assert.equal(healthHttpStatus({ app: "ok", database: "skipped" }), 200);
     assert.equal(healthHttpStatus({ app: "ok", database: "error" }), 503);
     assert.equal(healthHttpStatus({ app: "error", database: "ok" }), 503);
-    assert.equal(buildHealthPayload({ app: "ok", database: "error" }).ok, false);
-    assert.equal(buildHealthPayload({ app: "ok", database: "error" }).status, "degraded");
+    assert.equal(buildHealthPayload({ app: "ok", database: "error" }, {}).ok, false);
+    assert.equal(buildHealthPayload({ app: "ok", database: "error" }, {}).status, "degraded");
+    assert.equal(PRODUCTION_HEALTH_SIGNAL, "production_health");
+    assert.equal(healthRevision({ VERCEL_GIT_COMMIT_SHA: "abcdef1234567890" }), "abcdef1");
+    assert.equal(healthRevision({}), "");
+    assert.equal(healthRuntime({ VERCEL: "1" }), "vercel");
+    assert.equal(healthRuntime({}), "local");
+    const vercel = buildHealthPayload({ app: "ok", database: "ok" }, {
+      VERCEL: "1",
+      VERCEL_GIT_COMMIT_SHA: "deadbeefcafebabe",
+    });
+    assert.equal(vercel.runtime, "vercel");
+    assert.equal(vercel.revision, "deadbee");
+    assert.equal(vercel.signal, "production_health");
 
     const headers = healthHeaders();
     assert.equal(headers.get("cache-control"), "no-store");

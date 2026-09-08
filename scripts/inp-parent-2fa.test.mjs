@@ -12,6 +12,7 @@ function src(rel) {
 
 test("parent desk defers heavy tab content so nav highlight paints first", () => {
   const desk = src("src/components/parent-desk.tsx");
+  const route = src("src/routes/parent.tsx");
   assert.match(desk, /startTransition/);
   assert.match(desk, /setContentTab/);
   assert.match(desk, /active=\{tab\}/);
@@ -22,6 +23,9 @@ test("parent desk defers heavy tab content so nav highlight paints first", () =>
   assert.match(desk, /withTimeoutFallback/);
   assert.match(desk, /LOADER_SETTLE_MS/);
   assert.match(desk, /exploreReady/);
+  assert.match(desk, /loadDeskExtras/);
+  assert.match(desk, /lazy\(\(\) =>\s*import\("@\/components\/parent-desk-rails"/);
+  assert.match(route, /lazy\(\(\) =>\s*import\("@\/components\/parent-desk"/);
   assert.doesNotMatch(desk, /onSelect=\{\(id\) => setTab\(id as ParentTab\)\}/);
 });
 

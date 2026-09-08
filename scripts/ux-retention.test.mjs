@@ -77,6 +77,20 @@ test("listing cards label the heart as compare, not save", () => {
   assert.doesNotMatch(card, /aria-label=\{t\("saved"\)\}/);
 });
 
+test("home offers a resume CTA and records a sanitized last path", () => {
+  const home = src("src/routes/index.tsx");
+  const copy = src("src/lib/copy.ts");
+  const boot = src("src/components/posthog-boot.tsx");
+  const shell = src("src/components/shell.tsx");
+  assert.match(home, /ResumeVisitCard/);
+  assert.match(boot, /captureRetentionTouch/);
+  assert.match(shell, /rememberResumePath/);
+  assert.match(copy, /resumeVisitTitle: "Pick up where you left off"/);
+  assert.match(copy, /resumeVisitTitle: "Reprenez là où vous étiez"/);
+  assert.match(src("docs/posthog.md"), /retention_touch/);
+  assert.match(src("docs/posthog.md"), /7-13/);
+});
+
 test("signed-in drawer Account goes to /account, not a stranded /parent default", () => {
   const shell = src("src/components/shell.tsx");
   assert.match(shell, /accountHref="\/account"/);

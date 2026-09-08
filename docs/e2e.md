@@ -73,6 +73,8 @@ BASE_URL=https://your-preview.example BROWSER_ALLOW_EXTERNAL_HOST=1 npm run e2e
 
 ## CI
 
+The workflow cancels superseded PR/branch runs (`concurrency`). A cancelled or first-push red `check` job is **pipeline noise**, not production CFR — see `docs/uptime.md`.
+
 The `e2e` job in `.github/workflows/ci.yml` installs Chromium, then either:
 
 - `npm run build && npm run e2e:preview` (push / pull_request / dispatch without `base_url`), or

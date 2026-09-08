@@ -24,11 +24,20 @@ export type HealthChecks = {
   database: HealthCheckState;
 };
 
+export const PRODUCTION_HEALTH_SIGNAL = "production_health";
+
+export type HealthRuntime = "vercel" | "local";
+
 export type HealthPayload = {
   ok: boolean;
   status: "ok" | "degraded";
   service: "kidease";
+  /** Distinct from GitHub Actions fail-rate. Better Stack should key on this. */
+  signal: typeof PRODUCTION_HEALTH_SIGNAL;
   checks: HealthChecks;
+  /** Short git SHA when Vercel inlines it. Never a secret. */
+  revision?: string;
+  runtime?: HealthRuntime;
 };
 
 export function healthHeaders(): Headers {
@@ -43,13 +52,30 @@ export function healthHttpStatus(checks: HealthChecks): number {
   return checks.app === "ok" && checks.database !== "error" ? 200 : 503;
 }
 
-export function buildHealthPayload(checks: HealthChecks): HealthPayload {
+export function healthRevision(env: NodeJS.ProcessEnv = process.env): string {
+  const sha = String(env.VERCEL_GIT_COMMIT_SHA ?? "").trim();
+  return sha ? sha.slice(0, 7) : "";
+}
+
+export function healthRuntime(env: NodeJS.ProcessEnv = process.env): HealthRuntime {
+  return String(env.VERCEL ?? "").trim() ? "vercel" : "local";
+}
+
+export function buildHealthPayload(
+  checks: HealthChecks,
+  env: NodeJS.ProcessEnv = process.env,
+): HealthPayload {
   const ok = healthHttpStatus(checks) === 200;
+  const revision = healthRevision(env);
+  const runtime = healthRuntime(env);
   return {
     ok,
     status: ok ? "ok" : "degraded",
     service: "kidease",
+    signal: PRODUCTION_HEALTH_SIGNAL,
     checks,
+    ...(revision ? { revision } : {}),
+    runtime,
   };
 }
 

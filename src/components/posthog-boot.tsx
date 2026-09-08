@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { identifyPostHogUser, resetPostHogIdentity, startPostHog } from "@/lib/posthog";
+import { captureRetentionTouch } from "@/lib/retention";
 
 /**
  * Mount once in the root shell. Initializes PostHog on the client after
@@ -14,6 +15,7 @@ export function PostHogBoot() {
 
   useEffect(() => {
     startPostHog();
+    captureRetentionTouch();
   }, []);
 
   useEffect(() => {

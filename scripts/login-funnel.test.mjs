@@ -68,9 +68,17 @@ test("login and 2FA use the shared continue helper", () => {
 
 test("docs explain how to measure login_funnel in PostHog", () => {
   const docs = src("docs/posthog.md");
+  const funnel = src("src/lib/auth/login-funnel.ts");
   assert.match(docs, /login_funnel/);
   assert.match(docs, /desk_landed/);
+  assert.match(docs, /continued/);
   assert.match(docs, /30 minutes/);
+  assert.match(funnel, /markContinued/);
+  assert.match(funnel, /dest_failed/);
+  assert.match(funnel, /DESK_RESOLVE_MS/);
+  assert.match(funnel, /LOGIN_STALL_MS/);
+  assert.match(src("src/routes/login.tsx"), /login-recovery/);
+  assert.match(src("src/routes/verify-2fa.tsx"), /stall_continue/);
   assert.doesNotMatch(docs, /phc_[A-Za-z0-9]+/);
   assert.equal(sanitizePostLoginNext("/verify-2fa?next=/parent"), "/parent");
   assert.equal(resolvePostLoginPath({ next: "/login", role: "provider" }), "/provider");

@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { deleteAccount, getFamily } from "@/lib/server/family";
 import { listTourRequests } from "@/lib/server/tours";
-import { TourCard } from "@/components/tour-card";
 import { listParentBills } from "@/lib/server/billing";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { hasCareDetails } from "@/lib/child-profile";
@@ -29,7 +28,6 @@ import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore, soonestStartDate } from "@/lib/parent-urgency";
 import { distanceKm } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
-import { ParentDeskRails } from "@/components/parent-desk-rails";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
@@ -43,6 +41,12 @@ const SavedSearchesPanel = lazy(() =>
 );
 const ChildProfileForm = lazy(() =>
   import("@/components/child-profile-form").then((m) => ({ default: m.ChildProfileForm })),
+);
+const ParentDeskRails = lazy(() =>
+  import("@/components/parent-desk-rails").then((m) => ({ default: m.ParentDeskRails })),
+);
+const TourCard = lazy(() =>
+  import("@/components/tour-card").then((m) => ({ default: m.TourCard })),
 );
 
 function scheduleIdle(work: () => void): () => void {
@@ -116,23 +120,28 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   );
 
   const loadFamily = useCallback(async () => {
-    const [f, billed, tourRows] = await Promise.all([
-      getFamily(),
-      listParentBills().catch(() => ({ bills: [] as Bill[] })),
-      listTourRequests({ data: { desk: "parent" } }).catch(() => [] as TourRequest[]),
-    ]);
+    const f = await getFamily();
     setSaved(f.saved);
     setBookings(f.bookings);
     setPayments(f.payments);
-    setBills(billed.bills);
     setChildren(f.children);
-    setTours(tourRows);
     return f;
+  }, []);
+
+  const loadDeskExtras = useCallback(async () => {
+    const [billed, tourRows] = await Promise.all([
+      listParentBills().catch(() => ({ bills: [] as Bill[] })),
+      listTourRequests({ data: { desk: "parent" } }).catch(() => [] as TourRequest[]),
+    ]);
+    startTransition(() => {
+      setBills(billed.bills);
+      setTours(tourRows);
+    });
   }, []);
 
   async function load() {
     const f = await loadFamily();
-    await loadExplore(f.bookings);
+    await Promise.all([loadExplore(f.bookings), loadDeskExtras()]);
   }
 
   useEffect(() => {
@@ -143,7 +152,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       .then((f) => {
         if (cancelled) return;
         cancelIdle = scheduleIdle(() => {
-          if (!cancelled) void loadExplore(f.bookings).catch(() => undefined);
+          if (cancelled) return;
+          void loadExplore(f.bookings).catch(() => undefined);
+          void loadDeskExtras().catch(() => undefined);
         });
       })
       .catch(() => {
@@ -153,7 +164,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       cancelled = true;
       cancelIdle?.();
     };
-  }, [user, loadFamily, loadExplore]);
+  }, [user, loadFamily, loadExplore, loadDeskExtras]);
 
   useEffect(() => {
     if (!initialTab) return;
@@ -190,7 +201,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
           <h2 className="font-display text-2xl">{t("exploreForYou")}</h2>
           <p className="mt-1 text-sm text-muted">{t("sortMatchLead")}</p>
           {exploreReady ? (
-            <ParentDeskRails items={explore} children={children} bookings={bookings} />
+            <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
+              <ParentDeskRails items={explore} children={children} bookings={bookings} />
+            </Suspense>
           ) : (
             <div className="mt-6 space-y-3" aria-busy="true" aria-live="polite">
               <div className="ke-skel h-40 rounded-xl" />
@@ -238,7 +251,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             <ul className="mt-4 space-y-3">
               {tours.map((tour) => (
                 <li key={tour.id}>
-                  <TourCard tour={tour} />
+                  <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
+                    <TourCard tour={tour} />
+                  </Suspense>
                 </li>
               ))}
             </ul>
