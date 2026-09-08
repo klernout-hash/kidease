@@ -64,6 +64,13 @@ export const GROUPS = [
         required: false,
         notes: "Threshold for auto Neon SoT. Not a secret.",
       },
+      {
+        name: "ALLOW_TEST_LISTINGS",
+        concealed: false,
+        vercel: "preview",
+        required: false,
+        notes: "1 to seed QA ghost fixtures. Off on Vercel Production. Not a secret.",
+      },
     ],
   },
   {

@@ -6,8 +6,11 @@ import {
   isAdminOnlyListing,
   isPublicListing,
   listingVisibilityOf,
+  looksLikeTestFixture,
+  PUBLIC_LISTING_SQL,
   publicListings,
 } from "../src/lib/listing-visibility.ts";
+import { allowSeedTestListings, catalogRowsForSeed } from "../src/lib/catalog-seed.ts";
 import { turnstileMode } from "../src/lib/turnstile-mode.ts";
 
 test("ghost claim lab is admin-only by slug, licence, id, and title", () => {
@@ -28,6 +31,32 @@ test("durable visibility / is_test flags hide listings without hardcoding slug",
   assert.equal(listingVisibilityOf({ slug: "bonnie-bairns-childcare-services-1" }), "public");
 });
 
+test("TEST / ghost leftover rows are admin-only even when flags are missing", () => {
+  assert.equal(looksLikeTestFixture({ name: "TEST Ghost Claim Lab" }), true);
+  assert.equal(isAdminOnlyListing({ name: "TEST Extra Claim Lab" }), true);
+  assert.equal(isAdminOnlyListing({ name: "Winnipeg Ghost Listing" }), true);
+  assert.equal(isAdminOnlyListing({ id: "ke-test-copy-002" }), true);
+  assert.equal(isAdminOnlyListing({ slug: "test-ghost-claim-lab-2" }), true);
+  assert.equal(isAdminOnlyListing({ licenseNumber: "TEST-COPY-9" }), true);
+  assert.equal(isAdminOnlyListing({ address: "100 KidEase Test Lane" }), true);
+  assert.equal(isPublicListing({ name: "Teston Child Care", slug: "teston-child-care" }), true);
+  assert.equal(isPublicListing({ name: "Testing Academy Daycare", slug: "testing-academy" }), true);
+});
+
+test("production and Vercel Production never seed fixtures", () => {
+  assert.equal(allowSeedTestListings({}), true);
+  assert.equal(allowSeedTestListings({ VERCEL_ENV: "preview", NODE_ENV: "production" }), true);
+  assert.equal(allowSeedTestListings({ VERCEL_ENV: "production" }), false);
+  assert.equal(allowSeedTestListings({ NODE_ENV: "production" }), false);
+  assert.equal(allowSeedTestListings({ NODE_ENV: "production", ALLOW_TEST_LISTINGS: "1" }), true);
+  assert.equal(allowSeedTestListings({ VERCEL_ENV: "preview", ALLOW_TEST_LISTINGS: "0" }), false);
+  const rows = catalogRowsForSeed([GHOST_LISTING, { slug: "bonnie", name: "Bonnie" }], {
+    VERCEL_ENV: "production",
+  });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].slug, "bonnie");
+});
+
 test("publicListings drops the QA ghost from homepage / search / map payloads", () => {
   const rows = publicListings([
     { id: "bc-1", slug: "bonnie-bairns-childcare-services-1", name: "Bonnie Bairns" },
@@ -46,8 +75,11 @@ test("Turnstile enforces only in Vercel production when both keys are set", () =
 
 test("nearby SQL excludes admin-only and test rows so map pins stay clean", () => {
   const nearby = readFileSync(new URL("../src/lib/server/catalog-neon.ts", import.meta.url), "utf8");
-  assert.match(nearby, /coalesce\(visibility, 'public'\) = 'public'/);
-  assert.match(nearby, /coalesce\(is_test, 0\) = 0/);
+  assert.match(nearby, /PUBLIC_LISTING_SQL/);
+  assert.match(PUBLIC_LISTING_SQL, /coalesce\(visibility, 'public'\) = 'public'/);
+  assert.match(PUBLIC_LISTING_SQL, /coalesce\(is_test, 0\) = 0/);
+  assert.match(PUBLIC_LISTING_SQL, /name not like 'TEST %'/);
+  assert.match(PUBLIC_LISTING_SQL, /id not ilike 'ke-test-%'/);
 });
 
 test("catalogue extra file marks the ghost admin_only", () => {
@@ -70,4 +102,17 @@ test("request-guard 404s the same QA slugs the catalogue hides", () => {
     "utf8",
   );
   assert.match(middleware, /decision\.action === "not_found"/);
+});
+
+test("production seed and migration hide leftover TEST fixtures", () => {
+  const seed = readFileSync(new URL("../src/lib/catalog-seed.ts", import.meta.url), "utf8");
+  const api = readFileSync(new URL("../src/routes/api/seed-catalog.ts", import.meta.url), "utf8");
+  const ops = readFileSync(new URL("./seed-catalog-to-neon.mjs", import.meta.url), "utf8");
+  const migration = readFileSync(new URL("../migrations/0039_hide_test_fixtures.sql", import.meta.url), "utf8");
+  assert.match(seed, /allowSeedTestListings/);
+  assert.match(api, /catalogRowsForSeed/);
+  assert.match(ops, /catalogRowsForSeed/);
+  assert.match(migration, /visibility = 'admin_only'/);
+  assert.match(migration, /name like 'TEST %'/);
+  assert.doesNotMatch(migration, /delete from daycares/i);
 });

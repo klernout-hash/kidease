@@ -8,6 +8,7 @@ import { writeTrustEvent } from "@/lib/server/trust";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { asIsoString, compareTimeDesc } from "@/lib/sort-time";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
   const license = (licensePhoto || "").trim();
@@ -52,6 +53,7 @@ export type AdminCentreRow = {
   staffScreeningAttestedAt: string | null;
   licensePhoto: string | null;
   storefrontPhoto: string | null;
+  isTest: boolean;
 };
 
 export type Decision = "approve" | "decline" | "waiting";
@@ -176,6 +178,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
       staff_screening_attested_at: string | null;
       license_photo: string | null;
       photos: string | null;
+      visibility?: string | null;
+      is_test?: number | boolean | null;
     }>`
       select distinct on (d.id)
         d.id as daycare_id,
@@ -206,7 +210,9 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         d.staff_screening_attested,
         d.staff_screening_attested_at,
         coalesce(c.license_photo, d.license_photo) as license_photo,
-        d.photos
+        d.photos,
+        d.visibility,
+        d.is_test
       from daycares d
       left join listing_claims c on c.daycare_id = d.id
       left join provider_daycares pd on pd.daycare_id = d.id
@@ -215,9 +221,13 @@ export const listAdminCentres = createServerFn({ method: "GET" })
          or d.claim_status in ('pending', 'waiting', 'verified', 'approved', 'declined')
          or c.id is not null
          or pd.user_id is not null
+         or d.is_test = 1
+         or d.visibility = 'admin_only'
          or d.slug = 'test-ghost-claim-lab'
          or d.license_number = 'TEST-GHOST-0001'
          or d.id = 'ke-test-ghost-001'
+         or d.id ilike 'ke-test-%'
+         or d.name like 'TEST %'
       order by d.id, c.created_at desc nulls last
     `.catch(() =>
       sql<{
@@ -250,6 +260,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         staff_screening_attested_at: string | null;
         license_photo: string | null;
         photos: string | null;
+        visibility?: string | null;
+        is_test?: number | boolean | null;
       }>`
         select distinct on (d.id)
           d.id as daycare_id,
@@ -280,7 +292,9 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           0 as staff_screening_attested,
           null::timestamptz as staff_screening_attested_at,
           null::text as license_photo,
-          d.photos
+          d.photos,
+          d.visibility,
+          d.is_test
         from daycares d
         left join listing_claims c on c.daycare_id = d.id
         left join provider_daycares pd on pd.daycare_id = d.id
@@ -289,9 +303,13 @@ export const listAdminCentres = createServerFn({ method: "GET" })
            or d.claim_status in ('pending', 'waiting', 'verified', 'approved', 'declined')
            or c.id is not null
            or pd.user_id is not null
+           or d.is_test = 1
+           or d.visibility = 'admin_only'
            or d.slug = 'test-ghost-claim-lab'
            or d.license_number = 'TEST-GHOST-0001'
            or d.id = 'ke-test-ghost-001'
+           or d.id ilike 'ke-test-%'
+           or d.name like 'TEST %'
         order by d.id, c.created_at desc nulls last
       `.catch(() => []),
     );
@@ -327,6 +345,15 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         licenseVerificationSource: r.license_verification_source,
         staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
         staffScreeningAttestedAt: r.staff_screening_attested_at,
+        isTest: isAdminOnlyListing({
+          id: r.daycare_id,
+          slug: r.slug,
+          name: r.name,
+          licenseNumber: r.license_number,
+          address: r.address,
+          visibility: r.visibility,
+          isTest: r.is_test,
+        }),
         ...firstReviewPhoto(r.photos, r.license_photo),
       };
     });

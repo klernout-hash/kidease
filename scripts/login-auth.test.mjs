@@ -214,7 +214,7 @@ describe("production email sign-in is not globally rate-limited", () => {
     const server = read("src/lib/auth/server.ts");
     const authApi = read("src/routes/api/auth/$.ts");
     const pkg = JSON.parse(read("package.json"));
-    assert.match(pkg.dependencies["better-auth"], /^~?1\.6\./);
+    assert.match(pkg.dependencies["better-auth"], /^~?1\.[67]\./);
     assert.match(server, /cf-connecting-ip/);
     assert.match(server, /"\/sign-in\/email"/);
     assert.match(server, /max:\s*30/);

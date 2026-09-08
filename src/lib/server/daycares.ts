@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, fsaOf, recommendedRank } from "@/lib/proximity";
 import { catalogByIdsGet, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
-import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { isAdminOnlyListing, isPublicListing } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerIsAdmin } from "./public-listing";
@@ -394,7 +394,7 @@ export const getDaycaresByIds = createServerFn({ method: "POST" })
   .validator((ids: string[]) => ids)
   .handler(async ({ data: ids }) => {
     const origin = { lat: 49.8951, lng: -97.1384 };
-    const found = await catalogByIdsGet(ids);
+    const found = (await catalogByIdsGet(ids)).filter(isPublicListing);
     const cards = uniqueById(found.map((d) => toCard(d, origin)));
     const claimed = await overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
     return overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" });

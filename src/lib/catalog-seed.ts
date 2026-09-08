@@ -4,6 +4,7 @@
  */
 
 import { DAYCARE_UPSERT_SQL, daycareUpsertParams, type CatalogUpsertInput } from "./catalog-upsert.ts";
+import { isAdminOnlyListing, type ListingVisibilityInput } from "./listing-visibility.ts";
 import { localCatalogMatchIds, persistLocalLicenseMatches } from "./server/license-match.ts";
 
 export type SeedSql = {
@@ -30,6 +31,31 @@ export function clampSeedOffset(raw: number, total: number) {
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) return 0;
   return Math.min(total, Math.floor(n));
+}
+
+/**
+ * Local + Vercel Preview keep the claim-lab ghost. Vercel Production and
+ * NODE_ENV=production do not write fixtures. Override with ALLOW_TEST_LISTINGS=1|0.
+ */
+export function allowSeedTestListings(
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  const flag = (env.ALLOW_TEST_LISTINGS || "").trim();
+  if (flag === "1") return true;
+  if (flag === "0") return false;
+  if ((env.VERCEL_ENV || "").trim() === "production") return false;
+  if ((env.NODE_ENV || "").trim() === "production" && (env.VERCEL_ENV || "").trim() !== "preview") {
+    return false;
+  }
+  return true;
+}
+
+export function catalogRowsForSeed<T extends ListingVisibilityInput>(
+  rows: T[],
+  env: Record<string, string | undefined> = process.env,
+): T[] {
+  if (allowSeedTestListings(env)) return rows;
+  return rows.filter((row) => !isAdminOnlyListing(row));
 }
 
 export async function seedCatalogChunk(

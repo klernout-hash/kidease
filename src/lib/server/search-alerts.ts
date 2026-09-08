@@ -15,7 +15,7 @@ import { resetMailConfigured } from "@/lib/server/reset-mail-config";
 import { nearbyListings } from "@/lib/server/nearby";
 import { overlayClaimed } from "@/lib/server/claims";
 import { catchmentMatch, clampRadiusKm, distanceKm } from "@/lib/proximity";
-import { isPublicListing } from "@/lib/listing-visibility";
+import { isPublicListing, listingVisibilityInputFromDb, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { applyListingReadiness } from "@/lib/listing-readiness";
 import {
   isAgeBand,
@@ -78,8 +78,7 @@ select id, slug, name, city, province, postal_code, lat, lng, hours, amenities,
   st_distance(location, st_setsrid(st_makepoint($1, $2), 4326)::geography) / 1000.0 as distance_km
 from daycares
 where location is not null
-  and coalesce(visibility, 'public') = 'public'
-  and coalesce(is_test, 0) = 0
+  and ${PUBLIC_LISTING_SQL}
   and st_dwithin(
     location,
     st_setsrid(st_makepoint($1, $2), 4326)::geography,
@@ -97,8 +96,7 @@ select id, slug, name, city, province, postal_code, lat, lng, hours, amenities,
   0::float as distance_km
 from daycares
 where lat is not null and lng is not null
-  and coalesce(visibility, 'public') = 'public'
-  and coalesce(is_test, 0) = 0
+  and ${PUBLIC_LISTING_SQL}
 limit 800
 `;
 
@@ -144,7 +142,7 @@ export async function queryCentresInRadius(
     try {
       if (await postgisReady(sql)) {
         const geo = await sql.query<MatchRow>(SEARCH_ALERT_MATCH_SQL, [origin.lng, origin.lat, meters]);
-        return geo.filter((row) => isPublicListing({ visibility: row.visibility === "admin_only" ? "admin_only" : "public", isTest: row.is_test === 1 || row.is_test === true }));
+        return geo.filter((row) => isPublicListing(listingVisibilityInputFromDb(row)));
       }
     } catch {
       /* fall through */
@@ -159,12 +157,7 @@ export async function queryCentresInRadius(
         return { ...row, distance_km: km };
       })
       .filter((row) => row.distance_km <= radius)
-      .filter((row) =>
-        isPublicListing({
-          visibility: row.visibility === "admin_only" ? "admin_only" : "public",
-          isTest: row.is_test === 1 || row.is_test === true,
-        }),
-      );
+      .filter((row) => isPublicListing(listingVisibilityInputFromDb(row)));
   } catch {
     const nearby = await nearbyListings(origin, radius);
     return nearby.map((d) => ({

@@ -49,7 +49,7 @@ Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, 
 
 ## Production notes
 
-- QA ghost listing (`/daycare/test-ghost-claim-lab` and `/book/test-ghost-claim-lab`) must **404** for public document GETs. Robots `Disallow` alone is not enough. Admin claim/search still works from `/admin` and `/claim`.
+- QA ghost listing (`/daycare/test-ghost-claim-lab` and `/book/test-ghost-claim-lab`) must **404** for public document GETs. Robots `Disallow` alone is not enough. Catalogue / search / map / parent claim hide TEST/ghost fixtures via `PUBLIC_LISTING_SQL` and `isAdminOnlyListing`. Admin claim/search still works from `/admin` and `/claim` (QA test badge).
 - Production HTML must not include `https://grok.com/grok-app-builder/extensions.js` (Grok App Builder editor chrome). That host is not on the CSP allowlist.
 
 ## CSP

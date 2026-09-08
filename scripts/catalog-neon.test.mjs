@@ -208,7 +208,9 @@ describe("runtime SoT prefers Neon when populated", () => {
     assert.match(nearby, /nearby-sql-timeout/);
     assert.match(neon, /st_dwithin/i);
     assert.match(neon, /st_makepoint\(\$1, \$2\)/);
-    assert.match(neon, /coalesce\(visibility, 'public'\) = 'public'/);
+    assert.match(neon, /PUBLIC_LISTING_SQL/);
+    assert.match(src("src/lib/listing-visibility.ts"), /name not like 'TEST %'/);
     assert.match(src("src/lib/server/daycares.ts"), /catalogByIdsGet/);
+    assert.match(src("src/lib/server/daycares.ts"), /isPublicListing/);
   });
 });

@@ -6,7 +6,7 @@ import {
   type CatalogDaycare,
   type RawCentre,
 } from "./catalog-hydrate.ts";
-import { isAdminOnlyListing } from "./listing-visibility";
+import { isAdminOnlyListing, isPublicListing } from "./listing-visibility";
 import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
 
 export type { CatalogDaycare, RawCentre };
@@ -126,7 +126,7 @@ export async function catalogNear(origin: { lat: number; lng: number }, radiusKm
     try {
       const { nearbyFromNeonIfPreferred } = await import("./server/catalog-neon");
       const neon = await nearbyFromNeonIfPreferred(origin, radiusKm);
-      if (neon) return neon;
+      if (neon) return neon.filter(isPublicListing);
     } catch {
       /* cold fallback */
     }

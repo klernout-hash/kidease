@@ -6,7 +6,7 @@ import {
   preferNeonCatalog,
 } from "@/lib/catalog-source";
 import { clampRadiusKm } from "@/lib/proximity";
-import { listingVisibilityOf } from "@/lib/listing-visibility";
+import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
 export type CatalogDbRow = {
@@ -69,8 +69,7 @@ google_place_id, contact_email, website
 export const PUBLIC_CATALOG_COUNT_SQL = `
 select count(*)::int as n
 from daycares
-where coalesce(is_test, 0) = 0
-  and coalesce(visibility, 'public') = 'public'
+where ${PUBLIC_LISTING_SQL}
 `;
 
 export const POSTGIS_READY_SQL = `
@@ -88,8 +87,7 @@ select ${CATALOG_SELECT},
   st_distance(location, st_setsrid(st_makepoint($1, $2), 4326)::geography) / 1000.0 as distance_km
 from daycares
 where location is not null
-  and coalesce(visibility, 'public') = 'public'
-  and coalesce(is_test, 0) = 0
+  and ${PUBLIC_LISTING_SQL}
   and st_dwithin(
     location,
     st_setsrid(st_makepoint($1, $2), 4326)::geography,
@@ -105,8 +103,7 @@ select ${CATALOG_SELECT},
   st_distance(location, st_setsrid(st_makepoint($1, $2), 4326)::geography) / 1000.0 as distance_km
 from daycares
 where location is not null
-  and coalesce(visibility, 'public') = 'public'
-  and coalesce(is_test, 0) = 0
+  and ${PUBLIC_LISTING_SQL}
   and st_dwithin(
     location,
     st_setsrid(st_makepoint($1, $2), 4326)::geography,
@@ -243,6 +240,8 @@ export async function loadNeonCatalogIfPreferred(): Promise<CatalogDaycare[] | n
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
     if (!(await isNeonCatalogPreferred(sql))) return null;
     if (neonAllCache) return neonAllCache;
+    // Full table, including admin-only QA fixtures. Public surfaces must use
+    // getPublicCatalog / nearby SQL — never this list unfiltered.
     const rows = await sql.query<CatalogDbRow>(`select ${CATALOG_SELECT} from daycares`);
     neonAllCache = rows.filter(catalogRowRenderable).map(catalogRowToListing);
     return neonAllCache;
@@ -315,10 +314,13 @@ export async function queryNeonNearby(
       client.query<CatalogDbRow>(NEON_NEAR_SQL, [origin.lng, origin.lat, meters]),
       rejectAfter(6000, "nearby-dwithin-timeout"),
     ]);
-    return rows.filter(catalogRowRenderable).map((row) => ({
-      ...catalogRowToListing(row),
-      distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
-    }));
+    return rows
+      .filter(catalogRowRenderable)
+      .map((row) => ({
+        ...catalogRowToListing(row),
+        distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
+      }))
+      .filter(isPublicListing);
   } catch {
     return null;
   }
@@ -347,10 +349,13 @@ export async function queryNeonNearbyDual(
       client.query<CatalogDbRow>(NEON_DUAL_NEAR_SQL, [originA.lng, originA.lat, meters, originB.lng, originB.lat]),
       rejectAfter(6000, "nearby-dual-dwithin-timeout"),
     ]);
-    return rows.map((row) => ({
-      ...catalogRowToListing(row),
-      distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
-    }));
+    return rows
+      .filter(catalogRowRenderable)
+      .map((row) => ({
+        ...catalogRowToListing(row),
+        distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
+      }))
+      .filter(isPublicListing);
   } catch {
     return null;
   }
