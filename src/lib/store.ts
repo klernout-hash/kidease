@@ -6,6 +6,7 @@ import type { AgeGroup, Locale } from "./types";
 import { writeDistanceUnit, type DistanceUnit } from "./units";
 import { writeLocationConsent, type LocationConsent } from "./location-consent";
 import { clampRadiusKm } from "./proximity";
+import { parseAnchorMode, writeDualAnchorPrefs, type AnchorMode } from "./dual-anchor";
 
 export type SortKey = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency";
 
@@ -16,6 +17,10 @@ type SearchState = {
   setLocale: (locale: Locale) => void;
   origin: Origin;
   setOrigin: (origin: Origin, source?: OriginSource) => void;
+  workOrigin: Origin | null;
+  setWorkOrigin: (origin: Origin | null) => void;
+  anchorMode: AnchorMode;
+  setAnchorMode: (mode: AnchorMode) => void;
   located: boolean;
   setLocated: (v: boolean) => void;
   originSource: OriginSource | null;
@@ -55,6 +60,21 @@ export const useAppStore = create<SearchState>()((set) => ({
   setOrigin: (origin, source = "manual") => {
     writeSavedOrigin(origin);
     set({ origin, located: true, originSource: source, originAt: Date.now() });
+  },
+  workOrigin: null,
+  setWorkOrigin: (workOrigin) => {
+    set((state) => {
+      writeDualAnchorPrefs({ work: workOrigin, mode: state.anchorMode });
+      return { workOrigin };
+    });
+  },
+  anchorMode: "home",
+  setAnchorMode: (mode) => {
+    const anchorMode = parseAnchorMode(mode);
+    set((state) => {
+      writeDualAnchorPrefs({ work: state.workOrigin, mode: anchorMode });
+      return { anchorMode };
+    });
   },
   located: false,
   setLocated: (located) => set({ located }),

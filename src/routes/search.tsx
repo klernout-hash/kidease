@@ -22,7 +22,10 @@ import { cn } from "@/lib/utils";
 import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
+import { DualAnchorBar } from "@/components/dual-anchor-bar";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
+import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
+import { resolveSearchAnchors } from "@/lib/dual-anchor";
 import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
@@ -76,6 +79,10 @@ function SearchPage() {
   const incoming = Route.useSearch();
   const origin = useAppStore((s) => s.origin);
   const setOrigin = useAppStore((s) => s.setOrigin);
+  const workOrigin = useAppStore((s) => s.workOrigin);
+  const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
+  const anchorMode = useAppStore((s) => s.anchorMode);
+  const setAnchorMode = useAppStore((s) => s.setAnchorMode);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const setRadiusKm = useAppStore((s) => s.setRadiusKm);
   const sort = useAppStore((s) => s.sort);
@@ -113,6 +120,8 @@ function SearchPage() {
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saveBusy, setSaveBusy] = useState(false);
+  const [workQuery, setWorkQuery] = useState("");
+  const [anchorsHydrated, setAnchorsHydrated] = useState(false);
   const originAt = useAppStore((s) => s.originAt);
   const originSource = useAppStore((s) => s.originSource);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
@@ -172,8 +181,73 @@ function SearchPage() {
   }, [radiusKm, setRadiusKm]);
 
   useEffect(() => {
+    if (workOrigin?.label && !workQuery) setWorkQuery(workOrigin.label);
+  }, [workOrigin?.label, workQuery]);
+
+  useEffect(() => {
+    if (!user) {
+      setAnchorsHydrated(true);
+      return;
+    }
     let live = true;
-    const key = searchCacheKey({ lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, startDate: needBy || null });
+    void getMySearchAnchors()
+      .then((saved) => {
+        if (!live) return;
+        const localWork = useAppStore.getState().workOrigin;
+        if (saved.work && !localWork) {
+          setWorkOrigin(saved.work);
+          setWorkQuery(saved.work.label);
+        }
+        if (saved.mode !== "home" && useAppStore.getState().anchorMode === "home") {
+          setAnchorMode(saved.mode);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (live) setAnchorsHydrated(true);
+      });
+    return () => {
+      live = false;
+    };
+  }, [user?.id, setWorkOrigin, setAnchorMode]);
+
+  useEffect(() => {
+    if (!user || !anchorsHydrated) return;
+    const tmr = window.setTimeout(() => {
+      void saveMySearchAnchors({
+        data: { home: origin, work: workOrigin, mode: anchorMode },
+      }).catch(() => undefined);
+    }, 400);
+    return () => window.clearTimeout(tmr);
+  }, [user?.id, anchorsHydrated, origin.lat, origin.lng, origin.label, workOrigin?.lat, workOrigin?.lng, workOrigin?.label, anchorMode]);
+
+  const searchData = {
+    lat: origin.lat,
+    lng: origin.lng,
+    radiusKm,
+    sort,
+    ageGroup,
+    fsa: fsaOf(query) || fsaOf(origin.label),
+    startDate: needBy || null,
+    lat2: workOrigin?.lat,
+    lng2: workOrigin?.lng,
+    mode: anchorMode,
+  };
+  const cacheInput = {
+    lat: origin.lat,
+    lng: origin.lng,
+    radiusKm,
+    sort,
+    ageGroup,
+    startDate: needBy || null,
+    lat2: workOrigin?.lat,
+    lng2: workOrigin?.lng,
+    mode: anchorMode,
+  };
+
+  useEffect(() => {
+    let live = true;
+    const key = searchCacheKey(cacheInput);
     const cached = readSearchCache(key);
     if (cached) {
       setItems(cached);
@@ -184,7 +258,7 @@ function SearchPage() {
     }
     const tmr = window.setTimeout(() => {
       void searchDaycares({
-        data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label), startDate: needBy || null },
+        data: searchData,
       })
         .then((rows) => {
           if (!live) return;
@@ -217,7 +291,7 @@ function SearchPage() {
       window.clearTimeout(tmr);
       window.clearTimeout(watchdog);
     };
-  }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query, origin.label, needBy]);
+  }, [origin.lat, origin.lng, radiusKm, sort, ageGroup, query, origin.label, needBy, workOrigin?.lat, workOrigin?.lng, anchorMode]);
 
   function applyPlace(place: { lat: number; lng: number; label: string }) {
     setOrigin(place);
@@ -325,12 +399,12 @@ function SearchPage() {
     setSearchFailed(false);
     setRefreshing(true);
     void searchDaycares({
-      data: { lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, fsa: fsaOf(query) || fsaOf(origin.label), startDate: needBy || null },
+      data: searchData,
     })
       .then((rows) => {
         setItems(rows);
         setSearchFailed(false);
-        writeSearchCache(searchCacheKey({ lat: origin.lat, lng: origin.lng, radiusKm, sort, ageGroup, startDate: needBy || null }), rows);
+        writeSearchCache(searchCacheKey(cacheInput), rows);
       })
       .catch(() => {
         setItems([]);
@@ -398,9 +472,15 @@ function SearchPage() {
     (favoritesOnly ? 1 : 0) +
     (careType !== "any" ? 1 : 0) +
     (schoolAgeOnly ? 1 : 0);
-  const city = origin.label.split(",")[0];
+  const anchors = resolveSearchAnchors({ home: origin, work: workOrigin, mode: anchorMode });
+  const dualEmpty = anchors.intersect && !searchFailed && (items?.length ?? 0) === 0;
+  const city =
+    anchors.mode === "both" && workOrigin
+      ? `${origin.label.split(",")[0]} + ${workOrigin.label.split(",")[0]}`
+      : (anchors.mode === "work" && workOrigin ? workOrigin : origin).label.split(",")[0];
   const fabric = areaPresence(list);
   const freshness = presenceFreshness(originAt, originSource);
+  const mapOrigin = anchors.primary;
 
   function chip(on: boolean, label: string, action: () => void) {
     return (
@@ -592,6 +672,31 @@ function SearchPage() {
             </Button>
           </div>
         </form>
+        <DualAnchorBar
+          mode={anchorMode}
+          onMode={setAnchorMode}
+          home={origin}
+          work={workOrigin}
+          workQuery={workQuery}
+          onWorkQuery={setWorkQuery}
+          onWorkResolved={(place) => {
+            setWorkOrigin(place);
+            setWorkQuery(place.label);
+            if (anchorMode === "home") setAnchorMode("both");
+          }}
+          onClearWork={() => {
+            setWorkOrigin(null);
+            setWorkQuery("");
+            setAnchorMode("home");
+          }}
+        />
+        {anchors.mode === "both" && workOrigin ? (
+          <p className="mt-2 text-xs text-muted">
+            {t("anchorBothHint").replace("{n}", String(shownRadius)).replace("{u}", u)}
+          </p>
+        ) : anchors.mode === "work" && workOrigin ? (
+          <p className="mt-2 text-xs text-muted">{t("anchorWorkHint")}</p>
+        ) : null}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <div className="flex min-h-11 w-full min-w-0 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[13.5rem] sm:flex-none">
@@ -742,7 +847,8 @@ function SearchPage() {
                   <Suspense fallback={<div className="size-full bg-map" />}>
                     <MapView
                       items={list}
-                      origin={origin}
+                      origin={mapOrigin}
+                      secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
                       radiusKm={radiusKm}
                       activeSlug={active}
                       onSelect={(slug) => setActive(slug)}
@@ -764,8 +870,11 @@ function SearchPage() {
                             ? t("noFilterResults")
                             : liveOnly && (items?.length ?? 0) > 0
                               ? t("noLiveResults")
-                              : t("emptyMap")
+                              : dualEmpty
+                                ? t("noDualResults")
+                                : t("emptyMap")
                       }
+                      body={dualEmpty ? t("noDualResultsBody") : undefined}
                       action={
                         searchFailed
                           ? t("tryAgain")
@@ -773,7 +882,9 @@ function SearchPage() {
                             ? t("clearFilters")
                             : liveOnly && (items?.length ?? 0) > 0
                               ? t("showAll")
-                              : t("changeLocation")
+                              : dualEmpty
+                                ? t("anchorHome")
+                                : t("changeLocation")
                       }
                       onAction={
                         searchFailed
@@ -782,10 +893,16 @@ function SearchPage() {
                             ? clearListingFilters
                             : liveOnly && (items?.length ?? 0) > 0
                               ? () => setLiveOnly(false)
-                              : undefined
+                              : dualEmpty
+                                ? () => setAnchorMode("home")
+                                : undefined
                       }
+                      secondary={dualEmpty ? t("anchorWork") : undefined}
+                      onSecondary={dualEmpty ? () => setAnchorMode("work") : undefined}
                       actionTo={
-                        searchFailed || ((extraFilters || liveOnly) && (items?.length ?? 0) > 0)
+                        searchFailed ||
+                        ((extraFilters || liveOnly) && (items?.length ?? 0) > 0) ||
+                        dualEmpty
                           ? undefined
                           : "/?change=1"
                       }
@@ -814,8 +931,11 @@ function SearchPage() {
                       ? t("noFilterResults")
                       : liveOnly && (items?.length ?? 0) > 0
                         ? t("noLiveResults")
-                        : t("noResults")
+                        : dualEmpty
+                          ? t("noDualResults")
+                          : t("noResults")
                 }
+                body={dualEmpty ? t("noDualResultsBody") : undefined}
                 action={
                   searchFailed
                     ? t("tryAgain")
@@ -823,7 +943,9 @@ function SearchPage() {
                       ? t("clearFilters")
                       : liveOnly && (items?.length ?? 0) > 0
                         ? t("showAll")
-                        : t("changeLocation")
+                        : dualEmpty
+                          ? t("anchorHome")
+                          : t("changeLocation")
                 }
                 onAction={
                   searchFailed
@@ -832,10 +954,16 @@ function SearchPage() {
                       ? clearListingFilters
                       : liveOnly && (items?.length ?? 0) > 0
                         ? () => setLiveOnly(false)
-                        : undefined
+                        : dualEmpty
+                          ? () => setAnchorMode("home")
+                          : undefined
                 }
+                secondary={dualEmpty ? t("anchorWork") : undefined}
+                onSecondary={dualEmpty ? () => setAnchorMode("work") : undefined}
                 actionTo={
-                  searchFailed || ((extraFilters || liveOnly) && (items?.length ?? 0) > 0)
+                  searchFailed ||
+                  ((extraFilters || liveOnly) && (items?.length ?? 0) > 0) ||
+                  dualEmpty
                     ? undefined
                     : "/?change=1"
                 }

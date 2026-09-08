@@ -56,6 +56,8 @@ describe("nearby uses PostGIS ST_DWithin with a catalogue fallback", () => {
     assert.match(nearby, /dbSource === "neon"/);
     assert.match(nearby, /importCatalogSlice/);
     assert.match(nearby, /isNeonCatalogPreferred/);
+    assert.match(nearby, /nearbyListingsDual/);
+    assert.match(search, /nearbyListingsDual/);
   });
 
   it("PGLite skips the PostGIS migration; Neon migrate.mjs still applies it", () => {

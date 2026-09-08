@@ -13,6 +13,7 @@ import { startChannelListener } from "@/lib/runtime";
 import { startWebVitals } from "@/lib/web-vitals";
 import { canadaOriginOrWinnipeg, isInCanada } from "@/lib/canada-origin";
 import { readSavedOrigin, WINNIPEG } from "@/lib/geo";
+import { readDualAnchorPrefs } from "@/lib/dual-anchor";
 import { LANGUAGES } from "@/lib/languages";
 import { useAppStore } from "@/lib/store";
 import type { Locale } from "@/lib/types";
@@ -28,6 +29,8 @@ import { usePushRegistration } from "@/lib/use-push";
 export function NativeBoot() {
   usePushRegistration();
   const setOrigin = useAppStore((s) => s.setOrigin);
+  const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
+  const setAnchorMode = useAppStore((s) => s.setAnchorMode);
   const setLocated = useAppStore((s) => s.setLocated);
   const setLocale = useAppStore((s) => s.setLocale);
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
@@ -43,10 +46,13 @@ export function NativeBoot() {
       else if (livePref === "0") setLiveOnly(false);
       setDistanceUnit(readDistanceUnit());
       setLocationConsent(readLocationConsent());
+      const dual = readDualAnchorPrefs();
+      setWorkOrigin(dual.work);
+      setAnchorMode(dual.mode);
     } catch {
       /* ignore */
     }
-  }, [setLocale, setLiveOnly, setDistanceUnit, setLocationConsent]);
+  }, [setLocale, setLiveOnly, setDistanceUnit, setLocationConsent, setWorkOrigin, setAnchorMode]);
 
   useLayoutEffect(() => {
     void hideNativeSplash();

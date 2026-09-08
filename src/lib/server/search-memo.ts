@@ -13,6 +13,9 @@ export function searchMemoKey(input: {
   ageGroup: string;
   fsa?: string;
   startDate?: string | null;
+  lat2?: number;
+  lng2?: number;
+  mode?: string;
 }) {
   return [
     input.lat.toFixed(3),
@@ -22,6 +25,9 @@ export function searchMemoKey(input: {
     input.ageGroup,
     input.fsa || "",
     input.startDate || "",
+    input.mode || "home",
+    typeof input.lat2 === "number" ? input.lat2.toFixed(3) : "",
+    typeof input.lng2 === "number" ? input.lng2.toFixed(3) : "",
   ].join(":");
 }
 

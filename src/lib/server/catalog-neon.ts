@@ -99,6 +99,28 @@ order by location <-> st_setsrid(st_makepoint($1, $2), 4326)::geography
 limit 400
 `;
 
+/** lngA, latA, radius_meters, lngB, latB — intersection of two ST_DWithin circles. */
+export const NEON_DUAL_NEAR_SQL = `
+select ${CATALOG_SELECT},
+  st_distance(location, st_setsrid(st_makepoint($1, $2), 4326)::geography) / 1000.0 as distance_km
+from daycares
+where location is not null
+  and coalesce(visibility, 'public') = 'public'
+  and coalesce(is_test, 0) = 0
+  and st_dwithin(
+    location,
+    st_setsrid(st_makepoint($1, $2), 4326)::geography,
+    $3
+  )
+  and st_dwithin(
+    location,
+    st_setsrid(st_makepoint($4, $5), 4326)::geography,
+    $3
+  )
+order by location <-> st_setsrid(st_makepoint($1, $2), 4326)::geography
+limit 400
+`;
+
 const COUNT_TTL_MS = 30_000;
 let countCache: { at: number; n: number } | null = null;
 let neonAllCache: CatalogDaycare[] | null = null;
@@ -308,4 +330,28 @@ export async function nearbyFromNeonIfPreferred(
 ): Promise<(CatalogDaycare & { distanceKm?: number })[] | null> {
   if (!(await isNeonCatalogPreferred())) return null;
   return queryNeonNearby(origin, radiusKm);
+}
+
+export async function queryNeonNearbyDual(
+  originA: { lat: number; lng: number },
+  originB: { lat: number; lng: number },
+  radiusKm: number,
+  sql?: Sql,
+): Promise<(CatalogDaycare & { distanceKm?: number })[] | null> {
+  if (dbSource !== "neon") return null;
+  try {
+    const client = sql ?? (await Promise.race([getSql(), rejectAfter(6000, "nearby-sql-timeout")]));
+    if (!(await postgisReady(client))) return null;
+    const meters = clampRadiusKm(radiusKm) * 1000;
+    const rows = await Promise.race([
+      client.query<CatalogDbRow>(NEON_DUAL_NEAR_SQL, [originA.lng, originA.lat, meters, originB.lng, originB.lat]),
+      rejectAfter(6000, "nearby-dual-dwithin-timeout"),
+    ]);
+    return rows.map((row) => ({
+      ...catalogRowToListing(row),
+      distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
+    }));
+  } catch {
+    return null;
+  }
 }
