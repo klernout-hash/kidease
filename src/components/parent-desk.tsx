@@ -32,6 +32,9 @@ import { PipelineBadge } from "@/components/pipeline-badge";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
+import { yieldToMain } from "@/lib/yield-main";
+
+const SAVED_EAGER_CARDS = 4;
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -83,6 +86,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [deleting, setDeleting] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
+  const [savedReady, setSavedReady] = useState(false);
 
   const selectTab = useCallback((id: string) => {
     const next = id as ParentTab;
@@ -121,10 +125,13 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
 
   const loadFamily = useCallback(async () => {
     const f = await getFamily();
-    setSaved(f.saved);
-    setBookings(f.bookings);
-    setPayments(f.payments);
-    setChildren(f.children);
+    await yieldToMain();
+    startTransition(() => {
+      setSaved(f.saved);
+      setBookings(f.bookings);
+      setPayments(f.payments);
+      setChildren(f.children);
+    });
     return f;
   }, []);
 
@@ -148,9 +155,13 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
     if (!user) return;
     let cancelled = false;
     let cancelIdle: (() => void) | undefined;
-    void loadFamily()
+    void yieldToMain()
+      .then(() => {
+        if (cancelled) return null;
+        return loadFamily();
+      })
       .then((f) => {
-        if (cancelled) return;
+        if (cancelled || !f) return;
         cancelIdle = scheduleIdle(() => {
           if (cancelled) return;
           void loadExplore(f.bookings).catch(() => undefined);
@@ -165,6 +176,23 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       cancelIdle?.();
     };
   }, [user, loadFamily, loadExplore, loadDeskExtras]);
+
+  useEffect(() => {
+    if (contentTab !== "saved") {
+      setSavedReady(false);
+      return;
+    }
+    let cancelled = false;
+    const id = requestAnimationFrame(() => {
+      startTransition(() => {
+        if (!cancelled) setSavedReady(true);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(id);
+    };
+  }, [contentTab]);
 
   useEffect(() => {
     if (!initialTab) return;
@@ -216,7 +244,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       {contentTab === "saved" ? (
         <div className="ke-listings mt-6">
           {rankedSaved.length ? (
-            rankedSaved.map((item) => (
+            (savedReady ? rankedSaved : rankedSaved.slice(0, SAVED_EAGER_CARDS)).map((item) => (
               <div key={item.id} className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   {item.live || (item.claimStatus && item.claimStatus !== "unclaimed") ? (

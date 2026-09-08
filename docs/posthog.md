@@ -17,7 +17,7 @@ Capacitor (iOS / Android WebView) does **not** record sessions unless you set `V
 If the list is empty after a production deploy:
 
 1. Confirm [Replay settings](https://us.posthog.com/project/594559/replay/settings) has **Record user sessions** on. The SDK cannot record if the project toggle is off.
-2. Confirm Vercel **kidease-git** has `VITE_PUBLIC_POSTHOG_KEY` (same public `phc_…` already used for analytics) and `POSTHOG_HOST=https://us.i.posthog.com`. Redeploy after changing env. Do **not** invent a key or put a personal API key in the app.
+2. Confirm Vercel **kidease-git** has `VITE_PUBLIC_POSTHOG_KEY` (same public `phc_…` already used for analytics). Browser ingest is first-party `/ingest` on kidease.ca (rewritten to `us.i.posthog.com`). `POSTHOG_HOST=https://us.i.posthog.com` is the **upstream** for that proxy and for server flags — leave it. Redeploy after changing env. Do **not** invent a key or put a personal API key in the app.
 3. Confirm [session-replay-web](https://us.posthog.com/project/594559/feature_flags/870864) is **enabled**. Turning that flag **off** stops recordings without a redeploy. Deleting it does **not** stop them (sampled replay stays on).
 4. Remember the default sample rate is **20%**. Most visits will not produce a recording. Raise `VITE_PUBLIC_POSTHOG_REPLAY_SAMPLE` (see below) if you need more, then redeploy.
 
@@ -43,8 +43,8 @@ Public-by-design values only. Never commit real keys. Never prefix a personal AP
 | Name | Required | Notes |
 | --- | --- | --- |
 | `VITE_PUBLIC_POSTHOG_KEY` | yes, to record | Same public project key already on Production. Leave unset locally to disable all PostHog. |
-| `POSTHOG_HOST` | no | Defaults to `https://us.i.posthog.com`. Inlined at build (`envPrefix`). |
-| `VITE_PUBLIC_POSTHOG_HOST` | no | Client override if `POSTHOG_HOST` was not inlined. |
+| `POSTHOG_HOST` | no | Upstream US ingest (`https://us.i.posthog.com`). Server flags + `/ingest` rewrite destination. |
+| `VITE_PUBLIC_POSTHOG_HOST` | no | Client override. Leave unset so the browser uses first-party `/ingest`. A default US host is treated as “use the proxy”. |
 | `VITE_PUBLIC_POSTHOG_REPLAY` | no | Unset = **on** (web). `0` / `false` stops recordings and keeps pageviews. |
 | `VITE_PUBLIC_POSTHOG_REPLAY_SAMPLE` | no | `0`–`1` (or `0`–`100`). Default **0.2**. |
 | `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE` | no | Unset / `0` = Capacitor off. Do not turn on without a native privacy pass. |
@@ -104,9 +104,18 @@ Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) wh
 
 ## What is wired
 
-- `src/lib/posthog.ts` — init, sample rate, consent gate, native gate, masking, `capturePostHogEvent`.
+- `src/lib/posthog.ts` — init, sample rate, consent gate, native gate, masking, `capturePostHogEvent`, first-party `api_host` `/ingest` + `ui_host`.
+- `src/lib/posthog-proxy.ts` + `server/middleware/ingest-proxy.ts` — Nitro fallback proxy (preview / if the rewrite is skipped).
+- `vite.config.ts` `posthogIngestPlugin` — local `vite dev` `/ingest` proxy.
+- `vercel.json` rewrites — `/ingest/static|array` → `us-assets.i.posthog.com`, `/ingest/*` → `us.i.posthog.com`.
 - `src/lib/auth/login-funnel.ts` — login → dest steps (`continued` / `desk_landed`).
 - `src/lib/retention.ts` — `retention_touch` + sanitized resume path.
 - `src/components/posthog-boot.tsx` — once in the root shell.
-- CSP allowlist: `us.i.posthog.com` + `us-assets.i.posthog.com` (no `*.posthog.com`).
+- CSP allowlist: `'self'` (proxy) plus `us.i.posthog.com` + `us-assets.i.posthog.com` as fallback (no `*.posthog.com`).
+
+## Reverse proxy
+
+PostHog health flags **No reverse proxy detected** when the SDK talks to `us.i.posthog.com` directly. After this deploy, consented browsers send events to `https://www.kidease.ca/ingest` (and preview hosts). Capacitor keeps the public US host. Consent is unchanged: website PostHog still starts only after **Allow analytics**.
+
+Verify after production traffic: [Project health](https://us.posthog.com/project/594559/health) should clear `reverse_proxy`. In insights, `$lib_custom_api_host` on new `$pageview` / `$web_vitals` events should be `/ingest` or the site origin + `/ingest`.
 - Client flag helper `isPostHogFlagEnabled`. Server SMS / push / video gates stay on `docs/flags.md`.

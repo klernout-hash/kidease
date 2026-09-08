@@ -815,7 +815,7 @@ export const COOKIES_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "On the website, PostHog loads only after you tap Allow analytics. Until then — or if you choose Essential — we do not initialize PostHog or session replay. If you allow it, PostHog records page views, in-app clicks, and privacy-masked session replay. It may set a first-party cookie on this site and talk to us.i.posthog.com / us-assets.i.posthog.com. Passwords and form fields are masked. This is not an advertising or remarketing cookie.",
+          text: "On the website, PostHog loads only after you tap Allow analytics. Until then — or if you choose Essential — we do not initialize PostHog or session replay. If you allow it, PostHog records page views, in-app clicks, and privacy-masked session replay. It may set a first-party cookie on this site and send events through this site’s /ingest path (proxied to PostHog in the US). Passwords and form fields are masked. This is not an advertising or remarketing cookie.",
         },
       ],
     },
@@ -912,7 +912,7 @@ export const COOKIES_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "Sur le site web, PostHog se charge seulement après Autoriser l’analytique. Avant cela — ou si vous choisissez Essentiel — nous n’initialisons ni PostHog ni le replay. Si vous l’autorisez, PostHog enregistre les pages vues, les clics et un replay masqué. Il peut déposer un témoin de première partie et parler à us.i.posthog.com / us-assets.i.posthog.com. Les mots de passe et les champs de formulaire sont masqués. Ce n’est pas un témoin publicitaire.",
+          text: "Sur le site web, PostHog se charge seulement après Autoriser l’analytique. Avant cela — ou si vous choisissez Essentiel — nous n’initialisons ni PostHog ni le replay. Si vous l’autorisez, PostHog enregistre les pages vues, les clics et un replay masqué. Il peut déposer un témoin de première partie et envoyer les événements par le chemin /ingest de ce site (relayé vers PostHog aux États-Unis). Les mots de passe et les champs de formulaire sont masqués. Ce n’est pas un témoin publicitaire.",
         },
       ],
     },

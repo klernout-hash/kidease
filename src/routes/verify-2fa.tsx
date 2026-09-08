@@ -17,6 +17,7 @@ import {
 } from "@/lib/auth/login-funnel";
 import { readStickyDesk, sanitizePostLoginNext, staffTwoFactorRequired } from "@/lib/desks";
 import { isNative } from "@/lib/native";
+import { yieldToMain } from "@/lib/yield-main";
 
 export const Route = createFileRoute("/verify-2fa")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -80,6 +81,7 @@ const OtpCodeField = memo(function OtpCodeField({
 });
 
 async function leave(rawDest: string) {
+  await yieldToMain();
   try {
     const resolved = await resolveContinueDest({
       next: rawDest,
@@ -126,29 +128,32 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    void getTwoFactorStatus()
-      .then((s) => {
-        if (cancelled) return;
-        if (s.verified) {
-          captureLoginFunnel({ step: "two_factor_skipped", reason: "already_verified" });
-          return leave(dest);
-        }
-        return startTwoFactor({ data: { force: false } }).then((res) => {
-          if (!cancelled) setHint(res.emailed);
+    void yieldToMain().then(() => {
+      if (cancelled) return;
+      void getTwoFactorStatus()
+        .then((s) => {
+          if (cancelled) return;
+          if (s.verified) {
+            captureLoginFunnel({ step: "two_factor_skipped", reason: "already_verified" });
+            return leave(dest);
+          }
+          return startTwoFactor({ data: { force: false } }).then((res) => {
+            if (!cancelled) setHint(res.emailed);
+          });
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          if (!staff) {
+            captureLoginFunnel({ step: "two_factor_skipped", reason: "status_unavailable" });
+            return leave(dest);
+          }
+          setError(err instanceof Error ? err.message : "Could not send a code. Use Send a new code, or go back to sign in.");
+          setCanSkip(false);
+        })
+        .finally(() => {
+          if (!cancelled) setReady(true);
         });
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (!staff) {
-          captureLoginFunnel({ step: "two_factor_skipped", reason: "status_unavailable" });
-          return leave(dest);
-        }
-        setError(err instanceof Error ? err.message : "Could not send a code. Use Send a new code, or go back to sign in.");
-        setCanSkip(false);
-      })
-      .finally(() => {
-        if (!cancelled) setReady(true);
-      });
+    });
     return () => {
       cancelled = true;
     };
@@ -172,7 +177,8 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
     submitLock.current = true;
     setBusy(true);
     setError(null);
-    void verifyTwoFactor({ data: { code, remember: true, turnstileToken: takeChallenge() } })
+    void yieldToMain()
+      .then(() => verifyTwoFactor({ data: { code, remember: true, turnstileToken: takeChallenge() } }))
       .then(() => {
         captureLoginFunnel({ step: "two_factor_verified", native: isNative() });
         return leave(dest);
@@ -191,9 +197,9 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   function onCodeChange(nextCode: string) {
     setCode(nextCode);
     if (nextCode.length === 6 && ready && !busy && !submitLock.current) {
-      window.setTimeout(() => {
+      void yieldToMain().then(() => {
         if (!submitLock.current) formRef.current?.requestSubmit();
-      }, 0);
+      });
     }
   }
 

@@ -134,6 +134,8 @@ test("apex document GETs canonicalize to www so __Host- login is not split", () 
   assert.equal(isApexKideaseHost("www.kidease.ca"), false);
   assert.equal(shouldCanonicalizeApexPath("/login"), true);
   assert.equal(shouldCanonicalizeApexPath("/api/auth/sign-in/email"), false);
+  assert.equal(shouldCanonicalizeApexPath("/ingest"), false);
+  assert.equal(shouldCanonicalizeApexPath("/ingest/e"), false);
   assert.equal(shouldCanonicalizeApexPath("/.well-known/apple-app-site-association"), false);
   assert.equal(shouldCanonicalizeApexPath("/apple-app-site-association"), false);
   assert.deepEqual(decideRequest({ host: "kidease.ca", pathname: "/login", method: "GET" }), {
@@ -155,6 +157,12 @@ test("apex document GETs canonicalize to www so __Host- login is not split", () 
     decideRequest({ host: "kidease.ca", pathname: "/api/auth/sign-in/email", method: "POST" }),
     { action: "next" },
   );
+  assert.deepEqual(decideRequest({ host: "kidease.ca", pathname: "/ingest/e", method: "POST" }), {
+    action: "next",
+  });
+  assert.deepEqual(decideRequest({ host: "kidease.ca", pathname: "/ingest/static/array.js", method: "GET" }), {
+    action: "next",
+  });
   assert.deepEqual(
     decideRequest({ host: "kidease.ca", pathname: "/.well-known/apple-app-site-association" }),
     { action: "next" },

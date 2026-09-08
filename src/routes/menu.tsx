@@ -63,7 +63,9 @@ function MenuPage() {
   return (
     <Shell>
       <main className="ke-gutter mx-auto max-w-lg pb-8 pt-5">
-        <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{fr ? "Menu" : "Menu"}</h1>
+        <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">
+          {fr ? "Menu" : "Menu"}
+        </h1>
 
         {multiDesk ? (
           <Group title={fr ? "Vos espaces" : "Your desks"}>

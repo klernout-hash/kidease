@@ -82,7 +82,10 @@ test("origin robots.txt has no Content-Signal directive", () => {
 test("brand mark ships the SVG, and logos get a long cache hint", () => {
   const mark = src("src/components/brand-mark.tsx");
   assert.match(mark, /\/logo-transparent\.svg/);
+  assert.match(mark, /fetchPriority="high"/);
   assert.doesNotMatch(mark, /\/logo-transparent\.png/);
+  assert.match(src("src/routes/__root.tsx"), /logo-transparent\.svg\?v=17/);
+  assert.match(src("src/routes/menu.tsx"), /\[font-family:system-ui,Segoe_UI,sans-serif\]/);
   const svg = statSync(join(root, "public/logo-transparent.svg")).size;
   const png = statSync(join(root, "public/logo-transparent.png")).size;
   assert.ok(svg < 2_000, "vector logo should be a small SVG");

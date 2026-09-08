@@ -95,7 +95,7 @@ See `docs/inngest.md`. The Inngest Vercel integration can *set* these on kidease
 | Name | Conceal | Vercel | Notes |
 | --- | --- | --- | --- |
 | `VITE_PUBLIC_POSTHOG_KEY` | no | both | Public project key (pixel class). Still do not commit it. |
-| `POSTHOG_HOST` | no | both | `https://us.i.posthog.com` |
+| `POSTHOG_HOST` | no | both | `https://us.i.posthog.com` (upstream; browser uses `/ingest`) |
 | `POSTHOG_FLAGS_KEY` | yes | both | Optional server flag overlay. Leave unset for env-only flags. |
 
 See `docs/posthog.md` and `docs/flags.md`.

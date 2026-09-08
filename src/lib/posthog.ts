@@ -7,6 +7,9 @@ import {
 } from "./analytics-consent.ts";
 import { envFlagOn, envFlagSet } from "./flags.ts";
 import { isNative } from "./native.ts";
+import { POSTHOG_PROXY_PATH, POSTHOG_UI_HOST } from "./posthog-proxy.ts";
+
+export { POSTHOG_PROXY_PATH, POSTHOG_UI_HOST } from "./posthog-proxy.ts";
 
 /** Public project key — set on Vercel as `VITE_PUBLIC_POSTHOG_KEY`. Not a secret. */
 export const POSTHOG_KEY_ENV = "VITE_PUBLIC_POSTHOG_KEY";
@@ -50,10 +53,32 @@ export function posthogProjectKey(env: EnvMap = viteEnv()): string {
   return envString(POSTHOG_KEY_ENV, env);
 }
 
-export function posthogApiHost(env: EnvMap = viteEnv()): string {
+function isDefaultUsIngest(host: string): boolean {
+  const cleaned = host.replace(/\/$/, "");
+  return (
+    !cleaned ||
+    cleaned === DEFAULT_POSTHOG_HOST ||
+    cleaned === POSTHOG_US_INGEST ||
+    cleaned === "https://us.posthog.com" ||
+    cleaned.endsWith(".i.posthog.com")
+  );
+}
+
+/**
+ * Browser ingest URL. Default is the first-party `/ingest` reverse proxy so
+ * ad blockers that filter us.i.posthog.com do not drop events.
+ * `POSTHOG_HOST` / `VITE_PUBLIC_POSTHOG_HOST` stay the *upstream* (US ingest)
+ * unless they point at a non-default host (managed proxy, EU).
+ * Capacitor keeps the public US host — the WebView origin is not kidease.ca.
+ */
+export function posthogApiHost(env: EnvMap = viteEnv(), native?: boolean): string {
   const host =
-    envString(POSTHOG_PUBLIC_HOST_ENV, env) || envString(POSTHOG_HOST_ENV, env) || DEFAULT_POSTHOG_HOST;
-  return host.replace(/\/$/, "");
+    envString(POSTHOG_PUBLIC_HOST_ENV, env) || envString(POSTHOG_HOST_ENV, env) || "";
+  const cleaned = host.replace(/\/$/, "");
+  if (cleaned && !isDefaultUsIngest(cleaned)) return cleaned;
+  const onNative = native ?? (typeof window !== "undefined" && isNative());
+  if (onNative) return DEFAULT_POSTHOG_HOST;
+  return POSTHOG_PROXY_PATH;
 }
 
 export function posthogEnabled(env: EnvMap = viteEnv()): boolean {
@@ -150,7 +175,8 @@ export function posthogInitOptions(input: SessionReplayGateInput = {}): Partial<
   const env = input.env ?? viteEnv();
   const replayOn = sessionReplayEnabled(input);
   return {
-    api_host: posthogApiHost(env),
+    api_host: posthogApiHost(env, input.native),
+    ui_host: POSTHOG_UI_HOST,
     defaults: "2026-05-30",
     autocapture: true,
     capture_pageview: "history_change",
