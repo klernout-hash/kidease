@@ -7,6 +7,7 @@ import {
   ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS,
   ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS,
   ANALYTICS_CONSENT_BANNER_LOAD_CAP_MS,
+  ANALYTICS_CONSENT_BANNER_REVEAL_YIELD_MS,
   ANALYTICS_CONSENT_KEY,
   analyticsConsentAllowsCapture,
   analyticsConsentAllowsReplay,
@@ -91,6 +92,10 @@ describe("PostHog client wiring", () => {
     assert.equal(posthogProjectKey(), "");
     assert.equal(posthogEnabled(), false);
     assert.equal(posthogApiHost(), POSTHOG_PROXY_PATH);
+    assert.equal(
+      posthogApiHost({}, false, "https://www.kidease.ca"),
+      "https://www.kidease.ca/ingest",
+    );
     assert.equal(POSTHOG_PROXY_PATH, "/ingest");
     assert.equal(POSTHOG_UI_HOST, "https://us.posthog.com");
     assert.equal(
@@ -107,6 +112,10 @@ describe("PostHog client wiring", () => {
     const options = posthogInitOptions({ native: false, consent: "granted" });
     assert.equal(options.api_host, POSTHOG_PROXY_PATH);
     assert.equal(options.ui_host, POSTHOG_UI_HOST);
+    assert.match(read("src/lib/posthog.ts"), /\$lib_custom_api_host/);
+    assert.match(read("src/lib/server/posthog-proxy.ts"), /x-forwarded-host/);
+    assert.match(read("src/lib/server/posthog-proxy.ts"), /x-forwarded-proto/);
+    assert.match(read("src/lib/server/posthog-proxy.ts"), /x-forwarded-for/);
     assert.equal(options.capture_pageview, "history_change");
     assert.equal(options.autocapture, true);
     assert.equal(options.disable_session_recording, false);
@@ -231,6 +240,7 @@ describe("PostHog client wiring", () => {
   it("defers the cookie banner until after load idle and first input so it is not LCP", () => {
     assert.equal(ANALYTICS_CONSENT_BANNER_LOAD_CAP_MS, 2500);
     assert.equal(ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS, 2000);
+    assert.equal(ANALYTICS_CONSENT_BANNER_REVEAL_YIELD_MS, 0);
     assert.ok(ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS.includes("pointerdown"));
     assert.ok(ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS.includes("scroll"));
 
@@ -287,6 +297,10 @@ describe("PostHog client wiring", () => {
     assert.equal(shown, 0);
     assert.equal(typeof interactCb, "function");
     interactCb();
+    assert.equal(shown, 0, "first input must not paint the banner in the same task");
+    const yielded = [...timeouts.values()].find((row) => row.ms === ANALYTICS_CONSENT_BANNER_REVEAL_YIELD_MS);
+    assert.ok(yielded);
+    yielded.cb();
     assert.equal(shown, 1);
 
     interactCb?.();

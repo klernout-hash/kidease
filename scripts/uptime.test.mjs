@@ -17,8 +17,10 @@ import {
   healthHttpStatus,
   healthRevision,
   healthRuntime,
+  healthSentryState,
   isAllowedHeartbeatUrl,
   pingBetterStackHeartbeat,
+  PRODUCTION_CFR_SIGNAL,
   PRODUCTION_HEALTH_SIGNAL,
 } from "../src/lib/uptime.ts";
 import { decideRequest } from "./request-guard.mjs";
@@ -57,6 +59,8 @@ describe("uptime / Better Stack", () => {
     assert.match(docs, /production_health/);
     assert.match(docs, /CI fail-rate is not production CFR/);
     assert.match(docs, /pipeline noise/);
+    assert.match(docs, /production_change_failure/);
+    assert.match(docs, /cfr\.candidate/);
 
     const security = read("SECURITY.md");
     assert.match(security, /Better Stack/);
@@ -72,6 +76,7 @@ describe("uptime / Better Stack", () => {
       signal: PRODUCTION_HEALTH_SIGNAL,
       checks: { app: "ok", database: "ok" },
       runtime: "local",
+      cfr: { signal: PRODUCTION_CFR_SIGNAL, candidate: false, sentry: "unset" },
     });
     assert.equal(healthHttpStatus({ app: "ok", database: "skipped" }), 200);
     assert.equal(healthHttpStatus({ app: "ok", database: "error" }), 503);
@@ -90,6 +95,14 @@ describe("uptime / Better Stack", () => {
     assert.equal(vercel.runtime, "vercel");
     assert.equal(vercel.revision, "deadbee");
     assert.equal(vercel.signal, "production_health");
+    assert.equal(vercel.cfr.signal, PRODUCTION_CFR_SIGNAL);
+    assert.equal(vercel.cfr.candidate, false);
+    assert.equal(vercel.cfr.sentry, "unset");
+    assert.equal(healthSentryState({ SENTRY_DSN: "https://abc@o0.ingest.sentry.io/1" }), "configured");
+    assert.equal(healthSentryState({}), "unset");
+    assert.equal(buildHealthPayload({ app: "ok", database: "error" }, {}).cfr.candidate, true);
+    assert.equal(PRODUCTION_CFR_SIGNAL, "production_change_failure");
+    assert.doesNotMatch(JSON.stringify(buildHealthPayload({ app: "ok", database: "ok" }, { SENTRY_DSN: "https://abc@o0.ingest.sentry.io/1" })), /abc@o0/);
 
     const headers = healthHeaders();
     assert.equal(headers.get("cache-control"), "no-store");

@@ -3,6 +3,8 @@
  * Better Stack dashboard. Heartbeat URL is optional; the app boots without it.
  */
 
+import { SENTRY_DSN_ENV, SENTRY_PUBLIC_DSN_ENV } from "./sentry-shared.ts";
+
 export const HEALTH_PATH = "/api/health";
 export const UPTIME_ORIGIN = "https://www.kidease.ca";
 export const UPTIME_HOME_URL = `${UPTIME_ORIGIN}/`;
@@ -25,6 +27,18 @@ export type HealthChecks = {
 };
 
 export const PRODUCTION_HEALTH_SIGNAL = "production_health";
+/** Distinct from GitHub Actions fail-rate. Better Stack 503 after a Production deploy. */
+export const PRODUCTION_CFR_SIGNAL = "production_change_failure";
+
+export type HealthSentryState = "configured" | "unset";
+
+export type HealthCfr = {
+  signal: typeof PRODUCTION_CFR_SIGNAL;
+  /** True when this probe itself is a failed production change (503). */
+  candidate: boolean;
+  /** Whether Sentry ingest is configured. Never includes the DSN. */
+  sentry: HealthSentryState;
+};
 
 export type HealthRuntime = "vercel" | "local";
 
@@ -38,6 +52,8 @@ export type HealthPayload = {
   /** Short git SHA when Vercel inlines it. Never a secret. */
   revision?: string;
   runtime?: HealthRuntime;
+  /** Production change-failure / crash signal for Better Stack + Sentry. */
+  cfr: HealthCfr;
 };
 
 export function healthHeaders(): Headers {
@@ -61,6 +77,22 @@ export function healthRuntime(env: NodeJS.ProcessEnv = process.env): HealthRunti
   return String(env.VERCEL ?? "").trim() ? "vercel" : "local";
 }
 
+export function healthSentryState(env: NodeJS.ProcessEnv = process.env): HealthSentryState {
+  const dsn = String(env[SENTRY_DSN_ENV] ?? env[SENTRY_PUBLIC_DSN_ENV] ?? "").trim();
+  return dsn ? "configured" : "unset";
+}
+
+export function buildHealthCfr(
+  checks: HealthChecks,
+  env: NodeJS.ProcessEnv = process.env,
+): HealthCfr {
+  return {
+    signal: PRODUCTION_CFR_SIGNAL,
+    candidate: healthHttpStatus(checks) !== 200,
+    sentry: healthSentryState(env),
+  };
+}
+
 export function buildHealthPayload(
   checks: HealthChecks,
   env: NodeJS.ProcessEnv = process.env,
@@ -76,6 +108,7 @@ export function buildHealthPayload(
     checks,
     ...(revision ? { revision } : {}),
     runtime,
+    cfr: buildHealthCfr(checks, env),
   };
 }
 

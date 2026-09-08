@@ -437,6 +437,26 @@
     background: color-mix(in oklab, var(--color-surface-2) 88%, var(--color-border));
     animation: ke-skel 1.4s ease-in-out infinite;
   }
+  /* /menu LCP is the heading. Do not wait on Plus Jakarta or Lucide. */
+  .ke-menu-main,
+  .ke-menu-main h1,
+  .ke-menu-main h2,
+  .ke-menu-main h3 {
+    font-family: system-ui, "Segoe UI", sans-serif;
+  }
+  .ke-menu-group {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 14rem;
+  }
+  .ke-menu-chevron {
+    display: inline-block;
+    width: 0.45rem;
+    height: 0.45rem;
+    flex-shrink: 0;
+    border-right: 2px solid var(--color-muted);
+    border-top: 2px solid var(--color-muted);
+    transform: rotate(45deg);
+  }
   .ke-kicker {
     margin: 0;
     font-size: 0.875rem;

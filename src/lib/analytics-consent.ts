@@ -104,7 +104,11 @@ export function shouldShowAnalyticsConsentBanner(
 export const ANALYTICS_CONSENT_BANNER_LOAD_CAP_MS = 2500;
 /** Idle timeout after first paint / load before we listen for first input. */
 export const ANALYTICS_CONSENT_BANNER_IDLE_TIMEOUT_MS = 2000;
-/** First input finalizes LCP, then we paint the banner so `/menu` is not 2.5s LCP. */
+/**
+ * First input finalizes LCP. Reveal on a later task so `/menu` LCP stays the
+ * heading and `/parent` + `/verify-2fa` INP do not include banner paint.
+ */
+export const ANALYTICS_CONSENT_BANNER_REVEAL_YIELD_MS = 0;
 export const ANALYTICS_CONSENT_BANNER_INTERACTION_EVENTS = [
   "pointerdown",
   "keydown",
@@ -123,6 +127,8 @@ export type ConsentBannerScheduleEnv = {
   clearTimeout?: (id: number) => void;
   addLoadListener?: (cb: () => void) => () => void;
   addInteractionListener?: (cb: () => void) => () => void;
+  /** After first input, run `show` on a later task (default: setTimeout 0). */
+  yieldReveal?: (cb: () => void) => () => void;
 };
 
 /**
@@ -140,6 +146,7 @@ export function scheduleAnalyticsConsentBannerReveal(
   let capId = 0;
   let removeLoad: (() => void) | undefined;
   let removeInteraction: (() => void) | undefined;
+  let cancelYield: (() => void) | undefined;
 
   const setT = env.setTimeout ?? ((cb: () => void, ms: number) => globalThis.setTimeout(cb, ms) as unknown as number);
   const clearT = env.clearTimeout ?? ((id: number) => globalThis.clearTimeout(id));
@@ -159,7 +166,21 @@ export function scheduleAnalyticsConsentBannerReveal(
     revealed = true;
     removeInteraction?.();
     removeInteraction = undefined;
+    cancelYield?.();
+    cancelYield = undefined;
     show();
+  };
+
+  const defaultYieldReveal = (cb: () => void) => {
+    const id = setT(cb, ANALYTICS_CONSENT_BANNER_REVEAL_YIELD_MS);
+    return () => clearT(id);
+  };
+
+  const scheduleReveal = () => {
+    if (cancelled || revealed) return;
+    cancelYield?.();
+    const yielder = env.yieldReveal ?? defaultYieldReveal;
+    cancelYield = yielder(reveal);
   };
 
   const defaultInteractionListen = (cb: () => void) => {
@@ -179,7 +200,7 @@ export function scheduleAnalyticsConsentBannerReveal(
   const armInteraction = () => {
     if (cancelled || revealed) return;
     const listen = env.addInteractionListener ?? defaultInteractionListen;
-    removeInteraction = listen(reveal);
+    removeInteraction = listen(scheduleReveal);
   };
 
   const armIdle = () => {
@@ -210,6 +231,7 @@ export function scheduleAnalyticsConsentBannerReveal(
     cancelled = true;
     removeLoad?.();
     removeInteraction?.();
+    cancelYield?.();
     if (idleId && cancelRic) cancelRic(idleId);
     clearT(fallbackId);
     clearT(capId);

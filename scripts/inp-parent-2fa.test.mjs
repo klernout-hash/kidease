@@ -20,6 +20,8 @@ test("parent desk defers heavy tab content so nav highlight paints first", () =>
   assert.match(desk, /contentTab === "saved"/);
   assert.match(desk, /scheduleIdle/);
   assert.match(desk, /yieldToMain/);
+  assert.match(desk, /useDeferredValue/);
+  assert.match(desk, /accountToolsReady/);
   assert.match(desk, /SAVED_EAGER_CARDS/);
   assert.match(desk, /requestIdleCallback/);
   assert.match(desk, /withTimeoutFallback/);
@@ -63,6 +65,9 @@ test("verify-2fa keeps OTP state under Shell and never silently ignores a Verify
   assert.doesNotMatch(route, /disabled=\{busy \|\| !ready \|\| code\.length !== 6/);
   assert.match(route, /yieldToMain/);
   assert.match(route, /OtpCodeField/);
+  assert.match(route, /\[font-family:system-ui,Segoe_UI,sans-serif\]/);
+  assert.match(route, /ready \? \(/);
+  assert.match(src("src/components/shell.tsx"), /verifyLite/);
   assert.match(src("src/lib/auth/gates.tsx"), /pending\?:/);
   assert.match(src("src/routes/parent.tsx"), /pending=\{/);
 });

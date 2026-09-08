@@ -45,6 +45,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   }, []);
 
   const hideTabs = pathname.startsWith("/login");
+  const verifyLite = pathname.startsWith("/verify-2fa");
   const onAccount = pathname.startsWith("/account");
   const accountTab = tab ?? "profile";
   const hideFooter =
@@ -70,6 +71,21 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     { to: "/team", label: t("team") },
     { to: "/contact", label: t("contact") },
   ];
+
+  if (verifyLite) {
+    return (
+      <div className="min-h-dvh bg-bg text-fg">
+        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
+          <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
+            <Link to="/" className="shrink-0" aria-label="KidEase">
+              <BrandMark size="sm" />
+            </Link>
+          </div>
+        </header>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh bg-bg text-fg">
