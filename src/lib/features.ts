@@ -1,40 +1,33 @@
 /**
- * Server-side product flags. Default OFF.
- * Do not use these for auth, payments, or Turnstile — those stay env-gated
- * helpers (stripeChargesLive, turnstileMode, authConfigured).
+ * Server-side product flags. Default OFF (except provider subscriptions).
+ * Env is the safe fallback. Optional PostHog overlay: see src/lib/flags.ts
+ * and docs/flags.md. Do not use these for auth, payments, or Turnstile —
+ * those stay env-gated helpers (stripeChargesLive, turnstileMode, authConfigured).
+ *
+ * FEATURE_PUSH and FEATURE_SMS stay off unless env or PostHog explicitly enables them.
  */
 
-type EnvMap = Record<string, string | undefined>;
+import { evaluateFeatureFlag, type EnvMap } from "./flags.ts";
 
-function envMap(env?: EnvMap): EnvMap {
-  if (env) return env;
-  if (typeof process !== "undefined" && process.env) return process.env;
-  return {};
-}
-
-export function envFlagOn(raw: string | undefined | null): boolean {
-  const v = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
+export { envFlagOn, evaluateFeatureFlag, describeFeatureFlag } from "./flags.ts";
+export type { EnvMap, FeatureFlagKey, FlagDecision, FlagSource } from "./flags.ts";
 
 export function inAppChatEnabled(env?: EnvMap): boolean {
-  return envFlagOn(envMap(env).FEATURE_INAPP_CHAT);
+  return evaluateFeatureFlag("FEATURE_INAPP_CHAT", env);
 }
 
 export function pushEnabled(env?: EnvMap): boolean {
-  return envFlagOn(envMap(env).FEATURE_PUSH);
+  return evaluateFeatureFlag("FEATURE_PUSH", env);
 }
 
 /** Transactional Twilio SMS (vacancy / claim / bill reminder). Default OFF. */
 export function smsEnabled(env?: EnvMap): boolean {
-  return envFlagOn(envMap(env).FEATURE_SMS);
+  return evaluateFeatureFlag("FEATURE_SMS", env);
 }
 
 /** Parent ↔ centre Twilio Video tours (Parent Plus). Default OFF. */
 export function videoEnabled(env?: EnvMap): boolean {
-  return envFlagOn(envMap(env).FEATURE_VIDEO);
+  return evaluateFeatureFlag("FEATURE_VIDEO", env);
 }
 
 /**
@@ -43,9 +36,7 @@ export function videoEnabled(env?: EnvMap): boolean {
  * (admin can still preview — ghost).
  */
 export function providerSubscriptionsEnabled(env?: EnvMap): boolean {
-  const raw = envMap(env).FEATURE_PROVIDER_SUBSCRIPTIONS;
-  if (raw == null || String(raw).trim() === "") return true;
-  return envFlagOn(raw);
+  return evaluateFeatureFlag("FEATURE_PROVIDER_SUBSCRIPTIONS", env);
 }
 
 /**

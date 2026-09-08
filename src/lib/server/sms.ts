@@ -10,8 +10,10 @@
  *
  * Secrets stay in env. Never log TWILIO_AUTH_TOKEN or API key secret.
  * No @/ or extensionless relative imports — scripts/sms.test.mjs loads this file.
- * Flag / E.164 helpers are duplicated from src/lib/sms.ts so Node tests resolve.
+ * Flag helper lives in src/lib/flags.ts so env + optional PostHog stay in sync.
  */
+
+import { evaluateFeatureFlag } from "../flags.ts";
 
 const SMS_SCAFFOLD_MESSAGE =
   "SMS is scaffolded only. FEATURE_SMS is off until Kyle adds Twilio credentials and a Canadian sender.";
@@ -23,15 +25,8 @@ export const CASL_NO_CONSENT_MESSAGE = "CASL: no stored express consent for this
 
 type EnvMap = Record<string, string | undefined>;
 
-function flagOn(raw: string | undefined | null): boolean {
-  const v = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
-
 function smsEnabled(env: EnvMap): boolean {
-  return flagOn(env.FEATURE_SMS);
+  return evaluateFeatureFlag("FEATURE_SMS", env);
 }
 
 function envHas(env: EnvMap, key: string) {

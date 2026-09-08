@@ -2,25 +2,54 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { requireAdmin } from "@/lib/server/roles";
 import { CHAT_SCAFFOLD_MESSAGE, CHAT_SCAFFOLD_READY } from "@/lib/chat-scaffold";
-import { inAppChatEnabled, pushEnabled, smsEnabled, videoEnabled } from "@/lib/features";
+import { describeFeatureFlag } from "@/lib/features";
+import {
+  refreshRemoteFlags,
+  type FlagSource,
+  type RemoteFlagSnapshot,
+} from "@/lib/flags";
 import { pushCredentialsPresent, pushEnvPresence, type PushEnvPresence } from "@/lib/push";
 import { smsCredentialsPresent, smsEnvPresence, type SmsEnvPresence } from "@/lib/sms";
 import { videoCredentialsPresent, videoEnvPresence, type VideoEnvPresence } from "@/lib/video";
 
+export type FlagLab = {
+  enabled: boolean;
+  source: FlagSource;
+  envEnabled: boolean;
+  remoteValue: boolean | null;
+};
+
 export type LabStatus = {
-  chat: { enabled: boolean; ready: false; message: string };
-  push: {
-    enabled: boolean;
+  remote: {
+    configured: boolean;
+    provider: RemoteFlagSnapshot["provider"];
+    ok: boolean;
+    error?: string;
+  };
+  chat: FlagLab & { ready: false; message: string };
+  push: FlagLab & {
     ready: false;
     credentialsPresent: boolean;
     presence: PushEnvPresence;
     tokenCount: number;
   };
-  sms: { enabled: boolean; credentialsPresent: boolean; presence: SmsEnvPresence };
-  video: { enabled: boolean; credentialsPresent: boolean; presence: VideoEnvPresence };
+  sms: FlagLab & { credentialsPresent: boolean; presence: SmsEnvPresence };
+  video: FlagLab & { credentialsPresent: boolean; presence: VideoEnvPresence };
+  subscriptions: FlagLab;
 };
 
+function toFlagLab(key: Parameters<typeof describeFeatureFlag>[0]): FlagLab {
+  const d = describeFeatureFlag(key);
+  return {
+    enabled: d.enabled,
+    source: d.source,
+    envEnabled: d.envEnabled,
+    remoteValue: d.remoteValue,
+  };
+}
+
 export async function resolveLabStatus(): Promise<LabStatus> {
+  const remote = await refreshRemoteFlags();
   let tokenCount = 0;
   try {
     const { getSql } = await import("@/lib/db");
@@ -31,28 +60,35 @@ export async function resolveLabStatus(): Promise<LabStatus> {
     tokenCount = 0;
   }
   return {
+    remote: {
+      configured: remote.provider === "posthog",
+      provider: remote.provider,
+      ok: remote.ok,
+      error: remote.error,
+    },
     chat: {
-      enabled: inAppChatEnabled(),
+      ...toFlagLab("FEATURE_INAPP_CHAT"),
       ready: false,
       message: CHAT_SCAFFOLD_MESSAGE,
     },
     push: {
-      enabled: pushEnabled(),
+      ...toFlagLab("FEATURE_PUSH"),
       ready: false,
       credentialsPresent: pushCredentialsPresent(),
       presence: pushEnvPresence(),
       tokenCount,
     },
     sms: {
-      enabled: smsEnabled(),
+      ...toFlagLab("FEATURE_SMS"),
       credentialsPresent: smsCredentialsPresent(),
       presence: smsEnvPresence(),
     },
     video: {
-      enabled: videoEnabled(),
+      ...toFlagLab("FEATURE_VIDEO"),
       credentialsPresent: videoCredentialsPresent(),
       presence: videoEnvPresence(),
     },
+    subscriptions: toFlagLab("FEATURE_PROVIDER_SUBSCRIPTIONS"),
   };
 }
 

@@ -95,7 +95,12 @@ export function getPostHog(): PostHog | null {
   return client;
 }
 
-/** Feature-flag helper for later use. `undefined` until the client is live. */
+/**
+ * Client-side PostHog flag read. `undefined` until the browser client is live.
+ * Send gates (SMS / push / video) use `src/lib/flags.ts` on the server — env
+ * fallback plus optional POSTHOG_FLAGS_KEY. Do not treat this helper as the
+ * source of truth for those rollouts.
+ */
 export function isPostHogFlagEnabled(flag: string): boolean | undefined {
   return client?.isFeatureEnabled(flag);
 }

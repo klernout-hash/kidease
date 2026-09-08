@@ -81,23 +81,28 @@ function AdminChatPage() {
           <dl className="grid gap-3 sm:grid-cols-2">
             <Stat
               label="FEATURE_INAPP_CHAT"
-              value={lab?.chat.enabled ? "on" : "off"}
-              hint="Flag only. Composer and delivery are not built."
+              value={flagValue(lab?.chat.enabled)}
+              hint={`${sourceHint(lab?.chat.source)}Flag only. Composer and delivery are not built.`}
             />
             <Stat
               label="FEATURE_PUSH"
-              value={lab?.push.enabled ? "on" : "off"}
+              value={flagValue(lab?.push.enabled)}
               hint={pushHint(lab, dryRunHint)}
             />
             <Stat
               label="FEATURE_SMS"
-              value={lab?.sms.enabled ? "on" : "off"}
+              value={flagValue(lab?.sms.enabled)}
               hint={smsHint(lab)}
             />
             <Stat
               label="FEATURE_VIDEO"
-              value={lab?.video.enabled ? "on" : "off"}
+              value={flagValue(lab?.video.enabled)}
               hint={videoHint(lab)}
+            />
+            <Stat
+              label="FEATURE_PROVIDER_SUBSCRIPTIONS"
+              value={flagValue(lab?.subscriptions.enabled)}
+              hint={`${sourceHint(lab?.subscriptions.source)}Directors see the Subscription tab when on.`}
             />
           </dl>
           <div className="rounded-2xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
@@ -120,7 +125,12 @@ function AdminChatPage() {
             </p>
             <p className="mt-2">
               Push is native-only (<code>docs/push.md</code>). www does not prompt.
-              Live FCM / APNs stays off until <code>FEATURE_PUSH=1</code> and credentials exist.
+              Live FCM / APNs stays off until the flag is on and credentials exist.
+            </p>
+            <p className="mt-2">
+              Flags: {remoteHint(lab)}. Kyle flips them in PostHog without a redeploy —
+              see <code>docs/flags.md</code>. <code>FEATURE_PUSH</code> and{" "}
+              <code>FEATURE_SMS</code> stay off until you enable them.
             </p>
             <button
               type="button"
@@ -142,14 +152,34 @@ function AdminChatPage() {
   );
 }
 
+function flagValue(enabled: boolean | undefined): string {
+  if (enabled == null) return "…";
+  return enabled ? "on" : "off";
+}
+
+function sourceHint(source: LabStatus["chat"]["source"] | undefined): string {
+  if (source === "remote") return "Source: PostHog. ";
+  if (source === "env") return "Source: env. ";
+  if (source === "default") return "Source: default. ";
+  return "";
+}
+
+function remoteHint(lab: LabStatus | null): string {
+  if (!lab) return "remote status not loaded";
+  if (lab.remote.provider === "none") return "PostHog remote unset — env only";
+  if (!lab.remote.ok) return "PostHog remote configured, last fetch failed — using env fallback";
+  return "PostHog remote configured";
+}
+
 function pushHint(lab: LabStatus | null, dryRunHint: string): string {
   if (dryRunHint) return dryRunHint;
   if (!lab) return "FCM / APNs env not loaded. Do not invent keys.";
   const tokens = `${lab.push.tokenCount} stored token(s)`;
+  const source = sourceHint(lab.push.source);
   if (lab.push.credentialsPresent) {
-    return `${tokens}. Env names are present. Send stays off until FEATURE_PUSH=1.`;
+    return `${source}${tokens}. Env names are present. Send stays off until the flag is on.`;
   }
-  return `${tokens}. No FCM / APNs credentials. Do not invent keys.`;
+  return `${source}${tokens}. No FCM / APNs credentials. Do not invent keys.`;
 }
 
 function smsHint(lab: LabStatus | null): string {
@@ -157,20 +187,22 @@ function smsHint(lab: LabStatus | null): string {
   const p = lab.sms.presence;
   const sender = p.messagingService ? "Messaging Service present" : p.fromNumber ? "From number present" : "no Canadian sender / Messaging Service";
   const auth = p.authMode === "api_key" ? "API key present" : p.authMode === "auth_token" ? "auth token present" : "no auth";
+  const source = sourceHint(lab.sms.source);
   if (lab.sms.credentialsPresent) {
-    return `${auth}. ${sender}. Values are not shown.`;
+    return `${source}${auth}. ${sender}. Values are not shown.`;
   }
-  return `No Twilio send credentials (${auth}; ${sender}). Do not invent SID or token values.`;
+  return `${source}No Twilio send credentials (${auth}; ${sender}). Do not invent SID or token values.`;
 }
 
 function videoHint(lab: LabStatus | null): string {
   if (!lab) return "Twilio Video env not loaded. Do not invent credentials.";
   const p = lab.video.presence;
   const key = p.apiKey ? "API key present" : "no API key (tokens need TWILIO_API_KEY_SID + SECRET)";
+  const source = sourceHint(lab.video.source);
   if (lab.video.credentialsPresent) {
-    return `${key}. Account SID present. Values are not shown.`;
+    return `${source}${key}. Account SID present. Values are not shown.`;
   }
-  return `No Twilio Video credentials (${key}; SID ${p.accountSid ? "present" : "missing"}). Do not invent SID or secret values.`;
+  return `${source}No Twilio Video credentials (${key}; SID ${p.accountSid ? "present" : "missing"}). Do not invent SID or secret values.`;
 }
 
 function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {

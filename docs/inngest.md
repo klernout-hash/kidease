@@ -4,7 +4,7 @@ KidEase uses [Inngest](https://www.inngest.com) for durable background work. Thi
 
 TanStack Start on Vercel — **not** a Next.js `app/api` route. The handler is `src/routes/api/inngest.ts` (`createFileRoute` + `inngest/edge`).
 
-`FEATURE_PUSH` and `FEATURE_SMS` stay off. Inngest does not flip those flags.
+`FEATURE_PUSH` and `FEATURE_SMS` stay off. Inngest does not flip those flags. Remote toggles (when configured) live in PostHog — see `docs/flags.md`.
 
 ## Vercel env (kidease-git)
 

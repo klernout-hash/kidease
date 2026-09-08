@@ -262,7 +262,7 @@ test("status webhook route is registered and not a *.server.* client import", ()
   assert.match(route, /validateTwilioSignature/);
   assert.match(tree, /from '\.\/routes\/api\/sms\.status'/);
   assert.match(tree, /id:\s*'\/api\/sms\/status'/);
-  assert.match(lab, /smsEnabled/);
+  assert.match(lab, /FEATURE_SMS/);
   assert.doesNotMatch(lab, /sms\.server/);
 });
 

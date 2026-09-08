@@ -93,5 +93,7 @@ test("admin chat lab is registered, admin-gated, and honest", () => {
   assert.match(readFileSync(join(root, "src/lib/server/push-send.ts"), "utf8"), /fcm\.googleapis\.com/);
   assert.match(client, /registerPushDevice/);
   assert.match(readFileSync(join(root, "docs/push.md"), "utf8"), /FEATURE_PUSH/);
+  assert.match(readFileSync(join(root, "docs/flags.md"), "utf8"), /POSTHOG_FLAGS_KEY/);
+  assert.match(route, /docs\/flags\.md/);
   assert.match(readFileSync(join(root, "src/lib/chat-scaffold.ts"), "utf8"), /not Stream, not Sendbird/);
 });

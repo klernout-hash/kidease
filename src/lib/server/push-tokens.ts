@@ -1,10 +1,12 @@
 /**
  * Device-token register + dry-run counts. Live FCM / APNs lives in push-send.ts.
- * Flag / token helpers are duplicated from src/lib/push.ts so Node tests resolve.
+ * Flag helper lives in src/lib/flags.ts so env + optional PostHog stay in sync.
  *
  * FEATURE_PUSH defaults off. Register refuses to persist when the flag is off.
  * send / dry-run never leave this process.
  */
+
+import { evaluateFeatureFlag, type EnvMap } from "../flags.ts";
 
 export const PUSH_SCAFFOLD_MESSAGE =
   "Push is scaffolded only. FEATURE_PUSH is off until Kyle adds Firebase and Apple credentials.";
@@ -17,8 +19,6 @@ export const PUSH_DRY_RUN_MESSAGE =
 
 export const PUSH_WEB_BLOCKED_MESSAGE =
   "Push registration is native-only (iOS / Android). www does not collect tokens.";
-
-type EnvMap = Record<string, string | undefined>;
 
 export type PushPlatform = "ios" | "android";
 export type PushProvider = "fcm" | "apns";
@@ -64,15 +64,8 @@ type Sql = {
   query<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<T[]>;
 };
 
-function flagOn(raw: string | undefined | null): boolean {
-  const v = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
-
-export function pushEnabled(env: EnvMap = process.env): boolean {
-  return flagOn(env.FEATURE_PUSH);
+export function pushEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PUSH", env);
 }
 
 export function isPushToken(value: string): boolean {

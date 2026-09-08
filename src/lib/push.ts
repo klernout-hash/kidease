@@ -3,10 +3,11 @@
  * FCM HTTP v1 / APNs send is wired behind FEATURE_PUSH + env credentials.
  * Capacitor PushNotifications is native-only. Do not invent keys.
  *
- * No relative imports — scripts/push.test.mjs loads this file in Node.
+ * Flag helpers come from ./flags.ts (extension required — scripts/push.test.mjs
+ * loads this file in Node).
  */
 
-type EnvMap = Record<string, string | undefined>;
+import { envFlagOn, evaluateFeatureFlag, type EnvMap } from "./flags.ts";
 
 export const PUSH_ENV_NAMES = [
   "FEATURE_PUSH",
@@ -50,15 +51,10 @@ function envStr(env: EnvMap, key: string) {
   return env[key]?.trim() || "";
 }
 
-export function envFlagOn(raw: string | undefined | null): boolean {
-  const v = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
+export { envFlagOn };
 
-export function pushEnabled(env: EnvMap = process.env): boolean {
-  return envFlagOn(env.FEATURE_PUSH);
+export function pushEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PUSH", env);
 }
 
 export function fcmConfigured(env: EnvMap = process.env): boolean {
