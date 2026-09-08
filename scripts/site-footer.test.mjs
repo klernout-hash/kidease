@@ -51,6 +51,52 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.match(copy, /operatorSignIn: "Connexion opérateur"/);
 });
 
+test("Parents column keeps product links and omits every city hub", () => {
+  const parents = footer.slice(footer.indexOf(">Parents<"), footer.indexOf("Garderies"));
+  assert.match(parents, /to="\/search"/);
+  assert.match(parents, /parentSignIn/);
+  assert.match(parents, /to="\/parent"/);
+  assert.match(parents, /benefitsTab/);
+  assert.match(parents, /tourChecklist/);
+  assert.match(parents, /compare/);
+  assert.match(parents, /saved/);
+  assert.match(parents, /getApp/);
+  assert.match(parents, /rateKidEase/);
+  assert.doesNotMatch(parents, /cityHubs/);
+  assert.doesNotMatch(parents, /cityHubPath/);
+  assert.doesNotMatch(parents, /cityHubCityName/);
+  assert.doesNotMatch(parents, /cityHubDefBySlug/);
+  assert.doesNotMatch(parents, /daycare\/city/);
+  for (const city of [
+    "Toronto",
+    "Montreal",
+    "Montréal",
+    "Vancouver",
+    "Calgary",
+    "Edmonton",
+    "Ottawa",
+    "Winnipeg",
+    "Quebec City",
+    "Québec",
+    "Hamilton",
+    "Halifax",
+  ]) {
+    assert.doesNotMatch(parents, new RegExp(city));
+  }
+  assert.match(src("src/routes/index.tsx"), /CITY_HUB_DEFS\.map/);
+  assert.match(src("src/routes/daycare.city.$city.tsx"), /createFileRoute\("\/daycare\/city\/\$city"\)/);
+  assert.match(src("public/sitemap.xml"), /\/daycare\/city\/winnipeg/);
+
+  const menu = src("src/routes/menu.tsx");
+  const menuParents = menu.slice(menu.indexOf('title="Parents"'), menu.indexOf("Garderies"));
+  assert.match(menuParents, /parentSignIn/);
+  assert.doesNotMatch(menuParents, /cityHubs/);
+  assert.doesNotMatch(menuParents, /daycare\/city/);
+  for (const city of ["Toronto", "Winnipeg", "Halifax", "Vancouver"]) {
+    assert.doesNotMatch(menuParents, new RegExp(city));
+  }
+});
+
 test("Support column drops the inbox email and uses Contact Us copy", () => {
   assert.match(footer, /t\("helpTitle"\)/);
   assert.match(footer, /t\("contactTitle"\)/);
