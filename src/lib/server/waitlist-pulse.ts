@@ -412,6 +412,7 @@ export async function runWaitlistPulseJob(input: {
       isTest: daycare.is_test === 1 || daycare.is_test === true,
       id: daycare.id,
       slug: daycare.slug,
+      name: daycare.name,
     })
   ) {
     return empty(pulse.daycare_id);

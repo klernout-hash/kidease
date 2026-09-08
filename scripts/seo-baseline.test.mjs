@@ -71,6 +71,7 @@ test("sitemap generation includes public listing URLs and drops the ghost", asyn
   const slugs = publicSitemapSlugs(
     [
       { slug: "test-ghost-claim-lab", visibility: "admin_only", isTest: true },
+      { slug: "leftover-qa", name: "TEST Extra Claim Lab" },
       { slug: "not a slug" },
       { slug: "sunny-side-child-care" },
     ],

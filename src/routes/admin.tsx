@@ -574,6 +574,17 @@ function CentreRow({
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium">{c.name}</p>
             <ListingStatusBadge claimStatus={c.claimStatus} live={c.live} claimedAt={c.claimedAt} invert={invert} />
+            {c.isTest ? (
+              <span
+                className={
+                  invert
+                    ? "rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-primary-fg"
+                    : "rounded-full bg-warn/15 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-warn"
+                }
+              >
+                QA test
+              </span>
+            ) : null}
           </div>
           <p className={`mt-1 text-sm ${muted}`}>
             {[c.city, c.province].filter(Boolean).join(", ")}

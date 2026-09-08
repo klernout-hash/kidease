@@ -1,6 +1,7 @@
 import type { Daycare } from "@/lib/types";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
+import { isAdminOnlyListing, listingVisibilityOf } from "@/lib/listing-visibility";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
@@ -137,8 +138,24 @@ export function mapDaycare(r: DaycareRow): Daycare {
     priority: Boolean(r.priority_until && Date.parse(r.priority_until) > Date.now()),
     priorityUntil: r.priority_until ?? null,
     agesKnown: Boolean(r.ages_confirmed),
-    visibility: r.visibility === "admin_only" ? "admin_only" : "public",
-    isTest: r.is_test === 1 || r.is_test === true,
+    visibility: listingVisibilityOf({
+      id: r.id,
+      slug: r.slug,
+      name: r.name,
+      licenseNumber: r.license_number,
+      address: r.address,
+      visibility: r.visibility,
+      isTest: r.is_test,
+    }),
+    isTest: isAdminOnlyListing({
+      id: r.id,
+      slug: r.slug,
+      name: r.name,
+      licenseNumber: r.license_number,
+      address: r.address,
+      visibility: r.visibility,
+      isTest: r.is_test,
+    }),
     qualityScore: typeof r.quality_score === "number" ? r.quality_score : undefined,
     guestFavorite: r.guest_favorite === 1 || r.guest_favorite === true,
   }));

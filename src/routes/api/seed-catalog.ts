@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
 import { dbSource, getSql } from "@/lib/db";
 import { loadJsonCatalogFromDisk } from "@/lib/catalog-hydrate";
-import { clampSeedLimit, clampSeedOffset, seedCatalogChunk } from "@/lib/catalog-seed";
+import { catalogRowsForSeed, clampSeedLimit, clampSeedOffset, seedCatalogChunk } from "@/lib/catalog-seed";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 
 function authorized(request: Request) {
@@ -46,7 +46,7 @@ async function run(request: Request) {
   }
 
   const sql = await getSql();
-  const rows = await loadJsonCatalogFromDisk();
+  const rows = catalogRowsForSeed(await loadJsonCatalogFromDisk());
   const offset = clampSeedOffset(await readOffset(request), rows.length);
   const limit = await readLimit(request);
   const result = await seedCatalogChunk(sql, rows, { offset, limit, concurrency: 16 });

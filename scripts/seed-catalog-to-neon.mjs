@@ -13,7 +13,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { mergeBlankContacts, parseMasterContacts } from "../src/lib/catalog-master.ts";
-import { clampSeedLimit, clampSeedOffset, seedCatalogChunk } from "../src/lib/catalog-seed.ts";
+import { catalogRowsForSeed, clampSeedLimit, clampSeedOffset, seedCatalogChunk } from "../src/lib/catalog-seed.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_CHECKPOINT = join(root, "tmp", "seed-catalog-offset.txt");
@@ -116,7 +116,7 @@ async function defaultLoadCatalog() {
 }
 
 export async function prepareCatalogRows(opts, loadCatalog = defaultLoadCatalog, loadMaster = loadOptionalMaster) {
-  const catalog = await loadCatalog();
+  const catalog = catalogRowsForSeed(await loadCatalog());
   const master = await loadMaster(opts.masterCsvPath);
   if (!master || master.size === 0) {
     return { rows: catalog, masterKeys: 0, enriched: 0 };

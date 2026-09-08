@@ -3,6 +3,8 @@
  * set. QA ghost / admin-only slugs never appear.
  */
 
+import { isAdminOnlyListing } from "./listing-visibility";
+
 export const SITEMAP_ORIGIN = "https://www.kidease.ca";
 export const SITEMAP_LISTING_CAP = 500;
 export const SITEMAP_LISTINGS_PATH = "/sitemap-listings.xml";
@@ -42,7 +44,15 @@ export function sitemapListingPath(slug: string): string {
 }
 
 export function publicSitemapSlugs(
-  rows: Array<{ slug?: string | null; visibility?: string | null; isTest?: boolean | number | null }>,
+  rows: Array<{
+    id?: string | null;
+    slug?: string | null;
+    name?: string | null;
+    licenseNumber?: string | null;
+    address?: string | null;
+    visibility?: string | null;
+    isTest?: boolean | number | null;
+  }>,
   cap = SITEMAP_LISTING_CAP,
 ): string[] {
   const seen = new Set<string>();
@@ -50,7 +60,7 @@ export function publicSitemapSlugs(
   for (const row of rows) {
     const slug = (row.slug || "").trim();
     if (!isSafeSitemapSlug(slug)) continue;
-    if (row.visibility === "admin_only" || row.isTest === true || row.isTest === 1) continue;
+    if (isAdminOnlyListing(row)) continue;
     const key = slug.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);

@@ -66,3 +66,44 @@ npm run ops:seed-catalog
 ```
 
 Enrichment is blank-only. Existing catalogue or operator contacts win.
+
+## QA / ghost fixtures
+
+`centres-extra-1.json` and migration `0022_listing_visibility.sql` keep one
+claim-lab row (`TEST Ghost Claim Lab`, `ke-test-ghost-001`) for local and
+Preview. That row is **never** a public daycare.
+
+- Public Explore, search, map, listing detail, sitemap, search alerts, and
+  parent claim search drop fixtures via `isAdminOnlyListing` and
+  `PUBLIC_LISTING_SQL` (flags **plus** `TEST ` name prefix, `ke-test-` ids,
+  `TEST-` licences, ghost-claim copy, KidEase Test Lane).
+- Production seed (`VERCEL_ENV=production` or `NODE_ENV=production` outside
+  Preview) skips those rows. Override with `ALLOW_TEST_LISTINGS=1` only on
+  local / Preview claim-lab.
+- Admin still lists them with a **QA test** badge.
+
+### Ops: leftover production rows
+
+Deploy applies `0039_hide_test_fixtures.sql`, which sets
+`visibility = 'admin_only'` and `is_test = 1` on matching leftovers. Rows stay
+invisible on www even if that migration has not run yet (query filter).
+
+Inspect:
+
+```sql
+select id, slug, name, visibility, is_test
+from daycares
+where is_test = 1
+   or visibility = 'admin_only'
+   or name like 'TEST %'
+   or id ilike 'ke-test-%';
+```
+
+Optional delete (only if Admin should not see them either; watch FKs on
+`listing_claims` / `provider_daycares`):
+
+```sql
+delete from daycares
+where id ilike 'ke-test-%'
+   or slug ilike 'test-ghost-%';
+```
