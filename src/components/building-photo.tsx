@@ -25,6 +25,7 @@ export function BuildingPhoto({
   alt = "",
   className,
   eager = false,
+  priority = false,
   sizes = CARD_SIZES,
   width = 480,
   height = 360,
@@ -33,6 +34,8 @@ export function BuildingPhoto({
   alt?: string;
   className?: string;
   eager?: boolean;
+  /** LCP only. Eager cards stay loading=eager without stealing hero bandwidth. */
+  priority?: boolean;
   sizes?: string;
   width?: number;
   height?: number;
@@ -89,7 +92,7 @@ export function BuildingPhoto({
       className={cn("bg-surface-2 text-transparent", className)}
       loading={eager ? "eager" : "lazy"}
       decoding="async"
-      fetchPriority={eager ? "high" : "low"}
+      fetchPriority={priority ? "high" : eager ? "auto" : "low"}
       onError={() => {
         if (ready && !skipTransform && isResizedPhotoUrl(photoUrl(ready, width))) {
           setSkipTransform(true);
