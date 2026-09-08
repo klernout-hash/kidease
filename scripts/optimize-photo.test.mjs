@@ -12,6 +12,8 @@ test("/img dual-reads R2 then Git and still allow-lists /photos paths", () => {
   assert.match(source, /readListingOriginal/);
   assert.match(source, /r2ReadOriginalsEnabled/);
   assert.match(source, /getR2Object/);
+  assert.match(source, /readPublicMediaOriginal/);
+  assert.match(source, /media\.kidease\.ca\/photos/);
   assert.match(source, /public\/photos|public", src\.slice/);
   assert.match(source, /ALLOW = \/\^\\\/photos\\\//);
   assert.doesNotMatch(source, /BUILDING_ON_DISK/);

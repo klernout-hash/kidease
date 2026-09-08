@@ -18,6 +18,7 @@ import {
   cfImageResizeEnabled,
   cfImageTransformUrl,
   isCfImageTransformUrl,
+  isResizedPhotoUrl,
   normalizeR2PublicBase,
   photoSrcSet,
   photoUrl,
@@ -72,9 +73,17 @@ describe("public R2 photo URL helper", () => {
     );
     assert.equal(
       photoUrl("/photos/buildings/mb-1001.jpg", 768, PUBLIC),
-      `${R2_PUBLIC_MEDIA_ORIGIN}/photos/buildings/mb-1001.jpg`,
+      "/img?src=%2Fphotos%2Fbuildings%2Fmb-1001.jpg&w=768",
     );
-    assert.equal(photoSrcSet("/photos/wpg/1001.jpg", [320, 480], PUBLIC), undefined);
+    const set = photoSrcSet("/photos/wpg/1001.jpg", [320, 480], PUBLIC);
+    assert.match(set ?? "", /\/img\?src=%2Fphotos%2Fwpg%2F1001\.jpg&w=320 320w/);
+    assert.match(set ?? "", /\/img\?src=%2Fphotos%2Fwpg%2F1001\.jpg&w=480 480w/);
+    assert.equal(isResizedPhotoUrl("/img?src=%2Fphotos%2Fwpg%2F1001.jpg&w=480"), true);
+    assert.equal(
+      isResizedPhotoUrl(`${R2_PUBLIC_MEDIA_ORIGIN}/cdn-cgi/image/width=320,${CF_IMAGE_TRANSFORM_OPTS}/photos/wpg/1001.jpg`),
+      true,
+    );
+    assert.equal(isResizedPhotoUrl(`${R2_PUBLIC_MEDIA_ORIGIN}/photos/wpg/1001.jpg`), false);
   });
 
   it("does not invent or remap listing id→path assignments", () => {
@@ -123,19 +132,23 @@ const RESIZE_DEV = {
 };
 
 describe("Cloudflare Image Transformations on media.kidease.ca", () => {
-  it("defaults off and keeps the original R2 URL when the flag is unset", () => {
+  it("defaults off and sizes via /img while originals stay on media.kidease.ca", () => {
     assert.equal(cfImageResizeEnabled({}), false);
     assert.equal(cfImageResizeEnabled({ CF_IMAGE_RESIZE: "" }), false);
     assert.equal(cfImageResizeEnabled({ CF_IMAGE_RESIZE: "0" }), false);
     assert.equal(cfImageResizeEnabled({ CF_IMAGE_RESIZE: "false" }), false);
     assert.equal(
       photoUrl("/photos/buildings/mb-1001.jpg", 768, PUBLIC),
-      `${R2_PUBLIC_MEDIA_ORIGIN}/photos/buildings/mb-1001.jpg`,
+      "/img?src=%2Fphotos%2Fbuildings%2Fmb-1001.jpg&w=768",
     );
-    assert.equal(photoSrcSet("/photos/wpg/1001.jpg", [320, 480], PUBLIC), undefined);
+    assert.match(photoSrcSet("/photos/wpg/1001.jpg", [320, 480], PUBLIC) ?? "", /\/img\?src=/);
     assert.equal(
       publicPhotoUrl("/photos/buildings/mb-1001.jpg", RESIZE),
       `${R2_PUBLIC_MEDIA_ORIGIN}/photos/buildings/mb-1001.jpg`,
+    );
+    assert.equal(
+      publicPhotoUrl("/photos/wpg/1001.jpg", PUBLIC),
+      `${R2_PUBLIC_MEDIA_ORIGIN}/photos/wpg/1001.jpg`,
     );
   });
 
@@ -164,9 +177,9 @@ describe("Cloudflare Image Transformations on media.kidease.ca", () => {
   it("does not transform r2.dev, placeholders, or remapped ids", () => {
     assert.equal(
       photoUrl("/photos/wpg/1001.jpg", 480, RESIZE_DEV),
-      `${R2_PUBLIC_DEV_ORIGIN}/photos/wpg/1001.jpg`,
+      "/img?src=%2Fphotos%2Fwpg%2F1001.jpg&w=480",
     );
-    assert.equal(photoSrcSet("/photos/wpg/1001.jpg", [320], RESIZE_DEV), undefined);
+    assert.match(photoSrcSet("/photos/wpg/1001.jpg", [320], RESIZE_DEV) ?? "", /\/img\?src=/);
     assert.equal(
       photoUrl("/photos/storefront-placeholder-480.webp", 480, RESIZE),
       `${R2_PUBLIC_MEDIA_ORIGIN}/photos/storefront-placeholder-480.webp`,

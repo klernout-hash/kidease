@@ -14,7 +14,19 @@ const REQUIRED = [
   "public/photos/playroom-1200.jpg",
   "public/photos/community.jpg",
   "public/photos/cottage.jpg",
+  "public/photos/cottage-768.avif",
+  "public/photos/cottage-768.webp",
+  "public/photos/cottage-768.jpg",
+  "public/photos/cottage-1200.avif",
+  "public/photos/cottage-1200.webp",
+  "public/photos/cottage-1200.jpg",
   "public/photos/kitchen.jpg",
+  "public/photos/kitchen-768.avif",
+  "public/photos/kitchen-768.webp",
+  "public/photos/kitchen-768.jpg",
+  "public/photos/kitchen-1200.avif",
+  "public/photos/kitchen-1200.webp",
+  "public/photos/kitchen-1200.jpg",
   "public/photos/nature.jpg",
   "public/photos/brick.jpg",
   "public/photos/infant.jpg",
@@ -30,13 +42,18 @@ test("marketing feel photos stay on existing /photos paths", () => {
 
   const source = readFileSync(join(root, "src/components/building-photo.tsx"), "utf8");
   assert.match(source, /\/photos\/hero-1200\.jpg/);
+  assert.match(source, /\/photos\/cottage-768\.avif/);
+  assert.match(source, /\/photos\/kitchen-1200\.webp/);
   assert.match(source, /export function FeelPhoto/);
   assert.match(source, /export function HeroYard/);
+  assert.match(source, /feelSrcSet/);
+  assert.match(source, /type="image\/avif"/);
 
   const home = readFileSync(join(root, "src/routes/index.tsx"), "utf8");
   assert.match(home, /HeroYard/);
   assert.match(home, /\[\[data-channel=app\]/);
   assert.match(home, /\/photos\/hero\.jpg/);
+  assert.match(home, /STEP_SIZES/);
   assert.doesNotMatch(home, /login\.tsx/);
 
   assert.match(readFileSync(join(root, "src/routes/claim.tsx"), "utf8"), /FeelBanner/);
