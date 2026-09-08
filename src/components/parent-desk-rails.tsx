@@ -18,7 +18,7 @@ import type { CopyKey } from "@/lib/copy";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { soonestStartDate } from "@/lib/parent-urgency";
-import { cn } from "@/lib/utils";
+import { ChipButton } from "@/components/chip";
 
 const AGE_COPY: Record<RailAge, CopyKey> = {
   infant: "infant",
@@ -43,16 +43,9 @@ function Chip({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "min-h-11 rounded-full px-3.5 py-2 text-sm font-medium ring-1",
-        on ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border hover:bg-surface-2",
-      )}
-    >
+    <ChipButton on={on} aria-pressed={on} onClick={onClick}>
       {label}
-    </button>
+    </ChipButton>
   );
 }
 

@@ -23,9 +23,9 @@ import { usePushRegistration } from "@/lib/use-push";
 import { applyTheme, readThemePreference } from "@/lib/theme";
 
 /**
- * Web boot must never paint a full-screen BrandMark. The logo PNG is 673×893;
- * without CSS that overlay (or an in-flow mark) covers the home page. Capacitor
- * already has its own splash — we only hide it here.
+ * Web boot must never paint a full-screen BrandMark. Without CSS an in-flow
+ * mark can still cover the home page. Capacitor already has its own splash —
+ * we only hide it here.
  */
 export function NativeBoot() {
   usePushRegistration();

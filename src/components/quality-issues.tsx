@@ -97,14 +97,14 @@ export function QualityIssuesPanel({ item }: { item: Daycare }) {
 function IssueCta({ issue, label }: { issue: QualityIssue; label: string }) {
   if (issue.cta === "claim") {
     return (
-      <Link to="/claim" className="rounded-full px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-border hover:bg-surface">
+      <Link to="/claim" className="ke-chip">
         {label}
       </Link>
     );
   }
   if (issue.cta === "inbox") {
     return (
-      <Link to="/inbox" className="rounded-full px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-border hover:bg-surface">
+      <Link to="/inbox" className="ke-chip">
         {label}
       </Link>
     );
@@ -114,7 +114,7 @@ function IssueCta({ issue, label }: { issue: QualityIssue; label: string }) {
       <Link
         to="/provider"
         search={{ desk: "licence" }}
-        className="rounded-full px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-border hover:bg-surface"
+        className="ke-chip"
       >
         {label}
       </Link>
@@ -123,7 +123,7 @@ function IssueCta({ issue, label }: { issue: QualityIssue; label: string }) {
   return (
     <button
       type="button"
-      className="rounded-full px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-border hover:bg-surface"
+      className="ke-chip"
       onClick={() => jumpTo(issue.anchor)}
     >
       {label}

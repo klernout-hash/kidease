@@ -346,7 +346,15 @@ function Listing() {
                 className="size-full object-contain bg-surface p-10"
               />
             ) : (
-              <BuildingPhoto eager src={photos[photo] ?? "/photos/storefront-placeholder.jpg"} sizes={DETAIL_SIZES} width={768} height={576} className="size-full object-cover" />
+              <BuildingPhoto
+                eager
+                priority
+                src={photos[photo] ?? "/photos/storefront-placeholder.jpg"}
+                sizes={DETAIL_SIZES}
+                width={768}
+                height={576}
+                className="size-full object-cover"
+              />
             )}
             {photos.length > 1 ? (
               <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-0.5">
@@ -586,7 +594,7 @@ function Listing() {
                     .split(",")
                     .filter(Boolean)
                     .map((key) => (
-                      <li key={key} className="rounded-full bg-surface px-3 py-1 text-sm ring-1 ring-border">
+                      <li key={key} className="ke-chip">
                         {amenityLabel(key, locale)}
                       </li>
                     ))}

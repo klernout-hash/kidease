@@ -297,7 +297,7 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   assert.match(inbox, /to="\/video\/\$roomId"/);
   assert.match(inbox, /videoSurfaceEnabled/);
   assert.match(src("src/lib/server/family.ts"), /videoSurfaceEnabled/);
-  assert.match(src("src/routes/video.\$roomId.tsx"), /sdk_not_wired/);
+  assert.match(src("src/routes/video.$roomId.tsx"), /sdk_not_wired/);
   assert.match(tree, /from '\.\/routes\/video\.\$roomId'/);
   assert.match(tree, /id:\s*'\/video\/\$roomId'/);
   assert.match(lab, /FEATURE_VIDEO/);

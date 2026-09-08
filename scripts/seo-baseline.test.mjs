@@ -40,6 +40,8 @@ test("robots.txt keeps admin disallows and points Sitemap at the www URL", () =>
   assert.match(robots, /^Sitemap: https:\/\/www\.kidease\.ca\/sitemap\.xml$/m);
   assert.match(robots, /^Sitemap: https:\/\/www\.kidease\.ca\/sitemap-listings\.xml$/m);
   assert.doesNotMatch(robots, /Sitemap: https:\/\/kidease\.ca\/sitemap\.xml/);
+  assert.doesNotMatch(robots, /^Content-Signal:/m);
+  assert.doesNotMatch(robots, /ai-train=/);
 });
 
 test("sitemap.xml lists canonical www public pages and omits admin paths", () => {

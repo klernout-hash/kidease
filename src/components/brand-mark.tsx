@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 const MARK_PX = { sm: 36, md: 64, lg: 80 } as const;
 
 /**
- * Logo is a 673×893 PNG. Tailwind size classes vanish if CSS fails to load
+ * Logo is a vector mark. Tailwind size classes vanish if CSS fails to load
  * (root pending replacing the document, SW serving HTML as CSS). Always pin
  * width/height in attributes + inline style so it cannot cover the page.
  */
@@ -30,7 +30,7 @@ export function BrandMark({
       style={{ display: "inline-flex", flexDirection: "column", alignItems: align === "start" ? "flex-start" : "center" }}
     >
       <img
-        src="/logo-transparent.png?v=16"
+        src="/logo-transparent.svg?v=17"
         alt=""
         width={px}
         height={px}
