@@ -32,6 +32,8 @@ import { AdminReviewsPanel } from "@/components/admin-reviews";
 import { compareTimeDesc } from "@/lib/sort-time";
 import { staffQueueRows } from "@/lib/listing-visibility";
 import { getCatalogHealth } from "@/lib/server/catalog-health";
+import { listAdminLeadCounts } from "@/lib/server/lead-requests";
+import { emptyLeadCounts, type LeadCounts } from "@/lib/lead-requests";
 import type { CatalogRuntime } from "@/lib/catalog-source";
 import { paymentSourceLabel } from "@/lib/payment-source";
 
@@ -90,9 +92,10 @@ function AdminPage() {
   const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
   const [reports, setReports] = useState<AdminReportRow[]>([]);
   const [catalogHealth, setCatalogHealth] = useState<CatalogRuntime | null>(null);
+  const [leadCounts, setLeadCounts] = useState<LeadCounts>(emptyLeadCounts());
 
   async function refresh() {
-    const [events, list, cash, envelopes, regs, flags, health] = await Promise.all([
+    const [events, list, cash, envelopes, regs, flags, health, leads] = await Promise.all([
       listPlatformEvents().catch(() => []),
       listAdminCentres().catch(() => []),
       listAdminMoney().catch(() => ({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 })),
@@ -107,6 +110,7 @@ function AdminPage() {
       listJurisdictions().catch(() => []),
       listListingReports().catch(() => []),
       getCatalogHealth().catch(() => null),
+      listAdminLeadCounts().catch(() => emptyLeadCounts()),
     ]);
     setRows(events);
     setCentres(list);
@@ -119,6 +123,7 @@ function AdminPage() {
     setJurisdictions(regs);
     setReports(flags);
     setCatalogHealth(health);
+    setLeadCounts(leads);
   }
 
   const admin = Boolean(ready && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
@@ -325,6 +330,10 @@ function AdminPage() {
             <Stat label="Live" value={counts.approved} />
             <Stat label="Declined" value={counts.declined} />
             <Stat label="In this list" value={counts.all} />
+            <Stat label="Open leads" value={leadCounts.open} />
+            <Stat label="Leads confirmed" value={leadCounts.confirmed} />
+            <Stat label="Leads answered" value={leadCounts.answered} />
+            <Stat label="Leads declined" value={leadCounts.declined} />
           </dl>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />

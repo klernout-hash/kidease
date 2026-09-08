@@ -23,7 +23,8 @@ test("parent login search returns visitors to the page they left", () => {
 
 test("listing detail keeps website CTAs, login next, and a back link", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
-  assert.match(listing, /parentLoginSearch\(`\/daycare\/\$\{slug\}`\)/);
+  assert.match(listing, /parentLoginSearch\(next\)/);
+  assert.match(listing, /`\/daycare\/\$\{slug\}\?ask=/);
   assert.match(listing, /backToExplore/);
   assert.match(listing, /listingCtaLead/);
   assert.match(listing, /searchNearby/);

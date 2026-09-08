@@ -13,10 +13,12 @@ import {
   canListProviderRequests,
   canReadBill,
   canReadBooking,
+  canReadLead,
   canReadChild,
   canReadOwnProfile,
   canReadPayment,
   canUpdateBookingStatus,
+  canUpdateLeadRequestStatus,
   canWriteChild,
   canWriteOwnProfile,
   canWritePayment,
@@ -139,6 +141,72 @@ test("parent cannot accept their own request; other centres cannot either", () =
     true,
   );
   assert.equal(canUpdateBookingStatus({ daycareId: CENTRE_A, ownedDaycareIds: [], role: "admin" }), true);
+});
+
+test("lead read: owner parent, owning centre, or admin — never a stranger", () => {
+  assert.equal(
+    canReadLead({
+      actorUserId: PARENT_A,
+      parentUserId: PARENT_A,
+      daycareId: CENTRE_A,
+      ownedDaycareIds: [],
+    }),
+    true,
+  );
+  assert.equal(
+    canReadLead({
+      actorUserId: DAYCARE,
+      parentUserId: PARENT_A,
+      daycareId: CENTRE_A,
+      ownedDaycareIds: [CENTRE_A],
+    }),
+    true,
+  );
+  assert.equal(
+    canReadLead({
+      actorUserId: PARENT_B,
+      parentUserId: PARENT_A,
+      daycareId: CENTRE_A,
+      ownedDaycareIds: [],
+    }),
+    false,
+  );
+  assert.equal(
+    canReadLead({
+      actorUserId: OTHER_DAYCARE,
+      parentUserId: PARENT_A,
+      daycareId: CENTRE_A,
+      ownedDaycareIds: [CENTRE_B],
+    }),
+    false,
+  );
+  assert.equal(
+    canReadLead({
+      actorUserId: ADMIN,
+      parentUserId: PARENT_A,
+      daycareId: CENTRE_A,
+      ownedDaycareIds: [],
+      role: "admin",
+    }),
+    true,
+  );
+});
+
+test("parent cannot confirm their own lead; other centres cannot either", () => {
+  assert.equal(canUpdateLeadRequestStatus({ daycareId: CENTRE_A, ownedDaycareIds: [] }), false);
+  assert.equal(
+    canUpdateLeadRequestStatus({ daycareId: CENTRE_A, ownedDaycareIds: [], role: "parent" }),
+    false,
+  );
+  assert.equal(
+    canUpdateLeadRequestStatus({ daycareId: CENTRE_A, ownedDaycareIds: [CENTRE_B], role: "provider" }),
+    false,
+  );
+  assert.equal(
+    canUpdateLeadRequestStatus({ daycareId: CENTRE_A, ownedDaycareIds: [CENTRE_A], role: "provider" }),
+    true,
+  );
+  assert.equal(canUpdateLeadRequestStatus({ daycareId: CENTRE_A, ownedDaycareIds: [], role: "admin" }), true);
 });
 
 test("provider request list is empty when the session owns no centre", () => {

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { getFamily } from "@/lib/server/family";
 import { createTourRequest } from "@/lib/server/tours";
+import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { MAX_TOUR_SLOTS, type PreferredTime } from "@/lib/threads";
@@ -83,7 +84,7 @@ export function RequestTourSheet({ daycare, open, onClose }: Props) {
       toast.success(t("requestSentTitleTour"));
       setDone({ conversationId: res.conversationId });
       window.setTimeout(() => {
-        void navigate({ to: "/inbox/$id", params: { id: res.conversationId } });
+        void navigate({ to: "/parent", search: PARENT_REQUESTS_SEARCH });
       }, 1400);
     } catch {
       toast.error(t("needSignIn"));
@@ -110,9 +111,14 @@ export function RequestTourSheet({ daycare, open, onClose }: Props) {
             <h2 id={titleId} className="mt-5 font-display text-2xl">
               {t("requestSentTitleTour")}
             </h2>
-            <p className="mt-2 max-w-sm text-sm text-muted">{t("requestSentBodyTour")}</p>
+            <p className="mt-2 max-w-sm text-sm text-muted">{t("requestSentTrack")}</p>
             <p className="mt-1 text-xs text-subtle">{t("notifyCentre")}</p>
             <Button className="mt-6 w-full" asChild>
+              <Link to="/parent" search={PARENT_REQUESTS_SEARCH}>
+                {t("goToMyRequests")}
+              </Link>
+            </Button>
+            <Button className="mt-2 w-full" variant="secondary" asChild>
               <Link to="/inbox/$id" params={{ id: done.conversationId }}>
                 {t("goToConversation")}
               </Link>

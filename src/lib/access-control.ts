@@ -91,6 +91,29 @@ export function canListProviderRequests(ownsAnyCentre: boolean) {
   return Boolean(ownsAnyCentre);
 }
 
+/** Parent who filed it, owning centre, or admin. */
+export function canReadLead(input: {
+  actorUserId: string;
+  parentUserId: string;
+  daycareId: string;
+  ownedDaycareIds: readonly string[];
+  role?: AppRole | string | null;
+}) {
+  if (sameUser(input.actorUserId, input.parentUserId)) return true;
+  if (ownsDaycare(input.ownedDaycareIds, input.daycareId)) return true;
+  return canCallAdminApi(input.role);
+}
+
+/** Confirm / decline / answered. The parent who filed it cannot flip their own status. */
+export function canUpdateLeadRequestStatus(input: {
+  daycareId: string;
+  ownedDaycareIds: readonly string[];
+  role?: AppRole | string | null;
+}) {
+  if (ownsDaycare(input.ownedDaycareIds, input.daycareId)) return true;
+  return canCallAdminApi(input.role);
+}
+
 export type BillAccess = { ok: true; role: "parent" | "provider" } | { ok: false; role: "none" };
 
 export function canReadBill(input: {

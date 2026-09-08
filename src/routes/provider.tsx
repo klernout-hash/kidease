@@ -13,6 +13,9 @@ import { useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole } from "@/lib/server/family";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
 import { listTourRequests } from "@/lib/server/tours";
+import { listLeadRequests } from "@/lib/server/lead-requests";
+import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
+import type { LeadRequest } from "@/lib/lead-requests";
 import { listCentrePipeline } from "@/lib/server/crm-pipeline";
 import { CentrePipeline } from "@/components/centre-pipeline";
 import type { PipelineCard } from "@/lib/crm-pipeline";
@@ -64,6 +67,7 @@ function ProviderPage() {
   >([]);
   const [requests, setRequests] = useState<SpotRequest[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
+  const [leads, setLeads] = useState<LeadRequest[]>([]);
   const [pipeline, setPipeline] = useState<PipelineCard[]>([]);
   const [subscription, setSubscription] = useState<{
     selectedPlan: ProviderEntitlements["selectedPlan"];
@@ -91,11 +95,12 @@ function ProviderPage() {
   });
 
   async function load() {
-    const [res, incoming, tourRows, pipelineRows] = await Promise.all([
+    const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
       getProvider(),
       listDaycareIncoming(),
       listTourRequests({ data: { desk: "centre" } }).catch(() => [] as TourRequest[]),
       listCentrePipeline().catch(() => [] as PipelineCard[]),
+      listLeadRequests({ data: { desk: "centre" } }).catch(() => [] as LeadRequest[]),
     ]);
     setListings(res.listings);
     setStats(res.stats);
@@ -103,6 +108,7 @@ function ProviderPage() {
     setRequests(incoming);
     setTours(tourRows);
     setPipeline(pipelineRows);
+    setLeads(leadRows);
   }
 
   useEffect(() => {
@@ -190,6 +196,7 @@ function ProviderPage() {
       {subscription ? <ProviderPlanBanner subscription={subscription} /> : null}
       {desk === "requests" ? (
         <section className="space-y-8">
+          <DaycareLeadInbox items={leads} onChanged={() => void load()} />
           <CentrePipeline cards={pipeline} />
           <div>
             <h2 className="font-display text-2xl">{t("pendingTours")}</h2>

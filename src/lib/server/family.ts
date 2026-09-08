@@ -555,6 +555,21 @@ export const createSpotRequest = createServerFn({ method: "POST" })
         ${copy.note}, ${days || null}, ${cid}, ${data.startDate}, ${parentName}
       )
     `;
+    try {
+      const { recordLeadRequest } = await import("@/lib/server/lead-requests");
+      await recordLeadRequest(sql, {
+        userId: context.userId,
+        daycareId: data.daycareId,
+        kind: "spot_inquiry",
+        message: copy.note,
+        sourceKind: "booking",
+        sourceId: bookingId,
+        conversationId: cid,
+        notify: false,
+      });
+    } catch (err) {
+      console.error("[kidease-lead] spot lead skipped", err);
+    }
 
     const notify = pushNewRequest(copy, locale);
     const systemBody = systemRequestMessage(copy, locale);
@@ -1384,6 +1399,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
     await sql`delete from children where user_id = ${uid}`;
     await sql`delete from saved_daycares where user_id = ${uid}`;
     await sql`delete from provider_daycares where user_id = ${uid}`;
+    await sql`delete from lead_requests where user_id = ${uid}`.catch(() => undefined);
     await sql`delete from waitlist_interests where user_id = ${uid}`.catch(() => undefined);
     await sql`delete from waitlist_pulse_deliveries where user_id = ${uid}`.catch(() => undefined);
     await sql`delete from casl_consent_events where user_id = ${uid}`.catch(() => undefined);

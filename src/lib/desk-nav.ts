@@ -33,7 +33,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "account", label: "Account", hint: "Profile and preferences", href: "/account", search: { tab: "profile", desk: "support" } },
   ],
   daycare: [
-    { id: "requests", label: "Incoming requests", hint: "Pipeline, tours, enrol" },
+    { id: "requests", label: "Lead inbox", hint: "Tours, waitlist, and spots" },
     { id: "money", label: "Money", hint: "Bills you send" },
     { id: "listings", label: "My listings", hint: "Spots, photos, fees" },
     { id: "add", label: "Add a new Daycare listing", hint: "Another location" },
@@ -48,7 +48,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   parent: [
     { id: "explore", label: "For you", hint: "Matches near you" },
     { id: "children", label: "Children", hint: "Up to 4 profiles" },
-    { id: "bookings", label: "Enrolment", hint: "Per child, per centre" },
+    { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots" },
     { id: "saved", label: "Saved centres" },
     { id: "alerts", label: "Search alerts", hint: "Saved searches + notify" },
     { id: "payments", label: "Pay", hint: "Bills from your centre" },
@@ -70,7 +70,7 @@ export function providerNavSearch(
 
 export function parentNavSearch(
   id: string,
-): { tab?: "explore" | "saved" | "enrolled" | "payments" | "alerts" | "children" } {
+): { tab?: "explore" | "saved" | "enrolled" | "requests" | "payments" | "alerts" | "children" } {
   if (id === "saved") return { tab: "saved" };
   if (id === "bookings") return { tab: "enrolled" };
   if (id === "payments") return { tab: "payments" };

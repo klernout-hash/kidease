@@ -35,7 +35,9 @@ export type PlatformKind =
   | "enroll"
   | "chat"
   | "review"
-  | "tour_request";
+  | "tour_request"
+  | "waitlist_request"
+  | "lead_request";
 
 export type ProviderJoinKind = "claim" | "signup" | "listing";
 
@@ -120,6 +122,10 @@ function defaultTitle(kind: PlatformKind) {
       return "Parent review waiting";
     case "tour_request":
       return "New tour request";
+    case "waitlist_request":
+      return "New waitlist request";
+    case "lead_request":
+      return "Lead request update";
     default:
       return "KidEase update";
   }
@@ -139,6 +145,8 @@ const KIND_LABEL: Record<string, string> = {
   chat: "Live Chat",
   review: "Parent reviews",
   tour_request: "Tour requests",
+  waitlist_request: "Waitlist requests",
+  lead_request: "Lead updates",
 };
 
 function winnipegDay() {
