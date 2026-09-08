@@ -80,7 +80,9 @@ export function DirectorNudgeQueue({
               </Button>
             ) : nudge.cta === "inbox" ? (
               <Button size="sm" variant="secondary" asChild>
-                <Link to="/inbox">{t(CTA_KEY[nudge.cta])}</Link>
+                <Link to="/inbox" search={{ view: "centre" }}>
+                  {t(CTA_KEY[nudge.cta])}
+                </Link>
               </Button>
             ) : nudge.cta === "requests" ? (
               <Button size="sm" variant="secondary" asChild>

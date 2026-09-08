@@ -36,8 +36,17 @@ const PATH_DESK: Array<[string, DeskKey]> = [
   ["/support", "support"],
   ["/provider", "provider"],
   ["/parent", "parent"],
-  ["/account", "parent"],
 ];
+
+/** Shared account / inbox / menu — do not rewrite the sticky desk from these. */
+export function isDeskNeutralPath(pathname: string): boolean {
+  return deskFromPathname(pathname) === null;
+}
+
+/** Highlight the last desk on shared pages so Account/Messages keep Daycare context. */
+export function highlightDesk(pathname: string, sticky?: DeskKey | null): DeskKey | null {
+  return deskFromPathname(pathname) ?? sticky ?? null;
+}
 
 export function parseDeskQuery(raw: string | null | undefined): DeskKey | null {
   const v = (raw || "").trim().toLowerCase();

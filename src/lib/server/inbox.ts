@@ -8,7 +8,10 @@ import type { BookingStatus, Conversation, TourStatus } from "@/lib/types";
 
 export const listInbox = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
+  .validator((input?: { view?: "family" | "centre" }) => ({
+    view: input?.view === "centre" ? ("centre" as const) : input?.view === "family" ? ("family" as const) : undefined,
+  }))
+  .handler(async ({ context, data }) => {
     const sql = await getSql();
     const rows = await sql<{
       id: string;
@@ -69,6 +72,8 @@ export const listInbox = createServerFn({ method: "GET" })
         select body from messages where conversation_id = ${r.id} order by created_at desc limit 1
       `;
       const isParent = r.parent_user_id === context.userId;
+      if (data.view === "centre" && isParent) continue;
+      if (data.view === "family" && !isParent) continue;
       out.push({
         id: r.id,
         daycareId: r.daycare_id,

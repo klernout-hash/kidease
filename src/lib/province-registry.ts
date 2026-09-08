@@ -161,7 +161,20 @@ export function canadaFallbackUrl() {
 }
 
 export function adapterStatusLabel(status: AdapterStatus) {
-  if (status === "adapter_ready") return "Adapter ready";
-  if (status === "manual") return "Manual review";
-  return "Adapter stub";
+  if (status === "adapter_ready") return "Catalogue match only — not a live scrape";
+  if (status === "manual") return "Manual review — no live adapter";
+  return "Adapter stub — manual review";
+}
+
+export function adapterStatusHint(status: AdapterStatus) {
+  if (status === "adapter_ready") {
+    return "Matches the bundled KidEase catalogue. Staff still verify the licence photo. No live government scrape.";
+  }
+  return "No live government scrape. Verify the licence manually before approving a claim.";
+}
+
+export function adapterStatusTone(status: AdapterStatus): "ok" | "warn" | "muted" {
+  if (status === "adapter_ready") return "ok";
+  if (status === "manual") return "warn";
+  return "warn";
 }

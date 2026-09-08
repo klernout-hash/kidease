@@ -39,13 +39,15 @@ export function DeskShell({
           <nav className="mt-5 flex gap-2 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
             {items.map((item) => {
               if (item.href) {
+                const pathOnly = item.href.split("?")[0] || item.href;
                 const on =
-                  pathname === item.href ||
-                  (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+                  pathname === pathOnly ||
+                  (pathOnly !== "/" && pathname.startsWith(`${pathOnly}/`));
                 return (
                   <Link
                     key={item.id}
                     to={item.href}
+                    {...(item.search ? { search: item.search } : {})}
                     className={cn(
                       "min-h-11 shrink-0 rounded-full px-3 py-2 text-sm md:min-h-0 md:rounded-xl",
                       on

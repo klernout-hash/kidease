@@ -351,7 +351,7 @@ function Home() {
             liveOnly ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border",
           )}
         >
-          {t("liveOnly")}
+          {t("liveOnly")} · {featured.filter((r) => r.live).length}
         </button>
         <button
           type="button"
@@ -361,7 +361,7 @@ function Home() {
             !liveOnly ? "bg-fg text-bg ring-fg" : "bg-bg text-fg ring-border",
           )}
         >
-          {t("showAll")} · {shown.length}
+          {t("showAll")} · {featured.length}
         </button>
       </div>
 
@@ -461,6 +461,7 @@ function Home() {
                   <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
                     <EmptyState
                       title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
+                      body={liveOnly && featured.length > 0 ? t("noLiveResultsLead") : t("noResultsLead")}
                       action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
                       onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
                       actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
@@ -549,12 +550,13 @@ function Home() {
               <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
               {shown.length === 0 ? (
                 <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
-                  <EmptyState
-                    title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
-                    action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
-                    onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
-                    actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
-                  />
+                    <EmptyState
+                      title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
+                      body={liveOnly && featured.length > 0 ? t("noLiveResultsLead") : t("noResultsLead")}
+                      action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
+                      onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
+                      actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
+                    />
                 </div>
               ) : null}
             </>

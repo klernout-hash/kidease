@@ -5,6 +5,7 @@ import { Shell } from "@/components/shell";
 import { ParentDesk } from "@/components/parent-desk";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
+import { readStickyDesk } from "@/lib/desks";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { TwoFactorGate } from "@/lib/auth/gates";
@@ -52,7 +53,7 @@ function AccountPage() {
       <Shell>
         <main className="ke-gutter mx-auto max-w-lg py-12 text-center">
           <h1 className="font-display text-3xl">{search.tab === "enrolled" ? t("enrolled") : t("saved")}</h1>
-          <p className="mt-3 text-muted">{t("loginLead")}</p>
+          <p className="mt-3 text-muted">{t("accountSettingsGuest")}</p>
           <div className="mt-8 flex flex-col gap-3">
             <Button size="lg" className="h-14 min-h-14 w-full px-7 text-base" asChild>
               <Link
@@ -176,6 +177,11 @@ function ProfilePane() {
   return (
     <Shell>
       <main className="ke-gutter mx-auto max-w-lg pb-10 pt-6">
+        {readStickyDesk() === "provider" ? (
+          <Link to="/provider" className="mb-3 inline-block text-sm font-medium text-primary">
+            {t("accountBackDaycare")}
+          </Link>
+        ) : null}
         <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("profile")}</h1>
         <div className="mt-8 flex flex-col items-center text-center">
           <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={name || user?.displayName} size="lg" />
@@ -274,7 +280,7 @@ function ProfilePane() {
             </Button>
           </form>
         ) : (
-          <p className="mt-8 text-center text-sm text-muted">Sign in as a parent, daycare, or admin to add your contact details.</p>
+          <p className="mt-8 text-center text-sm text-muted">{t("accountSettingsGuest")}</p>
         )}
         <div className="mt-8">
           <RateKidEaseButton className="w-full" />

@@ -7,7 +7,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { getLabStatus, type LabStatus } from "@/lib/server/chat-scaffold";
 import { dryRunPush } from "@/lib/server/push-api";
-import { CHAT_SCAFFOLD_MESSAGE } from "@/lib/chat-scaffold";
+import { CHAT_SCAFFOLD_EMPTY, CHAT_SCAFFOLD_MESSAGE } from "@/lib/chat-scaffold";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { canSeeAdminDesk } from "@/lib/desks";
 
@@ -74,9 +74,10 @@ function AdminChatPage() {
       >
         <section className="space-y-6">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Scaffold</p>
-            <h2 className="mt-2 font-display text-2xl">In-app chat</h2>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Scaffold only</p>
+            <h2 className="mt-2 font-display text-2xl">Chat lab</h2>
             <p className="mt-2 max-w-xl text-sm text-muted">{CHAT_SCAFFOLD_MESSAGE}</p>
+            {lab === null ? <p className="mt-3 text-sm text-warn">{CHAT_SCAFFOLD_EMPTY}</p> : null}
           </div>
           <dl className="grid gap-3 sm:grid-cols-2">
             <Stat
