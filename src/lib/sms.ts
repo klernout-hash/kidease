@@ -7,10 +7,11 @@
  * Prefer a Canadian sender or Messaging Service. Full CRTC / carrier
  * registration is Console / Dashboard ops later.
  *
- * No relative imports — scripts/sms.test.mjs loads this file in Node.
+ * Flag helpers come from ./flags.ts (extension required — scripts/sms.test.mjs
+ * loads this file in Node).
  */
 
-type EnvMap = Record<string, string | undefined>;
+import { evaluateFeatureFlag, type EnvMap } from "./flags.ts";
 
 export const SMS_ENV_NAMES = [
   "FEATURE_SMS",
@@ -46,15 +47,8 @@ function envStr(env: EnvMap, key: string) {
   return env[key]?.trim() || "";
 }
 
-function flagOn(raw: string | undefined | null): boolean {
-  const v = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
-
-export function smsEnabled(env: EnvMap = process.env): boolean {
-  return flagOn(env.FEATURE_SMS);
+export function smsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_SMS", env);
 }
 
 /** ITU-T E.164: + then 8–15 digits, first digit 1–9. */

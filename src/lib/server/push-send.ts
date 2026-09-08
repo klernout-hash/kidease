@@ -4,10 +4,12 @@
  * Secrets stay in env. Never log FCM_PRIVATE_KEY, APNS_KEY, or raw tokens.
  *
  * No @/ imports — scripts/push.test.mjs loads this file in Node.
+ * Flag helper lives in src/lib/flags.ts so env + optional PostHog stay in sync.
  */
 
 import { createPrivateKey, sign } from "node:crypto";
 import { connect as http2Connect } from "node:http2";
+import { envFlagOn, evaluateFeatureFlag } from "../flags.ts";
 
 type EnvMap = Record<string, string | undefined>;
 type PushProvider = "fcm" | "apns";
@@ -74,19 +76,12 @@ export function resetPushSendCacheForTests(): void {
   cachedFcm = null;
 }
 
-function envFlagOn(raw: string | undefined | null): boolean {
-  const v = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
-
 function envStr(env: EnvMap, key: string) {
   return env[key]?.trim() || "";
 }
 
 function pushEnabled(env: EnvMap): boolean {
-  return envFlagOn(env.FEATURE_PUSH);
+  return evaluateFeatureFlag("FEATURE_PUSH", env);
 }
 
 function fcmConfigured(env: EnvMap): boolean {

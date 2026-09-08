@@ -4,6 +4,8 @@ KidEase sends **transactional** SMS only: vacancy alerts, claim-status updates, 
 
 `FEATURE_SMS` defaults **off**. Email (Resend / SendGrid / Titan) still works when SMS is off or credentials are missing.
 
+Optional PostHog overlay (no redeploy): see `docs/flags.md`. Env is the fallback when `POSTHOG_FLAGS_KEY` is unset. Do not enable SMS here by default.
+
 Bills / Stripe checkout paths are untouched in this scaffold.
 
 ## CASL + STOP (before you flip the flag)
@@ -45,7 +47,7 @@ Do **not** put `sk_live_` or Twilio secrets in git.
 6. Messaging → Settings → Geo permissions: allow **Canada** (disable countries you do not serve — SMS pumping).
 7. Put the env names on the Vercel project **kidease-git** (Production + Preview). Redeploy. Confirm `0036_casl_consents.sql` applied (`npm run db:migrate` runs on deploy).
 8. **Upgrade from trial** before texting unverified Canadian mobiles. Trial can only reach verified numbers.
-9. Confirm parents and directors can grant/withdraw SMS on `/account?tab=profile` and Family desk → Search alerts. Then — and only then — set `FEATURE_SMS=1`.
+9. Confirm parents and directors can grant/withdraw SMS on `/account?tab=profile` and Family desk → Search alerts. Then — and only then — enable `FEATURE_SMS` in PostHog (preferred) or set `FEATURE_SMS=1` on Vercel. See `docs/flags.md`.
 
 ## What is wired
 
@@ -54,7 +56,7 @@ Do **not** put `sk_live_` or Twilio secrets in git.
 - Platform admin SMS (Kyle) uses `audience: "internal"` and is still gated by the feature flag.
 - `POST /api/sms/status` validates Twilio signatures (needs `TWILIO_AUTH_TOKEN`) and returns `204`. No delivery table yet.
 - `POST /api/sms/inbound` persists STOP / START. `/unsubscribe` and `GET|POST /api/unsubscribe` honour email one-click.
-- Admin → Chat lab shows FEATURE_SMS on/off and whether env names are present (no secret values).
+- Admin → Chat lab shows FEATURE_SMS on/off, source (env / PostHog), and whether env names are present (no secret values).
 
 ## Later (not this PR)
 

@@ -6,10 +6,11 @@
  * Providers join without paying. Parents need active Plus (or admin testing).
  * No recording in v1. Monthly minute caps are scaffolded, not enforced.
  *
- * No relative imports — scripts/video.test.mjs loads this file in Node.
+ * Flag helpers come from ./flags.ts (extension required — scripts/video.test.mjs
+ * loads this file in Node).
  */
 
-type EnvMap = Record<string, string | undefined>;
+import { evaluateFeatureFlag, type EnvMap } from "./flags.ts";
 
 export const VIDEO_ENV_NAMES = [
   "FEATURE_VIDEO",
@@ -89,15 +90,8 @@ function envStr(env: EnvMap, key: string) {
   return env[key]?.trim() || "";
 }
 
-function flagOn(raw: string | undefined | null): boolean {
-  const v = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
-
-export function videoEnabled(env: EnvMap = process.env): boolean {
-  return flagOn(env.FEATURE_VIDEO);
+export function videoEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_VIDEO", env);
 }
 
 export function videoEnvPresence(env: EnvMap = process.env): VideoEnvPresence {

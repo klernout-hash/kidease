@@ -4,6 +4,8 @@ KidEase push is for **transactional** vacancy and alert notifications later (spo
 
 `FEATURE_PUSH` defaults **off**. Absent Vercel env = off. **www.kidease.ca does not register tokens and does not prompt** even after you flip the flag — only the Capacitor iOS / Android app does.
 
+Optional PostHog overlay (no redeploy): see `docs/flags.md`. Env is the fallback when `POSTHOG_FLAGS_KEY` is unset. Do not enable push here by default.
+
 This PR stores device tokens, dry-runs counts, and includes an FCM HTTP v1 / APNs send helper. **Nothing is sent until `FEATURE_PUSH=1` and the matching credentials are set.** Production stays off.
 
 ## Do not enable on Production today
@@ -77,13 +79,13 @@ www never calls `Notification.requestPermission()`. `Permissions-Policy: notific
 - `registerPushToken` / `getPushClientStatus` server functions — same rules, used by `usePushRegistration`.
 - `POST /api/admin/push-dry-run` and `dryRunPush` — admin only. Counts tokens. **Does not send.**
 - `sendPushNotification` / `sendPushToDevices` — FCM HTTP v1 and APNs HTTP/2 when the flag **and** credentials are present. Otherwise skip / dry-run. Invalid tokens (UNREGISTERED / 410) are deleted.
-- Admin → Chat lab shows FEATURE_PUSH on/off and whether env names are present (no secret values). Staff can run a dry-run.
+- Admin → Chat lab shows FEATURE_PUSH on/off, source (env / PostHog), and whether env names are present (no secret values). Staff can run a dry-run.
 
 ## How to turn it on later
 
 1. Put FCM service-account + APNs `.p8` values on Vercel **kidease-git** (Production + Preview). Redeploy. Leave `FEATURE_PUSH` off and hit Admin → Chat lab — credentials should read “present.”
 2. Ship a TestFlight / internal-track build with the plugin + entitlements. Place `google-services.json` only on the build machine.
-3. Set `FEATURE_PUSH=1` (and `APNS_PRODUCTION=1` for TestFlight). Redeploy. Open the **native** app while signed in. Confirm a row in `push_device_tokens`.
+3. Enable `FEATURE_PUSH` in PostHog (preferred — see `docs/flags.md`) or set `FEATURE_PUSH=1` on Vercel (and `APNS_PRODUCTION=1` for TestFlight). Open the **native** app while signed in. Confirm a row in `push_device_tokens`.
 4. `POST /api/admin/push-dry-run` — expect `dryRun: true` and a token count. Still no send.
 5. Call `sendPushNotification({ userId, title, body })` from a server path (vacancy / claim) only after a dry-run looks right. Keep copy transactional.
 

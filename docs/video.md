@@ -10,6 +10,8 @@ KidEase video is a **Parent Plus** offer: parent ↔ centre tour or talk. It is 
 
 `FEATURE_VIDEO` defaults **off**. Bills / Stripe checkout / SMS paths are untouched.
 
+Optional PostHog overlay (no redeploy): see `docs/flags.md`. Env is the fallback when `POSTHOG_FLAGS_KEY` is unset.
+
 When Stripe is **not** live, free parents see honest copy: **Plus required (billing not live)**. Do not pretend a rehearsal Plus pick is a paid subscription.
 
 ## Vercel env checklist
@@ -33,7 +35,7 @@ Do **not** put `sk_live_` or Twilio secrets in git.
 3. Do not enable Programmable Video recording, composition, or room recording rules. KidEase v1 sets `RecordParticipantsOnConnect=false`.
 4. Put the env names on the Vercel project **kidease-git** (Production + Preview). Redeploy.
 5. Confirm Parent Plus prices (`STRIPE_PRICE_PLUS_MONTHLY` / `STRIPE_PRICE_PLUS_YEARLY`) if you will take live Plus charges. Video still fails closed for free parents when `sk_live_` is unset.
-6. Set `FEATURE_VIDEO=1` only after the API key is on Vercel.
+6. Enable `FEATURE_VIDEO` in PostHog (preferred — see `docs/flags.md`) or set `FEATURE_VIDEO=1` on Vercel only after the API key is on Vercel.
 
 ## What is wired
 
@@ -42,7 +44,7 @@ Do **not** put `sk_live_` or Twilio secrets in git.
 - Plus gate in `src/lib/video.ts`: live Stripe + `plus_plan=plus` and `plus_status` `active`/`trialing` for parents; providers and admins skip Plus.
 - `/video/$roomId` — Join mints a room + token server-side, then shows **scaffold — connect Twilio Video SDK next**. The JWT is not painted on the page.
 - Inbox thread Video icon → `/video/{conversationId}` (paywall CTA when the parent is not Plus).
-- Admin → Chat lab shows FEATURE_VIDEO on/off and whether env names are present (no secret values). Staff can open `/video/lab`.
+- Admin → Chat lab shows FEATURE_VIDEO on/off, source (env / PostHog), and whether env names are present (no secret values). Staff can open `/video/lab`.
 - `/checkin/$id` stays the local camera preview on a listing. It is not Twilio Video.
 
 ## Later (not this PR)

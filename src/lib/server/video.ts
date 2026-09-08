@@ -9,10 +9,11 @@
  * the Auth Token). Secrets stay in env. Never log the API key secret.
  *
  * No @/ or extensionless relative imports — scripts/video.test.mjs loads this file.
- * Flag helpers are duplicated from src/lib/video.ts so Node tests resolve.
+ * Flag helper lives in src/lib/flags.ts so env + optional PostHog stay in sync.
  */
 
 import { createHmac } from "node:crypto";
+import { evaluateFeatureFlag } from "../flags.ts";
 
 const VIDEO_SCAFFOLD_MESSAGE =
   "Video is scaffolded only. FEATURE_VIDEO is off until Kyle adds Twilio Video credentials.";
@@ -24,15 +25,8 @@ const VIDEO_TOKEN_TTL_SECONDS = 900;
 
 type EnvMap = Record<string, string | undefined>;
 
-function flagOn(raw: string | undefined | null): boolean {
-  const v = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
-
 function videoEnabled(env: EnvMap): boolean {
-  return flagOn(env.FEATURE_VIDEO);
+  return evaluateFeatureFlag("FEATURE_VIDEO", env);
 }
 
 function envStr(env: EnvMap, key: string) {
