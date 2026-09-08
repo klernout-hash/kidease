@@ -452,7 +452,7 @@ function Home() {
               <ParentDeskRails items={explore.length ? explore : shown} children={familyKids} bookings={familyBookings} />
             ) : (
               <>
-                <div className="ke-web-grid mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                <div className="ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5">
                   {shown.slice(0, 9).map((item, i) => (
                     <DaycareCard key={item.id} item={item} eager={i < 3} />
                   ))}

@@ -1,5 +1,5 @@
 export const PHOTO_WIDTHS = [320, 480, 768, 1200] as const;
-export const CARD_SIZES = "(max-width: 767px) 172px, (max-width: 1023px) 44vw, 320px";
+export const CARD_SIZES = "(max-width: 767px) 172px, (max-width: 1023px) 30vw, 200px";
 export const HERO_SIZES = "(max-width: 767px) 100vw, 560px";
 export const DETAIL_SIZES = "(max-width: 767px) 100vw, 720px";
 

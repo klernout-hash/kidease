@@ -81,8 +81,8 @@ export function DaycareCard({
             rounded="rounded-[14px]"
             className={cn("bg-[#EBEBEB]", compact ? "aspect-[20/19]" : "aspect-[4/3]")}
           />
-          <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-col items-start gap-1.5">
-            <span className="inline-flex rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-semibold leading-none text-[#222] shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/5 backdrop-blur-[8px]">
+          <div className="pointer-events-none absolute left-2 top-2 z-[2] flex flex-col items-start gap-1">
+            <span className="inline-flex rounded-full bg-white/92 px-2 py-0.5 text-[10px] font-semibold leading-none text-[#222] shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/5 backdrop-blur-[8px]">
               {item.priority ? `✦ ${pill}` : pill}
             </span>
             <span className="pointer-events-auto">
@@ -90,24 +90,24 @@ export function DaycareCard({
             </span>
           </div>
           {photos.length === 0 || photos.every((p) => p.includes("placeholder")) ? (
-            <span className="pointer-events-none absolute bottom-3 left-3 z-[2] rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white">
+            <span className="pointer-events-none absolute bottom-2 left-2 z-[2] rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white">
               {live ? t("storefrontPhoto") : t("notOnKidEase")}
             </span>
           ) : null}
         </div>
 
-        <div className="mt-2.5 space-y-[3px] text-[#222]">
-          <div className="flex items-start justify-between gap-3">
-            <h3 className="min-w-0 truncate text-[15px] font-semibold leading-[1.2] tracking-[-0.2px]">{name}</h3>
+        <div className="mt-2 space-y-px text-[#222]">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="min-w-0 truncate text-[13px] font-semibold leading-[1.25] tracking-[-0.2px]">{name}</h3>
             {item.parentReviewCount && item.parentReviewCount > 0 && (item.parentRatingX10 ?? 0) > 0 ? (
-              <span className="mt-px inline-flex shrink-0 items-center gap-1 text-[14px] leading-none tabular-nums" title={t("parentReviews")}>
-                <Star className="size-3 fill-[#222] text-[#222]" strokeWidth={0} />
+              <span className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums" title={t("parentReviews")}>
+                <Star className="size-2.5 fill-[#222] text-[#222]" strokeWidth={0} />
                 <span className="font-semibold">{((item.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
                 <span className="font-normal text-[#6A6A6A]">({item.parentReviewCount})</span>
               </span>
             ) : item.ratingX10 > 0 && item.reviewCount > 0 ? (
-              <span className="mt-px inline-flex shrink-0 items-center gap-1 text-[14px] leading-none tabular-nums">
-                <Star className="size-3 fill-[#222] text-[#222]" strokeWidth={0} />
+              <span className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums">
+                <Star className="size-2.5 fill-[#222] text-[#222]" strokeWidth={0} />
                 <span className="font-semibold">{(item.ratingX10 / 10).toFixed(2)}</span>
                 <span className="font-normal text-[#6A6A6A]">({item.reviewCount})</span>
               </span>
@@ -123,16 +123,16 @@ export function DaycareCard({
             <TrustSignals item={item} surface="card" compact />
           </div>
           {showDistance ? (
-            <p className="truncate text-[14px] font-normal leading-5 text-[#6A6A6A]">
+            <p className="truncate text-[13px] font-normal leading-4 text-[#6A6A6A]">
               {item.city}
               {away ? ` · ${away}` : ""}
             </p>
           ) : (
-            <p className="truncate text-[14px] font-normal leading-5 text-[#6A6A6A]">{item.city}</p>
+            <p className="truncate text-[13px] font-normal leading-4 text-[#6A6A6A]">{item.city}</p>
           )}
-          {line3 ? <p className="truncate text-[14px] font-normal leading-5 text-[#6A6A6A]">{line3}</p> : null}
+          {line3 ? <p className="truncate text-[13px] font-normal leading-4 text-[#6A6A6A]">{line3}</p> : null}
           {incompleteLabel ? (
-            <p className="truncate text-[13px] font-normal leading-5 text-[#6A6A6A]">{incompleteLabel}</p>
+            <p className="truncate text-[12px] font-normal leading-4 text-[#6A6A6A]">{incompleteLabel}</p>
           ) : null}
           {spotsKnown || freshnessText || photoText || typeof item.matchScore === "number" || (item.urgencyScore ?? 0) > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
@@ -144,7 +144,7 @@ export function DaycareCard({
             </div>
           ) : null}
           {priceAmount ? (
-            <p className="pt-0.5 text-[15px] leading-5 tabular-nums">
+            <p className="pt-0.5 text-[13px] leading-4 tabular-nums">
               <span className="font-semibold">{priceAmount}</span>
               <span className="font-normal text-[#6A6A6A]">{priceUnit}</span>
             </p>
@@ -163,7 +163,7 @@ export function DaycareCard({
       >
         <Heart
           className={cn(
-            "size-[26px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]",
+            "size-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]",
             picked ? "text-[#FF385C]" : "text-white",
           )}
           strokeWidth={1.7}
