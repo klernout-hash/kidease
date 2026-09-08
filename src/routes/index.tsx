@@ -37,7 +37,7 @@ import { uniqueById } from "@/lib/utils";
 import { readRecent } from "@/lib/recent";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
-import { CITY_HUB_DEFS } from "@/lib/city-hubs";
+import { CITY_HUB_DEFS, cityHubChipLabel, cityHubSearchQuery } from "@/lib/city-hubs";
 import { compactExploreSearch, guestHeroSearch } from "@/lib/explore-search";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
@@ -87,10 +87,13 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const CITY_CHIPS = CITY_HUB_DEFS.map((hub) => ({ q: hub.city, label: hub.city }));
-
 function Home() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const CITY_CHIPS = CITY_HUB_DEFS.map((hub) => ({
+    slug: hub.slug,
+    q: cityHubSearchQuery(hub),
+    label: cityHubChipLabel(hub, locale),
+  }));
   const navigate = useNavigate();
   const search = Route.useSearch();
   const boot = Route.useLoaderData();
@@ -297,7 +300,7 @@ function Home() {
   const cityChips = (
     <div className="mt-4 flex flex-wrap gap-2">
       {CITY_CHIPS.map((c) => (
-        <ChipButton key={c.q} onClick={() => applyCity(c.q)}>
+        <ChipButton key={c.slug} className="whitespace-nowrap" onClick={() => applyCity(c.q)}>
           {c.label}
         </ChipButton>
       ))}
@@ -307,40 +310,42 @@ function Home() {
   const locationForm = (
     <>
       {manual ? (
-        <form
-          className="mt-5 max-w-md"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (q.trim()) void applyCity(q);
-          }}
-        >
-          {denied ? (
-            <p className="mb-2 text-sm text-muted">
-              Location is off. Enter a city, postal code, or daycare name to find licensed centres nearby.
-            </p>
-          ) : null}
-          <PlaceSearch
-            value={q}
-            onChange={setQ}
-            onResolved={(hit) => {
-              setOrigin(hit);
-              setQ(hit.label);
-              goSearch(hit.label);
+        <>
+          <form
+            className="mt-5 max-w-md"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (q.trim()) void applyCity(q);
             }}
-            placeholder={t("locationPh")}
-            origin={origin}
-            inputClassName="ke-input w-full min-h-12"
-          />
-          <Button
-            type="submit"
-            variant="secondary"
-            className="mt-2 min-h-12 w-full"
-            disabled={!q.trim()}
           >
-            {t("search")}
-          </Button>
+            {denied ? (
+              <p className="mb-2 text-sm text-muted">
+                Location is off. Enter a city, postal code, or daycare name to find licensed centres nearby.
+              </p>
+            ) : null}
+            <PlaceSearch
+              value={q}
+              onChange={setQ}
+              onResolved={(hit) => {
+                setOrigin(hit);
+                setQ(hit.label);
+                goSearch(hit.label);
+              }}
+              placeholder={t("locationPh")}
+              origin={origin}
+              inputClassName="ke-input w-full min-h-12"
+            />
+            <Button
+              type="submit"
+              variant="secondary"
+              className="mt-2 min-h-12 w-full"
+              disabled={!q.trim()}
+            >
+              {t("search")}
+            </Button>
+          </form>
           {cityChips}
-        </form>
+        </>
       ) : (
         <button
           type="button"
@@ -615,7 +620,7 @@ function Home() {
           <ResumeVisitCard />
           <div className="mt-4 flex flex-wrap gap-2">
             {CITY_CHIPS.map((c) => (
-              <ChipButton key={c.q} onClick={() => void applyPlace(c.q)}>
+              <ChipButton key={c.slug} className="whitespace-nowrap" onClick={() => void applyPlace(c.q)}>
                 {c.label}
               </ChipButton>
             ))}

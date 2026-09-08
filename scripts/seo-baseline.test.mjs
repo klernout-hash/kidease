@@ -55,6 +55,10 @@ test("sitemap.xml lists canonical www public pages and omits admin paths", () =>
   assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\//);
   assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\/city\/winnipeg/);
   assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\/city\/toronto/);
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\/city\/edmonton/);
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\/city\/quebec-city/);
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\/city\/hamilton/);
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\/city\/halifax/);
   assert.doesNotMatch(sitemap, /https:\/\/kidease\.ca\//);
   assert.doesNotMatch(sitemap, /\/admin/);
   assert.doesNotMatch(sitemap, /\/provider\/subscription/);

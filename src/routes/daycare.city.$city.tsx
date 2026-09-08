@@ -4,7 +4,7 @@ import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { cityHubBySlug, cityHubs } from "@/lib/city-hub-data";
-import { cityHubPath, cityHubUrl } from "@/lib/city-hubs";
+import { cityHubChipLabel, cityHubCityName, cityHubDefBySlug, cityHubPath, cityHubUrl } from "@/lib/city-hubs";
 import {
   breadcrumbJsonLdScript,
   faqPageJsonLdScript,
@@ -36,12 +36,14 @@ function CityHubPage() {
   const hub = Route.useLoaderData();
   const { t, locale } = useCopy();
   const fr = locale === "fr";
+  const def = cityHubDefBySlug(hub.slug);
+  const cityName = def ? cityHubCityName(def, locale) : hub.city;
   const otherHubs = cityHubs().filter((item) => item.slug !== hub.slug);
   const faqItems = [
     {
       q: fr
-        ? `KidEase liste-t-il des nounous à ${hub.city}?`
-        : `Does KidEase list nannies in ${hub.city}?`,
+        ? `KidEase liste-t-il des nounous à ${cityName}?`
+        : `Does KidEase list nannies in ${cityName}?`,
       a: fr
         ? "Non. KidEase répertorie seulement les garderies permises par la province ou le territoire. Pas de nounous, de gardiennes non permises, ni de babysitting."
         : "No. KidEase lists provincially or territorially licensed childcare centres only — not nannies, sitters, or unlicensed care.",
@@ -61,7 +63,7 @@ function CityHubPage() {
   ];
   const crumbs = [
     { name: "KidEase", url: `${SITEMAP_ORIGIN}/` },
-    { name: fr ? `Garderies à ${hub.city}` : `Daycare in ${hub.city}`, url: cityHubUrl(hub.slug) },
+    { name: fr ? `Garderies à ${cityName}` : `Daycare in ${cityName}`, url: cityHubUrl(hub.slug) },
   ];
 
   return (
@@ -76,18 +78,18 @@ function CityHubPage() {
           <span className="mx-1.5" aria-hidden>
             /
           </span>
-          <span>{fr ? `Garderies à ${hub.city}` : `Daycare in ${hub.city}`}</span>
+          <span>{fr ? `Garderies à ${cityName}` : `Daycare in ${cityName}`}</span>
         </nav>
         <p className="mt-6 text-sm font-semibold tracking-wide text-primary">{t("cityHubKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">
           {fr
-            ? `Garderies permises à ${hub.city}, ${hub.province}`
-            : `Licensed daycare in ${hub.city}, ${hub.province}`}
+            ? `Garderies permises à ${cityName}, ${hub.province}`
+            : `Licensed daycare in ${cityName}, ${hub.province}`}
         </h1>
         <p className="mt-6 text-lg text-muted">
           {fr
-            ? `KidEase répertorie ${hub.count} centres permis à ${hub.city}. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`
-            : `KidEase lists ${hub.count} licensed childcare centres in ${hub.city}. Search is free. We do not list nannies or sitters.`}
+            ? `KidEase répertorie ${hub.count} centres permis à ${cityName}. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`
+            : `KidEase lists ${hub.count} licensed childcare centres in ${cityName}. Search is free. We do not list nannies or sitters.`}
         </p>
         <p className="mt-4 text-sm text-muted">
           <Link to="/search" className="font-medium text-primary underline-offset-4 hover:underline">
@@ -104,7 +106,7 @@ function CityHubPage() {
         </p>
 
         <h2 className="mt-12 text-2xl">
-          {fr ? `Centres à ${hub.city}` : `Centres in ${hub.city}`}
+          {fr ? `Centres à ${cityName}` : `Centres in ${cityName}`}
         </h2>
         <p className="mt-2 text-sm text-muted">
           {hub.listings.length < hub.count
@@ -161,17 +163,20 @@ function CityHubPage() {
           <section className="mt-12">
             <h2 className="text-2xl">{t("browseCities")}</h2>
             <ul className="mt-4 flex flex-wrap gap-2">
-              {otherHubs.map((item) => (
-                <li key={item.slug}>
-                  <Link
-                    to="/daycare/city/$city"
-                    params={{ city: item.slug }}
-                    className="inline-flex min-h-11 items-center rounded-full bg-surface px-3 text-sm font-medium ring-1 ring-border hover:bg-bg"
-                  >
-                    {item.city}
-                  </Link>
-                </li>
-              ))}
+              {otherHubs.map((item) => {
+                const otherDef = cityHubDefBySlug(item.slug);
+                return (
+                  <li key={item.slug}>
+                    <Link
+                      to="/daycare/city/$city"
+                      params={{ city: item.slug }}
+                      className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full bg-surface px-3 text-sm font-medium ring-1 ring-border hover:bg-bg"
+                    >
+                      {otherDef ? cityHubChipLabel(otherDef, locale) : item.city}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ) : null}
