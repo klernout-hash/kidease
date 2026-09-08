@@ -344,9 +344,23 @@ export function canSeeAdminDesk(role: AppRole | string | null | undefined) {
   return parseAppRole(role) === "admin";
 }
 
+/**
+ * Fail closed: Admin requires profiles.role = admin. A missing role or a
+ * stale desk list must never unlock /admin or the Admin pill.
+ */
 export function canVisitDesk(desks: DeskKey[], desk: DeskKey, role?: AppRole | null) {
-  if (desk === "admin") return desks.includes("admin") && (role == null || canSeeAdminDesk(role));
+  if (desk === "admin") return desks.includes("admin") && canSeeAdminDesk(role);
   return desks.includes(desk);
+}
+
+/** Drop a persisted desk the current session is not allowed to open. */
+export function sanitizeStickyDesk(
+  sticky: DeskKey | null | undefined,
+  desks: DeskKey[],
+  role?: AppRole | null,
+): DeskKey | null {
+  if (!sticky) return null;
+  return canVisitDesk(desks, sticky, role) ? sticky : null;
 }
 
 /**
@@ -356,7 +370,7 @@ export function canVisitDesk(desks: DeskKey[], desk: DeskKey, role?: AppRole | n
  * Support stays in the account menu.
  */
 export function headerDesks(desks: DeskKey[], role?: AppRole | null): DeskKey[] {
-  const visible = desks.filter((desk) => desk !== "admin" || canSeeAdminDesk(role));
+  const visible = desks.filter((desk) => canVisitDesk(desks, desk, role));
   if (visible.includes("admin")) {
     return (["admin", "parent", "provider"] as const).filter((d) => visible.includes(d));
   }

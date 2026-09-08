@@ -20,6 +20,8 @@ import {
   primaryDesk,
   headerDesks,
   canSeeAdminDesk,
+  canVisitDesk,
+  sanitizeStickyDesk,
   showDeskSwitcher,
   resolvePostLoginPath,
   sanitizePostLoginNext,
@@ -93,6 +95,17 @@ test("admin role unlocks all four desks; provider also gets parent", () => {
   assert.equal(canSeeAdminDesk("provider"), false);
   assert.equal(canSeeAdminDesk("support"), false);
   assert.equal(canSeeAdminDesk("admin"), true);
+  assert.equal(canVisitDesk(["admin", "parent"], "admin", "admin"), true);
+  assert.equal(canVisitDesk(["admin", "parent"], "admin", "parent"), false);
+  assert.equal(canVisitDesk(["admin", "parent"], "admin", null), false);
+  assert.equal(canVisitDesk(["parent"], "admin", "parent"), false);
+  assert.equal(canVisitDesk(["provider", "parent"], "provider", "provider"), true);
+  assert.equal(canVisitDesk(["provider", "parent"], "admin", "provider"), false);
+  assert.equal(sanitizeStickyDesk("admin", ["parent"], "parent"), null);
+  assert.equal(sanitizeStickyDesk("admin", ["admin", "parent"], "parent"), null);
+  assert.equal(sanitizeStickyDesk("admin", ["admin", "parent"], "admin"), "admin");
+  assert.equal(sanitizeStickyDesk("parent", ["admin", "parent"], "admin"), "parent");
+  assert.equal(sanitizeStickyDesk(null, ["admin", "parent"], "admin"), null);
 });
 
 test("desk switcher is for any multi-desk session, not admin-only", () => {

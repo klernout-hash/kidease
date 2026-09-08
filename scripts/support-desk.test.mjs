@@ -105,7 +105,7 @@ test("support server fns gate on requireSupport; admin tools stay requireAdmin",
   assert.match(adminCentres, /requireAdmin/);
 
   const adminPage = readFileSync(join(root, "src/routes/admin.tsx"), "utf8");
-  assert.match(adminPage, /desks\.includes\("admin"\)/);
+  assert.match(adminPage, /canVisitDesk\(session\.desks, "admin", session\.role\)/);
   assert.doesNotMatch(adminPage, /desks\.includes\("support"\)/);
 
   const supportPage = readFileSync(join(root, "src/routes/support.tsx"), "utf8");

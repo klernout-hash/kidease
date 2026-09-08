@@ -3,9 +3,12 @@ import { useRouterState } from "@tanstack/react-router";
 import { getMyDesks } from "@/lib/server/roles";
 import { SESSION_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import {
+  canVisitDesk,
+  clearStickyDesk,
   deskFromPathname,
   parseDeskQuery,
   readStickyDesk,
+  sanitizeStickyDesk,
   writeStickyDesk,
   type DeskKey,
   type SessionDesks,
@@ -69,6 +72,14 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
       .then((s) => {
         if (cancelled) return;
         setSession(s);
+        setStickyState((prev) => {
+          const next = sanitizeStickyDesk(prev, s.desks, s.role);
+          if (next !== prev) {
+            if (next) writeStickyDesk(next);
+            else clearStickyDesk();
+          }
+          return next;
+        });
         setReady(true);
       })
       .catch(() => {
@@ -83,11 +94,11 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fromPath = deskFromPathname(pathname);
-    if (fromPath && (!session || session.desks.includes(fromPath))) {
+    if (fromPath && (!session || canVisitDesk(session.desks, fromPath, session.role))) {
       setSticky(fromPath);
       return;
     }
-    if (deskQuery && (!session || session.desks.includes(deskQuery))) {
+    if (deskQuery && (!session || canVisitDesk(session.desks, deskQuery, session.role))) {
       setSticky(deskQuery);
     }
   }, [pathname, deskQuery, session]);

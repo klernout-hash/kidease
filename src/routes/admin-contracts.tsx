@@ -10,7 +10,7 @@ import { AdminContractsPanel } from "@/components/admin-contracts";
 import type { DocusignConnectIssue } from "@/lib/docusign-errors";
 import type { DocusignTemplateOption } from "@/lib/docusign-packs";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
-import { canSeeAdminDesk } from "@/lib/desks";
+import { canVisitDesk } from "@/lib/desks";
 
 export const Route = createFileRoute("/admin-contracts")({
   beforeLoad: beforeLoadAdminDesk,
@@ -52,7 +52,7 @@ function AdminContractsPage() {
     setDocusignError(res.docusignError || null);
   }
 
-  const admin = Boolean(ready && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
+  const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role));
 
   useEffect(() => {
     if (!user || !admin) return;
