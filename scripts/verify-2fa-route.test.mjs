@@ -39,7 +39,8 @@ test("verify-2fa auto-start keys off user.id and does not remint while waiting",
   assert.match(routeFile, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false\s*\}\s*\}\)/);
   assert.match(routeFile, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*true\s*\}\s*\}\)/);
   assert.match(routeFile, /let cancelled = false/);
-  assert.match(routeFile, /\[\s*user\?\.id\s*\]/);
+  assert.match(routeFile, /\[\s*userId\s*\]/);
+  assert.match(routeFile, /userId=\{user\.id\}/);
   assert.doesNotMatch(routeFile, /useEffect\(\(\) => \{[\s\S]*?\}, \[user\]\)/);
 });
 

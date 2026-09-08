@@ -6,11 +6,12 @@ import { ensureSeed, upsertDaycare } from "./seed";
 import { lookupUser, notifyAccountCreated, notifyPlatform, notifyProviderJoined } from "./notify";
 import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
+import { splitPhotoList } from "@/lib/listing-photo";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
-import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, Payment, PayMethod, Schedule } from "@/lib/types";
+import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, PayMethod, Schedule } from "@/lib/types";
 import {
   centreAckMessage,
   emailBodyNewRequest,
@@ -19,7 +20,6 @@ import {
   formatStart,
   pushNewRequest,
   scheduleLabel,
-  spotConfirmedMessage,
   statusUpdateMessage,
   systemRequestMessage,
 } from "@/lib/templates";
@@ -642,7 +642,7 @@ export const listInbox = createServerFn({ method: "GET" })
         daycareId: r.daycare_id,
         daycareName: r.name,
         daycareSlug: r.slug,
-        photo: r.photos.split(",")[0] ?? "/photos/cottage.jpg",
+        photo: splitPhotoList(r.photos)[0] ?? "/photos/cottage.jpg",
         lastAt: String(r.last_at),
         lastBody: last[0]?.body ?? "",
         status: r.status,
@@ -758,7 +758,7 @@ export const getThread = createServerFn({ method: "GET" })
       daycareId: conv[0].daycare_id,
       daycareName: conv[0].name,
       daycareSlug: conv[0].slug,
-      photo: conv[0].photos.split(",")[0] ?? "/photos/cottage.jpg",
+      photo: splitPhotoList(conv[0].photos)[0] ?? "/photos/cottage.jpg",
       phone: conv[0].phone,
       isParent: conv[0].user_id === context.userId,
       booking: b
@@ -948,59 +948,6 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
     }
     return { ok: true as const, status: data.status, conversationId: cid };
   });
-
-
-async function postSpotConfirmed(
-  sql: Awaited<ReturnType<typeof getSql>>,
-  bookingId: string,
-  locale: "en" | "fr",
-) {
-  const rows = await sql<{
-    conversation_id: string | null;
-    user_id: string;
-    daycare_id: string;
-    parent_name: string | null;
-    child_name: string | null;
-    daycare_name: string;
-    start_date: string | null;
-    start_month: string;
-  }>`
-    select b.conversation_id, b.user_id, b.daycare_id, b.parent_name,
-           ch.name as child_name, d.name as daycare_name,
-           b.start_date, b.start_month
-    from bookings b
-    join daycares d on d.id = b.daycare_id
-    left join children ch on ch.id = b.child_id
-    where b.id = ${bookingId}
-    limit 1
-  `;
-  const b = rows[0];
-  if (!b) return;
-  let cid = b.conversation_id;
-  if (!cid) {
-    const existing = await sql<{ id: string }>`
-      select id from conversations where user_id = ${b.user_id} and daycare_id = ${b.daycare_id}
-    `;
-    cid = existing[0]?.id ?? null;
-  }
-  if (!cid) return;
-  const body = spotConfirmedMessage(
-    {
-      parentName: b.parent_name ?? "Parent",
-      childName: b.child_name ?? "your child",
-      age: "",
-      daycareName: b.daycare_name,
-      start: formatStart(b.start_date ?? b.start_month, locale),
-      schedule: "",
-    },
-    locale,
-  );
-  await sql`
-    insert into messages (id, conversation_id, sender, body, kind)
-    values (${nid("msg")}, ${cid}, ${"system"}, ${body}, ${"status"})
-  `;
-  await sql`update conversations set last_at = now() where id = ${cid}`;
-}
 
 export const createPayment = createServerFn({ method: "POST" })
   .middleware([authMiddleware])

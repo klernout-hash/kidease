@@ -11,6 +11,7 @@ import { PasswordField } from "@/components/password-field";
 import { Shell } from "@/components/shell";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
+import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
 import { deskQueryValue, loginRoleFromDesk, parseDeskQuery, readStickyDesk, resolvePostLoginPath, sanitizePostLoginNext, writeStickyDesk } from "@/lib/desks";
 import { captureLoginFunnel, continueAfterSignIn, loginErrorCallbackUrl, twoFactorPageUrl } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -19,7 +20,8 @@ import { useCopy } from "@/lib/use-copy";
 
 type Role = "parent" | "provider" | "admin";
 type DeskAlias = "parent" | "director" | "centre" | "admin" | "support" | "provider";
-const OPERATOR_EMAIL = "kyle@kidease.ca";
+
+const OPERATOR_EMAIL = KIDEASE_OPERATOR_EMAIL;
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => {

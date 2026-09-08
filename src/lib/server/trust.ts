@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { requireAdmin } from "@/lib/server/roles";
-import { lookupUser, notifyPlatform } from "@/lib/server/notify";
+import { notifyPlatform } from "@/lib/server/notify";
 import { JURISDICTIONS } from "@/lib/province-registry";
 import { lookupRegistry } from "@/lib/server/registry-adapters";
 import { type LicenseStatus, type RegistryMatchState } from "@/lib/trust";

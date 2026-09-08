@@ -98,7 +98,8 @@ test("FAQ is a real page and registry names get hyphen spacing", () => {
   assert.match(card, /notOnKidEase/);
   assert.match(card, /placeholder/);
   const origin = src("src/lib/search-origin.ts");
-  assert.match(origin, /locationConsent !== "granted"/);
+  assert.match(origin, /locationConsent/);
+  assert.match(origin, /gpsAllowed/);
 });
 
 test("listing On the map uses Maps JS, not a broken embed iframe", () => {

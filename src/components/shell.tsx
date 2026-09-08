@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Heart, ClipboardCheck, Menu, MessageCircle, Search } from "lucide-react";
+import { RateKidEaseControl } from "@/components/rate-kidease";
 import { ShareKidEaseButton } from "@/components/share-button";
 import { SignedIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -16,7 +17,7 @@ import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
-import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
+import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
 import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -26,7 +27,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const tab = useRouterState({ select: (s) => (s.location.search as { tab?: string }).tab });
   const { user } = useCurrentUserState();
-  const { sticky } = useSessionDesks();
+  const { session, sticky } = useSessionDesks();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -88,6 +89,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               );
             })}
             <ShareKidEaseButton appearance="nav" />
+            <RateKidEaseControl appearance="nav" />
           </nav>
           <div className="flex items-center gap-1.5">
             {user ? <DeskSwitcher /> : null}
@@ -167,6 +169,10 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         accountLabel={t("account")}
         accountHref="/account"
         accountSearch={accountSearch(sticky)}
+        isAdmin={canSeeAdminDesk(session?.role)}
+        desksSlot={
+          user && showDeskSwitcher(session?.desks, session?.role) ? <DeskSwitcher compact /> : null
+        }
         onSignOut={() => void signOut("/")}
       />
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"}>
@@ -308,6 +314,7 @@ function HeaderProfile({
             {providerLabel}
           </Link>
           <ShareKidEaseButton appearance="menu" onDone={() => setOpen(false)} />
+          <RateKidEaseControl appearance="menu" onDone={() => setOpen(false)} />
         </div>
       ) : null}
     </div>
@@ -435,6 +442,7 @@ function AccountMenu({
             </Link>
           ) : null}
           <ShareKidEaseButton appearance="menu" onDone={() => setOpen(false)} />
+          <RateKidEaseControl appearance="menu" onDone={() => setOpen(false)} />
           <button
             type="button"
             role="menuitem"

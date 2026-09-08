@@ -3,7 +3,6 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { lookupUser } from "@/lib/server/notify";
 import {
-  type AppRole,
   type SessionDesks,
   desksFor,
   isStaffRole,
@@ -13,8 +12,15 @@ import {
 } from "@/lib/desks";
 import { canAccessSupport } from "@/lib/support";
 import { stripeChargesLive } from "@/lib/stripe-live";
+import { paymentSourceLabel } from "@/lib/payment-source";
 import { reportError } from "@/lib/observe";
 import { canSeeProviderSubscriptions } from "@/lib/features";
+import {
+  bootstrapAdminEmail,
+  canBootstrapAdmin,
+  effectiveAdminRole,
+  isBlockedAdminEmail,
+} from "@/lib/admin-email";
 
 export const ADMIN_PROMOTE_SQL =
   "update profiles set role = 'admin' where user_id = '…';";
@@ -26,7 +32,7 @@ export const SUPPORT_LEAD_PROMOTE_SQL =
   "update profiles set role = 'support_lead' where user_id = '…';";
 
 function bootstrapEmail() {
-  return (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim().toLowerCase();
+  return bootstrapAdminEmail(process.env.ADMIN_EMAIL);
 }
 
 export type { SessionDesks };
@@ -36,13 +42,6 @@ async function profileRole(sql: Awaited<ReturnType<typeof getSql>>, userId: stri
     select role from profiles where user_id = ${userId} limit 1
   `.catch(() => []);
   return rows[0]?.role ?? null;
-}
-
-async function adminRowCount(sql: Awaited<ReturnType<typeof getSql>>) {
-  const rows = await sql<{ n: number }>`
-    select count(*)::int as n from profiles where role = 'admin'
-  `.catch(() => [{ n: 0 }]);
-  return rows[0]?.n ?? 0;
 }
 
 async function ownsCentre(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
@@ -81,7 +80,9 @@ async function unreadInboxCount(sql: Awaited<ReturnType<typeof getSql>>, userId:
 /**
  * Gate /admin on profiles.role = 'admin'.
  * The owner email (ADMIN_EMAIL / kyle@kidease.ca) is promoted only when
- * Better Auth marks that email verified. Extra staff:
+ * Better Auth marks that email verified. Open Road mailboxes never get
+ * Admin — even if ADMIN_EMAIL is leftover kyle@openroadoutlet.ca or
+ * profiles.role is already admin. Extra staff:
  *   update profiles set role = 'admin' where user_id = '…';
  */
 export async function resolveAdminAccess(userId: string) {
@@ -91,20 +92,26 @@ export async function resolveAdminAccess(userId: string) {
     on conflict (user_id) do nothing
   `.catch(() => undefined);
 
-  const role = parseAppRole(await profileRole(sql, userId));
-  if (role === "admin") {
-    return { ok: true as const, role, bootstrapped: false };
+  const stored = parseAppRole(await profileRole(sql, userId));
+  const actor = await lookupUser(userId);
+  const email = actor.email;
+
+  if (isBlockedAdminEmail(email)) {
+    const role = stored === "admin" ? ("parent" as const) : stored;
+    return { ok: false as const, role, bootstrapped: false };
   }
 
-  const actor = await lookupUser(userId);
-  const email = (actor.email || "").trim().toLowerCase();
+  if (effectiveAdminRole({ storedRole: stored, email }) === "admin") {
+    return { ok: true as const, role: "admin" as const, bootstrapped: false };
+  }
+
   // Owner email is staff only after the mailbox is verified. An unverified
   // signup that spoofs ADMIN_EMAIL must not inherit the admin desk.
-  if (email && email === bootstrapEmail() && actor.emailVerified) {
+  if (canBootstrapAdmin(email, bootstrapEmail()) && actor.emailVerified) {
     await sql`update profiles set role = 'admin' where user_id = ${userId}`;
     return { ok: true as const, role: "admin" as const, bootstrapped: true };
   }
-  return { ok: false as const, role, bootstrapped: false };
+  return { ok: false as const, role: stored, bootstrapped: false };
 }
 
 export async function requireAdmin(userId: string) {
@@ -150,7 +157,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   `.catch(() => undefined);
 
   const access = await resolveAdminAccess(userId);
-  const stored = access.ok ? "admin" : parseAppRole(await profileRole(sql, userId));
+  const stored = access.ok ? "admin" : access.role;
   const owned = await ownsCentre(sql, userId);
   const desks = desksFor({ role: stored, ownsCentre: owned });
   const unread = await unreadInboxCount(sql, userId);
@@ -161,7 +168,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     home: landingPath(desks),
     unread,
     stripeLive,
-    ledgerLabel: stripeLive ? "Stripe live" : "Internal ledger (not charged)",
+    ledgerLabel: paymentSourceLabel(stripeLive),
     providerSubscriptions: canSeeProviderSubscriptions(stored, process.env, owned),
   };
 }

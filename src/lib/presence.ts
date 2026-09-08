@@ -1,7 +1,7 @@
 import { haversineKm, type LatLng } from "@/lib/geo";
 import type { DaycareCard } from "@/lib/types";
 
-export type OriginSource = "gps" | "manual" | "saved";
+export type OriginSource = "gps" | "manual" | "saved" | "ip" | "default";
 export type PresenceFreshness = "live" | "fresh" | "stale" | "unknown";
 
 const LIVE_MS = 90_000;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { ListingRail } from "@/components/listing-rail";
 import { useCopy } from "@/lib/use-copy";
@@ -67,28 +67,51 @@ export function ParentDeskRails({
     childMonths == null ? "preschool" : childMonths >= 60 ? "school-age" : ageGroupFromMonths(childMonths);
   const [age, setAge] = useState<RailAge>(defaultAge);
   const [care, setCare] = useState<CareType>("centre");
+  const deferredAge = useDeferredValue(age);
+  const deferredCare = useDeferredValue(care);
+  const [extraReady, setExtraReady] = useState(false);
 
-  const prefs = useMemo(() => {
+  const matchPrefs = useMemo(() => {
     const startDate = soonestStartDate(bookings);
-    const ageGroup: ParentRailPrefs["ageGroup"] = age === "school-age" ? "any" : age;
+    const ageGroup: ParentRailPrefs["ageGroup"] = defaultAge === "school-age" ? "any" : defaultAge;
     return {
       ageGroup,
       radiusKm,
       distanceKnown: located,
       startDate,
     };
-  }, [age, bookings, located, radiusKm]);
+  }, [defaultAge, bookings, located, radiusKm]);
 
-  const rails = useMemo(() => {
-    const pool = scoreParentRailItems(items, prefs);
-    return {
-      match: bestMatchRail(pool, prefs),
-      urgency: urgencyRail(pool, prefs),
-      favorites: guestFavoritesRail(pool),
-      age: ageGroupRail(pool, age, prefs),
-      care: careTypeRail(pool, care, prefs),
+  const pool = useMemo(() => scoreParentRailItems(items, matchPrefs), [items, matchPrefs]);
+
+  const match = useMemo(() => bestMatchRail(pool, matchPrefs), [pool, matchPrefs]);
+  const urgency = useMemo(() => urgencyRail(pool, matchPrefs), [pool, matchPrefs]);
+  const favorites = useMemo(() => guestFavoritesRail(pool), [pool]);
+  const ageRail = useMemo(() => {
+    const agePrefs = {
+      ...matchPrefs,
+      ageGroup: (deferredAge === "school-age" ? "any" : deferredAge) as ParentRailPrefs["ageGroup"],
     };
-  }, [age, care, items, prefs]);
+    return ageGroupRail(items, deferredAge, agePrefs);
+  }, [deferredAge, items, matchPrefs]);
+  const careRail = useMemo(() => careTypeRail(pool, deferredCare, matchPrefs), [deferredCare, matchPrefs, pool]);
+
+  useEffect(() => {
+    if (!items.length) {
+      setExtraReady(false);
+      return;
+    }
+    let cancelled = false;
+    const id = requestAnimationFrame(() => {
+      startTransition(() => {
+        if (!cancelled) setExtraReady(true);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(id);
+    };
+  }, [items.length]);
 
   if (!items.length) {
     return (
@@ -100,51 +123,78 @@ export function ParentDeskRails({
 
   return (
     <div className="pb-4">
-      <ListingRail title={t("railBestMatch")} items={rails.match} seeAllHref={parentRailSearchHref({ sort: "match" })} />
-      <ListingRail title={t("railNeedSoon")} items={rails.urgency} seeAllHref={parentRailSearchHref({ sort: "urgency" })} />
-      <ListingRail
-        title={t("railGuestFavorites")}
-        items={rails.favorites}
-        seeAllHref={parentRailSearchHref({ favorites: true })}
-      />
-      <section className="mt-8 first:mt-4 md:mt-10">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
-            {t("railByAge")}
-          </h2>
-          <a
-            href={parentRailSearchHref({ age })}
-            className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {t("seeAll")}
-          </a>
-        </div>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {RAIL_AGES.map((band) => (
-            <Chip key={band} on={age === band} label={t(AGE_COPY[band])} onClick={() => setAge(band)} />
-          ))}
-        </div>
-        <ListingRail title={t(AGE_COPY[age])} hideTitle className="mt-0 first:mt-0 md:mt-0" items={rails.age} />
-      </section>
-      <section className="mt-8 md:mt-10">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
-            {t("railByCare")}
-          </h2>
-          <a
-            href={parentRailSearchHref({ care })}
-            className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {t("seeAll")}
-          </a>
-        </div>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {CARE_TYPES.map((kind) => (
-            <Chip key={kind} on={care === kind} label={t(CARE_COPY[kind])} onClick={() => setCare(kind)} />
-          ))}
-        </div>
-        <ListingRail title={t(CARE_COPY[care])} hideTitle className="mt-0 first:mt-0 md:mt-0" items={rails.care} />
-      </section>
+      <ListingRail title={t("railBestMatch")} items={match} seeAllHref={parentRailSearchHref({ sort: "match" })} />
+      {extraReady ? (
+        <>
+          <ListingRail title={t("railNeedSoon")} items={urgency} seeAllHref={parentRailSearchHref({ sort: "urgency" })} />
+          <ListingRail
+            title={t("railGuestFavorites")}
+            items={favorites}
+            seeAllHref={parentRailSearchHref({ favorites: true })}
+            eagerThumbs={false}
+          />
+          <section className="mt-8 first:mt-4 md:mt-10">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
+                {t("railByAge")}
+              </h2>
+              <a
+                href={parentRailSearchHref({ age })}
+                className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {t("seeAll")}
+              </a>
+            </div>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {RAIL_AGES.map((band) => (
+                <Chip
+                  key={band}
+                  on={age === band}
+                  label={t(AGE_COPY[band])}
+                  onClick={() => setAge(band)}
+                />
+              ))}
+            </div>
+            <ListingRail
+              title={t(AGE_COPY[deferredAge])}
+              hideTitle
+              className="mt-0 first:mt-0 md:mt-0"
+              items={ageRail}
+              eagerThumbs={false}
+            />
+          </section>
+          <section className="mt-8 md:mt-10">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
+                {t("railByCare")}
+              </h2>
+              <a
+                href={parentRailSearchHref({ care })}
+                className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {t("seeAll")}
+              </a>
+            </div>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {CARE_TYPES.map((kind) => (
+                <Chip
+                  key={kind}
+                  on={care === kind}
+                  label={t(CARE_COPY[kind])}
+                  onClick={() => setCare(kind)}
+                />
+              ))}
+            </div>
+            <ListingRail
+              title={t(CARE_COPY[deferredCare])}
+              hideTitle
+              className="mt-0 first:mt-0 md:mt-0"
+              items={careRail}
+              eagerThumbs={false}
+            />
+          </section>
+        </>
+      ) : null}
     </div>
   );
 }

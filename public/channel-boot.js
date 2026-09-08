@@ -8,7 +8,7 @@
     var r = document.documentElement;
     r.dataset.channel = force || n || w < 1024 ? "app" : "website";
     r.dataset.runtime = n && c.getPlatform ? c.getPlatform() : "web";
-  } catch (e) {
+  } catch {
     document.documentElement.dataset.channel = "website";
   }
 })();

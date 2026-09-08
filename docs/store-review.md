@@ -7,8 +7,8 @@ KidEase asks for an App Store / Play rating only after a real happy moment, usin
 | Surface | Behaviour |
 | --- | --- |
 | Happy moment (Capacitor iOS / Android) | `@capacitor-community/in-app-review` → `SKStoreReviewController` / Play In-App Review |
-| Menu + Account “Rate KidEase” | Native: App Store / Play **write-review** URL. Web: `/get-app` |
-| Website | No native sheet. “Rate KidEase” opens Get the app. Existing `/get-app` is unchanged |
+| Menu + Account + guest home “Rate KidEase” | Native: App Store / Play **write-review** URL. Web: `/get-app` |
+| Website (logged-out `/`) | Same Account prompt on guest home. Footer + website drawer also expose it. No native sheet. `/get-app` unchanged |
 
 Happy moments (only these call the native sheet):
 
@@ -64,6 +64,6 @@ The plugin is wired in `ios/` (SPM) and `android/` (Gradle). Production WebView 
 - [ ] Cold start does **not** show a review sheet
 - [ ] Save a search on a native build → OS sheet may appear (or silently no-op under quota)
 - [ ] Menu → Rate KidEase opens the store write-review page when IDs exist
-- [ ] www.kidease.ca Menu → Rate KidEase opens `/get-app` (no crash, no fake stars)
+- [ ] www.kidease.ca Menu / guest home / footer → Rate KidEase opens `/get-app` (no crash, no fake stars)
 
 See also [`mobile-builds.md`](mobile-builds.md) and [`store-readiness.md`](store-readiness.md).

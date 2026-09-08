@@ -46,7 +46,14 @@ function ParentPage() {
   if (!user) return <RedirectToSignIn />;
 
   return (
-    <TwoFactorGate next="/parent">
+    <TwoFactorGate
+      next="/parent"
+      pending={
+        <Shell>
+          <DeskSkeleton />
+        </Shell>
+      }
+    >
       <LoginFunnelDeskLand desk="parent" />
       {search.preview === "support" ? <SupportPreviewBanner /> : null}
       <ParentDesk initialTab={initialTab} />

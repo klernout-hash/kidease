@@ -4,6 +4,7 @@
  * Relative .ts imports so Node tests can load this file.
  */
 
+import { normalizeListingSlug } from "./listing-slug.ts";
 import { SITEMAP_ORIGIN, sitemapListingPath } from "./sitemap.ts";
 
 /** Official storefront or https media only. Placeholders and street-view stock stay out of OG. */
@@ -54,6 +55,8 @@ function clean(value: string | null | undefined) {
     .replace(/&quot;/gi, '"')
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
+    .replace(/\bCetnres\b/g, "Centres")
+    .replace(/\bCetnre\b/g, "Centre")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
@@ -77,12 +80,7 @@ function agePhrase(src: ListingSeoSource, locale: ListingSeoLocale) {
 }
 
 export function listingCanonicalUrl(slug: string | null | undefined) {
-  const cleanSlug = String(slug || "")
-    .trim()
-    .replace(/^\/+|\/+$/g, "")
-    .split("/")
-    .filter(Boolean)
-    .pop();
+  const cleanSlug = normalizeListingSlug(slug);
   if (!cleanSlug) return "";
   return `${SITEMAP_ORIGIN}${sitemapListingPath(encodeURIComponent(cleanSlug))}`;
 }

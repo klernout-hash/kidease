@@ -7,6 +7,7 @@ import {
   CATALOG_SOURCE_ENV,
   NEON_CATALOG_MIN_COUNT,
   catalogSourceFromEnv,
+  describeCatalogRuntime,
   neonCatalogMinCount,
   preferNeonCatalog,
 } from "../src/lib/catalog-source.ts";
@@ -83,6 +84,26 @@ describe("catalog source preference", () => {
     assert.equal(preferNeonCatalog({ neonAvailable: true, publicCount: 20_000, source: "json" }), false);
     assert.equal(preferNeonCatalog({ neonAvailable: false, publicCount: 20_000, source: "neon" }), false);
     assert.equal(preferNeonCatalog({ neonAvailable: true, publicCount: 0, source: "neon" }), false);
+  });
+
+  it("describes Neon as SoT and never treats Drive CSV as runtime truth", () => {
+    const neon = describeCatalogRuntime({
+      neonAvailable: true,
+      publicCount: NEON_CATALOG_MIN_COUNT,
+      source: "auto",
+    });
+    assert.equal(neon.runtime, "neon");
+    assert.equal(neon.preferred, true);
+    assert.match(neon.reason, /seed-only/);
+    const json = describeCatalogRuntime({ neonAvailable: false, publicCount: 0, source: "auto" });
+    assert.equal(json.runtime, "json");
+    assert.match(json.reason, /Drive|CSV|JSON/);
+    assert.doesNotMatch(src("src/lib/catalog.ts"), /MASTER_CSV/);
+    assert.doesNotMatch(src("src/lib/server/catalog-neon.ts"), /MASTER_CSV/);
+    assert.match(src("src/lib/server/catalog-neon.ts"), /readCatalogHealth/);
+    assert.match(src("src/lib/server/catalog-health.ts"), /getCatalogHealth/);
+    assert.match(src("src/routes/admin.tsx"), /getCatalogHealth/);
+    assert.match(src("docs/catalog-source.md"), /never treats Drive/);
   });
 });
 
@@ -189,7 +210,7 @@ describe("null catalog rows stay renderable", () => {
     assert.match(utils, /String\(value \?\? ""\)/);
     assert.match(neon, /export function catalogRowRenderable/);
     assert.match(neon, /rows\.filter\(catalogRowRenderable\)/);
-    assert.match(neon, /String\(row\.name \|\| ""\)\.trim\(\) \|\| slug/);
+    assert.match(neon, /correctCentreNameTypos\(String\(row\.name \|\| ""\)\.trim\(\)\) \|\| slug/);
     assert.match(neon, /Licensed centre/);
   });
 });

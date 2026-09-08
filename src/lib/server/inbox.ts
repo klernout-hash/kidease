@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { splitPhotoList } from "@/lib/listing-photo";
 import { nid } from "@/lib/utils";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "./notify";
 import { listCentreOwnerEmails, markConversationRead, requireConversationWrite } from "./thread-access";
@@ -79,7 +80,7 @@ export const listInbox = createServerFn({ method: "GET" })
         daycareId: r.daycare_id,
         daycareName: isParent ? r.name : r.parent_name || r.parent_email || "Parent",
         daycareSlug: r.slug,
-        photo: (r.photos || "").split(",")[0] || "/photos/cottage.jpg",
+        photo: splitPhotoList(r.photos)[0] || "/photos/cottage.jpg",
         lastAt: String(r.last_at),
         lastBody: last[0]?.body ?? "",
         status: r.status,

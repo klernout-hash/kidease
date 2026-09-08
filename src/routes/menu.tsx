@@ -7,7 +7,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { RateKidEaseMenuRow } from "@/components/rate-kidease";
-import { showDeskSwitcher } from "@/lib/desks";
+import { canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
 import { AppearanceControl } from "@/components/appearance-control";
 
 export const Route = createFileRoute("/menu")({
@@ -57,7 +57,8 @@ function MenuPage() {
   const { user } = useCurrentUserState();
   const { session } = useSessionDesks();
   const fr = locale === "fr";
-  const multiDesk = Boolean(user && showDeskSwitcher(session?.desks));
+  const multiDesk = Boolean(user && showDeskSwitcher(session?.desks, session?.role));
+  const showAdmin = Boolean(user && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
 
   return (
     <Shell>
@@ -69,6 +70,15 @@ function MenuPage() {
             <div className="px-1 py-2">
               <DeskSwitcher />
             </div>
+          </Group>
+        ) : null}
+
+        {showAdmin ? (
+          <Group title={fr ? "Équipe" : "Staff"}>
+            <Row to="/admin" label={fr ? "Espace admin" : "Admin desk"} />
+            {session?.desks.includes("support") ? (
+              <Row to="/support" label={fr ? "Espace soutien" : "Support desk"} />
+            ) : null}
           </Group>
         ) : null}
 

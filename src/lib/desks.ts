@@ -352,7 +352,8 @@ export function canVisitDesk(desks: DeskKey[], desk: DeskKey, role?: AppRole | n
 /**
  * Header pills. Admin-role users (kyle@kidease.ca) see Admin / Parent / Daycare
  * on one session. Parent and Daycare accounts never get the Admin pill — even
- * if a stale desk list included it. Support stays in the account menu.
+ * if a stale desk list included it. Open Road mailboxes never see Admin.
+ * Support stays in the account menu.
  */
 export function headerDesks(desks: DeskKey[], role?: AppRole | null): DeskKey[] {
   const visible = desks.filter((desk) => desk !== "admin" || canSeeAdminDesk(role));
@@ -362,9 +363,9 @@ export function headerDesks(desks: DeskKey[], role?: AppRole | null): DeskKey[] 
   return visible;
 }
 
-/** Header / menu switcher — only when this session actually has two desks. */
-export function showDeskSwitcher(desks: DeskKey[] | undefined | null) {
-  return Boolean(desks && headerDesks(desks).length >= 2);
+/** Header / menu switcher — only when this session actually has two visible desks. */
+export function showDeskSwitcher(desks: DeskKey[] | undefined | null, role?: AppRole | null) {
+  return Boolean(desks && headerDesks(desks, role).length >= 2);
 }
 
 export type SessionDesks = {

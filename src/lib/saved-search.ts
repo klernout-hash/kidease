@@ -7,7 +7,6 @@ import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { clampRadiusKm } from "@/lib/proximity";
 import { isClaimVerified } from "@/lib/trust";
-import type { AgeGroup } from "@/lib/types";
 
 export const SAVED_SEARCH_APPLY_KEY = "kidease-apply-saved-search";
 export const MAX_SAVED_SEARCHES = 12;

@@ -45,3 +45,77 @@ export function preferNeonCatalog(input: {
   if (source === "neon") return true;
   return count >= (input.minCount ?? NEON_CATALOG_MIN_COUNT);
 }
+
+export type CatalogRuntime = {
+  preferred: boolean;
+  runtime: "neon" | "json";
+  publicCount: number;
+  minCount: number;
+  source: CatalogSource;
+  reason: string;
+};
+
+/**
+ * Operator-facing honesty for Admin. Neon is SoT when preferred.
+ * Git JSON / Drive CSV are seed or emergency fallback — never reintroduced
+ * as runtime truth just because a master file exists.
+ */
+export function describeCatalogRuntime(input: {
+  source?: CatalogSource;
+  neonAvailable: boolean;
+  publicCount: number;
+  minCount?: number;
+}): CatalogRuntime {
+  const source = input.source ?? "auto";
+  const publicCount = Number(input.publicCount) || 0;
+  const minCount = input.minCount ?? NEON_CATALOG_MIN_COUNT;
+  const preferred = preferNeonCatalog({ ...input, source, publicCount, minCount });
+  if (preferred) {
+    return {
+      preferred: true,
+      runtime: "neon",
+      publicCount,
+      minCount,
+      source,
+      reason: `Neon is the licensed catalogue source of truth (${publicCount.toLocaleString("en-CA")} public rows). Git JSON and Drive CSV are seed-only.`,
+    };
+  }
+  if (source === "json") {
+    return {
+      preferred: false,
+      runtime: "json",
+      publicCount,
+      minCount,
+      source,
+      reason: "CATALOG_SOURCE=json emergency fallback. Neon is not being read. Drive CSV is still not runtime truth.",
+    };
+  }
+  if (!input.neonAvailable) {
+    return {
+      preferred: false,
+      runtime: "json",
+      publicCount,
+      minCount,
+      source,
+      reason: "Neon unreachable. Bundled JSON is the cold fallback until the national table is available.",
+    };
+  }
+  if (publicCount <= 0) {
+    return {
+      preferred: false,
+      runtime: "json",
+      publicCount,
+      minCount,
+      source,
+      reason: "Neon has no public rows yet. Seed from centres.json; do not treat Drive / Git CSV as runtime truth.",
+    };
+  }
+  return {
+    preferred: false,
+    runtime: "json",
+    publicCount,
+    minCount,
+    source,
+    reason: `Neon public count (${publicCount.toLocaleString("en-CA")}) is below the national threshold (${minCount.toLocaleString("en-CA")}). JSON is the cold fallback.`,
+  };
+}

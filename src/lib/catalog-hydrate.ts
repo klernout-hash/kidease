@@ -12,6 +12,7 @@ import {
   listingVisibilityOf,
   type ListingVisibility,
 } from "./listing-visibility.ts";
+import { correctCentreNameTypos, normalizeListingSlug } from "./listing-slug.ts";
 
 export type CatalogDaycare = {
   id: string;
@@ -205,8 +206,9 @@ export function hydrateCentre(
   }
   const city = raw.city || "";
   const province = raw.province || "";
-  const name = raw.name;
-  const nameFr = raw.nameFr || name;
+  const name = correctCentreNameTypos(raw.name);
+  const nameFr = correctCentreNameTypos(raw.nameFr || name);
+  const slug = normalizeListingSlug(raw.slug) || raw.slug;
   const amenities = raw.amenities?.includes("licensed") ? raw.amenities : `licensed${raw.amenities ? `,${raw.amenities}` : ""}`;
   const tag =
     raw.tagline ||
@@ -226,7 +228,7 @@ export function hydrateCentre(
   const feeOk = Boolean(fact?.feeConfirmed);
   return {
     id: raw.id,
-    slug: raw.slug,
+    slug,
     name,
     nameFr,
     tagline: tag,

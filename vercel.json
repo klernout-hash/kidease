@@ -70,6 +70,11 @@
       "permanent": false
     },
     { "source": "/explore", "destination": "/search", "permanent": true },
+    {
+      "source": "/daycare/little-fox-child-care-cetnre-103205",
+      "destination": "/daycare/little-fox-child-care-centre-103205",
+      "permanent": true
+    },
     { "source": "/childcare-benefits-program", "destination": "/benefits", "permanent": true },
     { "source": "/meet-the-team", "destination": "/team", "permanent": true },
     { "source": "/how-it-works", "destination": "/#how", "permanent": false }

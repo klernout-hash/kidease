@@ -1,4 +1,4 @@
-import { WINNIPEG, type LatLng } from "./geo";
+import { WINNIPEG, type LatLng } from "./geo.ts";
 
 /** KidEase only lists Canadian centres. Origins outside this box fall back to Winnipeg. */
 export function isInCanada(lat: number, lng: number) {

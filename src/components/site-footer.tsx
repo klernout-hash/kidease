@@ -72,6 +72,8 @@ export function SiteFooter() {
                   {t("saved")}
                 </Item>
                 <Item to="/get-app">{t("getApp")}</Item>
+                {/* Web footer is website-only; same destination as rateKidEaseFromMenu() on www. */}
+                <Item to="/get-app">{t("rateKidEase")}</Item>
               </ul>
             </section>
 

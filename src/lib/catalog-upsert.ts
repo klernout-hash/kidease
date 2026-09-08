@@ -4,6 +4,8 @@
  * Filled phone / email / website are never replaced with blank.
  */
 
+import { correctCentreNameTypos, normalizeListingSlug } from "./listing-slug.ts";
+
 export type CatalogUpsertInput = {
   id: string;
   slug: string;
@@ -130,9 +132,9 @@ export function daycareUpsertParams(d: CatalogUpsertInput): unknown[] {
     typeof d.reviewCount === "number" ? d.reviewCount : (d.reviews?.length ?? 0);
   return [
     d.id,
-    d.slug,
-    d.name,
-    d.nameFr,
+    normalizeListingSlug(d.slug) || d.slug,
+    correctCentreNameTypos(d.name) || d.name,
+    correctCentreNameTypos(d.nameFr) || d.nameFr,
     d.tagline,
     d.taglineFr,
     d.description,

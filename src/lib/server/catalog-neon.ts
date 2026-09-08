@@ -2,11 +2,15 @@ import { dbSource, getSql, type Sql } from "@/lib/db";
 import type { CatalogDaycare } from "@/lib/catalog";
 import {
   catalogSourceFromEnv,
+  describeCatalogRuntime,
   neonCatalogMinCount,
   preferNeonCatalog,
+  type CatalogRuntime,
 } from "@/lib/catalog-source";
+import { splitPhotoList } from "@/lib/listing-photo";
 import { clampRadiusKm } from "@/lib/proximity";
 import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
+import { correctCentreNameTypos, listingSlugLookupKeys, normalizeListingSlug } from "@/lib/listing-slug";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
 export type CatalogDbRow = {
@@ -134,13 +138,11 @@ export function catalogRowRenderable(row: Pick<CatalogDbRow, "id" | "slug">): bo
 }
 
 export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
-  const photos = String(row.photos || "")
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
+  const photos = splitPhotoList(row.photos);
   const id = String(row.id || "").trim();
-  const slug = String(row.slug || "").trim() || id;
-  const name = String(row.name || "").trim() || slug || id || "Licensed centre";
+  const rawSlug = String(row.slug || "").trim();
+  const slug = normalizeListingSlug(rawSlug) || rawSlug || id;
+  const name = correctCentreNameTypos(String(row.name || "").trim()) || slug || id || "Licensed centre";
   const visibility = listingVisibilityOf({
     id,
     slug,
@@ -153,7 +155,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     id,
     slug,
     name,
-    nameFr: row.name_fr || name,
+    nameFr: correctCentreNameTypos(row.name_fr || "") || name,
     tagline: row.tagline || "",
     taglineFr: row.tagline_fr || "",
     description: row.description || "",
@@ -258,14 +260,17 @@ export async function loadNeonCatalogIfPreferred(): Promise<CatalogDaycare[] | n
 
 export async function neonCatalogBySlug(slug: string): Promise<CatalogDaycare | null> {
   if (dbSource !== "neon") return null;
+  const keys = listingSlugLookupKeys(slug);
+  if (keys.length === 0) return null;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
     if (!(await isNeonCatalogPreferred(sql))) return null;
     const rows = await sql.query<CatalogDbRow>(
-      `select ${CATALOG_SELECT} from daycares where slug = $1 limit 1`,
-      [slug],
+      `select ${CATALOG_SELECT} from daycares where slug = any($1::text[]) limit 2`,
+      [keys],
     );
-    return rows[0] && catalogRowRenderable(rows[0]) ? catalogRowToListing(rows[0]) : null;
+    const exact = rows.find((row) => row.slug === slug) ?? rows[0];
+    return exact && catalogRowRenderable(exact) ? catalogRowToListing(exact) : null;
   } catch {
     return null;
   }
@@ -338,6 +343,21 @@ export async function nearbyFromNeonIfPreferred(
 ): Promise<(CatalogDaycare & { distanceKm?: number })[] | null> {
   if (!(await isNeonCatalogPreferred())) return null;
   return queryNeonNearby(origin, radiusKm);
+}
+
+export async function readCatalogHealth(): Promise<CatalogRuntime> {
+  const source = catalogSourceFromEnv();
+  const minCount = neonCatalogMinCount();
+  if (dbSource !== "neon") {
+    return describeCatalogRuntime({ source, neonAvailable: false, publicCount: 0, minCount });
+  }
+  try {
+    const sql = await Promise.race([getSql(), rejectAfter(4000, "catalog-health-timeout")]);
+    const publicCount = await countPublicDaycares(sql);
+    return describeCatalogRuntime({ source, neonAvailable: true, publicCount, minCount });
+  } catch {
+    return describeCatalogRuntime({ source, neonAvailable: false, publicCount: 0, minCount });
+  }
 }
 
 export async function queryNeonNearbyDual(

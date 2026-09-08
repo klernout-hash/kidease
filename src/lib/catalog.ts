@@ -7,6 +7,7 @@ import {
   type RawCentre,
 } from "./catalog-hydrate.ts";
 import { isAdminOnlyListing, isPublicListing } from "./listing-visibility";
+import { listingSlugLookupKeys, rememberSlugAliases } from "./listing-slug";
 import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
 
 export type { CatalogDaycare, RawCentre };
@@ -45,7 +46,7 @@ function buildRawGrid(rows: RawCentre[]) {
 async function ensureRaw() {
   if (rawCentres) return rawCentres;
   rawCentres = await loadRawCentresFromDisk();
-  rawBySlug = new Map(rawCentres.map((d) => [d.slug, d]));
+  rawBySlug = rememberSlugAliases(rawCentres);
   rawById = new Map(rawCentres.map((d) => [d.id, d]));
   buildRawGrid(rawCentres);
   return rawCentres;
@@ -54,7 +55,7 @@ async function ensureRaw() {
 function rememberCatalog(rows: CatalogDaycare[], source: "neon" | "json") {
   cachedCatalog = rows;
   cachedFrom = source;
-  catalogBySlugMap = new Map(rows.map((d) => [d.slug, d]));
+  catalogBySlugMap = rememberSlugAliases(rows);
   catalogByIdMap = new Map(rows.map((d) => [d.id, d]));
   return rows;
 }
@@ -64,7 +65,7 @@ export async function loadJsonCatalog(): Promise<CatalogDaycare[]> {
   if (cachedJsonCatalog) return cachedJsonCatalog;
   await ensureRaw();
   cachedJsonCatalog = await loadJsonCatalogFromDisk();
-  jsonBySlugMap = new Map(cachedJsonCatalog.map((d) => [d.slug, d]));
+  jsonBySlugMap = rememberSlugAliases(cachedJsonCatalog);
   jsonByIdMap = new Map(cachedJsonCatalog.map((d) => [d.id, d]));
   return cachedJsonCatalog;
 }
@@ -151,6 +152,7 @@ async function jsonById(id: string) {
 }
 
 export async function catalogBySlugGet(slug: string) {
+  const keys = listingSlugLookupKeys(slug);
   if (typeof window === "undefined") {
     try {
       const { neonCatalogBySlug } = await import("./server/catalog-neon");
@@ -160,8 +162,13 @@ export async function catalogBySlugGet(slug: string) {
       /* cold fallback */
     }
   }
-  if (catalogBySlugMap.has(slug)) return catalogBySlugMap.get(slug);
-  return jsonBySlug(slug);
+  for (const key of keys) {
+    if (catalogBySlugMap.has(key)) return catalogBySlugMap.get(key);
+  }
+  for (const key of keys) {
+    const hit = await jsonBySlug(key);
+    if (hit) return hit;
+  }
 }
 
 export async function catalogByIdGet(id: string) {

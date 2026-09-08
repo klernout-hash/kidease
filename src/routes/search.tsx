@@ -8,10 +8,12 @@ import { ExploreRails } from "@/components/explore-rails";
 import { DaycareCard } from "@/components/daycare-card";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
-import { reverseGeocode, WINNIPEG } from "@/lib/geo";
+import { reverseGeocode } from "@/lib/geo";
+import { originFromDeviceFix } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { bootSearchOrigin } from "@/lib/search-origin";
+import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence, presenceFreshness } from "@/lib/presence";
 import { readSearchCache, searchCacheKey, writeSearchCache } from "@/lib/search-cache";
@@ -66,11 +68,12 @@ const CompareBar = lazy(() =>
 
 export const Route = createFileRoute("/search")({
   loader: async () => {
+    const origin = await resolveRequestSearchOrigin();
     const items = await withTimeoutFallback(
       searchDaycares({
         data: {
-          lat: WINNIPEG.lat,
-          lng: WINNIPEG.lng,
+          lat: origin.lat,
+          lng: origin.lng,
           radiusKm: 25,
           sort: "distance",
           ageGroup: "any",
@@ -79,7 +82,7 @@ export const Route = createFileRoute("/search")({
       LOADER_SETTLE_MS,
       [] as Card[],
     );
-    return { items };
+    return { items, origin };
   },
   pendingMs: 200,
   pendingComponent: BootPending,
@@ -188,8 +191,8 @@ function SearchPage() {
   }, [view]);
 
   useEffect(() => {
-    void bootSearchOrigin(incoming.q);
-  }, [incoming.q]);
+    void bootSearchOrigin(incoming.q, boot.origin);
+  }, [incoming.q, boot.origin]);
 
   useEffect(() => {
     if (incoming.sort) setSort(incoming.sort);
@@ -415,7 +418,9 @@ function SearchPage() {
     }
     const pos = await getDeviceLocation({ precise: true });
     if (pos) {
-      setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
+      const resolved = originFromDeviceFix(pos, origin);
+      const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
+      setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
       void hapticLight();
     } else {
       setLocationConsent("denied");
@@ -427,7 +432,9 @@ function SearchPage() {
     const pos = await getDeviceLocation({ precise: true });
     if (pos) {
       setLocationConsent("granted");
-      setOrigin({ lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) }, "gps");
+      const resolved = originFromDeviceFix(pos, origin);
+      const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
+      setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
       void hapticLight();
     } else {
       setLocationConsent("denied");
@@ -1137,10 +1144,12 @@ function SearchPage() {
                       activeSlug={active}
                       onSelect={(slug) => setActive(slug)}
                       onRelocate={(pos) => {
-                        setOrigin(
-                          { lat: pos.lat, lng: pos.lng, label: reverseGeocode(pos.lat, pos.lng) },
-                          "gps",
-                        );
+                        const resolved = originFromDeviceFix(pos, origin);
+                        const label =
+                          resolved.source === "gps"
+                            ? reverseGeocode(pos.lat, pos.lng)
+                            : resolved.label;
+                        setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
                         void hapticLight();
                       }}
                       onLocate={() => void geo()}

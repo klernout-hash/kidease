@@ -53,6 +53,8 @@ Listing photos still come from `listingPhotosFor` + `real-storefronts.json` /
 `storefronts.json` at hydrate/seed time. This path does not invent id↔photo maps
 and does not change R2 wiring.
 
+Admin → Daycares shows the live SoT (Neon vs JSON fallback) and the public row count. That banner never treats Drive / Git CSV as runtime truth.
+
 ## Optional master CSV (offline only)
 
 The private 23 927-row master (phones / emails / websites) lives in

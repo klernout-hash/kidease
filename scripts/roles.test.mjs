@@ -35,7 +35,14 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { stripeChargesLive, INTERNAL_LEDGER_LABEL } from "../src/lib/stripe-live.ts";
+import { paymentSourceLabel, paymentSourceOfTruth } from "../src/lib/payment-source.ts";
 import { parseSentryDsn } from "../src/lib/sentry-shared.ts";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+function src(rel) {
+  return readFileSync(join(root, rel), "utf8");
+}
 
 test("listing status words are Waiting / Live / Declined only", () => {
   assert.equal(listingStatusLabel("pending"), "Waiting");
@@ -67,7 +74,10 @@ test("admin role unlocks all four desks; provider also gets parent", () => {
   assert.equal(landingPath(["parent"]), "/parent");
   assert.equal(showDeskSwitcher(["parent"]), false);
   assert.equal(showDeskSwitcher(["provider", "parent"]), true);
-  assert.equal(showDeskSwitcher(["admin", "support", "provider", "parent"]), true);
+  assert.equal(showDeskSwitcher(["admin", "support", "provider", "parent"], "admin"), true);
+  assert.equal(showDeskSwitcher(["admin", "parent"], "parent"), false);
+  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent"), true);
+  assert.deepEqual(headerDesks(["admin", "parent", "provider"], "parent"), ["parent", "provider"]);
   assert.deepEqual(headerDesks(["admin", "support", "provider", "parent"], "admin"), [
     "admin",
     "parent",
@@ -181,6 +191,12 @@ test("only sk_live_ keys count as Stripe live charges", () => {
   assert.equal(stripeChargesLive("sk_test_abc"), false);
   assert.equal(stripeChargesLive("sk_live_abc"), true);
   assert.equal(INTERNAL_LEDGER_LABEL, "Internal ledger (not charged)");
+  assert.equal(paymentSourceOfTruth(false), "internal_ledger");
+  assert.equal(paymentSourceOfTruth(true), "stripe");
+  assert.equal(paymentSourceLabel(false), INTERNAL_LEDGER_LABEL);
+  assert.equal(paymentSourceLabel(true), "Stripe (source of truth)");
+  assert.match(src("src/lib/server/roles.ts"), /paymentSourceLabel/);
+  assert.match(src("src/lib/payment-source.ts"), /does not change Checkout/);
 });
 
 test("Sentry DSN parse is optional and never throws", () => {
