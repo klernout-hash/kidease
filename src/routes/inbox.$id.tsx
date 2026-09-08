@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { inboxSearch, parseInboxView, resolveInboxView } from "@/lib/inbox-view";
-import { readStickyDesk } from "@/lib/desks";
 import { MapPinned, Phone, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
@@ -48,8 +47,8 @@ function ThreadPage() {
   const search = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
-  const { session: desks } = useSessionDesks();
-  const inboxView = resolveInboxView({ search: search.view, sticky: readStickyDesk() });
+  const { session: desks, sticky } = useSessionDesks();
+  const inboxView = resolveInboxView({ search: search.view, sticky });
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [photo, setPhoto] = useState("");

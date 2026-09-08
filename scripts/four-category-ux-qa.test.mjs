@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { GHOST_LISTING } from "../src/lib/ghost-listing.ts";
 import { isAdminOnlyListing, staffQueueRows } from "../src/lib/listing-visibility.ts";
-import { highlightDesk, isDeskNeutralPath } from "../src/lib/desks.ts";
-import { resolveInboxView } from "../src/lib/inbox-view.ts";
+import { accountSearch, highlightDesk, isDeskNeutralPath } from "../src/lib/desks.ts";
+import { inboxViewForDesk, resolveInboxView } from "../src/lib/inbox-view.ts";
 import { adapterStatusHint, adapterStatusLabel } from "../src/lib/province-registry.ts";
 import { CHAT_SCAFFOLD_EMPTY, CHAT_SCAFFOLD_MESSAGE } from "../src/lib/chat-scaffold.ts";
 
@@ -53,6 +53,10 @@ test("Parent: request empty copy, inbox subtitle, and search ↔ child wayfindin
 test("Daycare P1: Messages opens a centre inbox, not Messages with centres", () => {
   const nav = src("src/lib/desk-nav.ts");
   assert.match(nav, /view: "centre"/);
+  assert.match(nav, /view: "family"/);
+  assert.match(nav, /desk: "director"/);
+  assert.match(nav, /desk: "parent"/);
+  assert.match(nav, /desk: "admin"/);
   assert.match(nav, /Parent inquiries \+ tours/);
   const inbox = src("src/lib/server/inbox.ts");
   assert.match(inbox, /view === "centre"/);
@@ -63,7 +67,11 @@ test("Daycare P1: Messages opens a centre inbox, not Messages with centres", () 
   assert.match(list, /desk="daycare"/);
   assert.equal(resolveInboxView({ search: "centre" }), "centre");
   assert.equal(resolveInboxView({ sticky: "provider" }), "centre");
+  assert.equal(resolveInboxView({ search: "family", sticky: "provider" }), "family");
   assert.equal(resolveInboxView({}), "family");
+  assert.equal(inboxViewForDesk("provider"), "centre");
+  assert.equal(inboxViewForDesk("parent"), "family");
+  assert.equal(inboxViewForDesk("admin"), "family");
 });
 
 test("Daycare P2: Account stays on Daycare pill; unclaimed desk is guided onboarding", () => {
@@ -74,12 +82,18 @@ test("Daycare P2: Account stays on Daycare pill; unclaimed desk is guided onboar
   assert.equal(isDeskNeutralPath("/account"), true);
   assert.equal(isDeskNeutralPath("/inbox"), true);
   assert.equal(highlightDesk("/account", "provider"), "provider");
+  assert.equal(highlightDesk("/account", "parent", "provider"), "provider");
   assert.equal(highlightDesk("/provider", "parent"), "provider");
+  assert.deepEqual(accountSearch("provider"), { tab: "profile", desk: "director" });
   const switcher = src("src/components/desk-switcher.tsx");
   assert.match(switcher, /highlightDesk/);
   assert.match(switcher, /inboxSearch/);
   const account = src("src/routes/account.tsx");
   assert.match(account, /accountBackDaycare/);
+  assert.match(account, /accountBackAdmin/);
+  assert.match(account, /AccountDeskFrame/);
+  assert.match(account, /desk="daycare"/);
+  assert.doesNotMatch(account, /<ParentDesk/);
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /ProviderOnboarding/);
   assert.match(provider, /providerOnboardingClaim/);

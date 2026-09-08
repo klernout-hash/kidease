@@ -13,7 +13,7 @@ import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
 import { FeelPhoto, HeroYard } from "@/components/building-photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily, getMyRole } from "@/lib/server/family";
-import type { AppRole } from "@/lib/desks";
+import { homeLandPath, readStickyDesk, type AppRole } from "@/lib/desks";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { BootPending } from "@/components/boot-pending";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
@@ -242,21 +242,15 @@ function Home() {
     } catch {
       /* ignore */
     }
-    if (user && role === "admin") {
-      try {
-        sessionStorage.setItem("kidease-desk-landed", "1");
-      } catch {
-        /* ignore */
-      }
-      void navigate({ to: "/admin" });
-    } else if (user && role === "provider") {
-      try {
-        sessionStorage.setItem("kidease-desk-landed", "1");
-      } catch {
-        /* ignore */
-      }
-      void navigate({ to: "/provider" });
+    if (!user) return;
+    const dest = homeLandPath({ role, sticky: readStickyDesk() });
+    if (!dest) return;
+    try {
+      sessionStorage.setItem("kidease-desk-landed", "1");
+    } catch {
+      /* ignore */
     }
+    void navigate({ to: dest });
   }, [isPending, user, role, navigate]);
 
   const cityChips = (

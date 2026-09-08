@@ -15,6 +15,9 @@ test("session desks are fetched once and shared", () => {
   assert.match(provider, /SessionDesksProvider/);
   assert.match(provider, /getMyDesks/);
   assert.match(provider, /writeStickyDesk/);
+  assert.match(provider, /setSticky/);
+  assert.match(src("src/lib/desks.ts"), /localStorage\.setItem\(STICKY_DESK_KEY/);
+  assert.match(src("src/lib/desks.ts"), /localStorage\.removeItem\(STICKY_DESK_KEY/);
   const auth = src("src/lib/auth/provider.tsx");
   assert.match(auth, /SessionDesksProvider/);
   const switcher = src("src/components/desk-switcher.tsx");
@@ -54,4 +57,5 @@ test("admin desk stays gated by profiles.role + owner email", () => {
   assert.match(switcher, /headerDesks\(session\.desks, session\.role\)/);
   assert.match(switcher, /do not call setRole/);
   assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role\)/);
+  assert.match(src("src/routes/index.tsx"), /homeLandPath/);
 });

@@ -38,7 +38,7 @@ test("waitlist and account guest sign-in keep a next path", () => {
   assert.match(waitlist, /parentLoginSearch\(next \?\? "\/search"\)/);
   const account = src("src/routes/account.tsx");
   assert.match(account, /parentLoginSearch\(/);
-  assert.match(account, /\/account\?tab=saved/);
+  assert.match(account, /\/parent\?tab=saved/);
   assert.match(account, /DeskSkeleton/);
 });
 
@@ -80,7 +80,7 @@ test("listing cards label the heart as compare, not save", () => {
 test("signed-in drawer Account goes to /account, not a stranded /parent default", () => {
   const shell = src("src/components/shell.tsx");
   assert.match(shell, /accountHref="\/account"/);
-  assert.match(shell, /accountSearch=\{\{ tab: "profile" \}\}/);
+  assert.match(shell, /accountSearch=\{accountSearch\(sticky\)\}/);
   const drawer = src("src/components/nav-drawer.tsx");
   assert.match(drawer, /accountHref = "\/account"/);
   assert.match(drawer, /accountSearch/);

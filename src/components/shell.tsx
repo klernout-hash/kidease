@@ -16,7 +16,8 @@ import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
-import { canSeeAdminDesk } from "@/lib/desks";
+import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
+import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
 
@@ -25,6 +26,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const tab = useRouterState({ select: (s) => (s.location.search as { tab?: string }).tab });
   const { user } = useCurrentUserState();
+  const { sticky } = useSessionDesks();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -164,7 +166,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         signedIn={Boolean(user)}
         accountLabel={t("account")}
         accountHref="/account"
-        accountSearch={{ tab: "profile" }}
+        accountSearch={accountSearch(sticky)}
         onSignOut={() => void signOut("/")}
       />
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"}>
@@ -181,20 +183,26 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")}
             />
             <Tab
-              to="/account"
+              to="/parent"
               search={{ tab: "saved" }}
               label={t("saved")}
               icon={Heart}
-              active={onAccount && accountTab === "saved"}
+              active={pathname.startsWith("/parent") && tab === "saved"}
             />
             <Tab
-              to="/account"
+              to="/parent"
               search={{ tab: "enrolled" }}
               label={t("enrolled")}
               icon={ClipboardCheck}
-              active={onAccount && accountTab === "enrolled"}
+              active={pathname.startsWith("/parent") && tab === "enrolled"}
             />
-            <Tab to="/inbox" label={t("messages")} icon={MessageCircle} active={pathname.startsWith("/inbox")} />
+            <Tab
+              to="/inbox"
+              search={inboxSearch(inboxViewForDesk(sticky))}
+              label={t("messages")}
+              icon={MessageCircle}
+              active={pathname.startsWith("/inbox")}
+            />
             <Tab to="/menu" label={locale === "fr" ? "Menu" : "Menu"} icon={Menu} active={pathname.startsWith("/menu")} />
           </div>
         </nav>
@@ -248,9 +256,11 @@ function HeaderProfile({
     active ? "text-primary" : "text-muted",
   );
 
+  const { sticky } = useSessionDesks();
+
   if (signedIn) {
     return (
-      <Link to="/account" search={{ tab: "profile" }} className={triggerClass} aria-label={profileLabel}>
+      <Link to="/account" search={accountSearch(sticky)} className={triggerClass} aria-label={profileLabel}>
         <ProfileAvatar userId={userId} fallback={image} name={name} size="sm" />
         <span className="text-[9px] font-medium tracking-wide">{profileLabel}</span>
       </Link>
@@ -317,7 +327,7 @@ function AccountMenu({
 }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
-  const { session } = useSessionDesks();
+  const { session, sticky, setSticky } = useSessionDesks();
   const desks = session?.desks ?? [];
 
   useEffect(() => {
@@ -366,7 +376,7 @@ function AccountMenu({
           <Link
             role="menuitem"
             to="/account"
-            search={{ tab: "profile" }}
+            search={accountSearch(sticky)}
             onClick={() => setOpen(false)}
             className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
           >
@@ -376,7 +386,10 @@ function AccountMenu({
             <Link
               role="menuitem"
               to="/parent"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setSticky("parent");
+                setOpen(false);
+              }}
               className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
             >
               Parent desk
@@ -386,7 +399,10 @@ function AccountMenu({
             <Link
               role="menuitem"
               to="/provider"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setSticky("provider");
+                setOpen(false);
+              }}
               className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
             >
               Daycare desk
@@ -396,7 +412,10 @@ function AccountMenu({
             <Link
               role="menuitem"
               to="/admin"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setSticky("admin");
+                setOpen(false);
+              }}
               className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
             >
               Admin desk
@@ -406,7 +425,10 @@ function AccountMenu({
             <Link
               role="menuitem"
               to="/support"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setSticky("support");
+                setOpen(false);
+              }}
               className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
             >
               Support desk

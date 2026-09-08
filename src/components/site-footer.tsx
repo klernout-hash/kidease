@@ -68,7 +68,7 @@ export function SiteFooter() {
                 <Item to="/benefits">{t("benefitsTab")}</Item>
                 <Item to="/tour-checklist">{t("tourChecklist")}</Item>
                 <Item to="/compare">{t("compare")}</Item>
-                <Item to="/account" search={{ tab: "saved" }}>
+                <Item to="/parent" search={{ tab: "saved" }}>
                   {t("saved")}
                 </Item>
                 <Item to="/get-app">{t("getApp")}</Item>
