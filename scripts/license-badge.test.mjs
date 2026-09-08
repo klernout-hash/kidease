@@ -168,3 +168,16 @@ test("UI and docs stay honest: tooltip, aria, no scrape on listing load", () => 
   assert.match(src("src/lib/copy.ts"), /trustLicensedMatchedMbTip/);
   assert.match(src("src/lib/catalog-seed.ts"), /persistLocalLicenseMatches/);
 });
+
+test("guest Explore cards hide Catalogue-matched and keep high-contrast titles", () => {
+  const trust = src("src/lib/trust.ts");
+  assert.match(trust, /export function isCatalogueMatchedBadge/);
+  assert.match(trust, /surface === "card"/);
+  assert.match(trust, /isCatalogueMatchedBadge\(license\) \? \[\] : \[license\]/);
+  assert.match(src("src/lib/listing-card.ts"), /isCatalogueMatchedBadge\(license\)/);
+  const card = src("src/components/daycare-card.tsx");
+  assert.match(card, /isCatalogueMatchedBadge\(license\)/);
+  assert.match(card, /text-fg dark:text-white/);
+  assert.doesNotMatch(card, /space-y-px text-\[#222\]/);
+  assert.match(src("src/components/trust-badge.tsx"), /if \(!badges\.length\) return null;/);
+});

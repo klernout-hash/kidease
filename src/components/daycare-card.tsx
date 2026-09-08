@@ -14,6 +14,7 @@ import { feeProgramBadgeKey } from "@/lib/licensing";
 import { listingPill } from "@/lib/listing-card";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
+import { isCatalogueMatchedBadge, trustBadgesFor } from "@/lib/trust";
 import type { CopyKey } from "@/lib/copy";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
@@ -60,6 +61,7 @@ export const DaycareCard = memo(function DaycareCard({
   }, [item.id]);
 
   const license = publicLicenseBadge(item);
+  const cardTrust = trustBadgesFor(item, "card");
   const pillKey = listingPill(item)?.labelKey;
   const pill = pillKey ? t(pillKey as CopyKey) : "";
   const showLicensedChip = Boolean(license && pillKey !== license.labelKey);
@@ -102,7 +104,7 @@ export const DaycareCard = memo(function DaycareCard({
                 {item.priority ? `✦ ${pill}` : pill}
               </span>
             ) : null}
-            {showLicensedChip && license ? (
+            {showLicensedChip && license && !isCatalogueMatchedBadge(license) ? (
               <span className="pointer-events-auto">
                 <TrustBadge badge={license} compact />
               </span>
@@ -118,43 +120,47 @@ export const DaycareCard = memo(function DaycareCard({
           ) : null}
         </div>
 
-        <div className="mt-2 space-y-px text-[#222]">
+        <div className="mt-2 space-y-px text-fg">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="min-w-0 truncate text-[13px] font-semibold leading-[1.25] tracking-[-0.2px]">{name}</h3>
+            <h3 className="min-w-0 truncate text-[13px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
+              {name}
+            </h3>
             {item.parentReviewCount && item.parentReviewCount > 0 && (item.parentRatingX10 ?? 0) > 0 ? (
               <span className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums" title={t("parentReviews")}>
-                <Star className="size-2.5 fill-[#222] text-[#222]" strokeWidth={0} />
+                <Star className="size-2.5 fill-fg text-fg dark:fill-white dark:text-white" strokeWidth={0} />
                 <span className="font-semibold">{((item.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
-                <span className="font-normal text-[#6A6A6A]">({item.parentReviewCount})</span>
+                <span className="font-normal text-muted">({item.parentReviewCount})</span>
               </span>
             ) : item.ratingX10 > 0 && item.reviewCount > 0 ? (
               <span className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums">
-                <Star className="size-2.5 fill-[#222] text-[#222]" strokeWidth={0} />
+                <Star className="size-2.5 fill-fg text-fg dark:fill-white dark:text-white" strokeWidth={0} />
                 <span className="font-semibold">{(item.ratingX10 / 10).toFixed(2)}</span>
-                <span className="font-normal text-[#6A6A6A]">({item.reviewCount})</span>
+                <span className="font-normal text-muted">({item.reviewCount})</span>
               </span>
             ) : null}
           </div>
-          <div
-            className="pt-0.5"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <TrustSignals item={item} surface="card" compact />
-          </div>
+          {cardTrust.length ? (
+            <div
+              className="pt-0.5"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <TrustSignals item={item} surface="card" compact />
+            </div>
+          ) : null}
           {showDistance ? (
-            <p className="truncate text-[13px] font-normal leading-4 text-[#6A6A6A]">
+            <p className="truncate text-[13px] font-normal leading-4 text-muted">
               {item.city}
               {away ? ` · ${away}` : ""}
             </p>
           ) : (
-            <p className="truncate text-[13px] font-normal leading-4 text-[#6A6A6A]">{item.city}</p>
+            <p className="truncate text-[13px] font-normal leading-4 text-muted">{item.city}</p>
           )}
-          {line3 ? <p className="truncate text-[13px] font-normal leading-4 text-[#6A6A6A]">{line3}</p> : null}
+          {line3 ? <p className="truncate text-[13px] font-normal leading-4 text-muted">{line3}</p> : null}
           {incompleteLabel ? (
-            <p className="truncate text-[12px] font-normal leading-4 text-[#6A6A6A]">{incompleteLabel}</p>
+            <p className="truncate text-[12px] font-normal leading-4 text-muted">{incompleteLabel}</p>
           ) : null}
           {spotsKnown || freshnessText || photoText || typeof item.matchScore === "number" || (item.urgencyScore ?? 0) > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
@@ -168,7 +174,7 @@ export const DaycareCard = memo(function DaycareCard({
           {priceAmount ? (
             <p className="pt-0.5 text-[13px] leading-4 tabular-nums">
               <span className="font-semibold">{priceAmount}</span>
-              <span className="font-normal text-[#6A6A6A]">{priceUnit}</span>
+              <span className="font-normal text-muted">{priceUnit}</span>
             </p>
           ) : null}
         </div>
