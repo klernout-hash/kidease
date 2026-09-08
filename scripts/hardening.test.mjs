@@ -123,7 +123,7 @@ test("account oracle stays generic", () => {
   assert.match(src(".github/workflows/ci.yml"), /npx tsc --noEmit/);
   assert.match(src(".github/workflows/ci.yml"), /npm test/);
   assert.match(src(".github/workflows/ci.yml"), /npx eslint/);
-  assert.match(src("src/components/site-footer.tsx"), /SUPPORT_INBOX_EMAIL/);
+  assert.doesNotMatch(src("src/components/site-footer.tsx"), /SUPPORT_INBOX_EMAIL/);
 });
 
 test("booking pay helper copy stays honest", () => {

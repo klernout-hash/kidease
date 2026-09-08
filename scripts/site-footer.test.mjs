@@ -43,17 +43,20 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.match(copy, /operatorSignIn: "Connexion opérateur"/);
 });
 
-test("Support column drops delete-account and keeps the support inbox", () => {
+test("Support column drops the inbox email and uses Contact Us copy", () => {
   assert.match(footer, /t\("helpTitle"\)/);
-  assert.match(footer, /t\("contact"\)/);
+  assert.match(footer, /t\("contactTitle"\)/);
+  assert.match(footer, /to="\/contact"/);
   assert.match(footer, />FAQ</);
   assert.match(footer, /t\("howItWorksCta"\)/);
   assert.match(footer, /t\("privacy"\)/);
   assert.match(footer, /t\("terms"\)/);
   assert.match(footer, /t\("cookies"\)/);
   assert.doesNotMatch(footer, /deleteAccount/);
-  assert.match(footer, /SUPPORT_INBOX_EMAIL/);
-  assert.match(footer, /mailto:/);
+  assert.doesNotMatch(footer, /SUPPORT_INBOX_EMAIL/);
+  assert.doesNotMatch(footer, /mailto:/);
+  assert.match(copy, /contactTitle: "Contact Us"/);
+  assert.match(copy, /contactTitle: "Nous joindre"/);
 });
 
 test("footer CSS clusters columns instead of stretching full width", () => {
