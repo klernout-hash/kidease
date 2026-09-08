@@ -798,7 +798,7 @@ function SearchPage() {
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>
-            <p className="mt-0.5 text-sm text-muted" aria-live="polite">
+            <p className="mt-0.5 min-h-5 truncate text-sm text-muted" aria-live="polite">
               {items === null ? (
                 <span className="inline-flex items-center gap-2">
                   <span className="ke-skel inline-block h-3.5 w-28" aria-hidden="true" />
@@ -814,11 +814,18 @@ function SearchPage() {
                 </>
               )}
             </p>
-            {items !== null && fabric.live > 0 ? (
-              <p className="mt-1 text-xs font-medium text-ok">{t("liveInArea").replace("{n}", String(fabric.live))}</p>
-            ) : catalog.length > 0 ? (
-              <p className="mt-1 text-xs font-medium text-muted">{t("liveVsAllNone").replace("{n}", String(catalog.length))}</p>
-            ) : null}
+            <p
+              className={cn(
+                "mt-1 min-h-4 truncate text-xs font-medium",
+                items !== null && fabric.live > 0 ? "text-ok" : "text-muted",
+              )}
+            >
+              {items !== null && fabric.live > 0
+                ? t("liveInArea").replace("{n}", String(fabric.live))
+                : catalog.length > 0
+                  ? t("liveVsAllNone").replace("{n}", String(catalog.length))
+                  : null}
+            </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
             <Link
@@ -1110,7 +1117,13 @@ function SearchPage() {
           </div>
         ) : null}
 
-        <div className={cn("mt-2", refreshing && "opacity-70")}>
+        <div
+          className={cn(
+            "ke-search-results mt-2 contain-layout",
+            view !== "map" && "min-h-[22rem]",
+            refreshing && "opacity-70",
+          )}
+        >
           {view === "map" ? (
             mapEnabled ? (
               <div className="mt-4 space-y-3">
@@ -1150,12 +1163,19 @@ function SearchPage() {
               </div>
             ) : null
           ) : items === null ? (
-            <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="space-y-2" aria-hidden="true">
-                  <div className="ke-skel aspect-[20/19] w-full" />
-                  <div className="ke-skel h-3.5 w-4/5" />
-                  <div className="ke-skel h-3 w-1/2" />
+            <div className="mt-4 space-y-8" aria-busy="true" aria-label={t("searchCountLoading")}>
+              {Array.from({ length: 2 }).map((_, rail) => (
+                <div key={rail} aria-hidden="true">
+                  <div className="ke-skel mb-3 h-7 w-44" />
+                  <div className="ke-rail">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="ke-rail-card space-y-2">
+                        <div className="ke-skel aspect-[20/19] w-full" />
+                        <div className="ke-skel h-3.5 w-4/5" />
+                        <div className="ke-skel h-3 w-1/2" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

@@ -38,7 +38,7 @@ export function ListingRail({
       ) : (
         <div className={cn("mb-3 flex items-center justify-between gap-3", !hideTitle && "md:mb-4")}>
           {hideTitle ? <h2 className="sr-only">{title}</h2> : (
-            <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
+            <h2 className="min-h-7 min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:min-h-8 md:text-[1.45rem]">
               {title}
             </h2>
           )}
