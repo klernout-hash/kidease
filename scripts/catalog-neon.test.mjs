@@ -181,6 +181,19 @@ describe("seed script smoke", () => {
   });
 });
 
+describe("null catalog rows stay renderable", () => {
+  it("coerces a missing name and skips rows without id or slug", () => {
+    const neon = src("src/lib/server/catalog-neon.ts");
+    const utils = src("src/lib/utils.ts");
+    assert.match(utils, /value: string \| null \| undefined/);
+    assert.match(utils, /String\(value \?\? ""\)/);
+    assert.match(neon, /export function catalogRowRenderable/);
+    assert.match(neon, /rows\.filter\(catalogRowRenderable\)/);
+    assert.match(neon, /String\(row\.name \|\| ""\)\.trim\(\) \|\| slug/);
+    assert.match(neon, /Licensed centre/);
+  });
+});
+
 describe("runtime SoT prefers Neon when populated", () => {
   it("catalog and nearby fall back to JSON only when Neon is empty", () => {
     const catalog = src("src/lib/catalog.ts");

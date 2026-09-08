@@ -16,7 +16,7 @@ const databaseUrl =
  */
 export const dbSource: DbSource = databaseUrl
   ? "neon"
-  : process.env.VERCEL
+  : typeof process !== "undefined" && process.env.VERCEL
     ? "none"
     : "pglite";
 

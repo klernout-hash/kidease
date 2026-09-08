@@ -106,3 +106,20 @@ test("send paths and UI capture consent without enabling FEATURE_SMS", () => {
   assert.match(src("src/lib/copy.ts"), /caslLegend: "CASL consent"/);
   assert.match(src("src/lib/copy.ts"), /caslLegend: "Consentement LCAP"/);
 });
+
+test("client-reachable CASL server-fns do not statically import node:crypto", () => {
+  const api = src("src/lib/server/casl-consent-api.ts");
+  const server = src("src/lib/server/casl-consent.ts");
+  assert.match(api, /await import\("\.\/casl-consent"\)/);
+  assert.doesNotMatch(api, /casl-token/);
+  assert.doesNotMatch(api, /from ["']node:crypto["']/);
+  assert.match(server, /casl-token/);
+  assert.doesNotMatch(server, /createServerFn/);
+  assert.match(src("src/routes/account.tsx"), /casl-consent-api/);
+  assert.match(src("src/components/parent-plus.tsx"), /casl-consent-api/);
+  assert.match(src("src/routes/pay.bill.\$billId.tsx"), /casl-consent-api/);
+  assert.match(src("src/routes/unsubscribe.tsx"), /casl-consent-api/);
+  assert.doesNotMatch(src("src/routes/account.tsx"), /from "@\/lib\/server\/casl-consent"/);
+  assert.doesNotMatch(src("src/routes/api/unsubscribe.ts"), /casl-consent-api/);
+  assert.match(src("src/routes/api/unsubscribe.ts"), /from "@\/lib\/server\/casl-consent"/);
+});

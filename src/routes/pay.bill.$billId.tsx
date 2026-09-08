@@ -16,7 +16,7 @@ import { type Bill, billDollars } from "@/lib/bill";
 import { WalletMethodHints } from "@/components/wallet-methods";
 import { openStripeCheckout } from "@/lib/wallets";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
-import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent";
+import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
 
 export const Route = createFileRoute("/pay/bill/$billId")({
