@@ -625,6 +625,11 @@ export const copy = {
     onYourPhoneLead: "KidEase on iPhone — home, map search, a listing, and sign in.",
     terms: "Terms",
     cookies: "Cookies",
+    cookieConsentTitle: "Cookies and analytics",
+    cookieConsentBody:
+      "Essential cookies keep you signed in and remember your search. They are required. Optional analytics (PostHog) records page views and a privacy-masked session replay so we can improve KidEase — not ads, and not required to use the site.",
+    cookieConsentEssential: "Essential",
+    cookieConsentAllow: "Allow analytics",
     support: "Support",
     helpKicker: "Help",
     helpTitle: "Help Centre",
@@ -1776,6 +1781,11 @@ export const copy = {
     onYourPhoneLead: "KidEase sur iPhone — accueil, carte, une fiche, et connexion.",
     terms: "Conditions",
     cookies: "Témoins",
+    cookieConsentTitle: "Témoins et analytique",
+    cookieConsentBody:
+      "Les témoins essentiels vous gardent connecté et mémorisent la recherche. Ils sont nécessaires. L’analytique facultative (PostHog) enregistre les pages vues et un replay de session masqué pour améliorer KidEase — pas de publicité, et pas exigé pour utiliser le site.",
+    cookieConsentEssential: "Essentiel",
+    cookieConsentAllow: "Autoriser l’analytique",
     support: "Soutien",
     helpKicker: "Aide",
     helpTitle: "Centre d’aide",

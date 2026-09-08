@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
+import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { Toaster } from "sonner";
@@ -125,6 +126,7 @@ export const Route = createRootRoute({
           <PostHogBoot />
           <RoleBoot />
           <Outlet />
+          <CookieConsentBanner />
           <Toaster
             position="top-center"
             richColors={false}

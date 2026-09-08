@@ -2,6 +2,7 @@ import type { CapturedNetworkRequest, PostHog, PostHogConfig } from "posthog-js"
 import {
   analyticsConsentAllowsReplay,
   readAnalyticsConsent,
+  shouldStartPostHog,
   type AnalyticsConsent,
 } from "./analytics-consent.ts";
 import { envFlagOn, envFlagSet } from "./flags.ts";
@@ -80,8 +81,9 @@ export type SessionReplayGateInput = {
 
 /**
  * Whether this browser may start a recording.
- * Default on for web when the project key is set. Off when consent is denied,
- * the env kill switch is 0, or we are in Capacitor (unless native replay is on).
+ * Default on for web when the project key is set and the visitor allowed
+ * analytics. Off when consent is unset or denied, the env kill switch is 0,
+ * or we are in Capacitor (unless native replay is on).
  */
 export function sessionReplayEnabled(input: SessionReplayGateInput = {}): boolean {
   const env = input.env ?? viteEnv();
@@ -90,6 +92,7 @@ export function sessionReplayEnabled(input: SessionReplayGateInput = {}): boolea
   }
   const native = input.native ?? (typeof window !== "undefined" && isNative());
   if (native && !envFlagOn(env[POSTHOG_REPLAY_NATIVE_ENV])) return false;
+  if (native) return true;
   const consent = input.consent ?? readAnalyticsConsent();
   return analyticsConsentAllowsReplay(consent);
 }
@@ -119,8 +122,8 @@ export function maskCapturedNetworkRequest(
 
 /**
  * Apply consent + env + `session-replay-web` after init or flag reload.
- * Denied consent opts out of capture. A missing PostHog flag does not block
- * sampled replay (fully on by default).
+ * Essential (denied) opts out of capture on the website. A missing PostHog
+ * flag does not block sampled replay once the visitor has allowed analytics.
  */
 export function applyPostHogRecordingGate(ph?: PostHog | null): void {
   const clientPh = ph ?? client;
@@ -228,6 +231,7 @@ export function startPostHog(): void {
   if (started || typeof window === "undefined") return;
   const key = posthogProjectKey();
   if (!key) return;
+  if (!shouldStartPostHog()) return;
   started = true;
   void import("posthog-js")
     .then(({ default: posthog }) => {
