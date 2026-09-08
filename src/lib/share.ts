@@ -13,6 +13,16 @@ export type SharePayload = {
 
 export type ShareOutcome = "shared" | "copied" | "cancelled" | "failed";
 
+export type ShareFeedbackKey = "shareStarted" | "linkCopied" | "shareCopiedFallback" | "shareFailed";
+
+/** Toast / inline copy for a share attempt. Cancel stays silent. */
+export function shareFeedbackKey(outcome: ShareOutcome): ShareFeedbackKey | null {
+  if (outcome === "shared") return "shareStarted";
+  if (outcome === "copied") return "shareCopiedFallback";
+  if (outcome === "failed") return "shareFailed";
+  return null;
+}
+
 export function listingShareUrl(slug: string): string {
   const clean = slug.trim().replace(/^\/+|\/+$/g, "");
   const segment = clean.split("/").filter(Boolean).pop() ?? "";

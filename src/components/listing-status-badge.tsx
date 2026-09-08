@@ -42,12 +42,21 @@ export function LedgerHonesty({
   stripeLive,
   className,
   surface = "money",
+  ready = true,
 }: {
   stripeLive: boolean;
   className?: string;
   surface?: LedgerSurface;
+  ready?: boolean;
 }) {
   const { t } = useCopy();
+  if (!ready) {
+    return (
+      <p className={cn("text-sm text-muted", className)} aria-busy="true">
+        {t("moneyModeLoading")}
+      </p>
+    );
+  }
   const text =
     surface === "parent"
       ? stripeLive

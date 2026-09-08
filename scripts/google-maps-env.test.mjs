@@ -156,6 +156,18 @@ describe("listing map uses browser Google Maps key, not Carto/Leaflet", () => {
     assert.doesNotMatch(src, /mapId:\s*["'`]/);
   });
 
+  it("fits the map to the search radius, not a city-wide pad", () => {
+    const maps = read("src/lib/maps.ts");
+    const view = read("src/components/map-view.tsx");
+    assert.match(maps, /if \(radiusKm <= 18\) return 11;/);
+    assert.match(maps, /if \(radiusKm <= 32\) return 10;/);
+    assert.match(maps, /MAP_RADIUS_FIT_PAD = \{ top: 72, right: 64, bottom: 28, left: 16 \}/);
+    assert.match(view, /bboxFromRadius/);
+    assert.match(view, /MAP_RADIUS_FIT_PAD/);
+    assert.match(view, /mapSearchRadius/);
+    assert.doesNotMatch(view, /bottom:\s*240/);
+  });
+
   it("does not constrain Google Maps raster tile images", () => {
     const css = read("src/styles.css");
     assert.match(css, /\.gm-style img[\s\S]*max-width:\s*none\s*!important/);

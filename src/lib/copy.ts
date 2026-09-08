@@ -87,6 +87,8 @@ export const copy = {
     presenceFresh: "Location just updated",
     presenceStale: "Using last known location",
     liveInArea: "{n} live on KidEase in this area",
+    searchCountLoading: "Loading centres…",
+    mapSearchRadius: "{n} {u} search",
     locationPh: "Address, city, or postal code",
     anchorHome: "Near you",
     anchorWork: "Work",
@@ -449,6 +451,11 @@ export const copy = {
     parentPlusRehearsal: "Parent Plus Checkout stays off until Stripe live keys are on. Nothing will be charged. This is not a centre deposit.",
     ledgerLiveMoney: "Stripe Checkout is live for centre bills. KidEase keeps about 3% on each centre bill (the rest goes to the daycare).",
     ledgerOffMoney: "Card payments are not live yet. Amounts you see here are not charged until KidEase turns on live payments.",
+    moneyModeLoading: "Checking whether Stripe Checkout is live…",
+    newBillNeedFamily: "New bill stays off until a family requests a spot at this centre.",
+    newBillNeedAmount: "Enter an amount in CAD to create a bill.",
+    newBillLiveHint:
+      "Stripe Checkout is live for sent bills (~3% KidEase fee). New bill only drafts an invoice — parents pay after you Send.",
     ledgerLiveParent:
       "Parent Plus Checkout and centre-bill Checkout are live. Booking card deposits are not charged on the deposit page.",
     ledgerOffParent:
@@ -607,6 +614,8 @@ export const copy = {
     shareListingAria: "Share this centre",
     shareListingText: "See this licensed centre on KidEase",
     linkCopied: "Link copied",
+    shareStarted: "Share started",
+    shareCopiedFallback: "Link copied — share isn’t available on this browser",
     shareDone: "Shared",
     shareFailed: "Could not share",
     rateKidEase: "Rate KidEase",
@@ -1255,6 +1264,8 @@ export const copy = {
     presenceFresh: "Position à jour",
     presenceStale: "Dernière position connue",
     liveInArea: "{n} actifs sur KidEase dans ce secteur",
+    searchCountLoading: "Chargement des centres…",
+    mapSearchRadius: "Recherche {n} {u}",
     locationPh: "Adresse, ville ou code postal",
     anchorHome: "Près de vous",
     anchorWork: "Travail",
@@ -1618,6 +1629,11 @@ export const copy = {
     parentPlusRehearsal: "Le checkout Plus parents reste fermé tant que les clés Stripe live ne sont pas actives. Rien ne sera débité. Ce n’est pas un dépôt de centre.",
     ledgerLiveMoney: "Stripe Checkout est en direct pour les factures des centres. KidEase retient environ 3 % de chaque facture (le reste va à la garderie).",
     ledgerOffMoney: "Les paiements par carte ne sont pas encore en direct. Les montants ici ne sont pas débités tant que KidEase n’active pas les paiements.",
+    moneyModeLoading: "Vérification de Stripe Checkout…",
+    newBillNeedFamily: "Nouvelle facture reste fermée jusqu’à ce qu’une famille demande une place à ce centre.",
+    newBillNeedAmount: "Entrez un montant en CAD pour créer une facture.",
+    newBillLiveHint:
+      "Stripe Checkout est en direct pour les factures envoyées (frais KidEase d’environ 3 %). Nouvelle facture ne fait que brouillonner — les parents paient après Envoyer.",
     ledgerLiveParent:
       "Le checkout Plus parents et le checkout des factures de centre sont en direct. Les dépôts par carte de réservation ne sont pas débités sur la page de dépôt.",
     ledgerOffParent:
@@ -1776,6 +1792,8 @@ export const copy = {
     shareListingAria: "Partager ce centre",
     shareListingText: "Voir ce centre permis sur KidEase",
     linkCopied: "Lien copié",
+    shareStarted: "Partage lancé",
+    shareCopiedFallback: "Lien copié — le partage n’est pas disponible dans ce navigateur",
     shareDone: "Partagé",
     shareFailed: "Impossible de partager",
     rateKidEase: "Évaluer KidEase",

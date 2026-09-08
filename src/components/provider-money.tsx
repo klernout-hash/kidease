@@ -17,6 +17,7 @@ export function ProviderMoneyPanel() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [parties, setParties] = useState<BillParty[]>([]);
   const [stripeLive, setStripeLive] = useState(false);
+  const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [form, setForm] = useState({
     partyKey: "",
@@ -33,6 +34,7 @@ export function ProviderMoneyPanel() {
     setBills(list.bills);
     setStripeLive(list.stripeLive);
     setParties(people);
+    setReady(true);
     if (!form.partyKey && people[0]) {
       const first = people[0];
       setForm((cur) => ({
@@ -62,16 +64,13 @@ export function ProviderMoneyPanel() {
       <div>
         <h2 className="font-display text-2xl">Money</h2>
         <p className="mt-1 text-sm text-muted">{t("moneyDeskLead")}</p>
-        <LedgerHonesty stripeLive={stripeLive} className="mt-2" />
-        {!stripeLive ? (
+        <LedgerHonesty stripeLive={stripeLive} className="mt-2" ready={ready} />
+        {ready && !stripeLive ? (
           <p className="mt-2 text-sm text-muted">
             You can draft and Send bills so both desks can rehearse. Pay stays off — internal ledger (not charged).
           </p>
-        ) : (
-          <p className="mt-2 text-sm text-muted">
-            Live charges include a KidEase platform fee of about 3%. The parent pays the bill total; you receive the rest.
-          </p>
-        )}
+        ) : null}
+        {ready && stripeLive ? <p className="mt-2 text-sm text-muted">{t("newBillLiveHint")}</p> : null}
       </div>
 
       <form
@@ -187,9 +186,11 @@ export function ProviderMoneyPanel() {
           </p>
         ) : null}
         <div className="mt-4">
-          <Button type="submit" disabled={!party || amountCad < 1 || busy === "create"}>
+          <Button type="submit" disabled={!ready || !party || amountCad < 1 || busy === "create"}>
             {t("newBill")}
           </Button>
+          {ready && !party ? <p className="mt-2 text-sm text-muted">{t("newBillNeedFamily")}</p> : null}
+          {ready && party && amountCad < 1 ? <p className="mt-2 text-sm text-muted">{t("newBillNeedAmount")}</p> : null}
         </div>
         {/* Deposit CTA from an offered spot can deep-link here later (/provider?desk=money). */}
       </form>

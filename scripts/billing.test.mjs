@@ -156,8 +156,19 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   const money = src("src/components/provider-money.tsx");
   assert.match(money, /youReceive/);
   assert.match(money, /internal ledger/);
-  assert.match(money, /about 3%/);
+  assert.match(money, /newBillLiveHint/);
+  assert.match(money, /newBillNeedFamily/);
+  assert.match(money, /newBillNeedAmount/);
+  assert.match(money, /ready=\{ready\}/);
   assert.doesNotMatch(money, /Stripe Connect/);
+  assert.doesNotMatch(money, /Live charges include a KidEase platform fee of about 3%/);
+
+  const honesty = src("src/components/listing-status-badge.tsx");
+  assert.match(honesty, /moneyModeLoading/);
+  assert.match(honesty, /if \(!ready\)/);
+  const copy = src("src/lib/copy.ts");
+  assert.match(copy, /moneyModeLoading: "Checking whether Stripe Checkout is live…"/);
+  assert.match(copy, /newBillLiveHint:/);
 
   const checkout = src("src/lib/server/billing.ts");
   assert.match(checkout, /stripeChargesLive\(\)/);

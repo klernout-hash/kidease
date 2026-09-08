@@ -1,29 +1,39 @@
+import { useState } from "react";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { hapticLight } from "@/lib/native";
-import { appSharePayload, listingSharePayload, shareOrCopy, type SharePayload } from "@/lib/share";
+import {
+  appSharePayload,
+  listingSharePayload,
+  shareFeedbackKey,
+  shareOrCopy,
+  type SharePayload,
+} from "@/lib/share";
 import { noteHappyMoment } from "@/lib/store-review";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
 export type ShareAppearance = "icon" | "labeled" | "menu" | "nav" | "drawer" | "photo" | "row";
 
+const FEEDBACK_MS = 2800;
+
 async function runShare(
   payload: SharePayload,
-  messages: { copied: string; shared: string; failed: string },
-): Promise<void> {
+  messages: { started: string; copied: string; failed: string },
+): Promise<"shared" | "copied" | "failed" | "cancelled"> {
   const outcome = await shareOrCopy(payload);
   if (outcome === "copied") {
     toast.success(messages.copied);
-    return;
+    return outcome;
   }
   if (outcome === "shared") {
+    toast.success(messages.started);
     void hapticLight();
     noteHappyMoment("share");
-    toast.success(messages.shared);
-    return;
+    return outcome;
   }
   if (outcome === "failed") toast.error(messages.failed);
+  return outcome;
 }
 
 function ShareControl({
@@ -42,11 +52,21 @@ function ShareControl({
   onDone?: () => void;
 }) {
   const { t } = useCopy();
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   async function onShare(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     e.stopPropagation();
-    await runShare(payload, { copied: t("linkCopied"), shared: t("shareDone"), failed: t("shareFailed") });
+    const outcome = await runShare(payload, {
+      started: t("shareStarted"),
+      copied: t("shareCopiedFallback"),
+      failed: t("shareFailed"),
+    });
+    const key = shareFeedbackKey(outcome);
+    if (key) {
+      setFeedback(t(key));
+      window.setTimeout(() => setFeedback(null), FEEDBACK_MS);
+    }
     onDone?.();
   }
 
@@ -57,12 +77,15 @@ function ShareControl({
         ? "size-5"
         : "size-4";
 
+  const shown = feedback ?? label;
+
   return (
     <button
       type="button"
       role={appearance === "menu" ? "menuitem" : undefined}
       onClick={(e) => void onShare(e)}
-      aria-label={ariaLabel}
+      aria-label={feedback ? feedback : ariaLabel}
+      aria-live="polite"
       className={cn(
         appearance === "icon" && "grid size-11 place-items-center rounded-full text-fg hover:bg-surface-2",
         appearance === "photo" && "grid size-11 place-items-center rounded-full",
@@ -79,13 +102,13 @@ function ShareControl({
     >
       {appearance === "menu" || appearance === "nav" || appearance === "drawer" || appearance === "row" ? (
         <>
-          {label}
+          {shown}
           {appearance === "row" ? <Share2 className="size-4 text-muted" strokeWidth={1.7} aria-hidden /> : null}
         </>
       ) : (
         <>
           <Share2 className={iconClass} strokeWidth={1.7} aria-hidden />
-          {appearance === "labeled" ? <span>{label}</span> : null}
+          {appearance === "labeled" ? <span>{shown}</span> : null}
         </>
       )}
     </button>

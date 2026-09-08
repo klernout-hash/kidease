@@ -128,6 +128,38 @@ export function preferOsShare(): boolean {
   return /Android|iPhone|iPad|iPod/i.test(ua) || ipadOs;
 }
 
+export type WebShareData = { title?: string; text?: string; url?: string };
+
+/** True when the browser exposes a usable Web Share target for this payload. */
+export function canUseWebShare(data?: WebShareData): boolean {
+  if (typeof navigator === "undefined" || typeof navigator.share !== "function") return false;
+  if (data && typeof navigator.canShare === "function") {
+    try {
+      if (!navigator.canShare(data)) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Desktop Chrome/Edge often expose `navigator.share` with no visible sheet.
+ * Prefer Capacitor, `preferOsShare` (mobile UA / iPadOS), or coarse/touch Web Share.
+ */
+export function shouldOfferWebShare(data?: WebShareData): boolean {
+  if (isNative()) return true;
+  if (!canUseWebShare(data)) return false;
+  if (preferOsShare()) return true;
+  if (typeof window === "undefined") return false;
+  try {
+    if (window.matchMedia("(pointer: coarse)").matches) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
 export async function shareText(title: string, text: string, url?: string): Promise<ShareAttempt> {
   try {
     if (isNative()) {
@@ -135,7 +167,7 @@ export async function shareText(title: string, text: string, url?: string): Prom
       await Share.share({ title, text, url });
       return "shared";
     }
-    if (preferOsShare()) {
+    if (shouldOfferWebShare({ title, text, url })) {
       await navigator.share({ title, text, url });
       return "shared";
     }

@@ -24,6 +24,17 @@ test("listing detail can render catalogue data when Neon is down", () => {
   assert.match(daycares, /catch \{\s*return catalogPayload;/);
 });
 
+test("search count stays on a loading state instead of flashing 0 centres", () => {
+  const search = src("src/routes/search.tsx");
+  assert.match(search, /searchCountLoading/);
+  assert.match(search, /items === null \? \(/);
+  assert.match(search, /items !== null && fabric\.live > 0/);
+  assert.match(search, /\{list\.length\} \{list\.length === 1 \? "centre"/);
+  const copy = src("src/lib/copy.ts");
+  assert.match(copy, /searchCountLoading: "Loading centres…"/);
+  assert.match(copy, /searchCountLoading: "Chargement des centres…"/);
+});
+
 test("search and listing recover from hung fetches", () => {
   const search = src("src/routes/search.tsx");
   assert.match(search, /searchFailed/);

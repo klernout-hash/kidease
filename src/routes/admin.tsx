@@ -383,7 +383,7 @@ function AdminPage() {
           onRefresh={refresh}
         />
       ) : tab === "money" ? (
-        <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} />
+        <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} ready={ready} />
       ) : tab === "reviews" ? (
         <AdminReviewsPanel />
       ) : (
@@ -459,6 +459,7 @@ function MoneyPanel({
   dir,
   setDir,
   stripeLive,
+  ready = true,
 }: {
   ledger: AdminMoneyLedger;
   rows: AdminMoneyRow[];
@@ -467,17 +468,19 @@ function MoneyPanel({
   dir: "all" | "in" | "out";
   setDir: (v: "all" | "in" | "out") => void;
   stripeLive: boolean;
+  ready?: boolean;
 }) {
   return (
     <>
       <div className="mb-4">
         <h2 className="font-display text-2xl">Money</h2>
-        <LedgerHonesty stripeLive={stripeLive} className="mt-1" />
-        {!stripeLive ? (
+        <LedgerHonesty stripeLive={stripeLive} className="mt-1" ready={ready} />
+        {ready && !stripeLive ? (
           <p className="mt-2 text-sm text-muted">Pending totals are not settled. There is no payout, refund, or parent Pay CTA while Stripe is off.</p>
-        ) : (
+        ) : null}
+        {ready && stripeLive ? (
           <p className="mt-2 text-sm text-muted">Live centre bills keep about 3% as the KidEase platform fee.</p>
-        )}
+        ) : null}
         <AdminStripeCatalog />
       </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">

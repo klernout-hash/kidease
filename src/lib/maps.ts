@@ -47,11 +47,19 @@ export async function openDirections(lat: number, lng: number, name?: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+/**
+ * Fallback zoom when circle bounds are not ready.
+ * Tuned so a 16 mi / 25 km search fills the map instead of a city-wide view.
+ */
 export function mapZoomForRadius(radiusKm: number) {
   if (radiusKm <= 2) return 14;
   if (radiusKm <= 5) return 13;
   if (radiusKm <= 10) return 12;
-  if (radiusKm <= 20) return 11;
-  if (radiusKm <= 35) return 10;
-  return 9;
+  if (radiusKm <= 18) return 11;
+  if (radiusKm <= 32) return 10;
+  if (radiusKm <= 45) return 9;
+  return 8;
 }
+
+/** Tight inset so fitBounds frames the search circle, not the listing card chrome. */
+export const MAP_RADIUS_FIT_PAD = { top: 72, right: 64, bottom: 28, left: 16 };

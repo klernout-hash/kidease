@@ -6,7 +6,8 @@ import { cn, displayCentreName, money } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
-import { mapZoomForRadius, openDirections, readMapBase, writeMapBase, type MapBase } from "@/lib/maps";
+import { MAP_RADIUS_FIT_PAD, mapZoomForRadius, openDirections, readMapBase, writeMapBase, type MapBase } from "@/lib/maps";
+import { bboxFromRadius } from "@/lib/proximity";
 import {
   createListingOverlayFactory,
   createYouAreHereDot,
@@ -59,7 +60,7 @@ type SlugPin = AnyPin & {
   setActive(on: boolean, maps: typeof google.maps): void;
 };
 
-const MAP_PAD = { top: 88, right: 20, bottom: 240, left: 20 };
+const MAP_CLUSTER_PAD = { top: 72, right: 64, bottom: 28, left: 16 };
 
 export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onSelect, onRelocate, onLocate }: Props) {
   const host = useRef<HTMLDivElement>(null);
@@ -207,9 +208,10 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
         center: { lat: origin.lat, lng: origin.lng },
         radius: meters,
         strokeColor: "#1a3790",
-        strokeWeight: 1,
+        strokeWeight: 2,
+        strokeOpacity: 0.85,
         fillColor: "#1a3790",
-        fillOpacity: 0.06,
+        fillOpacity: 0.1,
         clickable: false,
       });
     }
@@ -224,9 +226,10 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
           center: { lat: secondOrigin.lat, lng: secondOrigin.lng },
           radius: meters,
           strokeColor: "#b45309",
-          strokeWeight: 1,
+          strokeWeight: 2,
+          strokeOpacity: 0.85,
           fillColor: "#b45309",
-          fillOpacity: 0.06,
+          fillOpacity: 0.1,
           clickable: false,
         });
       }
@@ -245,18 +248,24 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
       circle2Ref.current?.setMap(null);
       workYouRef.current?.setMap(null);
     }
-    const bounds = circleRef.current.getBounds();
-    const bounds2 = secondOrigin ? circle2Ref.current?.getBounds() : null;
-    if (bounds && bounds2) {
-      const union = new maps.LatLngBounds();
-      union.union(bounds);
-      union.union(bounds2);
-      map.fitBounds(union, MAP_PAD);
-    } else if (bounds) {
-      map.fitBounds(bounds, MAP_PAD);
-    } else {
-      map.setZoom(mapZoomForRadius(radiusKm));
+    const box = bboxFromRadius(origin, radiusKm);
+    const bounds = new maps.LatLngBounds(
+      { lat: box.minLat, lng: box.minLng },
+      { lat: box.maxLat, lng: box.maxLng },
+    );
+    if (secondOrigin) {
+      const box2 = bboxFromRadius(secondOrigin, radiusKm);
+      bounds.extend({ lat: box2.minLat, lng: box2.minLng });
+      bounds.extend({ lat: box2.maxLat, lng: box2.maxLng });
     }
+    map.fitBounds(bounds, MAP_RADIUS_FIT_PAD);
+    maps.event?.addListenerOnce?.(map, "idle", () => {
+      const minZoom = mapZoomForRadius(radiusKm);
+      const current = map.getZoom();
+      if (typeof current === "number" && current < minZoom - 1) {
+        map.setZoom(minZoom);
+      }
+    });
     if (youRef.current) {
       youRef.current.setPosition({ lat: origin.lat, lng: origin.lng });
     } else {
@@ -300,7 +309,7 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
                 }
               }
               if (!box.isEmpty()) {
-                map.fitBounds(box, MAP_PAD);
+                map.fitBounds(box, MAP_CLUSTER_PAD);
               } else {
                 map.setZoom(Math.min(zoom + 2, 16));
                 map.panTo({ lat: node.lat, lng: node.lng });
@@ -378,6 +387,14 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
       ) : null}
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[400] h-16 bg-gradient-to-b from-bg/55 to-transparent lg:h-8" />
+
+      <div className="pointer-events-none absolute left-3 top-[4.6rem] z-[400] lg:top-3">
+        <span className="inline-flex items-center rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-fg shadow-card ring-1 ring-border">
+          {t("mapSearchRadius")
+            .replace("{n}", displayDistance(radiusKm, distanceUnit))
+            .replace("{u}", distanceUnit === "mi" ? t("mi") : t("km"))}
+        </span>
+      </div>
 
       <div className="ke-map-controls absolute right-3 top-[4.6rem] z-[400] flex flex-col items-end gap-2 lg:top-3">
         <div className="overflow-hidden rounded-full bg-surface text-xs font-medium shadow-card ring-1 ring-border">
