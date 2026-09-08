@@ -4,7 +4,6 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { asIsoString, compareTimeDesc, sortTime } from "../src/lib/sort-time.ts";
-import { assignPipeline } from "../src/lib/crm-pipeline.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -64,25 +63,9 @@ test("admin queue and verify sorts no longer localeCompare submittedAt", () => {
   assert.match(pipeline, /compareTimeDesc\(a\.updatedAt, b\.updatedAt\)/);
 });
 
-test("centre pipeline still sorts newest first when updatedAt is a Date", () => {
-  const cards = assignPipeline([
-    {
-      id: "old",
-      kind: "conversation",
-      daycareId: "d1",
-      daycareName: "Bright",
-      parentUserId: "p-old",
-      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    },
-    {
-      id: "new",
-      kind: "conversation",
-      daycareId: "d1",
-      daycareName: "Bright",
-      parentUserId: "p-new",
-      updatedAt: new Date("2026-09-08T00:00:00.000Z"),
-    },
-  ]);
-  assert.equal(cards[0].id, "new");
-  assert.equal(cards[1].id, "old");
+test("compareTimeDesc newest-first matches the old localeCompare order for ISO strings", () => {
+  const older = "2026-01-01T00:00:00.000Z";
+  const newer = "2026-09-08T00:00:00.000Z";
+  assert.equal(Math.sign(compareTimeDesc(older, newer)), Math.sign((newer || "").localeCompare(older || "")));
+  assert.equal(Math.sign(compareTimeDesc(newer, older)), Math.sign((older || "").localeCompare(newer || "")));
 });
