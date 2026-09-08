@@ -1,12 +1,14 @@
 /**
  * Public KidEase social profiles. Header / footer links only —
  * not Facebook Login or Instagram OAuth.
+ *
+ * Facebook: Kyle's KidEase Page (West St. Paul MB). The confirmed share
+ * link https://www.facebook.com/share/181mPmxkyK/ canonicalizes to this
+ * vanity. The old mixed-case Kidease vanity and the legacy numeric Page
+ * id are the wrong Page.
  */
 export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/kideasecanada/";
-export const FACEBOOK_PROFILE_URL = "https://www.facebook.com/Kidease/";
-/** Meta Page asset id — fallback if the vanity URL is retired. */
-export const FACEBOOK_PAGE_ID = "107540987354875";
-export const FACEBOOK_PAGE_ID_URL = `https://www.facebook.com/${FACEBOOK_PAGE_ID}`;
+export const FACEBOOK_PROFILE_URL = "https://www.facebook.com/KidEaseApp/";
 
 export type SocialNetwork = "instagram" | "facebook";
 

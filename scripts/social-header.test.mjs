@@ -4,8 +4,6 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
-  FACEBOOK_PAGE_ID,
-  FACEBOOK_PAGE_ID_URL,
   FACEBOOK_PROFILE_URL,
   INSTAGRAM_PROFILE_URL,
   SOCIAL_PROFILES,
@@ -17,14 +15,25 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("public profile URLs are Kyle-confirmed Instagram and the Facebook vanity", () => {
+test("public profile URLs are Kyle-confirmed Instagram and Facebook Page", () => {
   assert.equal(INSTAGRAM_PROFILE_URL, "https://www.instagram.com/kideasecanada/");
-  assert.equal(FACEBOOK_PROFILE_URL, "https://www.facebook.com/Kidease/");
-  assert.equal(FACEBOOK_PAGE_ID, "107540987354875");
-  assert.equal(FACEBOOK_PAGE_ID_URL, "https://www.facebook.com/107540987354875");
+  assert.equal(FACEBOOK_PROFILE_URL, "https://www.facebook.com/KidEaseApp/");
+  assert.doesNotMatch(FACEBOOK_PROFILE_URL, /facebook\.com\/Kidease\/?$/i);
+  assert.doesNotMatch(FACEBOOK_PROFILE_URL, /107540987354875/);
   assert.equal(SOCIAL_PROFILES.length, 2);
   assert.equal(SOCIAL_PROFILES[0].href, INSTAGRAM_PROFILE_URL);
   assert.equal(SOCIAL_PROFILES[1].href, FACEBOOK_PROFILE_URL);
+  assert.equal(SOCIAL_PROFILES[1].network, "facebook");
+});
+
+test("header Facebook button href is the Kyle-confirmed Page URL", () => {
+  const header = src("src/components/header-social.tsx");
+  const social = src("src/lib/social.ts");
+  assert.match(header, /href=\{profile\.href\}/);
+  assert.match(header, /SOCIAL_PROFILES/);
+  assert.match(social, /FACEBOOK_PROFILE_URL = "https:\/\/www\.facebook\.com\/KidEaseApp\/"/);
+  assert.doesNotMatch(social, /facebook\.com\/Kidease/);
+  assert.doesNotMatch(social, /107540987354875/);
 });
 
 test("header wires website-only Facebook and Instagram buttons with a11y labels", () => {
