@@ -7,7 +7,9 @@ import { isAdminOnlyListing } from "./listing-visibility.ts";
 
 export const SITEMAP_ORIGIN = "https://www.kidease.ca";
 export const SITEMAP_LISTING_CAP = 500;
+export const LISTING_SITEMAP_CAP = 5000;
 export const SITEMAP_LISTINGS_PATH = "/sitemap-listings.xml";
+export const SITEMAP_LASTMOD = "2026-09-07";
 const BLOCKED_SITEMAP_SLUGS = new Set(["test-ghost-claim-lab"]);
 
 export const SITEMAP_STATIC_PATHS = [
@@ -84,7 +86,7 @@ export function renderSitemapXml(input: {
   listingSlugs?: readonly string[];
   lastmod?: string;
 }): string {
-  const lastmod = input.lastmod || "2026-09-07";
+  const lastmod = input.lastmod || SITEMAP_LASTMOD;
   const urls: string[] = [];
   for (const path of input.paths ?? SITEMAP_STATIC_PATHS) {
     urls.push(locFor(path));
@@ -108,7 +110,33 @@ ${body}
 `;
 }
 
-export function renderSitemapIndexXml(lastmod = "2026-09-07"): string {
+/**
+ * Listing-only sitemap. Never throws — crawlers get a valid urlset even when
+ * the slug source is missing, corrupt, or empty.
+ */
+export function safeListingSitemapXml(slugs: unknown, lastmod = SITEMAP_LASTMOD): string {
+  try {
+    const rows: Array<{ slug?: string | null; visibility?: string | null; isTest?: boolean | number | null }> =
+      [];
+    if (Array.isArray(slugs)) {
+      for (const entry of slugs) {
+        if (typeof entry === "string") rows.push({ slug: entry });
+        else if (entry && typeof entry === "object") {
+          rows.push(entry as { slug?: string | null; visibility?: string | null; isTest?: boolean | number | null });
+        }
+      }
+    }
+    return renderSitemapXml({
+      paths: [],
+      listingSlugs: publicSitemapSlugs(rows, LISTING_SITEMAP_CAP),
+      lastmod,
+    });
+  } catch {
+    return renderSitemapXml({ paths: [], listingSlugs: [], lastmod });
+  }
+}
+
+export function renderSitemapIndexXml(lastmod = SITEMAP_LASTMOD): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
