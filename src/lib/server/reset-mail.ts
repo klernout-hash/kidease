@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { transactionalMailFrom } from "@/lib/mail-from";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
 
@@ -10,7 +11,7 @@ export const getResetMailReady = createServerFn({ method: "GET" }).handler(() =>
 });
 
 function fromAddress() {
-  return (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
+  return transactionalMailFrom();
 }
 
 /** Send a password reset link to the registered mailbox. Never log the URL or token. */

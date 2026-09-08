@@ -27,8 +27,7 @@ import {
   type SearchAlertKind,
 } from "@/lib/saved-search";
 import { nid } from "@/lib/utils";
-
-const MAIL_FROM = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
+import { transactionalMailFrom } from "@/lib/mail-from";
 
 type SavedSearchJobRow = {
   id: string;
@@ -605,7 +604,7 @@ export async function sendSearchAlertEmail(payload: {
       method: "POST",
       headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: MAIL_FROM,
+        from: transactionalMailFrom(),
         to: [to],
         subject,
         text,
@@ -621,13 +620,13 @@ export async function sendSearchAlertEmail(payload: {
 
   const sendgrid = process.env.SENDGRID_API_KEY?.trim();
   if (sendgrid) {
-    const fromMatch = MAIL_FROM.match(/^(.*)<([^>]+)>$/);
+    const fromMatch = transactionalMailFrom().match(/^(.*)<([^>]+)>$/);
     const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${sendgrid}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: fromMatch?.[2]?.trim() || "kyle@kidease.ca", name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
+        from: { email: fromMatch?.[2]?.trim() || "login@send.kidease.ca", name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
         subject,
         content: [
           { type: "text/plain", value: text },

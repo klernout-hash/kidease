@@ -163,6 +163,7 @@ test("Nitro middleware, Vite plugin, and vercel.json keep these paths off the SP
   const guard = read("scripts/request-guard.mjs");
   assert.match(guard, /CHANGE_PASSWORD_PATH/);
   assert.match(guard, /path === "\/apple-app-site-association"/);
+  assert.match(guard, /\/apple-app-site-association/);
 });
 
 test("env example documents Team ID and fingerprint fill-in without fake hashes", () => {

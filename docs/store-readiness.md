@@ -106,6 +106,7 @@ Store and OS probes hit these URLs. They must be **HTTP 200** `application/json`
 | --- | --- |
 | `https://www.kidease.ca/.well-known/apple-app-site-association` | AASA JSON (also served at `…/apple-app-site-association.json`) |
 | `https://www.kidease.ca/apple-app-site-association` | Same AASA JSON — Apple's root fallback (no redirect) |
+| `https://www.kidease.ca/apple-app-site-association` | Same AASA JSON at the site root for older Apple clients |
 | `https://www.kidease.ca/.well-known/assetlinks.json` | Digital Asset Links JSON |
 | `https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-association` | Apple Pay domain file — **404 until** `STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION` is set (hosted Checkout does not need it) |
 

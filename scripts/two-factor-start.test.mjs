@@ -115,6 +115,10 @@ test("2FA From defaults to the Resend send subdomain, not Titan apex", () => {
   assert.equal(twoFactorMailFrom(""), TWO_FACTOR_DEFAULT_MAIL_FROM);
   assert.equal(twoFactorMailFrom("   "), TWO_FACTOR_DEFAULT_MAIL_FROM);
   assert.equal(twoFactorMailFrom("KidEase <alerts@send.kidease.ca>"), "KidEase <alerts@send.kidease.ca>");
+  assert.equal(twoFactorMailFrom("KidEase <login@send.kidease.ca>"), "KidEase <login@send.kidease.ca>");
+  assert.equal(twoFactorMailFrom("KidEase <kyle@kidease.ca>"), TWO_FACTOR_DEFAULT_MAIL_FROM);
+  assert.equal(twoFactorMailFrom("kyle@kidease.ca"), TWO_FACTOR_DEFAULT_MAIL_FROM);
+  assert.equal(twoFactorMailFrom("KidEase <support@kidease.ca>"), TWO_FACTOR_DEFAULT_MAIL_FROM);
   assert.match(TWO_FACTOR_DEFAULT_MAIL_FROM, /@send\.kidease\.ca>/);
   assert.doesNotMatch(TWO_FACTOR_DEFAULT_MAIL_FROM, /kyle@kidease\.ca/);
 });
@@ -126,6 +130,14 @@ test("Resend message id is extracted without treating other payload fields as id
   assert.equal(resendMessageId({ id: 12 }), undefined);
   assert.equal(resendMessageId({ object: "email" }), undefined);
   assert.equal(resendMessageId(null), undefined);
+});
+
+test("env example tells Production to set MAIL_FROM on send.kidease.ca and leave apex SPF Titan-only", () => {
+  const envExample = readFileSync(join(root, ".env.example"), "utf8");
+  assert.match(envExample, /Production MUST set MAIL_FROM/);
+  assert.match(envExample, /MAIL_FROM=KidEase <login@send\.kidease\.ca>/);
+  assert.match(envExample, /Do NOT add Resend/);
+  assert.doesNotMatch(envExample, /MAIL_FROM=KidEase <kyle@kidease\.ca>/);
 });
 
 test("sendCodeEmail uses aligned From, reply_to ADMIN_EMAIL, and logs Resend id", () => {

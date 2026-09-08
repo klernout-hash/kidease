@@ -5,6 +5,7 @@
  *   /.well-known/apple-app-site-association
  *   /.well-known/apple-app-site-association.json  (same body; Vercel-friendly alias)
  *   /apple-app-site-association                  (Apple's root fallback)
+ *   /apple-app-site-association                  (root mirror for older Apple clients)
  *   /.well-known/assetlinks.json
  *
  * Bundle / application id is the Capacitor appId already in the repo

@@ -40,13 +40,25 @@ import { EmptyState } from "@/components/empty-state";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { listingPageMeta, listingPageTitle } from "@/lib/listing-meta";
 import { formatMonth, money, formatAgeRange, displayCentreName } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
 import { ListingMap } from "@/components/listing-map";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 
-export const Route = createFileRoute("/daycare/$slug")({ component: Listing });
+export const Route = createFileRoute("/daycare/$slug")({
+  head: ({ params }) => {
+    const meta = listingPageMeta({ slug: params.slug });
+    return {
+      meta: [
+        { title: meta.title },
+        { name: "description", content: meta.description },
+      ],
+    };
+  },
+  component: Listing,
+});
 
 function Listing() {
   const { slug } = Route.useParams();
@@ -132,6 +144,7 @@ function Listing() {
     });
     const origin = useAppStore.getState().origin;
     trackLocation("view", origin.lat, origin.lng, origin.label, { slug: d.slug });
+    document.title = listingPageTitle(d);
   }, [data]);
 
   if (missing) {
