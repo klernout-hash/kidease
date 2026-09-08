@@ -28,9 +28,13 @@ export const CSP_SCRIPT_HOSTS = [
   "https://us-assets.i.posthog.com",
 ];
 
+/** Maps JS tiles/session also hit khms*.googleapis.com and tile.googleapis.com. */
 export const CSP_CONNECT_HOSTS = [
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
+  "https://*.googleapis.com",
+  "https://*.gstatic.com",
+  "https://tile.googleapis.com",
   "https://api.stripe.com",
   "https://*.kidease.ca",
   "https://kidease.ca",

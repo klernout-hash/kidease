@@ -110,7 +110,7 @@ test("listing On the map uses Maps JS, not a broken embed iframe", () => {
   assert.doesNotMatch(listing, /<iframe/);
   assert.doesNotMatch(listing, /maps\.google\.com\/maps\?/);
   assert.match(map, /loadGoogleMaps/);
-  assert.match(map, /listingMapConstructorOptions/);
+  assert.match(map, /createKidEaseMap/);
   assert.match(map, /ke-logo-pin/);
   assert.doesNotMatch(map, /<iframe/);
   assert.doesNotMatch(map, /maps\.google\.com/);

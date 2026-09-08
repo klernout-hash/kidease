@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  createKidEaseMap,
   createListingOverlayFactory,
-  googleMapsMapId,
   hasGoogleMapsBrowserKey,
-  listingMapConstructorOptions,
   loadAdvancedMarkerElement,
   loadGoogleMaps,
 } from "@/lib/google-maps";
+import { useCopy } from "@/lib/use-copy";
 
 /** Same smiling teardrop as search MapView. */
 const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">
@@ -28,7 +28,9 @@ type Props = {
 export function ListingMap({ lat, lng, title }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const valid = Number.isFinite(lat) && Number.isFinite(lng);
+  const { t } = useCopy();
   const [failed, setFailed] = useState(!hasGoogleMapsBrowserKey() || !valid);
+  const [basemapReady, setBasemapReady] = useState(false);
 
   useEffect(() => {
     const el = host.current;
@@ -45,23 +47,20 @@ export function ListingMap({ lat, lng, title }: Props) {
         if (cancelled || !el) return;
         el.innerHTML = "";
         const center = { lat, lng };
-        const map = new maps.Map(
-          el,
-          listingMapConstructorOptions({
-            maps,
-            center,
-            zoom: 16,
-            mapTypeId: "roadmap",
-            mapId: googleMapsMapId(),
-          }),
-        );
-        map.setOptions({ gestureHandling: "cooperative" });
-        const AdvancedMarker = await loadAdvancedMarkerElement(maps);
+        const created = await createKidEaseMap(maps, el, {
+          center,
+          zoom: 16,
+          mapTypeId: "roadmap",
+        });
+        if (cancelled) return;
+        created.map.setOptions({ gestureHandling: "cooperative" });
+        const AdvancedMarker = await loadAdvancedMarkerElement(maps, created.usedMapId);
         const factory = createListingOverlayFactory(maps, AdvancedMarker);
         const content = document.createElement("div");
         content.className = "ke-logo-pin";
         content.innerHTML = PIN_SVG;
-        pin = factory({ map, position: center, content });
+        pin = factory({ map: created.map, position: center, content });
+        setBasemapReady(true);
       } catch {
         if (!cancelled) setFailed(true);
       }
@@ -69,6 +68,7 @@ export function ListingMap({ lat, lng, title }: Props) {
 
     return () => {
       cancelled = true;
+      setBasemapReady(false);
       pin?.setMap(null);
     };
   }, [lat, lng, valid]);
@@ -77,5 +77,14 @@ export function ListingMap({ lat, lng, title }: Props) {
     return <div className="h-64 bg-map md:h-80" role="img" aria-label={title} />;
   }
 
-  return <div ref={host} className="h-64 w-full bg-map md:h-80" role="img" aria-label={title} />;
+  return (
+    <div className="relative h-64 w-full overflow-hidden bg-map md:h-80" role="img" aria-label={title}>
+      <div ref={host} className="ke-map-host absolute inset-0" />
+      {basemapReady ? null : (
+        <div className="ke-map-skel pointer-events-none absolute inset-0 grid place-items-center px-6 text-center" role="status">
+          <p className="text-sm font-medium text-muted">{t("mapLoading")}</p>
+        </div>
+      )}
+    </div>
+  );
 }
