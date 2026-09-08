@@ -23,9 +23,9 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - run: npx eslint .
       - run: npm test
       - run: npx tsc --noEmit
-      - run: npx eslint .
 
   e2e:
     runs-on: ubuntu-latest

@@ -17,7 +17,6 @@ import {
   VIDEO_SDK_WIRED,
   VIDEO_TOKEN_TTL_SECONDS,
   videoCredentialsPresent,
-  videoEnvPresence,
   videoJoinGate,
   videoMinutesStatus,
   videoRoomName,

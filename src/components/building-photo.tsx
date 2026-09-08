@@ -22,7 +22,7 @@ const FALLBACK = "/photos/storefront-placeholder-480.webp";
 
 export function BuildingPhoto({
   src,
-  alt = "",
+  alt: _alt = "",
   className,
   eager = false,
   priority = false,
