@@ -181,7 +181,10 @@ describe("PostHog client wiring", () => {
     assert.match(banner, /shouldShowAnalyticsConsentBanner/);
     assert.match(banner, /scheduleAnalyticsConsentBannerReveal/);
     assert.match(banner, /ke-cookie-consent-body/);
+    assert.match(banner, /cookieConsentBannerLead/);
+    assert.match(banner, /sr-only/);
     assert.match(banner, /text-\[11px\] leading-4/);
+    assert.match(copy, /cookieConsentBannerLead:/);
     assert.doesNotMatch(banner, /setOpen\(shouldShowAnalyticsConsentBanner\(\)\)/);
     assert.match(banner, /writeAnalyticsConsent\(value\)/);
     assert.match(banner, /choose\("granted"\)/);

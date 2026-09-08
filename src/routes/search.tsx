@@ -798,7 +798,7 @@ function SearchPage() {
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>
-            <p className="mt-0.5 min-h-5 text-sm text-muted" aria-live="polite">
+            <p className="mt-0.5 min-h-5 truncate text-sm text-muted" aria-live="polite">
               {items === null ? (
                 <span className="inline-flex items-center gap-2">
                   <span className="ke-skel inline-block h-3.5 w-28" aria-hidden="true" />
@@ -816,7 +816,7 @@ function SearchPage() {
             </p>
             <p
               className={cn(
-                "mt-1 min-h-4 text-xs font-medium",
+                "mt-1 min-h-4 truncate text-xs font-medium",
                 items !== null && fabric.live > 0 ? "text-ok" : "text-muted",
               )}
             >
