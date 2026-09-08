@@ -7,6 +7,7 @@ import { CAP_APP_ID } from "./native-permissions.mjs";
 import {
   AASA_JSON_PATH,
   AASA_PATH,
+  AASA_ROOT_PATH,
   ASSETLINKS_PATH,
   PLACEHOLDER_APPLE_TEAM_ID,
   buildAppleAppSiteAssociation,
@@ -79,6 +80,8 @@ test("payload matcher covers AASA (with and without .json) and assetlinks", () =
   assert.equal(isWellKnownAppLinksPath(AASA_PATH), true);
   assert.equal(isWellKnownAppLinksPath(`${AASA_PATH}/`), true);
   assert.equal(isWellKnownAppLinksPath(AASA_JSON_PATH), true);
+  assert.equal(isWellKnownAppLinksPath(AASA_ROOT_PATH), true);
+  assert.equal(isWellKnownAppLinksPath(`${AASA_ROOT_PATH}/`), true);
   assert.equal(isWellKnownAppLinksPath(ASSETLINKS_PATH), true);
   assert.equal(isWellKnownAppLinksPath("/.well-known/security.txt"), false);
   assert.equal(isWellKnownAppLinksPath("/.well-known/change-password"), false);
@@ -90,6 +93,10 @@ test("payload matcher covers AASA (with and without .json) and assetlinks", () =
   const alias = wellKnownAppLinksPayload(AASA_JSON_PATH, {});
   assert.deepEqual(JSON.parse(alias.body), JSON.parse(aasa.body));
 
+  const rootMirror = wellKnownAppLinksPayload(AASA_ROOT_PATH, {});
+  assert.deepEqual(JSON.parse(rootMirror.body), JSON.parse(aasa.body));
+  assert.equal(rootMirror.contentType, "application/json");
+
   const assets = wellKnownAppLinksPayload(ASSETLINKS_PATH, {});
   assert.equal(assets.contentType, "application/json");
   assert.deepEqual(JSON.parse(assets.body), buildAssetLinks({}));
@@ -100,12 +107,15 @@ test("payload matcher covers AASA (with and without .json) and assetlinks", () =
 test("public/.well-known files match the placeholder builders", () => {
   const aasaFile = join(root, "public/.well-known/apple-app-site-association");
   const aasaJson = join(root, "public/.well-known/apple-app-site-association.json");
+  const aasaRoot = join(root, "public/apple-app-site-association");
   const assetlinks = join(root, "public/.well-known/assetlinks.json");
   assert.equal(existsSync(aasaFile), true);
   assert.equal(existsSync(aasaJson), true);
+  assert.equal(existsSync(aasaRoot), true);
   assert.equal(existsSync(assetlinks), true);
   assert.deepEqual(JSON.parse(readFileSync(aasaFile, "utf8")), buildAppleAppSiteAssociation({}));
   assert.deepEqual(JSON.parse(readFileSync(aasaJson, "utf8")), buildAppleAppSiteAssociation({}));
+  assert.deepEqual(JSON.parse(readFileSync(aasaRoot, "utf8")), buildAppleAppSiteAssociation({}));
   assert.deepEqual(JSON.parse(readFileSync(assetlinks, "utf8")), buildAssetLinks({}));
 });
 
@@ -121,6 +131,7 @@ test("Nitro middleware, Vite plugin, and vercel.json keep these paths off the SP
 
   const vercel = read("vercel.json");
   assert.match(vercel, /"source": "\/\.well-known\/apple-app-site-association"/);
+  assert.match(vercel, /"source": "\/apple-app-site-association"/);
   assert.match(vercel, /"source": "\/\.well-known\/assetlinks\.json"/);
   assert.match(vercel, /"source": "\/\.well-known\/apple-developer-merchantid-domain-association"/);
   assert.match(vercel, /application\/json/);
@@ -136,7 +147,7 @@ test("Nitro middleware, Vite plugin, and vercel.json keep these paths off the SP
 
   const guard = read("scripts/request-guard.mjs");
   assert.match(guard, /CHANGE_PASSWORD_PATH/);
-  assert.doesNotMatch(guard, /apple-app-site-association/);
+  assert.match(guard, /\/apple-app-site-association/);
 });
 
 test("env example documents Team ID and fingerprint fill-in without fake hashes", () => {
