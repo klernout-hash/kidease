@@ -1,6 +1,9 @@
 # KidEase robots.txt — standard robots exclusion protocol only.
 # Do not add Content-Signal or other non-standard directives.
 # Cloudflare AI Crawl Control must not prepend Content-Signal (Lighthouse SEO).
+# sitemap.xml = marketing pages + city hubs + a capped listing set.
+# sitemap-listings.xml = sitemap index of /sitemap-listings-N.xml urlsets
+# (full public listing catalogue; do not treat the 5 index <loc>s as the URL set).
 
 User-agent: *
 Allow: /

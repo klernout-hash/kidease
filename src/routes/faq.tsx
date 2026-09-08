@@ -1,32 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FeelBanner } from "@/components/building-photo";
+import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
+import { FAQ_ITEM_KEYS } from "@/lib/faq-items";
+import { faqPageJsonLdScript, MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/faq")({
-  head: () => ({
-    meta: [
-      { title: "Frequently asked questions · KidEase" },
-      {
-        name: "description",
-        content: "Short answers for parents and licensed centres. Write support@kidease.ca if you need a person.",
-      },
-    ],
-  }),
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.faq),
   component: FaqPage,
 });
 
 function FaqPage() {
   const { t } = useCopy();
-  const items = [
-    { q: t("faqQ1"), a: t("faqA1") },
-    { q: t("faqQ2"), a: t("faqA2") },
-    { q: t("faqQ3"), a: t("faqA3") },
-    { q: t("faqQ4"), a: t("faqA4") },
-  ];
+  const items = FAQ_ITEM_KEYS.map(([q, a]) => ({ q: t(q), a: t(a) }));
+  const jsonLd = faqPageJsonLdScript(items);
   return (
     <Shell bare>
+      <JsonLd json={jsonLd} />
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">FAQ</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("faqTitle")}</h1>
@@ -47,6 +39,10 @@ function FaqPage() {
           {" · "}
           <Link to="/tour-checklist" className="font-medium text-primary underline-offset-4 hover:underline">
             {t("tourChecklist")}
+          </Link>
+          {" · "}
+          <Link to="/benefits" className="font-medium text-primary underline-offset-4 hover:underline">
+            {t("benefitsShort")}
           </Link>
         </p>
       </main>

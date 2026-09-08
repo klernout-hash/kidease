@@ -17,11 +17,14 @@ import {
 import { STORE } from "@/lib/store-listing";
 import { useCopy } from "@/lib/use-copy";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
+import { JsonLd } from "@/components/json-ld";
+import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/get-app")({
   validateSearch: (s: Record<string, unknown>) => ({
     dev: s.dev === "1" || s.dev === 1 || s.dev === true ? ("1" as const) : undefined,
   }),
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.getApp),
   component: GetApp,
 });
 
@@ -64,6 +67,7 @@ function GetApp() {
 
   return (
     <Shell>
+      <JsonLd json={organizationGraphJsonLdScript()} />
       <main className="ke-gutter mx-auto max-w-6xl pb-16 pt-8">
         <section className="grid items-center gap-10 md:grid-cols-[1fr_minmax(16rem,20rem)]">
           <div>

@@ -11,11 +11,14 @@ import { RequestTourSheet } from "@/components/request-tour";
 import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
+import { JsonLd } from "@/components/json-ld";
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto } from "@/lib/listing-photo";
 import { DETAIL_SIZES } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
 import { getDaycare, getListingSeo } from "@/lib/server/daycares";
+import { cityHubDefForPlace } from "@/lib/city-hubs";
 import {
+  listingBreadcrumbJsonLdScript,
   listingCanonicalUrl,
   listingJsonLdScript,
   listingPageTitle as listingSeoPageTitle,
@@ -72,9 +75,15 @@ export const Route = createFileRoute("/daycare/$slug")({
   head: ({ params, loaderData }) => {
     if (loaderData) {
       const canonical = listingCanonicalUrl(loaderData.slug);
+      const jsonLd = listingJsonLdScript(loaderData);
+      const crumbs = listingBreadcrumbJsonLdScript(loaderData);
       return {
         meta: listingSeoHeadTags(loaderData),
         links: canonical ? [{ rel: "canonical", href: canonical }] : [],
+        scripts: [
+          ...(jsonLd ? [{ type: "application/ld+json", children: jsonLd }] : []),
+          ...(crumbs ? [{ type: "application/ld+json", children: crumbs }] : []),
+        ],
       };
     }
     const fallback = listingPageMeta({ slug: params.slug });
@@ -304,6 +313,7 @@ function Listing() {
   }
 
   const waitlisted = known && spots <= 0;
+  const cityHub = cityHubDefForPlace(d.city, d.province);
 
   function ListingActions() {
     return (
@@ -340,13 +350,34 @@ function Listing() {
   return (
     <Shell>
       <ListingJsonLd src={jsonLdSrc} locale={seoLocale} />
+      <JsonLd json={jsonLdSrc ? listingBreadcrumbJsonLdScript(jsonLdSrc, seoLocale) : ""} />
       <article className="ke-gutter mx-auto max-w-5xl overflow-x-hidden py-6 pb-28 md:pb-10">
-        <Link
-          to="/search"
-          className="mb-4 inline-flex min-h-11 items-center text-sm font-medium text-muted hover:text-fg hover:underline"
-        >
-          ← {t("backToExplore")}
-        </Link>
+        <nav className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+          <Link to="/" className="min-h-11 inline-flex items-center hover:text-fg hover:underline">
+            KidEase
+          </Link>
+          {cityHub ? (
+            <>
+              <span aria-hidden>/</span>
+              <Link
+                to="/daycare/city/$city"
+                params={{ city: cityHub.slug }}
+                className="min-h-11 inline-flex items-center hover:text-fg hover:underline"
+              >
+                {locale === "fr" ? `Garderies à ${cityHub.city}` : `Daycare in ${cityHub.city}`}
+              </Link>
+            </>
+          ) : (
+            <>
+              <span aria-hidden>/</span>
+              <Link to="/search" className="min-h-11 inline-flex items-center hover:text-fg hover:underline">
+                {t("backToExplore")}
+              </Link>
+            </>
+          )}
+          <span aria-hidden>/</span>
+          <span className="text-fg">{name}</span>
+        </nav>
         <div className="overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
           <div className="relative aspect-[16/10] bg-surface-2 md:aspect-[2/1]">
             {photos[photo]?.includes("-logo") ? (

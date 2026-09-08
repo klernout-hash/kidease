@@ -1,4 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { CityHubLinks } from "@/components/city-hub-links";
+import { JsonLd } from "@/components/json-ld";
+import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
@@ -62,19 +65,24 @@ export const Route = createFileRoute("/")({
   },
   pendingMs: 200,
   pendingComponent: BootPending,
-  head: () => ({
-    links: [
-      {
-        rel: "preload",
-        as: "image",
-        type: "image/avif",
-        href: "/photos/hero-768.avif",
-        imageSrcSet: HERO_LCP_AVIF_SRCSET,
-        imageSizes: HERO_LCP_SIZES,
-        fetchPriority: "high",
-      },
-    ],
-  }),
+  head: () => {
+    const seo = pageSeoHead(MARKETING_PAGE_SEO.home);
+    return {
+      ...seo,
+      links: [
+        ...seo.links,
+        {
+          rel: "preload",
+          as: "image",
+          type: "image/avif",
+          href: "/photos/hero-768.avif",
+          imageSrcSet: HERO_LCP_AVIF_SRCSET,
+          imageSizes: HERO_LCP_SIZES,
+          fetchPriority: "high",
+        },
+      ],
+    };
+  },
   component: Home,
 });
 
@@ -337,6 +345,7 @@ function Home() {
             {t("search")}
           </Button>
           {cityChips}
+          <CityHubLinks className="mt-4" />
         </form>
       ) : (
         <button
@@ -411,6 +420,7 @@ function Home() {
 
   return (
     <Shell bare>
+      <JsonLd json={organizationGraphJsonLdScript()} />
       <div className="ke-web-only [[data-channel=app]_&]:hidden">
         <section className="relative overflow-hidden bg-gradient-to-b from-[#eef2fb] via-bg to-bg">
           <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20 xl:py-24">
@@ -444,6 +454,7 @@ function Home() {
                 </Button>
               </div>
               {locationForm}
+              <CityHubLinks className="mt-5" />
               <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>
             </div>
             <div className="relative">
@@ -615,6 +626,7 @@ function Home() {
               </ChipButton>
             ))}
           </div>
+          <CityHubLinks className="mt-4" />
           {user ? (
             <ParentDeskRails
               items={explore.length ? explore : shown}

@@ -5,8 +5,12 @@ import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
-export const Route = createFileRoute("/benefits")({ component: BenefitsPage });
+export const Route = createFileRoute("/benefits")({
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.benefits),
+  component: BenefitsPage,
+});
 
 const PROGRAMS: { key: string; title: CopyKey; body: CopyKey; href: string }[] = [
   { key: "ab", title: "benefitsAbT", body: "benefitsAb", href: "https://www.alberta.ca/child-care-subsidy" },

@@ -21,8 +21,12 @@ import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
 import type { DaycareCard } from "@/lib/types";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
-export const Route = createFileRoute("/compare")({ component: ComparePage });
+export const Route = createFileRoute("/compare")({
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.compare),
+  component: ComparePage,
+});
 
 function ComparePage() {
   const { t, locale } = useCopy();

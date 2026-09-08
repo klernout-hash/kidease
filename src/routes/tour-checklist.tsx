@@ -3,8 +3,12 @@ import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { useCopy } from "@/lib/use-copy";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
-export const Route = createFileRoute("/tour-checklist")({ component: TourChecklist });
+export const Route = createFileRoute("/tour-checklist")({
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.tourChecklist),
+  component: TourChecklist,
+});
 
 export function TourChecklist() {
   const { t } = useCopy();

@@ -40,6 +40,20 @@ export const SITEMAP_STATIC_PATHS = [
   "/unsubscribe",
 ] as const;
 
+/** Marketing pages plus generated city hubs. Hubs are passed in by write-sitemap. */
+export function sitemapPublicPaths(extraPaths: readonly string[] = []) {
+  const seen = new Set<string>(SITEMAP_STATIC_PATHS);
+  const out: string[] = [...SITEMAP_STATIC_PATHS];
+  for (const path of extraPaths) {
+    const clean = path.startsWith("/") ? path : `/${path}`;
+    if (!clean || seen.has(clean)) continue;
+    if (!clean.startsWith("/daycare/city/")) continue;
+    seen.add(clean);
+    out.push(clean);
+  }
+  return out;
+}
+
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;
 
 export function isSafeSitemapSlug(slug: string | null | undefined): boolean {

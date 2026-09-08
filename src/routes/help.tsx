@@ -10,14 +10,10 @@ import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/help")({
-  head: () => ({
-    meta: [
-      { title: "Help Centre · KidEase" },
-      { name: "description", content: "Parents and providers — we read every note." },
-    ],
-  }),
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.help),
   component: Help,
 });
 

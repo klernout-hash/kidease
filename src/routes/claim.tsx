@@ -12,8 +12,10 @@ import { useCopy } from "@/lib/use-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { stripePayoutsLive } from "@/lib/stripe-live";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/claim")({
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.claim),
   loader: () => ({ payoutsLive: stripePayoutsLive() }),
   validateSearch: (s: Record<string, unknown>) => {
     const q = typeof s.q === "string" ? s.q : "";

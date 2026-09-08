@@ -647,6 +647,23 @@ export const copy = {
     faqA3: "The centre has claimed the listing and KidEase has approved it. Fees and open spots come from the provider. Unclaimed pages are still licensed — details may be out of date.",
     faqQ4: "How do I claim my daycare?",
     faqA4: "Open Claim your daycare, find the existing listing, enter the verification code we send, and upload the current provincial licence. We review every claim.",
+    faqQ5: "Does KidEase list nannies or babysitters?",
+    faqA5:
+      "No. KidEase is a licensed daycare directory only. We do not list nannies, sitters, or unlicensed care.",
+    faqQ6: "How do I find licensed daycare in my city?",
+    faqA6:
+      "Search by address, city, or postal code, or open a city directory such as Winnipeg, Toronto, Montréal, Vancouver, Calgary, or Ottawa. Guests can browse without an account.",
+    faqQ7: "How do childcare subsidies work on KidEase?",
+    faqA7:
+      "KidEase does not process subsidy applications or host government forms. Reduced CWELCC fees are set by each province or territory and applied at participating centres. For income-tested subsidies, apply on your province’s official site — start at Childcare Benefits.",
+    faqQ8: "Is it free to search listings?",
+    faqA8:
+      "Yes. Searching the map and opening licensed centre listings is free. Sign in only if you want to save centres, request a spot, or message a live listing.",
+    browseCities: "Browse by city",
+    cityHubKicker: "Licensed daycare",
+    cityHubSearch: "Search the map",
+    cityHubSeeAll: "See all licensed centres on the map",
+    cityHubFaq: "Good to know",
     openNow: "Open now",
     full: "Full",
     deposit: "First-month deposit",
@@ -1941,6 +1958,23 @@ export const copy = {
     faqA3: "Le centre a revendiqué la fiche et KidEase l’a approuvée. Les tarifs et les places viennent du fournisseur. Les pages non revendiquées restent permises — les détails peuvent être périmés.",
     faqQ4: "Comment revendiquer ma garderie?",
     faqA4: "Ouvrez Revendiquer votre garderie, trouvez la fiche, entrez le code que nous envoyons et téléversez le permis provincial. Nous examinons chaque demande.",
+    faqQ5: "KidEase liste-t-il des nounous ou des gardiennes?",
+    faqA5:
+      "Non. KidEase ne répertorie que les garderies permises par la province ou le territoire. Pas de nounous, de gardiennes à domicile non permises, ni de babysitting.",
+    faqQ6: "Comment trouver une garderie permise dans ma ville?",
+    faqA6:
+      "Cherchez par adresse, ville ou code postal, ou ouvrez un répertoire municipal (Winnipeg, Toronto, Montréal, Vancouver, Calgary, Ottawa). La recherche est gratuite.",
+    faqQ7: "Comment fonctionnent les subventions sur KidEase?",
+    faqA7:
+      "KidEase n’accepte pas les demandes de subvention et n’héberge aucun formulaire gouvernemental. Les programmes (CWELCC, subvention selon le revenu) sont gérés par votre province. Consultez Aide à payer les frais et les sites officiels.",
+    faqQ8: "La recherche est-elle gratuite?",
+    faqA8:
+      "Oui. Consulter le répertoire et ouvrir une fiche est gratuit. Un compte est requis seulement pour enregistrer, demander une place ou écrire à un centre En ligne.",
+    browseCities: "Parcourir par ville",
+    cityHubKicker: "Garderie permise",
+    cityHubSearch: "Chercher sur la carte",
+    cityHubSeeAll: "Voir tous les centres permis sur la carte",
+    cityHubFaq: "Bon à savoir",
     openNow: "Ouvert",
     full: "Complet",
     deposit: "Dépôt du premier mois",

@@ -4,7 +4,9 @@
  * Relative .ts imports so Node tests can load this file.
  */
 
+import { cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
+import { breadcrumbJsonLd, breadcrumbJsonLdScript } from "./page-seo.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
 import { SITEMAP_ORIGIN, sitemapListingPath } from "./sitemap.ts";
 
@@ -221,4 +223,28 @@ export function listingJsonLdScript(src: ListingSeoSource, locale: ListingSeoLoc
   const node = listingJsonLd(src, locale);
   if (!node) return "";
   return JSON.stringify(node);
+}
+
+export function listingBreadcrumbItems(src: ListingSeoSource, locale: ListingSeoLocale = "en") {
+  const name = listingDisplayName(src, locale);
+  const url = listingCanonicalUrl(src.slug);
+  if (!name || !url) return [];
+  const items = [{ name: "KidEase", url: `${SITEMAP_ORIGIN}/` }];
+  const hub = cityHubDefForPlace(src.city, src.province);
+  if (hub) {
+    items.push({
+      name: locale === "fr" ? `Garderies à ${hub.city}` : `Daycare in ${hub.city}`,
+      url: cityHubUrl(hub.slug),
+    });
+  }
+  items.push({ name, url });
+  return items;
+}
+
+export function listingBreadcrumbJsonLd(src: ListingSeoSource, locale: ListingSeoLocale = "en") {
+  return breadcrumbJsonLd(listingBreadcrumbItems(src, locale));
+}
+
+export function listingBreadcrumbJsonLdScript(src: ListingSeoSource, locale: ListingSeoLocale = "en") {
+  return breadcrumbJsonLdScript(listingBreadcrumbItems(src, locale));
 }
