@@ -54,7 +54,9 @@ import {
 import {
   FACEBOOK_CLIENT_ID,
   FACEBOOK_CLIENT_SECRET,
+  FACEBOOK_LOGIN_SCOPES,
   facebookIdpConfigured,
+  mapFacebookProfileToUser,
 } from "./facebook-idp";
 import {
   grokBrokerConfigured,
@@ -317,6 +319,11 @@ const socialProviders = {
         facebook: {
           clientId: FACEBOOK_CLIENT_ID,
           clientSecret: FACEBOOK_CLIENT_SECRET,
+          // Better Auth docs show `scopes` (ignored). The provider reads
+          // `scope` and otherwise defaults to `email` + `public_profile`.
+          disableDefaultScope: true,
+          scope: [...FACEBOOK_LOGIN_SCOPES],
+          mapProfileToUser: mapFacebookProfileToUser,
         },
       }
     : {}),

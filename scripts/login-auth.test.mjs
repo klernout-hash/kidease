@@ -97,6 +97,7 @@ describe("password sign-in errors", () => {
     assert.match(oauthOnlyMessage(["apple"]), /Apple/);
     assert.match(friendlyAuthError("provider not found"), /not configured/);
     assert.match(friendlyAuthError(socialSignInFailedMessage("apple")), /Apple/);
+    assert.match(friendlyAuthError("email_not_found"), /did not share an email/);
   });
 
   it("throws when social sign-in returns no URL (Apple dead-button)", () => {

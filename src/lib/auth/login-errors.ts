@@ -172,6 +172,9 @@ export function friendlyAuthError(
   if (raw.includes("user already exists") || raw.includes("already exists")) {
     return "An account with that email already exists. Sign in instead.";
   }
+  if (raw.includes("email_not_found") || raw.includes("email is missing") || raw.includes("email_is_missing")) {
+    return "That sign-in method did not share an email. Try Google or email instead.";
+  }
   if (raw.includes("popup")) {
     return "Pop-up blocked — allow pop-ups for KidEase, then try again.";
   }

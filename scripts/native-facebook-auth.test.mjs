@@ -10,6 +10,10 @@ import {
   NATIVE_APPLE,
   GROK_PROVIDERS,
 } from "../src/lib/auth/providers.ts";
+import {
+  FACEBOOK_LOGIN_SCOPES,
+  mapFacebookProfileToUser,
+} from "../src/lib/auth/facebook-idp.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -192,6 +196,42 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.match(loader, /APPLE_PRIVATE_KEY/);
     assert.doesNotMatch(loader, /nativeApple\s*=\s*true/);
     assert.doesNotMatch(loader, /from ["']@\/lib\/auth\/apple-idp/);
+  });
+
+  it("requests only valid Facebook Login permissions (not OpenID or default email)", () => {
+    assert.deepEqual([...FACEBOOK_LOGIN_SCOPES], ["public_profile"]);
+    assert.equal(FACEBOOK_LOGIN_SCOPES.includes("email"), false);
+    assert.equal(FACEBOOK_LOGIN_SCOPES.includes("openid"), false);
+    assert.equal(FACEBOOK_LOGIN_SCOPES.includes("profile"), false);
+
+    const server = read("src/lib/auth/server.ts");
+    const idp = read("src/lib/auth/facebook-idp.ts");
+    const client = read("src/lib/auth/client.ts");
+    const popup = read("src/lib/auth/popup.server.ts");
+    const login = read("src/routes/login.tsx");
+    assert.match(idp, /FACEBOOK_LOGIN_SCOPES/);
+    assert.match(server, /disableDefaultScope:\s*true/);
+    assert.match(server, /scope:\s*\[\.\.\.FACEBOOK_LOGIN_SCOPES\]/);
+    assert.match(server, /mapProfileToUser:\s*mapFacebookProfileToUser/);
+    assert.doesNotMatch(server, /facebook:\s*\{[^}]*\bscopes:/s);
+    assert.match(server, /prompt:\s*"select_account"/);
+    assert.match(server, /emailAndPassword:\s*emailAndPasswordConfig/);
+    assert.doesNotMatch(client, /signIn\.social\(\{[\s\S]*scopes:/);
+    assert.doesNotMatch(popup, /signInSocial\(\{[\s\S]*scopes:/);
+    assert.doesNotMatch(login, /scopes:\s*\[/);
+  });
+
+  it("maps a missing Facebook email to a .invalid placeholder, keeps a real one", () => {
+    assert.deepEqual(mapFacebookProfileToUser({ id: "123", email: "pat@example.com" }), {
+      email: "pat@example.com",
+    });
+    assert.deepEqual(mapFacebookProfileToUser({ id: "123", email: "  " }), {
+      email: "123@facebook.invalid",
+    });
+    assert.deepEqual(mapFacebookProfileToUser({ sub: "oidc-sub" }), {
+      email: "oidc-sub@facebook.invalid",
+    });
+    assert.deepEqual(mapFacebookProfileToUser({}), {});
   });
 
   it("does not commit Facebook, Google, or Better Auth secrets", () => {
