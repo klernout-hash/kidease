@@ -9,12 +9,22 @@
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import { officialLicenceNumber } from "@/lib/licensing";
 import { stripeChargesLive } from "@/lib/stripe-live";
+import {
+  LICENSE_STATUSES,
+  REGISTRY_MATCH_STATES,
+  normalizeLicenseStatus,
+  normalizeMatchState,
+  type LicenseStatus,
+  type RegistryMatchState,
+} from "@/lib/license-status";
 
-export const LICENSE_STATUSES = ["unverified", "matched", "expired", "suspended"] as const;
-export type LicenseStatus = (typeof LICENSE_STATUSES)[number];
-
-export const REGISTRY_MATCH_STATES = ["unmatched", "pending", "matched", "mismatch"] as const;
-export type RegistryMatchState = (typeof REGISTRY_MATCH_STATES)[number];
+export {
+  LICENSE_STATUSES,
+  REGISTRY_MATCH_STATES,
+  normalizeLicenseStatus,
+  normalizeMatchState,
+};
+export type { LicenseStatus, RegistryMatchState };
 
 export const CLAIM_VERIFICATION_STATES = ["unclaimed", "pending", "waiting", "verified", "declined"] as const;
 export type ClaimVerificationState = (typeof CLAIM_VERIFICATION_STATES)[number];
@@ -119,22 +129,6 @@ export function defaultTrustFields(): TrustFields {
     staffScreeningAttestedBy: null,
     stripeIdentityVerified: false,
   };
-}
-
-export function normalizeLicenseStatus(raw?: string | null): LicenseStatus {
-  const v = (raw || "").trim().toLowerCase();
-  if (v === "matched" || v === "active") return "matched";
-  if (v === "expired") return "expired";
-  if (v === "suspended" || v === "revoked") return "suspended";
-  return "unverified";
-}
-
-export function normalizeMatchState(raw?: string | null): RegistryMatchState {
-  const v = (raw || "").trim().toLowerCase();
-  if (v === "matched") return "matched";
-  if (v === "pending") return "pending";
-  if (v === "mismatch") return "mismatch";
-  return "unmatched";
 }
 
 export function claimVerificationState(item: TrustListing): ClaimVerificationState {

@@ -9,11 +9,16 @@
  */
 
 import { lookupRegistry, registryLookupIsLive } from "./registry-adapters.ts";
-import {
-  normalizeLicenseStatus,
-  normalizeMatchState,
-  type TrustListing,
-} from "../trust.ts";
+import { normalizeLicenseStatus, normalizeMatchState } from "../license-status.ts";
+
+export type LicenseMatchListing = {
+  id?: string;
+  province?: string | null;
+  licenseNumber?: string | null;
+  licenseStatus?: string | null;
+  registryMatchState?: string | null;
+  licenseVerificationSource?: string | null;
+};
 
 export const LOCAL_CATALOG_SOURCE = "local_catalog";
 
@@ -31,10 +36,7 @@ where id = any($1::text[])
   and registry_match_state <> 'mismatch'
 `;
 
-export type LicenseMatchInput = TrustListing & {
-  id?: string;
-  province?: string | null;
-};
+export type LicenseMatchInput = LicenseMatchListing;
 
 export function applyLocalRegistryTrust<T extends LicenseMatchInput>(item: T): T {
   const status = normalizeLicenseStatus(item.licenseStatus);

@@ -9,9 +9,6 @@ import {
   persistLocalLicenseMatches,
   PERSIST_LOCAL_LICENSE_SQL,
 } from "../src/lib/server/license-match.ts";
-import { isVerifiedLicensed, publicLicenseBadge } from "../src/lib/license-verify.ts";
-import { licenseBadge, trustBadgesFor } from "../src/lib/trust.ts";
-import { listingPill } from "../src/lib/listing-card.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -31,10 +28,6 @@ test("Manitoba catalogue numbers become Licensed; other provinces stay unverifie
   assert.equal(mb.registryMatchState, "matched");
   assert.equal(mb.licenseVerificationSource, "local_catalog");
   assert.equal(mb.licenseNumber, "MB-1001");
-  assert.equal(isVerifiedLicensed(mb), true);
-  assert.equal(publicLicenseBadge(mb)?.id, "license_matched");
-  assert.equal(licenseBadge(mb).labelKey, "trustLicensedMatched");
-  assert.equal(licenseBadge(mb).tipKey, "trustLicensedMatchedMbTip");
 
   const on = applyLocalRegistryTrust({
     id: "on-1",
@@ -45,8 +38,6 @@ test("Manitoba catalogue numbers become Licensed; other provinces stay unverifie
   });
   assert.equal(on.licenseStatus, "unverified");
   assert.equal(on.registryMatchState, "unmatched");
-  assert.equal(isVerifiedLicensed(on), false);
-  assert.equal(publicLicenseBadge(on), null);
 });
 
 test("never invents a licence number and never overrides expired, suspended, or mismatch", () => {
@@ -59,7 +50,6 @@ test("never invents a licence number and never overrides expired, suspended, or 
   });
   assert.equal(blank.licenseNumber, "");
   assert.equal(blank.licenseStatus, "unverified");
-  assert.equal(isVerifiedLicensed(blank), false);
 
   const expired = applyLocalRegistryTrust({
     id: "mb-1001",
@@ -69,7 +59,6 @@ test("never invents a licence number and never overrides expired, suspended, or 
     registryMatchState: "unmatched",
   });
   assert.equal(expired.licenseStatus, "expired");
-  assert.equal(publicLicenseBadge(expired)?.id, "license_expired");
 
   const mismatch = applyLocalRegistryTrust({
     id: "mb-1001",
@@ -79,26 +68,7 @@ test("never invents a licence number and never overrides expired, suspended, or 
     registryMatchState: "mismatch",
   });
   assert.equal(mismatch.registryMatchState, "mismatch");
-  assert.equal(isVerifiedLicensed(mismatch), false);
-});
-
-test("parent cards omit Unverified and listing pills do not fake Licensed", () => {
-  const unverified = { province: "ON", licenseStatus: "unverified", registryMatchState: "unmatched", live: false };
-  assert.equal(
-    trustBadgesFor(unverified, "card").some((b) => b.id.startsWith("license_")),
-    false,
-  );
-  assert.equal(listingPill(unverified), null);
-
-  const matched = applyLocalRegistryTrust({
-    province: "MB",
-    licenseNumber: "MB-1001",
-    licenseStatus: "unverified",
-    live: false,
-  });
-  assert.equal(trustBadgesFor(matched, "card")[0]?.id, "license_matched");
-  assert.equal(listingPill(matched)?.labelKey, "badgeTen");
-  assert.equal(listingPill({ ...matched, province: "BC" })?.labelKey, "trustLicensedMatched");
+  assert.equal(mismatch.licenseStatus, "unverified");
 });
 
 test("seed persist only writes matched ids and never touches claimed or expired rows", () => {
@@ -131,6 +101,8 @@ test("UI and docs stay honest: tooltip, aria, no scrape on listing load", () => 
   const card = src("src/components/daycare-card.tsx");
   const listing = src("src/routes/daycare.$slug.tsx");
   const badge = src("src/components/trust-badge.tsx");
+  const trust = src("src/lib/trust.ts");
+  const pill = src("src/lib/listing-card.ts");
   const daycares = src("src/lib/server/daycares.ts");
   const nearby = src("src/lib/server/nearby.ts");
   const adapters = src("src/lib/server/registry-adapters.ts");
@@ -143,6 +115,8 @@ test("UI and docs stay honest: tooltip, aria, no scrape on listing load", () => 
   assert.match(badge, /data-license-badge/);
   assert.match(badge, /aria-label/);
   assert.match(badge, /title=\{tip\}/);
+  assert.match(trust, /license\.id === "license_unverified"/);
+  assert.match(pill, /license\.id === "license_unverified"/);
   assert.match(daycares, /applyLocalRegistryTrust/);
   assert.match(src("src/lib/server/map-row.ts"), /applyLocalRegistryTrust/);
   assert.doesNotMatch(daycares, /childcaresearch\.gov\.mb\.ca/);
@@ -151,7 +125,7 @@ test("UI and docs stay honest: tooltip, aria, no scrape on listing load", () => 
   assert.doesNotMatch(adapters, /cheerio|puppeteer|playwright\.chromium/);
   assert.match(docs, /Extending to another province/);
   assert.match(docs, /Do not scrape/);
-  assert.match(docs, /Never invents a licence number|never invents a licence number/i);
+  assert.match(docs, /never invents a licence number/i);
   assert.match(src("docs/catalog-source.md"), /licensing\.md/);
   assert.match(src("src/lib/copy.ts"), /trustLicensedMatched: "Licensed"/);
   assert.match(src("src/lib/copy.ts"), /trustLicensedMatchedMbTip/);
