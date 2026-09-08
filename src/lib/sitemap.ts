@@ -3,7 +3,7 @@
  * set. QA ghost / admin-only slugs never appear.
  */
 
-import { isAdminOnlyListing } from "./listing-visibility";
+import { isAdminOnlyListing } from "./listing-visibility.ts";
 
 export const SITEMAP_ORIGIN = "https://www.kidease.ca";
 export const SITEMAP_LISTING_CAP = 500;
