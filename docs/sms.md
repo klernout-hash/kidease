@@ -2,7 +2,11 @@
 
 KidEase sends **transactional** SMS only: vacancy alerts, claim-status updates, and (later) bill/pay reminders. Not marketing blasts.
 
+This is Twilio **Programmable SMS** (`Messages.json`), **not Twilio Verify**. There is no Verify Service SID and no OTP-over-SMS product flag.
+
 `FEATURE_SMS` defaults **off**. Email (Resend / SendGrid / Titan) still works when SMS is off or credentials are missing.
+
+**Production vs Preview:** on Vercel Production the flag is ignored unless Twilio send credentials exist (`src/lib/channel-readiness.ts`). Preview/dev may set `FEATURE_SMS=1` to exercise consent UI and Chat lab; `sendSms` still no-ops without secrets.
 
 Optional PostHog overlay (no redeploy): see `docs/flags.md`. Env is the fallback when `POSTHOG_FLAGS_KEY` is unset. Do not enable SMS here by default.
 
@@ -26,7 +30,7 @@ Set the same keys on **Production and Preview** (encrypted). Never prefix `VITE_
 
 | Name | Required to send | Notes |
 | --- | --- | --- |
-| `FEATURE_SMS` | yes (`1`) | Leave `0` until credentials + a Canadian sender **and** consent copy are live. |
+| `FEATURE_SMS` | yes (`1`) to send | **Production:** leave `0` / unset until credentials + a Canadian sender **and** consent copy are live. **Preview:** may set `1` to test UI. |
 | `TWILIO_ACCOUNT_SID` | yes | Console dashboard (`AC…`). |
 | `TWILIO_AUTH_TOKEN` | auth-token mode **or** webhooks | Required to validate `X-Twilio-Signature`. Keep it even if you send with an API key. |
 | `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET` | API-key mode | Preferred for production send. `SK…` + secret. |
@@ -47,7 +51,20 @@ Do **not** put `sk_live_` or Twilio secrets in git.
 6. Messaging → Settings → Geo permissions: allow **Canada** (disable countries you do not serve — SMS pumping).
 7. Put the env names on the Vercel project **kidease-git** (Production + Preview). Redeploy. Confirm `0036_casl_consents.sql` applied (`npm run db:migrate` runs on deploy).
 8. **Upgrade from trial** before texting unverified Canadian mobiles. Trial can only reach verified numbers.
-9. Confirm parents and directors can grant/withdraw SMS on `/account?tab=profile` and Family desk → Search alerts. Then — and only then — enable `FEATURE_SMS` in PostHog (preferred) or set `FEATURE_SMS=1` on Vercel. See `docs/flags.md`.
+9. Confirm parents and directors can grant/withdraw SMS on `/account?tab=profile` and Family desk → Search alerts. Then — and only then — enable `FEATURE_SMS` in PostHog (preferred) or set `FEATURE_SMS=1` on Vercel **Preview first**. Production only after the same Twilio names exist on Production. See `docs/flags.md`.
+
+## Enable checklist (Production)
+
+The send path is fully wired. Flip **only** after all of these are true:
+
+1. `TWILIO_ACCOUNT_SID` plus `TWILIO_AUTH_TOKEN` **or** `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET` on Vercel **kidease-git** Production (and Preview).
+2. `TWILIO_MESSAGING_SERVICE_SID` (preferred) or `TWILIO_FROM_NUMBER` E.164 Canadian sender.
+3. `TWILIO_AUTH_TOKEN` still set so `/api/sms/status` and `/api/sms/inbound` can validate `X-Twilio-Signature`.
+4. Messaging Service Advanced Opt-Out + inbound webhook → `https://www.kidease.ca/api/sms/inbound`.
+5. Geo permissions: Canada only. Trial upgraded before texting unverified mobiles.
+6. `0036_casl_consents.sql` applied. Profile + search-alert SMS checkboxes store express consent.
+7. Admin → Chat lab: FEATURE_SMS credentials read **present** (values never shown). Send a **Preview** pulse / claim-status dry path first.
+8. Enable in PostHog (`FEATURE_SMS`, distinct id `kidease-server`) **or** set `FEATURE_SMS=1` on Production and redeploy. Do not invent a Verify Service.
 
 ## What is wired
 

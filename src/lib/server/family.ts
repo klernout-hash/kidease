@@ -751,8 +751,10 @@ export const getThread = createServerFn({ method: "GET" })
         },
       );
     }
+    const { videoSurfaceEnabled } = await import("@/lib/channel-readiness");
     return {
       id: conv[0].id,
+      videoSurfaceEnabled: videoSurfaceEnabled(),
       daycareId: conv[0].daycare_id,
       daycareName: conv[0].name,
       daycareSlug: conv[0].slug,

@@ -12,10 +12,10 @@ import {
   PUSH_DRY_RUN_MESSAGE,
   PUSH_SCAFFOLD_MESSAGE,
   pushCredentialsPresent,
-  pushEnabled,
   pushEnvPresence,
   type PushEnvPresence,
 } from "@/lib/push";
+import { pushArmed } from "@/lib/channel-readiness";
 
 export type PushClientStatus = {
   enabled: boolean;
@@ -50,7 +50,7 @@ export type PushDryRunFnResult = {
 export const getPushClientStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async (): Promise<PushClientStatus> => {
-    const enabled = pushEnabled();
+    const enabled = pushArmed();
     return {
       enabled,
       credentialsPresent: pushCredentialsPresent(),

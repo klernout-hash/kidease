@@ -76,7 +76,7 @@ See `docs/store-readiness.md`. Do not put `sk_live_` in Preview.
 | `TWILIO_AUTH_TOKEN` | yes | both | Signature validation even if you send with an API key. |
 | `TWILIO_API_KEY_SID` / `TWILIO_API_KEY_SECRET` | yes | both | Preferred send; required for Video tokens. |
 | `TWILIO_MESSAGING_SERVICE_SID` | yes | both | `MG…` for Canada. |
-| `FEATURE_SMS` / `FEATURE_VIDEO` | no | both | Stay `0` until consent + sender / API key are live. |
+| `FEATURE_SMS` / `FEATURE_VIDEO` / `FEATURE_PUSH` | no | both | Stay `0` on Production until secrets exist. Preview may override. |
 
 See `docs/sms.md` and `docs/video.md`.
 

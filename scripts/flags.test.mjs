@@ -142,6 +142,8 @@ test("docs and env example stay placeholders; SMS and push stay off", () => {
   const vite = readFileSync(join(root, "vite.config.ts"), "utf8");
   assert.match(docs, /How Kyle flips a flag/);
   assert.match(docs, /POSTHOG_FLAGS_KEY/);
+  assert.match(docs, /Production vs Preview/);
+  assert.match(docs, /channel-readiness/);
   assert.match(docs, /FEATURE_SMS/);
   assert.match(docs, /FEATURE_PUSH/);
   assert.match(envExample, /# POSTHOG_FLAGS_KEY=/);

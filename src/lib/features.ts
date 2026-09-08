@@ -11,6 +11,15 @@ import { evaluateFeatureFlag, type EnvMap } from "./flags.ts";
 
 export { envFlagOn, evaluateFeatureFlag, describeFeatureFlag } from "./flags.ts";
 export type { EnvMap, FeatureFlagKey, FlagDecision, FlagSource } from "./flags.ts";
+export {
+  describeChannelReadiness,
+  isVercelProduction,
+  pushArmed,
+  smsArmed,
+  smsSendEnabled,
+  videoArmed,
+  videoSurfaceEnabled,
+} from "./channel-readiness.ts";
 
 export function inAppChatEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_INAPP_CHAT", env);

@@ -35,6 +35,7 @@ export function SavedSearchesPanel() {
     emailCommercial: false,
     updatedAt: null,
     emailConfigured: true,
+    smsChannelLive: false,
   });
   const [notices, setNotices] = useState<SearchAlertNotice[]>([]);
   const [editing, setEditing] = useState<SavedSearch | null>(null);
@@ -95,6 +96,9 @@ export function SavedSearchesPanel() {
               <span className="mt-1 block text-[12px] text-muted">{t("caslNotRequired")}</span>
             </span>
           </label>
+          {prefs.smsEnabled && !prefs.smsChannelLive ? (
+            <p className="text-xs text-muted">{t("alertSmsStub")}</p>
+          ) : null}
           <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
             <input
               type="checkbox"
