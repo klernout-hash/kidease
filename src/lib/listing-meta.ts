@@ -1,10 +1,9 @@
 /**
  * Unique title / description hooks for public daycare listing pages.
  * Slug-only input is enough for crawlers; name + city + province win when
- * the listing payload is available.
+ * the listing payload is available. No UI-kit imports — Node tests load this
+ * file the same way they load sitemap.ts.
  */
-
-import { displayCentreName } from "./utils.ts";
 
 export const LISTING_META_BRAND = "KidEase";
 
@@ -29,6 +28,19 @@ export function listingLabelFromSlug(slug: string | null | undefined): string {
     .trim();
 }
 
+function listingDisplayName(value: string | null | undefined): string {
+  return String(value ?? "")
+    .replace(/&amp;/gi, "&")
+    .replace(/&apos;/gi, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\bCetnre\b/g, "Centre")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function placeLabel(input: ListingMetaInput): string {
   const city = (input.city || "").trim();
   const province = (input.province || "").trim();
@@ -36,7 +48,7 @@ function placeLabel(input: ListingMetaInput): string {
 }
 
 export function listingPageTitle(input: ListingMetaInput): string {
-  const name = displayCentreName(input.name);
+  const name = listingDisplayName(input.name);
   const place = placeLabel(input);
   if (name && place) return `${name} · Daycare in ${place} · ${LISTING_META_BRAND}`;
   if (name) return `${name} · Licensed daycare · ${LISTING_META_BRAND}`;
@@ -46,7 +58,7 @@ export function listingPageTitle(input: ListingMetaInput): string {
 }
 
 export function listingPageDescription(input: ListingMetaInput): string {
-  const name = displayCentreName(input.name);
+  const name = listingDisplayName(input.name);
   const place = placeLabel(input);
   if (name && place) {
     return `See hours, fees, and open spots at ${name} in ${place}. Licensed childcare on ${LISTING_META_BRAND}.`;
