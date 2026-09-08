@@ -79,7 +79,6 @@ export function useCurrentUser(): AppUser | null {
  */
 export function useSettledUser(timeoutMs = SESSION_SETTLE_MS): CurrentUserState {
   if (!authEnabled) return { user: DEV_USER, isPending: false };
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
   const { data, isPending } = authClient.useSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [expired, setExpired] = useState(false);

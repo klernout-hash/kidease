@@ -3,7 +3,6 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { lookupUser } from "@/lib/server/notify";
 import {
-  type AppRole,
   type SessionDesks,
   desksFor,
   isStaffRole,
@@ -36,13 +35,6 @@ async function profileRole(sql: Awaited<ReturnType<typeof getSql>>, userId: stri
     select role from profiles where user_id = ${userId} limit 1
   `.catch(() => []);
   return rows[0]?.role ?? null;
-}
-
-async function adminRowCount(sql: Awaited<ReturnType<typeof getSql>>) {
-  const rows = await sql<{ n: number }>`
-    select count(*)::int as n from profiles where role = 'admin'
-  `.catch(() => [{ n: 0 }]);
-  return rows[0]?.n ?? 0;
 }
 
 async function ownsCentre(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {

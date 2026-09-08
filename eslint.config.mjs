@@ -5,7 +5,13 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-/** Flat ESLint config for the TanStack Start app-builder template. */
+/**
+ * Flat ESLint config. CI runs `npx eslint .` (same as `npm run lint`).
+ *
+ * TanStack route filenames contain a literal `$` (`video.$roomId.tsx`).
+ * Do not backslash-escape `$` in normal strings — `no-useless-escape` fails
+ * the check job. Escape `$` only inside regex literals (`/\$roomId/`).
+ */
 export default tseslint.config(
   {
     ignores: [
@@ -13,6 +19,11 @@ export default tseslint.config(
       ".output/**",
       ".vercel/**",
       ".nitro/**",
+      ".tanstack/**",
+      "coverage/**",
+      "artifacts/**",
+      "android/**",
+      "ios/**",
       "node_modules/**",
       "src/routeTree.gen.ts",
     ],
