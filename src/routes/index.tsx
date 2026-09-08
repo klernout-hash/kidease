@@ -491,7 +491,7 @@ function Home() {
             ) : (
               <>
                 <div className="ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5">
-                  {shown.slice(0, 9).map((item, i) => (
+                  {shown.slice(0, 9).map((item) => (
                     <DaycareCard key={item.id} item={item} />
                   ))}
                 </div>
