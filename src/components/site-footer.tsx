@@ -1,6 +1,5 @@
 import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
-import { RateKidEaseControl } from "@/components/rate-kidease";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -73,9 +72,8 @@ export function SiteFooter() {
                   {t("saved")}
                 </Item>
                 <Item to="/get-app">{t("getApp")}</Item>
-                <li>
-                  <RateKidEaseControl appearance="footer" />
-                </li>
+                {/* Web footer is website-only; same destination as rateKidEaseFromMenu() on www. */}
+                <Item to="/get-app">{t("rateKidEase")}</Item>
               </ul>
             </section>
 

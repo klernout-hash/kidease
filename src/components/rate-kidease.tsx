@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * All of them call `rateKidEaseFromMenu()` (PR 98): native write-review / OS sheet,
  * web → `/get-app`. No live App Store / Play fetches. Cookie consent is unchanged.
  */
-export type RateKidEaseAppearance = "button" | "row" | "drawer" | "footer" | "nav";
+export type RateKidEaseAppearance = "button" | "row" | "drawer" | "footer" | "nav" | "menu";
 
 async function runRate(onGetApp: () => void): Promise<void> {
   const result = await rateKidEaseFromMenu();
@@ -50,13 +50,16 @@ export function RateKidEaseControl({
     <button
       type="button"
       data-ke="rate-kidease"
+      role={appearance === "menu" ? "menuitem" : undefined}
       className={cn(
         appearance === "row" &&
           "flex min-h-14 w-full items-center justify-between gap-3 border-b border-border px-1 text-left text-[15px] text-fg last:border-b-0",
         appearance === "drawer" &&
           "flex min-h-12 w-full items-center rounded-xl px-3 text-left text-[15px] font-medium text-fg hover:bg-surface",
-        appearance === "footer" && "ke-footer-link cursor-pointer border-0 bg-transparent p-0 text-left",
+        appearance === "footer" &&
+          "ke-footer-link appearance-none cursor-pointer border-0 bg-transparent p-0 text-left font-inherit",
         appearance === "nav" && "whitespace-nowrap text-[13px] font-medium text-muted hover:text-fg",
+        appearance === "menu" && "block w-full px-3 py-2.5 text-left text-sm text-fg hover:bg-surface-2",
         className,
       )}
       onClick={onClick}

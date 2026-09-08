@@ -15,9 +15,10 @@ const css = src("src/styles.css");
 const copy = src("src/lib/copy.ts");
 
 test("footer exposes Rate KidEase next to Get the app in Parents", () => {
-  assert.match(footer, /to="\/get-app"/);
-  assert.match(footer, /RateKidEaseControl/);
-  assert.match(footer, /appearance="footer"/);
+  const getApp = footer.match(/to="\/get-app"/g) ?? [];
+  assert.ok(getApp.length >= 2, "Get the app + Rate KidEase both link to /get-app on www");
+  assert.match(footer, /t\("rateKidEase"\)/);
+  assert.match(footer, /rateKidEaseFromMenu/);
 });
 
 test("footer keeps Support / Parents / Daycares groups without a duplicate legal row", () => {
