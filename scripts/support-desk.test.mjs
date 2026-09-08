@@ -148,7 +148,6 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
     "src/routes/contact.tsx",
     "src/routes/claim.tsx",
     "src/routes/__root.tsx",
-    "src/components/site-footer.tsx",
     "src/components/legal-doc.tsx",
     "src/components/listing-contact.tsx",
     "src/lib/copy.ts",
