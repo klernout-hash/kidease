@@ -323,7 +323,8 @@ function prefOn(value: number | boolean | undefined, fallback = true) {
 }
 
 /**
- * Cron / queue stub. Logs matching candidates. First pass baselines (no notify).
+ * Cron / queue stub (also the Inngest `search-alerts-hourly` step).
+ * Logs matching candidates. First pass baselines (no notify).
  * Later passes emit in-app notices and attempt email. Never calls FCM.
  */
 export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {

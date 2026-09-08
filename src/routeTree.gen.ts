@@ -48,6 +48,7 @@ import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
+import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
@@ -268,6 +269,11 @@ const ApiSearchAlertsRoute = ApiSearchAlertsRouteImport.update({
   path: '/api/search-alerts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInngestRoute = ApiInngestRouteImport.update({
+  id: '/api/inngest',
+  path: '/api/inngest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSeedCatalogRoute = ApiSeedCatalogRouteImport.update({
   id: '/api/seed-catalog',
   path: '/api/seed-catalog',
@@ -424,6 +430,7 @@ export interface FileRoutesByFullPath {
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
+  '/api/inngest': typeof ApiInngestRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
@@ -488,6 +495,7 @@ export interface FileRoutesByTo {
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
+  '/api/inngest': typeof ApiInngestRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
@@ -553,6 +561,7 @@ export interface FileRoutesById {
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
+  '/api/inngest': typeof ApiInngestRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
@@ -619,6 +628,7 @@ export interface FileRouteTypes {
     | '/verify-2fa'
     | '/api/digest'
     | '/api/search-alerts'
+    | '/api/inngest'
     | '/api/seed-catalog'
     | '/book/$slug'
     | '/checkin/$id'
@@ -683,6 +693,7 @@ export interface FileRouteTypes {
     | '/verify-2fa'
     | '/api/digest'
     | '/api/search-alerts'
+    | '/api/inngest'
     | '/api/seed-catalog'
     | '/book/$slug'
     | '/checkin/$id'
@@ -747,6 +758,7 @@ export interface FileRouteTypes {
     | '/verify-2fa'
     | '/api/digest'
     | '/api/search-alerts'
+    | '/api/inngest'
     | '/api/seed-catalog'
     | '/book/$slug'
     | '/checkin/$id'
@@ -812,6 +824,7 @@ export interface RootRouteChildren {
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
+  ApiInngestRoute: typeof ApiInngestRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
@@ -1111,6 +1124,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSearchAlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/inngest': {
+      id: '/api/inngest'
+      path: '/api/inngest'
+      fullPath: '/api/inngest'
+      preLoaderRoute: typeof ApiInngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/seed-catalog': {
       id: '/api/seed-catalog'
       path: '/api/seed-catalog'
@@ -1325,6 +1345,7 @@ const rootRouteChildren: RootRouteChildren = {
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
+  ApiInngestRoute: ApiInngestRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
