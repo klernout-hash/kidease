@@ -9,7 +9,7 @@
     r.dataset.theme = pref;
     r.dataset.resolvedTheme = resolved;
     r.style.colorScheme = resolved;
-  } catch (e) {
+  } catch {
     document.documentElement.dataset.theme = "system";
   }
 })();
