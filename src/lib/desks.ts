@@ -85,6 +85,30 @@ export function pickLandingDesk(desks: DeskKey[], preferred?: DeskKey | null): D
   return primaryDesk(desks);
 }
 
+/**
+ * Where login should send the browser after a successful password/social
+ * sign-in. An explicit `next` (Parent pill, /parent gate, deep link) always
+ * wins — including for admin — so Kyle can open Parent desk on the same
+ * session. `?desk=` / `?role=parent` also prefer that desk over primaryDesk
+ * (admin), which would otherwise dump them on /admin or /provider.
+ */
+export function resolvePostLoginPath(input: {
+  next?: string | null;
+  desk?: DeskKey | null;
+  role?: "parent" | "provider" | "admin" | null;
+  desks?: DeskKey[] | null;
+  sticky?: DeskKey | null;
+}): string {
+  const next = (input.next || "").trim();
+  if (next.startsWith("/") && !next.startsWith("//")) return next;
+  const fromRole: DeskKey | null =
+    input.role === "parent" ? "parent" : input.role === "provider" ? "provider" : input.role === "admin" ? "admin" : null;
+  const preferred = input.desk ?? fromRole ?? input.sticky ?? null;
+  if (input.desks?.length) return DESK_PATH[pickLandingDesk(input.desks, preferred)];
+  if (preferred) return DESK_PATH[preferred];
+  return "/";
+}
+
 export function readStickyDesk(): DeskKey | null {
   if (typeof window === "undefined") return null;
   try {

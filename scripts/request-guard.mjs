@@ -40,7 +40,9 @@ export function normalizePath(pathname) {
 }
 
 /**
- * Staff desks and their API. `/administrator`, `/help`, and `/provider` are not matched.
+ * Staff desks and their API. `/administrator`, `/help`, `/provider`, `/parent`,
+ * `/login`, `/api/auth/*`, and `/_serverFn/*` are not matched — Cloudflare
+ * Access must stay on these staff prefixes only (see docs/cloudflare.md).
  * `/support*` is the Support desk (Access can be added later on www — see docs/support.md).
  */
 export function isSensitiveDeskPath(pathname) {

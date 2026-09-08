@@ -8,7 +8,10 @@ import { cn } from "@/lib/utils";
 
 export type ShareAppearance = "icon" | "labeled" | "menu" | "nav" | "drawer" | "photo" | "row";
 
-async function runShare(payload: SharePayload, messages: { copied: string; failed: string }): Promise<void> {
+async function runShare(
+  payload: SharePayload,
+  messages: { copied: string; shared: string; failed: string },
+): Promise<void> {
   const outcome = await shareOrCopy(payload);
   if (outcome === "copied") {
     toast.success(messages.copied);
@@ -17,6 +20,7 @@ async function runShare(payload: SharePayload, messages: { copied: string; faile
   if (outcome === "shared") {
     void hapticLight();
     noteHappyMoment("share");
+    toast.success(messages.shared);
     return;
   }
   if (outcome === "failed") toast.error(messages.failed);
@@ -42,7 +46,7 @@ function ShareControl({
   async function onShare(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     e.stopPropagation();
-    await runShare(payload, { copied: t("linkCopied"), failed: t("shareFailed") });
+    await runShare(payload, { copied: t("linkCopied"), shared: t("shareDone"), failed: t("shareFailed") });
     onDone?.();
   }
 

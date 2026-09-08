@@ -28,7 +28,7 @@ test("login preserves ?desk= and does not rewrite Better Auth cookies", () => {
   const login = src("src/routes/login.tsx");
   assert.match(login, /parseDeskQuery/);
   assert.match(login, /writeStickyDesk/);
-  assert.match(login, /pickLandingDesk/);
+  assert.match(login, /resolvePostLoginPath/);
   assert.match(login, /deskQueryValue/);
   assert.doesNotMatch(login, /sessionStorage\.setItem\("better-auth/);
   const gates = src("src/lib/auth/gates.tsx");

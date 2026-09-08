@@ -9,6 +9,7 @@
 import { compareParentMatch, parentMatchScore, type ParentMatchPrefs } from "@/lib/parent-match";
 import { compareParentUrgency, parentUrgencyScore, type ParentUrgencyPrefs } from "@/lib/parent-urgency";
 import { matchesCareType, matchesRailAge, type CareType, type RailAge } from "@/lib/care-type";
+import { isPublicListing } from "@/lib/listing-visibility";
 import type { DaycareCard } from "@/lib/types";
 
 export const PARENT_RAIL_LIMIT = 12;
@@ -94,7 +95,7 @@ export function buildParentRails(
   prefs: ParentRailPrefs = {},
   chips: { age: RailAge; care: CareType } = { age: "preschool", care: "centre" },
 ): ParentRail[] {
-  const pool = scoreParentRailItems(items, prefs);
+  const pool = scoreParentRailItems(items.filter((item) => isPublicListing(item)), prefs);
   const rails: ParentRail[] = [
     { id: "match", items: bestMatchRail(pool, prefs), seeAll: { sort: "match" } },
     { id: "urgency", items: urgencyRail(pool, prefs), seeAll: { sort: "urgency" } },

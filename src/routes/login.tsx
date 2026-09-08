@@ -12,7 +12,8 @@ import { Shell } from "@/components/shell";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { getMyDesks } from "@/lib/server/roles";
-import { DESK_PATH, deskQueryValue, loginRoleFromDesk, parseDeskQuery, pickLandingDesk, readStickyDesk, writeStickyDesk } from "@/lib/desks";
+import { deskQueryValue, loginRoleFromDesk, parseDeskQuery, readStickyDesk, resolvePostLoginPath, writeStickyDesk } from "@/lib/desks";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 
 type Role = "parent" | "provider" | "admin";
@@ -48,17 +49,13 @@ function Login() {
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
   const operator = role === "admin";
-  const dest = search.next && search.next.startsWith("/")
-    ? search.next
-    : deskHint
-      ? DESK_PATH[deskHint]
-      : role === "provider"
-        ? "/provider"
-        : role === "admin"
-          ? "/admin"
-          : role === "parent"
-            ? "/parent"
-            : "/";
+  const dest = resolvePostLoginPath({
+    next: search.next,
+    desk: deskHint,
+    role: role ?? null,
+    sticky: readStickyDesk(),
+  });
+  const { user, isPending: sessionPending } = useCurrentUserState();
   const [mode, setMode] = useState<"in" | "up">(operator ? "in" : search.intent === "up" ? "up" : "in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState(operator ? OPERATOR_EMAIL : "");
@@ -72,6 +69,13 @@ function Login() {
     if (role === "parent" || role === "provider") rememberRole(role);
     if (deskHint) writeStickyDesk(deskHint);
   }, [role, deskHint]);
+
+  useEffect(() => {
+    if (sessionPending || !user) return;
+    const destUrl = dest.startsWith("/") ? dest : "/";
+    if (destUrl === "/login" || destUrl.startsWith("/login?")) return;
+    window.location.replace(twoFactorUrl(destUrl));
+  }, [sessionPending, user, dest]);
 
   async function finish() {
     const session = await authClient.getSession().catch(() => ({ data: null }));
@@ -88,11 +92,16 @@ function Login() {
       }
     }
     let destUrl = dest.startsWith("/") ? dest : "/";
-    if (!search.next && !operator) {
+    if (!search.next) {
       try {
-        const session = await getMyDesks();
-        const preferred = deskHint ?? readStickyDesk();
-        destUrl = DESK_PATH[pickLandingDesk(session.desks, preferred)];
+        const sessionDesks = await getMyDesks();
+        destUrl = resolvePostLoginPath({
+          next: search.next,
+          desk: deskHint,
+          role: role ?? null,
+          desks: sessionDesks.desks,
+          sticky: readStickyDesk(),
+        });
       } catch {
         /* keep dest from the login role / desk */
       }

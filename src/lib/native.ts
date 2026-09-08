@@ -118,6 +118,16 @@ export function isShareCancellation(err: unknown): boolean {
   return /cancel|abort|dismiss/i.test(message);
 }
 
+/** True when an OS share sheet is likely to appear. Desktop Chrome often
+ *  implements `navigator.share` with no picker (or an instant abort). */
+export function preferOsShare(): boolean {
+  if (isNative()) return true;
+  if (typeof navigator === "undefined" || typeof navigator.share !== "function") return false;
+  const ua = navigator.userAgent || "";
+  const ipadOs = /Macintosh|Mac OS X/.test(ua) && (navigator.maxTouchPoints ?? 0) > 1;
+  return /Android|iPhone|iPad|iPod/i.test(ua) || ipadOs;
+}
+
 export async function shareText(title: string, text: string, url?: string): Promise<ShareAttempt> {
   try {
     if (isNative()) {
@@ -125,7 +135,7 @@ export async function shareText(title: string, text: string, url?: string): Prom
       await Share.share({ title, text, url });
       return "shared";
     }
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    if (preferOsShare()) {
       await navigator.share({ title, text, url });
       return "shared";
     }

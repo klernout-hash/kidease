@@ -69,6 +69,9 @@ test("subscription route is live for directors and checkout is live-keyed", () =
   const server = src("src/lib/server/provider-subscriptions.ts");
   const tree = src("src/routeTree.gen.ts");
   const shell = src("src/components/desk-shell.tsx");
+  const provider = src("src/routes/provider.tsx");
+  assert.match(provider, /<Outlet \/>/);
+  assert.match(provider, /\/provider\/subscription/);
   assert.match(route, /createFileRoute\("\/provider\/subscription"\)/);
   assert.match(route, /session\?\.providerSubscriptions/);
   assert.match(route, /directors/);

@@ -40,3 +40,27 @@ If the widget never appears, that is still the `/_serverFn/*` WAF skip above.
 ## Access vs Bot Fight
 
 Cloudflare **Access** still guards `/admin*` (and later `/support*`) — that is a login wall for staff, not a WAF block on `/api/auth/*`. Do not put Access in front of `/api/auth/*` or `/login`. See `docs/support.md`.
+
+## Access application (ops checklist)
+
+Mid-session re-entry to `/admin` showing the Cloudflare Access login wall is almost always the **Zero Trust application path being too broad**, or the Access JWT expiring after a hop through `/login`. KidEase cannot mint that JWT. Do this in the dashboard — do **not** put all of `www` behind Access.
+
+1. [Cloudflare Dashboard](https://dash.cloudflare.com) → **Zero Trust** → **Access** → **Applications**.
+2. Open the KidEase staff app (or create one) for **`www.kidease.ca`** only. Leave `kidease.ca` apex as a 308 to www (the app already canonicalizes).
+3. **Path include list** (self-hosted / hostname + path). Add only:
+
+   | Path | Why |
+   | --- | --- |
+   | `/admin` | Admin desk |
+   | `/admin/*` | Nested admin |
+   | `/admin-contracts` and `/admin-contracts/*` | Contracts desk |
+   | `/admin-chat` and `/admin-chat/*` | Chat lab |
+   | `/api/admin/*` | Admin JSON |
+
+4. **Do not** add `*`, `/`, `/parent`, `/provider`, `/login`, `/search`, `/api/auth/*`, or `/_serverFn/*`. Those stay public or Better Auth. A site-wide Access app is what forces parents and directors through the staff wall.
+5. Optional later: `/support` and `/support/*` on the **same** application (see `docs/support.md`). Still not `/help`.
+6. **Session duration:** 24 hours (or longer). Same-origin SPA clicks from Parent → Admin reuse the Access cookie; a 15-minute session looks like a “flap” after any full reload of `/admin`.
+7. **Cookie:** same-site `lax` on `www.kidease.ca`. Do not scope the Access cookie to `/admin` only if you also protect `/api/admin/*` — use the application path list above and the default cookie.
+8. **Bypass / public rules:** if a second application or WAF custom rule matches `www.kidease.ca/*`, disable it or narrow it. Preview hosts (`*.vercel.app`) are **not** behind Access; the app 302s `/admin*` and `/support*` to `https://www.kidease.ca…` so Access can apply on www.
+
+App-side: `scripts/request-guard.mjs` `isSensitiveDeskPath` is the allow-list that may 302 preview → www. `/parent`, `/provider`, `/login`, `/`, and `/api/auth/*` never go through that hop.

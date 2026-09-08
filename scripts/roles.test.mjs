@@ -21,6 +21,7 @@ import {
   headerDesks,
   canSeeAdminDesk,
   showDeskSwitcher,
+  resolvePostLoginPath,
 } from "../src/lib/desks.ts";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -103,6 +104,29 @@ test("?desk= aliases map to role desks without colliding with provider tabs", ()
   assert.equal(pickLandingDesk(["parent"], "admin"), "parent");
   assert.equal(DESK_PATH[pickLandingDesk(["admin", "provider", "parent"], "provider")], "/provider");
   assert.equal(DESK_LABEL.provider, "Daycare");
+});
+
+test("post-login dest honors /parent for admin instead of dumping them on Provider", () => {
+  const adminDesks = ["admin", "support", "provider", "parent"];
+  assert.equal(
+    resolvePostLoginPath({ next: "/parent", role: "parent", desks: adminDesks }),
+    "/parent",
+  );
+  assert.equal(
+    resolvePostLoginPath({ desk: "parent", role: "parent", desks: adminDesks }),
+    "/parent",
+  );
+  assert.equal(
+    resolvePostLoginPath({ role: "parent", desks: adminDesks }),
+    "/parent",
+  );
+  assert.equal(
+    resolvePostLoginPath({ role: "provider", desks: adminDesks }),
+    "/provider",
+  );
+  assert.equal(resolvePostLoginPath({ desks: adminDesks }), "/admin");
+  assert.equal(resolvePostLoginPath({ next: "/search", desks: ["parent"] }), "/search");
+  assert.equal(canSeeAdminDesk("parent"), false);
 });
 
 test("setRole never demotes staff and never elevates parent/provider to admin", () => {

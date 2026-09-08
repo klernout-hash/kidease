@@ -147,6 +147,7 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
 
   const parent = src("src/components/parent-desk.tsx");
   assert.match(parent, /ParentDeskRails/);
+  assert.match(src("src/lib/parent-rails.ts"), /isPublicListing/);
   assert.match(parent, /explore/);
   assert.match(parent, /withTimeoutFallback/);
   assert.match(parent, /LOADER_SETTLE_MS/);
