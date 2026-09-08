@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { MessageCircle } from "lucide-react";
-import { DESK_PATH, deskFromPathname, headerDesks, showDeskSwitcher, writeStickyDesk, type DeskKey } from "@/lib/desks";
+import { DESK_PATH, headerDesks, highlightDesk, readStickyDesk, showDeskSwitcher, writeStickyDesk, type DeskKey } from "@/lib/desks";
+import { inboxSearch } from "@/lib/inbox-view";
 import { useSessionDesks } from "@/components/session-desks";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
@@ -23,7 +24,8 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   // or rewrite the session cookie. /provider still promotes via its own mount.
   if (!session || !showDeskSwitcher(session.desks)) return null;
 
-  const current = deskFromPathname(pathname);
+  const current = highlightDesk(pathname, readStickyDesk());
+  const inboxView = current === "provider" ? "centre" : "family";
 
   return (
     <div
@@ -49,6 +51,7 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
       })}
       <Link
         to="/inbox"
+        search={inboxSearch(inboxView)}
         aria-label={session.unread ? `Inbox, ${session.unread} unread` : "Inbox"}
         className={cn(
           "relative inline-flex size-8 items-center justify-center rounded-full",

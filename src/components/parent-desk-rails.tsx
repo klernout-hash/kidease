@@ -100,7 +100,7 @@ export function ParentDeskRails({
   if (!items.length) {
     return (
       <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
-        <EmptyState title={t("noResults")} action={t("emptyFindCare")} actionTo="/search" />
+        <EmptyState title={t("noResults")} body={t("parentRailsEmptyLead")} action={t("emptyFindCare")} actionTo="/search" />
       </div>
     );
   }

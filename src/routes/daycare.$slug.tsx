@@ -192,14 +192,15 @@ function Listing() {
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
 
-  function goLogin() {
+  function goLogin(reason?: "needSignInTour" | "needSignInSave" | "needSignInMessage" | "guestSignInReturn") {
+    if (reason) toast.message(t(reason));
     void navigate({ to: "/login", search: parentLoginSearch(`/daycare/${slug}`) });
   }
 
   function onRequest() {
     if (!live) return;
     if (!user) {
-      goLogin();
+      goLogin("guestSignInReturn");
       return;
     }
     setRequestOpen(true);
@@ -208,7 +209,7 @@ function Listing() {
   function onTour() {
     if (!live) return;
     if (!user) {
-      goLogin();
+      goLogin("needSignInTour");
       return;
     }
     setTourOpen(true);
@@ -216,20 +217,20 @@ function Listing() {
 
   async function onSave() {
     if (!user) {
-      goLogin();
+      goLogin("needSignInSave");
       return;
     }
     try {
       const res = await toggleSave({ data: d.id });
       setSaved(res.saved);
     } catch {
-      goLogin();
+      goLogin("needSignInSave");
     }
   }
 
   async function onMessage() {
     if (!user) {
-      goLogin();
+      goLogin("needSignInMessage");
       return;
     }
     try {
@@ -237,7 +238,7 @@ function Listing() {
       void navigate({ to: "/inbox/$id", params: { id: res.id } });
     } catch {
       toast.error(t("needSignIn"));
-      goLogin();
+      goLogin("needSignInMessage");
     }
   }
 
@@ -384,7 +385,8 @@ function Listing() {
             </div>
 
             <div className="mt-6 grid gap-2 rounded-xl bg-surface p-4 ring-1 ring-border lg:hidden">
-              <p className="text-sm text-muted">{t("listingCtaLead")}</p>
+              <p className="text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
+              {!user && live ? <p className="text-xs text-subtle">{t("guestBrowse")}</p> : null}
               <ListingActions />
               {live && waitlisted ? <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
             </div>
@@ -585,7 +587,8 @@ function Listing() {
                 <span className="text-xl">{t("feeUnknown")}</span>
               )}
             </p>
-            <p className="mt-3 text-sm text-muted">{t("listingCtaLead")}</p>
+            <p className="mt-3 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
+            {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
             <div className="mt-4 grid gap-2">
               <ListingActions />
               {live && waitlisted ? <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}

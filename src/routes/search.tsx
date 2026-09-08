@@ -32,6 +32,7 @@ import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
 import { isCareType, isRailAge, matchesCareType, matchesRailAge, type CareType, type RailAge } from "@/lib/care-type";
+import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { noteHappyMoment } from "@/lib/store-review";
 import { saveSearch } from "@/lib/server/saved-searches";
@@ -495,17 +496,17 @@ function SearchPage() {
     : extraFilters && (items?.length ?? 0) > 0
       ? {
           title: t("noFilterResults"),
-          body: undefined as string | undefined,
+          body: t("noFilterResultsLead") as string | undefined,
           action: t("clearFilters"),
           onAction: clearListingFilters,
-          secondary: undefined as string | undefined,
+          secondary: t("showAll"),
           secondaryTo: undefined as string | undefined,
-          onSecondary: undefined as (() => void) | undefined,
+          onSecondary: () => setLiveOnly(false),
         }
       : liveOnly && (items?.length ?? 0) > 0
         ? {
             title: t("noLiveResults"),
-            body: undefined as string | undefined,
+            body: t("noLiveResultsLead") as string | undefined,
             action: t("showAll"),
             onAction: () => setLiveOnly(false),
             secondary: t("widenRadius"),
@@ -535,7 +536,8 @@ function SearchPage() {
     anchors.mode === "both" && workOrigin
       ? `${origin.label.split(",")[0]} + ${workOrigin.label.split(",")[0]}`
       : (anchors.mode === "work" && workOrigin ? workOrigin : origin).label.split(",")[0];
-  const fabric = areaPresence(list);
+  const catalog = items ?? [];
+  const fabric = areaPresence(catalog);
   const freshness = presenceFreshness(originAt, originSource);
   const mapOrigin = anchors.primary;
 
@@ -659,7 +661,7 @@ function SearchPage() {
                 </span>
               ) : (
                 <>
-                  {list.length} {list.length === 1 ? "centre" : "centres"}
+                  {list.length === 1 ? t("searchResultCountOne") : t("searchResultCount").replace("{n}", String(list.length))}
                   {DOT}
                   {shownRadius} {u}
                   {DOT}
@@ -669,6 +671,8 @@ function SearchPage() {
             </p>
             {items !== null && fabric.live > 0 ? (
               <p className="mt-1 text-xs font-medium text-ok">{t("liveInArea").replace("{n}", String(fabric.live))}</p>
+            ) : catalog.length > 0 ? (
+              <p className="mt-1 text-xs font-medium text-muted">{t("liveVsAllNone").replace("{n}", String(catalog.length))}</p>
             ) : null}
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
@@ -676,11 +680,16 @@ function SearchPage() {
               {t("changeLocation")}
             </Link>
             {user ? (
-              <button type="button" onClick={openSaveSearch} className="text-sm font-medium text-primary">
-                {t("saveSearch")}
-              </button>
+              <>
+                <Link to="/parent" search={{ tab: "children" }} className="text-sm font-medium text-primary">
+                  {t("wayfindChildProfile")}
+                </Link>
+                <button type="button" onClick={openSaveSearch} className="text-sm font-medium text-primary">
+                  {t("saveSearch")}
+                </button>
+              </>
             ) : (
-              <Link to="/login" search={{ next: "/search", role: "parent" }} className="text-sm font-medium text-primary">
+              <Link to="/login" search={parentLoginSearch("/search")} className="text-sm font-medium text-primary">
                 {t("saveSearchNeedSignIn")}
               </Link>
             )}
@@ -771,14 +780,14 @@ function SearchPage() {
               onClick={() => setLiveOnly(true)}
               className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", liveOnly ? "bg-ok text-primary-fg" : "text-muted")}
             >
-              {t("liveOnly")}
+              {t("liveOnly")} · {fabric.live}
             </button>
             <button
               type="button"
               onClick={() => setLiveOnly(false)}
               className={cn("flex-1 rounded-full px-4 text-[13px] font-semibold", !liveOnly ? "bg-fg text-bg" : "text-muted")}
             >
-              {t("showAll")}
+              {t("showAll")} · {catalog.length}
             </button>
           </div>
           <button

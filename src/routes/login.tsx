@@ -169,13 +169,18 @@ function Login() {
       : role === "parent"
         ? t("parentSignIn")
         : t("signIn");
+  const nextPath = (search.next || "").split("?")[0] || "";
   const lead = operator
     ? "This page is only for Kyle. After the password, KidEase emails a 6-digit code."
-    : role === "provider"
-      ? t("loginLeadProvider")
-      : role === "parent"
-        ? t("loginLeadParent")
-        : t("loginLead");
+    : nextPath.startsWith("/daycare/")
+      ? t("loginLeadListing")
+      : nextPath === "/search"
+        ? t("loginLeadSearchSave")
+        : role === "provider"
+          ? t("loginLeadProvider")
+          : role === "parent"
+            ? t("loginLeadParent")
+            : t("loginLead");
 
   return (
     <Shell bare>

@@ -7,6 +7,7 @@ export type DeskItem = {
   label: string;
   hint?: string;
   href?: string;
+  search?: Record<string, string>;
   icon?: DeskIcon;
 };
 
@@ -39,7 +40,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "promote", label: "Promote", hint: "Priority placement" },
     { id: "subscription", label: "Subscription", hint: "Centre plans", icon: "credit-card", href: "/provider/subscription" },
     { id: "claim", label: "Claim a centre", href: "/claim" },
-    { id: "messages", label: "Messages", hint: "Parent threads + tours", href: "/inbox" },
+    { id: "messages", label: "Messages", hint: "Parent inquiries + tours", href: "/inbox", search: { view: "centre" } },
   ],
   parent: [
     { id: "explore", label: "For you", hint: "Matches near you" },

@@ -8,9 +8,9 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
 export const Route = createFileRoute("/parent")({
   validateSearch: (s: Record<string, unknown>) => {
-    const out: { tab?: "explore" | "saved" | "enrolled" | "profile" | "payments" | "alerts"; preview?: "support" } = {};
+    const out: { tab?: "explore" | "saved" | "enrolled" | "profile" | "payments" | "alerts" | "children"; preview?: "support" } = {};
     const tab = s.tab;
-    if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments" || tab === "alerts") out.tab = tab;
+    if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments" || tab === "alerts" || tab === "children") out.tab = tab;
     if (s.preview === "support") out.preview = "support";
     return out;
   },
@@ -31,7 +31,9 @@ function ParentPage() {
             ? "alerts"
             : search.tab === "explore"
               ? "explore"
-              : "explore";
+              : search.tab === "children"
+                ? "children"
+                : "explore";
 
   if (isPending) {
     return (

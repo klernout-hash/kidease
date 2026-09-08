@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Check, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { getFamily } from "@/lib/server/family";
 import { createTourRequest } from "@/lib/server/tours";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -63,7 +64,7 @@ export function RequestTourSheet({ daycare, open, onClose }: Props) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) {
-      void navigate({ to: "/login" });
+      void navigate({ to: "/login", search: parentLoginSearch(`/daycare/${daycare.slug}`) });
       return;
     }
     if (times.length === 0) return;
@@ -86,7 +87,7 @@ export function RequestTourSheet({ daycare, open, onClose }: Props) {
       }, 1400);
     } catch {
       toast.error(t("needSignIn"));
-      void navigate({ to: "/login" });
+      void navigate({ to: "/login", search: parentLoginSearch(`/daycare/${daycare.slug}`) });
     } finally {
       setBusy(false);
     }

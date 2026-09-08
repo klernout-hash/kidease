@@ -63,6 +63,12 @@ export function publicListings<T extends ListingVisibilityInput>(rows: T[]): T[]
   return rows.filter((row) => isPublicListing(row));
 }
 
+/** Staff queues default to production claims. QA / ghost / Claim Lab stay opt-in. */
+export function staffQueueRows<T extends ListingVisibilityInput>(rows: T[], includeQa: boolean): T[] {
+  if (includeQa) return rows;
+  return rows.filter((row) => !isAdminOnlyListing(row));
+}
+
 export function listingVisibilityOf(d: ListingVisibilityInput): ListingVisibility {
   return isAdminOnlyListing(d) ? LISTING_VISIBILITY.adminOnly : LISTING_VISIBILITY.public;
 }

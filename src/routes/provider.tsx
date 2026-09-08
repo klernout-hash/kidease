@@ -56,6 +56,7 @@ function ProviderPage() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const childRoute = pathname === "/provider/subscription" || pathname.startsWith("/provider/subscription/");
   const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? "requests");
+  const [showNewForm, setShowNewForm] = useState(false);
   const [listings, setListings] = useState<Daycare[]>([]);
   const [stats, setStats] = useState<
     Array<{ daycareId: string; views: number; inquiries: number; requests: number; demand?: DemandSnapshot }>
@@ -162,12 +163,26 @@ function ProviderPage() {
       onSelect={(id) => {
         if (id === "add") {
           setDesk("listings");
+          if (listings.length === 0) {
+            setShowNewForm(false);
+            return;
+          }
+          setShowNewForm(true);
           queueMicrotask(() => document.getElementById("list-new")?.scrollIntoView({ behavior: "smooth", block: "start" }));
           return;
         }
         setDesk(id as DaycareDesk);
       }}
     >
+      {listings.length === 0 ? (
+        <ProviderOnboarding
+          showForm={showNewForm}
+          onShowForm={() => {
+            setShowNewForm(true);
+            setDesk("listings");
+          }}
+        />
+      ) : null}
       <DirectorNudgeQueue listings={listings} stats={stats} onConfirmed={() => void load()} />
       <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
       {subscription ? <ProviderPlanBanner subscription={subscription} /> : null}
@@ -196,11 +211,6 @@ function ProviderPage() {
             <p className="mt-1 text-sm text-muted">
               Parents who sent a child profile or asked this centre for a spot. Approve, put on waiting, or decline. The parent is notified in their inbox.
             </p>
-            {listings.length === 0 ? (
-              <p className="mt-4 rounded-xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
-                Claim or list a centre first. Incoming parent requests only show for centres you own.
-              </p>
-            ) : null}
             <RequestList
               items={waiting}
               empty="No new parent requests right now."
@@ -322,8 +332,18 @@ function ProviderPage() {
               </dl>
             </section>
           ) : null}
+          {listings.length === 0 && !showNewForm ? null : (
           <section id="list-new" className="rounded-xl bg-surface p-5 ring-1 ring-border">
+            {listings.length === 0 ? (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="font-display text-2xl">{t("listCentre")}</h2>
+                <Button type="button" variant="secondary" size="sm" onClick={() => setShowNewForm(false)}>
+                  {t("providerListNewHide")}
+                </Button>
+              </div>
+            ) : (
             <h2 className="font-display text-2xl">{t("listCentre")}</h2>
+            )}
             <form
               className="mt-4 grid gap-3 sm:grid-cols-2"
               onSubmit={(e) => {
@@ -377,13 +397,14 @@ function ProviderPage() {
               </div>
             </form>
           </section>
+          )}
         </>
       ) : null}
 
       {desk === "licence" ? (
         listings.length === 0 ? (
           <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
-            Claim or list a centre first, then upload the provincial licence photo here.
+            {t("providerOnboardingLead")}
           </p>
         ) : (
           listings.map((d) => (
@@ -408,7 +429,7 @@ function ProviderPage() {
 
       {desk === "promote" ? (
         listings.length === 0 ? (
-          <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">List a centre before buying priority placement.</p>
+          <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("providerOnboardingLead")}</p>
         ) : (
           listings.map((d) => {
             const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
@@ -429,6 +450,31 @@ function ProviderPage() {
       ) : null}
     </DeskShell>
     </TwoFactorGate>
+  );
+}
+
+function ProviderOnboarding({ showForm, onShowForm }: { showForm: boolean; onShowForm: () => void }) {
+  const { t } = useCopy();
+  return (
+    <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20">
+      <h2 className="font-display text-2xl">{t("providerOnboardingTitle")}</h2>
+      <p className="mt-2 text-sm text-muted">{t("providerOnboardingLead")}</p>
+      <ol className="mt-4 space-y-2 text-sm">
+        <li>{t("providerOnboardingStep1")}</li>
+        <li>{t("providerOnboardingStep2")}</li>
+        <li>{t("providerOnboardingStep3")}</li>
+      </ol>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <Button asChild>
+          <Link to="/claim">{t("providerOnboardingClaim")}</Link>
+        </Button>
+        {showForm ? null : (
+          <Button type="button" variant="secondary" onClick={onShowForm}>
+            {t("providerOnboardingListNew")}
+          </Button>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -466,7 +512,7 @@ function RequestList({
             </div>
             {r.conversationId ? (
               <Button size="sm" variant="secondary" asChild>
-                <Link to="/inbox/$id" params={{ id: r.conversationId }}>
+                <Link to="/inbox/$id" params={{ id: r.conversationId }} search={{ view: "centre" }}>
                   {t("viewRespond")}
                 </Link>
               </Button>

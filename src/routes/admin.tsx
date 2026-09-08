@@ -28,6 +28,7 @@ import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
 import { AdminReviewsPanel } from "@/components/admin-reviews";
 import { compareTimeDesc } from "@/lib/sort-time";
+import { staffQueueRows } from "@/lib/listing-visibility";
 
 type AdminDesk = "queue" | "verify" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
 
@@ -79,6 +80,7 @@ function AdminPage() {
   const [moneyDir, setMoneyDir] = useState<"all" | "in" | "out">("all");
   const [activityKind, setActivityKind] = useState("all");
   const [activityQ, setActivityQ] = useState("");
+  const [showQaFixtures, setShowQaFixtures] = useState(false);
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
   const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
   const [reports, setReports] = useState<AdminReportRow[]>([]);
@@ -118,17 +120,20 @@ function AdminPage() {
     void refresh();
   }, [user, admin]);
 
+  const staffCentres = useMemo(() => staffQueueRows(centres, showQaFixtures), [centres, showQaFixtures]);
+  const qaCount = useMemo(() => centres.filter((c) => c.isTest).length, [centres]);
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return centres;
-    return centres.filter((c) =>
+    if (!needle) return staffCentres;
+    return staffCentres.filter((c) =>
       [c.name, c.city, c.province, c.address, c.providerName, c.providerEmail, c.contactEmail]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(needle),
     );
-  }, [centres, q]);
+  }, [staffCentres, q]);
 
   const waitingOnYou = useMemo(
     () => filtered.filter((c) => isQueued(c.claimStatus)).sort((a, b) => compareTimeDesc(a.submittedAt, b.submittedAt)),
@@ -170,11 +175,11 @@ function AdminPage() {
   }, [filtered]);
 
   const counts = useMemo(() => {
-    const waiting = centres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "waiting").length;
-    const approved = centres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "live").length;
-    const declined = centres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "declined").length;
-    return { waiting, approved, declined, all: centres.length };
-  }, [centres]);
+    const waiting = staffCentres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "waiting").length;
+    const approved = staffCentres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "live").length;
+    const declined = staffCentres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "declined").length;
+    return { waiting, approved, declined, all: staffCentres.length };
+  }, [staffCentres]);
 
   const activityRows = useMemo(() => {
     const needle = activityQ.trim().toLowerCase();
@@ -269,10 +274,19 @@ function AdminPage() {
             <Stat label="Photo review" value={filtered.filter((c) => needsPhotoReview(c)).length} />
             <Stat label="Waiting claims" value={waitingOnYou.length} />
           </dl>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
+              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setShowQaFixtures(e.target.checked)} />
+              Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
+            </label>
           </div>
+          {!showQaFixtures && qaCount > 0 ? (
+            <p className="mt-3 text-xs text-muted">
+              {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from this production queue. Toggle Show QA fixtures to review the ghost listing separately.
+            </p>
+          ) : null}
           <section className="mt-8 overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-border">
             <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
               <div>
@@ -303,10 +317,19 @@ function AdminPage() {
             <Stat label="Declined" value={counts.declined} />
             <Stat label="In this list" value={counts.all} />
           </dl>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
+              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setShowQaFixtures(e.target.checked)} />
+              Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
+            </label>
           </div>
+          {!showQaFixtures && qaCount > 0 ? (
+            <p className="mt-3 text-xs text-muted">
+              {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from Live and Waiting counts. Toggle to review TEST Ghost Claim Lab separately.
+            </p>
+          ) : null}
           {tab === "queue" ? (
             <section className="mt-8 overflow-hidden rounded-2xl bg-[#1a3790] text-primary-fg shadow-card">
               <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
@@ -392,7 +415,7 @@ function AdminPage() {
         <div className="mb-4">
           <h2 className="font-display text-2xl">Activity</h2>
           <p className="mt-1 text-sm text-muted">
-            Platform log only. Export, RBAC, and admin chat actions are not built — filter here, then open the listing.
+            Platform log only. Claims, approvals, chat, and new accounts write here. Export and full RBAC are not built — filter, then open the listing or switch to Waiting on you.
           </p>
         </div>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row">
@@ -417,7 +440,21 @@ function AdminPage() {
         </div>
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
           {activityRows.length === 0 ? (
-            <li className="p-8 text-center text-muted">{rows.length === 0 ? "No activity yet." : "No activity matches that filter."}</li>
+            <li className="p-8 text-center">
+              {rows.length === 0 ? (
+                <>
+                  <p className="font-medium">No platform events yet.</p>
+                  <p className="mt-2 text-sm text-muted">
+                    Claims, approvals, chat, and new accounts appear here. Start on Waiting on you or Licence & photos when a centre submits.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium">No activity matches that filter.</p>
+                  <p className="mt-2 text-sm text-muted">Clear the search or switch the kind chip to All.</p>
+                </>
+              )}
+            </li>
           ) : (
             activityRows.map((r) => (
               <li key={r.id} className="p-4">

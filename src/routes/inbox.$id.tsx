@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { inboxSearch, parseInboxView, resolveInboxView } from "@/lib/inbox-view";
+import { readStickyDesk } from "@/lib/desks";
 import { MapPinned, Phone, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
@@ -16,7 +18,13 @@ import { TourCard } from "@/components/tour-card";
 import { cn, money } from "@/lib/utils";
 import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib/types";
 
-export const Route = createFileRoute("/inbox/$id")({ component: ThreadPage });
+export const Route = createFileRoute("/inbox/$id")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const view = parseInboxView(s.view);
+    return view ? { view } : {};
+  },
+  component: ThreadPage,
+});
 
 type BookingInfo = {
   id: string;
@@ -35,9 +43,11 @@ type BookingInfo = {
 
 function ThreadPage() {
   const { id } = Route.useParams();
+  const search = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
   const { session: desks } = useSessionDesks();
+  const inboxView = resolveInboxView({ search: search.view, sticky: readStickyDesk() });
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [photo, setPhoto] = useState("");
@@ -147,8 +157,8 @@ function ThreadPage() {
       <main className="mx-auto flex min-h-[70dvh] max-w-2xl flex-col px-4 py-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <Link to="/inbox" className="text-sm text-muted">
-              ← Message centre
+            <Link to="/inbox" search={inboxSearch(inboxView)} className="text-sm text-muted">
+              {inboxView === "centre" ? t("inboxBackCentre") : t("inboxBackFamily")}
             </Link>
             <div className="mt-1 flex items-center gap-3">
               {photo ? <img src={photo} alt="" className="size-10 rounded-md object-cover" /> : null}

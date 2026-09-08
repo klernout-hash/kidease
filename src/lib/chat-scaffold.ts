@@ -17,7 +17,10 @@
 export const CHAT_SCAFFOLD_READY = false;
 
 export const CHAT_SCAFFOLD_MESSAGE =
-  "In-app chat is scaffolded only. Parent ↔ centre messages stay on /inbox. Do not buy Stream yet.";
+  "This page is a flag checklist — not a chat product. Parents and centres already message on /inbox (text only, poll/reload). Do not buy Stream or Sendbird. Do not enable push, SMS, or video without a dry-run.";
+
+export const CHAT_SCAFFOLD_EMPTY =
+  "Could not load lab status. Confirm the admin session, then refresh. Live parent ↔ centre threads stay on /inbox regardless of these flags.";
 
 export type ChatThreadKind = "parent_centre" | "parent_admin" | "centre_admin";
 

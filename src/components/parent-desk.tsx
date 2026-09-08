@@ -174,7 +174,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
         <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {bookings.length === 0 ? (
             <li className="p-8 text-center">
-              <EmptyState title={t("noRequests")} body={t("noSavedLead")} action={t("emptyFindCare")} actionTo="/search" />
+              <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" />
             </li>
           ) : (
             bookings.map((b) => (
@@ -405,12 +405,12 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                         </Button>
                       </div>
                       <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
-                        <p className="text-sm font-medium">Send this profile to a centre</p>
+                        <p className="text-sm font-medium">{t("sendChildProfile")}</p>
                         {saved.length === 0 ? (
                           <p className="mt-2 text-sm text-muted">
-                            Save centres from search first, or open a listing and tap Request a spot.
+                            {t("sendChildNeedSaved")}
                             <Link to="/search" className="ml-1 underline">
-                              Find care
+                              {t("wayfindFindCare")}
                             </Link>
                           </p>
                         ) : (
@@ -449,7 +449,11 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                                 setSendingId(c.id);
                                 void shareChildWithCentres({ data: { childId: c.id, daycareIds: selected } })
                                   .then((res) => {
-                                    toast.success(`Sent ${res.childName} to ${res.sent.length} centre${res.sent.length === 1 ? "" : "s"}.`);
+                                    toast.success(
+                                      t("sentChildTo")
+                                        .replace("{name}", res.childName)
+                                        .replace("{n}", String(res.sent.length)),
+                                    );
                                     setTab("bookings");
                                     return load();
                                   })
@@ -457,7 +461,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                                   .finally(() => setSendingId(null));
                               }}
                             >
-                              {sendingId === c.id ? "Sending…" : "Send to selected centres"}
+                              {sendingId === c.id ? t("sendChildSending") : t("sendChildCta")}
                             </Button>
                           </>
                         )}

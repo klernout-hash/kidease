@@ -84,7 +84,7 @@ export function ChildCareCard({
         {row(t("sunscreenOk"), child.sunscreenOk)}
         {row(t("extraNotes"), child.notes, true)}
         {thin && showCompleteLink ? (
-          <Link to="/account" className="inline-block pt-1 text-sm text-primary underline">
+          <Link to="/parent" search={{ tab: "children" }} className="inline-block pt-1 text-sm text-primary underline">
             {t("completeProfile")}
           </Link>
         ) : null}

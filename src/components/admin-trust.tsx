@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { TrustSignals } from "@/components/trust-badge";
 import type { TrustListing } from "@/lib/trust";
-import { adapterStatusLabel, JURISDICTIONS, type AdapterStatus } from "@/lib/province-registry";
+import { adapterStatusHint, adapterStatusLabel, adapterStatusTone, JURISDICTIONS, type AdapterStatus } from "@/lib/province-registry";
 import type { AdminReportRow } from "@/lib/server/trust";
 
 type JurisdictionRow = {
@@ -40,10 +40,17 @@ export function AdminTrustPanel({
                     <span className="ml-2 text-sm font-normal text-muted">{j.code}</span>
                   </p>
                   <p className="text-sm text-muted">{j.nameFr}</p>
-                  <p className="mt-1 text-sm text-muted">{j.adapterNotes}</p>
+                  <p className="mt-1 text-sm text-muted">{j.adapterNotes.replace(/^TODO:\s*/i, "")}</p>
+                  <p className="mt-1 text-xs text-subtle">{adapterStatusHint((j.adapterStatus as AdapterStatus) || "stub")}</p>
                 </div>
                 <div className="text-right text-sm">
-                  <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-muted">
+                  <span
+                    className={
+                      adapterStatusTone((j.adapterStatus as AdapterStatus) || "stub") === "ok"
+                        ? "rounded-full bg-ok/15 px-2.5 py-1 text-xs text-ok"
+                        : "rounded-full bg-warn/15 px-2.5 py-1 text-xs text-warn"
+                    }
+                  >
                     {adapterStatusLabel((j.adapterStatus as AdapterStatus) || "stub")}
                   </span>
                   {j.registryUrl ? (
