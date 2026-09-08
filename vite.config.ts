@@ -150,7 +150,7 @@ export default defineConfig(({ command, isPreview }) => ({
   // a future POSTHOG_* / SENTRY_DSN secret is not inlined into the client bundle.
   // Browser Sentry reads VITE_PUBLIC_SENTRY_DSN only.
   envPrefix: ["VITE_", "POSTHOG_HOST"],
-  ssr: { external: ["sharp", "posthog-js", "@sentry/node"] },
+  ssr: { external: ["sharp", "posthog-js", "@sentry/node", "inngest"] },
   optimizeDeps: { exclude: ["sharp"] },
   plugins: [
     pgliteBootstrapPlugin(),

@@ -13,8 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
+import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
 import { Route as ChildcareBenefitsProgramRouteImport } from './routes/childcare-benefits-program'
@@ -24,7 +24,9 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as GetAppRouteImport } from './routes/get-app'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ImgRouteImport } from './routes/img'
 import { Route as InboxRouteImport } from './routes/inbox'
@@ -34,43 +36,42 @@ import { Route as MenuRouteImport } from './routes/menu'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
-import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SupportRouteImport } from './routes/support'
-import { Route as HelpRouteImport } from './routes/help'
-import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
+import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
+import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
-import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
-import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
+import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
+import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
+import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
 import { Route as ApiAdminMediaRouteImport } from './routes/api/admin.media'
 import { Route as ApiAdminPushDryRunRouteImport } from './routes/api/admin.push-dry-run'
 import { Route as ApiAdminSentryTestRouteImport } from './routes/api/admin.sentry-test'
 import { Route as ApiAdminStripeCatalogRouteImport } from './routes/api/admin.stripe-catalog'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
 import { Route as ApiDocusignPollRouteImport } from './routes/api/docusign.poll'
-import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
+import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
 import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
-import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
+import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -92,14 +93,14 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminContractsRoute = AdminContractsRouteImport.update({
-  id: '/admin-contracts',
-  path: '/admin-contracts',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminChatRoute = AdminChatRouteImport.update({
   id: '/admin-chat',
   path: '/admin-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminContractsRoute = AdminContractsRouteImport.update({
+  id: '/admin-contracts',
+  path: '/admin-contracts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIconRoute = AppIconRouteImport.update({
@@ -148,9 +149,19 @@ const FaqRoute = FaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GetAppRoute = GetAppRouteImport.update({
   id: '/get-app',
   path: '/get-app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -198,16 +209,6 @@ const ProviderRoute = ProviderRouteImport.update({
   path: '/provider',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
-  id: '/provider/subscription',
-  path: '/provider/subscription',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -223,16 +224,6 @@ const SupportRoute = SupportRouteImport.update({
   path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HelpRoute = HelpRouteImport.update({
-  id: '/help',
-  path: '/help',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SupportCaseIdRoute = SupportCaseIdRouteImport.update({
-  id: '/support/$caseId',
-  path: '/support/$caseId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -243,14 +234,14 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UnsubscribeRoute = UnsubscribeRouteImport.update({
-  id: '/unsubscribe',
-  path: '/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TourChecklistRoute = TourChecklistRouteImport.update({
   id: '/tour-checklist',
   path: '/tour-checklist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Verify2faRoute = Verify2faRouteImport.update({
@@ -263,6 +254,11 @@ const ApiDigestRoute = ApiDigestRouteImport.update({
   path: '/api/digest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInngestRoute = ApiInngestRouteImport.update({
+  id: '/api/inngest',
+  path: '/api/inngest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSearchAlertsRoute = ApiSearchAlertsRouteImport.update({
   id: '/api/search-alerts',
   path: '/api/search-alerts',
@@ -273,6 +269,11 @@ const ApiSeedCatalogRoute = ApiSeedCatalogRouteImport.update({
   path: '/api/seed-catalog',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
+  id: '/api/unsubscribe',
+  path: '/api/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookSlugRoute = BookSlugRouteImport.update({
   id: '/book/$slug',
   path: '/book/$slug',
@@ -281,11 +282,6 @@ const BookSlugRoute = BookSlugRouteImport.update({
 const CheckinIdRoute = CheckinIdRouteImport.update({
   id: '/checkin/$id',
   path: '/checkin/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VideoRoomIdRoute = VideoRoomIdRouteImport.update({
-  id: '/video/$roomId',
-  path: '/video/$roomId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DaycareSlugRoute = DaycareSlugRouteImport.update({
@@ -303,14 +299,24 @@ const PayBookingIdRoute = PayBookingIdRouteImport.update({
   path: '/pay/$bookingId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
-  id: '/pay/bill/$billId',
-  path: '/pay/bill/$billId',
-  getParentRoute: () => rootRouteImport,
+const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
+  getParentRoute: () => ProviderRoute,
 } as any)
 const SignIdRoute = SignIdRouteImport.update({
   id: '/sign/$id',
   path: '/sign/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportCaseIdRoute = SupportCaseIdRouteImport.update({
+  id: '/$caseId',
+  path: '/$caseId',
+  getParentRoute: () => SupportRoute,
+} as any)
+const VideoRoomIdRoute = VideoRoomIdRouteImport.update({
+  id: '/video/$roomId',
+  path: '/video/$roomId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminContractsRoute = ApiAdminContractsRouteImport.update({
@@ -343,19 +349,14 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiDocusignWebhookRoute = ApiDocusignWebhookRouteImport.update({
-  id: '/api/docusign/webhook',
-  path: '/api/docusign/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiDocusignPollRoute = ApiDocusignPollRouteImport.update({
   id: '/api/docusign/poll',
   path: '/api/docusign/poll',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiContractsIdPdfRoute = ApiContractsIdPdfRouteImport.update({
-  id: '/api/contracts/$id/pdf',
-  path: '/api/contracts/$id/pdf',
+const ApiDocusignWebhookRoute = ApiDocusignWebhookRouteImport.update({
+  id: '/api/docusign/webhook',
+  path: '/api/docusign/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPushRegisterRoute = ApiPushRegisterRouteImport.update({
@@ -373,14 +374,19 @@ const ApiSmsStatusRoute = ApiSmsStatusRouteImport.update({
   path: '/api/sms/status',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
-  id: '/api/unsubscribe',
-  path: '/api/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
+  id: '/pay/bill/$billId',
+  path: '/pay/bill/$billId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContractsIdPdfRoute = ApiContractsIdPdfRouteImport.update({
+  id: '/api/contracts/$id/pdf',
+  path: '/api/contracts/$id/pdf',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -389,8 +395,8 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
-  '/admin-contracts': typeof AdminContractsRoute
   '/admin-chat': typeof AdminChatRoute
+  '/admin-contracts': typeof AdminContractsRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -400,7 +406,9 @@ export interface FileRoutesByFullPath {
   '/cookies': typeof CookiesRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -409,52 +417,51 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/parent': typeof ParentRoute
   '/privacy': typeof PrivacyRoute
-  '/provider': typeof ProviderRoute
-  '/provider/subscription': typeof ProviderSubscriptionRoute
-  '/forgot-password': typeof ForgotPasswordRoute
+  '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
-  '/support': typeof SupportRoute
-  '/help': typeof HelpRoute
-  '/support/$caseId': typeof SupportCaseIdRoute
+  '/support': typeof SupportRouteWithChildren
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/unsubscribe': typeof UnsubscribeRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
+  '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
-  '/video/$roomId': typeof VideoRoomIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
-  '/pay/bill/$billId': typeof PayBillBillIdRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
+  '/support/$caseId': typeof SupportCaseIdRoute
+  '/video/$roomId': typeof VideoRoomIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/docusign/poll': typeof ApiDocusignPollRoute
-  '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/push/register': typeof ApiPushRegisterRoute
-  '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
-  '/api/unsubscribe': typeof ApiUnsubscribeRoute
+  '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/pay/bill/$billId': typeof PayBillBillIdRoute
+  '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
-  '/admin-contracts': typeof AdminContractsRoute
   '/admin-chat': typeof AdminChatRoute
+  '/admin-contracts': typeof AdminContractsRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -464,7 +471,9 @@ export interface FileRoutesByTo {
   '/cookies': typeof CookiesRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -473,44 +482,43 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/parent': typeof ParentRoute
   '/privacy': typeof PrivacyRoute
-  '/provider': typeof ProviderRoute
-  '/provider/subscription': typeof ProviderSubscriptionRoute
-  '/forgot-password': typeof ForgotPasswordRoute
+  '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
-  '/support': typeof SupportRoute
-  '/help': typeof HelpRoute
-  '/support/$caseId': typeof SupportCaseIdRoute
+  '/support': typeof SupportRouteWithChildren
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/unsubscribe': typeof UnsubscribeRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
+  '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
-  '/video/$roomId': typeof VideoRoomIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
-  '/pay/bill/$billId': typeof PayBillBillIdRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
+  '/support/$caseId': typeof SupportCaseIdRoute
+  '/video/$roomId': typeof VideoRoomIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/docusign/poll': typeof ApiDocusignPollRoute
-  '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/push/register': typeof ApiPushRegisterRoute
-  '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
-  '/api/unsubscribe': typeof ApiUnsubscribeRoute
+  '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/pay/bill/$billId': typeof PayBillBillIdRoute
+  '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -518,8 +526,8 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
-  '/admin-contracts': typeof AdminContractsRoute
   '/admin-chat': typeof AdminChatRoute
+  '/admin-contracts': typeof AdminContractsRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -529,7 +537,9 @@ export interface FileRoutesById {
   '/cookies': typeof CookiesRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -538,44 +548,43 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/parent': typeof ParentRoute
   '/privacy': typeof PrivacyRoute
-  '/provider': typeof ProviderRoute
-  '/provider/subscription': typeof ProviderSubscriptionRoute
-  '/forgot-password': typeof ForgotPasswordRoute
+  '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
-  '/support': typeof SupportRoute
-  '/help': typeof HelpRoute
-  '/support/$caseId': typeof SupportCaseIdRoute
+  '/support': typeof SupportRouteWithChildren
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/unsubscribe': typeof UnsubscribeRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
+  '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
-  '/video/$roomId': typeof VideoRoomIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
-  '/pay/bill/$billId': typeof PayBillBillIdRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
+  '/support/$caseId': typeof SupportCaseIdRoute
+  '/video/$roomId': typeof VideoRoomIdRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/docusign/poll': typeof ApiDocusignPollRoute
-  '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/push/register': typeof ApiPushRegisterRoute
-  '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
-  '/api/unsubscribe': typeof ApiUnsubscribeRoute
+  '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/pay/bill/$billId': typeof PayBillBillIdRoute
+  '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -584,8 +593,8 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/admin'
-    | '/admin-contracts'
     | '/admin-chat'
+    | '/admin-contracts'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -595,7 +604,9 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/explore'
     | '/faq'
+    | '/forgot-password'
     | '/get-app'
+    | '/help'
     | '/how-it-works'
     | '/img'
     | '/inbox'
@@ -605,51 +616,50 @@ export interface FileRouteTypes {
     | '/parent'
     | '/privacy'
     | '/provider'
-    | '/provider/subscription'
-    | '/forgot-password'
     | '/reset-password'
     | '/search'
     | '/support'
-    | '/help'
-    | '/support/$caseId'
     | '/team'
     | '/terms'
-    | '/unsubscribe'
     | '/tour-checklist'
+    | '/unsubscribe'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/inngest'
     | '/api/search-alerts'
     | '/api/seed-catalog'
+    | '/api/unsubscribe'
     | '/book/$slug'
     | '/checkin/$id'
-    | '/video/$roomId'
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
-    | '/pay/bill/$billId'
+    | '/provider/subscription'
     | '/sign/$id'
+    | '/support/$caseId'
+    | '/video/$roomId'
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
     | '/api/admin/sentry-test'
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
-    | '/api/docusign/webhook'
     | '/api/docusign/poll'
-    | '/api/contracts/$id/pdf'
+    | '/api/docusign/webhook'
     | '/api/push/register'
-    | '/api/sms/status'
     | '/api/sms/inbound'
-    | '/api/unsubscribe'
+    | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/pay/bill/$billId'
+    | '/api/contracts/$id/pdf'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/account'
     | '/admin'
-    | '/admin-contracts'
     | '/admin-chat'
+    | '/admin-contracts'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -659,7 +669,9 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/explore'
     | '/faq'
+    | '/forgot-password'
     | '/get-app'
+    | '/help'
     | '/how-it-works'
     | '/img'
     | '/inbox'
@@ -669,51 +681,50 @@ export interface FileRouteTypes {
     | '/parent'
     | '/privacy'
     | '/provider'
-    | '/provider/subscription'
-    | '/forgot-password'
     | '/reset-password'
     | '/search'
     | '/support'
-    | '/help'
-    | '/support/$caseId'
     | '/team'
     | '/terms'
-    | '/unsubscribe'
     | '/tour-checklist'
+    | '/unsubscribe'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/inngest'
     | '/api/search-alerts'
     | '/api/seed-catalog'
+    | '/api/unsubscribe'
     | '/book/$slug'
     | '/checkin/$id'
-    | '/video/$roomId'
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
-    | '/pay/bill/$billId'
+    | '/provider/subscription'
     | '/sign/$id'
+    | '/support/$caseId'
+    | '/video/$roomId'
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
     | '/api/admin/sentry-test'
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
-    | '/api/docusign/webhook'
     | '/api/docusign/poll'
-    | '/api/contracts/$id/pdf'
+    | '/api/docusign/webhook'
     | '/api/push/register'
-    | '/api/sms/status'
     | '/api/sms/inbound'
-    | '/api/unsubscribe'
+    | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/pay/bill/$billId'
+    | '/api/contracts/$id/pdf'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/account'
     | '/admin'
-    | '/admin-contracts'
     | '/admin-chat'
+    | '/admin-contracts'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -723,7 +734,9 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/explore'
     | '/faq'
+    | '/forgot-password'
     | '/get-app'
+    | '/help'
     | '/how-it-works'
     | '/img'
     | '/inbox'
@@ -733,43 +746,42 @@ export interface FileRouteTypes {
     | '/parent'
     | '/privacy'
     | '/provider'
-    | '/provider/subscription'
-    | '/forgot-password'
     | '/reset-password'
     | '/search'
     | '/support'
-    | '/help'
-    | '/support/$caseId'
     | '/team'
     | '/terms'
-    | '/unsubscribe'
     | '/tour-checklist'
+    | '/unsubscribe'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/inngest'
     | '/api/search-alerts'
     | '/api/seed-catalog'
+    | '/api/unsubscribe'
     | '/book/$slug'
     | '/checkin/$id'
-    | '/video/$roomId'
     | '/daycare/$slug'
     | '/inbox/$id'
     | '/pay/$bookingId'
-    | '/pay/bill/$billId'
+    | '/provider/subscription'
     | '/sign/$id'
+    | '/support/$caseId'
+    | '/video/$roomId'
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
     | '/api/admin/sentry-test'
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
-    | '/api/docusign/webhook'
     | '/api/docusign/poll'
-    | '/api/contracts/$id/pdf'
+    | '/api/docusign/webhook'
     | '/api/push/register'
-    | '/api/sms/status'
     | '/api/sms/inbound'
-    | '/api/unsubscribe'
+    | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/pay/bill/$billId'
+    | '/api/contracts/$id/pdf'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -777,8 +789,8 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRoute
-  AdminContractsRoute: typeof AdminContractsRoute
   AdminChatRoute: typeof AdminChatRoute
+  AdminContractsRoute: typeof AdminContractsRoute
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
   ChildcareBenefitsProgramRoute: typeof ChildcareBenefitsProgramRoute
@@ -788,7 +800,9 @@ export interface RootRouteChildren {
   CookiesRoute: typeof CookiesRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   GetAppRoute: typeof GetAppRoute
+  HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ImgRoute: typeof ImgRoute
   InboxRoute: typeof InboxRouteWithChildren
@@ -797,43 +811,40 @@ export interface RootRouteChildren {
   MenuRoute: typeof MenuRoute
   ParentRoute: typeof ParentRoute
   PrivacyRoute: typeof PrivacyRoute
-  ProviderRoute: typeof ProviderRoute
-  ProviderSubscriptionRoute: typeof ProviderSubscriptionRoute
-  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  ProviderRoute: typeof ProviderRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
-  SupportRoute: typeof SupportRoute
-  HelpRoute: typeof HelpRoute
-  SupportCaseIdRoute: typeof SupportCaseIdRoute
+  SupportRoute: typeof SupportRouteWithChildren
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
-  UnsubscribeRoute: typeof UnsubscribeRoute
   TourChecklistRoute: typeof TourChecklistRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
+  ApiInngestRoute: typeof ApiInngestRoute
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
+  ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
-  VideoRoomIdRoute: typeof VideoRoomIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   PayBookingIdRoute: typeof PayBookingIdRoute
-  PayBillBillIdRoute: typeof PayBillBillIdRoute
   SignIdRoute: typeof SignIdRoute
+  VideoRoomIdRoute: typeof VideoRoomIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
   ApiAdminMediaRoute: typeof ApiAdminMediaRoute
   ApiAdminPushDryRunRoute: typeof ApiAdminPushDryRunRoute
   ApiAdminSentryTestRoute: typeof ApiAdminSentryTestRoute
   ApiAdminStripeCatalogRoute: typeof ApiAdminStripeCatalogRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
   ApiDocusignPollRoute: typeof ApiDocusignPollRoute
-  ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
+  ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
   ApiPushRegisterRoute: typeof ApiPushRegisterRoute
-  ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
-  ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
+  ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  PayBillBillIdRoute: typeof PayBillBillIdRoute
+  ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -866,18 +877,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin-contracts': {
-      id: '/admin-contracts'
-      path: '/admin-contracts'
-      fullPath: '/admin-contracts'
-      preLoaderRoute: typeof AdminContractsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin-chat': {
       id: '/admin-chat'
       path: '/admin-chat'
       fullPath: '/admin-chat'
       preLoaderRoute: typeof AdminChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-contracts': {
+      id: '/admin-contracts'
+      path: '/admin-contracts'
+      fullPath: '/admin-contracts'
+      preLoaderRoute: typeof AdminContractsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app-icon': {
@@ -943,11 +954,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/get-app': {
       id: '/get-app'
       path: '/get-app'
       fullPath: '/get-app'
       preLoaderRoute: typeof GetAppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-it-works': {
@@ -1013,20 +1038,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProviderRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/provider/subscription': {
-      id: '/provider/subscription'
-      path: '/provider/subscription'
-      fullPath: '/provider/subscription'
-      preLoaderRoute: typeof ProviderSubscriptionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -1048,20 +1059,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/help': {
-      id: '/help'
-      path: '/help'
-      fullPath: '/help'
-      preLoaderRoute: typeof HelpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/support/$caseId': {
-      id: '/support/$caseId'
-      path: '/support/$caseId'
-      fullPath: '/support/$caseId'
-      preLoaderRoute: typeof SupportCaseIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/team': {
       id: '/team'
       path: '/team'
@@ -1076,18 +1073,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/unsubscribe': {
-      id: '/unsubscribe'
-      path: '/unsubscribe'
-      fullPath: '/unsubscribe'
-      preLoaderRoute: typeof UnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/tour-checklist': {
       id: '/tour-checklist'
       path: '/tour-checklist'
       fullPath: '/tour-checklist'
       preLoaderRoute: typeof TourChecklistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify-2fa': {
@@ -1104,6 +1101,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/inngest': {
+      id: '/api/inngest'
+      path: '/api/inngest'
+      fullPath: '/api/inngest'
+      preLoaderRoute: typeof ApiInngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/search-alerts': {
       id: '/api/search-alerts'
       path: '/api/search-alerts'
@@ -1118,6 +1122,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSeedCatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/unsubscribe': {
+      id: '/api/unsubscribe'
+      path: '/api/unsubscribe'
+      fullPath: '/api/unsubscribe'
+      preLoaderRoute: typeof ApiUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/$slug': {
       id: '/book/$slug'
       path: '/book/$slug'
@@ -1130,13 +1141,6 @@ declare module '@tanstack/react-router' {
       path: '/checkin/$id'
       fullPath: '/checkin/$id'
       preLoaderRoute: typeof CheckinIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/video/$roomId': {
-      id: '/video/$roomId'
-      path: '/video/$roomId'
-      fullPath: '/video/$roomId'
-      preLoaderRoute: typeof VideoRoomIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daycare/$slug': {
@@ -1160,18 +1164,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PayBookingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pay/bill/$billId': {
-      id: '/pay/bill/$billId'
-      path: '/pay/bill/$billId'
-      fullPath: '/pay/bill/$billId'
-      preLoaderRoute: typeof PayBillBillIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/provider/subscription': {
+      id: '/provider/subscription'
+      path: '/subscription'
+      fullPath: '/provider/subscription'
+      preLoaderRoute: typeof ProviderSubscriptionRouteImport
+      parentRoute: typeof ProviderRoute
     }
     '/sign/$id': {
       id: '/sign/$id'
       path: '/sign/$id'
       fullPath: '/sign/$id'
       preLoaderRoute: typeof SignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support/$caseId': {
+      id: '/support/$caseId'
+      path: '/$caseId'
+      fullPath: '/support/$caseId'
+      preLoaderRoute: typeof SupportCaseIdRouteImport
+      parentRoute: typeof SupportRoute
+    }
+    '/video/$roomId': {
+      id: '/video/$roomId'
+      path: '/video/$roomId'
+      fullPath: '/video/$roomId'
+      preLoaderRoute: typeof VideoRoomIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/contracts': {
@@ -1216,13 +1234,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/docusign/webhook': {
-      id: '/api/docusign/webhook'
-      path: '/api/docusign/webhook'
-      fullPath: '/api/docusign/webhook'
-      preLoaderRoute: typeof ApiDocusignWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/docusign/poll': {
       id: '/api/docusign/poll'
       path: '/api/docusign/poll'
@@ -1230,11 +1241,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDocusignPollRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/contracts/$id/pdf': {
-      id: '/api/contracts/$id/pdf'
-      path: '/api/contracts/$id/pdf'
-      fullPath: '/api/contracts/$id/pdf'
-      preLoaderRoute: typeof ApiContractsIdPdfRouteImport
+    '/api/docusign/webhook': {
+      id: '/api/docusign/webhook'
+      path: '/api/docusign/webhook'
+      fullPath: '/api/docusign/webhook'
+      preLoaderRoute: typeof ApiDocusignWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/push/register': {
@@ -1258,18 +1269,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSmsStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/unsubscribe': {
-      id: '/api/unsubscribe'
-      path: '/api/unsubscribe'
-      fullPath: '/api/unsubscribe'
-      preLoaderRoute: typeof ApiUnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
       path: '/api/stripe/webhook'
       fullPath: '/api/stripe/webhook'
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/bill/$billId': {
+      id: '/pay/bill/$billId'
+      path: '/pay/bill/$billId'
+      fullPath: '/pay/bill/$billId'
+      preLoaderRoute: typeof PayBillBillIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/contracts/$id/pdf': {
+      id: '/api/contracts/$id/pdf'
+      path: '/api/contracts/$id/pdf'
+      fullPath: '/api/contracts/$id/pdf'
+      preLoaderRoute: typeof ApiContractsIdPdfRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1285,13 +1303,36 @@ const InboxRouteChildren: InboxRouteChildren = {
 
 const InboxRouteWithChildren = InboxRoute._addFileChildren(InboxRouteChildren)
 
+interface ProviderRouteChildren {
+  ProviderSubscriptionRoute: typeof ProviderSubscriptionRoute
+}
+
+const ProviderRouteChildren: ProviderRouteChildren = {
+  ProviderSubscriptionRoute: ProviderSubscriptionRoute,
+}
+
+const ProviderRouteWithChildren = ProviderRoute._addFileChildren(
+  ProviderRouteChildren,
+)
+
+interface SupportRouteChildren {
+  SupportCaseIdRoute: typeof SupportCaseIdRoute
+}
+
+const SupportRouteChildren: SupportRouteChildren = {
+  SupportCaseIdRoute: SupportCaseIdRoute,
+}
+
+const SupportRouteWithChildren =
+  SupportRoute._addFileChildren(SupportRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
   AdminRoute: AdminRoute,
-  AdminContractsRoute: AdminContractsRoute,
   AdminChatRoute: AdminChatRoute,
+  AdminContractsRoute: AdminContractsRoute,
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,
   ChildcareBenefitsProgramRoute: ChildcareBenefitsProgramRoute,
@@ -1301,7 +1342,9 @@ const rootRouteChildren: RootRouteChildren = {
   CookiesRoute: CookiesRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   GetAppRoute: GetAppRoute,
+  HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
   ImgRoute: ImgRoute,
   InboxRoute: InboxRouteWithChildren,
@@ -1310,43 +1353,40 @@ const rootRouteChildren: RootRouteChildren = {
   MenuRoute: MenuRoute,
   ParentRoute: ParentRoute,
   PrivacyRoute: PrivacyRoute,
-  ProviderRoute: ProviderRoute,
-  ProviderSubscriptionRoute: ProviderSubscriptionRoute,
-  ForgotPasswordRoute: ForgotPasswordRoute,
+  ProviderRoute: ProviderRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
-  SupportRoute: SupportRoute,
-  HelpRoute: HelpRoute,
-  SupportCaseIdRoute: SupportCaseIdRoute,
+  SupportRoute: SupportRouteWithChildren,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
-  UnsubscribeRoute: UnsubscribeRoute,
   TourChecklistRoute: TourChecklistRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
+  ApiInngestRoute: ApiInngestRoute,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
+  ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
-  VideoRoomIdRoute: VideoRoomIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   PayBookingIdRoute: PayBookingIdRoute,
-  PayBillBillIdRoute: PayBillBillIdRoute,
   SignIdRoute: SignIdRoute,
+  VideoRoomIdRoute: VideoRoomIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
   ApiAdminMediaRoute: ApiAdminMediaRoute,
   ApiAdminPushDryRunRoute: ApiAdminPushDryRunRoute,
   ApiAdminSentryTestRoute: ApiAdminSentryTestRoute,
   ApiAdminStripeCatalogRoute: ApiAdminStripeCatalogRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
   ApiDocusignPollRoute: ApiDocusignPollRoute,
-  ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
+  ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
   ApiPushRegisterRoute: ApiPushRegisterRoute,
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
-  ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  PayBillBillIdRoute: PayBillBillIdRoute,
+  ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

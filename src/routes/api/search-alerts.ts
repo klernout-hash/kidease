@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { shouldDeferSearchAlertsToInngest } from "@/lib/inngest";
 import { runSearchAlertJob } from "@/lib/server/search-alerts";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 
@@ -15,6 +16,15 @@ async function run(request: Request) {
   }
   const url = new URL(request.url);
   const dryRun = url.searchParams.get("dryRun") === "1";
+  if (shouldDeferSearchAlertsToInngest(request)) {
+    await logSecurityEvent({ kind: "search_alerts_run", ip, detail: "deferred-inngest" });
+    return Response.json({
+      ok: true,
+      skipped: true,
+      via: "inngest",
+      reason: "inngest-owns-schedule",
+    });
+  }
   const result = await runSearchAlertJob({ dryRun });
   await logSecurityEvent({ kind: "search_alerts_run", ip, detail: dryRun ? "dry-run" : "ok" });
   return Response.json(result);

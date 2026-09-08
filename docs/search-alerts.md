@@ -44,13 +44,15 @@ No new geography column. Matching reads `daycares.location` from `0011_listing_g
 
 When `RESEND_API_KEY` and `SENDGRID_API_KEY` are missing, `sendSearchAlertEmail` logs an honest stub and still persists `email_enabled`. The family desk says mail will not leave the box until a key is set. The job reports `emailConfigured`, `emailSent`, and `emailStubbed`.
 
-Vercel cron (hourly):
+Vercel cron (hourly fallback when Inngest keys are unset):
 
 ```json
 { "path": "/api/search-alerts", "schedule": "20 * * * *" }
 ```
 
-Authorize with `Authorization: Bearer $CRON_SECRET` only (Vercel Cron sends this header). Query `?secret=` is rejected. `?dryRun=1` logs without writing notices or sending mail.
+Authorize with `Authorization: Bearer $CRON_SECRET` only (Vercel Cron sends this header). Query `?secret=` is rejected. `?dryRun=1` logs without writing notices or sending mail. `?force=1` runs the job even when Inngest Cloud is configured.
+
+When `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` are set, Inngest cron `search-alerts-hourly` (`TZ=America/Winnipeg 20 * * * *`) owns the schedule and this HTTP route no-ops so the job does not double-fire. See `docs/inngest.md`.
 
 ## Out of scope
 

@@ -29,6 +29,8 @@ Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, 
 
 `/api/digest`, `/api/search-alerts`, and `/api/seed-catalog` accept `Authorization: Bearer $CRON_SECRET` only (Vercel Cron sends this when `CRON_SECRET` is set). Query-string `?secret=` is rejected. `/api/seed-catalog` upserts a chunk of `centres.json` into Neon; it is not on the deploy build and is not a Vercel cron by default.
 
+`/api/inngest` is the Inngest serve endpoint (TanStack Start + `inngest/edge`). Inngest Cloud signs requests with `INNGEST_SIGNING_KEY`. Do not put a query-string secret on that URL. The app boots when Inngest keys are unset — Cloud simply cannot sync until Kyle pastes them on Vercel kidease-git. See `docs/inngest.md`.
+
 ## Production notes
 
 - QA ghost listing (`/daycare/test-ghost-claim-lab` and `/book/test-ghost-claim-lab`) must **404** for public document GETs. Robots `Disallow` alone is not enough. Admin claim/search still works from `/admin` and `/claim`.
