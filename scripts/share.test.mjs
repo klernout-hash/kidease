@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { isShareCancellation } from "../src/lib/native.ts";
+import { isShareCancellation, preferOsShare } from "../src/lib/native.ts";
 import {
   SHARE_APP_URL,
   appSharePayload,
@@ -42,12 +42,36 @@ test("share cancellation is abort or dismiss, not a generic failure", () => {
   assert.equal(isShareCancellation(null), false);
 });
 
+test("preferOsShare is mobile/native only — desktop falls through to clipboard", () => {
+  const original = globalThis.navigator;
+  Object.defineProperty(globalThis, "navigator", {
+    configurable: true,
+    value: { share: async () => undefined, userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0" },
+  });
+  assert.equal(preferOsShare(), false);
+  Object.defineProperty(globalThis, "navigator", {
+    configurable: true,
+    value: {
+      share: async () => undefined,
+      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+      maxTouchPoints: 5,
+    },
+  });
+  assert.equal(preferOsShare(), true);
+  Object.defineProperty(globalThis, "navigator", { configurable: true, value: original });
+});
+
 test("shareOrCopy uses Web Share when available and copies the link otherwise", async () => {
   const originalShare = globalThis.navigator?.share;
   const originalClipboard = globalThis.navigator?.clipboard;
   const payload = appSharePayload({ title: "KidEase", text: "Find licensed childcare near you on KidEase" });
 
-  const sharedNav = { share: async () => undefined, clipboard: originalClipboard };
+  const sharedNav = {
+    share: async () => undefined,
+    clipboard: originalClipboard,
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+    maxTouchPoints: 5,
+  };
   Object.defineProperty(globalThis, "navigator", { configurable: true, value: sharedNav });
   assert.equal(await shareOrCopy(payload), "shared");
 
@@ -57,6 +81,8 @@ test("shareOrCopy uses Web Share when available and copies the link otherwise", 
       err.name = "AbortError";
       throw err;
     },
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+    maxTouchPoints: 5,
     clipboard: { writeText: async () => assert.fail("should not copy after cancel") },
   };
   Object.defineProperty(globalThis, "navigator", { configurable: true, value: cancelledNav });
@@ -108,6 +134,7 @@ test("listing cards and listing detail share the centre deep link", () => {
   assert.match(listing, /d\.slug/);
   assert.match(button, /listingSharePayload/);
   assert.match(button, /linkCopied/);
+  assert.match(button, /shareDone/);
   assert.match(button, /shareListingAria/);
   assert.match(button, /aria-label=\{ariaLabel\}/);
 });

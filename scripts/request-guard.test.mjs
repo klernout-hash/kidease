@@ -49,6 +49,8 @@ test("isSensitiveDeskPath is prefix-safe", () => {
   assert.equal(isSensitiveDeskPath("/parent"), false);
   assert.equal(isSensitiveDeskPath("/"), false);
   assert.equal(isSensitiveDeskPath("/login"), false);
+  assert.equal(isSensitiveDeskPath("/api/auth/sign-in/email"), false);
+  assert.equal(isSensitiveDeskPath("/_serverFn/getMyDesks"), false);
 });
 
 test("health check / on kidease-git.vercel.app is not redirected", () => {
@@ -252,4 +254,5 @@ test("nitro middleware and vercel.json stay wired to the guard", () => {
   assert.match(vercel, /\\\\.vercel\\\\.app/);
   assert.match(vercel, /"source": "\/"/);
   assert.match(vercel, /max-age=0, must-revalidate/);
+  assert.doesNotMatch(vercel, /"source": "\/parent"/);
 });

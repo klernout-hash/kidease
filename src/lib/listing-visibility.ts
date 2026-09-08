@@ -38,11 +38,11 @@ export function looksLikeTestFixture(d: ListingVisibilityInput | null | undefine
   const name = (d.name || "").trim();
   const nameLc = name.toLowerCase();
   const address = norm(d.address);
-  if (KNOWN_ADMIN_ONLY_SLUGS.has(slug) || slug.startsWith("test-ghost-")) return true;
+  if (KNOWN_ADMIN_ONLY_SLUGS.has(slug) || slug.startsWith("test-ghost-") || slug.includes("ghost-listing")) return true;
   if (KNOWN_ADMIN_ONLY_IDS.has(id) || id.startsWith("ke-test-")) return true;
   if (KNOWN_ADMIN_ONLY_LICENCES.has(license) || license.startsWith("test-")) return true;
-  if (/^TEST\s/.test(name)) return true;
-  if (nameLc.includes("ghost claim") || nameLc.includes("ghost listing")) return true;
+  if (/^TEST[\s\-_]/.test(name)) return true;
+  if (nameLc.includes("ghost claim") || nameLc.includes("ghost listing") || nameLc === "ghost listing") return true;
   if (address.includes("kidease test")) return true;
   return false;
 }
@@ -99,6 +99,9 @@ export const PUBLIC_LISTING_SQL = `(
   and slug not ilike 'test-ghost-%'
   and coalesce(license_number, '') not ilike 'TEST-%'
   and name not like 'TEST %'
+  and name not like 'TEST-%'
+  and name not like 'TEST_%'
+  and slug not ilike '%ghost-listing%'
   and name not ilike '%ghost claim%'
   and name not ilike '%ghost listing%'
   and coalesce(address, '') not ilike '%kidease test%'

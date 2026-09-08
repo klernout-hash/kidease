@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, fsaOf, recommendedRank } from "@/lib/proximity";
 import { catalogByIdsGet, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
-import { isAdminOnlyListing, isPublicListing } from "@/lib/listing-visibility";
+import { isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerIsAdmin } from "./public-listing";
@@ -275,7 +275,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
     return compareProximity(a, b);
   });
-  return uniqueById(cards).map(slimCard);
+  return publicListings(uniqueById(cards)).map(slimCard);
 }
 
 export const searchDaycares = createServerFn({ method: "POST" })
@@ -303,7 +303,7 @@ async function loadFeatured(origin: { lat: number; lng: number }): Promise<Dayca
   const ranked = sortFeaturedCityAfterPriority(
     await overlayFeaturedCity(await overlayPriority(scored)),
   );
-  return uniqueById(ranked).slice(0, 12).map(slimCard);
+  return publicListings(uniqueById(ranked)).slice(0, 12).map(slimCard);
 }
 
 export const featuredDaycares = createServerFn({ method: "POST" })

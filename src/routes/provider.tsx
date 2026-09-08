@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -53,6 +53,8 @@ function ProviderPage() {
   const { user, isPending } = useSettledUser();
   const { t, locale } = useCopy();
   const search = Route.useSearch();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const childRoute = pathname === "/provider/subscription" || pathname.startsWith("/provider/subscription/");
   const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? "requests");
   const [listings, setListings] = useState<Daycare[]>([]);
   const [stats, setStats] = useState<
@@ -109,6 +111,8 @@ function ProviderPage() {
   useEffect(() => {
     if (search.desk) setDesk(search.desk);
   }, [search.desk]);
+
+  if (childRoute) return <Outlet />;
 
   if (isPending) {
     return (
