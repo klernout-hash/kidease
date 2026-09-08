@@ -276,7 +276,7 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   assert.match(inbox, /to="\/video\/\$roomId"/);
   assert.match(tree, /from '\.\/routes\/video\.\$roomId'/);
   assert.match(tree, /id:\s*'\/video\/\$roomId'/);
-  assert.match(lab, /videoEnabled/);
+  assert.match(lab, /FEATURE_VIDEO/);
   assert.match(admin, /FEATURE_VIDEO/);
   assert.match(join, /await import\("\.\/video"\)/);
   assert.match(src("docs/video.md"), /Vercel env checklist/);
