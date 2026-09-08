@@ -183,16 +183,18 @@ export const DaycareCard = memo(function DaycareCard({
         slug={item.slug}
         name={name}
         appearance="photo"
-        className="absolute right-12 top-2 z-20"
+        className="pointer-events-auto absolute right-12 top-2 z-20"
       />
       <button
         type="button"
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           toggleCompare(item.id);
         }}
-        className="absolute right-2 top-2 z-20 grid size-11 place-items-center rounded-full"
+        className="pointer-events-auto absolute right-2 top-2 z-20 grid size-11 place-items-center rounded-full"
         aria-label={picked ? t("comparing") : t("addToCompare")}
       >
         <Heart

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Share2 } from "lucide-react";
+import { Check, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { hapticLight } from "@/lib/native";
 import {
@@ -83,6 +83,8 @@ function ShareControl({
     <button
       type="button"
       role={appearance === "menu" ? "menuitem" : undefined}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => void onShare(e)}
       aria-label={feedback ? feedback : ariaLabel}
       aria-live="polite"
@@ -107,7 +109,11 @@ function ShareControl({
         </>
       ) : (
         <>
-          <Share2 className={iconClass} strokeWidth={1.7} aria-hidden />
+          {feedback ? (
+            <Check className={iconClass} strokeWidth={2.2} aria-hidden />
+          ) : (
+            <Share2 className={iconClass} strokeWidth={1.7} aria-hidden />
+          )}
           {appearance === "labeled" ? <span>{shown}</span> : null}
         </>
       )}

@@ -79,6 +79,8 @@ describe("Places autocomplete stays on the server key", () => {
     assert.doesNotMatch(src, /AIza[0-9A-Za-z_-]{20,}/);
     assert.doesNotMatch(read("src/components/place-search.tsx"), /process\.env\.GOOGLE_/);
     assert.doesNotMatch(read("src/lib/google-maps.ts"), /process\.env\.GOOGLE_PLACES_API_KEY/);
+    assert.match(read("src/components/place-search.tsx"), /suggestPlacesBrowser/);
+    assert.match(read("src/lib/place-suggest.ts"), /importLibrary/);
   });
 
   it("search and home use PlaceSearch", () => {

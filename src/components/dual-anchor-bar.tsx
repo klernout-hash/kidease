@@ -25,10 +25,21 @@ export function DualAnchorBar({
 }) {
   const { t } = useCopy();
   const [showWork, setShowWork] = useState(Boolean(work) || mode !== "home");
+  const [miss, setMiss] = useState(false);
 
   function pick(next: AnchorMode) {
     onMode(next);
     if (next !== "home") setShowWork(true);
+  }
+
+  async function resolveWork(raw: string) {
+    const hit = await resolveLocationQuery(raw);
+    if (hit) {
+      setMiss(false);
+      onWorkResolved(hit);
+      return;
+    }
+    setMiss(Boolean(raw.trim()));
   }
 
   return (
@@ -63,22 +74,27 @@ export function DualAnchorBar({
       </div>
       {showWork ? (
         <form
-          className="flex min-h-12 min-w-0 items-center gap-1.5 rounded-full bg-surface pl-3 pr-1.5 shadow-card ring-1 ring-border"
+          className="relative z-40 flex min-h-12 min-w-0 items-center gap-1.5 overflow-visible rounded-full bg-surface pl-3 pr-1.5 shadow-card ring-1 ring-border"
           onSubmit={(e) => {
             e.preventDefault();
-            void resolveLocationQuery(workQuery).then((hit) => {
-              if (hit) onWorkResolved(hit);
-            });
+            void resolveWork(workQuery);
           }}
         >
           <PlaceSearch
             value={workQuery}
-            onChange={onWorkQuery}
-            onResolved={onWorkResolved}
+            onChange={(q) => {
+              setMiss(false);
+              onWorkQuery(q);
+            }}
+            onResolved={(place) => {
+              setMiss(false);
+              onWorkResolved(place);
+            }}
             placeholder={t("anchorWorkPh")}
             origin={home}
-            className="h-11 min-h-11"
-            inputClassName="h-11 min-w-0 w-full bg-transparent text-[15px] outline-none"
+            ariaLabel={t("anchorWorkLabel")}
+            className="h-11 min-h-11 overflow-visible"
+            inputClassName="h-11 min-w-0 w-full bg-transparent text-[15px] text-fg outline-none placeholder:text-muted"
           />
           {work ? (
             <button type="button" onClick={onClearWork} className="shrink-0 px-2 text-xs font-semibold text-muted">
@@ -102,7 +118,8 @@ export function DualAnchorBar({
           {t("anchorAddWork")}
         </button>
       )}
-      {mode !== "home" && !work ? <p className="text-xs text-muted">{t("anchorNeedWork")}</p> : null}
+      {miss ? <p className="text-xs text-muted">{t("anchorWorkMiss")}</p> : null}
+      {mode !== "home" && !work && !miss ? <p className="text-xs text-muted">{t("anchorNeedWork")}</p> : null}
     </div>
   );
 }
