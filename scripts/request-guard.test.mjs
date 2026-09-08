@@ -58,6 +58,9 @@ test("health check / on kidease-git.vercel.app is not redirected", () => {
   assert.deepEqual(decideRequest({ host: "kidease-git.vercel.app", pathname: "/", search: "?ok=1" }), {
     action: "next",
   });
+  assert.deepEqual(decideRequest({ host: "kidease-git.vercel.app", pathname: "/api/health" }), {
+    action: "next",
+  });
 });
 
 test("public pages on vercel.app stay on that host", () => {

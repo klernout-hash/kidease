@@ -20,6 +20,8 @@ import {
   ADMIN_API_SMOKE_PATHS,
   classifyAdminApiGate,
   classifyAdminGate,
+  classifyPublicHealth,
+  HEALTH_SMOKE_PATH,
   DEFAULT_PREVIEW_ORIGIN,
   homepageLooksLive,
   loginPageLooksLive,
@@ -217,6 +219,17 @@ try {
   });
   await page.screenshot({ path: join(dirname(outDir), "home.png"), fullPage: false }).catch(() => {});
   record("homepage", home.ok, { note: home.reason, status: homeResp?.status() ?? 0 });
+
+  const healthResp = await page.request.get(new URL(HEALTH_SMOKE_PATH, base).href).catch(() => null);
+  const healthBody = (await healthResp?.text().catch(() => "")) || "";
+  const health = classifyPublicHealth({
+    status: healthResp?.status() ?? 0,
+    bodyText: healthBody,
+  });
+  record("api-health", health.ok, {
+    note: health.kind === "ok" ? health.kind : health.reason,
+    status: healthResp?.status() ?? 0,
+  });
 
   const loginResp = await page.goto(new URL(SMOKE_PATHS.login, base).href, {
     waitUntil: "domcontentloaded",

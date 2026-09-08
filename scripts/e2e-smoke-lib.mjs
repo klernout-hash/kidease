@@ -23,6 +23,25 @@ export const ADMIN_API_SMOKE_PATHS = Object.freeze([
   "/api/admin/stripe-catalog",
 ]);
 
+/** Public readiness probe. Must stay 200 without Better Stack keys. */
+export const HEALTH_SMOKE_PATH = "/api/health";
+
+export function classifyPublicHealth({ status = 0, bodyText = "" } = {}) {
+  if (status !== 200) {
+    return { ok: false, kind: "down", reason: `health HTTP ${status}` };
+  }
+  let json = null;
+  try {
+    json = bodyText ? JSON.parse(bodyText) : null;
+  } catch {
+    return { ok: false, kind: "invalid", reason: "health body is not JSON" };
+  }
+  if (json && json.ok === true && json.service === "kidease") {
+    return { ok: true, kind: "ok" };
+  }
+  return { ok: false, kind: "invalid", reason: "health JSON missing ok/service" };
+}
+
 export function parseE2eArgs(argv = [], env = {}) {
   const positional = [];
   let url = "";
