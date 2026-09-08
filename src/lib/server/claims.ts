@@ -10,6 +10,7 @@ import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
 import { applyInteriorPhotos, applyStorefrontPhoto, listingPhotosChanged } from "@/lib/listing-photo";
+import { cultureFieldsToSql } from "@/lib/listing-culture";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { assertCanMutateListing, decideStartClaim } from "@/lib/access-control";
 
@@ -300,6 +301,9 @@ export const updateListing = createServerFn({ method: "POST" })
       licenseExpiry?: string;
       licensedCapacity?: number;
       touchVacancy?: boolean;
+      staffLanguages?: string[];
+      culturalPrograms?: string[];
+      culturalTeamNote?: string | null;
     }) => input,
   )
   .handler(async ({ context, data }) => {
@@ -382,6 +386,18 @@ export const updateListing = createServerFn({ method: "POST" })
         where id = ${data.daycareId}
       `;
     });
+    const culture = cultureFieldsToSql({
+      staffLanguages: data.staffLanguages,
+      culturalPrograms: data.culturalPrograms,
+      culturalTeamNote: data.culturalTeamNote,
+    });
+    await sql`
+      update daycares set
+        staff_languages = ${culture.staffLanguagesJson}::jsonb,
+        cultural_programs = ${culture.culturalProgramsJson}::jsonb,
+        cultural_team_note = ${culture.culturalTeamNote}
+      where id = ${data.daycareId}
+    `.catch(() => undefined);
     if (license) {
       await storeLicensePhoto(sql, data.daycareId, license);
       await sql`

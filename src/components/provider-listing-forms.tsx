@@ -9,6 +9,7 @@ import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { classifyListingPhotos, MAX_INTERIOR_PHOTOS } from "@/lib/listing-photo";
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
+import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { promoteListing } from "@/lib/server/promos";
 import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
@@ -133,6 +134,9 @@ export function CapacityForm({
     storefront: "",
     interiors: [] as string[],
     licensePhoto: "",
+    staffLanguages: daycare.staffLanguages ?? [],
+    culturalPrograms: daycare.culturalPrograms ?? [],
+    culturalTeamNote: daycare.culturalTeamNote ?? "",
   });
   const [refreshing, setRefreshing] = useState(false);
   const draft = {
@@ -196,6 +200,9 @@ export function CapacityForm({
             hours: state.hours,
             licenseNumber: state.licenseNumber,
             touchVacancy: mode === "listing",
+            staffLanguages: state.staffLanguages,
+            culturalPrograms: state.culturalPrograms,
+            culturalTeamNote: state.culturalTeamNote,
           },
         })
           .then(onSaved)
@@ -285,6 +292,14 @@ export function CapacityForm({
               {t("agesAccepted")}: {formatAgeRange(state.ageMinMonths, state.ageMaxMonths)}
             </p>
           </div>
+          <ListingCultureFields
+            value={{
+              staffLanguages: state.staffLanguages,
+              culturalPrograms: state.culturalPrograms,
+              culturalTeamNote: state.culturalTeamNote,
+            }}
+            onChange={(culture) => setState({ ...state, ...culture })}
+          />
           <div id="listing-health-vacancy" className="rounded-lg bg-bg p-4 ring-1 ring-border">
             <VacancyFreshness item={daycare} className="text-sm" />
             {vacancy.kind === "unknown" ? <p className="text-sm text-muted">{t("vacancyUnknownProvider")}</p> : null}

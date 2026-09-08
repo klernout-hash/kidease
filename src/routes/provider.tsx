@@ -21,6 +21,7 @@ import { useCopy } from "@/lib/use-copy";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
+import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field, PromotePanel, readListingImage } from "@/components/provider-listing-forms";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
@@ -88,6 +89,9 @@ function ProviderPage() {
     toddlerMonthly: 1100,
     preschoolMonthly: 1000,
     storefront: "",
+    staffLanguages: [] as string[],
+    culturalPrograms: [] as string[],
+    culturalTeamNote: "",
   });
 
   async function load() {
@@ -393,6 +397,16 @@ function ProviderPage() {
                     />
                   </label>
                 </div>
+              </div>
+              <div className="sm:col-span-2">
+                <ListingCultureFields
+                  value={{
+                    staffLanguages: form.staffLanguages,
+                    culturalPrograms: form.culturalPrograms,
+                    culturalTeamNote: form.culturalTeamNote,
+                  }}
+                  onChange={(culture) => setForm({ ...form, ...culture })}
+                />
               </div>
               <div className="sm:col-span-2">
                 <Button type="submit">{t("createListing")}</Button>

@@ -25,6 +25,7 @@ import {
   listingSeoHeadTags,
 } from "@/lib/listing-seo";
 import { isSaved, openConversation, toggleSave } from "@/lib/server/family";
+import { ListingCultureCard } from "@/components/listing-culture-card";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
 import { licenseBadge } from "@/lib/trust";
@@ -664,6 +665,8 @@ function Listing() {
                 </ul>
               </section>
             ) : null}
+
+            <ListingCultureCard daycare={d} />
 
             <section className="mt-8">
               <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
