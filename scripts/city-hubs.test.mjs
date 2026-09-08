@@ -159,5 +159,6 @@ test("hub route, listing breadcrumbs, and internal links are wired", () => {
   const footer = src("src/components/site-footer.tsx");
   assert.match(home, /CityHubLinks/);
   assert.match(search, /CityHubLinks/);
-  assert.match(footer, /cityHubPath/);
+  assert.doesNotMatch(footer, /cityHubPath/);
+  assert.doesNotMatch(footer, /cityHubs\(\)/);
 });
