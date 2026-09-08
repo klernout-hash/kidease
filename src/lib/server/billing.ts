@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
-import { currentPeriod, splitFee } from "@/lib/stripe-methods";
+import { currentPeriod, platformFeeBps, splitFee } from "@/lib/stripe-methods";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import {
   type Bill,
@@ -321,6 +321,7 @@ export const listProviderBills = createServerFn({ method: "GET" })
     ).catch(() => []);
     return {
       stripeLive: stripeChargesLive(),
+      platformFeeBps: platformFeeBps(),
       bills: rows.map(mapBill),
     };
   });
@@ -343,6 +344,7 @@ export const listParentBills = createServerFn({ method: "GET" })
     ).catch(() => []);
     return {
       stripeLive: stripeChargesLive(),
+      platformFeeBps: platformFeeBps(),
       bills: rows.map(mapBill).filter((b) => parentCanSeeBill(b.status)),
     };
   });
@@ -551,7 +553,7 @@ export const getBill = createServerFn({ method: "GET" })
       status: bill.status,
     });
     if (!access.ok) throw new Error("Bill not found");
-    return { bill, stripeLive: stripeChargesLive(), role: access.role };
+    return { bill, stripeLive: stripeChargesLive(), role: access.role, platformFeeBps: platformFeeBps() };
   });
 
 export const createBillCheckout = createServerFn({ method: "POST" })

@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 import { useCopy } from "@/lib/use-copy";
 import { money } from "@/lib/utils";
 import type { Locale } from "@/lib/types";
-import { currentPeriod, periodLabel, platformFeeBps, splitFee } from "@/lib/stripe-methods";
+import { currentPeriod, periodLabel, platformFeePercentLabel, splitFee } from "@/lib/stripe-methods";
 import { type Bill, type BillParty, billDollars, centsToDollars, receiveCents } from "@/lib/bill";
 import { createBill, listBillParties, listProviderBills, sendBill, voidBill } from "@/lib/server/billing";
 import { Field } from "@/components/provider-listing-forms";
@@ -17,6 +17,7 @@ export function ProviderMoneyPanel() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [parties, setParties] = useState<BillParty[]>([]);
   const [stripeLive, setStripeLive] = useState(false);
+  const [feeBps, setFeeBps] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -33,6 +34,7 @@ export function ProviderMoneyPanel() {
     const [list, people] = await Promise.all([listProviderBills(), listBillParties()]);
     setBills(list.bills);
     setStripeLive(list.stripeLive);
+    setFeeBps(typeof list.platformFeeBps === "number" ? list.platformFeeBps : null);
     setParties(people);
     setReady(true);
     if (!form.partyKey && people[0]) {
@@ -54,7 +56,7 @@ export function ProviderMoneyPanel() {
 
   const party = parties.find((p) => `${p.userId}:${p.daycareId}` === form.partyKey) ?? null;
   const amountCad = Number(form.amountCad) || 0;
-  const preview = splitFee(Math.round(amountCad * 100));
+  const preview = splitFee(Math.round(amountCad * 100), feeBps ?? undefined);
 
   const open = useMemo(() => bills.filter((b) => b.status === "draft" || b.status === "sent"), [bills]);
   const done = useMemo(() => bills.filter((b) => b.status !== "draft" && b.status !== "sent"), [bills]);
@@ -178,10 +180,14 @@ export function ProviderMoneyPanel() {
               <>
                 {t("youReceive")}{" "}
                 <span className="font-medium text-fg">{money(centsToDollars(preview.net), locale)}</span>{" "}
-                {t("afterKidEaseFee")} ({(platformFeeBps() / 100).toFixed(1)}%).
+                {t("afterKidEaseFee")}
+                {platformFeePercentLabel(feeBps) ? ` (${platformFeePercentLabel(feeBps)})` : ""}.
               </>
             ) : (
-              <>Fee preview {(platformFeeBps() / 100).toFixed(1)}% — not charged on the internal ledger.</>
+              <>
+                {t("connectFeePreviewOff")}
+                {platformFeePercentLabel(feeBps) ? ` ${platformFeePercentLabel(feeBps)}` : ""}
+              </>
             )}
           </p>
         ) : null}

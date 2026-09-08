@@ -63,12 +63,19 @@ export function billDollars(bill: Pick<Bill, "amountCents">): number {
   return centsToDollars(bill.amountCents);
 }
 
+/** Same default as KIDEASE_PLATFORM_FEE_BPS / DEFAULT_PLATFORM_FEE_BPS (300). */
+const FALLBACK_PLATFORM_FEE_BPS = 300;
+
 /** Provider copy: “You receive $X” after the KidEase platform fee. */
-export function receiveCents(amountCents: number, platformFeeCents?: number): number {
+export function receiveCents(
+  amountCents: number,
+  platformFeeCents?: number,
+  fallbackBps = FALLBACK_PLATFORM_FEE_BPS,
+): number {
   if (platformFeeCents != null && Number.isFinite(platformFeeCents)) {
     return Math.max(0, amountCents - platformFeeCents);
   }
-  return Math.max(0, amountCents - Math.round((amountCents * 300) / 10000));
+  return Math.max(0, amountCents - Math.round((amountCents * fallbackBps) / 10000));
 }
 
 export function billStatusLabel(status: BillStatus): string {

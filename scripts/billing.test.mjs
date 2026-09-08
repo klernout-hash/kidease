@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { stripeChargesLive, INTERNAL_LEDGER_LABEL } from "../src/lib/stripe-live.ts";
-import { platformFeeBps, splitFee } from "../src/lib/stripe-methods.ts";
+import { platformFeeBps, platformFeePercentLabel, splitFee } from "../src/lib/stripe-methods.ts";
 import {
   billIsOpen,
   centsToDollars,
@@ -42,6 +42,10 @@ test("platform fee defaults to 3% and splits cents honestly", () => {
   assert.equal(dollarsToCents(1200), 120000);
   assert.equal(centsToDollars(3600), 36);
   assert.equal(receiveCents(120000, 3600), 116400);
+  assert.equal(splitFee(120000, 250).platformFee, 3000);
+  assert.equal(platformFeePercentLabel(300), "3.0%");
+  assert.equal(platformFeePercentLabel(null), null);
+  assert.equal(platformFeePercentLabel(undefined), null);
   if (prev == null) delete process.env.KIDEASE_PLATFORM_FEE_BPS;
   else process.env.KIDEASE_PLATFORM_FEE_BPS = prev;
 });
@@ -141,6 +145,8 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   assert.match(parent, /listParentBills/);
   assert.match(parent, /desks\?\.stripeLive/);
   assert.match(parent, /pay\/bill\/\$billId/);
+  assert.match(parent, /awaitingCentreBill/);
+  assert.doesNotMatch(parent, /to="\/pay\/\$bookingId"/);
 
   const pay = src("src/routes/pay.bill.$billId.tsx");
   assert.match(pay, /billInternalPay/);
@@ -155,13 +161,15 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
 
   const money = src("src/components/provider-money.tsx");
   assert.match(money, /youReceive/);
-  assert.match(money, /internal ledger/);
+  assert.match(money, /connectFeePreviewOff/);
   assert.match(money, /newBillLiveHint/);
   assert.match(money, /newBillNeedFamily/);
   assert.match(money, /newBillNeedAmount/);
   assert.match(money, /ready=\{ready\}/);
+  assert.match(money, /platformFeeBps/);
   assert.doesNotMatch(money, /Stripe Connect/);
   assert.doesNotMatch(money, /Live charges include a KidEase platform fee of about 3%/);
+  assert.doesNotMatch(money, /platformFeeBps\(\)/);
 
   const honesty = src("src/components/listing-status-badge.tsx");
   assert.match(honesty, /moneyModeLoading/);
@@ -169,12 +177,32 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /moneyModeLoading: "Checking whether Stripe Checkout is live…"/);
   assert.match(copy, /newBillLiveHint:/);
+  assert.match(copy, /connectFeeParentPay:/);
+  assert.match(copy, /connectFeeShownAtCheckout:/);
+  assert.match(copy, /fees are shown at checkout/i);
+  assert.doesNotMatch(copy, /about 3%/);
+  assert.doesNotMatch(copy, /~3%/);
+  assert.doesNotMatch(copy, /environ 3/);
+
+  const payBill = src("src/routes/pay.bill.$billId.tsx");
+  assert.match(payBill, /connectFeeParentPay/);
+  assert.match(payBill, /platformFeePercentLabel/);
+  assert.doesNotMatch(payBill, /t\("cardNumber"\)/);
+
+  const inbox = src("src/routes/inbox.$id.tsx");
+  assert.match(inbox, /pay\/bill\/\$billId|payUseBill/);
+  assert.doesNotMatch(inbox, /to="\/pay\/\$bookingId"/);
+
+  const admin = src("src/routes/admin.tsx");
+  assert.match(admin, /connectFeeAdminLive/);
+  assert.doesNotMatch(admin, /about 3%/);
 
   const checkout = src("src/lib/server/billing.ts");
   assert.match(checkout, /stripeChargesLive\(\)/);
   assert.match(checkout, /status <> 'draft'/);
   assert.match(checkout, /canReadBill/);
   assert.match(checkout, /canCheckoutBill/);
+  assert.match(checkout, /platformFeeBps: platformFeeBps\(\)/);
 
   const nav = src("src/lib/desk-nav.ts");
   assert.match(nav, /label: "Money"/);

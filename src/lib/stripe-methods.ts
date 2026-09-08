@@ -71,19 +71,29 @@ export function methodSettlesInstantly(method: PayMethod): boolean {
   return STRIPE_METHOD_META[method]?.instant ?? true;
 }
 
+/** Posted KidEase Connect fee. Override with KIDEASE_PLATFORM_FEE_BPS (server env). */
+export const DEFAULT_PLATFORM_FEE_BPS = 300;
+export const MAX_PLATFORM_FEE_BPS = 2000;
+
 export function stripeConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
 }
 
-export function platformFeeBps(): number {
-  const raw = Number(process.env.KIDEASE_PLATFORM_FEE_BPS ?? "300");
-  if (!Number.isFinite(raw) || raw < 0) return 300;
-  return Math.min(Math.round(raw), 2000);
+export function platformFeeBps(raw = process.env.KIDEASE_PLATFORM_FEE_BPS): number {
+  const n = Number(raw ?? String(DEFAULT_PLATFORM_FEE_BPS));
+  if (!Number.isFinite(n) || n < 0) return DEFAULT_PLATFORM_FEE_BPS;
+  return Math.min(Math.round(n), MAX_PLATFORM_FEE_BPS);
 }
 
-export function splitFee(gross: number): { platformFee: number; net: number } {
-  const fee = Math.round((gross * platformFeeBps()) / 10000);
+export function splitFee(gross: number, bps = platformFeeBps()): { platformFee: number; net: number } {
+  const fee = Math.round((gross * bps) / 10000);
   return { platformFee: fee, net: Math.max(0, gross - fee) };
+}
+
+/** Percent from posted bps. Null when the rate is unknown — do not invent one. */
+export function platformFeePercentLabel(bps: number | null | undefined): string | null {
+  if (bps == null || !Number.isFinite(bps) || bps < 0) return null;
+  return `${(bps / 100).toFixed(1)}%`;
 }
 
 export function currentPeriod(at = new Date()): string {

@@ -212,11 +212,14 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                     }
                     if (b.status === "accepted" && b.paymentStatus !== "paid" && desks?.stripeLive) {
                       return (
-                        <Button size="sm" asChild>
-                          <Link to="/pay/$bookingId" params={{ bookingId: b.id }}>
-                            {t("pay")}
-                          </Link>
-                        </Button>
+                        <div className="max-w-[14rem] text-right">
+                          <p className="text-xs text-muted">{t("awaitingCentreBill")}</p>
+                          <Button size="sm" variant="secondary" className="mt-2" asChild>
+                            <Link to="/parent" search={{ tab: "payments" }}>
+                              {t("payUseBill")}
+                            </Link>
+                          </Button>
+                        </div>
                       );
                     }
                     return null;
@@ -246,6 +249,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
               className="mt-2"
               ready={desksReady}
             />
+            <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
             <div className="mt-4">
               <ParentPlusPanel />
             </div>
