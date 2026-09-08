@@ -4,6 +4,8 @@ KidEase push is for **transactional** vacancy and alert notifications later (spo
 
 `FEATURE_PUSH` defaults **off**. Absent Vercel env = off. **www.kidease.ca does not register tokens and does not prompt** even after you flip the flag — only the Capacitor iOS / Android app does.
 
+**Production vs Preview:** on Vercel Production the flag is ignored unless FCM and/or APNs secrets exist (`src/lib/channel-readiness.ts`). Preview/dev may set `FEATURE_PUSH=1` to exercise Chat lab + native register; send still no-ops without credentials.
+
 Optional PostHog overlay (no redeploy): see `docs/flags.md`. Env is the fallback when `POSTHOG_FLAGS_KEY` is unset. Do not enable push here by default.
 
 This PR stores device tokens, dry-runs counts, and includes an FCM HTTP v1 / APNs send helper. **Nothing is sent until `FEATURE_PUSH=1` and the matching credentials are set.** Production stays off.
@@ -26,7 +28,7 @@ Set the same keys on **Production and Preview** (encrypted). Never commit values
 
 | Name | Required to send later | Notes |
 | --- | --- | --- |
-| `FEATURE_PUSH` | yes (`1`) | Leave `0` / unset until credentials + a TestFlight / Play binary exist. |
+| `FEATURE_PUSH` | yes (`1`) to send / prompt | **Production:** leave `0` / unset until credentials + a TestFlight / Play binary exist. **Preview:** may set `1` to test lab / native register. |
 | `FCM_PROJECT_ID` | Android / FCM HTTP v1 | Firebase project id. |
 | `FCM_CLIENT_EMAIL` | Android / FCM HTTP v1 | Service account email (`…@….iam.gserviceaccount.com`). |
 | `FCM_PRIVATE_KEY` | Android / FCM HTTP v1 | PEM from the service account JSON. Paste the full key; keep `\n` escapes. |

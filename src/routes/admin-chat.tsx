@@ -133,19 +133,19 @@ function AdminChatPage() {
             <Stat
               label="FEATURE_PUSH"
               value={flagValue(lab?.push.enabled)}
-              state={flagState(lab?.push.enabled, false)}
+              state={channelState(lab?.push)}
               hint={pushHint(lab, dryRunHint)}
             />
             <Stat
               label="FEATURE_SMS"
               value={flagValue(lab?.sms.enabled)}
-              state={flagState(lab?.sms.enabled, false)}
+              state={channelState(lab?.sms)}
               hint={smsHint(lab)}
             />
             <Stat
               label="FEATURE_VIDEO"
               value={flagValue(lab?.video.enabled)}
-              state={flagState(lab?.video.enabled, false)}
+              state={channelState(lab?.video)}
               hint={videoHint(lab)}
             />
             <Stat
@@ -176,6 +176,21 @@ function AdminChatPage() {
               ))}
             </ul>
             <p className="mt-4 text-muted">Flags: {remoteHint(lab)}. Kyle flips them in PostHog without a redeploy.</p>
+          </div>
+
+          <div className="rounded-2xl bg-surface px-5 py-6 text-sm ring-1 ring-border">
+            <h3 className="font-display text-xl">SMS · Twilio Programmable SMS</h3>
+            <p className="mt-2 text-muted">
+              {lab?.sms.sendEnabled
+                ? "FEATURE_SMS is armed and Twilio send credentials are present. User texts still need a stored CASL grant. This is Messages API, not Twilio Verify."
+                : lab?.sms.armed
+                  ? "Preview override — FEATURE_SMS is on, but send no-ops until Twilio credentials exist. Production would stay off without secrets."
+                  : "Coming soon — FEATURE_SMS is off in Production until Twilio + CASL are ready. Consent capture stays on so flipping later is safe."}
+            </p>
+            <p className="mt-2 text-xs text-muted">
+              Production stays off unless secrets exist. Preview/dev may set FEATURE_SMS=1 to test UI. See{" "}
+              <code>docs/sms.md</code>.
+            </p>
           </div>
 
           <div className="rounded-2xl bg-surface px-5 py-6 text-sm ring-1 ring-border">
@@ -259,6 +274,18 @@ function flagState(enabled: boolean | undefined, liveWhenOn: boolean): string {
   if (enabled == null) return "";
   if (!enabled) return "Coming soon · feature flag off";
   return liveWhenOn ? "Live when Stripe keys exist" : "Flag on · not a live product";
+}
+
+function channelState(channel: LabStatus["sms"] | LabStatus["push"] | LabStatus["video"] | undefined): string {
+  if (!channel) return "";
+  if (!channel.enabled) return "Coming soon · feature flag off";
+  if (channel.reason === "production_requires_secrets") return "Production blocked · secrets missing";
+  if (channel.reason === "sdk_not_wired") {
+    return channel.sendEnabled ? "Flag on · SDK not attached (inbox hidden)" : "Flag on · SDK not attached";
+  }
+  if (channel.sendEnabled) return "Armed · vendor send ready";
+  if (channel.armed && !channel.credentialsPresent) return "Preview override · send no-ops (no secrets)";
+  return "Flag on · not a live product";
 }
 
 function sourceHint(source: LabStatus["chat"]["source"] | undefined): string {

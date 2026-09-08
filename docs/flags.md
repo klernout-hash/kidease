@@ -4,7 +4,30 @@ KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_
 
 **Env is the safe fallback.** If remote is unset, down, or the flag does not exist in PostHog, behavior is exactly today’s `FEATURE_*=` env read.
 
-`FEATURE_PUSH` and `FEATURE_SMS` stay **off** unless you turn them on. This layer does not flip them.
+`FEATURE_PUSH`, `FEATURE_SMS`, and `FEATURE_VIDEO` stay **off** unless you turn them on. This layer does not flip them.
+
+## Production vs Preview
+
+`src/lib/channel-readiness.ts` is the safe-enablement gate. `smsEnabled` / `pushEnabled` / `videoEnabled` still report the raw flag. Surfaces and register paths use **armed**:
+
+| Runtime | `VERCEL_ENV` | Flag `1` without secrets | Flag `1` with secrets |
+| --- | --- | --- | --- |
+| Vercel Production (`www.kidease.ca`) | `production` | Treated as **off**. No parent chrome, no native prompt, no send. | Armed. Send still needs the vendor call + (SMS) CASL. |
+| Vercel Preview / local | `preview` / unset | Override allowed for UI / lab. Send / mint still no-ops without secrets. | Armed. |
+
+Do **not** set `FEATURE_SMS=1`, `FEATURE_PUSH=1`, or `FEATURE_VIDEO=1` on Vercel Production until the matching secrets exist on that same environment. Preview may set them to `1` to exercise Admin → Chat lab.
+
+Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Video JS SDK). Token mint is not a live call.
+
+## Inventory (gates)
+
+| Flag | Default | Server send / mint | Client / UI | Honest off-state |
+| --- | --- | --- | --- | --- |
+| `FEATURE_SMS` | off | `sendSms` in `src/lib/server/sms.ts`. No-ops if flag off, secrets missing, or no CASL grant. Waitlist pulse + claim-status SMS. **Programmable SMS (Messages API), not Twilio Verify.** | Consent on profile / search alerts / Plus checkout always (capture before flip). Alerts show a stub until send is armed. | Chat lab + `alertSmsStub`. |
+| `FEATURE_PUSH` | off | `sendPushToDevices` (FCM HTTP v1 / APNs). Register `POST /api/push/register` uses **armed** (Production requires secrets). | Native Capacitor only after `getPushClientStatus().enabled`. www never prompts. | Chat lab dry-run. Inbox / www stay silent. |
+| `FEATURE_VIDEO` | off | `createVideoRoom` / `createVideoAccessToken`. Admin `/video/lab` may mint to verify credentials. | Inbox Video icon only when `videoSurfaceEnabled` (flag armed **and** `VIDEO_SDK_WIRED`). `/video/$roomId` is honest when off / no secrets / SDK missing. | Coming-soon copy on `/video/$roomId`. |
+| `FEATURE_INAPP_CHAT` | off | None. Composer refuses send. | Chat lab disabled composer. Live threads stay on `/inbox`. | `docs/chat.md`. |
+| `FEATURE_PROVIDER_SUBSCRIPTIONS` | **on** | Stripe checkout still needs live keys. | Director Subscription tab. | Admin can preview when killed. |
 
 ## Why PostHog
 
@@ -45,8 +68,9 @@ The app **boots with no remote keys**. Do not invent a personal API key or a sec
 ## What is wired
 
 - `evaluateFeatureFlag` / `smsEnabled` / `pushEnabled` / `videoEnabled` / `inAppChatEnabled` / `providerSubscriptionsEnabled`.
+- Safe enablement: `describeChannelReadiness` / `smsArmed` / `pushArmed` / `videoSurfaceEnabled` in `src/lib/channel-readiness.ts`.
 - Send / register / mint paths in `src/lib/server/sms.ts`, `push-send.ts`, `push-tokens.ts`, `video.ts`.
-- Admin → Chat lab (`/admin-chat`) shows on/off **and** source (env / PostHog / default), plus a disabled composer and the flag-name catalog. See `docs/chat.md`.
+- Admin → Chat lab (`/admin-chat`) shows on/off, source (env / PostHog / default), Production-blocked / Preview-override / SDK-not-attached, plus a disabled composer and the flag-name catalog. See `docs/chat.md`.
 - Client `isPostHogFlagEnabled` is analytics-only. Server flags are the source of truth for SMS / push / video send gates.
 - Web session replay uses a separate client flag, `session-replay-web` (kill switch). See `docs/posthog.md`.
 

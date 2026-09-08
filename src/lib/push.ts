@@ -64,7 +64,7 @@ export const FCM_LAB_NEXT_STEPS: readonly PushLabNextStep[] = [
     id: "flag",
     title: "FEATURE_PUSH stays off",
     detail:
-      "Leave FEATURE_PUSH=0 until a dry-run token count on Admin → Chat lab looks right. Then enable in PostHog. Nothing is sent while the flag is off.",
+      "Leave FEATURE_PUSH=0 on Production until a dry-run token count on Admin → Chat lab looks right and FCM / APNs secrets exist. Preview may set 1. Then enable in PostHog. Nothing is sent while the flag is off.",
   },
 ];
 

@@ -9,7 +9,8 @@ Parent ↔ centre messages stay on `/inbox` (text only; poll/reload). Do **not**
 - **Coming soon / feature flag off** on Chat, Push, and Video when those flags are off (the default).
 - A **disabled composer**. Send is off. The form does not store, deliver, or fake a thread — even if `FEATURE_INAPP_CHAT` is on.
 - Exact **flag names** (`FEATURE_INAPP_CHAT`, `FEATURE_PUSH`, `FEATURE_SMS`, `FEATURE_VIDEO`, `FEATURE_PROVIDER_SUBSCRIPTIONS`) plus docs paths. Secret values are never shown.
-- Next-build checklists for **FCM / APNs** and **Twilio Video**. These do not enable live send, mint a charged call, or invent credentials.
+- Next-build checklists for **FCM / APNs** and **Twilio Video**, plus an SMS (Programmable SMS, not Verify) status. These do not enable live send, mint a charged call, or invent credentials.
+- Production vs Preview: flags stay off on Production unless vendor secrets exist. Preview may override. See `docs/flags.md`.
 
 ## Flag names (defaults)
 

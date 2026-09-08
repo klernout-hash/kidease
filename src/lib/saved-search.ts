@@ -76,6 +76,8 @@ export type SearchAlertPrefs = {
   updatedAt: string | null;
   /** Honest: email alerts only leave the box when Resend or SendGrid is configured. */
   emailConfigured: boolean;
+  /** Honest: texts only leave Twilio when FEATURE_SMS is armed and credentials exist. */
+  smsChannelLive: boolean;
 };
 
 export type SearchAlertNotice = {

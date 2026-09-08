@@ -17,7 +17,6 @@ import {
   VIDEO_SDK_WIRED,
   VIDEO_TOKEN_TTL_SECONDS,
   videoCredentialsPresent,
-  videoEnabled,
   videoEnvPresence,
   videoJoinGate,
   videoMinutesStatus,
@@ -25,6 +24,7 @@ import {
   type VideoJoinGateReason,
   type VideoSourceKind,
 } from "@/lib/video";
+import { videoArmed } from "@/lib/channel-readiness";
 
 export type VideoJoinStatus = {
   roomId: string;
@@ -154,7 +154,7 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
   const profile = await loadProfile(userId);
   const { allowed, desk } = await resolveDesk(userId, parsed.kind, parsed.sourceId, profile.role || "parent");
   const stripeLive = stripeChargesLive();
-  const featureOn = videoEnabled();
+  const featureOn = videoArmed();
   const credentialsPresent = videoCredentialsPresent();
   const gate = videoJoinGate({
     featureOn,
@@ -165,6 +165,8 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
       plusPlan: profile.plus_plan,
       plusStatus: profile.plus_status,
     },
+    sdkWired: VIDEO_SDK_WIRED,
+    allowScaffoldMint: desk === "admin",
   });
   const reason = gate.ok ? null : gate.reason;
   return {

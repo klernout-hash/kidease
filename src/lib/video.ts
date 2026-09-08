@@ -51,6 +51,9 @@ export const VIDEO_SDK_WIRED = false;
 export const VIDEO_FLAG_OFF_MESSAGE =
   "Coming soon — FEATURE_VIDEO is off. This path does not start a live Twilio Video call or charge Plus.";
 
+export const VIDEO_SDK_NOT_WIRED_MESSAGE =
+  "Video tours are not live yet. The Twilio Video camera SDK is not attached. This path does not start a call.";
+
 export type VideoLabNextStep = {
   id: "credentials" | "flag" | "sdk";
   title: string;
@@ -69,7 +72,7 @@ export const TWILIO_VIDEO_LAB_NEXT_STEPS: readonly VideoLabNextStep[] = [
     id: "flag",
     title: "FEATURE_VIDEO stays off",
     detail:
-      "Leave FEATURE_VIDEO=0 until credentials exist. Enable in PostHog only after Vercel has the API key. No Stripe charge is created here.",
+      "Leave FEATURE_VIDEO=0 on Production until credentials exist. Preview may set 1 to mint a lab token. Inbox Video stays hidden until the JS SDK is wired. No Stripe charge is created here.",
   },
   {
     id: "sdk",
@@ -102,6 +105,7 @@ export type VideoPlusGate =
 export type VideoJoinGateReason =
   | "feature_off"
   | "no_credentials"
+  | "sdk_not_wired"
   | "plus_required"
   | "plus_required_billing_not_live";
 
@@ -200,6 +204,10 @@ export function videoJoinGate(input: {
   credentialsPresent: boolean;
   actor: VideoActor;
   stripeLive: boolean;
+  /** Defaults true so unit tests of Plus / credentials stay focused. */
+  sdkWired?: boolean;
+  /** Admin lab may mint a token to verify credentials before the SDK ships. */
+  allowScaffoldMint?: boolean;
 }): VideoJoinGate {
   if (!input.featureOn) return { ok: false, reason: "feature_off", error: VIDEO_SCAFFOLD_MESSAGE };
   if (!input.credentialsPresent) return { ok: false, reason: "no_credentials", error: VIDEO_CREDENTIALS_MESSAGE };
@@ -210,6 +218,10 @@ export function videoJoinGate(input: {
       reason: plus.reason,
       error: plus.reason === "plus_required_billing_not_live" ? VIDEO_PLUS_BILLING_NOT_LIVE_MESSAGE : VIDEO_PLUS_REQUIRED_MESSAGE,
     };
+  }
+  const sdkWired = input.sdkWired !== false;
+  if (!sdkWired && !input.allowScaffoldMint) {
+    return { ok: false, reason: "sdk_not_wired", error: VIDEO_SDK_NOT_WIRED_MESSAGE };
   }
   return { ok: true };
 }
@@ -231,5 +243,6 @@ export function plusGateCopy(reason: VideoJoinGateReason | null | undefined): st
   if (reason === "plus_required") return VIDEO_PLUS_REQUIRED_MESSAGE;
   if (reason === "no_credentials") return VIDEO_CREDENTIALS_MESSAGE;
   if (reason === "feature_off") return VIDEO_SCAFFOLD_MESSAGE;
+  if (reason === "sdk_not_wired") return VIDEO_SDK_NOT_WIRED_MESSAGE;
   return "";
 }

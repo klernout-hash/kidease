@@ -427,6 +427,8 @@ export const copy = {
     alertPushOff: "Phone push is off. This job does not send FCM or APNs.",
     alertEmailStub:
       "Email alerts are saved, but this environment has no RESEND_API_KEY or SENDGRID_API_KEY. Matches stay on the family desk until mail is connected.",
+    alertSmsStub:
+      "Consent is stored. KidEase does not text until SMS is enabled and Twilio is connected on this environment.",
     alertNotices: "Recent alerts",
     noAlertNotices: "No alerts yet. The matcher logs candidates first, then notifies on later checks.",
     alertNewCentre: "New centre nearby",
@@ -577,6 +579,9 @@ export const copy = {
     videoNoCredentialsTitle: "Credentials not set",
     videoNoCredentials:
       "Twilio Video env names are missing. KidEase will not invent SID or secret values, and the camera SDK is not attached.",
+    videoSdkOffTitle: "Video tours not live",
+    videoSdkOff:
+      "The Twilio Video camera SDK is not connected yet. This page does not start a live call. Inbox hides Video until it is.",
     checkInTitle: "Check-in room",
     checkInLead: "A private room with the centre. Your camera stays on this device. The centre feed is the classroom overview they published — never a hidden camera on a child.",
     mute: "Mute",
@@ -1681,6 +1686,8 @@ export const copy = {
     alertPushOff: "Le push téléphone est fermé. Ce travail n’envoie pas de FCM ni d’APNs.",
     alertEmailStub:
       "Les alertes courriel sont enregistrées, mais cet environnement n’a pas de RESEND_API_KEY ni de SENDGRID_API_KEY. Les correspondances restent au bureau famille jusqu’à ce que le courriel soit branché.",
+    alertSmsStub:
+      "Le consentement est enregistré. KidEase n’envoie pas de texto tant que les SMS ne sont pas activés et que Twilio n’est pas branché ici.",
     alertNotices: "Alertes récentes",
     noAlertNotices: "Aucune alerte pour l’instant. Le comparateur journalise d’abord les candidats, puis avise aux vérifications suivantes.",
     alertNewCentre: "Nouveau centre à proximité",
@@ -1831,6 +1838,9 @@ export const copy = {
     videoNoCredentialsTitle: "Identifiants absents",
     videoNoCredentials:
       "Les variables Twilio Video ne sont pas configurées. KidEase n’invente pas de SID ni de secret, et le SDK caméra n’est pas branché.",
+    videoSdkOffTitle: "Visites vidéo pas en direct",
+    videoSdkOff:
+      "Le SDK caméra Twilio Video n’est pas encore branché. Cette page ne démarre pas d’appel en direct. La boîte de réception masque Vidéo jusqu’à ce qu’il le soit.",
     checkInTitle: "Salle de visio",
     checkInLead: "Une salle privée avec le centre. Votre caméra reste sur cet appareil. Le flux du centre est la vue d'ensemble qu'il a publiée — jamais une caméra cachée sur un enfant.",
     mute: "Muet",

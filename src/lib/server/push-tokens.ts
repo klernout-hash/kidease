@@ -7,6 +7,7 @@
  */
 
 import { evaluateFeatureFlag, type EnvMap } from "../flags.ts";
+import { pushArmed } from "../channel-readiness.ts";
 
 export const PUSH_SCAFFOLD_MESSAGE =
   "Push is scaffolded only. FEATURE_PUSH is off until Kyle adds Firebase and Apple credentials.";
@@ -113,8 +114,10 @@ export function newPushTokenId(): string {
 }
 
 /**
- * Persist a device token for the signed-in user. No-ops when FEATURE_PUSH is off.
- * Upserts on token so a reinstall / re-login moves the row to the current user.
+ * Persist a device token for the signed-in user. No-ops when FEATURE_PUSH is
+ * off, or on Vercel Production when FCM / APNs secrets are missing.
+ * Preview/dev may register with the flag on. Upserts on token so a reinstall
+ * / re-login moves the row to the current user.
  */
 export async function upsertPushDeviceToken(
   sql: Sql,
@@ -122,7 +125,7 @@ export async function upsertPushDeviceToken(
   input: PushRegisterInput,
   env: EnvMap = process.env,
 ): Promise<PushRegisterResult> {
-  if (!pushEnabled(env)) {
+  if (!pushArmed(env)) {
     return { ok: false, skipped: true, error: PUSH_DISABLED_MESSAGE };
   }
   const parsed = validateRegisterInput(input);
