@@ -20,6 +20,12 @@ import {
   signedPdfPath,
 } from "../src/lib/docusign-packs.ts";
 import { allowContentType, allowContractPdfType } from "../src/lib/server/r2.ts";
+import {
+  DOCUSIGN_CONSENT_MESSAGE,
+  classifyDocusignFailure,
+  listDocusignTemplatesFromApi,
+  readDocusignOrNull,
+} from "../src/lib/docusign-errors.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -126,6 +132,32 @@ test("Send stays off unless DocuSign is live and photo allowlist stays images", 
   assert.match(contracts, /packEnrolment/);
   assert.throws(() => allowContentType("application/pdf"));
   assert.equal(allowContractPdfType("application/pdf"), "application/pdf");
+});
+
+test("DocuSign JWT auth failure returns an empty list and never throws", async () => {
+  const authErr = new Error(
+    'DocuSign auth 400: {"error":"invalid_grant","error_description":"user_not_found"}',
+  );
+  assert.equal(classifyDocusignFailure(authErr).code, "consent");
+  assert.equal(classifyDocusignFailure(authErr).message, DOCUSIGN_CONSENT_MESSAGE);
+  const listed = await listDocusignTemplatesFromApi(async () => {
+    throw authErr;
+  });
+  assert.deepEqual(listed.templates, []);
+  assert.equal(listed.error?.code, "consent");
+  assert.equal(listed.error?.message, DOCUSIGN_CONSENT_MESSAGE);
+  const status = await readDocusignOrNull(async () => {
+    throw authErr;
+  });
+  assert.equal(status, null);
+  const contracts = src("src/lib/server/contracts.ts");
+  assert.match(contracts, /listDocusignTemplatesSafe/);
+  assert.match(contracts, /docusignError/);
+  assert.match(contracts, /emptyAdminContractsPayload/);
+  assert.match(src("src/components/admin-contracts.tsx"), /docusign-consent-banner/);
+  assert.match(src("src/lib/docusign-copy.ts"), /DocuSign not connected — finish JWT consent/);
+  assert.match(src(".env.example"), /FEATURE_SMS=0/);
+  assert.doesNotMatch(src(".env.example"), /^FEATURE_SMS=1$/m);
 });
 
 test("legal copy names DocuSign in EN and FR", () => {

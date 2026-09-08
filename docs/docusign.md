@@ -13,6 +13,8 @@ DocuSign emails the provider. When the envelope completes, KidEase stores the co
 
 Until JWT keys are set, **Send (DocuSign off)** stays disabled. Centres can still sign the in-app bilingual document from `/sign/{id}`.
 
+If JWT consent is still pending (`user_not_found` / `invalid_grant`), Admin Contracts stays up and shows **DocuSign not connected — finish JWT consent**. That failure must not throw into ErrorBoundary.
+
 `FEATURE_SMS` stays off. This integration does not touch Stripe Connect.
 
 ## Vercel env (Production + Preview)

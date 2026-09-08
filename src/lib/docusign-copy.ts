@@ -8,6 +8,7 @@ type DsKey =
   | "leadLive"
   | "leadOff"
   | "envHint"
+  | "consentBanner"
   | "search"
   | "filterNeed"
   | "filterSent"
@@ -54,6 +55,7 @@ const en: Record<DsKey, string> = {
     "DocuSign keys are not set. Send is off so we do not pretend envelopes leave KidEase. Centres can still sign the in-app document from their desk.",
   envHint:
     "Set the DOCUSIGN_* names on Vercel (Production + Preview) when you want live envelopes. See docs/docusign.md. Until then this list is a status board only.",
+  consentBanner: "DocuSign not connected — finish JWT consent",
   search: "Search centre, city, signer…",
   filterNeed: "Need sign",
   filterSent: "Sent",
@@ -102,6 +104,7 @@ const fr: Record<DsKey, string> = {
     "Les clés DocuSign ne sont pas définies. Envoi désactivé : nous ne prétendons pas que des enveloppes quittent KidEase. Les centres peuvent encore signer le document dans l’appli.",
   envHint:
     "Définissez les noms DOCUSIGN_* sur Vercel (Production + Preview) pour les enveloppes en direct. Voir docs/docusign.md. D’ici là, cette liste est un tableau de statut seulement.",
+  consentBanner: "DocuSign n’est pas connecté — terminez le consentement JWT",
   search: "Rechercher un centre, une ville, un signataire…",
   filterNeed: "À signer",
   filterSent: "Envoyé",

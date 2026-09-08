@@ -2,6 +2,14 @@
 export function friendlyResetMailError(message?: string | null) {
   const raw = (message || "").toLowerCase();
   if (
+    raw.includes("security filter blocked") ||
+    raw.includes("attention required") ||
+    raw.includes("you have been blocked") ||
+    (raw.includes("cloudflare") && raw.includes("blocked"))
+  ) {
+    return "Security filter blocked sign-in — try again or contact support";
+  }
+  if (
     raw.includes("not configured") ||
     raw.includes("resend_api_key") ||
     raw.includes("sendgrid_api_key") ||

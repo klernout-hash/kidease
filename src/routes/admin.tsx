@@ -16,6 +16,7 @@ import { JURISDICTIONS } from "@/lib/province-registry";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
 import { listAdminContracts, type AdminContractRow, type AdminPackRow } from "@/lib/server/contracts";
 import { AdminContractsPanel, CentrePackChips } from "@/components/admin-contracts";
+import type { DocusignConnectIssue } from "@/lib/docusign-errors";
 import type { DocusignTemplateOption } from "@/lib/docusign-packs";
 import { AdminMailPanel } from "@/components/admin-mail";
 import { AdminSentryTest } from "@/components/admin-sentry-test";
@@ -67,6 +68,7 @@ function AdminPage() {
     provider_agreement: string | null;
     enrolment_pack: string | null;
   }>({ provider_agreement: null, enrolment_pack: null });
+  const [contractError, setContractError] = useState<DocusignConnectIssue | null>(null);
   const [contractBusy, setContractBusy] = useState<string | null>(null);
   const [ledger, setLedger] = useState<AdminMoneyLedger>({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 });
   const [busy, setBusy] = useState<string | null>(null);
@@ -91,6 +93,7 @@ function AdminPage() {
         templates: [],
         defaultTemplateIds: { provider_agreement: null, enrolment_pack: null },
         templateRole: "Provider",
+        docusignError: null,
       })),
       listJurisdictions().catch(() => []),
       listListingReports().catch(() => []),
@@ -102,6 +105,7 @@ function AdminPage() {
     setContractMode(envelopes.mode);
     setContractTemplates(envelopes.templates || []);
     setContractDefaults(envelopes.defaultTemplateIds || { provider_agreement: null, enrolment_pack: null });
+    setContractError(envelopes.docusignError || null);
     setJurisdictions(regs);
     setReports(flags);
   }
@@ -372,6 +376,7 @@ function AdminPage() {
           mode={contractMode}
           templates={contractTemplates}
           defaultTemplateIds={contractDefaults}
+          docusignError={contractError}
           busy={contractBusy}
           setBusy={setContractBusy}
           onRefresh={refresh}

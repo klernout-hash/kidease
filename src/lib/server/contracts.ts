@@ -17,11 +17,12 @@ import {
   defaultTemplateIds,
   docusignMode,
   getEnvelopeStatus,
-  listDocusignTemplates,
+  listDocusignTemplatesSafe,
   persistSignedPdf,
   voidCentreEnvelope,
 } from "@/lib/server/docusign";
 import type { DocusignTemplateOption } from "@/lib/docusign-packs";
+import { classifyDocusignFailure, type DocusignConnectIssue } from "@/lib/docusign-errors";
 
 export type ContractStatus = "draft" | "sent" | "viewed" | "signed" | "declined" | "voided";
 
@@ -79,7 +80,22 @@ export type AdminContractsPayload = {
   defaultTemplateIds: { provider_agreement: string | null; enrolment_pack: string | null };
   templateRole: string;
   rows: AdminContractRow[];
+  docusignError: DocusignConnectIssue | null;
 };
+
+function emptyAdminContractsPayload(
+  mode: "live" | "demo" = docusignMode(),
+  docusignError: DocusignConnectIssue | null = null,
+): AdminContractsPayload {
+  return {
+    mode,
+    templates: [],
+    defaultTemplateIds: defaultTemplateIds(),
+    templateRole: (process.env.DOCUSIGN_TEMPLATE_ROLE || "Provider").trim() || "Provider",
+    rows: [],
+    docusignError,
+  };
+}
 
 async function requireOperator(userId: string) {
   return requireAdmin(userId);
@@ -116,6 +132,15 @@ export const listAdminContracts = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<AdminContractsPayload> => {
     await requireOperator(context.userId);
+    try {
+      return await loadAdminContractsPayload();
+    } catch (err) {
+      console.error("[contracts] list admin failed", err);
+      return emptyAdminContractsPayload(docusignMode(), classifyDocusignFailure(err));
+    }
+  });
+
+async function loadAdminContractsPayload(): Promise<AdminContractsPayload> {
     const sql = await getSql();
     const centres = await sql<{
       daycare_id: string;
@@ -230,15 +255,27 @@ export const listAdminContracts = createServerFn({ method: "GET" })
     };
     mapped.sort((a, b) => packRank(a) - packRank(b) || a.name.localeCompare(b.name));
 
-    const templates = docusignMode() === "live" ? await listDocusignTemplates() : [];
+    let templates: DocusignTemplateOption[] = [];
+    let docusignError: DocusignConnectIssue | null = null;
+    if (docusignMode() === "live") {
+      try {
+        const listed = await listDocusignTemplatesSafe();
+        templates = listed.templates;
+        docusignError = listed.error;
+      } catch (err) {
+        console.error("[docusign] admin list templates failed", err);
+        docusignError = classifyDocusignFailure(err);
+      }
+    }
     return {
       mode: docusignMode(),
       templates,
       defaultTemplateIds: defaultTemplateIds(),
       templateRole: (process.env.DOCUSIGN_TEMPLATE_ROLE || "Provider").trim() || "Provider",
       rows: mapped,
+      docusignError,
     };
-  });
+}
 
 export const sendCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -420,16 +457,21 @@ export const syncCentreContract = createServerFn({ method: "POST" })
     const row = rows[0];
     if (!row) throw new Error("Contract not found");
     if (!row.envelope_id) return { ok: true as const, status: row.status };
-    const remote = await getEnvelopeStatus(row.envelope_id);
-    if (remote) await applyEnvelopeEvent(remote);
-    if ((remote?.status === "signed" || row.status === "signed") && !row.signed_pdf_key) {
-      await persistSignedPdf({
-        contractId: row.id,
-        daycareId: row.daycare_id,
-        envelopeId: row.envelope_id,
-      });
+    try {
+      const remote = await getEnvelopeStatus(row.envelope_id);
+      if (remote) await applyEnvelopeEvent(remote);
+      if ((remote?.status === "signed" || row.status === "signed") && !row.signed_pdf_key) {
+        await persistSignedPdf({
+          contractId: row.id,
+          daycareId: row.daycare_id,
+          envelopeId: row.envelope_id,
+        });
+      }
+      return { ok: true as const, status: remote?.status || row.status };
+    } catch (err) {
+      console.error("[docusign] sync failed", err);
+      return { ok: true as const, status: row.status, error: classifyDocusignFailure(err).message };
     }
-    return { ok: true as const, status: remote?.status || row.status };
   });
 
 export const listProviderContracts = createServerFn({ method: "GET" })

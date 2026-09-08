@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
+import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
@@ -52,10 +53,10 @@ function ResetPassword() {
         token,
         fetchOptions: turnstileFetchOptions(challenge),
       });
-      if (res.error) throw new Error(res.error.message || "Could not reset the password.");
+      if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)) || "Could not reset the password.");
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not reset the password.");
+      setError(friendlyAuthError(authClientErrorMessage(err)) || "Could not reset the password.");
       resetTurnstile();
     } finally {
       setBusy(false);

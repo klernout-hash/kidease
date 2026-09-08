@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
+import { authClientErrorMessage } from "@/lib/auth/login-errors";
 import { friendlyResetMailError } from "@/lib/auth/reset-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { getResetMailReady } from "@/lib/server/reset-mail";
@@ -52,10 +53,10 @@ function ForgotPassword() {
         redirectTo: "/reset-password",
         fetchOptions: turnstileFetchOptions(token),
       });
-      if (res.error) throw new Error(friendlyResetMailError(res.error.message));
+      if (res.error) throw new Error(friendlyResetMailError(authClientErrorMessage(res.error)));
       setNote("If that email is registered with KidEase, we sent a reset link. Check the inbox and junk folder.");
     } catch (err) {
-      setError(err instanceof Error ? friendlyResetMailError(err.message) : "Could not send a reset email.");
+      setError(friendlyResetMailError(authClientErrorMessage(err)) || "Could not send a reset email.");
       resetTurnstile();
     } finally {
       setBusy(false);

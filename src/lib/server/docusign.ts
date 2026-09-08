@@ -10,6 +10,12 @@ import {
   type PackKind,
 } from "@/lib/docusign-packs";
 import {
+  classifyDocusignFailure,
+  listDocusignTemplatesFromApi,
+  readDocusignOrNull,
+  type DocusignTemplateList,
+} from "@/lib/docusign-errors";
+import {
   authorizedWebhook,
   mapEnvelopeStatus,
   parseConnectPayload,
@@ -170,10 +176,10 @@ function webhookNotification() {
   };
 }
 
-export async function listDocusignTemplates(): Promise<DocusignTemplate[]> {
+export async function listDocusignTemplatesSafe(): Promise<DocusignTemplateList> {
   const cfg = docusignConfig();
-  if (!cfg) return [];
-  try {
+  if (!cfg) return { templates: [], error: null };
+  const listed = await listDocusignTemplatesFromApi(async () => {
     const token = await accessToken(cfg);
     const json = await ds<{ envelopeTemplates?: { templateId?: string; name?: string }[] }>(
       cfg,
@@ -186,10 +192,16 @@ export async function listDocusignTemplates(): Promise<DocusignTemplate[]> {
         templateId: String(row.templateId),
         name: (row.name || row.templateId || "Template").trim(),
       }));
-  } catch (err) {
-    console.error("[docusign] list templates failed", err);
-    return [];
+  });
+  if (listed.error) {
+    console.error("[docusign] list templates failed", listed.error.code, listed.error.message);
   }
+  return listed;
+}
+
+export async function listDocusignTemplates(): Promise<DocusignTemplate[]> {
+  const listed = await listDocusignTemplatesSafe();
+  return listed.templates;
 }
 
 export async function createCentreEnvelope(input: {
@@ -213,10 +225,18 @@ export async function createCentreEnvelope(input: {
     };
   }
 
-  const token = await accessToken(cfg);
+  let token: string;
+  try {
+    token = await accessToken(cfg);
+  } catch (err) {
+    console.error("[docusign] create envelope auth failed", err);
+    throw new Error(classifyDocusignFailure(err).message);
+  }
   const subject = packEmailSubject(packKind, input.centreName || input.documentName);
   const templateId = (input.templateId || "").trim();
-  const created = templateId
+  let created: { envelopeId: string; status?: string };
+  try {
+    created = templateId
     ? await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
         method: "POST",
         body: JSON.stringify({
@@ -270,6 +290,10 @@ export async function createCentreEnvelope(input: {
           status: "sent",
         }),
       });
+  } catch (err) {
+    console.error("[docusign] create envelope failed", err);
+    throw new Error(classifyDocusignFailure(err).message);
+  }
 
   return {
     mode: "live",
@@ -282,32 +306,40 @@ export async function createCentreEnvelope(input: {
 export async function voidCentreEnvelope(envelopeId: string, reason = "Superseded by a new KidEase contract") {
   const cfg = docusignConfig();
   if (!cfg || envelopeId.startsWith("demo_")) return;
-  const token = await accessToken(cfg);
-  await ds(cfg, token, `/envelopes/${envelopeId}`, {
-    method: "PUT",
-    body: JSON.stringify({ status: "voided", voidedReason: reason }),
+  const ok = await readDocusignOrNull(async () => {
+    const token = await accessToken(cfg);
+    await ds(cfg, token, `/envelopes/${envelopeId}`, {
+      method: "PUT",
+      body: JSON.stringify({ status: "voided", voidedReason: reason }),
+    });
+    return true;
   });
+  if (!ok) console.error("[docusign] void envelope failed", envelopeId);
 }
 
 export async function getEnvelopeStatus(envelopeId: string) {
   const cfg = docusignConfig();
   if (!cfg || envelopeId.startsWith("demo_")) return null;
-  const token = await accessToken(cfg);
-  const json = await ds<{ status?: string; envelopeId?: string }>(cfg, token, `/envelopes/${envelopeId}`);
-  return {
-    envelopeId: json.envelopeId || envelopeId,
-    status: mapEnvelopeStatus(json.status || ""),
-    event: json.status || "poll",
-  };
+  return readDocusignOrNull(async () => {
+    const token = await accessToken(cfg);
+    const json = await ds<{ status?: string; envelopeId?: string }>(cfg, token, `/envelopes/${envelopeId}`);
+    return {
+      envelopeId: json.envelopeId || envelopeId,
+      status: mapEnvelopeStatus(json.status || ""),
+      event: json.status || "poll",
+    };
+  });
 }
 
 export async function downloadCombinedPdf(envelopeId: string) {
   const cfg = docusignConfig();
   if (!cfg || envelopeId.startsWith("demo_")) return null;
-  const token = await accessToken(cfg);
-  const body = await dsBytes(cfg, token, `/envelopes/${envelopeId}/documents/combined`);
-  if (!body.byteLength) return null;
-  return body;
+  return readDocusignOrNull(async () => {
+    const token = await accessToken(cfg);
+    const body = await dsBytes(cfg, token, `/envelopes/${envelopeId}/documents/combined`);
+    if (!body.byteLength) return null;
+    return body;
+  });
 }
 
 export async function persistSignedPdf(input: {
