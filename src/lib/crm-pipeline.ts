@@ -4,6 +4,8 @@
  * Sibling parent-rails work may add parent CTAs; this is the centre board.
  */
 
+import { compareTimeDesc } from "@/lib/sort-time";
+
 export const PIPELINE_STAGES = ["inquiry", "tour_pending", "tour_accepted", "enrol_open", "enrolled"] as const;
 export type PipelineStage = (typeof PIPELINE_STAGES)[number];
 
@@ -83,7 +85,7 @@ export function assignPipeline(rows: PipelineInput[]): PipelineCard[] {
   return [...best.values()].sort((a, b) => {
     const delta = STAGE_RANK[b.stage] - STAGE_RANK[a.stage];
     if (delta !== 0) return delta;
-    return (b.updatedAt || "").localeCompare(a.updatedAt || "");
+    return compareTimeDesc(a.updatedAt, b.updatedAt);
   });
 }
 

@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/server/roles";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
+import { asIsoString, compareTimeDesc } from "@/lib/sort-time";
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
   const license = (licensePhoto || "").trim();
@@ -314,7 +315,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         providerUserId: r.provider_user_id,
         providerName: r.provider_name,
         providerEmail: r.provider_email,
-        submittedAt: r.submitted_at,
+        submittedAt: asIsoString(r.submitted_at),
         reviewedAt: r.reviewed_at,
         reviewNote: r.review_note,
         licenseNumber: r.license_number,
@@ -331,7 +332,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
     });
 
     const rank = (s: string) => (s === "waiting" || s === "pending" ? 0 : s === "approved" ? 1 : 2);
-    mapped.sort((a, b) => rank(a.claimStatus) - rank(b.claimStatus) || (b.submittedAt || "").localeCompare(a.submittedAt || "") || a.name.localeCompare(b.name));
+    mapped.sort((a, b) => rank(a.claimStatus) - rank(b.claimStatus) || compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name));
     return mapped;
   });
 

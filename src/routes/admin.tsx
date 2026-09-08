@@ -27,6 +27,7 @@ import { money } from "@/lib/utils";
 import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
 import { AdminReviewsPanel } from "@/components/admin-reviews";
+import { compareTimeDesc } from "@/lib/sort-time";
 
 type AdminDesk = "queue" | "verify" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
 
@@ -130,7 +131,7 @@ function AdminPage() {
   }, [centres, q]);
 
   const waitingOnYou = useMemo(
-    () => filtered.filter((c) => isQueued(c.claimStatus)).sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || "")),
+    () => filtered.filter((c) => isQueued(c.claimStatus)).sort((a, b) => compareTimeDesc(a.submittedAt, b.submittedAt)),
     [filtered],
   );
 
@@ -138,7 +139,7 @@ function AdminPage() {
     () =>
       filtered
         .filter((c) => needsVerification(c))
-        .sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || "") || a.name.localeCompare(b.name)),
+        .sort((a, b) => compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name)),
     [filtered],
   );
 
