@@ -9,6 +9,7 @@ import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { asIsoString, compareTimeDesc } from "@/lib/sort-time";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { transactionalMailFrom } from "@/lib/mail-from";
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
   const license = (licensePhoto || "").trim();
@@ -89,7 +90,7 @@ async function deliverToProvider(to: string, subject: string, text: string) {
     </td></tr>
   </table>
 </body></html>`;
-  const from = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
+  const from = transactionalMailFrom();
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
     const res = await fetch("https://api.resend.com/emails", {

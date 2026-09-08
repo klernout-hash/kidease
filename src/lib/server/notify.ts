@@ -15,10 +15,10 @@ import {
 } from "@/lib/server/notify-mail";
 import { sendSms } from "@/lib/server/sms";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { transactionalMailFrom } from "@/lib/mail-from";
 
 /** Owner / admin notify. Support cases route through support@kidease.ca on the desk — not this address. */
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
-const MAIL_FROM = (process.env.MAIL_FROM || "KidEase <kyle@kidease.ca>").trim();
 const ADMIN_SMS = (process.env.ADMIN_SMS || "+12048088398").replace(/[^\d+]/g, "");
 const SMS_KINDS = new Set<PlatformKind>(["chat", "contact", "enroll", "spot_request", "account", "signup", "claim"]);
 
@@ -353,7 +353,7 @@ async function deliverEmail(subject: string, text: string, html: string, to = AD
       method: "POST",
       headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: MAIL_FROM,
+        from: transactionalMailFrom(),
         to: [to],
         reply_to: reply,
         subject,
@@ -366,7 +366,7 @@ async function deliverEmail(subject: string, text: string, html: string, to = AD
   }
   const sendgrid = process.env.SENDGRID_API_KEY?.trim();
   if (sendgrid) {
-    const fromMatch = MAIL_FROM.match(/^(.*)<([^>]+)>$/);
+    const fromMatch = transactionalMailFrom().match(/^(.*)<([^>]+)>$/);
     const fromName = fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase";
     const fromEmail = fromMatch?.[2]?.trim() || ADMIN_EMAIL;
     const res = await fetch("https://api.sendgrid.com/v3/mail/send", {

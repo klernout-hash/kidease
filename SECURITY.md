@@ -31,6 +31,10 @@ Dashboard monitors should hit `https://www.kidease.ca/` and `https://www.kidease
 
 Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, or `support_lead`). It does **not** weaken `/admin*` admin-only tools. Public Help Centre is `/help`. Cloudflare Access can later include `/support*` (see `docs/support.md`).
 
+## Transactional email (Resend)
+
+OTP and other Resend mail default From is `KidEase <login@send.kidease.ca>`. Apex SPF is Titan-only (`include:spf.titan.email -all`). Do **not** add Resend includes on `@` / `kidease.ca`. Production Vercel (`kidease-git`) must set `MAIL_FROM=KidEase <login@send.kidease.ca>`. Reply-To stays `ADMIN_EMAIL` / `kyle@kidease.ca`. Titan Admin → Mail still sends as the kyle@ mailbox on `smtp.titan.email`.
+
 ## Auth bootstrap
 
 `requireAdmin` / `requireSupport` and `/api/admin/*` require a verified 2FA cookie (same device token as TwoFactorGate). A thrown status check fails closed for those desks.
