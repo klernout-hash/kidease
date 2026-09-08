@@ -118,6 +118,7 @@ test("real photos exclude placeholders, logos, and street-view stock", () => {
   assert.match(readiness, /\/photos\/wpg\//);
   assert.match(readiness, /placeholder/);
   assert.match(readiness, /-logo/);
+  assert.match(readiness, /isUnflaggedSharedFallbackSrc/);
 });
 
 test("public reviews query only published gated rows and forms use Turnstile", () => {

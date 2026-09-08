@@ -189,6 +189,8 @@ describe("Cloudflare Image Transformations on media.kidease.ca", () => {
       "/img?src=%2Fphotos%2Fbuildings%2Fmb-1001.jpg&w=480",
     );
     assert.equal(listingPhotosFor("mb-1001", [], official, wpg)[0], "/photos/buildings/mb-1001.jpg");
+    assert.equal(listingPhotosFor("mb-2121", [], official, wpg)[0], LISTING_PLACEHOLDER);
+    assert.equal(photoUrl("/photos/wpg/2121.jpg", 480, RESIZE), `${R2_PUBLIC_MEDIA_ORIGIN}/photos/storefront-placeholder-480.webp`);
     assert.equal(srcsetWidthsFor(480), CARD_WIDTHS);
     assert.equal(srcsetWidthsFor(768), HERO_WIDTHS);
     assert.equal(

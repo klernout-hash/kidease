@@ -97,14 +97,25 @@ Names only in `.env.example`. Never commit real values.
 - Browser `onError` on `/img` or a transform URL → original
   `https://media.kidease.ca/photos/…` URL, then the storefront placeholder.
   Cards do not stay broken if `/img` misses or Kyle enables the CF flag early.
+- Distinct listing IDs must not share identical JPEG bytes unless that hash is
+  listed in `INTENTIONAL_SHARED_PHOTO_SHA256` (same-site programs). Unflagged
+  copies — including the Portage &amp; Main street-view on `/photos/wpg/2121.jpg`,
+  `2029.jpg`, and `101693.jpg` — are remapped by `listingPhotosFor` / `photoUrl`
+  to the official storefront placeholder, or to a unique `/photos/wpg/` asset
+  when one exists. `/img` hashes the original it actually read (R2 / Git /
+  media). If that hash is an unflagged shared fallback it encodes a
+  **per-listing** placeholder (`x-kidease-photo: per-listing-placeholder`)
+  instead of the copied street-view. The official `storefront-placeholder`
+  path stays a flagged shared asset.
 
 Home How-it-works stills (`cottage.jpg`, `kitchen.jpg`) ship pre-encoded
 AVIF/WebP at 768 and 1200 (`scripts/encode-feel-photos.mjs`). Hero and
 playroom already have 1200 variants. Re-run the encoder after replacing a
 source JPEG.
 
-`listingPhotosFor` / `real-storefronts.json` / `storefronts.json` are
-unchanged. Do not delete `public/photos`.
+`real-storefronts.json` / `storefronts.json` keep the scrape maps.
+`listingPhotosFor` applies the honesty overlay and does not invent new
+id→path assignments. Do not delete `public/photos`.
 
 ## See also
 

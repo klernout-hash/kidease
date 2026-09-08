@@ -1,3 +1,5 @@
+import { honestListingSrc, LISTING_PLACEHOLDER } from "./listing-photo.ts";
+
 export const PHOTO_WIDTHS = [320, 480, 768, 1200] as const;
 /** Airbnb-density Explore tiles (~184–200px CSS; 320/480 cover 1x–2x). */
 export const CARD_WIDTHS = [320, 480, 768] as const;
@@ -151,23 +153,24 @@ export function cfImageTransformUrl(src: string, width: number, base: string): s
 
 /** Sized AVIF/WebP URL. Catalogue path stays `/photos/…`; originals stay on media.kidease.ca. */
 export function photoUrl(src: string, width: number, env?: PhotoEnv) {
-  if (!src) return publicPhotoUrl("/photos/storefront-placeholder-480.webp", env);
-  if (src.includes("storefront-placeholder")) {
-    const placeholder = publicPhotoUrl(src, env);
+  const honest = honestListingSrc(src);
+  if (!honest || honest.includes("storefront-placeholder")) {
+    const placeholder = publicPhotoUrl(honest || LISTING_PLACEHOLDER, env);
     if (!isLocalPhoto(placeholder)) return placeholder;
-    return "/photos/storefront-placeholder-480.webp";
+    return LISTING_PLACEHOLDER;
   }
-  if (!isLocalPhoto(src)) return src;
+  if (!isLocalPhoto(honest)) return honest;
   const base = r2PublicBaseUrl(env);
   if (base && cfImageResizeEnabled(env) && canCfTransformBase(base)) {
-    return cfImageTransformUrl(src, width, base);
+    return cfImageTransformUrl(honest, width, base);
   }
-  return `/img?src=${encodeURIComponent(src)}&w=${nearestWidth(width)}`;
+  return `/img?src=${encodeURIComponent(honest)}&w=${nearestWidth(width)}`;
 }
 
 export function photoSrcSet(src: string, widths: readonly number[] = PHOTO_WIDTHS, env?: PhotoEnv) {
-  if (!isLocalPhoto(src) || src.includes("storefront-placeholder")) return undefined;
-  return widths.map((w) => `${photoUrl(src, w, env)} ${w}w`).join(", ");
+  const honest = honestListingSrc(src);
+  if (!isLocalPhoto(honest) || honest.includes("storefront-placeholder")) return undefined;
+  return widths.map((w) => `${photoUrl(honest, w, env)} ${w}w`).join(", ");
 }
 
-export { listingThumb, LISTING_PLACEHOLDER } from "./listing-photo.ts";
+export { listingThumb, LISTING_PLACEHOLDER, honestListingSrc } from "./listing-photo.ts";

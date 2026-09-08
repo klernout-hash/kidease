@@ -17,6 +17,9 @@ test("/img dual-reads R2 then Git and still allow-lists /photos paths", () => {
   assert.match(source, /public\/photos|public", src\.slice/);
   assert.match(source, /ALLOW = \/\^\\\/photos\\\//);
   assert.doesNotMatch(source, /BUILDING_ON_DISK/);
+  assert.match(source, /shouldReplaceWithPerListingPlaceholder/);
+  assert.match(source, /encodePerListingPlaceholder/);
+  assert.match(source, /x-kidease-photo/);
 
   const src = "/photos/storefront-placeholder-480.webp";
   assert.equal(listingSrcToR2Key(src), "originals/storefront-placeholder-480.webp");

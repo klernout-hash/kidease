@@ -54,6 +54,13 @@ describe("listing photos prefer official buildings over /photos/wpg/", () => {
     assert.equal(resolveListingStorefront("mb-unknown", official, {}), LISTING_PLACEHOLDER);
   });
 
+  it("does not treat unflagged shared street-view copies as unique storefronts", () => {
+    assert.equal(resolveListingStorefront("mb-2121", official, wpg), LISTING_PLACEHOLDER);
+    assert.equal(resolveListingStorefront("mb-2029", official, wpg), LISTING_PLACEHOLDER);
+    assert.equal(resolveListingStorefront("mb-101693", official, wpg), LISTING_PLACEHOLDER);
+    assert.equal(isStockListingPhoto("/photos/wpg/2121.jpg"), true);
+  });
+
   it("listingThumb prefers /photos/buildings/ over wpg and logos", () => {
     assert.equal(
       listingThumb(["/photos/wpg/1052.jpg", "/photos/buildings/mb-1052.jpg", "/photos/wpg/1052-logo.png"]),
