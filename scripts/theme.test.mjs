@@ -116,11 +116,27 @@ describe("appearance is wired across public + desks chrome", () => {
     assert.match(control, /aria-label=\{t\("appearance"\)\}/);
     assert.match(account, /AppearanceControl/);
     assert.match(menu, /AppearanceControl/);
-    assert.match(shell, /AppearanceControl variant="select"/);
+    assert.match(shell, /AppearanceControl variant="select" compact/);
+    assert.match(shell, /LanguageSelect compact/);
     assert.match(drawer, /AppearanceControl/);
     assert.match(copy, /appearance: "Appearance"/);
     assert.match(copy, /appearance: "Apparence"/);
     assert.match(copy, /appearanceSystem: "System"/);
     assert.match(copy, /appearanceSystem: "Système"/);
+  });
+
+  it("header language and appearance pills match desk pill size", () => {
+    const desk = src("src/components/desk-switcher.tsx");
+    const lang = src("src/components/language-select.tsx");
+    const appearance = src("src/components/appearance-control.tsx");
+    const css = src("src/styles.css");
+    const shell = src("src/components/shell.tsx");
+    assert.match(desk, /h-8 items-center rounded-full px-2\.5 text-\[11px\] font-medium leading-none/);
+    assert.match(lang, /ke-header-chrome h-8 min-h-8 px-2\.5 text-\[11px\] leading-none/);
+    assert.match(appearance, /ke-header-chrome h-8 min-h-8 px-2\.5 text-\[11px\] leading-none/);
+    assert.match(css, /select\.ke-lang-select\.ke-header-chrome/);
+    assert.match(css, /font-size: 11px/);
+    assert.match(shell, /LanguageSelect compact/);
+    assert.match(shell, /AppearanceControl variant="select" compact/);
   });
 });

@@ -678,7 +678,7 @@ export const copy = {
       "No. KidEase is a licensed daycare directory only. We do not list nannies, sitters, or unlicensed care.",
     faqQ6: "How do I find licensed daycare in my city?",
     faqA6:
-      "Search by address, city, or postal code, or open a city directory such as Winnipeg, Toronto, Montréal, Vancouver, Calgary, or Ottawa. Guests can browse without an account.",
+      "Search by address, city, or postal code, or open a city directory such as Toronto, Montreal, Vancouver, Calgary, Edmonton, Ottawa, Winnipeg, Quebec City, Hamilton, or Halifax. Guests can browse without an account.",
     faqQ7: "How do childcare subsidies work on KidEase?",
     faqA7:
       "KidEase does not process subsidy applications or host government forms. Reduced CWELCC fees are set by each province or territory and applied at participating centres. For income-tested subsidies, apply on your province’s official site — start at Childcare Benefits.",
@@ -2015,7 +2015,7 @@ export const copy = {
       "Non. KidEase ne répertorie que les garderies permises par la province ou le territoire. Pas de nounous, de gardiennes à domicile non permises, ni de babysitting.",
     faqQ6: "Comment trouver une garderie permise dans ma ville?",
     faqA6:
-      "Cherchez par adresse, ville ou code postal, ou ouvrez un répertoire municipal (Winnipeg, Toronto, Montréal, Vancouver, Calgary, Ottawa). La recherche est gratuite.",
+      "Cherchez par adresse, ville ou code postal, ou ouvrez un répertoire municipal (Toronto, Montréal, Vancouver, Calgary, Edmonton, Ottawa, Winnipeg, Québec, Hamilton, Halifax). La recherche est gratuite.",
     faqQ7: "Comment fonctionnent les subventions sur KidEase?",
     faqA7:
       "KidEase n’accepte pas les demandes de subvention et n’héberge aucun formulaire gouvernemental. Les programmes (CWELCC, subvention selon le revenu) sont gérés par votre province. Consultez Aide à payer les frais et les sites officiels.",

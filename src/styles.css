@@ -195,6 +195,13 @@
     text-align-last: center;
     padding-block: 0.55rem;
   }
+  select.ke-lang-select.ke-header-chrome {
+    font-size: 11px;
+    line-height: 1;
+    padding-block: 0;
+    min-height: 2rem;
+    height: 2rem;
+  }
   select.ke-lang-select option {
     font-size: 16px;
     line-height: 1.5;

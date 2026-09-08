@@ -3,11 +3,16 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { geocode } from "../src/lib/geo.ts";
 import {
   buildCityHubSnapshots,
+  CITY_HUB_DEFS,
   CITY_HUB_MIN_LISTINGS,
+  cityHubChipLabel,
+  cityHubDefBySlug,
   cityHubDefForPlace,
   cityHubPath,
+  cityHubSearchQuery,
   cityHubUrl,
   sitemapCityHubPaths,
 } from "../src/lib/city-hubs.ts";
@@ -18,13 +23,63 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
+test("home chips are Kyle's 10 City, Province labels in order", () => {
+  assert.deepEqual(
+    CITY_HUB_DEFS.map((hub) => hub.slug),
+    [
+      "toronto",
+      "montreal",
+      "vancouver",
+      "calgary",
+      "edmonton",
+      "ottawa",
+      "winnipeg",
+      "quebec-city",
+      "hamilton",
+      "halifax",
+    ],
+  );
+  assert.deepEqual(
+    CITY_HUB_DEFS.map((hub) => cityHubChipLabel(hub, "en")),
+    [
+      "Toronto, Ontario",
+      "Montreal, Quebec",
+      "Vancouver, British Columbia",
+      "Calgary, Alberta",
+      "Edmonton, Alberta",
+      "Ottawa, Ontario",
+      "Winnipeg, Manitoba",
+      "Quebec City, Quebec",
+      "Hamilton, Ontario",
+      "Halifax, Nova Scotia",
+    ],
+  );
+  assert.equal(cityHubChipLabel(CITY_HUB_DEFS.find((h) => h.slug === "montreal"), "fr"), "Montréal, Québec");
+  assert.equal(cityHubChipLabel(CITY_HUB_DEFS.find((h) => h.slug === "quebec-city"), "fr"), "Québec, Québec");
+  assert.equal(cityHubDefBySlug("quebec-city")?.slug, "quebec-city");
+  assert.equal(cityHubDefBySlug("quebeccity")?.slug, "quebec-city");
+});
+
 test("city hub URLs sit under /daycare/city and never invent empty cities", () => {
   assert.equal(cityHubPath("winnipeg"), "/daycare/city/winnipeg");
   assert.equal(cityHubUrl("winnipeg"), "https://www.kidease.ca/daycare/city/winnipeg");
+  assert.equal(cityHubPath("quebec-city"), "/daycare/city/quebec-city");
   assert.equal(cityHubDefForPlace("Winnipeg", "MB")?.slug, "winnipeg");
   assert.equal(cityHubDefForPlace("Montréal", "QC")?.slug, "montreal");
+  assert.equal(cityHubDefForPlace("Edmonton", "AB")?.slug, "edmonton");
+  assert.equal(cityHubDefForPlace("Québec", "QC")?.slug, "quebec-city");
+  assert.equal(cityHubDefForPlace("Quebec City", "QC")?.slug, "quebec-city");
+  assert.equal(cityHubDefForPlace("Hamilton", "ON")?.slug, "hamilton");
+  assert.equal(cityHubDefForPlace("Halifax", "NS")?.slug, "halifax");
   assert.equal(cityHubDefForPlace("Winnipegosis", "MB"), null);
   assert.equal(cityHubDefForPlace("Winnipeg", "ON"), null);
+  const quebecHit = geocode(cityHubSearchQuery(CITY_HUB_DEFS.find((h) => h.slug === "quebec-city")));
+  assert.ok(quebecHit);
+  assert.match(quebecHit.label, /Québec City|Quebec City/i);
+  assert.doesNotMatch(quebecHit.label, /Montréal|Montreal/i);
+  for (const hub of CITY_HUB_DEFS) {
+    assert.ok(geocode(cityHubSearchQuery(hub)), hub.slug);
+  }
 
   const hubs = buildCityHubSnapshots([
     { slug: "test-ghost-claim-lab", name: "Ghost", city: "Winnipeg", province: "MB", visibility: "admin_only" },
@@ -40,6 +95,21 @@ test("generated city-hubs.json keeps Winnipeg and other dense cities", () => {
   const path = join(root, "src/lib/data/city-hubs.json");
   assert.equal(existsSync(path), true);
   const hubs = JSON.parse(readFileSync(path, "utf8"));
+  const slugs = hubs.map((h) => h.slug);
+  for (const slug of [
+    "toronto",
+    "montreal",
+    "vancouver",
+    "calgary",
+    "edmonton",
+    "ottawa",
+    "winnipeg",
+    "quebec-city",
+    "hamilton",
+    "halifax",
+  ]) {
+    assert.ok(slugs.includes(slug), slug);
+  }
   const winnipeg = hubs.find((h) => h.slug === "winnipeg");
   assert.ok(winnipeg);
   assert.ok(winnipeg.count >= CITY_HUB_MIN_LISTINGS);
@@ -60,7 +130,9 @@ test("guest home renders each city shortcut once", () => {
   assert.match(form, /cityChips/);
   assert.doesNotMatch(form, /CityHubLinks/);
   assert.match(home, /CITY_HUB_DEFS\.map/);
+  assert.match(home, /cityHubChipLabel/);
   assert.match(src("src/lib/city-hubs.ts"), /city: "Montréal"/);
+  assert.match(src("src/lib/city-hubs.ts"), /cityEn: "Montreal"/);
 
   const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
   assert.equal((web.match(/<CityHubLinks/g) ?? []).length, 1);
