@@ -2,6 +2,10 @@
 
 Please report vulnerabilities privately to [support@kidease.ca](mailto:support@kidease.ca). Do not open a public GitHub issue for security reports.
 
+## Secrets (1Password Environments)
+
+Production secrets belong in **1Password Environments** (`KidEase Production` / `KidEase Preview`), then a copy on Vercel project **kidease-git**. Git has names only (`.env.example`). Do not invent or commit values. Adoption path and name map: [`docs/1password-environments.md`](docs/1password-environments.md).
+
 ## Error monitoring (Sentry)
 
 Production uses the official `@sentry/node` (SSR / API) and `@sentry/react` (browser) SDKs.
