@@ -1,4 +1,3 @@
-import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { clearStickyDesk } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
@@ -6,7 +5,6 @@ import { resolveSocialSignInRedirect } from "./login-errors";
 import { isNativeSocialProvider } from "./providers";
 
 export const authClient = createAuthClient({
-  plugins: [genericOAuthClient()],
   fetchOptions: {
     onRequest(ctx) {
       const token = getBearerToken();
@@ -128,8 +126,9 @@ export async function signIn(
     return;
   }
 
-  const { data, error } = await authClient.signIn.oauth2({
-    providerId,
+  // 1.7 rebuilt generic OAuth onto signIn.social (same path as Apple/Google/Facebook).
+  const { data, error } = await authClient.signIn.social({
+    provider: providerId,
     callbackURL,
     errorCallbackURL,
   });

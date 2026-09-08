@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { applySharedAuthCookies, requestWithAliasedAuthCookies } from "@/lib/auth/cookies";
+import { requestWithLegacyOAuthCallback } from "@/lib/auth/legacy-oauth-callback";
 import { auth } from "@/lib/auth/server";
 import { reportError } from "@/lib/observe";
 import { assertResetMailConfigured } from "@/lib/server/reset-mail-config";
@@ -41,7 +42,7 @@ async function handleAuth(request: Request) {
         }
       }
     }
-    const incoming = requestWithAliasedAuthCookies(request);
+    const incoming = requestWithLegacyOAuthCallback(requestWithAliasedAuthCookies(request));
     const path = new URL(incoming.url).pathname.replace(/\/+$/, "");
     const handled = auth.handler(incoming);
     // useSession() stays isPending until this returns. A wedged Neon or

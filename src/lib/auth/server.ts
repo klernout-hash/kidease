@@ -230,9 +230,38 @@ export { SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE } from "./cookies";
 
 // Built separately so the `betterAuth({...})` call stays easy to edit without
 // breaking brackets (models often trip on the conditional plugin spread).
+/**
+ * Better Auth 1.7 registers generic OAuth as social providers at
+ * `/api/auth/callback/:id`. The Grok preview/production broker clients are
+ * already allowlisted for `/api/auth/oauth2/callback/*`. Keep sending that
+ * redirect_uri so existing broker registrations still complete.
+ */
+function genericOAuthWithBrokerCallback(
+  options: Parameters<typeof genericOAuth>[0],
+) {
+  const plugin = genericOAuth(options);
+  const init = plugin.init;
+  return {
+    ...plugin,
+    async init(ctx: Parameters<typeof init>[0]) {
+      const result = await init(ctx);
+      return {
+        ...result,
+        context: {
+          ...result.context,
+          socialProviders: result.context.socialProviders.map((provider) => ({
+            ...provider,
+            callbackPath: `/oauth2/callback/${provider.id}`,
+          })),
+        },
+      };
+    },
+  };
+}
+
 const grokOAuthPlugin =
   grokBrokerConfigured && grokClientId && grokClientSecret
-    ? genericOAuth({
+    ? genericOAuthWithBrokerCallback({
       config: BROKER_PROVIDERS.map(({ providerId, idp }) => ({
         providerId,
         clientId: grokClientId as string,

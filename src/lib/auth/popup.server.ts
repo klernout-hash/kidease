@@ -64,26 +64,17 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
   // Stay first-party for the callback so the session cookie lands in THIS popup.
   const back = `${url.origin}/auth/popup?done=1`;
   try {
-    const apiRes =
-      isNativeSocialProvider(providerId)
-        ? await auth.api.signInSocial({
-            body: {
-              provider: providerId as "apple" | "google" | "facebook",
-              callbackURL: back,
-              errorCallbackURL: `${back}&error=1`,
-            },
-            headers: request.headers,
-            asResponse: true,
-          })
-        : await auth.api.signInWithOAuth2({
-            body: {
-              providerId,
-              callbackURL: back,
-              errorCallbackURL: `${back}&error=1`,
-            },
-            headers: request.headers,
-            asResponse: true,
-          });
+    const apiRes = await auth.api.signInSocial({
+      body: {
+        provider: isNativeSocialProvider(providerId)
+          ? (providerId as "apple" | "google" | "facebook")
+          : providerId,
+        callbackURL: back,
+        errorCallbackURL: `${back}&error=1`,
+      },
+      headers: request.headers,
+      asResponse: true,
+    });
 
     if (!apiRes.ok) {
       const detail = await apiRes.text().catch(() => "");
