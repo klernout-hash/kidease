@@ -219,11 +219,16 @@ test("admin media route is registered and env example has names only", async () 
   assert.match(envExample, /R2_READ_ORIGINALS=/);
   assert.match(envExample, /R2_PUBLIC_BASE_URL=/);
   assert.match(envExample, /VITE_R2_PUBLIC_BASE_URL=/);
+  assert.match(envExample, /CF_IMAGE_RESIZE=/);
+  assert.match(envExample, /VITE_CF_IMAGE_RESIZE=/);
   assert.match(envExample, /media\.kidease\.ca/);
   assert.doesNotMatch(envExample, /R2_SECRET_ACCESS_KEY=\S+/);
   assert.doesNotMatch(envExample, /R2_ACCESS_KEY_ID=\S+/);
   assert.doesNotMatch(envExample, /R2_PUBLIC_BASE_URL=\S+/);
   assert.doesNotMatch(envExample, /VITE_R2_PUBLIC_BASE_URL=\S+/);
+  assert.doesNotMatch(envExample, /CF_IMAGE_RESIZE=\S+/);
+  assert.doesNotMatch(envExample, /VITE_CF_IMAGE_RESIZE=\S+/);
+  assert.doesNotMatch(envExample, /CLOUDFLARE_API_TOKEN|IMAGES_TOKEN|imagedelivery\.net/);
   assert.match(csp, /img-src 'self' data: blob: https:/);
   assert.match(csp, /img-src[^;]*https:\/\/media\.kidease\.ca/);
   assert.match(csp, /img-src[^;]*https:\/\/pub-9e5f137809844fcdb6d6671cd909f312\.r2\.dev/);

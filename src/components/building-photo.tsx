@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { CARD_SIZES, photoSrcSet, photoUrl } from "@/lib/photo";
+import {
+  CARD_SIZES,
+  isCfImageTransformUrl,
+  photoSrcSet,
+  photoUrl,
+  publicPhotoUrl,
+  srcsetWidthsFor,
+} from "@/lib/photo";
 import { cn } from "@/lib/utils";
 
 const FALLBACK = "/photos/storefront-placeholder-480.webp";
@@ -25,10 +32,12 @@ export function BuildingPhoto({
   const [active, setActive] = useState(eager);
   const [cur, setCur] = useState(src || FALLBACK);
   const [broken, setBroken] = useState(false);
+  const [skipTransform, setSkipTransform] = useState(false);
 
   useEffect(() => {
     setBroken(false);
     setCur(src || FALLBACK);
+    setSkipTransform(false);
   }, [src]);
 
   useEffect(() => {
@@ -57,12 +66,13 @@ export function BuildingPhoto({
 
   const ready = active ? cur || FALLBACK : undefined;
   const blank = "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
+  const delivered = ready ? (skipTransform ? publicPhotoUrl(ready) : photoUrl(ready, width)) : blank;
 
   return (
     <img
       ref={ref}
-      src={ready ? photoUrl(ready, width) : blank}
-      srcSet={ready ? photoSrcSet(ready, [320, 480, 768]) : undefined}
+      src={delivered}
+      srcSet={ready && !skipTransform ? photoSrcSet(ready, srcsetWidthsFor(width)) : undefined}
       sizes={sizes}
       width={width}
       height={height}
@@ -72,6 +82,10 @@ export function BuildingPhoto({
       decoding="async"
       fetchPriority={eager ? "high" : "low"}
       onError={() => {
+        if (ready && !skipTransform && isCfImageTransformUrl(photoUrl(ready, width))) {
+          setSkipTransform(true);
+          return;
+        }
         if (cur !== FALLBACK) setCur(FALLBACK);
         else setBroken(true);
       }}
