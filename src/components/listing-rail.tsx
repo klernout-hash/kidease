@@ -26,7 +26,7 @@ export function ListingRail({
   if (!shown.length) return null;
 
   function go(dir: -1 | 1) {
-    scroller.current?.scrollBy({ left: dir * 320, behavior: "smooth" });
+    scroller.current?.scrollBy({ left: dir * 208, behavior: "smooth" });
   }
 
   const showChevrons = shown.length > 3;

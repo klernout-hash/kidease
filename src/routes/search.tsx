@@ -795,7 +795,7 @@ function SearchPage() {
               </div>
             ) : null
           ) : items === null ? (
-            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="space-y-2" aria-hidden="true">
                   <div className="ke-skel aspect-[20/19] w-full" />
