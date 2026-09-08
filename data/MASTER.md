@@ -2,6 +2,15 @@
 
 The 23,927-row licensed-childcare master is **not** stored in this public app repo (phones/emails).
 
+## Current snapshot — 2026-09-08
+
+- Rows: 23,927
+- Phones: 15,405
+- Emails: 13,668
+- Websites: 3,781
+- Private GitHub: https://github.com/klernout-hash/kidease-master-data file `KidEase_Canada_Master_23927_20260908.csv`
+- Enrichment log `found_20260908.jsonl` + GHL email-only / remainder zips also in that private repo
+
 ## Frozen snapshot — 2026-09-02
 
 - Rows: 23,927
@@ -41,7 +50,7 @@ DATABASE_URL='postgresql://…' npm run ops:seed-catalog
 Optional blank-only phones / emails / websites from this private CSV:
 
 ```bash
-MASTER_CSV_PATH=./KidEase_Canada_Master_23927_20260902.csv \
+MASTER_CSV_PATH=./KidEase_Canada_Master_23927_20260908.csv \
 DATABASE_URL='postgresql://…' \
 npm run ops:seed-catalog
 ```
