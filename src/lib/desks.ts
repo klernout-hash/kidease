@@ -67,11 +67,12 @@ export function homeLandPath(input: {
   sticky?: DeskKey | null;
 }): "/admin" | "/support" | "/provider" | null {
   const desks = input.desks?.length ? input.desks : input.role ? desksFor({ role: input.role }) : null;
-  if (input.sticky) {
-    if (!desks || desks.includes(input.sticky)) {
-      if (input.sticky === "parent") return null;
-      return DESK_PATH[input.sticky];
-    }
+  const sticky = input.sticky;
+  if (sticky && (!desks || desks.includes(sticky))) {
+    if (sticky === "admin") return "/admin";
+    if (sticky === "support") return "/support";
+    if (sticky === "provider") return "/provider";
+    return null;
   }
   if (!input.role) return null;
   if (input.role === "admin") return "/admin";
