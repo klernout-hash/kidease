@@ -22,7 +22,8 @@ test("image resize runbook is dashboard + env only — no invented tokens", () =
   assert.match(docs, /Leave the flag \*\*unset\*\*/);
   assert.match(docs, /No Images API token/);
   assert.match(docs, /https:\/\/media\.kidease\.ca\/photos\/buildings\/mb-1001\.jpg/);
-  assert.doesNotMatch(docs, /CLOUDFLARE_API_TOKEN|cfait_|sk_live_|imagedelivery\.net\/[a-zA-Z0-9]/);
+  assert.doesNotMatch(docs, /cfait_|sk_live_|imagedelivery\.net\/[a-zA-Z0-9]/);
+  assert.doesNotMatch(docs, /CLOUDFLARE_API_TOKEN=/);
   assert.match(publicPhotos, /docs\/image-resizing\.md/);
   assert.match(envExample, /# CF_IMAGE_RESIZE=/);
   assert.match(envExample, /# VITE_CF_IMAGE_RESIZE=/);

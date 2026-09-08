@@ -53,7 +53,11 @@ zone cannot run Transformations.
 5. Smoke-test in a private window (not committed):
 
    ```
-   https://media.kidease.ca/cdn-cgi/image/width=320,quality=75,format=auto,fit=scale-down/photos/buildings/mb-1001.jpg
+   https://media.kidease.ca/cdn-cgi/image/width=320,quality=75,format=auto,fit=scale-down/photos/wpg/1001.jpg
+
+   Compare with the original, which must keep working:
+
+   https://media.kidease.ca/photos/wpg/1001.jpg
    ```
 
    Expect an image, not an HTML error. The original without `/cdn-cgi/image/`
@@ -63,8 +67,8 @@ zone cannot run Transformations.
    Worker on `media.kidease.ca`) before the app should request them.
    Do not invent a second public host in git.
 
-No Images API token. No Account ID in the app. Do not put
-`CLOUDFLARE_API_TOKEN` in Vercel for this.
+No Images API token. No Account ID in the app. Do not add a Cloudflare
+token env for this — Transformations are a dashboard toggle, not a key.
 
 ## Vercel env
 
