@@ -4,10 +4,15 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { ADMIN_EMAIL, lookupUser } from "@/lib/server/notify";
+import {
+  TWO_FACTOR_MAX_ATTEMPTS,
+  decideTwoFactorStart,
+  friendlyTwoFactorMailError,
+} from "@/lib/two-factor-start";
 
 const TTL_MS = 10 * 60 * 1000;
 const DEVICE_MS = 30 * 24 * 60 * 60 * 1000;
-const MAX_ATTEMPTS = 5;
+const MAX_ATTEMPTS = TWO_FACTOR_MAX_ATTEMPTS;
 
 function secret() {
   return (process.env.BETTER_AUTH_SECRET || process.env.ADMIN_EMAIL || "kidease-preview").trim();
@@ -107,30 +112,42 @@ export const startTwoFactor = createServerFn({ method: "POST" })
       order by created_at desc limit 1
     `.catch(() => []);
     const last = recent[0];
-    if (last && Date.now() - new Date(last.created_at).getTime() < 45_000) {
-      return { ok: true as const, emailed, wait: true as const };
+    const decision = decideTwoFactorStart({
+      force: data.force,
+      last: last
+        ? {
+            createdAtMs: new Date(last.created_at).getTime(),
+            expiresAtMs: new Date(last.expires_at).getTime(),
+            attempts: last.attempts,
+          }
+        : null,
+    });
+    // Auto-start only: remounts must not remint a code still sitting in Titan/Resend.
+    // "Send a new code" (`force`) never takes this path.
+    if (decision === "wait") {
+      return { ok: true as const, emailed, wait: true as const, sent: false as const };
     }
-    // After the 45s wait window, keep the live code unless the user asked for a new one.
-    // Verify only reads the latest challenge — reminting here invalidates Titan mail still in flight.
-    if (
-      last &&
-      !data.force &&
-      new Date(last.expires_at).getTime() > Date.now() &&
-      last.attempts < MAX_ATTEMPTS
-    ) {
-      return { ok: true as const, emailed, wait: true as const, reused: true as const };
+    if (decision === "reuse") {
+      return { ok: true as const, emailed, wait: true as const, reused: true as const, sent: false as const };
     }
     const code = String(randomInt(100000, 999999));
     const id = nid("2fa");
+    let status: "sent" | "logged";
+    try {
+      status = await sendCodeEmail(email, code);
+    } catch (err) {
+      throw new Error(friendlyTwoFactorMailError(err));
+    }
+    // Persist after a successful send so a mail failure leaves the previous code valid.
     await sql.query(
       `insert into login_challenges (id, user_id, email, code_hash, expires_at) values ($1,$2,$3,$4,$5)`,
       [id, context.userId, email, hashCode(code), new Date(Date.now() + TTL_MS).toISOString()],
     );
-    const status = await sendCodeEmail(email, code);
     return {
       ok: true as const,
       emailed,
       status,
+      sent: true as const,
     };
   });
 

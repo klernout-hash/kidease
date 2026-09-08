@@ -23,6 +23,7 @@ function VerifyTwoFactorPage() {
   const [code, setCode] = useState("");
   const [hint, setHint] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -103,6 +104,7 @@ function VerifyTwoFactorPage() {
             </label>
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
+            {notice && !error ? <p className="text-sm text-muted">{notice}</p> : null}
             <Button type="submit" className="w-full" disabled={busy || !ready || code.length !== 6 || (turnstileRequired && !token.trim())}>
               Verify and continue
             </Button>
@@ -114,8 +116,16 @@ function VerifyTwoFactorPage() {
             onClick={() => {
               setBusy(true);
               setError(null);
+              setNotice(null);
               void startTwoFactor({ data: { force: true } })
-                .then((res) => setHint(res.emailed))
+                .then((res) => {
+                  setHint(res.emailed);
+                  if (!res.sent) {
+                    setError("Please wait a moment, then try Send a new code again.");
+                    return;
+                  }
+                  setNotice("A new code is on its way. Use the latest email.");
+                })
                 .catch((err) => setError(err instanceof Error ? err.message : "Could not send a code"))
                 .finally(() => setBusy(false));
             }}
