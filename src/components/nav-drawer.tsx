@@ -128,7 +128,7 @@ export function NavDrawer({
                 to={accountHref}
                 search={accountSearch}
                 onClick={onClose}
-                className="flex min-h-12 items-center rounded-xl bg-primary px-3 text-base font-medium text-primary-fg"
+                className="flex min-h-12 items-center justify-center rounded-xl bg-primary px-3 text-center text-base font-medium text-primary-fg"
               >
                 {accountLabel}
               </Link>
@@ -147,7 +147,7 @@ export function NavDrawer({
                   onClose();
                   onSignOut();
                 }}
-                className="mt-2 flex min-h-12 w-full items-center rounded-xl px-3 text-left text-base text-fg ring-1 ring-border"
+                className="mt-2 flex min-h-12 w-full items-center justify-center rounded-xl px-3 text-center text-base text-fg ring-1 ring-border"
               >
                 Sign out
               </button>
