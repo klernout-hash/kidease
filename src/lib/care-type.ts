@@ -72,3 +72,10 @@ export function railAgeToSearchAge(age: RailAge): "any" | AgeGroup {
   if (age === "school-age") return "any";
   return age;
 }
+
+/** Coerce chip / query / agent-typed strings so AgeGroup never fails tsc. */
+export function parseAgeGroup(value: unknown): AgeGroup | "any" {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (raw === "infant" || raw === "toddler" || raw === "preschool") return raw;
+  return "any";
+}

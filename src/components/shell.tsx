@@ -46,6 +46,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
 
   const hideTabs = pathname.startsWith("/login");
   const verifyLite = pathname.startsWith("/verify-2fa");
+  const menuLite = pathname.startsWith("/menu");
   const onAccount = pathname.startsWith("/account");
   const accountTab = tab ?? "profile";
   const hideFooter =
@@ -83,6 +84,53 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
           </div>
         </header>
         {children}
+      </div>
+    );
+  }
+
+  if (menuLite) {
+    return (
+      <div className="min-h-dvh bg-bg text-fg">
+        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
+          <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
+            <Link to="/" className="shrink-0" aria-label="KidEase">
+              <BrandMark size="sm" />
+            </Link>
+          </div>
+        </header>
+        <div className="[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]">{children}</div>
+        <nav className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
+          <div className="mx-auto grid max-w-lg grid-cols-5 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
+            <Tab
+              to="/"
+              label={t("search")}
+              icon={Search}
+              active={false}
+            />
+            <Tab
+              to="/parent"
+              search={{ tab: "saved" }}
+              label={t("saved")}
+              icon={Heart}
+              active={false}
+            />
+            <Tab
+              to="/parent"
+              search={{ tab: "enrolled" }}
+              label={t("enrolled")}
+              icon={ClipboardCheck}
+              active={false}
+            />
+            <Tab
+              to="/inbox"
+              search={inboxSearch(inboxViewForDesk(sticky))}
+              label={t("messages")}
+              icon={MessageCircle}
+              active={false}
+            />
+            <Tab to="/menu" label={locale === "fr" ? "Menu" : "Menu"} icon={Menu} active />
+          </div>
+        </nav>
       </div>
     );
   }
@@ -231,7 +279,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
           </div>
         </nav>
       )}
-      {hideTabs || pathname.startsWith("/search") ? null : <LiveChatSlot />}
+      {hideTabs || pathname.startsWith("/search") || pathname.startsWith("/parent") || pathname.startsWith("/menu") ? null : <LiveChatSlot />}
     </div>
   );
 }

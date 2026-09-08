@@ -12,8 +12,8 @@ import { Shell } from "@/components/shell";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
-import { deskQueryValue, loginRoleFromDesk, parseDeskQuery, readStickyDesk, resolvePostLoginPath, sanitizePostLoginNext, writeStickyDesk } from "@/lib/desks";
-import { captureLoginFunnel, continueAfterSignIn, LOGIN_STALL_MS, loginErrorCallbackUrl, twoFactorPageUrl } from "@/lib/auth/login-funnel";
+import { deskQueryValue, loginRoleFromDesk, parseDeskQuery, readStickyDesk, resolvePostLoginPath, sanitizePostLoginNext, staffTwoFactorRequired, writeStickyDesk } from "@/lib/desks";
+import { captureLoginFunnel, continueAfterSignIn, LOGIN_STALL_MS, loginErrorCallbackUrl, twoFactorPageUrl, waitForSignedInSession } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
@@ -106,10 +106,10 @@ function Login() {
   }, [sessionPending, user, dest, busy, search.next, deskHint, role, error]);
 
   async function finish() {
-    const session = await authClient.getSession().catch(() => ({ data: null }));
+    const session = await waitForSignedInSession(() => authClient.getSession());
     if (!session?.data?.user) {
       throw new Error(
-        "Signed in, but the browser did not keep the session cookie. Open https://www.kidease.ca/login and try again.",
+        "Signed in, but the browser did not keep the session cookie. Retry here, or open https://www.kidease.ca/login.",
       );
     }
     if (role === "parent" || role === "provider") {
@@ -180,7 +180,7 @@ function Login() {
     try {
       captureLoginFunnel({ step: "submitted", method: "social", native: isNative() });
       await signIn(providerId, {
-        callbackURL: twoFactorUrl(dest),
+        callbackURL: staffTwoFactorRequired(dest) ? twoFactorUrl(dest) : dest,
         errorCallbackURL: loginErrorCallbackUrl({
           next: search.next,
           role,
@@ -220,7 +220,14 @@ function Login() {
     <Shell bare>
       <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-5xl md:grid-cols-2">
         <div className="relative hidden overflow-hidden md:block">
-          <img src="/photos/community.jpg" alt="" className="absolute inset-0 size-full object-cover" />
+          <img
+            src="/photos/community.jpg"
+            alt=""
+            className="absolute inset-0 size-full object-cover"
+            loading="lazy"
+            fetchPriority="low"
+            decoding="async"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-fg/70 to-fg/10" />
           <p className="absolute bottom-10 left-10 right-10 font-display text-3xl text-primary-fg">{t("tagline")}</p>
         </div>
@@ -317,8 +324,8 @@ function Login() {
                 >
                   Retry
                 </button>
-                <a href="/parent" className="min-h-11 font-medium text-muted underline-offset-4 hover:underline">
-                  Open Parent desk
+                <a href={dest.startsWith("/") && !dest.startsWith("//") ? dest : "/parent"} className="min-h-11 font-medium text-muted underline-offset-4 hover:underline">
+                  {dest.startsWith("/search") ? "Back to Explore" : dest.startsWith("/daycare/") ? "Back to listing" : "Open your desk"}
                 </a>
               </div>
             ) : null}

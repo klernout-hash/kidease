@@ -22,7 +22,8 @@ Checkly stays a later option if we want as-code browser checks beyond the existi
   - `database` is `ok` after `select 1` (Neon / local PGLite), `skipped` when `DATABASE_URL` is unset on Vercel (catalogue still renders), `error` → HTTP 503.
   - `runtime` is `vercel` when `VERCEL` is set, otherwise `local`.
   - `revision` is the first 7 chars of `VERCEL_GIT_COMMIT_SHA` when Vercel inlines it. Never a secret.
-  - `cfr` is `{ signal: "production_change_failure", candidate, sentry }`. `candidate` is true on HTTP 503. `sentry` is `configured` or `unset` (never the DSN). Use this plus Better Stack incidents after a Production deploy to read CFR — not Actions fail-rate.
+  - `cfr` is `{ signal: "production_change_failure", candidate, sentry, alert? }`. `candidate` is true on HTTP 503. When true, `alert` is the stable keyword `cfr_candidate`. `sentry` is `configured` or `unset` (never the DSN). Use this plus Better Stack incidents after a Production deploy to read CFR — not Actions fail-rate.
+  - A healthy probe (not `cfr.candidate`) fire-and-forgets `BETTERSTACK_HEARTBEAT_URL` when that env is set. A 503 skips the heartbeat so a Heartbeat monitor pages Kyle. The same 503 also reports `production_change_failure` to Sentry once per revision/check fingerprint.
   - No auth. `Cache-Control: no-store`. `X-Robots-Tag: noindex`.
   - Does not leak connection strings, Better Stack secrets, or Sentry DSNs.
 - Optional `BETTERSTACK_HEARTBEAT_URL` — only `https://uptime.betterstack.com/…` or `https://betteruptime.com/…`. Unset = no-op. The HTTP monitors do **not** need this.
@@ -39,9 +40,13 @@ Do this in [Better Stack → Uptime](https://betterstack.com/). Do **not** paste
 3. Second monitor
    - URL: `https://www.kidease.ca/api/health`
    - Expect **200**. Optional keyword: `"ok":true`
-4. **On-call / Escalation → Email** **kyle@kidease.ca**. Confirm the subscription mail.
-5. (Optional) Heartbeat monitor for a cron. Copy the Heartbeat URL into Vercel Production as `BETTERSTACK_HEARTBEAT_URL` (encrypted). Set the heartbeat period to match the job. Leave unset until you need it.
-6. Pause / unpause a monitor once to prove the email arrives. Do not use a fake outage on production parents if you can avoid it.
+4. **CFR keyword monitor** (same URL)
+   - Type: HTTP(S) keyword / expected content.
+   - Alert when the body contains `cfr_candidate` (only present when `cfr.candidate` is true / HTTP 503).
+   - On-call: **kyle@kidease.ca**. This is the `/api/health` change-failure page — not GitHub Actions.
+5. **On-call / Escalation → Email** **kyle@kidease.ca**. Confirm the subscription mail.
+6. (Optional) Heartbeat monitor. Copy the Heartbeat URL into Vercel Production as `BETTERSTACK_HEARTBEAT_URL` (encrypted). Period: a few minutes (healthy `/api/health` pings it). Leave unset until you need it — HTTP 200 / keyword monitors already page without this.
+7. Pause / unpause a monitor once to prove the email arrives. Do not use a fake outage on production parents if you can avoid it.
 
 `BETTERSTACK_UPTIME_API_TOKEN` is listed in `.env.example` as a **dashboard-only** name. The app does not read it. Terraform / API sync is later — do not invent a token.
 
@@ -70,7 +75,7 @@ How to read deploy health / CFR:
 
 1. Better Stack HTTP monitor on `https://www.kidease.ca/api/health` stays **200** with `"ok":true` and `"signal":"production_health"`.
 2. After a Production deploy, compare `revision` (short SHA) to the Vercel deployment SHA. A 503 (`cfr.candidate: true`, usually `database: error`) is a real change-failure candidate. A red Actions `check` job on a draft PR is not.
-3. Optional Better Stack keyword on the health body: `"production_change_failure"` plus `"candidate":true` — pages only when the probe itself failed. Do not invent a second dashboard.
+3. Better Stack keyword on the health body: `cfr_candidate` (or `"production_change_failure"` plus `"candidate":true`) — pages only when the probe itself failed. Do not invent a second dashboard.
 4. Crash rate for the same window: Sentry issues on that `revision` (`SENTRY_DSN` / `VITE_PUBLIC_SENTRY_DSN` already on Production). Health reports `cfr.sentry: "configured"` when a DSN is present; it never echoes the DSN.
 5. Optional heartbeat (`BETTERSTACK_HEARTBEAT_URL`) is a cron liveness ping, not CFR.
 

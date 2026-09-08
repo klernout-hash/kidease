@@ -39,6 +39,7 @@ import {
   posthogApiHost,
   posthogEnabled,
   posthogInitOptions,
+  POSTHOG_FIRST_PARTY_ORIGIN,
   posthogProjectKey,
   resetPostHogClientForTests,
   resetPostHogIdentity,
@@ -78,6 +79,8 @@ describe("PostHog client wiring", () => {
     assert.equal(POSTHOG_US_INGEST, "https://us.i.posthog.com");
     assert.equal(POSTHOG_US_ASSETS, "https://us-assets.i.posthog.com");
     assert.match(src, /capturePostHogEvent/);
+    assert.match(src, /flushQueuedPostHogEvents/);
+    assert.match(src, /kidease-ph-queue/);
     resetPostHogClientForTests();
     assert.doesNotThrow(() => capturePostHogEvent("login_funnel", { email: "hidden", step: "viewed" }));
     assert.match(src, /VITE_PUBLIC_POSTHOG_KEY/);
@@ -91,16 +94,17 @@ describe("PostHog client wiring", () => {
     resetPostHogClientForTests();
     assert.equal(posthogProjectKey(), "");
     assert.equal(posthogEnabled(), false);
-    assert.equal(posthogApiHost(), POSTHOG_PROXY_PATH);
+    assert.equal(posthogApiHost(), `${POSTHOG_FIRST_PARTY_ORIGIN}${POSTHOG_PROXY_PATH}`);
     assert.equal(
       posthogApiHost({}, false, "https://www.kidease.ca"),
       "https://www.kidease.ca/ingest",
     );
     assert.equal(POSTHOG_PROXY_PATH, "/ingest");
     assert.equal(POSTHOG_UI_HOST, "https://us.posthog.com");
+    assert.equal(POSTHOG_FIRST_PARTY_ORIGIN, "https://www.kidease.ca");
     assert.equal(
       posthogApiHost({ POSTHOG_HOST: "https://us.i.posthog.com" }),
-      POSTHOG_PROXY_PATH,
+      `${POSTHOG_FIRST_PARTY_ORIGIN}${POSTHOG_PROXY_PATH}`,
     );
     assert.equal(
       posthogApiHost({ VITE_PUBLIC_POSTHOG_HOST: "https://ph.example.com" }),
@@ -110,7 +114,7 @@ describe("PostHog client wiring", () => {
 
   it("masks session replay inputs and all on-screen text, and keeps flags on", () => {
     const options = posthogInitOptions({ native: false, consent: "granted" });
-    assert.equal(options.api_host, POSTHOG_PROXY_PATH);
+    assert.equal(options.api_host, `${POSTHOG_FIRST_PARTY_ORIGIN}${POSTHOG_PROXY_PATH}`);
     assert.equal(options.ui_host, POSTHOG_UI_HOST);
     assert.match(read("src/lib/posthog.ts"), /\$lib_custom_api_host/);
     assert.match(read("src/lib/server/posthog-proxy.ts"), /x-forwarded-host/);
@@ -170,7 +174,7 @@ describe("PostHog client wiring", () => {
     assert.equal(pending.disable_session_recording, true);
     const native = posthogInitOptions({ native: true, consent: "unset" });
     assert.equal(native.disable_session_recording, true);
-    assert.equal(native.api_host, DEFAULT_POSTHOG_HOST);
+    assert.equal(native.api_host, `${POSTHOG_FIRST_PARTY_ORIGIN}${POSTHOG_PROXY_PATH}`);
   });
 
   it("requires Allow before website PostHog and hides the banner in Capacitor", () => {
@@ -383,6 +387,8 @@ describe("PostHog client wiring", () => {
     const proxy = read("src/lib/server/posthog-proxy.ts");
     assert.match(proxy, /headers\.delete\("cookie"\)|key === "cookie"/);
     assert.match(proxy, /authorization/);
+    assert.match(proxy, /access-control-allow-origin/);
+    assert.match(proxy, /applyIngestCors/);
     assert.match(read("server/middleware/ingest-proxy.ts"), /proxyPosthogRequest/);
     assert.match(read("vite.config.ts"), /posthogIngestPlugin/);
     assert.match(read("vite.config.ts"), /app-builder:posthog-ingest/);

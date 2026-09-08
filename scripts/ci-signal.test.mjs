@@ -15,8 +15,11 @@ test("CI check job stays fail-fast and cancels superseded runs", () => {
   const workflow = src(".github/workflows/ci.yml");
   const eslint = src("eslint.config.mjs");
   assert.match(workflow, /npx eslint \./);
-  assert.match(workflow, /npm test/);
   assert.match(workflow, /npx tsc --noEmit/);
+  assert.match(workflow, /npm test/);
+  const eslintIdx = workflow.indexOf("npx tsc --noEmit");
+  const testIdx = workflow.indexOf("npm test");
+  assert.ok(eslintIdx > 0 && testIdx > eslintIdx, "typecheck before unit tests so first-push tsc fails fast");
   assert.match(workflow, /cancel-in-progress: true/);
   assert.match(workflow, /group: ci-/);
   assert.match(workflow, /Pipeline fail-rate is not production CFR/);

@@ -65,7 +65,9 @@ After this instrumentation, measure **`login_funnel`** (not `$pageview`) in [Ins
 1. `login_funnel` where `step` = `submitted`
 2. `login_funnel` where `step` = `continued`
 
-`continued` fires immediately before the browser leaves `/login` or `/verify-2fa` for the resolved dest (desk **or** public `/search` / `/daycare`). Pre-#141 pageview funnels that required `/parent` scored listing/search returns as drop-off (the 10→2 Critical reading).
+`continued` fires immediately before the browser leaves `/login` or `/verify-2fa` for the resolved dest (desk **or** public `/search` / `/daycare`). Pre-#141 pageview funnels that required `/parent` scored listing/search returns as drop-off (the 10→2 / 12→2 Critical reading).
+
+`login_funnel` steps are queued in `sessionStorage` (`kidease-ph-queue`) until PostHog starts after **Allow analytics**, then flushed. Hard navigations (`/login` → `/verify-2fa` → desk) no longer drop `submitted` → `continued` → `desk_landed`. Denied consent clears the queue and never sends. Properties stay dest kinds / desk keys only.
 
 Optional confirmation (desk dests only):
 
@@ -115,7 +117,7 @@ Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) wh
 
 ## Reverse proxy
 
-PostHog health flags **No reverse proxy detected** when `$lib_custom_api_host` is unset (a relative `/ingest` path does not count). Consented browsers now set `api_host` to the absolute same-origin URL (`https://www.kidease.ca/ingest` on production, preview origin + `/ingest` on Vercel). `ui_host` stays `https://us.posthog.com`. Capacitor keeps the public US host. Consent is unchanged: website PostHog still starts only after **Allow analytics**.
+PostHog health flags **No reverse proxy detected** when `$lib_custom_api_host` is unset (a relative `/ingest` path does not count). Whenever analytics is allowed, `api_host` is an **absolute** first-party URL (`https://www.kidease.ca/ingest` on production, preview origin + `/ingest` on Vercel). A missing `window.location.origin` falls back to `https://www.kidease.ca/ingest` — never a bare `/ingest`. Capacitor’s production WebView is already `https://www.kidease.ca`, so native uses the same first-party proxy (not `us.i.posthog.com`). `ui_host` stays `https://us.posthog.com`. Consent is unchanged: website PostHog still starts only after **Allow analytics**. The ingest proxy answers CORS preflight so a live-reload WebView can still POST to www.
 
 The Nitro / Vite proxy also forwards `X-Forwarded-Host`, `X-Forwarded-Proto`, and `X-Forwarded-For`, and still strips `Cookie` / `Authorization`.
 

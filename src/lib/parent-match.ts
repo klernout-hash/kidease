@@ -10,6 +10,7 @@ import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { qualityBreakdown, QUALITY_WEIGHTS } from "@/lib/quality";
 import { distanceDecay } from "@/lib/proximity";
 import { matchesAgeBand, type AgeBand } from "@/lib/saved-search";
+import { parseAgeGroup } from "@/lib/care-type";
 import type { AgeGroup, Daycare } from "@/lib/types";
 
 export const MATCH_WEIGHTS = {
@@ -21,7 +22,8 @@ export const MATCH_WEIGHTS = {
 } as const;
 
 export type ParentMatchPrefs = {
-  ageGroup?: "any" | AgeGroup;
+  /** Parsed via `parseAgeGroup` — string chips must not fail tsc. */
+  ageGroup?: string | null;
   radiusKm?: number;
   /** Set only after a real origin→centre distance was measured. */
   distanceKnown?: boolean;
@@ -101,7 +103,7 @@ function distancePoints(item: ParentMatchInput, prefs: ParentMatchPrefs): number
 }
 
 function agePoints(item: ParentMatchInput, prefs: ParentMatchPrefs): number {
-  const band = (prefs.ageGroup ?? "any") as AgeBand;
+  const band = parseAgeGroup(prefs.ageGroup) as AgeBand;
   if (band === "any") {
     return item.agesKnown ? MATCH_WEIGHTS.ages : 0;
   }
@@ -112,7 +114,7 @@ function agePoints(item: ParentMatchInput, prefs: ParentMatchPrefs): number {
 function vacancyPoints(item: ParentMatchInput, prefs: ParentMatchPrefs): number {
   const vacancy = vacancyFreshness(vacancyTimestamp(item));
   if (vacancy.kind === "unknown") return 0;
-  const ageGroup = prefs.ageGroup ?? "any";
+  const ageGroup = parseAgeGroup(prefs.ageGroup);
   const ageSpots = spotsForAgeGroup(item, ageGroup);
   const anySpots = spotsForAgeGroup(item, "any");
   if (vacancy.kind === "stale") {

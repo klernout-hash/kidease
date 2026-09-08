@@ -558,14 +558,18 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                                         type="checkbox"
                                         className="size-4 accent-primary"
                                         checked={on}
-                                        onChange={() =>
-                                          setPicked((cur) => {
-                                            const next = new Set(cur[c.id] ?? []);
-                                            if (on) next.delete(d.id);
-                                            else next.add(d.id);
-                                            return { ...cur, [c.id]: [...next] };
-                                          })
-                                        }
+                                        onChange={() => {
+                                          void yieldToMain().then(() => {
+                                            startTransition(() => {
+                                              setPicked((cur) => {
+                                                const next = new Set(cur[c.id] ?? []);
+                                                if (on) next.delete(d.id);
+                                                else next.add(d.id);
+                                                return { ...cur, [c.id]: [...next] };
+                                              });
+                                            });
+                                          });
+                                        }}
                                       />
                                       <span>{d.name}</span>
                                       <span className="text-subtle">{d.city}</span>

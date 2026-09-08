@@ -90,6 +90,8 @@ test("brand mark ships the SVG, and logos get a long cache hint", () => {
   assert.match(src("src/routes/menu.tsx"), /ke-menu-chevron/);
   assert.match(src("src/routes/menu.tsx"), /ke-menu-group/);
   assert.match(src("src/styles.css"), /\.ke-menu-main h1/);
+  assert.match(src("src/components/shell.tsx"), /menuLite/);
+  assert.match(src("public/channel-boot.js"), /plus-jakarta/);
   assert.match(src("src/lib/analytics-consent.ts"), /ANALYTICS_CONSENT_BANNER_REVEAL_YIELD_MS/);
   const svg = statSync(join(root, "public/logo-transparent.svg")).size;
   const png = statSync(join(root, "public/logo-transparent.png")).size;

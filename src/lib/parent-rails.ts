@@ -8,7 +8,7 @@
 
 import { compareParentMatch, parentMatchScore, type ParentMatchPrefs } from "@/lib/parent-match";
 import { compareParentUrgency, parentUrgencyScore, type ParentUrgencyPrefs } from "@/lib/parent-urgency";
-import { matchesCareType, matchesRailAge, type CareType, type RailAge } from "@/lib/care-type";
+import { matchesCareType, matchesRailAge, railAgeToSearchAge, type CareType, type RailAge } from "@/lib/care-type";
 import { isPublicListing } from "@/lib/listing-visibility";
 import type { DaycareCard } from "@/lib/types";
 
@@ -86,7 +86,7 @@ export function guestFavoritesRail(items: DaycareCard[]): DaycareCard[] {
 }
 
 export function ageGroupRail(items: DaycareCard[], age: RailAge, prefs: ParentRailPrefs = {}): DaycareCard[] {
-  const agePrefs: ParentRailPrefs = { ...prefs, ageGroup: age === "school-age" ? "any" : age };
+  const agePrefs: ParentRailPrefs = { ...prefs, ageGroup: railAgeToSearchAge(age) };
   const scored = scoreParentRailItems(
     items.filter((item) => matchesRailAge(item, age)),
     agePrefs,

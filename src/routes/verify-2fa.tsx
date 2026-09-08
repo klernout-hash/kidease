@@ -13,9 +13,8 @@ import {
   captureLoginFunnel,
   LOGIN_STALL_MS,
   markContinued,
-  resolveContinueDest,
 } from "@/lib/auth/login-funnel";
-import { readStickyDesk, sanitizePostLoginNext, staffTwoFactorRequired } from "@/lib/desks";
+import { sanitizePostLoginNext, staffTwoFactorRequired } from "@/lib/desks";
 import { isNative } from "@/lib/native";
 import { yieldToMain } from "@/lib/yield-main";
 
@@ -81,20 +80,9 @@ const OtpCodeField = memo(function OtpCodeField({
 });
 
 async function leave(rawDest: string) {
-  await yieldToMain();
-  try {
-    const resolved = await resolveContinueDest({
-      next: rawDest,
-      sticky: readStickyDesk(),
-    });
-    markContinued(resolved);
-    assignPostAuthDest(resolved);
-  } catch {
-    captureLoginFunnel({ step: "dest_failed", reason: "verify_leave" });
-    const fallback = sanitizePostLoginNext(rawDest) ?? "/parent";
-    markContinued(fallback, { reason: "fallback" });
-    assignPostAuthDest(fallback);
-  }
+  const fallback = sanitizePostLoginNext(rawDest) ?? "/parent";
+  markContinued(fallback);
+  assignPostAuthDest(fallback);
 }
 
 function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string }) {
@@ -107,6 +95,8 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   const [ready, setReady] = useState(false);
   const [canSkip, setCanSkip] = useState(false);
   const [stalled, setStalled] = useState(false);
+  const [pageStalled, setPageStalled] = useState(false);
+  const [needTurnstile, setNeedTurnstile] = useState(false);
   const submitLock = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
@@ -114,6 +104,11 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
 
   useEffect(() => {
     captureLoginFunnel({ step: "two_factor_viewed", native: isNative() });
+  }, []);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setPageStalled(true), LOGIN_STALL_MS);
+    return () => window.clearTimeout(id);
   }, []);
 
   useEffect(() => {
@@ -196,7 +191,9 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
 
   function onCodeChange(nextCode: string) {
     setCode(nextCode);
-    if (nextCode.length === 6 && ready && !busy && !submitLock.current) {
+    if (nextCode.length > 0 && !needTurnstile) setNeedTurnstile(true);
+    const turnstileReady = !turnstileRequired || Boolean(token.trim());
+    if (nextCode.length === 6 && ready && !busy && !submitLock.current && turnstileReady) {
       void yieldToMain().then(() => {
         if (!submitLock.current) formRef.current?.requestSubmit();
       });
@@ -217,7 +214,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         </p>
         <form ref={formRef} className="mt-6 space-y-3 ph-no-capture" onSubmit={onSubmit}>
           <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} />
-          {ready ? (
+          {needTurnstile ? (
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
           ) : (
             <div className="min-h-[65px]" aria-hidden="true" />
@@ -265,13 +262,16 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         >
           Send a new code
         </button>
-        {(canSkip || stalled) && !staff ? (
+        {(canSkip || stalled || pageStalled) && !staff ? (
           <button
             type="button"
             className="mt-3 block min-h-11 text-sm font-medium text-primary underline-offset-4 hover:underline"
-            disabled={busy && !stalled}
+            disabled={busy && !stalled && !pageStalled}
             onClick={() => {
-              captureLoginFunnel({ step: "two_factor_skipped", reason: stalled ? "stall_continue" : "continue_without_code" });
+              captureLoginFunnel({
+                step: "two_factor_skipped",
+                reason: stalled || pageStalled ? "stall_continue" : "continue_without_code",
+              });
               void leave(dest);
             }}
           >

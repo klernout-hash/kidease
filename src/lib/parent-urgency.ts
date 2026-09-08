@@ -9,7 +9,7 @@
 import { MIN_THREAD_SAMPLE } from "@/lib/quality";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { spotsForAgeGroup, type ParentMatchInput } from "@/lib/parent-match";
-import type { AgeGroup } from "@/lib/types";
+import { parseAgeGroup } from "@/lib/care-type";
 
 export const URGENCY_WEIGHTS = {
   startDate: 40,
@@ -22,7 +22,8 @@ export const MIN_REPLY_SAMPLE = MIN_THREAD_SAMPLE;
 
 export type ParentUrgencyPrefs = {
   startDate?: string | null;
-  ageGroup?: "any" | AgeGroup;
+  /** Parsed via `parseAgeGroup` — string chips must not fail tsc. */
+  ageGroup?: string | null;
   now?: number;
 };
 
@@ -68,7 +69,7 @@ function startDatePoints(prefs: ParentUrgencyPrefs): number {
 function spotPoints(item: ParentUrgencyInput, prefs: ParentUrgencyPrefs): number {
   const vacancy = vacancyFreshness(vacancyTimestamp(item), prefs.now);
   if (vacancy.kind === "unknown") return 0;
-  const ageGroup = prefs.ageGroup ?? "any";
+  const ageGroup = parseAgeGroup(prefs.ageGroup);
   const ageSpots = spotsForAgeGroup(item, ageGroup);
   const anySpots = spotsForAgeGroup(item, "any");
   if (vacancy.kind === "stale") {
