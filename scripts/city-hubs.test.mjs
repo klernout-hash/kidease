@@ -54,6 +54,23 @@ test("generated city-hubs.json keeps Winnipeg and other dense cities", () => {
   );
 });
 
+test("guest home renders each city shortcut once", () => {
+  const home = src("src/routes/index.tsx");
+  const form = home.slice(home.indexOf("const locationForm"), home.indexOf("const featuredSearch"));
+  assert.match(form, /cityChips/);
+  assert.doesNotMatch(form, /CityHubLinks/);
+  assert.match(home, /CITY_HUB_DEFS\.map/);
+  assert.match(src("src/lib/city-hubs.ts"), /city: "Montréal"/);
+
+  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
+  assert.equal((web.match(/<CityHubLinks/g) ?? []).length, 1);
+  assert.match(web, /!manual \? <CityHubLinks/);
+
+  const app = home.slice(home.indexOf("ke-app-only"));
+  assert.match(app, /CITY_CHIPS/);
+  assert.equal((app.match(/<CityHubLinks/g) ?? []).length, 0);
+});
+
 test("hub route, listing breadcrumbs, and internal links are wired", () => {
   const hubRoute = src("src/routes/daycare.city.$city.tsx");
   assert.match(hubRoute, /createFileRoute\("\/daycare\/city\/\$city"\)/);

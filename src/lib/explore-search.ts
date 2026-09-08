@@ -77,3 +77,17 @@ export function compactExploreSearch(values: {
   }
   return out;
 }
+
+/**
+ * Guest hero is one field. A resolved place stays a location (`q`).
+ * Unresolved text is a centre-name filter on existing /search listings.
+ */
+export function guestHeroSearch(
+  raw: string,
+  resolved?: { label: string } | null,
+): ExploreSearchValues {
+  const text = raw.trim();
+  if (!text) return {};
+  if (resolved?.label) return compactExploreSearch({ q: resolved.label });
+  return compactExploreSearch({ name: text });
+}
