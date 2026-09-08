@@ -2,8 +2,10 @@ import { dbSource, getSql, type Sql } from "@/lib/db";
 import type { CatalogDaycare } from "@/lib/catalog";
 import {
   catalogSourceFromEnv,
+  describeCatalogRuntime,
   neonCatalogMinCount,
   preferNeonCatalog,
+  type CatalogRuntime,
 } from "@/lib/catalog-source";
 import { clampRadiusKm } from "@/lib/proximity";
 import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
@@ -343,6 +345,21 @@ export async function nearbyFromNeonIfPreferred(
 ): Promise<(CatalogDaycare & { distanceKm?: number })[] | null> {
   if (!(await isNeonCatalogPreferred())) return null;
   return queryNeonNearby(origin, radiusKm);
+}
+
+export async function readCatalogHealth(): Promise<CatalogRuntime> {
+  const source = catalogSourceFromEnv();
+  const minCount = neonCatalogMinCount();
+  if (dbSource !== "neon") {
+    return describeCatalogRuntime({ source, neonAvailable: false, publicCount: 0, minCount });
+  }
+  try {
+    const sql = await Promise.race([getSql(), rejectAfter(4000, "catalog-health-timeout")]);
+    const publicCount = await countPublicDaycares(sql);
+    return describeCatalogRuntime({ source, neonAvailable: true, publicCount, minCount });
+  } catch {
+    return describeCatalogRuntime({ source, neonAvailable: false, publicCount: 0, minCount });
+  }
 }
 
 export async function queryNeonNearbyDual(

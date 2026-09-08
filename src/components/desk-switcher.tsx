@@ -32,7 +32,7 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   const { session, sticky, setSticky } = useSessionDesks();
   // Same Better Auth session. Pills only navigate — they do not call setRole
   // or rewrite the session cookie. /provider still promotes via its own mount.
-  if (!session || !showDeskSwitcher(session.desks)) return null;
+  if (!session || !showDeskSwitcher(session.desks, session.role)) return null;
 
   const current = highlightDesk(pathname, sticky, queryDesk);
   const inboxView = inboxViewForDesk(current);
@@ -41,7 +41,10 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
     <div
       role="navigation"
       aria-label={t("deskSwitcherLabel")}
-      className={cn("flex items-center gap-1", compact ? "" : "rounded-full bg-surface/90 p-0.5 ring-1 ring-border")}
+      className={cn(
+        "flex items-center gap-1",
+        compact ? "" : "md:rounded-full md:bg-surface/90 md:p-0.5 md:ring-1 md:ring-border",
+      )}
     >
       {headerDesks(session.desks, session.role).map((desk) => {
         const on = current === desk;

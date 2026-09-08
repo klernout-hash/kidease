@@ -30,6 +30,9 @@ import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/a
 import { AdminReviewsPanel } from "@/components/admin-reviews";
 import { compareTimeDesc } from "@/lib/sort-time";
 import { staffQueueRows } from "@/lib/listing-visibility";
+import { getCatalogHealth } from "@/lib/server/catalog-health";
+import type { CatalogRuntime } from "@/lib/catalog-source";
+import { paymentSourceLabel } from "@/lib/payment-source";
 
 type AdminDesk = "queue" | "verify" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
 
@@ -85,9 +88,10 @@ function AdminPage() {
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
   const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
   const [reports, setReports] = useState<AdminReportRow[]>([]);
+  const [catalogHealth, setCatalogHealth] = useState<CatalogRuntime | null>(null);
 
   async function refresh() {
-    const [events, list, cash, envelopes, regs, flags] = await Promise.all([
+    const [events, list, cash, envelopes, regs, flags, health] = await Promise.all([
       listPlatformEvents().catch(() => []),
       listAdminCentres().catch(() => []),
       listAdminMoney().catch(() => ({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 })),
@@ -101,6 +105,7 @@ function AdminPage() {
       })),
       listJurisdictions().catch(() => []),
       listListingReports().catch(() => []),
+      getCatalogHealth().catch(() => null),
     ]);
     setRows(events);
     setCentres(list);
@@ -112,6 +117,7 @@ function AdminPage() {
     setContractError(envelopes.docusignError || null);
     setJurisdictions(regs);
     setReports(flags);
+    setCatalogHealth(health);
   }
 
   const admin = Boolean(ready && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
@@ -352,6 +358,17 @@ function AdminPage() {
             </section>
           ) : (
             <section className="mt-8">
+              {catalogHealth ? (
+                <p
+                  className="mb-5 rounded-xl bg-surface px-4 py-3 text-sm text-muted ring-1 ring-border"
+                  data-catalog-runtime={catalogHealth.runtime}
+                >
+                  <span className="font-medium text-fg">
+                    Catalogue SoT · {catalogHealth.runtime === "neon" ? "Neon" : "JSON fallback"}
+                  </span>
+                  <span className="mt-1 block">{catalogHealth.reason}</span>
+                </p>
+              ) : null}
               <h2 className="font-display text-2xl">By province</h2>
               <div className="mt-5 space-y-3">
                 {byProvince.length === 0 ? (
@@ -518,7 +535,10 @@ function MoneyPanel({
           <p className="mt-2 text-sm text-muted">Pending totals are not settled. There is no payout, refund, or parent Pay CTA while Stripe is off.</p>
         ) : null}
         {ready && stripeLive ? (
-          <p className="mt-2 text-sm text-muted">{t("connectFeeAdminLive")}</p>
+          <p className="mt-2 text-sm text-muted">
+            {t("connectFeeAdminLive")} {paymentSourceLabel(true)} for paid / refunded / disputed bills.
+            The internal row is a projection of signed webhooks — do not mark paid by hand.
+          </p>
         ) : null}
         <AdminStripeCatalog />
       </div>

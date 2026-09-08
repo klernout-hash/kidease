@@ -39,7 +39,7 @@ OTP and other Resend mail default From is `KidEase <login@send.kidease.ca>`. Ape
 
 `requireAdmin` / `requireSupport` and `/api/admin/*` require a verified 2FA cookie (same device token as TwoFactorGate). A thrown status check fails closed for those desks.
 
-`ADMIN_EMAIL` / `kyle@kidease.ca` is auto-promoted to `profiles.role = admin` only when Better Auth `user.emailVerified` is true. Remaining risk: if an identity provider marks that mailbox verified without a real mailbox check, the first such session still becomes admin. Extra staff should be promoted with SQL, not a second env flag.
+`ADMIN_EMAIL` / `kyle@kidease.ca` is auto-promoted to `profiles.role = admin` only when Better Auth `user.emailVerified` is true. Open Road mailboxes (`@openroadoutlet.ca`, including `kyle@openroadoutlet.ca`) never receive the Admin desk — even if `ADMIN_EMAIL` is leftover Open Road or `profiles.role` is already admin. Remaining risk: if an identity provider marks `kyle@kidease.ca` verified without a real mailbox check, the first such session still becomes admin. Extra staff should be promoted with SQL, not a second env flag, and must not use an Open Road address.
 
 ## Payments
 

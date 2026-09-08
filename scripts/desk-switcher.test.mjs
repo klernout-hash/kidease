@@ -55,7 +55,9 @@ test("admin desk stays gated by profiles.role + owner email", () => {
   assert.match(src("src/routes/admin-contracts.tsx"), /beforeLoadAdminDesk/);
   const switcher = src("src/components/desk-switcher.tsx");
   assert.match(switcher, /headerDesks\(session\.desks, session\.role\)/);
+  assert.match(switcher, /showDeskSwitcher\(session\.desks, session\.role\)/);
   assert.match(switcher, /do not call setRole/);
   assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role\)/);
+  assert.match(src("src/components/shell.tsx"), /desksSlot/);
   assert.match(src("src/routes/index.tsx"), /homeLandPath/);
 });

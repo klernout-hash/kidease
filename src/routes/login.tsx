@@ -13,12 +13,14 @@ import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { getMyDesks } from "@/lib/server/roles";
 import { deskQueryValue, loginRoleFromDesk, parseDeskQuery, readStickyDesk, resolvePostLoginPath, writeStickyDesk } from "@/lib/desks";
+import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 
 type Role = "parent" | "provider" | "admin";
 type DeskAlias = "parent" | "director" | "centre" | "admin" | "support" | "provider";
-const OPERATOR_EMAIL = "kyle@kidease.ca";
+
+const OPERATOR_EMAIL = KIDEASE_OPERATOR_EMAIL;
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => {
