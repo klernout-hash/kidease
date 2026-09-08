@@ -9,6 +9,8 @@ import {
   ADMIN_API_SMOKE_PATHS,
   classifyAdminApiGate,
   classifyAdminGate,
+  classifyParentGuestGate,
+  classifyProviderGuestGate,
   classifyPublicHealth,
   HEALTH_SMOKE_PATH,
   DEFAULT_PREVIEW_ORIGIN,
@@ -156,8 +158,49 @@ test("public /api/health is a guest 200 probe", () => {
   assert.match(src("scripts/e2e-smoke.mjs"), /api-health/);
 });
 
+test("guest parent desk redirects to login; provider stays a sign-in landing", () => {
+  assert.equal(
+    classifyParentGuestGate({
+      finalUrl: "http://127.0.0.1:8081/login?next=/parent",
+      status: 200,
+      bodyText: "Sign in",
+    }).kind,
+    "login",
+  );
+  assert.equal(
+    classifyParentGuestGate({
+      finalUrl: "http://127.0.0.1:8081/parent",
+      status: 200,
+      bodyText: "Saved centres\nYour children",
+    }).ok,
+    false,
+  );
+  assert.equal(
+    classifyProviderGuestGate({
+      finalUrl: "http://127.0.0.1:8081/provider",
+      status: 200,
+      bodyText: "Centre desk\nSign in to manage spots, fees, and photos\nSign in to the centre desk",
+    }).kind,
+    "guest-landing",
+  );
+  assert.equal(
+    classifyProviderGuestGate({
+      finalUrl: "http://127.0.0.1:8081/provider",
+      status: 200,
+      bodyText: "Tour requests\nMoney",
+    }).ok,
+    false,
+  );
+});
+
 test("smoke paths never include pay or 2FA submit", () => {
-  assert.deepEqual(SMOKE_PATHS, { home: "/", login: "/login", admin: "/admin" });
+  assert.deepEqual(SMOKE_PATHS, {
+    home: "/",
+    login: "/login",
+    admin: "/admin",
+    parent: "/parent",
+    provider: "/provider",
+  });
   const runner = src("scripts/e2e-smoke.mjs");
   assert.equal(e2eScriptMustStayChargeFree(runner).length, 0);
   assert.doesNotMatch(runner, /\/pay\//);

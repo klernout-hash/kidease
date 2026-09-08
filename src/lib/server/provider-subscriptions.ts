@@ -28,6 +28,7 @@ import {
   createBillingPortalSession,
   createCatalogCheckoutSession,
 } from "@/lib/server/stripe-checkout";
+import { decideProviderCheckout, PROVIDER_PRICE_MISSING } from "@/lib/access-control";
 
 export type ProviderSubscriptionState = {
   plan: ProviderPlanId;
@@ -175,21 +176,20 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await requireSubscriptionAccess(context.userId);
     await persistSelection(context.userId, data);
-    if (data.plan === "free") {
+    const state = await readSelection(context.userId);
+    const priceKey = data.plan === "free" ? null : providerPriceKey(data.plan, data.interval);
+    const priceId = priceKey ? envPriceId(priceKey) : null;
+    const gate = decideProviderCheckout({
+      plan: data.plan,
+      stripeLive: stripeChargesLive(),
+      priceId,
+      siteCount: state.siteCount,
+    });
+    if (!gate.ok) throw new Error(gate.error);
+    if (gate.savedOnly) {
       return { url: null as string | null, saved: true as const };
     }
-    if (!stripeChargesLive()) {
-      throw new Error("Centre plan checkout stays off until Stripe live keys are on. This pick is saved on the internal ledger (not charged).");
-    }
-    const priceKey = providerPriceKey(data.plan, data.interval);
-    const priceId = priceKey ? envPriceId(priceKey) : null;
-    if (!priceId) {
-      throw new Error("This plan’s Stripe price ID is not set. Add it on Vercel, then try again.");
-    }
-    const state = await readSelection(context.userId);
-    if (data.plan === "network" && state.siteCount < 3) {
-      throw new Error("Network is priced for 3 or more sites.");
-    }
+    if (!priceId) throw new Error(PROVIDER_PRICE_MISSING);
     const origin = appOrigin();
     const session = await createCatalogCheckoutSession({
       mode: "subscription",

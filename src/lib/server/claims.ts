@@ -11,6 +11,7 @@ import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
 import { applyStorefrontPhoto, listingPhotosChanged } from "@/lib/listing-photo";
 import { writeTrustEvent } from "@/lib/server/trust";
+import { assertCanMutateListing, decideStartClaim } from "@/lib/access-control";
 
 export type ClaimHit = {
   id: string;
@@ -95,18 +96,26 @@ export const startClaim = createServerFn({ method: "POST" })
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
     const listed = await catalogByIdGet(daycareId);
-    if (!listed) throw new Error("Listing not found");
-    if (isAdminOnlyListing(listed) && !(await callerIsAdmin())) {
-      throw new Error("Listing not found");
-    }
+    const adminOnly = Boolean(listed && isAdminOnlyListing(listed));
+    const isAdmin = adminOnly ? await callerIsAdmin() : false;
+    let existingOwner: string | null = null;
     const sql = await getSql();
-    const existing = await sql<{ user_id: string }>`
-      select user_id from provider_daycares where daycare_id = ${daycareId} limit 1
-    `;
-    if (existing[0] && existing[0].user_id !== context.userId) {
-      throw new Error("This listing is already claimed");
+    if (listed && (!adminOnly || isAdmin)) {
+      const existing = await sql<{ user_id: string }>`
+        select user_id from provider_daycares where daycare_id = ${daycareId} limit 1
+      `;
+      existingOwner = existing[0]?.user_id ?? null;
     }
-    if (existing[0]?.user_id === context.userId) {
+    const claim = decideStartClaim({
+      actorUserId: context.userId,
+      existingOwnerUserId: existingOwner,
+      listingFound: Boolean(listed),
+      adminOnly,
+      isAdmin,
+    });
+    if (!claim.ok) throw new Error(claim.error);
+    if (!listed) throw new Error("Listing not found");
+    if (claim.alreadyOwned) {
       return { alreadyOwned: true as const, daycareId, slug: listed.slug, code: "" };
     }
     await upsertDaycare(sql, listed);
@@ -299,7 +308,7 @@ export const updateListing = createServerFn({ method: "POST" })
       select user_id from provider_daycares
       where user_id = ${context.userId} and daycare_id = ${data.daycareId}
     `;
-    if (!own[0]) throw new Error("Not your listing");
+    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
     const current = await sql<{ photos: string }>`select photos from daycares where id = ${data.daycareId}`;
     const previousPhotos = current[0]?.photos ?? "";
     let photos = applyStorefrontPhoto(current[0]?.photos ?? "", data.storefront);
@@ -416,7 +425,7 @@ export const refreshVacancy = createServerFn({ method: "POST" })
       select user_id from provider_daycares
       where user_id = ${context.userId} and daycare_id = ${data.daycareId}
     `;
-    if (!own[0]) throw new Error("Not your listing");
+    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
     await sql`
       update daycares
       set last_vacancy_updated_at = now()

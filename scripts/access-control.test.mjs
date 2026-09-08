@@ -249,10 +249,10 @@ test("admin HTTP routes keep requireAdmin; parent desk never imports listAdminMo
   assert.doesNotMatch(src("src/routes/provider.tsx"), /listAdminMoney/);
 });
 
-test("billing getBill / checkout use canReadBill and canCheckoutBill", () => {
+test("billing getBill / checkout use canReadBill and decideBillCheckout", () => {
   const billing = src("src/lib/server/billing.ts");
   assert.match(billing, /canReadBill/);
-  assert.match(billing, /canCheckoutBill/);
+  assert.match(billing, /decideBillCheckout/);
   assert.match(billing, /canCreateBillForCentre/);
   assert.match(billing, /parent_user_id = \$1/);
   assert.match(billing, /p\.user_id = \$1 and p\.daycare_id = i\.daycare_id/);
