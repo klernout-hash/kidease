@@ -3,9 +3,13 @@ import { BadgeCheck, Camera, MapPin, ListChecks } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
-export const Route = createFileRoute("/about")({ component: About });
+export const Route = createFileRoute("/about")({
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.about),
+  component: About,
+});
 
 export function About() {
   const { t } = useCopy();

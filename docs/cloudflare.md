@@ -78,3 +78,14 @@ Lighthouse SEO treats `Content-Signal` as an unknown / invalid robots directive.
 **Dashboard fix (not this repo):** [Cloudflare Dashboard](https://dash.cloudflare.com) → zone **kidease.ca** → **AI** / **AI Crawl Control** / **Content Signals**. Turn **off** “Add content signals to robots.txt” (or Managed robots.txt). After it drops, `https://www.kidease.ca/robots.txt` must match git: no `Content-Signal` line.
 
 Bot-specific `Disallow` rules for GPTBot / CCBot / etc. can stay in AI Crawl Control without writing `Content-Signal` into robots.txt.
+
+## AI crawlers (GPTBot / Google-Extended) — ops follow-up
+
+This repo does not change Cloudflare **AI Crawl Control**. For Search / GEO growth, Kyle should review the zone console and allow the bots KidEase wants to train or cite from public marketing + listing pages:
+
+1. [Cloudflare Dashboard](https://dash.cloudflare.com) → zone **kidease.ca** → **AI** → **AI Crawl Control**.
+2. Confirm **GPTBot** and **Google-Extended** are allowed (or at least not blocked) for `www.kidease.ca` public HTML.
+3. Keep admin / support / test listing paths out of that grant if the product offers path exceptions; otherwise rely on `robots.txt` `Disallow` for `/admin*`, `/support`, and the ghost listing.
+4. Do **not** turn “Add content signals to robots.txt” back on.
+
+App-side sitemap and robots already advertise `https://www.kidease.ca/sitemap.xml` and `https://www.kidease.ca/sitemap-listings.xml` (the latter is a sitemap index of paginated listing urlsets).

@@ -60,6 +60,8 @@ import {
   type AgeBand,
   type SavedSearchFilters,
 } from "@/lib/saved-search";
+import { CityHubLinks } from "@/components/city-hub-links";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
 const CompareBar = lazy(() =>
@@ -111,6 +113,7 @@ export const Route = createFileRoute("/search")({
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
     return out;
   },
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.search),
   component: SearchPage,
 });
 
@@ -817,6 +820,7 @@ function SearchPage() {
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>
+            <CityHubLinks className="mt-3" />
             <p className="mt-0.5 min-h-5 truncate text-sm text-muted" aria-live="polite">
               {items === null ? (
                 <span className="inline-flex items-center gap-2">

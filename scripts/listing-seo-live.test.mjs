@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { isPlatformLive } from "../src/lib/live.ts";
 import {
+  listingBreadcrumbJsonLd,
   listingCanonicalUrl,
   listingJsonLd,
   listingMetaDescription,
@@ -103,12 +104,21 @@ test("PostGIS claimed_at reaches live mapping and overlay is scoped to result id
   assert.match(claims, /claimed_at is not null/);
 });
 
+test("listing breadcrumbs include the city hub when one exists", () => {
+  const crumbs = listingBreadcrumbJsonLd(centre);
+  assert.equal(crumbs["@type"], "BreadcrumbList");
+  assert.equal(crumbs.itemListElement[1].item, "https://www.kidease.ca/daycare/city/winnipeg");
+  assert.match(crumbs.itemListElement[1].name, /Winnipeg/);
+  assert.equal(crumbs.itemListElement[2].item, "https://www.kidease.ca/daycare/sunny-side-child-care");
+});
+
 test("listing route sets unique head tags and JSON-LD; grok OG does not overwrite /daycare/", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /getListingSeo/);
   assert.match(listing, /listingSeoHeadTags/);
   assert.match(listing, /application\/ld\+json/);
   assert.match(listing, /listingJsonLdScript/);
+  assert.match(listing, /listingBreadcrumbJsonLdScript/);
   const grok = src("server/middleware/grok-pwa.ts");
   assert.match(grok, /path\.startsWith\("\/daycare\/"\)/);
   const copy = src("src/lib/copy.ts");

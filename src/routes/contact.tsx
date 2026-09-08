@@ -11,12 +11,14 @@ import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import type { CopyKey } from "@/lib/copy";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/contact")({
   validateSearch: (s: Record<string, unknown>) => {
     if (s.intent === "parent") return { intent: "parent" as const };
     return {};
   },
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.contact),
   component: Contact,
 });
 

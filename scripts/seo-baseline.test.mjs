@@ -39,6 +39,7 @@ test("robots.txt keeps admin disallows and points Sitemap at the www URL", () =>
   assert.match(robots, /^Disallow: \/book\/test-ghost-claim-lab$/m);
   assert.match(robots, /^Sitemap: https:\/\/www\.kidease\.ca\/sitemap\.xml$/m);
   assert.match(robots, /^Sitemap: https:\/\/www\.kidease\.ca\/sitemap-listings\.xml$/m);
+  assert.match(robots, /sitemap index of \/sitemap-listings-N\.xml/);
   assert.doesNotMatch(robots, /Sitemap: https:\/\/kidease\.ca\/sitemap\.xml/);
   assert.doesNotMatch(robots, /^Content-Signal:/m);
   assert.doesNotMatch(robots, /ai-train=/);
@@ -52,6 +53,8 @@ test("sitemap.xml lists canonical www public pages and omits admin paths", () =>
     assert.match(sitemap, new RegExp(`<loc>${loc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}</loc>`));
   }
   assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\//);
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\/city\/winnipeg/);
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/daycare\/city\/toronto/);
   assert.doesNotMatch(sitemap, /https:\/\/kidease\.ca\//);
   assert.doesNotMatch(sitemap, /\/admin/);
   assert.doesNotMatch(sitemap, /\/provider\/subscription/);
@@ -69,7 +72,9 @@ test("vercel CSP does not allowlist grok.com and still keeps product hosts", () 
 });
 
 test("sitemap generation includes public listing URLs and drops the ghost", async () => {
-  const { publicSitemapSlugs, renderSitemapXml, isSafeSitemapSlug } = await import("../src/lib/sitemap.ts");
+  const { publicSitemapSlugs, renderSitemapXml, isSafeSitemapSlug, sitemapPublicPaths } = await import(
+    "../src/lib/sitemap.ts"
+  );
   assert.equal(isSafeSitemapSlug("test-ghost-claim-lab"), false);
   const slugs = publicSitemapSlugs(
     [
@@ -81,8 +86,12 @@ test("sitemap generation includes public listing URLs and drops the ghost", asyn
     50,
   );
   assert.deepEqual(slugs, ["sunny-side-child-care"]);
-  const xml = renderSitemapXml({ listingSlugs: slugs });
+  const xml = renderSitemapXml({
+    paths: sitemapPublicPaths(["/daycare/city/winnipeg"]),
+    listingSlugs: slugs,
+  });
   assert.match(xml, /https:\/\/www\.kidease\.ca\/daycare\/sunny-side-child-care/);
+  assert.match(xml, /https:\/\/www\.kidease\.ca\/daycare\/city\/winnipeg/);
   assert.doesNotMatch(xml, /test-ghost-claim-lab/);
   const middleware = readFileSync(join(root, "server/middleware/sitemap.ts"), "utf8");
   assert.match(middleware, /SITEMAP_LISTINGS_PATH/);

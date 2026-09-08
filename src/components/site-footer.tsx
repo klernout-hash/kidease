@@ -1,5 +1,7 @@
 import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
+import { cityHubPath } from "@/lib/city-hubs";
+import { cityHubs } from "@/lib/city-hub-data";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -68,6 +70,11 @@ export function SiteFooter() {
                 <Item to="/benefits">{t("benefitsTab")}</Item>
                 <Item to="/tour-checklist">{t("tourChecklist")}</Item>
                 <Item to="/compare">{t("compare")}</Item>
+                {cityHubs().map((hub) => (
+                  <Item key={hub.slug} to={cityHubPath(hub.slug)}>
+                    {hub.city}
+                  </Item>
+                ))}
                 <Item to="/parent" search={{ tab: "saved" }}>
                   {t("saved")}
                 </Item>

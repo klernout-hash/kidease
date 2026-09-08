@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
-export const Route = createFileRoute("/team")({ component: Team });
+export const Route = createFileRoute("/team")({
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.team),
+  component: Team,
+});
 
 export function Team() {
   const { t } = useCopy();

@@ -178,7 +178,9 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
   assert.doesNotMatch(security, /kyle@kidease\.ca/);
 
   const help = readFileSync(join(root, "src/routes/help.tsx"), "utf8");
-  assert.match(help, /Help Centre · KidEase/);
+  const pageSeo = readFileSync(join(root, "src/lib/page-seo.ts"), "utf8");
+  assert.match(help, /pageSeoHead\(MARKETING_PAGE_SEO\.help\)/);
+  assert.match(pageSeo, /Help Centre · KidEase/);
   assert.match(help, /t\("helpTitle"\)/);
   assert.match(help, /t\("helpKicker"\)/);
   assert.doesNotMatch(help, /t\("support"\)/);
