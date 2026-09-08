@@ -12,6 +12,8 @@ import { stripeChargesLive } from "@/lib/stripe-live";
 import {
   LICENSE_STATUSES,
   REGISTRY_MATCH_STATES,
+  isLocalCatalogSource,
+  isOperatorLicenseSource,
   normalizeLicenseStatus,
   normalizeMatchState,
   type LicenseStatus,
@@ -21,6 +23,8 @@ import {
 export {
   LICENSE_STATUSES,
   REGISTRY_MATCH_STATES,
+  isLocalCatalogSource,
+  isOperatorLicenseSource,
   normalizeLicenseStatus,
   normalizeMatchState,
 };
@@ -60,6 +64,8 @@ export type TrustCopyKey =
   | "trustLicensedMatched"
   | "trustLicensedMatchedTip"
   | "trustLicensedMatchedMbTip"
+  | "trustCatalogueMatched"
+  | "trustCatalogueMatchedTip"
   | "trustLicenseUnverified"
   | "trustLicenseUnverifiedTip"
   | "trustLicenseExpired"
@@ -144,6 +150,21 @@ export function claimVerificationState(item: TrustListing): ClaimVerificationSta
   return "waiting";
 }
 
+/**
+ * True only for an honest match: Manitoba local catalogue, or an operator
+ * who marked the registry after manual review. Stub provinces never count.
+ */
+export function isHonestLicenseMatch(item: TrustListing): boolean {
+  const status = normalizeLicenseStatus(item.licenseStatus);
+  if (status === "expired" || status === "suspended") return false;
+  const storedMatch = status === "matched" || item.registryMatchState === "matched";
+  if (!storedMatch) return false;
+  if (isOperatorLicenseSource(item.licenseVerificationSource)) return true;
+  const province = (item.province || "").trim().toUpperCase();
+  if (province === "MB") return true;
+  return false;
+}
+
 export function licenseBadge(item: TrustListing): TrustBadge {
   const status = normalizeLicenseStatus(item.licenseStatus);
   if (status === "expired") {
@@ -162,13 +183,18 @@ export function licenseBadge(item: TrustListing): TrustBadge {
       tipKey: "trustLicenseSuspendedTip",
     };
   }
-  if (status === "matched" || item.registryMatchState === "matched") {
+  if (isHonestLicenseMatch(item)) {
     const mb = (item.province || "").trim().toUpperCase() === "MB";
+    const catalogueOnly = !isOperatorLicenseSource(item.licenseVerificationSource);
     return {
       id: "license_matched",
       tone: "ok",
-      labelKey: "trustLicensedMatched",
-      tipKey: mb ? "trustLicensedMatchedMbTip" : "trustLicensedMatchedTip",
+      labelKey: catalogueOnly ? "trustCatalogueMatched" : "trustLicensedMatched",
+      tipKey: mb
+        ? "trustLicensedMatchedMbTip"
+        : catalogueOnly
+          ? "trustCatalogueMatchedTip"
+          : "trustLicensedMatchedTip",
     };
   }
   return {
@@ -250,8 +276,9 @@ export function paymentBadge(item: TrustListing, stripeLive = stripeChargesLive(
 export type TrustSurface = "card" | "parent" | "provider" | "admin";
 
 /**
- * Same Kyle-approved labels on every desk: licensed, unverified, claim verified, staff attested.
- * Parent cards stay compact: Licensed (or expired/suspended) only when we know,
+ * Same Kyle-approved labels on every desk: catalogue-matched, registry-checked,
+ * unverified, claim verified, staff attested.
+ * Parent cards stay compact: Catalogue-matched / Registry-checked (or expired/suspended) only when we know,
  * plus claim/staff only when those facts are true. Unverified is not a badge.
  * Provider and admin also see operational claim/staff/pay states.
  */

@@ -23,6 +23,7 @@ import {
 } from "@/lib/listing-readiness";
 import {
   isClaimVerified,
+  isHonestLicenseMatch,
   normalizeLicenseStatus,
   type TrustListing,
 } from "@/lib/trust";
@@ -190,7 +191,7 @@ function trustPoints(item: QualityInput): { score: number; issues: QualityIssue[
     issues.push(makeIssue("license_expired"));
   } else if (license === "suspended") {
     issues.push(makeIssue("license_suspended"));
-  } else if (license === "matched" || item.registryMatchState === "matched") {
+  } else if (isHonestLicenseMatch(item)) {
     score += 10;
   } else {
     issues.push(makeIssue("license_unverified"));

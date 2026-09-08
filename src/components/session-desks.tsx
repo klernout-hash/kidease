@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { getMyDesks } from "@/lib/server/roles";
+import { SESSION_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import {
   deskFromPathname,
   parseDeskQuery,
@@ -64,7 +65,7 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
     }
     let cancelled = false;
     setError(false);
-    void getMyDesks()
+    void withTimeout(getMyDesks(), SESSION_SETTLE_MS, "get-desks-timeout")
       .then((s) => {
         if (cancelled) return;
         setSession(s);

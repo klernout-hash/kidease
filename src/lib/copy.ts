@@ -642,7 +642,7 @@ export const copy = {
     statusCancelled: "Cancelled",
     statusDeclined: "Declined",
     heroCta: "Search Daycares Near Me",
-    heroSub: "See monthly fees, open spots, and reviews before you tour.",
+    heroSub: "See monthly fees and open spots before you tour.",
     findSpotsNear: "Find available spots near you.",
     heroTrust: "Built for Canadian families • Licensed facilities only • Real location photos",
     trustLicensedOnly: "Licensed",
@@ -651,7 +651,7 @@ export const copy = {
     trustSecure: "Private",
     bookConfidenceTitle: "Book with confidence",
     bookConfidenceBody:
-      "Every daycare on KidEase is provincially licensed. Live listings show real-time availability and pricing, so you know exactly what you’re requesting. Read Google reviews and message centres directly — all in one place.",
+      "KidEase lists centres from provincial and territorial registries. Live listings show availability and pricing from the centre. Parent reviews on KidEase are gated to confirmed enrolment — we do not invent testimonials.",
     liveMeans: "Live = actively managing availability on KidEase",
     licensedCentreLine: "KidEase lists centres from provincial and territorial registries. The badge above is the current KidEase check — not a government certificate.",
     liveListingLine: "Live listing — availability and pricing updated by the provider.",
@@ -872,17 +872,36 @@ export const copy = {
     trustWhy4: "Your searches stay private. We do not sell your data.",
     trustWhyLocal:
       "A Canada-wide directory so parents can find licensed care near them — safely, clearly, and with confidence.",
-    quotesTitle: "What Parents Are Saying",
-    quote1: "Finally a simple way to see what’s actually close to home. The real photos made a big difference.",
-    quote1By: "Canadian parent",
-    quote2: "I liked that it only shows licensed places. Made the whole search feel less overwhelming.",
-    quote2By: "Local mom",
-    quote3: "Clear info and actual pictures of the buildings. Exactly what I needed.",
-    quote3By: "Parent of a toddler",
+    quotesTitle: "Reviews on KidEase",
+    quotesLead:
+      "Parent reviews are gated to confirmed enrolment. Until those exist, KidEase does not invent testimonials or star ratings.",
+    quote1: "Search licensed care by distance, with a real photo of the building when we have one.",
+    quote1By: "What KidEase shows",
+    quote2: "A Licensed or Catalogue-matched badge is a KidEase check — not a live government certificate.",
+    quote2By: "How badges work",
+    quote3: "Open the official registry from the listing to see inspections and complaints.",
+    quote3By: "Source of truth",
     finalCtaTitle: "Ready when you are.",
     finalCtaBody: "Parents looking for care, or licensed centres ready to go live — enroll here.",
     howItWorksCta: "How It Works",
     verifyListings: "How we verify listings",
+    verifyTitle: "How we verify listings",
+    verifyLeadPage:
+      "KidEase checks licences against trusted sources. We do not scrape government sites, invent licence numbers, or treat being in the catalogue as a live government match.",
+    verifyMbTitle: "Manitoba catalogue match",
+    verifyMbBody:
+      "Manitoba listings can show Catalogue-matched when the licence number is in the bundled KidEase snapshot. That is not a live scrape of childcaresearch.gov.mb.ca. Official inspections stay on the government site.",
+    verifyStubTitle: "Other provinces stay fail-closed",
+    verifyStubBody:
+      "Ontario, Alberta, British Columbia, Saskatchewan, Québec, and the remaining provinces and territories have stub adapters. They never light a live government match. Staff review the official registry before a listing can show Registry-checked.",
+    verifyClaimTitle: "Claim and ownership",
+    verifyClaimBody:
+      "A director claims an existing listing, uploads the current provincial licence, and KidEase reviews ownership. Unclaimed pages stay searchable. Claim verified means the operator, not that KidEase police-checked staff.",
+    verifyPayTitle: "Payments and payouts",
+    verifyPayBody:
+      "Parent card payments and centre bank payouts stay off while Stripe is in review. KidEase does not say centres are paid quickly until payouts actually clear.",
+    verifyOfficial:
+      "The official provincial or territorial registry is always the source of truth for inspections, complaints, and licence status.",
     mbChildcare: "Manitoba Child Care",
     neverSell: "We respect your privacy. Your data is never sold.",
     comingSoon: "Coming soon",
@@ -964,7 +983,9 @@ export const copy = {
     perkChat: "In-app communication with parents",
     perkNear: "Proximity locating so nearby families find you first",
     perkMobile: "Everything managed from a mobile app",
-    perkPay: "Payments processed in the app and paid to you directly, quickly",
+    perkPay:
+      "In-app payments are in setup. Payouts to your bank stay off until Stripe finishes review.",
+    perkPayLive: "Payments processed in the app and paid to you directly, quickly",
     perkGrow: "A simple way to grow your enrolment",
     contactSubject: "Subject",
     subjectGeneral: "General Question",
@@ -1204,11 +1225,14 @@ export const copy = {
     grantReviewerCentre: "Centre id",
     reviewerGranted: "Reviewer flag saved.",
     reviewDecisionNote: "Optional note on next decision",
-    trustLicensedMatched: "Licensed",
+    trustLicensedMatched: "Registry-checked",
     trustLicensedMatchedTip:
-      "KidEase matched this licence number to a trusted provincial catalogue record. This is not a live government scrape — confirm inspections on the official registry.",
+      "A KidEase operator confirmed this licence against the official registry. This is not a live government scrape — confirm inspections on the official record.",
     trustLicensedMatchedMbTip:
       "KidEase matched this Manitoba licence number to the bundled registry snapshot. Official inspections stay on childcaresearch.gov.mb.ca.",
+    trustCatalogueMatched: "Catalogue-matched",
+    trustCatalogueMatchedTip:
+      "KidEase matched this licence number to a trusted provincial catalogue snapshot. This is not a live government scrape — confirm inspections on the official registry.",
     trustLicenseUnverified: "Unverified",
     trustLicenseUnverifiedTip: "KidEase has not confirmed this licence against the official registry yet. This is not a green check.",
     trustLicenseExpired: "License expired",
@@ -1905,7 +1929,7 @@ export const copy = {
     trustSecure: "Infos claires et transparentes",
     bookConfidenceTitle: "Réservez en toute confiance",
     bookConfidenceBody:
-      "Chaque garderie sur KidEase est permise par la province. Les fiches actives affichent les places et les tarifs en temps réel, pour que vous sachiez exactement ce que vous demandez. Lisez les avis Google et écrivez aux centres — au même endroit.",
+      "KidEase inscrit des centres provenant des registres provinciaux et territoriaux. Les fiches actives affichent les places et les tarifs du centre. Les avis parents sur KidEase sont réservés aux inscriptions confirmées — nous n’inventons pas de témoignages.",
     liveMeans: "En ligne = le centre gère ses places sur KidEase",
     licensedCentreLine: "KidEase inscrit des centres provenant des registres provinciaux et territoriaux. Le badge ci-dessus est la vérification KidEase — pas un certificat gouvernemental.",
     liveListingLine: "Fiche active — places et tarifs mis à jour par le fournisseur.",
@@ -2126,17 +2150,36 @@ export const copy = {
     trustWhy4: "Vos recherches restent privées. Nous ne vendons pas vos données.",
     trustWhyLocal:
       "Un répertoire pancanadien pour que les parents trouvent une garde permise près de chez eux — en toute sécurité, clairement et en confiance.",
-    quotesTitle: "Ce que disent les parents",
-    quote1: "Enfin une façon simple de voir ce qui est vraiment proche de la maison. Les vraies photos ont tout changé.",
-    quote1By: "Parent canadien",
-    quote2: "J’ai aimé que ça n’affiche que des places permises. La recherche est devenue beaucoup moins lourde.",
-    quote2By: "Maman d’ici",
-    quote3: "Des infos claires et de vraies photos des bâtiments. Exactement ce qu’il me fallait.",
-    quote3By: "Parent d’un tout-petit",
+    quotesTitle: "Les avis sur KidEase",
+    quotesLead:
+      "Les avis parents sont réservés aux inscriptions confirmées. Tant qu’ils n’existent pas, KidEase n’invente ni témoignages ni notes.",
+    quote1: "Cherchez une garde permise par distance, avec une vraie photo du bâtiment quand nous en avons une.",
+    quote1By: "Ce que KidEase montre",
+    quote2: "Un badge Permis ou Apparié au catalogue est une vérification KidEase — pas un certificat gouvernemental en direct.",
+    quote2By: "Fonctionnement des badges",
+    quote3: "Ouvrez le registre officiel depuis la fiche pour voir les inspections et les plaintes.",
+    quote3By: "Source de vérité",
     finalCtaTitle: "Prêt à trouver une place près de chez vous ?",
     finalCtaBody: "Parents à la recherche d’une place, ou garderies permises prêtes à passer en ligne — inscrivez-vous ici.",
     howItWorksCta: "Comment ça fonctionne",
     verifyListings: "Comment nous vérifions les fiches",
+    verifyTitle: "Comment nous vérifions les fiches",
+    verifyLeadPage:
+      "KidEase vérifie les permis auprès de sources de confiance. Nous ne collectons pas les sites gouvernementaux, n’inventons pas de numéros de permis et ne traitons pas le catalogue comme une correspondance gouvernementale en direct.",
+    verifyMbTitle: "Appariement au catalogue du Manitoba",
+    verifyMbBody:
+      "Les fiches manitobaines peuvent afficher Apparié au catalogue lorsque le numéro est dans l’instantané KidEase. Ce n’est pas une collecte en direct de childcaresearch.gov.mb.ca. Les inspections officielles restent sur le site gouvernemental.",
+    verifyStubTitle: "Les autres provinces restent en échec fermé",
+    verifyStubBody:
+      "L’Ontario, l’Alberta, la Colombie-Britannique, la Saskatchewan, le Québec et les autres provinces et territoires ont des adaptateurs fictifs. Ils n’allument jamais une correspondance gouvernementale en direct. Le personnel consulte le registre officiel avant qu’une fiche puisse afficher Vérifié au registre.",
+    verifyClaimTitle: "Réclamation et propriété",
+    verifyClaimBody:
+      "Un directeur revendique une fiche existante, téléverse le permis provincial et KidEase examine la propriété. Les pages non réclamées restent trouvables. Réclamation vérifiée désigne l’exploitant, pas une vérification policière du personnel.",
+    verifyPayTitle: "Paiements et versements",
+    verifyPayBody:
+      "Les paiements par carte des parents et les versements bancaires aux centres restent fermés pendant l’examen Stripe. KidEase ne dit pas que les centres sont payés rapidement tant que les versements ne sont pas ouverts.",
+    verifyOfficial:
+      "Le registre provincial ou territorial officiel reste toujours la source de vérité pour les inspections, les plaintes et le statut du permis.",
     mbChildcare: "Garde d’enfants au Manitoba",
     neverSell: "Nous respectons votre vie privée. Vos données ne sont jamais vendues.",
     comingSoon: "Bientôt",
@@ -2218,7 +2261,9 @@ export const copy = {
     perkChat: "Messagerie dans l’application avec les parents",
     perkNear: "Repérage par proximité pour que les familles du quartier vous trouvent en premier",
     perkMobile: "Tout se gère depuis l’application mobile",
-    perkPay: "Paiements dans l’application, versés directement et rapidement",
+    perkPay:
+      "Les paiements dans l’application sont en cours de mise en place. Les versements à votre banque restent fermés jusqu’à la fin de l’examen Stripe.",
+    perkPayLive: "Paiements dans l’application, versés directement et rapidement",
     perkGrow: "Une façon simple d’augmenter vos inscriptions",
     contactSubject: "Sujet",
     subjectGeneral: "Question générale",
@@ -2460,11 +2505,14 @@ export const copy = {
     grantReviewerCentre: "Identifiant du centre",
     reviewerGranted: "Autorisation enregistrée.",
     reviewDecisionNote: "Note facultative pour la prochaine décision",
-    trustLicensedMatched: "Permis",
+    trustLicensedMatched: "Vérifié au registre",
     trustLicensedMatchedTip:
-      "KidEase a apparié ce numéro de permis à un enregistrement de catalogue provincial de confiance. Ce n’est pas une collecte en direct — confirmez les inspections sur le registre officiel.",
+      "Un opérateur KidEase a confirmé ce permis auprès du registre officiel. Ce n’est pas une collecte en direct — confirmez les inspections sur le dossier officiel.",
     trustLicensedMatchedMbTip:
       "KidEase a apparié ce numéro de permis manitobain à l’instantané local du registre. Les inspections officielles restent sur childcaresearch.gov.mb.ca.",
+    trustCatalogueMatched: "Apparié au catalogue",
+    trustCatalogueMatchedTip:
+      "KidEase a apparié ce numéro de permis à un instantané de catalogue provincial de confiance. Ce n’est pas une collecte en direct — confirmez les inspections sur le registre officiel.",
     trustLicenseUnverified: "Non vérifié",
     trustLicenseUnverifiedTip: "KidEase n’a pas encore confirmé ce permis auprès du registre officiel. Ce n’est pas une validation.",
     trustLicenseExpired: "Permis expiré",

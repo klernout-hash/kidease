@@ -43,6 +43,7 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
@@ -245,6 +246,11 @@ const UnsubscribeRoute = UnsubscribeRouteImport.update({
   path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Verify2faRoute = Verify2faRouteImport.update({
   id: '/verify-2fa',
   path: '/verify-2fa',
@@ -431,6 +437,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/health': typeof ApiHealthRoute
@@ -497,6 +504,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/health': typeof ApiHealthRoute
@@ -564,6 +572,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/health': typeof ApiHealthRoute
@@ -632,6 +641,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/verify'
     | '/verify-2fa'
     | '/api/digest'
     | '/api/health'
@@ -698,6 +708,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/verify'
     | '/verify-2fa'
     | '/api/digest'
     | '/api/health'
@@ -764,6 +775,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/verify'
     | '/verify-2fa'
     | '/api/digest'
     | '/api/health'
@@ -831,6 +843,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiHealthRoute: typeof ApiHealthRoute
@@ -1098,6 +1111,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify-2fa': {
@@ -1381,6 +1401,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiHealthRoute: ApiHealthRoute,

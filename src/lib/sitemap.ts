@@ -9,7 +9,7 @@ export const SITEMAP_ORIGIN = "https://www.kidease.ca";
 export const SITEMAP_LISTING_CAP = 500;
 export const LISTING_SITEMAP_CAP = 5000;
 export const SITEMAP_LISTINGS_PATH = "/sitemap-listings.xml";
-export const SITEMAP_LASTMOD = "2026-09-07";
+export const SITEMAP_LASTMOD = "2026-09-08";
 const BLOCKED_SITEMAP_SLUGS = new Set(["test-ghost-claim-lab"]);
 
 export const SITEMAP_STATIC_PATHS = [
@@ -19,6 +19,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/terms",
   "/login",
   "/about",
+  "/verify",
   "/search",
   "/contact",
   "/help",

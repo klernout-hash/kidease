@@ -8,7 +8,9 @@ import { ExploreRails } from "@/components/explore-rails";
 import { DaycareCard } from "@/components/daycare-card";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
-import { reverseGeocode } from "@/lib/geo";
+import { reverseGeocode, WINNIPEG } from "@/lib/geo";
+import { BootPending } from "@/components/boot-pending";
+import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { bootSearchOrigin } from "@/lib/search-origin";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence, presenceFreshness } from "@/lib/presence";
@@ -62,6 +64,24 @@ const CompareBar = lazy(() =>
 );
 
 export const Route = createFileRoute("/search")({
+  loader: async () => {
+    const items = await withTimeoutFallback(
+      searchDaycares({
+        data: {
+          lat: WINNIPEG.lat,
+          lng: WINNIPEG.lng,
+          radiusKm: 25,
+          sort: "distance",
+          ageGroup: "any",
+        },
+      }),
+      LOADER_SETTLE_MS,
+      [] as Card[],
+    );
+    return { items };
+  },
+  pendingMs: 200,
+  pendingComponent: BootPending,
   validateSearch: (s: Record<string, unknown>) => {
     const fields = parseExploreSearchFields(s);
     const out: {
@@ -103,6 +123,7 @@ function SearchPage() {
   const { user } = useCurrentUserState();
   const navigate = useNavigate({ from: "/search" });
   const incoming = Route.useSearch();
+  const boot = Route.useLoaderData();
   const origin = useAppStore((s) => s.origin);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const workOrigin = useAppStore((s) => s.workOrigin);
@@ -121,7 +142,7 @@ function SearchPage() {
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
   const query = useAppStore((s) => s.query);
   const setQuery = useAppStore((s) => s.setQuery);
-  const [items, setItems] = useState<Card[] | null>(null);
+  const [items, setItems] = useState<Card[] | null>(boot.items.length > 0 ? boot.items : null);
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);

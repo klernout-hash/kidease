@@ -53,6 +53,29 @@ test("Manitoba catalogue numbers become Licensed; other provinces stay unverifie
   }
 });
 
+test("stub provinces fail closed even when stored as matched without operator review", () => {
+  const leftover = applyLocalRegistryTrust({
+    id: "on-stale",
+    province: "ON",
+    licenseNumber: "1234567",
+    licenseStatus: "matched",
+    registryMatchState: "matched",
+  });
+  assert.equal(leftover.licenseStatus, "unverified");
+  assert.equal(leftover.registryMatchState, "unmatched");
+
+  const reviewed = applyLocalRegistryTrust({
+    id: "on-reviewed",
+    province: "ON",
+    licenseNumber: "1234567",
+    licenseStatus: "matched",
+    registryMatchState: "matched",
+    licenseVerificationSource: "admin",
+  });
+  assert.equal(reviewed.licenseStatus, "matched");
+  assert.equal(reviewed.registryMatchState, "matched");
+});
+
 test("never invents a licence number and never overrides expired, suspended, or mismatch", () => {
   const blank = applyLocalRegistryTrust({
     id: "mb-blank",
@@ -140,7 +163,8 @@ test("UI and docs stay honest: tooltip, aria, no scrape on listing load", () => 
   assert.match(docs, /Do not scrape/);
   assert.match(docs, /never invents a licence number/i);
   assert.match(src("docs/catalog-source.md"), /licensing\.md/);
-  assert.match(src("src/lib/copy.ts"), /trustLicensedMatched: "Licensed"/);
+  assert.match(src("src/lib/copy.ts"), /trustCatalogueMatched: "Catalogue-matched"/);
+  assert.match(src("src/lib/copy.ts"), /trustLicensedMatched: "Registry-checked"/);
   assert.match(src("src/lib/copy.ts"), /trustLicensedMatchedMbTip/);
   assert.match(src("src/lib/catalog-seed.ts"), /persistLocalLicenseMatches/);
 });

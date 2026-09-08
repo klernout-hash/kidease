@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
 import { SupportCaseView } from "@/components/support-case";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { SESSION_SETTLE_MS } from "@/lib/timeout";
 
 export const Route = createFileRoute("/support/$caseId")({
   head: () => ({
@@ -19,9 +21,14 @@ function SupportCasePage() {
   const { caseId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setSettled(true), SESSION_SETTLE_MS);
+    return () => window.clearTimeout(t);
+  }, []);
   const allowed = Boolean(ready && session?.desks.includes("support"));
 
-  if (isPending || !ready) {
+  if ((isPending || !ready) && !settled) {
     return (
       <Shell>
         <p className="p-8 text-muted">Loading…</p>

@@ -72,7 +72,8 @@ const empty = {
 
 test("Kyle-approved trust labels are the only public badge words", () => {
   const copy = src("src/lib/copy.ts");
-  assert.match(copy, /trustLicensedMatched: "Licensed"/);
+  assert.match(copy, /trustCatalogueMatched: "Catalogue-matched"/);
+  assert.match(copy, /trustLicensedMatched: "Registry-checked"/);
   assert.match(copy, /trustLicenseUnverified: "Unverified"/);
   assert.match(copy, /trustClaimVerified: "Claim verified"/);
   assert.match(copy, /trustStaffAttested: "Staff attested"/);
@@ -84,7 +85,8 @@ test("Kyle-approved trust labels are the only public badge words", () => {
 
 test("badge meaning is shared: cards, listing, compare, provider, admin", () => {
   const trust = src("src/lib/trust.ts");
-  assert.match(trust, /labelKey: "trustLicensedMatched"/);
+  assert.match(trust, /trustCatalogueMatched/);
+  assert.match(trust, /trustLicensedMatched/);
   assert.match(trust, /labelKey: "trustLicenseUnverified"/);
   assert.match(trust, /labelKey: "trustClaimVerified"/);
   assert.match(trust, /labelKey: "trustStaffAttested"/);

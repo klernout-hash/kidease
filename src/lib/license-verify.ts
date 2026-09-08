@@ -5,6 +5,7 @@
  */
 
 import {
+  isHonestLicenseMatch,
   licenseBadge,
   normalizeLicenseStatus,
   type TrustBadge,
@@ -15,7 +16,7 @@ import {
 export function isVerifiedLicensed(item: TrustListing): boolean {
   const status = normalizeLicenseStatus(item.licenseStatus);
   if (status === "expired" || status === "suspended") return false;
-  return status === "matched" || item.registryMatchState === "matched";
+  return isHonestLicenseMatch(item);
 }
 
 /**

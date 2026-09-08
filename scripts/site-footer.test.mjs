@@ -22,8 +22,9 @@ test("footer keeps Support / Parents / Daycares groups without a duplicate legal
   assert.match(footer, /Daycares/);
   assert.doesNotMatch(footer, /aria-label=\{fr \? "Juridique" : "Legal"\}/);
   const privacyLinks = footer.match(/to="\/privacy"/g) ?? [];
-  assert.equal(privacyLinks.length, 1, "privacy lives in Support only; verify-listings goes to About");
+  assert.equal(privacyLinks.length, 1, "privacy lives in Support only; verify-listings goes to /verify");
   assert.match(footer, /to="\/about"/);
+  assert.match(footer, /to="\/verify"/);
   assert.match(footer, /verifyListings/);
 });
 
