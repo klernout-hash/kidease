@@ -11,11 +11,12 @@ import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
 import { readCompare, toggleCompare } from "@/lib/compare";
 import { feeProgramBadgeKey } from "@/lib/licensing";
-import { licenseBadge } from "@/lib/trust";
+import { listingPill } from "@/lib/listing-card";
+import { publicLicenseBadge } from "@/lib/license-verify";
 import type { CopyKey } from "@/lib/copy";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
-import { TrustSignals } from "@/components/trust-badge";
+import { TrustBadge, TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 
@@ -57,8 +58,10 @@ export function DaycareCard({
     return () => window.removeEventListener("kidease-compare", sync);
   }, [item.id]);
 
-  const license = licenseBadge(item);
-  const pill = feeBadge ? t(feeBadge) : live ? t("live") : t(license.labelKey as CopyKey);
+  const license = publicLicenseBadge(item);
+  const pillKey = listingPill(item)?.labelKey;
+  const pill = pillKey ? t(pillKey as CopyKey) : "";
+  const showLicensedChip = Boolean(license && pillKey !== license.labelKey);
   const ages =
     item.ageMaxMonths > item.ageMinMonths ? `${item.ageMinMonths}–${item.ageMaxMonths} months` : "";
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
@@ -83,9 +86,19 @@ export function DaycareCard({
             className={cn("bg-[#EBEBEB]", compact ? "aspect-[20/19]" : "aspect-[4/3]")}
           />
           <div className="pointer-events-none absolute left-2 top-2 z-[2] flex flex-col items-start gap-1">
-            <span className="inline-flex rounded-full bg-white/92 px-2 py-0.5 text-[10px] font-semibold leading-none text-[#222] shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/5 backdrop-blur-[8px]">
-              {item.priority ? `✦ ${pill}` : pill}
-            </span>
+            {pill ? (
+              <span
+                className="inline-flex rounded-full bg-white/92 px-2 py-0.5 text-[10px] font-semibold leading-none text-[#222] shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/5 backdrop-blur-[8px]"
+                title={license && pillKey === license.labelKey ? t(license.tipKey as CopyKey) : undefined}
+              >
+                {item.priority ? `✦ ${pill}` : pill}
+              </span>
+            ) : null}
+            {showLicensedChip && license ? (
+              <span className="pointer-events-auto">
+                <TrustBadge badge={license} compact />
+              </span>
+            ) : null}
             <span className="pointer-events-auto">
               <GuestFavoriteBadge item={item} compact surface="photo" />
             </span>

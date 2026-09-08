@@ -9,12 +9,22 @@
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import { officialLicenceNumber } from "@/lib/licensing";
 import { stripeChargesLive } from "@/lib/stripe-live";
+import {
+  LICENSE_STATUSES,
+  REGISTRY_MATCH_STATES,
+  normalizeLicenseStatus,
+  normalizeMatchState,
+  type LicenseStatus,
+  type RegistryMatchState,
+} from "@/lib/license-status";
 
-export const LICENSE_STATUSES = ["unverified", "matched", "expired", "suspended"] as const;
-export type LicenseStatus = (typeof LICENSE_STATUSES)[number];
-
-export const REGISTRY_MATCH_STATES = ["unmatched", "pending", "matched", "mismatch"] as const;
-export type RegistryMatchState = (typeof REGISTRY_MATCH_STATES)[number];
+export {
+  LICENSE_STATUSES,
+  REGISTRY_MATCH_STATES,
+  normalizeLicenseStatus,
+  normalizeMatchState,
+};
+export type { LicenseStatus, RegistryMatchState };
 
 export const CLAIM_VERIFICATION_STATES = ["unclaimed", "pending", "waiting", "verified", "declined"] as const;
 export type ClaimVerificationState = (typeof CLAIM_VERIFICATION_STATES)[number];
@@ -49,6 +59,7 @@ export type TrustBadge = {
 export type TrustCopyKey =
   | "trustLicensedMatched"
   | "trustLicensedMatchedTip"
+  | "trustLicensedMatchedMbTip"
   | "trustLicenseUnverified"
   | "trustLicenseUnverifiedTip"
   | "trustLicenseExpired"
@@ -74,6 +85,7 @@ export type TrustCopyKey =
 
 export type TrustListing = {
   id?: string;
+  province?: string | null;
   licenseNumber?: string | null;
   licenseStatus?: LicenseStatus | "active" | "unknown" | null;
   licenseExpiry?: string | null;
@@ -119,22 +131,6 @@ export function defaultTrustFields(): TrustFields {
   };
 }
 
-export function normalizeLicenseStatus(raw?: string | null): LicenseStatus {
-  const v = (raw || "").trim().toLowerCase();
-  if (v === "matched" || v === "active") return "matched";
-  if (v === "expired") return "expired";
-  if (v === "suspended" || v === "revoked") return "suspended";
-  return "unverified";
-}
-
-export function normalizeMatchState(raw?: string | null): RegistryMatchState {
-  const v = (raw || "").trim().toLowerCase();
-  if (v === "matched") return "matched";
-  if (v === "pending") return "pending";
-  if (v === "mismatch") return "mismatch";
-  return "unmatched";
-}
-
 export function claimVerificationState(item: TrustListing): ClaimVerificationState {
   const raw = (item.claimStatus || "").trim().toLowerCase();
   if (raw === "unclaimed" || (!raw && !item.claimed && !item.claimedAt)) return "unclaimed";
@@ -167,11 +163,12 @@ export function licenseBadge(item: TrustListing): TrustBadge {
     };
   }
   if (status === "matched" || item.registryMatchState === "matched") {
+    const mb = (item.province || "").trim().toUpperCase() === "MB";
     return {
       id: "license_matched",
       tone: "ok",
       labelKey: "trustLicensedMatched",
-      tipKey: "trustLicensedMatchedTip",
+      tipKey: mb ? "trustLicensedMatchedMbTip" : "trustLicensedMatchedTip",
     };
   }
   return {
@@ -254,7 +251,8 @@ export type TrustSurface = "card" | "parent" | "provider" | "admin";
 
 /**
  * Same Kyle-approved labels on every desk: licensed, unverified, claim verified, staff attested.
- * Cards stay compact: licence always, plus claim/staff only when those facts are true.
+ * Parent cards stay compact: Licensed (or expired/suspended) only when we know,
+ * plus claim/staff only when those facts are true. Unverified is not a badge.
  * Provider and admin also see operational claim/staff/pay states.
  */
 export function trustBadgesFor(item: TrustListing, surface: TrustSurface, stripeLive?: boolean): TrustBadge[] {
@@ -263,14 +261,14 @@ export function trustBadgesFor(item: TrustListing, surface: TrustSurface, stripe
   const staff = staffBadge(item);
 
   if (surface === "card") {
-    const badges = [license];
+    const badges = license.id === "license_unverified" ? [] : [license];
     if (claim.id === "claim_verified") badges.push(claim);
     if (staff.id === "staff_attested") badges.push(staff);
     return badges;
   }
 
   if (surface === "parent") {
-    const badges = [license, claim];
+    const badges = license.id === "license_unverified" ? [claim] : [license, claim];
     if (staff.id === "staff_attested") badges.push(staff);
     return badges;
   }

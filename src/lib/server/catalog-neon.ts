@@ -7,6 +7,7 @@ import {
 } from "@/lib/catalog-source";
 import { clampRadiusKm } from "@/lib/proximity";
 import { listingVisibilityOf } from "@/lib/listing-visibility";
+import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
 export type CatalogDbRow = {
   id: string;
@@ -39,6 +40,9 @@ export type CatalogDbRow = {
   rating_x10: number | null;
   review_count: number | null;
   license_number: string | null;
+  license_status?: string | null;
+  registry_match_state?: string | null;
+  license_verification_source?: string | null;
   languages: string | null;
   amenities: string | null;
   photos: string | null;
@@ -57,6 +61,7 @@ address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
 age_min_months, age_max_months, infant_monthly, toddler_monthly,
 preschool_monthly, part_time_monthly, spots_infant, spots_toddler,
 spots_preschool, waitlist, rating_x10, review_count, license_number,
+license_status, registry_match_state, license_verification_source,
 languages, amenities, photos, claimed_at, visibility, is_test,
 google_place_id, contact_email, website
 `;
@@ -154,6 +159,9 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     ratingX10: Number(row.rating_x10) || 0,
     reviewCount: Number(row.review_count) || 0,
     licenseNumber: row.license_number || row.id,
+    licenseStatus: normalizeLicenseStatus(row.license_status),
+    registryMatchState: normalizeMatchState(row.registry_match_state),
+    licenseVerificationSource: row.license_verification_source || null,
     languages: row.languages || "en",
     amenities: row.amenities || "licensed",
     photos,

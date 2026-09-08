@@ -19,7 +19,8 @@ import { compareParentMatch } from "@/lib/parent-match";
 import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
 import { isPlatformLive } from "@/lib/live";
-import { defaultTrustFields } from "@/lib/trust";
+import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
+import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
@@ -37,7 +38,7 @@ type SearchInput = {
 };
 
 function toDaycare(d: CatalogDaycare): Daycare {
-  return applyListingReadiness({
+  return applyLocalRegistryTrust(applyListingReadiness({
     id: d.id,
     slug: d.slug,
     name: d.name,
@@ -83,14 +84,16 @@ function toDaycare(d: CatalogDaycare): Daycare {
     spotsUpdatedAt: null,
     lastVacancyUpdatedAt: null,
     ...defaultTrustFields(),
-    licenseVerificationSource: d.licenseNumber ? "catalog" : null,
+    licenseStatus: normalizeLicenseStatus(d.licenseStatus),
+    registryMatchState: normalizeMatchState(d.registryMatchState),
+    licenseVerificationSource: d.licenseVerificationSource ?? null,
     priority: false,
     priorityUntil: null,
     featuredCity: false,
     agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
     visibility: d.visibility,
     isTest: d.isTest,
-  });
+  }));
 }
 
 function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
@@ -156,7 +159,8 @@ function mergeClaimedCard<T extends DaycareCard>(card: T, claimed: Daycare): T {
     hoursFr: claimed.hoursFr || card.hoursFr,
     licenseNumber: claimed.licenseNumber || card.licenseNumber,
   });
-  return { ...next, spotsTotal: spotsTotal(next), fromPrice: fromPrice(next) } as T;
+  const trusted = applyLocalRegistryTrust(next);
+  return { ...trusted, spotsTotal: spotsTotal(trusted), fromPrice: fromPrice(trusted) } as T;
 }
 
 function mapReviews(

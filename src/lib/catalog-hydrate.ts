@@ -44,6 +44,9 @@ export type CatalogDaycare = {
   ratingX10: number;
   reviewCount: number;
   licenseNumber: string;
+  licenseStatus?: "unverified" | "matched" | "expired" | "suspended";
+  registryMatchState?: "unmatched" | "pending" | "matched" | "mismatch";
+  licenseVerificationSource?: string | null;
   languages: string;
   amenities: string;
   photos: string[];
