@@ -22,6 +22,7 @@ import { useAppStore, type SortKey } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
+import { ChipButton } from "@/components/chip";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { DualAnchorBar } from "@/components/dual-anchor-bar";
@@ -688,16 +689,9 @@ function SearchPage() {
 
   function chip(on: boolean, label: string, action: () => void) {
     return (
-      <button
-        type="button"
-        onClick={action}
-        className={cn(
-          "min-h-11 rounded-full px-3.5 py-1.5 text-sm font-medium ring-1",
-          on ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border",
-        )}
-      >
+      <ChipButton on={on} onClick={action} aria-pressed={on}>
         {label}
-      </button>
+      </ChipButton>
     );
   }
 
@@ -762,17 +756,14 @@ function SearchPage() {
         {presets.map((n) => {
           const current = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
           return (
-            <button
+            <ChipButton
               key={n}
-              type="button"
+              on={current === n}
               onClick={() => setRadiusKm(distanceUnit === "mi" ? miToKm(n) : n)}
-              className={cn(
-                "rounded-full px-3 py-1 text-xs ring-1",
-                current === n ? "bg-fg text-bg ring-fg" : "ring-border",
-              )}
+              aria-pressed={current === n}
             >
               {n} {u}
-            </button>
+            </ChipButton>
           );
         })}
       </div>
@@ -1036,46 +1027,34 @@ function SearchPage() {
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold">{t("filters")}</p>
-              <button
-                type="button"
-                onClick={() => setFilters(false)}
-                className="min-h-11 rounded-full px-3 text-sm font-medium text-muted hover:text-fg"
-              >
-                {t("close")}
-              </button>
+              <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>
             </div>
             {filterChips}
             {radiusSlider}
             <div className="flex flex-wrap gap-2">
               {(["any", "infant", "toddler", "preschool"] as const).map((a) => (
-                <button
+                <ChipButton
                   key={a}
-                  type="button"
+                  on={!schoolAgeOnly && ageGroup === a}
+                  aria-pressed={!schoolAgeOnly && ageGroup === a}
                   onClick={() => {
                     setSchoolAgeOnly(false);
                     setAgeGroup(a === "any" ? "any" : (a as AgeGroup));
                   }}
-                  className={cn(
-                    "min-h-11 rounded-full px-3 py-1.5 text-sm ring-1",
-                    !schoolAgeOnly && ageGroup === a ? "bg-fg text-bg ring-fg" : "ring-border",
-                  )}
                 >
                   {a === "any" ? t("anyAge") : t(a)}
-                </button>
+                </ChipButton>
               ))}
-              <button
-                type="button"
+              <ChipButton
+                on={schoolAgeOnly}
+                aria-pressed={schoolAgeOnly}
                 onClick={() => {
                   setSchoolAgeOnly((v) => !v);
                   if (!schoolAgeOnly) setAgeGroup("any");
                 }}
-                className={cn(
-                  "min-h-11 rounded-full px-3 py-1.5 text-sm ring-1",
-                  schoolAgeOnly ? "bg-fg text-bg ring-fg" : "ring-border",
-                )}
               >
                 {t("schoolAge")}
-              </button>
+              </ChipButton>
             </div>
             <div className="flex flex-wrap gap-2">
               {(
@@ -1089,17 +1068,9 @@ function SearchPage() {
                   ["availability", t("sortOpen")],
                 ] as [SortKey, string][]
               ).map(([k, label]) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setSort(k)}
-                  className={cn(
-                    "min-h-11 rounded-full px-3 py-1.5 text-sm ring-1",
-                    sort === k ? "bg-fg text-bg ring-fg" : "ring-border",
-                  )}
-                >
+                <ChipButton key={k} on={sort === k} aria-pressed={sort === k} onClick={() => setSort(k)}>
                   {label}
-                </button>
+                </ChipButton>
               ))}
             </div>
             {sort === "recommended" ? (

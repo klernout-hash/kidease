@@ -586,7 +586,7 @@ function Listing() {
                     .split(",")
                     .filter(Boolean)
                     .map((key) => (
-                      <li key={key} className="rounded-full bg-surface px-3 py-1 text-sm ring-1 ring-border">
+                      <li key={key} className="ke-chip">
                         {amenityLabel(key, locale)}
                       </li>
                     ))}

@@ -53,7 +53,7 @@ export function HelpBot() {
           <div className="flex items-center justify-between bg-primary px-4 py-3 text-primary-fg">
             <div className="flex items-center gap-2">
               <img
-                src="/logo-transparent.png?v=16"
+                src="/logo-transparent.svg?v=17"
                 alt=""
                 width={32}
                 height={32}
@@ -118,7 +118,7 @@ export function HelpBot() {
           <X className="size-7 text-primary" />
         ) : (
           <img
-            src="/logo-transparent.png?v=16"
+            src="/logo-transparent.svg?v=17"
             alt=""
             width={44}
             height={44}

@@ -1,3 +1,7 @@
+# KidEase robots.txt — standard robots exclusion protocol only.
+# Do not add Content-Signal or other non-standard directives.
+# Cloudflare AI Crawl Control must not prepend Content-Signal (Lighthouse SEO).
+
 User-agent: *
 Allow: /
 Disallow: /admin

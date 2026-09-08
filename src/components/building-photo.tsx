@@ -11,6 +11,13 @@ import {
 } from "@/lib/photo";
 import { cn } from "@/lib/utils";
 
+/** Mobile Lighthouse LCP: sized AVIF, not a late-discovered 1200-only file. */
+export const HERO_LCP_AVIF_SRCSET =
+  "/photos/hero-480.avif 480w, /photos/hero-768.avif 768w, /photos/hero-1200.avif 1200w";
+export const HERO_LCP_WEBP_SRCSET =
+  "/photos/hero-480.webp 480w, /photos/hero-768.webp 768w, /photos/hero-1200.webp 1200w";
+export const HERO_LCP_SIZES = HERO_SIZES;
+
 const FALLBACK = "/photos/storefront-placeholder-480.webp";
 
 export function BuildingPhoto({
@@ -97,12 +104,26 @@ export function BuildingPhoto({
 
 type FeelVariant = { width: number; avif?: string; webp?: string; jpg: string };
 
+type FeelSource = {
+  variants: FeelVariant[];
+  avifSrcSet?: string;
+  webpSrcSet?: string;
+  sizes?: string;
+  width: number;
+  height: number;
+};
+
 /** Pre-sized marketing stills already in /public/photos. Prefer these paths over new assets. */
-const FEEL_SOURCES: Record<string, { variants: FeelVariant[]; width: number; height: number }> = {
+const FEEL_SOURCES: Record<string, FeelSource> = {
   "/photos/hero.jpg": {
     variants: [
+      { width: 480, avif: "/photos/hero-480.avif", webp: "/photos/hero-480.webp", jpg: "/photos/hero-1200.jpg" },
+      { width: 768, avif: "/photos/hero-768.avif", webp: "/photos/hero-768.webp", jpg: "/photos/hero-1200.jpg" },
       { width: 1200, avif: "/photos/hero-1200.avif", webp: "/photos/hero-1200.webp", jpg: "/photos/hero-1200.jpg" },
     ],
+    avifSrcSet: HERO_LCP_AVIF_SRCSET,
+    webpSrcSet: HERO_LCP_WEBP_SRCSET,
+    sizes: HERO_LCP_SIZES,
     width: 1200,
     height: 900,
   },
@@ -164,21 +185,22 @@ export function FeelPhoto({
   const feel = FEEL_SOURCES[src];
   if (feel) {
     const fallback = feel.variants[feel.variants.length - 1];
-    const avif = feelSrcSet(feel.variants, "avif");
-    const webp = feelSrcSet(feel.variants, "webp");
+    const avif = feel.avifSrcSet ?? feelSrcSet(feel.variants, "avif");
+    const webp = feel.webpSrcSet ?? feelSrcSet(feel.variants, "webp");
     const jpg = feelSrcSet(feel.variants, "jpg");
+    const mediaSizes = sizes ?? feel.sizes;
     return (
       <picture>
-        {avif ? <source type="image/avif" srcSet={avif} sizes={sizes} /> : null}
-        {webp ? <source type="image/webp" srcSet={webp} sizes={sizes} /> : null}
+        {avif ? <source type="image/avif" srcSet={avif} sizes={mediaSizes} /> : null}
+        {webp ? <source type="image/webp" srcSet={webp} sizes={mediaSizes} /> : null}
         <img
           src={fallback.jpg}
-          srcSet={jpg && feel.variants.length > 1 ? jpg : undefined}
-          sizes={sizes}
+          srcSet={jpg && feel.variants.length > 1 && !feel.avifSrcSet ? jpg : undefined}
+          sizes={mediaSizes}
           alt=""
           width={width ?? feel.width}
           height={height ?? feel.height}
-          fetchPriority={eager ? "high" : undefined}
+          fetchPriority={eager ? "high" : "auto"}
           loading={eager ? "eager" : "lazy"}
           decoding="async"
           className={cn("w-full object-cover", className)}

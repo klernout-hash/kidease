@@ -11,6 +11,10 @@ const REQUIRED = [
   "public/photos/hero-1200.jpg",
   "public/photos/hero-1200.webp",
   "public/photos/hero-1200.avif",
+  "public/photos/hero-768.avif",
+  "public/photos/hero-768.webp",
+  "public/photos/hero-480.avif",
+  "public/photos/hero-480.webp",
   "public/photos/playroom-1200.jpg",
   "public/photos/community.jpg",
   "public/photos/cottage.jpg",
@@ -44,6 +48,9 @@ test("marketing feel photos stay on existing /photos paths", () => {
   assert.match(source, /\/photos\/hero-1200\.jpg/);
   assert.match(source, /\/photos\/cottage-768\.avif/);
   assert.match(source, /\/photos\/kitchen-1200\.webp/);
+  assert.match(source, /HERO_LCP_AVIF_SRCSET/);
+  assert.match(source, /hero-480\.avif 480w/);
+  assert.match(source, /hero-768\.avif 768w/);
   assert.match(source, /export function FeelPhoto/);
   assert.match(source, /export function HeroYard/);
   assert.match(source, /feelSrcSet/);
@@ -54,6 +61,10 @@ test("marketing feel photos stay on existing /photos paths", () => {
   assert.match(home, /\[\[data-channel=app\]/);
   assert.match(home, /\/photos\/hero\.jpg/);
   assert.match(home, /STEP_SIZES/);
+  assert.match(home, /rel: "preload"/);
+  assert.match(home, /as: "image"/);
+  assert.match(home, /HERO_LCP_AVIF_SRCSET/);
+  assert.match(home, /fetchPriority: "high"/);
   assert.doesNotMatch(home, /login\.tsx/);
 
   assert.match(readFileSync(join(root, "src/routes/claim.tsx"), "utf8"), /FeelBanner/);

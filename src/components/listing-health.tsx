@@ -75,7 +75,7 @@ export function ListingHealthPanel({ item }: { item: Daycare }) {
               {ok && field !== "vacancy" && !(field === "photo" && photo.kind === "stale") ? null : (
                 <button
                   type="button"
-                  className="rounded-full px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-border hover:bg-surface"
+                  className="ke-chip"
                   onClick={() => jumpToField(field)}
                 >
                   {field === "vacancy" ? t("listingHealthConfirmSpots") : t("listingHealthEdit")}

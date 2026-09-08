@@ -10,7 +10,13 @@ import { DaycareCard } from "@/components/daycare-card";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
-import { FeelPhoto, HeroYard } from "@/components/building-photo";
+import {
+  FeelPhoto,
+  HeroYard,
+  HERO_LCP_AVIF_SRCSET,
+  HERO_LCP_SIZES,
+} from "@/components/building-photo";
+import { ChipButton } from "@/components/chip";
 import { HERO_SIZES, STEP_SIZES } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily, getMyRole } from "@/lib/server/family";
@@ -22,7 +28,7 @@ import { geocode, reverseGeocode, WINNIPEG } from "@/lib/geo";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
-import { cn, uniqueById } from "@/lib/utils";
+import { uniqueById } from "@/lib/utils";
 import { readRecent } from "@/lib/recent";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
@@ -51,6 +57,19 @@ export const Route = createFileRoute("/")({
   },
   pendingMs: 200,
   pendingComponent: BootPending,
+  head: () => ({
+    links: [
+      {
+        rel: "preload",
+        as: "image",
+        type: "image/avif",
+        href: "/photos/hero-768.avif",
+        imageSrcSet: HERO_LCP_AVIF_SRCSET,
+        imageSizes: HERO_LCP_SIZES,
+        fetchPriority: "high",
+      },
+    ],
+  }),
   component: Home,
 });
 
@@ -258,14 +277,9 @@ function Home() {
   const cityChips = (
     <div className="mt-4 flex flex-wrap gap-2">
       {CITY_CHIPS.map((c) => (
-        <button
-          key={c.q}
-          type="button"
-          onClick={() => applyCity(c.q)}
-          className="min-h-11 rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border hover:text-fg"
-        >
+        <ChipButton key={c.q} onClick={() => applyCity(c.q)}>
           {c.label}
-        </button>
+        </ChipButton>
       ))}
     </div>
   );
@@ -349,26 +363,12 @@ function Home() {
       />
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setLiveOnly(true)}
-          className={cn(
-            "min-h-11 rounded-full px-4 py-2 text-sm font-medium ring-1",
-            liveOnly ? "bg-primary text-primary-fg ring-primary" : "bg-bg text-fg ring-border",
-          )}
-        >
+        <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
           {liveCount > 0 ? t("liveToggleCount").replace("{n}", String(liveCount)) : t("liveOnly")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setLiveOnly(false)}
-          className={cn(
-            "min-h-11 rounded-full px-4 py-2 text-sm font-medium ring-1",
-            !liveOnly ? "bg-fg text-bg ring-fg" : "bg-bg text-fg ring-border",
-          )}
-        >
+        </ChipButton>
+        <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
           {t("allToggleCount").replace("{n}", String(featured.length))}
-        </button>
+        </ChipButton>
       </div>
 
       {askLocation ? (
@@ -578,14 +578,9 @@ function Home() {
           {featuredSearch}
           <div className="mt-4 flex flex-wrap gap-2">
             {CITY_CHIPS.map((c) => (
-              <button
-                key={c.q}
-                type="button"
-                onClick={() => void applyPlace(c.q)}
-                className="min-h-11 rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border hover:text-fg"
-              >
+              <ChipButton key={c.q} onClick={() => void applyPlace(c.q)}>
                 {c.label}
-              </button>
+              </ChipButton>
             ))}
           </div>
           {user ? (

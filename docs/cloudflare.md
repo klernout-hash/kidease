@@ -64,3 +64,17 @@ Mid-session re-entry to `/admin` showing the Cloudflare Access login wall is alm
 8. **Bypass / public rules:** if a second application or WAF custom rule matches `www.kidease.ca/*`, disable it or narrow it. Preview hosts (`*.vercel.app`) are **not** behind Access; the app 302s `/admin*` and `/support*` to `https://www.kidease.ca…` so Access can apply on www.
 
 App-side: `scripts/request-guard.mjs` `isSensitiveDeskPath` is the allow-list that may 302 preview → www. `/parent`, `/provider`, `/login`, `/`, and `/api/auth/*` never go through that hop.
+
+## robots.txt Content-Signal (Lighthouse SEO)
+
+Origin `public/robots.txt` is standard robots exclusion only (`User-agent`, `Allow`, `Disallow`, `Sitemap`). Production used to serve a Cloudflare-managed prefix:
+
+```
+Content-Signal: search=yes,ai-train=no,use=reference
+```
+
+Lighthouse SEO treats `Content-Signal` as an unknown / invalid robots directive.
+
+**Dashboard fix (not this repo):** [Cloudflare Dashboard](https://dash.cloudflare.com) → zone **kidease.ca** → **AI** / **AI Crawl Control** / **Content Signals**. Turn **off** “Add content signals to robots.txt” (or Managed robots.txt). After it drops, `https://www.kidease.ca/robots.txt` must match git: no `Content-Signal` line.
+
+Bot-specific `Disallow` rules for GPTBot / CCBot / etc. can stay in AI Crawl Control without writing `Content-Signal` into robots.txt.
