@@ -6,9 +6,10 @@
  *   - Never on launch. Only after saved search / share / booking success.
  *   - App-level cooldown (90 days) plus OS quotas. We never fake a 1–5 UI.
  *
- * Menu “Rate KidEase” / “Write a review”:
+ * Menu / Account / guest home “Rate KidEase” / “Write a review”:
  *   - Native: deep-link to write-review store URLs (placeholders until IDs exist).
  *   - Web: caller routes to /get-app. Do not request the native sheet.
+ *   - Guest www homepage is intentional (not Account-only). Same helper, no live store API.
  */
 
 import { isNative, nativePlatform, shareText, type NativePlatform } from "./native.ts";
@@ -190,9 +191,10 @@ export async function openWriteReview(platform: NativePlatform = nativePlatform(
 }
 
 /**
- * Menu / account “Rate KidEase”.
+ * Menu / account / guest home “Rate KidEase”.
  * Native → store write-review URL (or OS sheet if the Apple ID is still a placeholder).
  * Web → caller should send the user to /get-app. Never a fake rating UI.
+ * Logged-out www.kidease.ca home uses this same path — Rate KidEase is not Account-only.
  */
 export async function rateKidEaseFromMenu(): Promise<RateKidEaseResult> {
   if (isNative()) {

@@ -101,17 +101,31 @@ describe("plugin wiring and honest copy", () => {
     assert.match(src("src/lib/store-review.ts"), /noteHappyMoment\("share"\)/);
   });
 
-  it("exposes Rate KidEase on menu and account; web falls through to get-app", () => {
+  it("exposes Rate KidEase on guest home, menu, and account; web falls through to get-app", () => {
+    const home = src("src/routes/index.tsx");
+    const rate = src("src/components/rate-kidease.tsx");
     assert.match(src("src/routes/menu.tsx"), /RateKidEaseMenuRow/);
-    assert.match(src("src/routes/account.tsx"), /RateKidEaseButton/);
-    assert.match(src("src/components/rate-kidease.tsx"), /to: "\/get-app"/);
-    assert.match(src("src/components/rate-kidease.tsx"), /search: \{ dev: undefined \}/);
+    assert.match(src("src/routes/account.tsx"), /RateKidEasePrompt/);
+    // Guest www homepage: same Account prompt. Not an Account-only hide.
+    assert.match(home, /RateKidEasePrompt/);
+    assert.match(home, /Guest www homepage/);
+    assert.match(home, /!user \? \(/);
+    assert.match(src("src/components/site-footer.tsx"), /RateKidEaseControl/);
+    assert.match(src("src/components/nav-drawer.tsx"), /RateKidEaseControl/);
+    assert.match(rate, /to: "\/get-app"/);
+    assert.match(rate, /search: \{ dev: undefined \}/);
+    assert.match(rate, /not Account-only/);
     assert.match(src("src/lib/store-review.ts"), /return "get-app"/);
+    assert.match(src("src/lib/store-review.ts"), /not Account-only/);
+    assert.doesNotMatch(home, /apps\.apple\.com|play\.google\.com|InAppReview/);
+    assert.doesNotMatch(rate, /apps\.apple\.com|play\.google\.com/);
+    assert.doesNotMatch(home, /CookieConsentBanner|cookie-consent/);
     assert.match(src("src/lib/copy.ts"), /rateKidEase: "Rate KidEase"/);
     assert.match(src("src/lib/copy.ts"), /rateKidEase: "Évaluer KidEase"/);
     assert.match(src("src/lib/copy.ts"), /writeStoreReview: "Write a review"/);
     assert.match(src("docs/store-review.md"), /90-day/);
     assert.match(src("docs/store-review.md"), /Do \*\*not\*\*/);
+    assert.match(src("docs/store-review.md"), /guest home/);
     assert.match(src("docs/mobile-builds.md"), /store-review\.md/);
     assert.match(src(".env.example"), /VITE_APPLE_APP_STORE_ID=/);
     assert.doesNotMatch(src(".env.example"), /VITE_APPLE_APP_STORE_ID=\d+/);

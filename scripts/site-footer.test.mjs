@@ -14,6 +14,12 @@ const footer = src("src/components/site-footer.tsx");
 const css = src("src/styles.css");
 const copy = src("src/lib/copy.ts");
 
+test("footer exposes Rate KidEase next to Get the app in Parents", () => {
+  assert.match(footer, /to="\/get-app"/);
+  assert.match(footer, /RateKidEaseControl/);
+  assert.match(footer, /appearance="footer"/);
+});
+
 test("footer keeps Support / Parents / Daycares groups without a duplicate legal row", () => {
   assert.match(footer, /ke-footer-cols/);
   assert.match(footer, /t\("support"\)/);

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
+import { RateKidEaseControl } from "@/components/rate-kidease";
 import { ShareKidEaseButton } from "@/components/share-button";
 
 type Item = { to: string; label: string; search?: Record<string, string> };
@@ -116,6 +117,7 @@ export function NavDrawer({
             </span>
           ))}
           <ShareKidEaseButton appearance="drawer" onDone={onClose} />
+          <RateKidEaseControl appearance="drawer" onDone={onClose} />
           <div className="my-3 h-px bg-border" />
           {signedIn ? (
             <>

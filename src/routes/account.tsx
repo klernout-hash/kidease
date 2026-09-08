@@ -21,7 +21,7 @@ import type { CaslPrefs } from "@/lib/casl";
 import { PlaceSearch } from "@/components/place-search";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
 import { useAppStore } from "@/lib/store";
-import { RateKidEaseButton } from "@/components/rate-kidease";
+import { RateKidEasePrompt } from "@/components/rate-kidease";
 import { AppearanceControl } from "@/components/appearance-control";
 
 export const Route = createFileRoute("/account")({
@@ -366,10 +366,7 @@ function ProfilePane() {
         ) : (
           <p className="mt-8 text-center text-sm text-muted">{t("accountSettingsGuest")}</p>
         )}
-        <div className="mt-8">
-          <RateKidEaseButton className="w-full" />
-          <p className="mt-2 text-center text-xs text-subtle">{t("writeStoreReview")}</p>
-        </div>
+        <RateKidEasePrompt className="mt-8" />
       </main>
     </AccountDeskFrame>
   );
