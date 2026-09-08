@@ -30,7 +30,8 @@ git push
 
 The public app ships `centres.json` + extras (~20 846 licensed rows, no master
 emails). Neon is the runtime source of truth after those rows are upserted.
-Do **not** run this on `npm run build`.
+This CSV is seed / blank-only enrichment only — never commit it here and never
+read it at request time. Do **not** run this on `npm run build`.
 
 ```bash
 # After migrations. Uses Production DATABASE_URL. Idempotent; skips claimed rows.

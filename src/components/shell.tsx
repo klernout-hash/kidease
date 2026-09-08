@@ -16,7 +16,7 @@ import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
-import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
+import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
 import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -26,7 +26,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const tab = useRouterState({ select: (s) => (s.location.search as { tab?: string }).tab });
   const { user } = useCurrentUserState();
-  const { sticky } = useSessionDesks();
+  const { session, sticky } = useSessionDesks();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -167,6 +167,10 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         accountLabel={t("account")}
         accountHref="/account"
         accountSearch={accountSearch(sticky)}
+        isAdmin={canSeeAdminDesk(session?.role)}
+        desksSlot={
+          user && showDeskSwitcher(session?.desks, session?.role) ? <DeskSwitcher compact /> : null
+        }
         onSignOut={() => void signOut("/")}
       />
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"}>

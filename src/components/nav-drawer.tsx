@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
@@ -21,6 +21,7 @@ export function NavDrawer({
   accountHref = "/account",
   accountSearch,
   isAdmin = false,
+  desksSlot,
   onSignOut,
 }: {
   open: boolean;
@@ -34,6 +35,7 @@ export function NavDrawer({
   accountHref?: string;
   accountSearch?: Record<string, string>;
   isAdmin?: boolean;
+  desksSlot?: ReactNode;
   onSignOut: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -119,6 +121,7 @@ export function NavDrawer({
           <div className="my-3 h-px bg-border" />
           {signedIn ? (
             <>
+              {desksSlot ? <div className="mb-3 px-1">{desksSlot}</div> : null}
               <Link
                 to={accountHref}
                 search={accountSearch}
@@ -129,11 +132,11 @@ export function NavDrawer({
               </Link>
               {isAdmin ? (
                 <Link
-                  to="/provider"
+                  to="/admin"
                   onClick={onClose}
                   className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
                 >
-                  {providerLabel}
+                  Admin
                 </Link>
               ) : null}
               <button
