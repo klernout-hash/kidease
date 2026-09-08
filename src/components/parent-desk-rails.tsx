@@ -13,7 +13,7 @@ import {
   urgencyRail,
   type ParentRailPrefs,
 } from "@/lib/parent-rails";
-import { CARE_TYPES, RAIL_AGES, type CareType, type RailAge } from "@/lib/care-type";
+import { FACILITY_TYPES, RAIL_AGES, type FacilityType, type RailAge } from "@/lib/care-type";
 import type { CopyKey } from "@/lib/copy";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
@@ -27,10 +27,10 @@ const AGE_COPY: Record<RailAge, CopyKey> = {
   "school-age": "schoolAge",
 };
 
-const CARE_COPY: Record<CareType, CopyKey> = {
+const CARE_COPY: Record<FacilityType, CopyKey> = {
   centre: "careCentre",
+  nursery: "careNursery",
   home: "careHome",
-  "before-after": "careBeforeAfter",
 };
 
 function Chip({
@@ -66,7 +66,7 @@ export function ParentDeskRails({
   const defaultAge: RailAge =
     childMonths == null ? "preschool" : childMonths >= 60 ? "school-age" : ageGroupFromMonths(childMonths);
   const [age, setAge] = useState<RailAge>(defaultAge);
-  const [care, setCare] = useState<CareType>("centre");
+  const [care, setCare] = useState<FacilityType>("centre");
   const deferredAge = useDeferredValue(age);
   const deferredCare = useDeferredValue(care);
   const [extraReady, setExtraReady] = useState(false);
@@ -176,7 +176,7 @@ export function ParentDeskRails({
               </a>
             </div>
             <div className="mb-3 flex flex-wrap gap-2">
-              {CARE_TYPES.map((kind) => (
+              {FACILITY_TYPES.map((kind) => (
                 <Chip
                   key={kind}
                   on={care === kind}

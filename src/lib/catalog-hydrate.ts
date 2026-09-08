@@ -13,6 +13,11 @@ import {
   type ListingVisibility,
 } from "./listing-visibility.ts";
 import { correctCentreNameTypos, normalizeListingSlug } from "./listing-slug.ts";
+import {
+  classifyFacilityType,
+  facilityTypeTagline,
+  isGenericCentreTagline,
+} from "./facility-type.ts";
 
 export type CatalogDaycare = {
   id: string;
@@ -210,20 +215,31 @@ export function hydrateCentre(
   const nameFr = correctCentreNameTypos(raw.nameFr || name);
   const slug = normalizeListingSlug(raw.slug) || raw.slug;
   const amenities = raw.amenities?.includes("licensed") ? raw.amenities : `licensed${raw.amenities ? `,${raw.amenities}` : ""}`;
+  const facility = classifyFacilityType({ amenities, name });
   const tag =
-    raw.tagline ||
-    (city ? `Licensed centre in ${city}, ${province}.` : `Licensed centre, ${province}.`);
+    raw.tagline && !isGenericCentreTagline(raw.tagline, city, province)
+      ? raw.tagline
+      : facilityTypeTagline(facility.type, city, province, "en");
   const tagFr =
-    raw.taglineFr ||
-    (city ? `Centre permis à ${city}, ${province}.` : `Centre permis, ${province}.`);
+    raw.taglineFr && !isGenericCentreTagline(raw.taglineFr, city, province)
+      ? raw.taglineFr
+      : facilityTypeTagline(facility.type, city, province, "fr");
   const address = raw.address || "";
   const postal = raw.postalCode || "";
+  const kindEn =
+    facility.type === "nursery" ? "licensed nursery" : facility.type === "home" ? "licensed home" : "licensed childcare centre";
+  const kindFr =
+    facility.type === "nursery"
+      ? "nursery permise"
+      : facility.type === "home"
+        ? "milieu familial permis"
+        : "centre de garde permis";
   const desc =
     raw.description ||
-    `${name} is a licensed childcare centre${address ? ` at ${address}` : ""}${city ? `, ${city}` : ""} ${postal} (${province}). Hours and spaces follow the provincial or territorial registry.`.trim();
+    `${name} is a ${kindEn}${address ? ` at ${address}` : ""}${city ? `, ${city}` : ""} ${postal} (${province}). Hours and spaces follow the provincial or territorial registry.`.trim();
   const descFr =
     raw.descriptionFr ||
-    `${nameFr} est un centre de garde permis${address ? ` au ${address}` : ""}${city ? `, ${city}` : ""} ${postal} (${province}). Heures et places selon le registre provincial.`.trim();
+    `${nameFr} est un ${kindFr}${address ? ` au ${address}` : ""}${city ? `, ${city}` : ""} ${postal} (${province}). Heures et places selon le registre provincial.`.trim();
   const ages = inferAges(fact?.ageMinMonths ?? raw.ageMinMonths, fact?.ageMaxMonths ?? raw.ageMaxMonths);
   const feeOk = Boolean(fact?.feeConfirmed);
   return {

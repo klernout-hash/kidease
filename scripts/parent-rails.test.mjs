@@ -19,6 +19,7 @@ function hasAmenity(amenities, key) {
 
 function listingCareType(item) {
   if (hasAmenity(item.amenities, "home")) return "home";
+  if (hasAmenity(item.amenities, "nursery")) return "nursery";
   if (
     hasAmenity(item.amenities, "school-age") ||
     hasAmenity(item.amenities, "in-school") ||
@@ -31,6 +32,7 @@ function listingCareType(item) {
 
 function matchesCareType(item, care) {
   if (care === "home") return hasAmenity(item.amenities, "home");
+  if (care === "nursery") return hasAmenity(item.amenities, "nursery");
   if (care === "before-after") {
     return (
       hasAmenity(item.amenities, "school-age") ||
@@ -38,7 +40,7 @@ function matchesCareType(item, care) {
       hasAmenity(item.amenities, "extended")
     );
   }
-  return !hasAmenity(item.amenities, "home");
+  return !hasAmenity(item.amenities, "home") && !hasAmenity(item.amenities, "nursery");
 }
 
 function matchesRailAge(item, age) {
@@ -111,18 +113,23 @@ test("Guest Favorites rail only uses the real badge, never a paid pin", () => {
 test("age and care rails use real amenities and ages", () => {
   const home = { amenities: "home,licensed", agesKnown: true, ageMaxMonths: 60 };
   const centre = { amenities: "licensed", agesKnown: true, ageMaxMonths: 60 };
+  const nursery = { amenities: "licensed,nursery", agesKnown: true, ageMaxMonths: 60 };
   const school = { amenities: "school-age,licensed", agesKnown: true, ageMaxMonths: 144 };
   assert.equal(listingCareType(home), "home");
   assert.equal(listingCareType(centre), "centre");
+  assert.equal(listingCareType(nursery), "nursery");
   assert.equal(matchesCareType(home, "home"), true);
   assert.equal(matchesCareType(centre, "home"), false);
+  assert.equal(matchesCareType(nursery, "nursery"), true);
+  assert.equal(matchesCareType(centre, "nursery"), false);
   assert.equal(matchesRailAge(school, "school-age"), true);
   assert.equal(matchesRailAge(centre, "school-age"), true);
   assert.equal(matchesRailAge({ ...centre, agesKnown: true, ageMaxMonths: 36 }, "school-age"), false);
   const care = src("src/lib/care-type.ts");
   assert.match(care, /school-age/);
   assert.match(care, /before-after/);
-  assert.match(care, /hasAmenity/);
+  assert.match(care, /nursery/);
+  assert.match(care, /classifyFacilityType/);
 });
 
 test("see-all hrefs carry the honest filter or sort", () => {
@@ -141,7 +148,8 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
   assert.match(rails, /railByAge/);
   assert.match(rails, /railByCare/);
   assert.match(rails, /school-age/);
-  assert.match(rails, /before-after/);
+  assert.match(rails, /FACILITY_TYPES/);
+  assert.match(rails, /careNursery/);
   assert.doesNotMatch(rails, /priority \?/);
   assert.doesNotMatch(rails, /featuredCity/);
 

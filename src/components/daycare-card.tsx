@@ -12,6 +12,7 @@ import { displayDistance } from "@/lib/units";
 import { readCompare, toggleCompare } from "@/lib/compare";
 import { feeProgramBadgeKey } from "@/lib/licensing";
 import { listingPill } from "@/lib/listing-card";
+import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import type { CopyKey } from "@/lib/copy";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
@@ -65,7 +66,14 @@ export const DaycareCard = memo(function DaycareCard({
   const ages =
     item.ageMaxMonths > item.ageMinMonths ? `${item.ageMinMonths}–${item.ageMaxMonths} months` : "";
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
-  const line3 = [ages, hours].filter(Boolean).join(" · ");
+  const facility = classifyFacilityType(item);
+  const FACILITY_CARD: Record<FacilityType, CopyKey> = {
+    centre: "facilityTypeCentre",
+    nursery: "facilityTypeNursery",
+    home: "facilityTypeHome",
+  };
+  const typeLabel = t(FACILITY_CARD[facility.type]);
+  const line3 = [typeLabel, ages, hours].filter(Boolean).join(" · ");
   const freshness = vacancyLine(item, t, locale);
   const photosAge = photoLine(item, t, locale);
   const incompleteLabel = parentIncompleteLabel(item, t);

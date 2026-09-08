@@ -275,7 +275,7 @@ export const MARKETING_PAGE_SEO = {
   search: {
     title: "Search licensed daycare near you · KidEase",
     description:
-      "Search licensed childcare by kilometre radius. Filter by age and open spots, or open a city directory for Winnipeg, Toronto, and more.",
+      "Search licensed centres, nurseries, and homes by kilometre radius. Filter by facility type, age, and open spots, or open a city directory for Winnipeg, Toronto, and more.",
     path: "/search",
   },
 } as const;

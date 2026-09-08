@@ -50,6 +50,7 @@ import { PageSkeleton } from "@/components/page-skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { listingPageMeta, listingPageTitle } from "@/lib/listing-meta";
+import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { formatMonth, money, formatAgeRange, displayCentreName } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
@@ -462,6 +463,7 @@ function Listing() {
                   {licensed ? <TrustBadge badge={licensed} /> : null}
                 </div>
                 <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
+                <FacilityTypeBlurb daycare={d} />
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
                     <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
@@ -529,8 +531,10 @@ function Listing() {
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
                 <Meta label={t("licenseStatus")} value={t(licenseBadge(d).labelKey as CopyKey)} />
+                <Meta label={t("facilityType")} value={t(facilityTypeLabelKey(classifyFacilityType(d).type))} />
                 <Meta label={t("lastInspection")} value={t("seeOfficialRecord")} />
               </dl>
+              <FacilityTypeGapNote daycare={d} />
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button asChild variant="secondary">
                   <a href={licenseRecordUrl(d.province, d.name, d.licenseNumber)} target="_blank" rel="noreferrer">
@@ -792,6 +796,50 @@ function Listing() {
       <RequestTourSheet daycare={d} open={tourOpen} onClose={() => setTourOpen(false)} />
       <CompareBar />
     </Shell>
+  );
+}
+
+const FACILITY_LABEL: Record<FacilityType, CopyKey> = {
+  centre: "facilityTypeCentre",
+  nursery: "facilityTypeNursery",
+  home: "facilityTypeHome",
+};
+
+const FACILITY_LEAD: Record<FacilityType, CopyKey> = {
+  centre: "facilityTypeLeadCentre",
+  nursery: "facilityTypeLeadNursery",
+  home: "facilityTypeLeadHome",
+};
+
+function facilityTypeLabelKey(type: FacilityType): CopyKey {
+  return FACILITY_LABEL[type];
+}
+
+function FacilityTypeBlurb({ daycare }: { daycare: Daycare }) {
+  const { t } = useCopy();
+  const classified = classifyFacilityType(daycare);
+  return (
+    <div className="mt-3 max-w-prose rounded-lg bg-surface p-3 ring-1 ring-border" data-facility-type={classified.type}>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-subtle">{t("facilityType")}</p>
+      <p className="mt-1 text-sm font-medium">{t(FACILITY_LABEL[classified.type])}</p>
+      <p className="mt-1 text-sm text-muted">{t(FACILITY_LEAD[classified.type])}</p>
+    </div>
+  );
+}
+
+function FacilityTypeGapNote({ daycare }: { daycare: Daycare }) {
+  const { t } = useCopy();
+  const classified = classifyFacilityType(daycare);
+  if (!classified.gap) return null;
+  const typeLabel = t(FACILITY_LABEL[classified.type]);
+  const hintLabel = classified.nameHint ? t(FACILITY_LABEL[classified.nameHint]) : "";
+  const text = classified.nameHint
+    ? t("facilityTypeGap").replace("{type}", typeLabel).replace("{hint}", hintLabel)
+    : t("facilityTypeGapPlain");
+  return (
+    <p className="mt-3 text-xs text-subtle" data-facility-type-gap={classified.source}>
+      {text}
+    </p>
   );
 }
 

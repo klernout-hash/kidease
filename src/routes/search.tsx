@@ -43,11 +43,14 @@ import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
 import {
+  FACILITY_TYPES,
   isCareType,
+  isFacilityType,
   isRailAge,
   matchesCareType,
   matchesRailAge,
   type CareType,
+  type FacilityType,
   type RailAge,
 } from "@/lib/care-type";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
@@ -110,6 +113,7 @@ export const Route = createFileRoute("/search")({
     }
     if (typeof s.age === "string" && isRailAge(s.age)) out.age = s.age;
     if (typeof s.care === "string" && isCareType(s.care)) out.care = s.care;
+    else if (typeof s.facility === "string" && isFacilityType(s.facility)) out.care = s.facility;
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
     return out;
   },
@@ -649,6 +653,34 @@ function SearchPage() {
           secondaryTo: undefined as string | undefined,
           onSecondary: undefined as (() => void) | undefined,
         }
+      : extraFilters && (items?.length ?? 0) > 0 && isFacilityType(careType)
+        ? {
+            title: t("noFacilityTypeResults").replace(
+              "{type}",
+              t(
+                careType === "nursery"
+                  ? "facilityTypeNursery"
+                  : careType === "home"
+                    ? "facilityTypeHome"
+                    : "facilityTypeCentre",
+              ).toLowerCase(),
+            ),
+            body: t("noFacilityTypeResultsLead").replace(
+              "{type}",
+              t(
+                careType === "nursery"
+                  ? "facilityTypeNursery"
+                  : careType === "home"
+                    ? "facilityTypeHome"
+                    : "facilityTypeCentre",
+              ).toLowerCase(),
+            ),
+            action: t("showAll"),
+            onAction: () => setCareType("any"),
+            secondary: t("clearFilters"),
+            secondaryTo: undefined as string | undefined,
+            onSecondary: clearListingFilters,
+          }
       : extraFilters && (items?.length ?? 0) > 0
         ? {
             title: t("noFilterResults"),
@@ -802,15 +834,30 @@ function SearchPage() {
       {chip(infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v))}
       {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
       {chip(favoritesOnly, t("filterFavorites"), () => setFavoritesOnly((v) => !v))}
-      {chip(careType === "centre", t("filterCareCentre"), () =>
-        setCareType((v) => (v === "centre" ? "any" : "centre")),
-      )}
-      {chip(careType === "home", t("filterCareHome"), () =>
-        setCareType((v) => (v === "home" ? "any" : "home")),
-      )}
       {chip(careType === "before-after", t("filterCareBeforeAfter"), () =>
         setCareType((v) => (v === "before-after" ? "any" : "before-after")),
       )}
+    </div>
+  );
+
+  const SHOW_FACILITY: Record<FacilityType, "showCentres" | "showNurseries" | "showHomes"> = {
+    centre: "showCentres",
+    nursery: "showNurseries",
+    home: "showHomes",
+  };
+
+  const facilityCategoryChips = (
+    <div className="mt-3">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-subtle">
+        {t("exploreFacilityTypes")}
+      </p>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t("exploreFacilityTypes")}>
+        {FACILITY_TYPES.map((kind) =>
+          chip(careType === kind, t(SHOW_FACILITY[kind]), () =>
+            setCareType((v) => (v === kind ? "any" : kind)),
+          ),
+        )}
+      </div>
     </div>
   );
 
@@ -1033,6 +1080,8 @@ function SearchPage() {
         ) : null}
 
         <ExploreHint />
+
+        {facilityCategoryChips}
 
         {filters ? (
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">

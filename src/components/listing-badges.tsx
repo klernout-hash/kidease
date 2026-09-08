@@ -3,7 +3,9 @@ import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 import { PriorityPill } from "@/components/priority-pill";
 import { TrustSignals } from "@/components/trust-badge";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
+import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { feeProgramBadgeKey } from "@/lib/licensing";
+import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
@@ -25,9 +27,16 @@ export function ListingBadges({
   const pill = compact
     ? "rounded-full bg-surface/95 px-2 py-0.5 text-[11px] font-medium"
     : "rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium";
+  const facility = classifyFacilityType(item);
+  const FACILITY_BADGE: Record<FacilityType, CopyKey> = {
+    centre: "facilityTypeCentre",
+    nursery: "facilityTypeNursery",
+    home: "facilityTypeHome",
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      <span className={cn(pill, "text-muted")}>{t(FACILITY_BADGE[facility.type])}</span>
       {item.priority ? <PriorityPill /> : null}
       <GuestFavoriteBadge item={item} compact={compact} />
       <TrustSignals item={item} surface="parent" compact={compact} />
