@@ -1,6 +1,6 @@
 /** Titan IMAP/SMTP helpers for Admin Mail. No Start/DB — tests import this file. */
 
-import { isResendSendFrom } from "../mail-from";
+import { isResendSendFrom } from "../mail-from.ts";
 
 export const TITAN_WEB_INBOX = "https://app.titan.email";
 export const TITAN_DEFAULT_MAILBOX = "kyle@kidease.ca";

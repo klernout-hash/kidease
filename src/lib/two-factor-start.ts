@@ -1,4 +1,4 @@
-import { DEFAULT_TRANSACTIONAL_MAIL_FROM, transactionalMailFrom } from "./mail-from";
+import { DEFAULT_TRANSACTIONAL_MAIL_FROM, transactionalMailFrom } from "./mail-from.ts";
 
 /** Auto-start / remount cooldown. Does not apply to an explicit "Send a new code". */
 export const TWO_FACTOR_AUTO_COOLDOWN_MS = 45_000;
