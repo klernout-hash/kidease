@@ -7,7 +7,8 @@ import { DeskSkeleton } from "@/components/page-skeleton";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { readStickyDesk } from "@/lib/desks";
+import { useSessionDesks } from "@/components/session-desks";
+import { parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
 import { inboxSearch, resolveInboxView, type InboxView } from "@/lib/inbox-view";
 import { listInbox } from "@/lib/server/inbox";
 import { useCopy } from "@/lib/use-copy";
@@ -18,7 +19,8 @@ export function InboxList() {
   const { t } = useCopy();
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { view?: unknown };
-  const view: InboxView = resolveInboxView({ search: search.view, sticky: readStickyDesk() });
+  const { sticky } = useSessionDesks();
+  const view: InboxView = resolveInboxView({ search: search.view, sticky });
   const [items, setItems] = useState<Conversation[] | null>(null);
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export function InboxList() {
   if (!user) return <RedirectToSignIn />;
 
   const list = (
-    <div className={view === "centre" ? "" : "mx-auto max-w-2xl px-4 py-8"}>
+    <div>
       {view === "centre" ? (
         <>
           <h2 className="font-display text-2xl">{t("inboxCentreTitle")}</h2>
@@ -46,8 +48,7 @@ export function InboxList() {
         </>
       ) : (
         <>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t("messages")}</p>
-          <h1 className="mt-2 font-display text-3xl">{t("inboxFamilyTitle")}</h1>
+          <h2 className="font-display text-2xl">{t("inboxFamilyTitle")}</h2>
           {items && items.length ? <p className="mt-2 text-sm text-muted">{t("inboxHasThreads")}</p> : null}
         </>
       )}
@@ -108,13 +109,7 @@ export function InboxList() {
         active="messages"
         onSelect={(id) => {
           if (id === "messages") return;
-          const desk =
-            id === "money" || id === "listings" || id === "licence" || id === "contract" || id === "promote" || id === "add"
-              ? id === "add"
-                ? "listings"
-                : id
-              : "requests";
-          void navigate({ to: "/provider", search: { desk } });
+          void navigate({ to: "/provider", search: providerNavSearch(id) });
         }}
       >
         {list}
@@ -122,5 +117,16 @@ export function InboxList() {
     );
   }
 
-  return <Shell>{list}</Shell>;
+  return (
+    <DeskShell
+      desk="parent"
+      active="messages"
+      onSelect={(id) => {
+        if (id === "messages") return;
+        void navigate({ to: "/parent", search: parentNavSearch(id) });
+      }}
+    >
+      {list}
+    </DeskShell>
+  );
 }

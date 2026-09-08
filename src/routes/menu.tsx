@@ -102,16 +102,17 @@ function MenuPage() {
         <Group title="Parents">
           <Row to="/login" search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }} label={t("parentSignIn")} />
           <Row to="/parent" label={fr ? "Espace parent" : "Parent desk"} />
-          <Row to="/account" search={{ tab: "profile" }} label={t("profile")} />
+          <Row to="/account" search={{ tab: "profile", desk: "parent" }} label={t("profile")} />
           <Row to="/tour-checklist" label={t("tourChecklist")} />
           <Row to="/compare" label={t("compare")} />
-          <Row to="/account" search={{ tab: "saved" }} label={t("saved")} />
+          <Row to="/parent" search={{ tab: "saved" }} label={t("saved")} />
         </Group>
 
         <Group title={fr ? "Garderies" : "Daycares"}>
           <Row to="/claim" label={t("claimCta")} />
           <Row to="/login" search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }} label={t("providerLogin")} />
           <Row to="/provider" label={fr ? "Espace garderie" : "Daycare desk"} />
+          <Row to="/account" search={{ tab: "profile", desk: "director" }} label={t("account")} />
           <Row href="https://childcaresearch.gov.mb.ca/en" label={t("mbChildcare")} />
         </Group>
 

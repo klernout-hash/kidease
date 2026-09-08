@@ -22,6 +22,10 @@ import {
   canSeeAdminDesk,
   showDeskSwitcher,
   resolvePostLoginPath,
+  accountSearch,
+  homeLandPath,
+  highlightDesk,
+  stickyFromStores,
 } from "../src/lib/desks.ts";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -83,7 +87,7 @@ test("desk switcher is for any multi-desk session, not admin-only", () => {
   assert.match(src, /showDeskSwitcher/);
   assert.doesNotMatch(src, /session\.role !== "admin"/);
   assert.match(src, /do not call setRole/);
-  assert.match(src, /writeStickyDesk/);
+  assert.match(src, /setSticky/);
   assert.match(src, /deskDirector/);
   assert.match(src, /headerDesks/);
 });
@@ -104,6 +108,21 @@ test("?desk= aliases map to role desks without colliding with provider tabs", ()
   assert.equal(pickLandingDesk(["parent"], "admin"), "parent");
   assert.equal(DESK_PATH[pickLandingDesk(["admin", "provider", "parent"], "provider")], "/provider");
   assert.equal(DESK_LABEL.provider, "Daycare");
+});
+
+test("sticky desk persists across tabs and home landing honors it", () => {
+  assert.equal(stickyFromStores("parent", "director"), "parent");
+  assert.equal(stickyFromStores(null, "director"), "provider");
+  assert.equal(stickyFromStores(null, null), null);
+  assert.equal(homeLandPath({ role: "admin" }), "/admin");
+  assert.equal(homeLandPath({ role: "admin", sticky: "parent" }), null);
+  assert.equal(homeLandPath({ role: "admin", sticky: "provider" }), "/provider");
+  assert.equal(homeLandPath({ role: "provider", sticky: "parent" }), null);
+  assert.equal(homeLandPath({ role: "parent" }), null);
+  assert.equal(highlightDesk("/account", "parent", "provider"), "provider");
+  assert.deepEqual(accountSearch("provider"), { tab: "profile", desk: "director" });
+  assert.deepEqual(accountSearch("admin"), { tab: "profile", desk: "admin" });
+  assert.deepEqual(accountSearch(null), { tab: "profile" });
 });
 
 test("post-login dest honors /parent for admin instead of dumping them on Provider", () => {

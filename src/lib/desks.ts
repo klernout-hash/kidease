@@ -44,8 +44,48 @@ export function isDeskNeutralPath(pathname: string): boolean {
 }
 
 /** Highlight the last desk on shared pages so Account/Messages keep Daycare context. */
-export function highlightDesk(pathname: string, sticky?: DeskKey | null): DeskKey | null {
-  return deskFromPathname(pathname) ?? sticky ?? null;
+export function highlightDesk(
+  pathname: string,
+  sticky?: DeskKey | null,
+  queryDesk?: DeskKey | null,
+): DeskKey | null {
+  return deskFromPathname(pathname) ?? queryDesk ?? sticky ?? null;
+}
+
+/** sessionStorage first (this tab), then localStorage (other tabs / refresh). */
+export function stickyFromStores(sessionValue: string | null, localValue: string | null): DeskKey | null {
+  return parseDeskQuery(sessionValue) ?? parseDeskQuery(localValue);
+}
+
+/**
+ * First `/` visit for a signed-in multi-role user. Sticky desk wins so Kyle
+ * on Parent is not dumped back to Admin. Parent stays on Explore (`/` → null).
+ */
+export function homeLandPath(input: {
+  role?: AppRole | null;
+  desks?: DeskKey[] | null;
+  sticky?: DeskKey | null;
+}): "/admin" | "/support" | "/provider" | null {
+  const desks = input.desks?.length ? input.desks : input.role ? desksFor({ role: input.role }) : null;
+  if (input.sticky) {
+    if (!desks || desks.includes(input.sticky)) {
+      if (input.sticky === "parent") return null;
+      return DESK_PATH[input.sticky];
+    }
+  }
+  if (!input.role) return null;
+  if (input.role === "admin") return "/admin";
+  if (input.role === "provider") return "/provider";
+  if (input.role === "support" || input.role === "support_lead") return "/support";
+  return null;
+}
+
+/** Shared Account settings — keep `?desk=` so the pill stays on the current desk. */
+export function accountSearch(desk?: DeskKey | null): {
+  tab: "profile";
+  desk?: "parent" | "director" | "admin" | "support";
+} {
+  return desk ? { tab: "profile", desk: deskQueryValue(desk) } : { tab: "profile" };
 }
 
 export function parseDeskQuery(raw: string | null | undefined): DeskKey | null {
@@ -121,7 +161,10 @@ export function resolvePostLoginPath(input: {
 export function readStickyDesk(): DeskKey | null {
   if (typeof window === "undefined") return null;
   try {
-    return parseDeskQuery(window.sessionStorage.getItem(STICKY_DESK_KEY));
+    return stickyFromStores(
+      window.sessionStorage.getItem(STICKY_DESK_KEY),
+      window.localStorage.getItem(STICKY_DESK_KEY),
+    );
   } catch {
     return null;
   }
@@ -129,8 +172,14 @@ export function readStickyDesk(): DeskKey | null {
 
 export function writeStickyDesk(desk: DeskKey): void {
   if (typeof window === "undefined") return;
+  const value = deskQueryValue(desk);
   try {
-    window.sessionStorage.setItem(STICKY_DESK_KEY, deskQueryValue(desk));
+    window.sessionStorage.setItem(STICKY_DESK_KEY, value);
+  } catch {
+    /* ignore */
+  }
+  try {
+    window.localStorage.setItem(STICKY_DESK_KEY, value);
   } catch {
     /* ignore */
   }
@@ -140,6 +189,11 @@ export function clearStickyDesk(): void {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.removeItem(STICKY_DESK_KEY);
+  } catch {
+    /* ignore */
+  }
+  try {
+    window.localStorage.removeItem(STICKY_DESK_KEY);
   } catch {
     /* ignore */
   }

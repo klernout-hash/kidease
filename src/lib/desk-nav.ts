@@ -25,10 +25,12 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "reviews", label: "Reviews", hint: "Publish or hide gated parent reviews" },
     { id: "chat", label: "Chat lab", hint: "Scaffold only", href: "/admin-chat" },
     { id: "support", label: "Support", hint: "Cases and refunds", href: "/support" },
+    { id: "account", label: "Account", hint: "Profile and preferences", href: "/account", search: { tab: "profile", desk: "admin" } },
   ],
   support: [
     { id: "inbox", label: "Inbox", hint: "Open cases", href: "/support" },
     { id: "new", label: "New case", hint: "Open a case" },
+    { id: "account", label: "Account", hint: "Profile and preferences", href: "/account", search: { tab: "profile", desk: "support" } },
   ],
   daycare: [
     { id: "requests", label: "Incoming requests", hint: "Pipeline, tours, enrol" },
@@ -41,6 +43,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "subscription", label: "Subscription", hint: "Centre plans", icon: "credit-card", href: "/provider/subscription" },
     { id: "claim", label: "Claim a centre", href: "/claim" },
     { id: "messages", label: "Messages", hint: "Parent inquiries + tours", href: "/inbox", search: { view: "centre" } },
+    { id: "account", label: "Account", hint: "Sign-in and preferences", href: "/account", search: { tab: "profile", desk: "director" } },
   ],
   parent: [
     { id: "explore", label: "For you", hint: "Matches near you" },
@@ -49,10 +52,33 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "saved", label: "Saved centres" },
     { id: "alerts", label: "Search alerts", hint: "Saved searches + notify" },
     { id: "payments", label: "Pay", hint: "Bills from your centre" },
-    { id: "messages", label: "Messages", hint: "Centre threads + tours", href: "/inbox" },
+    { id: "messages", label: "Messages", hint: "Centre threads + tours", href: "/inbox", search: { view: "family" } },
     { id: "search", label: "Find care", href: "/search" },
+    { id: "account", label: "Account", hint: "Family profile and alerts", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
 };
+
+export function providerNavSearch(
+  id: string,
+): { desk: "requests" | "money" | "listings" | "licence" | "contract" | "promote" } {
+  if (id === "money" || id === "listings" || id === "licence" || id === "contract" || id === "promote") {
+    return { desk: id };
+  }
+  if (id === "add") return { desk: "listings" };
+  return { desk: "requests" };
+}
+
+export function parentNavSearch(
+  id: string,
+): { tab?: "explore" | "saved" | "enrolled" | "payments" | "alerts" | "children" } {
+  if (id === "saved") return { tab: "saved" };
+  if (id === "bookings") return { tab: "enrolled" };
+  if (id === "payments") return { tab: "payments" };
+  if (id === "alerts") return { tab: "alerts" };
+  if (id === "children") return { tab: "children" };
+  if (id === "explore") return { tab: "explore" };
+  return {};
+}
 
 export const DESK_META: Record<DeskId, { eyebrow: string; title: string }> = {
   admin: { eyebrow: "Operator", title: "Admin" },

@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
-import { ParentDesk } from "@/components/parent-desk";
+import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
-import { readStickyDesk } from "@/lib/desks";
+import { DESK_LABEL, DESK_PATH, deskQueryValue, parseDeskQuery, type DeskKey } from "@/lib/desks";
+import { parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
+import { useSessionDesks } from "@/components/session-desks";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
@@ -25,9 +26,15 @@ import { AppearanceControl } from "@/components/appearance-control";
 
 export const Route = createFileRoute("/account")({
   validateSearch: (s: Record<string, unknown>) => {
+    const out: {
+      tab?: "saved" | "enrolled" | "profile" | "payments";
+      desk?: "parent" | "director" | "admin" | "support";
+    } = {};
     const tab = s.tab;
-    if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") return { tab };
-    return {};
+    if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
+    const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
+    if (desk) out.desk = deskQueryValue(desk);
+    return out;
   },
   component: AccountPage,
 });
@@ -45,11 +52,10 @@ function AccountPage() {
     );
   }
 
-  if (search.tab === "profile" || !search.tab) {
-    return <ProfilePane />;
-  }
-
-  if (!user) {
+  if (search.tab === "saved" || search.tab === "enrolled" || search.tab === "payments") {
+    if (user) {
+      return <Navigate to="/parent" search={{ tab: search.tab }} />;
+    }
     return (
       <Shell>
         <main className="ke-gutter mx-auto max-w-lg py-12 text-center">
@@ -60,7 +66,7 @@ function AccountPage() {
               <Link
                 to="/login"
                 search={parentLoginSearch(
-                  search.tab === "enrolled" ? "/account?tab=enrolled" : "/account?tab=saved",
+                  search.tab === "enrolled" ? "/parent?tab=enrolled" : "/parent?tab=saved",
                 )}
               >
                 {t("parentSignIn")}
@@ -75,18 +81,76 @@ function AccountPage() {
     );
   }
 
-  const initialTab =
-    search.tab === "saved" ? "saved" : search.tab === "enrolled" ? "bookings" : search.tab === "payments" ? "payments" : "children";
-  return (
-    <TwoFactorGate next="/parent">
-      <ParentDesk initialTab={initialTab} />
-    </TwoFactorGate>
-  );
+  return <ProfilePane />;
+}
+
+function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: ReactNode }) {
+  const navigate = useNavigate();
+  if (desk === "provider") {
+    return (
+      <DeskShell
+        desk="daycare"
+        active="account"
+        onSelect={(id) => {
+          if (id === "account") return;
+          void navigate({ to: "/provider", search: providerNavSearch(id) });
+        }}
+      >
+        {children}
+      </DeskShell>
+    );
+  }
+  if (desk === "parent") {
+    return (
+      <DeskShell
+        desk="parent"
+        active="account"
+        onSelect={(id) => {
+          if (id === "account") return;
+          void navigate({ to: "/parent", search: parentNavSearch(id) });
+        }}
+      >
+        {children}
+      </DeskShell>
+    );
+  }
+  if (desk === "admin") {
+    return (
+      <DeskShell
+        desk="admin"
+        active="account"
+        onSelect={(id) => {
+          if (id === "account") return;
+          void navigate({ to: "/admin" });
+        }}
+      >
+        {children}
+      </DeskShell>
+    );
+  }
+  if (desk === "support") {
+    return (
+      <DeskShell
+        desk="support"
+        active="account"
+        onSelect={(id) => {
+          if (id === "account") return;
+          void navigate({ to: "/support" });
+        }}
+      >
+        {children}
+      </DeskShell>
+    );
+  }
+  return <Shell>{children}</Shell>;
 }
 
 function ProfilePane() {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
+  const search = Route.useSearch();
+  const { sticky } = useSessionDesks();
+  const desk = parseDeskQuery(search.desk) ?? sticky;
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -175,13 +239,29 @@ function ProfilePane() {
     }
   }
 
+  const backCopy =
+    desk === "provider"
+      ? t("accountBackDaycare")
+      : desk === "admin"
+        ? t("accountBackAdmin")
+        : desk === "support"
+          ? t("accountBackSupport")
+          : desk === "parent"
+            ? t("accountBackParent")
+            : null;
+
   return (
-    <Shell>
-      <main className="ke-gutter mx-auto max-w-lg pb-10 pt-6">
-        {readStickyDesk() === "provider" ? (
-          <Link to="/provider" className="mb-3 inline-block text-sm font-medium text-primary">
-            {t("accountBackDaycare")}
+    <AccountDeskFrame desk={desk}>
+      <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
+        {desk ? (
+          <Link to={DESK_PATH[desk]} className="mb-3 inline-block text-sm font-medium text-primary">
+            {backCopy}
           </Link>
+        ) : null}
+        {desk ? (
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">
+            {DESK_LABEL[desk]} · {t("account")}
+          </p>
         ) : null}
         <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("profile")}</h1>
         <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
@@ -291,6 +371,6 @@ function ProfilePane() {
           <p className="mt-2 text-center text-xs text-subtle">{t("writeStoreReview")}</p>
         </div>
       </main>
-    </Shell>
+    </AccountDeskFrame>
   );
 }

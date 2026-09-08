@@ -1,7 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { MessageCircle } from "lucide-react";
-import { DESK_PATH, headerDesks, highlightDesk, readStickyDesk, showDeskSwitcher, writeStickyDesk, type DeskKey } from "@/lib/desks";
-import { inboxSearch } from "@/lib/inbox-view";
+import {
+  DESK_PATH,
+  headerDesks,
+  highlightDesk,
+  parseDeskQuery,
+  showDeskSwitcher,
+  type DeskKey,
+} from "@/lib/desks";
+import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { useSessionDesks } from "@/components/session-desks";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
@@ -19,13 +26,16 @@ const DESK_COPY: Record<DeskKey, CopyKey> = {
 export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   const { t } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { session } = useSessionDesks();
+  const queryDesk = useRouterState({
+    select: (s) => parseDeskQuery((s.location.search as { desk?: unknown }).desk as string | undefined),
+  });
+  const { session, sticky, setSticky } = useSessionDesks();
   // Same Better Auth session. Pills only navigate — they do not call setRole
   // or rewrite the session cookie. /provider still promotes via its own mount.
   if (!session || !showDeskSwitcher(session.desks)) return null;
 
-  const current = highlightDesk(pathname, readStickyDesk());
-  const inboxView = current === "provider" ? "centre" : "family";
+  const current = highlightDesk(pathname, sticky, queryDesk);
+  const inboxView = inboxViewForDesk(current);
 
   return (
     <div
@@ -39,7 +49,8 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
           <Link
             key={desk}
             to={DESK_PATH[desk]}
-            onClick={() => writeStickyDesk(desk)}
+            onClick={() => setSticky(desk)}
+            aria-current={on ? "page" : undefined}
             className={cn(
               "inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium leading-none",
               on ? "bg-primary text-primary-fg" : "text-muted hover:text-fg",
