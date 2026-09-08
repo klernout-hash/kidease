@@ -61,6 +61,7 @@ describe("uptime / Better Stack", () => {
     assert.match(docs, /pipeline noise/);
     assert.match(docs, /production_change_failure/);
     assert.match(docs, /cfr\.candidate/);
+    assert.match(docs, /cfr_candidate/);
 
     const security = read("SECURITY.md");
     assert.match(security, /Better Stack/);
@@ -101,6 +102,8 @@ describe("uptime / Better Stack", () => {
     assert.equal(healthSentryState({ SENTRY_DSN: "https://abc@o0.ingest.sentry.io/1" }), "configured");
     assert.equal(healthSentryState({}), "unset");
     assert.equal(buildHealthPayload({ app: "ok", database: "error" }, {}).cfr.candidate, true);
+    assert.equal(buildHealthPayload({ app: "ok", database: "error" }, {}).cfr.alert, "cfr_candidate");
+    assert.equal(buildHealthPayload({ app: "ok", database: "ok" }, {}).cfr.alert, undefined);
     assert.equal(PRODUCTION_CFR_SIGNAL, "production_change_failure");
     assert.doesNotMatch(JSON.stringify(buildHealthPayload({ app: "ok", database: "ok" }, { SENTRY_DSN: "https://abc@o0.ingest.sentry.io/1" })), /abc@o0/);
 
@@ -145,6 +148,9 @@ describe("uptime / Better Stack", () => {
     assert.match(probe, /dbSource === "none"/);
     assert.match(probe, /getSqlWithin/);
     assert.match(probe, /pingBetterStackHeartbeat/);
+    assert.match(probe, /payload\.cfr\.candidate/);
+    assert.match(probe, /reportError/);
+    assert.match(probe, /cfr_candidate/);
     assert.doesNotMatch(probe, /connectionString|process\.env\.DATABASE_URL/);
 
     assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/api/health" }), {

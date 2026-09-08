@@ -33,10 +33,10 @@ jobs:
       - run: npm ci
       - name: ESLint
         run: npx eslint .
-      - name: Unit tests
-        run: npm test
       - name: Typecheck
         run: npx tsc --noEmit
+      - name: Unit tests
+        run: npm test
 
   e2e:
     runs-on: ubuntu-latest

@@ -38,6 +38,8 @@ export type HealthCfr = {
   candidate: boolean;
   /** Whether Sentry ingest is configured. Never includes the DSN. */
   sentry: HealthSentryState;
+  /** Stable Better Stack keyword. Present only when `candidate` is true. */
+  alert?: "cfr_candidate";
 };
 
 export type HealthRuntime = "vercel" | "local";
@@ -86,10 +88,12 @@ export function buildHealthCfr(
   checks: HealthChecks,
   env: NodeJS.ProcessEnv = process.env,
 ): HealthCfr {
+  const candidate = healthHttpStatus(checks) !== 200;
   return {
     signal: PRODUCTION_CFR_SIGNAL,
-    candidate: healthHttpStatus(checks) !== 200,
+    candidate,
     sentry: healthSentryState(env),
+    ...(candidate ? { alert: "cfr_candidate" as const } : {}),
   };
 }
 

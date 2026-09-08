@@ -26,6 +26,10 @@ export const POSTHOG_REPLAY_NATIVE_ENV = "VITE_PUBLIC_POSTHOG_REPLAY_NATIVE";
 export const DEFAULT_POSTHOG_HOST = "https://us.i.posthog.com";
 export const POSTHOG_US_INGEST = "https://us.i.posthog.com";
 export const POSTHOG_US_ASSETS = "https://us-assets.i.posthog.com";
+/** Production website origin. Used when the WebView origin is not http(s) or is empty. */
+export const POSTHOG_FIRST_PARTY_ORIGIN = "https://www.kidease.ca";
+const PH_QUEUE_KEY = "kidease-ph-queue";
+const PH_QUEUE_MAX = 24;
 export const DEFAULT_REPLAY_SAMPLE_RATE = 0.2;
 /** Client kill switch in PostHog. Missing flag still records (sampled). Off stops recordings. */
 export const POSTHOG_REPLAY_FLAG = "session-replay-web";
@@ -69,29 +73,26 @@ function isDefaultUsIngest(host: string): boolean {
  * ad blockers that filter us.i.posthog.com do not drop events.
  * `POSTHOG_HOST` / `VITE_PUBLIC_POSTHOG_HOST` stay the *upstream* (US ingest)
  * unless they point at a non-default host (managed proxy, EU).
- * Capacitor keeps the public US host — the WebView origin is not kidease.ca.
- *
- * On the website, prefer an absolute same-origin URL (`https://www.kidease.ca/ingest`)
- * so posthog-js sets `$lib_custom_api_host` and the reverse_proxy health check
- * can clear. A bare `/ingest` path is not treated as a custom host.
+ * Capacitor's production WebView is `https://www.kidease.ca` — use the same
+ * first-party proxy so `$lib_custom_api_host` is set and the reverse_proxy
+ * health warning can clear. Never return a bare `/ingest` path (PostHog
+ * health does not count a relative host).
  */
 export function posthogApiHost(
   env: EnvMap = viteEnv(),
-  native?: boolean,
+  _native?: boolean,
   origin?: string,
 ): string {
   const host =
     envString(POSTHOG_PUBLIC_HOST_ENV, env) || envString(POSTHOG_HOST_ENV, env) || "";
   const cleaned = host.replace(/\/$/, "");
   if (cleaned && !isDefaultUsIngest(cleaned)) return cleaned;
-  const onNative = native ?? (typeof window !== "undefined" && isNative());
-  if (onNative) return DEFAULT_POSTHOG_HOST;
   const loc =
     origin ??
     (typeof window !== "undefined" && window.location?.origin ? window.location.origin : "");
   const base = String(loc).replace(/\/$/, "");
   if (base && /^https?:\/\//i.test(base)) return `${base}${POSTHOG_PROXY_PATH}`;
-  return POSTHOG_PROXY_PATH;
+  return `${POSTHOG_FIRST_PARTY_ORIGIN}${POSTHOG_PROXY_PATH}`;
 }
 
 export function posthogEnabled(env: EnvMap = viteEnv()): boolean {
@@ -164,9 +165,10 @@ export function maskCapturedNetworkRequest(
  * flag does not block sampled replay once the visitor has allowed analytics.
  */
 export function applyPostHogRecordingGate(ph?: PostHog | null): void {
+  const consent = readAnalyticsConsent();
+  if (consent === "denied") clearQueuedPostHogEvents();
   const clientPh = ph ?? client;
   if (!clientPh) return;
-  const consent = readAnalyticsConsent();
   if (consent === "denied") {
     clientPh.stopSessionRecording();
     clientPh.opt_out_capturing();
@@ -211,6 +213,7 @@ export function posthogInitOptions(input: SessionReplayGateInput = {}): Partial<
     sanitize_properties: sanitizePostHogProperties,
     loaded: (ph) => {
       client = ph as PostHog;
+      flushQueuedPostHogEvents(ph as PostHog);
       if (pendingIdentify) {
         ph.identify(pendingIdentify);
         pendingIdentify = null;
@@ -225,11 +228,61 @@ export function getPostHog(): PostHog | null {
   return client;
 }
 
-/** Capture a product event. No-op until the client is live. Properties are scrubbed. */
+type QueuedPostHogEvent = { event: string; properties: Record<string, unknown> };
+
+function readQueuedPostHogEvents(): QueuedPostHogEvent[] {
+  if (typeof sessionStorage === "undefined") return [];
+  try {
+    const raw = sessionStorage.getItem(PH_QUEUE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as QueuedPostHogEvent[]).slice(0, PH_QUEUE_MAX) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeQueuedPostHogEvents(items: QueuedPostHogEvent[]): void {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    if (!items.length) sessionStorage.removeItem(PH_QUEUE_KEY);
+    else sessionStorage.setItem(PH_QUEUE_KEY, JSON.stringify(items.slice(0, PH_QUEUE_MAX)));
+  } catch {
+    /* private mode */
+  }
+}
+
+export function clearQueuedPostHogEvents(): void {
+  writeQueuedPostHogEvents([]);
+}
+
+function enqueuePostHogEvent(event: string, properties: Record<string, unknown>): void {
+  const next = [...readQueuedPostHogEvents(), { event, properties }];
+  writeQueuedPostHogEvents(next.slice(-PH_QUEUE_MAX));
+}
+
+export function flushQueuedPostHogEvents(ph?: PostHog | null): void {
+  const clientPh = ph ?? client;
+  if (!clientPh) return;
+  const items = readQueuedPostHogEvents();
+  writeQueuedPostHogEvents([]);
+  for (const item of items) {
+    if (!item?.event) continue;
+    clientPh.capture(item.event, item.properties ?? {});
+  }
+}
+
+/** Capture a product event. Queues across hard navigations until the client is live. */
 export function capturePostHogEvent(event: string, properties: Record<string, unknown> = {}): void {
   const name = event.trim();
-  if (!name || !client) return;
-  client.capture(name, sanitizePostHogProperties(properties, name));
+  if (!name) return;
+  if (readAnalyticsConsent() === "denied") return;
+  const props = sanitizePostHogProperties(properties, name);
+  if (client) {
+    client.capture(name, props);
+    return;
+  }
+  enqueuePostHogEvent(name, props);
 }
 
 /**
@@ -283,6 +336,7 @@ export function startPostHog(): void {
     .then(({ default: posthog }) => {
       posthog.init(key, posthogInitOptions());
       client = posthog;
+      flushQueuedPostHogEvents(posthog);
       if (pendingIdentify) {
         posthog.identify(pendingIdentify);
         pendingIdentify = null;
@@ -299,4 +353,5 @@ export function resetPostHogClientForTests(): void {
   started = false;
   identifiedId = "";
   pendingIdentify = null;
+  clearQueuedPostHogEvents();
 }

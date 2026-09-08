@@ -10,6 +10,7 @@ import {
   sanitizePostLoginNext,
   twoFactorPageUrl,
 } from "../src/lib/desks.ts";
+import { SESSION_SETTLE_RETRIES, waitForSignedInSession } from "../src/lib/auth/session-settle.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -51,8 +52,12 @@ test("login and 2FA use the shared continue helper", () => {
   assert.match(login, /loginErrorCallbackUrl/);
   assert.match(src("src/lib/desks.ts"), /\/verify-2fa\?next=/);
   assert.match(login, /Opening your desk/);
-  assert.match(twoFa, /resolveContinueDest/);
   assert.match(twoFa, /assignPostAuthDest/);
+  assert.match(twoFa, /pageStalled/);
+  assert.match(twoFa, /needTurnstile/);
+  assert.match(src("src/lib/auth/login-funnel.ts"), /waitForSignedInSession/);
+  assert.match(src("src/lib/auth/login-funnel.ts"), /SESSION_SETTLE_RETRIES/);
+  assert.match(src("src/routes/login.tsx"), /waitForSignedInSession/);
   assert.match(twoFa, /staffTwoFactorRequired/);
   assert.match(twoFa, /Continue to your desk/);
   assert.match(twoFa, /autoComplete="one-time-code"/);
@@ -83,4 +88,21 @@ test("docs explain how to measure login_funnel in PostHog", () => {
   assert.equal(sanitizePostLoginNext("/verify-2fa?next=/parent"), "/parent");
   assert.equal(resolvePostLoginPath({ next: "/login", role: "provider" }), "/provider");
   assert.equal(funnelDestPath("/provider?desk=money"), "/provider");
+});
+
+test("session settle retries instead of failing the first empty getSession", async () => {
+  assert.deepEqual([...SESSION_SETTLE_RETRIES], [0, 200, 500, 1000]);
+  let calls = 0;
+  const session = await waitForSignedInSession(async () => {
+    calls += 1;
+    if (calls < 3) return { data: null };
+    return { data: { user: { id: "u1" } } };
+  });
+  assert.equal(calls, 3);
+  assert.equal(session?.data?.user?.id, "u1");
+  const missing = await waitForSignedInSession(async () => ({ data: null }));
+  assert.equal(missing, null);
+  assert.match(src("src/lib/care-type.ts"), /export function parseAgeGroup/);
+  assert.match(src("src/lib/parent-match.ts"), /parseAgeGroup\(prefs\.ageGroup\)/);
+  assert.match(src("src/lib/auth/login-funnel.ts"), /waitForSignedInSession/);
 });

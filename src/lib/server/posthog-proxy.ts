@@ -58,6 +58,7 @@ export async function proxyPosthogRequest(request: Request): Promise<Response> {
     out.append("set-cookie", rewriteSetCookie(cookie));
   }
 
+  applyIngestCors(out, request);
   return new Response(upstream.body, {
     status: upstream.status,
     statusText: upstream.statusText,
@@ -65,14 +66,30 @@ export async function proxyPosthogRequest(request: Request): Promise<Response> {
   });
 }
 
+/** Capacitor / preview hosts may POST cross-origin to www.kidease.ca/ingest. */
+function applyIngestCors(headers: Headers, request: Request): void {
+  const origin = request.headers.get("origin") || "";
+  if (origin) headers.set("access-control-allow-origin", origin);
+  else headers.set("access-control-allow-origin", "*");
+  headers.set("access-control-allow-methods", "GET, HEAD, POST, PUT, PATCH, OPTIONS");
+  headers.set("vary", "origin");
+  const requested = request.headers.get("access-control-request-headers");
+  headers.set("access-control-allow-headers", requested || "content-type");
+}
+
 export function ingestProxyHandlers() {
   const run = ({ request }: { request: Request }) => proxyPosthogRequest(request);
+  const options = ({ request }: { request: Request }) => {
+    const headers = new Headers();
+    applyIngestCors(headers, request);
+    return new Response(null, { status: 204, headers });
+  };
   return {
     GET: run,
     HEAD: run,
     POST: run,
     PUT: run,
     PATCH: run,
-    OPTIONS: run,
+    OPTIONS: options,
   };
 }

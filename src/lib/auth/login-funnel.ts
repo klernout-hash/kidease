@@ -23,11 +23,13 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { getMyDesks } from "@/lib/server/roles";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
 import { withTimeout, withTimeoutFallback } from "@/lib/timeout";
+import { SESSION_SETTLE_RETRIES, waitForSignedInSession } from "./session-settle.ts";
 
 export { loginErrorCallbackUrl, twoFactorPageUrl } from "@/lib/desks";
+export { SESSION_SETTLE_RETRIES, waitForSignedInSession };
 
 export const LOGIN_FUNNEL_EVENT = "login_funnel";
-export const TWO_FACTOR_STATUS_MS = 4000;
+export const TWO_FACTOR_STATUS_MS = 1500;
 export const DESK_RESOLVE_MS = 4000;
 export const LOGIN_STALL_MS = 8000;
 
@@ -117,6 +119,8 @@ export async function resolveContinueDest(input: {
 }
 
 export async function shouldOpenTwoFactorPage(dest: string): Promise<boolean> {
+  const kind = postLoginDestKind(dest);
+  if (kind === "public" || kind === "home") return false;
   try {
     const status = await withTimeout(getTwoFactorStatus(), TWO_FACTOR_STATUS_MS, "2fa-status-timeout");
     if (status.verified) {

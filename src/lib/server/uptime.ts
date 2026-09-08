@@ -1,7 +1,15 @@
 import { dbSource, getSqlWithin } from "@/lib/db";
-import { buildHealthPayload, type HealthCheckState, type HealthPayload } from "@/lib/uptime";
+import { reportError } from "@/lib/observe";
+import {
+  buildHealthPayload,
+  pingBetterStackHeartbeat,
+  type HealthCheckState,
+  type HealthPayload,
+} from "@/lib/uptime";
 
 export { pingBetterStackHeartbeat } from "@/lib/uptime";
+
+let lastCfrFinger = "";
 
 const DATABASE_PROBE_MS = 2500;
 
@@ -21,9 +29,22 @@ export async function probeDatabase(): Promise<HealthCheckState> {
 }
 
 export async function collectHealth(): Promise<HealthPayload> {
-  return buildHealthPayload({
+  const payload = buildHealthPayload({
     app: "ok",
     database: await probeDatabase(),
   });
+  if (payload.cfr.candidate) {
+    const finger = `${payload.revision ?? ""}:${payload.checks.app}:${payload.checks.database}`;
+    if (lastCfrFinger !== finger) {
+      lastCfrFinger = finger;
+      reportError(new Error("production_change_failure"), {
+        route: "/api/health",
+        extra: { alert: "cfr_candidate", database: payload.checks.database },
+      });
+    }
+  } else {
+    void pingBetterStackHeartbeat();
+  }
+  return payload;
 }
 
