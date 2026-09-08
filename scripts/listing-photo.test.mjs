@@ -5,13 +5,18 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   LISTING_PLACEHOLDER,
+  MAX_INTERIOR_PHOTOS,
   STOCK_CREATE_PHOTOS,
+  applyInteriorPhotos,
   applyStorefrontPhoto,
+  classifyListingPhotos,
+  isInteriorEligiblePhoto,
   isOfficialBuildingPhoto,
   isStockListingPhoto,
   listingPhotosFor,
   listingThumb,
   resolveListingStorefront,
+  splitPhotoList,
 } from "../src/lib/listing-photo.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -71,6 +76,53 @@ describe("listing photos prefer official buildings over /photos/wpg/", () => {
     assert.equal(isStockListingPhoto("/photos/community.jpg"), true);
     assert.equal(isStockListingPhoto("/photos/storefront-placeholder-480.webp"), true);
     assert.equal(isStockListingPhoto("/photos/buildings/mb-1.jpg"), false);
+  });
+
+  it("classifies interiors and never invents them from stock or street view", () => {
+    const uploaded = "data:image/jpeg;base64,YWJj";
+    const playroom = "data:image/jpeg;base64,cGxheQ==";
+    const yard = "data:image/jpeg;base64,eWFyZA==";
+    assert.equal(isInteriorEligiblePhoto("/photos/playroom.jpg"), false);
+    assert.equal(isInteriorEligiblePhoto("/photos/wpg/1052.jpg"), false);
+    assert.equal(isInteriorEligiblePhoto("/photos/buildings/mb-1052.jpg"), false);
+    assert.equal(isInteriorEligiblePhoto("/photos/wpg/1052-logo.png"), false);
+    assert.equal(isInteriorEligiblePhoto(playroom), true);
+
+    const mixed = classifyListingPhotos([
+      "/photos/buildings/mb-1052.jpg",
+      playroom,
+      "/photos/wpg/1052-logo.png",
+      "/photos/playroom.jpg",
+    ]);
+    assert.equal(mixed.storefront, "/photos/buildings/mb-1052.jpg");
+    assert.deepEqual(mixed.interiors, [playroom]);
+    assert.deepEqual(mixed.logos, ["/photos/wpg/1052-logo.png"]);
+
+    assert.equal(applyInteriorPhotos(STOCK_CREATE_PHOTOS, []), STOCK_CREATE_PHOTOS);
+    assert.equal(
+      applyInteriorPhotos("/photos/buildings/mb-1.jpg,/photos/wpg/1-logo.png", [playroom, yard]),
+      `/photos/buildings/mb-1.jpg,${playroom},${yard},/photos/wpg/1-logo.png`,
+    );
+    const tooMany = Array.from({ length: MAX_INTERIOR_PHOTOS + 2 }, (_, i) => `data:image/jpeg;base64,bi${i}==`);
+    const capped = splitPhotoList(applyInteriorPhotos(uploaded, tooMany));
+    assert.equal(capped[0], uploaded);
+    assert.equal(capped.length, 1 + MAX_INTERIOR_PHOTOS);
+
+    const withInterior = listingPhotosFor(
+      "mb-1052",
+      ["/photos/wpg/1052.jpg", playroom, "/photos/wpg/1052-logo.png"],
+      official,
+      wpg,
+    );
+    assert.equal(withInterior[0], "/photos/buildings/mb-1052.jpg");
+    assert.ok(withInterior.includes(playroom));
+    assert.ok(withInterior.includes("/photos/wpg/1052-logo.png"));
+    assert.equal(
+      listingPhotosFor("mb-1052", ["/photos/wpg/1052.jpg", "/photos/wpg/1052-logo.png"], official, wpg).includes(
+        "/photos/playroom.jpg",
+      ),
+      false,
+    );
   });
 
   it("DaycareCard and catalog both call listingThumb / listingPhotosFor", () => {

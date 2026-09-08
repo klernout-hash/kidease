@@ -6,6 +6,7 @@ import { ensureSeed, upsertDaycare } from "./seed";
 import { lookupUser, notifyAccountCreated, notifyPlatform, notifyProviderJoined } from "./notify";
 import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
+import { splitPhotoList } from "@/lib/listing-photo";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
@@ -642,7 +643,7 @@ export const listInbox = createServerFn({ method: "GET" })
         daycareId: r.daycare_id,
         daycareName: r.name,
         daycareSlug: r.slug,
-        photo: r.photos.split(",")[0] ?? "/photos/cottage.jpg",
+        photo: splitPhotoList(r.photos)[0] ?? "/photos/cottage.jpg",
         lastAt: String(r.last_at),
         lastBody: last[0]?.body ?? "",
         status: r.status,
@@ -758,7 +759,7 @@ export const getThread = createServerFn({ method: "GET" })
       daycareId: conv[0].daycare_id,
       daycareName: conv[0].name,
       daycareSlug: conv[0].slug,
-      photo: conv[0].photos.split(",")[0] ?? "/photos/cottage.jpg",
+      photo: splitPhotoList(conv[0].photos)[0] ?? "/photos/cottage.jpg",
       phone: conv[0].phone,
       isParent: conv[0].user_id === context.userId,
       booking: b

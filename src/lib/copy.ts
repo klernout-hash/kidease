@@ -296,6 +296,7 @@ export const copy = {
       "Upload a clear photo of your entrance or storefront so parents can recognize the building. This replaces the street-view photo on your listing.",
     storefrontHint: "Use a well-lit shot of the front door or signage. JPG or PNG under 1.5 MB.",
     storefrontCta: "Upload storefront photo",
+    interiorCta: "Add interior photo",
     promoteTitle: "Promote this listing",
     promoteLead:
       "Pay to appear at the top of search results near you. Priority listings show a glowing blue Priority badge so parents notice you first.",
@@ -1585,6 +1586,7 @@ export const copy = {
       "Ajoutez une photo claire de l’entrée pour que les parents reconnaissent le bâtiment. Elle remplace la vue de rue sur votre fiche.",
     storefrontHint: "Façade, porte ou enseigne — bien éclairée. JPG ou PNG de moins de 1,5 Mo.",
     storefrontCta: "Téléverser la photo de façade",
+    interiorCta: "Ajouter une photo intérieure",
     promoteTitle: "Mettre en avant cette fiche",
     promoteLead:
       "Payez pour apparaître en haut des résultats près de chez vous. Les fiches prioritaire affichent un badge bleu lumineux pour attirer l’œil des parents.",

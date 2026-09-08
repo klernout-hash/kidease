@@ -5,6 +5,7 @@ import {
   neonCatalogMinCount,
   preferNeonCatalog,
 } from "@/lib/catalog-source";
+import { splitPhotoList } from "@/lib/listing-photo";
 import { clampRadiusKm } from "@/lib/proximity";
 import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
@@ -134,10 +135,7 @@ export function catalogRowRenderable(row: Pick<CatalogDbRow, "id" | "slug">): bo
 }
 
 export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
-  const photos = String(row.photos || "")
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
+  const photos = splitPhotoList(row.photos);
   const id = String(row.id || "").trim();
   const slug = String(row.slug || "").trim() || id;
   const name = String(row.name || "").trim() || slug || id || "Licensed centre";

@@ -11,7 +11,7 @@ import { RequestTourSheet } from "@/components/request-tour";
 import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
-import { LISTING_PLACEHOLDER, isOfficialBuildingPhoto } from "@/lib/listing-photo";
+import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto } from "@/lib/listing-photo";
 import { DETAIL_SIZES } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
 import { getDaycare, getListingSeo } from "@/lib/server/daycares";
@@ -228,8 +228,10 @@ function Listing() {
   const desc = locale === "fr" ? d.descriptionFr : d.description;
   const hours = locale === "fr" ? d.hoursFr : d.hours;
   const spots = d.spotsInfant + d.spotsToddler + d.spotsPreschool;
+  const classified = classifyListingPhotos(d.photos);
+  const interiors = classified.interiors;
   const photos = (() => {
-    const list = [...d.photos].filter(Boolean);
+    const list = [classified.storefront, ...interiors].filter(Boolean);
     list.sort((a, b) => Number(isOfficialBuildingPhoto(b)) - Number(isOfficialBuildingPhoto(a)));
     return list.length ? list : [LISTING_PLACEHOLDER];
   })();
@@ -390,6 +392,24 @@ function Listing() {
             </div>
           ) : null}
         </div>
+        {interiors.length ? (
+          <section className="mt-3 rounded-xl bg-surface p-4 shadow-card ring-1 ring-border">
+            <h2 className="font-display text-xl">{t("interiors")}</h2>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {interiors.map((src, i) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => setPhoto(photos.indexOf(src))}
+                  className="aspect-[4/3] overflow-hidden rounded-lg bg-surface-2"
+                  aria-label={`${t("interiors")} ${i + 1}`}
+                >
+                  <BuildingPhoto src={src} className="size-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <div className="mt-6 grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div className="min-w-0">

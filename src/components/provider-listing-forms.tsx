@@ -6,6 +6,7 @@ import { PriorityPill } from "@/components/priority-pill";
 import { ListingHealthPanel } from "@/components/listing-health";
 import { QualityIssuesPanel } from "@/components/quality-issues";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
+import { classifyListingPhotos, MAX_INTERIOR_PHOTOS } from "@/lib/listing-photo";
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
@@ -152,6 +153,7 @@ export function CapacityForm({
   const complete = listingCompleteness(draft);
   const vacancy = vacancyFreshness(vacancyTimestamp(daycare));
   const preview = state.storefront || daycare.photos[0];
+  const existingInteriors = classifyListingPhotos(daycare.photos).interiors;
 
   function readImage(file: File | undefined, into: "storefront" | "interiors" | "license") {
     readListingImage(
@@ -230,6 +232,30 @@ export function CapacityForm({
               </span>
               <input type="file" accept="image/*" className="sr-only" onChange={(e) => readImage(e.target.files?.[0], "storefront")} />
             </label>
+          </div>
+          <h3 className="font-display text-xl">{t("interiors")}</h3>
+          <p className="text-sm text-muted">{t("interiorPhotoNote")}</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {existingInteriors.map((src) => (
+              <img key={src} src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover ring-1 ring-border" />
+            ))}
+            {state.interiors.map((src, i) => (
+              <img key={`new-${i}`} src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover ring-1 ring-primary/40" />
+            ))}
+            {existingInteriors.length + state.interiors.length < MAX_INTERIOR_PHOTOS ? (
+              <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-bg px-3 text-center text-sm">
+                <span className="inline-flex items-center gap-2 font-medium text-primary">
+                  <Camera className="size-4" />
+                  {t("interiorCta")}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => readImage(e.target.files?.[0], "interiors")}
+                />
+              </label>
+            ) : null}
           </div>
           <h3 className="font-display text-xl">{t("businessDetails")}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
