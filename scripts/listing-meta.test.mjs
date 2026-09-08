@@ -50,7 +50,10 @@ test("daycare route exposes unique title and description hooks", () => {
   const route = readFileSync(join(root, "src/routes/daycare.$slug.tsx"), "utf8");
   assert.match(route, /listingPageMeta/);
   assert.match(route, /listingPageTitle/);
-  assert.match(route, /head:\s*\(\{\s*params\s*\}\)/);
+  assert.match(route, /head:\s*\(\{\s*params,\s*loaderData\s*\}\)/);
   assert.match(route, /name:\s*"description"/);
-  assert.match(route, /document\.title = listingPageTitle/);
+  assert.match(route, /document\.title = listingSeoPageTitle/);
+  assert.match(route, /listingPageTitle\(d\)/);
+  assert.match(route, /listingSeoHeadTags/);
+  assert.match(route, /application\/ld\+json/);
 });

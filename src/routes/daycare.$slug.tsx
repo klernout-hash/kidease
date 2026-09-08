@@ -15,7 +15,12 @@ import { LISTING_PLACEHOLDER, isOfficialBuildingPhoto } from "@/lib/listing-phot
 import { DETAIL_SIZES } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
 import { getDaycare, getListingSeo } from "@/lib/server/daycares";
-import { listingCanonicalUrl, listingJsonLdScript, listingSeoHeadTags } from "@/lib/listing-seo";
+import {
+  listingCanonicalUrl,
+  listingJsonLdScript,
+  listingPageTitle as listingSeoPageTitle,
+  listingSeoHeadTags,
+} from "@/lib/listing-seo";
 import { isSaved, openConversation, toggleSave } from "@/lib/server/family";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
@@ -56,12 +61,20 @@ export const Route = createFileRoute("/daycare/$slug")({
       return null;
     }
   },
-  head: ({ loaderData }) => {
-    if (!loaderData) return {};
-    const canonical = listingCanonicalUrl(loaderData.slug);
+  head: ({ params, loaderData }) => {
+    if (loaderData) {
+      const canonical = listingCanonicalUrl(loaderData.slug);
+      return {
+        meta: listingSeoHeadTags(loaderData),
+        links: canonical ? [{ rel: "canonical", href: canonical }] : [],
+      };
+    }
+    const fallback = listingPageMeta({ slug: params.slug });
     return {
-      meta: listingSeoHeadTags(loaderData),
-      links: canonical ? [{ rel: "canonical", href: canonical }] : [],
+      meta: [
+        { title: fallback.title },
+        { name: "description", content: fallback.description },
+      ],
     };
   },
   component: Listing,
@@ -164,8 +177,8 @@ function Listing() {
     });
     const origin = useAppStore.getState().origin;
     trackLocation("view", origin.lat, origin.lng, origin.label, { slug: d.slug });
-    document.title = listingPageTitle(d);
-  }, [data]);
+    document.title = listingSeoPageTitle(d, locale === "fr" ? "fr" : "en") || listingPageTitle(d);
+  }, [data, locale]);
 
   const seoLocale = locale === "fr" ? "fr" : "en";
   const jsonLdSrc = data?.daycare ?? seo;
