@@ -137,6 +137,27 @@ test("register refuses to persist when FEATURE_PUSH is off", async () => {
   assert.equal(sql.rows.length, 0);
 });
 
+test("register refuses on Vercel Production when secrets are missing", async () => {
+  const sql = memorySql();
+  const result = await upsertPushDeviceToken(
+    sql,
+    "user_1",
+    { token: SAMPLE_TOKEN, platform: "ios" },
+    { FEATURE_PUSH: "1", VERCEL_ENV: "production" },
+  );
+  assert.deepEqual(result, { ok: false, skipped: true, error: PUSH_DISABLED_MESSAGE });
+  assert.equal(sql.rows.length, 0);
+
+  const preview = await upsertPushDeviceToken(
+    sql,
+    "user_1",
+    { token: SAMPLE_TOKEN, platform: "ios" },
+    { FEATURE_PUSH: "1", VERCEL_ENV: "preview" },
+  );
+  assert.equal(preview.ok, true);
+  assert.equal(sql.rows.length, 1);
+});
+
 test("register upserts a native token when the flag is on", async () => {
   const sql = memorySql();
   const first = await upsertPushDeviceToken(

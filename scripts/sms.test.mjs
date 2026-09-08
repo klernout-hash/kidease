@@ -285,4 +285,6 @@ test("FEATURE_SMS stays off in env example after CASL landing", () => {
   assert.match(envExample, /^FEATURE_SMS=0$/m);
   assert.doesNotMatch(envExample, /^FEATURE_SMS=1$/m);
   assert.match(readFileSync(join(root, "docs/sms.md"), "utf8"), /casl_consents/);
+  assert.match(readFileSync(join(root, "docs/sms.md"), "utf8"), /Programmable SMS/);
+  assert.match(readFileSync(join(root, "docs/sms.md"), "utf8"), /not Twilio Verify/);
 });

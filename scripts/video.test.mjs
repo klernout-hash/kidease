@@ -14,6 +14,7 @@ import {
   VIDEO_PLUS_BILLING_NOT_LIVE_MESSAGE,
   VIDEO_PLUS_REQUIRED_MESSAGE,
   VIDEO_SCAFFOLD_MESSAGE,
+  VIDEO_SDK_NOT_WIRED_MESSAGE,
   VIDEO_SDK_WIRED,
   videoCredentialsPresent,
   videoEnvPresence,
@@ -116,6 +117,26 @@ test("Plus gate allows admin, provider, and live Plus parent", () => {
     parentPlusEntitlesVideo({ role: "parent", plusPlan: "plus", plusStatus: "canceled" }, true),
     { ok: false, reason: "plus_required" },
   );
+});
+
+test("videoJoinGate hides parent joins when the Twilio Video SDK is not wired", () => {
+  const parent = videoJoinGate({
+    featureOn: true,
+    credentialsPresent: true,
+    stripeLive: true,
+    actor: { role: "parent", plusPlan: "plus", plusStatus: "active" },
+    sdkWired: false,
+  });
+  assert.deepEqual(parent, { ok: false, reason: "sdk_not_wired", error: VIDEO_SDK_NOT_WIRED_MESSAGE });
+  const adminLab = videoJoinGate({
+    featureOn: true,
+    credentialsPresent: true,
+    stripeLive: true,
+    actor: { role: "admin" },
+    sdkWired: false,
+    allowScaffoldMint: true,
+  });
+  assert.equal(adminLab.ok, true);
 });
 
 test("videoJoinGate fails closed when the flag is off even for Plus parents", () => {
@@ -274,6 +295,9 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   assert.match(route, /from "@\/lib\/server\/video-join"/);
   assert.doesNotMatch(route, /\.server['"]/);
   assert.match(inbox, /to="\/video\/\$roomId"/);
+  assert.match(inbox, /videoSurfaceEnabled/);
+  assert.match(src("src/lib/server/family.ts"), /videoSurfaceEnabled/);
+  assert.match(src("src/routes/video.\$roomId.tsx"), /sdk_not_wired/);
   assert.match(tree, /from '\.\/routes\/video\.\$roomId'/);
   assert.match(tree, /id:\s*'\/video\/\$roomId'/);
   assert.match(lab, /FEATURE_VIDEO/);

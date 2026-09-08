@@ -62,6 +62,7 @@ function ThreadPage() {
   const [openBill, setOpenBill] = useState<Bill | null>(null);
   const [body, setBody] = useState("");
   const [sendError, setSendError] = useState("");
+  const [videoSurface, setVideoSurface] = useState(false);
 
   async function load() {
     const res = await getThread({ data: id });
@@ -104,6 +105,7 @@ function ThreadPage() {
     setMessages(res.messages);
     setTours(res.tours ?? []);
     setCanWrite(res.canWrite !== false);
+    setVideoSurface(Boolean(res.videoSurfaceEnabled));
     if (res.isParent && next) {
       const billed = await listParentBills().catch(() => ({ bills: [] as Bill[] }));
       const match = billed.bills.find((bill) => bill.bookingId === next.id && billIsOpen(bill.status)) ?? null;
@@ -187,7 +189,7 @@ function ThreadPage() {
                 </a>
               </Button>
             ) : null}
-            {id ? (
+            {id && videoSurface ? (
               <Button variant="ghost" size="icon" asChild>
                 <Link to="/video/$roomId" params={{ roomId: id }} aria-label={t("videoCall")}>
                   <Video className="size-5" />

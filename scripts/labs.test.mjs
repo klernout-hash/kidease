@@ -114,6 +114,8 @@ test("admin chat lab is registered, admin-gated, and honest", () => {
   assert.match(route, /CHAT_SCAFFOLD_MESSAGE/);
   assert.match(route, /FEATURE_SMS/);
   assert.match(route, /FEATURE_VIDEO/);
+  assert.match(route, /Programmable SMS/);
+  assert.match(route, /Production blocked|Preview override|channelState/);
   assert.match(route, /Scaffold/);
   assert.match(route, /Coming soon/);
   assert.match(route, /Chat composer \(disabled\)/);
@@ -132,6 +134,7 @@ test("admin chat lab is registered, admin-gated, and honest", () => {
   assert.match(readFileSync(join(root, "docs/push.md"), "utf8"), /FEATURE_PUSH/);
   assert.match(readFileSync(join(root, "docs/flags.md"), "utf8"), /POSTHOG_FLAGS_KEY/);
   assert.match(readFileSync(join(root, "docs/chat.md"), "utf8"), /disabled composer/i);
+  assert.match(readFileSync(join(root, "docs/chat.md"), "utf8"), /Production vs Preview/);
   assert.match(route, /docs\/flags\.md/);
   assert.match(route, /docs\/chat\.md/);
   assert.match(readFileSync(join(root, "src/lib/chat-scaffold.ts"), "utf8"), /not Stream, not Sendbird/);

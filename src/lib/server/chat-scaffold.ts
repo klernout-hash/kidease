@@ -15,16 +15,19 @@ import {
   type RemoteFlagSnapshot,
 } from "@/lib/flags";
 import {
+  describeChannelReadiness,
+  type ChannelBlockReason,
+  type ChannelReadiness,
+} from "@/lib/channel-readiness";
+import {
   FCM_LAB_NEXT_STEPS,
-  pushCredentialsPresent,
   pushEnvPresence,
   type PushEnvPresence,
   type PushLabNextStep,
 } from "@/lib/push";
-import { smsCredentialsPresent, smsEnvPresence, type SmsEnvPresence } from "@/lib/sms";
+import { smsEnvPresence, type SmsEnvPresence } from "@/lib/sms";
 import {
   TWILIO_VIDEO_LAB_NEXT_STEPS,
-  videoCredentialsPresent,
   videoEnvPresence,
   type VideoEnvPresence,
   type VideoLabNextStep,
@@ -37,6 +40,14 @@ export type FlagLab = {
   remoteValue: boolean | null;
 };
 
+export type ChannelLab = FlagLab & {
+  armed: boolean;
+  sendEnabled: boolean;
+  surfaceEnabled: boolean;
+  production: boolean;
+  reason: ChannelBlockReason | null;
+};
+
 export type LabStatus = {
   remote: {
     configured: boolean;
@@ -45,15 +56,15 @@ export type LabStatus = {
     error?: string;
   };
   chat: FlagLab & { ready: false; message: string; composer: ChatComposerState };
-  push: FlagLab & {
+  push: ChannelLab & {
     ready: false;
     credentialsPresent: boolean;
     presence: PushEnvPresence;
     tokenCount: number;
     nextSteps: readonly PushLabNextStep[];
   };
-  sms: FlagLab & { credentialsPresent: boolean; presence: SmsEnvPresence };
-  video: FlagLab & {
+  sms: ChannelLab & { credentialsPresent: boolean; presence: SmsEnvPresence };
+  video: ChannelLab & {
     credentialsPresent: boolean;
     presence: VideoEnvPresence;
     sdkWired: false;
@@ -72,6 +83,17 @@ function toFlagLab(key: Parameters<typeof describeFeatureFlag>[0]): FlagLab {
   };
 }
 
+function toChannelLab(ready: ChannelReadiness): ChannelLab {
+  return {
+    ...toFlagLab(ready.flagKey),
+    armed: ready.armed,
+    sendEnabled: ready.sendEnabled,
+    surfaceEnabled: ready.surfaceEnabled,
+    production: ready.production,
+    reason: ready.reason,
+  };
+}
+
 export async function resolveLabStatus(): Promise<LabStatus> {
   const remote = await refreshRemoteFlags();
   let tokenCount = 0;
@@ -84,6 +106,9 @@ export async function resolveLabStatus(): Promise<LabStatus> {
     tokenCount = 0;
   }
   const chatFlag = toFlagLab("FEATURE_INAPP_CHAT");
+  const smsReady = describeChannelReadiness("sms"); // FEATURE_SMS
+  const pushReady = describeChannelReadiness("push"); // FEATURE_PUSH
+  const videoReady = describeChannelReadiness("video"); // FEATURE_VIDEO
   return {
     remote: {
       configured: remote.provider === "posthog",
@@ -98,21 +123,21 @@ export async function resolveLabStatus(): Promise<LabStatus> {
       composer: chatComposerState(chatFlag.enabled),
     },
     push: {
-      ...toFlagLab("FEATURE_PUSH"),
+      ...toChannelLab(pushReady),
       ready: false,
-      credentialsPresent: pushCredentialsPresent(),
+      credentialsPresent: pushReady.credentialsPresent,
       presence: pushEnvPresence(),
       tokenCount,
       nextSteps: FCM_LAB_NEXT_STEPS,
     },
     sms: {
-      ...toFlagLab("FEATURE_SMS"),
-      credentialsPresent: smsCredentialsPresent(),
+      ...toChannelLab(smsReady),
+      credentialsPresent: smsReady.credentialsPresent,
       presence: smsEnvPresence(),
     },
     video: {
-      ...toFlagLab("FEATURE_VIDEO"),
-      credentialsPresent: videoCredentialsPresent(),
+      ...toChannelLab(videoReady),
+      credentialsPresent: videoReady.credentialsPresent,
       presence: videoEnvPresence(),
       sdkWired: false,
       nextSteps: TWILIO_VIDEO_LAB_NEXT_STEPS,

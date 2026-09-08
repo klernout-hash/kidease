@@ -79,19 +79,19 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     key: "FEATURE_PUSH",
     defaultOn: false,
     docs: "docs/push.md",
-    summary: "FCM HTTP v1 / APNs. Native-only. Dry-run counts tokens. Nothing is sent while off.",
+    summary: "FCM HTTP v1 / APNs. Native-only. Production stays off without secrets. Preview may override.",
   },
   {
     key: "FEATURE_SMS",
     defaultOn: false,
     docs: "docs/sms.md",
-    summary: "Transactional Twilio SMS (Canada). Needs CASL + STOP before enable.",
+    summary: "Transactional Twilio Programmable SMS (not Verify). Production stays off without secrets.",
   },
   {
     key: "FEATURE_VIDEO",
     defaultOn: false,
     docs: "docs/video.md",
-    summary: "Parent Plus Twilio Video tours. SDK not attached. Does not charge.",
+    summary: "Parent Plus Twilio Video. Inbox hidden until SDK is wired. Production stays off without secrets.",
   },
   {
     key: "FEATURE_PROVIDER_SUBSCRIPTIONS",

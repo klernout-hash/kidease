@@ -10,6 +10,8 @@ KidEase video is a **Parent Plus** offer: parent ↔ centre tour or talk. It is 
 
 `FEATURE_VIDEO` defaults **off**. Bills / Stripe checkout / SMS paths are untouched.
 
+**Production vs Preview:** on Vercel Production the flag is ignored unless Twilio Video API-key secrets exist. Preview/dev may set `FEATURE_VIDEO=1` to mint a lab token. **Inbox Video stays hidden** until `VIDEO_SDK_WIRED` is true — enabling the flag must not expose a fake call button.
+
 Optional PostHog overlay (no redeploy): see `docs/flags.md`. Env is the fallback when `POSTHOG_FLAGS_KEY` is unset.
 
 When Stripe is **not** live, free parents see honest copy: **Plus required (billing not live)**. Do not pretend a rehearsal Plus pick is a paid subscription.
@@ -20,7 +22,7 @@ Set the same keys on **Production and Preview** (encrypted). Never prefix `VITE_
 
 | Name | Required to mint | Notes |
 | --- | --- | --- |
-| `FEATURE_VIDEO` | yes (`1`) | Leave `0` until Console credentials exist. |
+| `FEATURE_VIDEO` | yes (`1`) to mint | **Production:** leave `0` until Console credentials exist. **Preview:** may set `1` to test `/video/lab`. Inbox stays hidden until the JS SDK is wired. |
 | `TWILIO_ACCOUNT_SID` | yes | Reuse the SMS Account SID (`AC…`). |
 | `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET` | yes | **Required for Video Access Tokens.** Standard or Main key in **US1**. Restricted keys cannot mint tokens. |
 | `TWILIO_AUTH_TOKEN` | optional | Needed later if you validate Video status-callback signatures. Keep it if SMS already uses it. |

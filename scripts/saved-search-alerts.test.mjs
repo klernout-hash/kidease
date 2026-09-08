@@ -128,6 +128,8 @@ test("email path uses Resend when wired and stubs honestly otherwise", () => {
   assert.doesNotMatch(alerts, /TODO: wire Resend/);
   const prefs = src("src/lib/server/saved-searches.ts");
   assert.match(prefs, /emailConfigured: resetMailConfigured/);
+  assert.match(prefs, /smsChannelLive/);
+  assert.match(src("src/components/saved-searches-panel.tsx"), /alertSmsStub/);
   assert.match(src("src/components/saved-searches-panel.tsx"), /alertEmailStub/);
 });
 

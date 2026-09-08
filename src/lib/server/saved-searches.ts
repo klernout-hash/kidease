@@ -234,6 +234,8 @@ export const getSearchAlertPrefs = createServerFn({ method: "GET" })
     `.catch(() => []);
     const row = rows[0];
     const emailConfigured = resetMailConfigured();
+    const { smsSendEnabled } = await import("@/lib/channel-readiness");
+    const smsChannelLive = smsSendEnabled();
     const { listConsents } = await import("@/lib/server/casl-consent");
     const consents = await listConsents(context.userId);
     if (!row) {
@@ -244,6 +246,7 @@ export const getSearchAlertPrefs = createServerFn({ method: "GET" })
         emailCommercial: consents.emailCommercial,
         updatedAt: null,
         emailConfigured,
+        smsChannelLive,
       };
     }
     return {
@@ -253,6 +256,7 @@ export const getSearchAlertPrefs = createServerFn({ method: "GET" })
       emailCommercial: consents.emailCommercial,
       updatedAt: iso(row.updated_at),
       emailConfigured,
+      smsChannelLive,
     };
   });
 
@@ -314,6 +318,7 @@ export const saveSearchAlertPrefs = createServerFn({ method: "POST" })
       address: actor.email,
       locale: data.locale,
     });
+    const { smsSendEnabled } = await import("@/lib/channel-readiness");
     return {
       emailEnabled: data.emailEnabled,
       inAppEnabled: data.inAppEnabled,
@@ -321,6 +326,7 @@ export const saveSearchAlertPrefs = createServerFn({ method: "POST" })
       emailCommercial: data.emailCommercial,
       updatedAt: new Date().toISOString(),
       emailConfigured: resetMailConfigured(),
+      smsChannelLive: smsSendEnabled(),
     };
   });
 
