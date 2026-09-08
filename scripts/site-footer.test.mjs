@@ -67,6 +67,24 @@ test("Support column drops the inbox email and uses Contact Us copy", () => {
   assert.match(copy, /contactTitle: "Nous joindre"/);
 });
 
+test("Parents column keeps product links and omits city hubs", () => {
+  const parents = footer.slice(footer.indexOf(">Parents<"), footer.indexOf("Garderies"));
+  assert.match(parents, /to="\/search"/);
+  assert.match(parents, /parentSignIn/);
+  assert.match(parents, /to="\/parent"/);
+  assert.match(parents, /benefitsTab/);
+  assert.match(parents, /tourChecklist/);
+  assert.match(parents, /compare/);
+  assert.match(parents, /saved/);
+  assert.match(parents, /getApp/);
+  assert.match(parents, /rateKidEase/);
+  assert.doesNotMatch(parents, /cityHubs/);
+  assert.doesNotMatch(parents, /cityHubPath/);
+  assert.doesNotMatch(parents, /daycare\/city/);
+  assert.match(src("src/routes/index.tsx"), /CITY_HUB_DEFS\.map/);
+  assert.match(src("public/sitemap.xml"), /\/daycare\/city\/winnipeg/);
+});
+
 test("footer CSS clusters columns instead of stretching full width", () => {
   assert.match(css, /\.ke-footer-inner \{[\s\S]*?max-width: 44rem;/);
   assert.match(css, /grid-template-columns: 1fr 1fr;/);
