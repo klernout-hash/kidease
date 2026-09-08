@@ -122,12 +122,19 @@ def esri_photo(lat: float, lon: float, out: Path) -> bool:
     return True
 
 
+_SLUG_TOKEN_FIXES = {"cetnre": "centre", "cetnres": "centres"}
+
+
+def fix_slug_tokens(s: str) -> str:
+    return "-".join(_SLUG_TOKEN_FIXES.get(part, part) for part in s.split("-"))
+
+
 def slugify(name: str, fid: str) -> str:
     s = name.lower()
     s = s.replace("&", " and ")
     s = re.sub(r"[^a-z0-9]+", "-", s)
     s = re.sub(r"-{2,}", "-", s).strip("-")[:70]
-    return f"{s}-{fid}"
+    return f"{fix_slug_tokens(s)}-{fid}"
 
 
 def parse_hour(iso: str | None, as_end: bool = False) -> tuple[int, int] | None:

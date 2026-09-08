@@ -38,10 +38,17 @@ nomi = pgeocode.Nominatim("ca")
 FSA_CACHE: dict[str, tuple[float, float] | None] = {}
 
 
+_SLUG_TOKEN_FIXES = {"cetnre": "centre", "cetnres": "centres"}
+
+
+def fix_slug_tokens(s: str) -> str:
+    return "-".join(_SLUG_TOKEN_FIXES.get(part, part) for part in s.split("-"))
+
+
 def slugify(s: str) -> str:
     s = s.lower()
     s = re.sub(r"[^a-z0-9]+", "-", s)
-    return s.strip("-")[:48] or "centre"
+    return fix_slug_tokens(s.strip("-")[:48] or "centre")
 
 
 def fsa_ll(postal: str) -> tuple[float, float] | None:

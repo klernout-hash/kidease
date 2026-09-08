@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { Heart, MapPinned, MessageCircle, Phone, Star } from "lucide-react";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { ShareListingButton } from "@/components/share-button";
@@ -56,8 +56,16 @@ import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/li
 export const Route = createFileRoute("/daycare/$slug")({
   loader: async ({ params }) => {
     try {
-      return await getListingSeo({ data: params.slug });
-    } catch {
+      const seo = await getListingSeo({ data: params.slug });
+      if (seo?.slug && seo.slug !== params.slug) {
+        throw redirect({
+          to: "/daycare/$slug",
+          params: { slug: seo.slug },
+        });
+      }
+      return seo;
+    } catch (error) {
+      if (error && typeof error === "object" && "isRedirect" in error) throw error;
       return null;
     }
   },
