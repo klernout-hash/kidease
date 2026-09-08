@@ -1,0 +1,6 @@
+# Cursor 1Password plugin — mount validation only (paths, no secrets).
+# Expects a FIFO mount at repo-root `.env` after Kyle connects
+# Developer → Environments → Local .env file.
+# Set mount_paths = [] to disable hook checks in this repo.
+# See docs/1password-environments.md
+mount_paths = [".env"]

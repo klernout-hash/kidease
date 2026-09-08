@@ -16,7 +16,7 @@ Set the **same names** on Production **and** Preview. Encrypted. Never prefix `V
 | `INNGEST_SIGNING_KEY` | yes (Cloud → app HMAC) | Inngest Cloud → **Manage** → Signing Key. Paste the key. Do not invent one. |
 | `INNGEST_SERVE_ORIGIN` | optional | `https://www.kidease.ca` so Cloud syncs the custom domain instead of `*.vercel.app`. |
 
-The [Inngest Vercel integration](https://www.inngest.com/docs/deploy/vercel) can set Event + Signing keys automatically when you link project **kidease-git**.
+The [Inngest Vercel integration](https://www.inngest.com/docs/deploy/vercel) can set Event + Signing keys automatically when you link project **kidease-git**. Still copy those names into 1Password Environments so they are not only on Vercel — see `docs/1password-environments.md`.
 
 Absent keys = the Next/Vite app still boots. `/api/inngest` exists but Cloud cannot sync. Existing Vercel crons keep running the HTTP jobs.
 

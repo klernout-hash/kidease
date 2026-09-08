@@ -138,6 +138,11 @@ export default defineConfig(({ command, isPreview }) => ({
     hmr: {
       overlay: false,
     },
+    // 1Password Environments mounts `.env` as a FIFO. Watching it restarts
+    // Vite in a loop. Names-only — see docs/1password-environments.md
+    watch: {
+      ignored: ["**/.env", "**/.env.local", "**/.env.*.local"],
+    },
   },
   preview: {
     host: "127.0.0.1",
