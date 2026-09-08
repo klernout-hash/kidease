@@ -33,6 +33,7 @@ import { displayDistance } from "@/lib/units";
 type Props = {
   items: DaycareCard[];
   origin: { lat: number; lng: number };
+  secondOrigin?: { lat: number; lng: number } | null;
   radiusKm: number;
   activeSlug?: string | null;
   onSelect: (slug: string) => void;
@@ -60,7 +61,7 @@ type SlugPin = AnyPin & {
 
 const MAP_PAD = { top: 88, right: 20, bottom: 240, left: 20 };
 
-export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onRelocate, onLocate }: Props) {
+export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onSelect, onRelocate, onLocate }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const mapsApiRef = useRef<typeof google.maps | null>(null);
@@ -68,7 +69,9 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
   const advancedMarkerRef = useRef<AdvancedMarkerCtor | null>(null);
   const pinsRef = useRef<AnyPin[]>([]);
   const youRef = useRef<MovableDot | null>(null);
+  const workYouRef = useRef<MovableDot | null>(null);
   const circleRef = useRef<google.maps.Circle | null>(null);
+  const circle2Ref = useRef<google.maps.Circle | null>(null);
   const markersBySlug = useRef(new Map<string, SlugPin>());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
@@ -153,8 +156,12 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
       pinsRef.current = [];
       youRef.current?.setMap(null);
       youRef.current = null;
+      workYouRef.current?.setMap(null);
+      workYouRef.current = null;
       circleRef.current?.setMap(null);
       circleRef.current = null;
+      circle2Ref.current?.setMap(null);
+      circle2Ref.current = null;
       markers.clear();
       mapRef.current = null;
       mapsApiRef.current = null;
@@ -190,14 +197,15 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
     const maps = mapsApiRef.current;
     if (!map || !maps || !ready) return;
     map.panTo({ lat: origin.lat, lng: origin.lng });
+    const meters = Math.max(radiusKm, 0.5) * 1000;
     if (circleRef.current) {
       circleRef.current.setCenter({ lat: origin.lat, lng: origin.lng });
-      circleRef.current.setRadius(Math.max(radiusKm, 0.5) * 1000);
+      circleRef.current.setRadius(meters);
     } else {
       circleRef.current = new maps.Circle({
         map,
         center: { lat: origin.lat, lng: origin.lng },
-        radius: Math.max(radiusKm, 0.5) * 1000,
+        radius: meters,
         strokeColor: "#1a3790",
         strokeWeight: 1,
         fillColor: "#1a3790",
@@ -205,8 +213,46 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         clickable: false,
       });
     }
+    if (secondOrigin) {
+      if (circle2Ref.current) {
+        circle2Ref.current.setCenter({ lat: secondOrigin.lat, lng: secondOrigin.lng });
+        circle2Ref.current.setRadius(meters);
+        circle2Ref.current.setMap(map);
+      } else {
+        circle2Ref.current = new maps.Circle({
+          map,
+          center: { lat: secondOrigin.lat, lng: secondOrigin.lng },
+          radius: meters,
+          strokeColor: "#b45309",
+          strokeWeight: 1,
+          fillColor: "#b45309",
+          fillOpacity: 0.06,
+          clickable: false,
+        });
+      }
+      if (workYouRef.current) {
+        workYouRef.current.setPosition({ lat: secondOrigin.lat, lng: secondOrigin.lng });
+        workYouRef.current.setMap(map);
+      } else {
+        workYouRef.current = createYouAreHereDot({
+          maps,
+          map,
+          position: { lat: secondOrigin.lat, lng: secondOrigin.lng },
+          AdvancedMarker: advancedMarkerRef.current,
+        });
+      }
+    } else {
+      circle2Ref.current?.setMap(null);
+      workYouRef.current?.setMap(null);
+    }
     const bounds = circleRef.current.getBounds();
-    if (bounds) {
+    const bounds2 = secondOrigin ? circle2Ref.current?.getBounds() : null;
+    if (bounds && bounds2) {
+      const union = new maps.LatLngBounds();
+      union.union(bounds);
+      union.union(bounds2);
+      map.fitBounds(union, MAP_PAD);
+    } else if (bounds) {
       map.fitBounds(bounds, MAP_PAD);
     } else {
       map.setZoom(mapZoomForRadius(radiusKm));
@@ -221,7 +267,7 @@ export function MapView({ items, origin, radiusKm, activeSlug, onSelect, onReloc
         AdvancedMarker: advancedMarkerRef.current,
       });
     }
-  }, [origin.lat, origin.lng, radiusKm, ready]);
+  }, [origin.lat, origin.lng, secondOrigin?.lat, secondOrigin?.lng, radiusKm, ready]);
 
   useEffect(() => {
     const map = mapRef.current;

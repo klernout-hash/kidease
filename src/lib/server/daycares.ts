@@ -3,7 +3,8 @@ import { getSql } from "@/lib/db";
 import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, fsaOf, recommendedRank } from "@/lib/proximity";
 import { catalogByIdsGet, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
-import { nearbyListings, type NearbyListing } from "./nearby";
+import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
+import { nearbyListings, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerIsAdmin } from "./public-listing";
 import { upsertDaycare } from "./seed";
 import { applyListingReadiness } from "@/lib/listing-readiness";
@@ -34,7 +35,15 @@ type SearchInput = {
   ageGroup: "any" | AgeGroup;
   fsa?: string;
   startDate?: string | null;
+  lat2?: number;
+  lng2?: number;
+  mode?: "home" | "work" | "both";
 };
+
+function optionalCoord(value: unknown) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
 
 function toDaycare(d: CatalogDaycare): Daycare {
   return applyListingReadiness({
@@ -210,9 +219,21 @@ function slimCard(card: DaycareCard): DaycareCard {
 }
 
 async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
-  const origin = { lat: data.lat, lng: data.lng };
+  const work =
+    typeof data.lat2 === "number" && typeof data.lng2 === "number"
+      ? { lat: data.lat2, lng: data.lng2 }
+      : null;
+  const anchors = resolveSearchAnchors({
+    home: { lat: data.lat, lng: data.lng },
+    work,
+    mode: data.mode,
+  });
+  const origin = anchors.primary;
+  const listings = anchors.intersect && anchors.secondary
+    ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
+    : await nearbyListings(origin, data.radiusKm);
   let cards: DaycareCard[] = [];
-  for (const d of await nearbyListings(origin, data.radiusKm)) {
+  for (const d of listings) {
     cards.push(toCard(d, origin, data.fsa));
   }
   cards = await overlayClaimed(cards, mergeClaimedCard);
@@ -257,6 +278,9 @@ export const searchDaycares = createServerFn({ method: "POST" })
   .validator((input: SearchInput) => ({
     ...input,
     radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
+    lat2: optionalCoord(input.lat2),
+    lng2: optionalCoord(input.lng2),
+    mode: parseAnchorMode(input.mode),
   }))
   .handler(async ({ data }) =>
     rememberSearch(searchMemoKey(data), () =>

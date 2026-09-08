@@ -14,6 +14,9 @@ import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
+import { PlaceSearch } from "@/components/place-search";
+import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
+import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/account")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -86,6 +89,12 @@ function ProfilePane() {
     emailService: false,
     emailCommercial: false,
   });
+  const origin = useAppStore((s) => s.origin);
+  const workOrigin = useAppStore((s) => s.workOrigin);
+  const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
+  const anchorMode = useAppStore((s) => s.anchorMode);
+  const setAnchorMode = useAppStore((s) => s.setAnchorMode);
+  const [workQuery, setWorkQuery] = useState(workOrigin?.label ?? "");
 
   useEffect(() => {
     if (!user) return;
@@ -108,6 +117,15 @@ function ProfilePane() {
           emailService: row.emailService,
           emailCommercial: row.emailCommercial,
         });
+      })
+      .catch(() => undefined);
+    void getMySearchAnchors()
+      .then((saved) => {
+        if (saved.work) {
+          setWorkOrigin(saved.work);
+          setWorkQuery(saved.work.label);
+        }
+        if (saved.mode) setAnchorMode(saved.mode);
       })
       .catch(() => undefined);
   }, [user?.id]);
@@ -224,6 +242,25 @@ function ProfilePane() {
             </label>
             <p className="text-right text-[12px] text-subtle">{bio.length}/400</p>
             <CaslConsentFields value={consents} onChange={setConsents} />
+            <div className="pt-2">
+              <p className="text-sm font-medium">{t("anchorWorkLabel")}</p>
+              <p className="mt-1 text-[13px] text-muted">{t("anchorNeedWork")}</p>
+              <PlaceSearch
+                value={workQuery}
+                onChange={setWorkQuery}
+                onResolved={(place) => {
+                  setWorkOrigin(place);
+                  setWorkQuery(place.label);
+                  if (anchorMode === "home") setAnchorMode("both");
+                  void saveMySearchAnchors({
+                    data: { home: origin, work: place, mode: anchorMode === "home" ? "both" : anchorMode },
+                  }).catch(() => undefined);
+                }}
+                placeholder={t("anchorWorkPh")}
+                origin={origin}
+                inputClassName="ke-input mt-2 w-full"
+              />
+            </div>
             <Button type="submit" className="w-full" disabled={saving}>
               {saving ? t("loading") : "Save details"}
             </Button>

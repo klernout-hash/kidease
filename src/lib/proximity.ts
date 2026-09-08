@@ -171,3 +171,25 @@ export function withinRadius<T extends LatLng>(
   }
   return out;
 }
+
+/** Centres inside both circles. Distance is from the first (home) origin. */
+export function withinBothRadii<T extends LatLng>(
+  originA: LatLng,
+  originB: LatLng,
+  radiusKm: number,
+  points: T[],
+): Array<T & { distanceKm: number; distanceKmB: number }> {
+  const radius = clampRadiusKm(radiusKm);
+  const boxA = bboxFromRadius(originA, radius);
+  const boxB = bboxFromRadius(originB, radius);
+  const out: Array<T & { distanceKm: number; distanceKmB: number }> = [];
+  for (const p of points) {
+    if (!inBbox(p, boxA) || !inBbox(p, boxB)) continue;
+    const kmA = distanceKm(originA, p);
+    if (kmA > radius) continue;
+    const kmB = distanceKm(originB, p);
+    if (kmB > radius) continue;
+    out.push({ ...p, distanceKm: kmA, distanceKmB: kmB });
+  }
+  return out;
+}
