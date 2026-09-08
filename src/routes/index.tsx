@@ -37,6 +37,7 @@ import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { compactExploreSearch } from "@/lib/explore-search";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
+import { RateKidEasePrompt } from "@/components/rate-kidease";
 import { displayDistance } from "@/lib/units";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 
@@ -578,6 +579,19 @@ function Home() {
             </Button>
           </div>
         </section>
+
+        {!user ? (
+          <section className="border-t border-border bg-bg" aria-label={t("rateKidEase")}>
+            {/*
+              Guest www homepage (logged-out): Rate KidEase is intentionally public,
+              not Account-only. Same prompt as /account. Web → rateKidEaseFromMenu → /get-app.
+              No live App Store / Play calls. Cookie consent banner stays on the root layout.
+            */}
+            <div className="ke-gutter mx-auto max-w-lg py-12">
+              <RateKidEasePrompt />
+            </div>
+          </section>
+        ) : null}
 
         <SiteFooter />
       </div>
