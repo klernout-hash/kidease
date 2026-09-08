@@ -7,6 +7,7 @@ import { writeDistanceUnit, type DistanceUnit } from "./units";
 import { writeLocationConsent, type LocationConsent } from "./location-consent";
 import { clampRadiusKm } from "./proximity";
 import { parseAnchorMode, writeDualAnchorPrefs, type AnchorMode } from "./dual-anchor";
+import { applyTheme, writeThemePreference, type ResolvedTheme, type ThemePreference } from "./theme";
 
 export type SortKey = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency";
 
@@ -43,6 +44,9 @@ type SearchState = {
   setDistanceUnit: (unit: DistanceUnit) => void;
   locationConsent: LocationConsent;
   setLocationConsent: (v: LocationConsent) => void;
+  theme: ThemePreference;
+  resolvedTheme: ResolvedTheme;
+  setTheme: (theme: ThemePreference) => void;
 };
 
 export const useAppStore = create<SearchState>()((set) => ({
@@ -117,5 +121,12 @@ export const useAppStore = create<SearchState>()((set) => ({
   setLocationConsent: (locationConsent) => {
     writeLocationConsent(locationConsent);
     set({ locationConsent });
+  },
+  theme: "system",
+  resolvedTheme: "light",
+  setTheme: (theme) => {
+    writeThemePreference(theme);
+    const resolvedTheme = applyTheme(theme);
+    set({ theme, resolvedTheme });
   },
 }));

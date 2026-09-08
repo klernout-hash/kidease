@@ -21,6 +21,7 @@ import { PlaceSearch } from "@/components/place-search";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
 import { useAppStore } from "@/lib/store";
 import { RateKidEaseButton } from "@/components/rate-kidease";
+import { AppearanceControl } from "@/components/appearance-control";
 
 export const Route = createFileRoute("/account")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -183,6 +184,9 @@ function ProfilePane() {
           </Link>
         ) : null}
         <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("profile")}</h1>
+        <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
+          <AppearanceControl />
+        </section>
         <div className="mt-8 flex flex-col items-center text-center">
           <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={name || user?.displayName} size="lg" />
           <p className="mt-4 text-lg font-semibold">{name || user?.displayName || t("profile")}</p>

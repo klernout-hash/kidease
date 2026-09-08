@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
 import { HeaderSocial } from "@/components/header-social";
 import { LanguageSelect } from "@/components/language-select";
+import { AppearanceControl } from "@/components/appearance-control";
 import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
@@ -91,6 +92,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:xl:flex">
               <LanguageSelect />
               <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
+              <AppearanceControl variant="select" />
+              <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
               {user ? (
                 <SignedIn>
                   <AccountMenu
@@ -122,6 +125,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             </div>
             <div className="hidden h-11 items-center overflow-visible rounded-full bg-surface/90 ring-1 ring-border [[data-channel=website]_&]:flex [[data-channel=website]_&]:xl:hidden">
               <LanguageSelect />
+              <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
+              <AppearanceControl variant="select" />
             </div>
             <HeaderProfile
               userId={user?.id}

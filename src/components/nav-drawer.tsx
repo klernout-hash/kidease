@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { LanguageSelect } from "@/components/language-select";
+import { AppearanceControl } from "@/components/appearance-control";
 import { ShareKidEaseButton } from "@/components/share-button";
 
 type Item = { to: string; label: string; search?: Record<string, string> };
@@ -168,6 +169,9 @@ export function NavDrawer({
           )}
           <div className="mt-4 overflow-visible rounded-full bg-surface ring-1 ring-border">
             <LanguageSelect className="w-full justify-start" />
+          </div>
+          <div className="mt-3 rounded-xl bg-surface px-3 py-3 ring-1 ring-border">
+            <AppearanceControl />
           </div>
         </nav>
       </aside>

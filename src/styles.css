@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@custom-variant dark (&:where([data-resolved-theme="dark"], [data-resolved-theme="dark"] *));
+
 @font-face {
   font-family: "Plus Jakarta Sans";
   font-style: normal;
@@ -51,12 +53,58 @@
 }
 
 @layer base {
+  html[data-theme="dark"],
+  html[data-resolved-theme="dark"] {
+    color-scheme: dark;
+    --color-bg: #14161c;
+    --color-surface: #1c2028;
+    --color-surface-2: #262b36;
+    --color-fg: #f3efe8;
+    --color-muted: #b0b6c4;
+    --color-subtle: #8d8a82;
+    --color-primary: #6d89d8;
+    --color-primary-fg: #ffffff;
+    --color-accent: #6d89d8;
+    --color-border: #343a48;
+    --color-ring: #6d89d8;
+    --color-danger: #f08880;
+    --color-warn: #e0b36a;
+    --color-ok: #4ea882;
+    --color-map: #1a1e26;
+    --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.28), 0 18px 40px -24px rgba(0, 0, 0, 0.55);
+    --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.28), 0 24px 48px -20px rgba(0, 0, 0, 0.6);
+  }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]):not([data-resolved-theme="light"]) {
+      color-scheme: dark;
+      --color-bg: #14161c;
+      --color-surface: #1c2028;
+      --color-surface-2: #262b36;
+      --color-fg: #f3efe8;
+      --color-muted: #b0b6c4;
+      --color-subtle: #8d8a82;
+      --color-primary: #6d89d8;
+      --color-primary-fg: #ffffff;
+      --color-accent: #6d89d8;
+      --color-border: #343a48;
+      --color-ring: #6d89d8;
+      --color-danger: #f08880;
+      --color-warn: #e0b36a;
+      --color-ok: #4ea882;
+      --color-map: #1a1e26;
+      --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.28), 0 18px 40px -24px rgba(0, 0, 0, 0.55);
+      --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.28), 0 24px 48px -20px rgba(0, 0, 0, 0.6);
+    }
+  }
   html[data-channel="app"] {
     --ke-card-w: 11.25rem;
   }
   html[data-channel="website"] {
     /* ~184px: 5–6 listing tiles on a 1280–1440 Explore row */
     --ke-card-w: 11.5rem;
+  }
+  html {
+    color-scheme: light;
   }
   html,
   body,

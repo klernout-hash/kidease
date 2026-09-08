@@ -20,6 +20,7 @@ import type { Locale } from "@/lib/types";
 import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
 import { usePushRegistration } from "@/lib/use-push";
+import { applyTheme, readThemePreference } from "@/lib/theme";
 
 /**
  * Web boot must never paint a full-screen BrandMark. The logo PNG is 673×893;
@@ -49,6 +50,8 @@ export function NativeBoot() {
       const dual = readDualAnchorPrefs();
       setWorkOrigin(dual.work);
       setAnchorMode(dual.mode);
+      const theme = readThemePreference();
+      useAppStore.setState({ theme, resolvedTheme: applyTheme(theme) });
     } catch {
       /* ignore */
     }
