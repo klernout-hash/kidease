@@ -215,6 +215,7 @@ export function turnstileFetchOptions(token: string) {
     headers: {
       "Content-Type": "application/json",
       "x-turnstile-token": trimmed,
+      "x-captcha-response": trimmed,
     },
   };
 }

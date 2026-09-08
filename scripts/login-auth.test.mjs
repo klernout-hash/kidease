@@ -218,8 +218,14 @@ describe("Turnstile is single-use and required when the widget is on", () => {
     const reset = read("src/routes/reset-password.tsx");
     assert.match(field, /resetSignal/);
     assert.match(field, /api\.reset/);
+    assert.match(field, /pageshow/);
+    assert.match(field, /takeChallenge/);
     assert.match(login, /resetSignal=\{resetSignal\}/);
-    assert.match(forgot, /resetTurnstile/);
-    assert.match(reset, /resetTurnstile/);
+    assert.match(login, /takeChallenge/);
+    assert.match(login, /submitLock/);
+    assert.match(forgot, /takeChallenge/);
+    assert.match(reset, /takeChallenge/);
+    assert.match(read("src/lib/auth/client.ts"), /x-captcha-response/);
+    assert.match(read("src/routes/api/auth/$.ts"), /headers: request\.headers/);
   });
 });

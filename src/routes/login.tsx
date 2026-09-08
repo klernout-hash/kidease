@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { authClient, authEnabled, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
@@ -65,7 +65,8 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const { token, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
+  const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
+  const submitLock = useRef(false);
 
   useEffect(() => {
     if (role === "parent" || role === "provider") rememberRole(role);
@@ -101,13 +102,16 @@ function Login() {
 
   async function onEmail(e: React.FormEvent) {
     e.preventDefault();
+    if (submitLock.current) return;
+    submitLock.current = true;
     setBusy(true);
     setError(null);
     try {
       if (operator && email.trim().toLowerCase() !== OPERATOR_EMAIL) {
         throw new Error("Operator sign-in is only for the KidEase owner account.");
       }
-      if (turnstileRequired && !token.trim()) {
+      const challenge = takeChallenge();
+      if (turnstileRequired && !challenge) {
         throw new Error("Please complete the security check, then try again.");
       }
       if (mode === "up") {
@@ -115,12 +119,12 @@ function Login() {
           email,
           password,
           name: name || email.split("@")[0],
-          fetchOptions: turnstileFetchOptions(token),
+          fetchOptions: turnstileFetchOptions(challenge),
         });
         if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
         rememberToken(res.data);
       } else {
-        const res = await authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(token) });
+        const res = await authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(challenge) });
         if (res.error) {
           throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
         }
@@ -131,6 +135,7 @@ function Login() {
       setError(friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed");
       resetTurnstile();
     } finally {
+      submitLock.current = false;
       setBusy(false);
     }
   }

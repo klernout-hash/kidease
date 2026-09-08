@@ -31,6 +31,12 @@ When an auth fetch returns CF HTML or a bare `403 Forbidden` with no Better Auth
 
 instead of a generic **Sign-in failed.**
 
+## Turnstile “Success!” then “Security check failed”
+
+That red inline copy is **KidEase siteverify**, not a WAF 403. The widget token is single-use. A second POST with the same token (double-click, fetch retry, back/forward cache) used to fail even though the checkbox still said Success. Login remints the widget as soon as the token is sent; the server retries siteverify with a stable `idempotency_key` so a used token is not a false failure.
+
+If the widget never appears, that is still the `/_serverFn/*` WAF skip above.
+
 ## Access vs Bot Fight
 
 Cloudflare **Access** still guards `/admin*` (and later `/support*`) — that is a login wall for staff, not a WAF block on `/api/auth/*`. Do not put Access in front of `/api/auth/*` or `/login`. See `docs/support.md`.

@@ -24,7 +24,7 @@ function ResetPassword() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
-  const { token: challenge, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
+  const { token: challenge, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
   const ready = passwordMeetsPolicy(password) && password === confirm && Boolean(token);
 
   async function onSubmit(e: React.FormEvent) {
@@ -41,7 +41,8 @@ function ResetPassword() {
       setError("This reset link is missing or expired. Request a new one from the sign-in page.");
       return;
     }
-    if (turnstileRequired && !challenge.trim()) {
+    const turnstile = takeChallenge();
+    if (turnstileRequired && !turnstile) {
       setError("Please complete the security check, then try again.");
       return;
     }
@@ -51,7 +52,7 @@ function ResetPassword() {
       const res = await authClient.resetPassword({
         newPassword: password,
         token,
-        fetchOptions: turnstileFetchOptions(challenge),
+        fetchOptions: turnstileFetchOptions(turnstile),
       });
       if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)) || "Could not reset the password.");
       setDone(true);

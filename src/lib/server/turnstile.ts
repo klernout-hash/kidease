@@ -1,9 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
+import { reportError } from "@/lib/observe";
 import { turnstileMode, type TurnstileMode } from "@/lib/turnstile-mode";
+import {
+  clientIpFromHeaders,
+  readTurnstileToken,
+  turnstileFailureMessage,
+  verifyTurnstileResponse,
+} from "@/lib/server/turnstile-verify";
 
 export { turnstileMode, type TurnstileMode };
-
-const SITEVERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+export { clientIpFromHeaders, readTurnstileToken };
 
 function env(key: string) {
   return (process.env[key] || "").trim();
@@ -29,26 +35,27 @@ export function currentTurnstileMode() {
   });
 }
 
-export async function assertTurnstileToken(token: string | null | undefined) {
-  const mode = currentTurnstileMode();
-  if (mode === "off") return { ok: true as const, skipped: true as const };
-  const trimmed = (token || "").trim();
-  if (!trimmed) {
-    if (mode === "enforce") throw new Error("Please complete the security check.");
-    return { ok: true as const, skipped: true as const };
-  }
-  const secret = turnstileSecretKey();
-  const res = await fetch(SITEVERIFY, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ secret, response: trimmed }),
+export async function assertTurnstileToken(
+  token: string | null | undefined,
+  opts?: { headers?: Headers; remoteip?: string },
+) {
+  const resolved = (token || "").trim() || (opts?.headers ? readTurnstileToken(opts.headers) : "");
+  const remoteip = opts?.remoteip || (opts?.headers ? clientIpFromHeaders(opts.headers) : undefined);
+  const result = await verifyTurnstileResponse({
+    token: resolved,
+    secret: turnstileSecretKey(),
+    mode: currentTurnstileMode(),
+    remoteip,
   });
-  const body = (await res.json().catch(() => null)) as { success?: boolean } | null;
-  if (!body?.success) {
-    if (mode === "enforce") throw new Error("Security check failed. Refresh and try again.");
-    return { ok: true as const, skipped: true as const };
+  if (result.ok) return { ok: true as const, skipped: result.skipped };
+  const message = turnstileFailureMessage(result.errorCodes);
+  if (!result.errorCodes?.includes("missing-input-response")) {
+    reportError(new Error(message), {
+      route: "turnstile",
+      extra: { codes: (result.errorCodes || []).join(",") || "unknown" },
+    });
   }
-  return { ok: true as const, skipped: false as const };
+  throw new Error(message);
 }
 
 /** Public site key only — never the secret. */

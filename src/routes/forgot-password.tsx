@@ -29,7 +29,7 @@ function ForgotPassword() {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const { token, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
+  const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +39,8 @@ function ForgotPassword() {
       setNote(null);
       return;
     }
-    if (turnstileRequired && !token.trim()) {
+    const challenge = takeChallenge();
+    if (turnstileRequired && !challenge) {
       setError("Please complete the security check, then try again.");
       setNote(null);
       return;
@@ -51,7 +52,7 @@ function ForgotPassword() {
       const res = await authClient.requestPasswordReset({
         email: target,
         redirectTo: "/reset-password",
-        fetchOptions: turnstileFetchOptions(token),
+        fetchOptions: turnstileFetchOptions(challenge),
       });
       if (res.error) throw new Error(friendlyResetMailError(authClientErrorMessage(res.error)));
       setNote("If that email is registered with KidEase, we sent a reset link. Check the inbox and junk folder.");

@@ -40,7 +40,9 @@ async function handleAuth(request: Request) {
       }
       if (authPathNeedsTurnstile(url.pathname)) {
         try {
-          await assertTurnstileToken(request.headers.get("x-turnstile-token"));
+          await assertTurnstileToken(request.headers.get("x-turnstile-token"), {
+            headers: request.headers,
+          });
         } catch (err) {
           const message = err instanceof Error ? err.message : "Security check failed";
           return Response.json({ message, code: "SECURITY_CHECK" }, { status: 400 });
