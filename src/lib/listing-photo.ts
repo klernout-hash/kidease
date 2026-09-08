@@ -1,5 +1,7 @@
 /** Listing-honesty photo pick. Official operator JPEGs beat /photos/wpg/; never Street View. */
 
+import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
+
 export const LISTING_PLACEHOLDER = "/photos/storefront-placeholder-480.webp";
 
 /** Default photos for a newly listed centre before a real storefront is uploaded. */
@@ -11,7 +13,13 @@ export const MAX_INTERIOR_PHOTOS = 5;
 const STOCK_CREATE_SET = new Set(STOCK_CREATE_PHOTOS.split(","));
 
 export function isStockListingPhoto(src: string) {
-  return STOCK_CREATE_SET.has(src) || src.includes("storefront-placeholder");
+  return STOCK_CREATE_SET.has(src) || src.includes("storefront-placeholder") || isUnflaggedSharedFallbackSrc(src);
+}
+
+/** Unique assets stay; unflagged shared fallbacks become the official placeholder. */
+export function honestListingSrc(src: string | undefined) {
+  if (!src || isUnflaggedSharedFallbackSrc(src)) return LISTING_PLACEHOLDER;
+  return src;
 }
 
 export function isLogoPhoto(src: string) {
@@ -117,17 +125,19 @@ export function isOfficialBuildingPhoto(src: string | undefined): boolean {
   return Boolean(src && src.startsWith("/photos/buildings/") && !src.includes("..") && !src.includes("-logo"));
 }
 
-/** First non-logo photo; prefer official /photos/buildings/ over /photos/wpg/ or placeholders. */
+/** First unique non-logo photo; prefer official /photos/buildings/ over /photos/wpg/. */
 export function listingThumb(photos: string[] | undefined) {
-  const list = (photos ?? []).filter((p) => p && !p.includes("-logo"));
+  const list = (photos ?? []).filter((p) => p && !p.includes("-logo") && !isUnflaggedSharedFallbackSrc(p));
   const official = list.find((p) => isOfficialBuildingPhoto(p));
   return official || list[0] || LISTING_PLACEHOLDER;
 }
 
 /**
  * Storefront for a catalogue card.
- * Mapped IDs always use real-storefronts (/photos/buildings/{id}.jpg).
- * BuildingPhoto falls back to the placeholder if that JPEG is not on disk yet.
+ * Mapped IDs always use real-storefronts (/photos/buildings/{id}.jpg) when
+ * that file is unique. Unflagged shared fallbacks (copied street-view, a
+ * pumping-station grab reused on five IDs) skip to a unique /photos/wpg/
+ * asset when one exists, otherwise the official placeholder.
  * Unmapped IDs keep /photos/wpg/ or the placeholder — never invent a photo.
  */
 export function resolveListingStorefront(
@@ -135,7 +145,11 @@ export function resolveListingStorefront(
   officialById: Record<string, string>,
   wpgById: Record<string, string>,
 ): string {
-  return officialById[id] || wpgById[id] || LISTING_PLACEHOLDER;
+  const official = officialById[id];
+  if (official && !isUnflaggedSharedFallbackSrc(official)) return official;
+  const wpg = wpgById[id];
+  if (wpg && !isUnflaggedSharedFallbackSrc(wpg)) return wpg;
+  return LISTING_PLACEHOLDER;
 }
 
 /**

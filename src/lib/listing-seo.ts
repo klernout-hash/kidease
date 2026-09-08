@@ -5,6 +5,7 @@
  */
 
 import { normalizeListingSlug } from "./listing-slug.ts";
+import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
 import { SITEMAP_ORIGIN, sitemapListingPath } from "./sitemap.ts";
 
 /** Official storefront or https media only. Placeholders and street-view stock stay out of OG. */
@@ -12,6 +13,7 @@ function isSeoPhoto(src?: string | null) {
   const p = String(src || "").trim();
   if (!p) return false;
   if (p.includes("placeholder") || p.includes("-logo") || p.includes("/photos/wpg/")) return false;
+  if (isUnflaggedSharedFallbackSrc(p)) return false;
   if (p.startsWith("/photos/buildings/")) return true;
   if (p.startsWith("https://")) return true;
   return false;

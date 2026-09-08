@@ -8,6 +8,7 @@
  */
 
 import { feeProgramBadgeKey, officialLicenceNumber } from "@/lib/licensing";
+import { isUnflaggedSharedFallbackSrc } from "@/lib/photo-honesty";
 import { isClaimVerified, type TrustListing } from "@/lib/trust";
 import type { Daycare } from "@/lib/types";
 
@@ -48,6 +49,7 @@ export function isRealListingPhoto(src?: string | null): boolean {
   if (!p) return false;
   if (p.includes("placeholder")) return false;
   if (p.includes("-logo")) return false;
+  if (isUnflaggedSharedFallbackSrc(p)) return false;
   if (p.includes("/photos/wpg/")) return false;
   if (p.startsWith("data:image")) return true;
   if (p.startsWith("/photos/buildings/")) return true;
