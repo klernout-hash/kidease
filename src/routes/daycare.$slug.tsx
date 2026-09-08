@@ -16,7 +16,7 @@ import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto } f
 import { DETAIL_SIZES } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
 import { getDaycare, getListingSeo } from "@/lib/server/daycares";
-import { cityHubDefForPlace } from "@/lib/city-hubs";
+import { cityHubCityName, cityHubDefForPlace } from "@/lib/city-hubs";
 import {
   listingBreadcrumbJsonLdScript,
   listingCanonicalUrl,
@@ -364,7 +364,7 @@ function Listing() {
                 params={{ city: cityHub.slug }}
                 className="min-h-11 inline-flex items-center hover:text-fg hover:underline"
               >
-                {locale === "fr" ? `Garderies à ${cityHub.city}` : `Daycare in ${cityHub.city}`}
+                {locale === "fr" ? `Garderies à ${cityHubCityName(cityHub, "fr")}` : `Daycare in ${cityHubCityName(cityHub, "en")}`}
               </Link>
             </>
           ) : (

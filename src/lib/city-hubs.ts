@@ -14,27 +14,38 @@ export const CITY_HUB_MIN_LISTINGS = 20;
 
 export type CityHubDef = {
   slug: string;
+  /** Canonical hub / catalogue name. May keep accents (Montréal). */
   city: string;
+  /** Kyle EN chip city (Montreal without accent; Quebec City). */
+  cityEn: string;
+  /** FR-CA chip / hub city (Montréal, Québec). */
+  cityFr: string;
   province: string;
+  /** Extra catalogue city keys (Québec listings → Quebec City hub). */
+  aliases?: readonly string[];
   subsidyUrl: string;
   subsidyLabel: string;
 };
 
+const PROVINCE_CHIP_NAMES: Record<string, { en: string; fr: string }> = {
+  ON: { en: "Ontario", fr: "Ontario" },
+  QC: { en: "Quebec", fr: "Québec" },
+  BC: { en: "British Columbia", fr: "Colombie-Britannique" },
+  AB: { en: "Alberta", fr: "Alberta" },
+  MB: { en: "Manitoba", fr: "Manitoba" },
+  NS: { en: "Nova Scotia", fr: "Nouvelle-Écosse" },
+};
+
 /**
- * Home city chips that already have real listing density.
+ * Home city chips + SEO hubs, Kyle order.
  * Slugs stay ASCII so URLs do not depend on accents.
  */
 export const CITY_HUB_DEFS: readonly CityHubDef[] = [
   {
-    slug: "winnipeg",
-    city: "Winnipeg",
-    province: "MB",
-    subsidyUrl: "https://www.gov.mb.ca/education/childcare/families/childcare_subsidies.html",
-    subsidyLabel: "Manitoba Child Care Subsidy",
-  },
-  {
     slug: "toronto",
     city: "Toronto",
+    cityEn: "Toronto",
+    cityFr: "Toronto",
     province: "ON",
     subsidyUrl: "https://www.ontario.ca/page/child-care-subsidies",
     subsidyLabel: "Ontario child care subsidies",
@@ -42,6 +53,8 @@ export const CITY_HUB_DEFS: readonly CityHubDef[] = [
   {
     slug: "montreal",
     city: "Montréal",
+    cityEn: "Montreal",
+    cityFr: "Montréal",
     province: "QC",
     subsidyUrl: "https://www.revenuquebec.ca/en/citizens/tax-credits/tax-credit-for-childcare-expenses/",
     subsidyLabel: "Quebec childcare tax credit",
@@ -49,6 +62,8 @@ export const CITY_HUB_DEFS: readonly CityHubDef[] = [
   {
     slug: "vancouver",
     city: "Vancouver",
+    cityEn: "Vancouver",
+    cityFr: "Vancouver",
     province: "BC",
     subsidyUrl: "https://www.gov.bc.ca/affordablechildcarebenefit",
     subsidyLabel: "B.C. Affordable Child Care Benefit",
@@ -56,6 +71,17 @@ export const CITY_HUB_DEFS: readonly CityHubDef[] = [
   {
     slug: "calgary",
     city: "Calgary",
+    cityEn: "Calgary",
+    cityFr: "Calgary",
+    province: "AB",
+    subsidyUrl: "https://www.alberta.ca/child-care-subsidy",
+    subsidyLabel: "Alberta Child Care Subsidy",
+  },
+  {
+    slug: "edmonton",
+    city: "Edmonton",
+    cityEn: "Edmonton",
+    cityFr: "Edmonton",
     province: "AB",
     subsidyUrl: "https://www.alberta.ca/child-care-subsidy",
     subsidyLabel: "Alberta Child Care Subsidy",
@@ -63,9 +89,48 @@ export const CITY_HUB_DEFS: readonly CityHubDef[] = [
   {
     slug: "ottawa",
     city: "Ottawa",
+    cityEn: "Ottawa",
+    cityFr: "Ottawa",
     province: "ON",
     subsidyUrl: "https://www.ontario.ca/page/child-care-subsidies",
     subsidyLabel: "Ontario child care subsidies",
+  },
+  {
+    slug: "winnipeg",
+    city: "Winnipeg",
+    cityEn: "Winnipeg",
+    cityFr: "Winnipeg",
+    province: "MB",
+    subsidyUrl: "https://www.gov.mb.ca/education/childcare/families/childcare_subsidies.html",
+    subsidyLabel: "Manitoba Child Care Subsidy",
+  },
+  {
+    slug: "quebec-city",
+    city: "Quebec City",
+    cityEn: "Quebec City",
+    cityFr: "Québec",
+    province: "QC",
+    aliases: ["quebec", "québec", "ville de quebec", "ville de québec"],
+    subsidyUrl: "https://www.revenuquebec.ca/en/citizens/tax-credits/tax-credit-for-childcare-expenses/",
+    subsidyLabel: "Quebec childcare tax credit",
+  },
+  {
+    slug: "hamilton",
+    city: "Hamilton",
+    cityEn: "Hamilton",
+    cityFr: "Hamilton",
+    province: "ON",
+    subsidyUrl: "https://www.ontario.ca/page/child-care-subsidies",
+    subsidyLabel: "Ontario child care subsidies",
+  },
+  {
+    slug: "halifax",
+    city: "Halifax",
+    cityEn: "Halifax",
+    cityFr: "Halifax",
+    province: "NS",
+    subsidyUrl: "https://childcarenovascotia.ca/families/child-care-subsidy",
+    subsidyLabel: "Nova Scotia Child Care Subsidy",
   },
 ];
 
@@ -116,9 +181,36 @@ export function cityHubUrl(slug: string) {
   return `${SITEMAP_ORIGIN}${cityHubPath(slug)}`;
 }
 
+export function cityHubSlugKey(slug: string | null | undefined) {
+  return normalizeCityKey(slug).replace(/\s+/g, "");
+}
+
 export function cityHubDefBySlug(slug: string | null | undefined) {
-  const key = normalizeCityKey(slug).replace(/\s+/g, "");
-  return CITY_HUB_DEFS.find((hub) => hub.slug === key) ?? null;
+  const key = cityHubSlugKey(slug);
+  return CITY_HUB_DEFS.find((hub) => cityHubSlugKey(hub.slug) === key) ?? null;
+}
+
+export function cityHubPlaceKeys(hub: CityHubDef) {
+  return [hub.city, hub.cityEn, hub.cityFr, ...(hub.aliases ?? [])]
+    .map((value) => normalizeCityKey(value))
+    .filter(Boolean);
+}
+
+export function cityHubCityName(hub: Pick<CityHubDef, "city" | "cityEn" | "cityFr">, locale = "en") {
+  if (locale === "fr") return hub.cityFr || hub.city;
+  return hub.cityEn || hub.city;
+}
+
+export function cityHubChipLabel(hub: CityHubDef, locale = "en") {
+  const city = cityHubCityName(hub, locale);
+  const names = PROVINCE_CHIP_NAMES[hub.province];
+  const province = locale === "fr" ? (names?.fr ?? hub.province) : (names?.en ?? hub.province);
+  return `${city}, ${province}`;
+}
+
+/** Geocode-safe query for home chips. "Quebec" alone resolves to Montréal. */
+export function cityHubSearchQuery(hub: CityHubDef) {
+  return hub.cityEn || hub.city;
 }
 
 export function cityHubDefForPlace(city: string | null | undefined, province: string | null | undefined) {
@@ -129,7 +221,7 @@ export function cityHubDefForPlace(city: string | null | undefined, province: st
   if (!cityKey || !provinceKey) return null;
   return (
     CITY_HUB_DEFS.find(
-      (hub) => normalizeCityKey(hub.city) === cityKey && hub.province === provinceKey,
+      (hub) => hub.province === provinceKey && cityHubPlaceKeys(hub).includes(cityKey),
     ) ?? null
   );
 }

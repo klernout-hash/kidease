@@ -4,7 +4,7 @@
  * Relative .ts imports so Node tests can load this file.
  */
 
-import { cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
+import { cityHubCityName, cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 import { breadcrumbJsonLd, breadcrumbJsonLdScript } from "./page-seo.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
@@ -233,7 +233,7 @@ export function listingBreadcrumbItems(src: ListingSeoSource, locale: ListingSeo
   const hub = cityHubDefForPlace(src.city, src.province);
   if (hub) {
     items.push({
-      name: locale === "fr" ? `Garderies à ${hub.city}` : `Daycare in ${hub.city}`,
+      name: locale === "fr" ? `Garderies à ${cityHubCityName(hub, "fr")}` : `Daycare in ${cityHubCityName(hub, "en")}`,
       url: cityHubUrl(hub.slug),
     });
   }
