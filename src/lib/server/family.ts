@@ -41,7 +41,7 @@ import {
   loadProfileEntitlements,
   overlayFeaturedCity,
 } from "@/lib/server/provider-entitlements";
-import { accessDeniedMessage, canUpdateBookingStatus } from "@/lib/access-control";
+import { accessDeniedMessage, assertCanMutateListing, canUpdateBookingStatus } from "@/lib/access-control";
 import { isCentreOwner } from "@/lib/server/thread-access";
 import { resolveAdminAccess } from "@/lib/server/roles";
 
@@ -1362,7 +1362,7 @@ export const updateCapacity = createServerFn({ method: "POST" })
       select user_id from provider_daycares
       where user_id = ${context.userId} and daycare_id = ${data.daycareId}
     `;
-    if (!own[0]) throw new Error("Not your listing");
+    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
     const before = await sql<{
       spots_infant: number;
       spots_toddler: number;

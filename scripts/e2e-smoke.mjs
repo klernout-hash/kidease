@@ -20,6 +20,8 @@ import {
   ADMIN_API_SMOKE_PATHS,
   classifyAdminApiGate,
   classifyAdminGate,
+  classifyParentGuestGate,
+  classifyProviderGuestGate,
   classifyPublicHealth,
   HEALTH_SMOKE_PATH,
   DEFAULT_PREVIEW_ORIGIN,
@@ -269,6 +271,43 @@ try {
   });
 
   await adminHttpGate(base);
+
+  const parentResp = await page.goto(new URL(SMOKE_PATHS.parent, base).href, {
+    waitUntil: "domcontentloaded",
+    timeout: timeoutMs,
+  });
+  await page.waitForURL(/\/login|\/parent/i, { timeout: timeoutMs }).catch(() => {});
+  const parentBody = await page.locator("body").innerText().catch(() => "");
+  const parentGate = classifyParentGuestGate({
+    finalUrl: page.url(),
+    status: parentResp?.status() ?? 0,
+    bodyText: parentBody,
+    locationHeader: parentResp?.headers()?.location ?? "",
+  });
+  await page.screenshot({ path: join(dirname(outDir), "parent-guest.png"), fullPage: false }).catch(() => {});
+  record("parent-guest-gate", parentGate.ok, {
+    note: parentGate.kind === "unknown" || parentGate.kind === "open" ? parentGate.reason : parentGate.kind,
+    status: parentResp?.status() ?? 0,
+    url: page.url(),
+  });
+
+  const providerResp = await page.goto(new URL(SMOKE_PATHS.provider, base).href, {
+    waitUntil: "domcontentloaded",
+    timeout: timeoutMs,
+  });
+  const providerBody = await page.locator("body").innerText().catch(() => "");
+  const providerGate = classifyProviderGuestGate({
+    finalUrl: page.url(),
+    status: providerResp?.status() ?? 0,
+    bodyText: providerBody,
+    locationHeader: providerResp?.headers()?.location ?? "",
+  });
+  await page.screenshot({ path: join(dirname(outDir), "provider-guest.png"), fullPage: false }).catch(() => {});
+  record("provider-guest-gate", providerGate.ok, {
+    note: providerGate.kind === "unknown" || providerGate.kind === "open" ? providerGate.reason : providerGate.kind,
+    status: providerResp?.status() ?? 0,
+    url: page.url(),
+  });
 
   for (const apiPath of ADMIN_API_SMOKE_PATHS) {
     const apiResp = await page.request.get(new URL(apiPath, base).href).catch(() => null);

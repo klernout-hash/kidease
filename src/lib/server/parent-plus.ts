@@ -9,6 +9,7 @@ import {
   createCatalogCheckoutSession,
 } from "@/lib/server/stripe-checkout";
 import { isPlusInterval, isPlusPlanId, type PlusInterval, type PlusPlanId } from "@/lib/parent-plus";
+import { decideParentPlusCheckout, PLUS_PRICE_MISSING } from "@/lib/access-control";
 
 export type ParentPlusState = {
   plan: PlusPlanId;
@@ -81,11 +82,10 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
         plus_interval = excluded.plus_interval,
         plus_selected_at = now()
     `.catch(() => undefined);
-    if (!stripeChargesLive()) {
-      throw new Error("Plus checkout stays off until Stripe live keys are on. This pick is saved on the internal ledger (not charged).");
-    }
     const priceId = envPriceId(plusPriceKey(data.interval));
-    if (!priceId) throw new Error("Parent Plus price ID is not set. Add STRIPE_PRICE_PLUS_MONTHLY or STRIPE_PRICE_PLUS_YEARLY on Vercel.");
+    const gate = decideParentPlusCheckout({ stripeLive: stripeChargesLive(), priceId });
+    if (!gate.ok) throw new Error(gate.error);
+    if (!priceId) throw new Error(PLUS_PRICE_MISSING);
     const state = await readPlus(context.userId);
     const origin = appOrigin();
     const session = await createCatalogCheckoutSession({

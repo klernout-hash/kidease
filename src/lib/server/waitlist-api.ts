@@ -16,6 +16,7 @@ import {
   type WaitlistPulseStatus,
 } from "@/lib/waitlist-pulse";
 import { nid } from "@/lib/utils";
+import { assertCanMutateListing } from "@/lib/access-control";
 
 async function assertPublicListing(daycareId: string) {
   const listed = await catalogByIdGet(daycareId);
@@ -30,7 +31,7 @@ async function assertOwnsListing(userId: string, daycareId: string) {
     select user_id from provider_daycares
     where user_id = ${userId} and daycare_id = ${daycareId}
   `;
-  if (!own[0]) throw new Error("Not your listing");
+  assertCanMutateListing(own[0] ? [daycareId] : [], daycareId);
 }
 
 export const getWaitlistInterest = createServerFn({ method: "GET" })

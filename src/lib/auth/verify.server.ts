@@ -1,4 +1,5 @@
 import { getRequest } from "@tanstack/react-start/server";
+import { DEV_FALLBACK_USER_ID, resolveRequiredUserId } from "@/lib/access-control";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import { aliasInboundAuthCookies, isKideasePublicHost } from "./cookies";
 import { auth, authConfigured } from "./server";
@@ -28,7 +29,7 @@ if (databaseConfigured && !authConfigured) {
 }
 
 /** Dev fallback user id, used only when auth is disabled (VITE_AUTH_ENABLED=false). */
-export const DEV_USER_ID = "dev-user";
+export const DEV_USER_ID = DEV_FALLBACK_USER_ID;
 
 /**
  * Thrown by `requireUserId` when the caller has no valid session. Carries
@@ -95,16 +96,15 @@ export async function getSessionUser(
  * - Auth disabled + no database -> the shared dev user id.
  */
 export async function requireUserId(bearerToken?: string): Promise<string> {
-  if (!authConfigured) {
-    if (databaseConfigured) {
-      throw new Error(
-        "Auth is disabled (VITE_AUTH_ENABLED=false) but DATABASE_URL is set — " +
-          "refusing to fall back to the shared dev user against a real database.",
-      );
-    }
-    return DEV_USER_ID;
+  const sessionUserId = authConfigured ? ((await getSessionUser(bearerToken))?.id ?? null) : null;
+  const decided = resolveRequiredUserId({
+    authConfigured,
+    databaseConfigured,
+    sessionUserId,
+  });
+  if (!decided.ok) {
+    if (decided.code === "unauthorized") throw new UnauthorizedError();
+    throw new Error(decided.error);
   }
-  const user = await getSessionUser(bearerToken);
-  if (!user) throw new UnauthorizedError();
-  return user.id;
+  return decided.userId;
 }

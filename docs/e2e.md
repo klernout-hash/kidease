@@ -10,6 +10,8 @@ Minimal Playwright checks that run without Stripe live keys, Twilio/Resend OTPs,
 | `/api/health` | Guest `200` JSON `{ ok: true, service: "kidease" }`. No Better Stack keys required. |
 | Login `/login` | Email field and **Sign in** copy. The suite does not submit the form. |
 | `/admin` | Guest gate: client redirect to `/login`, or Access-ish 302 to `https://www.kidease.ca/admin` on `*.vercel.app` hosts. A Cloudflare Access interstitial is also accepted. |
+| `/parent` | Guest gate: client redirect to `/login` (or Sign in). The signed-in parent desk must not render. |
+| `/provider` | Guest landing with **Sign in to the centre desk** — not the tours / money write desk. |
 | `/api/admin/sentry-test`, `/api/admin/stripe-catalog` | Guest fetch is 401/403, login/Access redirect, or `{ ok: false }`. A 200 admin JSON payload fails the suite. |
 
 The suite never opens `/pay/*`, never fills a password or OTP, and never calls Stripe Checkout.

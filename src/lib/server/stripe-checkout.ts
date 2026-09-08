@@ -154,6 +154,15 @@ export function catalogCheckoutBody(input: CatalogCheckoutInput): Record<string,
   return body;
 }
 
+type StripeFetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+
+let stripeFetchImpl: StripeFetch = globalThis.fetch.bind(globalThis);
+
+/** Tests only — swap fetch so checkout never hits api.stripe.com. */
+export function setStripeFetchForTests(fn: StripeFetch | null) {
+  stripeFetchImpl = fn ?? globalThis.fetch.bind(globalThis);
+}
+
 export async function stripeRequest<T>(
   path: string,
   body: Record<string, unknown>,
@@ -172,7 +181,7 @@ export async function stripeRequest<T>(
     for (const [k, v] of flattenStripeBody(body)) params.append(k, v);
     const joined = params.toString();
     const getUrl = joined ? `${url}${url.includes("?") ? "&" : "?"}${joined}` : url;
-    const res = await fetch(getUrl, { method: "GET", headers });
+    const res = await stripeFetchImpl(getUrl, { method: "GET", headers });
     const json = (await res.json()) as T & { error?: { message?: string } };
     if (!res.ok) throw new Error(json.error?.message || `Stripe ${path} failed (${res.status})`);
     return json;
@@ -181,7 +190,7 @@ export async function stripeRequest<T>(
   const params = new URLSearchParams();
   for (const [k, v] of flattenStripeBody(body)) params.append(k, v);
   const payload = params.toString();
-  const res = await fetch(url, { method: "POST", headers, body: payload });
+  const res = await stripeFetchImpl(url, { method: "POST", headers, body: payload });
   const json = (await res.json()) as T & { error?: { message?: string } };
   if (!res.ok) throw new Error(json.error?.message || `Stripe ${path} failed (${res.status})`);
   return json;
