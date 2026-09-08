@@ -11,6 +11,7 @@ export function ListingRail({
   limit = 12,
   seeAllHref,
   hideTitle = false,
+  eagerThumbs = true,
   className,
 }: {
   title: string;
@@ -18,6 +19,8 @@ export function ListingRail({
   limit?: number;
   seeAllHref?: string;
   hideTitle?: boolean;
+  /** Off on marketing home so hidden app rails do not preload against the LCP hero. */
+  eagerThumbs?: boolean;
   className?: string;
 }) {
   const { t } = useCopy();
@@ -77,7 +80,7 @@ export function ListingRail({
       <div ref={scroller} className="ke-rail">
         {shown.map((item, i) => (
           <div key={item.id} className="ke-rail-card">
-            <DaycareCard item={item} compact eager={i < 2} />
+            <DaycareCard item={item} compact eager={eagerThumbs && i < 2} />
           </div>
         ))}
       </div>

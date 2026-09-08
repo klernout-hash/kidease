@@ -492,7 +492,7 @@ function Home() {
               <>
                 <div className="ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5">
                   {shown.slice(0, 9).map((item, i) => (
-                    <DaycareCard key={item.id} item={item} eager={i < 3} />
+                    <DaycareCard key={item.id} item={item} />
                   ))}
                 </div>
                 {shown.length === 0 ? (
@@ -591,9 +591,9 @@ function Home() {
             />
           ) : (
             <>
-              <ListingRail title={t("recentlyViewed")} items={recent} />
-              <ListingRail title={t("availableNow")} items={availableNow} />
-              <ListingRail title={t("availableNextMonth")} items={availableNextMonth} />
+              <ListingRail title={t("recentlyViewed")} items={recent} eagerThumbs={false} />
+              <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} />
+              <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} />
               {shown.length === 0 ? (
                 <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
                     <EmptyState
