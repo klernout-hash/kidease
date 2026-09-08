@@ -135,12 +135,69 @@ export function pickLandingDesk(desks: DeskKey[], preferred?: DeskKey | null): D
   return primaryDesk(desks);
 }
 
+/** Auth pages that must never be a post-login `next` (they loop the funnel). */
+export const AUTH_LOOP_PATHS = ["/login", "/verify-2fa", "/forgot-password", "/reset-password"] as const;
+
+export function pathnameOfDest(raw: string): string {
+  const trimmed = (raw || "").trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return "";
+  return trimmed.split("?")[0] || "";
+}
+
+export function isAuthLoopPath(raw: string): boolean {
+  const path = pathnameOfDest(raw);
+  if (!path) return false;
+  return AUTH_LOOP_PATHS.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+/**
+ * Unwrap `?next=` on auth pages, drop protocol-relative / oversized / loop
+ * targets, and treat `/` as "no next" so desk resolution can run.
+ */
+export function sanitizePostLoginNext(raw?: string | null, depth = 0): string | null {
+  if (depth > 4) return null;
+  const trimmed = (raw || "").trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//") || trimmed.length > 512) return null;
+  const path = pathnameOfDest(trimmed);
+  if (!path || path === "/") return null;
+  if (isAuthLoopPath(path)) {
+    const q = trimmed.indexOf("?");
+    if (q === -1) return null;
+    const nested = new URLSearchParams(trimmed.slice(q + 1)).get("next");
+    return nested ? sanitizePostLoginNext(nested, depth + 1) : null;
+  }
+  return trimmed;
+}
+
+export type PostLoginDestKind = "desk" | "public" | "home" | "auth";
+
+export function postLoginDestKind(raw: string): PostLoginDestKind {
+  const path = pathnameOfDest(raw) || "/";
+  if (isAuthLoopPath(path)) return "auth";
+  if (path === "/") return "home";
+  if (deskFromPathname(path)) return "desk";
+  return "public";
+}
+
+/** Safe path label for analytics — never a raw query string or listing slug. */
+export function funnelDestPath(raw: string): string {
+  const path = pathnameOfDest(raw) || "/";
+  const desk = deskFromPathname(path);
+  if (desk) return DESK_PATH[desk];
+  if (path === "/" || path === "/search" || path === "/account" || path === "/inbox") return path;
+  if (path.startsWith("/daycare/")) return "/daycare";
+  if (isAuthLoopPath(path)) return path;
+  return "/other";
+}
+
 /**
  * Where login should send the browser after a successful password/social
  * sign-in. An explicit `next` (Parent pill, /parent gate, deep link) always
  * wins — including for admin — so Kyle can open Parent desk on the same
  * session. `?desk=` / `?role=parent` also prefer that desk over primaryDesk
  * (admin), which would otherwise dump them on /admin or /provider.
+ * Auth-loop `next` values and `/` fall through to desk resolution so a
+ * successful sign-in is not scored as a home bounce.
  */
 export function resolvePostLoginPath(input: {
   next?: string | null;
@@ -149,14 +206,37 @@ export function resolvePostLoginPath(input: {
   desks?: DeskKey[] | null;
   sticky?: DeskKey | null;
 }): string {
-  const next = (input.next || "").trim();
-  if (next.startsWith("/") && !next.startsWith("//")) return next;
+  const next = sanitizePostLoginNext(input.next);
+  if (next) return next;
   const fromRole: DeskKey | null =
     input.role === "parent" ? "parent" : input.role === "provider" ? "provider" : input.role === "admin" ? "admin" : null;
   const preferred = input.desk ?? fromRole ?? input.sticky ?? null;
   if (input.desks?.length) return DESK_PATH[pickLandingDesk(input.desks, preferred)];
   if (preferred) return DESK_PATH[preferred];
-  return "/";
+  return DESK_PATH.parent;
+}
+
+export function twoFactorPageUrl(dest: string): string {
+  const next = sanitizePostLoginNext(dest) ?? DESK_PATH.parent;
+  return `/verify-2fa?next=${encodeURIComponent(next)}`;
+}
+
+export function loginErrorCallbackUrl(search: {
+  next?: string;
+  role?: string;
+  desk?: string;
+  intent?: string;
+}): string {
+  const params = new URLSearchParams();
+  if (search.intent === "in" || search.intent === "up") params.set("intent", search.intent);
+  if (search.role === "parent" || search.role === "provider" || search.role === "admin") {
+    params.set("role", search.role);
+  }
+  if (search.desk) params.set("desk", search.desk);
+  const next = sanitizePostLoginNext(search.next);
+  if (next) params.set("next", next);
+  const qs = params.toString();
+  return qs ? `/login?${qs}` : "/login";
 }
 
 export function readStickyDesk(): DeskKey | null {

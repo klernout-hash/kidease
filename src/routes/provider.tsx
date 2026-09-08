@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityPill } from "@/components/priority-pill";
 import { TwoFactorGate } from "@/lib/auth/gates";
+import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole } from "@/lib/server/family";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
@@ -156,6 +157,7 @@ function ProviderPage() {
 
   return (
     <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
+    <LoginFunnelDeskLand desk="provider" />
     {search.preview === "support" ? <SupportPreviewBanner /> : null}
     <DeskShell
       desk="daycare"

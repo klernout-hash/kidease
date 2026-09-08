@@ -11,9 +11,10 @@ import { PasswordField } from "@/components/password-field";
 import { Shell } from "@/components/shell";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
-import { getMyDesks } from "@/lib/server/roles";
-import { deskQueryValue, loginRoleFromDesk, parseDeskQuery, readStickyDesk, resolvePostLoginPath, writeStickyDesk } from "@/lib/desks";
+import { deskQueryValue, loginRoleFromDesk, parseDeskQuery, readStickyDesk, resolvePostLoginPath, sanitizePostLoginNext, writeStickyDesk } from "@/lib/desks";
+import { captureLoginFunnel, continueAfterSignIn, loginErrorCallbackUrl, twoFactorPageUrl } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
 
 type Role = "parent" | "provider" | "admin";
@@ -23,7 +24,8 @@ const OPERATOR_EMAIL = "kyle@kidease.ca";
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => {
     const out: { next?: string; role?: Role; intent?: "in" | "up"; desk?: DeskAlias } = {};
-    if (typeof s.next === "string" && s.next.startsWith("/")) out.next = s.next;
+    const next = typeof s.next === "string" ? sanitizePostLoginNext(s.next) : null;
+    if (next) out.next = next;
     if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
     if (s.intent === "in" || s.intent === "up") out.intent = s.intent;
     const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
@@ -38,8 +40,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function twoFactorUrl(dest: string) {
-  const next = dest.startsWith("/") ? dest : "/";
-  return `/verify-2fa?next=${encodeURIComponent(next)}`;
+  return twoFactorPageUrl(dest);
 }
 
 function Login() {
@@ -64,6 +65,7 @@ function Login() {
   const [busy, setBusy] = useState(false);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
   const submitLock = useRef(false);
+  const continued = useRef(false);
 
   useEffect(() => {
     if (role === "parent" || role === "provider") rememberRole(role);
@@ -71,11 +73,25 @@ function Login() {
   }, [role, deskHint]);
 
   useEffect(() => {
-    if (sessionPending || !user) return;
-    const destUrl = dest.startsWith("/") ? dest : "/";
-    if (destUrl === "/login" || destUrl.startsWith("/login?")) return;
-    window.location.replace(twoFactorUrl(destUrl));
-  }, [sessionPending, user, dest]);
+    captureLoginFunnel({ step: "viewed", native: isNative() });
+  }, []);
+
+  useEffect(() => {
+    if (sessionPending || !user || busy || continued.current || error) return;
+    continued.current = true;
+    setBusy(true);
+    void continueAfterSignIn({
+      next: search.next,
+      desk: deskHint,
+      role: role ?? null,
+      sticky: readStickyDesk(),
+      method: "session",
+    }).catch(() => {
+      continued.current = false;
+      setError("Could not open your desk. Try signing in again.");
+      setBusy(false);
+    });
+  }, [sessionPending, user, dest, busy, search.next, deskHint, role, error]);
 
   async function finish() {
     const session = await authClient.getSession().catch(() => ({ data: null }));
@@ -91,22 +107,15 @@ function Login() {
         /* RoleBoot will retry once the session is visible */
       }
     }
-    let destUrl = dest.startsWith("/") ? dest : "/";
-    if (!search.next) {
-      try {
-        const sessionDesks = await getMyDesks();
-        destUrl = resolvePostLoginPath({
-          next: search.next,
-          desk: deskHint,
-          role: role ?? null,
-          desks: sessionDesks.desks,
-          sticky: readStickyDesk(),
-        });
-      } catch {
-        /* keep dest from the login role / desk */
-      }
-    }
-    window.location.assign(twoFactorUrl(destUrl));
+    continued.current = true;
+    captureLoginFunnel({ step: "succeeded", method: "email", native: isNative() });
+    await continueAfterSignIn({
+      next: search.next,
+      desk: deskHint,
+      role: role ?? null,
+      sticky: readStickyDesk(),
+      method: "email",
+    });
   }
 
   async function onEmail(e: React.FormEvent) {
@@ -123,6 +132,7 @@ function Login() {
       if (turnstileRequired && !challenge) {
         throw new Error("Please complete the security check, then try again.");
       }
+      captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
       if (mode === "up") {
         const res = await authClient.signUp.email({
           email,
@@ -141,7 +151,9 @@ function Login() {
       }
       await finish();
     } catch (err) {
-      setError(friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed");
+      const message = friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed";
+      captureLoginFunnel({ step: "failed", method: "email", reason: funnelFailReason(message), native: isNative() });
+      setError(message);
       resetTurnstile();
     } finally {
       submitLock.current = false;
@@ -154,9 +166,19 @@ function Login() {
     setError(null);
     if (role === "parent" || role === "provider") rememberRole(role);
     try {
-      await signIn(providerId, { callbackURL: twoFactorUrl(dest), errorCallbackURL: "/login" });
+      captureLoginFunnel({ step: "submitted", method: "social", native: isNative() });
+      await signIn(providerId, {
+        callbackURL: twoFactorUrl(dest),
+        errorCallbackURL: loginErrorCallbackUrl({
+          next: search.next,
+          role,
+          desk: search.desk,
+          intent: search.intent,
+        }),
+      });
     } catch (err) {
       const message = err instanceof Error ? friendlyAuthError(err.message) : "Sign-in failed";
+      captureLoginFunnel({ step: "failed", method: "social", reason: funnelFailReason(message), native: isNative() });
       setError(message.trim() || "Sign-in failed");
       setBusy(false);
     }
@@ -191,12 +213,12 @@ function Login() {
           <p className="absolute bottom-10 left-10 right-10 font-display text-3xl text-primary-fg">{t("tagline")}</p>
         </div>
         <div className="grid place-items-center px-[clamp(1rem,4vw,2rem)] py-10">
-          <div className="w-full max-w-md rounded-xl bg-surface p-8 shadow-card ring-1 ring-border">
+          <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border sm:p-8">
             <div className="flex justify-center">
               <BrandMark size="md" />
             </div>
             <h1 className="mt-6 font-display text-3xl">{mode === "up" && role && !operator ? t("createAccount") : title}</h1>
-            <p className="mt-2 text-sm text-muted">{lead}</p>
+            <p className="mt-2 text-sm text-muted">{user && !sessionPending ? "Opening your desk…" : lead}</p>
           {!operator ? (
           <div className="mt-6 space-y-2">
             {authEnabled ? (
@@ -245,15 +267,19 @@ function Login() {
             ) : null}
             <label className="block text-sm">
               {t("email")}
-              <input
-                type="email"
-                required
-                className="ke-input mt-1"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                readOnly={operator}
-              />
+                <input
+                  type="email"
+                  required
+                  className="ke-input mt-1"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  inputMode="email"
+                  enterKeyHint="next"
+                  readOnly={operator}
+                />
             </label>
             <PasswordField
               label={t("password")}
@@ -270,8 +296,8 @@ function Login() {
                 Sign-in methods could not load. If this keeps happening, a security filter may be blocking KidEase.
               </p>
             ) : null}
-            <Button type="submit" className="w-full" disabled={busy || (turnstileRequired && !token.trim())}>
-              {mode === "up" && !operator ? t("createAccount") : t("signIn")}
+            <Button type="submit" className="w-full min-h-12" disabled={busy || (turnstileRequired && !token.trim())}>
+              {busy ? "Opening your desk…" : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
           </form>
           {mode === "in" ? (
@@ -323,6 +349,17 @@ function Login() {
       </main>
     </Shell>
   );
+}
+
+function funnelFailReason(message: string): string {
+  const raw = message.toLowerCase();
+  if (raw.includes("security filter")) return "cloudflare";
+  if (raw.includes("security check")) return "turnstile";
+  if (raw.includes("too many")) return "rate_limit";
+  if (raw.includes("session")) return "session";
+  if (raw.includes("incorrect") || raw.includes("password")) return "credentials";
+  if (raw.includes("pop-up")) return "popup";
+  return "other";
 }
 
 function rememberToken(data: { token?: string | null } | null | undefined) {

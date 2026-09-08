@@ -22,6 +22,10 @@ import {
   canSeeAdminDesk,
   showDeskSwitcher,
   resolvePostLoginPath,
+  sanitizePostLoginNext,
+  isAuthLoopPath,
+  postLoginDestKind,
+  funnelDestPath,
   accountSearch,
   homeLandPath,
   highlightDesk,
@@ -145,6 +149,18 @@ test("post-login dest honors /parent for admin instead of dumping them on Provid
   );
   assert.equal(resolvePostLoginPath({ desks: adminDesks }), "/admin");
   assert.equal(resolvePostLoginPath({ next: "/search", desks: ["parent"] }), "/search");
+  assert.equal(resolvePostLoginPath({ next: "/login?next=/parent", desks: adminDesks }), "/parent");
+  assert.equal(resolvePostLoginPath({ next: "/verify-2fa?next=/provider" }), "/provider");
+  assert.equal(resolvePostLoginPath({ next: "/", role: "parent" }), "/parent");
+  assert.equal(resolvePostLoginPath({}), "/parent");
+  assert.equal(sanitizePostLoginNext("/login"), null);
+  assert.equal(sanitizePostLoginNext("//evil.example"), null);
+  assert.equal(sanitizePostLoginNext("/login?next=/login"), null);
+  assert.equal(sanitizePostLoginNext("/parent?tab=saved"), "/parent?tab=saved");
+  assert.equal(isAuthLoopPath("/verify-2fa"), true);
+  assert.equal(postLoginDestKind("/parent"), "desk");
+  assert.equal(postLoginDestKind("/search"), "public");
+  assert.equal(funnelDestPath("/daycare/some-slug?x=1"), "/daycare");
   assert.equal(canSeeAdminDesk("parent"), false);
 });
 

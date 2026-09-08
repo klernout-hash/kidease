@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
 import { SupportDesk } from "@/components/support-desk";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
+import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { SESSION_SETTLE_MS } from "@/lib/timeout";
@@ -56,6 +57,7 @@ function SupportPage() {
 
   return (
     <TwoFactorGate next="/support">
+      <LoginFunnelDeskLand desk="support" />
       <SupportDesk initialTab={search.tab === "new" ? "new" : "inbox"} />
     </TwoFactorGate>
   );
