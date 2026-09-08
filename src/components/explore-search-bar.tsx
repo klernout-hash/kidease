@@ -66,10 +66,12 @@ export function ExploreSearchBar({
   function segmentClass(field: Field, index: number) {
     return cn(
       "relative flex min-w-0 flex-1 flex-col justify-center px-5 py-3 text-left transition-colors",
-      "lg:min-h-[4.25rem] lg:rounded-full lg:px-6",
+      "lg:min-h-[4.25rem] lg:px-6",
+      index === 0 && "rounded-t-[2rem] lg:rounded-none lg:rounded-l-full",
+      index === 2 && "rounded-b-[2rem] lg:rounded-none lg:rounded-r-full",
       index > 0 &&
         "lg:before:absolute lg:before:left-0 lg:before:top-1/2 lg:before:h-8 lg:before:w-px lg:before:-translate-y-1/2 lg:before:bg-border",
-      active === field ? "bg-surface-2" : "hover:bg-surface-2/90",
+      active === field ? "z-30 bg-surface-2" : "hover:bg-surface-2/90",
     );
   }
 
@@ -84,7 +86,7 @@ export function ExploreSearchBar({
         onSubmit();
       }}
     >
-      <div className="flex flex-col divide-y divide-border overflow-hidden rounded-[2rem] bg-surface shadow-lift ring-1 ring-border/80 lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
+      <div className="relative z-20 flex flex-col divide-y divide-border rounded-[2rem] bg-surface shadow-lift ring-1 ring-border/80 lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
         <div className={segmentClass("where", 0)} onClick={() => setActive("where")}>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
@@ -150,7 +152,7 @@ export function ExploreSearchBar({
               id={whenPanelId}
               role="group"
               aria-labelledby={whenLabelId}
-              className="absolute left-3 right-3 top-[calc(100%+8px)] z-50 rounded-2xl bg-surface p-4 shadow-lift ring-1 ring-border lg:left-0 lg:right-auto lg:w-[22rem]"
+              className="absolute left-3 right-3 top-full z-[60] mt-2 rounded-2xl bg-surface p-4 shadow-lift ring-1 ring-border lg:left-0 lg:right-auto lg:w-[22rem]"
             >
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block text-sm" htmlFor={startId}>
