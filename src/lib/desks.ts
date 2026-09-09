@@ -134,6 +134,13 @@ export function twoFactorGateState(verified: boolean, next: string): TwoFactorGa
   return !verified && staffTwoFactorRequired(next) ? "need" : "ok";
 }
 
+/** Login funnel: only staff desks open /verify-2fa. Public/home and parent/provider do not. */
+export function shouldOpenTwoFactorForDest(dest: string, verified: boolean): boolean {
+  const kind = postLoginDestKind(dest);
+  if (kind === "public" || kind === "home") return false;
+  return twoFactorGateState(verified, dest) === "need";
+}
+
 /**
  * One hop of the desk ↔ /verify-2fa machine. Parent/provider skip or
  * start/status failure must land on the desk and stay there while unverified.

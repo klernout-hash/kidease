@@ -3,9 +3,9 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { shouldOpenTwoFactorPage } from "../src/lib/auth/login-funnel.ts";
 import {
   nextTwoFactorNav,
+  shouldOpenTwoFactorForDest,
   staffTwoFactorRequired,
   twoFactorGateState,
   twoFactorPageUrl,
@@ -92,13 +92,13 @@ test("admin/support still fail closed to /verify-2fa when unverified", () => {
   assert.equal(supportStay, "/verify-2fa");
 });
 
-test("shouldOpenTwoFactorPage is false for parent/provider even when unverified", async () => {
-  assert.equal(await shouldOpenTwoFactorPage("/parent", Promise.resolve({ verified: false })), false);
-  assert.equal(await shouldOpenTwoFactorPage("/provider", Promise.resolve({ verified: false })), false);
-  assert.equal(await shouldOpenTwoFactorPage("/search", Promise.resolve({ verified: false })), false);
-  assert.equal(await shouldOpenTwoFactorPage("/admin", Promise.resolve({ verified: false })), true);
-  assert.equal(await shouldOpenTwoFactorPage("/admin", Promise.resolve({ verified: true })), false);
-  assert.equal(await shouldOpenTwoFactorPage("/support/sc_1", Promise.reject(new Error("status"))), true);
+test("shouldOpenTwoFactorForDest is false for parent/provider even when unverified", () => {
+  assert.equal(shouldOpenTwoFactorForDest("/parent", false), false);
+  assert.equal(shouldOpenTwoFactorForDest("/provider", false), false);
+  assert.equal(shouldOpenTwoFactorForDest("/search", false), false);
+  assert.equal(shouldOpenTwoFactorForDest("/admin", false), true);
+  assert.equal(shouldOpenTwoFactorForDest("/admin", true), false);
+  assert.equal(shouldOpenTwoFactorForDest("/support/sc_1", false), true);
 });
 
 test("gate and funnel no longer treat parent verified:false as a hard Navigate", () => {
@@ -110,7 +110,9 @@ test("gate and funnel no longer treat parent verified:false as a hard Navigate",
   assert.match(funnel, /optional_desk/);
   assert.match(funnel, /if \(!staffTwoFactorRequired\(dest\)\)/);
   assert.match(desks, /export function twoFactorGateState/);
+  assert.match(desks, /export function shouldOpenTwoFactorForDest/);
   assert.match(desks, /export function nextTwoFactorNav/);
+  assert.match(funnel, /shouldOpenTwoFactorForDest/);
   assert.match(src("src/routes/parent.tsx"), /TwoFactorGate/);
   assert.match(src("src/routes/verify-2fa.tsx"), /if \(!staff\)/);
 });

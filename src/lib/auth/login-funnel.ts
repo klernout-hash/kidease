@@ -15,6 +15,7 @@ import {
   postLoginDestKind,
   resolvePostLoginPath,
   sanitizePostLoginNext,
+  shouldOpenTwoFactorForDest,
   staffTwoFactorRequired,
   twoFactorPageUrl,
   writeStickyDesk,
@@ -141,7 +142,7 @@ export async function shouldOpenTwoFactorPage(
       TWO_FACTOR_STATUS_MS,
       "2fa-status-timeout",
     );
-    if (status.verified) {
+    if (!shouldOpenTwoFactorForDest(dest, status.verified)) {
       captureLoginFunnel({
         step: "two_factor_skipped",
         reason: "already_verified",
