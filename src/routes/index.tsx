@@ -50,6 +50,7 @@ import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import { SearchAgeGate } from "@/components/search-age-gate";
 import {
   honestVacancy,
+  homeRailItems,
   isLiveLookingCard,
   liveLookingOnly,
   type SearchAge,
@@ -278,8 +279,12 @@ function Home() {
   }, []);
   const liveCount = useMemo(() => featured.filter((r) => r.live).length, [featured]);
   const shown = useMemo(
-    () => liveLookingOnly(uniqueById(liveOnly ? featured.filter((r) => r.live) : featured)),
-    [featured, liveOnly],
+    () =>
+      homeRailItems(liveLookingOnly(uniqueById(liveOnly ? featured.filter((r) => r.live) : featured)), {
+        city: origin.label,
+        label: origin.label,
+      }),
+    [featured, liveOnly, origin.label],
   );
   const availableNow = useMemo(() => {
     return uniqueById(shown.filter((r) => honestVacancy(r).kind === "open")).slice(0, 18);

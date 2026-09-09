@@ -160,6 +160,7 @@ function SearchPage() {
   const incoming = Route.useSearch();
   const boot = Route.useLoaderData();
   const origin = useAppStore((s) => s.origin);
+  const located = useAppStore((s) => s.located);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const workOrigin = useAppStore((s) => s.workOrigin);
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
@@ -704,7 +705,11 @@ function SearchPage() {
       ? incoming.cat
       : undefined;
   const searchStart = isSearchStart(incoming.start) ? incoming.start : undefined;
-  const gated = searchFiltersReady(searchAge, searchStart);
+  const gated = searchFiltersReady(searchAge, searchStart, {
+    q: incoming.q ?? query,
+    label: origin.label,
+    located,
+  });
   const split = useMemo(() => {
     if (!gated || !searchAge || !searchStart) return { primary: [] as Card[], ageUnknown: [] as Card[] };
     return splitSearchResults(list, searchAge, searchStart);
@@ -1196,47 +1201,6 @@ function SearchPage() {
             </div>
             {filterChips}
             {radiusSlider}
-            <div className="flex flex-wrap gap-2">
-              {(["any", "infant", "toddler", "preschool"] as const).map((a) => (
-                <ChipButton
-                  key={a}
-                  on={
-                    a === "any"
-                      ? !resolvedExploreCategory(incoming) && !schoolAgeOnly && ageGroup === "any"
-                      : resolvedExploreCategory(incoming) === a ||
-                        (!incoming.cat && !schoolAgeOnly && ageGroup === a)
-                  }
-                  aria-pressed={
-                    a === "any"
-                      ? !resolvedExploreCategory(incoming) && !schoolAgeOnly && ageGroup === "any"
-                      : resolvedExploreCategory(incoming) === a ||
-                        (!incoming.cat && !schoolAgeOnly && ageGroup === a)
-                  }
-                  onClick={() => {
-                    writeCategorySearch(a === "any" ? undefined : a);
-                  }}
-                >
-                  {a === "any" ? t("anyAge") : t(a)}
-                </ChipButton>
-              ))}
-              <ChipButton
-                on={
-                  resolvedExploreCategory(incoming) === "school-age" ||
-                  (!incoming.cat && schoolAgeOnly)
-                }
-                aria-pressed={
-                  resolvedExploreCategory(incoming) === "school-age" ||
-                  (!incoming.cat && schoolAgeOnly)
-                }
-                onClick={() => {
-                  writeCategorySearch(
-                    resolvedExploreCategory(incoming) === "school-age" ? undefined : "school-age",
-                  );
-                }}
-              >
-                {t("schoolAge")}
-              </ChipButton>
-            </div>
             <div className="flex flex-wrap gap-2">
               {(
                 [

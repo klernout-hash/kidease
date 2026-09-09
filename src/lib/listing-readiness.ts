@@ -72,6 +72,7 @@ export function hasFeeOrProgram(
 }
 
 export function hasConfirmedAges(d: Pick<Daycare, "agesKnown" | "ageMinMonths" | "ageMaxMonths">) {
+  if (d.agesKnown === false) return false;
   if (d.agesKnown) return true;
   return d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0;
 }
@@ -192,7 +193,7 @@ export function applyListingReadiness<T extends Daycare>(d: T): T {
     availabilityKnown: Boolean(vacancyAt),
     detailsReady: complete.ready,
     completenessMissing: complete.missing,
-    feeConfirmed: hasListedFees(d),
+    feeConfirmed: Boolean(d.feeConfirmed) || hasListedFees(d),
   };
 }
 

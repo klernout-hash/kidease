@@ -1,6 +1,7 @@
 import { ListingRail } from "@/components/listing-rail";
 import type { CopyKey } from "@/lib/copy";
 import { FACILITY_TYPES, matchesFacilityType, type FacilityType } from "@/lib/facility-type";
+import { homeRailItems } from "@/lib/now-loops";
 import { parentRailSearchHref } from "@/lib/parent-rails";
 import type { DaycareCard as Card } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
@@ -17,7 +18,7 @@ function take(rows: Card[], n = 12) {
 }
 
 export function facilityTypeRailItems(items: Card[], type: FacilityType, n = 12): Card[] {
-  const byDistance = [...items].sort((a, b) => a.distanceKm - b.distanceKm);
+  const byDistance = [...homeRailItems(items)].sort((a, b) => a.distanceKm - b.distanceKm);
   return take(
     byDistance.filter((row) => matchesFacilityType(row, type)),
     n,

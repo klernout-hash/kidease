@@ -1429,13 +1429,13 @@ export const copy = {
     fullMapExplore: "Open the full map",
     searchAgeGateTitle: "Who needs care?",
     searchAgeGateLead:
-      "Choose a child age band and when you need a spot. Centres that do not serve that age stay hidden.",
+      "Choose a child age band, when you need a spot, and a place. Centres that do not serve that age stay hidden.",
     searchAgeLabel: "Child age",
     searchStartLabel: "Start",
     searchStartNow: "Now",
     searchStartThisMonth: "This month",
     searchStartNextMonth: "Next month",
-    searchNeedAgeStart: "Choose age and start to see centres",
+    searchNeedAgeStart: "Choose age, start, and a place to see centres",
     ageNotConfirmed: "Age not confirmed",
     ageNotConfirmedLead:
       "These listings have not confirmed ages served. They are not matches and stay off the home rails.",
@@ -1446,7 +1446,8 @@ export const copy = {
     cardGapPhoto: "Photo pending",
     availabilityUnknown: "Availability unknown",
     confirmWithCentre: "Confirm with centre",
-    unclaimedRequestNote: "Claim not live — contact is a note to KidEase, not the centre.",
+    unclaimedRequestNote:
+      "Claim not live — no director reply. This is a note to KidEase, not the centre. Facts come from the public registry. Claim stays free.",
     requestTour: "Request a tour",
     requestSpotCta: "Request a spot",
     providerRequestsEmpty: "No parent requests yet. Complete ages, fees, photo to appear in search.",
@@ -2894,13 +2895,13 @@ export const copy = {
     fullMapExplore: "Ouvrir la carte complète",
     searchAgeGateTitle: "Qui a besoin d’une place?",
     searchAgeGateLead:
-      "Choisissez une tranche d’âge et le moment où vous avez besoin d’une place. Les centres qui ne desservent pas cet âge restent masqués.",
+      "Choisissez une tranche d’âge, le moment où vous avez besoin d’une place, et un lieu. Les centres qui ne desservent pas cet âge restent masqués.",
     searchAgeLabel: "Âge de l’enfant",
     searchStartLabel: "Début",
     searchStartNow: "Maintenant",
     searchStartThisMonth: "Ce mois-ci",
     searchStartNextMonth: "Le mois prochain",
-    searchNeedAgeStart: "Choisissez l’âge et le début pour voir les centres",
+    searchNeedAgeStart: "Choisissez l’âge, le début et un lieu pour voir les centres",
     ageNotConfirmed: "Âge non confirmé",
     ageNotConfirmedLead:
       "Ces fiches n’ont pas confirmé les âges acceptés. Ce ne sont pas des correspondances et elles restent hors des rangées d’accueil.",
@@ -2911,7 +2912,8 @@ export const copy = {
     cardGapPhoto: "Photo en attente",
     availabilityUnknown: "Disponibilité inconnue",
     confirmWithCentre: "Confirmer auprès du centre",
-    unclaimedRequestNote: "Réclamation non en ligne — le message va à KidEase, pas au centre.",
+    unclaimedRequestNote:
+      "Réclamation non en ligne — pas de réponse du directeur. Le message va à KidEase, pas au centre. Les faits viennent du registre public. La réclamation reste gratuite.",
     requestTour: "Demander une visite",
     requestSpotCta: "Demander une place",
     providerRequestsEmpty: "Aucune demande de parents pour l’instant. Complétez âges, tarifs et photo pour apparaître dans la recherche.",
