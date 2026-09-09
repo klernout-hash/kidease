@@ -1,5 +1,5 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useId, useRef, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { geocode } from "@/lib/geo";
 import {
   geocodePlace,
@@ -7,6 +7,7 @@ import {
   suggestPlaces,
   type PlaceSuggestion,
 } from "@/lib/server/google-places";
+import { DISMISS_POPOVERS, placeHostVisible } from "@/lib/dismiss-popovers";
 import {
   geocodeWithBrowser,
   resolveLocalPlace,
@@ -55,6 +56,12 @@ function newSession() {
   return `ke-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function menuContains(listId: string, node: Node | null) {
+  if (!node) return false;
+  const menu = document.getElementById(listId);
+  return Boolean(menu?.contains(node));
+}
+
 export function PlaceSearch({
   value,
   onChange,
@@ -80,11 +87,20 @@ export function PlaceSearch({
 }) {
   const listId = useId();
   const wrap = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null);
   const session = useRef(newSession());
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [hits, setHits] = useState<PlaceSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const [menuBox, setMenuBox] = useState<{ left: number; top: number; width: number } | null>(null);
+
+  function close() {
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    close();
+  }, [pathname]);
 
   useEffect(() => {
     const q = value.trim();
@@ -97,6 +113,8 @@ export function PlaceSearch({
     const tmr = window.setTimeout(() => {
       void loadSuggestions(q, origin, session.current).then((rows) => {
         if (!live) return;
+        if (!placeHostVisible(wrap.current)) return;
+        if (document.activeElement !== input.current) return;
         setHits(rows);
         setOpen(rows.length > 0);
         setActive(0);
@@ -108,36 +126,51 @@ export function PlaceSearch({
     };
   }, [value, origin?.lat, origin?.lng]);
 
-  useLayoutEffect(() => {
-    function measure() {
-      const el = wrap.current;
-      if (!el || !open) {
-        setMenuBox(null);
-        return;
-      }
-      const box = el.getBoundingClientRect();
-      setMenuBox({ left: box.left, top: box.bottom + 6, width: Math.max(box.width, 220) });
+  useEffect(() => {
+    if (!open) return;
+
+    function onPointer(event: Event) {
+      const target = event.target as Node | null;
+      if (wrap.current?.contains(target) || menuContains(listId, target)) return;
+      close();
     }
-    measure();
-    window.addEventListener("resize", measure);
-    window.addEventListener("scroll", measure, true);
+
+    function onScroll(event: Event) {
+      const target = event.target;
+      if (target instanceof Node && menuContains(listId, target)) return;
+      close();
+    }
+
+    function onDismiss() {
+      close();
+    }
+
+    document.addEventListener("pointerdown", onPointer);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener(DISMISS_POPOVERS, onDismiss);
+    window.visualViewport?.addEventListener("resize", onDismiss);
+    window.visualViewport?.addEventListener("scroll", onDismiss);
     return () => {
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure, true);
+      document.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener(DISMISS_POPOVERS, onDismiss);
+      window.visualViewport?.removeEventListener("resize", onDismiss);
+      window.visualViewport?.removeEventListener("scroll", onDismiss);
     };
-  }, [open, hits.length, value]);
+  }, [open, listId]);
 
   useEffect(() => {
-    function onDoc(event: MouseEvent) {
-      if (!wrap.current?.contains(event.target as Node)) {
-        const menu = document.getElementById(listId);
-        if (menu?.contains(event.target as Node)) return;
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [listId]);
+    const el = wrap.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.intersectionRatio === 0)) close();
+      },
+      { threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   async function pick(hit: PlaceSuggestion) {
     const local = resolveLocalPlace(hit.placeId);
@@ -161,6 +194,7 @@ export function PlaceSearch({
   return (
     <div ref={wrap} className={cn("relative z-40 min-w-0 flex-1 overflow-visible", className)}>
       <input
+        ref={input}
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -174,9 +208,23 @@ export function PlaceSearch({
         aria-labelledby={ariaLabelledBy}
         autoComplete="off"
         onFocus={() => {
+          if (!placeHostVisible(wrap.current)) return;
           if (hits.length) setOpen(true);
         }}
+        onBlur={(event) => {
+          const next = event.relatedTarget as Node | null;
+          if (wrap.current?.contains(next) || menuContains(listId, next)) return;
+          window.setTimeout(() => {
+            if (document.activeElement === input.current) return;
+            if (menuContains(listId, document.activeElement)) return;
+            close();
+          }, 0);
+        }}
         onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            close();
+            return;
+          }
           if (!open || hits.length === 0) return;
           if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -187,41 +235,35 @@ export function PlaceSearch({
           } else if (e.key === "Enter" && hits[active]) {
             e.preventDefault();
             void pick(hits[active]!);
-          } else if (e.key === "Escape") {
-            setOpen(false);
           }
         }}
       />
-      {open && hits.length > 0 && menuBox && typeof document !== "undefined"
-        ? createPortal(
-            <ul
-              id={listId}
-              role="listbox"
-              data-place-suggestions=""
-              className="fixed z-[80] max-h-64 overflow-auto rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
-              style={{ left: menuBox.left, top: menuBox.top, width: menuBox.width }}
-            >
-              {hits.map((hit, i) => (
-                <li key={hit.placeId} role="option" aria-selected={i === active}>
-                  <button
-                    type="button"
-                    className={cn(
-                      "flex w-full flex-col items-start px-3 py-2 text-left text-sm",
-                      i === active ? "bg-surface-2" : "hover:bg-surface-2",
-                    )}
-                    onMouseEnter={() => setActive(i)}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => void pick(hit)}
-                  >
-                    <span className="font-medium text-fg">{hit.label}</span>
-                    {hit.secondary ? <span className="text-xs text-muted">{hit.secondary}</span> : null}
-                  </button>
-                </li>
-              ))}
-            </ul>,
-            document.body,
-          )
-        : null}
+      {open && hits.length > 0 ? (
+        <ul
+          id={listId}
+          role="listbox"
+          data-place-suggestions=""
+          className="absolute left-0 right-0 top-full z-[80] mt-1.5 max-h-64 overflow-auto rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
+        >
+          {hits.map((hit, i) => (
+            <li key={hit.placeId} role="option" aria-selected={i === active}>
+              <button
+                type="button"
+                className={cn(
+                  "flex w-full flex-col items-start px-3 py-2 text-left text-sm",
+                  i === active ? "bg-surface-2" : "hover:bg-surface-2",
+                )}
+                onMouseEnter={() => setActive(i)}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => void pick(hit)}
+              >
+                <span className="font-medium text-fg">{hit.label}</span>
+                {hit.secondary ? <span className="text-xs text-muted">{hit.secondary}</span> : null}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

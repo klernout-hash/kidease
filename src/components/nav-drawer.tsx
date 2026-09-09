@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
 import { RateKidEaseControl } from "@/components/rate-kidease";
@@ -44,6 +45,7 @@ export function NavDrawer({
 
   useEffect(() => {
     if (!open) return;
+    dismissPopovers();
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
