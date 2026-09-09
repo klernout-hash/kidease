@@ -8,6 +8,7 @@ import {
   SHARE_APP_URL,
   appSharePayload,
   copyText,
+  listingMailtoHref,
   listingSharePayload,
   listingShareUrl,
   shareFeedbackKey,
@@ -49,6 +50,14 @@ test("share URLs stay on the public www origin without store IDs", () => {
   });
   assert.equal(listing.title, "Harrow House");
   assert.equal(listing.url, "https://www.kidease.ca/daycare/harrow-house");
+  const mail = listingMailtoHref({
+    name: "Harrow House",
+    slug: "harrow-house",
+    note: "Free KidEase listing · not a paid ad",
+  });
+  assert.match(mail, /^mailto:\?subject=/);
+  assert.match(decodeURIComponent(mail), /harrow-house/);
+  assert.match(decodeURIComponent(mail), /not a paid ad/);
 });
 
 test("share cancellation is abort or dismiss, not a generic failure", () => {

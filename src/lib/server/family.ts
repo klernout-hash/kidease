@@ -1097,6 +1097,7 @@ export const getMyRole = createServerFn({ method: "GET" })
       stripeLive: session.stripeLive,
       ledgerLabel: session.ledgerLabel,
       providerSubscriptions: session.providerSubscriptions,
+      showPayCtas: session.showPayCtas,
     };
   });
 

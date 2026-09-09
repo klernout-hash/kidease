@@ -281,6 +281,13 @@ export const GROUPS = [
         required: false,
         notes: "Production: leave 0 until FCM / APNs secrets + a native binary exist. Preview may set 1.",
       },
+      {
+        name: "SHOW_PAY_CTAS",
+        concealed: false,
+        vercel: "both",
+        required: false,
+        notes: "Default 0. Parent/director Upgrade · Subscribe chrome. Set 1 to restore. Stripe code stays.",
+      },
     ],
   },
   {

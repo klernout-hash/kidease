@@ -25,6 +25,7 @@ import {
   inAppChatEnabled,
   providerSubscriptionsEnabled,
   pushEnabled,
+  showPayCtas,
   smsEnabled,
   videoEnabled,
 } from "../src/lib/features.ts";
@@ -41,12 +42,16 @@ test("FEATURE_PUSH and FEATURE_SMS default off; subscriptions default on", () =>
   assert.equal(FLAG_DEFAULTS.FEATURE_VIDEO, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_INAPP_CHAT, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_PROVIDER_SUBSCRIPTIONS, true);
+  assert.equal(FLAG_DEFAULTS.SHOW_PAY_CTAS, false);
   assert.equal(envFlagOn(undefined), false);
   assert.equal(smsEnabled({}), false);
   assert.equal(pushEnabled({}), false);
   assert.equal(videoEnabled({}), false);
   assert.equal(inAppChatEnabled({}), false);
   assert.equal(providerSubscriptionsEnabled({}), true);
+  assert.equal(showPayCtas({}), false);
+  assert.equal(showPayCtas({ SHOW_PAY_CTAS: "0" }), false);
+  assert.equal(showPayCtas({ SHOW_PAY_CTAS: "1" }), true);
 });
 
 test("custom env objects stay env-only and ignore the process overlay", () => {
@@ -146,12 +151,14 @@ test("docs and env example stay placeholders; SMS and push stay off", () => {
   assert.match(docs, /channel-readiness/);
   assert.match(docs, /FEATURE_SMS/);
   assert.match(docs, /FEATURE_PUSH/);
+  assert.match(docs, /SHOW_PAY_CTAS/);
   assert.match(envExample, /# POSTHOG_FLAGS_KEY=/);
   assert.match(envExample, /# POSTHOG_FLAGS_HOST=/);
   assert.match(envExample, /^FEATURE_PUSH=0$/m);
   assert.match(envExample, /^FEATURE_SMS=0$/m);
   assert.match(envExample, /^FEATURE_VIDEO=0$/m);
   assert.match(envExample, /^FEATURE_INAPP_CHAT=0$/m);
+  assert.match(envExample, /^SHOW_PAY_CTAS=0$/m);
   assert.doesNotMatch(envExample, /^FEATURE_PUSH=1$/m);
   assert.doesNotMatch(envExample, /^FEATURE_SMS=1$/m);
   assert.doesNotMatch(envExample, /^FEATURE_VIDEO=1$/m);

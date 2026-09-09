@@ -11,7 +11,9 @@ import { breadcrumbJsonLd, breadcrumbJsonLdScript } from "./page-seo.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
 import { SITEMAP_ORIGIN, sitemapListingPath } from "./sitemap.ts";
 
-/** Official storefront or https media only. Placeholders and street-view stock stay out of OG. */
+/** Official storefront or https media only. Placeholders and street-view stock stay out of OG.
+ *  Winnipeg `/photos/wpg/` rows are street stock — they stay out, so many WPG listings
+ *  fall back to the default og.jpg until an official building photo exists. */
 function isSeoPhoto(src?: string | null) {
   const p = String(src || "").trim();
   if (!p) return false;

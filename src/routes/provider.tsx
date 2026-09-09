@@ -38,6 +38,8 @@ import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
 import { DirectorNudgeQueue } from "@/components/director-nudges";
 import { ProviderPlanBanner } from "@/components/provider-plan-banner";
+import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
+import { FreePageExplainer } from "@/components/free-listing-share";
 import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
@@ -48,10 +50,11 @@ const DESKS: DaycareDesk[] = ["requests", "money", "listings", "licence", "contr
 
 export const Route = createFileRoute("/provider")({
   validateSearch: (s: Record<string, unknown>) => {
-    const out: { desk?: DaycareDesk; preview?: "support" } = {};
+    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
     if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
     if (s.preview === "support") out.preview = "support";
+    if (s.claimed === true || s.claimed === "1" || s.claimed === "true") out.claimed = true;
     return out;
   },
   component: ProviderPage,
@@ -60,6 +63,7 @@ export const Route = createFileRoute("/provider")({
 function ProviderPage() {
   const { user, isPending } = useSettledUser();
   const { t, locale } = useCopy();
+  const showPay = useShowPayCtas();
   const search = Route.useSearch();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const childRoute = pathname === "/provider/subscription" || pathname.startsWith("/provider/subscription/");
@@ -212,13 +216,26 @@ function ProviderPage() {
       ) : null}
       <DirectorNudgeQueue listings={listings} stats={stats} onConfirmed={() => void load()} />
       <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
-      {subscription ? <ProviderPlanBanner subscription={subscription} /> : null}
+      {listings.length ? (
+        <FreePageExplainer
+          listings={listings.map((d) => ({
+            slug: d.slug,
+            name: d.name,
+            nameFr: d.nameFr,
+            lat: d.lat,
+            lng: d.lng,
+          }))}
+        />
+      ) : null}
+      <PayCtas>{subscription ? <ProviderPlanBanner subscription={subscription} /> : null}</PayCtas>
       {desk === "requests" ? (
         <section className="space-y-8">
+          <PayCtas>
           <DirectorProStrip
             views={stats.reduce((sum, s) => sum + (s.weekViews ?? 0), 0)}
             requests={stats.reduce((sum, s) => sum + (s.weekRequests ?? 0), 0)}
           />
+          </PayCtas>
           <p className="text-sm text-muted">
             {t("leadInbox")}
             {leads.filter((row) => isOpenLeadStatus(row.status)).length
@@ -337,6 +354,7 @@ function ProviderPage() {
               </section>
             );
           })}
+          <PayCtas>
           {subscription && subscription.siteCount >= 3 && !subscription.orgDashboard ? (
             <p className="mb-6 rounded-xl bg-primary/10 px-5 py-4 text-sm text-primary ring-1 ring-primary/20">
               {t("planOrgLocked")}{" "}
@@ -345,6 +363,7 @@ function ProviderPage() {
               </Link>
             </p>
           ) : null}
+          </PayCtas>
           {subscription?.orgDashboard && subscription.siteCount >= 3 ? (
             <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
               <h2 className="font-display text-2xl">{t("planOrgLive")}</h2>
@@ -476,7 +495,9 @@ function ProviderPage() {
       {desk === "contract" ? <ProviderContractsPanel /> : null}
 
       {desk === "promote" ? (
-        listings.length === 0 ? (
+        !showPay ? (
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
+        ) : listings.length === 0 ? (
           <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("providerOnboardingLead")}</p>
         ) : (
           listings.map((d) => {
@@ -507,6 +528,7 @@ function ProviderOnboarding({ showForm, onShowForm }: { showForm: boolean; onSho
     <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20">
       <h2 className="font-display text-2xl">{t("providerOnboardingTitle")}</h2>
       <p className="mt-2 text-sm text-muted">{t("providerOnboardingLead")}</p>
+      <p className="mt-2 text-sm font-medium">{t("listingStayFree")}</p>
       <ol className="mt-4 space-y-2 text-sm">
         <li>{t("providerOnboardingStep1")}</li>
         <li>{t("providerOnboardingStep2")}</li>

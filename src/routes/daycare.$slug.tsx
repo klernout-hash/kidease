@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound, redirect, useNavigate } from "@tanstac
 import { MapPinned, MessageCircle, Phone, Star } from "lucide-react";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { ShareListingButton } from "@/components/share-button";
+import { FreeListingShareActions } from "@/components/free-listing-share";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -356,13 +357,13 @@ function Listing() {
         ) : !d.claimed ? (
           <Button asChild variant="secondary">
             <Link to="/claim" search={{ q: d.name }}>
-              {t("claimCta")}
+              {t("claimThisFreePage")}
             </Link>
           </Button>
         ) : (
           <p className="text-xs text-muted">{t("requestUnavailable")}</p>
         )}
-        {!live ? <p className="text-xs text-muted">{t("unclaimedRequestNote")}</p> : null}
+        {!live ? <p className="text-xs text-muted">{t("parentRequestNotLive")}</p> : null}
         {live ? (
           <Button variant="secondary" onClick={() => void onMessage()}>
             <MessageCircle className="size-4" /> {t("message")}
@@ -439,7 +440,7 @@ function Listing() {
             ) : null}
             {photos[photo]?.includes("placeholder") ? (
               <span className="pointer-events-none absolute bottom-3 left-3 z-[2] rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white">
-                {live ? t("storefrontPhoto") : t("notOnKidEase")}
+                {t("photoPending")}
               </span>
             ) : null}
           </div>
@@ -487,6 +488,7 @@ function Listing() {
                   {licensed ? <TrustBadge badge={licensed} /> : null}
                 </div>
                 <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
+                <p className="mt-2 text-xs font-medium text-subtle">{t("freeListingNotAd")}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <CompareChip id={d.id} slug={d.slug} />
                   {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
@@ -518,7 +520,7 @@ function Listing() {
                   <p className="mt-3 text-sm">
                     {t("isThisYours")}{" "}
                     <Link to="/claim" search={{ q: d.name }} className="text-primary underline-offset-4 hover:underline">
-                      {t("claimCta")}
+                      {t("claimThisFreePage")}
                     </Link>
                   </p>
                 ) : null}
@@ -550,8 +552,10 @@ function Listing() {
             </div>
 
             <dl className="mt-6 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
-              <Meta label={t("hours")} value={hours} />
-              <Meta label={t("ages")} value={d.agesKnown ? formatAgeRange(d.ageMinMonths, d.ageMaxMonths) : t("agesUnknown")} />
+              {hours.trim() ? <Meta label={t("hours")} value={hours} /> : null}
+              {d.agesKnown ? (
+                <Meta label={t("ages")} value={formatAgeRange(d.ageMinMonths, d.ageMaxMonths)} />
+              ) : null}
               <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
               <Meta
                 label={t("spotsAvailable")}
@@ -592,6 +596,7 @@ function Listing() {
                   {comparing ? t("comparing") : t("compareAdd")}
                 </Button>
                 <ShareListingButton slug={d.slug} name={name} appearance="labeled" />
+                <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
                 <Button asChild variant="ghost">
                   <Link to="/tour-checklist">{t("tourChecklist")}</Link>
                 </Button>
@@ -762,6 +767,7 @@ function Listing() {
                 <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
               ) : null}
               <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full hover:bg-surface-2/70" />
+              <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
               <div className="grid grid-cols-3 gap-2">
                 <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" />
                 {d.phone ? (
@@ -807,13 +813,13 @@ function Listing() {
             <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" onClick={onRequest}>
               {t("requestSpotCta")}
             </Button>
-          ) : !d.claimed ? (
-            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" asChild>
-              <Link to="/claim" search={{ q: d.name }}>
-                {t("claimCtaShort")}
-              </Link>
-            </Button>
-          ) : null}
+            ) : !d.claimed ? (
+              <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" asChild>
+                <Link to="/claim" search={{ q: d.name }}>
+                  {t("claimCtaShort")}
+                </Link>
+              </Button>
+            ) : null}
           {live ? (
             <Button className="shrink-0" variant="secondary" size="icon" onClick={() => void onMessage()} aria-label={t("message")}>
               <MessageCircle className="size-5" />

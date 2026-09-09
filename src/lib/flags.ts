@@ -20,6 +20,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_SMS",
   "FEATURE_VIDEO",
   "FEATURE_PROVIDER_SUBSCRIPTIONS",
+  "SHOW_PAY_CTAS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -58,6 +59,7 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_SMS: false,
   FEATURE_VIDEO: false,
   FEATURE_PROVIDER_SUBSCRIPTIONS: true,
+  SHOW_PAY_CTAS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -98,6 +100,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: true,
     docs: "docs/flags.md",
     summary: "Director Subscription tab. Live by default. Checkout still needs Stripe live keys.",
+  },
+  {
+    key: "SHOW_PAY_CTAS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Parent and director Upgrade / Subscribe / plan-price chrome. Default off. Stripe code stays. Admin catalog stays.",
   },
 ];
 

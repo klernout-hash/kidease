@@ -6,6 +6,7 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { VIDEO_SDK_SCAFFOLD_MESSAGE } from "@/lib/video";
+import { PayCtas } from "@/components/pay-chrome";
 import {
   getVideoJoinStatus,
   joinVideoRoom,
@@ -121,11 +122,13 @@ function VideoRoomPage() {
               {status?.reason === "plus_required_billing_not_live" ? t("videoPlusRequiredBilling") : t("videoPlusRequired")}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
+              <PayCtas>
               <Button asChild>
                 <Link to="/parent" search={{ tab: "payments" }}>
                   {t("parentPlusSubscribe")}
                 </Link>
               </Button>
+              </PayCtas>
               <Button variant="secondary" asChild>
                 <Link to="/inbox">{t("inbox")}</Link>
               </Button>

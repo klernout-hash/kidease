@@ -5,6 +5,8 @@ import { nid } from "@/lib/utils";
 import { promoPlan, type PromoPlanId } from "@/lib/promos";
 import { lookupUser, notifyPlatform } from "./notify";
 import { assertCanMutateListing } from "@/lib/access-control";
+import { assertPayCheckoutAllowed } from "@/lib/features";
+import { resolveSessionDesks } from "@/lib/server/roles";
 
 export async function overlayPriority<T extends { id: string; priority?: boolean; priorityUntil?: string | null }>(
   items: T[],
@@ -39,6 +41,8 @@ export const promoteListing = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId: string; plan: PromoPlanId }) => input)
   .handler(async ({ context, data }) => {
+    const session = await resolveSessionDesks(context.userId);
+    assertPayCheckoutAllowed(session.role);
     const plan = promoPlan(data.plan);
     if (!plan) throw new Error("Choose a promotion plan");
     const sql = await getSql();

@@ -98,7 +98,7 @@ test("push stubs do not invent credentials and env example has names only", () =
   assert.equal(TWILIO_VIDEO_LAB_NEXT_STEPS.length, 3);
   assert.equal(
     FEATURE_FLAG_CATALOG.map((row) => row.key).join(","),
-    "FEATURE_INAPP_CHAT,FEATURE_PUSH,FEATURE_SMS,FEATURE_VIDEO,FEATURE_PROVIDER_SUBSCRIPTIONS",
+    "FEATURE_INAPP_CHAT,FEATURE_PUSH,FEATURE_SMS,FEATURE_VIDEO,FEATURE_PROVIDER_SUBSCRIPTIONS,SHOW_PAY_CTAS",
   );
   assert.equal(FEATURE_FLAG_CATALOG.find((row) => row.key === "FEATURE_PUSH")?.defaultOn, false);
   assert.equal(FEATURE_FLAG_CATALOG.find((row) => row.key === "FEATURE_VIDEO")?.defaultOn, false);

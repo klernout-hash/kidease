@@ -1,6 +1,6 @@
 # Feature flags (env + optional PostHog)
 
-KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`) go through `src/lib/flags.ts`.
+KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`) go through `src/lib/flags.ts`.
 
 **Env is the safe fallback.** If remote is unset, down, or the flag does not exist in PostHog, behavior is exactly today’s `FEATURE_*=` env read.
 
@@ -28,6 +28,7 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | `FEATURE_VIDEO` | off | `createVideoRoom` / `createVideoAccessToken`. Admin `/video/lab` may mint to verify credentials. | Inbox Video icon only when `videoSurfaceEnabled` (flag armed **and** `VIDEO_SDK_WIRED`). `/video/$roomId` is honest when off / no secrets / SDK missing. | Coming-soon copy on `/video/$roomId`. |
 | `FEATURE_INAPP_CHAT` | off | None. Composer refuses send. | Chat lab disabled composer. Live threads stay on `/inbox`. | `docs/chat.md`. |
 | `FEATURE_PROVIDER_SUBSCRIPTIONS` | **on** | Stripe checkout still needs live keys. | Director Subscription tab. | Admin can preview when killed. |
+| `SHOW_PAY_CTAS` | **off** | Does not delete Stripe. Checkout still needs live keys **and** this flag (or admin). | Parent Plus, Upgrade, Subscribe, Pro $49 / Network $39 / promote pay buttons. | `/provider/subscription` stays honest: listing and claim stay free. Admin Stripe catalog stays. |
 
 ## Why PostHog
 
@@ -42,7 +43,7 @@ Do **not** use these flags for auth, Stripe, or Turnstile. Those stay their own 
 1. Confirm credentials for that channel exist (Twilio / FCM / APNs). Flags do not invent keys. SMS also needs CASL consent + STOP — see `docs/sms.md`.
 2. On Vercel **kidease-git** (Production + Preview), set `POSTHOG_FLAGS_KEY` to the **same public project key** already used as `VITE_PUBLIC_POSTHOG_KEY` (`phc_…`). Optional: `POSTHOG_FLAGS_HOST` if ingest is not `https://us.i.posthog.com`. Redeploy **once** so the server can call PostHog. Leave the key unset to stay env-only.
 3. In [PostHog](https://us.posthog.com) → KidEase → **Feature flags** → **New feature flag**.
-   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, or `FEATURE_PROVIDER_SUBSCRIPTIONS`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, or `SHOW_PAY_CTAS`.
    - Create the flag **disabled**. Boolean release toggle (not a % experiment). The server evaluates as distinct id `kidease-server`.
 4. Enable or disable the flag in PostHog. Within ~30s the app picks it up (in-memory TTL). No Vercel redeploy.
 5. Confirm Admin → Chat lab (`/admin-chat`): source reads **PostHog**, value on/off. Secret values are never shown.
@@ -60,6 +61,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_VIDEO` | no | Default **off**. Leave `0` until Twilio Video credentials exist. |
 | `FEATURE_INAPP_CHAT` | no | Default **off**. Chat lab composer stays disabled even if set to `1`. |
 | `FEATURE_PROVIDER_SUBSCRIPTIONS` | no | Default **on** when unset. |
+| `SHOW_PAY_CTAS` | no | Default **off**. Leave `0` on Production. Set `1` to restore Upgrade / Subscribe chrome. Does not flip SMS / Push / Video. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |
 
@@ -67,7 +69,7 @@ The app **boots with no remote keys**. Do not invent a personal API key or a sec
 
 ## What is wired
 
-- `evaluateFeatureFlag` / `smsEnabled` / `pushEnabled` / `videoEnabled` / `inAppChatEnabled` / `providerSubscriptionsEnabled`.
+- `evaluateFeatureFlag` / `smsEnabled` / `pushEnabled` / `videoEnabled` / `inAppChatEnabled` / `providerSubscriptionsEnabled` / `showPayCtas`.
 - Safe enablement: `describeChannelReadiness` / `smsArmed` / `pushArmed` / `videoSurfaceEnabled` in `src/lib/channel-readiness.ts`.
 - Send / register / mint paths in `src/lib/server/sms.ts`, `push-send.ts`, `push-tokens.ts`, `video.ts`.
 - Admin → Chat lab (`/admin-chat`) shows on/off, source (env / PostHog / default), Production-blocked / Preview-override / SDK-not-attached, plus a disabled composer and the flag-name catalog. See `docs/chat.md`.

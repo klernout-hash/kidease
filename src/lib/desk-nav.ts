@@ -87,13 +87,14 @@ export const DESK_META: Record<DeskId, { eyebrow: string; title: string }> = {
   parent: { eyebrow: "Parent", title: "Family desk" },
 };
 
-/** Hide Subscription only when the live director flag is off. */
+/** Hide Subscription only when the live director flag is off. Hide Promote pay chrome when SHOW_PAY_CTAS is off. */
 export function visibleDeskNav(
   desk: DeskId,
-  opts?: { providerSubscriptions?: boolean },
+  opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean },
 ): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.id === "subscription") return Boolean(opts?.providerSubscriptions);
+    if (item.id === "promote") return opts?.showPayCtas !== false;
     return true;
   });
 }
