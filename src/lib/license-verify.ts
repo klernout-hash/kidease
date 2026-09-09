@@ -5,6 +5,7 @@
  */
 
 import {
+  isCatalogueMatchedBadge,
   isHonestLicenseMatch,
   licenseBadge,
   normalizeLicenseStatus,
@@ -20,11 +21,13 @@ export function isVerifiedLicensed(item: TrustListing): boolean {
 }
 
 /**
- * Compact public badge: matched, expired, or suspended only.
+ * Compact public badge: registry-checked, expired, or suspended only.
+ * Catalogue-matched is operator jargon — keep it off guest/parent surfaces.
  * Unverified stays off the card — absence is not a claim that the centre is unlicensed.
  */
 export function publicLicenseBadge(item: TrustListing): TrustBadge | null {
   const badge = licenseBadge(item);
   if (badge.id === "license_unverified") return null;
+  if (isCatalogueMatchedBadge(badge)) return null;
   return badge;
 }

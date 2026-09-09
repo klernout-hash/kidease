@@ -29,9 +29,8 @@ import { ListingCultureCard } from "@/components/listing-culture-card";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
-import { licenseBadge } from "@/lib/trust";
 import { publicLicenseBadge } from "@/lib/license-verify";
-import { TrustBadge, TrustExplainer } from "@/components/trust-badge";
+import { TrustBadge } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
 import type { CopyKey } from "@/lib/copy";
 import { readCompare, toggleCompare } from "@/lib/compare";
@@ -478,20 +477,30 @@ function Listing() {
                   {licensed ? <TrustBadge badge={licensed} /> : null}
                 </div>
                 <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
-                <FacilityTypeBlurb daycare={d} />
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
                     <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
                   ) : null}
                   <ListingBadges item={ranked} />
+                  <Link
+                    to="/verify"
+                    className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    {t("learnMore")}
+                  </Link>
                 </div>
-                <TrustExplainer className="mt-3" />
-                <p className="mt-3 text-sm text-muted">{t("licensedCentreLine")}</p>
-                {live ? <p className="text-sm text-muted">{t("liveListingLine")}</p> : null}
+                {live ? <p className="mt-2 text-sm text-muted">{t("liveListingLine")}</p> : null}
                 <CompletenessBanner item={d} />
                 {!live ? (
-                  <p className="mt-3 rounded-lg bg-surface p-3 text-sm text-muted ring-1 ring-border">
-                    {t("unclaimedNotice")}
+                  <p className="mt-3 text-sm text-muted">
+                    {t("unclaimedNotice")}{" "}
+                    <Link
+                      to="/verify"
+                      hash="unclaimed"
+                      className="font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {t("unclaimedWhatMeans")}
+                    </Link>
                   </p>
                 ) : null}
                 {!d.claimed ? (
@@ -515,9 +524,9 @@ function Listing() {
                     {t("viewOnGoogle")}
                   </a>
                 </div>
-              ) : (
-                <p className="text-sm text-muted">{t(licenseBadge(d).labelKey as CopyKey)}</p>
-              )}
+              ) : licensed ? (
+                <p className="text-sm text-muted">{t(licensed.labelKey as CopyKey)}</p>
+              ) : null}
             </div>
 
             <div className="mt-6 grid gap-2 rounded-xl bg-surface p-4 ring-1 ring-border lg:hidden">
@@ -547,11 +556,12 @@ function Listing() {
               <p className="mt-2 text-sm text-muted">{t("licenceRecordLead")}</p>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
-                <Meta label={t("licenseStatus")} value={t(licenseBadge(d).labelKey as CopyKey)} />
+                {licensed ? (
+                  <Meta label={t("licenseStatus")} value={t(licensed.labelKey as CopyKey)} />
+                ) : null}
                 <Meta label={t("facilityType")} value={t(facilityTypeLabelKey(classifyFacilityType(d).type))} />
                 <Meta label={t("lastInspection")} value={t("seeOfficialRecord")} />
               </dl>
-              <FacilityTypeGapNote daycare={d} />
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button asChild variant="secondary">
                   <a href={licenseRecordUrl(d.province, d.name, d.licenseNumber)} target="_blank" rel="noreferrer">
@@ -768,46 +778,46 @@ function Listing() {
 
       {!requestOpen ? (
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden [[data-channel=app]_&]:bottom-20">
-        <div className="mx-auto flex max-w-lg items-center gap-2">
+        <div className="mx-auto flex max-w-lg items-center gap-1.5 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {live ? (
-            <Button className="flex-1" onClick={onTour}>
+            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" onClick={onTour}>
               {t("bookTour")}
             </Button>
           ) : (
-            <Button className="flex-1" asChild>
-              <Link to="/search">{t("searchNearby")}</Link>
+            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" asChild>
+              <Link to="/search">{t("searchNearbyShort")}</Link>
             </Button>
           )}
           {live ? (
-            <Button className="flex-1" variant="secondary" onClick={onRequest}>
+            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" onClick={onRequest}>
               {t("book")}
             </Button>
           ) : !d.claimed ? (
-            <Button className="flex-1" variant="secondary" asChild>
+            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" asChild>
               <Link to="/claim" search={{ q: d.name }}>
-                {t("claimCta")}
+                {t("claimCtaShort")}
               </Link>
             </Button>
           ) : null}
           {live ? (
-            <Button variant="secondary" size="icon" onClick={() => void onMessage()} aria-label={t("message")}>
+            <Button className="shrink-0" variant="secondary" size="icon" onClick={() => void onMessage()} aria-label={t("message")}>
               <MessageCircle className="size-5" />
             </Button>
           ) : null}
           {d.phone ? (
-            <Button variant="secondary" size="icon" asChild>
+            <Button className="shrink-0" variant="secondary" size="icon" asChild>
               <a href={`tel:${d.phone}`} aria-label={t("call")}>
                 <Phone className="size-5" />
               </a>
             </Button>
           ) : null}
-          <Button variant="secondary" size="icon" asChild>
+          <Button className="shrink-0" variant="secondary" size="icon" asChild>
             <a href={mapsDir} target="_blank" rel="noreferrer" aria-label={t("directions")}>
               <MapPinned className="size-5" />
             </a>
           </Button>
-          <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="bar" />
-          <ShareListingButton slug={d.slug} name={name} appearance="icon" className="bg-surface text-fg ring-1 ring-border hover:bg-surface-2" />
+          <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="bar" className="shrink-0" />
+          <ShareListingButton slug={d.slug} name={name} appearance="icon" className="shrink-0 bg-surface text-fg ring-1 ring-border hover:bg-surface-2" />
         </div>
       </div>
       ) : null}
@@ -825,42 +835,8 @@ const FACILITY_LABEL: Record<FacilityType, CopyKey> = {
   home: "facilityTypeHome",
 };
 
-const FACILITY_LEAD: Record<FacilityType, CopyKey> = {
-  centre: "facilityTypeLeadCentre",
-  nursery: "facilityTypeLeadNursery",
-  home: "facilityTypeLeadHome",
-};
-
 function facilityTypeLabelKey(type: FacilityType): CopyKey {
   return FACILITY_LABEL[type];
-}
-
-function FacilityTypeBlurb({ daycare }: { daycare: Daycare }) {
-  const { t } = useCopy();
-  const classified = classifyFacilityType(daycare);
-  return (
-    <div className="mt-3 max-w-prose rounded-lg bg-surface p-3 ring-1 ring-border" data-facility-type={classified.type}>
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-subtle">{t("facilityType")}</p>
-      <p className="mt-1 text-sm font-medium">{t(FACILITY_LABEL[classified.type])}</p>
-      <p className="mt-1 text-sm text-muted">{t(FACILITY_LEAD[classified.type])}</p>
-    </div>
-  );
-}
-
-function FacilityTypeGapNote({ daycare }: { daycare: Daycare }) {
-  const { t } = useCopy();
-  const classified = classifyFacilityType(daycare);
-  if (!classified.gap) return null;
-  const typeLabel = t(FACILITY_LABEL[classified.type]);
-  const hintLabel = classified.nameHint ? t(FACILITY_LABEL[classified.nameHint]) : "";
-  const text = classified.nameHint
-    ? t("facilityTypeGap").replace("{type}", typeLabel).replace("{hint}", hintLabel)
-    : t("facilityTypeGapPlain");
-  return (
-    <p className="mt-3 text-xs text-subtle" data-facility-type-gap={classified.source}>
-      {text}
-    </p>
-  );
 }
 
 function Meta({ label, value }: { label: string; value: string }) {

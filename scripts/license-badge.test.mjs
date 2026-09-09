@@ -181,3 +181,14 @@ test("guest Explore cards hide Catalogue-matched and keep high-contrast titles",
   assert.doesNotMatch(card, /space-y-px text-\[#222\]/);
   assert.match(src("src/components/trust-badge.tsx"), /if \(!badges\.length\) return null;/);
 });
+
+test("guest listing detail also hides Catalogue-matched", () => {
+  const verify = src("src/lib/license-verify.ts");
+  assert.match(verify, /isCatalogueMatchedBadge\(badge\)/);
+  const trust = src("src/lib/trust.ts");
+  assert.match(trust, /surface === "parent"/);
+  assert.match(trust, /!isCatalogueMatchedBadge\(license\)/);
+  const listing = src("src/routes/daycare.$slug.tsx");
+  assert.match(listing, /publicLicenseBadge/);
+  assert.doesNotMatch(listing, /trustCatalogueMatched/);
+});

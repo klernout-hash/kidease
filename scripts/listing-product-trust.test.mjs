@@ -142,7 +142,7 @@ test("public reviews query only published gated rows and forms use Turnstile", (
   assert.match(badges, /TrustSignals/);
   const completeness = src("src/components/listing-completeness.tsx");
   assert.match(completeness, /detailsIncomplete/);
-  assert.match(completeness, /completenessParentNext/);
+  assert.doesNotMatch(completeness, /detailsIncompleteLead/);
 });
 
 test("parent listing honesty never labels unknown vacancy as stale", () => {

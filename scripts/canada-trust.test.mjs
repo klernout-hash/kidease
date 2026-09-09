@@ -79,10 +79,13 @@ test("admin declined claims still hide Waiting and Decline", () => {
 
 test("shared badge system is used on parent, provider, and admin", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
-  assert.match(listing, /TrustExplainer/);
+  assert.doesNotMatch(listing, /TrustExplainer/);
+  assert.doesNotMatch(listing, /licensedCentreLine/);
   assert.match(listing, /ListingReport/);
-  assert.match(listing, /licenseBadge/);
+  assert.match(listing, /publicLicenseBadge/);
   assert.doesNotMatch(listing, /t\("licenseActive"\)/);
+  assert.match(src("src/routes/verify.tsx"), /TrustExplainer/);
+  assert.match(src("src/routes/verify.tsx"), /licensedCentreLine/);
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /ProviderTrustChecklist/);
   assert.match(provider, /TrustSignals/);

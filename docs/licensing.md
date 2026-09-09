@@ -6,10 +6,11 @@ unlicensed. KidEase never invents a licence number.
 
 ## What parents see
 
-- **Listing cards** and **listing detail** show a compact **Catalogue-matched**
-  badge (tooltip + `aria-label`) when Manitoba hits the bundled snapshot, or
-  **Registry-checked** after an operator marks a match. Stub provinces never
-  light `license_matched` as a live government match.
+- **Listing cards** and **listing detail** omit **Catalogue-matched** (internal
+  matching jargon). They show **Registry-checked** after an operator marks a
+  match. Stub provinces never light `license_matched` as a live government match.
+  Catalogue-matched still appears on provider and admin desks, and is explained
+  on `/verify`.
 - Expired or suspended licences show those words instead. They are never painted
   as Licensed.
 - Unverified listings show no Licensed badge. The licence record section still

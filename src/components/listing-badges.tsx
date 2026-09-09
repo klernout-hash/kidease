@@ -36,7 +36,9 @@ export function ListingBadges({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className={cn(pill, "text-muted")}>{t(FACILITY_BADGE[facility.type])}</span>
+      <span className={cn(pill, "text-muted")} data-facility-type={facility.type}>
+        {t(FACILITY_BADGE[facility.type])}
+      </span>
       {item.priority ? <PriorityPill /> : null}
       <GuestFavoriteBadge item={item} compact={compact} />
       <TrustSignals item={item} surface="parent" compact={compact} />

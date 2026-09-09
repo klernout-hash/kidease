@@ -46,7 +46,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
     keys: ["licen", "inspect", "safe", "legal"],
     lines: [
       "Every centre on KidEase is from a provincial licensed-care register. Each card has a licence record link. We don’t list unlicensed care.",
-      "Look for Catalogue-matched or Registry-checked — never treat a stub province as a live government match. Open the official licence record from the listing. That record is the government source of truth.",
+      "Look for Registry-checked when an operator confirmed the licence. Never treat a stub province as a live government match. Open the official licence record from the listing. That record is the government source of truth.",
     ],
   },
   {

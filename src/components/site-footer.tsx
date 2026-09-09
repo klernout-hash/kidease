@@ -84,6 +84,7 @@ export function SiteFooter() {
                 <Item to="/how-it-works">{t("howItWorksCta")}</Item>
                 <Item to="/about">{t("about")}</Item>
                 <Item to="/team">{t("team")}</Item>
+                <Item to="/verify">{t("verifyListings")}</Item>
                 <Item to="/privacy">{t("privacy")}</Item>
                 <Item to="/terms">{t("terms")}</Item>
                 <Item to="/cookies">{t("cookies")}</Item>
