@@ -1,5 +1,6 @@
 import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -78,16 +79,16 @@ export function SiteFooter() {
             <section>
               <p className="ke-footer-title">{t("support")}</p>
               <ul className="ke-footer-list">
-                <Item to="/help">{t("helpTitle")}</Item>
-                <Item to="/contact">{t("contactTitle")}</Item>
-                <Item to="/faq">FAQ</Item>
-                <Item to="/how-it-works">{t("howItWorksCta")}</Item>
-                <Item to="/about">{t("about")}</Item>
+                <Item to={localePath("/help", locale)}>{t("helpTitle")}</Item>
+                <Item to={localePath("/contact", locale)}>{t("contactTitle")}</Item>
+                <Item to={localePath("/faq", locale)}>FAQ</Item>
+                <Item to={localePath("/how-it-works", locale)}>{t("howItWorksCta")}</Item>
+                <Item to={localePath("/about", locale)}>{t("about")}</Item>
                 <Item to="/team">{t("team")}</Item>
                 <Item to="/verify">{t("verifyListings")}</Item>
-                <Item to="/privacy">{t("privacy")}</Item>
-                <Item to="/terms">{t("terms")}</Item>
-                <Item to="/cookies">{t("cookies")}</Item>
+                <Item to={localePath("/privacy", locale)}>{t("privacy")}</Item>
+                <Item to={localePath("/terms", locale)}>{t("terms")}</Item>
+                <Item to={localePath("/cookies", locale)}>{t("cookies")}</Item>
                 <Item to="/unsubscribe">{t("unsubscribe")}</Item>
                 <Item to="/delete-account">{t("deleteAccount")}</Item>
               </ul>

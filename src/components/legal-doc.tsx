@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { SiteFooter } from "@/components/site-footer";
 import { Shell } from "@/components/shell";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import type { LegalDoc, LegalBlock } from "@/lib/legal-copy";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
@@ -76,7 +77,7 @@ function Block({ block }: { block: LegalBlock }) {
 }
 
 export function LegalPage({ doc }: { doc: LegalDoc }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   return (
     <Shell bare>
       <main className="ke-gutter mx-auto max-w-2xl py-10 md:py-14">
@@ -90,15 +91,15 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
         ))}
 
         <nav className="mt-6 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted" aria-label={t("privacy")}>
-          <Link to="/privacy" className="underline-offset-4 hover:underline">
+          <Link to={localePath("/privacy", locale)} className="underline-offset-4 hover:underline">
             {t("privacy")}
           </Link>
           <span aria-hidden>·</span>
-          <Link to="/terms" className="underline-offset-4 hover:underline">
+          <Link to={localePath("/terms", locale)} className="underline-offset-4 hover:underline">
             {t("terms")}
           </Link>
           <span aria-hidden>·</span>
-          <Link to="/cookies" className="underline-offset-4 hover:underline">
+          <Link to={localePath("/cookies", locale)} className="underline-offset-4 hover:underline">
             {t("cookies")}
           </Link>
         </nav>
@@ -146,7 +147,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
             {t("deleteAccount")}
           </Link>
           {" · "}
-          <Link to="/help" className="underline-offset-4 hover:underline">
+          <Link to={localePath("/help", locale)} className="underline-offset-4 hover:underline">
             {t("support")}
           </Link>
         </p>

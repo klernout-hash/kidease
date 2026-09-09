@@ -1409,6 +1409,10 @@ export const copy = {
     trustAttestDate: "Attested",
     trustLicenseExpiry: "Licence expiry",
     trustCapacity: "Licensed capacity",
+    officialLanguagesNote: "KidEase is available in English and French.",
+    listingCopyEnNote:
+      "Centre names and descriptions may appear in English. KidEase translates the app chrome; catalogue text stays as provided for now.",
+    fullMapExplore: "Open the full map",
   },
   fr: {
     app: "KidEase",
@@ -2821,6 +2825,10 @@ export const copy = {
     trustAttestDate: "Attesté",
     trustLicenseExpiry: "Expiration du permis",
     trustCapacity: "Capacité permise",
+    officialLanguagesNote: "KidEase est offert en anglais et en français.",
+    listingCopyEnNote:
+      "Les noms et descriptions des centres peuvent s’afficher en anglais. KidEase traduit l’interface; les textes du répertoire restent tels quels pour l’instant.",
+    fullMapExplore: "Ouvrir la carte complète",
   },
 } as const;
 

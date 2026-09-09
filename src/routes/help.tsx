@@ -17,7 +17,7 @@ export const Route = createFileRoute("/help")({
   component: Help,
 });
 
-function Help() {
+export function Help() {
   const { t } = useCopy();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

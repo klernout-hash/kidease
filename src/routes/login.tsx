@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { authClient, authEnabled, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import type { GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
@@ -286,7 +287,7 @@ function Login() {
           {!operator ? (
           <div className="mt-6 space-y-2">
             {authEnabled ? (
-              providers.map((p) => (
+              providers.map((p: GrokProvider) => (
                 <Button
                   key={p.providerId}
                   type="button"

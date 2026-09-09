@@ -224,8 +224,8 @@ describe("PostHog client wiring", () => {
     assert.match(banner, /choose\("granted"\)/);
     assert.match(banner, /choose\("denied"\)/);
     assert.match(banner, /startPostHog/);
-    assert.match(banner, /to="\/cookies"/);
-    assert.match(banner, /to="\/privacy"/);
+    assert.match(banner, /localePath\("\/cookies"/);
+    assert.match(banner, /localePath\("\/privacy"/);
     assert.match(banner, /cookieConsentEssential/);
     assert.match(banner, /cookieConsentAllow/);
     assert.match(banner, /role="region"/);

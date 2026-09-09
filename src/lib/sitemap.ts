@@ -1,5 +1,6 @@
 /**
- * Canonical www sitemap. Static marketing pages plus public listing URLs.
+ * Canonical www sitemap. Static marketing pages, French official-language
+ * counterparts, plus public listing URLs.
  * Listing files stay at LISTING_SITEMAP_CAP urls each; overflow is a
  * sitemap index at /sitemap-listings.xml → /sitemap-listings-N.xml.
  * QA ghost / admin-only slugs never appear.
@@ -7,6 +8,7 @@
 
 import { isAdminOnlyListing, looksLikeTestFixture } from "./listing-visibility.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
+import { SITEMAP_FR_PATHS } from "./locale-path.ts";
 
 export const SITEMAP_ORIGIN = "https://www.kidease.ca";
 export const SITEMAP_LISTING_CAP = 500;
@@ -41,10 +43,15 @@ export const SITEMAP_STATIC_PATHS = [
   "/delete-account",
 ] as const;
 
+function sitemapBasePaths() {
+  return [...SITEMAP_STATIC_PATHS, ...SITEMAP_FR_PATHS];
+}
+
 /** Marketing pages plus generated city hubs. Hubs are passed in by write-sitemap. */
 export function sitemapPublicPaths(extraPaths: readonly string[] = []) {
-  const seen = new Set<string>(SITEMAP_STATIC_PATHS);
-  const out: string[] = [...SITEMAP_STATIC_PATHS];
+  const base = sitemapBasePaths();
+  const seen = new Set<string>(base);
+  const out: string[] = [...base];
   for (const path of extraPaths) {
     const clean = path.startsWith("/") ? path : `/${path}`;
     if (!clean || seen.has(clean)) continue;
@@ -113,7 +120,7 @@ export function renderSitemapXml(input: {
 }): string {
   const lastmod = input.lastmod || SITEMAP_LASTMOD;
   const urls: string[] = [];
-  for (const path of input.paths ?? SITEMAP_STATIC_PATHS) {
+  for (const path of input.paths ?? sitemapBasePaths()) {
     urls.push(locFor(path));
   }
   for (const slug of input.listingSlugs ?? []) {

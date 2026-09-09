@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
@@ -33,7 +33,7 @@ const SUBJECTS: CopyKey[] = [
 
 export function Contact() {
   const { t } = useCopy();
-  const search = Route.useSearch();
+  const search = useSearch({ strict: false }) as { intent?: string };
   const isParent = search.intent === "parent";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

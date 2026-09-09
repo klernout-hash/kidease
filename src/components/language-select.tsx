@@ -1,4 +1,6 @@
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { applyDocumentLocale, LANGUAGES } from "@/lib/languages";
+import { localeSwitchPath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -13,6 +15,8 @@ export function LanguageSelect({
 }) {
   const { t, locale } = useCopy();
   const setLocale = useAppStore((s) => s.setLocale);
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
     <label
@@ -27,8 +31,10 @@ export function LanguageSelect({
         value={locale}
         onChange={(e) => {
           const next = e.target.value as Locale;
+          const dest = localeSwitchPath(pathname, next);
           setLocale(next);
           applyDocumentLocale(next);
+          if (dest) void navigate({ to: dest });
         }}
         className={cn(
           "ke-lang-select w-full cursor-pointer rounded-full border-0 bg-transparent text-center font-medium text-muted hover:text-fg",

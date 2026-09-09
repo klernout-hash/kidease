@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { FAQ_ITEM_KEYS } from "@/lib/faq-items";
+import { localePath } from "@/lib/locale-path";
 import { faqPageJsonLdScript, MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
@@ -12,8 +13,8 @@ export const Route = createFileRoute("/faq")({
   component: FaqPage,
 });
 
-function FaqPage() {
-  const { t } = useCopy();
+export function FaqPage() {
+  const { t, locale } = useCopy();
   const items = FAQ_ITEM_KEYS.map(([q, a]) => ({ q: t(q), a: t(a) }));
   const jsonLd = faqPageJsonLdScript(items);
   return (
@@ -33,7 +34,7 @@ function FaqPage() {
           ))}
         </ul>
         <p className="mt-8 text-sm">
-          <Link to="/help" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={localePath("/help", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
             {t("helpTitle")}
           </Link>
           {" · "}

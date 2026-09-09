@@ -8,6 +8,7 @@ import {
   writeAnalyticsConsent,
 } from "@/lib/analytics-consent";
 import { applyPostHogRecordingGate, startPostHog } from "@/lib/posthog";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
 /**
@@ -15,7 +16,7 @@ import { useCopy } from "@/lib/use-copy";
  * Essential = required cookies only. Allow = load PostHog + masked replay.
  */
 export function CookieConsentBanner() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -54,11 +55,11 @@ export function CookieConsentBanner() {
             </p>
             <p className="mt-0.5 truncate text-[11px] leading-4 text-muted">
               {t("cookieConsentBannerLead")}{" "}
-              <Link to="/cookies" className="font-medium text-primary underline-offset-4 hover:underline">
+              <Link to={localePath("/cookies", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
                 {t("cookies")}
               </Link>
               {" · "}
-              <Link to="/privacy" className="font-medium text-primary underline-offset-4 hover:underline">
+              <Link to={localePath("/privacy", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
                 {t("privacy")}
               </Link>
             </p>

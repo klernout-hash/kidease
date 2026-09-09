@@ -16,6 +16,7 @@ import { AppearanceControl } from "@/components/appearance-control";
 import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
+import { localePath } from "@/lib/locale-path";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { accountSearch, canSeeAdminDesk, canVisitDesk, showDeskSwitcher } from "@/lib/desks";
 import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
@@ -58,10 +59,11 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     pathname.startsWith("/menu");
   const onProfile = onAccount && accountTab === "profile";
 
+  const homeTo = localePath("/", locale);
   const desktopNav = [
-    { to: "/search", label: t("explore"), match: ["/search", "/daycare"] },
+    { to: "/search", label: t("explore"), match: ["/search", "/fr/search", "/daycare"] },
     { to: "/benefits", label: t("benefitsTab"), match: ["/benefits"] },
-    { to: "/about", label: t("about"), match: ["/about"] },
+    { to: localePath("/about", locale), label: t("about"), match: ["/about", "/fr/about"] },
     { to: "/get-app", label: t("getApp"), match: ["/get-app"] },
   ];
 
@@ -69,9 +71,9 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     { to: "/search", label: t("explore") },
     { to: "/benefits", label: t("benefitsTab") },
     { to: "/get-app", label: t("getApp") },
-    { to: "/about", label: t("about") },
+    { to: localePath("/about", locale), label: t("about") },
     { to: "/team", label: t("team") },
-    { to: "/contact", label: t("contact") },
+    { to: localePath("/contact", locale), label: t("contact") },
   ];
 
   if (verifyLite) {
@@ -79,7 +81,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       <div className="min-h-dvh bg-bg text-fg">
         <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
-            <Link to="/" className="shrink-0" aria-label="KidEase">
+            <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
           </div>
@@ -94,7 +96,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       <div className="min-h-dvh bg-bg text-fg">
         <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
-            <Link to="/" className="shrink-0" aria-label="KidEase">
+            <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
           </div>
@@ -141,7 +143,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
         <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 py-2">
           <div className="flex min-w-0 items-center gap-0.5">
-            <Link to="/" className="shrink-0" aria-label="KidEase">
+            <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
             <HeaderSocial />
@@ -254,7 +256,13 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               to="/"
               label={t("search")}
               icon={Search}
-              active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")}
+              active={
+                pathname === "/" ||
+                pathname === "/fr" ||
+                pathname.startsWith("/search") ||
+                pathname.startsWith("/fr/search") ||
+                pathname.startsWith("/daycare")
+              }
             />
             <Tab
               to="/parent"

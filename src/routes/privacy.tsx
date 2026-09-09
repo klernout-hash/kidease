@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage } from "@/components/legal-doc";
 import { PRIVACY_EN, PRIVACY_FR } from "@/lib/legal-copy";
+import { LEGAL_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({
-    meta: [{ title: "Privacy · KidEase" }, { name: "description", content: "KidEase privacy notice — PIPEDA, location, processors, and child safety." }],
-  }),
+  head: () => pageSeoHead(LEGAL_PAGE_SEO.privacy),
   component: Privacy,
 });
 
