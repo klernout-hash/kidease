@@ -7,6 +7,7 @@ import { lookupUser, notifyAccountCreated, notifyPlatform, notifyProviderJoined 
 import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
 import { splitPhotoList } from "@/lib/listing-photo";
+import { cultureFieldsToSql } from "@/lib/listing-culture";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
@@ -1206,6 +1207,9 @@ export const createListing = createServerFn({ method: "POST" })
       toddlerMonthly: number;
       preschoolMonthly: number;
       storefront?: string;
+      staffLanguages?: string[];
+      culturalPrograms?: string[];
+      culturalTeamNote?: string | null;
     }) => input,
   )
   .handler(async ({ context, data }) => {
@@ -1267,6 +1271,18 @@ export const createListing = createServerFn({ method: "POST" })
         )
       `;
     });
+    const culture = cultureFieldsToSql({
+      staffLanguages: data.staffLanguages,
+      culturalPrograms: data.culturalPrograms,
+      culturalTeamNote: data.culturalTeamNote,
+    });
+    await sql`
+      update daycares set
+        staff_languages = ${culture.staffLanguagesJson}::jsonb,
+        cultural_programs = ${culture.culturalProgramsJson}::jsonb,
+        cultural_team_note = ${culture.culturalTeamNote}
+      where id = ${id}
+    `.catch(() => undefined);
     await sql`insert into provider_daycares (user_id, daycare_id) values (${context.userId}, ${id})`;
     if (data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)) {
       await sql`update daycares set last_photo_updated_at = now() where id = ${id}`.catch(() => undefined);

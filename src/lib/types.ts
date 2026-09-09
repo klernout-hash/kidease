@@ -82,6 +82,12 @@ export type Daycare = {
   googlePlaceId?: string | null;
   licenseNumber: string | null;
   languages: string;
+  /** Languages spoken by staff. Optional; empty = hidden on the public listing. */
+  staffLanguages?: string[];
+  /** Cultural programs / strengths. Optional; empty = hidden. Never racial categories. */
+  culturalPrograms?: string[];
+  /** Optional public team note (languages/programs only). Max ~280 chars. */
+  culturalTeamNote?: string | null;
   amenities: string;
   photos: string[];
   verified: boolean;

@@ -11,6 +11,7 @@ import { splitPhotoList } from "@/lib/listing-photo";
 import { clampRadiusKm } from "@/lib/proximity";
 import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { correctCentreNameTypos, listingSlugLookupKeys, normalizeListingSlug } from "@/lib/listing-slug";
+import { listingCultureFrom } from "@/lib/listing-culture";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
 export type CatalogDbRow = {
@@ -48,6 +49,9 @@ export type CatalogDbRow = {
   registry_match_state?: string | null;
   license_verification_source?: string | null;
   languages: string | null;
+  staff_languages?: unknown;
+  cultural_programs?: unknown;
+  cultural_team_note?: string | null;
   amenities: string | null;
   photos: string | null;
   claimed_at: string | null;
@@ -68,7 +72,8 @@ age_min_months, age_max_months, infant_monthly, toddler_monthly,
 preschool_monthly, part_time_monthly, spots_infant, spots_toddler,
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
-languages, amenities, photos, claimed_at, claim_status, listing_active, visibility, is_test,
+languages, staff_languages, cultural_programs, cultural_team_note,
+amenities, photos, claimed_at, claim_status, listing_active, visibility, is_test,
 google_place_id, contact_email, website
 `;
 
@@ -186,6 +191,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     registryMatchState: normalizeMatchState(row.registry_match_state),
     licenseVerificationSource: row.license_verification_source || null,
     languages: row.languages || "en",
+    ...listingCultureFrom(row),
     amenities: row.amenities || "licensed",
     photos,
     reviews: [],

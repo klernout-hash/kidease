@@ -1,4 +1,5 @@
 import { splitPhotoList } from "@/lib/listing-photo";
+import { listingCultureFrom } from "@/lib/listing-culture";
 import type { Daycare } from "@/lib/types";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
@@ -38,6 +39,9 @@ export type DaycareRow = {
   review_count: number;
   license_number: string | null;
   languages: string;
+  staff_languages?: unknown;
+  cultural_programs?: unknown;
+  cultural_team_note?: string | null;
   amenities: string;
   photos: string;
   verified: number;
@@ -106,6 +110,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     googlePlaceId: null,
     licenseNumber: r.license_number,
     languages: r.languages,
+    ...listingCultureFrom(r),
     amenities: r.amenities,
     photos: splitPhotoList(r.photos),
     verified: Boolean(r.verified),

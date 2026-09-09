@@ -6,6 +6,7 @@
 
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { listingCultureFrom } from "./listing-culture.ts";
 import { listingPhotosFor } from "./listing-photo.ts";
 import {
   isAdminOnlyListing,
@@ -54,6 +55,9 @@ export type CatalogDaycare = {
   registryMatchState?: "unmatched" | "pending" | "matched" | "mismatch";
   licenseVerificationSource?: string | null;
   languages: string;
+  staffLanguages?: string[];
+  culturalPrograms?: string[];
+  culturalTeamNote?: string | null;
   amenities: string;
   photos: string[];
   reviews: Array<{ author: string; rating: number; body: string; bodyFr: string }>;
@@ -101,6 +105,9 @@ export type RawCentre = {
   ratingX10?: number;
   licenseNumber?: string;
   languages?: string;
+  staffLanguages?: string[];
+  culturalPrograms?: string[];
+  culturalTeamNote?: string | null;
   amenities?: string;
   photos?: string[];
   reviews?: CatalogDaycare["reviews"];
@@ -274,6 +281,7 @@ export function hydrateCentre(
     reviewCount: raw.googlePlaceId ? (raw.reviews?.length ?? 0) : 0,
     licenseNumber: raw.licenseNumber || raw.id,
     languages: raw.languages || (province === "QC" ? "fr" : "en"),
+    ...listingCultureFrom(raw),
     amenities,
     photos: listingPhotosFor(raw.id, raw.photos, input.buildings, input.wpg),
     reviews: raw.reviews ?? [],
