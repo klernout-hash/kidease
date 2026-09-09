@@ -75,7 +75,10 @@ test("requireAdmin checks verified 2FA and fails closed", () => {
   assert.doesNotMatch(twoFaClient, /export function assertTwoFactorVerified/);
   assert.match(twoFaClient, /two-factor\.server/);
   const gates = src("src/lib/auth/gates.tsx");
-  assert.match(gates, /staffTwoFactorRequired\(next\) \? "need" : "ok"/);
+  const desks = src("src/lib/desks.ts");
+  assert.match(gates, /twoFactorGateState/);
+  assert.match(desks, /export function twoFactorGateState/);
+  assert.match(desks, /staffTwoFactorRequired\(next\) \? "need" : "ok"/);
 });
 
 test("askKidEase and matchCentres require auth", () => {

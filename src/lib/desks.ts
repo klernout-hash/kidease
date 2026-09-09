@@ -123,6 +123,39 @@ export function staffTwoFactorRequired(next: string): boolean {
   );
 }
 
+export type TwoFactorGateState = "ok" | "need";
+
+/**
+ * Desk 2FA: staff fail closed. Parent / provider 2FA is optional — treating
+ * `verified: false` as `need` sends them to /verify-2fa, which fail-opens
+ * back to the desk without a cookie and flash-loops.
+ */
+export function twoFactorGateState(verified: boolean, next: string): TwoFactorGateState {
+  return !verified && staffTwoFactorRequired(next) ? "need" : "ok";
+}
+
+/**
+ * One hop of the desk ↔ /verify-2fa machine. Parent/provider skip or
+ * start/status failure must land on the desk and stay there while unverified.
+ */
+export function nextTwoFactorNav(input: {
+  at: string;
+  dest: string;
+  verified: boolean;
+  /** Status/start failed or skip — leave() without writing the device cookie. */
+  leftWithoutCookie?: boolean;
+}): string {
+  const dest = sanitizePostLoginNext(input.dest) ?? DESK_PATH.parent;
+  const at = pathnameOfDest(input.at) || input.at;
+  if (at === "/verify-2fa") {
+    if (input.verified) return dest;
+    if (input.leftWithoutCookie) return staffTwoFactorRequired(dest) ? "/verify-2fa" : dest;
+    return "/verify-2fa";
+  }
+  if (twoFactorGateState(input.verified, at) === "need") return twoFactorPageUrl(dest);
+  return at;
+}
+
 export function deskFromPathname(pathname: string): DeskKey | null {
   for (const [prefix, desk] of PATH_DESK) {
     if (pathname === prefix || pathname.startsWith(`${prefix}/`)) return desk;

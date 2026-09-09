@@ -125,6 +125,16 @@ export async function shouldOpenTwoFactorPage(
 ): Promise<boolean> {
   const kind = postLoginDestKind(dest);
   if (kind === "public" || kind === "home") return false;
+  // Parent / provider 2FA is optional. Sending them to /verify-2fa while
+  // TwoFactorGate still requires verified:true flash-loops parent ↔ code.
+  if (!staffTwoFactorRequired(dest)) {
+    captureLoginFunnel({
+      step: "two_factor_skipped",
+      reason: "optional_desk",
+      ...funnelDestMeta(dest),
+    });
+    return false;
+  }
   try {
     const status = await withTimeout(
       statusPromise ?? getTwoFactorStatus(),
@@ -141,13 +151,7 @@ export async function shouldOpenTwoFactorPage(
     }
     return true;
   } catch {
-    if (staffTwoFactorRequired(dest)) return true;
-    captureLoginFunnel({
-      step: "two_factor_skipped",
-      reason: "status_unavailable",
-      ...funnelDestMeta(dest),
-    });
-    return false;
+    return true;
   }
 }
 
@@ -182,7 +186,11 @@ export async function continueAfterSignIn(input: {
     const preview = sanitizePostLoginNext(input.next);
     const previewKind = preview ? postLoginDestKind(preview) : null;
     const statusPromise =
-      previewKind === "public" || previewKind === "home" ? undefined : getTwoFactorStatus();
+      previewKind === "public" ||
+      previewKind === "home" ||
+      (preview != null && !staffTwoFactorRequired(preview))
+        ? undefined
+        : getTwoFactorStatus();
     const dest = await resolveContinueDest(input);
     const needTwoFactor = await shouldOpenTwoFactorPage(dest, statusPromise);
     markContinued(dest, { method: input.method });
