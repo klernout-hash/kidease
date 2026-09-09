@@ -49,7 +49,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "explore", label: "For you", hint: "Matches near you" },
     { id: "children", label: "Children", hint: "Up to 4 profiles" },
     { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots" },
-    { id: "saved", label: "Saved centres" },
+    { id: "saved", label: "My shortlist", hint: "Compare up to 5" },
     { id: "alerts", label: "Search alerts", hint: "Saved searches + notify" },
     { id: "payments", label: "Pay", hint: "Bills from your centre" },
     { id: "messages", label: "Messages", hint: "Centre threads + tours", href: "/inbox", search: { view: "family" } },

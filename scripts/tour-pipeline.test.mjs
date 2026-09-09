@@ -68,7 +68,7 @@ test("pipeline is visible on parent shortlist, inbox, and centre desk", () => {
   assert.match(src("src/components/tour-card.tsx"), /PipelineBadge/);
   assert.match(src("src/components/inbox-list.tsx"), /PipelineBadge/);
   assert.match(src("src/routes/inbox.$id.tsx"), /PipelineBadge/);
-  assert.match(src("src/components/parent-desk.tsx"), /PipelineBadge/);
+  assert.match(src("src/components/parent-shortlist.tsx"), /PipelineBadge/);
   assert.match(src("src/lib/server/tours.ts"), /advanceTourRequest/);
   assert.match(src("src/lib/server/family.ts"), /syncToursFromBooking/);
   assert.match(src("src/lib/server/inbox.ts"), /tour_status/);

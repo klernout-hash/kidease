@@ -12,6 +12,7 @@ function src(rel) {
 
 test("parent desk defers heavy tab content so nav highlight paints first", () => {
   const desk = src("src/components/parent-desk.tsx");
+  const shortlist = src("src/components/parent-shortlist.tsx");
   const route = src("src/routes/parent.tsx");
   assert.match(desk, /startTransition/);
   assert.match(desk, /setContentTab/);
@@ -23,7 +24,8 @@ test("parent desk defers heavy tab content so nav highlight paints first", () =>
   assert.match(desk, /useDeferredValue/);
   assert.match(desk, /accountToolsReady/);
   assert.match(desk, /startTransition\(\(\) => \{\s*setPicked/);
-  assert.match(desk, /SAVED_EAGER_CARDS/);
+  assert.match(shortlist, /SAVED_EAGER_CARDS/);
+  assert.match(desk, /savedReady/);
   assert.match(desk, /requestIdleCallback/);
   assert.match(desk, /withTimeoutFallback/);
   assert.match(desk, /LOADER_SETTLE_MS/);

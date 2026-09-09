@@ -204,7 +204,7 @@ export function classifyParentGuestGate({
   if (/\/login(?:\/|$|\?)/.test(`${url}\n${location}`) || /Sign in/i.test(body)) {
     return { ok: true, kind: "login" };
   }
-  if (/Saved centres|Your children|Parent Plus|tab=payments/i.test(body) && !/Sign in/i.test(body)) {
+  if (/Saved centres|My shortlist|Your children|Parent Plus|tab=payments/i.test(body) && !/Sign in/i.test(body)) {
     return { ok: false, kind: "open", reason: "unsigned /parent rendered the parent desk" };
   }
   return {

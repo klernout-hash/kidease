@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
-import { Heart, MapPinned, MessageCircle, Phone, Star } from "lucide-react";
+import { MapPinned, MessageCircle, Phone, Star } from "lucide-react";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { ShareListingButton } from "@/components/share-button";
 import { useEffect, useState } from "react";
@@ -24,8 +24,9 @@ import {
   listingPageTitle as listingSeoPageTitle,
   listingSeoHeadTags,
 } from "@/lib/listing-seo";
-import { isSaved, openConversation, toggleSave } from "@/lib/server/family";
+import { openConversation } from "@/lib/server/family";
 import { ListingCultureCard } from "@/components/listing-culture-card";
+import { SaveListingButton } from "@/components/save-listing-button";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
 import { licenseBadge } from "@/lib/trust";
@@ -129,7 +130,6 @@ function Listing() {
     availability: AvailabilityRow[];
     nearby: Card[];
   } | null>(null);
-  const [saved, setSaved] = useState(false);
   const [photo, setPhoto] = useState(0);
   const [requestOpen, setRequestOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
@@ -181,13 +181,6 @@ function Listing() {
     window.addEventListener("kidease-compare", sync);
     return () => window.removeEventListener("kidease-compare", sync);
   }, [data]);
-
-  useEffect(() => {
-    if (!data || isPending || !user) return;
-    void isSaved({ data: data.daycare.id })
-      .then((r) => setSaved(r.saved))
-      .catch(() => setSaved(false));
-  }, [data, user, isPending]);
 
   useEffect(() => {
     if (!data || isPending) return;
@@ -319,19 +312,6 @@ function Listing() {
       return;
     }
     setTourOpen(true);
-  }
-
-  async function onSave() {
-    if (!user) {
-      goLogin("needSignInSave");
-      return;
-    }
-    try {
-      const res = await toggleSave({ data: d.id });
-      setSaved(res.saved);
-    } catch {
-      goLogin("needSignInSave");
-    }
   }
 
   async function onMessage() {
@@ -758,9 +738,7 @@ function Listing() {
               ) : null}
               <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full hover:bg-surface-2/70" />
               <div className="grid grid-cols-3 gap-2">
-                <Button variant="ghost" onClick={() => void onSave()} aria-label={t("save")}>
-                  <Heart className={saved ? "size-4 fill-fg" : "size-4"} />
-                </Button>
+                <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" />
                 {d.phone ? (
                   <Button variant="ghost" asChild>
                     <a href={`tel:${d.phone}`} aria-label={t("call")}>
@@ -828,6 +806,7 @@ function Listing() {
               <MapPinned className="size-5" />
             </a>
           </Button>
+          <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="bar" />
           <ShareListingButton slug={d.slug} name={name} appearance="icon" className="bg-surface text-fg ring-1 ring-border hover:bg-surface-2" />
         </div>
       </div>

@@ -22,6 +22,7 @@ import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { rememberResumePath } from "@/lib/retention";
+import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
 
 export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
   const { t, locale } = useCopy();
@@ -242,6 +243,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         onSignOut={() => void signOut("/")}
       />
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"}>
+        <ApplyPendingShortlist />
         {children}
       </div>
       {hideFooter || bare ? null : <SiteFooter />}
