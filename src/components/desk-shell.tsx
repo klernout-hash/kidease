@@ -1,10 +1,14 @@
-import type { ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { CreditCard } from "lucide-react";
 import { Shell } from "@/components/shell";
-import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { useSessionDesks } from "@/components/desk-switcher";
 import { DESK_META, visibleDeskNav, type DeskIcon, type DeskId } from "@/lib/desk-nav";
 import { cn } from "@/lib/utils";
+
+const DeskSwitcher = lazy(() =>
+  import("@/components/desk-switcher").then((m) => ({ default: m.DeskSwitcher })),
+);
 
 function DeskItemIcon({ name, className }: { name?: DeskIcon; className?: string }) {
   if (name === "credit-card") return <CreditCard className={className} strokeWidth={1.8} />;
@@ -34,7 +38,9 @@ export function DeskShell({
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{meta.eyebrow}</p>
           <h1 className="mt-2 font-display text-3xl">{meta.title}</h1>
           <div className="mt-3 md:hidden">
-            <DeskSwitcher compact />
+            <Suspense fallback={<div className="ke-skel h-11 rounded-full" aria-hidden="true" />}>
+              <DeskSwitcher compact />
+            </Suspense>
           </div>
           <nav className="mt-5 flex gap-2 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
             {items.map((item) => {

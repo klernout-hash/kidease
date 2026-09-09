@@ -83,6 +83,7 @@ describe("PostHog client wiring", () => {
     assert.match(src, /kidease-ph-queue/);
     resetPostHogClientForTests();
     assert.doesNotThrow(() => capturePostHogEvent("login_funnel", { email: "hidden", step: "viewed" }));
+    assert.doesNotThrow(() => capturePostHogEvent("marketplace_funnel", { email: "hidden", step: "search" }));
     assert.match(src, /VITE_PUBLIC_POSTHOG_KEY/);
     assert.match(src, /POSTHOG_HOST/);
     assert.doesNotMatch(src, /phc_[A-Za-z0-9]+/);
@@ -351,6 +352,11 @@ describe("PostHog client wiring", () => {
       email: "a@b.c",
     });
     assert.deepEqual(cleaned, { path: "/login", listing: "ok" });
+    const libHost = sanitizePostHogProperties({
+      $lib_custom_api_host: "https://www.kidease.ca/ingest",
+      email: "a@b.c",
+    });
+    assert.deepEqual(libHost, { $lib_custom_api_host: "https://www.kidease.ca/ingest" });
     const masked = maskCapturedNetworkRequest({
       name: "https://kidease.ca/api/auth",
       requestBody: '{"password":"x"}',

@@ -7,7 +7,7 @@ export type LegalProcessor = {
   hrefLabel?: string;
 };
 
-export type LegalPath = "/privacy" | "/terms" | "/cookies" | "/account" | "/help" | "/support";
+export type LegalPath = "/privacy" | "/terms" | "/cookies" | "/account" | "/delete-account" | "/unsubscribe" | "/help" | "/support";
 
 export type LegalBlock =
   | { type: "p"; text: string }
@@ -49,7 +49,7 @@ export const PRIVACY_EN: LegalDoc = {
   title: "PIPEDA & child safety",
   updated: UPDATED_EN,
   intro: [
-    "KidEase is a Canadian directory and enrolment tool for provincially licensed childcare. Parents search nearby centres. Directors claim listings. We are not the care provider. Your care agreement is with the centre.",
+    "KidEase is a Canadian directory and enrolment tool for provincially or territorially licensed childcare across Canada. Parents search nearby centres. Directors claim listings. We are not the care provider. Your care agreement is with the centre. We do not invent licences.",
     "We follow PIPEDA’s consent, limiting-collection, and safeguarding principles. We do not sell or rent personal information. Children’s details are used only to help a parent and a centre they choose. KidEase is a parent-and-director tool — not a children’s app.",
   ],
   sections: [
@@ -354,7 +354,7 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "We keep account, request, message, and payment records while the account is open.",
-            "Delete my account (in the app) removes your children, messages, bookings, payments, saved centres, director links, profile, and sign-in rows on KidEase. This cannot be undone.",
+            "Delete my account at /delete-account (or in the app) removes your children, messages, bookings, payments, saved centres, director links, profile, and sign-in rows on KidEase. This cannot be undone. Marketing email or SMS stops at /unsubscribe without deleting the account.",
             "Deletion does not erase copies a centre already received, emails already sitting in kyle@kidease.ca or Titan, or records a law or chargeback requires us to keep for a time.",
             `You can also email ${SUPPORT_INBOX_EMAIL} to access, correct, or delete.`,
             "Security we actually use: HTTPS in transit; signed-in sessions in first-party cookies; OAuth tokens encrypted at rest; email sign-in codes; access checks on parent and director desks; payment card data (when Stripe is on) stays with Stripe; audit events do not store card numbers or medical notes.",
@@ -369,7 +369,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: `You can access, correct, or delete your account and child profiles in the app, or email ${SUPPORT_INBOX_EMAIL}. You can withdraw consent by closing the account or by turning off location in the OS. For a PIPEDA complaint you can also contact the Office of the Privacy Commissioner of Canada.`,
+          text: `You can access, correct, or delete your account and child profiles at /delete-account, in the app, or by emailing ${SUPPORT_INBOX_EMAIL}. You can withdraw marketing consent at /unsubscribe, by closing the account, or by turning off location in the OS. For a PIPEDA complaint you can also contact the Office of the Privacy Commissioner of Canada.`,
         },
       ],
     },
@@ -404,7 +404,7 @@ export const PRIVACY_FR: LegalDoc = {
   title: "LPRPDE et sécurité des enfants",
   updated: UPDATED_FR,
   intro: [
-    "KidEase est un répertoire et un outil d’inscription pour des centres de garde permis. Les parents cherchent près d’eux. Les directions réclament leur fiche. Nous ne sommes pas le fournisseur de garde. Le contrat de service est entre vous et le centre.",
+    "KidEase est un répertoire et un outil d’inscription pour des centres de garde permis au Canada (permis provincial ou territorial). Les parents cherchent près d’eux. Les directions réclament leur fiche. Nous ne sommes pas le fournisseur de garde. Le contrat de service est entre vous et le centre. Nous n’inventons pas de permis.",
     "Nous suivons le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous ne vendons ni ne louons les renseignements personnels. Les détails sur les enfants servent seulement au parent et au centre qu’il choisit. KidEase est un outil pour parents et directions — pas une appli pour enfants.",
   ],
   sections: [
@@ -708,7 +708,7 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Nous gardons le compte, les demandes, les messages et les paiements tant que le compte est ouvert.",
-            "Supprimer mon compte efface enfants, messages, demandes, paiements, centres enregistrés, liens de direction, profil et sessions. Irréversible.",
+            "Supprimer mon compte à /delete-account (ou dans l’appli) efface enfants, messages, demandes, paiements, centres enregistrés, liens de direction, profil et sessions. Irréversible. /unsubscribe arrête les messages marketing sans supprimer le compte.",
             "La suppression n’efface pas les copies déjà reçues par un centre, les courriels déjà reçus, ni les dossiers qu’une loi ou une rétrofacturation exige.",
             `Vous pouvez aussi écrire à ${SUPPORT_INBOX_EMAIL}.`,
             "Sécurité réelle : HTTPS; sessions en témoins internes; jetons OAuth chiffrés; codes par courriel; contrôles d’accès; les cartes (si Stripe) restent chez Stripe; les journaux d’audit ne stockent pas les numéros de carte ni les notes médicales.",
@@ -723,7 +723,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: `Vous pouvez consulter, corriger ou supprimer votre compte dans l’appli, ou écrire à ${SUPPORT_INBOX_EMAIL}. Vous pouvez retirer votre consentement en fermant le compte ou en coupant la position. Une plainte LPRPDE peut aussi aller au Commissariat à la protection de la vie privée du Canada.`,
+          text: `Vous pouvez consulter, corriger ou supprimer votre compte à /delete-account, dans l’appli, ou en écrivant à ${SUPPORT_INBOX_EMAIL}. Vous pouvez retirer le consentement marketing à /unsubscribe, en fermant le compte ou en coupant la position. Une plainte LPRPDE peut aussi aller au Commissariat à la protection de la vie privée du Canada.`,
         },
       ],
     },
@@ -962,7 +962,7 @@ export const TERMS_EN: LegalDoc = {
         {
           type: "ul",
           items: [
-            "We run a directory and enrolment tool for provincially or territorially licensed centres.",
+            "We run a Canada-wide directory and enrolment tool for provincially or territorially licensed centres. We do not invent licences or registry numbers.",
             "We are not the care provider, employer, or insurer. Your service agreement, ratios, programming, and daily care are with the centre.",
             "Unclaimed cards may show public-registry facts and a storefront photo. Live (claimed) listings show spots and fees the director entered. Always confirm with the centre before you enrol.",
             "We may approve, pause, or remove a listing if a centre is unlicensed, a licence lapses, or these terms are broken.",
@@ -1105,7 +1105,7 @@ export const TERMS_FR: LegalDoc = {
         {
           type: "ul",
           items: [
-            "Nous tenons un répertoire et un outil d’inscription pour des centres permis.",
+            "Nous tenons un répertoire pancanadien et un outil d’inscription pour des centres permis (permis provincial ou territorial). Nous n’inventons pas de permis ni de numéros de registre.",
             "Nous ne sommes pas le fournisseur, l’employeur ni l’assureur. Le contrat de garde est avec le centre.",
             "Les fiches non réclamées peuvent montrer des faits de registre public. Les fiches en direct montrent les places et tarifs saisis par la direction. Vérifiez toujours auprès du centre.",
             "Nous pouvons approuver, suspendre ou retirer une fiche si le centre n’est pas permis, si le permis expire ou si ces conditions sont rompues.",

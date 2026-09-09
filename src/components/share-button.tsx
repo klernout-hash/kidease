@@ -10,6 +10,7 @@ import {
   type SharePayload,
 } from "@/lib/share";
 import { noteHappyMoment } from "@/lib/store-review";
+import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +63,9 @@ function ShareControl({
       copied: t("shareCopiedFallback"),
       failed: t("shareFailed"),
     });
+    if ((outcome === "shared" || outcome === "copied") && payload.url?.includes("/daycare/")) {
+      captureMarketplaceFunnel({ step: "share", source: "listing", dest_path: "/daycare" });
+    }
     const key = shareFeedbackKey(outcome);
     if (key) {
       setFeedback(t(key));

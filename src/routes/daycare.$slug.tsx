@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect, useNavigate } from "@tanstack/react-router";
 import { MapPinned, MessageCircle, Phone, Star } from "lucide-react";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { ShareListingButton } from "@/components/share-button";
@@ -50,7 +50,10 @@ import { EmptyState } from "@/components/empty-state";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
-import { listingPageMeta, listingPageTitle } from "@/lib/listing-meta";
+import { listingPageTitle } from "@/lib/listing-meta";
+import { listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-found";
+import { ListingNotFoundPage } from "@/components/page-not-found";
+import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { formatMonth, money, formatAgeRange, displayCentreName } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
@@ -73,31 +76,27 @@ export const Route = createFileRoute("/daycare/$slug")({
           params: { slug: seo.slug },
         });
       }
+      if (shouldNotFoundListing(seo)) throw notFound();
       return seo;
     } catch (error) {
-      if (error && typeof error === "object" && "isRedirect" in error) throw error;
-      return null;
+      if (error && typeof error === "object" && ("isRedirect" in error || "isNotFound" in error)) {
+        throw error;
+      }
+      throw notFound();
     }
   },
-  head: ({ params, loaderData }) => {
-    if (loaderData) {
-      const canonical = listingCanonicalUrl(loaderData.slug);
-      const jsonLd = listingJsonLdScript(loaderData);
-      const crumbs = listingBreadcrumbJsonLdScript(loaderData);
-      return {
-        meta: listingSeoHeadTags(loaderData),
-        links: canonical ? [{ rel: "canonical", href: canonical }] : [],
-        scripts: [
-          ...(jsonLd ? [{ type: "application/ld+json", children: jsonLd }] : []),
-          ...(crumbs ? [{ type: "application/ld+json", children: crumbs }] : []),
-        ],
-      };
-    }
-    const fallback = listingPageMeta({ slug: params.slug });
+  notFoundComponent: ListingNotFoundPage,
+  head: ({ loaderData }) => {
+    if (!loaderData) return listingNotFoundHead();
+    const canonical = listingCanonicalUrl(loaderData.slug);
+    const jsonLd = listingJsonLdScript(loaderData);
+    const crumbs = listingBreadcrumbJsonLdScript(loaderData);
     return {
-      meta: [
-        { title: fallback.title },
-        { name: "description", content: fallback.description },
+      meta: listingSeoHeadTags(loaderData),
+      links: canonical ? [{ rel: "canonical", href: canonical }] : [],
+      scripts: [
+        ...(jsonLd ? [{ type: "application/ld+json", children: jsonLd }] : []),
+        ...(crumbs ? [{ type: "application/ld+json", children: crumbs }] : []),
       ],
     };
   },
@@ -211,6 +210,7 @@ function Listing() {
     });
     const origin = useAppStore.getState().origin;
     trackLocation("view", origin.lat, origin.lng, origin.label, { slug: d.slug });
+    captureMarketplaceFunnel({ step: "listing_view", source: "listing", dest_path: "/daycare" });
     document.title = listingSeoPageTitle(d, locale === "fr" ? "fr" : "en") || listingPageTitle(d);
   }, [data, locale]);
 
@@ -301,6 +301,7 @@ function Listing() {
       goLogin("guestSignInReturn", "spot");
       return;
     }
+    captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "spot" });
     setRequestOpen(true);
   }
 
@@ -310,6 +311,7 @@ function Listing() {
       goLogin("needSignInTour", "tour");
       return;
     }
+    captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "tour" });
     setTourOpen(true);
   }
 
@@ -318,6 +320,7 @@ function Listing() {
       goLogin("needSignInMessage");
       return;
     }
+    captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "message" });
     try {
       const res = await openConversation({ data: d.id });
       void navigate({ to: "/inbox/$id", params: { id: res.id } });

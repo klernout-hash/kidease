@@ -89,6 +89,7 @@ export function SiteFooter() {
                 <Item to="/terms">{t("terms")}</Item>
                 <Item to="/cookies">{t("cookies")}</Item>
                 <Item to="/unsubscribe">{t("unsubscribe")}</Item>
+                <Item to="/delete-account">{t("deleteAccount")}</Item>
               </ul>
             </section>
           </nav>

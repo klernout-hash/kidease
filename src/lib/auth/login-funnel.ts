@@ -92,8 +92,9 @@ export async function resolveContinueDest(input: {
   sticky?: DeskKey | null;
 }): Promise<string> {
   const next = sanitizePostLoginNext(input.next);
+  const hinted = Boolean(next || input.desk || input.role || input.sticky);
   let desks: DeskKey[] | null = null;
-  if (!next) {
+  if (!hinted) {
     desks = await withTimeoutFallback(
       getMyDesks()
         .then((row) => row.desks)
@@ -118,11 +119,18 @@ export async function resolveContinueDest(input: {
   return dest;
 }
 
-export async function shouldOpenTwoFactorPage(dest: string): Promise<boolean> {
+export async function shouldOpenTwoFactorPage(
+  dest: string,
+  statusPromise?: Promise<{ verified: boolean }>,
+): Promise<boolean> {
   const kind = postLoginDestKind(dest);
   if (kind === "public" || kind === "home") return false;
   try {
-    const status = await withTimeout(getTwoFactorStatus(), TWO_FACTOR_STATUS_MS, "2fa-status-timeout");
+    const status = await withTimeout(
+      statusPromise ?? getTwoFactorStatus(),
+      TWO_FACTOR_STATUS_MS,
+      "2fa-status-timeout",
+    );
     if (status.verified) {
       captureLoginFunnel({
         step: "two_factor_skipped",
@@ -171,8 +179,12 @@ export async function continueAfterSignIn(input: {
   method: "email" | "social" | "session";
 }): Promise<string> {
   try {
+    const preview = sanitizePostLoginNext(input.next);
+    const previewKind = preview ? postLoginDestKind(preview) : null;
+    const statusPromise =
+      previewKind === "public" || previewKind === "home" ? undefined : getTwoFactorStatus();
     const dest = await resolveContinueDest(input);
-    const needTwoFactor = await shouldOpenTwoFactorPage(dest);
+    const needTwoFactor = await shouldOpenTwoFactorPage(dest, statusPromise);
     markContinued(dest, { method: input.method });
     if (needTwoFactor) {
       window.location.assign(twoFactorPageUrl(dest));

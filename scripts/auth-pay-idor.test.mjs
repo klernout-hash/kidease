@@ -81,6 +81,8 @@ test("unauthenticated cannot open protected desks or admin APIs", () => {
   assert.equal(guestPathKind("/provider"), "guest_landing");
   assert.equal(guestPathKind("/"), "public");
   assert.equal(guestPathKind("/login"), "public");
+  assert.equal(guestPathKind("/delete-account"), "public");
+  assert.equal(guestPathKind("/unsubscribe"), "public");
   assert.equal(guestPathKind("/claim"), "public");
   assert.equal(guestPathKind("/api/health"), "public");
   assert.equal(guestPathKind("/api/auth/sign-in/email"), "public");

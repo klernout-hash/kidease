@@ -48,8 +48,13 @@ test("login and 2FA use the shared continue helper", () => {
   const twoFa = src("src/routes/verify-2fa.tsx");
   const gates = src("src/lib/auth/gates.tsx");
   assert.match(login, /continueAfterSignIn/);
+  assert.match(login, /markContinued\(dest, \{ method: "social" \}\)/);
+  assert.match(login, /session_pending/);
+  assert.match(login, /function openDesk/);
   assert.match(login, /twoFactorPageUrl/);
   assert.match(login, /loginErrorCallbackUrl/);
+  assert.match(src("src/lib/auth/login-funnel.ts"), /statusPromise/);
+  assert.match(src("src/lib/auth/login-funnel.ts"), /hinted/);
   assert.match(src("src/lib/desks.ts"), /\/verify-2fa\?next=/);
   assert.match(login, /Opening your desk/);
   assert.match(twoFa, /assignPostAuthDest/);
@@ -91,7 +96,7 @@ test("docs explain how to measure login_funnel in PostHog", () => {
 });
 
 test("session settle retries instead of failing the first empty getSession", async () => {
-  assert.deepEqual([...SESSION_SETTLE_RETRIES], [0, 200, 500, 1000]);
+  assert.deepEqual([...SESSION_SETTLE_RETRIES], [0, 200, 500, 1000, 2000]);
   let calls = 0;
   const session = await waitForSignedInSession(async () => {
     calls += 1;

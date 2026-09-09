@@ -5,7 +5,7 @@
  * QA ghost / admin-only slugs never appear.
  */
 
-import { isAdminOnlyListing } from "./listing-visibility.ts";
+import { isAdminOnlyListing, looksLikeTestFixture } from "./listing-visibility.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 
 export const SITEMAP_ORIGIN = "https://www.kidease.ca";
@@ -16,7 +16,7 @@ export const LISTING_SITEMAP_CAP = 5000;
 export const LISTING_SITEMAP_TOTAL_CAP = 50_000;
 export const SITEMAP_LISTINGS_PATH = "/sitemap-listings.xml";
 export const SITEMAP_LASTMOD = "2026-09-08";
-const BLOCKED_SITEMAP_SLUGS = new Set(["test-ghost-claim-lab"]);
+const BLOCKED_SITEMAP_SLUGS = new Set(["test-ghost", "test-ghost-claim-lab"]);
 const LISTING_SITEMAP_PAGE_RE = /^\/sitemap-listings-([1-9]\d*)\.xml$/;
 
 export const SITEMAP_STATIC_PATHS = [
@@ -38,6 +38,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/claim",
   "/compare",
   "/unsubscribe",
+  "/delete-account",
 ] as const;
 
 /** Marketing pages plus generated city hubs. Hubs are passed in by write-sitemap. */
@@ -60,7 +61,9 @@ export function isSafeSitemapSlug(slug: string | null | undefined): boolean {
   const value = (slug || "").trim();
   if (!value || value.length > 80) return false;
   if (!SLUG_RE.test(value)) return false;
-  return !BLOCKED_SITEMAP_SLUGS.has(value.toLowerCase());
+  if (BLOCKED_SITEMAP_SLUGS.has(value.toLowerCase())) return false;
+  if (looksLikeTestFixture({ slug: value })) return false;
+  return true;
 }
 
 export function sitemapListingPath(slug: string): string {

@@ -73,7 +73,8 @@ test("Support column drops the inbox email and uses Contact Us copy", () => {
   assert.match(footer, /t\("privacy"\)/);
   assert.match(footer, /t\("terms"\)/);
   assert.match(footer, /t\("cookies"\)/);
-  assert.doesNotMatch(footer, /deleteAccount/);
+  assert.match(footer, /to="\/delete-account"/);
+  assert.match(footer, /t\("deleteAccount"\)/);
   assert.doesNotMatch(footer, /SUPPORT_INBOX_EMAIL/);
   assert.doesNotMatch(footer, /mailto:/);
   assert.match(copy, /contactTitle: "Contact Us"/);

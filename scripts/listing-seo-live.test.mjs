@@ -115,6 +115,7 @@ test("listing breadcrumbs include the city hub when one exists", () => {
 test("listing route sets unique head tags and JSON-LD; grok OG does not overwrite /daycare/", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /getListingSeo/);
+  assert.match(listing, /throw notFound\(\)/);
   assert.match(listing, /listingSeoHeadTags/);
   assert.match(listing, /application\/ld\+json/);
   assert.match(listing, /listingJsonLdScript/);

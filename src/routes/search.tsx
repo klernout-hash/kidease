@@ -20,6 +20,7 @@ import { readSearchCache, searchCacheKey, writeSearchCache } from "@/lib/search-
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useLivePresence } from "@/lib/use-presence";
 import { trackLocation } from "@/lib/telemetry";
+import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { useAppStore, type SortKey } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -345,6 +346,7 @@ function SearchPage() {
           setItems(rows);
           setSearchFailed(false);
           writeSearchCache(key, rows);
+          captureMarketplaceFunnel({ step: "search", source: "search", dest_path: "/search" });
         })
         .catch(() => {
           if (live && !cached) {
