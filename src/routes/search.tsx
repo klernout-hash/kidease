@@ -68,7 +68,7 @@ import {
   EXPLORE_CATEGORY_COPY,
   countExploreCategories,
   isExploreCategory,
-  matchesCategory,
+  listingMatchesExploreFilter,
   resolvedExploreCategory,
   type ExploreCategory,
 } from "@/lib/explore-categories";
@@ -673,8 +673,8 @@ function SearchPage() {
     if (favoritesOnly) rows = rows.filter((r) => r.guestFavorite === true);
     if (careType !== "any") rows = rows.filter((r) => matchesCareType(r, careType));
     if (schoolAgeOnly) rows = rows.filter((r) => matchesRailAge(r, "school-age"));
-    const cat = resolvedExploreCategory(incoming);
-    if (cat) rows = rows.filter((r) => matchesCategory(r, cat));
+    const cat = isExploreCategory(incoming.cat) ? incoming.cat : undefined;
+    if (cat) rows = rows.filter((r) => listingMatchesExploreFilter(r, cat));
     if (nameQuery.trim()) rows = rows.filter((r) => matchesDaycareName(r, nameQuery));
     return rows;
   }, [
@@ -715,7 +715,14 @@ function SearchPage() {
     return splitSearchResults(list, searchAge, searchStart);
   }, [gated, list, searchAge, searchStart]);
   const shownList = gated ? split.primary : [];
+  const resultCount = gated ? shownList.length + split.ageUnknown.length : 0;
+  const showSearchEmpty = gated && shownList.length === 0 && split.ageUnknown.length === 0;
   const [ageUnknownOpen, setAgeUnknownOpen] = useState(false);
+  useEffect(() => {
+    if (gated && shownList.length === 0 && split.ageUnknown.length > 0) {
+      setAgeUnknownOpen(true);
+    }
+  }, [gated, shownList.length, split.ageUnknown.length]);
   useEffect(() => {
     if (!gated || !searchAge || !searchStart) return;
     capturePostHogEvent("search_filters_applied", {
@@ -727,10 +734,11 @@ function SearchPage() {
   useEffect(() => {
     if (!gated || items === null) return;
     capturePostHogEvent("search_results_shown", {
-      n: shownList.length,
+      n: resultCount,
       n_age_known: shownList.length,
+      n_age_unknown: split.ageUnknown.length,
     });
-  }, [gated, items, shownList.length]);
+  }, [gated, items, shownList.length, split.ageUnknown.length, resultCount]);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +
@@ -972,9 +980,9 @@ function SearchPage() {
                         .replace("{n}", String(catalog.length))
                     : !gated
                       ? t("searchNeedAgeStart")
-                    : shownList.length === 1
+                    : resultCount === 1
                       ? t("searchResultCountOne")
-                      : t("searchResultCount").replace("{n}", String(shownList.length))}
+                      : t("searchResultCount").replace("{n}", String(resultCount))}
                   {DOT}
                   {shownRadius} {u}
                   {DOT}
@@ -1294,7 +1302,7 @@ function SearchPage() {
                     />
                   </Suspense>
                 </div>
-                {gated && items !== null && shownList.length === 0 ? (
+                {gated && items !== null && showSearchEmpty ? (
                   <div className="rounded-xl bg-surface ring-1 ring-border">
                     <EmptyState
                       title={emptyState.title}
@@ -1330,7 +1338,7 @@ function SearchPage() {
                 </div>
               ))}
             </div>
-          ) : shownList.length === 0 ? (
+          ) : showSearchEmpty ? (
             <div className="mt-6 rounded-xl bg-surface ring-1 ring-border">
               <EmptyState
                 title={emptyState.title}

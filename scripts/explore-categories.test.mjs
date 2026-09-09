@@ -98,6 +98,15 @@ function matchesCategory(item, cat) {
   return exploreTags(item).includes(cat);
 }
 
+function isFacilityExploreCategory(cat) {
+  return cat === "home" || cat === "nursery" || cat === "before-after";
+}
+
+function listingMatchesExploreFilter(item, cat) {
+  if (!cat || !isFacilityExploreCategory(cat)) return true;
+  return matchesCategory(item, cat);
+}
+
 function exploreCategoryToSearchAge(cat) {
   return ["infant", "toddler", "preschool", "school-age"].includes(cat) ? cat : undefined;
 }
@@ -253,6 +262,33 @@ test("exploreTags and matchesCategory cover infant, home, nursery, before-after,
   assert.equal(matchesCategory(centre, undefined), true);
 });
 
+test("age category filter keeps unknown-age rows for the All tail", () => {
+  const leftover = listing({
+    amenities: "licensed",
+    agesKnown: false,
+    ageMinMonths: 0,
+    ageMaxMonths: 18,
+  });
+  const home = listing({
+    amenities: "licensed,home",
+    agesKnown: false,
+    ageMinMonths: 0,
+    ageMaxMonths: 0,
+  });
+  const knownToddler = listing({
+    amenities: "licensed",
+    agesKnown: true,
+    ageMinMonths: 18,
+    ageMaxMonths: 36,
+  });
+  assert.equal(listingMatchesExploreFilter(leftover, "toddler"), true);
+  assert.equal(listingMatchesExploreFilter(leftover, "infant"), true);
+  assert.equal(listingMatchesExploreFilter(home, "home"), true);
+  assert.equal(listingMatchesExploreFilter(leftover, "home"), false);
+  assert.equal(listingMatchesExploreFilter(knownToddler, "nursery"), false);
+  assert.equal(matchesCategory(leftover, "infant"), false);
+});
+
 test("age chips 1–4 set the age-first search gate; facility chips do not", () => {
   assert.equal(exploreCategoryToSearchAge("infant"), "infant");
   assert.equal(exploreCategoryToSearchAge("home"), undefined);
@@ -294,6 +330,9 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.match(lib, /isBeforeAfterProgram/);
   assert.match(lib, /classifyFacilityType/);
   assert.match(lib, /exploreCategoryToSearchAge/);
+  assert.match(lib, /listingMatchesExploreFilter/);
+  assert.match(lib, /isFacilityExploreCategory/);
+  assert.match(search, /listingMatchesExploreFilter/);
   assert.doesNotMatch(lib, /Tiny Tots/);
   assert.match(search, /ExploreCategoryChips/);
   assert.match(search, /writeCategorySearch/);

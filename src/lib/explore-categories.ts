@@ -82,6 +82,10 @@ export function visibleExploreCategories(
   return EXPLORE_CATEGORIES.filter((cat) => counts[cat] > 0 || cat === selected);
 }
 
+export function isFacilityExploreCategory(cat?: ExploreCategory | null): boolean {
+  return cat === "home" || cat === "nursery" || cat === "before-after";
+}
+
 /** All / missing cat = no category filter (centres + everything). */
 export function matchesCategory(
   item: ExploreTaggedListing,
@@ -89,6 +93,18 @@ export function matchesCategory(
 ): boolean {
   if (!cat) return true;
   return exploreTags(item).includes(cat);
+}
+
+/**
+ * Age chips 1–4 are the search gate + All tail — do not drop unknown-age
+ * rows before splitSearchResults. Facility chips stay amenity-only.
+ */
+export function listingMatchesExploreFilter(
+  item: ExploreTaggedListing,
+  cat?: ExploreCategory | null,
+): boolean {
+  if (!cat || !isFacilityExploreCategory(cat)) return true;
+  return matchesCategory(item, cat);
 }
 
 export function countExploreCategories(

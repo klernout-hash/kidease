@@ -39,6 +39,9 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(search, /search_filters_applied/);
   assert.match(search, /search_results_shown/);
   assert.match(search, /ExploreCategoryChips/);
+  assert.match(search, /listingMatchesExploreFilter/);
+  assert.match(search, /n_age_unknown/);
+  assert.match(search, /showSearchEmpty/);
   assert.doesNotMatch(search, /ExploreRails/);
   assert.doesNotMatch(search, /FacilityTypeRails/);
 
