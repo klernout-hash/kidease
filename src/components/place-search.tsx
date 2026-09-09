@@ -243,7 +243,7 @@ export function PlaceSearch({
           id={listId}
           role="listbox"
           data-place-suggestions=""
-          className="absolute left-0 right-0 top-full z-[80] mt-1.5 max-h-64 overflow-auto rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
+          className="absolute left-0 right-0 top-[calc(100%+0.375rem)] z-[80] max-h-64 overflow-auto rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
         >
           {hits.map((hit, i) => (
             <li key={hit.placeId} role="option" aria-selected={i === active}>

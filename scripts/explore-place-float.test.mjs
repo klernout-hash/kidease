@@ -24,7 +24,7 @@ test("dismissPopovers is a no-op without window", () => {
 test("Explore location suggestions dismiss on route, scroll, blur, menu, and view tabs", () => {
   const places = src("src/components/place-search.tsx");
   assert.match(places, /data-place-suggestions/);
-  assert.match(places, /absolute left-0 right-0 top-full z-\[80\]/);
+  assert.match(places, /absolute left-0 right-0 top-\[calc\(100%/);
   assert.doesNotMatch(places, /createPortal/);
   assert.doesNotMatch(places, /fixed z-\[80\]/);
   assert.match(places, /useRouterState/);
@@ -44,10 +44,12 @@ test("Explore location suggestions dismiss on route, scroll, blur, menu, and vie
   assert.match(search, /setView\("list"\)/);
   assert.match(search, /setView\("map"\)/);
   assert.match(search, /whitespace-nowrap/);
+  assert.match(search, /basis-full/);
   assert.match(search, /CityHubLinks className="mt-3"/);
 
   const hubs = src("src/components/city-hub-links.tsx");
   assert.match(hubs, /overflow-x-auto/);
+  assert.match(hubs, /flex-nowrap/);
   assert.match(hubs, /lg:flex-wrap/);
   assert.match(hubs, /shrink-0/);
 

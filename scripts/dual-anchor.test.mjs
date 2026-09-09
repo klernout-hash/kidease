@@ -132,7 +132,7 @@ describe("search stack keeps single-anchor and adds dual PostGIS", () => {
     assert.match(bar, /overflow-visible/);
     const places = read("src/components/place-search.tsx");
     assert.match(places, /data-place-suggestions/);
-    assert.match(places, /absolute left-0 right-0 top-full/);
+    assert.match(places, /absolute left-0 right-0 top-\[calc\(100%/);
     assert.doesNotMatch(places, /createPortal/);
     assert.match(places, /suggestPlacesBrowser/);
     assert.match(places, /geocodeWithBrowser/);

@@ -30,7 +30,7 @@ test("local place suggestions match Canadian cities without inventing streets", 
 test("PlaceSearch anchors suggestions under the input and falls back when server Places is empty", () => {
   const places = src("src/components/place-search.tsx");
   assert.match(places, /data-place-suggestions/);
-  assert.match(places, /absolute left-0 right-0 top-full/);
+  assert.match(places, /absolute left-0 right-0 top-\[calc\(100%/);
   assert.doesNotMatch(places, /createPortal/);
   assert.doesNotMatch(places, /position: fixed|className="fixed /);
   assert.match(places, /placeHostVisible/);

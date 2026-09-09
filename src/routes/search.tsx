@@ -853,11 +853,16 @@ function SearchPage() {
         {t("exploreFacilityTypes")}
       </p>
       <div className="flex flex-wrap gap-2" role="group" aria-label={t("exploreFacilityTypes")}>
-        {FACILITY_TYPES.map((kind) =>
-          chip(careType === kind, t(SHOW_FACILITY[kind]), () =>
-            setCareType((v) => (v === kind ? "any" : kind)),
-          ),
-        )}
+        {FACILITY_TYPES.map((kind) => (
+          <ChipButton
+            key={kind}
+            on={careType === kind}
+            aria-pressed={careType === kind}
+            onClick={() => setCareType((v) => (v === kind ? "any" : kind))}
+          >
+            {t(SHOW_FACILITY[kind])}
+          </ChipButton>
+        ))}
       </div>
     </div>
   );
@@ -1008,12 +1013,12 @@ function SearchPage() {
         ) : null}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex h-11 w-full min-w-[12.5rem] flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[13.5rem] sm:flex-none">
+          <div className="flex h-11 w-full basis-full rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:basis-auto sm:min-w-[13.5rem] sm:flex-none">
             <button
               type="button"
               onClick={() => setLiveOnly(true)}
               className={cn(
-                "min-w-0 flex-1 truncate whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
+                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 liveOnly ? "bg-ok text-primary-fg" : "text-muted",
               )}
             >
@@ -1025,7 +1030,7 @@ function SearchPage() {
               type="button"
               onClick={() => setLiveOnly(false)}
               className={cn(
-                "min-w-0 flex-1 truncate whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
+                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 !liveOnly ? "bg-fg text-bg" : "text-muted",
               )}
             >
@@ -1048,7 +1053,7 @@ function SearchPage() {
               </span>
             ) : null}
           </button>
-          <div className="flex h-11 w-full min-w-[9.5rem] flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[10rem] sm:flex-none">
+          <div className="flex h-11 w-full basis-full rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:basis-auto sm:min-w-[10rem] sm:flex-none">
             <button
               type="button"
               onClick={() => {
@@ -1056,7 +1061,7 @@ function SearchPage() {
                 setView("list");
               }}
               className={cn(
-                "min-w-0 flex-1 truncate whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
+                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 view === "list" ? "bg-fg text-bg" : "text-muted",
               )}
             >
@@ -1069,7 +1074,7 @@ function SearchPage() {
                 setView("map");
               }}
               className={cn(
-                "min-w-0 flex-1 truncate whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
+                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 view === "map" ? "bg-fg text-bg" : "text-muted",
               )}
             >
