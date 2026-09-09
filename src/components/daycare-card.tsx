@@ -15,7 +15,8 @@ import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { isCatalogueMatchedBadge, trustBadgesFor } from "@/lib/trust";
 import type { CopyKey } from "@/lib/copy";
-import { photoLine } from "@/components/vacancy-freshness";
+import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
+import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { TrustBadge, TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
@@ -51,6 +52,9 @@ export const DaycareCard = memo(function DaycareCard({
   const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(feeBadge));
   const gaps = liveLookingGaps(item);
   const vacancy = honestVacancy(item);
+  const freshness = vacancyLine(item, t, locale);
+  const incompleteLabel = parentIncompleteLabel(item, t);
+  const freshnessText = freshness.kind === "unknown" ? "" : vacancy.kind === "open" || vacancy.kind === "waitlist" ? freshness.text : "";
   const GAP_COPY = {
     ages: "cardGapAges",
     fees: "cardGapFees",
@@ -160,10 +164,13 @@ export const DaycareCard = memo(function DaycareCard({
             <p className="truncate text-[12px] font-normal leading-4 text-muted">
               {gaps.map((gap) => t(GAP_COPY[gap])).join(" · ")}
             </p>
+          ) : incompleteLabel ? (
+            <p className="truncate text-[12px] font-normal leading-4 text-muted">{incompleteLabel}</p>
           ) : null}
-          {spotsKnown || photoText || (canShowMatchScore(item) && typeof item.matchScore === "number") || (item.urgencyScore ?? 0) > 0 ? (
+          {spotsKnown || freshnessText || photoText || (canShowMatchScore(item) && typeof item.matchScore === "number") || (item.urgencyScore ?? 0) > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
               {spotsKnown ? <span className="ke-honesty">{spotsKnown}</span> : null}
+              {freshnessText ? <span className="ke-honesty">{freshnessText}</span> : null}
               {photoText ? <span className="ke-honesty">{photoText}</span> : null}
               <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact />
               <UrgencyCue score={item.urgencyScore} compact />
