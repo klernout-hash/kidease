@@ -126,6 +126,12 @@ function splitSearchResults(rows, age, start, now) {
   }
   return { primary, ageUnknown };
 }
+function visibleSearchList(rows, age, start, now) {
+  if (isSearchAge(age) && isSearchStart(start)) {
+    return splitSearchResults(rows, age, start, now).primary;
+  }
+  return [];
+}
 function qualityTodoFirst(issues) {
   const first = ["incomplete_ages", "incomplete_fees", "incomplete_photo"];
   return [
@@ -208,6 +214,16 @@ test("Winnipeg toddler + now keeps age-eligible live cards and hides others", ()
   );
   assert.equal(ageUnknown.some((r) => r.slug === "wpg-unknown"), true);
   assert.equal(primary.some((r) => r.slug === "wpg-infant"), false);
+  const rows = [toddler, infantOnly, unknownAge, staleLive];
+  assert.deepEqual(
+    visibleSearchList(rows, "toddler", "now", now).map((r) => r.slug),
+    primary.map((r) => r.slug),
+  );
+  assert.equal(visibleSearchList(rows, undefined, undefined, now).length, 0);
+  assert.equal(
+    visibleSearchList(rows, "infant", "now", now).some((r) => r.slug === "wpg-unknown"),
+    false,
+  );
 });
 
 test("hollow cards are excluded from home rails", () => {
@@ -351,14 +367,16 @@ test("search, cards, rails, and vacancy wire the shared helper", () => {
   assert.match(helpers, /export function searchFiltersReady/);
   assert.match(helpers, /hasPlaceForSearch/);
   assert.match(helpers, /WINNIPEG_LIVE_LOOKING_RAIL_MIN/);
+  assert.match(helpers, /export function visibleSearchList/);
   assert.match(search, /searchFiltersReady/);
   assert.match(search, /located/);
   assert.match(search, /splitSearchResults/);
   assert.match(search, /search_filters_applied/);
   assert.match(search, /search_results_shown/);
   assert.match(home, /homeRailItems|isLiveLookingCard/);
-  assert.match(home, /SearchAgeGate/);
-  assert.match(fr, /isLiveLookingCard|searchFiltersReady/);
+  assert.match(home, /ExploreSearchBar/);
+  assert.doesNotMatch(home, /SearchAgeGate/);
+  assert.match(fr, /isLiveLookingCard|startWindowToDate/);
   assert.match(card, /liveLookingGaps/);
   assert.match(card, /canShowMatchScore/);
   assert.match(rails, /isLiveLookingCard|liveLookingOnly/);

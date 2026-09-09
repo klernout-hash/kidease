@@ -3,8 +3,7 @@
  * Never invent ages, amenities, CWELCC, or openings. Never write tags back
  * as a licence class. A listing may wear more than one tag.
  *
- * Age chips 1–4 also set the age-first search gate (`?age=` / child age band)
- * so this composes with NOW-loops (#168) as one chip row + age gate.
+ * Age chips 1–4 also set `?age=` so /search stays one chip row (no second age lecture).
  */
 
 import {

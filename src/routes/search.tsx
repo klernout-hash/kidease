@@ -29,7 +29,6 @@ import { ChipButton } from "@/components/chip";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { DualAnchorBar } from "@/components/dual-anchor-bar";
-import { ExploreHint } from "@/components/explore-hint";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { resolveLocationQuery } from "@/components/place-search";
 import {
@@ -43,7 +42,6 @@ import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { DaycareCard as Card } from "@/lib/types";
-import { SearchAgeGate } from "@/components/search-age-gate";
 import { capturePostHogEvent } from "@/lib/posthog";
 import {
   honestVacancy,
@@ -236,7 +234,7 @@ function SearchPage() {
     } else if (ageGate) {
       setSchoolAgeOnly(false);
       setAgeGroup(ageGate);
-    } else if (incoming.cat) {
+    } else {
       setSchoolAgeOnly(false);
       setAgeGroup("any");
     }
@@ -440,9 +438,9 @@ function SearchPage() {
     });
   }
 
-  function writeNowLoopSearch(next: { age?: SearchAge; start?: SearchStart }) {
-    const age = next.age ?? incoming.age;
-    const start = next.start ?? incoming.start;
+  function writeNowLoopSearch(next: { age?: SearchAge | ""; start?: SearchStart | "" }) {
+    const age = next.age === "" ? undefined : (next.age ?? incoming.age);
+    const start = next.start === "" ? undefined : (next.start ?? incoming.start);
     const keepFacilityCat =
       incoming.cat === "home" || incoming.cat === "nursery" || incoming.cat === "before-after";
     const cat = keepFacilityCat
@@ -466,9 +464,9 @@ function SearchPage() {
     });
   }
 
-  /** Age chips 1–4 also write `?age=` for the age-first gate. Preserve start + place. */
+  /** Age chips 1–4 write `?age=`. All / facility chips clear the age band. */
   function writeCategorySearch(cat?: ExploreCategory) {
-    const age = cat && isRailAge(cat) ? cat : incoming.age;
+    const age = cat && isRailAge(cat) ? cat : undefined;
     void navigate({
       search: {
         q: incoming.q ?? query,
@@ -731,7 +729,7 @@ function SearchPage() {
     });
   }, [gated, searchAge, searchStart, incoming.q, query, origin.label]);
   useEffect(() => {
-    if (!gated || items === null) return;
+    if (items === null) return;
     capturePostHogEvent("search_results_shown", {
       n: resultCount,
       n_age_known: shownList.length,
@@ -834,10 +832,9 @@ function SearchPage() {
                 secondaryTo: "/?change=1",
                 onSecondary: undefined as (() => void) | undefined,
               };
-  const city =
-    anchors.mode === "both" && workOrigin
-      ? `${origin.label.split(",")[0]} + ${workOrigin.label.split(",")[0]}`
-      : (anchors.mode === "work" && workOrigin ? workOrigin : origin).label.split(",")[0];
+  const whereLabel = (incoming.q || query || origin.label || "").trim();
+  const city = (whereLabel || origin.label).split(",")[0];
+  const whereSet = Boolean(whereLabel);
   const catalog = items ?? [];
   const fabric = areaPresence(catalog);
   const freshness = presenceFreshness(originAt, originSource);
@@ -948,11 +945,6 @@ function SearchPage() {
       {chip(infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v))}
       {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
       {chip(favoritesOnly, t("filterFavorites"), () => setFavoritesOnly((v) => !v))}
-      {chip(resolvedExploreCategory(incoming) === "before-after", t("filterCareBeforeAfter"), () =>
-        writeCategorySearch(
-          resolvedExploreCategory(incoming) === "before-after" ? undefined : "before-after",
-        ),
-      )}
     </div>
   );
 
@@ -964,7 +956,12 @@ function SearchPage() {
       <div className="ke-gutter mx-auto max-w-7xl pb-10 pt-4">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>
+            <h1
+              className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]"
+              data-search-h1=""
+            >
+              {city}
+            </h1>
             <p className="mt-0.5 min-h-5 truncate text-sm text-muted" aria-live="polite">
               {items === null ? (
                 <span className="inline-flex items-center gap-2">
@@ -977,8 +974,6 @@ function SearchPage() {
                     ? (fabric.live > 0 ? t("searchLiveCount") : t("searchLiveEmptyCount"))
                         .replace("{live}", String(fabric.live))
                         .replace("{n}", String(catalog.length))
-                    : !gated
-                      ? t("searchNeedAgeStart")
                     : resultCount === 1
                       ? t("searchResultCountOne")
                       : t("searchResultCount").replace("{n}", String(resultCount))}
@@ -986,20 +981,13 @@ function SearchPage() {
                   {shownRadius} {u}
                   {DOT}
                   {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
+                  {items !== null && fabric.live > 0
+                    ? `${DOT}${t("liveInArea").replace("{n}", String(fabric.live))}`
+                    : catalog.length > 0
+                      ? `${DOT}${t("liveVsAllNone").replace("{n}", String(catalog.length))}`
+                      : null}
                 </>
               )}
-            </p>
-            <p
-              className={cn(
-                "mt-1 min-h-4 truncate text-xs font-medium",
-                items !== null && fabric.live > 0 ? "text-ok" : "text-muted",
-              )}
-            >
-              {items !== null && fabric.live > 0
-                ? t("liveInArea").replace("{n}", String(fabric.live))
-                : catalog.length > 0
-                  ? t("liveVsAllNone").replace("{n}", String(catalog.length))
-                  : null}
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
@@ -1027,7 +1015,7 @@ function SearchPage() {
           </div>
         </div>
 
-        <CityHubLinks className="mt-3" />
+        {!whereSet ? <CityHubLinks className="mt-3" /> : null}
 
         {saveOpen ? (
           <div className="mt-3 rounded-xl bg-surface p-4 ring-1 ring-border">
@@ -1070,6 +1058,7 @@ function SearchPage() {
           className="mt-4"
           values={{ where: query, name: nameQuery, from: needBy, to: needUntil }}
           origin={origin}
+          start={searchStart ?? ""}
           onWhereChange={setQuery}
           onWhereResolved={applyPlace}
           onNameChange={setNameQuery}
@@ -1077,49 +1066,24 @@ function SearchPage() {
             setNeedBy(from);
             setNeedUntil(to);
           }}
+          onStartChange={(start) => writeNowLoopSearch({ start })}
           onLocate={() => void geo()}
           onSubmit={() => void applyQuery()}
         />
+        {!gated ? (
+          <p className="mt-2 text-sm text-muted">{t("searchNeedAgeStart")}</p>
+        ) : null}
         <ExploreCategoryChips
           selected={activeCat}
           counts={exploreCatCounts}
           onSelect={writeCategorySearch}
         />
-        <SearchAgeGate
-          age={searchAge ?? ""}
-          start={searchStart ?? ""}
-          hideAge
-          onAge={(age) => writeNowLoopSearch({ age })}
-          onStart={(start) => writeNowLoopSearch({ start })}
-        />
-        <DualAnchorBar
-          mode={anchorMode}
-          onMode={setAnchorMode}
-          home={origin}
-          work={workOrigin}
-          workQuery={workQuery}
-          onWorkQuery={setWorkQuery}
-          onWorkResolved={(place) => {
-            setWorkOrigin(place);
-            setWorkQuery(place.label);
-            if (anchorMode === "home") setAnchorMode("both");
-          }}
-          onClearWork={() => {
-            setWorkOrigin(null);
-            setWorkQuery("");
-            setAnchorMode("home");
-          }}
-        />
-        {anchors.mode === "both" && workOrigin ? (
-          <p className="mt-2 text-xs text-muted">
-            {t("anchorBothHint").replace("{n}", String(shownRadius)).replace("{u}", u)}
-          </p>
-        ) : anchors.mode === "work" && workOrigin ? (
-          <p className="mt-2 text-xs text-muted">{t("anchorWorkHint")}</p>
-        ) : null}
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex h-11 w-full basis-full rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:basis-auto sm:min-w-[13.5rem] sm:flex-none">
+        <div
+          className="mt-3 flex flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap"
+          data-search-row="live-filters-map"
+        >
+          <div className="flex h-11 shrink-0 rounded-full bg-surface p-0.5 ring-1 ring-border sm:min-w-[13.5rem]">
             <button
               type="button"
               onClick={() => setLiveOnly(true)}
@@ -1135,6 +1099,7 @@ function SearchPage() {
             <button
               type="button"
               onClick={() => setLiveOnly(false)}
+              data-listing-count={items !== null ? resultCount : undefined}
               className={cn(
                 "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 !liveOnly ? "bg-fg text-bg" : "text-muted",
@@ -1159,34 +1124,28 @@ function SearchPage() {
               </span>
             ) : null}
           </button>
-          <div className="flex h-11 w-full basis-full rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:basis-auto sm:min-w-[10rem] sm:flex-none">
-            <button
-              type="button"
-              onClick={() => {
-                dismissPopovers();
-                setView("list");
-              }}
-              className={cn(
-                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
-                view === "list" ? "bg-fg text-bg" : "text-muted",
-              )}
+          {workOrigin ? (
+            <ChipButton
+              on={anchorMode !== "home"}
+              aria-pressed={anchorMode !== "home"}
+              onClick={() => setAnchorMode(anchorMode === "home" ? "work" : "home")}
             >
-              {t("explore")}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                dismissPopovers();
-                setView("map");
-              }}
-              className={cn(
-                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
-                view === "map" ? "bg-fg text-bg" : "text-muted",
-              )}
-            >
-              {t("map")}
-            </button>
-          </div>
+              {t("nearWork")}
+            </ChipButton>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              dismissPopovers();
+              setView(view === "map" ? "list" : "map");
+            }}
+            className={cn(
+              "inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-xs font-semibold ring-1 sm:text-[13px]",
+              view === "map" ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border",
+            )}
+          >
+            {t("map")}
+          </button>
         </div>
 
         {askLocation ? (
@@ -1198,14 +1157,37 @@ function SearchPage() {
           </div>
         ) : null}
 
-        <ExploreHint />
-
         {filters ? (
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold">{t("filters")}</p>
               <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>
             </div>
+            <DualAnchorBar
+              mode={anchorMode}
+              onMode={setAnchorMode}
+              home={origin}
+              work={workOrigin}
+              workQuery={workQuery}
+              onWorkQuery={setWorkQuery}
+              onWorkResolved={(place) => {
+                setWorkOrigin(place);
+                setWorkQuery(place.label);
+                if (anchorMode === "home") setAnchorMode("both");
+              }}
+              onClearWork={() => {
+                setWorkOrigin(null);
+                setWorkQuery("");
+                setAnchorMode("home");
+              }}
+            />
+            {anchors.mode === "both" && workOrigin ? (
+              <p className="text-xs text-muted">
+                {t("anchorBothHint").replace("{n}", String(shownRadius)).replace("{u}", u)}
+              </p>
+            ) : anchors.mode === "work" && workOrigin ? (
+              <p className="text-xs text-muted">{t("anchorWorkHint")}</p>
+            ) : null}
             {filterChips}
             {radiusSlider}
             <div className="flex flex-wrap gap-2">
@@ -1316,10 +1298,6 @@ function SearchPage() {
                 ) : null}
               </div>
             ) : null
-          ) : !gated ? (
-            <div className="mt-6 rounded-xl bg-surface ring-1 ring-border">
-              <EmptyState title={t("searchAgeGateTitle")} body={t("searchNeedAgeStart")} />
-            </div>
           ) : items === null ? (
             <div className="mt-4 space-y-8" aria-busy="true" aria-label={t("searchCountLoading")}>
               {Array.from({ length: 2 }).map((_, rail) => (
@@ -1338,16 +1316,19 @@ function SearchPage() {
               ))}
             </div>
           ) : showSearchEmpty ? (
-            <div className="mt-6 rounded-xl bg-surface ring-1 ring-border">
-              <EmptyState
-                title={emptyState.title}
-                body={emptyState.body}
-                action={emptyState.action}
-                onAction={emptyState.onAction}
-                secondary={emptyState.secondary}
-                onSecondary={emptyState.onSecondary}
-                secondaryTo={emptyState.secondaryTo}
-              />
+            <div className="mt-6 space-y-4">
+              <div className="rounded-xl bg-surface ring-1 ring-border">
+                <EmptyState
+                  title={emptyState.title}
+                  body={emptyState.body}
+                  action={emptyState.action}
+                  onAction={emptyState.onAction}
+                  secondary={emptyState.secondary}
+                  onSecondary={emptyState.onSecondary}
+                  secondaryTo={emptyState.secondaryTo}
+                />
+              </div>
+              {whereSet ? <CityHubLinks className="mt-4" headingKey="otherCities" /> : null}
             </div>
           ) : (
             <section

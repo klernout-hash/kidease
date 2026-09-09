@@ -240,6 +240,22 @@ export function splitSearchResults<T extends LiveLookingInput & VacancyHonestyIn
   return { primary, ageUnknown };
 }
 
+/**
+ * Ranked /search list. Infant+Now === splitSearchResults.primary.
+ * Ungated All is a chrome state — results stay empty until age + start + place.
+ */
+export function visibleSearchList<T extends LiveLookingInput & VacancyHonestyInput>(
+  rows: T[],
+  age?: SearchAge | null,
+  start?: SearchStart | null,
+  now = Date.now(),
+): T[] {
+  if (isSearchAge(age) && isSearchStart(start)) {
+    return splitSearchResults(rows, age, start, now).primary;
+  }
+  return [];
+}
+
 export function liveLookingOnly<T extends LiveLookingInput>(rows: readonly T[]): T[] {
   return rows.filter((row) => isLiveLookingCard(row));
 }

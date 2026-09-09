@@ -57,7 +57,8 @@ test("Explore search bar is an Airbnb-style pill wired to /search params", () =>
   assert.match(bar, /searchWhen/);
   assert.match(bar, /searchDaycare/);
   assert.match(bar, /rounded-full bg-primary/);
-  assert.match(bar, /type="date"/);
+  assert.match(bar, /SEARCH_STARTS/);
+  assert.match(bar, /searchWhenHint/);
   assert.match(bar, /lg:flex-row/);
 
   assert.match(search, /ExploreSearchBar/);
@@ -65,8 +66,7 @@ test("Explore search bar is an Airbnb-style pill wired to /search params", () =>
   assert.match(search, /matchesDaycareName/);
   assert.match(search, /name: fields.name/);
   assert.match(search, /from: fields.from/);
-  assert.match(search, /setView\("map"\)/);
-  assert.match(search, /setView\("list"\)/);
+  assert.match(search, /setView\(view === "map" \? "list" : "map"\)/);
   assert.match(search, /setFilters/);
 
   assert.match(home, /ExploreSearchBar/);
