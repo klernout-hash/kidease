@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage } from "@/components/legal-doc";
 import { TERMS_EN, TERMS_FR } from "@/lib/legal-copy";
+import { LEGAL_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({
-    meta: [{ title: "Terms · KidEase" }, { name: "description", content: "KidEase terms of use for parents and licensed childcare centres." }],
-  }),
+  head: () => pageSeoHead(LEGAL_PAGE_SEO.terms),
   component: Terms,
 });
 

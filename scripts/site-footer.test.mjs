@@ -29,9 +29,9 @@ test("footer keeps Parents / Daycares / Support groups without a duplicate legal
   assert.match(footer, /Garderies/);
   assert.match(footer, /Daycares/);
   assert.doesNotMatch(footer, /aria-label=\{fr \? "Juridique" : "Legal"\}/);
-  const privacyLinks = footer.match(/to="\/privacy"/g) ?? [];
+  const privacyLinks = footer.match(/localePath\("\/privacy"/g) ?? [];
   assert.equal(privacyLinks.length, 1, "privacy lives in Support only; verify-listings goes to /verify");
-  assert.match(footer, /to="\/about"/);
+  assert.match(footer, /localePath\("\/about"/);
   assert.match(footer, /to="\/verify"/);
   assert.match(footer, /verifyListings/);
 });
@@ -67,7 +67,7 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
 test("Support column drops the inbox email and uses Contact Us copy", () => {
   assert.match(footer, /t\("helpTitle"\)/);
   assert.match(footer, /t\("contactTitle"\)/);
-  assert.match(footer, /to="\/contact"/);
+  assert.match(footer, /localePath\("\/contact"/);
   assert.match(footer, />FAQ</);
   assert.match(footer, /t\("howItWorksCta"\)/);
   assert.match(footer, /t\("privacy"\)/);
@@ -82,16 +82,16 @@ test("Support column drops the inbox email and uses Contact Us copy", () => {
 
 test("Support column includes About and Meet the Team before legal links", () => {
   const support = footer.slice(footer.indexOf('t("support")'), footer.indexOf("ke-footer-legal"));
-  assert.match(support, /to="\/about"/);
+  assert.match(support, /localePath\("\/about"/);
   assert.match(support, /to="\/team"/);
   assert.match(support, /to="\/verify"/);
   assert.match(support, /t\("about"\)/);
   assert.match(support, /t\("team"\)/);
   assert.match(support, /verifyListings/);
-  const aboutAt = support.indexOf('to="/about"');
+  const aboutAt = support.indexOf('localePath("/about"');
   const teamAt = support.indexOf('to="/team"');
   const verifyAt = support.indexOf('to="/verify"');
-  const privacyAt = support.indexOf('to="/privacy"');
+  const privacyAt = support.indexOf('localePath("/privacy"');
   assert.ok(aboutAt > 0 && teamAt > aboutAt && verifyAt > teamAt && privacyAt > verifyAt, "About then Team, then verify, then legal");
 });
 

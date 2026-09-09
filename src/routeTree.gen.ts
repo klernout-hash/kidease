@@ -25,6 +25,7 @@ import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as FrRouteImport } from './routes/fr'
 import { Route as GetAppRouteImport } from './routes/get-app'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
@@ -54,7 +55,17 @@ import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
-import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
+import { Route as FrIndexRouteImport } from './routes/fr.index'
+import { Route as FrAboutRouteImport } from './routes/fr.about'
+import { Route as FrContactRouteImport } from './routes/fr.contact'
+import { Route as FrCookiesRouteImport } from './routes/fr.cookies'
+import { Route as FrExploreRouteImport } from './routes/fr.explore'
+import { Route as FrFaqRouteImport } from './routes/fr.faq'
+import { Route as FrHelpRouteImport } from './routes/fr.help'
+import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
+import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
+import { Route as FrSearchRouteImport } from './routes/fr.search'
+import { Route as FrTermsRouteImport } from './routes/fr.terms'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
@@ -73,6 +84,7 @@ import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
 
@@ -155,6 +167,11 @@ const FaqRoute = FaqRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FrRoute = FrRouteImport.update({
+  id: '/fr',
+  path: '/fr',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GetAppRoute = GetAppRouteImport.update({
@@ -302,10 +319,60 @@ const DaycareSlugRoute = DaycareSlugRouteImport.update({
   path: '/daycare/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
-  id: '/daycare/city/$city',
-  path: '/daycare/city/$city',
-  getParentRoute: () => rootRouteImport,
+const FrIndexRoute = FrIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrAboutRoute = FrAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrContactRoute = FrContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrCookiesRoute = FrCookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrExploreRoute = FrExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrFaqRoute = FrFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrHelpRoute = FrHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrHowItWorksRoute = FrHowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrPrivacyRoute = FrPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrSearchRoute = FrSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrTermsRoute = FrTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => FrRoute,
 } as any)
 const InboxIdRoute = InboxIdRouteImport.update({
   id: '/$id',
@@ -397,6 +464,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
+  id: '/daycare/city/$city',
+  path: '/daycare/city/$city',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
   id: '/pay/bill/$billId',
   path: '/pay/bill/$billId',
@@ -425,6 +497,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -454,13 +527,23 @@ export interface FileRoutesByFullPath {
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
-  '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/about': typeof FrAboutRoute
+  '/fr/contact': typeof FrContactRoute
+  '/fr/cookies': typeof FrCookiesRoute
+  '/fr/explore': typeof FrExploreRoute
+  '/fr/faq': typeof FrFaqRoute
+  '/fr/help': typeof FrHelpRoute
+  '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/privacy': typeof FrPrivacyRoute
+  '/fr/search': typeof FrSearchRoute
+  '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
+  '/fr/': typeof FrIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
@@ -473,6 +556,7 @@ export interface FileRoutesByFullPath {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/daycare/city/$city': typeof DaycareCityCityRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
 }
@@ -522,13 +606,23 @@ export interface FileRoutesByTo {
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
-  '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/about': typeof FrAboutRoute
+  '/fr/contact': typeof FrContactRoute
+  '/fr/cookies': typeof FrCookiesRoute
+  '/fr/explore': typeof FrExploreRoute
+  '/fr/faq': typeof FrFaqRoute
+  '/fr/help': typeof FrHelpRoute
+  '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/privacy': typeof FrPrivacyRoute
+  '/fr/search': typeof FrSearchRoute
+  '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
+  '/fr': typeof FrIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
@@ -541,6 +635,7 @@ export interface FileRoutesByTo {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/daycare/city/$city': typeof DaycareCityCityRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
 }
@@ -562,6 +657,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -591,13 +687,23 @@ export interface FileRoutesById {
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
-  '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/about': typeof FrAboutRoute
+  '/fr/contact': typeof FrContactRoute
+  '/fr/cookies': typeof FrCookiesRoute
+  '/fr/explore': typeof FrExploreRoute
+  '/fr/faq': typeof FrFaqRoute
+  '/fr/help': typeof FrHelpRoute
+  '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/privacy': typeof FrPrivacyRoute
+  '/fr/search': typeof FrSearchRoute
+  '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
+  '/fr/': typeof FrIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
@@ -610,6 +716,7 @@ export interface FileRoutesById {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/daycare/city/$city': typeof DaycareCityCityRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
 }
@@ -632,6 +739,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/faq'
     | '/forgot-password'
+    | '/fr'
     | '/get-app'
     | '/help'
     | '/how-it-works'
@@ -661,13 +769,23 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
-    | '/daycare/city/$city'
+    | '/fr/about'
+    | '/fr/contact'
+    | '/fr/cookies'
+    | '/fr/explore'
+    | '/fr/faq'
+    | '/fr/help'
+    | '/fr/how-it-works'
+    | '/fr/privacy'
+    | '/fr/search'
+    | '/fr/terms'
     | '/inbox/$id'
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
     | '/support/$caseId'
     | '/video/$roomId'
+    | '/fr/'
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
@@ -680,6 +798,7 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/daycare/city/$city'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
   fileRoutesByTo: FileRoutesByTo
@@ -729,13 +848,23 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
-    | '/daycare/city/$city'
+    | '/fr/about'
+    | '/fr/contact'
+    | '/fr/cookies'
+    | '/fr/explore'
+    | '/fr/faq'
+    | '/fr/help'
+    | '/fr/how-it-works'
+    | '/fr/privacy'
+    | '/fr/search'
+    | '/fr/terms'
     | '/inbox/$id'
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
     | '/support/$caseId'
     | '/video/$roomId'
+    | '/fr'
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
@@ -748,6 +877,7 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/daycare/city/$city'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
   id:
@@ -768,6 +898,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/faq'
     | '/forgot-password'
+    | '/fr'
     | '/get-app'
     | '/help'
     | '/how-it-works'
@@ -797,13 +928,23 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
-    | '/daycare/city/$city'
+    | '/fr/about'
+    | '/fr/contact'
+    | '/fr/cookies'
+    | '/fr/explore'
+    | '/fr/faq'
+    | '/fr/help'
+    | '/fr/how-it-works'
+    | '/fr/privacy'
+    | '/fr/search'
+    | '/fr/terms'
     | '/inbox/$id'
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
     | '/support/$caseId'
     | '/video/$roomId'
+    | '/fr/'
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
@@ -816,6 +957,7 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/daycare/city/$city'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
   fileRoutesById: FileRoutesById
@@ -837,6 +979,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  FrRoute: typeof FrRouteWithChildren
   GetAppRoute: typeof GetAppRoute
   HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
@@ -866,7 +1009,6 @@ export interface RootRouteChildren {
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
-  DaycareCityCityRoute: typeof DaycareCityCityRoute
   PayBookingIdRoute: typeof PayBookingIdRoute
   SignIdRoute: typeof SignIdRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
@@ -882,6 +1024,7 @@ export interface RootRouteChildren {
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  DaycareCityCityRoute: typeof DaycareCityCityRoute
   PayBillBillIdRoute: typeof PayBillBillIdRoute
   ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
 }
@@ -998,6 +1141,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fr': {
+      id: '/fr'
+      path: '/fr'
+      fullPath: '/fr'
+      preLoaderRoute: typeof FrRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/get-app': {
@@ -1203,12 +1353,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DaycareSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/daycare/city/$city': {
-      id: '/daycare/city/$city'
-      path: '/daycare/city/$city'
-      fullPath: '/daycare/city/$city'
-      preLoaderRoute: typeof DaycareCityCityRouteImport
-      parentRoute: typeof rootRouteImport
+    '/fr/': {
+      id: '/fr/'
+      path: '/'
+      fullPath: '/fr/'
+      preLoaderRoute: typeof FrIndexRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/about': {
+      id: '/fr/about'
+      path: '/about'
+      fullPath: '/fr/about'
+      preLoaderRoute: typeof FrAboutRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/contact': {
+      id: '/fr/contact'
+      path: '/contact'
+      fullPath: '/fr/contact'
+      preLoaderRoute: typeof FrContactRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/cookies': {
+      id: '/fr/cookies'
+      path: '/cookies'
+      fullPath: '/fr/cookies'
+      preLoaderRoute: typeof FrCookiesRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/explore': {
+      id: '/fr/explore'
+      path: '/explore'
+      fullPath: '/fr/explore'
+      preLoaderRoute: typeof FrExploreRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/faq': {
+      id: '/fr/faq'
+      path: '/faq'
+      fullPath: '/fr/faq'
+      preLoaderRoute: typeof FrFaqRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/help': {
+      id: '/fr/help'
+      path: '/help'
+      fullPath: '/fr/help'
+      preLoaderRoute: typeof FrHelpRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/how-it-works': {
+      id: '/fr/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/fr/how-it-works'
+      preLoaderRoute: typeof FrHowItWorksRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/privacy': {
+      id: '/fr/privacy'
+      path: '/privacy'
+      fullPath: '/fr/privacy'
+      preLoaderRoute: typeof FrPrivacyRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/search': {
+      id: '/fr/search'
+      path: '/search'
+      fullPath: '/fr/search'
+      preLoaderRoute: typeof FrSearchRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/terms': {
+      id: '/fr/terms'
+      path: '/terms'
+      fullPath: '/fr/terms'
+      preLoaderRoute: typeof FrTermsRouteImport
+      parentRoute: typeof FrRoute
     }
     '/inbox/$id': {
       id: '/inbox/$id'
@@ -1336,6 +1556,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/daycare/city/$city': {
+      id: '/daycare/city/$city'
+      path: '/daycare/city/$city'
+      fullPath: '/daycare/city/$city'
+      preLoaderRoute: typeof DaycareCityCityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pay/bill/$billId': {
       id: '/pay/bill/$billId'
       path: '/pay/bill/$billId'
@@ -1352,6 +1579,36 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface FrRouteChildren {
+  FrAboutRoute: typeof FrAboutRoute
+  FrContactRoute: typeof FrContactRoute
+  FrCookiesRoute: typeof FrCookiesRoute
+  FrExploreRoute: typeof FrExploreRoute
+  FrFaqRoute: typeof FrFaqRoute
+  FrHelpRoute: typeof FrHelpRoute
+  FrHowItWorksRoute: typeof FrHowItWorksRoute
+  FrPrivacyRoute: typeof FrPrivacyRoute
+  FrSearchRoute: typeof FrSearchRoute
+  FrTermsRoute: typeof FrTermsRoute
+  FrIndexRoute: typeof FrIndexRoute
+}
+
+const FrRouteChildren: FrRouteChildren = {
+  FrAboutRoute: FrAboutRoute,
+  FrContactRoute: FrContactRoute,
+  FrCookiesRoute: FrCookiesRoute,
+  FrExploreRoute: FrExploreRoute,
+  FrFaqRoute: FrFaqRoute,
+  FrHelpRoute: FrHelpRoute,
+  FrHowItWorksRoute: FrHowItWorksRoute,
+  FrPrivacyRoute: FrPrivacyRoute,
+  FrSearchRoute: FrSearchRoute,
+  FrTermsRoute: FrTermsRoute,
+  FrIndexRoute: FrIndexRoute,
+}
+
+const FrRouteWithChildren = FrRoute._addFileChildren(FrRouteChildren)
 
 interface InboxRouteChildren {
   InboxIdRoute: typeof InboxIdRoute
@@ -1403,6 +1660,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  FrRoute: FrRouteWithChildren,
   GetAppRoute: GetAppRoute,
   HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
@@ -1432,7 +1690,6 @@ const rootRouteChildren: RootRouteChildren = {
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
-  DaycareCityCityRoute: DaycareCityCityRoute,
   PayBookingIdRoute: PayBookingIdRoute,
   SignIdRoute: SignIdRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
@@ -1448,19 +1705,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  DaycareCityCityRoute: DaycareCityCityRoute,
   PayBillBillIdRoute: PayBillBillIdRoute,
   ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

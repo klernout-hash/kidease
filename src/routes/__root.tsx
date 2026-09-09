@@ -1,4 +1,5 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
+import { documentLangFromPath } from "@/lib/locale-path";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
@@ -100,9 +101,14 @@ export const Route = createRootRoute({
       { rel: "preconnect", href: "https://maps.gstatic.com" },
     ],
   }),
-  component: () => (
+  component: RootDocument,
+});
+
+function RootDocument() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return (
     <html
-      lang="en"
+      lang={documentLangFromPath(pathname)}
       className="antialiased"
       data-channel="website"
       data-runtime="web"
@@ -146,5 +152,5 @@ export const Route = createRootRoute({
         <Scripts />
       </body>
     </html>
-  ),
-});
+  );
+}

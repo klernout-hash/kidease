@@ -7,6 +7,7 @@
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
 import { FACEBOOK_PROFILE_URL, INSTAGRAM_PROFILE_URL } from "./social.ts";
 import { SITEMAP_ORIGIN } from "./sitemap.ts";
+import { hreflangLinks, pathLocale } from "./locale-path.ts";
 
 export const HOME_SEO_TITLE = "KidEase · Licensed daycare near you";
 export const HOME_SEO_DESCRIPTION =
@@ -53,7 +54,8 @@ export function pageSeoMeta(input: PageSeoInput): PageSeoMeta {
 
 export function pageSeoHeadTags(input: PageSeoInput) {
   const meta = pageSeoMeta(input);
-  return [
+  const locale = pathLocale(input.path);
+  const tags: Array<Record<string, string>> = [
     { title: meta.title },
     { name: "description", content: meta.description },
     { property: "og:title", content: meta.ogTitle },
@@ -62,17 +64,26 @@ export function pageSeoHeadTags(input: PageSeoInput) {
     { property: "og:url", content: meta.url },
     { property: "og:image", content: meta.ogImage },
     { property: "og:site_name", content: "KidEase" },
+    { property: "og:locale", content: locale === "fr" ? "fr_CA" : "en_CA" },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: meta.ogTitle },
     { name: "twitter:description", content: meta.ogDescription },
     { name: "twitter:image", content: meta.ogImage },
   ];
+  const alternate = locale === "fr" ? "en_CA" : "fr_CA";
+  if (hreflangLinks(input.path).length) {
+    tags.push({ property: "og:locale:alternate", content: alternate });
+  }
+  return tags;
 }
 
 export function pageSeoHead(input: PageSeoInput) {
   return {
     meta: pageSeoHeadTags(input),
-    links: [{ rel: "canonical", href: pageCanonicalUrl(input.path) }],
+    links: [
+      { rel: "canonical", href: pageCanonicalUrl(input.path) },
+      ...hreflangLinks(input.path, SITEMAP_ORIGIN),
+    ],
   };
 }
 
@@ -277,5 +288,81 @@ export const MARKETING_PAGE_SEO = {
     description:
       "Search licensed centres, nurseries, and homes by kilometre radius. Filter by facility type, age, and open spots, or open a city directory for Winnipeg, Toronto, and more.",
     path: "/search",
+  },
+} as const;
+
+/** French counterparts for shipped official-language URLs. Catalogue bodies stay EN. */
+export const MARKETING_PAGE_SEO_FR = {
+  home: {
+    title: "KidEase · Garderie permise près de chez vous",
+    description:
+      "Trouvez des services de garde permis au Canada dans un rayon d’un kilomètre. Frais mensuels, places ouvertes et inscription, dans votre poche.",
+    path: "/fr",
+  },
+  help: {
+    title: "Centre d’aide · KidEase",
+    description:
+      "Parents et centres permis — écrivez-nous ou envoyez une note. KidEase lit chaque message. L’App Store et Google Play utilisent aussi cette page.",
+    path: "/fr/help",
+  },
+  faq: {
+    title: "Foire aux questions · KidEase",
+    description:
+      "Réponses courtes pour les parents et les centres permis : comptes, position, fiches En ligne, réclamation, subventions et recherche gratuite sur KidEase.",
+    path: "/fr/faq",
+  },
+  contact: {
+    title: "Nous joindre · KidEase",
+    description:
+      "Écrivez à KidEase au sujet d’une fiche de garde permise, d’une réclamation de centre ou d’un problème technique. Nous lisons chaque note à support@kidease.ca.",
+    path: "/fr/contact",
+  },
+  about: {
+    title: "À propos de KidEase · Répertoire de garderies permises",
+    description:
+      "KidEase est un répertoire pancanadien de garderies permises, fondé à Winnipeg. De vraies photos de devanture et une recherche au kilomètre — pas de nounous ni de gardiens.",
+    path: "/fr/about",
+  },
+  search: {
+    title: "Chercher une garderie permise près de vous · KidEase",
+    description:
+      "Cherchez des centres, nurseries et milieux familiaux permis par rayon en kilomètres. Filtrez par type, âge et places ouvertes, ou ouvrez un répertoire de ville.",
+    path: "/fr/search",
+  },
+} as const;
+
+export const LEGAL_PAGE_SEO = {
+  privacy: {
+    title: "Privacy · KidEase",
+    description: "KidEase privacy notice — PIPEDA, location, processors, and child safety.",
+    path: "/privacy",
+  },
+  terms: {
+    title: "Terms · KidEase",
+    description: "KidEase terms of use for parents and licensed childcare centres.",
+    path: "/terms",
+  },
+  cookies: {
+    title: "Cookies · KidEase",
+    description: "KidEase cookie policy — essential cookies, optional analytics only after you allow.",
+    path: "/cookies",
+  },
+} as const;
+
+export const LEGAL_PAGE_SEO_FR = {
+  privacy: {
+    title: "Confidentialité · KidEase",
+    description: "Avis de confidentialité KidEase — LPRPDE, position, sous-traitants et sécurité des enfants.",
+    path: "/fr/privacy",
+  },
+  terms: {
+    title: "Conditions · KidEase",
+    description: "Conditions d’utilisation KidEase pour les parents et les centres de garde permis.",
+    path: "/fr/terms",
+  },
+  cookies: {
+    title: "Témoins · KidEase",
+    description: "Politique sur les témoins KidEase — témoins essentiels, analytique facultative seulement après Autoriser.",
+    path: "/fr/cookies",
   },
 } as const;

@@ -15,6 +15,7 @@ import { resolveDefaultSearchOrigin } from "@/lib/default-origin";
 import { readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
 import { LANGUAGES } from "@/lib/languages";
+import { isFrPath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
 import type { Locale } from "@/lib/types";
 import { readDistanceUnit } from "@/lib/units";
@@ -40,8 +41,12 @@ export function NativeBoot() {
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem("kidease-locale");
-      if (saved && LANGUAGES.some((l) => l.code === saved)) setLocale(saved as Locale);
+      if (isFrPath(window.location.pathname)) {
+        setLocale("fr");
+      } else {
+        const saved = window.localStorage.getItem("kidease-locale");
+        if (saved && LANGUAGES.some((l) => l.code === saved)) setLocale(saved as Locale);
+      }
       const livePref = window.localStorage.getItem("kidease-live-only");
       if (livePref === "1") setLiveOnly(true);
       else if (livePref === "0") setLiveOnly(false);
