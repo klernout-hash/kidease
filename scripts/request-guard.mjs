@@ -82,12 +82,26 @@ export const HIDDEN_LISTING_SLUGS = ["test-ghost-claim-lab", "ke-test-ghost-001"
 /** Public document prefixes that take a centre slug. */
 const LISTING_DOCUMENT_PREFIXES = ["/daycare/", "/book/"];
 
+/** QA / ghost slugs that must never render a public listing document. */
+export function isHiddenListingSlug(slug) {
+  const s = String(slug || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\/+$/, "");
+  if (!s) return false;
+  if (HIDDEN_LISTING_SLUGS.includes(s)) return true;
+  if (s === "test-ghost" || s.startsWith("test-ghost-")) return true;
+  if (s.startsWith("ke-test-")) return true;
+  if (s.includes("ghost-listing")) return true;
+  return false;
+}
+
 export function isHiddenListingPath(pathname) {
   const path = normalizePath(pathname).toLowerCase();
   for (const prefix of LISTING_DOCUMENT_PREFIXES) {
     if (!path.startsWith(prefix)) continue;
     const slug = path.slice(prefix.length);
-    if (HIDDEN_LISTING_SLUGS.includes(slug)) return true;
+    if (isHiddenListingSlug(slug)) return true;
   }
   return false;
 }

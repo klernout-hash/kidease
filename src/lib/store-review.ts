@@ -53,10 +53,33 @@ export function isPlayPackageName(id: string): boolean {
   return /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/.test(id.trim());
 }
 
-export function appleWriteReviewUrl(id = appleAppStoreId()): string | null {
+/** Public App Store listing URL — empty until Apple assigns a numeric ID. Never invent one. */
+export function appleStoreListingUrl(id = appleAppStoreId()): string | null {
   const trimmed = id.trim();
   if (!isAssignedAppleAppStoreId(trimmed)) return null;
-  return `https://apps.apple.com/app/id${trimmed}?action=write-review`;
+  return `https://apps.apple.com/app/id${trimmed}`;
+}
+
+export function appleWriteReviewUrl(id = appleAppStoreId()): string | null {
+  const listing = appleStoreListingUrl(id);
+  return listing ? `${listing}?action=write-review` : null;
+}
+
+/**
+ * Public Play listing URL — only when ops set `VITE_PLAY_STORE_URL`.
+ * Package name alone is not a live listing. Do not invent a store URL.
+ */
+export function playStoreListingUrl(): string | null {
+  const raw = readPublicEnv("VITE_PLAY_STORE_URL");
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "https:") return null;
+    if (url.hostname !== "play.google.com") return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 export function playWriteReviewUrl(pkg = playPackageName()): string | null {

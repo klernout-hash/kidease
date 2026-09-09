@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { memo, useEffect, useRef, useState } from "react";
-import { Shell } from "@/components/shell";
+import { ShellLite } from "@/components/shell-lite";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { DeskSkeleton } from "@/components/page-skeleton";
@@ -34,17 +34,17 @@ function VerifyTwoFactorPage() {
 
   if (isPending) {
     return (
-      <Shell bare>
+      <ShellLite>
         <DeskSkeleton />
-      </Shell>
+      </ShellLite>
     );
   }
   if (!user) return <RedirectToSignIn />;
 
   return (
-    <Shell bare>
+    <ShellLite>
       <VerifyTwoFactorForm dest={dest} userId={user.id} />
-    </Shell>
+    </ShellLite>
   );
 }
 

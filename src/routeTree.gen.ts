@@ -22,6 +22,7 @@ import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -152,6 +153,11 @@ const ContactRoute = ContactRouteImport.update({
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeleteAccountRoute = DeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -494,6 +500,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -574,6 +581,7 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -654,6 +662,7 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -736,6 +745,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
+    | '/delete-account'
     | '/explore'
     | '/faq'
     | '/forgot-password'
@@ -816,6 +826,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
+    | '/delete-account'
     | '/explore'
     | '/faq'
     | '/forgot-password'
@@ -895,6 +906,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
+    | '/delete-account'
     | '/explore'
     | '/faq'
     | '/forgot-password'
@@ -976,6 +988,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
+  DeleteAccountRoute: typeof DeleteAccountRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -1120,6 +1133,13 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/cookies'
       preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delete-account': {
+      id: '/delete-account'
+      path: '/delete-account'
+      fullPath: '/delete-account'
+      preLoaderRoute: typeof DeleteAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -1657,6 +1677,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
+  DeleteAccountRoute: DeleteAccountRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
@@ -1712,3 +1733,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

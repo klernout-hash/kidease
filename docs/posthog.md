@@ -111,6 +111,7 @@ Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) wh
 - `vite.config.ts` `posthogIngestPlugin` — local `vite dev` `/ingest` proxy.
 - `vercel.json` rewrites — `/ingest/static|array` → `us-assets.i.posthog.com`, `/ingest/*` → `us.i.posthog.com`.
 - `src/lib/auth/login-funnel.ts` — login → dest steps (`continued` / `desk_landed`).
+- `src/lib/marketplace-funnel.ts` — `marketplace_funnel` steps `search` / `explore` → `listing_view` → `share` | `contact` | `claim`. Coarse `dest_path` only (no slugs).
 - `src/lib/retention.ts` — `retention_touch` + sanitized resume path.
 - `src/components/posthog-boot.tsx` — once in the root shell.
 - CSP allowlist: `'self'` (proxy) plus `us.i.posthog.com` + `us-assets.i.posthog.com` as fallback (no `*.posthog.com`).
@@ -118,6 +119,10 @@ Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) wh
 ## Reverse proxy
 
 PostHog health flags **No reverse proxy detected** when `$lib_custom_api_host` is unset (a relative `/ingest` path does not count). Whenever analytics is allowed, `api_host` is an **absolute** first-party URL (`https://www.kidease.ca/ingest` on production, preview origin + `/ingest` on Vercel). A missing `window.location.origin` falls back to `https://www.kidease.ca/ingest` — never a bare `/ingest`. Capacitor’s production WebView is already `https://www.kidease.ca`, so native uses the same first-party proxy (not `us.i.posthog.com`). `ui_host` stays `https://us.posthog.com`. Consent is unchanged: website PostHog still starts only after **Allow analytics**. The ingest proxy answers CORS preflight so a live-reload WebView can still POST to www.
+
+`sanitizePostHogProperties` **preserves `$lib_*` keys** (including `$lib_custom_api_host`) so the privacy sanitizer cannot strip the health signal.
+
+Vercel already rewrites `/ingest/static|array` → `us-assets.i.posthog.com` and `/ingest/*` → `us.i.posthog.com` in `vercel.json`. No extra env is required for the proxy hop itself. The remaining health warning is a **traffic mix**: older `$pageview`s still arrive with `$lib_custom_api_host` unset until first-party traffic dominates after this ships.
 
 The Nitro / Vite proxy also forwards `X-Forwarded-Host`, `X-Forwarded-Proto`, and `X-Forwarded-For`, and still strips `Cookie` / `Authorization`.
 

@@ -12,6 +12,8 @@ Disallow: /admin-contracts
 Disallow: /admin-chat
 Disallow: /support
 Disallow: /provider/subscription
+Disallow: /daycare/test-ghost
+Disallow: /book/test-ghost
 Disallow: /daycare/test-ghost-claim-lab
 Disallow: /book/test-ghost-claim-lab
 

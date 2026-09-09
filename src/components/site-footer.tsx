@@ -90,6 +90,7 @@ export function SiteFooter() {
                 <Item to={localePath("/terms", locale)}>{t("terms")}</Item>
                 <Item to={localePath("/cookies", locale)}>{t("cookies")}</Item>
                 <Item to="/unsubscribe">{t("unsubscribe")}</Item>
+                <Item to="/delete-account">{t("deleteAccount")}</Item>
               </ul>
             </section>
           </nav>

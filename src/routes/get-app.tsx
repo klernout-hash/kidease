@@ -15,6 +15,7 @@ import {
   promptInstall,
 } from "@/lib/native";
 import { STORE } from "@/lib/store-listing";
+import { appleStoreListingUrl, playStoreListingUrl } from "@/lib/store-review";
 import { useCopy } from "@/lib/use-copy";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { JsonLd } from "@/components/json-ld";
@@ -321,8 +322,9 @@ function DeviceFrame({ device, children }: { device: "iphone" | "android"; child
 }
 
 function StoreBadge({ store, label }: { store: "apple" | "play"; label: string }) {
-  return (
-    <span className="inline-flex h-11 items-center gap-2 rounded-md bg-fg/90 px-3 text-sm text-bg" aria-disabled="true">
+  const href = store === "apple" ? appleStoreListingUrl() : playStoreListingUrl();
+  const inner = (
+    <>
       {store === "apple" ? (
         <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
           <path
@@ -336,6 +338,19 @@ function StoreBadge({ store, label }: { store: "apple" | "play"; label: string }
         </svg>
       )}
       {label}
+    </>
+  );
+  const className = "inline-flex h-11 items-center gap-2 rounded-md bg-fg/90 px-3 text-sm text-bg";
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={className}>
+        {inner}
+      </a>
+    );
+  }
+  return (
+    <span className={className} aria-disabled="true">
+      {inner}
     </span>
   );
 }

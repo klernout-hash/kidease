@@ -4,7 +4,15 @@ import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { cityHubBySlug, cityHubs } from "@/lib/city-hub-data";
-import { cityHubChipLabel, cityHubCityName, cityHubDefBySlug, cityHubPath, cityHubUrl } from "@/lib/city-hubs";
+import {
+  cityHubChipLabel,
+  cityHubCityName,
+  cityHubDefBySlug,
+  cityHubPath,
+  cityHubUrl,
+  type CityHubListing,
+  type CityHubSnapshot,
+} from "@/lib/city-hubs";
 import {
   breadcrumbJsonLdScript,
   faqPageJsonLdScript,
@@ -14,7 +22,7 @@ import { SITEMAP_ORIGIN } from "@/lib/sitemap";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/daycare/city/$city")({
-  loader: ({ params }) => {
+  loader: ({ params }): CityHubSnapshot => {
     const hub = cityHubBySlug(params.city);
     if (!hub) throw redirect({ to: "/search" });
     return hub;
@@ -118,7 +126,7 @@ function CityHubPage() {
               : `${hub.count} licensed listings.`}
         </p>
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-          {hub.listings.map((listing) => (
+          {hub.listings.map((listing: CityHubListing) => (
             <li key={listing.slug}>
               <Link
                 to="/daycare/$slug"

@@ -43,7 +43,7 @@ Goal: soft launch via **TestFlight** + **Play internal testing**, then public li
 - [ ] Privacy Policy URL
 - [ ] Terms of Use URL
 - [ ] Support URL or mailto `support@kidease.ca`
-- [ ] Delete-account path documented (Apple requires account deletion if accounts exist)
+- [x] Delete-account path documented — live URL `/delete-account` (PIPEDA + Apple). Marketing opt-out stays `/unsubscribe`.
 
 ---
 

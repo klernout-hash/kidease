@@ -142,6 +142,7 @@ export function sanitizePostHogProperties(
 ): Record<string, unknown> {
   const next: Record<string, unknown> = { ...properties };
   for (const key of Object.keys(next)) {
+    if (key.startsWith("$lib_")) continue;
     if (SENSITIVE_PROP.test(key)) delete next[key];
   }
   return next;

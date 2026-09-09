@@ -225,7 +225,9 @@ test("isHiddenListingPath matches daycare and book aliases, not claim or search"
   assert.equal(isHiddenListingPath("/claim"), false);
   assert.equal(isHiddenListingPath("/admin"), false);
   assert.equal(isHiddenListingPath("/search"), false);
-  assert.equal(isHiddenListingPath("/daycare/test-ghost-claim-lab-extra"), false);
+  assert.equal(isHiddenListingPath("/daycare/test-ghost"), true);
+  assert.equal(isHiddenListingPath("/daycare/test-ghost-claim-lab-extra"), true);
+  assert.equal(isHiddenListingPath("/daycare/not-a-real-centre"), false);
 });
 
 test("QA ghost listing document URLs 404 on every host", () => {
@@ -235,6 +237,7 @@ test("QA ghost listing document URLs 404 on every host", () => {
       "/daycare/test-ghost-claim-lab/",
       "/book/test-ghost-claim-lab",
       "/daycare/ke-test-ghost-001",
+      "/daycare/test-ghost",
     ]) {
       assert.deepEqual(decideRequest({ host, pathname }), { action: "not_found", status: 404 });
     }
