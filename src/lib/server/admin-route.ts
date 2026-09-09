@@ -15,7 +15,7 @@ export async function beforeLoadAdminDesk() {
     if (raw === "Unauthorized" || raw === "admin-gate-timeout") {
       throw redirect({
         to: "/login",
-        search: { intent: "in" as const, next: "/admin" },
+        search: { role: "admin" as const, desk: "admin" as const, intent: "admin" as const, next: "/admin" },
       });
     }
     throw redirect({ to: "/" });

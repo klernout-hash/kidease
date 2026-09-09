@@ -17,6 +17,7 @@ import {
   deskFromPathname,
   deskQueryValue,
   funnelDestPath,
+  isAdminLoginIntent,
   loginRoleFromDesk,
   parseDeskQuery,
   postLoginDestKind,
@@ -42,7 +43,7 @@ import { useCopy } from "@/lib/use-copy";
 type Role = "parent" | "provider" | "admin";
 type DeskAlias = "parent" | "director" | "centre" | "admin" | "support" | "provider";
 
-export type LoginSearch = { next?: string; role?: Role; intent?: "in" | "up"; desk?: DeskAlias };
+export type LoginSearch = { next?: string; role?: Role; intent?: "in" | "up" | "admin"; desk?: DeskAlias };
 
 const OPERATOR_EMAIL = KIDEASE_OPERATOR_EMAIL;
 
@@ -51,7 +52,7 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
   const next = typeof s.next === "string" ? sanitizePostLoginNext(s.next) : null;
   if (next) out.next = next;
   if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
-  if (s.intent === "in" || s.intent === "up") out.intent = s.intent;
+  if (s.intent === "in" || s.intent === "up" || s.intent === "admin") out.intent = s.intent;
   const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
   if (desk) out.desk = deskQueryValue(desk);
   return out;
@@ -88,7 +89,12 @@ export function LoginScreen({
   const { t } = useCopy();
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
-  const operator = role === "admin";
+  const operator = isAdminLoginIntent({
+    role: role ?? search.role,
+    desk: search.desk,
+    intent: search.intent,
+    next: search.next,
+  });
   const dest = resolvePostLoginPath({
     next: search.next,
     desk: deskHint,
@@ -259,7 +265,7 @@ export function LoginScreen({
   }
 
   const title = operator
-    ? "Operator sign-in"
+    ? t("operatorSignIn")
     : role === "provider"
       ? t("providerSignIn")
       : role === "parent"
@@ -267,7 +273,7 @@ export function LoginScreen({
         : t("signIn");
   const nextPath = (search.next || "").split("?")[0] || "";
   const lead = operator
-    ? "This page is only for Kyle. After the password, KidEase emails a 6-digit code."
+    ? t("operatorLead")
     : nextPath.startsWith("/daycare/")
       ? t("loginLeadListing")
       : nextPath === "/search"
@@ -300,8 +306,13 @@ export function LoginScreen({
             </div>
             <h1 className="mt-6 font-display text-3xl">{mode === "up" && role && !operator ? t("createAccount") : title}</h1>
             <p className="mt-2 text-sm text-muted">{user && !sessionPending ? "Opening your desk…" : lead}</p>
+            {operator && !user ? (
+              <p className="mt-1 text-xs text-subtle" data-ke="admin-titan-note">
+                {t("operatorEmailNote")}
+              </p>
+            ) : null}
           {!operator ? (
-          <div className="mt-6 space-y-2">
+          <div className="mt-6 space-y-2" data-ke="social-sign-in">
             {authEnabled ? (
               providers.map((p: GrokProvider) => (
                 <Button
@@ -334,7 +345,7 @@ export function LoginScreen({
             <span className="h-px flex-1 bg-border" />
           </div>
           ) : <div className="mt-6" />}
-          <form onSubmit={onEmail} className="space-y-3 ph-no-capture">
+          <form onSubmit={onEmail} className="space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
             {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}

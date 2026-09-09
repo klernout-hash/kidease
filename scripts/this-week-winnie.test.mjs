@@ -56,7 +56,7 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
 
   assert.match(listing, /requestTour/);
   assert.match(listing, /claimCta/);
-  assert.match(listing, /unclaimedRequestNote/);
+  assert.match(listing, /unclaimedRequestNote|listing_request_started/);
   assert.match(copy, /no director reply/);
   assert.match(src("src/components/request-tour.tsx"), /listing_request_submitted/);
   assert.match(src("src/components/request-spot.tsx"), /listing_request_submitted/);

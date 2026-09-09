@@ -41,6 +41,15 @@ test("social error callback keeps role/desk and drops looped next", () => {
     loginErrorCallbackUrl({ role: "provider", desk: "director", next: "/login" }),
     "/login?role=provider&desk=director",
   );
+  assert.equal(
+    loginErrorCallbackUrl({
+      role: "admin",
+      desk: "admin",
+      intent: "admin",
+      next: "/admin",
+    }),
+    "/login?intent=admin&role=admin&desk=admin&next=%2Fadmin",
+  );
 });
 
 test("login and 2FA use the shared continue helper", () => {
