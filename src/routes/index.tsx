@@ -106,7 +106,6 @@ function Home() {
     label: cityHubChipLabel(hub, locale),
   }));
   const navigate = useNavigate();
-  const search = Route.useSearch();
   const boot = Route.useLoaderData();
   const { user, isPending } = useCurrentUserState();
   const origin = useAppStore((s) => s.origin);
@@ -125,7 +124,7 @@ function Home() {
   const [homeFrom, setHomeFrom] = useState("");
   const [homeTo, setHomeTo] = useState("");
   const [homeStart, setHomeStart] = useState<SearchStart | "">("");
-  const [manual, setManual] = useState(Boolean(search.change) || locationConsent === "denied");
+  const [manual, setManual] = useState(true);
   const [denied, setDenied] = useState(locationConsent === "denied");
   const [askLocation, setAskLocation] = useState(false);
   const [busy, setBusy] = useState(false);

@@ -4,7 +4,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Heart, ClipboardCheck, Menu, MessageCircle, Search } from "lucide-react";
 import { RateKidEaseControl } from "@/components/rate-kidease";
 import { ShareKidEaseButton } from "@/components/share-button";
-import { SignedIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { useCopy } from "@/lib/use-copy";
@@ -18,7 +17,7 @@ import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
-import { accountSearch, canSeeAdminDesk, canVisitDesk, showDeskSwitcher } from "@/lib/desks";
+import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
 import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -61,14 +60,6 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const onProfile = onAccount && accountTab === "profile";
 
   const homeTo = localePath("/", locale);
-  const desktopNav = [
-    { to: "/search", label: t("explore"), match: ["/search", "/fr/search", "/daycare"] },
-    { to: "/compare", label: t("compare"), match: ["/compare"] },
-    { to: "/benefits", label: t("benefitsTab"), match: ["/benefits"] },
-    { to: localePath("/about", locale), label: t("about"), match: ["/about", "/fr/about"] },
-    { to: "/get-app", label: t("getApp"), match: ["/get-app"] },
-  ];
-
   const drawerItems = [
     { to: "/search", label: t("explore") },
     { to: "/compare", label: t("compare") },
@@ -151,55 +142,9 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             </Link>
             <HeaderSocial />
           </div>
-          <nav className="hidden items-center gap-6 text-[13px] font-medium text-muted [[data-channel=website]_&]:xl:flex">
-            {desktopNav.map((item) => {
-              const on = item.match.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-              return (
-                <Link key={item.to} to={item.to} className={cn("whitespace-nowrap hover:text-fg", on && "text-fg")}>
-                  {item.label}
-                </Link>
-              );
-            })}
-            <ShareKidEaseButton appearance="nav" />
-            <RateKidEaseControl appearance="nav" />
-          </nav>
           <div className="flex items-center gap-1.5">
             {user ? <DeskSwitcher /> : null}
-            <div className="hidden items-center overflow-visible rounded-full bg-surface/90 p-0.5 ring-1 ring-border [[data-channel=website]_&]:xl:flex">
-              <LanguageSelect compact />
-              <span className="h-3.5 w-px shrink-0 bg-border" aria-hidden />
-              <AppearanceControl variant="select" compact />
-              <span className="h-3.5 w-px shrink-0 bg-border" aria-hidden />
-              {user ? (
-                <SignedIn>
-                  <AccountMenu
-                    name={user.displayName ?? t("account")}
-                    image={user.profileImageUrl}
-                    accountLabel={t("account")}
-                    email={user.primaryEmail}
-                  />
-                </SignedIn>
-              ) : (
-                <>
-                  <Link
-                    to={loginTo}
-                    search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
-                    className="inline-flex h-8 items-center justify-center rounded-full px-2.5 text-[11px] font-medium leading-none text-muted hover:text-fg"
-                  >
-                    {t("providerLogin")}
-                  </Link>
-                  <span className="h-3.5 w-px shrink-0 bg-border" aria-hidden />
-                  <Link
-                    to={loginTo}
-                    search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
-                    className="inline-flex h-8 items-center justify-center rounded-full px-2.5 text-[11px] font-medium leading-none text-muted hover:text-fg"
-                  >
-                    {t("parentSignIn")}
-                  </Link>
-                </>
-              )}
-            </div>
-            <div className="hidden items-center overflow-visible rounded-full bg-surface/90 p-0.5 ring-1 ring-border [[data-channel=website]_&]:flex [[data-channel=website]_&]:xl:hidden">
+            <div className="hidden items-center overflow-visible rounded-full bg-surface/90 p-0.5 ring-1 ring-border [[data-channel=website]_&]:flex">
               <LanguageSelect compact />
               <span className="h-3.5 w-px shrink-0 bg-border" aria-hidden />
               <AppearanceControl variant="select" compact />
@@ -217,7 +162,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             />
             <button
               type="button"
-              className="hidden size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=website]_&]:grid [[data-channel=website]_&]:xl:hidden"
+              className="hidden size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=website]_&]:grid"
               aria-label="Menu"
               aria-expanded={open}
               aria-controls="ke-nav-drawer"
@@ -340,7 +285,7 @@ function HeaderProfile({
 
   const triggerClass = cn(
     "flex min-w-12 flex-col items-center justify-center gap-0.5 px-1 py-0.5 [[data-channel=app]_&]:flex",
-    "hidden [[data-channel=website]_&]:flex [[data-channel=website]_&]:xl:hidden",
+    "hidden [[data-channel=website]_&]:flex",
     active ? "text-primary" : "text-muted",
   );
 
@@ -356,7 +301,7 @@ function HeaderProfile({
   }
 
   return (
-    <div ref={wrap} className="relative hidden [[data-channel=app]_&]:block [[data-channel=website]_&]:block [[data-channel=website]_&]:xl:hidden">
+    <div ref={wrap} className="relative hidden [[data-channel=app]_&]:block [[data-channel=website]_&]:block">
       <button
         type="button"
         aria-haspopup="menu"
@@ -397,142 +342,6 @@ function HeaderProfile({
           </Link>
           <ShareKidEaseButton appearance="menu" onDone={() => setOpen(false)} />
           <RateKidEaseControl appearance="menu" onDone={() => setOpen(false)} />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function AccountMenu({
-  name,
-  image,
-  accountLabel,
-  email,
-}: {
-  name: string;
-  image: string | null;
-  accountLabel: string;
-  email: string | null;
-}) {
-  const [open, setOpen] = useState(false);
-  const wrap = useRef<HTMLDivElement>(null);
-  const { session, sticky, setSticky } = useSessionDesks();
-  const desks = session?.desks ?? [];
-
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  return (
-    <div ref={wrap} className="relative">
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-8 items-center justify-center rounded-full px-2.5 text-[11px] font-medium leading-none text-muted hover:text-fg"
-      >
-        {image ? (
-          <img src={image} alt="" className="size-5 rounded-full object-cover" />
-        ) : (
-          <span className="grid size-5 place-items-center rounded-full bg-primary text-[10px] text-primary-fg">
-            {name.slice(0, 1).toUpperCase()}
-          </span>
-        )}
-        <span className="hidden max-w-28 truncate sm:inline">{name}</span>
-      </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-56 overflow-hidden rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
-        >
-          <div className="border-b border-border px-3 py-2">
-            <p className="truncate text-sm font-medium text-fg">{name}</p>
-            {email ? <p className="truncate text-xs text-muted">{email}</p> : null}
-          </div>
-          <Link
-            role="menuitem"
-            to="/account"
-            search={accountSearch(sticky)}
-            onClick={() => setOpen(false)}
-            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
-          >
-            {accountLabel}
-          </Link>
-          {desks.includes("parent") ? (
-            <Link
-              role="menuitem"
-              to="/parent"
-              onClick={() => {
-                setSticky("parent");
-                setOpen(false);
-              }}
-              className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
-            >
-              Parent desk
-            </Link>
-          ) : null}
-          {desks.includes("provider") ? (
-            <Link
-              role="menuitem"
-              to="/provider"
-              onClick={() => {
-                setSticky("provider");
-                setOpen(false);
-              }}
-              className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
-            >
-              Daycare desk
-            </Link>
-          ) : null}
-          {session && canVisitDesk(desks, "admin", session.role) ? (
-            <Link
-              role="menuitem"
-              to="/admin"
-              onClick={() => {
-                setSticky("admin");
-                setOpen(false);
-              }}
-              className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
-            >
-              Admin desk
-            </Link>
-          ) : null}
-          {desks.includes("support") ? (
-            <Link
-              role="menuitem"
-              to="/support"
-              onClick={() => {
-                setSticky("support");
-                setOpen(false);
-              }}
-              className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
-            >
-              Support desk
-            </Link>
-          ) : null}
-          <ShareKidEaseButton appearance="menu" onDone={() => setOpen(false)} />
-          <RateKidEaseControl appearance="menu" onDone={() => setOpen(false)} />
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2.5 text-left text-sm text-danger hover:bg-surface-2"
-            onClick={() => void signOut("/")}
-          >
-            Sign out
-          </button>
         </div>
       ) : null}
     </div>
