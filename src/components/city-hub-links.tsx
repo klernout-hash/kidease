@@ -1,15 +1,22 @@
 import { Link } from "@tanstack/react-router";
 import { cityHubs } from "@/lib/city-hub-data";
 import { cityHubChipLabel, cityHubDefBySlug } from "@/lib/city-hubs";
+import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 
-export function CityHubLinks({ className }: { className?: string }) {
+export function CityHubLinks({
+  className,
+  headingKey = "browseCities",
+}: {
+  className?: string;
+  headingKey?: CopyKey;
+}) {
   const { t, locale } = useCopy();
   const hubs = cityHubs();
   if (!hubs.length) return null;
   return (
-    <nav aria-label={t("browseCities")} className={className}>
-      <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">{t("browseCities")}</p>
+    <nav aria-label={t(headingKey)} className={className}>
+      <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">{t(headingKey)}</p>
       <ul className="mt-2 flex flex-nowrap gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden">
         {hubs.map((hub) => {
           const def = cityHubDefBySlug(hub.slug);

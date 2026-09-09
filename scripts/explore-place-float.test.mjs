@@ -44,8 +44,9 @@ test("Explore location suggestions dismiss on route, scroll, blur, menu, and vie
   assert.match(search, /setView\("list"\)/);
   assert.match(search, /setView\("map"\)/);
   assert.match(search, /whitespace-nowrap/);
-  assert.match(search, /basis-full/);
-  assert.match(search, /CityHubLinks className="mt-3"/);
+  assert.match(search, /CityHubLinks/);
+  assert.match(search, /headingKey="otherCities"/);
+  assert.match(search, /!whereSet \? <CityHubLinks className="mt-3"/);
 
   const hubs = src("src/components/city-hub-links.tsx");
   assert.match(hubs, /overflow-x-auto/);

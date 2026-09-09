@@ -42,7 +42,12 @@ export function ExploreCategoryChips({
   const visible = visibleExploreCategories(counts, selected);
 
   return (
-    <div className="ke-explore-cats mt-3" role="group" aria-label={t("exploreCategories")}>
+    <div
+      className="ke-explore-cats mt-3"
+      data-search-row="categories"
+      role="group"
+      aria-label={t("exploreCategories")}
+    >
       <ExploreCatChip
         icon={LayoutGrid}
         label={t("catAll")}
@@ -84,7 +89,6 @@ function ExploreCatChip({
     <ChipButton
       on={on}
       className={cn("ke-explore-cat", className)}
-      title={label}
       {...props}
     >
       <Icon className="size-4 shrink-0" aria-hidden="true" />

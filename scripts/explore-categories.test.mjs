@@ -337,8 +337,11 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.match(search, /ExploreCategoryChips/);
   assert.match(search, /writeCategorySearch/);
   assert.match(search, /searchFiltersReady/);
-  assert.match(search, /hideAge/);
+  assert.match(search, /splitSearchResults/);
+  assert.doesNotMatch(search, /SearchAgeGate/);
+  assert.doesNotMatch(search, /hideAge/);
   assert.match(search, /start: incoming\.start/);
+  assert.match(chips, /visibleExploreCategories/);
   assert.match(search, /s\.cat/);
   assert.match(search, /isExploreCategory/);
   assert.match(search, /ke-listings/);
