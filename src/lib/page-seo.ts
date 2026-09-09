@@ -151,7 +151,7 @@ export function faqPageJsonLdScript(items: FaqSeoItem[]) {
  * licensed childcare discovery, free to search. No street address, ratings,
  * or review counts.
  */
-export function organizationJsonLd() {
+export function organizationJsonLd(locale: "en" | "fr" = "en") {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -159,7 +159,7 @@ export function organizationJsonLd() {
     url: `${SITEMAP_ORIGIN}/`,
     logo: LOGO_URL,
     email: SUPPORT_INBOX_EMAIL,
-    description: HOME_SEO_DESCRIPTION,
+    description: locale === "fr" ? MARKETING_PAGE_SEO_FR.home.description : HOME_SEO_DESCRIPTION,
     areaServed: {
       "@type": "Country",
       name: "Canada",
@@ -201,10 +201,10 @@ export function softwareApplicationJsonLd() {
   };
 }
 
-export function organizationGraphJsonLd() {
+export function organizationGraphJsonLd(locale: "en" | "fr" = "en") {
   return {
     "@context": "https://schema.org",
-    "@graph": [organizationJsonLd(), softwareApplicationJsonLd()].map((node) => {
+    "@graph": [organizationJsonLd(locale), softwareApplicationJsonLd()].map((node) => {
       const { "@context": _ctx, ...rest } = node as Record<string, unknown> & { "@context"?: string };
       void _ctx;
       return rest;
@@ -212,8 +212,8 @@ export function organizationGraphJsonLd() {
   };
 }
 
-export function organizationGraphJsonLdScript() {
-  return JSON.stringify(organizationGraphJsonLd());
+export function organizationGraphJsonLdScript(locale: "en" | "fr" = "en") {
+  return JSON.stringify(organizationGraphJsonLd(locale));
 }
 
 /** Unique title + description per public marketing route. Do not reuse home copy. */

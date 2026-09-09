@@ -57,7 +57,7 @@ function FrHome() {
 
   return (
     <Shell bare>
-      <JsonLd json={organizationGraphJsonLdScript()} />
+      <JsonLd json={organizationGraphJsonLdScript("fr")} />
       <section className="relative overflow-hidden bg-gradient-to-b from-[#eef2fb] via-bg to-bg">
         <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20">
           <div>
