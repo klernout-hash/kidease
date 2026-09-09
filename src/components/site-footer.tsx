@@ -44,22 +44,6 @@ export function SiteFooter() {
         <div className="ke-footer-inner">
           <nav className="ke-footer-cols" aria-label="KidEase">
             <section>
-              <p className="ke-footer-title">{t("support")}</p>
-              <ul className="ke-footer-list">
-                <Item to="/help">{t("helpTitle")}</Item>
-                <Item to="/contact">{t("contactTitle")}</Item>
-                <Item to="/faq">FAQ</Item>
-                <Item to="/how-it-works">{t("howItWorksCta")}</Item>
-                <Item to="/about">{t("about")}</Item>
-                <Item to="/team">{t("team")}</Item>
-                <Item to="/privacy">{t("privacy")}</Item>
-                <Item to="/terms">{t("terms")}</Item>
-                <Item to="/cookies">{t("cookies")}</Item>
-                <Item to="/unsubscribe">{t("unsubscribe")}</Item>
-              </ul>
-            </section>
-
-            <section>
               <p className="ke-footer-title">Parents</p>
               <ul className="ke-footer-list">
                 <Item to="/search">{t("search")}</Item>
@@ -88,6 +72,22 @@ export function SiteFooter() {
                 </Item>
                 <Item to="/provider">{fr ? "Espace garderie" : "Daycare desk"}</Item>
                 <Item to="/verify">{t("verifyListings")}</Item>
+              </ul>
+            </section>
+
+            <section>
+              <p className="ke-footer-title">{t("support")}</p>
+              <ul className="ke-footer-list">
+                <Item to="/help">{t("helpTitle")}</Item>
+                <Item to="/contact">{t("contactTitle")}</Item>
+                <Item to="/faq">FAQ</Item>
+                <Item to="/how-it-works">{t("howItWorksCta")}</Item>
+                <Item to="/about">{t("about")}</Item>
+                <Item to="/team">{t("team")}</Item>
+                <Item to="/privacy">{t("privacy")}</Item>
+                <Item to="/terms">{t("terms")}</Item>
+                <Item to="/cookies">{t("cookies")}</Item>
+                <Item to="/unsubscribe">{t("unsubscribe")}</Item>
               </ul>
             </section>
           </nav>
