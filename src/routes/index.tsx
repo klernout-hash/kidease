@@ -44,6 +44,7 @@ import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { RateKidEasePrompt } from "@/components/rate-kidease";
 import { ResumeVisitCard } from "@/components/resume-visit";
+import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { displayDistance } from "@/lib/units";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 
@@ -124,6 +125,11 @@ function Home() {
   const [familyKids, setFamilyKids] = useState<Child[]>([]);
   const [familyBookings, setFamilyBookings] = useState<Booking[]>([]);
   const [explore, setExplore] = useState<Card[]>(boot.featured ?? []);
+
+  useEffect(() => {
+    if (!featured.length) return;
+    captureMarketplaceFunnel({ step: "explore", source: "home", dest_path: "/search" });
+  }, [featured.length]);
 
   useEffect(() => {
     if (!user) {

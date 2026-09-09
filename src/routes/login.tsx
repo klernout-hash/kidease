@@ -12,8 +12,28 @@ import { Shell } from "@/components/shell";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
-import { deskQueryValue, loginRoleFromDesk, parseDeskQuery, readStickyDesk, resolvePostLoginPath, sanitizePostLoginNext, staffTwoFactorRequired, writeStickyDesk } from "@/lib/desks";
-import { captureLoginFunnel, continueAfterSignIn, LOGIN_STALL_MS, loginErrorCallbackUrl, twoFactorPageUrl, waitForSignedInSession } from "@/lib/auth/login-funnel";
+import {
+  deskFromPathname,
+  deskQueryValue,
+  funnelDestPath,
+  loginRoleFromDesk,
+  parseDeskQuery,
+  postLoginDestKind,
+  readStickyDesk,
+  resolvePostLoginPath,
+  sanitizePostLoginNext,
+  staffTwoFactorRequired,
+  writeStickyDesk,
+} from "@/lib/desks";
+import {
+  captureLoginFunnel,
+  continueAfterSignIn,
+  LOGIN_STALL_MS,
+  loginErrorCallbackUrl,
+  markContinued,
+  twoFactorPageUrl,
+  waitForSignedInSession,
+} from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
@@ -89,9 +109,10 @@ function Login() {
   }, [busy]);
 
   useEffect(() => {
-    if (sessionPending || !user || busy || continued.current || error) return;
+    if (sessionPending || !user || busy || continued.current) return;
     continued.current = true;
     setBusy(true);
+    setError(null);
     void continueAfterSignIn({
       next: search.next,
       desk: deskHint,
@@ -100,18 +121,13 @@ function Login() {
       method: "session",
     }).catch(() => {
       continued.current = false;
-      setError("Could not open your desk. Use Retry, or open the Parent desk.");
+      setError("Could not open your desk. Use Retry, or open https://www.kidease.ca/login.");
       setBusy(false);
     });
-  }, [sessionPending, user, dest, busy, search.next, deskHint, role, error]);
+  }, [sessionPending, user, dest, busy, search.next, deskHint, role]);
 
   async function finish() {
     const session = await waitForSignedInSession(() => authClient.getSession());
-    if (!session?.data?.user) {
-      throw new Error(
-        "Signed in, but the browser did not keep the session cookie. Retry here, or open https://www.kidease.ca/login.",
-      );
-    }
     if (role === "parent" || role === "provider") {
       try {
         await setRole({ data: role });
@@ -120,13 +136,35 @@ function Login() {
       }
     }
     continued.current = true;
-    captureLoginFunnel({ step: "succeeded", method: "email", native: isNative() });
+    captureLoginFunnel({
+      step: "succeeded",
+      method: "email",
+      native: isNative(),
+      ...(session?.data?.user ? {} : { reason: "session_pending" }),
+    });
     await continueAfterSignIn({
       next: search.next,
       desk: deskHint,
       role: role ?? null,
       sticky: readStickyDesk(),
       method: "email",
+    });
+  }
+
+  function openDesk() {
+    continued.current = true;
+    setBusy(true);
+    setError(null);
+    void continueAfterSignIn({
+      next: search.next,
+      desk: deskHint,
+      role: role ?? null,
+      sticky: readStickyDesk(),
+      method: "session",
+    }).catch(() => {
+      continued.current = false;
+      setError("Could not open your desk. Use Retry, or open https://www.kidease.ca/login.");
+      setBusy(false);
     });
   }
 
@@ -179,6 +217,13 @@ function Login() {
     if (role === "parent" || role === "provider") rememberRole(role);
     try {
       captureLoginFunnel({ step: "submitted", method: "social", native: isNative() });
+      captureLoginFunnel({
+        step: "dest_resolved",
+        dest_kind: postLoginDestKind(dest),
+        dest_path: funnelDestPath(dest),
+        desk: deskFromPathname(dest) ?? undefined,
+      });
+      markContinued(dest, { method: "social" });
       await signIn(providerId, {
         callbackURL: staffTwoFactorRequired(dest) ? twoFactorUrl(dest) : dest,
         errorCallbackURL: loginErrorCallbackUrl({
@@ -324,8 +369,15 @@ function Login() {
                 >
                   Retry
                 </button>
-                <a href={dest.startsWith("/") && !dest.startsWith("//") ? dest : "/parent"} className="min-h-11 font-medium text-muted underline-offset-4 hover:underline">
+                <button
+                  type="button"
+                  className="min-h-11 font-medium text-muted underline-offset-4 hover:underline"
+                  onClick={() => openDesk()}
+                >
                   {dest.startsWith("/search") ? "Back to Explore" : dest.startsWith("/daycare/") ? "Back to listing" : "Open your desk"}
+                </button>
+                <a href="/parent" className="min-h-11 font-medium text-subtle underline-offset-4 hover:underline">
+                  Parent desk
                 </a>
               </div>
             ) : null}

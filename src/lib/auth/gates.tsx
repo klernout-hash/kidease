@@ -3,6 +3,7 @@ import { Navigate, useRouterState } from "@tanstack/react-router";
 import { authEnabled, signOut } from "./client";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
+import { yieldToMain } from "@/lib/yield-main";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import {
@@ -77,7 +78,8 @@ export function TwoFactorGate({
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    void getTwoFactorStatus()
+    void yieldToMain()
+      .then(() => getTwoFactorStatus())
       .then((s) => {
         if (!cancelled) setState(s.verified ? "ok" : "need");
       })

@@ -13,6 +13,7 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { stripePayoutsLive } from "@/lib/stripe-live";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
+import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 
 export const Route = createFileRoute("/claim")({
   head: () => pageSeoHead(MARKETING_PAGE_SEO.claim),
@@ -130,6 +131,7 @@ function ClaimPage() {
     setBusy(true);
     try {
       const res = await startClaim({ data: daycareId });
+      captureMarketplaceFunnel({ step: "claim", source: "claim", dest_path: "/claim" });
       if (res.alreadyOwned) {
         toast.success(t("claimOwned"));
         void navigate({ to: "/provider" });

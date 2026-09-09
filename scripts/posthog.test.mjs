@@ -83,6 +83,7 @@ describe("PostHog client wiring", () => {
     assert.match(src, /kidease-ph-queue/);
     resetPostHogClientForTests();
     assert.doesNotThrow(() => capturePostHogEvent("login_funnel", { email: "hidden", step: "viewed" }));
+    assert.doesNotThrow(() => capturePostHogEvent("marketplace_funnel", { email: "hidden", step: "search" }));
     assert.match(src, /VITE_PUBLIC_POSTHOG_KEY/);
     assert.match(src, /POSTHOG_HOST/);
     assert.doesNotMatch(src, /phc_[A-Za-z0-9]+/);

@@ -3,7 +3,7 @@
  * bearer fallback). Retry instead of treating a successful sign-in as a
  * dead end.
  */
-export const SESSION_SETTLE_RETRIES = [0, 200, 500, 1000] as const;
+export const SESSION_SETTLE_RETRIES = [0, 200, 500, 1000, 2000] as const;
 
 export async function waitForSignedInSession<T extends { data?: { user?: unknown } | null }>(
   getSession: () => Promise<T>,

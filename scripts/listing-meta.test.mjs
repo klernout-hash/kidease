@@ -57,10 +57,13 @@ test("name and city win over the slug fallback", () => {
 
 test("daycare route exposes unique title and description hooks", () => {
   const route = readFileSync(join(root, "src/routes/daycare.$slug.tsx"), "utf8");
-  assert.match(route, /listingPageMeta/);
+  assert.match(route, /listingNotFoundHead/);
   assert.match(route, /listingPageTitle/);
-  assert.match(route, /head:\s*\(\{\s*params,\s*loaderData\s*\}\)/);
-  assert.match(route, /name:\s*"description"/);
+  assert.match(route, /head:\s*\(\{\s*loaderData\s*\}\)/);
+  assert.match(
+    readFileSync(join(root, "src/lib/listing-not-found.ts"), "utf8"),
+    /name:\s*"description"/,
+  );
   assert.match(route, /document\.title = listingSeoPageTitle/);
   assert.match(route, /listingPageTitle\(d\)/);
   assert.match(route, /listingSeoHeadTags/);

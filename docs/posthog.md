@@ -111,6 +111,7 @@ Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) wh
 - `vite.config.ts` `posthogIngestPlugin` — local `vite dev` `/ingest` proxy.
 - `vercel.json` rewrites — `/ingest/static|array` → `us-assets.i.posthog.com`, `/ingest/*` → `us.i.posthog.com`.
 - `src/lib/auth/login-funnel.ts` — login → dest steps (`continued` / `desk_landed`).
+- `src/lib/marketplace-funnel.ts` — `marketplace_funnel` steps `search` / `explore` → `listing_view` → `share` | `contact` | `claim`. Coarse `dest_path` only (no slugs).
 - `src/lib/retention.ts` — `retention_touch` + sanitized resume path.
 - `src/components/posthog-boot.tsx` — once in the root shell.
 - CSP allowlist: `'self'` (proxy) plus `us.i.posthog.com` + `us-assets.i.posthog.com` as fallback (no `*.posthog.com`).

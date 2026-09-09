@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
-import { Shell } from "@/components/shell";
+import { ShellLite } from "@/components/shell-lite";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
-import { useSessionDesks } from "@/components/desk-switcher";
-import { canSeeAdminDesk, canVisitDesk, showDeskSwitcher } from "@/lib/desks";
+
+const MenuDeskTools = lazy(() =>
+  import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
+);
 
 const ShareKidEaseButton = lazy(() =>
   import("@/components/share-button").then((m) => ({ default: m.ShareKidEaseButton })),
@@ -16,11 +18,14 @@ const RateKidEaseMenuRow = lazy(() =>
 const AppearanceControl = lazy(() =>
   import("@/components/appearance-control").then((m) => ({ default: m.AppearanceControl })),
 );
-const DeskSwitcher = lazy(() =>
-  import("@/components/desk-switcher").then((m) => ({ default: m.DeskSwitcher })),
-);
 
 export const Route = createFileRoute("/menu")({
+  head: () => ({
+    meta: [
+      { title: "Menu · KidEase" },
+      { name: "description", content: "Settings, desks, and support on KidEase." },
+    ],
+  }),
   component: MenuPage,
 });
 
@@ -74,37 +79,19 @@ function Group({
 function MenuPage() {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
-  const { session } = useSessionDesks();
   const fr = locale === "fr";
-  const multiDesk = Boolean(user && showDeskSwitcher(session?.desks, session?.role));
-  const showAdmin = Boolean(
-    user && canSeeAdminDesk(session?.role) && session && canVisitDesk(session.desks, "admin", session.role),
-  );
 
   return (
-    <Shell>
+    <ShellLite appTabs>
       <main className="ke-menu-main ke-gutter mx-auto max-w-lg pb-8 pt-5">
         <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">
           {fr ? "Menu" : "Menu"}
         </h1>
 
-        {multiDesk ? (
-          <Group title={fr ? "Vos espaces" : "Your desks"}>
-            <div className="px-1 py-2">
-              <Suspense fallback={<div className="ke-skel h-11 rounded-full" aria-hidden="true" />}>
-                <DeskSwitcher />
-              </Suspense>
-            </div>
-          </Group>
-        ) : null}
-
-        {showAdmin ? (
-          <Group title={fr ? "Équipe" : "Staff"}>
-            <Row to="/admin" label={fr ? "Espace admin" : "Admin desk"} />
-            {session?.desks.includes("support") ? (
-              <Row to="/support" label={fr ? "Espace soutien" : "Support desk"} />
-            ) : null}
-          </Group>
+        {user ? (
+          <Suspense fallback={null}>
+            <MenuDeskTools />
+          </Suspense>
         ) : null}
 
         <Group title={fr ? "Réglages" : "Settings"}>
@@ -166,6 +153,6 @@ function MenuPage() {
           </button>
         ) : null}
       </main>
-    </Shell>
+    </ShellLite>
   );
 }
