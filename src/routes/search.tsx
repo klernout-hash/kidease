@@ -1099,6 +1099,7 @@ function SearchPage() {
             <button
               type="button"
               onClick={() => setLiveOnly(false)}
+              data-listing-count={items !== null ? shownList.length : undefined}
               className={cn(
                 "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 !liveOnly ? "bg-fg text-bg" : "text-muted",
@@ -1107,11 +1108,6 @@ function SearchPage() {
               {items !== null ? t("allToggleCount").replace("{n}", String(catalog.length)) : t("showAll")}
             </button>
           </div>
-          {items !== null ? (
-            <span className="shrink-0 text-sm tabular-nums text-muted" data-listing-count={shownList.length}>
-              {shownList.length}
-            </span>
-          ) : null}
           <button
             type="button"
             onClick={() => setFilters((v) => !v)}
