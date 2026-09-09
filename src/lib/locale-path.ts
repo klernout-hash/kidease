@@ -7,7 +7,8 @@
  * need a real HTTP URL for hreflang and the sitemap.
  *
  * Catalogue listing bodies stay English for v1 (user-generated / registry
- * text). Desks, login, and /admin never get a `/fr` prefix.
+ * text). Desks and /admin stay unprefixed. `/login` has a `/fr/login`
+ * counterpart so the URL is not a 404; other auth desks stay English.
  */
 
 export const DEFAULT_LOCALE = "en" as const;
@@ -26,6 +27,9 @@ export const LOCALE_PAIRED_PATHS = [
   "/about",
   "/faq",
   "/how-it-works",
+  "/get-app",
+  "/benefits",
+  "/login",
 ] as const;
 
 export type LocalePairedPath = (typeof LOCALE_PAIRED_PATHS)[number];
@@ -103,7 +107,6 @@ export function sitemapFrenchPaths(enPaths: readonly string[] = LOCALE_PAIRED_PA
 export const SITEMAP_FR_PATHS = sitemapFrenchPaths();
 
 const DESK_OR_AUTH_PREFIXES = [
-  "/login",
   "/parent",
   "/provider",
   "/admin",

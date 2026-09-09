@@ -29,7 +29,7 @@ const PROGRAMS: { key: string; title: CopyKey; body: CopyKey; href: string }[] =
   { key: "yt", title: "benefitsYtT", body: "benefitsYt", href: "https://yukon.ca/en/universal-child-care" },
 ];
 
-function BenefitsPage() {
+export function BenefitsPage() {
   const { t, locale } = useCopy();
   const fr = locale === "fr";
   return (

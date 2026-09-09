@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { allowAiSpend } from "@/lib/ai-spend";
 import { getPublicCatalog } from "@/lib/catalog";
+import { CHAT_FLAG_OFF_MESSAGE } from "@/lib/chat-scaffold";
+import { inAppChatEnabled } from "@/lib/features";
 import { AGENT_CONFIRM, KIDEASE_SYSTEM, localHelpReply, wantsLiveAgent } from "@/lib/help-knowledge";
 import { notifyPlatform } from "@/lib/server/notify";
 
@@ -87,6 +89,13 @@ export const askKidEase = createServerFn({ method: "POST" })
   }))
   .handler(async ({ context, data }) => {
     try {
+      if (!inAppChatEnabled()) {
+        return {
+          ok: false as const,
+          live: false as const,
+          reply: CHAT_FLAG_OFF_MESSAGE,
+        };
+      }
       if (!allowAiSpend(context.userId)) {
         return { ok: true as const, live: false as const, reply: localHelpReply(data.messages.filter((m) => m.role === "user").at(-1)?.text || "", []) };
       }

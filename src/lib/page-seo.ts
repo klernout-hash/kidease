@@ -329,6 +329,24 @@ export const MARKETING_PAGE_SEO_FR = {
       "Cherchez des centres, nurseries et milieux familiaux permis par rayon en kilomètres. Filtrez par type, âge et places ouvertes, ou ouvrez un répertoire de ville.",
     path: "/fr/search",
   },
+  getApp: {
+    title: "Télécharger l’appli KidEase · iPhone, Android, Mac",
+    description:
+      "Mettez la recherche de garde permise au Canada sur votre écran d’accueil. GPS, fiches et inscription. App Store et Google Play bientôt.",
+    path: "/fr/get-app",
+  },
+  benefits: {
+    title: "Prestations et subventions pour la garde · KidEase",
+    description:
+      "AGJE et subventions provinciales pour la garde permise. KidEase pointe vers les sites officiels et n’héberge pas les demandes.",
+    path: "/fr/benefits",
+  },
+  login: {
+    title: "Connexion · KidEase",
+    description:
+      "Connectez-vous pour enregistrer des centres, demander une place et écrire aux éducatrices. Parents et centres permis.",
+    path: "/fr/login",
+  },
 } as const;
 
 export const LEGAL_PAGE_SEO = {

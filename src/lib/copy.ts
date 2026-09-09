@@ -532,6 +532,11 @@ export const copy = {
     bookingPayDisabled:
       "Card, Apple Pay, Google Pay, and PayPal stay off here so a booking cannot be marked paid without Stripe. Use the bill your centre sends, or email support@kidease.ca.",
     payUseBill: "Open bills",
+    payHubTitle: "Pay a centre bill",
+    payHubLead:
+      "This page needs a bill or booking link. Open bills from the parent desk, or sign in if you arrived here without one.",
+    payHubBills: "Parent bills",
+    payHubSignIn: "Sign in to pay",
     interacPendingReview: "Interac is waiting for KidEase staff to confirm the transfer. This page cannot mark it paid.",
     interacSentCta: "I sent the Interac transfer",
     payFor: "First-month parent fee",
@@ -988,7 +993,7 @@ export const copy = {
     filterCatchment: "Serves my area",
     trustWhyTitle: "Why Parents Trust KidEase",
     trustWhy1: "We only list provincially licensed daycares across Canada.",
-    trustWhy2: "Every listing features a real photo of the actual storefront so you can recognize the location.",
+    trustWhy2: "Every listing features a real photo of the actual storefront so you can recognise the location.",
     trustWhy3: "Information is kept clear and transparent — no hidden fees or confusing details.",
     trustWhy4: "Your searches stay private. We do not sell your data.",
     trustWhyLocal:
@@ -1046,7 +1051,7 @@ export const copy = {
       "To make finding quality, licensed daycare across Canada easier and less stressful for families.",
     aboutDifferentT: "What Makes KidEase Different",
     aboutDiff1: "We only list provincially licensed daycares",
-    aboutDiff2: "Every listing features a real storefront photo so you can recognize the location",
+    aboutDiff2: "Every listing features a real storefront photo so you can recognise the location",
     aboutDiff3: "Search is built around proximity — see what’s actually near you",
     aboutDiff4: "Information is kept clear and transparent",
     aboutLocalT: "Built for Canadian families",
@@ -1981,6 +1986,11 @@ export const copy = {
     bookingPayDisabled:
       "Carte, Apple Pay, Google Pay et PayPal restent fermés ici pour qu’une réservation ne soit pas marquée payée sans Stripe. Utilisez la facture du centre, ou écrivez à support@kidease.ca.",
     payUseBill: "Factures ouvertes",
+    payHubTitle: "Payer une facture",
+    payHubLead:
+      "Cette page a besoin d’un lien de facture ou de réservation. Ouvrez les factures depuis le bureau parent, ou connectez-vous si vous êtes arrivé ici sans lien.",
+    payHubBills: "Factures parent",
+    payHubSignIn: "Se connecter pour payer",
     interacPendingReview: "Le virement Interac attend la confirmation du personnel KidEase. Cette page ne peut pas le marquer payé.",
     interacSentCta: "J’ai envoyé le virement Interac",
     payFor: "Frais mensuels du premier mois",

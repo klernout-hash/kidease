@@ -133,7 +133,9 @@ describe("appearance is wired across public + desks chrome", () => {
     const shell = src("src/components/shell.tsx");
     assert.match(desk, /h-8 items-center rounded-full px-2\.5 text-\[11px\] font-medium leading-none/);
     assert.match(lang, /ke-header-chrome h-8 min-h-8 px-2\.5 text-\[11px\] leading-none/);
-    assert.match(appearance, /ke-header-chrome h-8 min-h-8 px-2\.5 text-\[11px\] leading-none/);
+    assert.match(appearance, /ke-header-chrome h-8 min-h-8 min-w-\[5\.5rem\] px-2\.5 text-\[11px\] leading-none/);
+    assert.match(appearance, /min-w-\[5\.5rem\]/);
+    assert.match(appearance, /shrink-0/);
     assert.match(css, /select\.ke-lang-select\.ke-header-chrome/);
     assert.match(css, /font-size: 11px/);
     assert.match(shell, /LanguageSelect compact/);

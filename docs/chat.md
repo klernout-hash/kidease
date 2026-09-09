@@ -26,6 +26,10 @@ Flip remote overlays in PostHog with the **same key** — see `docs/flags.md`. E
 
 This PR does **not** turn `FEATURE_PUSH` or `FEATURE_VIDEO` on.
 
+## Guest Live Chat helper
+
+The floating **Live Chat** helper on marketing pages (`HelpBot`) is gated on `FEATURE_INAPP_CHAT`. When the flag is off (the default), the bubble and “Ask a question” composer are not mounted, so guests are not invited to send. `askKidEase` also refuses when the flag is off. Parent ↔ centre threads stay on `/inbox`.
+
 ## Composer
 
 `src/lib/chat-scaffold.ts` owns the stub types and `chatComposerState()`.
