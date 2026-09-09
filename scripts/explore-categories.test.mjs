@@ -48,11 +48,20 @@ function matchesAgeBand(ageBand, row) {
   return row.ageMaxMonths >= 30 && row.ageMinMonths < 72;
 }
 
+function hasConfirmedAges(d) {
+  if (d.agesKnown === false) return false;
+  if (d.agesKnown) return true;
+  return d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0;
+}
+function listingAgeUnknown(d) {
+  return !hasConfirmedAges(d);
+}
 function matchesRailAge(item, age) {
   if (age === "school-age") {
     if (hasAmenity(item.amenities || "", "school-age")) return true;
-    return Boolean(item.agesKnown && item.ageMaxMonths >= 60);
+    return hasConfirmedAges(item) && item.ageMaxMonths >= 60;
   }
+  if (!hasConfirmedAges(item)) return false;
   return matchesAgeBand(age, item);
 }
 
@@ -69,8 +78,10 @@ function isBeforeAfterProgram(item) {
 
 function exploreTags(item) {
   const tags = [];
-  for (const age of ["infant", "toddler", "preschool", "school-age"]) {
-    if (matchesRailAge(item, age)) tags.push(age);
+  if (!listingAgeUnknown(item)) {
+    for (const age of ["infant", "toddler", "preschool", "school-age"]) {
+      if (matchesRailAge(item, age)) tags.push(age);
+    }
   }
   if (isBeforeAfterProgram(item)) tags.push("before-after");
   const facility = classifyFacilityType(item).type;
@@ -78,10 +89,22 @@ function exploreTags(item) {
   if (facility === "nursery") tags.push("nursery");
   return tags;
 }
+function visibleExploreCategories(counts, selected) {
+  return EXPLORE_CATEGORIES.filter((cat) => counts[cat] > 0 || cat === selected);
+}
 
 function matchesCategory(item, cat) {
   if (!cat) return true;
   return exploreTags(item).includes(cat);
+}
+
+function isFacilityExploreCategory(cat) {
+  return cat === "home" || cat === "nursery" || cat === "before-after";
+}
+
+function listingMatchesExploreFilter(item, cat) {
+  if (!cat || !isFacilityExploreCategory(cat)) return true;
+  return matchesCategory(item, cat);
 }
 
 function exploreCategoryToSearchAge(cat) {
@@ -174,6 +197,15 @@ test("exploreTags and matchesCategory cover infant, home, nursery, before-after,
   assert.equal(matchesCategory(unknownAges, "infant"), false);
   assert.equal(matchesCategory(unknownAges, undefined), true);
 
+  const leftoverRangeUnknown = listing({
+    agesKnown: false,
+    ageMinMonths: 0,
+    ageMaxMonths: 18,
+    amenities: "licensed",
+  });
+  assert.equal(exploreTags(leftoverRangeUnknown).includes("infant"), false);
+  assert.equal(matchesCategory(leftoverRangeUnknown, "infant"), false);
+
   const unknownHome = listing({
     name: "Tiny Tots",
     amenities: "licensed,home",
@@ -230,6 +262,33 @@ test("exploreTags and matchesCategory cover infant, home, nursery, before-after,
   assert.equal(matchesCategory(centre, undefined), true);
 });
 
+test("age category filter keeps unknown-age rows for the All tail", () => {
+  const leftover = listing({
+    amenities: "licensed",
+    agesKnown: false,
+    ageMinMonths: 0,
+    ageMaxMonths: 18,
+  });
+  const home = listing({
+    amenities: "licensed,home",
+    agesKnown: false,
+    ageMinMonths: 0,
+    ageMaxMonths: 0,
+  });
+  const knownToddler = listing({
+    amenities: "licensed",
+    agesKnown: true,
+    ageMinMonths: 18,
+    ageMaxMonths: 36,
+  });
+  assert.equal(listingMatchesExploreFilter(leftover, "toddler"), true);
+  assert.equal(listingMatchesExploreFilter(leftover, "infant"), true);
+  assert.equal(listingMatchesExploreFilter(home, "home"), true);
+  assert.equal(listingMatchesExploreFilter(leftover, "home"), false);
+  assert.equal(listingMatchesExploreFilter(knownToddler, "nursery"), false);
+  assert.equal(matchesCategory(leftover, "infant"), false);
+});
+
 test("age chips 1–4 set the age-first search gate; facility chips do not", () => {
   assert.equal(exploreCategoryToSearchAge("infant"), "infant");
   assert.equal(exploreCategoryToSearchAge("home"), undefined);
@@ -252,6 +311,11 @@ test("zero-count tags stay off the page empty-state; All still includes unknown 
   assert.equal(counts.home, 1);
   assert.equal(counts.nursery, 0);
   assert.ok(matchesCategory(rows[1], undefined));
+  const visible = visibleExploreCategories(counts);
+  assert.ok(visible.includes("infant"));
+  assert.ok(visible.includes("home"));
+  assert.equal(visible.includes("nursery"), false);
+  assert.ok(visibleExploreCategories(counts, "nursery").includes("nursery"));
 });
 
 test("search and explore wire one Top 7 chip row and ?cat=", () => {
@@ -266,6 +330,9 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.match(lib, /isBeforeAfterProgram/);
   assert.match(lib, /classifyFacilityType/);
   assert.match(lib, /exploreCategoryToSearchAge/);
+  assert.match(lib, /listingMatchesExploreFilter/);
+  assert.match(lib, /isFacilityExploreCategory/);
+  assert.match(search, /listingMatchesExploreFilter/);
   assert.doesNotMatch(lib, /Tiny Tots/);
   assert.match(search, /ExploreCategoryChips/);
   assert.match(search, /writeCategorySearch/);
@@ -281,6 +348,8 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.doesNotMatch(search, /ExploreRails/);
   assert.doesNotMatch(search, /FacilityTypeRails/);
   assert.match(chips, /data-explore-cat/);
+  assert.match(chips, /visibleExploreCategories/);
+  assert.match(lib, /listingAgeUnknown/);
   assert.match(chips, /EXPLORE_CATEGORY_COPY/);
   assert.match(src("src/lib/copy.ts"), /catInfants: "Infants"/);
   assert.match(src("src/lib/copy.ts"), /catBeforeAfter: "Before & after"/);

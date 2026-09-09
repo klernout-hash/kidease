@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { ChipButton } from "@/components/chip";
 import {
-  EXPLORE_CATEGORIES,
   EXPLORE_CATEGORY_COPY,
+  visibleExploreCategories,
   type ExploreCategory,
 } from "@/lib/explore-categories";
 import { useCopy } from "@/lib/use-copy";
@@ -39,9 +39,7 @@ export function ExploreCategoryChips({
   onSelect: (cat?: ExploreCategory) => void;
 }) {
   const { t } = useCopy();
-  // Always paint All + the locked 7 so the taxonomy is visible. A 0-count tap
-  // uses the category empty state — it does not blank the page.
-  const visible = EXPLORE_CATEGORIES;
+  const visible = visibleExploreCategories(counts, selected);
 
   return (
     <div className="ke-explore-cats mt-3" role="group" aria-label={t("exploreCategories")}>

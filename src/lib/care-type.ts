@@ -6,6 +6,7 @@
  */
 
 import { hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
+import { hasConfirmedAges } from "@/lib/listing-readiness";
 import { matchesAgeBand } from "@/lib/saved-search";
 import {
   FACILITY_TYPES,
@@ -68,8 +69,9 @@ export function matchesRailAge(
 ): boolean {
   if (age === "school-age") {
     if (hasAmenity(item.amenities || "", "school-age")) return true;
-    return Boolean(item.agesKnown && item.ageMaxMonths >= 60);
+    return hasConfirmedAges(item) && item.ageMaxMonths >= 60;
   }
+  if (!hasConfirmedAges(item)) return false;
   return matchesAgeBand(age, item);
 }
 

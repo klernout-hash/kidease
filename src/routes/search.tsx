@@ -68,7 +68,7 @@ import {
   EXPLORE_CATEGORY_COPY,
   countExploreCategories,
   isExploreCategory,
-  matchesCategory,
+  listingMatchesExploreFilter,
   resolvedExploreCategory,
   type ExploreCategory,
 } from "@/lib/explore-categories";
@@ -160,6 +160,7 @@ function SearchPage() {
   const incoming = Route.useSearch();
   const boot = Route.useLoaderData();
   const origin = useAppStore((s) => s.origin);
+  const located = useAppStore((s) => s.located);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const workOrigin = useAppStore((s) => s.workOrigin);
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
@@ -337,7 +338,7 @@ function SearchPage() {
     lng: origin.lng,
     radiusKm,
     sort,
-    ageGroup,
+    ageGroup: "any" as const,
     fsa: fsaOf(query) || fsaOf(origin.label),
     startDate: needBy || null,
     lat2: workOrigin?.lat,
@@ -349,7 +350,7 @@ function SearchPage() {
     lng: origin.lng,
     radiusKm,
     sort,
-    ageGroup,
+    ageGroup: "any" as const,
     startDate: needBy || null,
     lat2: workOrigin?.lat,
     lng2: workOrigin?.lng,
@@ -408,7 +409,6 @@ function SearchPage() {
     origin.lng,
     radiusKm,
     sort,
-    ageGroup,
     query,
     origin.label,
     needBy,
@@ -672,8 +672,8 @@ function SearchPage() {
     if (favoritesOnly) rows = rows.filter((r) => r.guestFavorite === true);
     if (careType !== "any") rows = rows.filter((r) => matchesCareType(r, careType));
     if (schoolAgeOnly) rows = rows.filter((r) => matchesRailAge(r, "school-age"));
-    const cat = resolvedExploreCategory(incoming);
-    if (cat) rows = rows.filter((r) => matchesCategory(r, cat));
+    const cat = isExploreCategory(incoming.cat) ? incoming.cat : undefined;
+    if (cat) rows = rows.filter((r) => listingMatchesExploreFilter(r, cat));
     if (nameQuery.trim()) rows = rows.filter((r) => matchesDaycareName(r, nameQuery));
     return rows;
   }, [
@@ -704,13 +704,24 @@ function SearchPage() {
       ? incoming.cat
       : undefined;
   const searchStart = isSearchStart(incoming.start) ? incoming.start : undefined;
-  const gated = searchFiltersReady(searchAge, searchStart);
+  const gated = searchFiltersReady(searchAge, searchStart, {
+    q: incoming.q ?? query,
+    label: origin.label,
+    located,
+  });
   const split = useMemo(() => {
     if (!gated || !searchAge || !searchStart) return { primary: [] as Card[], ageUnknown: [] as Card[] };
     return splitSearchResults(list, searchAge, searchStart);
   }, [gated, list, searchAge, searchStart]);
   const shownList = gated ? split.primary : [];
+  const resultCount = gated ? shownList.length + split.ageUnknown.length : 0;
+  const showSearchEmpty = gated && shownList.length === 0 && split.ageUnknown.length === 0;
   const [ageUnknownOpen, setAgeUnknownOpen] = useState(false);
+  useEffect(() => {
+    if (gated && shownList.length === 0 && split.ageUnknown.length > 0) {
+      setAgeUnknownOpen(true);
+    }
+  }, [gated, shownList.length, split.ageUnknown.length]);
   useEffect(() => {
     if (!gated || !searchAge || !searchStart) return;
     capturePostHogEvent("search_filters_applied", {
@@ -722,10 +733,11 @@ function SearchPage() {
   useEffect(() => {
     if (!gated || items === null) return;
     capturePostHogEvent("search_results_shown", {
-      n: shownList.length,
+      n: resultCount,
       n_age_known: shownList.length,
+      n_age_unknown: split.ageUnknown.length,
     });
-  }, [gated, items, shownList.length]);
+  }, [gated, items, shownList.length, split.ageUnknown.length, resultCount]);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +
@@ -967,9 +979,9 @@ function SearchPage() {
                         .replace("{n}", String(catalog.length))
                     : !gated
                       ? t("searchNeedAgeStart")
-                    : shownList.length === 1
+                    : resultCount === 1
                       ? t("searchResultCountOne")
-                      : t("searchResultCount").replace("{n}", String(shownList.length))}
+                      : t("searchResultCount").replace("{n}", String(resultCount))}
                   {DOT}
                   {shownRadius} {u}
                   {DOT}
@@ -1197,47 +1209,6 @@ function SearchPage() {
             {filterChips}
             {radiusSlider}
             <div className="flex flex-wrap gap-2">
-              {(["any", "infant", "toddler", "preschool"] as const).map((a) => (
-                <ChipButton
-                  key={a}
-                  on={
-                    a === "any"
-                      ? !resolvedExploreCategory(incoming) && !schoolAgeOnly && ageGroup === "any"
-                      : resolvedExploreCategory(incoming) === a ||
-                        (!incoming.cat && !schoolAgeOnly && ageGroup === a)
-                  }
-                  aria-pressed={
-                    a === "any"
-                      ? !resolvedExploreCategory(incoming) && !schoolAgeOnly && ageGroup === "any"
-                      : resolvedExploreCategory(incoming) === a ||
-                        (!incoming.cat && !schoolAgeOnly && ageGroup === a)
-                  }
-                  onClick={() => {
-                    writeCategorySearch(a === "any" ? undefined : a);
-                  }}
-                >
-                  {a === "any" ? t("anyAge") : t(a)}
-                </ChipButton>
-              ))}
-              <ChipButton
-                on={
-                  resolvedExploreCategory(incoming) === "school-age" ||
-                  (!incoming.cat && schoolAgeOnly)
-                }
-                aria-pressed={
-                  resolvedExploreCategory(incoming) === "school-age" ||
-                  (!incoming.cat && schoolAgeOnly)
-                }
-                onClick={() => {
-                  writeCategorySearch(
-                    resolvedExploreCategory(incoming) === "school-age" ? undefined : "school-age",
-                  );
-                }}
-              >
-                {t("schoolAge")}
-              </ChipButton>
-            </div>
-            <div className="flex flex-wrap gap-2">
               {(
                 [
                   ["match", t("sortMatch")],
@@ -1330,7 +1301,7 @@ function SearchPage() {
                     />
                   </Suspense>
                 </div>
-                {gated && items !== null && shownList.length === 0 ? (
+                {gated && items !== null && showSearchEmpty ? (
                   <div className="rounded-xl bg-surface ring-1 ring-border">
                     <EmptyState
                       title={emptyState.title}
@@ -1366,7 +1337,7 @@ function SearchPage() {
                 </div>
               ))}
             </div>
-          ) : shownList.length === 0 ? (
+          ) : showSearchEmpty ? (
             <div className="mt-6 rounded-xl bg-surface ring-1 ring-border">
               <EmptyState
                 title={emptyState.title}

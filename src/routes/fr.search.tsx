@@ -69,6 +69,7 @@ function FrExplore() {
   const incoming = Route.useSearch();
   const boot = Route.useLoaderData();
   const origin = useAppStore((s) => s.origin);
+  const located = useAppStore((s) => s.located);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setQuery = useAppStore((s) => s.setQuery);
   const [place, setPlace] = useState(incoming.q || origin.label || boot.origin.label);
@@ -77,7 +78,11 @@ function FrExplore() {
   const [to, setTo] = useState(incoming.to || "");
   const [age, setAge] = useState<SearchAge | "">(incoming.age || "");
   const [start, setStart] = useState<SearchStart | "">(incoming.start || "");
-  const gated = searchFiltersReady(age, start);
+  const gated = searchFiltersReady(age, start, {
+    q: incoming.q || place,
+    label: origin.label,
+    located,
+  });
   const shown = useMemo(() => {
     const rows: Card[] = (boot.items?.length ? boot.items : boot.featured) ?? [];
     return liveLookingOnly(uniqueById(rows)).slice(0, 12);

@@ -20,8 +20,12 @@ function isSearchAge(raw) {
 function isSearchStart(raw) {
   return SEARCH_STARTS.includes(raw);
 }
-function searchFiltersReady(age, start) {
-  return isSearchAge(age) && isSearchStart(start);
+function hasPlaceForSearch(q, label, located) {
+  if (located) return true;
+  return Boolean((q || label || "").trim());
+}
+function searchFiltersReady(age, start, place) {
+  return isSearchAge(age) && isSearchStart(start) && hasPlaceForSearch(place?.q, place?.label, place?.located);
 }
 function hasAmenity(amenities, key) {
   return String(amenities || "")
@@ -33,6 +37,7 @@ function hasListedFees(d) {
   return [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly, d.partTimeMonthly].some((n) => n != null && n > 0);
 }
 function hasConfirmedAges(d) {
+  if (d.agesKnown === false) return false;
   if (d.agesKnown) return true;
   return d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0;
 }
@@ -94,10 +99,18 @@ function qualifiesStartWindow(d, start, now = Date.now()) {
   return isLiveOrClaimed(d) && vacancyFresh(d, now);
 }
 function matchesRailAge(d, age) {
-  if (age === "school-age") return Boolean(d.agesKnown && d.ageMaxMonths >= 60);
+  if (!hasConfirmedAges(d) && age !== "school-age") return false;
+  if (age === "school-age") return Boolean(hasConfirmedAges(d) && d.ageMaxMonths >= 60);
   if (age === "infant") return d.ageMinMonths <= 18;
   if (age === "toddler") return d.ageMinMonths < 36 && d.ageMaxMonths >= 18;
   return d.ageMaxMonths >= 30 && d.ageMinMonths < 72;
+}
+function liveLookingShare(rows) {
+  if (!rows.length) return 0;
+  return rows.filter(isLiveLookingCard).length / rows.length;
+}
+function homeRailItems(rows) {
+  return rows.filter(isLiveLookingCard);
 }
 function splitSearchResults(rows, age, start, now) {
   const primary = [];
@@ -149,12 +162,14 @@ function listing(over = {}) {
   };
 }
 
-test("age gate refuses a catalogue dump without age + start", () => {
-  assert.equal(searchFiltersReady(undefined, undefined), false);
-  assert.equal(searchFiltersReady("any", "now"), false);
-  assert.equal(searchFiltersReady("toddler", undefined), false);
-  assert.equal(searchFiltersReady("toddler", "now"), true);
-  assert.equal(searchFiltersReady("school-age", "next-month"), true);
+test("age gate refuses a catalogue dump without age + start + place", () => {
+  const place = { label: "Winnipeg, MB" };
+  assert.equal(searchFiltersReady(undefined, undefined, place), false);
+  assert.equal(searchFiltersReady("any", "now", place), false);
+  assert.equal(searchFiltersReady("toddler", undefined, place), false);
+  assert.equal(searchFiltersReady("toddler", "now", {}), false);
+  assert.equal(searchFiltersReady("toddler", "now", place), true);
+  assert.equal(searchFiltersReady("school-age", "next-month", { located: true }), true);
 });
 
 test("Winnipeg toddler + now keeps age-eligible live cards and hides others", () => {
@@ -278,6 +293,34 @@ test("compare deep-link keeps two slugs", () => {
   assert.equal(`/compare?slugs=${parseCompareSlugs("alpha-centre,beta-home").join(",")}`, "/compare?slugs=alpha-centre,beta-home");
 });
 
+test("explicit agesKnown false is unknown even with leftover min/max", () => {
+  const leftover = listing({ agesKnown: false, ageMinMonths: 0, ageMaxMonths: 72 });
+  assert.equal(hasConfirmedAges(leftover), false);
+  assert.equal(matchesRailAge(leftover, "infant"), false);
+});
+
+test("Winnipeg rails hide hollow instead of inventing to hit 80%", () => {
+  const liveLooking = listing();
+  const hollow = listing({
+    agesKnown: false,
+    ageMinMonths: 0,
+    ageMaxMonths: 0,
+    infantMonthly: null,
+    toddlerMonthly: null,
+    preschoolMonthly: null,
+    photos: ["/photos/wpg/1001.jpg"],
+    amenities: "ten-a-day,funded",
+    feeConfirmed: false,
+  });
+  const rows = [liveLooking, hollow, hollow, hollow, hollow];
+  assert.ok(liveLookingShare(rows) < 0.8);
+  assert.deepEqual(
+    homeRailItems(rows).map((r) => r.photos[0]),
+    [liveLooking.photos[0]],
+  );
+  assert.equal(isLiveLookingCard(hollow), false);
+});
+
 test("director quality todos put ages, fees, and photo first", () => {
   const ordered = qualityTodoFirst([
     { id: "vacancy_stale" },
@@ -306,18 +349,23 @@ test("search, cards, rails, and vacancy wire the shared helper", () => {
   assert.match(helpers, /export function isLiveLookingCard/);
   assert.match(helpers, /export function honestVacancy/);
   assert.match(helpers, /export function searchFiltersReady/);
+  assert.match(helpers, /hasPlaceForSearch/);
+  assert.match(helpers, /WINNIPEG_LIVE_LOOKING_RAIL_MIN/);
   assert.match(search, /searchFiltersReady/);
+  assert.match(search, /located/);
   assert.match(search, /splitSearchResults/);
   assert.match(search, /search_filters_applied/);
   assert.match(search, /search_results_shown/);
-  assert.match(home, /isLiveLookingCard/);
+  assert.match(home, /homeRailItems|isLiveLookingCard/);
   assert.match(home, /SearchAgeGate/);
   assert.match(fr, /isLiveLookingCard|searchFiltersReady/);
   assert.match(card, /liveLookingGaps/);
   assert.match(card, /canShowMatchScore/);
   assert.match(rails, /isLiveLookingCard|liveLookingOnly/);
-  assert.match(parentRails, /isLiveLookingCard|liveLookingOnly/);
+  assert.match(parentRails, /homeRailItems|isLiveLookingCard|liveLookingOnly/);
   assert.match(listing, /unclaimedRequestNote|listing_request_started/);
+  assert.match(src("src/components/request-tour.tsx"), /listing_request_submitted/);
+  assert.match(src("src/components/shell.tsx"), /to: "\/compare"/);
   assert.match(inbox, /providerRequestsEmpty/);
   assert.match(quality, /qualityTodoFirst/);
   assert.doesNotMatch(helpers, /FEATURE_INAPP_CHAT|FEATURE_SMS|FEATURE_PUSH/);
