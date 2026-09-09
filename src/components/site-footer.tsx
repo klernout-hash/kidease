@@ -125,7 +125,7 @@ export function SiteFooter() {
               {showOperatorSignIn ? (
                 <Link
                   to="/login"
-                  search={{ role: "admin", desk: "admin", intent: "in", next: "/admin" }}
+                  search={{ role: "admin", desk: "admin", intent: "admin", next: "/admin" }}
                   className="ke-footer-operator"
                 >
                   {t("operatorSignIn")}

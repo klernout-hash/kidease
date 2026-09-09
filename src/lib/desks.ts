@@ -237,7 +237,9 @@ export function loginErrorCallbackUrl(search: {
   intent?: string;
 }): string {
   const params = new URLSearchParams();
-  if (search.intent === "in" || search.intent === "up") params.set("intent", search.intent);
+  if (search.intent === "in" || search.intent === "up" || search.intent === "admin") {
+    params.set("intent", search.intent);
+  }
   if (search.role === "parent" || search.role === "provider" || search.role === "admin") {
     params.set("role", search.role);
   }
@@ -246,6 +248,26 @@ export function loginErrorCallbackUrl(search: {
   if (next) params.set("next", next);
   const qs = params.toString();
   return qs ? `/login?${qs}` : "/login";
+}
+
+/**
+ * Admin / operator login: email + password first (Titan mailbox), not Google.
+ * Matches role=admin, desk=admin, intent=admin, and next=/admin*.
+ * Parent / Daycare desks stay on the social-first login.
+ */
+export function isAdminLoginIntent(search: {
+  role?: string | null;
+  desk?: string | null;
+  intent?: string | null;
+  next?: string | null;
+}): boolean {
+  if ((search.role || "").trim().toLowerCase() === "admin") return true;
+  if ((search.intent || "").trim().toLowerCase() === "admin") return true;
+  if (parseDeskQuery(search.desk) === "admin") return true;
+  const next = sanitizePostLoginNext(search.next);
+  if (!next) return false;
+  const path = pathnameOfDest(next);
+  return path === "/admin" || path.startsWith("/admin/") || path.startsWith("/admin-");
 }
 
 export function readStickyDesk(): DeskKey | null {

@@ -1065,6 +1065,8 @@ export const copy = {
     neverSell: "We respect your privacy. Your data is never sold.",
     comingSoon: "Coming soon",
     operatorSignIn: "Operator sign-in",
+    operatorLead: "This page is only for Kyle. After the password, KidEase emails a 6-digit code.",
+    operatorEmailNote: "kyle@kidease.ca signs in with email (Titan), not Google.",
     aboutTitle: "About KidEase",
     aboutHero:
       "KidEase is a Canada-wide app that helps parents find licensed daycare near them — quickly, clearly, and with confidence.",
@@ -2544,6 +2546,8 @@ export const copy = {
     neverSell: "Nous respectons votre vie privée. Vos données ne sont jamais vendues.",
     comingSoon: "Bientôt",
     operatorSignIn: "Connexion opérateur",
+    operatorLead: "Cette page est réservée à Kyle. Après le mot de passe, KidEase envoie un code à 6 chiffres.",
+    operatorEmailNote: "kyle@kidease.ca se connecte par courriel (Titan), pas Google.",
     aboutTitle: "À propos de KidEase",
     aboutHero:
       "KidEase est une appli pancanadienne qui aide les parents à trouver une garderie permise près de chez eux — rapidement, clairement et en confiance.",
