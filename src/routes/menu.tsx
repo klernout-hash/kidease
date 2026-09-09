@@ -5,7 +5,7 @@ import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { useSessionDesks } from "@/components/desk-switcher";
-import { canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
+import { canSeeAdminDesk, canVisitDesk, showDeskSwitcher } from "@/lib/desks";
 
 const ShareKidEaseButton = lazy(() =>
   import("@/components/share-button").then((m) => ({ default: m.ShareKidEaseButton })),
@@ -77,7 +77,9 @@ function MenuPage() {
   const { session } = useSessionDesks();
   const fr = locale === "fr";
   const multiDesk = Boolean(user && showDeskSwitcher(session?.desks, session?.role));
-  const showAdmin = Boolean(user && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
+  const showAdmin = Boolean(
+    user && canSeeAdminDesk(session?.role) && session && canVisitDesk(session.desks, "admin", session.role),
+  );
 
   return (
     <Shell>

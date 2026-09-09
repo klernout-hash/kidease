@@ -110,7 +110,7 @@ test("admin chat lab is registered, admin-gated, and honest", () => {
   const send = readFileSync(join(root, "src/lib/server/push.server.ts"), "utf8");
   const client = readFileSync(join(root, "src/lib/push-client.ts"), "utf8");
   assert.match(route, /createFileRoute\("\/admin-chat"\)/);
-  assert.match(route, /desks\.includes\("admin"\)/);
+  assert.match(route, /canVisitDesk\(session\.desks, "admin", session\.role\)/);
   assert.match(route, /CHAT_SCAFFOLD_MESSAGE/);
   assert.match(route, /FEATURE_SMS/);
   assert.match(route, /FEATURE_VIDEO/);

@@ -19,7 +19,7 @@ import { FEATURE_FLAG_CATALOG } from "@/lib/flags";
 import { FCM_LAB_NEXT_STEPS } from "@/lib/push";
 import { TWILIO_VIDEO_LAB_NEXT_STEPS } from "@/lib/video";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
-import { canSeeAdminDesk } from "@/lib/desks";
+import { canVisitDesk } from "@/lib/desks";
 
 export const Route = createFileRoute("/admin-chat")({
   beforeLoad: beforeLoadAdminDesk,
@@ -38,7 +38,7 @@ function AdminChatPage() {
   const [lab, setLab] = useState<LabStatus | null>(null);
   const [dryRunHint, setDryRunHint] = useState("");
 
-  const admin = Boolean(ready && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
+  const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role));
 
   useEffect(() => {
     if (!user || !admin) return;

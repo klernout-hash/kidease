@@ -17,7 +17,7 @@ import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
-import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
+import { accountSearch, canSeeAdminDesk, canVisitDesk, showDeskSwitcher } from "@/lib/desks";
 import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -481,7 +481,7 @@ function AccountMenu({
               Daycare desk
             </Link>
           ) : null}
-          {canSeeAdminDesk(session?.role) && desks.includes("admin") ? (
+          {session && canVisitDesk(desks, "admin", session.role) ? (
             <Link
               role="menuitem"
               to="/admin"

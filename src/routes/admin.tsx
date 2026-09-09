@@ -8,7 +8,7 @@ import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
-import { canSeeAdminDesk } from "@/lib/desks";
+import { canVisitDesk } from "@/lib/desks";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
@@ -126,7 +126,7 @@ function AdminPage() {
     setLeadCounts(leads);
   }
 
-  const admin = Boolean(ready && canSeeAdminDesk(session?.role) && session?.desks.includes("admin"));
+  const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role));
 
   useEffect(() => {
     if (!user || !admin) return;
