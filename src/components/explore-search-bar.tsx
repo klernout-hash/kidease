@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { LocateFixed, Search } from "lucide-react";
 import { PlaceSearch, type ResolvedPlace } from "@/components/place-search";
 import { formatExploreDateRange } from "@/lib/explore-search";
+import { DISMISS_POPOVERS } from "@/lib/dismiss-popovers";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -55,17 +56,22 @@ export function ExploreSearchBar({
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") setActive(null);
     }
+    function onDismiss() {
+      setActive(null);
+    }
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
+    window.addEventListener(DISMISS_POPOVERS, onDismiss);
     return () => {
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener(DISMISS_POPOVERS, onDismiss);
     };
   }, []);
 
   function segmentClass(field: Field, index: number) {
     return cn(
-      "relative flex min-h-[4.25rem] min-w-0 flex-1 flex-col justify-center px-5 py-3 text-left transition-colors contain-layout",
+      "relative flex min-h-[4.25rem] min-w-0 flex-1 flex-col justify-center overflow-visible px-5 py-3 text-left transition-colors",
       "lg:px-6",
       index === 0 && "rounded-t-[2rem] lg:rounded-none lg:rounded-l-full",
       index === 2 && "rounded-b-[2rem] lg:rounded-none lg:rounded-r-full",
@@ -86,7 +92,7 @@ export function ExploreSearchBar({
         onSubmit();
       }}
     >
-      <div className="relative z-20 flex flex-col min-h-[12.75rem] divide-y divide-border rounded-[2rem] bg-surface shadow-lift ring-1 ring-border/80 contain-layout lg:min-h-[4.25rem] lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
+      <div className="relative z-20 flex flex-col min-h-[12.75rem] divide-y divide-border overflow-visible rounded-[2rem] bg-surface shadow-lift ring-1 ring-border/80 lg:min-h-[4.25rem] lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
         <div className={segmentClass("where", 0)} onClick={() => setActive("where")}>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">

@@ -10,11 +10,11 @@ export function CityHubLinks({ className }: { className?: string }) {
   return (
     <nav aria-label={t("browseCities")} className={className}>
       <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">{t("browseCities")}</p>
-      <ul className="mt-2 flex flex-wrap gap-2">
+      <ul className="mt-2 flex flex-nowrap gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden">
         {hubs.map((hub) => {
           const def = cityHubDefBySlug(hub.slug);
           return (
-            <li key={hub.slug}>
+            <li key={hub.slug} className="shrink-0">
               <Link
                 to="/daycare/city/$city"
                 params={{ city: hub.slug }}

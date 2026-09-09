@@ -64,6 +64,7 @@ import {
   type SavedSearchFilters,
 } from "@/lib/saved-search";
 import { CityHubLinks } from "@/components/city-hub-links";
+import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
@@ -852,11 +853,16 @@ function SearchPage() {
         {t("exploreFacilityTypes")}
       </p>
       <div className="flex flex-wrap gap-2" role="group" aria-label={t("exploreFacilityTypes")}>
-        {FACILITY_TYPES.map((kind) =>
-          chip(careType === kind, t(SHOW_FACILITY[kind]), () =>
-            setCareType((v) => (v === kind ? "any" : kind)),
-          ),
-        )}
+        {FACILITY_TYPES.map((kind) => (
+          <ChipButton
+            key={kind}
+            on={careType === kind}
+            aria-pressed={careType === kind}
+            onClick={() => setCareType((v) => (v === kind ? "any" : kind))}
+          >
+            {t(SHOW_FACILITY[kind])}
+          </ChipButton>
+        ))}
       </div>
     </div>
   );
@@ -867,7 +873,6 @@ function SearchPage() {
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]">{city}</h1>
-            <CityHubLinks className="mt-3" />
             <p className="mt-0.5 min-h-5 truncate text-sm text-muted" aria-live="polite">
               {items === null ? (
                 <span className="inline-flex items-center gap-2">
@@ -927,6 +932,8 @@ function SearchPage() {
             )}
           </div>
         </div>
+
+        <CityHubLinks className="mt-3" />
 
         {saveOpen ? (
           <div className="mt-3 rounded-xl bg-surface p-4 ring-1 ring-border">
@@ -1006,12 +1013,12 @@ function SearchPage() {
         ) : null}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex min-h-11 w-full min-w-0 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[13.5rem] sm:flex-none">
+          <div className="flex h-11 w-full basis-full rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:basis-auto sm:min-w-[13.5rem] sm:flex-none">
             <button
               type="button"
               onClick={() => setLiveOnly(true)}
               className={cn(
-                "flex-1 rounded-full px-4 text-[13px] font-semibold",
+                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 liveOnly ? "bg-ok text-primary-fg" : "text-muted",
               )}
             >
@@ -1023,7 +1030,7 @@ function SearchPage() {
               type="button"
               onClick={() => setLiveOnly(false)}
               className={cn(
-                "flex-1 rounded-full px-4 text-[13px] font-semibold",
+                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 !liveOnly ? "bg-fg text-bg" : "text-muted",
               )}
             >
@@ -1034,7 +1041,7 @@ function SearchPage() {
             type="button"
             onClick={() => setFilters((v) => !v)}
             className={cn(
-              "inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold ring-1",
+              "inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-xs font-semibold ring-1 sm:text-[13px]",
               filters || extraFilters ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border",
             )}
           >
@@ -1046,12 +1053,15 @@ function SearchPage() {
               </span>
             ) : null}
           </button>
-          <div className="flex h-11 w-full min-w-0 flex-1 rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:min-w-[10rem] sm:flex-none">
+          <div className="flex h-11 w-full basis-full rounded-full bg-surface p-0.5 ring-1 ring-border sm:w-auto sm:basis-auto sm:min-w-[10rem] sm:flex-none">
             <button
               type="button"
-              onClick={() => setView("list")}
+              onClick={() => {
+                dismissPopovers();
+                setView("list");
+              }}
               className={cn(
-                "flex-1 rounded-full px-4 text-[13px] font-semibold",
+                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 view === "list" ? "bg-fg text-bg" : "text-muted",
               )}
             >
@@ -1059,9 +1069,12 @@ function SearchPage() {
             </button>
             <button
               type="button"
-              onClick={() => setView("map")}
+              onClick={() => {
+                dismissPopovers();
+                setView("map");
+              }}
               className={cn(
-                "flex-1 rounded-full px-4 text-[13px] font-semibold",
+                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 view === "map" ? "bg-fg text-bg" : "text-muted",
               )}
             >

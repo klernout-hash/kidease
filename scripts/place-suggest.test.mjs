@@ -27,10 +27,15 @@ test("local place suggestions match Canadian cities without inventing streets", 
   assert.equal(resolveLocalPlace("ChIJxxxx"), null);
 });
 
-test("PlaceSearch portals suggestions and falls back when server Places is empty", () => {
+test("PlaceSearch anchors suggestions under the input and falls back when server Places is empty", () => {
   const places = src("src/components/place-search.tsx");
-  assert.match(places, /createPortal/);
   assert.match(places, /data-place-suggestions/);
+  assert.match(places, /absolute left-0 right-0 top-\[calc\(100%/);
+  assert.doesNotMatch(places, /createPortal/);
+  assert.doesNotMatch(places, /position: fixed|className="fixed /);
+  assert.match(places, /placeHostVisible/);
+  assert.match(places, /DISMISS_POPOVERS/);
+  assert.match(places, /document\.activeElement !== input\.current/);
   assert.match(places, /suggestPlacesBrowser/);
   assert.match(places, /geocodeWithBrowser/);
   assert.match(places, /suggestLocalPlaces/);
