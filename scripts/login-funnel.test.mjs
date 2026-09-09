@@ -73,6 +73,8 @@ test("login and 2FA use the shared continue helper", () => {
   assert.match(src("src/lib/auth/login-funnel.ts"), /SESSION_SETTLE_RETRIES/);
   assert.match(src("src/routes/login.tsx"), /waitForSignedInSession/);
   assert.match(twoFa, /staffTwoFactorRequired/);
+  assert.match(twoFa, /decideVerify2faSessionGate/);
+  assert.match(twoFa, /waitForSignedInSession/);
   assert.match(twoFa, /Continue to your desk/);
   assert.match(twoFa, /autoComplete="one-time-code"/);
   assert.match(twoFa, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false\s*\}\s*\}\)/);
