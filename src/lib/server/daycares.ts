@@ -426,9 +426,17 @@ export const getListingSeo = createServerFn({ method: "GET" })
 
 export const getDaycaresByIds = createServerFn({ method: "POST" })
   .validator((ids: string[]) => ids)
-  .handler(async ({ data: ids }) => {
+  .handler(async ({ data: keys }) => {
     const origin = { lat: 49.8951, lng: -97.1384 };
-    const found = (await catalogByIdsGet(ids)).filter(isPublicListing);
+    const byId = await catalogByIdsGet(keys);
+    const foundIds = new Set(byId.map((d) => d.id));
+    const extras = [];
+    for (const key of keys) {
+      if (foundIds.has(key)) continue;
+      const row = await catalogBySlugGet(key);
+      if (row) extras.push(row);
+    }
+    const found = [...byId, ...extras].filter(isPublicListing);
     const cards = uniqueById(found.map((d) => toCard(d, origin)));
     const claimed = await overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
     return overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" });

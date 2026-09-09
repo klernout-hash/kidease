@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
-import { clearCompare, readCompare } from "@/lib/compare";
+import { clearCompare, readCompareEntries } from "@/lib/compare";
+import { compareSlugsHref } from "@/lib/now-loops";
 import { useCopy } from "@/lib/use-copy";
 import { Button } from "@/components/ui/button";
 
 export function CompareBar() {
   const { t } = useCopy();
   const [ids, setIds] = useState<string[]>([]);
+  const [href, setHref] = useState("/compare");
 
   useEffect(() => {
     function sync() {
-      setIds(readCompare());
+      const entries = readCompareEntries();
+      setIds(entries.map((item) => item.id));
+      setHref(compareSlugsHref(entries.map((item) => item.slug)));
     }
     sync();
     window.addEventListener("kidease-compare", sync);
@@ -35,7 +38,7 @@ export function CompareBar() {
         <div className="flex items-center gap-2">
           {ready ? (
             <Button asChild size="sm">
-              <Link to="/compare">{t("compareNow")}</Link>
+              <a href={href}>{t("compareNow")}</a>
             </Button>
           ) : (
             <Button size="sm" disabled>

@@ -15,6 +15,9 @@ import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-que
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
+import { DirectorProStrip } from "@/components/director-pro-strip";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { isOpenLeadStatus } from "@/lib/lead-requests";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { listCentrePipeline } from "@/lib/server/crm-pipeline";
 import { CentrePipeline } from "@/components/centre-pipeline";
@@ -64,7 +67,15 @@ function ProviderPage() {
   const [showNewForm, setShowNewForm] = useState(false);
   const [listings, setListings] = useState<Daycare[]>([]);
   const [stats, setStats] = useState<
-    Array<{ daycareId: string; views: number; inquiries: number; requests: number; demand?: DemandSnapshot }>
+    Array<{
+      daycareId: string;
+      views: number;
+      inquiries: number;
+      requests: number;
+      weekViews?: number;
+      weekRequests?: number;
+      demand?: DemandSnapshot;
+    }>
   >([]);
   const [requests, setRequests] = useState<SpotRequest[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
@@ -123,6 +134,10 @@ function ProviderPage() {
   useEffect(() => {
     if (search.desk) setDesk(search.desk);
   }, [search.desk]);
+
+  useEffect(() => {
+    if (desk === "requests") capturePostHogEvent("provider_request_opened");
+  }, [desk]);
 
   if (childRoute) return <Outlet />;
 
@@ -200,6 +215,16 @@ function ProviderPage() {
       {subscription ? <ProviderPlanBanner subscription={subscription} /> : null}
       {desk === "requests" ? (
         <section className="space-y-8">
+          <DirectorProStrip
+            views={stats.reduce((sum, s) => sum + (s.weekViews ?? 0), 0)}
+            requests={stats.reduce((sum, s) => sum + (s.weekRequests ?? 0), 0)}
+          />
+          <p className="text-sm text-muted">
+            {t("leadInbox")}
+            {leads.filter((row) => isOpenLeadStatus(row.status)).length
+              ? ` · ${leads.filter((row) => isOpenLeadStatus(row.status)).length}`
+              : ""}
+          </p>
           <DaycareLeadInbox items={leads} onChanged={() => void load()} />
           <CentrePipeline cards={pipeline} />
           <div>
@@ -226,7 +251,7 @@ function ProviderPage() {
             </p>
             <RequestList
               items={waiting}
-              empty="No new parent requests right now."
+              empty={t("providerRequestsEmpty")}
               onDecide={async (id, decision) => {
                 await decideParentRequest({ data: { bookingId: id, decision } });
                 toast.success(

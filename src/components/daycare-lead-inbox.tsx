@@ -27,7 +27,7 @@ export function DaycareLeadInbox({
       </div>
       <LeadInboxList
         items={waiting}
-        empty={t("leadNoCentre")}
+        empty={t("providerRequestsEmpty")}
         onChanged={onChanged}
         locale={locale}
         canAct

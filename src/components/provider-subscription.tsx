@@ -26,6 +26,8 @@ import {
   type ProviderSubscriptionState,
 } from "@/lib/server/provider-subscriptions";
 import { openStripeCheckout } from "@/lib/wallets";
+import { getProvider } from "@/lib/server/family";
+import { DirectorProStrip } from "@/components/director-pro-strip";
 
 const COPY = {
   en: {
@@ -96,6 +98,7 @@ export function ProviderSubscriptionPanel() {
   const [addons, setAddons] = useState<ProviderAddonId[]>([]);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [week, setWeek] = useState({ views: 0, requests: 0 });
 
   useEffect(() => {
     void getProviderSubscription()
@@ -106,6 +109,14 @@ export function ProviderSubscriptionPanel() {
         setLoadError(false);
       })
       .catch(() => setLoadError(true));
+    void getProvider()
+      .then((res) => {
+        setWeek({
+          views: res.stats.reduce((sum, s) => sum + (s.weekViews ?? 0), 0),
+          requests: res.stats.reduce((sum, s) => sum + (s.weekRequests ?? 0), 0),
+        });
+      })
+      .catch(() => undefined);
   }, []);
 
   if (loadError) {
@@ -204,6 +215,9 @@ export function ProviderSubscriptionPanel() {
           {t.title}
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">{t.lead}</p>
+        <div className="mt-4">
+          <DirectorProStrip views={week.views} requests={week.requests} />
+        </div>
         {state.ghost ? (
           <p className="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{PROVIDER_SUBSCRIPTION_GHOST_MESSAGE}</p>
         ) : null}

@@ -33,7 +33,11 @@ import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
 import type { CopyKey } from "@/lib/copy";
-import { readCompare, toggleCompare } from "@/lib/compare";
+import { hasCompare, toggleCompareItem } from "@/lib/compare";
+import { CompareChip } from "@/components/compare-chip";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { honestVacancy, liveLookingOnly } from "@/lib/now-loops";
+import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { rememberViewed } from "@/lib/recent";
 import { trackLocation } from "@/lib/telemetry";
 import { useAppStore } from "@/lib/store";
@@ -173,7 +177,7 @@ function Listing() {
     if (!data) return;
     const id = data.daycare.id;
     function sync() {
-      setComparing(readCompare().includes(id));
+      setComparing(hasCompare(id, data?.daycare.slug));
     }
     sync();
     window.addEventListener("kidease-compare", sync);
@@ -302,6 +306,7 @@ function Listing() {
       return;
     }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "spot" });
+    capturePostHogEvent("listing_request_started", { intent: "spot" });
     setRequestOpen(true);
   }
 
@@ -312,6 +317,7 @@ function Listing() {
       return;
     }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "tour" });
+    capturePostHogEvent("listing_request_started", { intent: "tour" });
     setTourOpen(true);
   }
 
@@ -337,7 +343,7 @@ function Listing() {
     return (
       <>
         {live ? (
-          <Button onClick={onTour}>{t("bookTour")}</Button>
+          <Button onClick={onTour}>{t("requestTour")}</Button>
         ) : (
           <Button asChild>
             <Link to="/search">{t("searchNearby")}</Link>
@@ -345,7 +351,7 @@ function Listing() {
         )}
         {live ? (
           <Button variant="secondary" onClick={onRequest}>
-            {t("book")}
+            {t("requestSpotCta")}
           </Button>
         ) : !d.claimed ? (
           <Button asChild variant="secondary">
@@ -356,6 +362,7 @@ function Listing() {
         ) : (
           <p className="text-xs text-muted">{t("requestUnavailable")}</p>
         )}
+        {!live ? <p className="text-xs text-muted">{t("unclaimedRequestNote")}</p> : null}
         {live ? (
           <Button variant="secondary" onClick={() => void onMessage()}>
             <MessageCircle className="size-4" /> {t("message")}
@@ -481,6 +488,7 @@ function Listing() {
                 </div>
                 <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <CompareChip id={d.id} slug={d.slug} />
                   {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
                     <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
                   ) : null}
@@ -547,7 +555,11 @@ function Listing() {
               <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
               <Meta
                 label={t("spotsAvailable")}
-                value={known ? (spots > 0 ? `${spots}` : t("waitlist")) : t("availUnknown")}
+                value={
+                  honestVacancy({ ...d, spotsTotal: spots }).kind === "open"
+                    ? `${spots}`
+                    : t(honestVacancy({ ...d, spotsTotal: spots }).labelKey)
+                }
               />
             </dl>
 
@@ -576,8 +588,8 @@ function Listing() {
                     {t("checkSubsidy")}
                   </a>
                 </Button>
-                <Button type="button" variant="ghost" onClick={() => toggleCompare(d.id)}>
-                  {comparing ? t("comparing") : t("addToCompare")}
+                <Button type="button" variant="ghost" onClick={() => toggleCompareItem({ id: d.id, slug: d.slug })}>
+                  {comparing ? t("comparing") : t("compareAdd")}
                 </Button>
                 <ShareListingButton slug={d.slug} name={name} appearance="labeled" />
                 <Button asChild variant="ghost">
@@ -699,7 +711,7 @@ function Listing() {
 
             <section className="mt-8">
               <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
-              {(d.parentReviewCount ?? 0) > 0 && (d.parentRatingX10 ?? 0) > 0 ? (
+              {(d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0 ? (
                 <p className="mt-2 inline-flex items-center gap-2 text-sm">
                   <Star className="size-3.5 fill-fg" />
                   <span className="font-medium tabular-nums">{((d.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
@@ -724,7 +736,7 @@ function Listing() {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-2 text-sm text-muted">{t("noReviews")}</p>
+                <p className="mt-2 text-sm text-muted">{t("reviewsEnrolledEmpty")}</p>
               )}
               <ListingReviewForm daycareId={d.id} slug={d.slug} />
             </section>
@@ -775,7 +787,7 @@ function Listing() {
         </div>
 
         {data.nearby.length ? (
-          <ListingRail title={t("similar")} items={data.nearby} seeAllHref="/search" className="mt-12 first:mt-12" />
+          <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref="/search" className="mt-12 first:mt-12" />
         ) : null}
       </article>
 
@@ -784,7 +796,7 @@ function Listing() {
         <div className="mx-auto flex max-w-lg items-center gap-1.5 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {live ? (
             <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" onClick={onTour}>
-              {t("bookTour")}
+              {t("requestTour")}
             </Button>
           ) : (
             <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" asChild>
@@ -793,7 +805,7 @@ function Listing() {
           )}
           {live ? (
             <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" onClick={onRequest}>
-              {t("book")}
+              {t("requestSpotCta")}
             </Button>
           ) : !d.claimed ? (
             <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" asChild>

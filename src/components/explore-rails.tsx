@@ -6,22 +6,10 @@ import { uniqueById } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
 import { readRecent } from "@/lib/recent";
 import { useAppStore } from "@/lib/store";
+import { honestVacancy, isLiveLookingCard, liveLookingOnly } from "@/lib/now-loops";
 
 function take(rows: Card[], n = 12) {
   return uniqueById(rows).slice(0, n);
-}
-
-function fill(preferred: Card[], pool: Card[], n = 12) {
-  const out = take(preferred, n);
-  if (out.length >= n) return out;
-  const seen = new Set(out.map((r) => r.id));
-  for (const row of pool) {
-    if (out.length >= n) break;
-    if (seen.has(row.id)) continue;
-    seen.add(row.id);
-    out.push(row);
-  }
-  return out;
 }
 
 export function ExploreRails({
@@ -47,24 +35,25 @@ export function ExploreRails({
   }, []);
 
   const rows = useMemo(() => {
-    const byDistance = [...items].sort((a, b) => a.distanceKm - b.distanceKm);
-    const available = items
-      .filter((r) => (r.live || r.availabilityKnown) && r.spotsTotal > 0)
+    const looking = liveLookingOnly(items);
+    const byDistance = [...looking].sort((a, b) => a.distanceKm - b.distanceKm);
+    const available = looking
+      .filter((r) => honestVacancy(r).kind === "open")
       .sort((a, b) => b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm);
-    const nextMonth = items.filter((r) => !available.slice(0, 6).some((x) => x.id === r.id));
-    const priority = items.filter((r) => r.priority).sort((a, b) => a.distanceKm - b.distanceKm);
+    const nextMonth = looking.filter((r) => honestVacancy(r).kind === "open" && !available.slice(0, 6).some((x) => x.id === r.id));
+    const priority = looking.filter((r) => r.priority).sort((a, b) => a.distanceKm - b.distanceKm);
     const liveNear = take(
-      items.filter((r) => r.live).sort((a, b) => a.distanceKm - b.distanceKm),
+      looking.filter((r) => r.live).sort((a, b) => a.distanceKm - b.distanceKm),
     );
-    const recentHits = recent.filter((r) => items.some((i) => i.id === r.id));
+    const recentHits = recent.filter((r) => looking.some((i) => i.id === r.id) && isLiveLookingCard(r));
     return {
-      first: liveNear.length ? liveNear : recentHits.length ? take(recentHits) : fill(priority, byDistance),
+      first: liveNear.length ? liveNear : recentHits.length ? take(recentHits) : take(priority.length ? priority : byDistance),
       firstTitle: liveNear.length ? "live" : recentHits.length ? "recent" : "priority",
-      available: fill(available, byDistance),
-      nextMonth: fill(nextMonth, byDistance),
-      centre: facilityTypeRailItems(items, "centre"),
-      nursery: facilityTypeRailItems(items, "nursery"),
-      home: facilityTypeRailItems(items, "home"),
+      available: take(available),
+      nextMonth: take(nextMonth),
+      centre: facilityTypeRailItems(looking, "centre"),
+      nursery: facilityTypeRailItems(looking, "nursery"),
+      home: facilityTypeRailItems(looking, "home"),
     };
   }, [items, recent]);
 

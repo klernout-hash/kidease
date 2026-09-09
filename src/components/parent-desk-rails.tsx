@@ -20,6 +20,7 @@ import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { soonestStartDate } from "@/lib/parent-urgency";
 import { ChipButton } from "@/components/chip";
+import { liveLookingOnly } from "@/lib/now-loops";
 
 const AGE_COPY: Record<RailAge, CopyKey> = {
   infant: "infant",
@@ -75,7 +76,8 @@ export function ParentDeskRails({
     };
   }, [defaultAge, bookings, located, radiusKm]);
 
-  const pool = useMemo(() => scoreParentRailItems(items, matchPrefs), [items, matchPrefs]);
+  const looking = useMemo(() => liveLookingOnly(items), [items]);
+  const pool = useMemo(() => scoreParentRailItems(looking, matchPrefs), [looking, matchPrefs]);
 
   const match = useMemo(() => bestMatchRail(pool, matchPrefs), [pool, matchPrefs]);
   const urgency = useMemo(() => urgencyRail(pool, matchPrefs), [pool, matchPrefs]);
@@ -85,8 +87,8 @@ export function ParentDeskRails({
       ...matchPrefs,
       ageGroup: (deferredAge === "school-age" ? "any" : deferredAge) as ParentRailPrefs["ageGroup"],
     };
-    return ageGroupRail(items, deferredAge, agePrefs);
-  }, [deferredAge, items, matchPrefs]);
+    return ageGroupRail(looking, deferredAge, agePrefs);
+  }, [deferredAge, looking, matchPrefs]);
   const facilityRails = useMemo(
     () => ({
       centre: careTypeRail(pool, "centre", matchPrefs),
@@ -97,7 +99,7 @@ export function ParentDeskRails({
   );
 
   useEffect(() => {
-    if (!items.length) {
+    if (!looking.length) {
       setExtraReady(false);
       return;
     }
@@ -111,9 +113,9 @@ export function ParentDeskRails({
       cancelled = true;
       cancelAnimationFrame(id);
     };
-  }, [items.length]);
+  }, [looking.length]);
 
-  if (!items.length) {
+  if (!looking.length) {
     return (
       <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
         <EmptyState title={t("noResults")} body={t("parentRailsEmptyLead")} action={t("emptyFindCare")} actionTo="/search" />

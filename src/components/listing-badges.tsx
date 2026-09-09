@@ -4,7 +4,7 @@ import { PriorityPill } from "@/components/priority-pill";
 import { TrustSignals } from "@/components/trust-badge";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
-import { feeProgramBadgeKey } from "@/lib/licensing";
+import { canShowMatchScore, confirmedFeeProgramBadge, honestVacancy } from "@/lib/now-loops";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -18,10 +18,9 @@ export function ListingBadges({
   compact?: boolean;
 }) {
   const { t, locale } = useCopy();
-  const feeBadge = feeProgramBadgeKey(item.province);
-  const spots = (item.spotsInfant ?? 0) + (item.spotsToddler ?? 0) + (item.spotsPreschool ?? 0);
+  const feeBadge = confirmedFeeProgramBadge(item);
+  const vacancy = honestVacancy(item);
   const live = Boolean(item.live);
-  const known = Boolean(item.availabilityKnown);
   const freshness = vacancyLine(item, t, locale);
   const photosAge = photoLine(item, t, locale);
   const pill = compact
@@ -46,20 +45,16 @@ export function ListingBadges({
       {live ? (
         <span className={cn(pill, "bg-ok text-primary-fg")}>{t("live")}</span>
       ) : null}
-      {known ? (
-        <span className={cn(pill, spots > 0 ? "" : "bg-fg/80 text-surface")}>
-          {spots > 0 ? `${spots} ${t("spots")}` : t("waitlist")}
-        </span>
-      ) : (
-        <span className={cn(pill, "text-muted")}>{t("availUnknown")}</span>
-      )}
-      {freshness.kind !== "unknown" && freshness.text ? (
+      <span className={cn(pill, vacancy.kind === "open" ? "" : "text-muted", vacancy.kind === "waitlist" && "bg-fg/80 text-surface")}>
+        {vacancy.kind === "open" ? `${vacancy.spots} ${t("spots")}` : t(vacancy.labelKey)}
+      </span>
+      {(vacancy.kind === "open" || vacancy.kind === "waitlist") && freshness.kind !== "unknown" && freshness.text ? (
         <span className={cn(pill, "text-muted")}>{freshness.text}</span>
       ) : null}
       {photosAge.kind !== "unknown" && photosAge.text ? (
         <span className={cn(pill, "text-muted")}>{photosAge.text}</span>
       ) : null}
-      <MatchCue score={item.matchScore} compact={compact} />
+      <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact={compact} />
       <UrgencyCue score={item.urgencyScore} compact={compact} />
     </div>
   );

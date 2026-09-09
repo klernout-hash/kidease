@@ -43,6 +43,18 @@ import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
+import { SearchAgeGate } from "@/components/search-age-gate";
+import { capturePostHogEvent } from "@/lib/posthog";
+import {
+  honestVacancy,
+  isSearchAge,
+  isSearchStart,
+  searchFiltersReady,
+  splitSearchResults,
+  startWindowToDate,
+  type SearchAge,
+  type SearchStart,
+} from "@/lib/now-loops";
 import {
   FACILITY_TYPES,
   isCareType,
@@ -102,6 +114,7 @@ export const Route = createFileRoute("/search")({
       to?: string;
       sort?: SortKey;
       age?: RailAge;
+      start?: SearchStart;
       care?: CareType;
       favorites?: "1";
     } = { ...fields };
@@ -114,6 +127,7 @@ export const Route = createFileRoute("/search")({
       out.sort = sort as SortKey;
     }
     if (typeof s.age === "string" && isRailAge(s.age)) out.age = s.age;
+    if (typeof s.start === "string" && isSearchStart(s.start)) out.start = s.start;
     if (typeof s.care === "string" && isCareType(s.care)) out.care = s.care;
     else if (typeof s.facility === "string" && isFacilityType(s.facility)) out.care = s.facility;
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
@@ -214,7 +228,10 @@ function SearchPage() {
     }
     if (incoming.care) setCareType(incoming.care);
     if (incoming.favorites === "1") setFavoritesOnly(true);
-  }, [incoming.sort, incoming.age, incoming.care, incoming.favorites, setSort, setAgeGroup]);
+    if (incoming.start === "now" || incoming.start === "this-month" || incoming.start === "next-month") {
+      setNeedBy(startWindowToDate(incoming.start));
+    }
+  }, [incoming.sort, incoming.age, incoming.care, incoming.favorites, incoming.start, setSort, setAgeGroup]);
 
   useEffect(() => {
     setNameQuery(incoming.name ?? "");
@@ -402,6 +419,23 @@ function SearchPage() {
         to: fields.to,
         sort: incoming.sort,
         age: incoming.age,
+        start: incoming.start,
+        care: incoming.care,
+        favorites: incoming.favorites,
+      },
+    });
+  }
+
+  function writeNowLoopSearch(next: { age?: SearchAge; start?: SearchStart }) {
+    void navigate({
+      search: {
+        q: incoming.q ?? query,
+        name: incoming.name,
+        from: incoming.from,
+        to: incoming.to,
+        sort: incoming.sort,
+        age: next.age ?? incoming.age,
+        start: next.start ?? incoming.start,
         care: incoming.care,
         favorites: incoming.favorites,
       },
@@ -569,8 +603,8 @@ function SearchPage() {
   const list = useMemo(() => {
     let rows = items ?? [];
     if (liveOnly) rows = rows.filter((r) => r.live);
-    if (avail === "open") rows = rows.filter((r) => r.availabilityKnown && r.spotsTotal > 0);
-    if (avail === "waitlist") rows = rows.filter((r) => r.availabilityKnown && r.spotsTotal <= 0);
+    if (avail === "open") rows = rows.filter((r) => honestVacancy(r).kind === "open");
+    if (avail === "waitlist") rows = rows.filter((r) => honestVacancy(r).kind === "waitlist");
     if (avail === "unknown") rows = rows.filter((r) => !r.availabilityKnown);
     if (ten)
       rows = rows.filter(
@@ -616,6 +650,30 @@ function SearchPage() {
     schoolAgeOnly,
     nameQuery,
   ]);
+  const searchAge = isSearchAge(incoming.age) ? incoming.age : undefined;
+  const searchStart = isSearchStart(incoming.start) ? incoming.start : undefined;
+  const gated = searchFiltersReady(searchAge, searchStart);
+  const split = useMemo(() => {
+    if (!gated || !searchAge || !searchStart) return { primary: [] as Card[], ageUnknown: [] as Card[] };
+    return splitSearchResults(list, searchAge, searchStart);
+  }, [gated, list, searchAge, searchStart]);
+  const shownList = gated ? split.primary : [];
+  const [ageUnknownOpen, setAgeUnknownOpen] = useState(false);
+  useEffect(() => {
+    if (!gated || !searchAge || !searchStart) return;
+    capturePostHogEvent("search_filters_applied", {
+      age_band: searchAge,
+      start: searchStart,
+      has_place: Boolean((incoming.q || query || origin.label || "").trim()),
+    });
+  }, [gated, searchAge, searchStart, incoming.q, query, origin.label]);
+  useEffect(() => {
+    if (!gated || items === null) return;
+    capturePostHogEvent("search_results_shown", {
+      n: shownList.length,
+      n_age_known: shownList.length,
+    });
+  }, [gated, items, shownList.length]);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +
@@ -887,9 +945,11 @@ function SearchPage() {
                     ? (fabric.live > 0 ? t("searchLiveCount") : t("searchLiveEmptyCount"))
                         .replace("{live}", String(fabric.live))
                         .replace("{n}", String(catalog.length))
-                    : list.length === 1
+                    : !gated
+                      ? t("searchNeedAgeStart")
+                    : shownList.length === 1
                       ? t("searchResultCountOne")
-                      : t("searchResultCount").replace("{n}", String(list.length))}
+                      : t("searchResultCount").replace("{n}", String(shownList.length))}
                   {DOT}
                   {shownRadius} {u}
                   {DOT}
@@ -987,6 +1047,12 @@ function SearchPage() {
           }}
           onLocate={() => void geo()}
           onSubmit={() => void applyQuery()}
+        />
+        <SearchAgeGate
+          age={searchAge ?? ""}
+          start={searchStart ?? ""}
+          onAge={(age) => writeNowLoopSearch({ age })}
+          onStart={(start) => writeNowLoopSearch({ start })}
         />
         <DualAnchorBar
           mode={anchorMode}
@@ -1205,7 +1271,7 @@ function SearchPage() {
                 <div className="h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
-                      items={list}
+                      items={shownList}
                       origin={mapOrigin}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
                       radiusKm={radiusKm}
@@ -1224,7 +1290,7 @@ function SearchPage() {
                     />
                   </Suspense>
                 </div>
-                {items !== null && list.length === 0 ? (
+                {gated && items !== null && shownList.length === 0 ? (
                   <div className="rounded-xl bg-surface ring-1 ring-border">
                     <EmptyState
                       title={emptyState.title}
@@ -1239,6 +1305,10 @@ function SearchPage() {
                 ) : null}
               </div>
             ) : null
+          ) : !gated ? (
+            <div className="mt-6 rounded-xl bg-surface ring-1 ring-border">
+              <EmptyState title={t("searchAgeGateTitle")} body={t("searchNeedAgeStart")} />
+            </div>
           ) : items === null ? (
             <div className="mt-4 space-y-8" aria-busy="true" aria-label={t("searchCountLoading")}>
               {Array.from({ length: 2 }).map((_, rail) => (
@@ -1256,7 +1326,7 @@ function SearchPage() {
                 </div>
               ))}
             </div>
-          ) : list.length === 0 ? (
+          ) : shownList.length === 0 ? (
             <div className="mt-6 rounded-xl bg-surface ring-1 ring-border">
               <EmptyState
                 title={emptyState.title}
@@ -1284,14 +1354,34 @@ function SearchPage() {
                 {sort === "match" ? t("sortMatchLead") : t("sortUrgencyLead")}
               </p>
               <div className="ke-listings mt-4">
-                {list.map((item, i) => (
+                {shownList.map((item, i) => (
                   <DaycareCard key={item.id} item={item} eager={i < 4} />
                 ))}
               </div>
             </section>
           ) : (
-            <ExploreRails items={list} onHover={setActive} />
+            <ExploreRails items={shownList} onHover={setActive} />
           )}
+          {gated && split.ageUnknown.length ? (
+            <div className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">
+              <p className="font-semibold">{t("ageNotConfirmed")}</p>
+              <p className="mt-1 text-sm text-muted">{t("ageNotConfirmedLead")}</p>
+              <button
+                type="button"
+                className="mt-3 text-sm font-medium text-primary"
+                onClick={() => setAgeUnknownOpen((v) => !v)}
+              >
+                {ageUnknownOpen ? t("ageNotConfirmedHide") : t("ageNotConfirmedOpen")}
+              </button>
+              {ageUnknownOpen ? (
+                <div className="ke-listings mt-4">
+                  {split.ageUnknown.map((item) => (
+                    <DaycareCard key={item.id} item={item} />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
       <Suspense fallback={null}>
