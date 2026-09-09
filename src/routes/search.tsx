@@ -1099,7 +1099,7 @@ function SearchPage() {
             <button
               type="button"
               onClick={() => setLiveOnly(false)}
-              data-listing-count={items !== null ? shownList.length : undefined}
+              data-listing-count={items !== null ? resultCount : undefined}
               className={cn(
                 "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
                 !liveOnly ? "bg-fg text-bg" : "text-muted",
