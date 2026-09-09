@@ -242,7 +242,7 @@ test("age chips 1–4 set the age-first search gate; facility chips do not", () 
   assert.equal(resolvedExploreCategory({ cat: "home", age: "infant" }), "home");
 });
 
-test("zero-count chips hide without emptying All; counts are per tag not exclusive", () => {
+test("zero-count tags stay off the page empty-state; All still includes unknown ages", () => {
   const rows = [
     listing({ amenities: "licensed,home", agesKnown: true, ageMinMonths: 0, ageMaxMonths: 18 }),
     listing({ amenities: "licensed", agesKnown: false, ageMinMonths: 0, ageMaxMonths: 0 }),
