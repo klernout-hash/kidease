@@ -34,6 +34,7 @@ export type LiveLookingInput = Pick<
   | "amenities"
   | "photos"
   | "province"
+  | "feeConfirmed"
 >;
 
 export type VacancyHonestyInput = Pick<
@@ -82,21 +83,29 @@ export function hasPlaceForSearch(q?: string | null, label?: string | null, loca
 export function hasConfirmedFeeLine(
   d: Pick<
     Daycare,
-    "infantMonthly" | "toddlerMonthly" | "preschoolMonthly" | "partTimeMonthly" | "amenities"
+    | "infantMonthly"
+    | "toddlerMonthly"
+    | "preschoolMonthly"
+    | "partTimeMonthly"
+    | "amenities"
+    | "feeConfirmed"
   >,
 ): boolean {
   if (hasListedFees(d)) return true;
+  if (!d.feeConfirmed) return false;
   const amenities = d.amenities || "";
   return hasAmenity(amenities, "ten-a-day") || hasAmenity(amenities, "funded");
 }
 
 /**
  * $10-a-day / $15-a-day / Québec reduced badge only when this centre
- * has a confirmed program amenity. Québec is never stamped $10-a-day.
+ * confirmed the program. Harvest amenities and province defaults are not enough.
+ * Québec is never stamped $10-a-day.
  */
 export function confirmedFeeProgramBadge(
-  d: Pick<Daycare, "province" | "amenities">,
+  d: Pick<Daycare, "province" | "amenities" | "feeConfirmed">,
 ): "badgeTen" | "badgeFifteen" | "badgeReducedQc" | null {
+  if (!d.feeConfirmed) return null;
   const amenities = d.amenities || "";
   const ten = hasAmenity(amenities, "ten-a-day");
   const funded = hasAmenity(amenities, "funded");

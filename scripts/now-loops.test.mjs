@@ -45,9 +45,12 @@ function isRealListingPhoto(p) {
   return true;
 }
 function hasConfirmedFeeLine(d) {
-  return hasListedFees(d) || hasAmenity(d.amenities, "ten-a-day") || hasAmenity(d.amenities, "funded");
+  if (hasListedFees(d)) return true;
+  if (!d.feeConfirmed) return false;
+  return hasAmenity(d.amenities, "ten-a-day") || hasAmenity(d.amenities, "funded");
 }
 function confirmedFeeProgramBadge(d) {
+  if (!d.feeConfirmed) return null;
   const ten = hasAmenity(d.amenities, "ten-a-day");
   const funded = hasAmenity(d.amenities, "funded");
   if (!ten && !funded) return null;
@@ -241,14 +244,16 @@ test("province-typical $10-a-day is not a confirmed fee line", () => {
     infantMonthly: null,
     toddlerMonthly: null,
     preschoolMonthly: null,
-    amenities: "",
+    amenities: "ten-a-day,funded",
+    feeConfirmed: false,
     province: "MB",
   });
   const qcGuess = listing({
     infantMonthly: null,
     toddlerMonthly: null,
     preschoolMonthly: null,
-    amenities: "",
+    amenities: "funded",
+    feeConfirmed: false,
     province: "QC",
   });
   const confirmed = listing({
@@ -256,6 +261,7 @@ test("province-typical $10-a-day is not a confirmed fee line", () => {
     toddlerMonthly: null,
     preschoolMonthly: null,
     amenities: "ten-a-day",
+    feeConfirmed: true,
     province: "MB",
   });
   assert.equal(hasConfirmedFeeLine(mbGuess), false);

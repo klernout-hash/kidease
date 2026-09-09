@@ -4,7 +4,7 @@ import { confirmedFeeProgramBadge } from "@/lib/now-loops";
 import { isCatalogueMatchedBadge, licenseBadge, type TrustCopyKey } from "@/lib/trust";
 
 /** One pill max, Airbnb-style top-left. Licensed only when we actually know. */
-export function listingPill(item: Pick<DaycareCard, "province" | "live" | "priority" | "licenseStatus" | "registryMatchState" | "amenities">): {
+export function listingPill(item: Pick<DaycareCard, "province" | "live" | "priority" | "licenseStatus" | "registryMatchState" | "amenities" | "feeConfirmed">): {
   labelKey: "badgeTen" | "badgeFifteen" | "badgeReducedQc" | "live" | TrustCopyKey;
 } | null {
   const fee = confirmedFeeProgramBadge(item);
