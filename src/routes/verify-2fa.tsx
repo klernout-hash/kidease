@@ -5,7 +5,15 @@ import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { RedirectToSignIn } from "@/lib/auth/gates";
+import { authClient } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import {
+  decideVerify2faSessionGate,
+  mapAuthSessionUser,
+  VERIFY_2FA_SESSION_GRACE_MS,
+  verify2faSearchNext,
+} from "@/lib/auth/verify-2fa-session";
+import { waitForSignedInSession } from "@/lib/auth/session-settle";
 import { getTwoFactorStatus, startTwoFactor, verifyTwoFactor } from "@/lib/server/two-factor";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import {
@@ -19,27 +27,66 @@ import { isNative } from "@/lib/native";
 import { yieldToMain } from "@/lib/yield-main";
 
 export const Route = createFileRoute("/verify-2fa")({
-  validateSearch: (s: Record<string, unknown>) => {
-    const raw = typeof s.next === "string" ? s.next : "";
-    const next = sanitizePostLoginNext(raw) ?? (raw.startsWith("/") && !raw.startsWith("//") ? raw : "/parent");
-    return { next: sanitizePostLoginNext(next) ?? "/parent" };
-  },
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: verify2faSearchNext(s.next),
+  }),
   component: VerifyTwoFactorPage,
 });
 
-function VerifyTwoFactorPage() {
+/**
+ * After Google OAuth, `useSession()` can report not-pending + null for a tick
+ * (cookie lag). Wait out that grace and poll get-session instead of kicking
+ * to /login, which remounts this screen and looks like a 2FA glitch.
+ */
+function useVerify2faSession() {
   const { user, isPending } = useCurrentUserState();
-  const { next } = Route.useSearch();
-  const dest = sanitizePostLoginNext(next) ?? "/parent";
+  const [graceElapsed, setGraceElapsed] = useState(false);
+  const [polledUser, setPolledUser] = useState<typeof user>(null);
 
-  if (isPending) {
+  useEffect(() => {
+    const id = window.setTimeout(() => setGraceElapsed(true), VERIFY_2FA_SESSION_GRACE_MS);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    if (user?.id) return;
+    let cancelled = false;
+    void waitForSignedInSession(() => authClient.getSession()).then((session) => {
+      if (cancelled) return;
+      const mapped = mapAuthSessionUser(session?.data?.user ?? null);
+      if (mapped) setPolledUser(mapped);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const resolved = user ?? polledUser;
+  return {
+    user: resolved,
+    phase: decideVerify2faSessionGate({
+      hasUser: Boolean(resolved),
+      isPending,
+      graceElapsed,
+    }),
+  };
+}
+
+function VerifyTwoFactorPage() {
+  const { user, phase } = useVerify2faSession();
+  const { next } = Route.useSearch();
+  const dest = verify2faSearchNext(next);
+
+  if (phase === "wait") {
     return (
       <ShellLite>
-        <DeskSkeleton />
+        <div data-ke="verify-2fa-session-wait">
+          <DeskSkeleton />
+        </div>
       </ShellLite>
     );
   }
-  if (!user) return <RedirectToSignIn />;
+  if (phase === "signed_out" || !user) return <RedirectToSignIn />;
 
   return (
     <ShellLite>
