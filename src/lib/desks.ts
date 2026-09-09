@@ -337,6 +337,16 @@ export function writeStickyDesk(desk: DeskKey): void {
   }
 }
 
+/**
+ * Full document navigation to the Admin desk. SPA Link hops skip Cloudflare
+ * Access on `/admin` and can bounce via beforeLoad without painting the desk.
+ */
+export function openAdminDesk(): void {
+  writeStickyDesk("admin");
+  if (typeof window === "undefined") return;
+  window.location.assign(DESK_PATH.admin);
+}
+
 export function clearStickyDesk(): void {
   if (typeof window === "undefined") return;
   try {

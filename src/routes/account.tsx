@@ -5,7 +5,8 @@ import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
-import { DESK_LABEL, DESK_PATH, deskQueryValue, parseDeskQuery, type DeskKey } from "@/lib/desks";
+import { AdminDeskLink } from "@/components/admin-desk-link";
+import { DESK_LABEL, DESK_PATH, deskQueryValue, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
 import { parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
         active="account"
         onSelect={(id) => {
           if (id === "account") return;
-          void navigate({ to: "/admin" });
+          openAdminDesk();
         }}
       >
         {children}
@@ -254,9 +255,13 @@ function ProfilePane() {
     <AccountDeskFrame desk={desk}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
         {desk ? (
-          <Link to={DESK_PATH[desk]} className="mb-3 inline-block text-sm font-medium text-primary">
-            {backCopy}
-          </Link>
+          desk === "admin" ? (
+            <AdminDeskLink className="mb-3 inline-block text-sm font-medium text-primary">{backCopy}</AdminDeskLink>
+          ) : (
+            <Link to={DESK_PATH[desk]} className="mb-3 inline-block text-sm font-medium text-primary">
+              {backCopy}
+            </Link>
+          )
         ) : null}
         {desk ? (
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">

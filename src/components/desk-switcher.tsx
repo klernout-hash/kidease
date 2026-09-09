@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, MessageCircle } from "lucide-react";
+import { AdminDeskLink } from "@/components/admin-desk-link";
 import {
   DESK_PATH,
   headerDesks,
@@ -43,16 +44,29 @@ function DeskPills({
     <>
       {desks.map((desk) => {
         const on = current === desk;
+        const className = cn(
+          "inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium leading-none",
+          on ? "bg-primary text-primary-fg" : "text-muted hover:text-fg",
+        );
+        if (desk === "admin") {
+          return (
+            <AdminDeskLink
+              key={desk}
+              onClick={() => onPick(desk)}
+              aria-current={on ? "page" : undefined}
+              className={className}
+            >
+              {deskLabel(t, desk)}
+            </AdminDeskLink>
+          );
+        }
         return (
           <Link
             key={desk}
             to={DESK_PATH[desk]}
             onClick={() => onPick(desk)}
             aria-current={on ? "page" : undefined}
-            className={cn(
-              "inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium leading-none",
-              on ? "bg-primary text-primary-fg" : "text-muted hover:text-fg",
-            )}
+            className={className}
           >
             {deskLabel(t, desk)}
           </Link>
@@ -144,20 +158,35 @@ function DeskMenu({
         >
           {desks.map((desk) => {
             const on = current === desk;
+            const className = cn(
+              "block px-3 py-2.5 text-sm hover:bg-surface-2",
+              on ? "font-semibold text-fg" : "text-fg",
+            );
+            const onSelect = () => {
+              onPick(desk);
+              setOpen(false);
+            };
+            if (desk === "admin") {
+              return (
+                <AdminDeskLink
+                  key={desk}
+                  role="menuitem"
+                  onClick={onSelect}
+                  aria-current={on ? "page" : undefined}
+                  className={className}
+                >
+                  {deskLabel(t, desk)}
+                </AdminDeskLink>
+              );
+            }
             return (
               <Link
                 key={desk}
                 role="menuitem"
                 to={DESK_PATH[desk]}
-                onClick={() => {
-                  onPick(desk);
-                  setOpen(false);
-                }}
+                onClick={onSelect}
                 aria-current={on ? "page" : undefined}
-                className={cn(
-                  "block px-3 py-2.5 text-sm hover:bg-surface-2",
-                  on ? "font-semibold text-fg" : "text-fg",
-                )}
+                className={className}
               >
                 {deskLabel(t, desk)}
               </Link>

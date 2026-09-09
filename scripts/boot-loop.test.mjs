@@ -124,7 +124,11 @@ describe("home / session / splash cannot stay pending forever", () => {
 
   it("admin beforeLoad timeout goes to login, not home, so desk bounce cannot loop", () => {
     const gate = src("src/lib/server/admin-route.ts");
+    const dest = src("src/lib/admin-desk-gate.ts");
+    assert.match(gate, /adminDeskGateRedirect/);
     assert.match(gate, /admin-gate-timeout/);
-    assert.match(gate, /Unauthorized.*admin-gate-timeout|admin-gate-timeout.*Unauthorized/s);
+    assert.match(dest, /Unauthorized/);
+    assert.match(dest, /admin-gate-timeout/);
+    assert.match(dest, /Two-factor verification required/);
   });
 });

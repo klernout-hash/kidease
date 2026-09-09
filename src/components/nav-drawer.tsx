@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
+import { AdminDeskLink } from "@/components/admin-desk-link";
 import { BrandMark } from "@/components/brand-mark";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { LanguageSelect } from "@/components/language-select";
@@ -139,13 +140,12 @@ export function NavDrawer({
                 {accountLabel}
               </Link>
               {isAdmin ? (
-                <Link
-                  to="/admin"
+                <AdminDeskLink
                   onClick={onClose}
                   className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
                 >
                   Admin
-                </Link>
+                </AdminDeskLink>
               ) : null}
               <button
                 type="button"

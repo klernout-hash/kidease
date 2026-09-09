@@ -201,10 +201,15 @@ export const getMyDesks = createServerFn({ method: "GET" })
     }
   });
 
-/** Document GET /admin* — session + profiles.role = admin. Not a desk hint. */
+/**
+ * Document GET /admin* — session + profiles.role = admin. Not a desk hint.
+ * 2FA stays on TwoFactorGate / requireAdmin (API + mutations). Requiring
+ * the device cookie here dumped Kyle's Admin click to `/`.
+ */
 export const assertAdminDesk = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    await requireAdmin(context.userId);
+    const access = await resolveAdminAccess(context.userId);
+    if (!access.ok) throw new Error("Not authorized");
     return { ok: true as const };
   });
