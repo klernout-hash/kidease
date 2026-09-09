@@ -109,6 +109,9 @@ test("free landing page keeps claim free and never invents $10-a-day fees", () =
   const explainer = src("src/components/free-listing-share.tsx");
   assert.match(explainer, /does not auto-post|freePageShareHint/);
   assert.match(explainer, /listingMailtoHref/);
+  const provider = src("src/routes/provider.tsx");
+  assert.match(provider, /CompletenessChecklist/);
+  assert.match(provider, /claimSuccessTitle/);
 });
 
 test("JSON-LD and OG stay LocalBusiness/ChildCare without KidEase plan prices", () => {

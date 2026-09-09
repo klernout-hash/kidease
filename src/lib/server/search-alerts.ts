@@ -1,13 +1,15 @@
 /**
- * Geofence match query + cron/queue stub for saved-search alerts.
+ * Geofence match query + hourly saved-search alerts.
  *
  * Uses the same PostGIS ST_DWithin + st_makepoint(lng, lat) pattern as nearby.ts.
  * Origins come from saved_searches (the parent's live search). Never invent lat/lng.
  *
- * Delivery:
- *   - in-app notices when search_alert_prefs.in_app_enabled
- *   - email via Resend/SendGrid when those keys exist; otherwise an honest stub
- *   - does NOT send FCM / APNs. FEATURE_PUSH stays off-by-default.
+ * Delivery now:
+ *   - in-app family-desk notices
+ *   - email via Resend/SendGrid when keyed (else honest stub). List-Unsubscribe. Free.
+ * Delivery later (wired no-op until flags + keys):
+ *   - sendPushNotification when FEATURE_PUSH is armed + a native token exists
+ *   - sendSms when FEATURE_SMS + CASL. www never prompts for push.
  */
 import { getSql, dbSource, type Sql } from "@/lib/db";
 import { lookupUser } from "@/lib/server/notify";
@@ -28,6 +30,19 @@ import {
 } from "@/lib/saved-search";
 import { nid } from "@/lib/utils";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import {
+  ALERT_TZ,
+  alertFacilityType,
+  canSendDigestEmail,
+  honestAlertCopy,
+  planSearchAlertEvents,
+  shouldNotifySearchAlert,
+  underPushSmsDailyCap,
+  winnipegDayKey,
+  type PlannedAlertEvent,
+} from "@/lib/search-alert-policy";
+import { sendPushNotification } from "@/lib/server/push.server";
+import { sendSms } from "@/lib/server/sms";
 
 type SavedSearchJobRow = {
   id: string;
@@ -279,6 +294,10 @@ export async function findMatchingListings(
   return overlaid.filter((row) => listingMatchesSavedSearch(row, { ageBand: band, filters }));
 }
 
+function amenityString(row: { amenities?: string | null }) {
+  return row.amenities || "";
+}
+
 export async function findAlertCandidatesForSearch(search: {
   centerLat: number;
   centerLng: number;
@@ -307,20 +326,73 @@ export async function findAlertCandidatesForSearch(search: {
   }));
 }
 
-type PrefRow = { email_enabled: number | boolean; in_app_enabled: number | boolean };
+type PrefRow = {
+  email_enabled: number | boolean;
+  in_app_enabled: number | boolean;
+  last_email_at: string | Date | null;
+};
 
 function prefOn(value: number | boolean | undefined, fallback = true) {
   if (value == null) return fallback;
   return value !== 0 && value !== false;
 }
 
+type DigestBucket = {
+  userId: string;
+  savedSearchId: string;
+  searchName: string;
+  originLabel: string;
+  events: Array<PlannedAlertEvent & { ageBand: string }>;
+};
+
+async function countChannelSendsToday(
+  sql: Sql,
+  userId: string,
+  savedSearchId: string,
+  channel: "push" | "sms",
+  now: Date,
+) {
+  const day = winnipegDayKey(now);
+  const rows = await sql<{ n: number }>`
+    select count(*)::int as n
+    from search_alert_channel_sends
+    where user_id = ${userId}
+      and saved_search_id = ${savedSearchId}
+      and channel = ${channel}
+      and to_char(created_at at time zone ${ALERT_TZ}, 'YYYY-MM-DD') = ${day}
+  `.catch(() => [{ n: 0 }]);
+  return Number(rows[0]?.n) || 0;
+}
+
+async function recordChannelSend(
+  sql: Sql,
+  input: {
+    userId: string;
+    savedSearchId: string;
+    daycareId: string;
+    kind: string;
+    channel: "email" | "in_app" | "push" | "sms";
+  },
+) {
+  await sql`
+    insert into search_alert_channel_sends (
+      id, user_id, saved_search_id, daycare_id, kind, channel
+    ) values (
+      ${nid("scs")}, ${input.userId}, ${input.savedSearchId}, ${input.daycareId},
+      ${input.kind}, ${input.channel}
+    )
+  `.catch(() => undefined);
+}
+
 /**
- * Cron / queue stub (also the Inngest `search-alerts-hourly` step).
- * Logs matching candidates. First pass baselines (no notify).
- * Later passes emit in-app notices and attempt email. Never calls FCM.
+ * Hourly job (also the Inngest `search-alerts-hourly` step).
+ * First pass baselines (notified=0). Later passes emit in-app + digest email.
+ * sendPush / sendSms are called and no-op while FEATURE_PUSH / FEATURE_SMS are off.
  */
-export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
+export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date }) {
   const dryRun = Boolean(opts?.dryRun);
+  const now = opts?.now ?? new Date();
+  const nowMs = now.getTime();
   const sql = await getSql();
   const searches = await sql<SavedSearchJobRow>`
     select id, user_id, name, center_lat, center_lng, center_label, radius_km,
@@ -337,7 +409,17 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
   let skippedInvalidOrigin = 0;
   let emailSent = 0;
   let emailStubbed = 0;
-  const kinds: Record<SearchAlertKind, number> = { new_centre: 0, vacancy_reconfirmed: 0, waitlist_pulse: 0 };
+  let emailHeldQuiet = 0;
+  let pushSkipped = 0;
+  let smsSkipped = 0;
+  const kinds: Record<SearchAlertKind, number> = {
+    new_centre: 0,
+    vacancy_reconfirmed: 0,
+    waitlist_pulse: 0,
+    request_reply: 0,
+  };
+  const digestByUser = new Map<string, DigestBucket[]>();
+  const lastEmailByUser = new Map<string, string | Date | null>();
 
   for (const search of searches) {
     const lat = Number(search.center_lat);
@@ -359,56 +441,53 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
     const baseline = !search.last_checked_at;
     const since = search.last_checked_at ? Date.parse(iso(search.last_checked_at) || "") : 0;
 
-    const seen = await sql<{ daycare_id: string; kind: string; vacancy_updated_at: string | Date | null }>`
-      select daycare_id, kind, vacancy_updated_at
+    const seenRows = await sql<{
+      daycare_id: string;
+      kind: string;
+      vacancy_updated_at: string | Date | null;
+      notified: number | boolean | null;
+      seen_at: string | Date | null;
+    }>`
+      select daycare_id, kind, vacancy_updated_at, notified, seen_at
       from search_alert_candidates
       where saved_search_id = ${search.id}
     `.catch(() => []);
-    const seenNew = new Set(seen.filter((r) => r.kind === "new_centre").map((r) => r.daycare_id));
+    const seenNew = new Set(seenRows.filter((r) => r.kind === "new_centre").map((r) => r.daycare_id));
     const seenVacancy = new Map(
-      seen.filter((r) => r.kind === "vacancy_reconfirmed").map((r) => [r.daycare_id, iso(r.vacancy_updated_at)]),
+      seenRows.filter((r) => r.kind === "vacancy_reconfirmed").map((r) => [r.daycare_id, iso(r.vacancy_updated_at)]),
     );
-
-    const events: Array<{
-      daycareId: string;
-      slug: string;
-      name: string;
-      city: string;
-      kind: SearchAlertKind;
-      distanceKm: number;
-      vacancyAt: string | null;
-    }> = [];
-
-    for (const hit of matches) {
-      if (!seenNew.has(hit.id)) {
-        events.push({
-          daycareId: hit.id,
-          slug: hit.slug,
-          name: hit.name,
-          city: hit.city,
-          kind: "new_centre",
-          distanceKm: hit.distanceKm,
-          vacancyAt: hit.lastVacancyUpdatedAt ?? null,
-        });
-      }
-      const vacancyAt = hit.lastVacancyUpdatedAt ?? null;
-      if (vacancyAt) {
-        const prev = seenVacancy.get(hit.id);
-        const vacancyTs = Date.parse(vacancyAt);
-        const isReconfirm = !baseline && Number.isFinite(vacancyTs) && vacancyTs > since && vacancyAt !== prev;
-        if (isReconfirm) {
-          events.push({
-            daycareId: hit.id,
-            slug: hit.slug,
-            name: hit.name,
-            city: hit.city,
-            kind: "vacancy_reconfirmed",
-            distanceKm: hit.distanceKm,
-            vacancyAt,
-          });
-        }
-      }
+    const lastNotifiedAt = new Map<string, number>();
+    for (const row of seenRows) {
+      if (row.kind !== "new_centre" && row.kind !== "vacancy_reconfirmed") continue;
+      if (row.notified !== 1 && row.notified !== true) continue;
+      const ts = Date.parse(iso(row.seen_at) || "");
+      if (!Number.isFinite(ts)) continue;
+      lastNotifiedAt.set(`${row.daycare_id}:${row.kind}`, ts);
     }
+
+    const events = planSearchAlertEvents({
+      baseline,
+      sinceMs: Number.isFinite(since) ? since : 0,
+      nowMs,
+      matches: matches.map((hit) => ({
+        id: hit.id,
+        slug: hit.slug,
+        name: hit.name,
+        city: hit.city,
+        live: hit.live,
+        claimed: hit.claimed,
+        agesKnown: hit.agesKnown,
+        ageMinMonths: hit.ageMinMonths,
+        ageMaxMonths: hit.ageMaxMonths,
+        lastVacancyUpdatedAt: hit.lastVacancyUpdatedAt ?? null,
+        createdAt: "createdAt" in hit ? (hit.createdAt as string | null) : null,
+        distanceKm: hit.distanceKm,
+        amenities: amenityString(hit),
+        visibility: "visibility" in hit ? ((hit as { visibility?: string | null }).visibility ?? null) : null,
+        isTest: "isTest" in hit ? (hit as { isTest?: boolean | number | null }).isTest : null,
+      })),
+      seen: { seenNew, seenVacancy, lastNotifiedAt },
+    });
 
     for (const ev of events) {
       logged += 1;
@@ -416,10 +495,10 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
       const id = nid("sac");
       await sql`
         insert into search_alert_candidates (
-          id, saved_search_id, daycare_id, kind, distance_km, vacancy_updated_at, notified, seen_at
+          id, saved_search_id, daycare_id, kind, distance_km, vacancy_updated_at, notified, email_notified, seen_at
         ) values (
           ${id}, ${search.id}, ${ev.daycareId}, ${ev.kind}, ${ev.distanceKm},
-          ${ev.vacancyAt}, ${baseline || dryRun ? 0 : 1}, now()
+          ${ev.vacancyAt}, ${baseline || dryRun ? 0 : 1}, 0, now()
         )
         on conflict (saved_search_id, daycare_id, kind) do update set
           distance_km = excluded.distance_km,
@@ -438,49 +517,119 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
       });
     }
 
-    if (!baseline && !dryRun && events.length) {
+    if (shouldNotifySearchAlert(baseline, dryRun, events.length)) {
       const prefs = await sql<PrefRow>`
-        select email_enabled, in_app_enabled from search_alert_prefs where user_id = ${search.user_id} limit 1
+        select email_enabled, in_app_enabled, last_email_at
+        from search_alert_prefs where user_id = ${search.user_id} limit 1
       `.catch(() => [] as PrefRow[]);
       const emailOn = prefOn(prefs[0]?.email_enabled);
       const inAppOn = prefOn(prefs[0]?.in_app_enabled);
+      lastEmailByUser.set(search.user_id, lastEmailByUser.get(search.user_id) ?? prefs[0]?.last_email_at ?? null);
+
+      const ageBand = isAgeBand(search.age_band) ? search.age_band : "any";
       if (inAppOn) {
         for (const ev of events) {
-          const title =
-            ev.kind === "vacancy_reconfirmed"
-              ? `${ev.name} reconfirmed open spots`
-              : `New centre near ${search.center_label.split(",")[0] || "you"}: ${ev.name}`;
-          const body = `${ev.city} · ${ev.distanceKm} km · ${search.name}`;
+          const copy = honestAlertCopy({
+            kind: ev.kind,
+            name: ev.name,
+            distanceKm: ev.distanceKm,
+            ageBand,
+            originLabel: search.center_label,
+            facilityType: ev.facilityType,
+          });
           await sql`
-            insert into search_alert_notices (id, user_id, saved_search_id, daycare_id, kind, title, body)
-            values (${nid("san")}, ${search.user_id}, ${search.id}, ${ev.daycareId}, ${ev.kind}, ${title}, ${body})
+            insert into search_alert_notices (id, user_id, saved_search_id, daycare_id, kind, title, body, link_path)
+            values (
+              ${nid("san")}, ${search.user_id}, ${search.id}, ${ev.daycareId}, ${ev.kind},
+              ${copy.title}, ${copy.body}, ${`/daycare/${ev.slug}`}
+            )
           `.catch(() => undefined);
+          await recordChannelSend(sql, {
+            userId: search.user_id,
+            savedSearchId: search.id,
+            daycareId: ev.daycareId,
+            kind: ev.kind,
+            channel: "in_app",
+          });
         }
       }
+
       if (emailOn) {
-        const { evaluateCaslSend } = await import("@/lib/server/casl-consent");
-        const actor = await lookupUser(search.user_id);
-        const casl = await evaluateCaslSend({
+        const pending = digestByUser.get(search.user_id) ?? [];
+        pending.push({
           userId: search.user_id,
-          channel: "email",
-          purpose: "service",
-          address: actor.email,
+          savedSearchId: search.id,
+          searchName: search.name,
+          originLabel: search.center_label,
+          events: events.map((ev) => ({ ...ev, ageBand })),
         });
-        if (!casl.ok) {
-          console.info("[kidease-search-alerts] email skipped — no CASL consent", search.user_id);
-        } else {
-          try {
-            const mail = await sendSearchAlertEmail({
+        digestByUser.set(search.user_id, pending);
+      }
+
+      const { evaluateCaslSend } = await import("@/lib/server/casl-consent");
+      const actor = await lookupUser(search.user_id);
+      const phoneRows = await sql<{ phone: string | null }>`
+        select phone from profiles where user_id = ${search.user_id} limit 1
+      `.catch(() => [] as { phone: string | null }[]);
+      const smsCasl = await evaluateCaslSend({
+        userId: search.user_id,
+        channel: "sms",
+        purpose: "service",
+        address: phoneRows[0]?.phone,
+      });
+      let pushToday = await countChannelSendsToday(sql, search.user_id, search.id, "push", now);
+      let smsToday = await countChannelSendsToday(sql, search.user_id, search.id, "sms", now);
+      for (const ev of events) {
+        const copy = honestAlertCopy({
+          kind: ev.kind,
+          name: ev.name,
+          distanceKm: ev.distanceKm,
+          ageBand,
+          originLabel: search.center_label,
+          facilityType: ev.facilityType,
+        });
+        if (underPushSmsDailyCap(pushToday)) {
+          const push = await sendPushNotification({
+            userId: search.user_id,
+            title: copy.title,
+            body: copy.body,
+          });
+          if (push.ok) {
+            pushToday += 1;
+            await recordChannelSend(sql, {
               userId: search.user_id,
-              searchName: search.name,
-              events,
+              savedSearchId: search.id,
+              daycareId: ev.daycareId,
+              kind: ev.kind,
+              channel: "push",
             });
-            if (mail.via === "stub") emailStubbed += 1;
-            else emailSent += 1;
-          } catch (err) {
-            emailStubbed += 1;
-            console.error("[kidease-search-alerts] email failed", err);
+          } else {
+            pushSkipped += 1;
           }
+        } else {
+          pushSkipped += 1;
+        }
+        if (underPushSmsDailyCap(smsToday)) {
+          const sms = await sendSms({
+            to: phoneRows[0]?.phone || "",
+            body: copy.title,
+            audience: "user",
+            consentGranted: smsCasl.ok,
+          });
+          if (sms.ok) {
+            smsToday += 1;
+            await recordChannelSend(sql, {
+              userId: search.user_id,
+              savedSearchId: search.id,
+              daycareId: ev.daycareId,
+              kind: ev.kind,
+              channel: "sms",
+            });
+          } else {
+            smsSkipped += 1;
+          }
+        } else {
+          smsSkipped += 1;
         }
       }
       notified += events.length;
@@ -490,6 +639,135 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
       await sql`
         update saved_searches set last_checked_at = now() where id = ${search.id}
       `.catch(() => undefined);
+    }
+  }
+
+  const pendingMail = await sql<{
+    saved_search_id: string;
+    daycare_id: string;
+    kind: string;
+    distance_km: number;
+    user_id: string;
+    search_name: string;
+    center_label: string;
+    age_band: string;
+    slug: string;
+    daycare_name: string;
+    city: string;
+    amenities: string | null;
+  }>`
+    select c.saved_search_id, c.daycare_id, c.kind, c.distance_km,
+           s.user_id, s.name as search_name, s.center_label, s.age_band,
+           d.slug, d.name as daycare_name, d.city, d.amenities
+    from search_alert_candidates c
+    join saved_searches s on s.id = c.saved_search_id
+    join daycares d on d.id = c.daycare_id
+    where c.notified = 1
+      and coalesce(c.email_notified, 0) = 0
+      and c.kind in ('new_centre', 'vacancy_reconfirmed')
+  `.catch(() => []);
+  for (const row of pendingMail) {
+    if (row.kind !== "new_centre" && row.kind !== "vacancy_reconfirmed") continue;
+    const buckets = digestByUser.get(row.user_id) ?? [];
+    const already = buckets.some((b) =>
+      b.events.some((ev) => ev.daycareId === row.daycare_id && ev.kind === row.kind),
+    );
+    if (already) continue;
+    const ev: PlannedAlertEvent & { ageBand: string } = {
+      daycareId: row.daycare_id,
+      slug: row.slug,
+      name: row.daycare_name,
+      city: row.city,
+      kind: row.kind,
+      distanceKm: Number(row.distance_km) || 0,
+      vacancyAt: null,
+      facilityType: alertFacilityType({ amenities: row.amenities || "", name: row.daycare_name }),
+      ageBand: row.age_band,
+    };
+    const hit = buckets.find((b) => b.savedSearchId === row.saved_search_id);
+    if (hit) hit.events.push(ev);
+    else {
+      buckets.push({
+        userId: row.user_id,
+        savedSearchId: row.saved_search_id,
+        searchName: row.search_name,
+        originLabel: row.center_label,
+        events: [ev],
+      });
+    }
+    digestByUser.set(row.user_id, buckets);
+  }
+
+  for (const [userId, buckets] of digestByUser) {
+    const events = buckets.flatMap((b) =>
+      b.events.map((ev) => ({
+        name: ev.name,
+        city: ev.city,
+        kind: ev.kind,
+        distanceKm: ev.distanceKm,
+        slug: ev.slug,
+        title: honestAlertCopy({
+          kind: ev.kind,
+          name: ev.name,
+          distanceKm: ev.distanceKm,
+          ageBand: isAgeBand(ev.ageBand) ? ev.ageBand : "any",
+          originLabel: buckets[0]?.originLabel,
+          facilityType: ev.facilityType,
+        }).title,
+      })),
+    );
+    if (!events.length) continue;
+    if (!canSendDigestEmail(lastEmailByUser.get(userId) ?? null, now)) {
+      emailHeldQuiet += 1;
+      console.info("[kidease-search-alerts] email held — quiet hours or already mailed today", userId);
+      continue;
+    }
+    const { evaluateCaslSend } = await import("@/lib/server/casl-consent");
+    const actor = await lookupUser(userId);
+    const casl = await evaluateCaslSend({
+      userId,
+      channel: "email",
+      purpose: "service",
+      address: actor.email,
+    });
+    if (!casl.ok) {
+      console.info("[kidease-search-alerts] email skipped — no CASL consent", userId);
+      continue;
+    }
+    try {
+      const mail = await sendSearchAlertEmail({
+        userId,
+        searchName: buckets.map((b) => b.searchName).filter(Boolean).join(" · ") || "Saved search",
+        events,
+      });
+      if (mail.via === "stub") emailStubbed += 1;
+      else emailSent += 1;
+      await sql`
+        insert into search_alert_prefs (user_id, email_enabled, in_app_enabled, last_email_at, updated_at)
+        values (${userId}, 1, 1, now(), now())
+        on conflict (user_id) do update set last_email_at = now()
+      `.catch(() => undefined);
+      for (const bucket of buckets) {
+        for (const ev of bucket.events) {
+          await sql`
+            update search_alert_candidates
+            set email_notified = 1
+            where saved_search_id = ${bucket.savedSearchId}
+              and daycare_id = ${ev.daycareId}
+              and kind = ${ev.kind}
+          `.catch(() => undefined);
+          await recordChannelSend(sql, {
+            userId,
+            savedSearchId: bucket.savedSearchId,
+            daycareId: ev.daycareId,
+            kind: ev.kind,
+            channel: "email",
+          });
+        }
+      }
+    } catch (err) {
+      emailStubbed += 1;
+      console.error("[kidease-search-alerts] email failed", err);
     }
   }
 
@@ -504,9 +782,14 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean }) {
     kinds,
     emailSent,
     emailStubbed,
+    emailHeldQuiet,
     emailConfigured: resetMailConfigured(),
-    // Push is intentionally not invoked. FEATURE_PUSH stays off-by-default.
-    push: "skipped" as const,
+    pushSkipped,
+    smsSkipped,
+    // sendPush / sendSms ran; they no-op while flags are off.
+    push: "wired-noop" as const,
+    sms: "wired-noop" as const,
+    tz: ALERT_TZ,
   };
   console.info("[kidease-search-alerts] job", result);
   return result;
@@ -526,25 +809,24 @@ function escMail(s: string) {
 
 function searchAlertCopy(
   searchName: string,
-  events: Array<{ name: string; city: string; kind: SearchAlertKind; distanceKm: number }>,
+  events: Array<{ name: string; city: string; kind: SearchAlertKind; distanceKm: number; title?: string }>,
   unsubUrl?: string | null,
 ) {
-  const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
+  const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca";
   const deskUrl = `${origin}/parent?tab=alerts`;
   const lines = events.slice(0, 8).map((ev) => {
-    const kind = ev.kind === "vacancy_reconfirmed" ? "spots reconfirmed" : "new centre";
-    return `• ${ev.name} (${ev.city}, ${ev.distanceKm} km) — ${kind}`;
+    return `• ${ev.title || ev.name} (${ev.city}, ${ev.distanceKm} km)`;
   });
   const subject = `KidEase: updates for “${searchName}”`;
   const unsubLine = unsubUrl
     ? `\nUnsubscribe: ${unsubUrl}\nKidEase · Winnipeg, Manitoba · support@kidease.ca\n`
     : `\nUnsubscribe: ${origin}/unsubscribe\nKidEase · Winnipeg, Manitoba · support@kidease.ca\n`;
-  const text = `A saved search on KidEase has a match.\n\n${lines.join("\n")}\n\nOpen your family desk: ${deskUrl}\n${unsubLine}`;
+  const text = `A saved search on KidEase has an update. Confirm details with the centre — KidEase does not guarantee an opening.\n\n${lines.join("\n")}\n\nOpen your family desk: ${deskUrl}\n${unsubLine}`;
   const items = events
     .slice(0, 8)
     .map((ev) => {
-      const kind = ev.kind === "vacancy_reconfirmed" ? "Spots reconfirmed" : "New centre";
-      return `<li style="margin:0 0 8px;"><strong>${escMail(ev.name)}</strong> · ${escMail(ev.city)} · ${ev.distanceKm} km<br/><span style="color:#5c6578;">${kind}</span></li>`;
+      const line = ev.title || ev.name;
+      return `<li style="margin:0 0 8px;"><strong>${escMail(line)}</strong><br/><span style="color:#5c6578;">${escMail(ev.city)} · ${ev.distanceKm} km</span></li>`;
     })
     .join("");
   const html = `<!doctype html>
@@ -573,7 +855,7 @@ function searchAlertCopy(
 export async function sendSearchAlertEmail(payload: {
   userId: string;
   searchName: string;
-  events: Array<{ name: string; city: string; kind: SearchAlertKind; distanceKm: number; slug: string }>;
+  events: Array<{ name: string; city: string; kind: SearchAlertKind; distanceKm: number; slug: string; title?: string }>;
 }) {
   const actor = await lookupUser(payload.userId);
   const to = actor.email?.trim();

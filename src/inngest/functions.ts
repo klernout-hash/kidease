@@ -6,8 +6,8 @@ import { inngest } from "./client";
 /**
  * First Inngest job: wrap the existing saved-search alert cron.
  *
- * Same work as GET|POST /api/search-alerts. FEATURE_PUSH stays off
- * (runSearchAlertJob never calls FCM / APNs). Email still respects CASL.
+ * Same work as GET|POST /api/search-alerts. sendPush / sendSms are wired
+ * and no-op while FEATURE_PUSH / FEATURE_SMS stay off. Email respects CASL.
  *
  * Triggers:
  *   - hourly cron (America/Winnipeg :20) once Inngest Cloud is registered

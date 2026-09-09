@@ -40,6 +40,7 @@ type NoticeRow = {
   kind: string;
   title: string;
   body: string | null;
+  link_path: string | null;
   read_at: string | Date | null;
   created_at: string | Date;
 };
@@ -77,9 +78,12 @@ function mapNotice(row: NoticeRow): SearchAlertNotice {
         ? "vacancy_reconfirmed"
         : row.kind === "waitlist_pulse"
           ? "waitlist_pulse"
-          : "new_centre",
+          : row.kind === "request_reply"
+            ? "request_reply"
+            : "new_centre",
     title: row.title,
     body: row.body || "",
+    linkPath: row.link_path || null,
     readAt: iso(row.read_at),
     createdAt: iso(row.created_at) || new Date().toISOString(),
   };
@@ -240,7 +244,7 @@ export const getSearchAlertPrefs = createServerFn({ method: "GET" })
     const consents = await listConsents(context.userId);
     if (!row) {
       return {
-        emailEnabled: consents.emailService,
+        emailEnabled: true,
         inAppEnabled: true,
         smsEnabled: consents.smsService,
         emailCommercial: consents.emailCommercial,
@@ -335,12 +339,21 @@ export const listSearchAlertNotices = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<SearchAlertNotice[]> => {
     const sql = await getSql();
     const rows = await sql<NoticeRow>`
-      select id, saved_search_id, daycare_id, kind, title, body, read_at, created_at
+      select id, saved_search_id, daycare_id, kind, title, body, link_path, read_at, created_at
       from search_alert_notices
       where user_id = ${context.userId}
       order by created_at desc
       limit 40
-    `.catch(() => [] as NoticeRow[]);
+    `.catch(async () => {
+      const fallback = await sql<Omit<NoticeRow, "link_path"> & { link_path?: string | null }>`
+        select id, saved_search_id, daycare_id, kind, title, body, read_at, created_at
+        from search_alert_notices
+        where user_id = ${context.userId}
+        order by created_at desc
+        limit 40
+      `.catch(() => [] as NoticeRow[]);
+      return fallback.map((row) => ({ ...row, link_path: row.link_path ?? null }));
+    });
     return rows.map(mapNotice);
   });
 

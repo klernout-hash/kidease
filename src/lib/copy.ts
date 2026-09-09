@@ -366,8 +366,12 @@ export const copy = {
     plansNotOffered: "Plans are not offered on this site yet. Listing and claim stay free.",
     freePageTitle: "Your free KidEase page",
     freePageLead:
-      "Share this URL on Google Business, Facebook, Instagram, or a flyer. Listing and claim stay free. KidEase does not auto-post.",
-    freePageShareHint: "Add the link on Google Business and Facebook yourself — KidEase does not post for you.",
+      "Add this link on Google Business and Facebook so families see licence, ages, and photo.",
+    freePageShareHint:
+      "Share it on Instagram or a flyer too. KidEase does not auto-post to Facebook or Google Business.",
+    claimSuccessTitle: "Your free KidEase page is live",
+    claimSuccessLead:
+      "Add this link on Google Business and Facebook so families see licence, ages, and photo. Listing and claim stay free.",
     listingStayFree: "Listing and claim stay free.",
     isThisYours: "Is this your centre?",
     claimedBadge: "Claimed",
@@ -501,7 +505,8 @@ export const copy = {
     searchAlerts: "Search alerts",
     saveSearch: "Save this search",
     saveSearchName: "Name this search",
-    saveSearchLead: "We'll watch this area and these filters. You'll get a notice when a matching centre appears or a centre reconfirms open spots.",
+    saveSearchLead:
+      "We'll watch this area and these filters. You'll get a notice when a matching licensed centre appears, or when a live centre may have a spot — confirm with them. Alerts are free.",
     saveSearchSaved: "Search saved",
     saveSearchNeedSignIn: "Sign in to save this search",
     savedSearches: "Saved searches",
@@ -511,19 +516,22 @@ export const copy = {
     deleteSavedSearch: "Delete",
     runSavedSearch: "Open in search",
     alertPrefs: "Alert preferences",
-    alertPrefsLead: "Email uses Resend when it's connected. In-app notices land here. SMS needs a stored CASL consent. Phone push stays off.",
+    alertPrefsLead:
+      "Email and in-app notices are free. SMS is optional and off until you tick CASL. Push comes in the iPhone/Android app later — www never asks for notification permission.",
     alertEmail: "Email me when something matches",
     alertInApp: "Show notices on the family desk",
-    alertPushOff: "Phone push is off. This job does not send FCM or APNs.",
+    alertPushOff: "Push alerts come in the iPhone/Android app later. This website never asks for notification permission.",
     alertEmailStub:
       "Email alerts are saved, but this environment has no RESEND_API_KEY or SENDGRID_API_KEY. Matches stay on the family desk until mail is connected.",
     alertSmsStub:
       "Consent is stored. KidEase does not text until SMS is enabled and Twilio is connected on this environment.",
     alertNotices: "Recent alerts",
     noAlertNotices: "No alerts yet. The matcher logs candidates first, then notifies on later checks.",
-    alertNewCentre: "New centre nearby",
-    alertVacancy: "Spots reconfirmed nearby",
+    alertNewCentre: "New licensed centre nearby",
+    alertVacancy: "A spot may be open — confirm with the centre",
+    alertRequestReply: "A centre replied",
     alertWaitlistPulse: "Spot opened on a waitlist you follow",
+    alertOpenNotice: "Open",
     waitlistOptIn: "Notify me if a spot opens",
     waitlistOptInLead: "We’ll send an in-app notice, and a text if you already granted CASL SMS consent. Optional.",
     waitlistOptInOn: "You’re on this waitlist pulse",
@@ -1845,8 +1853,12 @@ export const copy = {
     plansNotOffered: "Les forfaits ne sont pas offerts sur ce site pour le moment. La fiche et la réclamation restent gratuites.",
     freePageTitle: "Votre page KidEase gratuite",
     freePageLead:
-      "Partagez cette URL sur Google Business, Facebook, Instagram ou un dépliant. La fiche et la réclamation restent gratuites. KidEase ne publie pas automatiquement.",
-    freePageShareHint: "Ajoutez le lien vous-même sur Google Business et Facebook — KidEase ne publie pas à votre place.",
+      "Ajoutez ce lien sur Google Business et Facebook pour que les familles voient le permis, les âges et la photo.",
+    freePageShareHint:
+      "Partagez-le aussi sur Instagram ou un dépliant. KidEase ne publie pas automatiquement sur Facebook ou Google Business.",
+    claimSuccessTitle: "Votre page KidEase gratuite est en ligne",
+    claimSuccessLead:
+      "Ajoutez ce lien sur Google Business et Facebook pour que les familles voient le permis, les âges et la photo. La fiche et la réclamation restent gratuites.",
     listingStayFree: "La fiche et la réclamation restent gratuites.",
     isThisYours: "C’est votre centre ?",
     claimedBadge: "Réclamée",
@@ -1982,7 +1994,8 @@ export const copy = {
     searchAlerts: "Alertes de recherche",
     saveSearch: "Enregistrer cette recherche",
     saveSearchName: "Nommer cette recherche",
-    saveSearchLead: "Nous surveillons cette zone et ces filtres. Vous serez avisé quand un centre correspondant apparaît ou qu’un centre reconfirme des places.",
+    saveSearchLead:
+      "Nous surveillons cette zone et ces filtres. Vous serez avisé quand un centre permis correspondant apparaît, ou quand un centre en ligne pourrait avoir une place — confirmez auprès d’eux. Les alertes sont gratuites.",
     saveSearchSaved: "Recherche enregistrée",
     saveSearchNeedSignIn: "Connectez-vous pour enregistrer cette recherche",
     savedSearches: "Recherches enregistrées",
@@ -1992,19 +2005,23 @@ export const copy = {
     deleteSavedSearch: "Supprimer",
     runSavedSearch: "Ouvrir dans la recherche",
     alertPrefs: "Préférences d’alerte",
-    alertPrefsLead: "Le courriel passe par Resend s’il est branché. Les avis dans l’appli apparaissent ici. Les textos exigent un consentement LCAP. Le push téléphone reste fermé.",
+    alertPrefsLead:
+      "Le courriel et les avis dans l’appli sont gratuits. Le texto est facultatif et fermé tant que vous n’avez pas coché LCAP. Le push arrivera dans l’appli iPhone/Android plus tard — le site www ne demande jamais la permission de notification.",
     alertEmail: "M’écrire quand quelque chose correspond",
     alertInApp: "Afficher les avis au bureau famille",
-    alertPushOff: "Le push téléphone est fermé. Ce travail n’envoie pas de FCM ni d’APNs.",
+    alertPushOff:
+      "Les alertes push arriveront dans l’appli iPhone/Android plus tard. Ce site ne demande jamais la permission de notification.",
     alertEmailStub:
       "Les alertes courriel sont enregistrées, mais cet environnement n’a pas de RESEND_API_KEY ni de SENDGRID_API_KEY. Les correspondances restent au bureau famille jusqu’à ce que le courriel soit branché.",
     alertSmsStub:
       "Le consentement est enregistré. KidEase n’envoie pas de texto tant que les SMS ne sont pas activés et que Twilio n’est pas branché ici.",
     alertNotices: "Alertes récentes",
     noAlertNotices: "Aucune alerte pour l’instant. Le comparateur journalise d’abord les candidats, puis avise aux vérifications suivantes.",
-    alertNewCentre: "Nouveau centre à proximité",
-    alertVacancy: "Places reconfirmées à proximité",
+    alertNewCentre: "Nouveau centre permis à proximité",
+    alertVacancy: "Une place pourrait être ouverte — confirmez auprès du centre",
+    alertRequestReply: "Un centre a répondu",
     alertWaitlistPulse: "Place ouverte sur une liste d’attente que vous suivez",
+    alertOpenNotice: "Ouvrir",
     waitlistOptIn: "M’aviser si une place s’ouvre",
     waitlistOptInLead: "Nous enverrons un avis dans l’appli, et un texto si vous avez déjà donné un consentement LCAP. Facultatif.",
     waitlistOptInOn: "Vous êtes sur cette alerte de liste d’attente",

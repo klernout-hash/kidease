@@ -2,7 +2,7 @@
 
 Parents save a search (origin + radius + age band + filters) and get notified when a matching centre appears in that radius, or when a centre in the radius reconfirms vacancy.
 
-This is email + in-app scaffolding. **It does not send FCM / APNs.** `FEATURE_PUSH` stays off-by-default.
+This is email + in-app now. **Push and SMS are wired no-ops** until `FEATURE_PUSH` / `FEATURE_SMS` are armed with keys. www never prompts for notification permission.
 
 ## What landed
 
@@ -19,8 +19,9 @@ Applied on deploy by `npm run db:migrate` (`scripts/migrate.mjs`) when `DATABASE
 | --- | --- |
 | `saved_searches` | Named search: `center_lat` / `center_lng` / `center_label` (from live search), `radius_km` (1–50), `age_band`, `filters` JSONB (includes PR #59 honesty chips), `alerts_enabled`, `last_checked_at` |
 | `search_alert_prefs` | Per-user `email_enabled` + `in_app_enabled` |
-| `search_alert_notices` | In-app family-desk notices (`new_centre` \| `vacancy_reconfirmed`) |
+| `search_alert_notices` | In-app family-desk notices (`new_centre` \| `vacancy_reconfirmed` \| `waitlist_pulse` \| `request_reply`) |
 | `search_alert_candidates` | Job log / dedup. First check inserts a baseline (`notified = 0`) |
+| `search_alert_channel_sends` | Email / in-app / push / SMS send log for 72h silence + daily caps |
 
 No new geography column. Matching reads `daycares.location` from `0011_listing_geography.sql`.
 
@@ -39,8 +40,12 @@ No new geography column. Matching reads `daycares.location` from `0011_listing_g
 3. Query public centres in radius via `SEARCH_ALERT_MATCH_SQL` (PostGIS) or a lat/lng fallback that still uses the saved origin.
 4. Apply age band + stored filters.
 5. First run: write candidates, no notify.
-6. Later runs: `new_centre` (not seen before) and `vacancy_reconfirmed` (`last_vacancy_updated_at` after `last_checked_at`).
-7. In-app insert when prefs allow. Email via Resend/SendGrid when those keys exist.
+6. Later runs: `new_centre` (not seen before) and `vacancy_reconfirmed` only when the centre is **Live + claimed + confirm < 14 days**. Unclaimed or stale vacancy never pings.
+7. Age band must overlap **and** `agesKnown`. Unknown ages never match infant / toddler / preschool / school-age.
+8. Same centre + type is silent for 72 hours. Digest email is max 1/day; quiet hours 21:00–08:00 America/Winnipeg hold email (in-app still lands).
+9. In-app insert when prefs allow. Email via Resend/SendGrid when those keys exist (List-Unsubscribe). Free — no Plus.
+10. `sendPushNotification` / `sendSms` run and no-op while flags are off (3/search/day cap when those channels exist).
+11. `request_reply` is an in-app notice when a centre replies (`{centre} replied.` → `/inbox/{id}`).
 
 When `RESEND_API_KEY` and `SENDGRID_API_KEY` are missing, `sendSearchAlertEmail` logs an honest stub and still persists `email_enabled`. The family desk says mail will not leave the box until a key is set. The job reports `emailConfigured`, `emailSent`, and `emailStubbed`.
 

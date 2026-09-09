@@ -150,6 +150,16 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
         threadUrl,
         daycareName: row.name,
       }).catch(() => undefined);
+      const { requestReplyCopy, requestReplyPath } = await import("@/lib/search-alert-policy");
+      const reply = requestReplyCopy(row.name);
+      const linkPath = requestReplyPath(row.id);
+      await sql`
+        insert into search_alert_notices (id, user_id, saved_search_id, daycare_id, kind, title, body, link_path)
+        values (
+          ${nid("san")}, ${row.user_id}, null, ${row.daycare_id}, ${"request_reply"},
+          ${reply.title}, ${reply.body}, ${linkPath}
+        )
+      `.catch(() => undefined);
     }
 
     return { ok: true as const, sender };

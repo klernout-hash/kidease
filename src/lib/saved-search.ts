@@ -12,13 +12,13 @@ export const SAVED_SEARCH_APPLY_KEY = "kidease-apply-saved-search";
 export const MAX_SAVED_SEARCHES = 12;
 export const MAX_SEARCH_NAME = 80;
 
-export const AGE_BANDS = ["any", "infant", "toddler", "preschool"] as const;
+export const AGE_BANDS = ["any", "infant", "toddler", "preschool", "school-age"] as const;
 export type AgeBand = (typeof AGE_BANDS)[number];
 
 export const AVAIL_FILTERS = ["any", "open", "waitlist", "unknown"] as const;
 export type AvailFilter = (typeof AVAIL_FILTERS)[number];
 
-export const ALERT_KINDS = ["new_centre", "vacancy_reconfirmed", "waitlist_pulse"] as const;
+export const ALERT_KINDS = ["new_centre", "vacancy_reconfirmed", "waitlist_pulse", "request_reply"] as const;
 export type SearchAlertKind = (typeof ALERT_KINDS)[number];
 
 /** Listing-side filters from search (includes PR #59 honesty chips when present). */
@@ -86,6 +86,7 @@ export type SearchAlertNotice = {
   kind: SearchAlertKind;
   title: string;
   body: string;
+  linkPath: string | null;
   readAt: string | null;
   createdAt: string;
 };
@@ -158,9 +159,11 @@ export function matchesAgeBand(
   row: { agesKnown?: boolean; ageMinMonths: number; ageMaxMonths: number },
 ) {
   if (ageBand === "any") return true;
-  if (row.agesKnown === false) return false;
+  // Unknown ages never match a specific band — including school-age.
+  if (row.agesKnown !== true) return false;
   if (ageBand === "infant") return row.ageMinMonths <= 18;
   if (ageBand === "toddler") return row.ageMinMonths < 36 && row.ageMaxMonths >= 18;
+  if (ageBand === "school-age") return row.ageMaxMonths >= 60;
   return row.ageMaxMonths >= 30 && row.ageMinMonths < 72;
 }
 
@@ -210,7 +213,7 @@ export function listingMatchesSavedFilters(row: FilterableListing, filters: Save
   if (filters.outdoor && !hasAmenity(amenities, "outdoor") && !hasAmenity(amenities, "yard")) return false;
   if (filters.inclusive && !hasAmenity(amenities, "inclusive")) return false;
   if (filters.extended && !staysLate(hours, amenities) && !opensEarly(hours)) return false;
-  if (filters.infantOnly && !(row.agesKnown !== false && row.ageMinMonths <= 18)) return false;
+  if (filters.infantOnly && !(row.agesKnown === true && row.ageMinMonths <= 18)) return false;
   if (filters.catchmentOnly && !row.inCatchment) return false;
   if (filters.confirmedOnly && vacancyFreshness(vacancyTimestamp(row)).kind !== "fresh") return false;
   if (filters.readyOnly && row.detailsReady !== true) return false;
