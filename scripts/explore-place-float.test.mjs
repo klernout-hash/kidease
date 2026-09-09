@@ -41,8 +41,7 @@ test("Explore location suggestions dismiss on route, scroll, blur, menu, and vie
 
   const search = src("src/routes/search.tsx");
   assert.match(search, /dismissPopovers\(\)/);
-  assert.match(search, /setView\("list"\)/);
-  assert.match(search, /setView\("map"\)/);
+  assert.match(search, /setView\(view === "map" \? "list" : "map"\)/);
   assert.match(search, /whitespace-nowrap/);
   assert.match(search, /CityHubLinks/);
   assert.match(search, /headingKey="otherCities"/);
