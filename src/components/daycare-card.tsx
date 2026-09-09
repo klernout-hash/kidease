@@ -11,7 +11,7 @@ import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
 import { listingPill } from "@/lib/listing-card";
-import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
+import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { isCatalogueMatchedBadge, trustBadgesFor } from "@/lib/trust";
 import type { CopyKey } from "@/lib/copy";
@@ -72,12 +72,7 @@ export const DaycareCard = memo(function DaycareCard({
     item.ageMaxMonths > item.ageMinMonths ? `${item.ageMinMonths}–${item.ageMaxMonths} months` : "";
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
   const facility = classifyFacilityType(item);
-  const FACILITY_CARD: Record<FacilityType, CopyKey> = {
-    centre: "facilityTypeCentre",
-    nursery: "facilityTypeNursery",
-    home: "facilityTypeHome",
-  };
-  const typeLabel = t(FACILITY_CARD[facility.type]);
+  const typeLabel = facilityTypeSeoKind(facility.type, locale === "fr" ? "fr" : "en");
   const line3 = [typeLabel, ages, hours].filter(Boolean).join(" · ");
   const photosAge = photoLine(item, t, locale);
   const photoText = photosAge.kind === "unknown" ? "" : photosAge.text;

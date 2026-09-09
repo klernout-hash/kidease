@@ -125,8 +125,16 @@ export function buildParentRails(
 export function parentRailSearchHref(seeAll: ParentRailSeeAll): string {
   const params = new URLSearchParams();
   if (seeAll.sort) params.set("sort", seeAll.sort);
-  if (seeAll.age) params.set("age", seeAll.age);
-  if (seeAll.care) params.set("care", seeAll.care);
+  if (seeAll.age) {
+    params.set("age", seeAll.age);
+    params.set("cat", seeAll.age);
+  }
+  if (seeAll.care) {
+    params.set("care", seeAll.care);
+    if (seeAll.care === "home" || seeAll.care === "nursery" || seeAll.care === "before-after") {
+      params.set("cat", seeAll.care);
+    }
+  }
   if (seeAll.favorites) params.set("favorites", "1");
   const q = params.toString();
   return q ? `/search?${q}` : "/search";

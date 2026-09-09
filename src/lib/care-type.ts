@@ -33,7 +33,7 @@ export function isRailAge(value: string): value is RailAge {
   return (RAIL_AGES as readonly string[]).includes(value);
 }
 
-function isBeforeAfterProgram(item: Pick<Daycare, "amenities" | "hours">): boolean {
+export function isBeforeAfterProgram(item: Pick<Daycare, "amenities" | "hours">): boolean {
   const amenities = item.amenities || "";
   return (
     hasAmenity(amenities, "school-age") ||
