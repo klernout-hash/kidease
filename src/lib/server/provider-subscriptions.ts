@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { resolveSessionDesks } from "@/lib/server/roles";
-import { providerSubscriptionsEnabled } from "@/lib/features";
+import { assertPayCheckoutAllowed, providerSubscriptionsEnabled } from "@/lib/features";
 import { resolveProviderEntitlements, type ProviderEntitlements } from "@/lib/provider-entitlements";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import {
@@ -174,7 +174,8 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
-    await requireSubscriptionAccess(context.userId);
+    const desks = await requireSubscriptionAccess(context.userId);
+    assertPayCheckoutAllowed(desks.role);
     await persistSelection(context.userId, data);
     const state = await readSelection(context.userId);
     const priceKey = data.plan === "free" ? null : providerPriceKey(data.plan, data.interval);
@@ -221,7 +222,8 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
     return { addon };
   })
   .handler(async ({ context, data }) => {
-    await requireSubscriptionAccess(context.userId);
+    const desks = await requireSubscriptionAccess(context.userId);
+    assertPayCheckoutAllowed(desks.role);
     const state = await readSelection(context.userId);
     const nextAddons = state.addons.includes(data.addon) ? state.addons : [...state.addons, data.addon];
     await persistSelection(context.userId, { plan: state.plan, interval: state.interval, addons: nextAddons });

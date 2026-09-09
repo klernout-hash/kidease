@@ -29,7 +29,10 @@ export function DeskShell({
   const meta = DESK_META[desk];
   const { session } = useSessionDesks();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const items = visibleDeskNav(desk, { providerSubscriptions: session?.providerSubscriptions });
+  const items = visibleDeskNav(desk, {
+    providerSubscriptions: session?.providerSubscriptions,
+    showPayCtas: session?.showPayCtas,
+  });
 
   return (
     <Shell>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SessionDesksProvider } from "@/components/session-desks";
+import { PayChromeProvider } from "@/components/pay-chrome";
 
 /**
  * App-wide client provider mounted once near the root (in `src/routes/__root.tsx`):
@@ -11,5 +12,9 @@ import { SessionDesksProvider } from "@/components/session-desks";
  * getMyDesks result so desk pages do not each re-fetch.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  return <SessionDesksProvider>{children}</SessionDesksProvider>;
+  return (
+    <SessionDesksProvider>
+      <PayChromeProvider>{children}</PayChromeProvider>
+    </SessionDesksProvider>
+  );
 }

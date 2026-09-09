@@ -71,6 +71,7 @@ export type LabStatus = {
     nextSteps: readonly VideoLabNextStep[];
   };
   subscriptions: FlagLab;
+  payCtas: FlagLab;
 };
 
 function toFlagLab(key: Parameters<typeof describeFeatureFlag>[0]): FlagLab {
@@ -143,6 +144,7 @@ export async function resolveLabStatus(): Promise<LabStatus> {
       nextSteps: TWILIO_VIDEO_LAB_NEXT_STEPS,
     },
     subscriptions: toFlagLab("FEATURE_PROVIDER_SUBSCRIPTIONS"),
+    payCtas: toFlagLab("SHOW_PAY_CTAS"),
   };
 }
 

@@ -48,6 +48,34 @@ export function providerSubscriptionsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PROVIDER_SUBSCRIPTIONS", env);
 }
 
+/** Honest copy when SHOW_PAY_CTAS is off. Stripe / plan code stays compiled. */
+export const PLANS_NOT_OFFERED_YET =
+  "Plans are not offered on this site yet. Listing and claim stay free.";
+
+/**
+ * Parent- and director-facing Upgrade / Subscribe / plan-price chrome.
+ * Default OFF. Does not delete Stripe, webhooks, or plan tables.
+ * Set SHOW_PAY_CTAS=1 to restore CTAs. Admin Stripe screens stay available.
+ */
+export function showPayCtas(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("SHOW_PAY_CTAS", env);
+}
+
+/** Live checkout for KidEase plans. Admin may still open Stripe when chrome is hidden. */
+export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
+  if (showPayCtas(env)) return true;
+  const r = String(role || "")
+    .trim()
+    .toLowerCase();
+  return r === "admin";
+}
+
+export function assertPayCheckoutAllowed(role?: string | null, env?: EnvMap): void {
+  if (!canUsePayCheckout(role, env)) {
+    throw new Error(PLANS_NOT_OFFERED_YET);
+  }
+}
+
 /**
  * Who may see the provider Subscription tab and page.
  * Directors (and anyone who owns a centre) when the feature is live.

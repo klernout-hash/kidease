@@ -77,6 +77,7 @@ See `docs/store-readiness.md`. Do not put `sk_live_` in Preview.
 | `TWILIO_API_KEY_SID` / `TWILIO_API_KEY_SECRET` | yes | both | Preferred send; required for Video tokens. |
 | `TWILIO_MESSAGING_SERVICE_SID` | yes | both | `MG…` for Canada. |
 | `FEATURE_SMS` / `FEATURE_VIDEO` / `FEATURE_PUSH` | no | both | Stay `0` on Production until secrets exist. Preview may override. |
+| `SHOW_PAY_CTAS` | no | both | Stay `0` on Production. Set `1` to restore Upgrade / Subscribe chrome. Stripe code stays. |
 
 See `docs/sms.md` and `docs/video.md`.
 

@@ -41,6 +41,13 @@ export function listingSharePayload(input: { name: string; slug: string; text: s
   };
 }
 
+export function listingMailtoHref(input: { name: string; slug: string; note: string }) {
+  const url = listingShareUrl(input.slug);
+  const subject = encodeURIComponent(input.name);
+  const body = encodeURIComponent(`${input.name}\n${url}\n\n${input.note}`);
+  return `mailto:?subject=${subject}&body=${body}`;
+}
+
 export async function copyText(value: string): Promise<boolean> {
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
     try {

@@ -10,6 +10,8 @@ import {
 } from "@/lib/server/stripe-checkout";
 import { isPlusInterval, isPlusPlanId, type PlusInterval, type PlusPlanId } from "@/lib/parent-plus";
 import { decideParentPlusCheckout, PLUS_PRICE_MISSING } from "@/lib/access-control";
+import { assertPayCheckoutAllowed } from "@/lib/features";
+import { resolveSessionDesks } from "@/lib/server/roles";
 
 export type ParentPlusState = {
   plan: PlusPlanId;
@@ -74,6 +76,8 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
     return { interval: input.interval };
   })
   .handler(async ({ context, data }) => {
+    const desks = await resolveSessionDesks(context.userId);
+    assertPayCheckoutAllowed(desks.role);
     const sql = await getSql();
     await sql`
       insert into profiles (user_id, plus_plan, plus_interval, plus_selected_at)

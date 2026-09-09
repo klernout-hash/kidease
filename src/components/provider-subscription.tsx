@@ -28,6 +28,9 @@ import {
 import { openStripeCheckout } from "@/lib/wallets";
 import { getProvider } from "@/lib/server/family";
 import { DirectorProStrip } from "@/components/director-pro-strip";
+import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
+import { useSessionDesks } from "@/components/session-desks";
+import { PLANS_NOT_OFFERED_YET } from "@/lib/features";
 
 const COPY = {
   en: {
@@ -90,9 +93,13 @@ function priceReady(state: ProviderSubscriptionState, plan: ProviderPlanId, inte
 }
 
 export function ProviderSubscriptionPanel() {
-  const { locale } = useCopy();
+  const { locale, t: tx } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const t = COPY[loc];
+  const showPay = useShowPayCtas();
+  const { session } = useSessionDesks();
+  const adminPreview = session?.role === "admin";
+  const showCheckout = showPay || adminPreview;
   const [state, setState] = useState<ProviderSubscriptionState | null>(null);
   const [interval, setInterval] = useState<ProviderInterval>("month");
   const [addons, setAddons] = useState<ProviderAddonId[]>([]);
@@ -206,6 +213,17 @@ export function ProviderSubscriptionPanel() {
 
   const liveCheckout = state.stripeLive && state.checkoutLive;
 
+  if (!showCheckout) {
+    return (
+      <section className="space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border">
+        <h2 className="font-display text-2xl">{t.title}</h2>
+        <p className="text-sm text-muted">{tx("plansNotOffered")}</p>
+        <p className="text-sm text-muted">{tx("listingStayFree")}</p>
+        <p className="text-xs text-subtle">{PLANS_NOT_OFFERED_YET}</p>
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-8">
       <div>
@@ -215,9 +233,11 @@ export function ProviderSubscriptionPanel() {
           {t.title}
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">{t.lead}</p>
+        <PayCtas>
         <div className="mt-4">
           <DirectorProStrip views={week.views} requests={week.requests} />
         </div>
+        </PayCtas>
         {state.ghost ? (
           <p className="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{PROVIDER_SUBSCRIPTION_GHOST_MESSAGE}</p>
         ) : null}

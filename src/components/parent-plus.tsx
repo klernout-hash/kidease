@@ -9,6 +9,7 @@ import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
 import { openStripeCheckout } from "@/lib/wallets";
+import { useShowPayCtas } from "@/components/pay-chrome";
 
 function plusMoney(amount: number, locale: "en" | "fr") {
   return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
@@ -22,6 +23,7 @@ function plusMoney(amount: number, locale: "en" | "fr") {
 export function ParentPlusPanel() {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
+  const showPay = useShowPayCtas();
   const [state, setState] = useState<ParentPlusState | null>(null);
   const [interval, setInterval] = useState<PlusInterval>("month");
   const [busy, setBusy] = useState(false);
@@ -32,6 +34,7 @@ export function ParentPlusPanel() {
   });
 
   useEffect(() => {
+    if (!showPay) return;
     void getParentPlus()
       .then((s) => {
         setState(s);
@@ -47,9 +50,9 @@ export function ParentPlusPanel() {
         });
       })
       .catch(() => undefined);
-  }, []);
+  }, [showPay]);
 
-  if (!state) return null;
+  if (!showPay || !state) return null;
 
   const live = state.stripeLive && Boolean(state.prices[interval === "year" ? "plus_yearly" : "plus_monthly"]);
   const current = state.plan === "plus" && (state.status === "active" || !state.stripeLive);

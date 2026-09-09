@@ -154,6 +154,12 @@ function AdminChatPage() {
               state={flagState(lab?.subscriptions.enabled, true)}
               hint={`${sourceHint(lab?.subscriptions.source)}Directors see the Subscription tab when on.`}
             />
+            <Stat
+              label="SHOW_PAY_CTAS"
+              value={flagValue(lab?.payCtas.enabled)}
+              state={flagState(lab?.payCtas.enabled, false)}
+              hint={`${sourceHint(lab?.payCtas.source)}Parent and director Upgrade / Subscribe chrome. Default off. Admin Stripe stays.`}
+            />
           </dl>
 
           <div className="rounded-2xl bg-surface px-5 py-6 text-sm ring-1 ring-border">

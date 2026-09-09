@@ -157,7 +157,7 @@ function ClaimPage() {
     try {
       await verifyClaim({ data: { daycareId: pending.daycareId, code, licensePhoto: license, turnstileToken: claimChallenge.token } });
       toast.success(t("claimVerified"));
-      void navigate({ to: "/provider" });
+      void navigate({ to: "/provider", search: { claimed: true } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("claimFailed"));
     } finally {

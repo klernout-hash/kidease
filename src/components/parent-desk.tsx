@@ -32,6 +32,7 @@ import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
+import { PayCtas } from "@/components/pay-chrome";
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -380,11 +381,13 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
               ready={desksReady}
             />
             <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
+            <PayCtas>
             <div className="mt-4">
               <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
                 <ParentPlusPanel />
               </Suspense>
             </div>
+            </PayCtas>
           </div>
           {bills.filter((b) => billIsOpen(b.status)).length ? (
             <div>

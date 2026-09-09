@@ -400,6 +400,8 @@ export type SessionDesks = {
   ledgerLabel: string;
   /** Subscription tab on the centre desk (live for directors; admin always). */
   providerSubscriptions: boolean;
+  /** Parent/director Upgrade · Subscribe chrome. Default off. */
+  showPayCtas: boolean;
 };
 
 /**
