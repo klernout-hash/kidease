@@ -8,6 +8,8 @@ import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
 import { RateKidEaseControl } from "@/components/rate-kidease";
 import { ShareKidEaseButton } from "@/components/share-button";
+import { localePath } from "@/lib/locale-path";
+import { useCopy } from "@/lib/use-copy";
 
 type Item = { to: string; label: string; search?: Record<string, string> };
 
@@ -42,6 +44,8 @@ export function NavDrawer({
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+  const { locale } = useCopy();
+  const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
 
   useEffect(() => {
     if (!open) return;
@@ -157,7 +161,7 @@ export function NavDrawer({
           ) : (
             <>
               <Link
-                to="/login"
+                to={loginTo}
                 search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
                 onClick={onClose}
                 className="flex min-h-12 items-center justify-center rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
@@ -165,7 +169,7 @@ export function NavDrawer({
                 {parentLabel}
               </Link>
               <Link
-                to="/login"
+                to={loginTo}
                 search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
                 onClick={onClose}
                 className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"

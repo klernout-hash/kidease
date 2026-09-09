@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { AGENT_CONFIRM } from "@/lib/help-knowledge";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { chatComposerState } from "@/lib/chat-scaffold";
+import { inAppChatEnabled } from "@/lib/features";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,11 @@ export function HelpBot() {
   async function sendText(text: string, agent = false) {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
+    if (!inAppChatEnabled()) {
+      setMsgs((m) => [...m, { role: "assistant", text: chatComposerState(false).message }]);
+      setDraft("");
+      return;
+    }
     const next: ChatMsg[] = [...msgs, { role: "user", text: trimmed }];
     setMsgs(next);
     setDraft("");
@@ -140,5 +147,7 @@ export function LiveChatSlot() {
     return () => window.clearTimeout(idle);
   }, []);
   if (!ready) return null;
+  // FEATURE_INAPP_CHAT is parked off. Do not paint a live composer or FAB.
+  if (!inAppChatEnabled()) return null;
   return <HelpBot />;
 }

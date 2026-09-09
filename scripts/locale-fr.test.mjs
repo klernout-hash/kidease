@@ -42,7 +42,11 @@ test("language toggle rewrites paired pages and stays put on Explore and desks",
   assert.equal(localeSwitchPath("/", "fr"), "/fr");
   assert.equal(localeSwitchPath("/fr", "en"), "/");
   assert.equal(localeSwitchPath("/search", "fr"), null);
-  assert.equal(localeSwitchPath("/login", "fr"), null);
+  assert.equal(localeSwitchPath("/login", "fr"), "/fr/login");
+  assert.equal(localeSwitchPath("/fr/login", "en"), "/login");
+  assert.equal(localePath("/login", "fr"), "/fr/login");
+  assert.equal(localePath("/get-app", "fr"), "/fr/get-app");
+  assert.equal(localePath("/benefits", "fr"), "/fr/benefits");
   assert.equal(localeSwitchPath("/parent", "fr"), null);
   assert.equal(localeSwitchPath("/admin", "fr"), null);
   assert.equal(localeSwitchPath("/fr/search", "en"), "/search");
@@ -73,11 +77,25 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/privacy"));
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/search"));
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/help"));
+  assert.ok(SITEMAP_FR_PATHS.includes("/fr/get-app"));
+  assert.ok(SITEMAP_FR_PATHS.includes("/fr/benefits"));
+  assert.ok(SITEMAP_FR_PATHS.includes("/fr/login"));
   assert.ok(!SITEMAP_FR_PATHS.includes("/fr/explore"));
   const paths = sitemapPublicPaths();
   for (const path of SITEMAP_FR_PATHS) assert.ok(paths.includes(path), path);
   const sitemap = src("public/sitemap.xml");
-  for (const path of ["/fr", "/fr/privacy", "/fr/terms", "/fr/cookies", "/fr/help", "/fr/search", "/fr/contact"]) {
+  for (const path of [
+    "/fr",
+    "/fr/privacy",
+    "/fr/terms",
+    "/fr/cookies",
+    "/fr/help",
+    "/fr/search",
+    "/fr/contact",
+    "/fr/get-app",
+    "/fr/benefits",
+    "/fr/login",
+  ]) {
     assert.match(sitemap, new RegExp(`<loc>https://www.kidease.ca${path}</loc>`));
   }
   assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/fr\/explore</);
@@ -98,6 +116,9 @@ test("FR routes and language toggle are wired to the existing locale store", () 
     "src/routes/fr.terms.tsx",
     "src/routes/fr.cookies.tsx",
     "src/routes/fr.contact.tsx",
+    "src/routes/fr.get-app.tsx",
+    "src/routes/fr.benefits.tsx",
+    "src/routes/fr.login.tsx",
   ]) {
     assert.equal(existsSync(join(root, file)), true, file);
   }

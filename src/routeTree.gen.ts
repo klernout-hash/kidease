@@ -36,6 +36,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as ParentRouteImport } from './routes/parent'
+import { Route as PayRouteImport } from './routes/pay'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -58,16 +59,20 @@ import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
 import { Route as FrIndexRouteImport } from './routes/fr.index'
 import { Route as FrAboutRouteImport } from './routes/fr.about'
+import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
 import { Route as FrContactRouteImport } from './routes/fr.contact'
 import { Route as FrCookiesRouteImport } from './routes/fr.cookies'
 import { Route as FrExploreRouteImport } from './routes/fr.explore'
 import { Route as FrFaqRouteImport } from './routes/fr.faq'
+import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
 import { Route as FrHelpRouteImport } from './routes/fr.help'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
+import { Route as FrLoginRouteImport } from './routes/fr.login'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
+import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
@@ -225,6 +230,11 @@ const ParentRoute = ParentRouteImport.update({
   path: '/parent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayRoute = PayRouteImport.update({
+  id: '/pay',
+  path: '/pay',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -335,6 +345,11 @@ const FrAboutRoute = FrAboutRouteImport.update({
   path: '/about',
   getParentRoute: () => FrRoute,
 } as any)
+const FrBenefitsRoute = FrBenefitsRouteImport.update({
+  id: '/benefits',
+  path: '/benefits',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrContactRoute = FrContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -355,6 +370,11 @@ const FrFaqRoute = FrFaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGetAppRoute = FrGetAppRouteImport.update({
+  id: '/get-app',
+  path: '/get-app',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrHelpRoute = FrHelpRouteImport.update({
   id: '/help',
   path: '/help',
@@ -363,6 +383,11 @@ const FrHelpRoute = FrHelpRouteImport.update({
 const FrHowItWorksRoute = FrHowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrLoginRoute = FrLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => FrRoute,
 } as any)
 const FrPrivacyRoute = FrPrivacyRouteImport.update({
@@ -385,10 +410,15 @@ const InboxIdRoute = InboxIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => InboxRoute,
 } as any)
+const PayIndexRoute = PayIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PayRoute,
+} as any)
 const PayBookingIdRoute = PayBookingIdRouteImport.update({
-  id: '/pay/$bookingId',
-  path: '/pay/$bookingId',
-  getParentRoute: () => rootRouteImport,
+  id: '/$bookingId',
+  path: '/$bookingId',
+  getParentRoute: () => PayRoute,
 } as any)
 const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
   id: '/subscription',
@@ -476,9 +506,9 @@ const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
-  id: '/pay/bill/$billId',
-  path: '/pay/bill/$billId',
-  getParentRoute: () => rootRouteImport,
+  id: '/bill/$billId',
+  path: '/bill/$billId',
+  getParentRoute: () => PayRoute,
 } as any)
 const ApiContractsIdPdfRoute = ApiContractsIdPdfRouteImport.update({
   id: '/api/contracts/$id/pdf',
@@ -514,6 +544,7 @@ export interface FileRoutesByFullPath {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
   '/parent': typeof ParentRoute
+  '/pay': typeof PayRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -535,12 +566,15 @@ export interface FileRoutesByFullPath {
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/fr/about': typeof FrAboutRoute
+  '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
+  '/fr/get-app': typeof FrGetAppRoute
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/login': typeof FrLoginRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/terms': typeof FrTermsRoute
@@ -551,6 +585,7 @@ export interface FileRoutesByFullPath {
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/fr/': typeof FrIndexRoute
+  '/pay/': typeof PayIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
@@ -615,12 +650,15 @@ export interface FileRoutesByTo {
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/fr/about': typeof FrAboutRoute
+  '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
+  '/fr/get-app': typeof FrGetAppRoute
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/login': typeof FrLoginRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/terms': typeof FrTermsRoute
@@ -631,6 +669,7 @@ export interface FileRoutesByTo {
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/fr': typeof FrIndexRoute
+  '/pay': typeof PayIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
@@ -676,6 +715,7 @@ export interface FileRoutesById {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
   '/parent': typeof ParentRoute
+  '/pay': typeof PayRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -697,12 +737,15 @@ export interface FileRoutesById {
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/fr/about': typeof FrAboutRoute
+  '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
+  '/fr/get-app': typeof FrGetAppRoute
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/login': typeof FrLoginRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/terms': typeof FrTermsRoute
@@ -713,6 +756,7 @@ export interface FileRoutesById {
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/fr/': typeof FrIndexRoute
+  '/pay/': typeof PayIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
@@ -759,6 +803,7 @@ export interface FileRouteTypes {
     | '/meet-the-team'
     | '/menu'
     | '/parent'
+    | '/pay'
     | '/privacy'
     | '/provider'
     | '/reset-password'
@@ -780,12 +825,15 @@ export interface FileRouteTypes {
     | '/checkin/$id'
     | '/daycare/$slug'
     | '/fr/about'
+    | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
     | '/fr/explore'
     | '/fr/faq'
+    | '/fr/get-app'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/login'
     | '/fr/privacy'
     | '/fr/search'
     | '/fr/terms'
@@ -796,6 +844,7 @@ export interface FileRouteTypes {
     | '/support/$caseId'
     | '/video/$roomId'
     | '/fr/'
+    | '/pay/'
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
@@ -860,12 +909,15 @@ export interface FileRouteTypes {
     | '/checkin/$id'
     | '/daycare/$slug'
     | '/fr/about'
+    | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
     | '/fr/explore'
     | '/fr/faq'
+    | '/fr/get-app'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/login'
     | '/fr/privacy'
     | '/fr/search'
     | '/fr/terms'
@@ -876,6 +928,7 @@ export interface FileRouteTypes {
     | '/support/$caseId'
     | '/video/$roomId'
     | '/fr'
+    | '/pay'
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
@@ -920,6 +973,7 @@ export interface FileRouteTypes {
     | '/meet-the-team'
     | '/menu'
     | '/parent'
+    | '/pay'
     | '/privacy'
     | '/provider'
     | '/reset-password'
@@ -941,12 +995,15 @@ export interface FileRouteTypes {
     | '/checkin/$id'
     | '/daycare/$slug'
     | '/fr/about'
+    | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
     | '/fr/explore'
     | '/fr/faq'
+    | '/fr/get-app'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/login'
     | '/fr/privacy'
     | '/fr/search'
     | '/fr/terms'
@@ -957,6 +1014,7 @@ export interface FileRouteTypes {
     | '/support/$caseId'
     | '/video/$roomId'
     | '/fr/'
+    | '/pay/'
     | '/api/admin/contracts'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
@@ -1002,6 +1060,7 @@ export interface RootRouteChildren {
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MenuRoute: typeof MenuRoute
   ParentRoute: typeof ParentRoute
+  PayRoute: typeof PayRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   ProviderRoute: typeof ProviderRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1022,7 +1081,6 @@ export interface RootRouteChildren {
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
-  PayBookingIdRoute: typeof PayBookingIdRoute
   SignIdRoute: typeof SignIdRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
@@ -1038,7 +1096,6 @@ export interface RootRouteChildren {
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
-  PayBillBillIdRoute: typeof PayBillBillIdRoute
   ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
 }
 
@@ -1233,6 +1290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pay': {
+      id: '/pay'
+      path: '/pay'
+      fullPath: '/pay'
+      preLoaderRoute: typeof PayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -1387,6 +1451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrAboutRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/benefits': {
+      id: '/fr/benefits'
+      path: '/benefits'
+      fullPath: '/fr/benefits'
+      preLoaderRoute: typeof FrBenefitsRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/contact': {
       id: '/fr/contact'
       path: '/contact'
@@ -1415,6 +1486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrFaqRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/get-app': {
+      id: '/fr/get-app'
+      path: '/get-app'
+      fullPath: '/fr/get-app'
+      preLoaderRoute: typeof FrGetAppRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/help': {
       id: '/fr/help'
       path: '/help'
@@ -1427,6 +1505,13 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/fr/how-it-works'
       preLoaderRoute: typeof FrHowItWorksRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/login': {
+      id: '/fr/login'
+      path: '/login'
+      fullPath: '/fr/login'
+      preLoaderRoute: typeof FrLoginRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/privacy': {
@@ -1457,12 +1542,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InboxIdRouteImport
       parentRoute: typeof InboxRoute
     }
+    '/pay/': {
+      id: '/pay/'
+      path: '/'
+      fullPath: '/pay/'
+      preLoaderRoute: typeof PayIndexRouteImport
+      parentRoute: typeof PayRoute
+    }
     '/pay/$bookingId': {
       id: '/pay/$bookingId'
-      path: '/pay/$bookingId'
+      path: '/$bookingId'
       fullPath: '/pay/$bookingId'
       preLoaderRoute: typeof PayBookingIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof PayRoute
     }
     '/provider/subscription': {
       id: '/provider/subscription'
@@ -1585,10 +1677,10 @@ declare module '@tanstack/react-router' {
     }
     '/pay/bill/$billId': {
       id: '/pay/bill/$billId'
-      path: '/pay/bill/$billId'
+      path: '/bill/$billId'
       fullPath: '/pay/bill/$billId'
       preLoaderRoute: typeof PayBillBillIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof PayRoute
     }
     '/api/contracts/$id/pdf': {
       id: '/api/contracts/$id/pdf'
@@ -1602,12 +1694,15 @@ declare module '@tanstack/react-router' {
 
 interface FrRouteChildren {
   FrAboutRoute: typeof FrAboutRoute
+  FrBenefitsRoute: typeof FrBenefitsRoute
   FrContactRoute: typeof FrContactRoute
   FrCookiesRoute: typeof FrCookiesRoute
   FrExploreRoute: typeof FrExploreRoute
   FrFaqRoute: typeof FrFaqRoute
+  FrGetAppRoute: typeof FrGetAppRoute
   FrHelpRoute: typeof FrHelpRoute
   FrHowItWorksRoute: typeof FrHowItWorksRoute
+  FrLoginRoute: typeof FrLoginRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
   FrSearchRoute: typeof FrSearchRoute
   FrTermsRoute: typeof FrTermsRoute
@@ -1616,12 +1711,15 @@ interface FrRouteChildren {
 
 const FrRouteChildren: FrRouteChildren = {
   FrAboutRoute: FrAboutRoute,
+  FrBenefitsRoute: FrBenefitsRoute,
   FrContactRoute: FrContactRoute,
   FrCookiesRoute: FrCookiesRoute,
   FrExploreRoute: FrExploreRoute,
   FrFaqRoute: FrFaqRoute,
+  FrGetAppRoute: FrGetAppRoute,
   FrHelpRoute: FrHelpRoute,
   FrHowItWorksRoute: FrHowItWorksRoute,
+  FrLoginRoute: FrLoginRoute,
   FrPrivacyRoute: FrPrivacyRoute,
   FrSearchRoute: FrSearchRoute,
   FrTermsRoute: FrTermsRoute,
@@ -1639,6 +1737,20 @@ const InboxRouteChildren: InboxRouteChildren = {
 }
 
 const InboxRouteWithChildren = InboxRoute._addFileChildren(InboxRouteChildren)
+
+interface PayRouteChildren {
+  PayBookingIdRoute: typeof PayBookingIdRoute
+  PayIndexRoute: typeof PayIndexRoute
+  PayBillBillIdRoute: typeof PayBillBillIdRoute
+}
+
+const PayRouteChildren: PayRouteChildren = {
+  PayBookingIdRoute: PayBookingIdRoute,
+  PayIndexRoute: PayIndexRoute,
+  PayBillBillIdRoute: PayBillBillIdRoute,
+}
+
+const PayRouteWithChildren = PayRoute._addFileChildren(PayRouteChildren)
 
 interface ProviderRouteChildren {
   ProviderSubscriptionRoute: typeof ProviderSubscriptionRoute
@@ -1691,6 +1803,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeetTheTeamRoute: MeetTheTeamRoute,
   MenuRoute: MenuRoute,
   ParentRoute: ParentRoute,
+  PayRoute: PayRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   ProviderRoute: ProviderRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -1711,7 +1824,6 @@ const rootRouteChildren: RootRouteChildren = {
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
-  PayBookingIdRoute: PayBookingIdRoute,
   SignIdRoute: SignIdRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
@@ -1727,7 +1839,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,
-  PayBillBillIdRoute: PayBillBillIdRoute,
   ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
 }
 export const routeTree = rootRouteImport

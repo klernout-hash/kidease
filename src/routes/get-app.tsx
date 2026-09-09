@@ -21,10 +21,14 @@ import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 
-export const Route = createFileRoute("/get-app")({
-  validateSearch: (s: Record<string, unknown>) => ({
+export function getAppValidateSearch(s: Record<string, unknown>) {
+  return {
     dev: s.dev === "1" || s.dev === 1 || s.dev === true ? ("1" as const) : undefined,
-  }),
+  };
+}
+
+export const Route = createFileRoute("/get-app")({
+  validateSearch: getAppValidateSearch,
   head: () => pageSeoHead(MARKETING_PAGE_SEO.getApp),
   component: GetApp,
 });
@@ -36,9 +40,13 @@ const SHOTS: { key: string; device: "iphone" | "android"; caption: string; scree
   { key: "login", device: "android", caption: "Sign in \u00b7 Android", screen: <ShotLogin /> },
 ];
 
-function GetApp() {
-  const { t, locale } = useCopy();
+export function GetApp() {
   const { dev } = Route.useSearch();
+  return <GetAppScreen dev={dev} />;
+}
+
+export function GetAppScreen({ dev }: { dev?: "1" }) {
+  const { t, locale } = useCopy();
   const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);

@@ -201,6 +201,8 @@
     padding-block: 0;
     min-height: 2rem;
     height: 2rem;
+    overflow: visible;
+    text-overflow: clip;
   }
   select.ke-lang-select option {
     font-size: 16px;

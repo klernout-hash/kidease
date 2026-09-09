@@ -16,7 +16,7 @@ import { AppearanceControl } from "@/components/appearance-control";
 import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
-import { localePath } from "@/lib/locale-path";
+import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { accountSearch, canSeeAdminDesk, canVisitDesk, showDeskSwitcher } from "@/lib/desks";
 import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
@@ -46,7 +46,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     setOpen(false);
   }, []);
 
-  const hideTabs = pathname.startsWith("/login");
+  const hideTabs = stripLocalePrefix(pathname).startsWith("/login");
+  const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
   const verifyLite = pathname.startsWith("/verify-2fa");
   const menuLite = pathname.startsWith("/menu");
   const onAccount = pathname.startsWith("/account");
@@ -179,7 +180,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               ) : (
                 <>
                   <Link
-                    to="/login"
+                    to={loginTo}
                     search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
                     className="inline-flex h-8 items-center justify-center rounded-full px-2.5 text-[11px] font-medium leading-none text-muted hover:text-fg"
                   >
@@ -187,7 +188,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                   </Link>
                   <span className="h-3.5 w-px shrink-0 bg-border" aria-hidden />
                   <Link
-                    to="/login"
+                    to={loginTo}
                     search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
                     className="inline-flex h-8 items-center justify-center rounded-full px-2.5 text-[11px] font-medium leading-none text-muted hover:text-fg"
                   >
@@ -210,6 +211,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               profileLabel={t("profile")}
               parentLabel={t("parentSignIn")}
               providerLabel={t("providerLogin")}
+              loginTo={loginTo}
             />
             <button
               type="button"
@@ -303,6 +305,7 @@ function HeaderProfile({
   profileLabel,
   parentLabel,
   providerLabel,
+  loginTo = "/login",
 }: {
   userId?: string | null;
   image?: string | null;
@@ -312,6 +315,7 @@ function HeaderProfile({
   profileLabel: string;
   parentLabel: string;
   providerLabel: string;
+  loginTo?: "/login" | "/fr/login";
 }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -373,7 +377,7 @@ function HeaderProfile({
           <p className="border-b border-border px-3 py-2 text-xs font-medium text-muted">Sign in</p>
           <Link
             role="menuitem"
-            to="/login"
+            to={loginTo}
             search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
             onClick={() => setOpen(false)}
             className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
@@ -382,7 +386,7 @@ function HeaderProfile({
           </Link>
           <Link
             role="menuitem"
-            to="/login"
+            to={loginTo}
             search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
             onClick={() => setOpen(false)}
             className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"

@@ -42,23 +42,29 @@ import { useCopy } from "@/lib/use-copy";
 type Role = "parent" | "provider" | "admin";
 type DeskAlias = "parent" | "director" | "centre" | "admin" | "support" | "provider";
 
+export type LoginSearch = { next?: string; role?: Role; intent?: "in" | "up"; desk?: DeskAlias };
+
 const OPERATOR_EMAIL = KIDEASE_OPERATOR_EMAIL;
 
+export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
+  const out: LoginSearch = {};
+  const next = typeof s.next === "string" ? sanitizePostLoginNext(s.next) : null;
+  if (next) out.next = next;
+  if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
+  if (s.intent === "in" || s.intent === "up") out.intent = s.intent;
+  const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
+  if (desk) out.desk = deskQueryValue(desk);
+  return out;
+}
+
+export async function loginLoader() {
+  const providers = await withTimeoutFallback(getSignInProviders(), LOADER_SETTLE_MS, []);
+  return { providers };
+}
+
 export const Route = createFileRoute("/login")({
-  validateSearch: (s: Record<string, unknown>) => {
-    const out: { next?: string; role?: Role; intent?: "in" | "up"; desk?: DeskAlias } = {};
-    const next = typeof s.next === "string" ? sanitizePostLoginNext(s.next) : null;
-    if (next) out.next = next;
-    if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
-    if (s.intent === "in" || s.intent === "up") out.intent = s.intent;
-    const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
-    if (desk) out.desk = deskQueryValue(desk);
-    return out;
-  },
-  loader: async () => {
-    const providers = await withTimeoutFallback(getSignInProviders(), LOADER_SETTLE_MS, []);
-    return { providers };
-  },
+  validateSearch: loginValidateSearch,
+  loader: loginLoader,
   component: Login,
 });
 
@@ -66,10 +72,20 @@ function twoFactorUrl(dest: string) {
   return twoFactorPageUrl(dest);
 }
 
-function Login() {
-  const { t } = useCopy();
+export function Login() {
   const { providers } = Route.useLoaderData();
   const search = Route.useSearch();
+  return <LoginScreen providers={providers} search={search} />;
+}
+
+export function LoginScreen({
+  providers,
+  search,
+}: {
+  providers: GrokProvider[];
+  search: LoginSearch;
+}) {
+  const { t } = useCopy();
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
   const operator = role === "admin";
