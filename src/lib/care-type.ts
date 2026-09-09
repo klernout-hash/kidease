@@ -72,7 +72,7 @@ export function matchesRailAge(
     return hasConfirmedAges(item) && item.ageMaxMonths >= 60;
   }
   if (!hasConfirmedAges(item)) return false;
-  return matchesAgeBand(age, item);
+  return matchesAgeBand(age, { ...item, agesKnown: true });
 }
 
 export function railAgeToSearchAge(age: RailAge): "any" | AgeGroup {

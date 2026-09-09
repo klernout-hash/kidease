@@ -14,6 +14,7 @@ import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { JsonLd } from "@/components/json-ld";
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto } from "@/lib/listing-photo";
+import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { DETAIL_SIZES } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
 import { getDaycare, getListingSeo } from "@/lib/server/daycares";
@@ -438,7 +439,7 @@ function Listing() {
                 ))}
               </div>
             ) : null}
-            {photos[photo]?.includes("placeholder") ? (
+            {!photos.some((src) => isRealListingPhoto(src)) || photos[photo]?.includes("placeholder") ? (
               <span className="pointer-events-none absolute bottom-3 left-3 z-[2] rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white">
                 {t("photoPending")}
               </span>

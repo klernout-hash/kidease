@@ -40,9 +40,10 @@ function parseSavedSearchFilters(raw) {
 
 function matchesAgeBand(ageBand, row) {
   if (ageBand === "any") return true;
-  if (row.agesKnown === false) return false;
+  if (row.agesKnown !== true) return false;
   if (ageBand === "infant") return row.ageMinMonths <= 18;
   if (ageBand === "toddler") return row.ageMinMonths < 36 && row.ageMaxMonths >= 18;
+  if (ageBand === "school-age") return row.ageMaxMonths >= 60;
   return row.ageMaxMonths >= 30 && row.ageMinMonths < 72;
 }
 
@@ -77,6 +78,10 @@ test("filters parse PR #59 honesty chips and age-band matches search", () => {
   assert.equal(matchesAgeBand("any", { ageMinMonths: 0, ageMaxMonths: 0, agesKnown: false }), true);
   assert.equal(matchesAgeBand("infant", { ageMinMonths: 12, ageMaxMonths: 24, agesKnown: true }), true);
   assert.equal(matchesAgeBand("infant", { ageMinMonths: 24, ageMaxMonths: 60, agesKnown: true }), false);
+  assert.equal(matchesAgeBand("infant", { ageMinMonths: 0, ageMaxMonths: 18, agesKnown: false }), false);
+  assert.equal(matchesAgeBand("infant", { ageMinMonths: 0, ageMaxMonths: 18 }), false);
+  assert.equal(matchesAgeBand("school-age", { ageMinMonths: 60, ageMaxMonths: 144, agesKnown: true }), true);
+  assert.equal(matchesAgeBand("school-age", { ageMinMonths: 60, ageMaxMonths: 144, agesKnown: false }), false);
   const lib = src("src/lib/saved-search.ts");
   assert.match(lib, /confirmedOnly/);
   assert.match(lib, /readyOnly/);
@@ -111,9 +116,10 @@ test("matcher uses ST_DWithin like nearby.ts (lng, lat)", () => {
   assert.match(alerts, /st_makepoint\(\$1, \$2\)/);
   assert.match(`${nearby}\n${neon}`, /st_makepoint\(\$1, \$2\)/);
   assert.match(alerts, /last_vacancy_updated_at/);
-  assert.match(alerts, /FEATURE_PUSH stays off/);
-  assert.doesNotMatch(alerts, /sendPushNotification/);
-  assert.match(alerts, /does NOT send FCM/);
+  assert.match(alerts, /sendPushNotification/);
+  assert.match(alerts, /sendSms/);
+  assert.match(alerts, /FEATURE_PUSH/);
+  assert.doesNotMatch(alerts, /sendPushToDevices\(/);
 });
 
 test("email path uses Resend when wired and stubs honestly otherwise", () => {

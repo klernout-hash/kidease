@@ -21,6 +21,20 @@ import {
   type SearchAlertNotice,
   type SearchAlertPrefs,
 } from "@/lib/saved-search";
+import type { CopyKey } from "@/lib/copy";
+
+function ageBandCopyKey(band: AgeBand): CopyKey {
+  if (band === "any") return "anyAge";
+  if (band === "school-age") return "schoolAge";
+  return band;
+}
+
+function noticeKindKey(kind: SearchAlertNotice["kind"]): CopyKey {
+  if (kind === "vacancy_reconfirmed") return "alertVacancy";
+  if (kind === "waitlist_pulse") return "alertWaitlistPulse";
+  if (kind === "request_reply") return "alertRequestReply";
+  return "alertNewCentre";
+}
 import { useCopy } from "@/lib/use-copy";
 import { clampRadiusKm } from "@/lib/proximity";
 
@@ -29,7 +43,7 @@ export function SavedSearchesPanel() {
   const navigate = useNavigate();
   const [searches, setSearches] = useState<SavedSearch[] | null>(null);
   const [prefs, setPrefs] = useState<SearchAlertPrefs>({
-    emailEnabled: false,
+    emailEnabled: true,
     inAppEnabled: true,
     smsEnabled: false,
     emailCommercial: false,
@@ -84,6 +98,16 @@ export function SavedSearchesPanel() {
           {prefs.emailEnabled && !prefs.emailConfigured ? (
             <p className="text-xs text-muted">{t("alertEmailStub")}</p>
           ) : null}
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={prefs.inAppEnabled}
+              onChange={(e) => setPrefs((cur) => ({ ...cur, inAppEnabled: e.target.checked }))}
+            />
+            <span>{t("alertInApp")}</span>
+          </label>
+          <p className="text-xs text-subtle">{t("alertPushOff")}</p>
           <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
             <input
               type="checkbox"
@@ -111,16 +135,6 @@ export function SavedSearchesPanel() {
               <span className="mt-1 block text-[12px] text-muted">{t("caslNotRequired")}</span>
             </span>
           </label>
-          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={prefs.inAppEnabled}
-              onChange={(e) => setPrefs((cur) => ({ ...cur, inAppEnabled: e.target.checked }))}
-            />
-            <span>{t("alertInApp")}</span>
-          </label>
-          <p className="text-xs text-subtle">{t("alertPushOff")}</p>
           <p className="text-xs text-subtle">{t("caslWithdrawHint")}</p>
           <Button
             size="sm"
@@ -184,7 +198,7 @@ export function SavedSearchesPanel() {
                           <p className="font-medium">{search.name}</p>
                           <p className="text-sm text-muted">
                             {search.centerLabel} · {search.radiusKm} km
-                            {search.ageBand !== "any" ? ` · ${t(search.ageBand)}` : ` · ${t("anyAge")}`}
+                            {` · ${t(ageBandCopyKey(search.ageBand))}`}
                             {extra ? ` · ${extra} ${t("filters").toLowerCase()}` : ""}
                           </p>
                           <p className="mt-1 text-xs text-subtle">
@@ -249,20 +263,12 @@ export function SavedSearchesPanel() {
               <li key={n.id} className="flex flex-wrap items-start justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <p className={n.readAt ? "text-sm text-muted" : "text-sm font-medium"}>
-                    {n.kind === "waitlist_pulse"
-                      ? t("alertWaitlistPulse")
-                      : n.kind === "vacancy_reconfirmed"
-                        ? t("alertVacancy")
-                        : t("alertNewCentre")}
+                    {t(noticeKindKey(n.kind))}
                   </p>
                   <p className="font-medium">{n.title}</p>
                   {n.body ? <p className="text-sm text-muted">{n.body}</p> : null}
                 </div>
-                {n.daycareId ? (
-                  <Button size="sm" variant="secondary" asChild>
-                    <Link to="/search">{t("emptyFindCare")}</Link>
-                  </Button>
-                ) : null}
+                <NoticeLink notice={n} label={t("alertOpenNotice")} />
               </li>
             ))}
           </ul>
@@ -270,6 +276,38 @@ export function SavedSearchesPanel() {
       </section>
     </div>
   );
+}
+
+function NoticeLink({ notice, label }: { notice: SearchAlertNotice; label: string }) {
+  const path = notice.linkPath || "";
+  const inbox = path.match(/^\/inbox\/([^/?#]+)/);
+  if (inbox) {
+    return (
+      <Button size="sm" variant="secondary" asChild>
+        <Link to="/inbox/$id" params={{ id: inbox[1] }}>
+          {label}
+        </Link>
+      </Button>
+    );
+  }
+  const listing = path.match(/^\/daycare\/([^/?#]+)/);
+  if (listing) {
+    return (
+      <Button size="sm" variant="secondary" asChild>
+        <Link to="/daycare/$slug" params={{ slug: listing[1] }}>
+          {label}
+        </Link>
+      </Button>
+    );
+  }
+  if (notice.daycareId) {
+    return (
+      <Button size="sm" variant="secondary" asChild>
+        <Link to="/search">{label}</Link>
+      </Button>
+    );
+  }
+  return null;
 }
 
 function SavedSearchEditor({
@@ -335,7 +373,7 @@ function SavedSearchEditor({
                 : "min-h-11 rounded-full px-3 py-1.5 text-sm ring-1 ring-border"
             }
           >
-            {band === "any" ? t("anyAge") : t(band)}
+            {t(ageBandCopyKey(band))}
           </button>
         ))}
       </div>

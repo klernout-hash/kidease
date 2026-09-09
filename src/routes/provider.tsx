@@ -40,6 +40,7 @@ import { DirectorNudgeQueue } from "@/components/director-nudges";
 import { ProviderPlanBanner } from "@/components/provider-plan-banner";
 import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { FreePageExplainer } from "@/components/free-listing-share";
+import { CompletenessChecklist } from "@/components/listing-completeness";
 import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
@@ -214,6 +215,12 @@ function ProviderPage() {
           }}
         />
       ) : null}
+      {search.claimed && listings[0] ? (
+        <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20">
+          <h2 className="font-display text-2xl">{t("claimSuccessTitle")}</h2>
+          <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
+        </section>
+      ) : null}
       <DirectorNudgeQueue listings={listings} stats={stats} onConfirmed={() => void load()} />
       <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
       {listings.length ? (
@@ -321,11 +328,13 @@ function ProviderPage() {
                     <TrustSignals item={d} surface="provider" compact className="mt-2" />
                   </div>
                   {d.priority ? <PriorityPill /> : null}
+                  <PayCtas>
                   {d.featuredCity ? (
                     <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                       {t("planPro")} · featured
                     </span>
                   ) : null}
+                  </PayCtas>
                 </div>
                 <p className="mt-3 text-xs text-subtle">
                   {subscription?.analyticsDays === 90 ? t("analytics90") : t("analytics")}
@@ -345,6 +354,7 @@ function ProviderPage() {
                   </div>
                 </dl>
                 <DemandCues snapshot={st?.demand} />
+                <CompletenessChecklist item={d} />
                 {declined ? (
                   <p className="mt-4 rounded-lg bg-danger/10 p-3 text-sm text-danger">
                     KidEase declined this listing. Parent requests and Promote stay off. Add another centre below, or wait for a re-review after Kyle asks for more.

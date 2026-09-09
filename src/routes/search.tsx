@@ -259,7 +259,13 @@ function SearchPage() {
     if (!saved) return;
     setOrigin({ lat: saved.centerLat, lng: saved.centerLng, label: saved.centerLabel });
     setRadiusKm(saved.radiusKm);
-    setAgeGroup(saved.ageBand === "any" ? "any" : saved.ageBand);
+    if (saved.ageBand === "school-age") {
+      setSchoolAgeOnly(true);
+      setAgeGroup("any");
+    } else {
+      setSchoolAgeOnly(false);
+      setAgeGroup(saved.ageBand === "any" ? "any" : saved.ageBand);
+    }
     setQuery(saved.centerLabel);
     setLiveOnly(saved.filters.liveOnly);
     setAvail(saved.filters.avail);
@@ -563,7 +569,7 @@ function SearchPage() {
   }
 
   function openSaveSearch() {
-    const band: AgeBand = ageGroup === "any" ? "any" : ageGroup;
+    const band: AgeBand = schoolAgeOnly ? "school-age" : ageGroup === "any" ? "any" : ageGroup;
     setSaveName(defaultSearchName(origin.label, radiusKm, band));
     setSaveOpen(true);
   }
@@ -571,7 +577,7 @@ function SearchPage() {
   function submitSaveSearch() {
     if (!user) return;
     setSaveBusy(true);
-    const band: AgeBand = ageGroup === "any" ? "any" : ageGroup;
+    const band: AgeBand = schoolAgeOnly ? "school-age" : ageGroup === "any" ? "any" : ageGroup;
     void saveSearch({
       data: {
         name: saveName,
