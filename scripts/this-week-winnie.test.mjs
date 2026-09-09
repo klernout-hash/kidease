@@ -42,6 +42,8 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(search, /listingMatchesExploreFilter/);
   assert.match(search, /n_age_unknown/);
   assert.match(search, /showSearchEmpty/);
+  assert.match(search, /ageGroup: "any"/);
+  assert.match(src("src/lib/server/daycares.ts"), /listingAgeUnknown/);
   assert.doesNotMatch(search, /ExploreRails/);
   assert.doesNotMatch(search, /FacilityTypeRails/);
 

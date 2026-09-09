@@ -8,6 +8,7 @@ import { nearbyListings, nearbyListingsDual, type NearbyListing } from "./nearby
 import { callerIsAdmin } from "./public-listing";
 import { upsertDaycare } from "./seed";
 import { applyListingReadiness } from "@/lib/listing-readiness";
+import { listingAgeUnknown } from "@/lib/now-loops";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
 import { overlayParentReviews } from "./reviews";
@@ -266,7 +267,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   cards = await overlayFeaturedCity(cards);
   if (data.ageGroup !== "any") {
     cards = cards.filter((c) => {
-      if (!c.agesKnown) return false;
+      if (listingAgeUnknown(c)) return true;
       if (data.ageGroup === "infant") return c.ageMinMonths <= 18;
       if (data.ageGroup === "toddler") return c.ageMinMonths < 36 && c.ageMaxMonths >= 18;
       return c.ageMaxMonths >= 30 && c.ageMinMonths < 72;
