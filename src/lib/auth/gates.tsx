@@ -14,6 +14,7 @@ import {
   parseDeskQuery,
   sanitizePostLoginNext,
   staffTwoFactorRequired,
+  twoFactorGateState,
 } from "@/lib/desks";
 
 /** Where `RedirectToSignIn` sends signed-out visitors. Create this route. */
@@ -73,20 +74,26 @@ export function TwoFactorGate({
   pending?: ReactNode;
 }) {
   const { user, isPending } = useCurrentUserState();
-  const [state, setState] = useState<"load" | "ok" | "need">("load");
+  const staff = staffTwoFactorRequired(next);
+  const [state, setState] = useState<"load" | "ok" | "need">(staff ? "load" : "ok");
 
   useEffect(() => {
     if (!user) return;
+    if (!staffTwoFactorRequired(next)) {
+      setState("ok");
+      return;
+    }
     let cancelled = false;
+    setState("load");
     void yieldToMain()
       .then(() => getTwoFactorStatus())
       .then((s) => {
-        if (!cancelled) setState(s.verified ? "ok" : "need");
+        if (!cancelled) setState(twoFactorGateState(s.verified, next));
       })
       .catch(() => {
-        // Admin / support fail closed. Parent / provider mobile may fail open
-        // so a flaky status check does not loop /verify-2fa.
-        if (!cancelled) setState(staffTwoFactorRequired(next) ? "need" : "ok");
+        // Admin / support fail closed. Parent / provider never reach here
+        // (optional 2FA) so a flaky status check cannot loop /verify-2fa.
+        if (!cancelled) setState(twoFactorGateState(false, next));
       });
     return () => {
       cancelled = true;
