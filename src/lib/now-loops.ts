@@ -3,7 +3,7 @@
  * Ages, fees, CWELCC, and openings are never invented.
  */
 
-import { matchesRailAge, type RailAge } from "@/lib/care-type";
+import { RAIL_AGES, matchesRailAge, type RailAge } from "@/lib/care-type";
 import { hasAmenity } from "@/lib/licensing";
 import {
   hasConfirmedAges,
@@ -14,8 +14,11 @@ import {
 } from "@/lib/listing-readiness";
 import type { Daycare } from "@/lib/types";
 
-export const SEARCH_AGES = ["infant", "toddler", "preschool", "school-age"] as const;
-export type SearchAge = (typeof SEARCH_AGES)[number];
+export const SEARCH_AGES = RAIL_AGES;
+export type SearchAge = RailAge;
+
+/** Home rails hide hollow rather than invent facts to pad density. */
+export const WINNIPEG_LIVE_LOOKING_RAIL_MIN = 0.8;
 
 export const SEARCH_STARTS = ["now", "this-month", "next-month"] as const;
 export type SearchStart = (typeof SEARCH_STARTS)[number];
@@ -66,9 +69,19 @@ export function isSearchStart(raw: unknown): raw is SearchStart {
   return SEARCH_STARTS.includes(raw as SearchStart);
 }
 
-/** Results must not render until age band + start window are chosen. */
-export function searchFiltersReady(age?: string | null, start?: string | null): boolean {
-  return isSearchAge(age) && isSearchStart(start);
+export type SearchPlaceInput = {
+  q?: string | null;
+  label?: string | null;
+  located?: boolean;
+};
+
+/** Results must not render until age band + start window + place are chosen. */
+export function searchFiltersReady(
+  age?: string | null,
+  start?: string | null,
+  place?: SearchPlaceInput | null,
+): boolean {
+  return isSearchAge(age) && isSearchStart(start) && hasPlaceForSearch(place?.q, place?.label, place?.located);
 }
 
 export function hasPlaceForSearch(q?: string | null, label?: string | null, located?: boolean): boolean {
@@ -138,6 +151,31 @@ export function listingAgeUnknown(d: Pick<Daycare, "agesKnown" | "ageMinMonths" 
   return !hasConfirmedAges(d);
 }
 
+export function liveLookingShare<T extends LiveLookingInput>(rows: readonly T[]): number {
+  if (!rows.length) return 0;
+  return liveLookingOnly(rows).length / rows.length;
+}
+
+export function isWinnipegPlace(city?: string | null, label?: string | null): boolean {
+  const hay = `${city || ""} ${label || ""}`.toLowerCase();
+  return hay.includes("winnipeg") || /\bwpg\b/.test(hay);
+}
+
+/**
+ * Home rails are live-looking only. Winnipeg never invents ages/fees/photos
+ * to hit the 80% floor — hollow stay off the rail even if that leaves 0%.
+ */
+export function homeRailItems<T extends LiveLookingInput>(
+  rows: T[],
+  opts?: { city?: string | null; label?: string | null },
+): T[] {
+  const looking = liveLookingOnly(rows);
+  if (isWinnipegPlace(opts?.city, opts?.label) && liveLookingShare(rows) < WINNIPEG_LIVE_LOOKING_RAIL_MIN) {
+    return looking;
+  }
+  return looking;
+}
+
 export function listingServesSearchAge(
   d: Pick<Daycare, "agesKnown" | "ageMinMonths" | "ageMaxMonths" | "amenities">,
   age: SearchAge,
@@ -202,7 +240,23 @@ export function splitSearchResults<T extends LiveLookingInput & VacancyHonestyIn
   return { primary, ageUnknown };
 }
 
-export function liveLookingOnly<T extends LiveLookingInput>(rows: T[]): T[] {
+/**
+ * Ranked /search list. Infant+Now === splitSearchResults.primary.
+ * Ungated All is a chrome state — results stay empty until age + start + place.
+ */
+export function visibleSearchList<T extends LiveLookingInput & VacancyHonestyInput>(
+  rows: T[],
+  age?: SearchAge | null,
+  start?: SearchStart | null,
+  now = Date.now(),
+): T[] {
+  if (isSearchAge(age) && isSearchStart(start)) {
+    return splitSearchResults(rows, age, start, now).primary;
+  }
+  return [];
+}
+
+export function liveLookingOnly<T extends LiveLookingInput>(rows: readonly T[]): T[] {
   return rows.filter((row) => isLiveLookingCard(row));
 }
 

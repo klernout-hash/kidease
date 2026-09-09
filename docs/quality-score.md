@@ -6,7 +6,7 @@ This is not a safety grade or inspection score. Never claim KidEase police-check
 
 ## Score (0–100)
 
-Computed server-side in `src/lib/quality.ts`. Missing signals add **zero**. Incomplete listings stay searchable (soft demotion only). Home rails and “best match / need soon / guest favorites” only show **live-looking** cards via `isLiveLookingCard()` in `src/lib/now-loops.ts`: confirmed ages, a listed fee or a per-centre CWELCC amenity (never a province-wide $10-a-day guess), and a real storefront photo. Hollow cards name the exact gap and stay off those rails.
+Computed server-side in `src/lib/quality.ts`. Missing signals add **zero**. Incomplete listings stay searchable (soft demotion only). Home rails and “best match / need soon / guest favorites” only show **live-looking** cards via `isLiveLookingCard()` / `homeRailItems()` in `src/lib/now-loops.ts`: confirmed ages, a listed fee or a per-centre CWELCC amenity (never a province-wide $10-a-day guess), and a real storefront photo. Hollow cards name the exact gap and stay off those rails. Winnipeg never invents ages, fees, or photos to hit an 80% live-looking floor — if the share is below 80% without inventing, hollow stay hidden.
 
 | Component | Max | What counts |
 | --- | ---: | --- |

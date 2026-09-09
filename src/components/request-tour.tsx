@@ -7,6 +7,7 @@ import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { getFamily } from "@/lib/server/family";
 import { createTourRequest } from "@/lib/server/tours";
 import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { MAX_TOUR_SLOTS, type PreferredTime } from "@/lib/threads";
@@ -81,6 +82,7 @@ export function RequestTourSheet({ daycare, open, onClose }: Props) {
           locale: locale === "fr" ? "fr" : "en",
         },
       });
+      capturePostHogEvent("listing_request_submitted", { intent: "tour" });
       toast.success(t("requestSentTitleTour"));
       setDone({ conversationId: res.conversationId });
       window.setTimeout(() => {

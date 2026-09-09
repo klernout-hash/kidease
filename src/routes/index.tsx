@@ -47,11 +47,12 @@ import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { displayDistance } from "@/lib/units";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
-import { SearchAgeGate } from "@/components/search-age-gate";
 import {
   honestVacancy,
+  homeRailItems,
   isLiveLookingCard,
   liveLookingOnly,
+  startWindowToDate,
   type SearchAge,
   type SearchStart,
 } from "@/lib/now-loops";
@@ -123,7 +124,6 @@ function Home() {
   const [homeName, setHomeName] = useState("");
   const [homeFrom, setHomeFrom] = useState("");
   const [homeTo, setHomeTo] = useState("");
-  const [homeAge, setHomeAge] = useState<SearchAge | "">("");
   const [homeStart, setHomeStart] = useState<SearchStart | "">("");
   const [manual, setManual] = useState(Boolean(search.change) || locationConsent === "denied");
   const [denied, setDenied] = useState(locationConsent === "denied");
@@ -207,7 +207,7 @@ function Home() {
       from: extra?.from,
       to: extra?.to,
     });
-    const age = extra?.age || homeAge || undefined;
+    const age = extra?.age || undefined;
     const start = extra?.start || homeStart || undefined;
     void navigate({
       to: "/search",
@@ -278,8 +278,12 @@ function Home() {
   }, []);
   const liveCount = useMemo(() => featured.filter((r) => r.live).length, [featured]);
   const shown = useMemo(
-    () => liveLookingOnly(uniqueById(liveOnly ? featured.filter((r) => r.live) : featured)),
-    [featured, liveOnly],
+    () =>
+      homeRailItems(liveLookingOnly(uniqueById(liveOnly ? featured.filter((r) => r.live) : featured)), {
+        city: origin.label,
+        label: origin.label,
+      }),
+    [featured, liveOnly, origin.label],
   );
   const availableNow = useMemo(() => {
     return uniqueById(shown.filter((r) => honestVacancy(r).kind === "open")).slice(0, 18);
@@ -385,6 +389,7 @@ function Home() {
         className="mt-5 lg:mt-8"
         values={{ where: place, name: homeName, from: homeFrom, to: homeTo }}
         origin={origin}
+        start={homeStart}
         onWhereChange={setPlace}
         onWhereResolved={(hit) => {
           setOrigin(hit);
@@ -396,25 +401,27 @@ function Home() {
           setHomeFrom(from);
           setHomeTo(to);
         }}
+        onStartChange={(start) => {
+          setHomeStart(start);
+          if (start) {
+            setHomeFrom(startWindowToDate(start));
+            setHomeTo("");
+          } else {
+            setHomeFrom("");
+            setHomeTo("");
+          }
+        }}
         onLocate={() => void pinLocation()}
         onSubmit={() => {
           void applyPlace(place).then((hit) => {
             goSearch(hit?.label || place.trim() || origin.label, {
               name: homeName,
-              from: homeFrom,
+              from: homeStart ? startWindowToDate(homeStart) : homeFrom,
               to: homeTo,
-              age: homeAge || undefined,
               start: homeStart || undefined,
             });
           });
         }}
-      />
-      <SearchAgeGate
-        compact
-        age={homeAge}
-        start={homeStart}
-        onAge={setHomeAge}
-        onStart={setHomeStart}
       />
 
       <div className="mt-4 flex flex-wrap gap-2">

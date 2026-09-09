@@ -63,6 +63,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const homeTo = localePath("/", locale);
   const desktopNav = [
     { to: "/search", label: t("explore"), match: ["/search", "/fr/search", "/daycare"] },
+    { to: "/compare", label: t("compare"), match: ["/compare"] },
     { to: "/benefits", label: t("benefitsTab"), match: ["/benefits"] },
     { to: localePath("/about", locale), label: t("about"), match: ["/about", "/fr/about"] },
     { to: "/get-app", label: t("getApp"), match: ["/get-app"] },
@@ -70,6 +71,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
 
   const drawerItems = [
     { to: "/search", label: t("explore") },
+    { to: "/compare", label: t("compare") },
     { to: "/benefits", label: t("benefitsTab") },
     { to: "/get-app", label: t("getApp") },
     { to: localePath("/about", locale), label: t("about") },

@@ -3,8 +3,7 @@
  * Never invent ages, amenities, CWELCC, or openings. Never write tags back
  * as a licence class. A listing may wear more than one tag.
  *
- * Age chips 1–4 also set the age-first search gate (`?age=` / child age band)
- * so this composes with NOW-loops (#168) as one chip row + age gate.
+ * Age chips 1–4 also set `?age=` so /search stays one chip row (no second age lecture).
  */
 
 import {
@@ -15,6 +14,7 @@ import {
   type RailAge,
 } from "@/lib/care-type";
 import { classifyFacilityType } from "@/lib/facility-type";
+import { listingAgeUnknown } from "@/lib/now-loops";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare } from "@/lib/types";
 
@@ -61,14 +61,28 @@ export function exploreCategorySetsAgeGate(cat?: ExploreCategory | null): boolea
 /** Compute the 7 slugs a listing wears. Unknown ages → no tags 1–4. */
 export function exploreTags(item: ExploreTaggedListing): ExploreCategory[] {
   const tags: ExploreCategory[] = [];
-  for (const age of RAIL_AGES) {
-    if (matchesRailAge(item, age)) tags.push(age);
+  if (!listingAgeUnknown(item)) {
+    for (const age of RAIL_AGES) {
+      if (matchesRailAge(item, age)) tags.push(age);
+    }
   }
   if (isBeforeAfterProgram(item)) tags.push("before-after");
   const facility = classifyFacilityType(item).type;
   if (facility === "home") tags.push("home");
   if (facility === "nursery") tags.push("nursery");
   return tags;
+}
+
+/** All stays visible. Age/facility chips with zero hits stay off the row. */
+export function visibleExploreCategories(
+  counts: Record<ExploreCategory, number>,
+  selected?: ExploreCategory | null,
+): ExploreCategory[] {
+  return EXPLORE_CATEGORIES.filter((cat) => counts[cat] > 0 || cat === selected);
+}
+
+export function isFacilityExploreCategory(cat?: ExploreCategory | null): boolean {
+  return cat === "home" || cat === "nursery" || cat === "before-after";
 }
 
 /** All / missing cat = no category filter (centres + everything). */
@@ -78,6 +92,18 @@ export function matchesCategory(
 ): boolean {
   if (!cat) return true;
   return exploreTags(item).includes(cat);
+}
+
+/**
+ * Age chips 1–4 are the search gate + All tail — do not drop unknown-age
+ * rows before splitSearchResults. Facility chips stay amenity-only.
+ */
+export function listingMatchesExploreFilter(
+  item: ExploreTaggedListing,
+  cat?: ExploreCategory | null,
+): boolean {
+  if (!cat || !isFacilityExploreCategory(cat)) return true;
+  return matchesCategory(item, cat);
 }
 
 export function countExploreCategories(

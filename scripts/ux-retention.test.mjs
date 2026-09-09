@@ -48,7 +48,7 @@ test("Explore empty states distinguish load failure from a true empty radius", (
   assert.match(search, /searchFailedTitle/);
   assert.match(search, /searchFailedLead/);
   assert.match(search, /widenSearchRadius/);
-  assert.match(search, /ExploreHint/);
+  assert.doesNotMatch(search, /ExploreHint/);
   assert.match(search, /ke-skel size-full/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /searchFailedTitle: "Couldn't load centres"/);
