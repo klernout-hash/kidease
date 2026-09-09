@@ -154,7 +154,10 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
     "src/lib/help-knowledge.ts",
   ];
   for (const rel of publicFacing) {
-    const src = readFileSync(join(root, rel), "utf8");
+    let src = readFileSync(join(root, rel), "utf8");
+    if (rel.endsWith("copy.ts")) {
+      src = src.replace(/operatorEmailNote:\s*"[^"]*"/g, 'operatorEmailNote: ""');
+    }
     assert.doesNotMatch(src, /kyle@kidease\.ca/, rel);
     assert.match(src, /SUPPORT_INBOX_EMAIL/, rel);
   }

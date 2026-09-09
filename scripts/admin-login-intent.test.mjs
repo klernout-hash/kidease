@@ -73,6 +73,8 @@ test("operator copy notes Titan email, not Google", () => {
   assert.match(copy, /operatorEmailNote/);
   assert.match(copy, /operatorLead/);
   assert.equal(KIDEASE_OPERATOR_EMAIL, "kyle@kidease.ca");
+  const support = src("scripts/support-desk.test.mjs");
+  assert.match(support, /operatorEmailNote/);
 });
 
 test("reset and verification mail stay on Resend, not Titan SMTP", () => {
