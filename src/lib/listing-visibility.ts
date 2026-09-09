@@ -18,7 +18,7 @@ export type ListingVisibilityInput = {
 
 /** Known QA fixture — keep in sync with GHOST_LISTING / centres-extra-1.json / request-guard HIDDEN_LISTING_SLUGS. */
 const KNOWN_ADMIN_ONLY_IDS = new Set(["ke-test-ghost-001"]);
-const KNOWN_ADMIN_ONLY_SLUGS = new Set(["test-ghost-claim-lab"]);
+const KNOWN_ADMIN_ONLY_SLUGS = new Set(["test-ghost", "test-ghost-claim-lab"]);
 const KNOWN_ADMIN_ONLY_LICENCES = new Set(["test-ghost-0001"]);
 
 function norm(value: string | null | undefined) {
@@ -38,7 +38,7 @@ export function looksLikeTestFixture(d: ListingVisibilityInput | null | undefine
   const name = (d.name || "").trim();
   const nameLc = name.toLowerCase();
   const address = norm(d.address);
-  if (KNOWN_ADMIN_ONLY_SLUGS.has(slug) || slug.startsWith("test-ghost-") || slug.includes("ghost-listing")) return true;
+  if (KNOWN_ADMIN_ONLY_SLUGS.has(slug) || slug === "test-ghost" || slug.startsWith("test-ghost-") || slug.includes("ghost-listing")) return true;
   if (KNOWN_ADMIN_ONLY_IDS.has(id) || id.startsWith("ke-test-")) return true;
   if (KNOWN_ADMIN_ONLY_LICENCES.has(license) || license.startsWith("test-")) return true;
   if (/^TEST[\s\-_]/.test(name)) return true;
@@ -102,7 +102,7 @@ export const PUBLIC_LISTING_SQL = `(
   coalesce(is_test, 0) = 0
   and coalesce(visibility, 'public') = 'public'
   and id not ilike 'ke-test-%'
-  and slug not ilike 'test-ghost-%'
+  and slug not ilike 'test-ghost%'
   and coalesce(license_number, '') not ilike 'TEST-%'
   and name not like 'TEST %'
   and name not like 'TEST-%'

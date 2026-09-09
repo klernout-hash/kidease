@@ -35,6 +35,8 @@ test("robots.txt keeps admin disallows and points Sitemap at the www URL", () =>
   assert.match(robots, /^Disallow: \/admin-chat$/m);
   assert.match(robots, /^Disallow: \/support$/m);
   assert.match(robots, /^Disallow: \/provider\/subscription$/m);
+  assert.match(robots, /^Disallow: \/daycare\/test-ghost$/m);
+  assert.match(robots, /^Disallow: \/book\/test-ghost$/m);
   assert.match(robots, /^Disallow: \/daycare\/test-ghost-claim-lab$/m);
   assert.match(robots, /^Disallow: \/book\/test-ghost-claim-lab$/m);
   assert.match(robots, /^Sitemap: https:\/\/www\.kidease\.ca\/sitemap\.xml$/m);
@@ -63,6 +65,8 @@ test("sitemap.xml lists canonical www public pages and omits admin paths", () =>
   assert.doesNotMatch(sitemap, /\/admin/);
   assert.doesNotMatch(sitemap, /\/provider\/subscription/);
   assert.doesNotMatch(sitemap, /test-ghost-claim-lab/);
+  assert.doesNotMatch(sitemap, /\/daycare\/test-ghost</);
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/delete-account/);
 });
 
 test("vercel CSP does not allowlist grok.com and still keeps product hosts", () => {
@@ -71,6 +75,8 @@ test("vercel CSP does not allowlist grok.com and still keeps product hosts", () 
   assert.doesNotMatch(vercel, /unsafe-inline/);
   assert.doesNotMatch(vercel, /grok\.com/);
   assert.match(vercel, /"source": "\/admin-chat"/);
+  assert.match(vercel, /"source": "\/daycare\/test-ghost"/);
+  assert.match(vercel, /"source": "\/book\/test-ghost"/);
   assert.match(vercel, /"source": "\/daycare\/test-ghost-claim-lab"/);
   assert.match(vercel, /"source": "\/book\/test-ghost-claim-lab"/);
 });
@@ -79,6 +85,7 @@ test("sitemap generation includes public listing URLs and drops the ghost", asyn
   const { publicSitemapSlugs, renderSitemapXml, isSafeSitemapSlug, sitemapPublicPaths } = await import(
     "../src/lib/sitemap.ts"
   );
+  assert.equal(isSafeSitemapSlug("test-ghost"), false);
   assert.equal(isSafeSitemapSlug("test-ghost-claim-lab"), false);
   const slugs = publicSitemapSlugs(
     [

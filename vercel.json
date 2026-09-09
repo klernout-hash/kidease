@@ -148,6 +148,14 @@
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {
+      "source": "/daycare/test-ghost",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/book/test-ghost",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
       "source": "/daycare/test-ghost-claim-lab",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },

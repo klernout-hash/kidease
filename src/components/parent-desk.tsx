@@ -8,7 +8,7 @@ import { LedgerHonesty } from "@/components/listing-status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { deleteAccount, getFamily } from "@/lib/server/family";
+import { getFamily } from "@/lib/server/family";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import type { LeadRequest } from "@/lib/lead-requests";
@@ -16,7 +16,6 @@ import { listParentBills } from "@/lib/server/billing";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { hasCareDetails } from "@/lib/child-profile";
 import { useCopy } from "@/lib/use-copy";
-import { signOut } from "@/lib/auth/client";
 import { formatAgeLabel } from "@/lib/templates";
 import { ageGroupFromMonths, formatMonth, money, monthsBetween } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
@@ -84,8 +83,6 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [leads, setLeads] = useState<LeadRequest[]>([]);
   const [editing, setEditing] = useState<Child | null | "new">(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
@@ -626,29 +623,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       <section className="mt-14 rounded-xl bg-surface p-5 ring-1 ring-border">
         <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
         <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
-        {confirmDelete ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              variant="danger"
-              disabled={deleting}
-              onClick={() => {
-                setDeleting(true);
-                void deleteAccount()
-                  .then(() => signOut("/"))
-                  .catch(() => setDeleting(false));
-              }}
-            >
-              {t("deleteAccountConfirm")}
-            </Button>
-            <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
-              {t("back")}
-            </Button>
-          </div>
-        ) : (
-          <Button variant="ghost" className="mt-4 text-danger" onClick={() => setConfirmDelete(true)}>
-            {t("deleteAccount")}
-          </Button>
-        )}
+        <Button variant="ghost" className="mt-4 text-danger" asChild>
+          <Link to="/delete-account">{t("deleteAccount")}</Link>
+        </Button>
       </section>
       ) : null}
     </DeskShell>

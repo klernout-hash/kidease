@@ -184,7 +184,16 @@ export function funnelDestPath(raw: string): string {
   const path = pathnameOfDest(raw) || "/";
   const desk = deskFromPathname(path);
   if (desk) return DESK_PATH[desk];
-  if (path === "/" || path === "/search" || path === "/account" || path === "/inbox") return path;
+  if (
+    path === "/" ||
+    path === "/search" ||
+    path === "/account" ||
+    path === "/inbox" ||
+    path === "/delete-account" ||
+    path === "/unsubscribe"
+  ) {
+    return path;
+  }
   if (path.startsWith("/daycare/")) return "/daycare";
   if (isAuthLoopPath(path)) return path;
   return "/other";

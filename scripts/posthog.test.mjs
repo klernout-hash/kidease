@@ -352,6 +352,11 @@ describe("PostHog client wiring", () => {
       email: "a@b.c",
     });
     assert.deepEqual(cleaned, { path: "/login", listing: "ok" });
+    const libHost = sanitizePostHogProperties({
+      $lib_custom_api_host: "https://www.kidease.ca/ingest",
+      email: "a@b.c",
+    });
+    assert.deepEqual(libHost, { $lib_custom_api_host: "https://www.kidease.ca/ingest" });
     const masked = maskCapturedNetworkRequest({
       name: "https://kidease.ca/api/auth",
       requestBody: '{"password":"x"}',

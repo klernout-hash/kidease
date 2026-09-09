@@ -823,6 +823,9 @@ export const copy = {
     supportSent: "Message sent. We’ll reply by email.",
     deleteAccount: "Delete my account",
     deleteAccountLead: "Removes your children, messages, bookings, payments, and saved centres. This cannot be undone.",
+    deleteAccountGuestLead:
+      "Sign in to delete your KidEase account. This is the same path App Store and PIPEDA reviews look for.",
+    deleteAccountSignIn: "Sign in to delete my account",
     deleteAccountConfirm: "Delete everything",
     accountDeleted: "Account deleted",
     privacyNutrition: "What the stores ask us to disclose",
@@ -2230,6 +2233,9 @@ export const copy = {
     supportSent: "Message envoyé. Nous répondrons par courriel.",
     deleteAccount: "Supprimer mon compte",
     deleteAccountLead: "Efface vos enfants, messages, demandes, paiements et centres enregistrés. Irréversible.",
+    deleteAccountGuestLead:
+      "Connectez-vous pour supprimer votre compte KidEase. C’est le chemin que les revues App Store et PIPEDA recherchent.",
+    deleteAccountSignIn: "Se connecter pour supprimer mon compte",
     deleteAccountConfirm: "Tout supprimer",
     accountDeleted: "Compte supprimé",
     privacyNutrition: "Ce que les boutiques nous demandent de déclarer",

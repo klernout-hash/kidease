@@ -7,11 +7,13 @@ import {
   STORE_REVIEW_COOLDOWN_MS,
   STORE_REVIEW_LAST_KEY,
   appleAppStoreId,
+  appleStoreListingUrl,
   appleWriteReviewUrl,
   isAssignedAppleAppStoreId,
   isHappyMomentReason,
   isPlayPackageName,
   playPackageName,
+  playStoreListingUrl,
   playWriteReviewUrl,
   parseReviewTimestamp,
   reviewCooldownElapsed,
@@ -32,6 +34,7 @@ describe("store review IDs stay placeholders", () => {
     assert.equal(isAssignedAppleAppStoreId(""), false);
     assert.equal(isAssignedAppleAppStoreId("APPLE_APP_STORE_ID"), false);
     assert.equal(isAssignedAppleAppStoreId("12345"), false);
+    assert.equal(appleStoreListingUrl(""), null);
     assert.equal(appleWriteReviewUrl(""), null);
     assert.equal(appleWriteReviewUrl("id1234567890"), null);
     assert.equal(writeReviewUrlForPlatform("ios"), null);
@@ -45,6 +48,7 @@ describe("store review IDs stay placeholders", () => {
     assert.equal(isPlayPackageName("ca.daycarenearme.app"), true);
     assert.equal(isPlayPackageName(""), false);
     assert.equal(isPlayPackageName("not-a-package"), false);
+    assert.equal(playStoreListingUrl(), null);
     assert.equal(
       playWriteReviewUrl(),
       "https://play.google.com/store/apps/details?id=ca.daycarenearme.app",
@@ -55,6 +59,7 @@ describe("store review IDs stay placeholders", () => {
 
   it("builds an Apple write-review URL only for a real numeric id", () => {
     assert.equal(isAssignedAppleAppStoreId("1234567890"), true);
+    assert.equal(appleStoreListingUrl("1234567890"), "https://apps.apple.com/app/id1234567890");
     assert.equal(
       appleWriteReviewUrl("1234567890"),
       "https://apps.apple.com/app/id1234567890?action=write-review",
@@ -129,6 +134,12 @@ describe("plugin wiring and honest copy", () => {
     assert.match(src("docs/store-review.md"), /guest home/);
     assert.match(src("docs/mobile-builds.md"), /store-review\.md/);
     assert.match(src(".env.example"), /VITE_APPLE_APP_STORE_ID=/);
+    assert.match(src(".env.example"), /VITE_PLAY_STORE_URL=/);
     assert.doesNotMatch(src(".env.example"), /VITE_APPLE_APP_STORE_ID=\d+/);
+    assert.doesNotMatch(src(".env.example"), /VITE_PLAY_STORE_URL=https:/);
+    assert.match(src("src/routes/get-app.tsx"), /appleStoreListingUrl/);
+    assert.match(src("src/routes/get-app.tsx"), /playStoreListingUrl/);
+    assert.match(src("src/routes/get-app.tsx"), /Coming soon on the App Store/);
+    assert.doesNotMatch(src("src/routes/get-app.tsx"), /apps\.apple\.com\/app\/id[1-9]/);
   });
 });

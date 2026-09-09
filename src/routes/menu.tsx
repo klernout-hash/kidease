@@ -140,7 +140,7 @@ function MenuPage() {
           <Row to="/privacy" label={t("privacy")} />
           <Row to="/terms" label={t("terms")} />
           <Row to="/cookies" label={t("cookies")} />
-          <Row to="/account" label={t("deleteAccount")} />
+          <Row to="/delete-account" label={t("deleteAccount")} />
         </Group>
 
         {user ? (

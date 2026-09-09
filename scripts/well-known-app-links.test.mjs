@@ -176,6 +176,12 @@ test("env example documents Team ID and fingerprint fill-in without fake hashes"
   assert.doesNotMatch(envExample, /ANDROID_CERT_SHA256S=[0-9A-F:]{10,}/);
   assert.doesNotMatch(envExample, /ANDROID_SHA256_CERT_FINGERPRINTS=[0-9A-F:]{10,}/);
 
+  const wellKnownReadme = read("public/.well-known/README.md");
+  assert.match(wellKnownReadme, /APPLE_TEAM_ID/);
+  assert.match(wellKnownReadme, /ANDROID_CERT_SHA256S/);
+  assert.match(wellKnownReadme, /XXXXXXXXXX/);
+  assert.match(wellKnownReadme, /Do not invent/);
+
   const docs = read("docs/store-readiness.md");
   assert.match(docs, /apple-app-site-association/);
   assert.match(docs, /https:\/\/www\.kidease\.ca\/apple-app-site-association/);

@@ -184,6 +184,8 @@ test("post-login dest honors /parent for admin instead of dumping them on Provid
   assert.equal(postLoginDestKind("/parent"), "desk");
   assert.equal(postLoginDestKind("/search"), "public");
   assert.equal(funnelDestPath("/daycare/some-slug?x=1"), "/daycare");
+  assert.equal(funnelDestPath("/delete-account"), "/delete-account");
+  assert.equal(funnelDestPath("/unsubscribe"), "/unsubscribe");
   assert.equal(canSeeAdminDesk("parent"), false);
 });
 

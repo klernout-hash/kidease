@@ -36,6 +36,7 @@ test("TEST / ghost leftover rows are admin-only even when flags are missing", ()
   assert.equal(isAdminOnlyListing({ name: "TEST Extra Claim Lab" }), true);
   assert.equal(isAdminOnlyListing({ name: "Winnipeg Ghost Listing" }), true);
   assert.equal(isAdminOnlyListing({ id: "ke-test-copy-002" }), true);
+  assert.equal(isAdminOnlyListing({ slug: "test-ghost" }), true);
   assert.equal(isAdminOnlyListing({ slug: "test-ghost-claim-lab-2" }), true);
   assert.equal(isAdminOnlyListing({ licenseNumber: "TEST-COPY-9" }), true);
   assert.equal(isAdminOnlyListing({ name: "TEST-Ghost copy" }), true);
@@ -83,6 +84,7 @@ test("nearby SQL excludes admin-only and test rows so map pins stay clean", () =
   assert.match(PUBLIC_LISTING_SQL, /name not like 'TEST %'/);
   assert.match(PUBLIC_LISTING_SQL, /name not like 'TEST-%'/);
   assert.match(PUBLIC_LISTING_SQL, /id not ilike 'ke-test-%'/);
+  assert.match(PUBLIC_LISTING_SQL, /slug not ilike 'test-ghost%'/);
 });
 
 test("catalogue extra file marks the ghost admin_only", () => {
