@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { noteHappyMoment } from "@/lib/store-review";
 import type { Child, Daycare, Schedule } from "@/lib/types";
 import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
+import { capturePostHogEvent } from "@/lib/posthog";
 
 const DAYS = [
   ["Mon", "dayMon"],
@@ -89,6 +90,7 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
           locale,
         },
       });
+      capturePostHogEvent("listing_request_submitted", { intent });
       toast.success(t("requestSentTitle"));
       noteHappyMoment("booking");
       setDone({ conversationId: res.conversationId });

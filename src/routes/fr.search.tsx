@@ -19,9 +19,24 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import type { DaycareCard as Card } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
 import { uniqueById } from "@/lib/utils";
+import { SearchAgeGate } from "@/components/search-age-gate";
+import {
+  isSearchAge,
+  isSearchStart,
+  liveLookingOnly,
+  searchFiltersReady,
+  type SearchAge,
+  type SearchStart,
+} from "@/lib/now-loops";
 
 export const Route = createFileRoute("/fr/search")({
-  validateSearch: (s: Record<string, unknown>) => parseExploreSearchFields(s),
+  validateSearch: (s: Record<string, unknown>) => {
+    const fields = parseExploreSearchFields(s);
+    const out: typeof fields & { age?: SearchAge; start?: SearchStart } = { ...fields };
+    if (typeof s.age === "string" && isSearchAge(s.age)) out.age = s.age;
+    if (typeof s.start === "string" && isSearchStart(s.start)) out.start = s.start;
+    return out;
+  },
   loader: async () => {
     const origin = await resolveRequestSearchOrigin();
     const items = await withTimeoutFallback(
@@ -60,9 +75,12 @@ function FrExplore() {
   const [name, setName] = useState(incoming.name || "");
   const [from, setFrom] = useState(incoming.from || "");
   const [to, setTo] = useState(incoming.to || "");
+  const [age, setAge] = useState<SearchAge | "">(incoming.age || "");
+  const [start, setStart] = useState<SearchStart | "">(incoming.start || "");
+  const gated = searchFiltersReady(age, start);
   const shown = useMemo(() => {
     const rows: Card[] = (boot.items?.length ? boot.items : boot.featured) ?? [];
-    return uniqueById(rows).slice(0, 12);
+    return liveLookingOnly(uniqueById(rows)).slice(0, 12);
   }, [boot.featured, boot.items]);
 
   function goFullMap(label?: string) {
@@ -79,6 +97,8 @@ function FrExplore() {
         name: fields.name,
         from: fields.from,
         to: fields.to,
+        age: age || undefined,
+        start: start || undefined,
       },
     });
   }
@@ -124,6 +144,7 @@ function FrExplore() {
             });
           }}
         />
+        <SearchAgeGate age={age} start={start} onAge={setAge} onStart={setStart} compact />
 
         <CityHubLinks className="mt-6" />
 
@@ -138,7 +159,11 @@ function FrExplore() {
         </div>
 
         <h2 className="mt-12 text-2xl">{t("featured")}</h2>
-        {shown.length ? (
+        {!gated ? (
+          <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
+            <EmptyState title={t("searchAgeGateTitle")} body={t("searchNeedAgeStart")} />
+          </div>
+        ) : shown.length ? (
           <div className="ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-4">
             {shown.map((item) => (
               <DaycareCard key={item.id} item={item} />

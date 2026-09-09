@@ -1125,6 +1125,7 @@ export const getProvider = createServerFn({ method: "GET" })
     `;
     const entitlements = await loadProfileEntitlements(sql, context.userId);
     const since = analyticsSinceDate(entitlements.analyticsDays);
+    const weekSince = analyticsSinceDate(7);
     const listings = await overlayDemandSnapshots(
       await overlayFeaturedCity(await overlayQuality(owned.map(mapDaycare))),
     );
@@ -1145,11 +1146,23 @@ export const getProvider = createServerFn({ method: "GET" })
         from bookings
         where daycare_id = ${d.id} and created_at >= ${since}::timestamptz
       `;
+      const weekViews = await sql<{ n: number }>`
+        select coalesce(sum(count),0)::int as n
+        from daycare_views
+        where daycare_id = ${d.id} and viewed_on >= ${weekSince}
+      `;
+      const weekRequests = await sql<{ n: number }>`
+        select count(*)::int as n
+        from bookings
+        where daycare_id = ${d.id} and created_at >= ${weekSince}::timestamptz
+      `;
       stats.push({
         daycareId: d.id,
         views: views[0]?.n ?? 0,
         inquiries: inquiries[0]?.n ?? 0,
         requests: requests[0]?.n ?? 0,
+        weekViews: weekViews[0]?.n ?? 0,
+        weekRequests: weekRequests[0]?.n ?? 0,
         demand: d.demand,
       });
     }

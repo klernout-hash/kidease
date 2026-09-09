@@ -7,7 +7,14 @@ import { listingThumb } from "@/lib/listing-photo";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { getDaycaresByIds } from "@/lib/server/daycares";
-import { clearCompare, readCompare, toggleCompare } from "@/lib/compare";
+import { clearCompare, compareKeysFromSearch, readCompare, toggleCompareItem } from "@/lib/compare";
+import {
+  canShowMatchScore,
+  confirmedFeeProgramBadge,
+  honestVacancy,
+  parseCompareSlugs,
+} from "@/lib/now-loops";
+import { hasRealPhoto } from "@/lib/listing-readiness";
 import { useCopy } from "@/lib/use-copy";
 import { vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
@@ -31,6 +38,9 @@ import type { DaycareCard } from "@/lib/types";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/compare")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    slugs: parseCompareSlugs(s.slugs),
+  }),
   head: () => pageSeoHead(MARKETING_PAGE_SEO.compare),
   component: ComparePage,
 });
@@ -42,16 +52,17 @@ function ComparePage() {
   const radiusKm = useAppStore((s) => s.radiusKm);
   const ageGroup = useAppStore((s) => s.ageGroup);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
+  const incoming = Route.useSearch();
   const [items, setItems] = useState<DaycareCard[]>([]);
 
   useEffect(() => {
-    const ids = readCompare();
-    if (!ids.length) {
+    const keys = compareKeysFromSearch(incoming.slugs, readCompare());
+    if (!keys.length) {
       setItems([]);
       return;
     }
-    void getDaycaresByIds({ data: ids }).then(setItems).catch(() => setItems([]));
-  }, []);
+    void getDaycaresByIds({ data: keys }).then(setItems).catch(() => setItems([]));
+  }, [incoming.slugs]);
 
   return (
     <Shell>
@@ -96,10 +107,12 @@ function ComparePage() {
                   <th className="p-2 font-medium text-fg">{t("matchScore")}</th>
                   {items.map((d) => {
                     const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
-                    const score = parentMatchScore(
-                      { ...d, distanceKm: km },
-                      { ageGroup, radiusKm, distanceKnown: located },
-                    );
+                    const score = canShowMatchScore(d)
+                      ? parentMatchScore(
+                          { ...d, distanceKm: km },
+                          { ageGroup, radiusKm, distanceKnown: located },
+                        )
+                      : undefined;
                     return (
                       <td key={d.id} className="p-2">
                         <MatchCue score={score} />
@@ -155,18 +168,32 @@ function ComparePage() {
                   values={items.map((d) => formatListingCulture(d.amenities, locale === "fr" ? "fr" : "en") || t("noneListed"))}
                 />
                 <Row
-                  label={t("pricing")}
-                  values={items.map((d) => (d.live && d.fromPrice > 0 ? money(d.fromPrice, locale) : t("feeUnknown")))}
+                  label={t("compareFeesCwelcc")}
+                  values={items.map((d) => {
+                    const badge = confirmedFeeProgramBadge(d);
+                    if (badge) return t(badge);
+                    return d.fromPrice > 0 ? money(d.fromPrice, locale) : t("cardGapFees");
+                  })}
+                />
+                <Row
+                  label={t("comparePhoto")}
+                  values={items.map((d) => (hasRealPhoto(d) ? t("detailsReady") : t("cardGapPhoto")))}
+                />
+                <Row
+                  label={t("compareVacancy")}
+                  values={items.map((d) => {
+                    const vacancy = honestVacancy(d);
+                    if (vacancy.kind === "open") return `${vacancy.spots} ${t("spots")}`;
+                    return t(vacancy.labelKey);
+                  })}
                 />
                 <Row
                   label={t("availability")}
-                  values={items.map((d) =>
-                    d.availabilityKnown
-                      ? d.spotsTotal > 0
-                        ? `${d.spotsTotal} ${t("spots")}`
-                        : t("waitlist")
-                      : t("availUnknown"),
-                  )}
+                  values={items.map((d) => {
+                    const vacancy = honestVacancy(d);
+                    if (vacancy.kind === "open") return `${vacancy.spots} ${t("spots")}`;
+                    return t(vacancy.labelKey);
+                  })}
                 />
                 <Row
                   label={t("spotsUpdated")}
@@ -196,7 +223,7 @@ function ComparePage() {
                   <th className="p-2" />
                   {items.map((d) => (
                     <td key={d.id} className="p-2">
-                      <button type="button" className="text-sm text-muted hover:text-fg" onClick={() => { toggleCompare(d.id); setItems((rows) => rows.filter((r) => r.id !== d.id)); }}>
+                      <button type="button" className="text-sm text-muted hover:text-fg" onClick={() => { toggleCompareItem({ id: d.id, slug: d.slug }); setItems((rows) => rows.filter((r) => r.id !== d.id)); }}>
                         {t("clearCompare")}
                       </button>
                     </td>

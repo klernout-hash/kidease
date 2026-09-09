@@ -10,7 +10,6 @@ import { cn, displayCentreName, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
-import { feeProgramBadgeKey } from "@/lib/licensing";
 import { listingPill } from "@/lib/listing-card";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
@@ -21,6 +20,14 @@ import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { TrustBadge, TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
+import { CompareChip } from "@/components/compare-chip";
+import {
+  canShowMatchScore,
+  confirmedFeeProgramBadge,
+  honestVacancy,
+  liveLookingGaps,
+} from "@/lib/now-loops";
+import { MIN_REVIEW_COUNT } from "@/lib/quality";
 
 export const DaycareCard = memo(function DaycareCard({
   item,
@@ -37,14 +44,22 @@ export const DaycareCard = memo(function DaycareCard({
   const { t, locale } = useCopy();
   const name = displayCentreName(locale === "fr" ? item.nameFr : item.name);
   const live = Boolean(item.live);
-  const known = Boolean(item.availabilityKnown);
-  const open = item.spotsTotal > 0;
-  const feeOk = (live || Boolean(item.feeConfirmed)) && item.fromPrice > 0;
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
   const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
-  const feeBadge = feeProgramBadgeKey(item.province);
+  const feeBadge = confirmedFeeProgramBadge(item);
+  const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(feeBadge));
+  const gaps = liveLookingGaps(item);
+  const vacancy = honestVacancy(item);
+  const freshness = vacancyLine(item, t, locale);
+  const incompleteLabel = parentIncompleteLabel(item, t);
+  const freshnessText = freshness.kind === "unknown" ? "" : vacancy.kind === "open" || vacancy.kind === "waitlist" ? freshness.text : "";
+  const GAP_COPY = {
+    ages: "cardGapAges",
+    fees: "cardGapFees",
+    photo: "cardGapPhoto",
+  } as const;
   const away = located ? `${displayDistance(distanceKm, distanceUnit)} ${distanceUnit === "mi" ? t("miAway") : t("kmAway")}` : "";
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
 
@@ -64,14 +79,18 @@ export const DaycareCard = memo(function DaycareCard({
   };
   const typeLabel = t(FACILITY_CARD[facility.type]);
   const line3 = [typeLabel, ages, hours].filter(Boolean).join(" · ");
-  const freshness = vacancyLine(item, t, locale);
   const photosAge = photoLine(item, t, locale);
-  const incompleteLabel = parentIncompleteLabel(item, t);
-  const spotsKnown = known ? (open ? `${item.spotsTotal} ${t("spots")}` : t("waitlist")) : "";
-  const freshnessText = freshness.kind === "unknown" ? "" : freshness.text;
   const photoText = photosAge.kind === "unknown" ? "" : photosAge.text;
-  const priceAmount = feeBadge === "badgeTen" ? "$10" : feeOk ? money(item.fromPrice, locale) : "";
-  const priceUnit = feeBadge === "badgeTen" ? " / day" : feeOk ? t("month") : "";
+  const spotsKnown =
+    vacancy.kind === "open"
+      ? `${vacancy.spots} ${t("spots")}`
+      : vacancy.kind === "waitlist"
+        ? t("waitlist")
+        : t(vacancy.labelKey);
+  const priceAmount =
+    feeBadge === "badgeTen" ? "$10" : feeBadge === "badgeFifteen" ? "$15" : feeOk ? money(item.fromPrice, locale) : "";
+  const priceUnit = feeBadge === "badgeTen" || feeBadge === "badgeFifteen" ? " / day" : feeOk ? t("month") : "";
+  const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
 
   return (
     <article data-slug={item.slug} className="ke-tile group relative w-full">
@@ -113,17 +132,11 @@ export const DaycareCard = memo(function DaycareCard({
             <h3 className="min-w-0 truncate text-[13px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
               {name}
             </h3>
-            {item.parentReviewCount && item.parentReviewCount > 0 && (item.parentRatingX10 ?? 0) > 0 ? (
+            {showParentAverage ? (
               <span className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums" title={t("parentReviews")}>
                 <Star className="size-2.5 fill-fg text-fg dark:fill-white dark:text-white" strokeWidth={0} />
                 <span className="font-semibold">{((item.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
                 <span className="font-normal text-muted">({item.parentReviewCount})</span>
-              </span>
-            ) : item.ratingX10 > 0 && item.reviewCount > 0 ? (
-              <span className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums">
-                <Star className="size-2.5 fill-fg text-fg dark:fill-white dark:text-white" strokeWidth={0} />
-                <span className="font-semibold">{(item.ratingX10 / 10).toFixed(2)}</span>
-                <span className="font-normal text-muted">({item.reviewCount})</span>
               </span>
             ) : null}
           </div>
@@ -147,15 +160,19 @@ export const DaycareCard = memo(function DaycareCard({
             <p className="truncate text-[13px] font-normal leading-4 text-muted">{item.city}</p>
           )}
           {line3 ? <p className="truncate text-[13px] font-normal leading-4 text-muted">{line3}</p> : null}
-          {incompleteLabel ? (
+          {gaps.length ? (
+            <p className="truncate text-[12px] font-normal leading-4 text-muted">
+              {gaps.map((gap) => t(GAP_COPY[gap])).join(" · ")}
+            </p>
+          ) : incompleteLabel ? (
             <p className="truncate text-[12px] font-normal leading-4 text-muted">{incompleteLabel}</p>
           ) : null}
-          {spotsKnown || freshnessText || photoText || typeof item.matchScore === "number" || (item.urgencyScore ?? 0) > 0 ? (
+          {spotsKnown || freshnessText || photoText || (canShowMatchScore(item) && typeof item.matchScore === "number") || (item.urgencyScore ?? 0) > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
               {spotsKnown ? <span className="ke-honesty">{spotsKnown}</span> : null}
               {freshnessText ? <span className="ke-honesty">{freshnessText}</span> : null}
               {photoText ? <span className="ke-honesty">{photoText}</span> : null}
-              <MatchCue score={item.matchScore} compact />
+              <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact />
               <UrgencyCue score={item.urgencyScore} compact />
             </div>
           ) : null}
@@ -164,9 +181,16 @@ export const DaycareCard = memo(function DaycareCard({
               <span className="font-semibold">{priceAmount}</span>
               <span className="font-normal text-muted">{priceUnit}</span>
             </p>
-          ) : null}
+          ) : (
+            <p className="pt-0.5 text-[12px] leading-4 text-muted">{t("cardGapFees")}</p>
+          )}
         </div>
       </Link>
+      <CompareChip
+        id={item.id}
+        slug={item.slug}
+        className="pointer-events-auto absolute left-2 bottom-2 z-20"
+      />
       <ShareListingButton
         slug={item.slug}
         name={name}

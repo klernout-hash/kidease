@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { qualityBreakdown, type QualityIssue, type QualityIssueId } from "@/lib/quality";
+import { qualityTodoFirst } from "@/lib/now-loops";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare } from "@/lib/types";
@@ -48,7 +49,7 @@ function jumpTo(anchor?: string) {
 export function QualityIssuesPanel({ item }: { item: Daycare }) {
   const { t } = useCopy();
   const breakdown = qualityBreakdown(item);
-  const issues = breakdown.issues;
+  const issues = qualityTodoFirst(breakdown.issues) as QualityIssue[];
 
   return (
     <div className="mt-4 rounded-lg bg-bg p-4 text-sm ring-1 ring-border">

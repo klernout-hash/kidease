@@ -198,8 +198,10 @@ export function listingMatchesSavedFilters(row: FilterableListing, filters: Save
   const amenities = row.amenities || "";
   const hours = row.hours || "";
   const known = row.availabilityKnown === true || Boolean(vacancyTimestamp(row));
-  if (filters.avail === "open" && !(known && spots > 0)) return false;
-  if (filters.avail === "waitlist" && !(known && spots <= 0)) return false;
+  const liveFresh =
+    Boolean(row.live) && vacancyFreshness(vacancyTimestamp(row)).kind === "fresh";
+  if (filters.avail === "open" && !(liveFresh && spots > 0)) return false;
+  if (filters.avail === "waitlist" && !(liveFresh && spots <= 0)) return false;
   if (filters.avail === "unknown" && known) return false;
   if (filters.ten && cwelccKind(row.province || "") === "ask" && !hasAmenity(amenities, "ten-a-day") && !hasAmenity(amenities, "funded")) {
     return false;

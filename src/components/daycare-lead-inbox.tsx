@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Inbox } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/empty-state";
 import { LeadKindChip, LeadStatusChip } from "@/components/lead-status-chip";
 import { Button } from "@/components/ui/button";
 import { updateLeadRequest } from "@/lib/server/lead-requests";
@@ -27,7 +29,7 @@ export function DaycareLeadInbox({
       </div>
       <LeadInboxList
         items={waiting}
-        empty={t("leadNoCentre")}
+        empty={t("providerRequestsEmpty")}
         onChanged={onChanged}
         locale={locale}
         canAct
@@ -60,7 +62,11 @@ function LeadInboxList({
   const { t } = useCopy();
   if (!items.length) {
     return empty ? (
-      <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{empty}</p>
+      <EmptyState
+        icon={Inbox}
+        title={empty}
+        body={t("providerRequestsEmptyLead")}
+      />
     ) : null;
   }
   return (

@@ -47,6 +47,14 @@ import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { displayDistance } from "@/lib/units";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
+import { SearchAgeGate } from "@/components/search-age-gate";
+import {
+  honestVacancy,
+  isLiveLookingCard,
+  liveLookingOnly,
+  type SearchAge,
+  type SearchStart,
+} from "@/lib/now-loops";
 
 const CompareBar = lazy(() =>
   import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })),
@@ -115,6 +123,8 @@ function Home() {
   const [homeName, setHomeName] = useState("");
   const [homeFrom, setHomeFrom] = useState("");
   const [homeTo, setHomeTo] = useState("");
+  const [homeAge, setHomeAge] = useState<SearchAge | "">("");
+  const [homeStart, setHomeStart] = useState<SearchStart | "">("");
   const [manual, setManual] = useState(Boolean(search.change) || locationConsent === "denied");
   const [denied, setDenied] = useState(locationConsent === "denied");
   const [askLocation, setAskLocation] = useState(false);
@@ -190,13 +200,15 @@ function Home() {
       .catch(() => undefined);
   }, [origin.lat, origin.lng, origin.label, radiusKm, boot.origin]);
 
-  function goSearch(label?: string, extra?: { name?: string; from?: string; to?: string }) {
+  function goSearch(label?: string, extra?: { name?: string; from?: string; to?: string; age?: SearchAge; start?: SearchStart }) {
     const fields = compactExploreSearch({
       q: label,
       name: extra?.name,
       from: extra?.from,
       to: extra?.to,
     });
+    const age = extra?.age || homeAge || undefined;
+    const start = extra?.start || homeStart || undefined;
     void navigate({
       to: "/search",
       search: {
@@ -204,6 +216,8 @@ function Home() {
         name: fields.name,
         from: fields.from,
         to: fields.to,
+        age: age || undefined,
+        start: start || undefined,
       },
     });
   }
@@ -264,17 +278,17 @@ function Home() {
   }, []);
   const liveCount = useMemo(() => featured.filter((r) => r.live).length, [featured]);
   const shown = useMemo(
-    () => uniqueById(liveOnly ? featured.filter((r) => r.live) : featured),
+    () => liveLookingOnly(uniqueById(liveOnly ? featured.filter((r) => r.live) : featured)),
     [featured, liveOnly],
   );
   const availableNow = useMemo(() => {
-    const open = shown.filter((r) => (r.live || r.availabilityKnown) && r.spotsTotal > 0);
-    return uniqueById(open.length ? open : shown).slice(0, 18);
+    return uniqueById(shown.filter((r) => honestVacancy(r).kind === "open")).slice(0, 18);
   }, [shown]);
   const availableNextMonth = useMemo(() => {
     const top = new Set(availableNow.slice(0, 6).map((r) => r.id));
-    return shown.filter((r) => !top.has(r.id)).slice(0, 18);
+    return shown.filter((r) => honestVacancy(r).kind === "open" && !top.has(r.id)).slice(0, 18);
   }, [shown, availableNow]);
+  const recentLooking = useMemo(() => recent.filter((r) => isLiveLookingCard(r)), [recent]);
 
   async function requestDeviceLocation() {
     const ok = await pinHere();
@@ -389,9 +403,18 @@ function Home() {
               name: homeName,
               from: homeFrom,
               to: homeTo,
+              age: homeAge || undefined,
+              start: homeStart || undefined,
             });
           });
         }}
+      />
+      <SearchAgeGate
+        compact
+        age={homeAge}
+        start={homeStart}
+        onAge={setHomeAge}
+        onStart={setHomeStart}
       />
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -640,7 +663,7 @@ function Home() {
             />
           ) : (
             <>
-              <ListingRail title={t("recentlyViewed")} items={recent} eagerThumbs={false} />
+              <ListingRail title={t("recentlyViewed")} items={recentLooking} eagerThumbs={false} />
               <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} />
               <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} />
               <FacilityTypeRails items={shown} />
