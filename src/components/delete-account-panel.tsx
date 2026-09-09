@@ -21,7 +21,7 @@ export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
           </Link>
         </Button>
         <p className="text-xs text-subtle">
-          <Link to="/unsubscribe" className="underline-offset-4 hover:underline">
+          <Link to="/unsubscribe" search={{ token: undefined, channel: undefined }} className="underline-offset-4 hover:underline">
             {t("unsubscribe")}
           </Link>
         </p>

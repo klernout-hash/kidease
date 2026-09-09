@@ -34,7 +34,7 @@ function DeleteAccountPage() {
           <DeleteAccountPanel signedIn={Boolean(user)} />
         )}
         <p className="mt-8 text-sm text-muted">
-          <Link to="/unsubscribe" className="underline-offset-4 hover:underline">
+          <Link to="/unsubscribe" search={{ token: undefined, channel: undefined }} className="underline-offset-4 hover:underline">
             {t("unsubscribe")}
           </Link>
           {" · "}
