@@ -45,9 +45,20 @@ try {
           el.scrollLeft = el.scrollWidth;
         }).catch(() => undefined);
       }
+      const fullPage = spec.name !== "search-toddler-now";
       const file = `${OUT}/${spec.name}-${vp.w}.png`;
-      await page.screenshot({ path: file, fullPage: true });
+      await page.screenshot({ path: file, fullPage });
       console.error(`wrote ${file}`);
+      if (spec.name === "search-toddler-now") {
+        const tail = page.locator("text=Age not confirmed").first();
+        if (await tail.count()) {
+          await tail.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(300);
+          const tailFile = `${OUT}/search-toddler-tail-${vp.w}.png`;
+          await page.screenshot({ path: tailFile, fullPage: false });
+          console.error(`wrote ${tailFile}`);
+        }
+      }
     }
     await context.close();
   }
