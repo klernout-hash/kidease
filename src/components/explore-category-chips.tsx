@@ -39,7 +39,9 @@ export function ExploreCategoryChips({
   onSelect: (cat?: ExploreCategory) => void;
 }) {
   const { t } = useCopy();
-  const visible = EXPLORE_CATEGORIES.filter((cat) => counts[cat] > 0 || cat === selected);
+  // Always paint All + the locked 7 so the taxonomy is visible. A 0-count tap
+  // uses the category empty state — it does not blank the page.
+  const visible = EXPLORE_CATEGORIES;
 
   return (
     <div className="ke-explore-cats mt-3" role="group" aria-label={t("exploreCategories")}>

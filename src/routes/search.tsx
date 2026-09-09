@@ -1068,6 +1068,11 @@ function SearchPage() {
           onLocate={() => void geo()}
           onSubmit={() => void applyQuery()}
         />
+        <ExploreCategoryChips
+          selected={activeCat}
+          counts={exploreCatCounts}
+          onSelect={writeCategorySearch}
+        />
         <SearchAgeGate
           age={searchAge ?? ""}
           start={searchStart ?? ""}
@@ -1182,12 +1187,6 @@ function SearchPage() {
         ) : null}
 
         <ExploreHint />
-
-        <ExploreCategoryChips
-          selected={activeCat}
-          counts={exploreCatCounts}
-          onSelect={writeCategorySearch}
-        />
 
         {filters ? (
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
