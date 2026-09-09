@@ -123,7 +123,7 @@ function Listing() {
   const seo = Route.useLoaderData();
   const { t, locale } = useCopy();
   const navigate = useNavigate();
-  const { user } = useCurrentUserState();
+  const { user, isPending } = useCurrentUserState();
   const [data, setData] = useState<{
     daycare: Daycare;
     reviews: Review[];
