@@ -47,6 +47,9 @@ test("header wires website-only Facebook and Instagram buttons with a11y labels"
   assert.match(header, /rel="noopener noreferrer"/);
   assert.match(header, /t\(profile\.labelKey\)/);
   assert.match(header, /\[\[data-channel=website\]_&\]:flex/);
+  assert.doesNotMatch(header, /xl:hidden/);
+  assert.doesNotMatch(header, /xl:flex/);
+  assert.doesNotMatch(shell, /\[\[data-channel=website\]_&\]:xl:hidden/);
   assert.match(copy, /socialInstagram: "KidEase on Instagram"/);
   assert.match(copy, /socialFacebook: "KidEase on Facebook"/);
   assert.match(copy, /socialInstagram: "KidEase sur Instagram"/);

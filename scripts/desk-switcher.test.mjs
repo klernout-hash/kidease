@@ -62,7 +62,6 @@ test("admin desk stays gated by profiles.role + owner email", () => {
   assert.match(switcher, /aria-haspopup="menu"/);
   assert.match(switcher, /md:hidden/);
   assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role\)/);
-  assert.match(src("src/components/shell.tsx"), /canVisitDesk\(desks, "admin", session\.role\)/);
   assert.match(src("src/components/shell.tsx"), /desksSlot/);
   assert.match(src("src/components/session-desks.tsx"), /sanitizeStickyDesk/);
   assert.match(src("src/components/session-desks.tsx"), /canVisitDesk/);

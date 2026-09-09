@@ -141,4 +141,21 @@ describe("appearance is wired across public + desks chrome", () => {
     assert.match(shell, /LanguageSelect compact/);
     assert.match(shell, /AppearanceControl variant="select" compact/);
   });
+
+  it("website chrome stays compact at every width — no xl wide nav or sign-in row", () => {
+    const shell = src("src/components/shell.tsx");
+    const header = src("src/components/header-social.tsx");
+    assert.doesNotMatch(shell, /desktopNav/);
+    assert.doesNotMatch(shell, /\[\[data-channel=website\]_&\]:xl:flex/);
+    assert.doesNotMatch(shell, /\[\[data-channel=website\]_&\]:xl:hidden/);
+    assert.match(shell, /HeaderSocial/);
+    assert.match(shell, /\[\[data-channel=website\]_&\]:flex/);
+    assert.match(shell, /\[\[data-channel=website\]_&\]:grid/);
+    assert.match(shell, /aria-label="Menu"/);
+    assert.match(shell, /aria-controls="ke-nav-drawer"/);
+    assert.match(shell, /size-12 shrink-0 place-items-center/);
+    assert.match(header, /\[\[data-channel=website\]_&\]:flex/);
+    assert.doesNotMatch(header, /xl:hidden/);
+    assert.doesNotMatch(header, /xl:flex/);
+  });
 });

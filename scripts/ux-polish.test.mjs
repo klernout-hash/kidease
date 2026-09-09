@@ -38,13 +38,23 @@ test("parent rails drop stacked headings and show an empty state", () => {
 test("app home uses one location bar; website does not stack rails and the featured grid", () => {
   const home = src("src/routes/index.tsx");
   const appBlock = home.slice(home.indexOf("ke-app-only"));
+  const webBlock = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
+  const form = home.slice(home.indexOf("const locationForm"), home.indexOf("const featuredSearch"));
   assert.match(appBlock, /featuredSearch/);
   assert.match(appBlock, /CITY_CHIPS/);
   assert.match(appBlock, /applyPlace/);
   assert.doesNotMatch(appBlock, /locationForm/);
   assert.doesNotMatch(appBlock, /useLocation\(\)/);
+  assert.doesNotMatch(appBlock, /ExploreSearchBar/);
   assert.match(home, /user && role !== "admin" && role !== "provider"/);
   assert.match(home, /ke-web-grid/);
+  assert.match(home, /const \[manual, setManual\] = useState\(true\)/);
+  assert.match(form, /PlaceSearch/);
+  assert.match(form, /cityChips/);
+  assert.match(form, /min-h-12/);
+  assert.doesNotMatch(form, /ExploreSearchBar/);
+  assert.match(webBlock, /locationForm/);
+  assert.doesNotMatch(webBlock, /<ExploreSearchBar/);
 });
 
 test("listing nearby uses a rail; compare and missing listing use EmptyState copy", () => {
