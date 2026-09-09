@@ -164,6 +164,21 @@ export const createTourRequest = createServerFn({ method: "POST" })
         ${serializePreferredTimes(times)}, ${note}, ${"pending"}
       )
     `;
+    try {
+      const { recordLeadRequest } = await import("@/lib/server/lead-requests");
+      await recordLeadRequest(sql, {
+        userId: context.userId,
+        daycareId: data.daycareId,
+        kind: "tour",
+        message: note,
+        sourceKind: "tour_request",
+        sourceId: tourId,
+        conversationId: cid,
+        notify: false,
+      });
+    } catch (err) {
+      console.error("[kidease-lead] tour lead skipped", err);
+    }
 
     const systemBody = tourSystemBody({
       parentName,

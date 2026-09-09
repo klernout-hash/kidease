@@ -7,6 +7,7 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getDaycare } from "@/lib/server/daycares";
 import { createSpotRequest } from "@/lib/server/family";
+import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
 import { useCopy } from "@/lib/use-copy";
 import { noteHappyMoment } from "@/lib/store-review";
 import type { Daycare, Schedule } from "@/lib/types";
@@ -86,7 +87,7 @@ function BookPage() {
       });
       toast.success(t("requestSentTitle"));
       noteHappyMoment("booking");
-      void navigate({ to: "/inbox/$id", params: { id: res.conversationId } });
+      void navigate({ to: "/parent", search: PARENT_REQUESTS_SEARCH });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("needSignIn"));
     } finally {

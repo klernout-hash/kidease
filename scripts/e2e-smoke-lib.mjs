@@ -232,7 +232,7 @@ export function classifyProviderGuestGate({
   if (/Sign in to the centre desk|Sign in to manage spots/i.test(body)) {
     return { ok: true, kind: "guest-landing" };
   }
-  if (/Tour requests|ProviderMoney|Vacancy confirm/i.test(body) && !/Sign in/i.test(body)) {
+  if (/Tour requests|Lead inbox|ProviderMoney|Vacancy confirm/i.test(body) && !/Sign in/i.test(body)) {
     return { ok: false, kind: "open", reason: "unsigned /provider rendered the centre write desk" };
   }
   if (/Sign in/i.test(body)) return { ok: true, kind: "login" };

@@ -79,6 +79,12 @@ export const setWaitlistInterest = createServerFn({ method: "POST" })
     await assertPublicListing(data.daycareId);
     const sql = await getSql();
     if (!data.optedIn) {
+      try {
+        const { closeWaitlistLead } = await import("@/lib/server/lead-requests");
+        await closeWaitlistLead(sql, context.userId, data.daycareId);
+      } catch (err) {
+        console.error("[kidease-lead] waitlist close skipped", err);
+      }
       await sql`
         delete from waitlist_interests
         where user_id = ${context.userId} and daycare_id = ${data.daycareId}
@@ -98,6 +104,24 @@ export const setWaitlistInterest = createServerFn({ method: "POST" })
         notify_sms = excluded.notify_sms,
         updated_at = now()
     `;
+    const saved = await sql<{ id: string }>`
+      select id from waitlist_interests
+      where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+      limit 1
+    `.catch(() => []);
+    try {
+      const { recordLeadRequest } = await import("@/lib/server/lead-requests");
+      await recordLeadRequest(sql, {
+        userId: context.userId,
+        daycareId: data.daycareId,
+        kind: "waitlist",
+        message: "Waitlist pulse opt-in",
+        sourceKind: "waitlist_interest",
+        sourceId: saved[0]?.id || id,
+      });
+    } catch (err) {
+      console.error("[kidease-lead] waitlist lead skipped", err);
+    }
     return {
       daycareId: data.daycareId,
       ageBand: data.ageBand,

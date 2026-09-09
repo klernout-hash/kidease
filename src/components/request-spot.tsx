@@ -10,6 +10,7 @@ import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { noteHappyMoment } from "@/lib/store-review";
 import type { Child, Daycare, Schedule } from "@/lib/types";
+import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
 
 const DAYS = [
   ["Mon", "dayMon"],
@@ -92,7 +93,7 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
       noteHappyMoment("booking");
       setDone({ conversationId: res.conversationId });
       window.setTimeout(() => {
-        void navigate({ to: "/inbox/$id", params: { id: res.conversationId } });
+        void navigate({ to: "/parent", search: PARENT_REQUESTS_SEARCH });
       }, 1400);
     } catch {
       toast.error(t("needSignIn"));
@@ -124,9 +125,14 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
             <h2 id={titleId} className="mt-5 font-display text-2xl">
               {t(intent === "tour" ? "requestSentTitleTour" : "requestSentTitle")}
             </h2>
-            <p className="mt-2 max-w-sm text-sm text-muted">{t(intent === "tour" ? "requestSentBodyTour" : "requestSentBody")}</p>
+            <p className="mt-2 max-w-sm text-sm text-muted">{t("requestSentTrack")}</p>
             <p className="mt-1 text-xs text-subtle">{t("notifyCentre")}</p>
             <Button className="mt-6 w-full" asChild>
+              <Link to="/parent" search={PARENT_REQUESTS_SEARCH}>
+                {t("goToMyRequests")}
+              </Link>
+            </Button>
+            <Button className="mt-2 w-full" variant="secondary" asChild>
               <Link to="/inbox/$id" params={{ id: done.conversationId }}>
                 {t("goToConversation")}
               </Link>

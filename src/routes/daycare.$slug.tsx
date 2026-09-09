@@ -57,8 +57,13 @@ import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
 import { ListingMap } from "@/components/listing-map";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
+import { parseListingAsk, type ListingAsk } from "@/lib/lead-requests";
 
 export const Route = createFileRoute("/daycare/$slug")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const ask = parseListingAsk(s.ask);
+    return ask ? { ask } : {};
+  },
   loader: async ({ params }) => {
     try {
       const seo = await getListingSeo({ data: params.slug });
@@ -113,6 +118,7 @@ function ListingJsonLd({
 
 function Listing() {
   const { slug } = Route.useParams();
+  const search = Route.useSearch();
   const seo = Route.useLoaderData();
   const { t, locale } = useCopy();
   const navigate = useNavigate();
@@ -182,6 +188,23 @@ function Listing() {
       .then((r) => setSaved(r.saved))
       .catch(() => setSaved(false));
   }, [data, user, isPending]);
+
+  useEffect(() => {
+    if (!data || isPending) return;
+    const ask = search.ask;
+    if (!ask) return;
+    if (!user) {
+      goLogin(ask === "tour" ? "needSignInTour" : "guestSignInReturn", ask);
+      return;
+    }
+    if (ask === "tour") setTourOpen(true);
+    if (ask === "spot") setRequestOpen(true);
+    if (ask === "waitlist") {
+      window.setTimeout(() => {
+        document.getElementById("waitlist-opt-in")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 80);
+    }
+  }, [data, user, isPending, search.ask]);
 
   useEffect(() => {
     if (!data) return;
@@ -264,15 +287,26 @@ function Listing() {
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
 
-  function goLogin(reason?: "needSignInTour" | "needSignInSave" | "needSignInMessage" | "guestSignInReturn") {
+  function goLogin(
+    reason?: "needSignInTour" | "needSignInSave" | "needSignInMessage" | "guestSignInReturn",
+    ask?: ListingAsk,
+  ) {
     if (reason) toast.message(t(reason));
-    void navigate({ to: "/login", search: parentLoginSearch(`/daycare/${slug}`) });
+    const next =
+      ask === "tour"
+        ? `/daycare/${slug}?ask=tour`
+        : ask === "spot"
+          ? `/daycare/${slug}?ask=spot`
+          : ask === "waitlist"
+            ? `/daycare/${slug}?ask=waitlist`
+            : `/daycare/${slug}`;
+    void navigate({ to: "/login", search: parentLoginSearch(next) });
   }
 
   function onRequest() {
     if (!live) return;
     if (!user) {
-      goLogin("guestSignInReturn");
+      goLogin("guestSignInReturn", "spot");
       return;
     }
     setRequestOpen(true);
@@ -281,7 +315,7 @@ function Listing() {
   function onTour() {
     if (!live) return;
     if (!user) {
-      goLogin("needSignInTour");
+      goLogin("needSignInTour", "tour");
       return;
     }
     setTourOpen(true);
@@ -510,7 +544,9 @@ function Listing() {
               <p className="text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
               {!user && live ? <p className="text-xs text-subtle">{t("guestBrowse")}</p> : null}
               <ListingActions />
-              {live && waitlisted ? <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
+              {live && waitlisted ? (
+                <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
+              ) : null}
             </div>
 
             <dl className="mt-6 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
@@ -717,7 +753,9 @@ function Listing() {
             {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
             <div className="mt-4 grid gap-2">
               <ListingActions />
-              {live && waitlisted ? <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
+              {live && waitlisted ? (
+                <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
+              ) : null}
               <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full hover:bg-surface-2/70" />
               <div className="grid grid-cols-3 gap-2">
                 <Button variant="ghost" onClick={() => void onSave()} aria-label={t("save")}>

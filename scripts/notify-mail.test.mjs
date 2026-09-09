@@ -174,13 +174,13 @@ test("auto-reply is skipped when admin notify was only logged locally", async ()
 });
 
 test("actor confirmation kinds are signup, enroll, claim, spot, and tour request", () => {
-  for (const kind of ["account", "signup", "enroll", "listing", "claim", "spot_request", "tour_request"]) {
+  for (const kind of ["account", "signup", "enroll", "listing", "claim", "spot_request", "tour_request", "waitlist_request"]) {
     assert.equal(isActorConfirmKind(kind), true);
     assert.equal(shouldSendActorConfirmation(kind, "sent", "parent@example.com"), true);
   }
   assert.deepEqual(
     [...ACTOR_CONFIRM_KINDS],
-    ["account", "signup", "enroll", "listing", "claim", "spot_request", "tour_request"],
+    ["account", "signup", "enroll", "listing", "claim", "spot_request", "tour_request", "waitlist_request"],
   );
 });
 
@@ -218,6 +218,7 @@ test("confirmation copy keeps the 24-hour promise and Thank you, and does not in
   assert.match(actorConfirmationText("claim"), /listing claim/);
   assert.match(actorConfirmationText("spot_request"), /spot request/);
   assert.match(actorConfirmationText("tour_request"), /tour request/);
+  assert.match(actorConfirmationText("waitlist_request"), /waitlist request/);
 });
 
 test("confirmation reply_to is Kyle, not the parent or provider", () => {

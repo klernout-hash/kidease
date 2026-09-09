@@ -191,6 +191,14 @@ test("guest parent desk redirects to login; provider stays a sign-in landing", (
     }).ok,
     false,
   );
+  assert.equal(
+    classifyProviderGuestGate({
+      finalUrl: "http://127.0.0.1:8081/provider",
+      status: 200,
+      bodyText: "Lead inbox\nMoney",
+    }).ok,
+    false,
+  );
 });
 
 test("smoke paths never include pay or 2FA submit", () => {

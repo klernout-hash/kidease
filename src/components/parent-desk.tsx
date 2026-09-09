@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { deleteAccount, getFamily } from "@/lib/server/family";
 import { listTourRequests } from "@/lib/server/tours";
+import { listLeadRequests } from "@/lib/server/lead-requests";
+import type { LeadRequest } from "@/lib/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { hasCareDetails } from "@/lib/child-profile";
@@ -51,6 +53,9 @@ const ParentDeskRails = lazy(() =>
 const TourCard = lazy(() =>
   import("@/components/tour-card").then((m) => ({ default: m.TourCard })),
 );
+const ParentRequestsList = lazy(() =>
+  import("@/components/parent-requests").then((m) => ({ default: m.ParentRequestsList })),
+);
 
 function scheduleIdle(work: () => void): () => void {
   const ric = typeof requestIdleCallback === "function" ? requestIdleCallback : null;
@@ -81,6 +86,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [bills, setBills] = useState<Bill[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
+  const [leads, setLeads] = useState<LeadRequest[]>([]);
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -139,13 +145,15 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   }, []);
 
   const loadDeskExtras = useCallback(async () => {
-    const [billed, tourRows] = await Promise.all([
+    const [billed, tourRows, leadRows] = await Promise.all([
       listParentBills().catch(() => ({ bills: [] as Bill[] })),
       listTourRequests({ data: { desk: "parent" } }).catch(() => [] as TourRequest[]),
+      listLeadRequests({ data: { desk: "parent" } }).catch(() => [] as LeadRequest[]),
     ]);
     startTransition(() => {
       setBills(billed.bills);
       setTours(tourRows);
+      setLeads(leadRows);
     });
   }, []);
 
@@ -282,6 +290,19 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
 
       {contentTab === "bookings" ? (
         <div className="mt-6 space-y-8">
+        <section>
+          <h2 className="font-display text-2xl">{t("myRequests")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("myRequestsLead")}</p>
+          <div className="mt-4">
+            {leads.length === 0 && bookings.length === 0 ? (
+              <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" />
+            ) : leads.length ? (
+            <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
+              <ParentRequestsList items={leads} />
+            </Suspense>
+            ) : null}
+          </div>
+        </section>
         {tours.length ? (
           <section>
             <h2 className="font-display text-2xl">{t("pendingTours")}</h2>
@@ -296,13 +317,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             </ul>
           </section>
         ) : null}
+        {bookings.length === 0 ? null : (
         <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-          {bookings.length === 0 ? (
-            <li className="p-8 text-center">
-              <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" />
-            </li>
-          ) : (
-            bookings.map((b) => (
+          {bookings.map((b) => (
               <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -352,8 +369,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                 </div>
               </li>
             ))
-          )}
+          }
         </ul>
+        )}
         </div>
       ) : null}
 
