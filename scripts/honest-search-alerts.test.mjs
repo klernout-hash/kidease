@@ -137,7 +137,7 @@ test("vacancy copy is honest and request_reply points at /inbox/{id}", () => {
   assert.match(vacancy.title, /A spot may be open at Sunny Side Child Care · 2\.4 km · infant/);
   assert.match(vacancy.title, /Confirm with the centre/);
   assert.doesNotMatch(vacancy.title, /guaranteed/i);
-  assert.doesNotMatch(vacancy.body, /guaranteed opening/i);
+  assert.match(vacancy.body, /not a guaranteed opening/i);
   const fresh = honestAlertCopy({
     kind: "new_centre",
     name: "Sunny Side Child Care",
