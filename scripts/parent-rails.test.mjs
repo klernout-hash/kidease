@@ -54,8 +54,16 @@ function matchesRailAge(item, age) {
 function parentRailSearchHref(seeAll) {
   const params = new URLSearchParams();
   if (seeAll.sort) params.set("sort", seeAll.sort);
-  if (seeAll.age) params.set("age", seeAll.age);
-  if (seeAll.care) params.set("care", seeAll.care);
+  if (seeAll.age) {
+    params.set("age", seeAll.age);
+    params.set("cat", seeAll.age);
+  }
+  if (seeAll.care) {
+    params.set("care", seeAll.care);
+    if (seeAll.care === "home" || seeAll.care === "nursery" || seeAll.care === "before-after") {
+      params.set("cat", seeAll.care);
+    }
+  }
   if (seeAll.favorites) params.set("favorites", "1");
   const q = params.toString();
   return q ? `/search?${q}` : "/search";
@@ -136,8 +144,8 @@ test("see-all hrefs carry the honest filter or sort", () => {
   assert.equal(parentRailSearchHref({ sort: "match" }), "/search?sort=match");
   assert.equal(parentRailSearchHref({ sort: "urgency" }), "/search?sort=urgency");
   assert.equal(parentRailSearchHref({ favorites: true }), "/search?favorites=1");
-  assert.equal(parentRailSearchHref({ age: "infant" }), "/search?age=infant");
-  assert.equal(parentRailSearchHref({ care: "home" }), "/search?care=home");
+  assert.equal(parentRailSearchHref({ age: "infant" }), "/search?age=infant&cat=infant");
+  assert.equal(parentRailSearchHref({ care: "home" }), "/search?care=home&cat=home");
 });
 
 test("parent rails are wired on parent desk, home, and search see-all", () => {

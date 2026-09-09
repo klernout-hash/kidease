@@ -27,12 +27,15 @@ export function SearchAgeGate({
   onAge,
   onStart,
   compact = false,
+  hideAge = false,
 }: {
   age?: SearchAge | "";
   start?: SearchStart | "";
   onAge: (age: SearchAge) => void;
   onStart: (start: SearchStart) => void;
   compact?: boolean;
+  /** Top 7 chips own the age row — keep start + place/when here. */
+  hideAge?: boolean;
 }) {
   const { t } = useCopy();
   return (
@@ -43,6 +46,7 @@ export function SearchAgeGate({
           <p className="mt-1 text-sm text-muted">{t("searchAgeGateLead")}</p>
         </div>
       )}
+      {hideAge ? null : (
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-subtle">{t("searchAgeLabel")}</p>
         <div className="flex flex-wrap gap-2" role="group" aria-label={t("searchAgeLabel")}>
@@ -58,6 +62,7 @@ export function SearchAgeGate({
           ))}
         </div>
       </div>
+      )}
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-subtle">{t("searchStartLabel")}</p>
         <div className="flex flex-wrap gap-2" role="group" aria-label={t("searchStartLabel")}>

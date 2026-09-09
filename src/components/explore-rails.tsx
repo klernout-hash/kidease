@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { ListingRail } from "@/components/listing-rail";
-import { FacilityTypeRails, facilityTypeRailItems } from "@/components/facility-type-rails";
 import { uniqueById } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
 import { readRecent } from "@/lib/recent";
@@ -51,9 +50,6 @@ export function ExploreRails({
       firstTitle: liveNear.length ? "live" : recentHits.length ? "recent" : "priority",
       available: take(available),
       nextMonth: take(nextMonth),
-      centre: facilityTypeRailItems(looking, "centre"),
-      nursery: facilityTypeRailItems(looking, "nursery"),
-      home: facilityTypeRailItems(looking, "home"),
     };
   }, [items, recent]);
 
@@ -82,7 +78,6 @@ export function ExploreRails({
       <ListingRail title={firstTitle} items={rows.first} />
       <ListingRail title={t("availableNow")} items={rows.available} />
       <ListingRail title={t("availableNextMonth")} items={rows.nextMonth} />
-      <FacilityTypeRails rows={rows} />
     </div>
   );
 }

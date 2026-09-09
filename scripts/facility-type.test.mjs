@@ -56,11 +56,9 @@ test("Nursery and Home come from amenities only — names never assign", () => {
 
 test("Explore wires three facility-type categories and listing copy", () => {
   const search = src("src/routes/search.tsx");
-  assert.match(search, /showCentres/);
-  assert.match(search, /showNurseries/);
-  assert.match(search, /showHomes/);
-  assert.match(search, /FACILITY_TYPES/);
+  assert.match(search, /ExploreCategoryChips/);
   assert.match(search, /noFacilityTypeResults/);
+  assert.doesNotMatch(search, /showCentres/);
   assert.match(src("src/components/listing-badges.tsx"), /data-facility-type/);
   assert.doesNotMatch(src("src/routes/daycare.$slug.tsx"), /FacilityTypeBlurb/);
   assert.doesNotMatch(src("src/routes/daycare.$slug.tsx"), /facilityTypeLeadNursery/);
@@ -73,7 +71,7 @@ test("Explore wires three facility-type categories and listing copy", () => {
   assert.match(care, /nursery/);
   assert.match(care, /classifyFacilityType/);
   const explore = src("src/components/explore-rails.tsx");
-  assert.match(explore, /FacilityTypeRails/);
+  assert.doesNotMatch(explore, /FacilityTypeRails/);
   assert.doesNotMatch(explore, /Popular daycares/);
   assert.doesNotMatch(explore, /Highest rated/);
   assert.doesNotMatch(explore, /Garderies près/);

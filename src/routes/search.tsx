@@ -4,7 +4,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
-import { ExploreRails } from "@/components/explore-rails";
+import { ExploreCategoryChips } from "@/components/explore-category-chips";
 import { DaycareCard } from "@/components/daycare-card";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
@@ -42,7 +42,7 @@ import { resolveSearchAnchors } from "@/lib/dual-anchor";
 import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
-import type { AgeGroup, DaycareCard as Card } from "@/lib/types";
+import type { DaycareCard as Card } from "@/lib/types";
 import { SearchAgeGate } from "@/components/search-age-gate";
 import { capturePostHogEvent } from "@/lib/posthog";
 import {
@@ -56,16 +56,22 @@ import {
   type SearchStart,
 } from "@/lib/now-loops";
 import {
-  FACILITY_TYPES,
   isCareType,
   isFacilityType,
   isRailAge,
   matchesCareType,
   matchesRailAge,
   type CareType,
-  type FacilityType,
   type RailAge,
 } from "@/lib/care-type";
+import {
+  EXPLORE_CATEGORY_COPY,
+  countExploreCategories,
+  isExploreCategory,
+  matchesCategory,
+  resolvedExploreCategory,
+  type ExploreCategory,
+} from "@/lib/explore-categories";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { noteHappyMoment } from "@/lib/store-review";
@@ -115,6 +121,7 @@ export const Route = createFileRoute("/search")({
       sort?: SortKey;
       age?: RailAge;
       start?: SearchStart;
+      cat?: ExploreCategory;
       care?: CareType;
       favorites?: "1";
     } = { ...fields };
@@ -128,6 +135,7 @@ export const Route = createFileRoute("/search")({
     }
     if (typeof s.age === "string" && isRailAge(s.age)) out.age = s.age;
     if (typeof s.start === "string" && isSearchStart(s.start)) out.start = s.start;
+    if (typeof s.cat === "string" && isExploreCategory(s.cat)) out.cat = s.cat;
     if (typeof s.care === "string" && isCareType(s.care)) out.care = s.care;
     else if (typeof s.facility === "string" && isFacilityType(s.facility)) out.care = s.facility;
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
@@ -219,19 +227,24 @@ function SearchPage() {
 
   useEffect(() => {
     if (incoming.sort) setSort(incoming.sort);
-    if (incoming.age === "school-age") {
+    const cat = resolvedExploreCategory(incoming);
+    const ageGate = (cat && isRailAge(cat) ? cat : incoming.age) as RailAge | undefined;
+    if (ageGate === "school-age") {
       setSchoolAgeOnly(true);
       setAgeGroup("any");
-    } else if (incoming.age) {
+    } else if (ageGate) {
       setSchoolAgeOnly(false);
-      setAgeGroup(incoming.age);
+      setAgeGroup(ageGate);
+    } else if (incoming.cat) {
+      setSchoolAgeOnly(false);
+      setAgeGroup("any");
     }
     if (incoming.care) setCareType(incoming.care);
     if (incoming.favorites === "1") setFavoritesOnly(true);
     if (incoming.start === "now" || incoming.start === "this-month" || incoming.start === "next-month") {
       setNeedBy(startWindowToDate(incoming.start));
     }
-  }, [incoming.sort, incoming.age, incoming.care, incoming.favorites, incoming.start, setSort, setAgeGroup]);
+  }, [incoming.sort, incoming.age, incoming.cat, incoming.care, incoming.favorites, incoming.start, setSort, setAgeGroup]);
 
   useEffect(() => {
     setNameQuery(incoming.name ?? "");
@@ -420,6 +433,7 @@ function SearchPage() {
         sort: incoming.sort,
         age: incoming.age,
         start: incoming.start,
+        cat: incoming.cat,
         care: incoming.care,
         favorites: incoming.favorites,
       },
@@ -427,6 +441,15 @@ function SearchPage() {
   }
 
   function writeNowLoopSearch(next: { age?: SearchAge; start?: SearchStart }) {
+    const age = next.age ?? incoming.age;
+    const start = next.start ?? incoming.start;
+    const keepFacilityCat =
+      incoming.cat === "home" || incoming.cat === "nursery" || incoming.cat === "before-after";
+    const cat = keepFacilityCat
+      ? incoming.cat
+      : next.age && isExploreCategory(next.age)
+        ? next.age
+        : incoming.cat;
     void navigate({
       search: {
         q: incoming.q ?? query,
@@ -434,9 +457,28 @@ function SearchPage() {
         from: incoming.from,
         to: incoming.to,
         sort: incoming.sort,
-        age: next.age ?? incoming.age,
-        start: next.start ?? incoming.start,
+        age,
+        start,
+        cat,
         care: incoming.care,
+        favorites: incoming.favorites,
+      },
+    });
+  }
+
+  /** Age chips 1–4 also write `?age=` for the age-first gate. Preserve start + place. */
+  function writeCategorySearch(cat?: ExploreCategory) {
+    const age = cat && isRailAge(cat) ? cat : incoming.age;
+    void navigate({
+      search: {
+        q: incoming.q ?? query,
+        name: incoming.name,
+        from: incoming.from,
+        to: incoming.to,
+        sort: incoming.sort,
+        cat,
+        age,
+        start: incoming.start,
         favorites: incoming.favorites,
       },
     });
@@ -502,6 +544,7 @@ function SearchPage() {
     setFavoritesOnly(false);
     setCareType("any");
     setSchoolAgeOnly(false);
+    writeCategorySearch(undefined);
   }
 
   function currentFilters(): SavedSearchFilters {
@@ -629,6 +672,8 @@ function SearchPage() {
     if (favoritesOnly) rows = rows.filter((r) => r.guestFavorite === true);
     if (careType !== "any") rows = rows.filter((r) => matchesCareType(r, careType));
     if (schoolAgeOnly) rows = rows.filter((r) => matchesRailAge(r, "school-age"));
+    const cat = resolvedExploreCategory(incoming);
+    if (cat) rows = rows.filter((r) => matchesCategory(r, cat));
     if (nameQuery.trim()) rows = rows.filter((r) => matchesDaycareName(r, nameQuery));
     return rows;
   }, [
@@ -648,9 +693,16 @@ function SearchPage() {
     favoritesOnly,
     careType,
     schoolAgeOnly,
+    incoming.cat,
+    incoming.age,
+    incoming.care,
     nameQuery,
   ]);
-  const searchAge = isSearchAge(incoming.age) ? incoming.age : undefined;
+  const searchAge = isSearchAge(incoming.age)
+    ? incoming.age
+    : isSearchAge(incoming.cat)
+      ? incoming.cat
+      : undefined;
   const searchStart = isSearchStart(incoming.start) ? incoming.start : undefined;
   const gated = searchFiltersReady(searchAge, searchStart);
   const split = useMemo(() => {
@@ -689,7 +741,8 @@ function SearchPage() {
     (ageGroup !== "any" ? 1 : 0) +
     (favoritesOnly ? 1 : 0) +
     (careType !== "any" ? 1 : 0) +
-    (schoolAgeOnly ? 1 : 0);
+    (schoolAgeOnly ? 1 : 0) +
+    (resolvedExploreCategory(incoming) ? 1 : 0);
   const anchors = resolveSearchAnchors({ home: origin, work: workOrigin, mode: anchorMode });
   const dualEmpty = anchors.intersect && !searchFailed && (items?.length ?? 0) === 0;
   const emptyState = searchFailed
@@ -714,30 +767,18 @@ function SearchPage() {
           secondaryTo: undefined as string | undefined,
           onSecondary: undefined as (() => void) | undefined,
         }
-      : extraFilters && (items?.length ?? 0) > 0 && isFacilityType(careType)
+      : extraFilters && (items?.length ?? 0) > 0 && resolvedExploreCategory(incoming)
         ? {
             title: t("noFacilityTypeResults").replace(
               "{type}",
-              t(
-                careType === "nursery"
-                  ? "facilityTypeNursery"
-                  : careType === "home"
-                    ? "facilityTypeHome"
-                    : "facilityTypeCentre",
-              ).toLowerCase(),
+              t(EXPLORE_CATEGORY_COPY[resolvedExploreCategory(incoming)!]).toLowerCase(),
             ),
             body: t("noFacilityTypeResultsLead").replace(
               "{type}",
-              t(
-                careType === "nursery"
-                  ? "facilityTypeNursery"
-                  : careType === "home"
-                    ? "facilityTypeHome"
-                    : "facilityTypeCentre",
-              ).toLowerCase(),
+              t(EXPLORE_CATEGORY_COPY[resolvedExploreCategory(incoming)!]).toLowerCase(),
             ),
             action: t("showAll"),
-            onAction: () => setCareType("any"),
+            onAction: () => writeCategorySearch(undefined),
             secondary: t("clearFilters"),
             secondaryTo: undefined as string | undefined,
             onSecondary: clearListingFilters,
@@ -895,37 +936,16 @@ function SearchPage() {
       {chip(infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v))}
       {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
       {chip(favoritesOnly, t("filterFavorites"), () => setFavoritesOnly((v) => !v))}
-      {chip(careType === "before-after", t("filterCareBeforeAfter"), () =>
-        setCareType((v) => (v === "before-after" ? "any" : "before-after")),
+      {chip(resolvedExploreCategory(incoming) === "before-after", t("filterCareBeforeAfter"), () =>
+        writeCategorySearch(
+          resolvedExploreCategory(incoming) === "before-after" ? undefined : "before-after",
+        ),
       )}
     </div>
   );
 
-  const SHOW_FACILITY: Record<FacilityType, "showCentres" | "showNurseries" | "showHomes"> = {
-    centre: "showCentres",
-    nursery: "showNurseries",
-    home: "showHomes",
-  };
-
-  const facilityCategoryChips = (
-    <div className="mt-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-subtle">
-        {t("exploreFacilityTypes")}
-      </p>
-      <div className="flex flex-wrap gap-2" role="group" aria-label={t("exploreFacilityTypes")}>
-        {FACILITY_TYPES.map((kind) => (
-          <ChipButton
-            key={kind}
-            on={careType === kind}
-            aria-pressed={careType === kind}
-            onClick={() => setCareType((v) => (v === kind ? "any" : kind))}
-          >
-            {t(SHOW_FACILITY[kind])}
-          </ChipButton>
-        ))}
-      </div>
-    </div>
-  );
+  const exploreCatCounts = countExploreCategories(catalog);
+  const activeCat = resolvedExploreCategory(incoming);
 
   return (
     <Shell>
@@ -1051,6 +1071,7 @@ function SearchPage() {
         <SearchAgeGate
           age={searchAge ?? ""}
           start={searchStart ?? ""}
+          hideAge
           onAge={(age) => writeNowLoopSearch({ age })}
           onStart={(start) => writeNowLoopSearch({ start })}
         />
@@ -1162,7 +1183,11 @@ function SearchPage() {
 
         <ExploreHint />
 
-        {facilityCategoryChips}
+        <ExploreCategoryChips
+          selected={activeCat}
+          counts={exploreCatCounts}
+          onSelect={writeCategorySearch}
+        />
 
         {filters ? (
           <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
@@ -1176,22 +1201,38 @@ function SearchPage() {
               {(["any", "infant", "toddler", "preschool"] as const).map((a) => (
                 <ChipButton
                   key={a}
-                  on={!schoolAgeOnly && ageGroup === a}
-                  aria-pressed={!schoolAgeOnly && ageGroup === a}
+                  on={
+                    a === "any"
+                      ? !resolvedExploreCategory(incoming) && !schoolAgeOnly && ageGroup === "any"
+                      : resolvedExploreCategory(incoming) === a ||
+                        (!incoming.cat && !schoolAgeOnly && ageGroup === a)
+                  }
+                  aria-pressed={
+                    a === "any"
+                      ? !resolvedExploreCategory(incoming) && !schoolAgeOnly && ageGroup === "any"
+                      : resolvedExploreCategory(incoming) === a ||
+                        (!incoming.cat && !schoolAgeOnly && ageGroup === a)
+                  }
                   onClick={() => {
-                    setSchoolAgeOnly(false);
-                    setAgeGroup(a === "any" ? "any" : (a as AgeGroup));
+                    writeCategorySearch(a === "any" ? undefined : a);
                   }}
                 >
                   {a === "any" ? t("anyAge") : t(a)}
                 </ChipButton>
               ))}
               <ChipButton
-                on={schoolAgeOnly}
-                aria-pressed={schoolAgeOnly}
+                on={
+                  resolvedExploreCategory(incoming) === "school-age" ||
+                  (!incoming.cat && schoolAgeOnly)
+                }
+                aria-pressed={
+                  resolvedExploreCategory(incoming) === "school-age" ||
+                  (!incoming.cat && schoolAgeOnly)
+                }
                 onClick={() => {
-                  setSchoolAgeOnly((v) => !v);
-                  if (!schoolAgeOnly) setAgeGroup("any");
+                  writeCategorySearch(
+                    resolvedExploreCategory(incoming) === "school-age" ? undefined : "school-age",
+                  );
                 }}
               >
                 {t("schoolAge")}
@@ -1338,7 +1379,7 @@ function SearchPage() {
                 secondaryTo={emptyState.secondaryTo}
               />
             </div>
-          ) : sort === "match" || sort === "urgency" ? (
+          ) : (
             <section
               className="mt-6"
               onMouseOver={(e) => {
@@ -1347,20 +1388,22 @@ function SearchPage() {
                 if (slug) setActive(slug);
               }}
             >
-              <h2 className="text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
-                {sort === "match" ? t("sortMatch") : t("sortUrgency")}
-              </h2>
-              <p className="mt-1 text-xs text-muted">
-                {sort === "match" ? t("sortMatchLead") : t("sortUrgencyLead")}
-              </p>
+              {sort === "match" || sort === "urgency" ? (
+                <>
+                  <h2 className="text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
+                    {sort === "match" ? t("sortMatch") : t("sortUrgency")}
+                  </h2>
+                  <p className="mt-1 text-xs text-muted">
+                    {sort === "match" ? t("sortMatchLead") : t("sortUrgencyLead")}
+                  </p>
+                </>
+              ) : null}
               <div className="ke-listings mt-4">
                 {shownList.map((item, i) => (
                   <DaycareCard key={item.id} item={item} eager={i < 4} />
                 ))}
               </div>
             </section>
-          ) : (
-            <ExploreRails items={shownList} onHover={setActive} />
           )}
           {gated && split.ageUnknown.length ? (
             <div className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">

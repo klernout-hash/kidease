@@ -109,7 +109,7 @@ describe("dual chrome and map clustering stay in place", () => {
   it("keeps app sheet + website side-by-side and existing clusters", () => {
     const search = read("src/routes/search.tsx");
     const shell = read("src/components/shell.tsx");
-    assert.match(search, /ExploreRails/);
+    assert.match(search, /ExploreCategoryChips/);
     assert.match(shell, /data-channel=app/);
     assert.match(search, /ke-gutter mx-auto max-w-7xl/);
     const map = read("src/components/map-view.tsx");
