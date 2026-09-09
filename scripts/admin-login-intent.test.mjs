@@ -50,10 +50,12 @@ test("login screen uses admin intent and hides social for that path", () => {
 
 test("signed-out /admin gate and footer send Admin email-first search", () => {
   const gate = src("src/lib/server/admin-route.ts");
-  assert.match(gate, /intent: "admin"/);
-  assert.match(gate, /role: "admin"/);
-  assert.match(gate, /desk: "admin"/);
-  assert.match(gate, /next: "\/admin"/);
+  const dest = src("src/lib/admin-desk-gate.ts");
+  assert.match(gate, /adminDeskGateRedirect/);
+  assert.match(dest, /intent: "admin"/);
+  assert.match(dest, /role: "admin"/);
+  assert.match(dest, /desk: "admin"/);
+  assert.match(dest, /next: "\/admin"/);
   assert.match(src("src/components/site-footer.tsx"), /intent: "admin"/);
   assert.equal(
     loginErrorCallbackUrl({
