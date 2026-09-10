@@ -87,6 +87,6 @@ test("rail cards skip offscreen paint and listing cards are memoized", () => {
   assert.match(src("src/components/daycare-card.tsx"), /export const DaycareCard = memo\(/);
   assert.match(src("src/components/turnstile-field.tsx"), /export const TurnstileField = memo\(/);
   assert.match(src("src/components/turnstile-field.tsx"), /min-h-\[65px\]/);
-  assert.match(src("src/components/turnstile-field.tsx"), /size: "flexible"/);
+  assert.match(src("src/components/turnstile-field.tsx"), /size: compact \? "compact" : "flexible"/);
   assert.match(src("src/components/turnstile-field.tsx"), /requestIdleCallback/);
 });

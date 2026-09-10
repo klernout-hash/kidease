@@ -80,8 +80,8 @@ test("header, hamburger, and menu Admin entries document-navigate to /admin", ()
   assert.match(drawer, /AdminDeskLink/);
   assert.match(drawer, /isAdmin/);
   assert.match(menu, /AdminDeskLink/);
-  assert.match(menu, /canSeeAdminDesk\(session\?\.role\)/);
-  assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role\)/);
+  assert.match(menu, /canSeeAdminDesk\(session\?\.role, email\)/);
+  assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role, user\?\.primaryEmail\)/);
   assert.doesNotMatch(drawer, /to="\/admin"/);
   assert.doesNotMatch(menu, /to="\/admin"/);
 });

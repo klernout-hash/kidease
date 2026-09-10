@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import { facebookLoginLive } from "@/lib/auth/facebook-idp";
 import { visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
 
 /**
  * Sign-in buttons the login page should render.
  * Google when native Google or the Grok broker is configured.
  * Facebook only when FACEBOOK_CLIENT_ID + FACEBOOK_CLIENT_SECRET are set
- * (no broker path — hide the button rather than show a dead click).
+ * and FACEBOOK_LOGIN_LIVE is on (Meta App not Live → hide the CTA).
  * Apple only when APPLE_CLIENT_ID + APPLE_TEAM_ID + APPLE_KEY_ID +
  * APPLE_PRIVATE_KEY are set (same four keys Better Auth needs). Check env
  * here — do not import apple-idp.ts (node:crypto) into this module.
@@ -32,6 +33,7 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
     nativeGoogle,
     nativeFacebook,
     nativeApple,
+    facebookLive: facebookLoginLive(),
     broker,
     preferNativeGoogle: preferNative,
   });

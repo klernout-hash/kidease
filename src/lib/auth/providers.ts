@@ -61,6 +61,8 @@ export function visibleSignInProviders(opts: {
   preferNativeGoogle?: boolean;
   nativeFacebook?: boolean;
   nativeApple?: boolean;
+  /** Default true when omitted so unit tests that only set nativeFacebook still pass. */
+  facebookLive?: boolean;
 }): GrokProvider[] {
   const brokerGoogle = GROK_PROVIDERS.find((p) => p.providerId === "grok-google");
   const out: GrokProvider[] = [];
@@ -70,7 +72,7 @@ export function visibleSignInProviders(opts: {
 
   const google = pickGoogle(opts, brokerGoogle);
   if (google) out.push(google);
-  if (opts.nativeFacebook) out.push(NATIVE_FACEBOOK);
+  if (opts.nativeFacebook && opts.facebookLive !== false) out.push(NATIVE_FACEBOOK);
   return out;
 }
 

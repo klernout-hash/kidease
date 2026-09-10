@@ -24,6 +24,9 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as DaycaresRouteImport } from './routes/daycares'
+import { Route as DaycaresCityRouteImport } from './routes/daycares.$city'
+import { Route as ListingSlugRouteImport } from './routes/listing.$slug'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FrRouteImport } from './routes/fr'
@@ -168,6 +171,21 @@ const DeleteAccountRoute = DeleteAccountRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DaycaresRoute = DaycaresRouteImport.update({
+  id: '/daycares',
+  path: '/daycares',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DaycaresCityRoute = DaycaresCityRouteImport.update({
+  id: '/daycares/$city',
+  path: '/daycares/$city',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListingSlugRoute = ListingSlugRouteImport.update({
+  id: '/listing/$slug',
+  path: '/listing/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -532,6 +550,9 @@ export interface FileRoutesByFullPath {
   '/cookies': typeof CookiesRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
+  '/daycares': typeof DaycaresRoute
+  '/daycares/$city': typeof DaycaresCityRoute
+  '/listing/$slug': typeof ListingSlugRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
@@ -618,6 +639,9 @@ export interface FileRoutesByTo {
   '/cookies': typeof CookiesRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
+  '/daycares': typeof DaycaresRoute
+  '/daycares/$city': typeof DaycaresCityRoute
+  '/listing/$slug': typeof ListingSlugRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
@@ -703,6 +727,9 @@ export interface FileRoutesById {
   '/cookies': typeof CookiesRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
+  '/daycares': typeof DaycaresRoute
+  '/daycares/$city': typeof DaycaresCityRoute
+  '/listing/$slug': typeof ListingSlugRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
@@ -791,6 +818,9 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/delete-account'
     | '/explore'
+    | '/daycares'
+    | '/daycares/$city'
+    | '/listing/$slug'
     | '/faq'
     | '/forgot-password'
     | '/fr'
@@ -877,6 +907,9 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/delete-account'
     | '/explore'
+    | '/daycares'
+    | '/daycares/$city'
+    | '/listing/$slug'
     | '/faq'
     | '/forgot-password'
     | '/get-app'
@@ -961,6 +994,9 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/delete-account'
     | '/explore'
+    | '/daycares'
+    | '/daycares/$city'
+    | '/listing/$slug'
     | '/faq'
     | '/forgot-password'
     | '/fr'
@@ -1048,6 +1084,9 @@ export interface RootRouteChildren {
   CookiesRoute: typeof CookiesRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
   ExploreRoute: typeof ExploreRoute
+  DaycaresRoute: typeof DaycaresRoute
+  DaycaresCityRoute: typeof DaycaresCityRoute
+  ListingSlugRoute: typeof ListingSlugRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FrRoute: typeof FrRouteWithChildren
@@ -1204,6 +1243,27 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daycares': {
+      id: '/daycares'
+      path: '/daycares'
+      fullPath: '/daycares'
+      preLoaderRoute: typeof DaycaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daycares/$city': {
+      id: '/daycares/$city'
+      path: '/daycares/$city'
+      fullPath: '/daycares/$city'
+      preLoaderRoute: typeof DaycaresCityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listing/$slug': {
+      id: '/listing/$slug'
+      path: '/listing/$slug'
+      fullPath: '/listing/$slug'
+      preLoaderRoute: typeof ListingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -1791,6 +1851,9 @@ const rootRouteChildren: RootRouteChildren = {
   CookiesRoute: CookiesRoute,
   DeleteAccountRoute: DeleteAccountRoute,
   ExploreRoute: ExploreRoute,
+  DaycaresRoute: DaycaresRoute,
+  DaycaresCityRoute: DaycaresCityRoute,
+  ListingSlugRoute: ListingSlugRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   FrRoute: FrRouteWithChildren,

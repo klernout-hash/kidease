@@ -16,6 +16,8 @@
  * Required process env (injected on the host; Better Auth documented names):
  *   FACEBOOK_CLIENT_ID
  *   FACEBOOK_CLIENT_SECRET
+ * Optional CTA gate (default off until Meta App is Live):
+ *   FACEBOOK_LOGIN_LIVE
  */
 const env = (key: string): string | undefined => {
   const value = process.env[key]?.trim();
@@ -26,6 +28,15 @@ export const FACEBOOK_CLIENT_ID = env("FACEBOOK_CLIENT_ID");
 export const FACEBOOK_CLIENT_SECRET = env("FACEBOOK_CLIENT_SECRET");
 
 export const facebookIdpConfigured = Boolean(FACEBOOK_CLIENT_ID && FACEBOOK_CLIENT_SECRET);
+
+/**
+ * Facebook login CTA. Default off until Meta App Review is Live.
+ * Set FACEBOOK_LOGIN_LIVE=1|true|on on the host. Never VITE_*.
+ */
+export function facebookLoginLive(raw = process.env.FACEBOOK_LOGIN_LIVE): boolean {
+  const value = (raw || "").trim().toLowerCase();
+  return value === "1" || value === "true" || value === "on";
+}
 
 /**
  * Facebook Login (consumer) permissions KidEase may request.

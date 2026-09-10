@@ -187,9 +187,11 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         accountLabel={t("account")}
         accountHref="/account"
         accountSearch={accountSearch(sticky)}
-        isAdmin={canSeeAdminDesk(session?.role)}
+        isAdmin={canSeeAdminDesk(session?.role, user?.primaryEmail)}
         desksSlot={
-          user && showDeskSwitcher(session?.desks, session?.role) ? <DeskSwitcher compact /> : null
+          user && showDeskSwitcher(session?.desks, session?.role, user?.primaryEmail) ? (
+            <DeskSwitcher compact />
+          ) : null
         }
         onSignOut={() => void signOut("/")}
       />
@@ -290,6 +292,7 @@ function HeaderProfile({
   );
 
   const { sticky } = useSessionDesks();
+  const { t } = useCopy();
 
   if (signedIn) {
     return (
@@ -321,7 +324,7 @@ function HeaderProfile({
           role="menu"
           className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-56 overflow-hidden rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
         >
-          <p className="border-b border-border px-3 py-2 text-xs font-medium text-muted">Sign in</p>
+          <p className="border-b border-border px-3 py-2 text-xs font-medium text-muted">{t("signIn")}</p>
           <Link
             role="menuitem"
             to={loginTo}

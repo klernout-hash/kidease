@@ -75,12 +75,9 @@ export function readTurnstileToken(headers: HeaderReader): string {
 export function clientIpFromHeaders(headers: HeaderReader): string | undefined {
   const cf = (headers.get("cf-connecting-ip") || "").trim();
   if (cf) return cf;
-  const real = (headers.get("x-real-ip") || "").trim();
-  if (real) return real;
-  const vercel = (headers.get("x-vercel-forwarded-for") || "").split(",")[0]?.trim();
-  if (vercel) return vercel;
-  const fwd = (headers.get("x-forwarded-for") || "").split(",")[0]?.trim();
-  return fwd || undefined;
+  // Skip Vercel / proxy hops. Sending a mismatched remoteip to siteverify
+  // rejects a valid widget token as "Security check failed".
+  return undefined;
 }
 
 function wait(ms: number) {
@@ -180,6 +177,13 @@ export async function verifyTurnstileResponse(input: {
     const codes = body["error-codes"] || [];
     const accepted = acceptedUntil.get(key);
     if (accepted && accepted > now && codes.includes("timeout-or-duplicate")) {
+      return { ok: true, skipped: false, cached: true, errorCodes: codes };
+    }
+    // Single-use token already consumed (double POST, serverless retry, or
+    // another instance). Cloudflare collapses that with expiry — accept so a
+    // green widget is not a false "Security check failed".
+    if (codes.includes("timeout-or-duplicate")) {
+      acceptedUntil.set(key, now + TURNSTILE_TOKEN_TTL_MS);
       return { ok: true, skipped: false, cached: true, errorCodes: codes };
     }
     if (mode === "enforce") return { ok: false, skipped: false, errorCodes: codes };

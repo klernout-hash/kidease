@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
+import { publicFormErrorMessage } from "@/lib/public-form-error";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import type { CopyKey } from "@/lib/copy";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
@@ -41,11 +42,21 @@ export function Contact() {
   const [body, setBody] = useState("");
 
   const [busy, setBusy] = useState(false);
-  const { token, onToken } = useTurnstileToken();
+  const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const { onToken, takeChallenge, reset: resetTurnstile, resetSignal, required: turnstileRequired } =
+    useTurnstileToken();
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
+    const challenge = takeChallenge();
+    if (turnstileRequired && !challenge) {
+      setFormError(t("securityCheckNeeded"));
+      setSent(false);
+      return;
+    }
     setBusy(true);
+    setFormError(null);
     try {
       const label = t(subject);
       await submitPublicMessage({
@@ -55,14 +66,19 @@ export function Contact() {
           email,
           subject: isParent ? `${t("roleParentTitle")} — ${label}` : label,
           body,
-          turnstileToken: token,
+          turnstileToken: challenge,
         },
       });
       toast.success(t("contactSent"));
+      setSent(true);
       setBody("");
     } catch (err) {
       console.error("[kidease-contact]", err);
-      toast.error(`Could not send. Email ${SUPPORT_INBOX_EMAIL} directly.`);
+      setSent(false);
+      const message = publicFormErrorMessage(err, SUPPORT_INBOX_EMAIL);
+      setFormError(message);
+      toast.error(message);
+      resetTurnstile();
     } finally {
       setBusy(false);
     }
@@ -133,7 +149,13 @@ export function Contact() {
               onChange={(e) => setBody(e.target.value)}
             />
           </label>
-          <TurnstileField onToken={onToken} />
+          <TurnstileField onToken={onToken} resetSignal={resetSignal} />
+          {sent ? (
+            <p className="rounded-xl bg-ok/10 px-4 py-3 text-sm font-medium text-fg ring-1 ring-ok/30" role="status">
+              {t("contactSent")}
+            </p>
+          ) : null}
+          {formError ? <p className="text-sm text-danger">{formError}</p> : null}
           <Button type="submit" className="w-full" size="lg" disabled={busy}>
             {t("submit")}
           </Button>

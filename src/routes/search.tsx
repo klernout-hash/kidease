@@ -718,8 +718,9 @@ function SearchPage() {
     return splitSearchResults(list, searchAge, searchStart);
   }, [gated, list, searchAge, searchStart]);
   const shownList = gated ? split.primary : [];
-  const resultCount = gated ? shownList.length + split.ageUnknown.length : 0;
-  const showSearchEmpty = gated && shownList.length === 0 && split.ageUnknown.length === 0;
+  const visibleList = gated ? shownList : list;
+  const resultCount = gated ? shownList.length + split.ageUnknown.length : visibleList.length;
+  const showSearchEmpty = items !== null && visibleList.length === 0 && (!gated || split.ageUnknown.length === 0);
   const [ageUnknownOpen, setAgeUnknownOpen] = useState(false);
   useEffect(() => {
     if (gated && shownList.length === 0 && split.ageUnknown.length > 0) {
@@ -959,7 +960,7 @@ function SearchPage() {
 
   return (
     <Shell>
-      <div className="ke-gutter mx-auto max-w-7xl pb-10 pt-4">
+      <div className="ke-gutter mx-auto max-w-7xl overflow-x-hidden pb-10 pt-4">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1
@@ -979,7 +980,7 @@ function SearchPage() {
                   {liveOnly
                     ? (fabric.live > 0 ? t("searchLiveCount") : t("searchLiveEmptyCount"))
                         .replace("{live}", String(fabric.live))
-                        .replace("{n}", String(catalog.length))
+                        .replace("{n}", String(resultCount))
                     : resultCount === 1
                       ? t("searchResultCountOne")
                       : t("searchResultCount").replace("{n}", String(resultCount))}
@@ -989,8 +990,8 @@ function SearchPage() {
                   {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
                   {items !== null && fabric.live > 0
                     ? `${DOT}${t("liveInArea").replace("{n}", String(fabric.live))}`
-                    : catalog.length > 0
-                      ? `${DOT}${t("liveVsAllNone").replace("{n}", String(catalog.length))}`
+                    : resultCount > 0
+                      ? `${DOT}${t("liveVsAllNone").replace("{n}", String(resultCount))}`
                       : null}
                 </>
               )}
@@ -1086,9 +1087,10 @@ function SearchPage() {
         />
 
         <div
-          className="mt-3 flex flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap"
+          className="mt-3 min-w-0 overflow-x-auto"
           data-search-row="live-filters-map"
         >
+          <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
           <div className="flex h-11 shrink-0 rounded-full bg-surface p-0.5 ring-1 ring-border sm:min-w-[13.5rem]">
             <button
               type="button"
@@ -1111,7 +1113,7 @@ function SearchPage() {
                 !liveOnly ? "bg-fg text-bg" : "text-muted",
               )}
             >
-              {items !== null ? t("allToggleCount").replace("{n}", String(catalog.length)) : t("showAll")}
+              {items !== null ? t("allToggleCount").replace("{n}", String(resultCount)) : t("showAll")}
             </button>
           </div>
           <button
@@ -1152,6 +1154,7 @@ function SearchPage() {
           >
             {t("map")}
           </button>
+          </div>
         </div>
 
         {askLocation ? (
@@ -1270,7 +1273,7 @@ function SearchPage() {
                 <div className="h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
-                      items={shownList}
+                      items={visibleList}
                       origin={mapOrigin}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
                       radiusKm={radiusKm}
@@ -1289,7 +1292,7 @@ function SearchPage() {
                     />
                   </Suspense>
                 </div>
-                {gated && items !== null && showSearchEmpty ? (
+                {items !== null && showSearchEmpty ? (
                   <div className="rounded-xl bg-surface ring-1 ring-border">
                     <EmptyState
                       title={emptyState.title}
@@ -1356,7 +1359,7 @@ function SearchPage() {
                 </>
               ) : null}
               <div className="ke-listings mt-4">
-                {shownList.map((item, i) => (
+                {visibleList.map((item, i) => (
                   <DaycareCard key={item.id} item={item} eager={i < 4} />
                 ))}
               </div>

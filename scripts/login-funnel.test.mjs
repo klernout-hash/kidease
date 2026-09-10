@@ -65,7 +65,8 @@ test("login and 2FA use the shared continue helper", () => {
   assert.match(src("src/lib/auth/login-funnel.ts"), /statusPromise/);
   assert.match(src("src/lib/auth/login-funnel.ts"), /hinted/);
   assert.match(src("src/lib/desks.ts"), /\/verify-2fa\?next=/);
-  assert.match(login, /Opening your desk/);
+  assert.match(login, /openingDesk/);
+  assert.match(src("src/lib/copy.ts"), /openingDesk: "Opening your desk…"/);
   assert.match(twoFa, /assignPostAuthDest/);
   assert.match(twoFa, /pageStalled/);
   assert.match(twoFa, /needTurnstile/);

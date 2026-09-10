@@ -45,7 +45,7 @@ export function NavDrawer({
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
-  const { locale } = useCopy();
+  const { locale, t } = useCopy();
   const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export function NavDrawer({
             type="button"
             onClick={onClose}
             className="grid size-12 place-items-center rounded-full text-fg hover:bg-surface-2"
-            aria-label="Close"
+            aria-label={t("close")}
           >
             <X className="size-6" strokeWidth={1.75} />
           </button>
@@ -144,7 +144,7 @@ export function NavDrawer({
                   onClick={onClose}
                   className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
                 >
-                  Admin
+                  {t("deskAdmin")}
                 </AdminDeskLink>
               ) : null}
               <button
@@ -155,7 +155,7 @@ export function NavDrawer({
                 }}
                 className="mt-2 flex min-h-12 w-full items-center justify-center rounded-xl px-3 text-center text-base text-fg ring-1 ring-border"
               >
-                Sign out
+                {t("signOut")}
               </button>
             </>
           ) : (

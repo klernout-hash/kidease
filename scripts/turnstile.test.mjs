@@ -49,7 +49,7 @@ describe("Turnstile siteverify", () => {
       ),
       "203.0.113.9",
     );
-    assert.equal(clientIpFromHeaders(new Headers({ "x-forwarded-for": "198.51.100.2, 10.0.0.1" })), "198.51.100.2");
+    assert.equal(clientIpFromHeaders(new Headers({ "x-forwarded-for": "198.51.100.2, 10.0.0.1" })), undefined);
   });
 
   it("skips when mode is off or optional without a token", async () => {
@@ -130,15 +130,15 @@ describe("Turnstile siteverify", () => {
     assert.equal(calls, 2);
   });
 
-  it("fails enforce on timeout-or-duplicate when this process never accepted the token", async () => {
+  it("accepts timeout-or-duplicate so a consumed valid token is not a false fail", async () => {
     const result = await verifyTurnstileResponse({
       token: "already-used",
       secret: "s",
       mode: "enforce",
       fetch: async () => jsonResponse({ success: false, "error-codes": ["timeout-or-duplicate"] }),
     });
-    assert.equal(result.ok, false);
-    assert.equal(turnstileFailureMessage(result.errorCodes), "Security check failed. Refresh and try again.");
+    assert.equal(result.ok, true);
+    assert.equal(result.cached, true);
   });
 
   it("fails open in optional mode when siteverify rejects", async () => {

@@ -73,7 +73,7 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setSession(s);
         setStickyState((prev) => {
-          const next = sanitizeStickyDesk(prev, s.desks, s.role);
+          const next = sanitizeStickyDesk(prev, s.desks, s.role, user.primaryEmail);
           if (next !== prev) {
             if (next) writeStickyDesk(next);
             else clearStickyDesk();
@@ -94,14 +94,14 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fromPath = deskFromPathname(pathname);
-    if (fromPath && (!session || canVisitDesk(session.desks, fromPath, session.role))) {
+    if (fromPath && (!session || canVisitDesk(session.desks, fromPath, session.role, user?.primaryEmail))) {
       setSticky(fromPath);
       return;
     }
-    if (deskQuery && (!session || canVisitDesk(session.desks, deskQuery, session.role))) {
+    if (deskQuery && (!session || canVisitDesk(session.desks, deskQuery, session.role, user?.primaryEmail))) {
       setSticky(deskQuery);
     }
-  }, [pathname, deskQuery, session]);
+  }, [pathname, deskQuery, session, user?.primaryEmail]);
 
   return (
     <SessionDesksContext.Provider value={{ session, ready, error, sticky, setSticky }}>

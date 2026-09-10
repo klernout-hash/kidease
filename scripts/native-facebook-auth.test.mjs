@@ -12,6 +12,7 @@ import {
 } from "../src/lib/auth/providers.ts";
 import {
   FACEBOOK_LOGIN_SCOPES,
+  facebookLoginLive,
   mapFacebookProfileToUser,
 } from "../src/lib/auth/facebook-idp.ts";
 
@@ -169,6 +170,14 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
       both.filter((p) => p.idp === "facebook"),
       [NATIVE_FACEBOOK],
     );
+
+    const hiddenUntilLive = visibleSignInProviders({
+      nativeGoogle: false,
+      nativeFacebook: true,
+      facebookLive: false,
+      broker: false,
+    });
+    assert.equal(hiddenUntilLive.some((p) => p.idp === "facebook"), false);
   });
 
   it("login loader only lists Facebook when FACEBOOK_CLIENT_* are set", () => {
@@ -219,6 +228,20 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.doesNotMatch(client, /signIn\.social\(\{[\s\S]*scopes:/);
     assert.doesNotMatch(popup, /signInSocial\(\{[\s\S]*scopes:/);
     assert.doesNotMatch(login, /scopes:\s*\[/);
+  });
+
+  it("hides the Facebook CTA unless FACEBOOK_LOGIN_LIVE is on", () => {
+    assert.equal(facebookLoginLive(""), false);
+    assert.equal(facebookLoginLive(undefined), false);
+    assert.equal(facebookLoginLive("0"), false);
+    assert.equal(facebookLoginLive("1"), true);
+    assert.equal(facebookLoginLive("true"), true);
+    assert.equal(facebookLoginLive("on"), true);
+    const loader = read("src/lib/server/sign-in-providers.ts");
+    const example = read(".env.example");
+    assert.match(loader, /facebookLoginLive/);
+    assert.match(example, /FACEBOOK_LOGIN_LIVE/);
+    assert.doesNotMatch(example, /FACEBOOK_LOGIN_LIVE=1/);
   });
 
   it("maps a missing Facebook email to a .invalid placeholder, keeps a real one", () => {
