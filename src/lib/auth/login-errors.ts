@@ -142,6 +142,9 @@ export function friendlyAuthError(
   if (raw.includes("please complete the security check")) {
     return "Please complete the security check, then try again.";
   }
+  if (raw.includes("security check expired") || raw.includes("timeout-or-duplicate")) {
+    return "Security check expired. Complete it again, then try once.";
+  }
   if (raw.includes("security check failed") || raw.includes("security check")) {
     return "Security check failed. Refresh and try again.";
   }

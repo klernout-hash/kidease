@@ -19,7 +19,7 @@ function src(rel) {
 test("Guest: live vs all counts, empty-search lead, and listing login handoff", () => {
   const search = src("src/routes/search.tsx");
   assert.match(search, /liveVsAllNone/);
-  assert.match(search, /noLiveResultsLead/);
+  assert.match(search, /licensedNotLiveLead/);
   assert.match(search, /areaPresence\(catalog\)/);
   assert.match(search, /parentLoginSearch\("\/search"\)/);
   const listing = src("src/routes/daycare.$slug.tsx");

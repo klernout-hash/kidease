@@ -17,6 +17,7 @@ import {
   hasGoogleMapsBrowserKey,
   loadAdvancedMarkerElement,
   loadGoogleMaps,
+  MAP_VIEW_WAIT_MS,
   type AdvancedMarkerCtor,
   type ListingOverlay,
   type MovableDot,
@@ -39,6 +40,7 @@ type Props = {
   onSelect: (slug: string) => void;
   onRelocate?: (pos: { lat: number; lng: number }) => void;
   onLocate?: () => void;
+  onFallback?: () => void;
 };
 
 /** Brand map pin — same smiling teardrop as the KidEase logo. */
@@ -61,7 +63,17 @@ type SlugPin = AnyPin & {
 
 const MAP_CLUSTER_PAD = { top: 72, right: 64, bottom: 28, left: 16 };
 
-export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onSelect, onRelocate, onLocate }: Props) {
+export function MapView({
+  items,
+  origin,
+  secondOrigin,
+  radiusKm,
+  activeSlug,
+  onSelect,
+  onRelocate,
+  onLocate,
+  onFallback,
+}: Props) {
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const mapsApiRef = useRef<typeof google.maps | null>(null);
@@ -88,6 +100,7 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
   const [base, setBase] = useState<MapBase>("roadmap");
   const [picked, setPicked] = useState<string | null>(activeSlug ?? null);
   const [locating, setLocating] = useState(false);
+  const [loadGen, setLoadGen] = useState(0);
 
   useEffect(() => {
     setBase(readMapBase());
@@ -110,6 +123,12 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
     const markers = markersBySlug.current;
 
     void (async () => {
+      const watchdog = window.setTimeout(() => {
+        if (cancelled) return;
+        setLoadError("Google Maps timed out");
+        setBasemapReady(false);
+        setReady(false);
+      }, MAP_VIEW_WAIT_MS);
       try {
         const maps = await loadGoogleMaps();
         if (cancelled || !el) return;
@@ -142,6 +161,8 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
           setBasemapReady(false);
           setReady(false);
         }
+      } finally {
+        window.clearTimeout(watchdog);
       }
     })();
 
@@ -169,9 +190,9 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
       advancedMarkerRef.current = null;
       el.innerHTML = "";
     };
-    // Created once per mount.
+    // Recreated on retry (loadGen). Origin/radius apply in later effects.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadGen]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -379,9 +400,32 @@ export function MapView({ items, origin, secondOrigin, radiusKm, activeSlug, onS
 
       {loadError ? (
         <div className="absolute inset-0 z-[1] grid place-items-center bg-map px-6 text-center">
-          <p className="max-w-sm text-sm text-muted">
-            Map is temporarily unavailable. Licensed daycares are still listed on this page.
-          </p>
+          <div className="max-w-sm">
+            <p className="text-sm text-muted">{t("mapUnavailable")}</p>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                className="inline-flex h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg"
+                onClick={() => {
+                  setLoadError(null);
+                  setBasemapReady(false);
+                  setReady(false);
+                  setLoadGen((n) => n + 1);
+                }}
+              >
+                {t("mapRetry")}
+              </button>
+              {onFallback ? (
+                <button
+                  type="button"
+                  className="inline-flex h-11 items-center rounded-full bg-surface px-4 text-sm font-semibold text-fg ring-1 ring-border"
+                  onClick={onFallback}
+                >
+                  {t("mapShowList")}
+                </button>
+              ) : null}
+            </div>
+          </div>
         </div>
       ) : !basemapReady ? (
         <div

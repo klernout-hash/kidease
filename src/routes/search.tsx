@@ -760,6 +760,8 @@ function SearchPage() {
     (schoolAgeOnly ? 1 : 0) +
     (resolvedExploreCategory(incoming) ? 1 : 0);
   const anchors = resolveSearchAnchors({ home: origin, work: workOrigin, mode: anchorMode });
+  const catalog = items ?? [];
+  const fabric = areaPresence(catalog);
   const dualEmpty = anchors.intersect && !searchFailed && (items?.length ?? 0) === 0;
   const emptyState = searchFailed
     ? {
@@ -809,10 +811,10 @@ function SearchPage() {
             secondaryTo: undefined as string | undefined,
             onSecondary: () => setLiveOnly(false),
           }
-        : liveOnly && (items?.length ?? 0) > 0
+        : (items?.length ?? 0) > 0 && fabric.live === 0
           ? {
-              title: t("noLiveResults"),
-              body: t("noLiveResultsLead") as string | undefined,
+              title: t("licensedNotLiveTitle"),
+              body: t("licensedNotLiveLead").replace("{n}", String(catalog.length)),
               action: t("showAll"),
               onAction: () => setLiveOnly(false),
               secondary: t("noLiveResultsClaim"),
@@ -841,8 +843,6 @@ function SearchPage() {
   const whereLabel = (incoming.q || query || origin.label || "").trim();
   const city = (whereLabel || origin.label).split(",")[0];
   const whereSet = Boolean(whereLabel);
-  const catalog = items ?? [];
-  const fabric = areaPresence(catalog);
   const freshness = presenceFreshness(originAt, originSource);
   const mapOrigin = anchors.primary;
 
@@ -1020,6 +1020,15 @@ function SearchPage() {
             )}
           </div>
         </div>
+
+        {items !== null && catalog.length > 0 && fabric.live === 0 ? (
+          <p
+            className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm leading-6 text-muted ring-1 ring-border"
+            data-ke="licensed-not-live"
+          >
+            {t("licensedNotLiveLead").replace("{n}", String(catalog.length))}
+          </p>
+        ) : null}
 
         {!whereSet ? <CityHubLinks className="mt-3" /> : null}
 
@@ -1270,7 +1279,7 @@ function SearchPage() {
                 <div className="h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
-                      items={shownList}
+                      items={shownList.length > 0 ? shownList : catalog}
                       origin={mapOrigin}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
                       radiusKm={radiusKm}
@@ -1286,10 +1295,11 @@ function SearchPage() {
                         void hapticLight();
                       }}
                       onLocate={() => void geo()}
+                      onFallback={() => setView("list")}
                     />
                   </Suspense>
                 </div>
-                {gated && items !== null && showSearchEmpty ? (
+                {items !== null && (showSearchEmpty || (shownList.length === 0 && catalog.length > 0)) ? (
                   <div className="rounded-xl bg-surface ring-1 ring-border">
                     <EmptyState
                       title={emptyState.title}

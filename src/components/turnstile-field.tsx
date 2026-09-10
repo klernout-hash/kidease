@@ -114,17 +114,27 @@ export const TurnstileField = memo(function TurnstileField({
     void loadTurnstile()
       .then((api) => {
         if (cancelled || !api || !host.current || widgetId.current) return;
+        const narrow =
+          typeof window !== "undefined" &&
+          typeof window.matchMedia === "function" &&
+          window.matchMedia("(max-width: 399px)").matches;
         widgetId.current = api.render(host.current, {
           sitekey: siteKey,
-          size: "flexible",
+          size: narrow ? "compact" : "flexible",
           retry: "auto",
           "refresh-expired": "auto",
           callback: (token) => {
             setLoadError(null);
             onTokenRef.current(token);
           },
-          "expired-callback": () => onTokenRef.current(""),
-          "timeout-callback": () => onTokenRef.current(""),
+          "expired-callback": () => {
+            onTokenRef.current("");
+            setLoadError("Security check expired. Complete it again, then try once.");
+          },
+          "timeout-callback": () => {
+            onTokenRef.current("");
+            setLoadError("Security check expired. Complete it again, then try once.");
+          },
           "error-callback": () => {
             onTokenRef.current("");
             setLoadError("Security check failed. Refresh and try again.");
@@ -171,8 +181,8 @@ export const TurnstileField = memo(function TurnstileField({
 
   if (siteKey === undefined || siteKey === null) return null;
   return (
-    <div className="min-h-[65px]">
-      <div ref={host} className="cf-turnstile" />
+    <div className="min-h-[65px] max-w-full overflow-x-hidden">
+      <div ref={host} className="cf-turnstile max-w-full" />
       {loadError ? <p className="mt-2 text-sm text-danger">{loadError}</p> : null}
     </div>
   );

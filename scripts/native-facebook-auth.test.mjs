@@ -12,6 +12,7 @@ import {
 } from "../src/lib/auth/providers.ts";
 import {
   FACEBOOK_LOGIN_SCOPES,
+  facebookLoginVisible,
   mapFacebookProfileToUser,
 } from "../src/lib/auth/facebook-idp.ts";
 
@@ -169,6 +170,40 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
       both.filter((p) => p.idp === "facebook"),
       [NATIVE_FACEBOOK],
     );
+  });
+
+  it("hides Continue with Facebook until FEATURE_FACEBOOK_LOGIN is on", () => {
+    assert.equal(
+      facebookLoginVisible({
+        FACEBOOK_CLIENT_ID: "app-id",
+        FACEBOOK_CLIENT_SECRET: "app-secret",
+      }),
+      false,
+    );
+    assert.equal(
+      facebookLoginVisible({
+        FACEBOOK_CLIENT_ID: "app-id",
+        FACEBOOK_CLIENT_SECRET: "app-secret",
+        FEATURE_FACEBOOK_LOGIN: "0",
+      }),
+      false,
+    );
+    assert.equal(
+      facebookLoginVisible({
+        FACEBOOK_CLIENT_ID: "app-id",
+        FACEBOOK_CLIENT_SECRET: "app-secret",
+        FEATURE_FACEBOOK_LOGIN: "1",
+      }),
+      true,
+    );
+    assert.equal(facebookLoginVisible({ FEATURE_FACEBOOK_LOGIN: "1" }), false);
+    const loader = read("src/lib/server/sign-in-providers.ts");
+    const example = read(".env.example");
+    assert.match(loader, /facebookLoginVisible/);
+    assert.match(loader, /FEATURE_FACEBOOK_LOGIN|facebookLoginVisible/);
+    assert.doesNotMatch(loader, /nativeFacebook\s*=\s*true/);
+    assert.match(example, /^FEATURE_FACEBOOK_LOGIN=0$/m);
+    assert.doesNotMatch(example, /^FEATURE_FACEBOOK_LOGIN=1$/m);
   });
 
   it("login loader only lists Facebook when FACEBOOK_CLIENT_* are set", () => {

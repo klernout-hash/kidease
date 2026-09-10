@@ -180,6 +180,7 @@ describe("listing map uses browser Google Maps key, not Carto/Leaflet", () => {
     assert.match(view, /MAP_RADIUS_FIT_PAD/);
     assert.match(view, /mapSearchRadius/);
     assert.match(view, /mapLoading/);
+    assert.match(view, /mapRetry/);
     assert.match(view, /ke-map-host/);
     assert.match(view, /ke-map-skel/);
     assert.doesNotMatch(view, /bottom:\s*240/);

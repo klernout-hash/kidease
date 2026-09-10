@@ -286,8 +286,11 @@ export function LoginScreen({
 
   return (
     <Shell bare>
-      <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-5xl md:grid-cols-2">
-        <div className="relative hidden overflow-hidden md:block">
+      <main
+        className="mx-auto grid min-h-[calc(100dvh-4.5rem)] w-full min-w-0 max-w-5xl overflow-x-hidden lg:grid-cols-2"
+        data-ke="login-split"
+      >
+        <div className="relative hidden min-w-0 overflow-hidden lg:block">
           <img
             src="/photos/community.jpg"
             alt=""
@@ -299,8 +302,8 @@ export function LoginScreen({
           <div className="absolute inset-0 bg-gradient-to-t from-fg/70 to-fg/10" />
           <p className="absolute bottom-10 left-10 right-10 font-display text-3xl text-primary-fg">{t("tagline")}</p>
         </div>
-        <div className="grid place-items-center px-[clamp(1rem,4vw,2rem)] py-10">
-          <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border sm:p-8">
+        <div className="grid min-w-0 place-items-center px-[clamp(0.75rem,3vw,2rem)] py-8 sm:py-10">
+          <div className="w-full min-w-0 max-w-md rounded-xl bg-surface p-4 shadow-card ring-1 ring-border sm:p-8">
             <div className="flex justify-center">
               <BrandMark size="md" />
             </div>
