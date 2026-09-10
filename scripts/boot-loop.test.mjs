@@ -28,7 +28,9 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(rootRoute, /data-ke-mark/);
     assert.match(index, /pendingComponent: BootPending/);
     assert.match(index, /withTimeoutFallback/);
-    assert.match(index, /kidease-desk-landed/);
+    assert.match(index, /DESK_LANDED_KEY/);
+    assert.match(index, /consumeJustSignedOut/);
+    assert.match(src("src/lib/desks.ts"), /kidease-desk-landed/);
     assert.match(pending, /could not finish loading/i);
     assert.match(pending, /BOOT_SETTLE_MS/);
     assert.match(pending, /PageSkeleton/);

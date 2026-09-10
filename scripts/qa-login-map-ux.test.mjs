@@ -79,6 +79,41 @@ describe("QA 2026-09-10: login split does not overflow under 768", () => {
   });
 });
 
+describe("login strength: email Connexion primary, logout, honest errors", () => {
+  it("puts email Connexion above Google so social cannot steal submit", () => {
+    const login = src("src/routes/login.tsx");
+    const emailIdx = login.indexOf('data-ke={operator ? "admin-email-first" : "email-sign-in"}');
+    const socialIdx = login.indexOf('data-ke="social-sign-in"');
+    const primaryIdx = login.indexOf('data-ke="email-primary"');
+    const googleIdx = login.indexOf('data-ke="social-secondary"');
+    assert.ok(emailIdx > 0 && socialIdx > emailIdx, "email form must render before social");
+    assert.ok(primaryIdx > 0 && googleIdx > primaryIdx, "Connexion submit must render before Google");
+    assert.match(login, /t\("orSocial"\)/);
+    assert.match(login, /t\("signIn"\)/);
+    assert.match(login, /continueGoogle/);
+    assert.match(src("src/lib/copy.ts"), /orSocial: "or continue with Google"/);
+    assert.match(src("src/lib/copy.ts"), /orSocial: "ou continuer avec Google"/);
+    assert.match(src(".env.example"), /^FEATURE_FACEBOOK_LOGIN=0$/m);
+  });
+
+  it("sign-out clears session crumbs and uses replace so back cannot bounce", () => {
+    const client = src("src/lib/auth/client.ts");
+    const desks = src("src/lib/desks.ts");
+    assert.match(client, /clearClientAuthState/);
+    assert.match(client, /location\.replace/);
+    assert.match(client, /sign-out-timeout/);
+    assert.match(client, /forgetRememberedRole/);
+    assert.match(client, /clearDeskLanded/);
+    assert.match(client, /markJustSignedOut/);
+    assert.doesNotMatch(client, /location\.href = redirectTo/);
+    assert.match(desks, /JUST_SIGNED_OUT_KEY/);
+    assert.match(src("src/routes/login.tsx"), /consumeJustSignedOut/);
+    assert.match(src("src/routes/index.tsx"), /consumeJustSignedOut/);
+    assert.match(src("src/routes/fr.index.tsx"), /consumeJustSignedOut/);
+    assert.match(src("src/routes/api/auth/$.ts"), /applyExpiredAuthCookies/);
+  });
+});
+
 describe("QA 2026-09-10: map hang + licensed-not-live honesty", () => {
   it("times out Maps JS and offers retry plus list fallback", () => {
     const maps = src("src/lib/google-maps.ts");

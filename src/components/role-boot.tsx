@@ -1,13 +1,10 @@
 import { useEffect } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { forgetRememberedRole, readRememberedRole, rememberRoleChoice } from "@/lib/desks";
 import { setRole } from "@/lib/server/family";
 
 export function rememberRole(role: "parent" | "provider") {
-  try {
-    window.localStorage.setItem("kidease-role", role);
-  } catch {
-    /* ignore */
-  }
+  rememberRoleChoice(role);
 }
 
 export function RoleBoot() {
@@ -15,19 +12,10 @@ export function RoleBoot() {
 
   useEffect(() => {
     if (isPending || !user) return;
-    let role: string | null = null;
-    try {
-      role = window.localStorage.getItem("kidease-role");
-    } catch {
-      role = null;
-    }
-    if (role !== "parent" && role !== "provider") return;
+    const role = readRememberedRole();
+    if (!role) return;
     void setRole({ data: role }).finally(() => {
-      try {
-        window.localStorage.removeItem("kidease-role");
-      } catch {
-        /* ignore */
-      }
+      forgetRememberedRole();
     });
   }, [user, isPending]);
 

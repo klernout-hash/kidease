@@ -164,3 +164,34 @@ export function applySharedAuthCookies(request: Request, response: Response): Re
     headers,
   });
 }
+
+function expireHostAuthCookie(name: string): string {
+  return `${name}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`;
+}
+
+function expireSharedAuthCookie(name: string): string {
+  return `${name}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0; Domain=${KIDEASE_COOKIE_DOMAIN}`;
+}
+
+/** Expire host-only + shared session/2FA cookies so sign-out cannot leave a half-session. */
+export function expireAuthCookieHeaders(publicHost = false): string[] {
+  const host = Object.keys(HOST_TO_SHARED).map(expireHostAuthCookie);
+  if (!publicHost) return host;
+  return [...host, ...Object.values(HOST_TO_SHARED).map(expireSharedAuthCookie)];
+}
+
+export function isAuthSignOutPath(pathname: string): boolean {
+  return pathname.replace(/\/+$/, "").endsWith("/sign-out");
+}
+
+export function applyExpiredAuthCookies(request: Request, response: Response): Response {
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || new URL(request.url).host;
+  const extras = expireAuthCookieHeaders(isKideasePublicHost(host));
+  const headers = new Headers(response.headers);
+  for (const cookie of extras) headers.append("set-cookie", cookie);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}

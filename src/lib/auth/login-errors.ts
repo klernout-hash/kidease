@@ -4,6 +4,16 @@
 export const CLOUDFLARE_AUTH_BLOCK_MESSAGE =
   "Security filter blocked sign-in — try again or contact support";
 
+export const WRONG_EMAIL_OR_PASSWORD_MESSAGE =
+  "Wrong email or password. Try again, or reset it from Forgot password.";
+
+export const WRONG_PASSWORD_MESSAGE =
+  "Wrong password for that email. Try again, or reset it from Forgot password.";
+
+export const TURNSTILE_FAILED_MESSAGE = "Security check failed. Refresh and try again.";
+export const TURNSTILE_EXPIRED_MESSAGE = "Security check expired. Complete it again, then try once.";
+export const TURNSTILE_REQUIRED_MESSAGE = "Please complete the security check, then try again.";
+
 export function isCloudflareBlockText(text?: string | null): boolean {
   const raw = (text || "").toLowerCase();
   if (!raw) return false;
@@ -95,9 +105,9 @@ export function messageForEmailAccount(explanation: EmailSignInExplanation): str
     return oauthOnlyMessage(explanation.providers);
   }
   if (explanation.kind === "has_password") {
-    return "Wrong password for that email. Try again, or reset it from Forgot password.";
+    return WRONG_PASSWORD_MESSAGE;
   }
-  return "Email or password is incorrect.";
+  return WRONG_EMAIL_OR_PASSWORD_MESSAGE;
 }
 
 export function socialSignInFailedMessage(providerId?: string): string {
@@ -140,13 +150,17 @@ export function friendlyAuthError(
     return CLOUDFLARE_AUTH_BLOCK_MESSAGE;
   }
   if (raw.includes("please complete the security check")) {
-    return "Please complete the security check, then try again.";
+    return TURNSTILE_REQUIRED_MESSAGE;
   }
   if (raw.includes("security check expired") || raw.includes("timeout-or-duplicate")) {
-    return "Security check expired. Complete it again, then try once.";
+    return TURNSTILE_EXPIRED_MESSAGE;
   }
-  if (raw.includes("security check failed") || raw.includes("security check")) {
-    return "Security check failed. Refresh and try again.";
+  if (
+    raw.includes("security_check") ||
+    raw.includes("security check failed") ||
+    raw.includes("security check")
+  ) {
+    return TURNSTILE_FAILED_MESSAGE;
   }
   if (raw.includes("too many") || raw.includes("rate limit") || raw.includes("429")) {
     return "Too many sign-in tries. Wait a minute, then try again.";
@@ -170,7 +184,10 @@ export function friendlyAuthError(
     raw.includes("invalid_email_or_password") ||
     raw.includes("invalid email or password")
   ) {
-    return "Email or password is incorrect. If you use Apple, Google, or Facebook, try that button, or reset from Forgot password.";
+    if (explanation && explanation.kind !== "unknown") {
+      return messageForEmailAccount(explanation);
+    }
+    return WRONG_EMAIL_OR_PASSWORD_MESSAGE;
   }
   if (raw.includes("user already exists") || raw.includes("already exists")) {
     return "An account with that email already exists. Sign in instead.";
@@ -227,6 +244,10 @@ export function authClientErrorMessage(error: unknown): string {
   const code = [row.code, nested?.code].find((part) => typeof part === "string" && part.trim()) ?? "";
   const statusText = typeof row.statusText === "string" ? row.statusText : "";
   const status = typeof row.status === "number" ? row.status : undefined;
+  if (String(code).toUpperCase() === "SECURITY_CHECK") {
+    const text = String(message || "").trim();
+    return /security check/i.test(text) ? text : "Security check failed";
+  }
   if (
     looksLikeCloudflareAuthBlock({
       status,

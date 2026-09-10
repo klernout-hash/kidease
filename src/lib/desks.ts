@@ -30,6 +30,11 @@ export const DESK_QUERY_ALIASES: Record<string, DeskKey> = {
 export const PROVIDER_TAB_KEYS = ["requests", "money", "listings", "licence", "license", "contract", "promote"] as const;
 
 export const STICKY_DESK_KEY = "kidease-desk";
+/** One-shot: home already sent this tab to a desk. Cleared on sign-out. */
+export const DESK_LANDED_KEY = "kidease-desk-landed";
+/** One-shot: skip desk bounce / login auto-continue after sign-out. */
+export const JUST_SIGNED_OUT_KEY = "kidease-just-signed-out";
+export const REMEMBERED_ROLE_KEY = "kidease-role";
 
 const PATH_DESK: Array<[string, DeskKey]> = [
   ["/admin", "admin"],
@@ -358,6 +363,64 @@ export function clearStickyDesk(): void {
     window.localStorage.removeItem(STICKY_DESK_KEY);
   } catch {
     /* ignore */
+  }
+}
+
+export function clearDeskLanded(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(DESK_LANDED_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function markJustSignedOut(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(JUST_SIGNED_OUT_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+/** True once after sign-out so home/login do not bounce back into a desk. */
+export function consumeJustSignedOut(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const flagged = window.sessionStorage.getItem(JUST_SIGNED_OUT_KEY) === "1";
+    if (flagged) window.sessionStorage.removeItem(JUST_SIGNED_OUT_KEY);
+    return flagged;
+  } catch {
+    return false;
+  }
+}
+
+export function rememberRoleChoice(role: "parent" | "provider"): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(REMEMBERED_ROLE_KEY, role);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function forgetRememberedRole(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(REMEMBERED_ROLE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readRememberedRole(): "parent" | "provider" | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const role = window.localStorage.getItem(REMEMBERED_ROLE_KEY);
+    return role === "parent" || role === "provider" ? role : null;
+  } catch {
+    return null;
   }
 }
 
