@@ -157,6 +157,20 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   }
 
   useEffect(() => {
+    setSaved([]);
+    setBookings([]);
+    setPayments([]);
+    setBills([]);
+    setChildren([]);
+    setTours([]);
+    setLeads([]);
+    setExplore([]);
+    setExploreReady(false);
+    setPicked({});
+    setEditing(null);
+  }, [user?.id]);
+
+  useEffect(() => {
     if (!user) return;
     let cancelled = false;
     let cancelIdle: (() => void) | undefined;
@@ -241,7 +255,9 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
 
   return (
     <DeskShell desk="parent" active={tab} onSelect={selectTab}>
-      <p className="text-muted">{user.displayName ?? user.primaryEmail}</p>
+      <p className="text-muted" data-ke="parent-identity" data-user-id={user.id}>
+        {user.displayName ?? user.primaryEmail}
+      </p>
 
       {contentTab === "explore" ? (
         <div className="mt-6">

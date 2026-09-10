@@ -127,7 +127,7 @@ describe("QA 2026-09-10: map hang + licensed-not-live honesty", () => {
     assert.match(view, /onFallback/);
     assert.match(view, /setLoadGen/);
     assert.match(search, /onFallback=\{\(\) => setView\("list"\)\}/);
-    assert.match(search, /shownList\.length > 0 \? shownList : catalog/);
+    assert.match(search, /items=\{shownList\}/);
   });
 
   it("guest copy is honest when 0 live and licensed centres exist", () => {

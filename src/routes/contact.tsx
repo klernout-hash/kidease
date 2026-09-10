@@ -10,6 +10,7 @@ import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import type { CopyKey } from "@/lib/copy";
+import { publicFormErrorMessage } from "@/lib/public-form-error";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
@@ -39,13 +40,24 @@ export function Contact() {
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState<CopyKey>(isParent ? "subjectCare" : "subjectGeneral");
   const [body, setBody] = useState("");
+  const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [busy, setBusy] = useState(false);
-  const { token, onToken } = useTurnstileToken();
+  const { onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
+    useTurnstileToken();
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
+    const challenge = takeChallenge();
+    if (turnstileRequired && !challenge) {
+      setFormError("Please complete the security check, then try again.");
+      setSent(false);
+      return;
+    }
     setBusy(true);
+    setFormError(null);
+    setSent(false);
     try {
       const label = t(subject);
       await submitPublicMessage({
@@ -55,14 +67,20 @@ export function Contact() {
           email,
           subject: isParent ? `${t("roleParentTitle")} — ${label}` : label,
           body,
-          turnstileToken: token,
+          turnstileToken: challenge,
         },
       });
-      toast.success(t("contactSent"));
+      setSent(true);
       setBody("");
     } catch (err) {
       console.error("[kidease-contact]", err);
-      toast.error(`Could not send. Email ${SUPPORT_INBOX_EMAIL} directly.`);
+      const message = publicFormErrorMessage(
+        err,
+        t("contactSendFailed").replace("{email}", SUPPORT_INBOX_EMAIL),
+      );
+      setFormError(message);
+      toast.error(message);
+      resetTurnstile();
     } finally {
       setBusy(false);
     }
@@ -87,57 +105,73 @@ export function Contact() {
           </div>
         )}
 
-        <form className="mt-8 space-y-3" onSubmit={send}>
-          <label className="block text-sm font-medium">
-            {t("name")}
-            <input
-              required
-              className="ke-input mt-1"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            {t("email")}
-            <input
-              required
-              type="email"
-              className="ke-input mt-1"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            {t("contactSubject")}
-            <select
-              className="ke-input mt-1"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value as CopyKey)}
-            >
-              {SUBJECTS.map((key) => (
-                <option key={key} value={key}>
-                  {t(key)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm font-medium">
-            {t("messageLabel")}
-            <textarea
-              required
-              rows={6}
-              className="ke-textarea mt-1"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-            />
-          </label>
-          <TurnstileField onToken={onToken} />
-          <Button type="submit" className="w-full" size="lg" disabled={busy}>
-            {t("submit")}
-          </Button>
-        </form>
+        {sent ? (
+          <div
+            className="mt-8 rounded-xl bg-ok/10 p-5 ring-1 ring-ok/30"
+            data-ke="contact-thanks"
+            role="status"
+          >
+            <p className="text-base font-semibold">{t("contactSent")}</p>
+            <p className="mt-2 text-sm text-muted">{t("contactResponse")}</p>
+          </div>
+        ) : (
+          <form className="mt-8 space-y-3" onSubmit={send}>
+            <label className="block text-sm font-medium">
+              {t("name")}
+              <input
+                required
+                className="ke-input mt-1"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              {t("email")}
+              <input
+                required
+                type="email"
+                className="ke-input mt-1"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              {t("contactSubject")}
+              <select
+                className="ke-input mt-1"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value as CopyKey)}
+              >
+                {SUBJECTS.map((key) => (
+                  <option key={key} value={key}>
+                    {t(key)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm font-medium">
+              {t("messageLabel")}
+              <textarea
+                required
+                rows={6}
+                className="ke-textarea mt-1"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+              />
+            </label>
+            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
+            {formError ? (
+              <p className="text-sm text-danger" data-ke="contact-error" role="alert">
+                {formError}
+              </p>
+            ) : null}
+            <Button type="submit" className="w-full" size="lg" disabled={busy}>
+              {t("submit")}
+            </Button>
+          </form>
+        )}
 
         <div className="mt-10 rounded-xl bg-surface p-5 ring-1 ring-border">
           <p className="text-sm font-semibold">{t("contactDirect")}</p>

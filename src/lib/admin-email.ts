@@ -1,13 +1,9 @@
 /**
  * Who may hold the KidEase Admin desk.
  *
- * Only kyle@kidease.ca is auto-bootstrapped. Open Road mailboxes
- * (kyle@openroadoutlet.ca and any @openroadoutlet.ca) never become
- * KidEase admin — even if ADMIN_EMAIL is mis-set or profiles.role is
- * already admin.
- *
- * Extra staff stay SQL-promoted (`update profiles set role = 'admin'`),
- * but a blocked mailbox still fails closed.
+ * King-admin rule: only kyle@kidease.ca may hold Admin. Open Road mailboxes
+ * never become KidEase admin. SQL `profiles.role = 'admin'` on any other
+ * mailbox is ignored. ADMIN_EMAIL cannot bootstrap another @kidease.ca.
  */
 
 export const KIDEASE_OPERATOR_EMAIL = "kyle@kidease.ca";
@@ -34,32 +30,31 @@ export function isKidEaseOperatorEmail(email: string | null | undefined): boolea
 }
 
 /**
- * ADMIN_EMAIL env, never an Open Road / non-kidease.ca mailbox.
- * A leftover Production ADMIN_EMAIL=kyle@openroadoutlet.ca is ignored.
+ * ADMIN_EMAIL env is accepted only when it is kyle@kidease.ca.
+ * Leftover Production ADMIN_EMAIL=kyle@openroadoutlet.ca or any other
+ * @kidease.ca mailbox is ignored so the Kyle-only rule cannot be widened
+ * from env.
  */
 export function bootstrapAdminEmail(envAdmin?: string | null): string {
   const raw = normalizeEmail(envAdmin ?? process.env.ADMIN_EMAIL);
-  if (!raw || isBlockedAdminEmail(raw) || !raw.endsWith("@kidease.ca")) {
-    return KIDEASE_OPERATOR_EMAIL;
-  }
-  return raw;
+  if (isKidEaseOperatorEmail(raw)) return KIDEASE_OPERATOR_EMAIL;
+  return KIDEASE_OPERATOR_EMAIL;
 }
 
-/** Verified kyle@kidease.ca (or an explicit @kidease.ca ADMIN_EMAIL). Never Open Road. */
+/** Verified kyle@kidease.ca only. Never Open Road. Never another @kidease.ca. */
 export function canBootstrapAdmin(email: string | null | undefined, envAdmin?: string | null): boolean {
-  const e = normalizeEmail(email);
-  if (!e || isBlockedAdminEmail(e)) return false;
-  return e === bootstrapAdminEmail(envAdmin);
+  void bootstrapAdminEmail(envAdmin);
+  return isKidEaseOperatorEmail(email);
 }
 
 /**
- * Stored admin is honored unless the session mailbox is blocked.
- * Parent / Daycare roles never become admin here.
+ * Stored admin is honored only for kyle@kidease.ca.
+ * SQL-promoted non-kyle and missing mailbox fail closed.
  */
 export function effectiveAdminRole(input: {
   storedRole: string | null | undefined;
   email?: string | null;
 }): "admin" | null {
-  if (isBlockedAdminEmail(input.email)) return null;
+  if (!isKidEaseOperatorEmail(input.email)) return null;
   return (input.storedRole || "").trim().toLowerCase() === "admin" ? "admin" : null;
 }

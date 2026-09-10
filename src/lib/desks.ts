@@ -1,3 +1,5 @@
+import { isKidEaseOperatorEmail } from "@/lib/admin-email";
+
 export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent";
 export type DeskKey = "admin" | "support" | "provider" | "parent";
 
@@ -483,17 +485,31 @@ export function desksFor(input: {
   return (["admin", "support", "provider", "parent"] as const).filter((d) => desks.has(d));
 }
 
-/** Admin pill + /admin — only profiles.role = admin. Parent/Daycare never. */
-export function canSeeAdminDesk(role: AppRole | string | null | undefined) {
-  return parseAppRole(role) === "admin";
+/**
+ * Admin pill + /admin — profiles.role = admin AND (when email is known)
+ * the session mailbox is kyle@kidease.ca. Role-only callers (unit tests)
+ * still pass without an email; chrome must pass session email.
+ */
+export function canSeeAdminDesk(
+  role: AppRole | string | null | undefined,
+  email?: string | null,
+) {
+  if (parseAppRole(role) !== "admin") return false;
+  if (email === undefined) return true;
+  return isKidEaseOperatorEmail(email);
 }
 
 /**
- * Fail closed: Admin requires profiles.role = admin. A missing role or a
- * stale desk list must never unlock /admin or the Admin pill.
+ * Fail closed: Admin requires profiles.role = admin and kyle@ when email
+ * is known. A missing role or a stale desk list must never unlock /admin.
  */
-export function canVisitDesk(desks: DeskKey[], desk: DeskKey, role?: AppRole | null) {
-  if (desk === "admin") return desks.includes("admin") && canSeeAdminDesk(role);
+export function canVisitDesk(
+  desks: DeskKey[],
+  desk: DeskKey,
+  role?: AppRole | null,
+  email?: string | null,
+) {
+  if (desk === "admin") return desks.includes("admin") && canSeeAdminDesk(role, email);
   return desks.includes(desk);
 }
 
@@ -502,19 +518,23 @@ export function sanitizeStickyDesk(
   sticky: DeskKey | null | undefined,
   desks: DeskKey[],
   role?: AppRole | null,
+  email?: string | null,
 ): DeskKey | null {
   if (!sticky) return null;
-  return canVisitDesk(desks, sticky, role) ? sticky : null;
+  return canVisitDesk(desks, sticky, role, email) ? sticky : null;
 }
 
 /**
- * Header pills. Admin-role users (kyle@kidease.ca) see Admin / Parent / Daycare
- * on one session. Parent and Daycare accounts never get the Admin pill — even
- * if a stale desk list included it. Open Road mailboxes never see Admin.
- * Support stays in the account menu.
+ * Header pills. Only kyle@kidease.ca Admin sessions see Admin / Parent / Daycare.
+ * Parent and Daycare accounts never get the Admin pill — even if a stale desk
+ * list included it. Support stays in the account menu.
  */
-export function headerDesks(desks: DeskKey[], role?: AppRole | null): DeskKey[] {
-  const visible = desks.filter((desk) => canVisitDesk(desks, desk, role));
+export function headerDesks(
+  desks: DeskKey[],
+  role?: AppRole | null,
+  email?: string | null,
+): DeskKey[] {
+  const visible = desks.filter((desk) => canVisitDesk(desks, desk, role, email));
   if (visible.includes("admin")) {
     return (["admin", "parent", "provider"] as const).filter((d) => visible.includes(d));
   }
@@ -522,13 +542,19 @@ export function headerDesks(desks: DeskKey[], role?: AppRole | null): DeskKey[] 
 }
 
 /** Header / menu switcher — only when this session actually has two visible desks. */
-export function showDeskSwitcher(desks: DeskKey[] | undefined | null, role?: AppRole | null) {
-  return Boolean(desks && headerDesks(desks, role).length >= 2);
+export function showDeskSwitcher(
+  desks: DeskKey[] | undefined | null,
+  role?: AppRole | null,
+  email?: string | null,
+) {
+  return Boolean(desks && headerDesks(desks, role, email).length >= 2);
 }
 
 export type SessionDesks = {
   role: AppRole;
   desks: DeskKey[];
+  /** Session mailbox — required to show Admin chrome (kyle@kidease.ca only). */
+  email?: string | null;
   home: "/admin" | "/support" | "/provider" | "/parent";
   unread: number;
   stripeLive: boolean;
@@ -542,7 +568,7 @@ export type SessionDesks = {
 /**
  * Never demote staff when a page or claim writes provider/parent.
  * Never elevate parent/provider to admin or support via setRole — only
- * resolveAdminAccess (owner email / stored profiles.role = admin) grants Admin.
+ * resolveAdminAccess (kyle@kidease.ca only) grants Admin.
  */
 export function nextStoredRole(current: AppRole | string | null | undefined, requested: AppRole): AppRole {
   const cur = parseAppRole(current);

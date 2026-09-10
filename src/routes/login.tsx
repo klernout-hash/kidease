@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { authClient, authEnabled, signIn, turnstileFetchOptions } from "@/lib/auth/client";
+import { authClient, authEnabled, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import type { GrokProvider } from "@/lib/auth/providers";
@@ -208,6 +208,9 @@ export function LoginScreen({
         throw new Error("Please complete the security check, then try again.");
       }
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
+      if (user && user.primaryEmail?.trim().toLowerCase() !== email.trim().toLowerCase()) {
+        await dropExistingSession();
+      }
       if (mode === "up") {
         const res = await authClient.signUp.email({
           email,

@@ -187,9 +187,11 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         accountLabel={t("account")}
         accountHref="/account"
         accountSearch={accountSearch(sticky)}
-        isAdmin={canSeeAdminDesk(session?.role)}
+        isAdmin={canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
         desksSlot={
-          user && showDeskSwitcher(session?.desks, session?.role) ? <DeskSwitcher compact /> : null
+          user && showDeskSwitcher(session?.desks, session?.role, session?.email ?? user?.primaryEmail) ? (
+            <DeskSwitcher compact />
+          ) : null
         }
         onSignOut={() => void signOut("/")}
       />

@@ -9,9 +9,11 @@ export function MenuDeskTools() {
   const { locale } = useCopy();
   const { session } = useSessionDesks();
   const fr = locale === "fr";
-  const multiDesk = Boolean(showDeskSwitcher(session?.desks, session?.role));
+  const multiDesk = Boolean(showDeskSwitcher(session?.desks, session?.role, session?.email));
   const showAdmin = Boolean(
-    canSeeAdminDesk(session?.role) && session && canVisitDesk(session.desks, "admin", session.role),
+    canSeeAdminDesk(session?.role, session?.email) &&
+      session &&
+      canVisitDesk(session.desks, "admin", session.role, session.email),
   );
 
   if (!multiDesk && !showAdmin) return null;

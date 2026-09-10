@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import { publicFormErrorMessage } from "@/lib/public-form-error";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
@@ -24,20 +25,37 @@ export function Help() {
   const [body, setBody] = useState("");
 
   const [busy, setBusy] = useState(false);
-  const { token, onToken } = useTurnstileToken();
+  const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const { onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
+    useTurnstileToken();
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
+    const challenge = takeChallenge();
+    if (turnstileRequired && !challenge) {
+      setFormError("Please complete the security check, then try again.");
+      setSent(false);
+      return;
+    }
     setBusy(true);
+    setFormError(null);
+    setSent(false);
     try {
       await submitPublicMessage({
-        data: { kind: "support", name, email, body, turnstileToken: token },
+        data: { kind: "support", name, email, body, turnstileToken: challenge },
       });
-      toast.success(t("supportSent"));
+      setSent(true);
       setBody("");
     } catch (err) {
       console.error("[kidease-contact]", err);
-      toast.error(`Could not send. Email ${SUPPORT_INBOX_EMAIL} directly.`);
+      const message = publicFormErrorMessage(
+        err,
+        t("contactSendFailed").replace("{email}", SUPPORT_INBOX_EMAIL),
+      );
+      setFormError(message);
+      toast.error(message);
+      resetTurnstile();
     } finally {
       setBusy(false);
     }
@@ -62,6 +80,15 @@ export function Help() {
           </a>
         </div>
 
+        {sent ? (
+          <div
+            className="mt-8 rounded-xl bg-ok/10 p-5 ring-1 ring-ok/30"
+            data-ke="help-thanks"
+            role="status"
+          >
+            <p className="text-base font-semibold">{t("supportSent")}</p>
+          </div>
+        ) : (
         <form className="mt-8 space-y-3" onSubmit={send}>
           <label className="block text-sm font-medium">
             {t("name")}
@@ -94,11 +121,17 @@ export function Help() {
               onChange={(e) => setBody(e.target.value)}
             />
           </label>
-          <TurnstileField onToken={onToken} />
+          <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
+          {formError ? (
+            <p className="text-sm text-danger" data-ke="help-error" role="alert">
+              {formError}
+            </p>
+          ) : null}
           <Button type="submit" className="w-full" size="lg" disabled={busy}>
             {t("send")}
           </Button>
         </form>
+        )}
       </main>
       <SiteFooter />
     </Shell>

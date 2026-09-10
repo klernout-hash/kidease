@@ -207,9 +207,9 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   const { session, sticky, setSticky } = useSessionDesks();
   // Same Better Auth session. Pills only navigate — they do not call setRole
   // or rewrite the session cookie. /provider still promotes via its own mount.
-  if (!session || !showDeskSwitcher(session.desks, session.role)) return null;
+  if (!session || !showDeskSwitcher(session.desks, session.role, session.email)) return null;
 
-  const desks = headerDesks(session.desks, session.role);
+  const desks = headerDesks(session.desks, session.role, session.email);
   const highlighted = highlightDesk(pathname, sticky, queryDesk);
   const current = highlighted && desks.includes(highlighted) ? highlighted : null;
 

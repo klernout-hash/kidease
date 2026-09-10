@@ -36,30 +36,30 @@ test("Open Road emails never bootstrap or keep Admin", () => {
   assert.equal(effectiveAdminRole({ storedRole: "admin", email: "kyle@openroadoutlet.ca" }), null);
   assert.equal(effectiveAdminRole({ storedRole: "admin", email: "kyle@kidease.ca" }), "admin");
   assert.equal(effectiveAdminRole({ storedRole: "parent", email: "kyle@kidease.ca" }), null);
+  assert.equal(effectiveAdminRole({ storedRole: "admin", email: "support@kidease.ca" }), null);
 });
 
-test("ADMIN_EMAIL leftover Open Road is ignored", () => {
+test("ADMIN_EMAIL leftover Open Road or other @kidease.ca is ignored", () => {
   assert.equal(bootstrapAdminEmail("kyle@openroadoutlet.ca"), "kyle@kidease.ca");
   assert.equal(bootstrapAdminEmail("not-an-email"), "kyle@kidease.ca");
   assert.equal(bootstrapAdminEmail("ops@example.com"), "kyle@kidease.ca");
-  assert.equal(bootstrapAdminEmail("support@kidease.ca"), "support@kidease.ca");
+  assert.equal(bootstrapAdminEmail("support@kidease.ca"), "kyle@kidease.ca");
   assert.equal(canBootstrapAdmin("kyle@kidease.ca", "kyle@openroadoutlet.ca"), true);
-  assert.equal(canBootstrapAdmin("support@kidease.ca", "support@kidease.ca"), true);
+  assert.equal(canBootstrapAdmin("support@kidease.ca", "support@kidease.ca"), false);
 });
 
 test("admin gate and login refuse Open Road as KidEase admin", () => {
   const roles = src("src/lib/server/roles.ts");
-  assert.match(roles, /isBlockedAdminEmail/);
+  assert.match(roles, /isKidEaseOperatorEmail/);
   assert.match(roles, /canBootstrapAdmin/);
   assert.match(roles, /effectiveAdminRole/);
-  assert.match(roles, /openroadoutlet/);
   assert.match(src("src/routes/login.tsx"), /KIDEASE_OPERATOR_EMAIL/);
   assert.doesNotMatch(src("src/routes/login.tsx"), /openroadoutlet/);
   assert.match(src("SECURITY.md"), /openroadoutlet\.ca/);
-  assert.match(src("src/components/desk-switcher.tsx"), /headerDesks\(session\.desks, session\.role\)/);
-  assert.match(src("src/components/desk-switcher.tsx"), /showDeskSwitcher\(session\.desks, session\.role\)/);
-  assert.match(src("src/components/menu-desk-tools.tsx"), /canSeeAdminDesk\(session\?\.role\)/);
-  assert.match(src("src/components/menu-desk-tools.tsx"), /canVisitDesk\(session\.desks, "admin", session\.role\)/);
+  assert.match(src("src/components/desk-switcher.tsx"), /headerDesks\(session\.desks, session\.role, session\.email\)/);
+  assert.match(src("src/components/desk-switcher.tsx"), /showDeskSwitcher\(session\.desks, session\.role, session\.email\)/);
+  assert.match(src("src/components/menu-desk-tools.tsx"), /canSeeAdminDesk\(session\?\.role, session\?\.email\)/);
+  assert.match(src("src/components/menu-desk-tools.tsx"), /canVisitDesk\(session\.desks, "admin", session\.role, session\.email\)/);
   assert.match(src("src/routes/menu.tsx"), /MenuDeskTools/);
   assert.match(src("src/components/shell.tsx"), /desksSlot/);
   assert.match(src("src/components/nav-drawer.tsx"), /AdminDeskLink/);
