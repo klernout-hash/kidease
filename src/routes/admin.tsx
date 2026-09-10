@@ -126,7 +126,7 @@ function AdminPage() {
     setLeadCounts(leads);
   }
 
-  const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role));
+  const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role, session.email));
 
   useEffect(() => {
     if (!user || !admin) return;

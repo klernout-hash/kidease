@@ -42,26 +42,26 @@ test("login preserves ?desk= and does not rewrite Better Auth cookies", () => {
 
 test("admin desk stays gated by profiles.role + owner email", () => {
   const roles = src("src/lib/server/roles.ts");
-  assert.match(roles, /profiles\.role = 'admin'/);
+  assert.match(roles, /isKidEaseOperatorEmail/);
   assert.match(roles, /kyle@kidease\.ca/);
   assert.match(roles, /bootstrapEmail/);
   assert.match(roles, /assertAdminDesk/);
   assert.match(roles, /requireAdmin/);
   const admin = src("src/routes/admin.tsx");
-  assert.match(admin, /canVisitDesk\(session\.desks, "admin", session\.role\)/);
+  assert.match(admin, /canVisitDesk\(session\.desks, "admin", session\.role, session\.email\)/);
   assert.match(admin, /beforeLoadAdminDesk/);
   assert.match(admin, /profiles\.role = admin/);
   assert.match(admin, /Not found/);
   assert.match(src("src/routes/admin-chat.tsx"), /beforeLoadAdminDesk/);
   assert.match(src("src/routes/admin-contracts.tsx"), /beforeLoadAdminDesk/);
   const switcher = src("src/components/desk-switcher.tsx");
-  assert.match(switcher, /headerDesks\(session\.desks, session\.role\)/);
-  assert.match(switcher, /showDeskSwitcher\(session\.desks, session\.role\)/);
+  assert.match(switcher, /headerDesks\(session\.desks, session\.role, session\.email\)/);
+  assert.match(switcher, /showDeskSwitcher\(session\.desks, session\.role, session\.email\)/);
   assert.match(switcher, /do not call setRole/);
   assert.match(switcher, /deskSwitcherLabel/);
   assert.match(switcher, /aria-haspopup="menu"/);
   assert.match(switcher, /md:hidden/);
-  assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role\)/);
+  assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role, session\?\.email/);
   assert.match(src("src/components/shell.tsx"), /desksSlot/);
   assert.match(src("src/components/session-desks.tsx"), /sanitizeStickyDesk/);
   assert.match(src("src/components/session-desks.tsx"), /canVisitDesk/);

@@ -1,9 +1,10 @@
 /**
  * Who may hold the KidEase Admin desk.
  *
- * King-admin rule: only kyle@kidease.ca may hold Admin. Open Road mailboxes
- * never become KidEase admin. SQL `profiles.role = 'admin'` on any other
- * mailbox is ignored. ADMIN_EMAIL cannot bootstrap another @kidease.ca.
+ * King-admin rule: only kyle@kidease.ca may hold Admin.
+ * Only kyle@kidease.ca is auto-bootstrapped. Open Road mailboxes never
+ * become KidEase admin. SQL `profiles.role = 'admin'` on any other mailbox
+ * is ignored. ADMIN_EMAIL cannot bootstrap another @kidease.ca.
  */
 
 export const KIDEASE_OPERATOR_EMAIL = "kyle@kidease.ca";

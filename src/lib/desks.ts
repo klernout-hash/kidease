@@ -1,4 +1,4 @@
-import { isKidEaseOperatorEmail } from "@/lib/admin-email";
+import { isKidEaseOperatorEmail } from "./admin-email.ts";
 
 export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent";
 export type DeskKey = "admin" | "support" | "provider" | "parent";
