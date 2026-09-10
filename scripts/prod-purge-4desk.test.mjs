@@ -70,7 +70,7 @@ test("P0 catalogue counts match visible cards and dead hubs redirect", () => {
 
 test("P0 email sign-in drops a different session before Connexion", () => {
   const login = src("src/routes/login.tsx");
-  assert.match(login, /dropExistingSession/);
+  assert.match(login, /if \(user\) \{\s*await dropExistingSession\(\);/);
   assert.match(src("src/lib/auth/client.ts"), /export async function dropExistingSession/);
   assert.match(src("src/lib/auth/client.ts"), /clearShortlistCache/);
   assert.match(src("src/components/parent-desk.tsx"), /data-ke="parent-identity"/);
@@ -88,9 +88,10 @@ test("P0 mail UX stays honest when Resend fails", () => {
   assert.match(src("src/routes/contact.tsx"), /contactSendFailed/);
   assert.match(src("src/routes/help.tsx"), /data-ke="help-thanks"/);
   assert.match(src("src/routes/forgot-password.tsx"), /Could not send a reset email/);
-  assert.equal(DEFAULT_TRANSACTIONAL_MAIL_FROM, "KidEase <login@send.kidease.ca>");
+  assert.equal(DEFAULT_TRANSACTIONAL_MAIL_FROM, "KidEase <noreply@send.kidease.ca>");
   assert.equal(transactionalMailFrom("kyle@kidease.ca"), DEFAULT_TRANSACTIONAL_MAIL_FROM);
-  assert.match(src(".env.example"), /MAIL_FROM=KidEase <login@send\.kidease\.ca>/);
+  assert.equal(transactionalMailFrom("KidEase <login@send.kidease.ca>"), DEFAULT_TRANSACTIONAL_MAIL_FROM);
+  assert.match(src(".env.example"), /MAIL_FROM=KidEase <noreply@send\.kidease\.ca>/);
 });
 
 test("P0 Better Auth stays; Facebook login stays default-off", () => {

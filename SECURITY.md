@@ -33,9 +33,9 @@ Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, 
 
 ## Transactional email (Resend)
 
-OTP and other Resend mail default From is `KidEase <login@send.kidease.ca>`. Apex SPF is Titan-only (`include:spf.titan.email -all`). Do **not** add Resend includes on `@` / `kidease.ca`. Production Vercel (`kidease-git`) must set `MAIL_FROM=KidEase <login@send.kidease.ca>`. Reply-To stays `ADMIN_EMAIL` / `kyle@kidease.ca`. Titan Admin → Mail still sends as the kyle@ mailbox on `smtp.titan.email`.
+OTP and other Resend mail default From is `KidEase <noreply@send.kidease.ca>`. Apex SPF is Titan-only (`include:spf.titan.email -all`). Do **not** add Resend includes on `@` / `kidease.ca`. Production Vercel (`kidease-git`) must set `MAIL_FROM=KidEase <noreply@send.kidease.ca>`. Leftover `MAIL_FROM=kyle@kidease.ca` or `login@send.kidease.ca` is remapped in code. Reply-To stays `ADMIN_EMAIL` / `kyle@kidease.ca`. Titan Admin → Mail still sends as the kyle@ mailbox on `smtp.titan.email`.
 
-Password reset and 2FA / verification codes for `kyle@kidease.ca` stay on this Resend path (`login@send.kidease.ca` → Titan inbox). Do **not** send auth mail through Titan SMTP. Titan SMTP is only for Admin → Mail replies. If a reset or OTP never arrives: confirm `RESEND_API_KEY` and `MAIL_FROM` on Vercel kidease-git, then check Titan junk and Cloudflare Email Security quarantine. Allowlist `login@send.kidease.ca` in Titan if the send subdomain is filtered. Do not change apex SPF to include Resend.
+Password reset and 2FA / verification codes for `kyle@kidease.ca` stay on this Resend path (`noreply@send.kidease.ca` → Titan inbox). Do **not** send auth mail through Titan SMTP. Titan SMTP is only for Admin → Mail replies. If a reset or OTP never arrives: confirm `RESEND_API_KEY` and `MAIL_FROM` on Vercel kidease-git, then check Titan junk and Cloudflare Email Security quarantine. Allowlist `noreply@send.kidease.ca` in Titan if the send subdomain is filtered. Do not change apex SPF to include Resend. Do not invent a Resend API key.
 
 Admin / operator login (`/login?intent=admin`, `/login?next=/admin`, `role=admin`, `desk=admin`) leads with email + password for the Titan mailbox. Google / Facebook stay available on Parent and Daycare desks. `kyle@kidease.ca` does not use Google OAuth.
 

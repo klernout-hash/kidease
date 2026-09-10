@@ -208,7 +208,7 @@ export function LoginScreen({
         throw new Error("Please complete the security check, then try again.");
       }
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
-      if (user && user.primaryEmail?.trim().toLowerCase() !== email.trim().toLowerCase()) {
+      if (user) {
         await dropExistingSession();
       }
       if (mode === "up") {

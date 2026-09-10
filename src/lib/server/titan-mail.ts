@@ -74,7 +74,7 @@ export function mailboxAddress(env: EnvMap = process.env): string {
 export function mailFromHeader(env: EnvMap = process.env): string {
   const from = envStr(env, "MAIL_FROM");
   // Production MAIL_FROM is the Resend send subdomain. Titan SMTP must stay
-  // on the kyle@ mailbox — do not send as login@send.kidease.ca via Titan.
+  // on the kyle@ mailbox — do not send as noreply@send.kidease.ca via Titan.
   if (from && !isResendSendFrom(from)) return from;
   return `KidEase <${mailboxAddress(env)}>`;
 }
