@@ -216,5 +216,9 @@ export function turnstileFetchOptions(token: string) {
       "x-turnstile-token": trimmed,
       "x-captcha-response": trimmed,
     },
+    onRequest(ctx: { headers: Headers }) {
+      ctx.headers.set("x-turnstile-token", trimmed);
+      ctx.headers.set("x-captcha-response", trimmed);
+    },
   };
 }

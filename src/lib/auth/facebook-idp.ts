@@ -27,6 +27,31 @@ export const FACEBOOK_CLIENT_SECRET = env("FACEBOOK_CLIENT_SECRET");
 
 export const facebookIdpConfigured = Boolean(FACEBOOK_CLIENT_ID && FACEBOOK_CLIENT_SECRET);
 
+export const FACEBOOK_LOGIN_FLAG = "FEATURE_FACEBOOK_LOGIN";
+
+type FacebookLoginEnv = {
+  FACEBOOK_CLIENT_ID?: string;
+  FACEBOOK_CLIENT_SECRET?: string;
+  FEATURE_FACEBOOK_LOGIN?: string;
+};
+
+function flagOn(raw: string | undefined | null): boolean {
+  const v = String(raw || "")
+    .trim()
+    .toLowerCase();
+  return v === "1" || v === "true" || v === "on" || v === "yes";
+}
+
+/**
+ * Continue with Facebook stays hidden until the Meta app is Live.
+ * Credentials alone are not enough — parked apps show "App not active".
+ * Set FEATURE_FACEBOOK_LOGIN=1 after Meta review. Default off.
+ */
+export function facebookLoginVisible(envMap: FacebookLoginEnv = process.env): boolean {
+  const creds = Boolean(envMap.FACEBOOK_CLIENT_ID?.trim() && envMap.FACEBOOK_CLIENT_SECRET?.trim());
+  return creds && flagOn(envMap.FEATURE_FACEBOOK_LOGIN);
+}
+
 /**
  * Facebook Login (consumer) permissions KidEase may request.
  *

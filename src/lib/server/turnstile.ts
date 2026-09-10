@@ -5,11 +5,12 @@ import {
   clientIpFromHeaders,
   readTurnstileToken,
   turnstileFailureMessage,
+  turnstileRemoteIp,
   verifyTurnstileResponse,
 } from "@/lib/server/turnstile-verify";
 
 export { turnstileMode, type TurnstileMode };
-export { clientIpFromHeaders, readTurnstileToken };
+export { clientIpFromHeaders, readTurnstileToken, turnstileRemoteIp };
 
 function env(key: string) {
   return (process.env[key] || "").trim();
@@ -40,7 +41,7 @@ export async function assertTurnstileToken(
   opts?: { headers?: Headers; remoteip?: string },
 ) {
   const resolved = (token || "").trim() || (opts?.headers ? readTurnstileToken(opts.headers) : "");
-  const remoteip = opts?.remoteip || (opts?.headers ? clientIpFromHeaders(opts.headers) : undefined);
+  const remoteip = opts?.remoteip || (opts?.headers ? turnstileRemoteIp(opts.headers) : undefined);
   const result = await verifyTurnstileResponse({
     token: resolved,
     secret: turnstileSecretKey(),

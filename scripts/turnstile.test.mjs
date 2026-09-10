@@ -4,9 +4,11 @@ import {
   clientIpFromHeaders,
   isTurnstileIdempotencyKey,
   readTurnstileToken,
+  readTurnstileTokenFromBody,
   resetTurnstileVerifyCacheForTests,
   turnstileFailureMessage,
   turnstileIdempotencyKey,
+  turnstileRemoteIp,
   verifyTurnstileResponse,
 } from "../src/lib/server/turnstile-verify.ts";
 
@@ -50,6 +52,28 @@ describe("Turnstile siteverify", () => {
       "203.0.113.9",
     );
     assert.equal(clientIpFromHeaders(new Headers({ "x-forwarded-for": "198.51.100.2, 10.0.0.1" })), "198.51.100.2");
+  });
+
+  it("siteverify remoteip is only Cloudflare's visitor IP", () => {
+    assert.equal(
+      turnstileRemoteIp(
+        new Headers({
+          "cf-connecting-ip": "203.0.113.9",
+          "x-real-ip": "10.0.0.8",
+          "x-forwarded-for": "10.0.0.1, 203.0.113.9",
+        }),
+      ),
+      "203.0.113.9",
+    );
+    assert.equal(turnstileRemoteIp(new Headers({ "x-real-ip": "10.0.0.8" })), undefined);
+    assert.equal(turnstileRemoteIp(new Headers({ "x-forwarded-for": "198.51.100.2" })), undefined);
+  });
+
+  it("reads a widget token from JSON body keys when headers were stripped", () => {
+    assert.equal(readTurnstileTokenFromBody({ turnstileToken: " tok " }), "tok");
+    assert.equal(readTurnstileTokenFromBody({ "cf-turnstile-response": "cf" }), "cf");
+    assert.equal(readTurnstileTokenFromBody({ captchaResponse: "cap" }), "cap");
+    assert.equal(readTurnstileTokenFromBody({ email: "a@b.c" }), "");
   });
 
   it("skips when mode is off or optional without a token", async () => {
@@ -138,7 +162,23 @@ describe("Turnstile siteverify", () => {
       fetch: async () => jsonResponse({ success: false, "error-codes": ["timeout-or-duplicate"] }),
     });
     assert.equal(result.ok, false);
-    assert.equal(turnstileFailureMessage(result.errorCodes), "Security check failed. Refresh and try again.");
+    assert.match(turnstileFailureMessage(result.errorCodes), /expired/i);
+  });
+
+  it("does not retry siteverify after HTTP 200 (token already consumed)", async () => {
+    let calls = 0;
+    const result = await verifyTurnstileResponse({
+      token: "used-once",
+      secret: "s",
+      mode: "enforce",
+      retryDelayMs: 1,
+      fetch: async () => {
+        calls += 1;
+        return jsonResponse({ success: false, "error-codes": ["internal-error"] });
+      },
+    });
+    assert.equal(result.ok, false);
+    assert.equal(calls, 1);
   });
 
   it("fails open in optional mode when siteverify rejects", async () => {

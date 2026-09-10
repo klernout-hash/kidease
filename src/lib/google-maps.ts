@@ -112,6 +112,10 @@ export function listingMapConstructorOptions(input: {
 
 /** How long to wait for the first `tilesloaded` before dropping a Map ID. */
 export const MAP_TILES_WAIT_MS = 2500;
+/** How long to wait for the Maps JS script before treating it as failed. */
+export const MAP_SCRIPT_WAIT_MS = 8000;
+/** How long the search map may stay on "Loading…" before a retry/fallback. */
+export const MAP_VIEW_WAIT_MS = 16_000;
 
 const TILE_HOST_RE = /googleapis\.com|gstatic\.com|ggpht\.com|google\.com\/maps|\/maps\/vt/;
 
@@ -191,7 +195,14 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
   if (mapsPromise) return mapsPromise;
 
   mapsPromise = new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      fail("Google Maps timed out");
+    }, MAP_SCRIPT_WAIT_MS);
     const fail = (message: string) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
       mapsPromise = null;
       reject(new Error(message));
     };
@@ -202,6 +213,9 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
     const finish = () => {
       const maps = window.google?.maps;
       if (maps?.Map) {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
         resolve(maps);
         return;
       }
@@ -332,8 +346,13 @@ export async function loadAdvancedMarkerElement(
   if (!mapId.trim()) return null;
   try {
     if (typeof maps.importLibrary === "function") {
-      const lib = await maps.importLibrary("marker");
-      if (lib.AdvancedMarkerElement) return lib.AdvancedMarkerElement;
+      const lib = await Promise.race([
+        maps.importLibrary("marker"),
+        new Promise<null>((resolve) => {
+          globalThis.setTimeout(() => resolve(null), MAP_SCRIPT_WAIT_MS);
+        }),
+      ]);
+      if (lib?.AdvancedMarkerElement) return lib.AdvancedMarkerElement;
     }
     return maps.marker?.AdvancedMarkerElement ?? null;
   } catch {

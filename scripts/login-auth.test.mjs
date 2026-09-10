@@ -51,6 +51,7 @@ describe("password sign-in errors", () => {
     );
     assert.match(friendlyAuthError("Please complete the security check."), /security check/);
     assert.match(friendlyAuthError("Security check failed. Refresh and try again."), /Refresh/);
+    assert.match(friendlyAuthError("Security check expired. Complete it again, then try once."), /expired/);
     assert.match(friendlyAuthError("Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY)"), /RESEND_API_KEY/);
     assert.match(friendlyAuthError("Too many requests"), /Wait a minute/);
     assert.match(friendlyAuthError("Too many requests. Please try again later."), /Wait a minute/);
@@ -251,5 +252,6 @@ describe("Turnstile is single-use and required when the widget is on", () => {
     assert.match(reset, /takeChallenge/);
     assert.match(read("src/lib/auth/client.ts"), /x-captcha-response/);
     assert.match(read("src/routes/api/auth/$.ts"), /headers: request\.headers/);
+    assert.match(read("src/routes/api/auth/$.ts"), /readTurnstileTokenFromBody/);
   });
 });

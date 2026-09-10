@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth/server";
 import { reportError } from "@/lib/observe";
 import { assertResetMailConfigured } from "@/lib/server/reset-mail-config";
 import { assertTurnstileToken } from "@/lib/server/turnstile";
+import { readTurnstileToken, readTurnstileTokenFromBody } from "@/lib/server/turnstile-verify";
 import { SQL_SETTLE_MS, resolveAfter } from "@/lib/timeout";
 
 const TURNSTILE_AUTH_PATHS = [
@@ -24,6 +25,16 @@ const TURNSTILE_AUTH_PATHS = [
 function authPathNeedsTurnstile(pathname: string) {
   const path = pathname.replace(/\/+$/, "");
   return TURNSTILE_AUTH_PATHS.some((suffix) => path.endsWith(suffix));
+}
+
+async function turnstileTokenFromAuthRequest(request: Request): Promise<string> {
+  const header = readTurnstileToken(request.headers);
+  if (header) return header;
+  try {
+    return readTurnstileTokenFromBody(await request.clone().json());
+  } catch {
+    return "";
+  }
 }
 
 async function handleAuth(request: Request) {
@@ -41,7 +52,7 @@ async function handleAuth(request: Request) {
       }
       if (authPathNeedsTurnstile(url.pathname)) {
         try {
-          await assertTurnstileToken(request.headers.get("x-turnstile-token"), {
+          await assertTurnstileToken(await turnstileTokenFromAuthRequest(request), {
             headers: request.headers,
           });
         } catch (err) {

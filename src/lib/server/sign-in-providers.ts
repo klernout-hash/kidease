@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import { facebookLoginVisible } from "@/lib/auth/facebook-idp";
 import { visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
 
 /**
  * Sign-in buttons the login page should render.
  * Google when native Google or the Grok broker is configured.
- * Facebook only when FACEBOOK_CLIENT_ID + FACEBOOK_CLIENT_SECRET are set
- * (no broker path — hide the button rather than show a dead click).
+ * Facebook only when FACEBOOK_CLIENT_* are set AND FEATURE_FACEBOOK_LOGIN is on
+ * (Meta App must be Live — hide a parked "App not active" button).
  * Apple only when APPLE_CLIENT_ID + APPLE_TEAM_ID + APPLE_KEY_ID +
  * APPLE_PRIVATE_KEY are set (same four keys Better Auth needs). Check env
  * here — do not import apple-idp.ts (node:crypto) into this module.
@@ -14,9 +15,7 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
   const nativeGoogle = Boolean(
     process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim(),
   );
-  const nativeFacebook = Boolean(
-    process.env.FACEBOOK_CLIENT_ID?.trim() && process.env.FACEBOOK_CLIENT_SECRET?.trim(),
-  );
+  const nativeFacebook = facebookLoginVisible(process.env);
   const nativeApple = Boolean(
     process.env.APPLE_CLIENT_ID?.trim() &&
       process.env.APPLE_TEAM_ID?.trim() &&

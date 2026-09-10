@@ -83,6 +83,29 @@ export function clientIpFromHeaders(headers: HeaderReader): string | undefined {
   return fwd || undefined;
 }
 
+/**
+ * Siteverify `remoteip` must be the browser, not a proxy hop. A wrong IP
+ * (Vercel edge, Cloudflare-to-Vercel) makes a valid widget token fail.
+ * Only send Cloudflare's visitor IP; omit otherwise.
+ */
+export function turnstileRemoteIp(headers: HeaderReader): string | undefined {
+  const cf = (headers.get("cf-connecting-ip") || "").trim();
+  return cf || undefined;
+}
+
+const BODY_TOKEN_KEYS = ["turnstileToken", "cf-turnstile-response", "captchaResponse"];
+
+/** Token from a JSON auth body when custom headers were stripped. */
+export function readTurnstileTokenFromBody(body: unknown): string {
+  if (!body || typeof body !== "object") return "";
+  const row = body as Record<string, unknown>;
+  for (const key of BODY_TOKEN_KEYS) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -105,7 +128,7 @@ async function siteverifyWithRetry(input: {
 }): Promise<SiteverifyBody> {
   const idempotencyKey = await turnstileIdempotencyKey(input.token);
   let last: SiteverifyBody = { success: false, "error-codes": ["internal-error"] };
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const params = new URLSearchParams({
         secret: input.secret,
@@ -121,13 +144,16 @@ async function siteverifyWithRetry(input: {
       const body = asSiteverifyBody(await res.json().catch(() => null));
       if (body.success) return body;
       last = body;
+      // A 200 already consumed the single-use token. Retrying it is a
+      // timeout-or-duplicate false failure — only retry transport / 5xx.
+      if (res.ok) return last;
       const codes = last["error-codes"] || [];
-      const retryable = !res.ok || codes.includes("internal-error") || codes.length === 0;
+      const retryable = !res.ok || codes.includes("internal-error");
       if (!retryable) return last;
     } catch {
       last = { success: false, "error-codes": ["internal-error"] };
     }
-    if (attempt < 2) await wait(input.retryDelayMs * (attempt + 1));
+    if (attempt < 1) await wait(input.retryDelayMs * (attempt + 1));
   }
   return last;
 }
@@ -192,6 +218,12 @@ export async function verifyTurnstileResponse(input: {
 export function turnstileFailureMessage(errorCodes: string[] | undefined) {
   if (errorCodes?.includes("missing-input-response")) {
     return "Please complete the security check.";
+  }
+  if (errorCodes?.includes("timeout-or-duplicate")) {
+    return "Security check expired. Complete it again, then try once.";
+  }
+  if (errorCodes?.includes("invalid-input-response")) {
+    return "Security check expired. Complete it again, then try once.";
   }
   return "Security check failed. Refresh and try again.";
 }
