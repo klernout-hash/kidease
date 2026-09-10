@@ -1,5 +1,5 @@
 import { createAuthClient } from "better-auth/react";
-import { clearStickyDesk } from "@/lib/desks";
+import { clearDeskLanded, clearStickyDesk, forgetRememberedRole, markJustSignedOut } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
 import {
   CLOUDFLARE_AUTH_BLOCK_MESSAGE,
@@ -196,15 +196,34 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
   });
 }
 
+const SIGN_OUT_WAIT_MS = 4000;
+
+/** Drop client session crumbs so the next paint cannot look half-logged-in. */
+export function clearClientAuthState(): void {
+  setBearerToken(null);
+  resetPostHogIdentity();
+  clearStickyDesk();
+  clearDeskLanded();
+  forgetRememberedRole();
+  markJustSignedOut();
+}
+
 export async function signOut(redirectTo = "/"): Promise<void> {
+  clearClientAuthState();
   try {
-    await authClient.signOut();
-  } finally {
-    setBearerToken(null);
-    resetPostHogIdentity();
-    clearStickyDesk();
+    await Promise.race([
+      authClient.signOut(),
+      new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error("sign-out-timeout")), SIGN_OUT_WAIT_MS);
+      }),
+    ]);
+  } catch {
+    /* cookies may still expire via /sign-out Set-Cookie; never retry-storm */
   }
-  window.location.href = redirectTo;
+  clearClientAuthState();
+  const dest = new URL(redirectTo, window.location.origin);
+  const path = `${dest.pathname}${dest.search}${dest.hash}` || "/";
+  window.location.replace(path.startsWith("/") ? path : "/");
 }
 
 export function turnstileFetchOptions(token: string) {

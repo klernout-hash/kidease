@@ -315,24 +315,18 @@ export function ShotLogin() {
           <p className="mt-1 text-[8px] leading-snug" style={{ color: MUTED }}>
             Save centres, request a spot, and message educators.
           </p>
-          <div className="mt-3 flex h-7 items-center justify-center rounded-full text-[9px] font-medium text-white" style={{ background: INK }}>
-            Sign in with Apple
-          </div>
-          <div className="mt-1.5 flex h-7 items-center justify-center rounded-full text-[9px]" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
-            Continue with Google
-          </div>
-          <div className="mt-1.5 flex h-7 items-center justify-center rounded-full text-[9px]" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
-            Continue with Facebook
-          </div>
-          <p className="mt-2.5 text-center text-[7px] uppercase tracking-[0.14em]" style={{ color: SUBTLE }}>
-            or use email
-          </p>
           <p className="mt-2 text-[8px] font-medium">Email</p>
           <div className="mt-1 h-6 rounded-xl" style={{ boxShadow: `inset 0 0 0 1px ${LINE}` }} />
           <p className="mt-1.5 text-[8px] font-medium">Password</p>
           <div className="mt-1 h-6 rounded-xl" style={{ boxShadow: `inset 0 0 0 1px ${LINE}` }} />
           <div className="mt-2.5 flex h-7 items-center justify-center rounded-full text-[9px] font-medium text-white" style={{ background: NAVY }}>
             Sign in
+          </div>
+          <p className="mt-2.5 text-center text-[7px] uppercase tracking-[0.14em]" style={{ color: SUBTLE }}>
+            or continue with Google
+          </p>
+          <div className="mt-1.5 flex h-6 items-center justify-center rounded-full text-[8px]" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
+            Continue with Google
           </div>
         </div>
       </div>

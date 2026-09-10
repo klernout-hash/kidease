@@ -14,6 +14,7 @@ import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
 import {
+  consumeJustSignedOut,
   deskFromPathname,
   deskQueryValue,
   funnelDestPath,
@@ -133,6 +134,7 @@ export function LoginScreen({
 
   useEffect(() => {
     if (sessionPending || !user || busy || continued.current) return;
+    if (consumeJustSignedOut()) return;
     continued.current = true;
     setBusy(true);
     setError(null);
@@ -307,48 +309,14 @@ export function LoginScreen({
             <div className="flex justify-center">
               <BrandMark size="md" />
             </div>
-            <h1 className="mt-6 font-display text-3xl">{mode === "up" && role && !operator ? t("createAccount") : title}</h1>
+            <h1 className="mt-4 font-display text-2xl sm:mt-6 sm:text-3xl">{mode === "up" && role && !operator ? t("createAccount") : title}</h1>
             <p className="mt-2 text-sm text-muted">{user && !sessionPending ? "Opening your desk…" : lead}</p>
             {operator && !user ? (
               <p className="mt-1 text-xs text-subtle" data-ke="admin-titan-note">
                 {t("operatorEmailNote")}
               </p>
             ) : null}
-          {!operator ? (
-          <div className="mt-6 space-y-2" data-ke="social-sign-in">
-            {authEnabled ? (
-              providers.map((p: GrokProvider) => (
-                <Button
-                  key={p.providerId}
-                  type="button"
-                  variant={p.idp === "apple" ? "apple" : "secondary"}
-                  className="w-full"
-                  disabled={busy}
-                  onClick={() => void onSocial(p.providerId)}
-                >
-                  {p.idp === "apple" ? <AppleMark /> : p.idp === "facebook" ? <FacebookMark /> : null}
-                  {p.idp === "apple"
-                    ? t("continueApple")
-                    : p.idp === "google"
-                      ? t("continueGoogle")
-                      : p.idp === "facebook"
-                        ? t("continueFacebook")
-                        : p.label}
-                </Button>
-              ))
-            ) : (
-              <p className="text-sm text-muted">Sign-in is disabled.</p>
-            )}
-          </div>
-          ) : null}
-          {!operator ? (
-          <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
-            <span className="h-px flex-1 bg-border" />
-            {t("orEmail")}
-            <span className="h-px flex-1 bg-border" />
-          </div>
-          ) : <div className="mt-6" />}
-          <form onSubmit={onEmail} className="space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
+          <form onSubmit={onEmail} className="mt-6 space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
             {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}
@@ -417,7 +385,13 @@ export function LoginScreen({
                 Sign-in methods could not load. If this keeps happening, a security filter may be blocking KidEase.
               </p>
             ) : null}
-            <Button type="submit" className="w-full min-h-12" disabled={busy || (turnstileRequired && !token.trim())}>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full min-h-12"
+              data-ke="email-primary"
+              disabled={busy || (turnstileRequired && !token.trim())}
+            >
               {busy ? "Opening your desk…" : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
           </form>
@@ -444,6 +418,42 @@ export function LoginScreen({
           >
             {mode === "up" ? t("haveAccount") : t("needAccount")}
           </button>
+          ) : null}
+          {!operator && (providers.length > 0 || !authEnabled) ? (
+          <div className="mt-6">
+            <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
+              <span className="h-px flex-1 bg-border" />
+              {t("orSocial")}
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <div className="space-y-2" data-ke="social-sign-in">
+              {authEnabled ? (
+                providers.map((p: GrokProvider) => (
+                  <Button
+                    key={p.providerId}
+                    type="button"
+                    variant={p.idp === "apple" ? "apple" : "secondary"}
+                    size="md"
+                    className="w-full font-normal"
+                    data-ke="social-secondary"
+                    disabled={busy}
+                    onClick={() => void onSocial(p.providerId)}
+                  >
+                    {p.idp === "apple" ? <AppleMark /> : p.idp === "facebook" ? <FacebookMark /> : null}
+                    {p.idp === "apple"
+                      ? t("continueApple")
+                      : p.idp === "google"
+                        ? t("continueGoogle")
+                        : p.idp === "facebook"
+                          ? t("continueFacebook")
+                          : p.label}
+                  </Button>
+                ))
+              ) : (
+                <p className="text-sm text-muted">Sign-in is disabled.</p>
+              )}
+            </div>
+          </div>
           ) : null}
           <p className="mt-6 text-center text-xs text-subtle">
             <a

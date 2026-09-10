@@ -5,7 +5,12 @@
  * See docs/cloudflare.md.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { applySharedAuthCookies, requestWithAliasedAuthCookies } from "@/lib/auth/cookies";
+import {
+  applyExpiredAuthCookies,
+  applySharedAuthCookies,
+  isAuthSignOutPath,
+  requestWithAliasedAuthCookies,
+} from "@/lib/auth/cookies";
 import { requestWithLegacyOAuthCallback } from "@/lib/auth/legacy-oauth-callback";
 import { auth } from "@/lib/auth/server";
 import { reportError } from "@/lib/observe";
@@ -73,7 +78,8 @@ async function handleAuth(request: Request) {
             resolveAfter(SQL_SETTLE_MS, Response.json({ session: null, user: null })),
           ])
         : await handled;
-    return applySharedAuthCookies(incoming, response);
+    const shared = applySharedAuthCookies(incoming, response);
+    return isAuthSignOutPath(path) ? applyExpiredAuthCookies(incoming, shared) : shared;
   } catch (err) {
     reportError(err, { route: "/api/auth" });
     const message = err instanceof Error && err.message.trim() ? err.message : "Sign-in failed";

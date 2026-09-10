@@ -14,12 +14,19 @@ import {
   oauthOnlyMessage,
   resolveSocialSignInRedirect,
   socialSignInFailedMessage,
+  TURNSTILE_EXPIRED_MESSAGE,
+  TURNSTILE_FAILED_MESSAGE,
+  WRONG_EMAIL_OR_PASSWORD_MESSAGE,
+  WRONG_PASSWORD_MESSAGE,
 } from "../src/lib/auth/login-errors.ts";
 import { friendlyResetMailError } from "../src/lib/auth/reset-errors.ts";
 import { NATIVE_APPLE, visibleSignInProviders } from "../src/lib/auth/providers.ts";
 import {
   aliasInboundAuthCookies,
+  applyExpiredAuthCookies,
   applySharedAuthCookies,
+  expireAuthCookieHeaders,
+  isAuthSignOutPath,
   isKideasePublicHost,
   mergeSetCookieHeaders,
   readSessionTokenFromHeader,
@@ -39,19 +46,25 @@ describe("password sign-in errors", () => {
   it("tells missing / oauth-only / wrong-password / turnstile / mail apart", () => {
     assert.match(
       friendlyAuthError("Invalid email or password", { kind: "missing", providers: [] }),
-      /Email or password is incorrect/,
+      /No KidEase account/,
     );
     assert.match(
       friendlyAuthError("Invalid email or password", { kind: "oauth_only", providers: ["google"] }),
-      /Email or password is incorrect/,
+      /Google/,
     );
-    assert.match(
+    assert.equal(
       friendlyAuthError("Invalid email or password", { kind: "has_password", providers: [] }),
-      /Email or password is incorrect/,
+      WRONG_PASSWORD_MESSAGE,
     );
-    assert.match(friendlyAuthError("Please complete the security check."), /security check/);
-    assert.match(friendlyAuthError("Security check failed. Refresh and try again."), /Refresh/);
-    assert.match(friendlyAuthError("Security check expired. Complete it again, then try once."), /expired/);
+    assert.equal(friendlyAuthError("Invalid email or password"), WRONG_EMAIL_OR_PASSWORD_MESSAGE);
+    assert.doesNotMatch(WRONG_EMAIL_OR_PASSWORD_MESSAGE, /security check/i);
+    assert.doesNotMatch(TURNSTILE_FAILED_MESSAGE, /password/i);
+    assert.equal(friendlyAuthError("Please complete the security check."), "Please complete the security check, then try again.");
+    assert.equal(friendlyAuthError("Security check failed. Refresh and try again."), TURNSTILE_FAILED_MESSAGE);
+    assert.equal(friendlyAuthError("Security check expired. Complete it again, then try once."), TURNSTILE_EXPIRED_MESSAGE);
+    assert.equal(friendlyAuthError("SECURITY_CHECK"), TURNSTILE_FAILED_MESSAGE);
+    assert.match(friendlyAuthError(authClientErrorMessage({ code: "SECURITY_CHECK", message: "Sign-in failed" })), /security check/i);
+    assert.doesNotMatch(friendlyAuthError("Invalid email or password"), /security check/i);
     assert.match(friendlyAuthError("Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY)"), /RESEND_API_KEY/);
     assert.match(friendlyAuthError("Too many requests"), /Wait a minute/);
     assert.match(friendlyAuthError("Too many requests. Please try again later."), /Wait a minute/);
@@ -177,12 +190,32 @@ describe("apex/www session cookies", () => {
     assert.equal(isolated.headers.getSetCookie().length, 1);
   });
 
+  it("sign-out expires host and shared session cookies", () => {
+    assert.equal(isAuthSignOutPath("/api/auth/sign-out"), true);
+    assert.equal(isAuthSignOutPath("/api/auth/sign-out/"), true);
+    assert.equal(isAuthSignOutPath("/api/auth/sign-in/email"), false);
+    const local = expireAuthCookieHeaders(false);
+    assert.ok(local.some((c) => c.startsWith(`${SESSION_TOKEN_COOKIE}=`) && /Max-Age=0/i.test(c)));
+    assert.ok(!local.some((c) => c.includes(SHARED_SESSION_TOKEN_COOKIE)));
+    const publicHost = expireAuthCookieHeaders(true);
+    assert.ok(publicHost.some((c) => c.startsWith(`${SHARED_SESSION_TOKEN_COOKIE}=`) && /Domain=kidease\.ca/i.test(c)));
+    const expired = applyExpiredAuthCookies(
+      new Request("https://www.kidease.ca/api/auth/sign-out", { headers: { host: "www.kidease.ca" } }),
+      new Response(null, { status: 200 }),
+    );
+    const names = expired.headers.getSetCookie().map((c) => c.split("=", 1)[0]);
+    assert.ok(names.includes(SESSION_TOKEN_COOKIE));
+    assert.ok(names.includes(SHARED_SESSION_TOKEN_COOKIE));
+  });
+
   it("auth handler aliases inbound cookies and shares outbound ones", () => {
     const authApi = read("src/routes/api/auth/$.ts");
     const server = read("src/lib/auth/server.ts");
     const twoFa = read("src/lib/server/two-factor.server.ts");
     assert.match(authApi, /requestWithAliasedAuthCookies/);
     assert.match(authApi, /applySharedAuthCookies/);
+    assert.match(authApi, /applyExpiredAuthCookies/);
+    assert.match(authApi, /isAuthSignOutPath/);
     assert.match(server, /SHARED_SESSION_TOKEN_COOKIE/);
     assert.match(twoFa, /SHARED_TWO_FACTOR_COOKIE/);
     assert.match(twoFa, /KIDEASE_COOKIE_DOMAIN/);
