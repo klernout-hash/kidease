@@ -1092,6 +1092,7 @@ export const getMyRole = createServerFn({ method: "GET" })
     return {
       role: session.role,
       desks: session.desks,
+      email: session.email,
       home: session.home,
       unread: session.unread,
       stripeLive: session.stripeLive,

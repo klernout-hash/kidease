@@ -67,13 +67,15 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
       return;
     }
     let cancelled = false;
+    setSession(null);
+    setReady(false);
     setError(false);
     void withTimeout(getMyDesks(), SESSION_SETTLE_MS, "get-desks-timeout")
       .then((s) => {
         if (cancelled) return;
         setSession(s);
         setStickyState((prev) => {
-          const next = sanitizeStickyDesk(prev, s.desks, s.role);
+          const next = sanitizeStickyDesk(prev, s.desks, s.role, s.email);
           if (next !== prev) {
             if (next) writeStickyDesk(next);
             else clearStickyDesk();
@@ -94,11 +96,11 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fromPath = deskFromPathname(pathname);
-    if (fromPath && (!session || canVisitDesk(session.desks, fromPath, session.role))) {
+    if (fromPath && (!session || canVisitDesk(session.desks, fromPath, session.role, session.email))) {
       setSticky(fromPath);
       return;
     }
-    if (deskQuery && (!session || canVisitDesk(session.desks, deskQuery, session.role))) {
+    if (deskQuery && (!session || canVisitDesk(session.desks, deskQuery, session.role, session.email))) {
       setSticky(deskQuery);
     }
   }, [pathname, deskQuery, session]);

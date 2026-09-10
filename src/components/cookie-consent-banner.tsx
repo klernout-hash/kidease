@@ -66,13 +66,14 @@ export function CookieConsentBanner() {
             <div className="mt-2 flex flex-wrap gap-2">
               <Button
                 type="button"
+                role="button"
                 variant="secondary"
                 size="sm"
                 onClick={() => choose("denied")}
               >
                 {t("cookieConsentEssential")}
               </Button>
-              <Button type="button" size="sm" onClick={() => choose("granted")}>
+              <Button type="button" role="button" size="sm" onClick={() => choose("granted")}>
                 {t("cookieConsentAllow")}
               </Button>
             </div>

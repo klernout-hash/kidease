@@ -1,6 +1,9 @@
 import { createAuthClient } from "better-auth/react";
+import { clearCompare } from "@/lib/compare";
 import { clearDeskLanded, clearStickyDesk, forgetRememberedRole, markJustSignedOut } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
+import { clearSearchCache } from "@/lib/search-cache";
+import { clearShortlistCache, takePendingSave } from "@/lib/shortlist";
 import {
   CLOUDFLARE_AUTH_BLOCK_MESSAGE,
   looksLikeCloudflareAuthBlock,
@@ -206,6 +209,29 @@ export function clearClientAuthState(): void {
   clearDeskLanded();
   forgetRememberedRole();
   markJustSignedOut();
+  clearShortlistCache();
+  takePendingSave();
+  try {
+    clearCompare();
+  } catch {
+    /* storage unavailable */
+  }
+  clearSearchCache();
+}
+
+/**
+ * Sign out the current Better Auth session without navigating away.
+ * Use before email/password sign-in so a Daycare login cannot leave a
+ * previous Parent identity on /parent.
+ */
+export async function dropExistingSession(): Promise<void> {
+  clearClientAuthState();
+  try {
+    await authClient.signOut();
+  } catch {
+    /* proceed — new sign-in replaces the cookie */
+  }
+  clearClientAuthState();
 }
 
 export async function signOut(redirectTo = "/"): Promise<void> {

@@ -19,7 +19,7 @@ import {
   bootstrapAdminEmail,
   canBootstrapAdmin,
   effectiveAdminRole,
-  isBlockedAdminEmail,
+  isKidEaseOperatorEmail,
 } from "@/lib/admin-email";
 
 export const ADMIN_PROMOTE_SQL =
@@ -78,12 +78,10 @@ async function unreadInboxCount(sql: Awaited<ReturnType<typeof getSql>>, userId:
 }
 
 /**
- * Gate /admin on profiles.role = 'admin'.
- * The owner email (ADMIN_EMAIL / kyle@kidease.ca) is promoted only when
- * Better Auth marks that email verified. Open Road mailboxes never get
- * Admin — even if ADMIN_EMAIL is leftover kyle@openroadoutlet.ca or
- * profiles.role is already admin. Extra staff:
- *   update profiles set role = 'admin' where user_id = '…';
+ * Gate /admin on kyle@kidease.ca only (isKidEaseOperatorEmail).
+ * SQL-promoted non-kyle and ADMIN_EMAIL bootstrap of any other mailbox
+ * fail closed. Owner is promoted only when Better Auth marks that
+ * mailbox verified. Does not rewrite Production profiles.role.
  */
 export async function resolveAdminAccess(userId: string) {
   const sql = await getSql();
@@ -96,7 +94,7 @@ export async function resolveAdminAccess(userId: string) {
   const actor = await lookupUser(userId);
   const email = actor.email;
 
-  if (isBlockedAdminEmail(email)) {
+  if (!isKidEaseOperatorEmail(email)) {
     const role = stored === "admin" ? ("parent" as const) : stored;
     return { ok: false as const, role, bootstrapped: false };
   }
@@ -162,9 +160,11 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   const desks = desksFor({ role: stored, ownsCentre: owned });
   const unread = await unreadInboxCount(sql, userId);
   const stripeLive = stripeChargesLive();
+  const actor = await lookupUser(userId);
   return {
     role: stored,
     desks,
+    email: actor.email ?? null,
     home: landingPath(desks),
     unread,
     stripeLive,

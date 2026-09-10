@@ -82,10 +82,10 @@ export function englishPath(pathname: string): string {
   return stripLocalePrefix(pathname);
 }
 
-/** Prefix a paired English path when the UI locale is French. Search stays unprefixed. */
+/** Prefix a paired English path when the UI locale is French. `/search` ↔ `/fr/search`. */
 export function localePath(enPath: string, locale: string): string {
   const bare = enPath.startsWith("/") ? enPath : `/${enPath}`;
-  if (bare === "/search" || bare === "/explore") return bare === "/explore" ? "/search" : bare;
+  if (bare === "/explore") return locale === "fr" ? frenchPath("/search") : "/search";
   if (locale === "fr" && PAIRED.has(bare)) return frenchPath(bare);
   return bare;
 }
@@ -125,7 +125,6 @@ const DESK_OR_AUTH_PREFIXES = [
 ];
 
 function isStickyAppPath(bare: string): boolean {
-  if (bare === "/search") return true;
   return DESK_OR_AUTH_PREFIXES.some((prefix) => bare === prefix || bare.startsWith(`${prefix}/`));
 }
 

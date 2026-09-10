@@ -57,6 +57,9 @@ import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
+import { Route as DaycaresRouteImport } from './routes/daycares'
+import { Route as DaycaresCityRouteImport } from './routes/daycares_.$city'
+import { Route as ListingSlugRouteImport } from './routes/listing.$slug'
 import { Route as FrIndexRouteImport } from './routes/fr.index'
 import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
@@ -335,6 +338,21 @@ const DaycareSlugRoute = DaycareSlugRouteImport.update({
   path: '/daycare/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DaycaresRoute = DaycaresRouteImport.update({
+  id: '/daycares',
+  path: '/daycares',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DaycaresCityRoute = DaycaresCityRouteImport.update({
+  id: '/daycares/$city',
+  path: '/daycares/$city',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListingSlugRoute = ListingSlugRouteImport.update({
+  id: '/listing/$slug',
+  path: '/listing/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FrIndexRoute = FrIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -532,6 +550,7 @@ export interface FileRoutesByFullPath {
   '/cookies': typeof CookiesRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
+  '/daycares': typeof DaycaresRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
@@ -565,6 +584,9 @@ export interface FileRoutesByFullPath {
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
+  '/daycares': typeof DaycaresRoute
+  '/daycares/$city': typeof DaycaresCityRoute
+  '/listing/$slug': typeof ListingSlugRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
@@ -618,6 +640,7 @@ export interface FileRoutesByTo {
   '/cookies': typeof CookiesRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
+  '/daycares': typeof DaycaresRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
@@ -649,6 +672,9 @@ export interface FileRoutesByTo {
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
+  '/daycares': typeof DaycaresRoute
+  '/daycares/$city': typeof DaycaresCityRoute
+  '/listing/$slug': typeof ListingSlugRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
@@ -703,6 +729,7 @@ export interface FileRoutesById {
   '/cookies': typeof CookiesRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
+  '/daycares': typeof DaycaresRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
@@ -736,6 +763,9 @@ export interface FileRoutesById {
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
+  '/daycares': typeof DaycaresRoute
+  '/daycares/$city': typeof DaycaresCityRoute
+  '/listing/$slug': typeof ListingSlugRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
@@ -791,6 +821,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/delete-account'
     | '/explore'
+    | '/daycares'
     | '/faq'
     | '/forgot-password'
     | '/fr'
@@ -824,6 +855,9 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
+    | '/daycares'
+    | '/daycares/$city'
+    | '/listing/$slug'
     | '/fr/about'
     | '/fr/benefits'
     | '/fr/contact'
@@ -877,6 +911,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/delete-account'
     | '/explore'
+    | '/daycares'
     | '/faq'
     | '/forgot-password'
     | '/get-app'
@@ -908,6 +943,9 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
+    | '/daycares'
+    | '/daycares/$city'
+    | '/listing/$slug'
     | '/fr/about'
     | '/fr/benefits'
     | '/fr/contact'
@@ -961,6 +999,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/delete-account'
     | '/explore'
+    | '/daycares'
     | '/faq'
     | '/forgot-password'
     | '/fr'
@@ -994,6 +1033,9 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
+    | '/daycares'
+    | '/daycares/$city'
+    | '/listing/$slug'
     | '/fr/about'
     | '/fr/benefits'
     | '/fr/contact'
@@ -1081,6 +1123,9 @@ export interface RootRouteChildren {
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
+  DaycaresRoute: typeof DaycaresRoute
+  DaycaresCityRoute: typeof DaycaresCityRoute
+  ListingSlugRoute: typeof ListingSlugRoute
   SignIdRoute: typeof SignIdRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
@@ -1435,6 +1480,27 @@ declare module '@tanstack/react-router' {
       path: '/daycare/$slug'
       fullPath: '/daycare/$slug'
       preLoaderRoute: typeof DaycareSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daycares': {
+      id: '/daycares'
+      path: '/daycares'
+      fullPath: '/daycares'
+      preLoaderRoute: typeof DaycaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daycares/$city': {
+      id: '/daycares/$city'
+      path: '/daycares/$city'
+      fullPath: '/daycares/$city'
+      preLoaderRoute: typeof DaycaresCityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listing/$slug': {
+      id: '/listing/$slug'
+      path: '/listing/$slug'
+      fullPath: '/listing/$slug'
+      preLoaderRoute: typeof ListingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fr/': {
@@ -1824,6 +1890,9 @@ const rootRouteChildren: RootRouteChildren = {
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
+  DaycaresRoute: DaycaresRoute,
+  DaycaresCityRoute: DaycaresCityRoute,
+  ListingSlugRoute: ListingSlugRoute,
   SignIdRoute: SignIdRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,

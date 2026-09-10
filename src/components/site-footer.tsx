@@ -1,6 +1,7 @@
 import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { localePath } from "@/lib/locale-path";
+import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -26,9 +27,9 @@ export function SiteFooter() {
   const { t, locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const fr = locale === "fr";
-  // Guest-only login deep-link. Signed-in Parent / Daycare must not see an
-  // Admin path in the footer. Wait out isPending so it never flashes.
-  const showOperatorSignIn = !isPending && !user;
+  // King-admin privacy: guests and non-kyle sessions never see operator login.
+  // Wait out isPending so the link never flashes for the public.
+  const showOperatorSignIn = !isPending && isKidEaseOperatorEmail(user?.primaryEmail);
 
   useLayoutEffect(() => {
     const all = document.querySelectorAll("footer.ke-site-footer");

@@ -92,9 +92,9 @@ test("reset and verification mail stay on Resend, not Titan SMTP", () => {
   assert.doesNotMatch(resetMail, /smtp\.titan\.email/);
   assert.match(twoFa, /api\.resend\.com\/emails/);
   assert.doesNotMatch(twoFa, /smtp\.titan\.email/);
-  assert.match(security, /login@send\.kidease\.ca/);
+  assert.match(security, /noreply@send\.kidease\.ca/);
   assert.match(security, /Do \*\*not\*\* send auth mail through Titan SMTP/);
-  assert.match(security, /Allowlist `login@send\.kidease\.ca`/);
+  assert.match(security, /Allowlist `noreply@send\.kidease\.ca`/);
 });
 
 test("Google IdP and admin-email bootstrap stay unchanged", () => {

@@ -84,6 +84,10 @@
       "permanent": false
     },
     { "source": "/explore", "destination": "/search", "permanent": true },
+    { "source": "/listing", "destination": "/search", "permanent": false },
+    { "source": "/listing/:slug", "destination": "/daycare/:slug", "permanent": false },
+    { "source": "/daycares", "destination": "/search", "permanent": false },
+    { "source": "/daycares/:city", "destination": "/search?q=:city", "permanent": false },
     {
       "source": "/daycare/little-fox-child-care-cetnre-103205",
       "destination": "/daycare/little-fox-child-care-centre-103205",

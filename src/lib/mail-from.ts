@@ -7,8 +7,10 @@
  * Reply-To stays ADMIN_EMAIL / kyle@ (Titan inbox).
  */
 
-export const DEFAULT_TRANSACTIONAL_MAIL_FROM = "KidEase <login@send.kidease.ca>";
+export const DEFAULT_TRANSACTIONAL_MAIL_FROM = "KidEase <noreply@send.kidease.ca>";
 export const RESEND_SEND_HOST = "send.kidease.ca";
+/** Leftover Vercel MAIL_FROM before the noreply local-part. Remapped. */
+export const LEGACY_RESEND_LOGIN_FROM = "login@send.kidease.ca";
 
 export function mailFromEmail(header: string): string {
   const trimmed = header.trim();
@@ -27,13 +29,21 @@ export function isApexKidEaseFrom(header: string): boolean {
   return email.endsWith("@kidease.ca") && !isResendSendFrom(header);
 }
 
+/** Old `login@send.kidease.ca` default — remap to noreply. */
+export function isLegacyLoginSendFrom(header: string): boolean {
+  return mailFromEmail(header) === LEGACY_RESEND_LOGIN_FROM;
+}
+
 /**
  * Resend / SendGrid From. Ignores leftover Production MAIL_FROM=kyle@
- * so OTP and other transactional mail stay on send.kidease.ca.
- * A verified send.kidease.ca (or other non-apex) MAIL_FROM still wins.
+ * and the old login@ send local-part so OTP and other transactional mail
+ * stay on `noreply@send.kidease.ca`. A different verified send.kidease.ca
+ * MAIL_FROM still wins.
  */
 export function transactionalMailFrom(mailFrom = process.env.MAIL_FROM): string {
   const trimmed = (mailFrom || "").trim();
-  if (!trimmed || isApexKidEaseFrom(trimmed)) return DEFAULT_TRANSACTIONAL_MAIL_FROM;
+  if (!trimmed || isApexKidEaseFrom(trimmed) || isLegacyLoginSendFrom(trimmed)) {
+    return DEFAULT_TRANSACTIONAL_MAIL_FROM;
+  }
   return trimmed;
 }

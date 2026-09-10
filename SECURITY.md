@@ -33,9 +33,9 @@ Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, 
 
 ## Transactional email (Resend)
 
-OTP and other Resend mail default From is `KidEase <login@send.kidease.ca>`. Apex SPF is Titan-only (`include:spf.titan.email -all`). Do **not** add Resend includes on `@` / `kidease.ca`. Production Vercel (`kidease-git`) must set `MAIL_FROM=KidEase <login@send.kidease.ca>`. Reply-To stays `ADMIN_EMAIL` / `kyle@kidease.ca`. Titan Admin → Mail still sends as the kyle@ mailbox on `smtp.titan.email`.
+OTP and other Resend mail default From is `KidEase <noreply@send.kidease.ca>`. Apex SPF is Titan-only (`include:spf.titan.email -all`). Do **not** add Resend includes on `@` / `kidease.ca`. Production Vercel (`kidease-git`) must set `MAIL_FROM=KidEase <noreply@send.kidease.ca>`. Leftover `MAIL_FROM=kyle@kidease.ca` or `login@send.kidease.ca` is remapped in code. Reply-To stays `ADMIN_EMAIL` / `kyle@kidease.ca`. Titan Admin → Mail still sends as the kyle@ mailbox on `smtp.titan.email`.
 
-Password reset and 2FA / verification codes for `kyle@kidease.ca` stay on this Resend path (`login@send.kidease.ca` → Titan inbox). Do **not** send auth mail through Titan SMTP. Titan SMTP is only for Admin → Mail replies. If a reset or OTP never arrives: confirm `RESEND_API_KEY` and `MAIL_FROM` on Vercel kidease-git, then check Titan junk and Cloudflare Email Security quarantine. Allowlist `login@send.kidease.ca` in Titan if the send subdomain is filtered. Do not change apex SPF to include Resend.
+Password reset and 2FA / verification codes for `kyle@kidease.ca` stay on this Resend path (`noreply@send.kidease.ca` → Titan inbox). Do **not** send auth mail through Titan SMTP. Titan SMTP is only for Admin → Mail replies. If a reset or OTP never arrives: confirm `RESEND_API_KEY` and `MAIL_FROM` on Vercel kidease-git, then check Titan junk and Cloudflare Email Security quarantine. Allowlist `noreply@send.kidease.ca` in Titan if the send subdomain is filtered. Do not change apex SPF to include Resend. Do not invent a Resend API key.
 
 Admin / operator login (`/login?intent=admin`, `/login?next=/admin`, `role=admin`, `desk=admin`) leads with email + password for the Titan mailbox. Google / Facebook stay available on Parent and Daycare desks. `kyle@kidease.ca` does not use Google OAuth.
 
@@ -43,7 +43,7 @@ Admin / operator login (`/login?intent=admin`, `/login?next=/admin`, `role=admin
 
 `requireAdmin` / `requireSupport` and `/api/admin/*` require a verified 2FA cookie (same device token as TwoFactorGate). A thrown status check fails closed for those desks.
 
-`ADMIN_EMAIL` / `kyle@kidease.ca` is auto-promoted to `profiles.role = admin` only when Better Auth `user.emailVerified` is true. Open Road mailboxes (`@openroadoutlet.ca`, including `kyle@openroadoutlet.ca`) never receive the Admin desk — even if `ADMIN_EMAIL` is leftover Open Road or `profiles.role` is already admin. Remaining risk: if an identity provider marks `kyle@kidease.ca` verified without a real mailbox check, the first such session still becomes admin. Extra staff should be promoted with SQL, not a second env flag, and must not use an Open Road address.
+`ADMIN_EMAIL` / `kyle@kidease.ca` is auto-promoted to `profiles.role = admin` only when Better Auth `user.emailVerified` is true. **Only `kyle@kidease.ca` may hold Admin.** Open Road mailboxes (`@openroadoutlet.ca`, including `kyle@openroadoutlet.ca`) never receive the Admin desk. `ADMIN_EMAIL` set to any other `@kidease.ca` mailbox is ignored. SQL `profiles.role = 'admin'` on a non-kyle account is ignored (fail closed; Production rows are not rewritten). Remaining risk: if an identity provider marks `kyle@kidease.ca` verified without a real mailbox check, the first such session still becomes admin. Extra **support** staff should be promoted with SQL (`support` / `support_lead`), not Admin.
 
 ## Payments
 

@@ -908,7 +908,7 @@ export async function sendSearchAlertEmail(payload: {
       headers: { Authorization: `Bearer ${sendgrid}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: fromMatch?.[2]?.trim() || "login@send.kidease.ca", name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
+        from: { email: fromMatch?.[2]?.trim() || "noreply@send.kidease.ca", name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
         subject,
         content: [
           { type: "text/plain", value: text },

@@ -717,9 +717,9 @@ function SearchPage() {
     if (!gated || !searchAge || !searchStart) return { primary: [] as Card[], ageUnknown: [] as Card[] };
     return splitSearchResults(list, searchAge, searchStart);
   }, [gated, list, searchAge, searchStart]);
-  const shownList = gated ? split.primary : [];
-  const resultCount = gated ? shownList.length + split.ageUnknown.length : 0;
-  const showSearchEmpty = gated && shownList.length === 0 && split.ageUnknown.length === 0;
+  const shownList = gated ? split.primary : list;
+  const resultCount = shownList.length + (gated ? split.ageUnknown.length : 0);
+  const showSearchEmpty = items !== null && shownList.length === 0 && (!gated || split.ageUnknown.length === 0);
   const [ageUnknownOpen, setAgeUnknownOpen] = useState(false);
   useEffect(() => {
     if (gated && shownList.length === 0 && split.ageUnknown.length > 0) {
@@ -814,7 +814,7 @@ function SearchPage() {
         : (items?.length ?? 0) > 0 && fabric.live === 0
           ? {
               title: t("licensedNotLiveTitle"),
-              body: t("licensedNotLiveLead").replace("{n}", String(catalog.length)),
+              body: t("licensedNotLiveLead").replace("{n}", String(resultCount)),
               action: t("showAll"),
               onAction: () => setLiveOnly(false),
               secondary: t("noLiveResultsClaim"),
@@ -979,7 +979,7 @@ function SearchPage() {
                   {liveOnly
                     ? (fabric.live > 0 ? t("searchLiveCount") : t("searchLiveEmptyCount"))
                         .replace("{live}", String(fabric.live))
-                        .replace("{n}", String(catalog.length))
+                        .replace("{n}", String(resultCount))
                     : resultCount === 1
                       ? t("searchResultCountOne")
                       : t("searchResultCount").replace("{n}", String(resultCount))}
@@ -989,8 +989,8 @@ function SearchPage() {
                   {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
                   {items !== null && fabric.live > 0
                     ? `${DOT}${t("liveInArea").replace("{n}", String(fabric.live))}`
-                    : catalog.length > 0
-                      ? `${DOT}${t("liveVsAllNone").replace("{n}", String(catalog.length))}`
+                    : resultCount > 0
+                      ? `${DOT}${t("liveVsAllNone").replace("{n}", String(resultCount))}`
                       : null}
                 </>
               )}
@@ -1021,12 +1021,12 @@ function SearchPage() {
           </div>
         </div>
 
-        {items !== null && catalog.length > 0 && fabric.live === 0 ? (
+        {items !== null && resultCount > 0 && fabric.live === 0 ? (
           <p
             className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm leading-6 text-muted ring-1 ring-border"
             data-ke="licensed-not-live"
           >
-            {t("licensedNotLiveLead").replace("{n}", String(catalog.length))}
+            {t("licensedNotLiveLead").replace("{n}", String(resultCount))}
           </p>
         ) : null}
 
@@ -1120,7 +1120,7 @@ function SearchPage() {
                 !liveOnly ? "bg-fg text-bg" : "text-muted",
               )}
             >
-              {items !== null ? t("allToggleCount").replace("{n}", String(catalog.length)) : t("showAll")}
+              {items !== null ? t("allToggleCount").replace("{n}", String(resultCount)) : t("showAll")}
             </button>
           </div>
           <button
@@ -1279,7 +1279,7 @@ function SearchPage() {
                 <div className="h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
-                      items={shownList.length > 0 ? shownList : catalog}
+                      items={shownList}
                       origin={mapOrigin}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
                       radiusKm={radiusKm}
@@ -1299,7 +1299,7 @@ function SearchPage() {
                     />
                   </Suspense>
                 </div>
-                {items !== null && (showSearchEmpty || (shownList.length === 0 && catalog.length > 0)) ? (
+                {items !== null && showSearchEmpty ? (
                   <div className="rounded-xl bg-surface ring-1 ring-border">
                     <EmptyState
                       title={emptyState.title}
