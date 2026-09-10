@@ -206,10 +206,13 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.doesNotMatch(example, /^FEATURE_FACEBOOK_LOGIN=1$/m);
   });
 
-  it("login loader only lists Facebook when FACEBOOK_CLIENT_* are set", () => {
+  it("login loader only lists Facebook when FACEBOOK_CLIENT_* are set and the Live flag is on", () => {
     const loader = read("src/lib/server/sign-in-providers.ts");
-    assert.match(loader, /FACEBOOK_CLIENT_ID/);
-    assert.match(loader, /FACEBOOK_CLIENT_SECRET/);
+    const idp = read("src/lib/auth/facebook-idp.ts");
+    assert.match(loader, /facebookLoginVisible/);
+    assert.match(idp, /FACEBOOK_CLIENT_ID/);
+    assert.match(idp, /FACEBOOK_CLIENT_SECRET/);
+    assert.match(idp, /FEATURE_FACEBOOK_LOGIN/);
     assert.doesNotMatch(loader, /nativeFacebook\s*=\s*true/);
   });
 
