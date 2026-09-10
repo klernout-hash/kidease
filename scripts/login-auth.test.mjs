@@ -137,8 +137,9 @@ describe("password sign-in errors", () => {
     assert.doesNotMatch(login, /explainEmailSignInFailure/);
     assert.match(login, /resetTurnstile/);
     assert.match(login, /turnstileRequired && !token\.trim\(\)/);
-    assert.match(login, /www\.kidease\.ca\/login/);
-    assert.match(login, /Forgot password/);
+    assert.match(login, /deskOpenFailed/);
+    assert.match(login, /forgotPassword/);
+    assert.match(read("src/lib/copy.ts"), /www\.kidease\.ca\/login/);
     assert.doesNotMatch(login, /function friendlyAuthError/);
   });
 });
@@ -229,7 +230,8 @@ describe("production email sign-in is not globally rate-limited", () => {
     assert.match(client, /CLOUDFLARE_AUTH_BLOCK_MESSAGE/);
     assert.match(read("docs/cloudflare.md"), /\/api\/auth\/\*/);
     assert.match(read("docs/cloudflare.md"), /\/_serverFn\/\*/);
-    assert.match(read("src/routes/login.tsx"), /security filter may be blocking/i);
+    assert.match(read("src/routes/login.tsx"), /signInMethodsFailed/);
+    assert.match(read("src/lib/copy.ts"), /security filter may be blocking/i);
     assert.match(read("src/routes/forgot-password.tsx"), /authClientErrorMessage/);
   });
 });
