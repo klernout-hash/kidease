@@ -95,6 +95,15 @@ test("admin role unlocks all four desks; provider also gets parent", () => {
   assert.equal(canSeeAdminDesk("provider"), false);
   assert.equal(canSeeAdminDesk("support"), false);
   assert.equal(canSeeAdminDesk("admin"), true);
+  assert.equal(canSeeAdminDesk("admin", "kyle@kidease.ca"), true);
+  assert.equal(canSeeAdminDesk("admin", "parent@example.com"), false);
+  assert.equal(canSeeAdminDesk("parent", "kyle@kidease.ca"), false);
+  assert.equal(headerDesks(["admin", "parent", "provider"], "admin", "parent@example.com").includes("admin"), false);
+  assert.deepEqual(headerDesks(["admin", "parent", "provider"], "admin", "kyle@kidease.ca"), [
+    "admin",
+    "parent",
+    "provider",
+  ]);
   assert.equal(canVisitDesk(["admin", "parent"], "admin", "admin"), true);
   assert.equal(canVisitDesk(["admin", "parent"], "admin", "parent"), false);
   assert.equal(canVisitDesk(["admin", "parent"], "admin", null), false);

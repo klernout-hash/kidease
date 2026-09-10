@@ -12,6 +12,7 @@ import {
 } from "@/lib/desks";
 import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { useSessionDesks } from "@/components/session-desks";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
@@ -205,11 +206,13 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
     select: (s) => parseDeskQuery((s.location.search as { desk?: unknown }).desk as string | undefined),
   });
   const { session, sticky, setSticky } = useSessionDesks();
+  const { user } = useCurrentUserState();
+  const email = user?.primaryEmail;
   // Same Better Auth session. Pills only navigate — they do not call setRole
   // or rewrite the session cookie. /provider still promotes via its own mount.
-  if (!session || !showDeskSwitcher(session.desks, session.role)) return null;
+  if (!session || !showDeskSwitcher(session.desks, session.role, email)) return null;
 
-  const desks = headerDesks(session.desks, session.role);
+  const desks = headerDesks(session.desks, session.role, email);
   const highlighted = highlightDesk(pathname, sticky, queryDesk);
   const current = highlighted && desks.includes(highlighted) ? highlighted : null;
 

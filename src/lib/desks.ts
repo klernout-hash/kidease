@@ -1,3 +1,5 @@
+import { isKidEaseOperatorEmail } from "./admin-email";
+
 export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent";
 export type DeskKey = "admin" | "support" | "provider" | "parent";
 
@@ -420,17 +422,33 @@ export function desksFor(input: {
   return (["admin", "support", "provider", "parent"] as const).filter((d) => desks.has(d));
 }
 
-/** Admin pill + /admin — only profiles.role = admin. Parent/Daycare never. */
-export function canSeeAdminDesk(role: AppRole | string | null | undefined) {
-  return parseAppRole(role) === "admin";
+/**
+ * Admin pill + hamburger + footer operator link.
+ * Role must be admin. When a session email is known, only kyle@kidease.ca
+ * sees Admin chrome — guests, parents, and daycares never do.
+ * Omit `email` for role-only checks (unit tests / desk lists).
+ */
+export function canSeeAdminDesk(
+  role: AppRole | string | null | undefined,
+  email?: string | null,
+) {
+  if (parseAppRole(role) !== "admin") return false;
+  if (email === undefined) return true;
+  return isKidEaseOperatorEmail(email);
 }
 
 /**
  * Fail closed: Admin requires profiles.role = admin. A missing role or a
  * stale desk list must never unlock /admin or the Admin pill.
+ * When `email` is passed, only kyle@kidease.ca keeps the Admin desk.
  */
-export function canVisitDesk(desks: DeskKey[], desk: DeskKey, role?: AppRole | null) {
-  if (desk === "admin") return desks.includes("admin") && canSeeAdminDesk(role);
+export function canVisitDesk(
+  desks: DeskKey[],
+  desk: DeskKey,
+  role?: AppRole | null,
+  email?: string | null,
+) {
+  if (desk === "admin") return desks.includes("admin") && canSeeAdminDesk(role, email);
   return desks.includes(desk);
 }
 
@@ -439,19 +457,24 @@ export function sanitizeStickyDesk(
   sticky: DeskKey | null | undefined,
   desks: DeskKey[],
   role?: AppRole | null,
+  email?: string | null,
 ): DeskKey | null {
   if (!sticky) return null;
-  return canVisitDesk(desks, sticky, role) ? sticky : null;
+  return canVisitDesk(desks, sticky, role, email) ? sticky : null;
 }
 
 /**
- * Header pills. Admin-role users (kyle@kidease.ca) see Admin / Parent / Daycare
+ * Header pills. Only kyle@kidease.ca sees Admin / Parent / Daycare
  * on one session. Parent and Daycare accounts never get the Admin pill — even
  * if a stale desk list included it. Open Road mailboxes never see Admin.
  * Support stays in the account menu.
  */
-export function headerDesks(desks: DeskKey[], role?: AppRole | null): DeskKey[] {
-  const visible = desks.filter((desk) => canVisitDesk(desks, desk, role));
+export function headerDesks(
+  desks: DeskKey[],
+  role?: AppRole | null,
+  email?: string | null,
+): DeskKey[] {
+  const visible = desks.filter((desk) => canVisitDesk(desks, desk, role, email));
   if (visible.includes("admin")) {
     return (["admin", "parent", "provider"] as const).filter((d) => visible.includes(d));
   }
@@ -459,8 +482,12 @@ export function headerDesks(desks: DeskKey[], role?: AppRole | null): DeskKey[] 
 }
 
 /** Header / menu switcher — only when this session actually has two visible desks. */
-export function showDeskSwitcher(desks: DeskKey[] | undefined | null, role?: AppRole | null) {
-  return Boolean(desks && headerDesks(desks, role).length >= 2);
+export function showDeskSwitcher(
+  desks: DeskKey[] | undefined | null,
+  role?: AppRole | null,
+  email?: string | null,
+) {
+  return Boolean(desks && headerDesks(desks, role, email).length >= 2);
 }
 
 export type SessionDesks = {

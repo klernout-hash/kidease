@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { AdminDeskLink } from "@/components/admin-desk-link";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canSeeAdminDesk, canVisitDesk, showDeskSwitcher } from "@/lib/desks";
 import { useCopy } from "@/lib/use-copy";
 
@@ -8,10 +9,14 @@ import { useCopy } from "@/lib/use-copy";
 export function MenuDeskTools() {
   const { locale } = useCopy();
   const { session } = useSessionDesks();
+  const { user } = useCurrentUserState();
+  const email = user?.primaryEmail;
   const fr = locale === "fr";
-  const multiDesk = Boolean(showDeskSwitcher(session?.desks, session?.role));
+  const multiDesk = Boolean(showDeskSwitcher(session?.desks, session?.role, email));
   const showAdmin = Boolean(
-    canSeeAdminDesk(session?.role) && session && canVisitDesk(session.desks, "admin", session.role),
+    canSeeAdminDesk(session?.role, email) &&
+      session &&
+      canVisitDesk(session.desks, "admin", session.role, email),
   );
 
   if (!multiDesk && !showAdmin) return null;

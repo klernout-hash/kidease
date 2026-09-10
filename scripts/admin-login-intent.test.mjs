@@ -43,7 +43,7 @@ test("login screen uses admin intent and hides social for that path", () => {
   assert.match(login, /data-ke=\{operator \? "admin-email-first" : "email-sign-in"\}/);
   assert.match(login, /data-ke="social-sign-in"/);
   assert.match(login, /\{!operator \? \(/);
-  assert.match(login, /Forgot password\?/);
+  assert.match(login, /forgotPassword/);
   assert.match(login, /KIDEASE_OPERATOR_EMAIL/);
   assert.doesNotMatch(login, /const operator = role === "admin"/);
 });

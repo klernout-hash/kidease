@@ -31,17 +31,17 @@ test("French paths prefix paired English routes and leave desks alone", () => {
   assert.equal(isFrPath("/fr/search"), true);
   assert.equal(isFrPath("/search"), false);
   assert.equal(localePath("/privacy", "fr"), "/fr/privacy");
-  assert.equal(localePath("/search", "fr"), "/search");
+  assert.equal(localePath("/search", "fr"), "/fr/search");
   assert.equal(localePath("/parent", "fr"), "/parent");
   assert.equal(localePath("/admin", "fr"), "/admin");
 });
 
-test("language toggle rewrites paired pages and stays put on Explore and desks", () => {
+test("language toggle rewrites paired pages including search and stays put on desks", () => {
   assert.equal(localeSwitchPath("/privacy", "fr"), "/fr/privacy");
   assert.equal(localeSwitchPath("/fr/privacy", "en"), "/privacy");
   assert.equal(localeSwitchPath("/", "fr"), "/fr");
   assert.equal(localeSwitchPath("/fr", "en"), "/");
-  assert.equal(localeSwitchPath("/search", "fr"), null);
+  assert.equal(localeSwitchPath("/search", "fr"), "/fr/search");
   assert.equal(localeSwitchPath("/login", "fr"), "/fr/login");
   assert.equal(localeSwitchPath("/fr/login", "en"), "/login");
   assert.equal(localePath("/login", "fr"), "/fr/login");

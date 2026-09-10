@@ -78,6 +78,7 @@ export const TurnstileField = memo(function TurnstileField({
   const onTokenRef = useRef(onToken);
   const [siteKey, setSiteKey] = useState<string | null | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [compact, setCompact] = useState(false);
   onTokenRef.current = onToken;
 
   useEffect(() => {
@@ -105,6 +106,14 @@ export const TurnstileField = memo(function TurnstileField({
   }, [siteKey, onRequired]);
 
   useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setCompact(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
     onLoadError?.(loadError);
   }, [loadError, onLoadError]);
 
@@ -116,7 +125,7 @@ export const TurnstileField = memo(function TurnstileField({
         if (cancelled || !api || !host.current || widgetId.current) return;
         widgetId.current = api.render(host.current, {
           sitekey: siteKey,
-          size: "flexible",
+          size: compact ? "compact" : "flexible",
           retry: "auto",
           "refresh-expired": "auto",
           callback: (token) => {
@@ -139,7 +148,7 @@ export const TurnstileField = memo(function TurnstileField({
     return () => {
       cancelled = true;
     };
-  }, [siteKey]);
+  }, [siteKey, compact]);
 
   useEffect(() => {
     if (!resetSignal) return;

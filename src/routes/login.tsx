@@ -144,7 +144,7 @@ export function LoginScreen({
       method: "session",
     }).catch(() => {
       continued.current = false;
-      setError("Could not open your desk. Use Retry, or open https://www.kidease.ca/login.");
+      setError(t("deskOpenFailed"));
       setBusy(false);
     });
   }, [sessionPending, user, dest, busy, search.next, deskHint, role]);
@@ -186,7 +186,7 @@ export function LoginScreen({
       method: "session",
     }).catch(() => {
       continued.current = false;
-      setError("Could not open your desk. Use Retry, or open https://www.kidease.ca/login.");
+      setError(t("deskOpenFailed"));
       setBusy(false);
     });
   }
@@ -203,7 +203,7 @@ export function LoginScreen({
       }
       const challenge = takeChallenge();
       if (turnstileRequired && !challenge) {
-        throw new Error("Please complete the security check, then try again.");
+        throw new Error(t("securityCheckNeeded"));
       }
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
       if (mode === "up") {
@@ -286,8 +286,8 @@ export function LoginScreen({
 
   return (
     <Shell bare>
-      <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-5xl md:grid-cols-2">
-        <div className="relative hidden overflow-hidden md:block">
+      <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-5xl overflow-x-hidden md:grid-cols-2">
+        <div className="relative hidden min-w-0 overflow-hidden md:block">
           <img
             src="/photos/community.jpg"
             alt=""
@@ -299,53 +299,20 @@ export function LoginScreen({
           <div className="absolute inset-0 bg-gradient-to-t from-fg/70 to-fg/10" />
           <p className="absolute bottom-10 left-10 right-10 font-display text-3xl text-primary-fg">{t("tagline")}</p>
         </div>
-        <div className="grid place-items-center px-[clamp(1rem,4vw,2rem)] py-10">
-          <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border sm:p-8">
+        <div className="grid min-w-0 place-items-center overflow-x-hidden px-[clamp(1rem,4vw,2rem)] py-10">
+          <div className="w-full min-w-0 max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border sm:p-8">
             <div className="flex justify-center">
               <BrandMark size="md" />
             </div>
             <h1 className="mt-6 font-display text-3xl">{mode === "up" && role && !operator ? t("createAccount") : title}</h1>
-            <p className="mt-2 text-sm text-muted">{user && !sessionPending ? "Opening your desk…" : lead}</p>
+            <p className="mt-2 text-sm text-muted">{user && !sessionPending ? t("openingDesk") : lead}</p>
             {operator && !user ? (
               <p className="mt-1 text-xs text-subtle" data-ke="admin-titan-note">
                 {t("operatorEmailNote")}
               </p>
             ) : null}
-          {!operator ? (
-          <div className="mt-6 space-y-2" data-ke="social-sign-in">
-            {authEnabled ? (
-              providers.map((p: GrokProvider) => (
-                <Button
-                  key={p.providerId}
-                  type="button"
-                  variant={p.idp === "apple" ? "apple" : "secondary"}
-                  className="w-full"
-                  disabled={busy}
-                  onClick={() => void onSocial(p.providerId)}
-                >
-                  {p.idp === "apple" ? <AppleMark /> : p.idp === "facebook" ? <FacebookMark /> : null}
-                  {p.idp === "apple"
-                    ? t("continueApple")
-                    : p.idp === "google"
-                      ? t("continueGoogle")
-                      : p.idp === "facebook"
-                        ? t("continueFacebook")
-                        : p.label}
-                </Button>
-              ))
-            ) : (
-              <p className="text-sm text-muted">Sign-in is disabled.</p>
-            )}
-          </div>
-          ) : null}
-          {!operator ? (
-          <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
-            <span className="h-px flex-1 bg-border" />
-            {t("orEmail")}
-            <span className="h-px flex-1 bg-border" />
-          </div>
-          ) : <div className="mt-6" />}
-          <form onSubmit={onEmail} className="space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
+          {operator ? <div className="mt-6" /> : null}
+          <form onSubmit={onEmail} className="mt-6 space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
             {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}
@@ -395,27 +362,29 @@ export function LoginScreen({
                     setBusy(false);
                   }}
                 >
-                  Retry
+                  {t("retry")}
                 </button>
                 <button
                   type="button"
                   className="min-h-11 font-medium text-muted underline-offset-4 hover:underline"
                   onClick={() => openDesk()}
                 >
-                  {dest.startsWith("/search") ? "Back to Explore" : dest.startsWith("/daycare/") ? "Back to listing" : "Open your desk"}
+                  {dest.startsWith("/search")
+                    ? t("backToExplore")
+                    : dest.startsWith("/daycare/")
+                      ? t("backToListing")
+                      : t("openYourDesk")}
                 </button>
                 <a href="/parent" className="min-h-11 font-medium text-subtle underline-offset-4 hover:underline">
-                  Parent desk
+                  {t("parentDesk")}
                 </a>
               </div>
             ) : null}
             {authEnabled && providers.length === 0 && !operator ? (
-              <p className="text-xs text-muted">
-                Sign-in methods could not load. If this keeps happening, a security filter may be blocking KidEase.
-              </p>
+              <p className="text-xs text-muted">{t("signInMethodsFailed")}</p>
             ) : null}
             <Button type="submit" className="w-full min-h-12" disabled={busy || (turnstileRequired && !token.trim())}>
-              {busy ? "Opening your desk…" : mode === "up" && !operator ? t("createAccount") : t("signIn")}
+              {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
           </form>
           {mode === "in" ? (
@@ -425,12 +394,43 @@ export function LoginScreen({
                 search={{ email: (operator ? OPERATOR_EMAIL : email).trim() }}
                 className="text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
               >
-                Forgot password?
+                {t("forgotPassword")}
               </Link>
-              <p className="mt-2 text-[13px] text-muted">
-                If none of the passwords you remember work, reset from that page. The link is emailed to the
-                inbox on the account and expires in about an hour.
-              </p>
+              <p className="mt-2 text-[13px] text-muted">{t("forgotPasswordLead")}</p>
+            </div>
+          ) : null}
+          {!operator ? (
+            <div className="mt-5" data-ke="social-sign-in">
+              <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
+                <span className="h-px flex-1 bg-border" />
+                {t("orContinueWith")}
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              {authEnabled ? (
+                <div className="space-y-2">
+                  {providers.map((p: GrokProvider) => (
+                    <Button
+                      key={p.providerId}
+                      type="button"
+                      variant={p.idp === "apple" ? "apple" : "secondary"}
+                      className="w-full"
+                      disabled={busy}
+                      onClick={() => void onSocial(p.providerId)}
+                    >
+                      {p.idp === "apple" ? <AppleMark /> : p.idp === "facebook" ? <FacebookMark /> : null}
+                      {p.idp === "apple"
+                        ? t("continueApple")
+                        : p.idp === "google"
+                          ? t("continueGoogle")
+                          : p.idp === "facebook"
+                            ? t("continueFacebook")
+                            : p.label}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted">{t("signInDisabled")}</p>
+              )}
             </div>
           ) : null}
           {!operator ? (
