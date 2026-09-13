@@ -1,6 +1,9 @@
 import { getSql } from "@/lib/db";
 import { PROVIDER_ONBOARD_PURPOSE, winnipegDayKey } from "@/lib/signup-user-mail";
 
+/** Sentinel Winnipeg day so next-steps / verify nudge are once-ever, not same-day. */
+export const ACTOR_MAIL_ONCE_DAY = "1970-01-01";
+
 async function ensureTable() {
   const sql = await getSql();
   await sql.query(`
@@ -44,11 +47,12 @@ export async function releaseActorMailDay(input: {
   purpose?: string;
   email: string;
   at?: Date;
+  day?: string;
 }): Promise<void> {
   const email = input.email.trim().toLowerCase();
   if (!email) return;
   const purpose = input.purpose || PROVIDER_ONBOARD_PURPOSE;
-  const day = winnipegDayKey(input.at);
+  const day = input.day || winnipegDayKey(input.at);
   const sql = await getSql();
   await sql
     .query(`delete from actor_mail_sends where purpose = $1 and email = $2 and winnipeg_day = $3::date`, [
@@ -57,4 +61,34 @@ export async function releaseActorMailDay(input: {
       day,
     ])
     .catch(() => undefined);
+}
+
+export async function claimActorMailOnce(input: {
+  purpose?: string;
+  email: string;
+  userId?: string | null;
+}): Promise<boolean> {
+  const email = input.email.trim().toLowerCase();
+  if (!email || !email.includes("@")) return false;
+  const purpose = input.purpose || PROVIDER_ONBOARD_PURPOSE;
+  await ensureTable();
+  const sql = await getSql();
+  const rows = await sql
+    .query<{ purpose: string }>(
+      `insert into actor_mail_sends (purpose, email, winnipeg_day, user_id)
+       values ($1, $2, $3::date, $4)
+       on conflict (purpose, email, winnipeg_day) do nothing
+       returning purpose`,
+      [purpose, email, ACTOR_MAIL_ONCE_DAY, input.userId ?? null],
+    )
+    .catch(() => [] as { purpose: string }[]);
+  return Boolean(rows[0]);
+}
+
+export async function releaseActorMailOnce(input: { purpose?: string; email: string }): Promise<void> {
+  await releaseActorMailDay({
+    purpose: input.purpose,
+    email: input.email,
+    day: ACTOR_MAIL_ONCE_DAY,
+  });
 }

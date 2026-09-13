@@ -11,8 +11,13 @@ export function providerOnboardOrigin(): string {
   return signupMailAppOrigin(process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca");
 }
 
-/** Next steps after provider signup or first listing. Same-day dedupe lives in the caller. */
-export async function sendProviderNextStepsMail(input: { to: string; origin?: string | null; name?: string | null }) {
+/** Next steps after emailVerified for a provider. Once-ever lock lives in the caller. */
+export async function sendProviderNextStepsMail(input: {
+  to: string;
+  origin?: string | null;
+  name?: string | null;
+  listingName?: string | null;
+}) {
   const to = input.to.trim().toLowerCase();
   if (!to || !to.includes("@")) throw new Error("A registered email is required.");
   const origin = signupMailAppOrigin(input.origin || providerOnboardOrigin());
@@ -20,8 +25,8 @@ export async function sendProviderNextStepsMail(input: { to: string; origin?: st
     purpose: "provider_onboard",
     to,
     subject: PROVIDER_ONBOARD_SUBJECT,
-    text: providerOnboardText(origin, input.name),
-    html: providerOnboardHtml(origin, input.name),
+    text: providerOnboardText(origin, input.name, input.listingName),
+    html: providerOnboardHtml(origin, input.name, input.listingName),
     replyTo: KIDEASE_OPERATOR_EMAIL,
   });
 }
