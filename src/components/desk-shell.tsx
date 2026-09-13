@@ -12,6 +12,8 @@ import {
   type DeskId,
   type DeskItem,
 } from "@/lib/desk-nav";
+import { useCopy } from "@/lib/use-copy";
+import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 
 const DeskSwitcher = lazy(() =>
@@ -30,24 +32,34 @@ function navClass(on: boolean) {
   );
 }
 
+function deskItemText(item: DeskItem, t: (key: CopyKey) => string) {
+  return {
+    label: item.labelKey ? t(item.labelKey) : item.label,
+    hint: item.hintKey ? t(item.hintKey) : item.hint,
+  };
+}
+
 function DeskNavButton({
   item,
   on,
   onSelect,
+  t,
 }: {
   item: DeskItem;
   on: boolean;
   onSelect: (id: string) => void;
+  t: (key: CopyKey) => string;
 }) {
+  const { label, hint } = deskItemText(item, t);
   return (
     <button type="button" onClick={() => onSelect(item.id)} className={cn(navClass(on), "text-left")}>
       <span className="flex items-center gap-2 font-medium">
         <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
-        {item.label}
+        {label}
       </span>
-      {item.hint ? (
+      {hint ? (
         <span className={cn("mt-0.5 hidden text-xs md:block", on ? "text-primary-fg/70" : "text-subtle")}>
-          {item.hint}
+          {hint}
         </span>
       ) : null}
     </button>
@@ -57,10 +69,13 @@ function DeskNavButton({
 function DeskNavLink({
   item,
   on,
+  t,
 }: {
   item: DeskItem;
   on: boolean;
+  t: (key: CopyKey) => string;
 }) {
+  const { label, hint } = deskItemText(item, t);
   return (
     <Link
       to={item.href!}
@@ -69,11 +84,11 @@ function DeskNavLink({
     >
       <span className="flex items-center gap-2 font-medium">
         <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
-        {item.label}
+        {label}
       </span>
-      {item.hint ? (
+      {hint ? (
         <span className={cn("mt-0.5 hidden text-xs md:block", on ? "text-primary-fg/70" : "text-subtle")}>
-          {item.hint}
+          {hint}
         </span>
       ) : null}
     </Link>
@@ -93,11 +108,13 @@ function DaycareMoreMenu({
   active,
   pathname,
   onSelect,
+  t,
 }: {
   items: DeskItem[];
   active: string;
   pathname: string;
   onSelect: (id: string) => void;
+  t: (key: CopyKey) => string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -127,12 +144,12 @@ function DaycareMoreMenu({
         type="button"
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label="More"
+        aria-label={t("deskNavMore")}
         onClick={() => setOpen((v) => !v)}
         className={cn(navClass(secondaryOn && !open), "flex items-center gap-2")}
       >
         <Menu className="size-3.5 shrink-0" strokeWidth={1.8} />
-        <span className="font-medium">More</span>
+        <span className="font-medium">{t("deskNavMore")}</span>
       </button>
       {open ? (
         <div
@@ -141,6 +158,7 @@ function DaycareMoreMenu({
         >
           {items.map((item) => {
             const on = itemIsOn(item, active, pathname);
+            const { label } = deskItemText(item, t);
             if (item.href) {
               return (
                 <Link
@@ -156,7 +174,7 @@ function DaycareMoreMenu({
                 >
                   <span className="flex items-center gap-2 font-medium">
                     <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
-                    {item.label}
+                    {label}
                   </span>
                 </Link>
               );
@@ -175,7 +193,7 @@ function DaycareMoreMenu({
                   on ? "bg-primary text-primary-fg" : "text-muted hover:bg-bg hover:text-fg",
                 )}
               >
-                <span className="font-medium">{item.label}</span>
+                <span className="font-medium">{label}</span>
               </button>
             );
           })}
@@ -199,6 +217,7 @@ export function DeskShell({
   wide?: boolean;
 }) {
   const meta = DESK_META[desk];
+  const { t } = useCopy();
   const { session } = useSessionDesks();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const opts = {
@@ -208,13 +227,15 @@ export function DeskShell({
   };
   const primary = desk === "daycare" ? visiblePrimaryDeskNav(desk, opts) : visibleDeskNav(desk, opts);
   const secondary = visibleSecondaryDeskNav(desk, opts);
+  const eyebrow = meta.eyebrowKey ? t(meta.eyebrowKey) : meta.eyebrow;
+  const title = meta.titleKey ? t(meta.titleKey) : meta.title;
 
   return (
     <Shell>
       <div className={cn("mx-auto flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-8 md:py-10", wide ? "max-w-[90rem]" : "max-w-6xl")}>
         <aside className="md:sticky md:top-24 md:w-56 md:shrink-0">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{meta.eyebrow}</p>
-          <h1 className="mt-2 font-display text-3xl">{meta.title}</h1>
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{eyebrow}</p>
+          <h1 className="mt-2 font-display text-3xl">{title}</h1>
           <div className="mt-3 md:hidden">
             <Suspense fallback={<div className="ke-skel h-11 rounded-full" aria-hidden="true" />}>
               <DeskSwitcher compact />
@@ -223,11 +244,11 @@ export function DeskShell({
           <nav className="mt-5 flex gap-2 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
             {primary.map((item) => {
               const on = itemIsOn(item, active, pathname);
-              if (item.href) return <DeskNavLink key={item.id} item={item} on={on} />;
-              return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} />;
+              if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} />;
+              return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} />;
             })}
             {desk === "daycare" ? (
-              <DaycareMoreMenu items={secondary} active={active} pathname={pathname} onSelect={onSelect} />
+              <DaycareMoreMenu items={secondary} active={active} pathname={pathname} onSelect={onSelect} t={t} />
             ) : null}
           </nav>
         </aside>

@@ -196,5 +196,16 @@ test("centre inbox ships three-pane, empty truth, and ops composer — not CMS",
   assert.doesNotMatch(rail, /listing-readiness|listingHealth\(/);
   assert.match(copy, /inboxEmptyNeedYou: "No parent threads need you"/);
   assert.match(copy, /inboxEmptyNeedYou: "Aucun fil parent n’a besoin de vous"/);
+  assert.match(copy, /inboxEmptyNeedYouCta: "See incoming requests"/);
+  assert.match(copy, /inboxEmptyNeedYouCta: "Voir les demandes entrantes"/);
+  const emptyCta = desk.slice(desk.indexOf("inboxEmptyNeedYouCta") - 180, desk.indexOf("inboxEmptyNeedYouCta") + 80);
+  assert.match(emptyCta, /to="\/inbox"/);
+  assert.match(emptyCta, /inboxSearch\("centre"\)/);
+  assert.doesNotMatch(emptyCta, /to="\/provider"/);
+  assert.match(desk, /data-ke="inbox-stage-filters"/);
+  assert.match(desk, /flex-wrap/);
+  assert.doesNotMatch(desk, /data-ke="inbox-stage-filters"[\s\S]*overflow-x-auto/);
   assert.match(src("src/routes/inbox.tsx"), /CentreInboxDesk|centre-inbox/);
+  assert.match(src("src/components/inbox-list.tsx"), /actionTo="\/inbox\?view=centre"/);
+  assert.doesNotMatch(src("src/components/inbox-list.tsx"), /actionTo="\/provider"/);
 });
