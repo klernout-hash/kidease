@@ -56,6 +56,7 @@ import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
+import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
@@ -338,6 +339,11 @@ const ApiInngestRoute = ApiInngestRouteImport.update({
 const ApiSearchAlertsRoute = ApiSearchAlertsRouteImport.update({
   id: '/api/search-alerts',
   path: '/api/search-alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
+  id: '/api/tour-holds',
+  path: '/api/tour-holds',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSeedCatalogRoute = ApiSeedCatalogRouteImport.update({
@@ -624,6 +630,7 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
+  '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
@@ -718,6 +725,7 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
+  '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
@@ -815,6 +823,7 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
+  '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
@@ -913,6 +922,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/inngest'
     | '/api/search-alerts'
+    | '/api/tour-holds'
     | '/api/seed-catalog'
     | '/api/unsubscribe'
     | '/book/$slug'
@@ -1007,6 +1017,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/inngest'
     | '/api/search-alerts'
+    | '/api/tour-holds'
     | '/api/seed-catalog'
     | '/api/unsubscribe'
     | '/book/$slug'
@@ -1103,6 +1114,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/inngest'
     | '/api/search-alerts'
+    | '/api/tour-holds'
     | '/api/seed-catalog'
     | '/api/unsubscribe'
     | '/book/$slug'
@@ -1200,6 +1212,7 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
+  ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
@@ -1556,6 +1569,13 @@ declare module '@tanstack/react-router' {
       path: '/api/search-alerts'
       fullPath: '/api/search-alerts'
       preLoaderRoute: typeof ApiSearchAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tour-holds': {
+      id: '/api/tour-holds'
+      path: '/api/tour-holds'
+      fullPath: '/api/tour-holds'
+      preLoaderRoute: typeof ApiTourHoldsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/seed-catalog': {
@@ -2025,6 +2045,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
+  ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,

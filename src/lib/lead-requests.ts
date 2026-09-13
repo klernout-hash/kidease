@@ -111,7 +111,7 @@ export function nextLeadStatus(current: string, action: LeadAction): LeadStatus 
 
 export function tourStatusToLead(status: string | null | undefined): LeadStatus {
   if (status === "accepted") return "confirmed";
-  if (status === "declined" || status === "lost") return "declined";
+  if (status === "declined" || status === "lost" || status === "expired") return "declined";
   if (status === "completed" || status === "enrolled") return "closed";
   return "requested";
 }

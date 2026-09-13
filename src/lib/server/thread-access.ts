@@ -93,20 +93,20 @@ export async function markConversationRead(sql: Sql, conversationId: string, use
 export async function listCentreOwnerEmails(
   sql: Sql,
   daycareId: string,
-): Promise<Array<{ email: string; name: string | null }>> {
-  const rows = await sql<{ email: string | null; name: string | null }>`
-    select u.email, u.name
+): Promise<Array<{ email: string; name: string | null; userId?: string }>> {
+  const rows = await sql<{ id: string | null; email: string | null; name: string | null }>`
+    select u.id, u.email, u.name
     from provider_daycares p
     join "user" u on u.id = p.user_id
     where p.daycare_id = ${daycareId}
   `.catch(() => []);
-  const out: Array<{ email: string; name: string | null }> = [];
+  const out: Array<{ email: string; name: string | null; userId?: string }> = [];
   const seen = new Set<string>();
   for (const row of rows) {
     const email = (row.email || "").trim();
     if (!email || seen.has(email.toLowerCase())) continue;
     seen.add(email.toLowerCase());
-    out.push({ email, name: row.name });
+    out.push({ email, name: row.name, userId: row.id || undefined });
   }
   return out;
 }

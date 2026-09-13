@@ -22,7 +22,11 @@ import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib
 export const Route = createFileRoute("/inbox/$id")({
   validateSearch: (s: Record<string, unknown>) => {
     const view = parseInboxView(s.view);
-    return view ? { view } : {};
+    const tour = typeof s.tour === "string" && s.tour.trim() ? s.tour.trim() : undefined;
+    return {
+      ...(view ? { view } : {}),
+      ...(tour ? { tour } : {}),
+    };
   },
   component: ThreadPage,
 });
@@ -123,6 +127,13 @@ function ThreadPage() {
     }, 12_000);
     return () => window.clearInterval(tick);
   }, [user, id]);
+
+  useEffect(() => {
+    const tourId = search.tour;
+    if (!tourId || !tours.some((tour) => tour.id === tourId)) return;
+    const node = document.getElementById(`tour-${tourId}`);
+    node?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [search.tour, tours]);
 
   if (isPending) {
     return (

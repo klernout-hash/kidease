@@ -8,6 +8,7 @@ import {
   setDaycareTimezone,
 } from "@/lib/server/tour-calendar";
 import { useCopy } from "@/lib/use-copy";
+import { TOUR_INVENTORY_COPY_KEY } from "@/lib/tour-hold";
 import {
   CANADA_TOUR_TIMEZONES,
   DEFAULT_TOUR_TIMEZONE,
@@ -193,6 +194,8 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
                 <div>
                   <p className="text-sm font-medium">{formatTourSlotRange(slot, loc)}</p>
                   <p className="text-xs text-muted">
+                    {t("tourTimesInventory")}: {t(TOUR_INVENTORY_COPY_KEY[slot.inventory])}
+                    {" · "}
                     {slot.booked}/{slot.capacity} {t("tourTimesBooked")}
                     {left === 0 ? ` · ${t("tourTimesFull")}` : ""}
                   </p>

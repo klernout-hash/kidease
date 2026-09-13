@@ -8,6 +8,7 @@ import { callerIsAdmin } from "@/lib/server/public-listing";
 import { upsertDaycare } from "@/lib/server/seed";
 import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
+import { notifyTourParties, syncLeadFromTour } from "@/lib/server/tour-hold-notify";
 import {
   listCentreOwnerEmails,
   markConversationRead,
@@ -19,11 +20,14 @@ import {
   parsePreferredTimes,
   preferredTimesValid,
   serializePreferredTimes,
+  tourRescheduleBody,
   tourStatusBody,
   tourSystemBody,
   type PreferredTime,
 } from "@/lib/threads";
+import { canProposeTourTime, declineReasonValid, holdExpiresAtIso } from "@/lib/tour-hold";
 import { nextTourPipeline, tourStatusFromBooking } from "@/lib/tour-pipeline";
+import { isTourWindowBookable, remainingTourSeats, toPublicTourSlot } from "@/lib/tour-calendar";
 import type { BookingStatus, TourRequest, TourStatus } from "@/lib/types";
 
 type TourRow = {
@@ -42,6 +46,7 @@ type TourRow = {
   created_at: string;
   responded_at: string | null;
   window_id?: string | null;
+  hold_expires_at?: string | Date | null;
   parent_first_name?: string | null;
   parent_last_name?: string | null;
   parent_phone?: string | null;
@@ -72,6 +77,7 @@ function mapTour(row: TourRow): TourRequest {
     createdAt: String(row.created_at),
     respondedAt: row.responded_at ? String(row.responded_at) : null,
     windowId: row.window_id ?? null,
+    holdExpiresAt: row.hold_expires_at ? String(row.hold_expires_at) : null,
     parentPhone: row.parent_phone ?? null,
     parentEmail: row.contact_email ?? null,
   };
@@ -99,7 +105,7 @@ export async function listToursForConversation(
     select t.id, t.conversation_id, t.daycare_id, d.name as daycare_name, d.slug,
            t.child_id, t.child_name, u.name as parent_name, t.preferred_times,
            t.parent_note, t.status, t.centre_note, t.created_at, t.responded_at,
-           t.window_id, t.parent_first_name, t.parent_last_name, t.parent_phone, t.contact_email
+           t.window_id, t.hold_expires_at, t.parent_first_name, t.parent_last_name, t.parent_phone, t.contact_email
     from tour_requests t
     join daycares d on d.id = t.daycare_id
     left join "user" u on u.id = t.user_id
@@ -172,11 +178,11 @@ export const createTourRequest = createServerFn({ method: "POST" })
     await sql`
       insert into tour_requests (
         id, conversation_id, user_id, daycare_id, child_id, child_name,
-        preferred_times, parent_note, status
+        preferred_times, parent_note, status, hold_expires_at
       ) values (
         ${tourId}, ${cid}, ${context.userId}, ${data.daycareId},
         ${childId || null}, ${childName || null},
-        ${serializePreferredTimes(times)}, ${note}, ${"pending"}
+        ${serializePreferredTimes(times)}, ${note}, ${"pending"}, ${holdExpiresAtIso()}
       )
     `;
     try {
@@ -263,6 +269,9 @@ export const listTourRequests = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((input?: { desk?: "parent" | "centre" }) => input ?? {})
   .handler(async ({ context, data }) => {
+    await import("@/lib/server/tour-holds")
+      .then((mod) => mod.expireDueTourHolds({ notify: true }))
+      .catch(() => undefined);
     const sql = await getSql();
     const asParent = data.desk !== "centre";
     const asCentre = data.desk !== "parent";
@@ -270,7 +279,7 @@ export const listTourRequests = createServerFn({ method: "GET" })
       select t.id, t.conversation_id, t.daycare_id, d.name as daycare_name, d.slug,
              t.child_id, t.child_name, u.name as parent_name, t.preferred_times,
              t.parent_note, t.status, t.centre_note, t.created_at, t.responded_at,
-             t.window_id, t.parent_first_name, t.parent_last_name, t.parent_phone, t.contact_email
+             t.window_id, t.hold_expires_at, t.parent_first_name, t.parent_last_name, t.parent_phone, t.contact_email
       from tour_requests t
       join daycares d on d.id = t.daycare_id
       left join "user" u on u.id = t.user_id
@@ -328,15 +337,19 @@ export const respondTourRequest = createServerFn({ method: "POST" })
     if (!owned) throw new Error("Not authorized");
 
     const next = nextTourStatus(tour.status, data.status);
-    if (!next) throw new Error("This tour request was already answered");
+    if (!next || (next !== "accepted" && next !== "declined")) throw new Error("This tour request was already answered");
 
     const note = (data.note || "").trim() || null;
+    if (next === "declined" && !declineReasonValid(note)) {
+      throw new Error("Add a reason so the parent knows why this tour was declined");
+    }
     await sql`
       update tour_requests
       set status = ${next},
           centre_note = ${note},
           responded_by = ${context.userId},
-          responded_at = now()
+          responded_at = now(),
+          hold_expires_at = null
       where id = ${tour.id}
     `;
 
@@ -351,17 +364,18 @@ export const respondTourRequest = createServerFn({ method: "POST" })
     `;
     await sql`update conversations set last_at = now() where id = ${tour.conversation_id}`;
     await markConversationRead(sql, tour.conversation_id, context.userId);
+    await syncLeadFromTour(sql, tour.id, next);
 
-    const parent = await lookupUser(tour.user_id);
     const guestName = `${tour.parent_first_name || ""} ${tour.parent_last_name || ""}`.trim();
-    const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
-    await notifyThreadParty({
-      to: parent.email || tour.contact_email,
-      name: parent.name || guestName || null,
-      subject: next === "accepted" ? `Tour accepted — ${tour.daycare_name}` : `Tour update — ${tour.daycare_name}`,
-      preview: body,
-      threadUrl: `${origin}/inbox/${tour.conversation_id}`,
+    await notifyTourParties(sql, {
+      conversationId: tour.conversation_id,
+      daycareId: tour.daycare_id,
       daycareName: tour.daycare_name,
+      parentUserId: tour.user_id,
+      parentEmail: tour.contact_email,
+      parentName: guestName || null,
+      subject: next === "accepted" ? `Tour confirmed — ${tour.daycare_name}` : `Tour declined — ${tour.daycare_name}`,
+      preview: body,
     }).catch(() => undefined);
 
     try {
@@ -378,6 +392,190 @@ export const respondTourRequest = createServerFn({ method: "POST" })
     } catch {
       /* admin mail is best-effort */
     }
+
+    return { ok: true as const, status: next, conversationId: tour.conversation_id };
+  });
+
+export const proposeTourTime = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { tourId: string; windowId: string; note?: string }) => input)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await import("@/lib/server/tour-holds")
+      .then((mod) => mod.expireDueTourHolds({ notify: true }))
+      .catch(() => undefined);
+
+    const rows = await sql<{
+      id: string;
+      status: string;
+      conversation_id: string;
+      user_id: string;
+      daycare_id: string;
+      daycare_name: string;
+      slug: string;
+      window_id: string | null;
+      contact_email: string | null;
+      parent_first_name: string | null;
+      parent_last_name: string | null;
+    }>`
+      select t.id, t.status, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug,
+             t.window_id, t.contact_email, t.parent_first_name, t.parent_last_name
+      from tour_requests t
+      join daycares d on d.id = t.daycare_id
+      where t.id = ${data.tourId}
+      limit 1
+    `.catch(() => []);
+    const tour = rows[0];
+    if (!tour) throw new Error("Tour request not found");
+    if (!canProposeTourTime(tour.status)) throw new Error("This tour cannot be rescheduled");
+
+    const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
+    const owned = await canCentreWriteLeadsFor(sql, context.userId, tour.daycare_id);
+    if (!owned) throw new Error("Not authorized");
+
+    const windowId = (data.windowId || "").trim();
+    if (!windowId || windowId === tour.window_id) throw new Error("Pick a different posted tour time");
+
+    const windows = await sql<{
+      id: string;
+      daycare_id: string;
+      window_date: string | Date;
+      start_time: string;
+      end_time: string;
+      capacity: number;
+      timezone: string;
+      start_at: string | Date;
+      booked: number;
+    }>`
+      select w.id, w.daycare_id, w.window_date, w.start_time, w.end_time, w.capacity, w.timezone, w.start_at,
+             coalesce((
+               select count(*)::int from tour_requests t
+               where t.window_id = w.id and t.status in ('pending', 'accepted') and t.id <> ${tour.id}
+             ), 0) as booked
+      from tour_windows w
+      where w.id = ${windowId} and w.daycare_id = ${tour.daycare_id}
+      limit 1
+    `.catch(() => []);
+    const window = windows[0];
+    const slot = window
+      ? toPublicTourSlot({
+          id: window.id,
+          date: window.window_date,
+          startTime: window.start_time,
+          endTime: window.end_time,
+          capacity: window.capacity,
+          booked: window.booked,
+          timezone: window.timezone,
+          startAt: window.start_at,
+        })
+      : null;
+    if (!slot) throw new Error("That tour time is no longer available.");
+    if (!isTourWindowBookable(slot, slot.timezone)) throw new Error("That tour time is no longer available.");
+    if (remainingTourSeats(slot.capacity, slot.booked) < 1) throw new Error("That tour time is full. Pick another.");
+
+    const times: PreferredTime[] = [{ date: slot.date, time: slot.startTime }];
+    const note = (data.note || "").trim() || null;
+    const staysPending = tour.status === "pending";
+    await sql`
+      update tour_requests
+      set window_id = ${slot.id},
+          preferred_times = ${serializePreferredTimes(times)},
+          centre_note = coalesce(${note}, centre_note),
+          hold_expires_at = ${staysPending ? holdExpiresAtIso() : null},
+          responded_by = ${context.userId},
+          responded_at = coalesce(responded_at, now())
+      where id = ${tour.id}
+    `;
+
+    const body = tourRescheduleBody({ daycareName: tour.daycare_name, times, note });
+    await sql`
+      insert into messages (id, conversation_id, sender, body, kind)
+      values (${nid("msg")}, ${tour.conversation_id}, ${"system"}, ${body}, ${"status"})
+    `;
+    await sql`update conversations set last_at = now() where id = ${tour.conversation_id}`;
+    await markConversationRead(sql, tour.conversation_id, context.userId);
+    await syncLeadFromTour(sql, tour.id, tour.status);
+
+    const guestName = `${tour.parent_first_name || ""} ${tour.parent_last_name || ""}`.trim();
+    await notifyTourParties(sql, {
+      conversationId: tour.conversation_id,
+      daycareId: tour.daycare_id,
+      daycareName: tour.daycare_name,
+      parentUserId: tour.user_id,
+      parentEmail: tour.contact_email,
+      parentName: guestName || null,
+      subject: `Tour time updated — ${tour.daycare_name}`,
+      preview: body,
+    }).catch(() => undefined);
+
+    return { ok: true as const, conversationId: tour.conversation_id, windowId: slot.id, times };
+  });
+
+export const cancelTourRequest = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { tourId: string; note?: string }) => input)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const rows = await sql<{
+      id: string;
+      status: string;
+      conversation_id: string;
+      user_id: string;
+      daycare_id: string;
+      daycare_name: string;
+      slug: string;
+      contact_email: string | null;
+      parent_first_name: string | null;
+      parent_last_name: string | null;
+    }>`
+      select t.id, t.status, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug,
+             t.contact_email, t.parent_first_name, t.parent_last_name
+      from tour_requests t
+      join daycares d on d.id = t.daycare_id
+      where t.id = ${data.tourId}
+      limit 1
+    `.catch(() => []);
+    const tour = rows[0];
+    if (!tour) throw new Error("Tour request not found");
+
+    const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
+    const owned = await canCentreWriteLeadsFor(sql, context.userId, tour.daycare_id);
+    const isParent = tour.user_id === context.userId;
+    if (!owned && !isParent) throw new Error("Not authorized");
+
+    const next = nextTourStatus(tour.status, "lost");
+    if (!next) throw new Error("This tour cannot be cancelled");
+
+    const note = (data.note || "").trim() || null;
+    await sql`
+      update tour_requests
+      set status = ${next},
+          centre_note = coalesce(${note}, centre_note),
+          responded_by = ${context.userId},
+          responded_at = coalesce(responded_at, now())
+      where id = ${tour.id}
+    `;
+
+    const body = tourStatusBody({ status: next, daycareName: tour.daycare_name, note });
+    await sql`
+      insert into messages (id, conversation_id, sender, body, kind)
+      values (${nid("msg")}, ${tour.conversation_id}, ${"system"}, ${body}, ${"status"})
+    `;
+    await sql`update conversations set last_at = now() where id = ${tour.conversation_id}`;
+    await markConversationRead(sql, tour.conversation_id, context.userId);
+    await syncLeadFromTour(sql, tour.id, next);
+
+    const guestName = `${tour.parent_first_name || ""} ${tour.parent_last_name || ""}`.trim();
+    await notifyTourParties(sql, {
+      conversationId: tour.conversation_id,
+      daycareId: tour.daycare_id,
+      daycareName: tour.daycare_name,
+      parentUserId: tour.user_id,
+      parentEmail: tour.contact_email,
+      parentName: guestName || null,
+      subject: `Tour cancelled — ${tour.daycare_name}`,
+      preview: body,
+    }).catch(() => undefined);
 
     return { ok: true as const, status: next, conversationId: tour.conversation_id };
   });

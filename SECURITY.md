@@ -61,7 +61,7 @@ Session cookies stay `Secure`, `HttpOnly`, `SameSite=Lax`. Admin idle is 30 minu
 
 ## Cron
 
-`/api/digest`, `/api/search-alerts`, and `/api/seed-catalog` accept `Authorization: Bearer $CRON_SECRET` only (Vercel Cron sends this when `CRON_SECRET` is set). Query-string `?secret=` is rejected. `/api/seed-catalog` upserts a chunk of `centres.json` into Neon; it is not on the deploy build and is not a Vercel cron by default.
+`/api/digest`, `/api/search-alerts`, `/api/tour-holds`, and `/api/seed-catalog` accept `Authorization: Bearer $CRON_SECRET` only (Vercel Cron sends this when `CRON_SECRET` is set). Query-string `?secret=` is rejected. `/api/seed-catalog` upserts a chunk of `centres.json` into Neon; it is not on the deploy build and is not a Vercel cron by default. `/api/tour-holds` expires overdue tour soft-holds and frees the seat.
 
 `/api/inngest` is the Inngest serve endpoint (TanStack Start + `inngest/edge`). Inngest Cloud signs requests with `INNGEST_SIGNING_KEY`. Do not put a query-string secret on that URL. The app boots when Inngest keys are unset — Cloud simply cannot sync until Kyle pastes them on Vercel kidease-git. See `docs/inngest.md`.
 

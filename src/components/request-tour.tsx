@@ -199,6 +199,7 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
               <p className="text-sm text-muted">{t("tourTimesListingLead")}</p>
+              <p className="text-sm text-muted">{t("tourHoldSlaLead")}</p>
               {loading ? (
                 <p className="text-sm text-muted">{t("loading")}</p>
               ) : empty ? (

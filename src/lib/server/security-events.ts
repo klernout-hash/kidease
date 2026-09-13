@@ -17,6 +17,8 @@ export type SecurityKind =
   | "digest_run"
   | "search_alerts_denied"
   | "search_alerts_run"
+  | "tour_holds_denied"
+  | "tour_holds_run"
   | "seed_catalog_denied"
   | "seed_catalog_run"
   | "employee_invite"
