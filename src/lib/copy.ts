@@ -947,6 +947,10 @@ export const copy = {
     todayActionLicence: "Action required · Licence",
     todayActionListing: "Action required · Listing details",
     todayActionScreening: "Action required · Screening",
+    todayActionRequired: "Action required",
+    todayActionRequiredLead:
+      "Required listing facts still block Listing Verified. KidEase is not the provincial regulator and does not issue licences or Vulnerable Sector Checks.",
+    todayActionRequiredOpen: "Open next item",
     todayConfirmed: "Confirmed tour today",
     todayOpenItem: "Open",
     todayAllSet: "All set until {when}",
@@ -1415,6 +1419,23 @@ export const copy = {
     completenessTitle: "Public listing checklist",
     completenessLead:
       "Parents see a quiet “A few details to confirm” note until you add the missing facts. Incomplete listings stay visible. KidEase does not hide them or invent the missing facts.",
+    listingVerified: "Listing Verified",
+    listingVerifiedLead:
+      "Required Canada facts are filled. KidEase is not the provincial regulator and does not issue licences or Vulnerable Sector Checks.",
+    listingVerifiedPending: "Listing Verified is waiting",
+    listingVerifiedPendingLead:
+      "Required items block Listing Verified. Nice-to-have items help parents compare. KidEase is not the regulator — it does not issue licences or Vulnerable Sector Checks.",
+    listingCoachBlockers: "Required for Listing Verified",
+    listingCoachNice: "Nice to have",
+    listingCoachNeedProvince: "Province or territory",
+    listingCoachNeedCapacity: "Licensed capacity",
+    listingCoachNeedScreening: "Vulnerable Sector Check / screening on file",
+    listingCoachNeedSubsidy: "Subsidy or fee-program notes",
+    listingCoachNeedPolicies: "Safety or policy notes",
+    listingCoachNeedVacancy: "Confirm today’s open spots",
+    listingCoachOpenLicence: "Licence",
+    listingCoachOpenListing: "Listing details",
+    listingCoachOpenScreening: "Screening",
     listingHealthTitle: "Listing health",
     listingHealthLead:
       "Percent complete from fees, ages, photo, hours, and a real vacancy confirm. Incomplete listings stay searchable. KidEase does not invent missing facts or timestamps.",
@@ -2741,6 +2762,10 @@ export const copy = {
     todayActionLicence: "Action requise · Permis",
     todayActionListing: "Action requise · Fiche",
     todayActionScreening: "Action requise · Filtrage",
+    todayActionRequired: "Action requise",
+    todayActionRequiredLead:
+      "Des faits obligatoires de la fiche bloquent encore Fiche vérifiée. KidEase n’est pas l’organisme de réglementation et n’émet ni permis ni vérifications du secteur vulnérable.",
+    todayActionRequiredOpen: "Ouvrir le prochain élément",
     todayConfirmed: "Visite confirmée aujourd’hui",
     todayOpenItem: "Ouvrir",
     todayAllSet: "Tout est en ordre jusqu’à {when}",
@@ -3212,6 +3237,23 @@ export const copy = {
     completenessTitle: "Liste pour la fiche publique",
     completenessLead:
       "Les parents voient une mention discrète « Quelques détails à confirmer » jusqu’à ce que vous ajoutiez les faits manquants. Les fiches incomplètes restent visibles. KidEase ne les cache pas et n’invente pas les faits manquants.",
+    listingVerified: "Fiche vérifiée",
+    listingVerifiedLead:
+      "Les faits canadiens obligatoires sont remplis. KidEase n’est pas l’organisme de réglementation et n’émet ni permis ni vérifications du secteur vulnérable.",
+    listingVerifiedPending: "Fiche vérifiée en attente",
+    listingVerifiedPendingLead:
+      "Les éléments obligatoires bloquent Fiche vérifiée. Les éléments facultatifs aident les parents à comparer. KidEase n’est pas l’organisme de réglementation — il n’émet ni permis ni vérifications du secteur vulnérable.",
+    listingCoachBlockers: "Obligatoire pour Fiche vérifiée",
+    listingCoachNice: "Facultatif",
+    listingCoachNeedProvince: "Province ou territoire",
+    listingCoachNeedCapacity: "Capacité autorisée",
+    listingCoachNeedScreening: "Vérification du secteur vulnérable / dossier de filtrage",
+    listingCoachNeedSubsidy: "Notes sur la subvention ou le programme de frais",
+    listingCoachNeedPolicies: "Notes de sécurité ou de politique",
+    listingCoachNeedVacancy: "Confirmer les places d’aujourd’hui",
+    listingCoachOpenLicence: "Permis",
+    listingCoachOpenListing: "Détails de la fiche",
+    listingCoachOpenScreening: "Filtrage",
     listingHealthTitle: "Santé de la fiche",
     listingHealthLead:
       "Pourcentage selon les tarifs, âges, photo, heures et une vraie confirmation de places. Les fiches incomplètes restent trouvables. KidEase n’invente pas les faits ni les horodatages manquants.",

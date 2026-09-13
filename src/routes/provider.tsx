@@ -44,6 +44,8 @@ import { ProviderPlanBanner } from "@/components/provider-plan-banner";
 import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { FreePageExplainer } from "@/components/free-listing-share";
 import { CompletenessChecklist } from "@/components/listing-completeness";
+import { ActionRequiredBanner, ListingReadinessCoach } from "@/components/listing-readiness-coach";
+import { COACH_FOCUS_ANCHOR, type ListingCoachFocus } from "@/lib/listing-verified";
 import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
@@ -54,14 +56,29 @@ import { useSessionDesks } from "@/components/desk-switcher";
 const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
+const COACH_FOCUS = new Set<ListingCoachFocus>([
+  "license",
+  "province",
+  "hours",
+  "ages",
+  "capacity",
+  "fees",
+  "photo",
+  "screening",
+  "subsidy",
+  "policies",
+  "vacancy",
+]);
 
 export const Route = createFileRoute("/provider")({
   validateSearch: (s: Record<string, unknown>) => {
-    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean } = {};
+    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
     if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
     if (s.preview === "support") out.preview = "support";
     if (s.claimed === true || s.claimed === "1" || s.claimed === "true") out.claimed = true;
+    const focus = typeof s.focus === "string" ? s.focus : "";
+    if (COACH_FOCUS.has(focus as ListingCoachFocus)) out.focus = focus as ListingCoachFocus;
     return out;
   },
   component: ProviderPage,
@@ -156,6 +173,22 @@ function ProviderPage() {
   useEffect(() => {
     if (search.desk) setDesk(search.desk);
   }, [search.desk]);
+
+  useEffect(() => {
+    const focus = search.focus;
+    if (!focus) return;
+    const id = COACH_FOCUS_ANCHOR[focus];
+    const timer = window.setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const focusable = el.matches("input, textarea, button, select")
+        ? el
+        : el.querySelector<HTMLElement>("input, textarea, button, select");
+      focusable?.focus();
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [desk, search.focus, listings.length]);
 
   useEffect(() => {
     if (desk === "requests") capturePostHogEvent("provider_request_opened");
@@ -328,6 +361,7 @@ function ProviderPage() {
 
       {desk === "listings" ? (
         <>
+          <ActionRequiredBanner listings={listings} />
           <DirectorNudgeQueue listings={listings} stats={stats} onConfirmed={() => void load()} />
           <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
           {listings.length ? (
@@ -529,6 +563,7 @@ function ProviderPage() {
             <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
               <h2 className="font-display text-2xl">{locale === "fr" ? d.nameFr : d.name}</h2>
               <p className="mt-1 text-sm text-muted">{t("trustChecklistTitle")}</p>
+              <ListingReadinessCoach item={d} variant="card" />
               <div className="mt-4">
                 <ProviderTrustChecklist daycare={d} onSaved={() => void load()} />
               </div>

@@ -213,7 +213,8 @@ test("server overlay, cards, desk, and docs stay honest", () => {
   assert.match(src("src/components/daycare-card.tsx"), /GuestFavoriteBadge/);
   assert.match(src("src/components/listing-badges.tsx"), /GuestFavoriteBadge/);
   assert.match(src("src/components/quality-issues.tsx"), /QualityIssuesPanel/);
-  assert.match(src("src/components/provider-listing-forms.tsx"), /QualityIssuesPanel/);
+  assert.match(src("src/components/provider-listing-forms.tsx"), /ListingReadinessCoach/);
+  assert.doesNotMatch(src("src/components/provider-listing-forms.tsx"), /QualityIssuesPanel/);
   assert.match(src("src/routes/compare.tsx"), /guestFavorite/);
 
   const copy = src("src/lib/copy.ts");

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PriorityPill } from "@/components/priority-pill";
 import { ListingHealthPanel } from "@/components/listing-health";
-import { QualityIssuesPanel } from "@/components/quality-issues";
+import { ListingReadinessCoach } from "@/components/listing-readiness-coach";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { classifyListingPhotos, MAX_INTERIOR_PHOTOS } from "@/lib/listing-photo";
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
@@ -173,7 +173,10 @@ export function CapacityForm({
   const draft = {
     ...daycare,
     hours: state.hours,
+    province: state.province,
     licenseNumber: state.licenseNumber,
+    financial: state.financial,
+    safetyFeatures: state.safetyFeatures,
     spotsInfant: state.spotsInfant,
     spotsToddler: state.spotsToddler,
     spotsPreschool: state.spotsPreschool,
@@ -265,7 +268,15 @@ export function CapacityForm({
         </>
       ) : (
         <>
-          <QualityIssuesPanel item={{ ...daycare, ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
+          <ListingReadinessCoach
+            item={{
+              ...daycare,
+              ...draft,
+              detailsReady: complete.ready,
+              completenessMissing: complete.missing,
+            }}
+            variant="editor"
+          />
           <ListingHealthPanel item={{ ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
           <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -313,7 +324,9 @@ export function CapacityForm({
             <Field label={t("centreName")} value={state.name} onChange={(v) => setState({ ...state, name: v })} />
             <Field label={t("addressLabel")} value={state.address} onChange={(v) => setState({ ...state, address: v })} />
             <Field label={t("cityLabel")} value={state.city} onChange={(v) => setState({ ...state, city: v })} />
-            <Field label={t("provinceLabel")} value={state.province} onChange={(v) => setState({ ...state, province: v })} />
+            <div id="listing-health-province">
+              <Field label={t("provinceLabel")} value={state.province} onChange={(v) => setState({ ...state, province: v })} />
+            </div>
             <Field label={t("postalLabel")} value={state.postalCode} onChange={(v) => setState({ ...state, postalCode: v })} />
             <Field label={t("phoneLabel")} value={state.phone} onChange={(v) => setState({ ...state, phone: v })} />
             <Field label={t("contactEmail")} value={state.email} onChange={(v) => setState({ ...state, email: v })} />
@@ -344,10 +357,14 @@ export function CapacityForm({
             }}
             onChange={(culture) => setState({ ...state, ...culture })}
           />
-          <ProviderParentFields
-            value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
-            onChange={(parent) => setState({ ...state, ...parent })}
-          />
+          <div id="listing-health-subsidy">
+            <div id="listing-health-policies">
+              <ProviderParentFields
+                value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
+                onChange={(parent) => setState({ ...state, ...parent })}
+              />
+            </div>
+          </div>
           <div id="listing-health-vacancy" className="rounded-lg bg-bg p-4 ring-1 ring-border">
             <VacancyFreshness item={daycare} className="text-sm" />
             {vacancy.kind === "unknown" ? <p className="text-sm text-muted">{t("vacancyUnknownProvider")}</p> : null}

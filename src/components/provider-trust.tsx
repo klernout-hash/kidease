@@ -36,7 +36,7 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
           <p className="mt-1 font-medium">{t(claimKey(daycare))}</p>
           <p className="mt-1 text-sm text-muted">{t("trustClaimReviewTip")}</p>
         </li>
-        <li className="rounded-lg bg-bg p-4 ring-1 ring-border">
+        <li id="listing-health-license" className="rounded-lg bg-bg p-4 ring-1 ring-border">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">2 · {t("trustChecklistLicense")}</p>
           <p className="mt-1 text-sm text-muted">{t("trustLicenseUnverifiedTip")}</p>
           <form
@@ -70,7 +70,7 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
                 onChange={(e) => setLicenseExpiry(e.target.value)}
               />
             </label>
-            <label className="text-sm">
+            <label id="listing-health-capacity" className="text-sm">
               {t("trustCapacity")}
               <input
                 type="number"

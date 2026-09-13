@@ -240,11 +240,15 @@ export function ProviderScreeningPanel() {
   }
 
   if (!centres.length) {
-    return <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("screeningNoPeople")}</p>;
+    return (
+      <p id="listing-coach-screening" className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">
+        {t("screeningNoPeople")}
+      </p>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div id="listing-coach-screening" className="space-y-6">
       <div>
         <h2 className="font-display text-2xl">{t("screeningDesk")}</h2>
         <p className="mt-2 text-sm leading-6 text-muted">{t("screeningLead")}</p>

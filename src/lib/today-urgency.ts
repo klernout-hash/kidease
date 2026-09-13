@@ -6,6 +6,7 @@
 import { DAYCARE_PRIMARY_NAV_IDS, type DaycarePrimaryNavId } from "@/lib/desk-nav";
 import { listingCompleteness } from "@/lib/listing-readiness";
 import { listingStatusFromClaim } from "@/lib/listing-status";
+import { listingVerifiedCoach } from "@/lib/listing-verified";
 import { isClaimVerified, normalizeLicenseStatus, type TrustListing } from "@/lib/trust";
 import type { Conversation, Daycare, TourRequest } from "@/lib/types";
 import {
@@ -81,7 +82,8 @@ export function listingNeedsLicence(
 }
 
 export function listingNeedsCompleteness(item: Daycare): boolean {
-  return !listingCompleteness(item).ready;
+  const coach = listingVerifiedCoach(item);
+  return coach.missingBlockers.some((id) => id !== "screening" && id !== "license");
 }
 
 export function centreNeedsScreening(centre: ScreeningGapCentre): boolean {
@@ -124,7 +126,7 @@ export function collectActionRequired(input: {
           tone: "navy",
           title: name,
           detail: "licence",
-          href: { to: "/provider", search: { desk: "licence" } },
+          href: { to: "/provider", search: { desk: "licence", focus: "license" } },
           sortAt: 3,
         });
       }
@@ -139,7 +141,7 @@ export function collectActionRequired(input: {
           tone: "navy",
           title: name,
           detail: "listing",
-          href: { to: "/provider", search: { desk: "listings" } },
+          href: { to: "/provider", search: { desk: "listings", focus: "hours" } },
           sortAt: 4,
         });
       }
@@ -156,7 +158,7 @@ export function collectActionRequired(input: {
       tone: "navy",
       title: previewName(centre.daycareName, centre.daycareId),
       detail: "screening",
-      href: { to: "/provider", search: { desk: "screening" } },
+      href: { to: "/provider", search: { desk: "screening", focus: "screening" } },
       sortAt: 2,
     });
   }

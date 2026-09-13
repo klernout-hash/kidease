@@ -155,10 +155,11 @@ test("provider default desk is Today and clutter stays off that path", () => {
   assert.match(provider, /desk === "today"/);
   assert.match(provider, /desk !== "today"/);
   assert.match(home, /todayAllSet/);
+  assert.match(home, /ActionRequiredBanner/);
   assert.match(home, /acceptTour/);
   assert.match(home, /todayProposeTime/);
   assert.match(home, /declineTour/);
-  assert.doesNotMatch(home, /Promote|Subscription|Claim a centre|FreePageExplainer|DirectorNudge|VacancyConfirm|ProviderPlanBanner|first-run|modal/);
+  assert.doesNotMatch(home, /Promote|Subscription|Claim a centre|FreePageExplainer|DirectorNudge|VacancyConfirm|ProviderPlanBanner|first-run|modal|QualityIssuesPanel|Superhost/);
   assert.match(shell, /visiblePrimaryDeskNav/);
   assert.match(shell, /visibleSecondaryDeskNav/);
   assert.match(shell, /bg-primary text-primary-fg/);

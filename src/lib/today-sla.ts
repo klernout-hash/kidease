@@ -12,7 +12,13 @@ export type TodayKind = "tour_request" | "unread" | "action" | "confirmed_tour";
 export type TodayHref =
   | { to: "/inbox/$id"; params: { id: string }; search?: { view: "centre" } }
   | { to: "/inbox"; search: { view: "centre" } }
-  | { to: "/provider"; search: { desk: "listings" | "tours" | "licence" | "screening" | "requests" } };
+  | {
+      to: "/provider";
+      search: {
+        desk: "listings" | "tours" | "licence" | "screening" | "requests";
+        focus?: "license" | "hours" | "ages" | "fees" | "photo" | "screening" | "capacity" | "province";
+      };
+    };
 
 export type TodayRow = {
   id: string;
