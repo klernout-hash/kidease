@@ -14,10 +14,15 @@ import {
   ADMIN_PEOPLE_DAYS,
   adminDeskHref,
   activityAccountHeadline,
+  activityEmailFailed,
+  activityEmailStatusLabel,
+  activityPeopleSearch,
   activityRoleBadge,
+  activitySignupMeta,
   activityWhoLine,
   isAccountEventKind,
   isAdminDeskTab,
+  isSignupActivityKind,
   parseAccountEventDetail,
   parseAdminActivityKind,
   resolveAdminTab,
@@ -187,6 +192,10 @@ function AdminPage() {
     if (!user || !admin) return;
     void refresh();
   }, [user, admin]);
+
+  useEffect(() => {
+    setPeopleQ(search.q || "");
+  }, [search.q]);
 
   const staffCentres = useMemo(() => staffQueueRows(centres, showQaFixtures), [centres, showQaFixtures]);
   const qaCount = useMemo(() => centres.filter((c) => c.isTest).length, [centres]);
@@ -518,7 +527,18 @@ function AdminPage() {
           rows={peopleRows}
           all={people}
           q={peopleQ}
-          setQ={setPeopleQ}
+          setQ={(v) => {
+            setPeopleQ(v);
+            void navigate({
+              to: "/admin",
+              search: {
+                tab: "people",
+                role: peopleRole === "all" ? undefined : peopleRole,
+                q: v.trim() || undefined,
+              },
+              replace: true,
+            });
+          }}
           role={peopleRole}
           onRole={(next) => {
             void navigate({
@@ -585,21 +605,34 @@ function AdminPage() {
               const badge = activityRoleBadge(r.kind, r.detail);
               const extra = parseAccountEventDetail(r.detail);
               const who = activityWhoLine(r);
+              const meta = activitySignupMeta(r);
+              const mailFailed = activityEmailFailed(r.email_status);
+              const peopleSearch = activityPeopleSearch(r);
               return (
-              <li key={r.id} className="p-4">
+              <li key={r.id} className={mailFailed ? "bg-danger/5 p-4" : "p-4"}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs uppercase tracking-wide text-subtle">{r.kind}</p>
                       {badge ? <RoleBadge label={badge} /> : null}
+                      {mailFailed ? (
+                        <span className="rounded-full bg-danger/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-danger">
+                          {activityEmailStatusLabel(r.email_status)}
+                        </span>
+                      ) : null}
                     </div>
                     <p className="font-medium">{activityAccountHeadline(r)}</p>
                     <p className="text-sm text-muted">
-                      {isAccountEventKind(r.kind)
+                      {isAccountEventKind(r.kind) || r.kind === "listing"
                         ? [r.city, r.province].filter(Boolean).join(", ") || "—"
                         : [r.address, r.city, r.province].filter(Boolean).join(", ") || "—"}
                     </p>
                     <p className="mt-1 text-sm">{who}</p>
+                    {isSignupActivityKind(r.kind) ? (
+                      <p className="mt-0.5 text-xs text-subtle">
+                        {[meta.who, meta.role, meta.city, meta.time].join(" · ")}
+                      </p>
+                    ) : null}
                     {isAccountEventKind(r.kind) && (extra.phone || extra.authMethod) ? (
                       <p className="mt-0.5 text-xs text-subtle">
                         {[extra.phone, extra.authMethod].filter(Boolean).join(" · ")}
@@ -608,16 +641,17 @@ function AdminPage() {
                   </div>
                   <div className="text-right text-xs text-muted">
                     <p>{new Date(r.created_at).toLocaleString("en-CA", { timeZone: "America/Winnipeg", dateStyle: "medium", timeStyle: "short" })}</p>
-                    <p className="mt-1">email {r.email_status}</p>
+                    {mailFailed ? null : <p className="mt-1">{activityEmailStatusLabel(r.email_status)}</p>}
                     {r.slug ? (
                       <Link to="/daycare/$slug" params={{ slug: r.slug }} className="text-primary underline-offset-4 hover:underline">
                         View listing
                       </Link>
-                    ) : isAccountEventKind(r.kind) ? (
+                    ) : null}
+                    {isSignupActivityKind(r.kind) || isAccountEventKind(r.kind) ? (
                       <Link
                         to="/admin"
-                        search={{ tab: "people", role: r.kind === "signup" ? "provider" : "parent" }}
-                        className="text-primary underline-offset-4 hover:underline"
+                        search={peopleSearch}
+                        className="mt-1 block text-primary underline-offset-4 hover:underline"
                       >
                         Open People
                       </Link>

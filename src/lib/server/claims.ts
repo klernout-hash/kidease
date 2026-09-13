@@ -208,8 +208,9 @@ export const verifyClaim = createServerFn({ method: "POST" })
     await writeProfileRole(context.userId, "provider");
     const actor = await lookupUser(context.userId);
     const listedAfter = await catalogByIdGet(data.daycareId);
+    let eventId: string | null = null;
     try {
-      await notifyProviderJoined({
+      const result = await notifyProviderJoined({
         kind: "claim",
         daycareName: listedAfter?.name,
         address: listedAfter?.address,
@@ -219,8 +220,24 @@ export const verifyClaim = createServerFn({ method: "POST" })
         providerName: actor.name,
         providerEmail: actor.email,
       });
+      eventId = result?.id ?? null;
     } catch (err) {
       console.error("[kidease-mail] claim notify failed", err);
+    }
+    try {
+      const { captureSignupIntakeFromUser } = await import("@/lib/server/ghl-intake");
+      await captureSignupIntakeFromUser({
+        userId: context.userId,
+        role: "provider",
+        trigger: "claim_verify",
+        eventId,
+        company: listedAfter?.name,
+        name: actor.name,
+        email: actor.email,
+        phone: actor.phone,
+      });
+    } catch (err) {
+      console.error("[kidease-ghl] claim intake failed", err);
     }
     return { ok: true as const, status: "waiting" as const };
   });

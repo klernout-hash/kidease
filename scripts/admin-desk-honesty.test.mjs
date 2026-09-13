@@ -73,6 +73,10 @@ test("account and signup activity always name who, with People + first-class chi
   const nav = src("src/lib/desk-nav.ts");
   assert.match(admin, /activityAccountHeadline/);
   assert.match(admin, /activityWhoLine/);
+  assert.match(admin, /activityEmailFailed/);
+  assert.match(admin, /activityEmailStatusLabel/);
+  assert.match(admin, /activityPeopleSearch/);
+  assert.match(src("src/lib/account-notify.ts"), /Email failed/);
   assert.match(admin, /RoleBadge/);
   assert.match(admin, /PeoplePanel/);
   assert.match(admin, /Daycare providers/);

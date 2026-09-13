@@ -16,6 +16,7 @@ import {
   leadNotificationHref,
   leadTitleKey,
   notificationSourceKey,
+  projectAdminSignupNotification,
   searchAlertHref,
   type NotificationItem,
   type NotificationKind,
@@ -233,6 +234,29 @@ async function projectFromSearchAlerts(sql: Sql, userId: string): Promise<Projec
   }));
 }
 
+async function projectFromPlatformSignups(sql: Sql, isAdmin: boolean): Promise<ProjectedNotification[]> {
+  if (!isAdmin) return [];
+  const rows = await sql<{
+    id: string;
+    kind: string;
+    daycare_name: string | null;
+    provider_name: string | null;
+    provider_email: string | null;
+    email_status: string | null;
+    created_at: string;
+  }>`
+    select id, kind, daycare_name, provider_name, provider_email, email_status, created_at
+    from platform_events
+    where kind in ('account', 'signup', 'listing')
+    order by created_at desc
+    limit 40
+  `.catch(() => []);
+
+  return rows
+    .map((row) => projectAdminSignupNotification(row))
+    .filter((row): row is ProjectedNotification => Boolean(row));
+}
+
 export async function projectUserNotifications(sql: Sql, userId: string): Promise<ProjectedNotification[]> {
   const actor = await lookupUser(userId).catch(() => ({ email: null }));
   const isAdmin = isKidEaseOperatorEmail(actor.email);
@@ -242,6 +266,7 @@ export async function projectUserNotifications(sql: Sql, userId: string): Promis
     projectFromClaims(sql, userId, isAdmin),
     projectFromInbox(sql, userId),
     projectFromSearchAlerts(sql, userId),
+    projectFromPlatformSignups(sql, isAdmin),
   ]);
   return batches.flat().filter((row) => isAllowedNotificationHref(row.href));
 }
