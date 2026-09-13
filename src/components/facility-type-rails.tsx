@@ -11,6 +11,7 @@ export const FACILITY_RAIL_COPY: Record<FacilityType, CopyKey> = {
   centre: "railDaycareCentres",
   nursery: "railNursery",
   home: "railHome",
+  school: "railSchool",
 };
 
 function take(rows: Card[], n = 12) {
@@ -40,6 +41,7 @@ export function FacilityTypeRails({
     centre: rows?.centre ?? facilityTypeRailItems(items ?? [], "centre"),
     nursery: rows?.nursery ?? facilityTypeRailItems(items ?? [], "nursery"),
     home: rows?.home ?? facilityTypeRailItems(items ?? [], "home"),
+    school: rows?.school ?? facilityTypeRailItems(items ?? [], "school"),
   };
 
   return (
@@ -49,7 +51,9 @@ export function FacilityTypeRails({
           key={kind}
           title={t(FACILITY_RAIL_COPY[kind])}
           items={resolved[kind]}
-          seeAllHref={parentRailSearchHref({ care: kind })}
+          seeAllHref={
+            kind === "school" ? "/search?fac=school" : parentRailSearchHref({ care: kind })
+          }
           eagerThumbs={eagerThumbs}
         />
       ))}

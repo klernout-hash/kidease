@@ -9,6 +9,13 @@ import { Shell } from "@/components/shell";
 import { ListingRail } from "@/components/listing-rail";
 import { RequestSpotSheet } from "@/components/request-spot";
 import { RequestTourSheet } from "@/components/request-tour";
+import { RequestInfoSheet } from "@/components/request-info";
+import {
+  ListingHeaderPills,
+  ListingJumpNav,
+  ListingProgramsTable,
+  ListingSnapshotGrid,
+} from "@/components/listing-parent-pack";
 import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
@@ -137,6 +144,7 @@ function Listing() {
   const [photo, setPhoto] = useState(0);
   const [requestOpen, setRequestOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [missing, setMissing] = useState(false);
   const [reload, setReload] = useState(0);
@@ -190,6 +198,10 @@ function Listing() {
     if (!data || isPending) return;
     const ask = search.ask;
     if (!ask) return;
+    if (ask === "info") {
+      setInfoOpen(true);
+      return;
+    }
     if (!user) {
       goLogin(ask === "tour" ? "needSignInTour" : "guestSignInReturn", ask);
       return;
@@ -297,8 +309,17 @@ function Listing() {
           ? `/daycare/${slug}?ask=spot`
           : ask === "waitlist"
             ? `/daycare/${slug}?ask=waitlist`
-            : `/daycare/${slug}`;
+            : ask === "info"
+              ? `/daycare/${slug}?ask=info`
+              : `/daycare/${slug}`;
     void navigate({ to: "/login", search: parentLoginSearch(next) });
+  }
+
+  function onInfo() {
+    if (!live) return;
+    captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "info" });
+    capturePostHogEvent("listing_request_started", { intent: "info" });
+    setInfoOpen(true);
   }
 
   function onRequest() {
@@ -345,15 +366,15 @@ function Listing() {
     return (
       <>
         {live ? (
-          <Button onClick={onTour}>{t("requestTour")}</Button>
+          <Button onClick={onInfo}>{t("requestInfo")}</Button>
         ) : (
           <Button asChild>
             <Link to="/search">{t("searchNearby")}</Link>
           </Button>
         )}
         {live ? (
-          <Button variant="secondary" onClick={onRequest}>
-            {t("requestSpotCta")}
+          <Button variant="secondary" onClick={onTour}>
+            {t("bookTour")}
           </Button>
         ) : !d.claimed ? (
           <Button asChild variant="secondary">
@@ -365,6 +386,11 @@ function Listing() {
           <p className="text-xs text-muted">{t("requestUnavailable")}</p>
         )}
         {!live ? <p className="text-xs text-muted">{t("parentRequestNotLive")}</p> : null}
+        {live ? (
+          <Button variant="ghost" onClick={onRequest}>
+            {t("requestSpotCta")}
+          </Button>
+        ) : null}
         {live ? (
           <Button variant="secondary" onClick={() => void onMessage()}>
             <MessageCircle className="size-4" /> {t("message")}
@@ -405,7 +431,7 @@ function Listing() {
           <span aria-hidden>/</span>
           <span className="text-fg">{name}</span>
         </nav>
-        <div className="overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
+        <div id="listing-photos" className="scroll-mt-24 overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
           <div className="relative aspect-[16/10] bg-surface-2 md:aspect-[2/1]">
             {photos[photo]?.includes("-logo") ? (
               <img
@@ -489,6 +515,8 @@ function Listing() {
                   {licensed ? <TrustBadge badge={licensed} /> : null}
                 </div>
                 <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
+                <ListingHeaderPills item={d} />
+                <ListingJumpNav />
                 <p className="mt-2 text-xs font-medium text-subtle">{t("freeListingNotAd")}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <CompareChip id={d.id} slug={d.slug} />
@@ -615,7 +643,10 @@ function Listing() {
               <p className="mt-2 max-w-prose text-muted">{desc}</p>
             </section>
 
-            <section className="mt-8">
+            <ListingProgramsTable item={d} />
+            <ListingSnapshotGrid item={d} />
+
+            <section id="listing-fees" className="mt-8 scroll-mt-24">
               <h2 className="font-display text-2xl">{t("pricing")}</h2>
               {live && from > 0 ? (
                 <ul className="mt-3 divide-y divide-border rounded-lg ring-1 ring-border">
@@ -643,7 +674,7 @@ function Listing() {
               </p>
             </section>
 
-            <section className="mt-8">
+            <section id="listing-location" className="mt-8 scroll-mt-24">
               <div className="flex items-end justify-between gap-3">
                 <h2 className="font-display text-2xl">{t("onMap")}</h2>
                 <button
@@ -715,7 +746,7 @@ function Listing() {
 
             <ListingCultureCard daycare={d} />
 
-            <section className="mt-8">
+            <section id="listing-reviews" className="mt-8 scroll-mt-24">
               <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
               {(d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0 ? (
                 <p className="mt-2 inline-flex items-center gap-2 text-sm">
@@ -802,8 +833,8 @@ function Listing() {
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden [[data-channel=app]_&]:bottom-20">
         <div className="mx-auto flex max-w-lg items-center gap-1.5 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {live ? (
-            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" onClick={onTour}>
-              {t("requestTour")}
+            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" onClick={onInfo}>
+              {t("requestInfo")}
             </Button>
           ) : (
             <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" asChild>
@@ -811,8 +842,8 @@ function Listing() {
             </Button>
           )}
           {live ? (
-            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" onClick={onRequest}>
-              {t("requestSpotCta")}
+            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" onClick={onTour}>
+              {t("bookTour")}
             </Button>
             ) : !d.claimed ? (
               <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" asChild>
@@ -846,6 +877,7 @@ function Listing() {
 
       <RequestSpotSheet daycare={d} open={requestOpen} intent="spot" onClose={() => setRequestOpen(false)} />
       <RequestTourSheet daycare={d} open={tourOpen} onClose={() => setTourOpen(false)} />
+      <RequestInfoSheet daycare={d} open={infoOpen} onClose={() => setInfoOpen(false)} />
       <CompareBar />
     </Shell>
   );
@@ -855,6 +887,7 @@ const FACILITY_LABEL: Record<FacilityType, CopyKey> = {
   centre: "facilityTypeCentre",
   nursery: "facilityTypeNursery",
   home: "facilityTypeHome",
+  school: "facilityTypeSchool",
 };
 
 function facilityTypeLabelKey(type: FacilityType): CopyKey {

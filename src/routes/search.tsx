@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { ExploreCategoryChips } from "@/components/explore-category-chips";
+import { ExploreFilterChips } from "@/components/explore-filter-chips";
 import { DaycareCard } from "@/components/daycare-card";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
@@ -36,6 +37,14 @@ import {
   matchesDaycareName,
   parseExploreSearchFields,
 } from "@/lib/explore-search";
+import {
+  compactParentListingSearch,
+  matchesParentListingFilters,
+  parentSearchActive,
+  parseParentListingSearch,
+  visibleParentChipOptions,
+  type ParentListingSearch,
+} from "@/lib/parent-listing";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
 import { resolveSearchAnchors } from "@/lib/dual-anchor";
 import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
@@ -55,7 +64,6 @@ import {
 } from "@/lib/now-loops";
 import {
   isCareType,
-  isFacilityType,
   isRailAge,
   matchesCareType,
   matchesRailAge,
@@ -122,6 +130,10 @@ export const Route = createFileRoute("/search")({
       cat?: ExploreCategory;
       care?: CareType;
       favorites?: "1";
+      ages?: string;
+      open?: string;
+      sched?: string;
+      fac?: string;
     } = { ...fields };
     const sort = typeof s.sort === "string" ? s.sort : "";
     if (
@@ -135,9 +147,10 @@ export const Route = createFileRoute("/search")({
     if (typeof s.start === "string" && isSearchStart(s.start)) out.start = s.start;
     if (typeof s.cat === "string" && isExploreCategory(s.cat)) out.cat = s.cat;
     if (typeof s.care === "string" && isCareType(s.care)) out.care = s.care;
-    else if (typeof s.facility === "string" && isFacilityType(s.facility)) out.care = s.facility;
+    else if (typeof s.facility === "string" && isCareType(s.facility)) out.care = s.facility;
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
-    return out;
+    const parent = compactParentListingSearch(parseParentListingSearch(s));
+    return { ...out, ...parent };
   },
   head: () => pageSeoHead(MARKETING_PAGE_SEO.search),
   component: SearchPage,
@@ -421,6 +434,34 @@ function SearchPage() {
     anchorMode,
   ]);
 
+  const parentFilters = useMemo(() => parseParentListingSearch(incoming), [incoming]);
+
+  function withParentSearch(search: Record<string, unknown>) {
+    return { ...search, ...compactParentListingSearch(parentFilters) };
+  }
+
+  function writeParentFilters(next: ParentListingSearch) {
+    void navigate({
+      search: {
+        q: incoming.q ?? query,
+        name: incoming.name,
+        from: incoming.from,
+        to: incoming.to,
+        sort: incoming.sort,
+        age: incoming.age,
+        start: incoming.start,
+        cat: incoming.cat,
+        care: incoming.care,
+        favorites: incoming.favorites,
+        ages: undefined,
+        open: undefined,
+        sched: undefined,
+        fac: undefined,
+        ...compactParentListingSearch(next),
+      },
+    });
+  }
+
   function applyPlace(place: { lat: number; lng: number; label: string }) {
     setOrigin(place);
     setQuery(place.label);
@@ -429,7 +470,7 @@ function SearchPage() {
   function writeExploreSearch(next: { q?: string; name?: string; from?: string; to?: string }) {
     const fields = compactExploreSearch(next);
     void navigate({
-      search: {
+      search: withParentSearch({
         q: fields.q,
         name: fields.name,
         from: fields.from,
@@ -440,7 +481,7 @@ function SearchPage() {
         cat: incoming.cat,
         care: incoming.care,
         favorites: incoming.favorites,
-      },
+      }),
     });
   }
 
@@ -455,7 +496,7 @@ function SearchPage() {
         ? next.age
         : incoming.cat;
     void navigate({
-      search: {
+      search: withParentSearch({
         q: incoming.q ?? query,
         name: incoming.name,
         from: incoming.from,
@@ -466,7 +507,7 @@ function SearchPage() {
         cat,
         care: incoming.care,
         favorites: incoming.favorites,
-      },
+      }),
     });
   }
 
@@ -474,7 +515,7 @@ function SearchPage() {
   function writeCategorySearch(cat?: ExploreCategory) {
     const age = cat && isRailAge(cat) ? cat : undefined;
     void navigate({
-      search: {
+      search: withParentSearch({
         q: incoming.q ?? query,
         name: incoming.name,
         from: incoming.from,
@@ -484,7 +525,7 @@ function SearchPage() {
         age,
         start: incoming.start,
         favorites: incoming.favorites,
-      },
+      }),
     });
   }
 
@@ -679,6 +720,7 @@ function SearchPage() {
     const cat = isExploreCategory(incoming.cat) ? incoming.cat : undefined;
     if (cat) rows = rows.filter((r) => listingMatchesExploreFilter(r, cat));
     if (nameQuery.trim()) rows = rows.filter((r) => matchesDaycareName(r, nameQuery));
+    if (parentSearchActive(parentFilters)) rows = rows.filter((r) => matchesParentListingFilters(r, parentFilters));
     return rows;
   }, [
     items,
@@ -701,6 +743,7 @@ function SearchPage() {
     incoming.age,
     incoming.care,
     nameQuery,
+    parentFilters,
   ]);
   const searchAge = isSearchAge(incoming.age)
     ? incoming.age
@@ -1088,6 +1131,11 @@ function SearchPage() {
         {!gated ? (
           <p className="mt-2 text-sm text-muted">{t("searchNeedAgeStart")}</p>
         ) : null}
+        <ExploreFilterChips
+          value={parentFilters}
+          visible={visibleParentChipOptions(items ?? [])}
+          onApply={writeParentFilters}
+        />
         <ExploreCategoryChips
           selected={activeCat}
           counts={exploreCatCounts}

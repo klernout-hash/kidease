@@ -27,6 +27,8 @@ import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { rememberSearch, searchMemoKey } from "./search-memo";
+import { transactionalMailConfigured } from "@/lib/transactional-mail";
+import { listingInfoSlaReady } from "@/lib/parent-listing";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
 
 type SearchInput = {
@@ -129,6 +131,13 @@ function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFs
     fromPrice: fromPrice(daycare),
     catchmentKm: catchm.catchmentKm,
     inCatchment: catchm.inCatchment,
+  };
+}
+
+function withInboxReady(daycare: Daycare): Daycare {
+  return {
+    ...daycare,
+    inboxMailReady: listingInfoSlaReady(daycare) && transactionalMailConfigured(),
   };
 }
 
@@ -345,7 +354,7 @@ export const getDaycare = createServerFn({ method: "GET" })
     const catalogDaycare = toDaycare(found);
     const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
     const catalogPayload = {
-      daycare: catalogScored[0] ?? catalogDaycare,
+      daycare: withInboxReady(catalogScored[0] ?? catalogDaycare),
       reviews: [] as Review[],
       availability: catalogAvailability(found),
       nearby: withQualityCards(nearby, catalogScored),
@@ -391,7 +400,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         persistIds: [daycare.id],
       });
       return {
-        daycare: overlayed[0] ?? daycare,
+        daycare: withInboxReady(overlayed[0] ?? daycare),
         reviews: mapReviews(reviews),
         availability,
         nearby: withQualityCards(nearby, overlayed),

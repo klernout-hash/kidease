@@ -10,6 +10,7 @@ import { classifyListingPhotos, MAX_INTERIOR_PHOTOS } from "@/lib/listing-photo"
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
+import { ProviderParentFields, parentDeskFromDaycare } from "@/components/provider-parent-fields";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { promoteListing } from "@/lib/server/promos";
 import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
@@ -137,6 +138,7 @@ export function CapacityForm({
     staffLanguages: daycare.staffLanguages ?? [],
     culturalPrograms: daycare.culturalPrograms ?? [],
     culturalTeamNote: daycare.culturalTeamNote ?? "",
+    ...parentDeskFromDaycare(daycare),
   });
   const [refreshing, setRefreshing] = useState(false);
   const draft = {
@@ -203,6 +205,19 @@ export function CapacityForm({
             staffLanguages: state.staffLanguages,
             culturalPrograms: state.culturalPrograms,
             culturalTeamNote: state.culturalTeamNote,
+            tagline: state.tagline,
+            description: state.description,
+            partTimeMonthly: state.partTimeMonthly,
+            amenities: state.amenityKeys.join(","),
+            facilityType: state.facilityType,
+            scheduleOptions: state.scheduleOptions,
+            openingWindow: state.openingWindow,
+            programs: state.programs,
+            financial: state.financial,
+            curriculumTags: state.curriculumTags,
+            valuesNote: state.valuesNote,
+            safetyFeatures: state.safetyFeatures,
+            promoText: state.promoText,
           },
         })
           .then(onSaved)
@@ -299,6 +314,10 @@ export function CapacityForm({
               culturalTeamNote: state.culturalTeamNote,
             }}
             onChange={(culture) => setState({ ...state, ...culture })}
+          />
+          <ProviderParentFields
+            value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
+            onChange={(parent) => setState({ ...state, ...parent })}
           />
           <div id="listing-health-vacancy" className="rounded-lg bg-bg p-4 ring-1 ring-border">
             <VacancyFreshness item={daycare} className="text-sm" />

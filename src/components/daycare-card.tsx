@@ -27,6 +27,7 @@ import {
   honestVacancy,
   liveLookingGaps,
 } from "@/lib/now-loops";
+import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 
 export const DaycareCard = memo(function DaycareCard({
@@ -73,6 +74,8 @@ export const DaycareCard = memo(function DaycareCard({
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
   const facility = classifyFacilityType(item);
   const typeLabel = facilityTypeSeoKind(facility.type, locale === "fr" ? "fr" : "en");
+  const ageChips = listingAgeChips(item);
+  const loc = locale === "fr" ? "fr" : "en";
   const line3 = [typeLabel, ages, hours].filter(Boolean).join(" · ");
   const photosAge = photoLine(item, t, locale);
   const photoText = photosAge.kind === "unknown" ? "" : photosAge.text;
@@ -171,6 +174,15 @@ export const DaycareCard = memo(function DaycareCard({
               <UrgencyCue score={item.urgencyScore} compact />
             </div>
           ) : null}
+          {ageChips.length ? (
+            <div className="flex flex-wrap gap-1 pt-1">
+              {ageChips.map((band) => (
+                <span key={band} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium">
+                  {parentAgeLabel(band, loc)}
+                </span>
+              ))}
+            </div>
+          ) : null}
           {priceAmount ? (
             <p className="pt-0.5 text-[13px] leading-4 tabular-nums">
               <span className="font-semibold">{priceAmount}</span>
@@ -180,6 +192,15 @@ export const DaycareCard = memo(function DaycareCard({
             <p className="pt-0.5 text-[12px] leading-4 text-muted">{t("cardGapFees")}</p>
           )}
         </div>
+      </Link>
+      <Link
+        to="/daycare/$slug"
+        params={{ slug: item.slug }}
+        search={{ ask: "info" }}
+        className="mt-2 inline-flex h-9 items-center rounded-full bg-primary px-3 text-[12px] font-semibold text-primary-fg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {t("cardRequestInfo")}
       </Link>
       <CompareChip
         id={item.id}

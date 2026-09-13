@@ -289,6 +289,18 @@ export const MARKETING_PAGE_SEO = {
       "Search licensed centres, nurseries, and homes by kilometre radius. Filter by facility type, age, and open spots, or open a city directory for Winnipeg, Toronto, and more.",
     path: "/search",
   },
+  jobs: {
+    title: "Find daycare jobs in Canada · KidEase",
+    description:
+      "KidEase does not run a live job board yet. Licensed caregivers in Canada can leave a note. We do not invent openings.",
+    path: "/jobs",
+  },
+  jobsPost: {
+    title: "Add jobs at KidEase · Licensed centres",
+    description:
+      "Licensed centres can tell KidEase about an opening. This is a waitlist note, not a live job board. We do not publish unverified roles.",
+    path: "/jobs/post",
+  },
 } as const;
 
 /** French counterparts for shipped official-language URLs. Catalogue bodies stay EN. */
@@ -346,6 +358,18 @@ export const MARKETING_PAGE_SEO_FR = {
     description:
       "Connectez-vous pour enregistrer des centres, demander une place et écrire aux éducatrices. Parents et centres permis.",
     path: "/fr/login",
+  },
+  jobs: {
+    title: "Trouver des emplois en garderie au Canada · KidEase",
+    description:
+      "KidEase n’offre pas encore un babillard d’emplois en direct. Les éducatrices au Canada peuvent laisser une note. Nous n’inventons pas de postes.",
+    path: "/fr/jobs",
+  },
+  jobsPost: {
+    title: "Afficher des postes sur KidEase · Centres permis",
+    description:
+      "Les centres permis peuvent parler à KidEase d’une ouverture. C’est une note d’attente, pas un babillard en direct. Nous n’affichons pas de postes non vérifiés.",
+    path: "/fr/jobs/post",
   },
 } as const;
 

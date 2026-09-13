@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 /** Dead `/daycares/:city` hub → working search for that city. */
-export const Route = createFileRoute("/daycares/$city")({
+export const Route = createFileRoute("/daycares_/$city")({
   beforeLoad: ({ params }) => {
     const city = String(params.city || "").trim();
     throw redirect({

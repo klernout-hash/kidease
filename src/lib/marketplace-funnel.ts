@@ -18,7 +18,7 @@ export type MarketplaceFunnelProps = {
   step: MarketplaceFunnelStep;
   source?: "home" | "search" | "listing" | "claim";
   dest_path?: "/search" | "/daycare" | "/claim" | "/other";
-  contact?: "message" | "tour" | "spot" | "phone";
+  contact?: "message" | "tour" | "spot" | "phone" | "info";
 };
 
 export function captureMarketplaceFunnel(props: MarketplaceFunnelProps): void {

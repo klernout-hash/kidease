@@ -31,6 +31,7 @@ export function ListingBadges({
     centre: "facilityTypeCentre",
     nursery: "facilityTypeNursery",
     home: "facilityTypeHome",
+    school: "facilityTypeSchool",
   };
 
   return (

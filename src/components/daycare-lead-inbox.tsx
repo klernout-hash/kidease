@@ -83,6 +83,11 @@ function LeadInboxList({
               <Link to="/daycare/$slug" params={{ slug: lead.daycareSlug }} className="mt-1 block text-sm text-muted hover:underline">
                 {lead.daycareName}
               </Link>
+              {lead.parentEmail || lead.parentPhone ? (
+                <p className="mt-1 text-xs text-subtle">
+                  {[lead.parentEmail, lead.parentPhone].filter(Boolean).join(" · ")}
+                </p>
+              ) : null}
               {lead.message ? (
                 <p className="mt-2 text-sm">
                   <span className="text-subtle">{t("leadParentNote")}: </span>

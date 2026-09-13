@@ -123,6 +123,34 @@ export type Daycare = {
   agesKnown?: boolean;
   visibility?: "public" | "admin_only";
   isTest?: boolean;
+  /** Provider-set facility class. Null = derive from amenities (never a name guess). */
+  facilityType?: "centre" | "nursery" | "home" | "school" | null;
+  /** Provider-set FT/PT/flexible offers. Empty = hidden from parent schedule chips. */
+  scheduleOptions?: Array<"full" | "part" | "flexible">;
+  /** Provider vacancy window. Public Immediate still requires honest fresh spots. */
+  openingWindow?: "immediate" | "upcoming" | "none" | null;
+  /** Structured age programs. Empty falls back to confirmed age/fee columns. */
+  programs?: Array<{
+    band: "infant" | "toddler" | "preschool" | "school-age";
+    ageMinMonths: number;
+    ageMaxMonths: number;
+    schedules: Array<"full" | "part" | "flexible">;
+    monthlyFee: number | null;
+  }>;
+  financial?: {
+    subsidy: boolean;
+    sliding: boolean;
+    sibling: boolean;
+    meals: boolean;
+  };
+  curriculumTags?: string[];
+  /** Optional values / faith note. Hidden when empty. Not a US religion list. */
+  valuesNote?: string | null;
+  safetyFeatures?: string[];
+  /** Optional public promo blurb from the daycare desk. */
+  promoText?: string | null;
+  /** Claimed + centre inbox + transactional mail configured. */
+  inboxMailReady?: boolean;
 };
 
 export type DaycareCard = Daycare & {

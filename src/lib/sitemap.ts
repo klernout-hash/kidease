@@ -41,6 +41,8 @@ export const SITEMAP_STATIC_PATHS = [
   "/compare",
   "/unsubscribe",
   "/delete-account",
+  "/jobs",
+  "/jobs/post",
 ] as const;
 
 function sitemapBasePaths() {

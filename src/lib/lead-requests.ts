@@ -1,6 +1,6 @@
 import type { BookingStatus, TourStatus } from "./types";
 
-export const LEAD_KINDS = ["tour", "waitlist", "spot_inquiry"] as const;
+export const LEAD_KINDS = ["tour", "waitlist", "spot_inquiry", "info"] as const;
 export type LeadKind = (typeof LEAD_KINDS)[number];
 
 export const LEAD_STATUSES = [
@@ -19,7 +19,7 @@ export type LeadAction = (typeof LEAD_ACTIONS)[number];
 export const LEAD_SOURCE_KINDS = ["tour_request", "booking", "waitlist_interest"] as const;
 export type LeadSourceKind = (typeof LEAD_SOURCE_KINDS)[number];
 
-export const LISTING_ASKS = ["tour", "spot", "waitlist"] as const;
+export const LISTING_ASKS = ["tour", "spot", "waitlist", "info"] as const;
 export type ListingAsk = (typeof LISTING_ASKS)[number];
 
 export const PARENT_REQUESTS_SEARCH = { tab: "enrolled" as const };
@@ -33,6 +33,7 @@ export type LeadRequest = {
   userId: string;
   parentName: string | null;
   parentEmail: string | null;
+  parentPhone?: string | null;
   daycareId: string;
   daycareName: string;
   daycareSlug: string;
@@ -85,6 +86,7 @@ export function listingAskHref(slug: string, ask: ListingAsk): string {
 
 export function leadKindFromAsk(ask: ListingAsk): LeadKind {
   if (ask === "spot") return "spot_inquiry";
+  if (ask === "info") return "info";
   return ask;
 }
 
@@ -146,9 +148,12 @@ export function tallyLeadCounts(statuses: readonly string[]): LeadCounts {
   return counts;
 }
 
-export function leadKindCopyKey(kind: LeadKind): "leadKindTour" | "leadKindWaitlist" | "leadKindSpot" {
+export function leadKindCopyKey(
+  kind: LeadKind,
+): "leadKindTour" | "leadKindWaitlist" | "leadKindSpot" | "leadKindInfo" {
   if (kind === "waitlist") return "leadKindWaitlist";
   if (kind === "spot_inquiry") return "leadKindSpot";
+  if (kind === "info") return "leadKindInfo";
   return "leadKindTour";
 }
 
@@ -169,9 +174,12 @@ export function leadStatusCopyKey(
   return "leadStatusRequested";
 }
 
-export function leadNotifyKind(kind: LeadKind): "tour_request" | "spot_request" | "waitlist_request" {
+export function leadNotifyKind(
+  kind: LeadKind,
+): "tour_request" | "spot_request" | "waitlist_request" | "lead_request" {
   if (kind === "waitlist") return "waitlist_request";
   if (kind === "spot_inquiry") return "spot_request";
+  if (kind === "info") return "lead_request";
   return "tour_request";
 }
 

@@ -121,6 +121,7 @@ export function alertFacilityType(row: Pick<AlertMatchFacts, "amenities" | "name
 export function licensedTypeLabel(type: FacilityType): string {
   if (type === "nursery") return "nursery";
   if (type === "home") return "home";
+  if (type === "school") return "school-based";
   return "centre";
 }
 
