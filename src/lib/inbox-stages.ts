@@ -50,7 +50,8 @@ export function isInboxFilter(value: string | null | undefined): value is InboxF
 }
 
 export function parseInboxFilter(raw: unknown): InboxFilter {
-  return isInboxFilter(typeof raw === "string" ? raw : "") ? raw : "all";
+  const value = typeof raw === "string" ? raw : "";
+  return isInboxFilter(value) ? value : "all";
 }
 
 export function deriveInboxStage(input: {
