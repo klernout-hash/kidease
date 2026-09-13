@@ -15,7 +15,7 @@ test("jobs pages are honest Canada waitlists, not a fake board", () => {
   const post = src("src/routes/jobs_.post.tsx");
   const form = src("src/components/jobs-interest-form.tsx");
   assert.match(jobs, /createFileRoute\("\/jobs"\)/);
-  assert.match(post, /createFileRoute\("\/jobs\/post"\)/);
+  assert.match(post, /createFileRoute\("\/jobs_\/post"\)/);
   assert.match(form, /submitPublicMessage/);
   assert.match(form, /kind: "contact"/);
   assert.doesNotMatch(jobs + post + form, /Open Road/i);
