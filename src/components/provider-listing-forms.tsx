@@ -268,15 +268,7 @@ export function CapacityForm({
         </>
       ) : (
         <>
-          <ListingReadinessCoach
-            item={{
-              ...daycare,
-              ...draft,
-              detailsReady: complete.ready,
-              completenessMissing: complete.missing,
-            }}
-            variant="editor"
-          />
+          <ListingReadinessCoach item={draft} variant="editor" />
           <ListingHealthPanel item={{ ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
           <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
