@@ -26,7 +26,7 @@ import { guestInfoUserId, normalizeInfoContact } from "@/lib/parent-listing";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
 import { requireAdmin } from "@/lib/server/roles";
-import { isCentreOwner, listCentreOwnerEmails } from "@/lib/server/thread-access";
+import { listCentreOwnerEmails } from "@/lib/server/thread-access";
 import { upsertDaycare } from "@/lib/server/seed";
 import { nid } from "@/lib/utils";
 
@@ -285,9 +285,15 @@ export const listLeadRequests = createServerFn({ method: "GET" })
         )
          or (
           ${asCentre}
-          and exists (
-           select 1 from provider_daycares p
-           where p.user_id = ${context.userId} and p.daycare_id = l.daycare_id
+          and (
+            exists (
+              select 1 from provider_daycares p
+              where p.user_id = ${context.userId} and p.daycare_id = l.daycare_id
+            )
+            or exists (
+              select 1 from centre_members m
+              where m.user_id = ${context.userId} and m.daycare_id = l.daycare_id and m.status = 'active'
+            )
          )
       )
       order by
@@ -392,7 +398,8 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
     const lead = rows[0];
     if (!lead) throw new Error(ACCESS_NOT_FOUND);
 
-    const owned = await isCentreOwner(sql, context.userId, lead.daycare_id);
+    const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
+    const owned = await canCentreWriteLeadsFor(sql, context.userId, lead.daycare_id);
     const admin = await callerIsAdmin();
     if (!canUpdateLeadStatus({ daycareId: lead.daycare_id, ownedDaycareIds: owned ? [lead.daycare_id] : [], isAdmin: admin })) {
       throw new Error("Not authorized");

@@ -44,10 +44,13 @@ import { CompletenessChecklist } from "@/components/listing-completeness";
 import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
+import { CentreEmployeesPanel } from "@/components/centre-employees";
+import { useSessionDesks } from "@/components/desk-switcher";
 
-type DaycareDesk = "requests" | "money" | "listings" | "licence" | "contract" | "promote";
+type DaycareDesk = "requests" | "money" | "listings" | "licence" | "contract" | "promote" | "employees";
 
-const DESKS: DaycareDesk[] = ["requests", "money", "listings", "licence", "contract", "promote"];
+const DESKS: DaycareDesk[] = ["requests", "money", "listings", "licence", "contract", "promote", "employees"];
+const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 
 export const Route = createFileRoute("/provider")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -65,6 +68,8 @@ function ProviderPage() {
   const { user, isPending } = useSettledUser();
   const { t, locale } = useCopy();
   const showPay = useShowPayCtas();
+  const { session } = useSessionDesks();
+  const centreOwner = session?.centreOwner !== false;
   const search = Route.useSearch();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const childRoute = pathname === "/provider/subscription" || pathname.startsWith("/provider/subscription/");
@@ -194,6 +199,7 @@ function ProviderPage() {
       active={desk}
       onSelect={(id) => {
         if (id === "add") {
+          if (!centreOwner) return;
           setDesk("listings");
           if (listings.length === 0) {
             setShowNewForm(false);
@@ -203,10 +209,14 @@ function ProviderPage() {
           queueMicrotask(() => document.getElementById("list-new")?.scrollIntoView({ behavior: "smooth", block: "start" }));
           return;
         }
+        if (OWNER_DESKS.has(id as DaycareDesk) && !centreOwner) {
+          setDesk("requests");
+          return;
+        }
         setDesk(id as DaycareDesk);
       }}
     >
-      {listings.length === 0 ? (
+      {listings.length === 0 && centreOwner ? (
         <ProviderOnboarding
           showForm={showNewForm}
           onShowForm={() => {
@@ -399,7 +409,7 @@ function ProviderPage() {
               </dl>
             </section>
           ) : null}
-          {listings.length === 0 && !showNewForm ? null : (
+          {centreOwner && (listings.length === 0 && !showNewForm ? null : true) ? (
           <section id="list-new" className="rounded-xl bg-surface p-5 ring-1 ring-border">
             {listings.length === 0 ? (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -478,7 +488,13 @@ function ProviderPage() {
         </>
       ) : null}
 
-      {desk === "licence" ? (
+      {desk === "employees" ? <CentreEmployeesPanel canInvite={centreOwner} /> : null}
+
+      {desk === "licence" && !centreOwner ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
+      ) : null}
+
+      {desk === "licence" && centreOwner ? (
         listings.length === 0 ? (
           <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
             {t("providerOnboardingLead")}
@@ -500,11 +516,27 @@ function ProviderPage() {
         )
       ) : null}
 
-      {desk === "money" ? <ProviderMoneyPanel /> : null}
+      {desk === "money" ? (
+        centreOwner ? (
+          <ProviderMoneyPanel />
+        ) : (
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
+        )
+      ) : null}
 
-      {desk === "contract" ? <ProviderContractsPanel /> : null}
+      {desk === "contract" ? (
+        centreOwner ? (
+          <ProviderContractsPanel />
+        ) : (
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
+        )
+      ) : null}
 
-      {desk === "promote" ? (
+      {desk === "promote" && !centreOwner ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
+      ) : null}
+
+      {desk === "promote" && centreOwner ? (
         !showPay ? (
           <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
         ) : listings.length === 0 ? (

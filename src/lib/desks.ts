@@ -29,7 +29,16 @@ export const DESK_QUERY_ALIASES: Record<string, DeskKey> = {
   support: "support",
 };
 
-export const PROVIDER_TAB_KEYS = ["requests", "money", "listings", "licence", "license", "contract", "promote"] as const;
+export const PROVIDER_TAB_KEYS = [
+  "requests",
+  "money",
+  "listings",
+  "licence",
+  "license",
+  "contract",
+  "promote",
+  "employees",
+] as const;
 
 export const STICKY_DESK_KEY = "kidease-desk";
 /** One-shot: home already sent this tab to a desk. Cleared on sign-out. */
@@ -242,6 +251,7 @@ export function funnelDestPath(raw: string): string {
     return path;
   }
   if (path.startsWith("/daycare/")) return "/daycare";
+  if (path === "/invite" || path.startsWith("/invite/")) return "/invite";
   if (isAuthLoopPath(path)) return path;
   return "/other";
 }
@@ -563,6 +573,8 @@ export type SessionDesks = {
   providerSubscriptions: boolean;
   /** Parent/director Upgrade · Subscribe chrome. Default off. */
   showPayCtas: boolean;
+  /** Owner chrome (Money / claim / invite). False only for staff-only employees. */
+  centreOwner?: boolean;
 };
 
 /**

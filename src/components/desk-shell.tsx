@@ -32,6 +32,7 @@ export function DeskShell({
   const items = visibleDeskNav(desk, {
     providerSubscriptions: session?.providerSubscriptions,
     showPayCtas: session?.showPayCtas,
+    centreOwner: session?.centreOwner,
   });
 
   return (

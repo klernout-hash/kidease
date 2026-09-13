@@ -132,6 +132,7 @@ export function canReadBill(input: {
   return { ok: false, role: "none" };
 }
 
+/** Owner `provider_daycares` ids only. Staff membership ids must not be passed. */
 export function canCreateBillForCentre(ownedDaycareIds: readonly string[], daycareId: string) {
   return ownsDaycare(ownedDaycareIds, daycareId);
 }

@@ -64,6 +64,10 @@ export const listInbox = createServerFn({ method: "GET" })
            select 1 from provider_daycares p
            where p.user_id = ${context.userId} and p.daycare_id = c.daycare_id
          )
+         or exists (
+           select 1 from centre_members m
+           where m.user_id = ${context.userId} and m.daycare_id = c.daycare_id and m.status = 'active'
+         )
       order by c.last_at desc
     `;
 

@@ -58,6 +58,7 @@ import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
 import { Route as DaycaresCityRouteImport } from './routes/daycares_.$city'
 import { Route as FrIndexRouteImport } from './routes/fr.index'
@@ -347,6 +348,11 @@ const CheckinIdRoute = CheckinIdRouteImport.update({
   path: '/checkin/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DaycareSlugRoute = DaycareSlugRouteImport.update({
   id: '/daycare/$slug',
   path: '/daycare/$slug',
@@ -608,6 +614,7 @@ export interface FileRoutesByFullPath {
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/daycares/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
@@ -699,6 +706,7 @@ export interface FileRoutesByTo {
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/daycares/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
@@ -793,6 +801,7 @@ export interface FileRoutesById {
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/daycares_/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
@@ -888,6 +897,7 @@ export interface FileRouteTypes {
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/checkin/$id'
+    | '/invite/$token'
     | '/daycare/$slug'
     | '/daycares/$city'
     | '/fr/about'
@@ -979,6 +989,7 @@ export interface FileRouteTypes {
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/checkin/$id'
+    | '/invite/$token'
     | '/daycare/$slug'
     | '/daycares/$city'
     | '/fr/about'
@@ -1072,6 +1083,7 @@ export interface FileRouteTypes {
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/checkin/$id'
+    | '/invite/$token'
     | '/daycare/$slug'
     | '/daycares_/$city'
     | '/fr/about'
@@ -1166,6 +1178,7 @@ export interface RootRouteChildren {
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
   JobsPostRoute: typeof JobsPostRoute
@@ -1531,6 +1544,13 @@ declare module '@tanstack/react-router' {
       path: '/checkin/$id'
       fullPath: '/checkin/$id'
       preLoaderRoute: typeof CheckinIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daycare/$slug': {
@@ -1967,6 +1987,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
+  InviteTokenRoute: InviteTokenRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
   JobsPostRoute: JobsPostRoute,

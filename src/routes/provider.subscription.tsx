@@ -19,7 +19,9 @@ export const Route = createFileRoute("/provider/subscription")({
 function ProviderSubscriptionPage() {
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
-  const allowed = Boolean(ready && session?.providerSubscriptions);
+  const allowed = Boolean(
+    ready && session?.providerSubscriptions && (session.centreOwner !== false || session.role === "admin"),
+  );
 
   if (isPending) {
     return (

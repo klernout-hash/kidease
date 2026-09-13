@@ -1,4 +1,6 @@
 import type { Sql } from "@/lib/db";
+import { centreCanWriteInbox } from "@/lib/centre-roles";
+import { loadCentreRole } from "@/lib/server/centre-access";
 import { resolveAdminAccess } from "@/lib/server/roles";
 import { resolveThreadAccess, type ThreadAccess } from "@/lib/threads";
 
@@ -31,13 +33,9 @@ export async function loadConversation(
   return rows[0] ?? null;
 }
 
+/** Active owner or employee — desk / inbox / leads. Not money. */
 export async function isCentreOwner(sql: Sql, userId: string, daycareId: string): Promise<boolean> {
-  const rows = await sql<{ n: number }>`
-    select count(*)::int as n
-    from provider_daycares
-    where user_id = ${userId} and daycare_id = ${daycareId}
-  `.catch(() => [{ n: 0 }]);
-  return (rows[0]?.n ?? 0) > 0;
+  return (await loadCentreRole(sql, userId, daycareId)) !== null;
 }
 
 export async function resolveConversationAccess(
@@ -47,16 +45,18 @@ export async function resolveConversationAccess(
 ): Promise<ConversationAccess | null> {
   const conversation = await loadConversation(sql, conversationId);
   if (!conversation) return null;
-  const [owned, admin] = await Promise.all([
-    isCentreOwner(sql, userId, conversation.daycare_id),
+  const [role, admin] = await Promise.all([
+    loadCentreRole(sql, userId, conversation.daycare_id),
     resolveAdminAccess(userId)
       .then((a) => a.ok)
       .catch(() => false),
   ]);
+  const write = centreCanWriteInbox(role);
   const access = resolveThreadAccess({
     userId,
     parentUserId: conversation.user_id,
-    isCentreOwner: owned,
+    isCentreOwner: write,
+    isCentreReader: Boolean(role) && !write,
     isAdmin: admin,
   });
   return { ...access, conversation };

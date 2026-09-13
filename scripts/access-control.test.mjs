@@ -287,7 +287,7 @@ test("blank ids never match (IDOR probe with empty owner)", () => {
 test("family pay and child writes stay scoped to the session user id", () => {
   const family = src("src/lib/server/family.ts");
   assert.match(family, /canUpdateBookingStatus/);
-  assert.match(family, /isCentreOwner\(sql, context\.userId, b\.daycare_id\)/);
+  assert.match(family, /canCentreWriteLeadsFor\(sql, context\.userId, b\.daycare_id\)/);
   assert.match(family, /where id = \$\{data\.bookingId\} and user_id = \$\{context\.userId\}/);
   assert.match(family, /where id = \$\{paymentId\} and user_id = \$\{context\.userId\}/);
   assert.match(family, /where id = \$\{data\.id\} and user_id = \$\{context\.userId\}/);
