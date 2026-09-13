@@ -52,7 +52,17 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
   }
 
   useEffect(() => {
-    void load().catch(() => undefined);
+    let live = true;
+    void listCentreTourWindows({ data: { daycareId: daycare.id } })
+      .then((res) => {
+        if (!live) return;
+        setTimezone(res.timezone);
+        setSlots(res.slots);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
   }, [daycare.id]);
 
   return (
