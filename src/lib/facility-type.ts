@@ -7,11 +7,11 @@
  * Untyped rows stay Centre with an admin-visible gap — never a name guess.
  */
 
-export const FACILITY_TYPES = ["centre", "nursery", "home"] as const;
+export const FACILITY_TYPES = ["centre", "nursery", "home", "school"] as const;
 export type FacilityType = (typeof FACILITY_TYPES)[number];
 
 export const FACILITY_TYPE_SLUGS = FACILITY_TYPES;
-export type FacilityTypeSource = "amenity" | "fallback";
+export type FacilityTypeSource = "amenity" | "column" | "fallback";
 
 /** Conservative name tokens for the admin gap only. Never used to assign type. */
 const HOME_NAME_HINT =
@@ -50,9 +50,18 @@ export type FacilityTypeClass = {
 export function classifyFacilityType(item: {
   amenities?: string | null;
   name?: string | null;
+  facilityType?: FacilityType | null;
 }): FacilityTypeClass {
   const keys = amenityKeys(item.amenities || "");
   const nameHint = facilityTypeNameHint(item.name || "");
+  if (item.facilityType && isFacilityType(item.facilityType)) {
+    return {
+      type: item.facilityType,
+      source: "column",
+      nameHint,
+      gap: Boolean(nameHint && nameHint !== item.facilityType && item.facilityType !== "school"),
+    };
+  }
   if (keys.has("home")) {
     return {
       type: "home",
@@ -69,6 +78,14 @@ export function classifyFacilityType(item: {
       gap: Boolean(nameHint && nameHint !== "nursery"),
     };
   }
+  if (keys.has("in-school")) {
+    return {
+      type: "school",
+      source: "amenity",
+      nameHint,
+      gap: Boolean(nameHint && nameHint !== "school"),
+    };
+  }
   return {
     type: "centre",
     source: "fallback",
@@ -80,12 +97,13 @@ export function classifyFacilityType(item: {
 export function listingFacilityType(item: {
   amenities?: string | null;
   name?: string | null;
+  facilityType?: FacilityType | null;
 }): FacilityType {
   return classifyFacilityType(item).type;
 }
 
 export function matchesFacilityType(
-  item: { amenities?: string | null; name?: string | null },
+  item: { amenities?: string | null; name?: string | null; facilityType?: FacilityType | null },
   type: FacilityType,
 ): boolean {
   return classifyFacilityType(item).type === type;
@@ -95,10 +113,12 @@ export function facilityTypeNoun(type: FacilityType, locale: "en" | "fr" = "en")
   if (locale === "fr") {
     if (type === "nursery") return "nursery";
     if (type === "home") return "milieu familial";
+    if (type === "school") return "milieu scolaire";
     return "centre";
   }
   if (type === "nursery") return "nursery";
   if (type === "home") return "home";
+  if (type === "school") return "school-based";
   return "centre";
 }
 
@@ -116,6 +136,9 @@ export function facilityTypeTagline(
     if (type === "home") {
       return city ? `Milieu familial permis à ${place}.` : `Milieu familial permis, ${place}.`;
     }
+    if (type === "school") {
+      return city ? `Service en milieu scolaire à ${place}.` : `Service en milieu scolaire, ${place}.`;
+    }
     return city ? `Centre permis à ${place}.` : `Centre permis, ${place}.`;
   }
   if (type === "nursery") {
@@ -123,6 +146,9 @@ export function facilityTypeTagline(
   }
   if (type === "home") {
     return city ? `Licensed home in ${place}.` : `Licensed home, ${place}.`;
+  }
+  if (type === "school") {
+    return city ? `School-based care in ${place}.` : `School-based care, ${place}.`;
   }
   return city ? `Licensed centre in ${place}.` : `Licensed centre, ${place}.`;
 }
@@ -139,9 +165,11 @@ export function facilityTypeSeoKind(type: FacilityType, locale: "en" | "fr" = "e
   if (locale === "fr") {
     if (type === "nursery") return "Nursery permise";
     if (type === "home") return "Garderie en milieu familial";
+    if (type === "school") return "En milieu scolaire";
     return "Centre permis";
   }
   if (type === "nursery") return "Licensed nursery";
   if (type === "home") return "Licensed home";
+  if (type === "school") return "School-based";
   return "Licensed centre";
 }

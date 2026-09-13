@@ -11,6 +11,16 @@ import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
 import { applyInteriorPhotos, applyStorefrontPhoto, listingPhotosChanged } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
+import {
+  mergeListingAmenities,
+  normalizeOpeningWindow,
+  normalizeFacilityTypeColumn,
+  parentListingToSql,
+  type ListingFinancial,
+  type ParentSchedule,
+  type OpeningWindow,
+} from "@/lib/parent-listing";
+import type { FacilityType } from "@/lib/facility-type";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { assertCanMutateListing, decideStartClaim } from "@/lib/access-control";
 
@@ -304,6 +314,25 @@ export const updateListing = createServerFn({ method: "POST" })
       staffLanguages?: string[];
       culturalPrograms?: string[];
       culturalTeamNote?: string | null;
+      tagline?: string;
+      description?: string;
+      partTimeMonthly?: number;
+      amenities?: string;
+      facilityType?: FacilityType | null;
+      scheduleOptions?: ParentSchedule[];
+      openingWindow?: OpeningWindow | null;
+      programs?: Array<{
+        band: "infant" | "toddler" | "preschool" | "school-age";
+        ageMinMonths: number;
+        ageMaxMonths: number;
+        schedules: ParentSchedule[];
+        monthlyFee: number | null;
+      }>;
+      financial?: ListingFinancial;
+      curriculumTags?: string[];
+      valuesNote?: string | null;
+      safetyFeatures?: string[];
+      promoText?: string | null;
     }) => input,
   )
   .handler(async ({ context, data }) => {
@@ -313,7 +342,9 @@ export const updateListing = createServerFn({ method: "POST" })
       where user_id = ${context.userId} and daycare_id = ${data.daycareId}
     `;
     assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
-    const current = await sql<{ photos: string }>`select photos from daycares where id = ${data.daycareId}`;
+    const current = await sql<{ photos: string; amenities: string }>`
+      select photos, amenities from daycares where id = ${data.daycareId}
+    `;
     const previousPhotos = current[0]?.photos ?? "";
     let photos = applyStorefrontPhoto(current[0]?.photos ?? "", data.storefront);
     photos = applyInteriorPhotos(photos, data.interiors);
@@ -396,6 +427,57 @@ export const updateListing = createServerFn({ method: "POST" })
         staff_languages = ${culture.staffLanguagesJson}::jsonb,
         cultural_programs = ${culture.culturalProgramsJson}::jsonb,
         cultural_team_note = ${culture.culturalTeamNote}
+      where id = ${data.daycareId}
+    `.catch(() => undefined);
+    const facilityType = normalizeFacilityTypeColumn(data.facilityType);
+    const openingWindow = normalizeOpeningWindow(data.openingWindow);
+    const pack = parentListingToSql({
+      facilityType,
+      scheduleOptions: data.scheduleOptions,
+      openingWindow,
+      programs: data.programs,
+      financial: data.financial,
+      curriculumTags: data.curriculumTags,
+      valuesNote: data.valuesNote,
+      safetyFeatures: data.safetyFeatures,
+      promoText: data.promoText,
+    });
+    const amenities = mergeListingAmenities(current[0]?.amenities ?? "", {
+      facilityType,
+      financial: data.financial,
+      curriculumTags: data.curriculumTags,
+      safetyFeatures: data.safetyFeatures,
+      amenityKeys:
+        data.amenities != null
+          ? data.amenities
+              .split(",")
+              .map((part) => part.trim())
+              .filter(Boolean)
+          : undefined,
+    });
+    const tagline = (data.tagline ?? "").trim().slice(0, 180);
+    const description = (data.description ?? "").trim().slice(0, 2000);
+    const partTime =
+      typeof data.partTimeMonthly === "number" && data.partTimeMonthly > 0
+        ? Math.round(data.partTimeMonthly)
+        : null;
+    await sql`
+      update daycares set
+        facility_type = ${pack.facilityType},
+        schedule_options = ${pack.scheduleOptionsJson}::jsonb,
+        opening_window = ${pack.openingWindow},
+        programs = ${pack.programsJson}::jsonb,
+        financial_flags = ${pack.financialJson}::jsonb,
+        curriculum_tags = ${pack.curriculumJson}::jsonb,
+        values_note = ${pack.valuesNote},
+        safety_features = ${pack.safetyJson}::jsonb,
+        promo_text = ${pack.promoText},
+        amenities = ${amenities},
+        tagline = case when ${tagline} = '' then tagline else ${tagline} end,
+        tagline_fr = case when ${tagline} = '' then tagline_fr else ${tagline} end,
+        description = case when ${description} = '' then description else ${description} end,
+        description_fr = case when ${description} = '' then description_fr else ${description} end,
+        part_time_monthly = coalesce(${partTime}, part_time_monthly)
       where id = ${data.daycareId}
     `.catch(() => undefined);
     if (license) {

@@ -1,5 +1,6 @@
 import { splitPhotoList } from "@/lib/listing-photo";
 import { listingCultureFrom } from "@/lib/listing-culture";
+import { parentListingFrom } from "@/lib/parent-listing";
 import type { Daycare } from "@/lib/types";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
@@ -70,6 +71,15 @@ export type DaycareRow = {
   quality_score?: number | null;
   quality_scored_at?: string | null;
   guest_favorite?: number | boolean | null;
+  facility_type?: string | null;
+  schedule_options?: unknown;
+  opening_window?: string | null;
+  programs?: unknown;
+  financial_flags?: unknown;
+  curriculum_tags?: unknown;
+  values_note?: string | null;
+  safety_features?: unknown;
+  promo_text?: string | null;
 };
 
 export function mapDaycare(r: DaycareRow): Daycare {
@@ -167,6 +177,19 @@ export function mapDaycare(r: DaycareRow): Daycare {
     }),
     qualityScore: typeof r.quality_score === "number" ? r.quality_score : undefined,
     guestFavorite: r.guest_favorite === 1 || r.guest_favorite === true,
+    ...parentListingFrom({
+      facility_type: r.facility_type,
+      schedule_options: r.schedule_options,
+      opening_window: r.opening_window,
+      programs: r.programs,
+      financial_flags: r.financial_flags,
+      curriculum_tags: r.curriculum_tags,
+      values_note: r.values_note,
+      safety_features: r.safety_features,
+      promo_text: r.promo_text,
+      amenities: r.amenities,
+      staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
+    }),
   }));
 }
 

@@ -33,6 +33,7 @@ test("lead kinds and statuses are the track vocabulary only", () => {
   assert.equal(isLeadKind("tour"), true);
   assert.equal(isLeadKind("waitlist"), true);
   assert.equal(isLeadKind("spot_inquiry"), true);
+  assert.equal(isLeadKind("info"), true);
   assert.equal(isLeadKind("chat"), false);
   assert.equal(isLeadStatus("requested"), true);
   assert.equal(isLeadStatus("confirmed"), true);
@@ -77,6 +78,7 @@ test("listing ?ask= deep-links tour, spot, and waitlist", () => {
   assert.equal(isListingAsk("tour"), true);
   assert.equal(isListingAsk("spot"), true);
   assert.equal(isListingAsk("waitlist"), true);
+  assert.equal(isListingAsk("info"), true);
   assert.equal(parseListingAsk("chat"), undefined);
   assert.equal(leadKindFromAsk("spot"), "spot_inquiry");
   assert.equal(leadKindFromAsk("tour"), "tour");
@@ -119,6 +121,7 @@ test("notify kinds stay on existing Resend paths — no GHL", () => {
   assert.equal(leadNotifyKind("tour"), "tour_request");
   assert.equal(leadNotifyKind("spot_inquiry"), "spot_request");
   assert.equal(leadNotifyKind("waitlist"), "waitlist_request");
+  assert.equal(leadNotifyKind("info"), "lead_request");
   assert.match(leadReplyPreview("confirmed", "Elm Grove", "Tue 10am"), /Elm Grove/);
   assert.match(leadReplyPreview("confirmed", "Elm Grove", "Tue 10am"), /Tue 10am/);
   const files = ["src/lib/server/lead-requests.ts", "src/lib/lead-requests.ts", "src/lib/server/tours.ts", "src/lib/server/waitlist-api.ts"];
@@ -135,6 +138,7 @@ test("copy keys exist in English and French", () => {
     "leadKindTour",
     "leadKindWaitlist",
     "leadKindSpot",
+    "leadKindInfo",
     "leadStatusRequested",
     "leadStatusConfirmed",
     "goToMyRequests",
@@ -192,6 +196,7 @@ test("listing CTAs deep-link ask= tour|spot|waitlist and land on My requests", (
   assert.match(listing, /ask === "tour"/);
   assert.match(listing, /ask === "spot"/);
   assert.match(listing, /ask === "waitlist"/);
+  assert.match(listing, /ask === "info"/);
   assert.match(listing, /ask=tour/);
   assert.match(listing, /ask=waitlist/);
   assert.match(src("src/components/request-tour.tsx"), /PARENT_REQUESTS_SEARCH/);

@@ -46,17 +46,17 @@ export function isBeforeAfterProgram(item: Pick<Daycare, "amenities" | "hours">)
 }
 
 export function listingCareType(
-  item: Pick<Daycare, "amenities" | "hours" | "name">,
+  item: Pick<Daycare, "amenities" | "hours" | "name" | "facilityType">,
 ): CareType {
   const facility = classifyFacilityType(item).type;
   if (facility === "home") return "home";
   if (facility === "nursery") return "nursery";
-  if (isBeforeAfterProgram(item)) return "before-after";
+  if (facility === "school" || isBeforeAfterProgram(item)) return "before-after";
   return "centre";
 }
 
 export function matchesCareType(
-  item: Pick<Daycare, "amenities" | "hours" | "name">,
+  item: Pick<Daycare, "amenities" | "hours" | "name" | "facilityType">,
   care: CareType,
 ): boolean {
   if (care === "before-after") return isBeforeAfterProgram(item);

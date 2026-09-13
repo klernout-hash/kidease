@@ -17,10 +17,11 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("facility types are Centre / Nursery / Home with stable slugs", () => {
+test("facility types are Centre / Nursery / Home / School with stable slugs", () => {
   assert.equal(isFacilityType("centre"), true);
   assert.equal(isFacilityType("nursery"), true);
   assert.equal(isFacilityType("home"), true);
+  assert.equal(isFacilityType("school"), true);
   assert.equal(isFacilityType("before-after"), false);
   assert.equal(isFacilityType("daycare"), false);
 });
@@ -52,6 +53,9 @@ test("Nursery and Home come from amenities only — names never assign", () => {
   assert.equal(facilityTypeNameHint("Kims Home Daycare"), "home");
   assert.equal(matchesFacilityType({ amenities: "licensed,nursery" }, "nursery"), true);
   assert.equal(matchesFacilityType({ amenities: "licensed,nursery" }, "centre"), false);
+  assert.equal(classifyFacilityType({ amenities: "licensed,in-school" }).type, "school");
+  assert.equal(classifyFacilityType({ amenities: "licensed", facilityType: "school" }).type, "school");
+  assert.equal(classifyFacilityType({ amenities: "licensed", facilityType: "school" }).source, "column");
 });
 
 test("Explore wires three facility-type categories and listing copy", () => {

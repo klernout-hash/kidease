@@ -24,6 +24,7 @@ export function amenityLabel(key: string, locale: string) {
     literacy: { en: "Literacy-forward", fr: "Littératie" },
     tours: { en: "Thursday tours", fr: "Visites le jeudi" },
     "sliding-scale": { en: "Sliding-scale fees", fr: "Tarif selon le revenu" },
+    "sibling-discount": { en: "Sibling discount", fr: "Rabais fratrie" },
     "resource-centre": { en: "Family resource centre", fr: "Centre de ressources" },
     park: { en: "Beside a park", fr: "À côté d'un parc" },
     transit: { en: "On a bus route", fr: "Sur une ligne d'autobus" },

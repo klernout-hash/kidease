@@ -54,7 +54,8 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(readiness, /agesKnown === false/);
   assert.match(readiness, /Boolean\(d\.feeConfirmed\) \|\| hasListedFees\(d\)/);
 
-  assert.match(listing, /requestTour/);
+  assert.match(listing, /requestInfo/);
+  assert.match(listing, /bookTour/);
   assert.match(listing, /claimCta/);
   assert.match(listing, /unclaimedRequestNote|listing_request_started/);
   assert.match(copy, /no director reply/);

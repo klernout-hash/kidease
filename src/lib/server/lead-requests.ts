@@ -22,6 +22,7 @@ import {
   type LeadRequest,
   type LeadSourceKind,
 } from "@/lib/lead-requests";
+import { guestInfoUserId, normalizeInfoContact } from "@/lib/parent-listing";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
 import { requireAdmin } from "@/lib/server/roles";
@@ -36,6 +37,7 @@ type LeadRow = {
   user_id: string;
   parent_name: string | null;
   parent_email: string | null;
+  parent_phone?: string | null;
   daycare_id: string;
   daycare_name: string;
   slug: string;
@@ -57,6 +59,7 @@ function mapLead(row: LeadRow): LeadRequest {
     userId: row.user_id,
     parentName: row.parent_name,
     parentEmail: row.parent_email,
+    parentPhone: row.parent_phone ?? null,
     daycareId: row.daycare_id,
     daycareName: row.daycare_name,
     daycareSlug: row.slug,
@@ -78,6 +81,10 @@ export async function recordLeadRequest(
     daycareId: string;
     kind: LeadKind;
     message?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    phone?: string | null;
+    email?: string | null;
     sourceKind?: LeadSourceKind | null;
     sourceId?: string | null;
     conversationId?: string | null;
@@ -124,15 +131,33 @@ export async function recordLeadRequest(
   }
 
   const id = nid("lr");
+  const firstName = (input.firstName || "").trim() || null;
+  const lastName = (input.lastName || "").trim() || null;
+  const phone = (input.phone || "").trim() || null;
+  const email = (input.email || "").trim() || null;
   await sql`
     insert into lead_requests (
       id, kind, status, user_id, daycare_id, message,
-      source_kind, source_id, conversation_id, created_at, updated_at
+      source_kind, source_id, conversation_id,
+      parent_first_name, parent_last_name, parent_phone, contact_email,
+      created_at, updated_at
     ) values (
       ${id}, ${kind}, ${"requested"}, ${input.userId}, ${input.daycareId}, ${message},
-      ${sourceKind}, ${sourceId}, ${input.conversationId || null}, now(), now()
+      ${sourceKind}, ${sourceId}, ${input.conversationId || null},
+      ${firstName}, ${lastName}, ${phone}, ${email},
+      now(), now()
     )
-  `;
+  `.catch(async () => {
+    await sql`
+      insert into lead_requests (
+        id, kind, status, user_id, daycare_id, message,
+        source_kind, source_id, conversation_id, created_at, updated_at
+      ) values (
+        ${id}, ${kind}, ${"requested"}, ${input.userId}, ${input.daycareId}, ${message},
+        ${sourceKind}, ${sourceId}, ${input.conversationId || null}, now(), now()
+      )
+    `;
+  });
 
   if (input.notify !== false) {
     await notifyNewLead(sql, {
@@ -191,7 +216,13 @@ async function notifyNewLead(
   const actor = await lookupUser(input.userId);
   const parentName = (actor.name || "A parent").trim() || "A parent";
   const kindLabel =
-    input.kind === "waitlist" ? "Waitlist" : input.kind === "spot_inquiry" ? "Spot inquiry" : "Tour";
+    input.kind === "waitlist"
+      ? "Waitlist"
+      : input.kind === "spot_inquiry"
+        ? "Spot inquiry"
+        : input.kind === "info"
+          ? "Request info"
+          : "Tour";
   try {
     await notifyPlatform({
       kind: leadNotifyKind(input.kind),
@@ -239,7 +270,10 @@ export const listLeadRequests = createServerFn({ method: "GET" })
     const asParent = data.desk !== "centre";
     const asCentre = data.desk !== "parent";
     const rows = await sql<LeadRow>`
-      select l.id, l.kind, l.status, l.user_id, u.name as parent_name, u.email as parent_email,
+      select l.id, l.kind, l.status, l.user_id,
+             coalesce(nullif(btrim(u.name), ''), nullif(btrim(concat_ws(' ', l.parent_first_name, l.parent_last_name)), '')) as parent_name,
+             coalesce(u.email, l.contact_email) as parent_email,
+             l.parent_phone,
              l.daycare_id, d.name as daycare_name, d.slug, l.message, l.reply_note,
              l.source_kind, l.source_id, l.conversation_id, l.created_at, l.updated_at, l.responded_at
       from lead_requests l
@@ -283,6 +317,52 @@ export const createLeadRequest = createServerFn({ method: "POST" })
       daycareId,
       kind: data.kind,
       message: data.message,
+    });
+    if (!recorded) throw new Error("Could not save request");
+    return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
+  });
+
+export const createInfoRequest = createServerFn({ method: "POST" })
+  .validator((input: {
+    daycareId: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    message?: string;
+    userId?: string;
+  }) => input)
+  .handler(async ({ data }) => {
+    const contact = normalizeInfoContact(data);
+    if (!contact.ok) throw new Error("Please enter your name, phone, and email.");
+    const daycareId = (data.daycareId || "").trim();
+    if (!daycareId) throw new Error("Centre not found");
+    const listed = await catalogByIdGet(daycareId);
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+      throw new Error("Listing not found");
+    }
+    const sql = await getSql();
+    if (listed) await upsertDaycare(sql, listed);
+    const exists = await sql<{ id: string }>`select id from daycares where id = ${daycareId} limit 1`;
+    if (!exists[0]) throw new Error("Centre not found");
+    const userId = (data.userId || "").trim() || guestInfoUserId(contact.email);
+    const note = [
+      `${contact.firstName} ${contact.lastName}`,
+      contact.phone,
+      contact.email,
+      contact.message,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const recorded = await recordLeadRequest(sql, {
+      userId,
+      daycareId,
+      kind: "info",
+      message: note,
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      phone: contact.phone,
+      email: contact.email,
     });
     if (!recorded) throw new Error("Could not save request");
     return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
