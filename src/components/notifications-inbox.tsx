@@ -5,8 +5,9 @@ import { EmptyState } from "@/components/empty-state";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { fillNotificationCopy, notificationCopyKey, type NotificationItem } from "@/lib/notifications";
+import { fillNotificationCopy, isCriticalNotification, notificationCopyKey, type NotificationItem } from "@/lib/notifications";
 import { listMyNotifications, markNotificationRead } from "@/lib/server/notifications";
+import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 
 function timeLabel(iso: string, locale: string) {
@@ -28,12 +29,7 @@ export function NotificationsInbox() {
   useEffect(() => {
     if (!user) return;
     void listMyNotifications()
-      .then((rows) => {
-        setItems(rows);
-        if (rows.some((row) => !row.readAt)) {
-          void markNotificationRead({ data: { all: true } }).catch(() => undefined);
-        }
-      })
+      .then(setItems)
       .catch(() => setItems([]));
   }, [user]);
 
@@ -49,7 +45,22 @@ export function NotificationsInbox() {
   return (
     <Shell>
       <main className="ke-gutter mx-auto max-w-lg pb-8 pt-5">
-        <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{t("notifications")}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{t("notifications")}</h1>
+          {items?.some((row) => !row.readAt) ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                void markNotificationRead({ data: { all: true } })
+                  .then(() => listMyNotifications().then(setItems))
+                  .catch(() => undefined);
+              }}
+            >
+              {t("markAlertsRead")}
+            </Button>
+          ) : null}
+        </div>
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {items === null ? (
             <li className="space-y-3 p-4" aria-hidden="true">
@@ -88,6 +99,9 @@ export function NotificationsInbox() {
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[15px] font-medium text-fg">{title}</span>
+                      {isCriticalNotification(item) ? (
+                        <span className="mt-0.5 block text-xs font-medium text-danger">{t("inboxCriticalNotif")}</span>
+                      ) : null}
                       <span className="mt-0.5 block text-xs text-muted">{timeLabel(item.createdAt, locale)}</span>
                     </span>
                   </a>

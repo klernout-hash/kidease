@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { inboxSearch, parseInboxView, resolveInboxView } from "@/lib/inbox-view";
+import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
 import { MapPinned, Phone, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
@@ -20,14 +20,7 @@ import { cn, money } from "@/lib/utils";
 import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib/types";
 
 export const Route = createFileRoute("/inbox/$id")({
-  validateSearch: (s: Record<string, unknown>) => {
-    const view = parseInboxView(s.view);
-    const tour = typeof s.tour === "string" && s.tour.trim() ? s.tour.trim() : undefined;
-    return {
-      ...(view ? { view } : {}),
-      ...(tour ? { tour } : {}),
-    };
-  },
+  validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
   component: ThreadPage,
 });
 

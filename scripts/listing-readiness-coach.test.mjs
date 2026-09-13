@@ -143,7 +143,8 @@ test("Sprint 2c does not rewrite inbox, tours, or public Explore", () => {
   const home = src("src/components/today-urgency-home.tsx");
   assert.match(home, /acceptTour/);
   assert.match(home, /todayProposeTime/);
-  assert.match(src("src/lib/today-sla.ts"), /TODAY_TOUR_SLA_HOURS = 48/);
+  assert.match(src("src/lib/today-sla.ts"), /TODAY_TOUR_SLA_HOURS = TOUR_HOLD_SLA_HOURS/);
+  assert.match(src("src/lib/tour-hold.ts"), /TOUR_HOLD_SLA_HOURS = 48/);
   assert.doesNotMatch(src("src/routes/index.tsx"), /ListingReadinessCoach|ActionRequiredBanner/);
   assert.doesNotMatch(src("src/routes/search.tsx"), /ListingReadinessCoach|ActionRequiredBanner/);
   assert.doesNotMatch(src("src/components/parent-desk.tsx"), /ListingReadinessCoach/);

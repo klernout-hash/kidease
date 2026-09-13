@@ -190,11 +190,13 @@ export function DeskShell({
   active,
   onSelect,
   children,
+  wide,
 }: {
   desk: DeskId;
   active: string;
   onSelect: (id: string) => void;
   children: ReactNode;
+  wide?: boolean;
 }) {
   const meta = DESK_META[desk];
   const { session } = useSessionDesks();
@@ -209,7 +211,7 @@ export function DeskShell({
 
   return (
     <Shell>
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-8 md:py-10">
+      <div className={cn("mx-auto flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-8 md:py-10", wide ? "max-w-[90rem]" : "max-w-6xl")}>
         <aside className="md:sticky md:top-24 md:w-56 md:shrink-0">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{meta.eyebrow}</p>
           <h1 className="mt-2 font-display text-3xl">{meta.title}</h1>

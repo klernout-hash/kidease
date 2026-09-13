@@ -720,8 +720,15 @@ export const listInbox = createServerFn({ method: "GET" })
 
 export const getThread = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((conversationId: string) => conversationId)
-  .handler(async ({ context, data: conversationId }) => {
+  .validator((input: string | { conversationId: string; markRead?: boolean }) => {
+    if (typeof input === "string") return { conversationId: input, markRead: true };
+    return {
+      conversationId: String(input?.conversationId || "").trim(),
+      markRead: input?.markRead !== false,
+    };
+  })
+  .handler(async ({ context, data }) => {
+    const conversationId = data.conversationId;
     const sql = await getSql();
     const { requireConversationRead, markConversationRead } = await import("@/lib/server/thread-access");
     const { listToursForConversation } = await import("@/lib/server/tours");
@@ -732,7 +739,11 @@ export const getThread = createServerFn({ method: "GET" })
       return null;
     }
     const conv = [access.conversation];
-    await markConversationRead(sql, conversationId, context.userId);
+    if (data.markRead === false) {
+      /* Centre inbox: opening list/thread must not clear unread. */
+    } else {
+      await markConversationRead(sql, conversationId, context.userId);
+    }
     if (!conv[0]) return null;
     const messages = await sql<{
       id: string;

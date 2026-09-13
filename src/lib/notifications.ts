@@ -102,8 +102,12 @@ export function leadNotificationHref(input: {
   audience: "parent" | "provider";
   conversationId?: string | null;
 }): string {
-  if (input.conversationId && isAllowedNotificationHref(`/inbox/${input.conversationId}`)) {
-    return `/inbox/${input.conversationId}`;
+  if (input.conversationId) {
+    const href =
+      input.audience === "provider"
+        ? `/inbox/${input.conversationId}?view=centre&detail=1`
+        : `/inbox/${input.conversationId}`;
+    if (isAllowedNotificationHref(href)) return href;
   }
   return input.audience === "provider" ? DAYCARE_INBOX_HREF : PARENT_REQUESTS_HREF;
 }
@@ -112,8 +116,25 @@ export function claimNotificationHref(audience: "provider" | "admin"): string {
   return audience === "admin" ? "/admin" : "/provider";
 }
 
-export function inboxNotificationHref(conversationId: string): string {
+export function inboxNotificationHref(conversationId: string, view?: "centre" | "family"): string {
+  if (view === "centre") {
+    return safeNotificationHref(`/inbox/${conversationId}?view=centre&detail=1`, "/inbox?view=centre");
+  }
   return safeNotificationHref(`/inbox/${conversationId}`, "/inbox");
+}
+
+/** Tour request, parent message, or a declined/rejected screening-style flag. */
+export function isCriticalNotification(item: {
+  kind?: string | null;
+  titleKey?: string | null;
+  status?: string | null;
+}): boolean {
+  if (item.kind === "tour" || item.titleKey === "notifTourNew" || item.titleKey === "notifTourUpdated") return true;
+  if (item.kind === "inbox" || item.titleKey === "notifInbox") return true;
+  if (item.titleKey === "notifClaimDeclined" || item.status === "rejected" || item.status === "declined") {
+    return item.kind === "claim" || item.kind === "tour";
+  }
+  return false;
 }
 
 export function searchAlertHref(linkPath?: string | null): string {
