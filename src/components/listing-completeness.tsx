@@ -1,3 +1,4 @@
+import { ListingReadinessCoach } from "@/components/listing-readiness-coach";
 import { listingCompleteness, photoFreshness, photoTimestamp, type CompletenessField } from "@/lib/listing-readiness";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
@@ -62,26 +63,5 @@ export function CompletenessBanner({ item }: { item: Daycare }) {
 }
 
 export function CompletenessChecklist({ item }: { item: Daycare }) {
-  const { t } = useCopy();
-  const complete = listingCompleteness(item);
-  return (
-    <div className="mt-4 rounded-lg bg-bg p-4 text-sm ring-1 ring-border">
-      <p className="font-medium">{t("completenessTitle")}</p>
-      <p className="mt-1 text-muted">{t("completenessLead")}</p>
-      <p className="mt-2 text-xs text-subtle">
-        {complete.ready ? t("detailsReady") : `${t("detailsIncomplete")} · ${complete.score}/5`}
-      </p>
-      <ul className="mt-3 space-y-1.5">
-        {(["fees", "ages", "hours", "license", "photo"] as CompletenessField[]).map((field) => {
-          const ok = !complete.missing.includes(field);
-          return (
-            <li key={field} className={ok ? "text-muted" : "text-fg"}>
-              <span className="mr-2 tabular-nums">{ok ? "✓" : "–"}</span>
-              {t(NEED_KEY[field])}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
+  return <ListingReadinessCoach item={item} variant="card" />;
 }

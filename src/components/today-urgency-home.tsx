@@ -6,6 +6,7 @@ import { respondTourRequest } from "@/lib/server/tours";
 import { listInbox } from "@/lib/server/inbox";
 import { listProviderScreening } from "@/lib/server/provider-screening";
 import type { LeadRequest } from "@/lib/lead-requests";
+import { ActionRequiredBanner } from "@/components/listing-readiness-coach";
 import {
   buildTodayRows,
   formatSlaCountdown,
@@ -14,6 +15,7 @@ import {
   type TodayRow,
   type TodayTone,
 } from "@/lib/today-urgency";
+import { listingVerifiedCoach } from "@/lib/listing-verified";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { Conversation, Daycare, TourRequest } from "@/lib/types";
@@ -119,6 +121,16 @@ export function TodayUrgencyHome({
       .catch(() => setScreening([]));
   }, [listings.length, tours.length]);
 
+  const coachListings = useMemo(
+    () =>
+      listings.map((listing) => ({
+        ...listing,
+        screeningOnFile:
+          listing.screeningOnFile ||
+          screening.some((centre) => centre.daycareId === listing.id && centre.screeningOnFile),
+      })),
+    [listings, screening],
+  );
   const rows = useMemo(
     () =>
       buildTodayRows({
@@ -130,7 +142,15 @@ export function TodayUrgencyHome({
       }),
     [tours, threads, listings, screening, t],
   );
-  const empty = useMemo(() => todayEmptyTruth({ rows, tours, leads }), [rows, tours, leads]);
+  const opsRows = useMemo(() => rows.filter((row) => row.kind !== "action"), [rows]);
+  const listingActionOpen = useMemo(
+    () => coachListings.some((listing) => !listingVerifiedCoach(listing).verified),
+    [coachListings],
+  );
+  const empty = useMemo(
+    () => (listingActionOpen ? null : todayEmptyTruth({ rows: opsRows, tours, leads })),
+    [listingActionOpen, opsRows, tours, leads],
+  );
   const emptyHref = empty?.href;
   const emptyDesk = emptyHref?.to === "/provider" ? emptyHref.search.desk : null;
 
@@ -153,6 +173,7 @@ export function TodayUrgencyHome({
         <h2 className="font-display text-2xl">{t("todayHome")}</h2>
         <p className="mt-1 text-sm text-muted">{t("todayHomeLead")}</p>
       </div>
+      <ActionRequiredBanner listings={coachListings} />
       {empty ? (
         <div className="rounded-xl bg-surface px-5 py-8 ring-1 ring-border">
           <p className="font-medium">
@@ -171,9 +192,9 @@ export function TodayUrgencyHome({
             ) : null}
           </div>
         </div>
-      ) : (
+      ) : opsRows.length ? (
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-          {rows.map((row) => (
+          {opsRows.map((row) => (
             <li key={row.id} className="p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -228,7 +249,7 @@ export function TodayUrgencyHome({
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </section>
   );
 }
