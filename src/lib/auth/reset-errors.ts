@@ -13,6 +13,7 @@ export function friendlyResetMailError(message?: string | null) {
     raw.includes("not configured") ||
     raw.includes("resend_api_key") ||
     raw.includes("sendgrid_api_key") ||
+    raw.includes("titan_app_password") ||
     raw.includes("reset password isn't enabled") ||
     raw.includes("reset_password_disabled")
   ) {
@@ -22,9 +23,10 @@ export function friendlyResetMailError(message?: string | null) {
     raw.includes("could not send") ||
     raw.includes("email could not be sent") ||
     raw.includes("resend") ||
-    raw.includes("sendgrid")
+    raw.includes("sendgrid") ||
+    raw.includes("titan")
   ) {
-    return "The reset email could not be sent. Try again in a few minutes.";
+    return "The reset email could not be sent. Try again in a few minutes, or email support@kidease.ca. We did not treat this as sent.";
   }
   if (raw.includes("security check")) {
     return message || "Please complete the security check.";

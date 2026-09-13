@@ -113,9 +113,14 @@ test("Send a new code waits only for the short resend cooldown, never because a 
 
 test("mail failures stay generic and do not leak provider payloads", () => {
   assert.match(friendlyTwoFactorMailError(new Error("Email is not configured")), /not configured/);
+  assert.match(friendlyTwoFactorMailError(new Error("Email is not configured")), /support@kidease\.ca/);
   assert.match(
     friendlyTwoFactorMailError(new Error("Resend 429: {\"name\":\"rate_limit_exceeded\"}")),
     /could not send a new code/i,
+  );
+  assert.match(
+    friendlyTwoFactorMailError(new Error("Resend 429: {\"name\":\"rate_limit_exceeded\"}")),
+    /did not treat this as sent/i,
   );
   assert.doesNotMatch(
     friendlyTwoFactorMailError(new Error("Resend 429: {\"name\":\"rate_limit_exceeded\"}")),
@@ -172,20 +177,21 @@ test("Resend message id is extracted without treating other payload fields as id
 
 test("env example tells Production to set MAIL_FROM on send.kidease.ca and leave apex SPF Titan-only", () => {
   const envExample = readFileSync(join(root, ".env.example"), "utf8");
-  assert.match(envExample, /Production MUST set MAIL_FROM/);
   assert.match(envExample, /MAIL_FROM=KidEase <noreply@send\.kidease\.ca>/);
   assert.match(envExample, /Do NOT add Resend/);
-  assert.doesNotMatch(envExample, /MAIL_FROM=KidEase <kyle@kidease\.ca>/);
+  assert.match(envExample, /MAIL_FROM_RESEND=KidEase <kyle@kidease\.ca>/);
+  assert.match(envExample, /Titan SMTP From MUST be the mailbox/);
+  assert.match(envExample, /TITAN_APP_PASSWORD set on Vercel/);
+  assert.doesNotMatch(envExample, /(?:^|\n)#?\s*MAIL_FROM=KidEase <kyle@kidease\.ca>/);
 });
 
-test("sendCodeEmail uses aligned From, reply_to ADMIN_EMAIL, and logs Resend id", () => {
+test("sendCodeEmail uses shared fallback sender, reply-to ADMIN_EMAIL, and logs Resend without secrets", () => {
   const twoFa = readFileSync(join(root, "src/lib/server/two-factor.ts"), "utf8");
   const sendBlock = twoFa.slice(twoFa.indexOf("async function sendCodeEmail"), twoFa.indexOf("export const getTwoFactorStatus"));
-  assert.match(sendBlock, /twoFactorMailFrom\(\)/);
-  assert.match(sendBlock, /reply_to:\s*ADMIN_EMAIL/);
-  assert.match(sendBlock, /reply_to:\s*\{\s*email:\s*ADMIN_EMAIL\s*\}/);
+  assert.match(sendBlock, /sendTransactionalMail/);
+  assert.match(sendBlock, /purpose:\s*"2fa"/);
+  assert.match(sendBlock, /replyTo:\s*ADMIN_EMAIL/);
   assert.match(sendBlock, /\[kidease-2fa\] resend/);
-  assert.match(sendBlock, /resendMessageId/);
   assert.doesNotMatch(sendBlock, /kyle@kidease\.ca/);
   assert.doesNotMatch(sendBlock, /re_[A-Za-z0-9]/);
 });

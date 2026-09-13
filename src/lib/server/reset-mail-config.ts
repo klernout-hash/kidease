@@ -1,8 +1,10 @@
+import { transactionalMailConfigured } from "../transactional-mail.ts";
+
 export const RESET_MAIL_NOT_CONFIGURED =
-  "Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY)";
+  "Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY or TITAN_APP_PASSWORD)";
 
 export function resetMailConfigured(env: NodeJS.ProcessEnv = process.env) {
-  return Boolean(env.RESEND_API_KEY?.trim() || env.SENDGRID_API_KEY?.trim());
+  return transactionalMailConfigured(env);
 }
 
 export function assertResetMailConfigured(env: NodeJS.ProcessEnv = process.env) {
