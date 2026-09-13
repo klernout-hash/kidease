@@ -170,7 +170,7 @@ test("wire: Neon membership, Better Auth invite, owner revoke, king-admin untouc
   assert.match(src("src/lib/server/centre-members.ts"), /employee_invite/);
   assert.match(src("src/lib/server/invite-mail.ts"), /purpose: "invite"/);
   assert.match(src("src/lib/transactional-mail.ts"), /"invite"/);
-  assert.match(src("src/routes/invite.\$token.tsx"), /createFileRoute\("\/invite\/\$token"\)/);
+  assert.match(src("src/routes/invite.$token.tsx"), /createFileRoute\("\/invite\/\$token"\)/);
   assert.match(src("src/routeTree.gen.ts"), /id:\s*'\/invite\/\$token'/);
   assert.match(src("src/lib/server/family.ts"), /delete from centre_members/);
   assert.match(src("src/routes/provider.tsx"), /employees/);
