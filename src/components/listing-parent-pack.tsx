@@ -46,7 +46,7 @@ export function ListingHeaderPills({ item }: { item: Daycare }) {
       </span>
       {item.city ? <span className={pill}>{item.city}</span> : null}
       <span className={pill} data-facility-type={facility.type}>
-        {parentFacilityLabel(facility.type === "home" ? "home" : facility.type === "school" ? "school" : "centre", loc)}
+        {parentFacilityLabel(facility.type, loc)}
       </span>
       {license ? <span className={pill}>{t(license.labelKey as CopyKey)}</span> : null}
       {updatedLabel ? (
@@ -62,6 +62,7 @@ export function ListingJumpNav() {
   const { t } = useCopy();
   const links = [
     ["listing-programs", "jumpPrograms"],
+    ["listing-tours", "tourTimesJump"],
     ["listing-reviews", "jumpReviews"],
     ["listing-photos", "jumpPhotos"],
     ["listing-location", "jumpLocation"],

@@ -85,8 +85,8 @@ function exploreTags(item) {
   }
   if (isBeforeAfterProgram(item)) tags.push("before-after");
   const facility = classifyFacilityType(item).type;
-  if (facility === "home") tags.push("home");
-  if (facility === "nursery") tags.push("nursery");
+  if (facility === "family_home" || facility === "group_home") tags.push("home");
+  if (facility === "nursery_preschool") tags.push("nursery");
   return tags;
 }
 function visibleExploreCategories(counts, selected) {

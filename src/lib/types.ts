@@ -123,8 +123,14 @@ export type Daycare = {
   agesKnown?: boolean;
   visibility?: "public" | "admin_only";
   isTest?: boolean;
-  /** Provider-set facility class. Null = derive from amenities (never a name guess). */
-  facilityType?: "centre" | "nursery" | "home" | "school" | null;
+  /** Provider-set Canada facility class. Null = derive from amenities (never a name guess). */
+  facilityType?:
+    | "child_care_centre"
+    | "family_home"
+    | "group_home"
+    | "nursery_preschool"
+    | "school_age"
+    | null;
   /** Provider-set FT/PT/flexible offers. Empty = hidden from parent schedule chips. */
   scheduleOptions?: Array<"full" | "part" | "flexible">;
   /** Provider vacancy window. Public Immediate still requires honest fresh spots. */
@@ -149,6 +155,8 @@ export type Daycare = {
   safetyFeatures?: string[];
   /** Optional public promo blurb from the daycare desk. */
   promoText?: string | null;
+  /** Centre timezone for posted tour times. Default America/Winnipeg. */
+  timezone?: string;
   /** Claimed + centre inbox + transactional mail configured. */
   inboxMailReady?: boolean;
 };
@@ -272,6 +280,9 @@ export type TourRequest = {
   centreNote: string | null;
   createdAt: string;
   respondedAt: string | null;
+  windowId?: string | null;
+  parentPhone?: string | null;
+  parentEmail?: string | null;
 };
 
 export type Message = {

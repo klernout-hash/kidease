@@ -33,6 +33,7 @@ export const PROVIDER_TAB_KEYS = [
   "requests",
   "money",
   "listings",
+  "tours",
   "licence",
   "license",
   "contract",

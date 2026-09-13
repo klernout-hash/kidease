@@ -1,52 +1,81 @@
 import { useEffect, useId, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Check, Plus, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { getFamily } from "@/lib/server/family";
-import { createTourRequest } from "@/lib/server/tours";
+import { bookTourSlot, listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
-import { MAX_TOUR_SLOTS, type PreferredTime } from "@/lib/threads";
+import {
+  formatTourDateChip,
+  formatTourSlotRange,
+  timezoneLabel,
+  type PublicTourSlot,
+  type TourEmptyReason,
+} from "@/lib/tour-calendar";
 import type { Child, Daycare } from "@/lib/types";
 
 type Props = {
   daycare: Daycare;
   open: boolean;
   onClose: () => void;
+  onRequestInfo?: () => void;
 };
 
-function emptySlot(): PreferredTime {
-  const d = new Date();
-  d.setDate(d.getDate() + 3);
-  d.setMinutes(0, 0, 0);
-  if (d.getHours() < 9) d.setHours(9);
-  if (d.getHours() > 16) d.setHours(10);
-  return { date: d.toISOString().slice(0, 10), time: `${String(d.getHours()).padStart(2, "0")}:00` };
-}
-
-export function RequestTourSheet({ daycare, open, onClose }: Props) {
+export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Props) {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const navigate = useNavigate();
   const titleId = useId();
+  const loc = locale === "fr" ? "fr" : "en";
   const [childId, setChildId] = useState("");
   const [savedKids, setSavedKids] = useState<Child[]>([]);
   const [childName, setChildName] = useState("");
-  const [times, setTimes] = useState<PreferredTime[]>([emptySlot()]);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [slots, setSlots] = useState<PublicTourSlot[]>([]);
+  const [empty, setEmpty] = useState<TourEmptyReason | null>("none_posted");
+  const [timezone, setTimezone] = useState(daycare.timezone || "America/Winnipeg");
+  const [date, setDate] = useState("");
+  const [windowId, setWindowId] = useState("");
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ conversationId: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState<{ conversationId: string; guest: boolean } | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setDone(null);
+    setWindowId("");
+    setDate("");
+    setLoading(true);
+    if (user?.primaryEmail) setEmail(user.primaryEmail);
+    if (user?.displayName) {
+      const [first, ...rest] = user.displayName.trim().split(/\s+/);
+      setFirstName(first || "");
+      if (rest.length) setLastName(rest.join(" "));
+    }
     void getFamily()
       .then((f) => setSavedKids(f.children))
       .catch(() => undefined);
+    void listPublicTourSlots({ data: { daycareId: daycare.id } })
+      .then((res) => {
+        setSlots(res.slots);
+        setEmpty(res.empty);
+        setTimezone(res.timezone);
+        const first = res.slots[0]?.date ?? "";
+        setDate(first);
+      })
+      .catch(() => {
+        setSlots([]);
+        setEmpty("none_posted");
+      })
+      .finally(() => setLoading(false));
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function onKey(e: KeyboardEvent) {
@@ -57,40 +86,53 @@ export function RequestTourSheet({ daycare, open, onClose }: Props) {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose]);
+  }, [open, onClose, daycare.id, user]);
 
   if (!open) return null;
 
   const name = locale === "fr" ? daycare.nameFr : daycare.name;
+  const dates = [...new Set(slots.map((slot) => slot.date))];
+  const daySlots = slots.filter((slot) => slot.date === date);
+  const selected = slots.find((slot) => slot.id === windowId) ?? null;
+  const guest = !user;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!user) {
-      void navigate({ to: "/login", search: parentLoginSearch(`/daycare/${daycare.slug}`) });
+    if (!windowId) {
+      toast.error(t("tourTimesNeedSlot"));
       return;
     }
-    if (times.length === 0) return;
+    if (guest && (!firstName.trim() || !lastName.trim() || phone.trim().length < 7 || !email.trim())) {
+      toast.error(t("tourTimesNeedContact"));
+      return;
+    }
     setBusy(true);
     try {
-      const res = await createTourRequest({
+      const res = await bookTourSlot({
         data: {
           daycareId: daycare.id,
-          preferredTimes: times,
+          windowId,
           childId: childId || undefined,
           childName: childName.trim() || undefined,
           note: message.trim() || undefined,
           locale: locale === "fr" ? "fr" : "en",
+          userId: user?.id,
+          firstName: firstName.trim() || undefined,
+          lastName: lastName.trim() || undefined,
+          phone: phone.trim() || undefined,
+          email: email.trim() || undefined,
         },
       });
       capturePostHogEvent("listing_request_submitted", { intent: "tour" });
       toast.success(t("requestSentTitleTour"));
-      setDone({ conversationId: res.conversationId });
-      window.setTimeout(() => {
-        void navigate({ to: "/parent", search: PARENT_REQUESTS_SEARCH });
-      }, 1400);
-    } catch {
-      toast.error(t("needSignIn"));
-      void navigate({ to: "/login", search: parentLoginSearch(`/daycare/${daycare.slug}`) });
+      setDone({ conversationId: res.conversationId, guest: res.guest });
+      if (!res.guest) {
+        window.setTimeout(() => {
+          void navigate({ to: "/parent", search: PARENT_REQUESTS_SEARCH });
+        }, 1400);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("tourTimesFailed"));
     } finally {
       setBusy(false);
     }
@@ -115,22 +157,30 @@ export function RequestTourSheet({ daycare, open, onClose }: Props) {
             </h2>
             <p className="mt-2 max-w-sm text-sm text-muted">{t("requestSentTrack")}</p>
             <p className="mt-1 text-xs text-subtle">{t("notifyCentre")}</p>
-            <Button className="mt-6 w-full" asChild>
-              <Link to="/parent" search={PARENT_REQUESTS_SEARCH}>
-                {t("goToMyRequests")}
-              </Link>
-            </Button>
-            <Button className="mt-2 w-full" variant="secondary" asChild>
-              <Link to="/inbox/$id" params={{ id: done.conversationId }}>
-                {t("goToConversation")}
-              </Link>
-            </Button>
-            <button type="button" className="mt-3 text-sm text-muted hover:text-fg" onClick={onClose}>
-              {t("cancel")}
-            </button>
+            {done.guest ? (
+              <Button className="mt-6 w-full" onClick={onClose}>
+                {t("close")}
+              </Button>
+            ) : (
+              <>
+                <Button className="mt-6 w-full" asChild>
+                  <Link to="/parent" search={PARENT_REQUESTS_SEARCH}>
+                    {t("goToMyRequests")}
+                  </Link>
+                </Button>
+                <Button className="mt-2 w-full" variant="secondary" asChild>
+                  <Link to="/inbox/$id" params={{ id: done.conversationId }}>
+                    {t("goToConversation")}
+                  </Link>
+                </Button>
+                <button type="button" className="mt-3 text-sm text-muted hover:text-fg" onClick={onClose}>
+                  {t("cancel")}
+                </button>
+              </>
+            )}
           </div>
         ) : (
-          <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+          <form onSubmit={(e) => void submit(e)} className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
               <div>
                 <h2 id={titleId} className="font-display text-xl">
@@ -148,8 +198,76 @@ export function RequestTourSheet({ daycare, open, onClose }: Props) {
               </button>
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
-              <p className="text-sm text-muted">{t("tourLead")}</p>
-              {savedKids.length ? (
+              <p className="text-sm text-muted">{t("tourTimesListingLead")}</p>
+              {loading ? (
+                <p className="text-sm text-muted">{t("loading")}</p>
+              ) : empty ? (
+                <div className="rounded-lg bg-bg p-4 ring-1 ring-border" data-tour-empty={empty}>
+                  <p className="font-medium">{empty === "none_open" ? t("tourTimesNoneOpen") : t("tourTimesEmpty")}</p>
+                  <p className="mt-1 text-sm text-muted">
+                    {empty === "none_open" ? t("tourTimesNoneOpenLead") : t("tourTimesEmptyLead")}
+                  </p>
+                  {onRequestInfo ? (
+                    <Button
+                      type="button"
+                      className="mt-3 w-full"
+                      onClick={() => {
+                        onClose();
+                        onRequestInfo();
+                      }}
+                    >
+                      {t("requestInfo")}
+                    </Button>
+                  ) : null}
+                </div>
+              ) : (
+                <>
+                  <fieldset>
+                    <legend className="text-sm font-medium">{t("tourTimesPickDate")}</legend>
+                    <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto pb-1">
+                      {dates.map((day) => (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => {
+                            setDate(day);
+                            setWindowId("");
+                          }}
+                          className={`min-h-11 shrink-0 rounded-full px-3 text-sm ring-1 ${
+                            date === day ? "bg-primary text-primary-fg ring-primary" : "bg-bg ring-border"
+                          }`}
+                        >
+                          {formatTourDateChip(day, loc)}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend className="text-sm font-medium">{t("tourTimesPickSlot")}</legend>
+                    <p className="mt-1 text-xs text-muted">{timezoneLabel(timezone, loc)}</p>
+                    <div className="mt-2 grid gap-2">
+                      {daySlots.map((slot) => (
+                        <button
+                          key={slot.id}
+                          type="button"
+                          onClick={() => setWindowId(slot.id)}
+                          className={`min-h-11 rounded-lg px-3 py-2 text-left text-sm ring-1 ${
+                            windowId === slot.id ? "bg-primary/10 ring-2 ring-primary" : "bg-bg ring-border"
+                          }`}
+                        >
+                          <span className="font-medium">{formatTourSlotRange(slot, loc)}</span>
+                          <span className="mt-0.5 block text-xs text-muted">
+                            {slot.remaining === 1
+                              ? `1 ${t("tourTimesSpotLeft")}`
+                              : `${slot.remaining} ${t("tourTimesSpotsLeft")}`}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                </>
+              )}
+              {user && savedKids.length ? (
                 <label className="block text-sm">
                   {t("pickChild")}
                   <select
@@ -171,88 +289,89 @@ export function RequestTourSheet({ daycare, open, onClose }: Props) {
                   </select>
                 </label>
               ) : null}
-              <label className="block text-sm">
-                {t("childFullName")}
-                <input
-                  autoComplete="off"
-                  className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                  value={childName}
-                  onChange={(e) => setChildName(e.target.value)}
-                  placeholder={t("optional")}
-                />
-              </label>
-              <fieldset>
-                <legend className="text-sm">{t("preferredTimes")}</legend>
-                <p className="mt-1 text-xs text-muted">{t("preferredTimesLead")}</p>
-                <div className="mt-2 space-y-2">
-                  {times.map((slot, i) => (
-                    <div key={`${slot.date}-${i}`} className="flex flex-wrap items-center gap-2">
-                      <input
-                        required
-                        type="date"
-                        min={todayIso()}
-                        className="h-11 flex-1 rounded-md border border-border bg-bg px-3"
-                        value={slot.date}
-                        onChange={(e) =>
-                          setTimes((cur) => cur.map((s, idx) => (idx === i ? { ...s, date: e.target.value } : s)))
-                        }
-                      />
-                      <input
-                        required
-                        type="time"
-                        className="h-11 w-32 rounded-md border border-border bg-bg px-3"
-                        value={slot.time}
-                        onChange={(e) =>
-                          setTimes((cur) => cur.map((s, idx) => (idx === i ? { ...s, time: e.target.value } : s)))
-                        }
-                      />
-                      {times.length > 1 ? (
-                        <button
-                          type="button"
-                          className="grid size-10 place-items-center rounded-md text-muted hover:bg-surface-2"
-                          aria-label={t("removeTime")}
-                          onClick={() => setTimes((cur) => cur.filter((_, idx) => idx !== i))}
-                        >
-                          <X className="size-4" />
-                        </button>
-                      ) : null}
-                    </div>
-                  ))}
+              {user ? (
+                <label className="block text-sm">
+                  {t("childFullName")}
+                  <input
+                    autoComplete="off"
+                    className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                    value={childName}
+                    onChange={(e) => setChildName(e.target.value)}
+                    placeholder={t("optional")}
+                  />
+                </label>
+              ) : null}
+              {guest && !empty ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <p className="text-sm text-muted sm:col-span-2">{t("tourTimesGuestLead")}</p>
+                  <label className="text-sm">
+                    {t("requestInfoFirst")}
+                    <input
+                      required
+                      className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      autoComplete="given-name"
+                    />
+                  </label>
+                  <label className="text-sm">
+                    {t("requestInfoLast")}
+                    <input
+                      required
+                      className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      autoComplete="family-name"
+                    />
+                  </label>
+                  <label className="text-sm">
+                    {t("requestInfoPhone")}
+                    <input
+                      required
+                      type="tel"
+                      className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      autoComplete="tel"
+                    />
+                  </label>
+                  <label className="text-sm">
+                    {t("requestInfoEmail")}
+                    <input
+                      required
+                      type="email"
+                      className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="email"
+                    />
+                  </label>
                 </div>
-                {times.length < MAX_TOUR_SLOTS ? (
-                  <button
-                    type="button"
-                    className="mt-2 inline-flex items-center gap-1 text-sm text-primary"
-                    onClick={() => setTimes((cur) => [...cur, emptySlot()])}
-                  >
-                    <Plus className="size-4" />
-                    {t("addTime")}
-                  </button>
-                ) : null}
-              </fieldset>
-              <label className="block text-sm">
-                {t("optionalMessage")}
-                <textarea
-                  rows={3}
-                  placeholder={t("tourDefaultNote")}
-                  className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                />
-              </label>
+              ) : null}
+              {!empty ? (
+                <label className="block text-sm">
+                  {t("optionalMessage")}
+                  <textarea
+                    rows={3}
+                    placeholder={t("tourDefaultNote")}
+                    className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                  />
+                </label>
+              ) : null}
+              {selected ? <p className="text-xs text-subtle">{formatTourSlotRange(selected, loc)}</p> : null}
             </div>
-            <div className="border-t border-border px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              <Button type="submit" className="w-full" disabled={busy} size="lg">
-                {busy ? t("loading") : t("sendTourRequest")}
-              </Button>
-            </div>
+            {!empty ? (
+              <div className="border-t border-border px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <Button type="submit" className="w-full" disabled={busy || !windowId} size="lg">
+                  {busy ? t("loading") : t("tourTimesBook")}
+                </Button>
+              </div>
+            ) : null}
           </form>
         )}
       </div>
     </div>
   );
-}
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
 }

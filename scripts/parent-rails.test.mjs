@@ -156,7 +156,7 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
   assert.match(rails, /railByAge/);
   assert.match(rails, /FacilityTypeRails/);
   assert.match(rails, /school-age/);
-  assert.match(rails, /careTypeRail/);
+  assert.match(rails, /FacilityTypeRails items=\{pool\}/);
   assert.doesNotMatch(rails, /railByCare/);
   const typeRails = src("src/components/facility-type-rails.tsx");
   assert.match(typeRails, /railDaycareCentres/);

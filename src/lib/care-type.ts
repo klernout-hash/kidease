@@ -1,6 +1,7 @@
 /**
  * Care-type and age-rail filters for parent explore.
- * Facility types (Centre / Nursery / Home) come from real amenities only.
+ * Facility types (centre / family home / group home / nursery / school-age)
+ * come from the provider column or real amenities only.
  * Before-after is a program signal from amenities and hours — not a facility class.
  * School-age is amenity or confirmed max age — never invented.
  */
@@ -12,6 +13,7 @@ import {
   FACILITY_TYPES,
   classifyFacilityType,
   isFacilityType,
+  isHomeBasedFacility,
   matchesFacilityType,
   type FacilityType,
 } from "@/lib/facility-type";
@@ -49,9 +51,9 @@ export function listingCareType(
   item: Pick<Daycare, "amenities" | "hours" | "name" | "facilityType">,
 ): CareType {
   const facility = classifyFacilityType(item).type;
-  if (facility === "home") return "home";
-  if (facility === "nursery") return "nursery";
-  if (facility === "school" || isBeforeAfterProgram(item)) return "before-after";
+  if (isHomeBasedFacility(facility)) return "home";
+  if (facility === "nursery_preschool") return "nursery";
+  if (facility === "school_age" || isBeforeAfterProgram(item)) return "before-after";
   return "centre";
 }
 
@@ -60,7 +62,10 @@ export function matchesCareType(
   care: CareType,
 ): boolean {
   if (care === "before-after") return isBeforeAfterProgram(item);
-  return matchesFacilityType(item, care);
+  const facility = classifyFacilityType(item).type;
+  if (care === "home") return isHomeBasedFacility(facility);
+  if (care === "nursery") return facility === "nursery_preschool";
+  return facility === "child_care_centre";
 }
 
 export function matchesRailAge(

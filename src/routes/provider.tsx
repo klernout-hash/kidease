@@ -29,6 +29,7 @@ import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field, PromotePanel, readListingImage } from "@/components/provider-listing-forms";
+import { TourAvailabilityDesk } from "@/components/tour-availability-desk";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
@@ -47,9 +48,9 @@ import type { ProviderEntitlements } from "@/lib/provider-entitlements";
 import { CentreEmployeesPanel } from "@/components/centre-employees";
 import { useSessionDesks } from "@/components/desk-switcher";
 
-type DaycareDesk = "requests" | "money" | "listings" | "licence" | "contract" | "promote" | "employees";
+type DaycareDesk = "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote" | "employees";
 
-const DESKS: DaycareDesk[] = ["requests", "money", "listings", "licence", "contract", "promote", "employees"];
+const DESKS: DaycareDesk[] = ["requests", "money", "listings", "tours", "licence", "contract", "promote", "employees"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 
 export const Route = createFileRoute("/provider")({
@@ -317,6 +318,8 @@ function ProviderPage() {
         </section>
       ) : null}
 
+      {desk === "tours" ? <TourAvailabilityDesk listings={listings} onSaved={() => void load()} /> : null}
+
       {desk === "listings" ? (
         <>
           {listings.map((d) => {
@@ -409,7 +412,7 @@ function ProviderPage() {
               </dl>
             </section>
           ) : null}
-          {centreOwner && (listings.length > 0 || showNewForm) ? (
+          {listings.length === 0 && !showNewForm ? null : centreOwner ? (
           <section id="list-new" className="rounded-xl bg-surface p-5 ring-1 ring-border">
             {listings.length === 0 ? (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
