@@ -7,6 +7,7 @@ import { applyLocalRegistryTrust } from "../src/lib/server/license-match.ts";
 import { lookupRegistry, registryLookupIsLive } from "../src/lib/server/registry-adapters.ts";
 import { stripeChargesLive, stripePayoutsLive } from "../src/lib/stripe-live.ts";
 import { MANUAL_STUB_ADAPTER_CODES } from "../src/lib/province-registry.ts";
+import { FOOTER_DAYCARES, FOOTER_SUPPORT } from "../src/lib/site-footer-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -15,10 +16,12 @@ function src(rel) {
 }
 
 test("footer How we verify listings goes to /verify, not /about", () => {
-  const footer = src("src/components/site-footer.tsx");
-  assert.match(footer, /to="\/verify"/);
-  assert.match(footer, /verifyListings/);
-  assert.doesNotMatch(footer, /to="\/about">\{t\("verifyListings"\)\}/);
+  const verifyDaycares = FOOTER_DAYCARES.filter((link) => link.labelKey === "verifyListings");
+  const verifySupport = FOOTER_SUPPORT.filter((link) => link.labelKey === "verifyListings");
+  assert.ok(verifyDaycares.length >= 1 && verifyDaycares.every((link) => link.to === "/verify"));
+  assert.ok(verifySupport.length >= 1 && verifySupport.every((link) => link.to === "/verify"));
+  assert.ok(!FOOTER_DAYCARES.some((link) => link.labelKey === "verifyListings" && link.to === "/about"));
+  assert.ok(!FOOTER_SUPPORT.some((link) => link.labelKey === "verifyListings" && link.to === "/about"));
   assert.match(src("src/routes/verify.tsx"), /createFileRoute\("\/verify"\)/);
   assert.match(src("src/routes/verify.tsx"), /verifyLeadPage/);
   assert.match(src("src/lib/sitemap.ts"), /"\/verify"/);

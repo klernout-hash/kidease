@@ -2,8 +2,16 @@ import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { localePath } from "@/lib/locale-path";
 import { isKidEaseOperatorEmail } from "@/lib/admin-email";
+import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import {
+  FOOTER_COLUMNS,
+  footerLinkLabel,
+  sortFooterLinks,
+  type FooterColumnId,
+  type FooterLinkDef,
+} from "@/lib/site-footer-nav";
 
 function Item({
   to,
@@ -20,6 +28,44 @@ function Item({
         {children}
       </Link>
     </li>
+  );
+}
+
+function Column({
+  id,
+  title,
+  links,
+  locale,
+  t,
+}: {
+  id: FooterColumnId;
+  title: string;
+  links: readonly FooterLinkDef[];
+  locale: string;
+  t: (key: CopyKey) => string;
+}) {
+  const labeled = links.map((link) => ({
+    ...link,
+    href: link.localePaired ? localePath(link.to, locale) : link.to,
+    label: footerLinkLabel(link, t, locale),
+  }));
+  const sorted = sortFooterLinks(labeled, locale);
+
+  return (
+    <section data-footer-col={id}>
+      <p className="ke-footer-title">{title}</p>
+      <ul className="ke-footer-list">
+        {sorted.map((link) => (
+          <Item
+            key={`${link.href}|${JSON.stringify(link.search ?? {})}|${link.label}`}
+            to={link.href}
+            search={link.search}
+          >
+            {link.label}
+          </Item>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -45,64 +91,16 @@ export function SiteFooter() {
       <div className="ke-gutter">
         <div className="ke-footer-inner">
           <nav className="ke-footer-cols" aria-label="KidEase">
-            <section>
-              <p className="ke-footer-title">Parents</p>
-              <ul className="ke-footer-list">
-                <Item to="/search">{t("search")}</Item>
-                <Item to="/login" search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}>
-                  {t("parentSignIn")}
-                </Item>
-                <Item to="/parent">{fr ? "Espace parent" : "Parent desk"}</Item>
-                <Item to="/benefits">{t("benefitsTab")}</Item>
-                <Item to="/tour-checklist">{t("tourChecklist")}</Item>
-                <Item to="/compare">{t("compare")}</Item>
-                <Item to="/parent" search={{ tab: "saved" }}>
-                  {t("saved")}
-                </Item>
-                <Item to="/get-app">{t("getApp")}</Item>
-                {/* Web footer is website-only; same destination as rateKidEaseFromMenu() on www. */}
-                <Item to="/get-app">{t("rateKidEase")}</Item>
-              </ul>
-            </section>
-
-            <section>
-              <p className="ke-footer-title">{fr ? "Garderies" : "Daycares"}</p>
-              <ul className="ke-footer-list">
-                <Item to="/claim">{t("claimCta")}</Item>
-                <Item to="/login" search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}>
-                  {t("providerLogin")}
-                </Item>
-                <Item to="/provider">{fr ? "Espace garderie" : "Daycare desk"}</Item>
-                <Item to="/verify">{t("verifyListings")}</Item>
-                <Item to={localePath("/jobs", locale)}>{t("findDaycareJobs")}</Item>
-              </ul>
-            </section>
-
-            <section>
-              <p className="ke-footer-title">{t("footerCaregivers")}</p>
-              <ul className="ke-footer-list">
-                <Item to={localePath("/jobs", locale)}>{t("findDaycareJobs")}</Item>
-              </ul>
-            </section>
-
-            <section>
-              <p className="ke-footer-title">{t("footerKidEase")}</p>
-              <ul className="ke-footer-list">
-                <Item to={localePath("/jobs/post", locale)}>{t("addJobsAtKidEase")}</Item>
-                <Item to={localePath("/help", locale)}>{t("helpTitle")}</Item>
-                <Item to={localePath("/contact", locale)}>{t("contactTitle")}</Item>
-                <Item to={localePath("/faq", locale)}>FAQ</Item>
-                <Item to={localePath("/how-it-works", locale)}>{t("howItWorksCta")}</Item>
-                <Item to={localePath("/about", locale)}>{t("about")}</Item>
-                <Item to="/team">{t("team")}</Item>
-                <Item to="/verify">{t("verifyListings")}</Item>
-                <Item to={localePath("/privacy", locale)}>{t("privacy")}</Item>
-                <Item to={localePath("/terms", locale)}>{t("terms")}</Item>
-                <Item to={localePath("/cookies", locale)}>{t("cookies")}</Item>
-                <Item to="/unsubscribe">{t("unsubscribe")}</Item>
-                <Item to="/delete-account">{t("deleteAccount")}</Item>
-              </ul>
-            </section>
+            <Column id="parents" title="Parents" links={FOOTER_COLUMNS.parents} locale={locale} t={t} />
+            <Column
+              id="daycares"
+              title={fr ? "Garderies" : "Daycares"}
+              links={FOOTER_COLUMNS.daycares}
+              locale={locale}
+              t={t}
+            />
+            <Column id="kidease" title={t("app")} links={FOOTER_COLUMNS.kidease} locale={locale} t={t} />
+            <Column id="support" title={t("support")} links={FOOTER_COLUMNS.support} locale={locale} t={t} />
           </nav>
 
           <div className="ke-footer-legal">

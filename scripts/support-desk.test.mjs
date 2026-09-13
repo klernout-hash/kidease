@@ -17,6 +17,7 @@ import {
   supportRefundMaxCents,
 } from "../src/lib/support.ts";
 import { desksFor, parseAppRole } from "../src/lib/desks.ts";
+import { FOOTER_SUPPORT } from "../src/lib/site-footer-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -118,9 +119,9 @@ test("public help moved to /help; /support is the staff desk", () => {
   assert.match(help, /createFileRoute\("\/help"\)/);
   assert.match(help, /kind: "support"/);
 
-  const footer = readFileSync(join(root, "src/components/site-footer.tsx"), "utf8");
-  assert.match(footer, /localePath\("\/help"/);
-  assert.doesNotMatch(footer, /to="\/support"/);
+  const helpLink = FOOTER_SUPPORT.find((link) => link.to === "/help");
+  assert.ok(helpLink?.localePaired, "public Help uses localePath so /fr/help is live");
+  assert.ok(!FOOTER_SUPPORT.some((link) => link.to === "/support"));
 
   const store = readFileSync(join(root, "src/lib/store-listing.ts"), "utf8");
   assert.match(store, /supportPath: "\/help"/);
