@@ -16,6 +16,12 @@ export const VERIFY_EMAIL_NUDGE_PURPOSE = "verify_email_nudge";
 export const VERIFY_NUDGE_MIN_MS = 24 * 60 * 60 * 1000;
 export const VERIFY_NUDGE_MAX_MS = 48 * 60 * 60 * 1000;
 
+/** Product truth: unclaimed / unverified centres are not live parent-facing listings. */
+export const NOT_LIVE_UNTIL_VERIFIED_EN =
+  "Your daycare will not be listed live on KidEase for parents until it is verified.";
+export const NOT_LIVE_UNTIL_VERIFIED_FR =
+  "Votre service de garde ne sera pas affiché en direct sur KidEase pour les parents tant qu’il n’est pas vérifié.";
+
 export function signupMailAppOrigin(origin?: string | null): string {
   const raw = (origin || "").trim() || "https://www.kidease.ca";
   return raw.replace(/\/$/, "");
@@ -105,12 +111,18 @@ function hello(name?: string | null, locale: "en" | "fr" = "en"): string {
   return first ? `Hi ${first},` : "Hi,";
 }
 
-export function verifyEmailText(url: string, name?: string | null): string {
+export function verifyEmailIncludesNotLiveLine(audience?: "parent" | "provider" | null): boolean {
+  return audience !== "parent";
+}
+
+export function verifyEmailText(url: string, name?: string | null, audience?: "parent" | "provider" | null): string {
+  const notLive = verifyEmailIncludesNotLiveLine(audience);
   return [
     hello(name, "en"),
     "",
     "Thanks for signing up with KidEase.",
     "",
+    ...(notLive ? [NOT_LIVE_UNTIL_VERIFIED_EN, ""] : []),
     "Please verify this email so we can reach you about your account.",
     "",
     url,
@@ -126,6 +138,7 @@ export function verifyEmailText(url: string, name?: string | null): string {
     "",
     "Merci de vous inscrire à KidEase.",
     "",
+    ...(notLive ? [NOT_LIVE_UNTIL_VERIFIED_FR, ""] : []),
     "Veuillez confirmer ce courriel pour que nous puissions vous joindre au sujet de votre compte.",
     "",
     url,
@@ -137,10 +150,13 @@ export function verifyEmailText(url: string, name?: string | null): string {
   ].join("\n");
 }
 
-export function verifyEmailHtml(url: string, name?: string | null): string {
+export function verifyEmailHtml(url: string, name?: string | null, audience?: "parent" | "provider" | null): string {
   const href = escapeAttr(url);
   const enHi = escapeHtml(hello(name, "en"));
   const frHi = escapeHtml(hello(name, "fr"));
+  const notLive = verifyEmailIncludesNotLiveLine(audience);
+  const enNotLive = notLive ? ` <strong>${escapeHtml(NOT_LIVE_UNTIL_VERIFIED_EN)}</strong>` : "";
+  const frNotLive = notLive ? ` <strong>${escapeHtml(NOT_LIVE_UNTIL_VERIFIED_FR)}</strong>` : "";
   return `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
@@ -148,11 +164,11 @@ export function verifyEmailHtml(url: string, name?: string | null): string {
       <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
       <h1 style="margin:12px 0 0;font-size:24px;">Verify your email</h1>
       <p style="margin:16px 0 0;">${enHi}</p>
-      <p style="margin:16px 0 0;color:#5c6578;">Thanks for signing up with KidEase. Please verify this email so we can reach you about your account. The link expires in about 24 hours.</p>
+      <p style="margin:16px 0 0;color:#5c6578;">Thanks for signing up with KidEase.${enNotLive} Please verify this email so we can reach you about your account. The link expires in about 24 hours.</p>
       <p style="margin:24px 0 0;">
         <a href="${href}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600;">Verify email</a>
       </p>
-      <p style="margin:28px 0 0;font-size:13px;color:#5c6578;">${frHi} Merci de vous inscrire à KidEase. Confirmez ce courriel pour que nous puissions vous joindre. Ce lien expire dans environ 24 heures.</p>
+      <p style="margin:28px 0 0;font-size:13px;color:#5c6578;">${frHi} Merci de vous inscrire à KidEase.${frNotLive} Confirmez ce courriel pour que nous puissions vous joindre. Ce lien expire dans environ 24 heures.</p>
     </td></tr>
   </table>
 </body></html>`;
@@ -184,6 +200,8 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     "",
     enLead,
     "",
+    NOT_LIVE_UNTIL_VERIFIED_EN,
+    "",
     "Here are the next steps to get verified. KidEase reviews what you upload. KidEase does not run police checks and does not issue Vulnerable Sector Checks. Only local police / RCMP (or British Columbia’s Criminal Records Review Program) can.",
     "",
     enStep1,
@@ -199,6 +217,8 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     hello(name, "fr"),
     "",
     frLead,
+    "",
+    NOT_LIVE_UNTIL_VERIFIED_FR,
     "",
     "Voici les prochaines étapes pour être vérifié. KidEase examine ce que vous téléversez. KidEase ne fait pas de contrôles policiers et ne délivre pas de vérifications du secteur vulnérable. Seule la police locale / la GRC (ou le CRRP de la C.-B.) le peut.",
     "",
@@ -237,6 +257,7 @@ export function providerOnboardHtml(origin?: string | null, name?: string | null
       <h1 style="margin:12px 0 0;font-size:24px;">Next steps to get verified</h1>
       <p style="margin:16px 0 0;">${enHi}</p>
       <p style="margin:12px 0 0;color:#5c6578;">${enLead}</p>
+      <p style="margin:12px 0 0;color:#1c2438;font-weight:600;">${escapeHtml(NOT_LIVE_UNTIL_VERIFIED_EN)}</p>
       <ol style="margin:16px 0 0;padding-left:20px;color:#1c2438;line-height:1.55;">
         <li>${enStep1}</li>
         <li>Add your current licence number.</li>
@@ -248,7 +269,7 @@ export function providerOnboardHtml(origin?: string | null, name?: string | null
         <a href="${listings}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600;">Complete listing</a>
       </p>
       <p style="margin:12px 0 0;"><a href="${claim}" style="color:#1a3790;font-weight:600;">Claim a listing</a> · <a href="${screening}" style="color:#1a3790;font-weight:600;">Open Screening</a></p>
-      <p style="margin:28px 0 0;font-size:13px;color:#5c6578;">${frLead}</p>
+      <p style="margin:28px 0 0;font-size:13px;color:#5c6578;">${frLead} <strong>${escapeHtml(NOT_LIVE_UNTIL_VERIFIED_FR)}</strong></p>
     </td></tr>
   </table>
 </body></html>`;

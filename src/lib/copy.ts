@@ -1754,6 +1754,8 @@ export const copy = {
     verifyEmailLead: "Thanks for signing up with KidEase. Please verify this email so we can reach you about your account.",
     verifyEmailCta: "Verify email",
     verifyEmailExpiry: "This link expires in about 24 hours. If you did not create a KidEase account, you can ignore this email.",
+    listingNotLiveUntilVerified:
+      "Your daycare will not be listed live on KidEase for parents until it is verified.",
     providerOnboardSubject: "Next steps to get verified on KidEase",
     providerOnboardLead: "Thanks for joining KidEase as a daycare provider.",
     providerOnboardHonesty:
@@ -3533,6 +3535,8 @@ export const copy = {
     verifyEmailCta: "Confirmer le courriel",
     verifyEmailExpiry:
       "Ce lien expire dans environ 24 heures. Si vous n’avez pas créé de compte KidEase, ignorez ce message.",
+    listingNotLiveUntilVerified:
+      "Votre service de garde ne sera pas affiché en direct sur KidEase pour les parents tant qu’il n’est pas vérifié.",
     providerOnboardSubject: "Prochaines étapes pour être vérifié sur KidEase",
     providerOnboardLead: "Merci de joindre KidEase comme fournisseur de garde.",
     providerOnboardHonesty:
