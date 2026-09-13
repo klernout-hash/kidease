@@ -68,6 +68,9 @@ export type DaycareRow = {
   staff_screening_attested?: number | boolean | null;
   staff_screening_attested_at?: string | null;
   staff_screening_attested_by?: string | null;
+  screening_on_file?: number | boolean | null;
+  screening_on_file_at?: string | null;
+  screening_on_file_by?: string | null;
   stripe_identity_verified?: number | boolean | null;
   quality_score?: number | null;
   quality_scored_at?: string | null;
@@ -155,6 +158,9 @@ export function mapDaycare(r: DaycareRow): Daycare {
     staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
     staffScreeningAttestedAt: r.staff_screening_attested_at ?? null,
     staffScreeningAttestedBy: r.staff_screening_attested_by ?? null,
+    screeningOnFile: r.screening_on_file === 1 || r.screening_on_file === true,
+    screeningOnFileAt: r.screening_on_file_at ?? null,
+    screeningOnFileBy: r.screening_on_file_by ?? null,
     stripeIdentityVerified: r.stripe_identity_verified === 1 || r.stripe_identity_verified === true,
     priority: Boolean(r.priority_until && Date.parse(r.priority_until) > Date.now()),
     priorityUntil: r.priority_until ?? null,

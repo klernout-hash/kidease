@@ -97,9 +97,11 @@ export function TrustSignals({
           invert={invert}
           compact={compact}
           extra={
-            badge.id === "staff_attested"
-              ? formatAttestedOn(item.staffScreeningAttestedAt, locale === "fr" ? "fr-CA" : "en-CA")
-              : undefined
+            badge.id === "screening_on_file"
+              ? formatAttestedOn(item.screeningOnFileAt, locale === "fr" ? "fr-CA" : "en-CA")
+              : badge.id === "staff_attested"
+                ? formatAttestedOn(item.staffScreeningAttestedAt, locale === "fr" ? "fr-CA" : "en-CA")
+                : undefined
           }
         />
       ))}

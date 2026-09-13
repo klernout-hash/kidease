@@ -77,6 +77,7 @@ test("Kyle-approved trust labels are the only public badge words", () => {
   assert.match(copy, /trustLicenseUnverified: "Unverified"/);
   assert.match(copy, /trustClaimVerified: "Claim verified"/);
   assert.match(copy, /trustStaffAttested: "Staff attested"/);
+  assert.match(copy, /trustScreeningOnFile: "Screening on file"/);
   assert.doesNotMatch(copy, /KidEase background-checked/);
   assert.doesNotMatch(copy, /Background checked by KidEase/);
   assert.doesNotMatch(copy, /Owner claim verified/);
@@ -90,6 +91,8 @@ test("badge meaning is shared: cards, listing, compare, provider, admin", () => 
   assert.match(trust, /labelKey: "trustLicenseUnverified"/);
   assert.match(trust, /labelKey: "trustClaimVerified"/);
   assert.match(trust, /labelKey: "trustStaffAttested"/);
+  assert.match(trust, /labelKey: "trustScreeningOnFile"/);
+  assert.match(trust, /id: "screening_on_file"/);
   assert.match(trust, /claim\.id === "claim_verified"/);
   assert.match(trust, /staff\.id === "staff_attested"/);
   assert.match(src("src/components/daycare-card.tsx"), /surface="card"/);

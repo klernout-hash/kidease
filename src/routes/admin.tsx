@@ -12,7 +12,9 @@ import { canVisitDesk } from "@/lib/desks";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
+import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
 import { AdminLicenseActions, AdminTrustPanel } from "@/components/admin-trust";
+import { AdminScreeningQueue } from "@/components/admin-screening";
 import { JURISDICTIONS } from "@/lib/province-registry";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
 import { listAdminContracts, type AdminContractRow, type AdminPackRow } from "@/lib/server/contracts";
@@ -38,7 +40,7 @@ import type { CatalogRuntime } from "@/lib/catalog-source";
 import { paymentSourceLabel } from "@/lib/payment-source";
 import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 
-type AdminDesk = "queue" | "verify" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
+type AdminDesk = "queue" | "verify" | "daycares" | "trust" | "screening" | "mail" | "contracts" | "money" | "activity" | "reviews";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: beforeLoadAdminDesk,
@@ -93,11 +95,12 @@ function AdminPage() {
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
   const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
   const [reports, setReports] = useState<AdminReportRow[]>([]);
+  const [screeningQueue, setScreeningQueue] = useState<AdminScreeningQueueRow[]>([]);
   const [catalogHealth, setCatalogHealth] = useState<CatalogRuntime | null>(null);
   const [leadCounts, setLeadCounts] = useState<LeadCounts>(emptyLeadCounts());
 
   async function refresh() {
-    const [events, list, cash, envelopes, regs, flags, health, leads] = await Promise.all([
+    const [events, list, cash, envelopes, regs, flags, health, leads, screening] = await Promise.all([
       listPlatformEvents().catch(() => []),
       listAdminCentres().catch(() => []),
       listAdminMoney().catch(() => ({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 })),
@@ -113,6 +116,7 @@ function AdminPage() {
       listListingReports().catch(() => []),
       getCatalogHealth().catch(() => null),
       listAdminLeadCounts().catch(() => emptyLeadCounts()),
+      listAdminScreeningQueue().catch(() => []),
     ]);
     setRows(events);
     setCentres(list);
@@ -126,6 +130,7 @@ function AdminPage() {
     setReports(flags);
     setCatalogHealth(health);
     setLeadCounts(leads);
+    setScreeningQueue(screening);
   }
 
   const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role, session.email));
@@ -429,6 +434,8 @@ function AdminPage() {
         </>
       ) : tab === "trust" ? (
         <AdminTrustPanel jurisdictions={jurisdictions} reports={reports} />
+      ) : tab === "screening" ? (
+        <AdminScreeningQueue rows={screeningQueue} onChanged={() => void refresh()} />
       ) : tab === "mail" ? (
         <AdminMailPanel />
       ) : tab === "contracts" ? (

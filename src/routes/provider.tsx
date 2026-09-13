@@ -46,11 +46,12 @@ import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
 import { CentreEmployeesPanel } from "@/components/centre-employees";
+import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 
-type DaycareDesk = "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote" | "employees";
+type DaycareDesk = "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote" | "employees" | "screening";
 
-const DESKS: DaycareDesk[] = ["requests", "money", "listings", "tours", "licence", "contract", "promote", "employees"];
+const DESKS: DaycareDesk[] = ["requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 
 export const Route = createFileRoute("/provider")({
@@ -492,6 +493,8 @@ function ProviderPage() {
       ) : null}
 
       {desk === "employees" ? <CentreEmployeesPanel canInvite={centreOwner} /> : null}
+
+      {desk === "screening" ? <ProviderScreeningPanel /> : null}
 
       {desk === "licence" && !centreOwner ? (
         <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>

@@ -76,6 +76,7 @@ test("session staff hide Money / licence / claim; owners keep them", () => {
   assert.equal(hidden.includes("subscription"), false);
   assert.equal(hidden.includes("requests"), true);
   assert.equal(hidden.includes("listings"), true);
+  assert.equal(hidden.includes("screening"), true);
   const shown = visibleDeskNav("daycare", {
     providerSubscriptions: true,
     showPayCtas: true,

@@ -45,6 +45,7 @@ export const TRUST_BADGE_IDS = [
   "claim_review",
   "claim_unclaimed",
   "claim_declined",
+  "screening_on_file",
   "staff_attested",
   "staff_none",
   "pay_stripe",
@@ -80,6 +81,8 @@ export type TrustCopyKey =
   | "trustClaimUnclaimedTip"
   | "trustClaimDeclined"
   | "trustClaimDeclinedTip"
+  | "trustScreeningOnFile"
+  | "trustScreeningOnFileTip"
   | "trustStaffAttested"
   | "trustStaffAttestedTip"
   | "trustStaffNone"
@@ -106,6 +109,9 @@ export type TrustListing = {
   staffScreeningAttested?: boolean;
   staffScreeningAttestedAt?: string | null;
   staffScreeningAttestedBy?: string | null;
+  screeningOnFile?: boolean;
+  screeningOnFileAt?: string | null;
+  screeningOnFileBy?: string | null;
   stripeIdentityVerified?: boolean;
 };
 
@@ -119,6 +125,9 @@ export type TrustFields = {
   staffScreeningAttested: boolean;
   staffScreeningAttestedAt: string | null;
   staffScreeningAttestedBy: string | null;
+  screeningOnFile: boolean;
+  screeningOnFileAt: string | null;
+  screeningOnFileBy: string | null;
   stripeIdentityVerified: boolean;
 };
 
@@ -133,6 +142,9 @@ export function defaultTrustFields(): TrustFields {
     staffScreeningAttested: false,
     staffScreeningAttestedAt: null,
     staffScreeningAttestedBy: null,
+    screeningOnFile: false,
+    screeningOnFileAt: null,
+    screeningOnFileBy: null,
     stripeIdentityVerified: false,
   };
 }
@@ -240,6 +252,14 @@ export function claimBadge(item: TrustListing): TrustBadge {
 }
 
 export function staffBadge(item: TrustListing): TrustBadge {
+  if (item.screeningOnFile) {
+    return {
+      id: "screening_on_file",
+      tone: "ok",
+      labelKey: "trustScreeningOnFile",
+      tipKey: "trustScreeningOnFileTip",
+    };
+  }
   if (item.staffScreeningAttested) {
     return {
       id: "staff_attested",
@@ -282,7 +302,7 @@ export function isCatalogueMatchedBadge(badge: Pick<TrustBadge, "labelKey">): bo
 
 /**
  * Same Kyle-approved labels on every desk: catalogue-matched, registry-checked,
- * unverified, claim verified, staff attested.
+ * unverified, claim verified, screening on file, staff attested.
  * Guest/parent Explore cards and listing detail omit Catalogue-matched
  * (internal matching jargon). Registry-checked and expired/suspended still show
  * when we know. Unverified is not a badge.
@@ -297,14 +317,14 @@ export function trustBadgesFor(item: TrustListing, surface: TrustSurface, stripe
     const badges =
       license.id === "license_unverified" || isCatalogueMatchedBadge(license) ? [] : [license];
     if (claim.id === "claim_verified") badges.push(claim);
-    if (staff.id === "staff_attested") badges.push(staff);
+    if (staff.id === "screening_on_file" || staff.id === "staff_attested") badges.push(staff);
     return badges;
   }
 
   if (surface === "parent") {
     const showLicense = license.id !== "license_unverified" && !isCatalogueMatchedBadge(license);
     const badges = showLicense ? [license, claim] : [claim];
-    if (staff.id === "staff_attested") badges.push(staff);
+    if (staff.id === "screening_on_file" || staff.id === "staff_attested") badges.push(staff);
     return badges;
   }
 
@@ -331,6 +351,7 @@ export const FORBIDDEN_TRUST_PHRASES = [
   "background-checked by kidease",
   "police-checked by kidease",
   "staff vetted by kidease",
+  "vulnerable sector check issued by kidease",
   "safety grade",
   "inspection score",
 ];

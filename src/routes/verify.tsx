@@ -84,6 +84,16 @@ export function VerifyPage() {
             </li>
           ))}
         </ul>
+        <section id="screening" className="mt-8 scroll-mt-24">
+          <h2 className="text-2xl font-semibold">{t("verifyScreeningTitle")}</h2>
+          <p className="mt-3 text-sm leading-6 text-muted">{t("verifyScreeningBody")}</p>
+          <p className="mt-3 text-sm">
+            <Link to="/daycare-requirements" className="font-medium text-primary underline-offset-4 hover:underline">
+              {t("daycareRequirements")}
+            </Link>
+          </p>
+        </section>
+
         <p className="mt-8 text-sm text-muted">{t("verifyOfficial")}</p>
         <p className="mt-6 text-sm">
           <Link to="/about" className="font-medium text-primary underline-offset-4 hover:underline">

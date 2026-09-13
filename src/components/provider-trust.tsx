@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TrustSignals } from "@/components/trust-badge";
@@ -124,6 +125,17 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
               {t("trustAttestCta")}
             </Button>
           )}
+          <p className="mt-3 text-sm">
+            <Link
+              to="/provider"
+              search={{ desk: "screening" }}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              {t("screeningDesk")}
+            </Link>
+            {" — "}
+            {t("screeningDeskHint")}
+          </p>
         </li>
       </ol>
     </div>

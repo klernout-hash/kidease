@@ -117,6 +117,7 @@ export type CentreDeskCaps = {
   addListing: boolean;
   claim: boolean;
   employees: boolean;
+  screening: boolean;
   vacancies: boolean;
   leadsWrite: boolean;
 };
@@ -132,6 +133,7 @@ export function centreDeskCaps(role: CentreMemberRole | null | undefined): Centr
     addListing: owner,
     claim: owner,
     employees: owner,
+    screening: centreCanViewDesk(role),
     vacancies: centreCanMutateVacancies(role),
     leadsWrite: centreCanWriteLeads(role),
   };

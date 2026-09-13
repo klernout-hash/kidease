@@ -52,6 +52,8 @@ test("trust badges never claim KidEase police-checks staff or invent scores", ()
   assert.match(src("src/lib/copy.ts"), /trustLicenseUnverified: "Unverified"/);
   assert.match(src("src/lib/copy.ts"), /trustClaimVerified: "Claim verified"/);
   assert.match(src("src/lib/copy.ts"), /trustStaffAttested: "Staff attested"/);
+  assert.match(src("src/lib/copy.ts"), /trustScreeningOnFile: "Screening on file"/);
+  assert.match(src("src/lib/copy.ts"), /trustScreeningOnFile: "Dossier de filtrage"/);
   assert.match(src("src/lib/copy.ts"), /Payments: not charged yet/);
   assert.doesNotMatch(src("src/lib/copy.ts"), /KidEase background-checked/);
   assert.doesNotMatch(src("src/lib/copy.ts"), /Background checked by KidEase/);

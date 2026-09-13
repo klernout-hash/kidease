@@ -28,6 +28,13 @@ test("footer How we verify listings goes to /verify, not /about", () => {
   assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/verify/);
   assert.match(src("src/routeTree.gen.ts"), /from '\.\/routes\/verify'/);
   assert.match(src("src/routeTree.gen.ts"), /id:\s*'\/verify'/);
+  assert.ok(FOOTER_DAYCARES.some((link) => link.to === "/daycare-requirements" && link.labelKey === "daycareRequirements"));
+  assert.ok(FOOTER_SUPPORT.some((link) => link.to === "/daycare-requirements" && link.labelKey === "daycareRequirements"));
+  assert.ok(!FOOTER_DAYCARES.some((link) => link.to === "/delete-account"));
+  assert.ok(!FOOTER_SUPPORT.some((link) => link.to === "/delete-account"));
+  assert.match(src("src/routes/daycare-requirements.tsx"), /createFileRoute\("\/daycare-requirements"\)/);
+  assert.match(src("src/lib/sitemap.ts"), /"\/daycare-requirements"/);
+  assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/daycare-requirements/);
 });
 
 test("claim and help copy stay honest until Stripe payouts are live", () => {
