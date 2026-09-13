@@ -185,7 +185,7 @@ async function projectFromInbox(sql: Sql, userId: string): Promise<ProjectedNoti
   return rows.map((row) => ({
     kind: "inbox",
     titleKey: "notifInbox",
-    href: inboxNotificationHref(row.id),
+    href: inboxNotificationHref(row.id, row.parent_user_id === userId ? "family" : "centre"),
     sourceKey: notificationSourceKey("inbox", row.id, String(row.last_at)),
     createdAt: String(row.last_at),
     daycareName: row.name,

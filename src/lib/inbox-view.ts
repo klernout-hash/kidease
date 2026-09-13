@@ -7,8 +7,29 @@ export function parseInboxView(raw: unknown): InboxView | undefined {
   return undefined;
 }
 
-export function inboxSearch(view: InboxView | undefined): { view?: InboxView } {
-  return view === "centre" ? { view: "centre" } : view === "family" ? { view: "family" } : {};
+export type InboxSearch = {
+  view?: InboxView;
+  detail?: true;
+  tour?: string;
+};
+
+export function parseInboxSearch(s: Record<string, unknown>): InboxSearch {
+  const view = parseInboxView(s.view);
+  const detail = s.detail === true || s.detail === "1" || s.detail === 1;
+  const tour = typeof s.tour === "string" && s.tour.trim() ? s.tour.trim() : undefined;
+  return {
+    ...(view ? { view } : {}),
+    ...(detail ? { detail: true as const } : {}),
+    ...(tour ? { tour } : {}),
+  };
+}
+
+export function inboxSearch(view: InboxView | undefined, extra?: { detail?: boolean; tour?: string }): InboxSearch {
+  return {
+    ...(view === "centre" ? { view: "centre" as const } : view === "family" ? { view: "family" as const } : {}),
+    ...(extra?.detail ? { detail: true as const } : {}),
+    ...(extra?.tour ? { tour: extra.tour } : {}),
+  };
 }
 
 /** Provider / Daycare desk only — parent inbox stays family. */

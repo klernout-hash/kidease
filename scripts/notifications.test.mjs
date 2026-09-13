@@ -80,6 +80,7 @@ test("notification deep links only hit real KidEase screens", () => {
   assert.equal(leadNotificationHref({ audience: "parent" }), "/parent?tab=enrolled");
   assert.equal(leadNotificationHref({ audience: "provider" }), "/provider?desk=requests");
   assert.equal(leadNotificationHref({ audience: "parent", conversationId: "c1" }), "/inbox/c1");
+  assert.equal(leadNotificationHref({ audience: "provider", conversationId: "c1" }), "/inbox/c1?view=centre&detail=1");
   assert.equal(claimNotificationHref("admin"), "/admin");
   assert.equal(claimNotificationHref("provider"), "/provider");
   assert.equal(inboxNotificationHref("thread-1"), "/inbox/thread-1");
