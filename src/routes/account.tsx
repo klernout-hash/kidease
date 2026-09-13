@@ -24,6 +24,8 @@ import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anc
 import { useAppStore } from "@/lib/store";
 import { RateKidEasePrompt } from "@/components/rate-kidease";
 import { AppearanceControl } from "@/components/appearance-control";
+import { SignedInDevices } from "@/components/signed-in-devices";
+import { AccountSecurity } from "@/components/account-security";
 
 export const Route = createFileRoute("/account")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -371,6 +373,12 @@ function ProfilePane() {
         ) : (
           <p className="mt-8 text-center text-sm text-muted">{t("accountSettingsGuest")}</p>
         )}
+        {user ? (
+          <>
+            <AccountSecurity email={email || user.primaryEmail || ""} />
+            <SignedInDevices />
+          </>
+        ) : null}
         <RateKidEasePrompt className="mt-8" />
       </main>
     </AccountDeskFrame>

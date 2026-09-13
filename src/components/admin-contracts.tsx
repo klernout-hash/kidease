@@ -12,6 +12,7 @@ import {
   type AdminContractRow,
   type AdminPackRow,
 } from "@/lib/server/contracts";
+import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 
 export function AdminContractsPanel({
   rows,
@@ -169,6 +170,7 @@ function PackRow({
   onRefresh: () => Promise<void>;
 }) {
   const { locale } = useCopy();
+  const reauth = useReauthPrompt();
   const [templateId, setTemplateId] = useState(defaultTemplateId || "");
   const [signerEmail, setSignerEmail] = useState(pack.signerEmail || centre.providerEmail || centre.contactEmail || "");
   const [signerName, setSignerName] = useState(pack.signerName || centre.providerName || "");
@@ -177,15 +179,19 @@ function PackRow({
   async function send() {
     setBusy(`send:${centre.daycareId}:${pack.packKind}`);
     try {
-      await sendCentreContract({
-        data: {
-          daycareId: centre.daycareId,
-          packKind: pack.packKind,
-          templateId: templateId || undefined,
-          signerName: signerName || undefined,
-          signerEmail: signerEmail || undefined,
-        },
-      });
+      await withReauth(
+        () =>
+          sendCentreContract({
+            data: {
+              daycareId: centre.daycareId,
+              packKind: pack.packKind,
+              templateId: templateId || undefined,
+              signerName: signerName || undefined,
+              signerEmail: signerEmail || undefined,
+            },
+          }),
+        reauth.prompt,
+      );
       await onRefresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Could not send contract");
@@ -195,10 +201,11 @@ function PackRow({
   }
 
   async function voidRow() {
-    if (!pack.contractId) return;
-    setBusy(`void:${pack.contractId}`);
+    const contractId = pack.contractId;
+    if (!contractId) return;
+    setBusy(`void:${contractId}`);
     try {
-      await voidCentreContract({ data: { contractId: pack.contractId } });
+      await withReauth(() => voidCentreContract({ data: { contractId } }), reauth.prompt);
       await onRefresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Could not void contract");
@@ -222,6 +229,7 @@ function PackRow({
 
   return (
     <div className="rounded-xl bg-bg p-3 ring-1 ring-border">
+      {reauth.dialog}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">

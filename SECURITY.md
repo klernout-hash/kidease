@@ -43,6 +43,14 @@ Admin / operator login (`/login?intent=admin`, `/login?next=/admin`, `role=admin
 
 ## Auth bootstrap
 
+Account settings (`/account` on Parent, Daycare, and Admin) list **Devices signed in** (this browser, Better Auth sessions, and `#187` remembered `__Host-kidease.2fa.device` rows). Revoke this device / revoke all others fail closed. Remember-30d still works: new cookies are `{userId}.{deviceId}.{exp}.{sig}`; legacy 3-part cookies still verify.
+
+Sensitive actions (password change, email change, Admin claim Approve/Decline, DocuSign send/void) require a **10-minute step-up** (password or email OTP). A 30-day trusted-device cookie does not satisfy step-up.
+
+Signup, password change, and reset block common / HIBP-breached passwords (k-anonymity range API, offline common list if HIBP is unreachable). Soft caps on password login, forgot-password, and OTP send return **Try again in X s/min** — never a silent fail. OTP resend stays on the `#187` 15s cooldown.
+
+Session cookies stay `Secure`, `HttpOnly`, `SameSite=Lax`. Admin idle is 30 minutes (shorter than Parent remember-device). King-admin is still only `kyle@kidease.ca`. Better Auth stays.
+
 `requireAdmin` / `requireSupport` and `/api/admin/*` require a verified 2FA cookie (same device token as TwoFactorGate). A thrown status check fails closed for those desks.
 
 `ADMIN_EMAIL` / `kyle@kidease.ca` is auto-promoted to `profiles.role = admin` only when Better Auth `user.emailVerified` is true. **Only `kyle@kidease.ca` may hold Admin.** Open Road mailboxes (`@openroadoutlet.ca`, including `kyle@openroadoutlet.ca`) never receive the Admin desk. `ADMIN_EMAIL` set to any other `@kidease.ca` mailbox is ignored. SQL `profiles.role = 'admin'` on a non-kyle account is ignored (fail closed; Production rows are not rewritten). Remaining risk: if an identity provider marks `kyle@kidease.ca` verified without a real mailbox check, the first such session still becomes admin. Extra **support** staff should be promoted with SQL (`support` / `support_lead`), not Admin.

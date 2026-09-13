@@ -8,7 +8,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { PasswordField } from "@/components/password-field";
 import { Shell } from "@/components/shell";
 import { PasswordRules } from "@/components/password-rules";
-import { PASSWORD_POLICY_HINT, passwordMeetsPolicy } from "@/lib/password-policy";
+import { localPasswordIssue, PASSWORD_POLICY_HINT, passwordMeetsPolicy } from "@/lib/password-hygiene";
 
 export const Route = createFileRoute("/reset-password")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -29,6 +29,11 @@ function ResetPassword() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const hygiene = localPasswordIssue(password);
+    if (hygiene) {
+      setError(hygiene);
+      return;
+    }
     if (!passwordMeetsPolicy(password)) {
       setError(PASSWORD_POLICY_HINT);
       return;

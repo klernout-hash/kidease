@@ -15,7 +15,7 @@ import {
 } from "@/lib/auth/verify-2fa-session";
 import { waitForSignedInSession } from "@/lib/auth/session-settle";
 import { getTwoFactorStatus, startTwoFactor, verifyTwoFactor } from "@/lib/server/two-factor";
-import { twoFactorResendWaitCopy } from "@/lib/two-factor-start";
+import { hourlyOtpWaitCopy, twoFactorResendWaitCopy } from "@/lib/two-factor-start";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import {
   assignPostAuthDest,
@@ -326,7 +326,8 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
                   const seconds = "waitSeconds" in res && typeof res.waitSeconds === "number" ? res.waitSeconds : 0;
                   if (seconds > 0) {
                     setResendWait(seconds);
-                    setNotice(twoFactorResendWaitCopy(seconds));
+                    const hourly = "hourly" in res && res.hourly;
+                    setNotice(hourly ? hourlyOtpWaitCopy(seconds) : twoFactorResendWaitCopy(seconds));
                   } else {
                     setDelivered(false);
                     setError("Please wait a moment, then try Send a new code again.");

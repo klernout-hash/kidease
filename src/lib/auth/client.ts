@@ -4,6 +4,7 @@ import { clearDeskLanded, clearStickyDesk, forgetRememberedRole, markJustSignedO
 import { resetPostHogIdentity } from "@/lib/posthog";
 import { clearSearchCache } from "@/lib/search-cache";
 import { clearShortlistCache, takePendingSave } from "@/lib/shortlist";
+import { parseRetryAfterSeconds, rateLimitWaitCopy } from "@/lib/auth-rate-limit";
 import {
   CLOUDFLARE_AUTH_BLOCK_MESSAGE,
   looksLikeCloudflareAuthBlock,
@@ -25,6 +26,12 @@ export const authClient = createAuthClient({
     onError(ctx) {
       const extra = ctx as typeof ctx & { responseText?: string };
       const headers = extra.response?.headers;
+      const status = extra.error?.status ?? extra.response?.status;
+      if (status === 429) {
+        const wait = parseRetryAfterSeconds(headers?.get("retry-after"), 60);
+        extra.error.message = rateLimitWaitCopy(wait);
+        extra.error.code = "RATE_LIMITED";
+      }
       if (
         looksLikeCloudflareAuthBlock({
           status: extra.error?.status ?? extra.response?.status,
