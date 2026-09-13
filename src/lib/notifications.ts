@@ -1,7 +1,7 @@
 import { DAYCARE_INBOX_HREF, PARENT_REQUESTS_HREF, type LeadKind } from "./lead-requests.ts";
 import type { CopyKey } from "./copy.ts";
 
-export const NOTIFICATION_KINDS = ["lead", "tour", "claim", "inbox", "search_alert", "admin_queue"] as const;
+export const NOTIFICATION_KINDS = ["lead", "tour", "claim", "inbox", "search_alert", "admin_queue", "admin_signup"] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export const NOTIFICATION_TITLE_KEYS = [
@@ -17,6 +17,9 @@ export const NOTIFICATION_TITLE_KEYS = [
   "notifSearchAlert",
   "notifAdminClaim",
   "notifAdminQueue",
+  "notifAdminParentSignup",
+  "notifAdminProviderSignup",
+  "notifAdminListing",
 ] as const;
 export type NotificationTitleKey = (typeof NOTIFICATION_TITLE_KEYS)[number];
 
@@ -135,6 +138,51 @@ export function claimTitleKey(status: string, audience: "provider" | "admin"): N
   if (status === "declined") return "notifClaimDeclined";
   if (status === "waiting") return "notifClaimWaiting";
   return "notifClaimPending";
+}
+
+export const ADMIN_SIGNUP_EVENT_KINDS = ["account", "signup", "listing"] as const;
+
+export function adminSignupTitleKey(kind?: string | null): NotificationTitleKey | null {
+  if (kind === "account") return "notifAdminParentSignup";
+  if (kind === "signup") return "notifAdminProviderSignup";
+  if (kind === "listing") return "notifAdminListing";
+  return null;
+}
+
+export function adminSignupHref(input: { kind?: string | null; email?: string | null }): string {
+  const role = input.kind === "account" ? "parent" : "provider";
+  const params = new URLSearchParams({ tab: "people", role });
+  const q = (input.email || "").trim();
+  if (q) params.set("q", q);
+  return `/admin?${params.toString()}`;
+}
+
+/** Project a platform_events row into Kyle's bell. email_status=failed still yields a row. */
+export function projectAdminSignupNotification(row: {
+  id: string;
+  kind: string;
+  daycare_name?: string | null;
+  provider_name?: string | null;
+  provider_email?: string | null;
+  email_status?: string | null;
+  created_at: string;
+}): ProjectedNotification | null {
+  const titleKey = adminSignupTitleKey(row.kind);
+  if (!titleKey) return null;
+  const name =
+    (row.provider_name || "").trim() ||
+    (row.daycare_name || "").trim() ||
+    (row.provider_email || "").trim() ||
+    "KidEase";
+  return {
+    kind: "admin_signup",
+    titleKey,
+    href: adminSignupHref({ kind: row.kind, email: row.provider_email }),
+    sourceKey: notificationSourceKey("admin_signup", row.id, row.kind),
+    createdAt: String(row.created_at),
+    daycareName: name,
+    status: row.email_status || null,
+  };
 }
 
 export function notificationCopyKey(titleKey: string | null | undefined): CopyKey {

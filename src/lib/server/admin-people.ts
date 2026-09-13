@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
-import { ADMIN_PEOPLE_DAYS, type AccountNotifyRole } from "@/lib/account-notify";
+import { ADMIN_PEOPLE_DAYS, adminPersonEligible, type AccountNotifyRole } from "@/lib/account-notify";
 
 export type AdminPersonRow = {
   userId: string;
@@ -45,7 +45,7 @@ export const listAdminPeople = createServerFn({ method: "GET" })
       limit 200
     `.catch(() => []);
     return rows
-      .filter((r) => r.role === "parent" || r.role === "provider")
+      .filter((r) => adminPersonEligible(r))
       .map((r) => ({
         userId: r.user_id,
         name: r.name,

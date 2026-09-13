@@ -11,9 +11,11 @@ import {
   formatUnreadBadge,
   inboxNotificationHref,
   isAllowedNotificationHref,
+  adminSignupHref,
   leadNotificationHref,
   leadTitleKey,
   notificationSourceKey,
+  projectAdminSignupNotification,
   searchAlertHref,
   unreadFromRows,
 } from "../src/lib/notifications.ts";
@@ -42,6 +44,9 @@ const COPY_KEYS = [
   "notifSearchAlert",
   "notifAdminClaim",
   "notifAdminQueue",
+  "notifAdminParentSignup",
+  "notifAdminProviderSignup",
+  "notifAdminListing",
   "parentDesk",
   "daycareDesk",
   "settings",
@@ -80,6 +85,37 @@ test("notification deep links only hit real KidEase screens", () => {
   assert.equal(inboxNotificationHref("thread-1"), "/inbox/thread-1");
   assert.equal(searchAlertHref("/parent?tab=alerts"), "/parent?tab=alerts");
   assert.equal(searchAlertHref("https://phish"), "/parent?tab=alerts");
+});
+
+test("admin bell projects signup and listing even when email_status=failed", () => {
+  const joan = projectAdminSignupNotification({
+    id: "ev_joan",
+    kind: "signup",
+    daycare_name: "",
+    provider_name: "Joan Mbabazi",
+    provider_email: "kidsworlddaycare2025@gmail.com",
+    email_status: "failed",
+    created_at: "2026-09-13T14:33:00.000Z",
+  });
+  assert.ok(joan);
+  assert.equal(joan.kind, "admin_signup");
+  assert.equal(joan.titleKey, "notifAdminProviderSignup");
+  assert.equal(joan.daycareName, "Joan Mbabazi");
+  assert.equal(joan.status, "failed");
+  assert.equal(joan.href, "/admin?tab=people&role=provider&q=kidsworlddaycare2025%40gmail.com");
+  assert.equal(isAllowedNotificationHref(joan.href), true);
+  assert.equal(adminSignupHref({ kind: "account", email: "sam@family.ca" }), "/admin?tab=people&role=parent&q=sam%40family.ca");
+  const listing = projectAdminSignupNotification({
+    id: "ev_list",
+    kind: "listing",
+    daycare_name: "Kids World Daycare",
+    provider_name: "Joan Mbabazi",
+    provider_email: "kidsworlddaycare2025@gmail.com",
+    email_status: "failed",
+    created_at: "2026-09-13T14:49:00.000Z",
+  });
+  assert.equal(listing?.titleKey, "notifAdminListing");
+  assert.equal(projectAdminSignupNotification({ id: "x", kind: "chat", created_at: "2026-09-13" }), null);
 });
 
 test("source keys stay stable and titles stay honest", () => {
@@ -180,6 +216,9 @@ test("king-admin stays kyle-only and notifications do not invent Clerk", () => {
   const server = src("src/lib/server/notifications.ts");
   assert.match(server, /isKidEaseOperatorEmail/);
   assert.match(server, /notifAdminClaim/);
+  assert.match(server, /projectFromPlatformSignups/);
+  assert.match(server, /projectAdminSignupNotification/);
+  assert.match(server, /platform_events/);
   assert.doesNotMatch(server, /clerk/i);
   assert.doesNotMatch(src("src/components/notifications-inbox.tsx"), /clerk/i);
   assert.doesNotMatch(src("src/routes/notifications.tsx"), /clerk/i);

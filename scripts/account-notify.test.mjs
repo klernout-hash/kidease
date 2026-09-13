@@ -9,11 +9,17 @@ import {
   accountRoleLabel,
   accountSmsBody,
   activityAccountHeadline,
+  activityEmailFailed,
+  activityEmailStatusLabel,
+  activityPeopleHref,
+  activityPeopleSearch,
   activityRoleBadge,
+  activitySignupMeta,
   activityWhoLine,
   adminAccountDeepLink,
   adminDeskHref,
   adminPeoplePath,
+  adminPersonEligible,
   ellipsisEmail,
   formatPlace,
   parseAdminActivityKind,
@@ -198,6 +204,56 @@ test("event detail JSON stores phone and auth without secrets", () => {
   assert.equal(accountNotifyTitle("parent"), "New parent account");
 });
 
+test("failed Admin email still yields a visible Activity row and People eligibility", () => {
+  const joan = {
+    kind: "signup",
+    daycare_name: "",
+    provider_name: "Joan Mbabazi",
+    provider_email: "kidsworlddaycare2025@gmail.com",
+    city: "",
+    province: "",
+    email_status: "failed",
+    created_at: "2026-09-13T14:33:00.000Z",
+  };
+  assert.equal(activityEmailFailed("failed"), true);
+  assert.equal(activityEmailFailed("sent"), false);
+  assert.equal(activityEmailStatusLabel("failed"), "Email failed");
+  assert.equal(activityAccountHeadline(joan), "Joan Mbabazi · kidsworlddaycare2025@gmail.com");
+  const meta = activitySignupMeta(joan);
+  assert.equal(meta.who, "Joan Mbabazi · kidsworlddaycare2025@gmail.com");
+  assert.equal(meta.role, "Daycare provider");
+  assert.equal(meta.emailFailed, true);
+  assert.equal(meta.city, "—");
+  assert.match(meta.time, /2026/);
+  assert.equal(activityPeopleHref(joan), "/admin?tab=people&role=provider&q=kidsworlddaycare2025%40gmail.com");
+  assert.deepEqual(activityPeopleSearch(joan), {
+    tab: "people",
+    role: "provider",
+    q: "kidsworlddaycare2025@gmail.com",
+  });
+  assert.equal(
+    adminPersonEligible({
+      role: "provider",
+      name: "Joan Mbabazi",
+      email: "kidsworlddaycare2025@gmail.com",
+      phone: null,
+      city: null,
+    }),
+    true,
+  );
+  assert.equal(adminPersonEligible({ role: "parent", name: null, email: "sam@family.ca" }), true);
+  assert.equal(adminPersonEligible({ role: "admin", name: "Kyle", email: "kyle@kidease.ca" }), false);
+  const listing = {
+    kind: "listing",
+    daycare_name: "",
+    provider_name: "Joan Mbabazi",
+    provider_email: "kidsworlddaycare2025@gmail.com",
+    email_status: "failed",
+  };
+  assert.match(activityAccountHeadline(listing), /Joan Mbabazi/);
+  assert.equal(activityRoleBadge("listing"), "Daycare provider");
+});
+
 test("signup hook and notify persist filled actor fields", () => {
   const family = src("src/lib/server/family.ts");
   const notify = src("src/lib/server/notify.ts");
@@ -209,4 +265,6 @@ test("signup hook and notify persist filled actor fields", () => {
   assert.match(notify, /accountSmsBody/);
   assert.match(notify, /provider_name, provider_email, listing_url, email_to, email_status, email_error, detail/);
   assert.match(notify, /select "providerId" from "account"/);
+  assert.match(src("src/lib/server/admin-people.ts"), /adminPersonEligible/);
+  assert.match(src("src/lib/server/admin-people.ts"), /p.role in \('parent', 'provider'\)/);
 });

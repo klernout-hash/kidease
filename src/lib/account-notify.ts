@@ -98,6 +98,32 @@ export function isAccountEventKind(kind?: string | null): boolean {
   return kind === "account" || kind === "signup";
 }
 
+/** Signup + listing rows must stay on Activity even when daycare_name is empty or email failed. */
+export function isSignupActivityKind(kind?: string | null): boolean {
+  return kind === "account" || kind === "signup" || kind === "listing";
+}
+
+export function activityEmailFailed(status?: string | null): boolean {
+  return (status || "").trim().toLowerCase() === "failed";
+}
+
+export function activityEmailStatusLabel(status?: string | null): string {
+  const v = (status || "").trim() || "unknown";
+  return activityEmailFailed(v) ? "Email failed" : `email ${v}`;
+}
+
+/** Parent / provider accounts stay on People even with no phone or city (Joan-like). */
+export function adminPersonEligible(row: {
+  role?: string | null;
+  email?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  city?: string | null;
+}): boolean {
+  if (row.role !== "parent" && row.role !== "provider") return false;
+  return Boolean((row.email || "").trim() || (row.name || "").trim());
+}
+
 export function accountRoleFromKind(kind?: string | null): AccountNotifyRole | null {
   if (kind === "signup") return "provider";
   if (kind === "account") return "parent";
@@ -142,6 +168,7 @@ export function parseAdminActivityKind(raw?: string | null): string {
     return "signup";
   }
   if (v === "claim" || v === "claims") return "claim";
+  if (v === "listing" || v === "listings") return "listing";
   return v;
 }
 
@@ -149,8 +176,29 @@ export const ACTIVITY_KIND_CHIPS: Array<{ id: string; label: string }> = [
   { id: "all", label: "All" },
   { id: "account", label: "Parents" },
   { id: "signup", label: "Daycare providers" },
+  { id: "listing", label: "Listings" },
   { id: "claim", label: "Claims" },
 ];
+
+export function activityPeopleSearch(row: {
+  kind?: string | null;
+  provider_email?: string | null;
+}): { tab: "people"; role: AccountNotifyRole; q?: string } {
+  const q = (row.provider_email || "").trim();
+  return {
+    tab: "people",
+    role: row.kind === "account" ? "parent" : "provider",
+    ...(q ? { q } : {}),
+  };
+}
+
+export function activityPeopleHref(row: {
+  kind?: string | null;
+  provider_email?: string | null;
+}): string {
+  const search = activityPeopleSearch(row);
+  return adminDeskHref(search);
+}
 
 export function serializeAccountEventDetail(d: AccountEventDetail): string {
   return JSON.stringify({
@@ -227,15 +275,46 @@ export function activityAccountHeadline(row: {
   provider_email?: string | null;
 }): string {
   if (isAccountEventKind(row.kind)) return activityWhoLine(row);
+  if (row.kind === "listing") {
+    const daycare = (row.daycare_name || "").trim();
+    const who = activityWhoLine(row);
+    return daycare && who !== "—" ? `${daycare} · ${who}` : daycare || who;
+  }
   return (row.daycare_name || "").trim() || "Activity";
 }
 
 export function activityRoleBadge(kind?: string | null, detail?: string | null): string | null {
+  if (kind === "listing") return accountRoleLabel("provider");
   const fromKind = accountRoleFromKind(kind);
   if (fromKind) return accountRoleLabel(fromKind);
   const parsed = parseAccountEventDetail(detail);
   if (parsed.role) return accountRoleLabel(parsed.role);
   return null;
+}
+
+/** name · email · role · city · time — never drop a row because email_status=failed. */
+export function activitySignupMeta(row: {
+  kind: string;
+  provider_name?: string | null;
+  provider_email?: string | null;
+  city?: string | null;
+  province?: string | null;
+  daycare_name?: string | null;
+  email_status?: string | null;
+  created_at?: string | null;
+  detail?: string | null;
+}): { who: string; role: string; city: string; time: string; emailFailed: boolean } {
+  const role = activityRoleBadge(row.kind, row.detail) || accountRoleLabel(accountRoleFromKind(row.kind) || "parent");
+  const city = formatPlace(row.city, row.province) || (row.daycare_name || "").trim() || "—";
+  const at = row.created_at ? new Date(row.created_at) : new Date();
+  const time = Number.isNaN(at.getTime()) ? "—" : formatWinnipegFull(at);
+  return {
+    who: activityWhoLine(row),
+    role,
+    city,
+    time,
+    emailFailed: activityEmailFailed(row.email_status),
+  };
 }
 
 export const ADMIN_DESK_TABS = [

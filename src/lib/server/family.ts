@@ -62,10 +62,23 @@ async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: st
 }
 
 async function pingNewAccount(userId: string, role: "parent" | "provider") {
+  let eventId: string | null = null;
   try {
-    await notifyNewAccountFromUser(userId, role);
+    const result = await notifyNewAccountFromUser(userId, role);
+    eventId = result?.id ?? null;
   } catch (err) {
     console.error("[kidease-mail] account notify failed", err);
+  }
+  try {
+    const { captureSignupIntakeFromUser } = await import("@/lib/server/ghl-intake");
+    await captureSignupIntakeFromUser({
+      userId,
+      role,
+      trigger: role === "provider" ? "provider_signup" : "parent_signup",
+      eventId,
+    });
+  } catch (err) {
+    console.error("[kidease-ghl] signup intake failed", err);
   }
   try {
     const { afterNewAccountUserMail } = await import("@/lib/server/signup-user-mail.server");

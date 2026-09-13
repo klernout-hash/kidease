@@ -554,6 +554,27 @@ export const GROUPS = [
         required: false,
         notes: "Turnstile server secret.",
       },
+      {
+        name: "FEATURE_GHL_INTAKE",
+        concealed: false,
+        vercel: "both",
+        required: false,
+        notes: "Optional kill switch. Unset = on when a GHL URL exists. Set 0 to disable POSTs.",
+      },
+      {
+        name: "GHL_WEBHOOK_DAYCARE_SIGNUP_URL",
+        concealed: true,
+        vercel: "both",
+        required: false,
+        notes: "GHL Daycare Sign Up webhook. Provider signup + claim verify. Router fallback if only one URL is set.",
+      },
+      {
+        name: "GHL_WEBHOOK_PARENT_ONBOARD_URL",
+        concealed: true,
+        vercel: "both",
+        required: false,
+        notes: "GHL Parent Onboard webhook. Parent signup. Router fallback if only one URL is set.",
+      },
     ],
   },
 ];

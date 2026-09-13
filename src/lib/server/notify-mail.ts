@@ -79,13 +79,17 @@ export function shouldSendVisitorAutoReply(adminStatus: string): boolean {
   return adminStatus === "sent";
 }
 
-/** Same gate as the visitor auto-reply: only after a real provider send, and only with an actor email. */
+/**
+ * Actor thanks is independent of Admin notify success.
+ * Verify-email / next-steps / listing-claim confirmations must still send when Resend 403s Kyle.
+ */
 export function shouldSendActorConfirmation(
   kind: string,
   adminStatus: string,
   actorEmail?: string | null,
 ): boolean {
-  return shouldSendVisitorAutoReply(adminStatus) && isActorConfirmKind(kind) && Boolean((actorEmail ?? "").trim());
+  void adminStatus;
+  return isActorConfirmKind(kind) && Boolean((actorEmail ?? "").trim());
 }
 
 /**
@@ -111,9 +115,9 @@ export async function afterPublicAdminNotify(args: {
 }
 
 /**
- * Same request as the admin notify: if that send succeeded, immediately email the parent/provider.
+ * Same request as the admin notify, but not gated on Admin mail succeeding.
  * Confirmation failures are logged and must not fail signup, enroll, claim, or spot request.
- * Do not schedule this for later. Skip when admin send failed or there is no actor email.
+ * Do not schedule this for later. Skip when there is no actor email or the kind is not confirmable.
  */
 export async function afterEnrollmentAdminNotify(args: {
   kind: string;

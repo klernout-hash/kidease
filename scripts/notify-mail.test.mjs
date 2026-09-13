@@ -196,10 +196,11 @@ test("actor confirmation is not sent for contact, support, payment, or promo", (
   }
 });
 
-test("actor confirmation is skipped when admin notify failed or was only logged", () => {
-  assert.equal(shouldSendActorConfirmation("enroll", "failed", "parent@example.com"), false);
-  assert.equal(shouldSendActorConfirmation("spot_request", "logged", "parent@example.com"), false);
-  assert.equal(shouldSendActorConfirmation("claim", "queued", "parent@example.com"), false);
+test("actor confirmation is independent of Admin notify success", () => {
+  assert.equal(shouldSendActorConfirmation("enroll", "failed", "parent@example.com"), true);
+  assert.equal(shouldSendActorConfirmation("spot_request", "logged", "parent@example.com"), true);
+  assert.equal(shouldSendActorConfirmation("claim", "queued", "parent@example.com"), true);
+  assert.equal(shouldSendActorConfirmation("listing", "failed", "provider@example.com"), true);
 });
 
 test("actor confirmation is skipped when there is no actor email", () => {
@@ -245,7 +246,7 @@ test("confirmation runs after admin sent and signup still succeeds if confirmati
   assert.equal(confirms, 1);
 });
 
-test("confirmation is skipped when admin notify failed — user action still succeeds", async () => {
+test("confirmation still sends when admin notify failed — user action still succeeds", async () => {
   let confirms = 0;
   await afterEnrollmentAdminNotify({
     kind: "spot_request",
@@ -255,7 +256,7 @@ test("confirmation is skipped when admin notify failed — user action still suc
       confirms += 1;
     },
   });
-  assert.equal(confirms, 0);
+  assert.equal(confirms, 1);
 });
 
 test("confirmation is invoked before the enroll handler returns (same request, not scheduled)", async () => {
