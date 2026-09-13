@@ -409,7 +409,7 @@ function ProviderPage() {
               </dl>
             </section>
           ) : null}
-          {centreOwner && (listings.length === 0 && !showNewForm ? null : true) ? (
+          {centreOwner && (listings.length > 0 || showNewForm) ? (
           <section id="list-new" className="rounded-xl bg-surface p-5 ring-1 ring-border">
             {listings.length === 0 ? (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -484,7 +484,7 @@ function ProviderPage() {
               </div>
             </form>
           </section>
-          )}
+          ) : null}
         </>
       ) : null}
 

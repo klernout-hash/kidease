@@ -21,7 +21,11 @@ function InvitePage() {
   const { token } = Route.useParams();
   const { t } = useCopy();
   const { user, isPending } = useSettledUser();
-  const [peek, setPeek] = useState<Awaited<ReturnType<typeof peekCentreInvite>> | null>(null);
+  const [peek, setPeek] = useState<
+    | { ok: true; email: string; name: string | null; role: string; daycareName: string }
+    | { ok: false; error: string }
+    | null
+  >(null);
 
   useEffect(() => {
     void peekCentreInvite({ data: token })
