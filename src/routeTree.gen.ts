@@ -76,6 +76,7 @@ import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as JobsPostRouteImport } from './routes/jobs_.post'
 import { Route as ListingSlugRouteImport } from './routes/listing.$slug'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
@@ -437,6 +438,11 @@ const InboxIdRoute = InboxIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => InboxRoute,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JobsPostRoute = JobsPostRouteImport.update({
   id: '/jobs_/post',
   path: '/jobs/post',
@@ -625,6 +631,7 @@ export interface FileRoutesByFullPath {
   '/fr/search': typeof FrSearchRoute
   '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
   '/listing/$slug': typeof ListingSlugRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
@@ -716,6 +723,7 @@ export interface FileRoutesByTo {
   '/fr/search': typeof FrSearchRoute
   '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
   '/listing/$slug': typeof ListingSlugRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
@@ -810,6 +818,7 @@ export interface FileRoutesById {
   '/fr/search': typeof FrSearchRoute
   '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/jobs_/post': typeof JobsPostRoute
   '/listing/$slug': typeof ListingSlugRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
@@ -905,6 +914,7 @@ export interface FileRouteTypes {
     | '/fr/search'
     | '/fr/terms'
     | '/inbox/$id'
+    | '/invite/$token'
     | '/jobs/post'
     | '/listing/$slug'
     | '/pay/$bookingId'
@@ -996,6 +1006,7 @@ export interface FileRouteTypes {
     | '/fr/search'
     | '/fr/terms'
     | '/inbox/$id'
+    | '/invite/$token'
     | '/jobs/post'
     | '/listing/$slug'
     | '/pay/$bookingId'
@@ -1089,6 +1100,7 @@ export interface FileRouteTypes {
     | '/fr/search'
     | '/fr/terms'
     | '/inbox/$id'
+    | '/invite/$token'
     | '/jobs_/post'
     | '/listing/$slug'
     | '/pay/$bookingId'
@@ -1168,6 +1180,7 @@ export interface RootRouteChildren {
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
   SignIdRoute: typeof SignIdRoute
@@ -1659,6 +1672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InboxIdRouteImport
       parentRoute: typeof InboxRoute
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jobs_/post': {
       id: '/jobs_/post'
       path: '/jobs/post'
@@ -1969,6 +1989,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
+  InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
   SignIdRoute: SignIdRoute,

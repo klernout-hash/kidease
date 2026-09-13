@@ -23,6 +23,7 @@ import {
 import type { FacilityType } from "@/lib/facility-type";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { assertCanMutateListing, decideStartClaim } from "@/lib/access-control";
+import { ensureOwnerMembership } from "@/lib/server/centre-access";
 
 export type ClaimHit = {
   id: string;
@@ -192,6 +193,7 @@ export const verifyClaim = createServerFn({ method: "POST" })
       values (${context.userId}, ${data.daycareId})
       on conflict (user_id, daycare_id) do nothing
     `;
+    await ensureOwnerMembership(sql, context.userId, data.daycareId);
     await sql`
       update daycares
       set claim_status = 'waiting'

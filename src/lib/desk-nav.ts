@@ -34,6 +34,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   ],
   daycare: [
     { id: "requests", label: "Lead inbox", hint: "Tours, waitlist, and spots" },
+    { id: "employees", label: "Employees", hint: "Add an employee" },
     { id: "money", label: "Money", hint: "Bills you send" },
     { id: "listings", label: "My listings", hint: "Spots, photos, fees" },
     { id: "tours", label: "Tour times", hint: "When families can visit" },
@@ -61,8 +62,16 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
 
 export function providerNavSearch(
   id: string,
-): { desk: "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote" } {
-  if (id === "money" || id === "listings" || id === "tours" || id === "licence" || id === "contract" || id === "promote") {
+): { desk: "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote" | "employees" } {
+  if (
+    id === "money" ||
+    id === "listings" ||
+    id === "tours" ||
+    id === "licence" ||
+    id === "contract" ||
+    id === "promote" ||
+    id === "employees"
+  ) {
     return { desk: id };
   }
   if (id === "add") return { desk: "listings" };
@@ -89,13 +98,33 @@ export const DESK_META: Record<DeskId, { eyebrow: string; title: string }> = {
 };
 
 /** Hide Subscription only when the live director flag is off. Hide Promote pay chrome when SHOW_PAY_CTAS is off. */
+const OWNER_ONLY_NAV = new Set([
+  "money",
+  "licence",
+  "contract",
+  "promote",
+  "subscription",
+  "add",
+  "claim",
+  "employees",
+]);
+
 export function visibleDeskNav(
   desk: DeskId,
-  opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean },
+  opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean; centreOwner?: boolean },
 ): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
-    if (item.id === "subscription") return Boolean(opts?.providerSubscriptions);
-    if (item.id === "promote") return opts?.showPayCtas !== false;
+    if (item.id === "subscription") {
+      if (!opts?.providerSubscriptions) return false;
+      if (opts.centreOwner === false) return false;
+      return true;
+    }
+    if (item.id === "promote") {
+      if (opts?.showPayCtas === false) return false;
+      if (opts?.centreOwner === false) return false;
+      return true;
+    }
+    if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
     return true;
   });
 }

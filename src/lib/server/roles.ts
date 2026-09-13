@@ -21,6 +21,7 @@ import {
   effectiveAdminRole,
   isKidEaseOperatorEmail,
 } from "@/lib/admin-email";
+import { isActiveCentreMember, listOwnedDaycareIds } from "@/lib/server/centre-access";
 
 export const ADMIN_PROMOTE_SQL =
   "update profiles set role = 'admin' where user_id = '…';";
@@ -45,10 +46,8 @@ async function profileRole(sql: Awaited<ReturnType<typeof getSql>>, userId: stri
 }
 
 async function ownsCentre(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
-  const rows = await sql<{ n: number }>`
-    select count(*)::int as n from provider_daycares where user_id = ${userId}
-  `.catch(() => [{ n: 0 }]);
-  return (rows[0]?.n ?? 0) > 0;
+  const owned = await listOwnedDaycareIds(sql, userId);
+  return owned.length > 0;
 }
 
 async function unreadInboxCount(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
@@ -57,9 +56,13 @@ async function unreadInboxCount(sql: Awaited<ReturnType<typeof getSql>>, userId:
     from conversations c
     where (
         c.user_id = ${userId}
-        or exists (
+         or exists (
           select 1 from provider_daycares p
           where p.user_id = ${userId} and p.daycare_id = c.daycare_id
+        )
+         or exists (
+          select 1 from centre_members m
+          where m.user_id = ${userId} and m.daycare_id = c.daycare_id and m.status = 'active'
         )
       )
       and exists (
@@ -160,7 +163,8 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   const access = await resolveAdminAccess(userId);
   const stored = access.ok ? "admin" : access.role;
   const owned = await ownsCentre(sql, userId);
-  const desks = desksFor({ role: stored, ownsCentre: owned });
+  const member = owned ? false : await isActiveCentreMember(sql, userId);
+  const desks = desksFor({ role: stored, ownsCentre: owned || member });
   const unread = await unreadInboxCount(sql, userId);
   const stripeLive = stripeChargesLive();
   const actor = await lookupUser(userId);
@@ -174,6 +178,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     ledgerLabel: paymentSourceLabel(stripeLive),
     providerSubscriptions: canSeeProviderSubscriptions(stored, process.env, owned),
     showPayCtas: showPayCtas(),
+    centreOwner: owned || stored === "admin" || !member,
   };
 }
 

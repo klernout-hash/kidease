@@ -9,7 +9,6 @@ import { upsertDaycare } from "@/lib/server/seed";
 import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
 import {
-  isCentreOwner,
   listCentreOwnerEmails,
   markConversationRead,
   requireConversationRead,
@@ -281,9 +280,15 @@ export const listTourRequests = createServerFn({ method: "GET" })
         )
          or (
           ${asCentre}
-          and exists (
-           select 1 from provider_daycares p
-           where p.user_id = ${context.userId} and p.daycare_id = t.daycare_id
+          and (
+            exists (
+              select 1 from provider_daycares p
+              where p.user_id = ${context.userId} and p.daycare_id = t.daycare_id
+            )
+            or exists (
+              select 1 from centre_members m
+              where m.user_id = ${context.userId} and m.daycare_id = t.daycare_id and m.status = 'active'
+            )
          )
       )
       order by t.created_at desc
@@ -318,7 +323,8 @@ export const respondTourRequest = createServerFn({ method: "POST" })
     const tour = rows[0];
     if (!tour) throw new Error("Tour request not found");
 
-    const owned = await isCentreOwner(sql, context.userId, tour.daycare_id);
+    const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
+    const owned = await canCentreWriteLeadsFor(sql, context.userId, tour.daycare_id);
     if (!owned) throw new Error("Not authorized");
 
     const next = nextTourStatus(tour.status, data.status);
@@ -439,7 +445,8 @@ export const advanceTourRequest = createServerFn({ method: "POST" })
     const tour = rows[0];
     if (!tour) throw new Error("Tour request not found");
 
-    const owned = await isCentreOwner(sql, context.userId, tour.daycare_id);
+    const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
+    const owned = await canCentreWriteLeadsFor(sql, context.userId, tour.daycare_id);
     const isParent = tour.user_id === context.userId;
     if (!owned && !(isParent && data.status === "completed")) throw new Error("Not authorized");
 

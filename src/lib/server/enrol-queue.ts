@@ -66,7 +66,11 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
     const sql = await getSql();
     const owned = await sql<{ daycare_id: string }>`
       select daycare_id from provider_daycares where user_id = ${context.userId}
-    `;
+      union
+      select daycare_id from centre_members where user_id = ${context.userId} and status = 'active'
+    `.catch(async () =>
+      sql<{ daycare_id: string }>`select daycare_id from provider_daycares where user_id = ${context.userId}`,
+    );
     if (!owned.length) return [] as SpotRequest[];
 
     const rows = await sql<IncomingRow>`
@@ -77,8 +81,15 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
              (select p.status from payments p where p.booking_id = b.id order by p.created_at desc limit 1) as payment_status
       from bookings b
       join daycares d on d.id = b.daycare_id
-      join provider_daycares pd on pd.daycare_id = b.daycare_id and pd.user_id = ${context.userId}
       left join children ch on ch.id = b.child_id
+      where exists (
+          select 1 from provider_daycares pd
+          where pd.daycare_id = b.daycare_id and pd.user_id = ${context.userId}
+        )
+         or exists (
+          select 1 from centre_members m
+          where m.daycare_id = b.daycare_id and m.user_id = ${context.userId} and m.status = 'active'
+        )
       order by
         case when b.status in ('requested','under_review') then 0 else 1 end,
         b.created_at desc
@@ -107,8 +118,18 @@ export const decideParentRequest = createServerFn({ method: "POST" })
     const sql = await getSql();
     const rows = await sql<{ id: string; daycare_id: string }>`
       select b.id, b.daycare_id from bookings b
-      join provider_daycares p on p.daycare_id = b.daycare_id
-      where b.id = ${data.bookingId} and p.user_id = ${context.userId}
+      where b.id = ${data.bookingId}
+        and (
+          exists (
+            select 1 from provider_daycares p
+            where p.daycare_id = b.daycare_id and p.user_id = ${context.userId}
+          )
+          or exists (
+            select 1 from centre_members m
+            where m.daycare_id = b.daycare_id and m.user_id = ${context.userId}
+              and m.status = 'active' and m.role in ('owner', 'manager', 'staff')
+          )
+        )
       limit 1
     `;
     if (!rows[0]) throw new Error("Request not found for this centre");

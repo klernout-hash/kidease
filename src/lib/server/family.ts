@@ -43,8 +43,14 @@ import {
   overlayFeaturedCity,
 } from "@/lib/server/provider-entitlements";
 import { accessDeniedMessage, assertCanMutateListing, canUpdateBookingStatus } from "@/lib/access-control";
-import { isCentreOwner } from "@/lib/server/thread-access";
 import { resolveAdminAccess } from "@/lib/server/roles";
+import {
+  canCentreWriteLeadsFor,
+  ensureOwnerMembership,
+  listAccessibleDaycareIds,
+  loadCentreRole,
+} from "@/lib/server/centre-access";
+import { centreCanCreateListing, centreCanMutateVacancies } from "@/lib/centre-roles";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -939,7 +945,7 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
     `;
     const b = rows[0];
     if (!b) throw new Error(accessDeniedMessage("request"));
-    const owned = await isCentreOwner(sql, context.userId, b.daycare_id);
+    const owned = await canCentreWriteLeadsFor(sql, context.userId, b.daycare_id);
     const admin = await resolveAdminAccess(context.userId)
       .then((a) => a.ok)
       .catch(() => false);
@@ -1120,11 +1126,13 @@ export const getProvider = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureSeed(sql);
-    const owned = await sql<DaycareRow>`
-      select d.* from daycares d
-      join provider_daycares p on p.daycare_id = d.id
-      where p.user_id = ${context.userId}
-    `;
+    const accessIds = await listAccessibleDaycareIds(sql, context.userId);
+    const owned = accessIds.length
+      ? await sql.query<DaycareRow>(
+          `select d.* from daycares d where d.id = any($1::text[])`,
+          [accessIds],
+        )
+      : [];
     const entitlements = await loadProfileEntitlements(sql, context.userId);
     const since = analyticsSinceDate(entitlements.analyticsDays);
     const weekSince = analyticsSinceDate(7);
@@ -1180,9 +1188,15 @@ export const getProvider = createServerFn({ method: "GET" })
     }>`
       select c.id, c.user_id, c.daycare_id, d.name, c.last_at
       from conversations c
-      join provider_daycares p on p.daycare_id = c.daycare_id
       join daycares d on d.id = c.daycare_id
-      where p.user_id = ${context.userId}
+      where exists (
+          select 1 from provider_daycares p
+          where p.user_id = ${context.userId} and p.daycare_id = c.daycare_id
+        )
+         or exists (
+          select 1 from centre_members m
+          where m.user_id = ${context.userId} and m.daycare_id = c.daycare_id and m.status = 'active'
+        )
       order by c.last_at desc
     `;
     const requests = await sql<{
@@ -1216,6 +1230,7 @@ export const getProvider = createServerFn({ method: "GET" })
       join daycares d on d.id = b.daycare_id
       left join children ch on ch.id = b.child_id
       where exists (select 1 from provider_daycares p where p.user_id = ${context.userId} and p.daycare_id = b.daycare_id)
+         or exists (select 1 from centre_members m where m.user_id = ${context.userId} and m.daycare_id = b.daycare_id and m.status = 'active')
       order by b.created_at desc
       limit 40
     `;
@@ -1282,6 +1297,15 @@ export const createListing = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
+    const ownerCount = (
+      await sql<{ n: number }>`
+        select count(*)::int as n from provider_daycares where user_id = ${context.userId}
+      `.catch(() => [{ n: 0 }])
+    )[0]?.n ?? 0;
+    const staffOnly = ownerCount === 0 && (await listAccessibleDaycareIds(sql, context.userId)).length > 0;
+    if (!centreCanCreateListing({ ownerCount, memberOnly: staffOnly })) {
+      throw new Error("Only the centre owner can add a listing.");
+    }
     const id = nid("d");
     const slug = data.name
       .toLowerCase()
@@ -1352,6 +1376,7 @@ export const createListing = createServerFn({ method: "POST" })
       where id = ${id}
     `.catch(() => undefined);
     await sql`insert into provider_daycares (user_id, daycare_id) values (${context.userId}, ${id})`;
+    await ensureOwnerMembership(sql, context.userId, id);
     if (data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)) {
       await sql`update daycares set last_photo_updated_at = now() where id = ${id}`.catch(() => undefined);
     }
@@ -1389,11 +1414,10 @@ export const updateCapacity = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const own = await sql<{ user_id: string }>`
-      select user_id from provider_daycares
-      where user_id = ${context.userId} and daycare_id = ${data.daycareId}
-    `;
-    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
+    const role = await loadCentreRole(sql, context.userId, data.daycareId);
+    if (!centreCanMutateVacancies(role)) {
+      assertCanMutateListing([], data.daycareId);
+    }
     const before = await sql<{
       spots_infant: number;
       spots_toddler: number;
@@ -1468,6 +1492,10 @@ export const deleteAccount = createServerFn({ method: "POST" })
     await sql`delete from children where user_id = ${uid}`;
     await sql`delete from saved_daycares where user_id = ${uid}`;
     await sql`delete from provider_daycares where user_id = ${uid}`;
+    await sql`delete from centre_members where user_id = ${uid}`.catch(() => undefined);
+    await sql`delete from centre_invites where invited_by = ${uid} or accepted_user_id = ${uid}`.catch(
+      () => undefined,
+    );
     await sql`delete from lead_requests where user_id = ${uid}`.catch(() => undefined);
     await sql`delete from waitlist_interests where user_id = ${uid}`.catch(() => undefined);
     await sql`delete from waitlist_pulse_deliveries where user_id = ${uid}`.catch(() => undefined);

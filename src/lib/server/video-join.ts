@@ -81,12 +81,9 @@ async function loadProfile(userId: string): Promise<ActorRow> {
 }
 
 async function ownsDaycare(userId: string, daycareId: string): Promise<boolean> {
+  const { hasCentreDeskAccess } = await import("@/lib/server/centre-access");
   const sql = await getSql();
-  const rows = await sql<{ n: number }>`
-    select count(*)::int as n from provider_daycares
-    where user_id = ${userId} and daycare_id = ${daycareId}
-  `.catch(() => [{ n: 0 }]);
-  return (rows[0]?.n ?? 0) > 0;
+  return hasCentreDeskAccess(sql, userId, daycareId);
 }
 
 async function resolveDesk(

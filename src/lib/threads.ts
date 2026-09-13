@@ -46,12 +46,14 @@ export function resolveThreadAccess(input: {
   userId: string;
   parentUserId: string;
   isCentreOwner: boolean;
+  isCentreReader?: boolean;
   isAdmin: boolean;
 }): ThreadAccess {
   const uid = (input.userId || "").trim();
   if (!uid) return { canRead: false, canWrite: false, role: "none" };
   if (uid === input.parentUserId) return { canRead: true, canWrite: true, role: "parent" };
   if (input.isCentreOwner) return { canRead: true, canWrite: true, role: "centre" };
+  if (input.isCentreReader) return { canRead: true, canWrite: false, role: "centre" };
   if (input.isAdmin) return { canRead: true, canWrite: false, role: "admin" };
   return { canRead: false, canWrite: false, role: "none" };
 }
