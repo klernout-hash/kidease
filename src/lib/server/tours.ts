@@ -42,7 +42,19 @@ type TourRow = {
   centre_note: string | null;
   created_at: string;
   responded_at: string | null;
+  window_id?: string | null;
+  parent_first_name?: string | null;
+  parent_last_name?: string | null;
+  parent_phone?: string | null;
+  contact_email?: string | null;
 };
+
+function guestParentName(row: TourRow): string | null {
+  const fromUser = (row.parent_name || "").trim();
+  if (fromUser) return fromUser;
+  const assembled = `${row.parent_first_name || ""} ${row.parent_last_name || ""}`.trim();
+  return assembled || null;
+}
 
 function mapTour(row: TourRow): TourRequest {
   return {
@@ -53,13 +65,16 @@ function mapTour(row: TourRow): TourRequest {
     daycareSlug: row.slug,
     childId: row.child_id,
     childName: row.child_name,
-    parentName: row.parent_name,
+    parentName: guestParentName(row),
     preferredTimes: parsePreferredTimes(row.preferred_times),
     parentNote: row.parent_note,
     status: row.status,
     centreNote: row.centre_note,
     createdAt: String(row.created_at),
     respondedAt: row.responded_at ? String(row.responded_at) : null,
+    windowId: row.window_id ?? null,
+    parentPhone: row.parent_phone ?? null,
+    parentEmail: row.contact_email ?? null,
   };
 }
 
@@ -84,7 +99,8 @@ export async function listToursForConversation(
   const rows = await sql<TourRow>`
     select t.id, t.conversation_id, t.daycare_id, d.name as daycare_name, d.slug,
            t.child_id, t.child_name, u.name as parent_name, t.preferred_times,
-           t.parent_note, t.status, t.centre_note, t.created_at, t.responded_at
+           t.parent_note, t.status, t.centre_note, t.created_at, t.responded_at,
+           t.window_id, t.parent_first_name, t.parent_last_name, t.parent_phone, t.contact_email
     from tour_requests t
     join daycares d on d.id = t.daycare_id
     left join "user" u on u.id = t.user_id
@@ -254,7 +270,8 @@ export const listTourRequests = createServerFn({ method: "GET" })
     const rows = await sql<TourRow>`
       select t.id, t.conversation_id, t.daycare_id, d.name as daycare_name, d.slug,
              t.child_id, t.child_name, u.name as parent_name, t.preferred_times,
-             t.parent_note, t.status, t.centre_note, t.created_at, t.responded_at
+             t.parent_note, t.status, t.centre_note, t.created_at, t.responded_at,
+             t.window_id, t.parent_first_name, t.parent_last_name, t.parent_phone, t.contact_email
       from tour_requests t
       join daycares d on d.id = t.daycare_id
       left join "user" u on u.id = t.user_id
@@ -287,8 +304,12 @@ export const respondTourRequest = createServerFn({ method: "POST" })
       daycare_id: string;
       daycare_name: string;
       slug: string;
+      contact_email: string | null;
+      parent_first_name: string | null;
+      parent_last_name: string | null;
     }>`
-      select t.id, t.status, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug
+      select t.id, t.status, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug,
+             t.contact_email, t.parent_first_name, t.parent_last_name
       from tour_requests t
       join daycares d on d.id = t.daycare_id
       where t.id = ${data.tourId}
@@ -326,10 +347,11 @@ export const respondTourRequest = createServerFn({ method: "POST" })
     await markConversationRead(sql, tour.conversation_id, context.userId);
 
     const parent = await lookupUser(tour.user_id);
+    const guestName = `${tour.parent_first_name || ""} ${tour.parent_last_name || ""}`.trim();
     const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
     await notifyThreadParty({
-      to: parent.email,
-      name: parent.name,
+      to: parent.email || tour.contact_email,
+      name: parent.name || guestName || null,
       subject: next === "accepted" ? `Tour accepted — ${tour.daycare_name}` : `Tour update — ${tour.daycare_name}`,
       preview: body,
       threadUrl: `${origin}/inbox/${tour.conversation_id}`,

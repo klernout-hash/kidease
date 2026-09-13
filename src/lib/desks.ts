@@ -29,7 +29,7 @@ export const DESK_QUERY_ALIASES: Record<string, DeskKey> = {
   support: "support",
 };
 
-export const PROVIDER_TAB_KEYS = ["requests", "money", "listings", "licence", "license", "contract", "promote"] as const;
+export const PROVIDER_TAB_KEYS = ["requests", "money", "listings", "tours", "licence", "license", "contract", "promote"] as const;
 
 export const STICKY_DESK_KEY = "kidease-desk";
 /** One-shot: home already sent this tab to a desk. Cleared on sign-out. */

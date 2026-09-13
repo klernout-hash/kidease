@@ -29,6 +29,7 @@ import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field, PromotePanel, readListingImage } from "@/components/provider-listing-forms";
+import { TourAvailabilityDesk } from "@/components/tour-availability-desk";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
@@ -45,9 +46,9 @@ import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
 
-type DaycareDesk = "requests" | "money" | "listings" | "licence" | "contract" | "promote";
+type DaycareDesk = "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote";
 
-const DESKS: DaycareDesk[] = ["requests", "money", "listings", "licence", "contract", "promote"];
+const DESKS: DaycareDesk[] = ["requests", "money", "listings", "tours", "licence", "contract", "promote"];
 
 export const Route = createFileRoute("/provider")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -306,6 +307,8 @@ function ProviderPage() {
           </div>
         </section>
       ) : null}
+
+      {desk === "tours" ? <TourAvailabilityDesk listings={listings} onSaved={() => void load()} /> : null}
 
       {desk === "listings" ? (
         <>
