@@ -7,7 +7,6 @@ import { useAppStore } from "@/lib/store";
 import {
   ageGroupRail,
   bestMatchRail,
-  careTypeRail,
   guestFavoritesRail,
   parentRailSearchHref,
   scoreParentRailItems,
@@ -89,15 +88,6 @@ export function ParentDeskRails({
     };
     return ageGroupRail(looking, deferredAge, agePrefs);
   }, [deferredAge, looking, matchPrefs]);
-  const facilityRails = useMemo(
-    () => ({
-      centre: careTypeRail(pool, "centre", matchPrefs),
-      nursery: careTypeRail(pool, "nursery", matchPrefs),
-      home: careTypeRail(pool, "home", matchPrefs),
-    }),
-    [matchPrefs, pool],
-  );
-
   useEffect(() => {
     if (!looking.length) {
       setExtraReady(false);
@@ -165,7 +155,7 @@ export function ParentDeskRails({
               eagerThumbs={false}
             />
           </section>
-          <FacilityTypeRails rows={facilityRails} />
+          <FacilityTypeRails items={pool} />
         </>
       ) : null}
     </div>

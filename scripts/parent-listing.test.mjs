@@ -23,7 +23,7 @@ function parseParentListingSearch(s) {
     ages: allow(new Set(["infant", "toddler", "preschool", "school-age"])),
     open: allow(new Set(["immediate", "upcoming"])),
     sched: allow(new Set(["full", "part", "flexible"])),
-    fac: allow(new Set(["centre", "home", "school"])),
+    fac: allow(new Set(["child_care_centre", "family_home", "group_home", "nursery_preschool", "school_age", "centre", "home", "school"])),
   };
 }
 
@@ -32,12 +32,12 @@ test("parent search URL round-trips Canada chips", () => {
     ages: parseParentListingSearch("infant,toddler").ages,
     open: parseParentListingSearch("immediate").open,
     sched: parseParentListingSearch("full,flexible").sched,
-    fac: parseParentListingSearch("centre,home").fac,
+    fac: parseParentListingSearch("child_care_centre,family_home").fac,
   };
   assert.deepEqual(parsed.ages, ["infant", "toddler"]);
   assert.deepEqual(parsed.open, ["immediate"]);
   assert.deepEqual(parsed.sched, ["full", "flexible"]);
-  assert.deepEqual(parsed.fac, ["centre", "home"]);
+  assert.deepEqual(parsed.fac, ["child_care_centre", "family_home"]);
   assert.deepEqual(parseParentListingSearch("junk").ages, []);
 });
 
@@ -80,6 +80,19 @@ test("migration 0044 adds Canada desk columns and info leads without inventing o
   assert.doesNotMatch(mig, /set opening_window = 'immediate'/);
 });
 
+test("migration 0045 maps legacy centre/home enums to Canada facility types", () => {
+  const names = readdirSync(join(root, "migrations"));
+  assert.ok(names.includes("0045_canada_facility_types.sql"));
+  const mig = src("migrations/0045_canada_facility_types.sql");
+  assert.match(mig, /child_care_centre/);
+  assert.match(mig, /family_home/);
+  assert.match(mig, /group_home/);
+  assert.match(mig, /nursery_preschool/);
+  assert.match(mig, /school_age/);
+  assert.match(mig, /Do not invent group_home/);
+  assert.doesNotMatch(mig, /set facility_type = 'group_home'\s+where name/i);
+});
+
 test("FR-CA chip labels exist for /fr routes", () => {
   const copy = src("src/lib/copy.ts");
   for (const key of [
@@ -94,7 +107,8 @@ test("FR-CA chip labels exist for /fr routes", () => {
     assert.equal(copy.split(`${key}:`).length >= 3, true, key);
   }
   assert.match(copy, /Milieu familial/);
-  assert.match(copy, /En milieu scolaire/);
+  assert.match(copy, /Parascolaire/);
+  assert.match(copy, /Milieu familial de groupe/);
   assert.match(copy, /Demander des infos/);
 });
 

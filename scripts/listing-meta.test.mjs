@@ -43,7 +43,7 @@ test("name and city win over the slug fallback", () => {
     }),
     /Harrow House in Winnipeg, MB/,
   );
-  assert.equal(listingPageTitle({ name: "Harrow House" }), "Harrow House · Licensed centre · KidEase");
+  assert.equal(listingPageTitle({ name: "Harrow House" }), "Harrow House · Licensed child care centre · KidEase");
   assert.match(
     listingPageTitle({
       name: "Alonsa Nursery School",

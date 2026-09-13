@@ -5,7 +5,7 @@
  * file the same way they load sitemap.ts.
  */
 
-import { classifyFacilityType, facilityTypeSeoKind, type FacilityType } from "./facility-type.ts";
+import { classifyFacilityType, facilityTypeSeoKind, facilityTypeTitleNoun, type FacilityType } from "./facility-type.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 
 export const LISTING_META_BRAND = "KidEase";
@@ -20,8 +20,7 @@ export type ListingMetaInput = {
 
 function listingKind(input: ListingMetaInput): { type: FacilityType; label: string } {
   const type = classifyFacilityType({ amenities: input.amenities, name: input.name }).type;
-  const noun = type === "nursery" ? "Nursery" : type === "home" ? "Home" : "Centre";
-  return { type, label: noun };
+  return { type, label: facilityTypeTitleNoun(type) };
 }
 
 /** "bonnie-bairns-childcare-services-1" → "Bonnie Bairns Childcare Services". */
