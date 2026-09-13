@@ -75,7 +75,8 @@ test("requireAdmin checks verified 2FA and fails closed", () => {
   assert.doesNotMatch(twoFaClient, /export function assertTwoFactorVerified/);
   assert.match(twoFaClient, /two-factor\.server/);
   assert.match(twoFaClient, /writeTwoFactorSessionCookie/);
-  assert.match(twoFaClient, /if \(data\.remember\) writeTwoFactorDeviceCookie/);
+  assert.match(twoFaClient, /if \(data\.remember\)/);
+  assert.match(twoFaClient, /writeTwoFactorDeviceCookie/);
   assert.match(twoFa, /TWO_FACTOR_DEVICE_COOKIE/);
   assert.match(twoFa, /writeTwoFactorSessionCookie/);
   const gates = src("src/lib/auth/gates.tsx");

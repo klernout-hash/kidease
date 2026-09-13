@@ -290,6 +290,8 @@ export const sendCentreContract = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const actor = await requireOperator(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
     const packKind = parsePackKind(data.packKind);
     const sql = await getSql();
     const listed = await sql<{
@@ -421,6 +423,8 @@ export const voidCentreContract = createServerFn({ method: "POST" })
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
     await requireOperator(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
     const sql = await getSql();
     const rows = await sql<{ id: string; envelope_id: string | null }>`
       select id, envelope_id from daycare_contracts where id = ${data.contractId} limit 1

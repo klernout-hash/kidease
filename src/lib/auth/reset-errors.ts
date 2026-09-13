@@ -28,6 +28,16 @@ export function friendlyResetMailError(message?: string | null) {
   ) {
     return "The reset email could not be sent. Try again in a few minutes, or email support@kidease.ca. We did not treat this as sent.";
   }
+  if (raw.includes("too many") || raw.includes("rate limit") || raw.includes("429") || raw.includes("try again in")) {
+    const seconds = message?.match(/(\d+)\s*(s|sec|second|min)/i);
+    if (seconds && /min/i.test(seconds[2] || "")) {
+      const n = Number(seconds[1]);
+      return n === 1 ? "Too many tries. Try again in 1 min." : `Too many tries. Try again in ${n} min.`;
+    }
+    if (seconds) return `Too many tries. Try again in ${Number(seconds[1])}s.`;
+    if (raw.includes("try again in")) return message || "Too many tries. Try again in 1 min.";
+    return "Too many tries. Try again in 1 min.";
+  }
   if (raw.includes("security check")) {
     return message || "Please complete the security check.";
   }

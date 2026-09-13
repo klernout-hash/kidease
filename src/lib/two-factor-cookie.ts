@@ -11,21 +11,49 @@ export function signTwoFactorCookie(userId: string, exp: number, secret: string)
   return `${body}.${sig}`;
 }
 
+/** Revocable trusted-device cookie. Legacy 3-part cookies still verify. */
+export function signTwoFactorDeviceCookie(
+  userId: string,
+  deviceId: string,
+  exp: number,
+  secret: string,
+): string {
+  const id = deviceId.trim();
+  if (!id || id.includes(".")) throw new Error("Invalid trusted device id");
+  const body = `${userId}.${id}.${exp}`;
+  const sig = createHmac("sha256", secret).update(body).digest("hex");
+  return `${body}.${sig}`;
+}
+
 export function parseTwoFactorDevice(
   raw: string | null | undefined,
   secret: string,
-): { userId: string; exp: number } | null {
+): { userId: string; exp: number; deviceId?: string } | null {
   if (!raw || !secret) return null;
   const parts = raw.split(".");
-  if (parts.length !== 3) return null;
-  const [userId, expRaw, sig] = parts;
-  const exp = Number(expRaw);
-  if (!userId || !Number.isFinite(exp) || exp < Date.now()) return null;
-  const expected = createHmac("sha256", secret).update(`${userId}.${exp}`).digest("hex");
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-  return { userId, exp };
+  if (parts.length === 3) {
+    const [userId, expRaw, sig] = parts;
+    const exp = Number(expRaw);
+    if (!userId || !Number.isFinite(exp) || exp < Date.now()) return null;
+    const expected = createHmac("sha256", secret).update(`${userId}.${exp}`).digest("hex");
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+    return { userId, exp };
+  }
+  if (parts.length === 4) {
+    const [userId, deviceId, expRaw, sig] = parts;
+    const exp = Number(expRaw);
+    if (!userId || !deviceId || deviceId.includes(".") || !Number.isFinite(exp) || exp < Date.now()) {
+      return null;
+    }
+    const expected = createHmac("sha256", secret).update(`${userId}.${deviceId}.${exp}`).digest("hex");
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+    return { userId, exp, deviceId };
+  }
+  return null;
 }
 
 export function isTwoFactorVerified(

@@ -36,6 +36,7 @@ import { listAdminLeadCounts } from "@/lib/server/lead-requests";
 import { emptyLeadCounts, type LeadCounts } from "@/lib/lead-requests";
 import type { CatalogRuntime } from "@/lib/catalog-source";
 import { paymentSourceLabel } from "@/lib/payment-source";
+import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 
 type AdminDesk = "queue" | "verify" | "daycares" | "trust" | "mail" | "contracts" | "money" | "activity" | "reviews";
 
@@ -67,6 +68,7 @@ function provCode(raw: string | null | undefined) {
 function AdminPage() {
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
+  const reauth = useReauthPrompt();
   const [tab, setTab] = useState<AdminDesk>("queue");
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listPlatformEvents>>>([]);
   const [centres, setCentres] = useState<AdminCentreRow[]>([]);
@@ -227,7 +229,10 @@ function AdminPage() {
   async function onDecide(daycareId: string, decision: Decision) {
     setBusy(`${daycareId}:${decision}`);
     try {
-      await decideCentre({ data: { daycareId, decision, note } });
+      await withReauth(
+        () => decideCentre({ data: { daycareId, decision, note } }),
+        reauth.prompt,
+      );
       setNote("");
       await refresh();
     } catch (err) {
@@ -516,6 +521,7 @@ function AdminPage() {
         </>
       )}
     </DeskShell>
+      {reauth.dialog}
     </TwoFactorGate>
   );
 }

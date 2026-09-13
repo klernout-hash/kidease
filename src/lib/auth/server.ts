@@ -67,6 +67,7 @@ import {
 import { pgliteDialect } from "./pglite-dialect";
 import { PREVIEW_ALLOWED_HOSTS } from "./preview";
 import { SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE } from "./cookies";
+import { AUTH_FORGOT_MAX, AUTH_LOGIN_MAX, AUTH_SIGNUP_MAX } from "@/lib/auth-rate-limit";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
 void ensureDbReady();
@@ -363,7 +364,11 @@ export const auth = betterAuth({
   // Do not cache the session in a cookie. cookieCache writes
   // __Host-grok-auth.session_data and blows past Vercel's request header
   // limit (494 REQUEST_HEADER_TOO_LARGE) in Safari.
-  session: { cookieCache: { enabled: false } },
+  session: {
+    cookieCache: { enabled: false },
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 10,
+  },
 
   // Production enables rate limits (3 / 10s on /sign-in/*). Cloudflare + Vercel
   // send a multi-hop X-Forwarded-For; without a single-IP header Better Auth
@@ -372,10 +377,10 @@ export const auth = betterAuth({
     window: 60,
     max: 120,
     customRules: {
-      "/sign-in/email": { window: 60, max: 30 },
-      "/sign-up/email": { window: 60, max: 15 },
-      "/forget-password": { window: 60, max: 8 },
-      "/request-password-reset": { window: 60, max: 8 },
+      "/sign-in/email": { window: 60, max: AUTH_LOGIN_MAX },
+      "/sign-up/email": { window: 60, max: AUTH_SIGNUP_MAX },
+      "/forget-password": { window: 60, max: AUTH_FORGOT_MAX },
+      "/request-password-reset": { window: 60, max: AUTH_FORGOT_MAX },
     },
   },
 
@@ -392,7 +397,10 @@ export const auth = betterAuth({
   // `http://localhost`, so local dev still works.)
   advanced: {
     useSecureCookies: false,
-    defaultCookieAttributes: { secure: true, sameSite: "lax", path: "/" },
+    // Session cookies: Secure + SameSite=Lax + Path=/. Better Auth sets HttpOnly
+    // on session_token. __Host- names refuse Domain (sibling toss). Admin idle
+    // is a shorter 30-min cookie than Parent's 30-day trusted-device path.
+    defaultCookieAttributes: { secure: true, sameSite: "lax", path: "/", httpOnly: true },
     ipAddress: {
       ipAddressHeaders: ["cf-connecting-ip", "x-real-ip", "x-vercel-forwarded-for", "x-forwarded-for"],
     },

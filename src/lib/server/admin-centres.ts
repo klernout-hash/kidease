@@ -367,6 +367,8 @@ export const decideCentre = createServerFn({ method: "POST" })
   .validator((input: { daycareId: string; decision: Decision; note?: string }) => input)
   .handler(async ({ context, data }) => {
     const actor = await requireOperator(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
     const decision = data.decision;
     if (!["approve", "decline", "waiting"].includes(decision)) throw new Error("Invalid decision");
 

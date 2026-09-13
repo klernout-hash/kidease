@@ -162,8 +162,17 @@ export function friendlyAuthError(
   ) {
     return TURNSTILE_FAILED_MESSAGE;
   }
-  if (raw.includes("too many") || raw.includes("rate limit") || raw.includes("429")) {
-    return "Too many sign-in tries. Wait a minute, then try again.";
+  if (raw.includes("too many") || raw.includes("rate limit") || raw.includes("429") || raw.includes("try again in")) {
+    const seconds = message?.match(/(\d+)\s*(s|sec|second|min)/i);
+    if (seconds && /min/i.test(seconds[2] || "")) {
+      const n = Number(seconds[1]);
+      return n === 1 ? "Too many tries. Try again in 1 min." : `Too many tries. Try again in ${n} min.`;
+    }
+    if (seconds) {
+      return `Too many tries. Try again in ${Number(seconds[1])}s.`;
+    }
+    if (raw.includes("try again in")) return (message || "").trim();
+    return "Too many tries. Try again in 1 min.";
   }
   if (raw.includes("missing or null origin") || raw.includes("missing_or_null_origin")) {
     return "This sign-in page needs a refresh — try again, or use email.";

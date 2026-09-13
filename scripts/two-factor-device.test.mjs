@@ -66,7 +66,9 @@ test("verify writes a session cookie always and a 30-day device cookie only when
   const twoFa = src("src/lib/server/two-factor.ts");
   const server = src("src/lib/server/two-factor.server.ts");
   assert.match(twoFa, /writeTwoFactorSessionCookie\(context\.userId\)/);
-  assert.match(twoFa, /if \(data\.remember\) writeTwoFactorDeviceCookie\(context\.userId, TWO_FACTOR_DEVICE_TTL_MS\)/);
+  assert.match(twoFa, /if \(data\.remember\)/);
+  assert.match(twoFa, /writeTwoFactorDeviceCookie\(context\.userId, TWO_FACTOR_DEVICE_TTL_MS\)/);
+  assert.match(twoFa, /persistTrustedDevice/);
   assert.match(server, /TWO_FACTOR_DEVICE_COOKIE/);
   assert.match(server, /SHARED_TWO_FACTOR_DEVICE_COOKIE/);
   assert.match(server, /writeTwoFactorSessionCookie/);

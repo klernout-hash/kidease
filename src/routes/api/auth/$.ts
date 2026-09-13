@@ -18,6 +18,8 @@ import { assertResetMailConfigured } from "@/lib/server/reset-mail-config";
 import { assertTurnstileToken } from "@/lib/server/turnstile";
 import { readTurnstileToken, readTurnstileTokenFromBody } from "@/lib/server/turnstile-verify";
 import { SQL_SETTLE_MS, resolveAfter } from "@/lib/timeout";
+import { parseRetryAfterSeconds, rateLimitWaitCopy } from "@/lib/auth-rate-limit";
+import { assertPasswordAllowed } from "@/lib/server/password-hygiene";
 
 const TURNSTILE_AUTH_PATHS = [
   "/sign-in/email",
@@ -55,6 +57,24 @@ async function handleAuth(request: Request) {
           return Response.json({ message }, { status: 503 });
         }
       }
+      if (
+        path.endsWith("/sign-up/email") ||
+        path.endsWith("/reset-password") ||
+        path.endsWith("/change-password")
+      ) {
+        try {
+          const body = (await request.clone().json().catch(() => null)) as {
+            password?: unknown;
+            newPassword?: unknown;
+            email?: unknown;
+          } | null;
+          const password = String(body?.password || body?.newPassword || "");
+          if (password) await assertPasswordAllowed(password, String(body?.email || ""));
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Choose a stronger password.";
+          return Response.json({ message, code: "PASSWORD_REJECTED" }, { status: 400 });
+        }
+      }
       if (authPathNeedsTurnstile(url.pathname)) {
         try {
           await assertTurnstileToken(await turnstileTokenFromAuthRequest(request), {
@@ -78,13 +98,28 @@ async function handleAuth(request: Request) {
             resolveAfter(SQL_SETTLE_MS, Response.json({ session: null, user: null })),
           ])
         : await handled;
-    const shared = applySharedAuthCookies(incoming, response);
+    const honest = await applyHonestRateLimit(response);
+    const shared = applySharedAuthCookies(incoming, honest);
     return isAuthSignOutPath(path) ? applyExpiredAuthCookies(incoming, shared) : shared;
   } catch (err) {
     reportError(err, { route: "/api/auth" });
     const message = err instanceof Error && err.message.trim() ? err.message : "Sign-in failed";
     return Response.json({ message, code: "AUTH_HANDLER_ERROR" }, { status: 500 });
   }
+}
+
+async function applyHonestRateLimit(response: Response): Promise<Response> {
+  if (response.status !== 429) return response;
+  const retryAfter = parseRetryAfterSeconds(response.headers.get("retry-after"), 60);
+  const message = rateLimitWaitCopy(retryAfter);
+  const headers = new Headers(response.headers);
+  headers.set("retry-after", String(retryAfter));
+  headers.set("content-type", "application/json");
+  return new Response(JSON.stringify({ message, code: "RATE_LIMITED" }), {
+    status: 429,
+    statusText: "Too Many Requests",
+    headers,
+  });
 }
 
 export const Route = createFileRoute("/api/auth/$")({

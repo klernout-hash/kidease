@@ -9,6 +9,8 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { PasswordField } from "@/components/password-field";
+import { PasswordRules } from "@/components/password-rules";
+import { localPasswordIssue } from "@/lib/password-hygiene";
 import { Shell } from "@/components/shell";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
@@ -212,6 +214,8 @@ export function LoginScreen({
         await dropExistingSession();
       }
       if (mode === "up") {
+        const hygiene = localPasswordIssue(password, email);
+        if (hygiene) throw new Error(hygiene);
         const res = await authClient.signUp.email({
           email,
           password,
@@ -355,6 +359,7 @@ export function LoginScreen({
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={mode === "up" ? "new-password" : "current-password"}
             />
+            {mode === "up" && !operator ? <PasswordRules password={password} /> : null}
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger" data-ke="auth-error">{error}</p> : null}
             {stalled || error ? (

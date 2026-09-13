@@ -68,8 +68,9 @@ describe("password sign-in errors", () => {
     assert.match(friendlyAuthError(authClientErrorMessage({ code: "SECURITY_CHECK", message: "Sign-in failed" })), /security check/i);
     assert.doesNotMatch(friendlyAuthError("Invalid email or password"), /security check/i);
     assert.match(friendlyAuthError("Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY)"), /RESEND_API_KEY/);
-    assert.match(friendlyAuthError("Too many requests"), /Wait a minute/);
-    assert.match(friendlyAuthError("Too many requests. Please try again later."), /Wait a minute/);
+    assert.match(friendlyAuthError("Too many requests"), /Try again in 1 min/);
+    assert.match(friendlyAuthError("Too many requests. Please try again later."), /Try again in 1 min/);
+    assert.match(friendlyAuthError("Too many tries. Try again in 15s."), /15s/);
     assert.equal(isCloudflareBlockText("Attention Required! | Cloudflare"), true);
     assert.equal(
       looksLikeCloudflareAuthBlock({
@@ -105,7 +106,7 @@ describe("password sign-in errors", () => {
     assert.match(friendlyAuthError("Failed to create session"), /session could not be saved/);
     assert.equal(authClientErrorMessage({ status: 429, statusText: "Too Many Requests" }), "Too Many Requests");
     assert.equal(authClientErrorMessage({ message: "" }), "");
-    assert.match(friendlyAuthError(authClientErrorMessage({ statusText: "Too Many Requests" })), /Wait a minute/);
+    assert.match(friendlyAuthError(authClientErrorMessage({ statusText: "Too Many Requests" })), /Try again in 1 min/);
     assert.equal(classifyEmailAccounts([]), "missing");
     assert.equal(classifyEmailAccounts([{ providerId: "google", password: null }]), "oauth_only");
     assert.equal(classifyEmailAccounts([{ providerId: "credential", password: "hash" }]), "has_password");
@@ -259,7 +260,10 @@ describe("production email sign-in is not globally rate-limited", () => {
     assert.match(pkg.dependencies["better-auth"], /^~?1\.[67]\./);
     assert.match(server, /cf-connecting-ip/);
     assert.match(server, /"\/sign-in\/email"/);
-    assert.match(server, /max:\s*30/);
+    assert.match(server, /AUTH_LOGIN_MAX/);
+    assert.match(server, /httpOnly: true/);
+    assert.match(server, /sameSite: "lax"/);
+    assert.match(server, /secure: true/);
     assert.match(server, /emailAndPassword:\s*emailAndPasswordConfig/);
     assert.match(authApi, /code: "AUTH_HANDLER_ERROR"/);
     assert.match(authApi, /return Response\.json\(\{ message/);

@@ -1,5 +1,6 @@
 import { DEFAULT_TRANSACTIONAL_MAIL_FROM, transactionalMailFrom } from "./mail-from.ts";
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
+import { TWO_FACTOR_HOURLY_MAX, TWO_FACTOR_HOURLY_MS, hourlyOtpWaitCopy } from "./auth-rate-limit.ts";
 
 /** Auto-start / remount cooldown. Does not apply to an explicit "Send a new code". */
 export const TWO_FACTOR_AUTO_COOLDOWN_MS = 45_000;
@@ -77,6 +78,21 @@ export function twoFactorResendWaitCopy(seconds: number): string {
   const n = Math.max(1, Math.ceil(seconds));
   return `Wait ${n}s then resend`;
 }
+
+export function twoFactorHourlyWait(input: { sentInWindow: number; oldestMs: number; nowMs?: number }): {
+  blocked: boolean;
+  waitSeconds: number;
+  copy: string;
+} {
+  const nowMs = input.nowMs ?? Date.now();
+  if (input.sentInWindow < TWO_FACTOR_HOURLY_MAX) {
+    return { blocked: false, waitSeconds: 0, copy: "" };
+  }
+  const waitSeconds = Math.max(1, Math.ceil((input.oldestMs + TWO_FACTOR_HOURLY_MS - nowMs) / 1000));
+  return { blocked: true, waitSeconds, copy: hourlyOtpWaitCopy(waitSeconds) };
+}
+
+export { TWO_FACTOR_HOURLY_MAX, TWO_FACTOR_HOURLY_MS, hourlyOtpWaitCopy };
 
 export function friendlyTwoFactorMailError(error: unknown): string {
   const raw = (error instanceof Error ? error.message : String(error || "")).toLowerCase();

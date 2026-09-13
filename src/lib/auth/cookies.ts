@@ -9,6 +9,14 @@
  * `__Secure-kidease.*` with `Domain=kidease.ca` so both public hosts share
  * the same session (and 2FA device) token.
  */
+import {
+  ADMIN_IDLE_COOKIE,
+  REAUTH_COOKIE,
+  SHARED_ADMIN_IDLE_COOKIE,
+  SHARED_REAUTH_COOKIE,
+} from "../reauth.ts";
+
+export { ADMIN_IDLE_COOKIE, REAUTH_COOKIE, SHARED_ADMIN_IDLE_COOKIE, SHARED_REAUTH_COOKIE };
 
 export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 export const SHARED_SESSION_TOKEN_COOKIE = "__Secure-kidease.session_token";
@@ -28,6 +36,8 @@ const SESSION_HOST_TO_SHARED: Record<string, string> = {
   ["__Host-grok-auth.account_data"]: "__Secure-kidease.account_data",
   ["__Host-grok-auth.dont_remember"]: "__Secure-kidease.dont_remember",
   [TWO_FACTOR_COOKIE]: SHARED_TWO_FACTOR_COOKIE,
+  [REAUTH_COOKIE]: SHARED_REAUTH_COOKIE,
+  [ADMIN_IDLE_COOKIE]: SHARED_ADMIN_IDLE_COOKIE,
 };
 
 const DEVICE_HOST_TO_SHARED: Record<string, string> = {
@@ -198,6 +208,13 @@ export function expireAuthCookieHeaders(publicHost = false): string[] {
   const host = Object.keys(SESSION_HOST_TO_SHARED).map(expireHostAuthCookie);
   if (!publicHost) return host;
   return [...host, ...Object.values(SESSION_HOST_TO_SHARED).map(expireSharedAuthCookie)];
+}
+
+/** Expire trusted-device cookies on this browser (revoke this device). */
+export function expireTrustedDeviceCookieHeaders(publicHost = false): string[] {
+  const host = Object.keys(DEVICE_HOST_TO_SHARED).map(expireHostAuthCookie);
+  if (!publicHost) return host;
+  return [...host, ...Object.values(DEVICE_HOST_TO_SHARED).map(expireSharedAuthCookie)];
 }
 
 export function isAuthSignOutPath(pathname: string): boolean {

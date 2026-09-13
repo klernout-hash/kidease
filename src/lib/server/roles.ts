@@ -115,8 +115,11 @@ export async function resolveAdminAccess(userId: string) {
 export async function requireAdmin(userId: string) {
   const access = await resolveAdminAccess(userId);
   if (!access.ok) throw new Error("Not authorized");
-  const { assertTwoFactorVerified } = await import("@/lib/server/two-factor.server");
+  const { assertAdminIdleFresh, assertTrustedDeviceActive, assertTwoFactorVerified } =
+    await import("@/lib/server/two-factor.server");
   assertTwoFactorVerified(userId);
+  await assertTrustedDeviceActive(userId);
+  await assertAdminIdleFresh(userId);
   return lookupUser(userId);
 }
 

@@ -8,8 +8,10 @@ import {
   TWO_FACTOR_MAX_ATTEMPTS,
   decideTwoFactorStart,
   friendlyTwoFactorMailError,
+  twoFactorHourlyWait,
   twoFactorWaitSeconds,
 } from "@/lib/two-factor-start";
+import { TWO_FACTOR_HOURLY_MS } from "@/lib/auth-rate-limit";
 import { TWO_FACTOR_DEVICE_TTL_MS } from "@/lib/two-factor-cookie";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 
@@ -71,7 +73,15 @@ export const getTwoFactorStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const { isCurrentUserTwoFactorVerified } = await import("./two-factor.server");
-    return { verified: isCurrentUserTwoFactorVerified(context.userId) };
+    const verified = isCurrentUserTwoFactorVerified(context.userId);
+    if (!verified) return { verified: false };
+    try {
+      const { assertTrustedDeviceActive } = await import("./two-factor.server");
+      await assertTrustedDeviceActive(context.userId);
+    } catch {
+      return { verified: false };
+    }
+    return { verified: true };
   });
 
 export const startTwoFactor = createServerFn({ method: "POST" })
@@ -117,6 +127,34 @@ export const startTwoFactor = createServerFn({ method: "POST" })
     if (decision === "reuse") {
       return { ok: true as const, emailed, wait: true as const, reused: true as const, sent: false as const };
     }
+    await sql
+      .query(
+        `create table if not exists two_factor_sends (
+          id text primary key,
+          user_id text not null,
+          created_at timestamptz not null default now()
+        )`,
+      )
+      .catch(() => undefined);
+    const sends = await sql<{ created_at: string }>`
+      select created_at from two_factor_sends
+      where user_id = ${context.userId} and created_at > now() - interval '1 hour'
+      order by created_at asc
+    `.catch(() => []);
+    const hourly = twoFactorHourlyWait({
+      sentInWindow: sends.length,
+      oldestMs: sends[0] ? new Date(sends[0].created_at).getTime() : Date.now() - TWO_FACTOR_HOURLY_MS,
+    });
+    if (hourly.blocked) {
+      return {
+        ok: true as const,
+        emailed,
+        wait: true as const,
+        sent: false as const,
+        waitSeconds: hourly.waitSeconds,
+        hourly: true as const,
+      };
+    }
     const code = String(randomInt(100000, 999999));
     const id = nid("2fa");
     let status: "sent" | "logged";
@@ -131,6 +169,9 @@ export const startTwoFactor = createServerFn({ method: "POST" })
       `insert into login_challenges (id, user_id, email, code_hash, expires_at) values ($1,$2,$3,$4,$5)`,
       [id, context.userId, email, hashCode(code), new Date(Date.now() + TTL_MS).toISOString()],
     );
+    await sql.query(`insert into two_factor_sends (id, user_id) values ($1,$2)`, [nid("2fas"), context.userId]).catch(
+      () => undefined,
+    );
     return {
       ok: true as const,
       emailed,
@@ -138,6 +179,34 @@ export const startTwoFactor = createServerFn({ method: "POST" })
       sent: true as const,
     };
   });
+
+export async function consumeTwoFactorCode(userId: string, code: string) {
+  if (code.length !== 6) throw new Error("Enter the 6-digit code from your email.");
+  await ensureTable();
+  const sql = await getSql();
+  const rows = await sql<{
+    id: string;
+    code_hash: string;
+    attempts: number;
+    expires_at: string;
+  }>`
+    select id, code_hash, attempts, expires_at
+    from login_challenges
+    where user_id = ${userId}
+    order by created_at desc limit 1
+  `;
+  const row = rows[0];
+  if (!row) throw new Error("Request a new code first.");
+  if (new Date(row.expires_at).getTime() < Date.now()) throw new Error("That code expired. Request a new one.");
+  if (row.attempts >= MAX_ATTEMPTS) throw new Error("Too many tries. Request a new code.");
+  if (row.code_hash !== hashCode(code)) {
+    await sql`update login_challenges set attempts = attempts + 1 where id = ${row.id}`;
+    throw new Error("That code is not correct.");
+  }
+  await sql`delete from login_challenges where user_id = ${userId}`;
+}
+
+export const verifyTwoFactorCode = consumeTwoFactorCode;
 
 export const verifyTwoFactor = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -149,31 +218,26 @@ export const verifyTwoFactor = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { assertTurnstileToken } = await import("@/lib/server/turnstile");
     await assertTurnstileToken(data.turnstileToken);
-    if (data.code.length !== 6) throw new Error("Enter the 6-digit code from your email.");
-    await ensureTable();
-    const sql = await getSql();
-    const rows = await sql<{
-      id: string;
-      code_hash: string;
-      attempts: number;
-      expires_at: string;
-    }>`
-      select id, code_hash, attempts, expires_at
-      from login_challenges
-      where user_id = ${context.userId}
-      order by created_at desc limit 1
-    `;
-    const row = rows[0];
-    if (!row) throw new Error("Request a new code first.");
-    if (new Date(row.expires_at).getTime() < Date.now()) throw new Error("That code expired. Request a new one.");
-    if (row.attempts >= MAX_ATTEMPTS) throw new Error("Too many tries. Request a new code.");
-    if (row.code_hash !== hashCode(data.code)) {
-      await sql`update login_challenges set attempts = attempts + 1 where id = ${row.id}`;
-      throw new Error("That code is not correct.");
-    }
-    await sql`delete from login_challenges where user_id = ${context.userId}`;
-    const { writeTwoFactorDeviceCookie, writeTwoFactorSessionCookie } = await import("./two-factor.server");
+    await consumeTwoFactorCode(context.userId, data.code);
+    const {
+      requestDeviceHints,
+      writeTwoFactorDeviceCookie,
+      writeTwoFactorSessionCookie,
+    } = await import("./two-factor.server");
     writeTwoFactorSessionCookie(context.userId);
-    if (data.remember) writeTwoFactorDeviceCookie(context.userId, TWO_FACTOR_DEVICE_TTL_MS);
+    if (data.remember) {
+      const remembered = writeTwoFactorDeviceCookie(context.userId, TWO_FACTOR_DEVICE_TTL_MS);
+      const hints = requestDeviceHints();
+      const { persistTrustedDevice } = await import("./trusted-devices");
+      await persistTrustedDevice({
+        userId: context.userId,
+        deviceId: remembered.deviceId,
+        exp: remembered.exp,
+        userAgent: hints.userAgent,
+        ip: hints.ip,
+      });
+    }
+    const { writeReauthCookie } = await import("./reauth.server");
+    writeReauthCookie(context.userId);
     return { ok: true as const };
   });
