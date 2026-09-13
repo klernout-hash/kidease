@@ -15,6 +15,7 @@ import {
 } from "@/lib/auth/verify-2fa-session";
 import { waitForSignedInSession } from "@/lib/auth/session-settle";
 import { getTwoFactorStatus, startTwoFactor, verifyTwoFactor } from "@/lib/server/two-factor";
+import { twoFactorResendWaitCopy } from "@/lib/two-factor-start";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import {
   assignPostAuthDest,
@@ -144,6 +145,8 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   const [stalled, setStalled] = useState(false);
   const [pageStalled, setPageStalled] = useState(false);
   const [needTurnstile, setNeedTurnstile] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [resendWait, setResendWait] = useState(0);
   const submitLock = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
@@ -166,6 +169,12 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
     const id = window.setTimeout(() => setStalled(true), LOGIN_STALL_MS);
     return () => window.clearTimeout(id);
   }, [busy]);
+
+  useEffect(() => {
+    if (resendWait <= 0) return;
+    const id = window.setTimeout(() => setResendWait((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(id);
+  }, [resendWait]);
 
   useEffect(() => {
     if (!userId) return;
@@ -220,7 +229,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
     setBusy(true);
     setError(null);
     void yieldToMain()
-      .then(() => verifyTwoFactor({ data: { code, remember: true, turnstileToken: takeChallenge() } }))
+      .then(() => verifyTwoFactor({ data: { code, remember, turnstileToken: takeChallenge() } }))
       .then(() => {
         captureLoginFunnel({ step: "two_factor_verified", native: isNative() });
         return leave(dest);
@@ -261,6 +270,22 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         </p>
         <form ref={formRef} className="mt-6 space-y-3 ph-no-capture" onSubmit={onSubmit}>
           <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} />
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 accent-primary"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              disabled={busy}
+              data-ke="remember-device"
+            />
+            <span>
+              <span className="font-medium">Remember this device for 30 days</span>
+              <span className="mt-1 block text-[12px] text-muted">
+                Skip the email code on this browser for 30 days. Do not use this on a shared computer.
+              </span>
+            </span>
+          </label>
           {needTurnstile ? (
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
           ) : (
@@ -279,10 +304,11 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         </form>
         <button
           type="button"
-          className="mt-4 min-h-11 text-sm text-muted underline-offset-4 hover:underline"
-          disabled={busy}
+          className="mt-4 min-h-11 text-sm text-muted underline-offset-4 hover:underline disabled:no-underline disabled:opacity-70"
+          disabled={busy || resendWait > 0}
+          data-ke="resend-code"
           onClick={() => {
-            if (submitLock.current || busy) return;
+            if (submitLock.current || busy || resendWait > 0) return;
             submitLock.current = true;
             setBusy(true);
             setError(null);
@@ -291,7 +317,13 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               .then((res) => {
                 setHint(res.emailed);
                 if (!res.sent) {
-                  setError("Please wait a moment, then try Send a new code again.");
+                  const seconds = "waitSeconds" in res && typeof res.waitSeconds === "number" ? res.waitSeconds : 0;
+                  if (seconds > 0) {
+                    setResendWait(seconds);
+                    setNotice(twoFactorResendWaitCopy(seconds));
+                  } else {
+                    setError("Please wait a moment, then try Send a new code again.");
+                  }
                   if (!staff) setCanSkip(true);
                   return;
                 }
@@ -307,7 +339,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               });
           }}
         >
-          Send a new code
+          {resendWait > 0 ? twoFactorResendWaitCopy(resendWait) : "Send a new code"}
         </button>
         {(canSkip || stalled || pageStalled) && !staff ? (
           <button

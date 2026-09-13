@@ -64,4 +64,15 @@ test("Send a new code surfaces wait or send failure instead of a silent success"
   assert.match(routeFile, /Please wait a moment, then try Send a new code again/);
   assert.match(routeFile, /A new code is on its way/);
   assert.match(routeFile, /setNotice\(null\)/);
+  assert.match(routeFile, /twoFactorResendWaitCopy/);
+  assert.match(routeFile, /Wait \$\{.*\}s then resend|twoFactorResendWaitCopy\(resendWait\)/);
+  assert.doesNotMatch(routeFile, /previous code is still valid/);
+});
+
+test("verify-2fa offers Remember this device for 30 days and only sends it when checked", () => {
+  assert.match(routeFile, /Remember this device for 30 days/);
+  assert.match(routeFile, /data-ke="remember-device"/);
+  assert.match(routeFile, /const \[remember, setRemember\] = useState\(false\)/);
+  assert.match(routeFile, /remember,\s*turnstileToken:/);
+  assert.doesNotMatch(routeFile, /remember:\s*true/);
 });

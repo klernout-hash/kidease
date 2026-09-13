@@ -15,16 +15,28 @@ export const SHARED_SESSION_TOKEN_COOKIE = "__Secure-kidease.session_token";
 
 export const TWO_FACTOR_COOKIE = "__Host-kidease.2fa";
 export const SHARED_TWO_FACTOR_COOKIE = "__Secure-kidease.2fa";
+/** 30-day trusted device — survives sign-out. Not expired with the session. */
+export const TWO_FACTOR_DEVICE_COOKIE = "__Host-kidease.2fa.device";
+export const SHARED_TWO_FACTOR_DEVICE_COOKIE = "__Secure-kidease.2fa.device";
 
 /** Registrable domain only — never `www.kidease.ca` (that would not share with apex). */
 export const KIDEASE_COOKIE_DOMAIN = "kidease.ca";
 
-const HOST_TO_SHARED: Record<string, string> = {
+const SESSION_HOST_TO_SHARED: Record<string, string> = {
   [SESSION_TOKEN_COOKIE]: SHARED_SESSION_TOKEN_COOKIE,
   ["__Host-grok-auth.session_data"]: "__Secure-kidease.session_data",
   ["__Host-grok-auth.account_data"]: "__Secure-kidease.account_data",
   ["__Host-grok-auth.dont_remember"]: "__Secure-kidease.dont_remember",
   [TWO_FACTOR_COOKIE]: SHARED_TWO_FACTOR_COOKIE,
+};
+
+const DEVICE_HOST_TO_SHARED: Record<string, string> = {
+  [TWO_FACTOR_DEVICE_COOKIE]: SHARED_TWO_FACTOR_DEVICE_COOKIE,
+};
+
+const HOST_TO_SHARED: Record<string, string> = {
+  ...SESSION_HOST_TO_SHARED,
+  ...DEVICE_HOST_TO_SHARED,
 };
 
 const SHARED_TO_HOST = Object.fromEntries(
@@ -82,7 +94,12 @@ export function readSessionTokenFromHeader(header?: string | null): string | nul
 }
 
 export function readTwoFactorFromHeader(header?: string | null): string | null {
-  return pickCookieValue(header, [TWO_FACTOR_COOKIE, SHARED_TWO_FACTOR_COOKIE]);
+  return pickCookieValue(header, [
+    TWO_FACTOR_COOKIE,
+    SHARED_TWO_FACTOR_COOKIE,
+    TWO_FACTOR_DEVICE_COOKIE,
+    SHARED_TWO_FACTOR_DEVICE_COOKIE,
+  ]);
 }
 
 /**
@@ -173,11 +190,14 @@ function expireSharedAuthCookie(name: string): string {
   return `${name}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0; Domain=${KIDEASE_COOKIE_DOMAIN}`;
 }
 
-/** Expire host-only + shared session/2FA cookies so sign-out cannot leave a half-session. */
+/**
+ * Expire host-only + shared session cookies (including this-login 2FA).
+ * Trusted-device 2FA cookies are left alone so "Remember this device" survives sign-out.
+ */
 export function expireAuthCookieHeaders(publicHost = false): string[] {
-  const host = Object.keys(HOST_TO_SHARED).map(expireHostAuthCookie);
+  const host = Object.keys(SESSION_HOST_TO_SHARED).map(expireHostAuthCookie);
   if (!publicHost) return host;
-  return [...host, ...Object.values(HOST_TO_SHARED).map(expireSharedAuthCookie)];
+  return [...host, ...Object.values(SESSION_HOST_TO_SHARED).map(expireSharedAuthCookie)];
 }
 
 export function isAuthSignOutPath(pathname: string): boolean {
