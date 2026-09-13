@@ -9,7 +9,23 @@ import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canVisitDesk } from "@/lib/desks";
+import {
+  ACTIVITY_KIND_CHIPS,
+  ADMIN_PEOPLE_DAYS,
+  adminDeskHref,
+  activityAccountHeadline,
+  activityRoleBadge,
+  activityWhoLine,
+  isAccountEventKind,
+  isAdminDeskTab,
+  parseAccountEventDetail,
+  parseAdminActivityKind,
+  resolveAdminTab,
+  type AccountNotifyRole,
+  type AdminDeskTab,
+} from "@/lib/account-notify";
 import { listPlatformEvents } from "@/lib/server/notify";
+import { listAdminPeople, type AdminPersonRow } from "@/lib/server/admin-people";
 import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
@@ -40,10 +56,24 @@ import type { CatalogRuntime } from "@/lib/catalog-source";
 import { paymentSourceLabel } from "@/lib/payment-source";
 import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 
-type AdminDesk = "queue" | "verify" | "daycares" | "trust" | "screening" | "mail" | "contracts" | "money" | "activity" | "reviews";
-
 export const Route = createFileRoute("/admin")({
   beforeLoad: beforeLoadAdminDesk,
+  validateSearch: (s: Record<string, unknown>) => {
+    const rawTab = typeof s.tab === "string" ? s.tab : null;
+    const tab = isAdminDeskTab(rawTab) ? rawTab : undefined;
+    const kindRaw = typeof s.kind === "string" ? s.kind : undefined;
+    const kind = kindRaw ? parseAdminActivityKind(kindRaw) : undefined;
+    const role = s.role === "parent" || s.role === "provider" ? (s.role as AccountNotifyRole) : undefined;
+    const q = typeof s.q === "string" && s.q.trim() ? s.q : undefined;
+    const out: { tab?: AdminDeskTab; kind?: string; role?: AccountNotifyRole; q?: string } = {};
+    if (tab) out.tab = tab;
+    else if (role) out.tab = "people";
+    else if (kind && kind !== "all") out.tab = "activity";
+    if (kind && kind !== "all") out.kind = kind;
+    if (role) out.role = role;
+    if (q) out.q = q;
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Admin · KidEase" },
@@ -71,8 +101,11 @@ function AdminPage() {
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
   const reauth = useReauthPrompt();
-  const [tab, setTab] = useState<AdminDesk>("queue");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const tab = resolveAdminTab(search);
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listPlatformEvents>>>([]);
+  const [people, setPeople] = useState<AdminPersonRow[]>([]);
   const [centres, setCentres] = useState<AdminCentreRow[]>([]);
   const [contracts, setContracts] = useState<AdminContractRow[]>([]);
   const [contractMode, setContractMode] = useState<"live" | "demo">("demo");
@@ -89,8 +122,8 @@ function AdminPage() {
   const [q, setQ] = useState("");
   const [moneyQ, setMoneyQ] = useState("");
   const [moneyDir, setMoneyDir] = useState<"all" | "in" | "out">("all");
-  const [activityKind, setActivityKind] = useState("all");
   const [activityQ, setActivityQ] = useState("");
+  const [peopleQ, setPeopleQ] = useState(search.q || "");
   const [showQaFixtures, setShowQaFixtures] = useState(false);
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
   const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
@@ -99,9 +132,23 @@ function AdminPage() {
   const [catalogHealth, setCatalogHealth] = useState<CatalogRuntime | null>(null);
   const [leadCounts, setLeadCounts] = useState<LeadCounts>(emptyLeadCounts());
 
+  function setTab(next: AdminDeskTab) {
+    void navigate({
+      to: "/admin",
+      search: (prev) => ({
+        tab: next,
+        kind: next === "activity" ? prev.kind : undefined,
+        role: next === "people" ? prev.role : undefined,
+        q: next === "people" ? prev.q : undefined,
+      }),
+      replace: true,
+    });
+  }
+
   async function refresh() {
-    const [events, list, cash, envelopes, regs, flags, health, leads, screening] = await Promise.all([
+    const [events, accounts, list, cash, envelopes, regs, flags, health, leads, screening] = await Promise.all([
       listPlatformEvents().catch(() => []),
+      listAdminPeople().catch(() => []),
       listAdminCentres().catch(() => []),
       listAdminMoney().catch(() => ({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 })),
       listAdminContracts().catch(() => ({
@@ -119,6 +166,7 @@ function AdminPage() {
       listAdminScreeningQueue().catch(() => []),
     ]);
     setRows(events);
+    setPeople(accounts);
     setCentres(list);
     setLedger(cash);
     setContracts(envelopes.rows);
@@ -201,12 +249,15 @@ function AdminPage() {
     return { waiting, approved, declined, all: staffCentres.length };
   }, [staffCentres]);
 
+  const activityKind = parseAdminActivityKind(search.kind);
+  const peopleRole = search.role === "parent" || search.role === "provider" ? search.role : "all";
+
   const activityRows = useMemo(() => {
     const needle = activityQ.trim().toLowerCase();
     return rows.filter((r) => {
       if (activityKind !== "all" && r.kind !== activityKind) return false;
       if (!needle) return true;
-      return [r.kind, r.daycare_name, r.address, r.city, r.province, r.provider_name, r.provider_email]
+      return [r.kind, r.daycare_name, r.address, r.city, r.province, r.provider_name, r.provider_email, r.detail]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
@@ -214,9 +265,18 @@ function AdminPage() {
     });
   }, [rows, activityKind, activityQ]);
   const activityKinds = useMemo(() => {
-    const set = new Set(rows.map((r) => r.kind).filter(Boolean));
-    return ["all", ...[...set].sort()];
+    const extra = [...new Set(rows.map((r) => r.kind).filter((k) => k && !ACTIVITY_KIND_CHIPS.some((c) => c.id === k)))].sort();
+    return [...ACTIVITY_KIND_CHIPS, ...extra.map((id) => ({ id, label: id }))];
   }, [rows]);
+
+  const peopleRows = useMemo(() => {
+    const needle = peopleQ.trim().toLowerCase();
+    return people.filter((p) => {
+      if (peopleRole !== "all" && p.role !== peopleRole) return false;
+      if (!needle) return true;
+      return [p.name, p.email, p.phone, p.city, p.role].filter(Boolean).join(" ").toLowerCase().includes(needle);
+    });
+  }, [people, peopleQ, peopleRole]);
 
   const moneyRows = useMemo(() => {
     const needle = moneyQ.trim().toLowerCase();
@@ -287,9 +347,9 @@ function AdminPage() {
   }
 
   return (
-    <TwoFactorGate next="/admin">
+    <TwoFactorGate next={adminDeskHref(search)}>
     <LoginFunnelDeskLand desk="admin" />
-    <DeskShell desk="admin" active={tab} onSelect={(id) => setTab(id as AdminDesk)}>
+    <DeskShell desk="admin" active={tab} onSelect={(id) => setTab(id as AdminDeskTab)}>
       {tab === "verify" ? (
         <>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -453,13 +513,28 @@ function AdminPage() {
         <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} ready={ready} />
       ) : tab === "reviews" ? (
         <AdminReviewsPanel />
+      ) : tab === "people" ? (
+        <PeoplePanel
+          rows={peopleRows}
+          all={people}
+          q={peopleQ}
+          setQ={setPeopleQ}
+          role={peopleRole}
+          onRole={(next) => {
+            void navigate({
+              to: "/admin",
+              search: { tab: "people", role: next === "all" ? undefined : next },
+              replace: true,
+            });
+          }}
+        />
       ) : (
         <>
         <AdminSentryTest />
         <div className="mb-4">
           <h2 className="font-display text-2xl">Activity</h2>
           <p className="mt-1 text-sm text-muted">
-            Platform log only. Claims, approvals, chat, and new accounts write here. Export and full RBAC are not built — filter, then open the listing or switch to Waiting on you.
+            Platform log only. New parents and daycare providers always show name · email · role. Filter, then open People or the listing.
           </p>
         </div>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row">
@@ -472,12 +547,18 @@ function AdminPage() {
           <div className="flex flex-wrap gap-2">
             {activityKinds.map((kind) => (
               <button
-                key={kind}
+                key={kind.id}
                 type="button"
-                onClick={() => setActivityKind(kind)}
-                className={activityKind === kind ? "rounded-full bg-primary px-3 py-2 text-sm text-primary-fg" : "rounded-full bg-surface px-3 py-2 text-sm ring-1 ring-border"}
+                onClick={() => {
+                  void navigate({
+                    to: "/admin",
+                    search: { tab: "activity", kind: kind.id === "all" ? undefined : kind.id },
+                    replace: true,
+                  });
+                }}
+                className={activityKind === kind.id ? "rounded-full bg-primary px-3 py-2 text-sm text-primary-fg" : "rounded-full bg-surface px-3 py-2 text-sm ring-1 ring-border"}
               >
-                {kind === "all" ? "All" : kind}
+                {kind.label}
               </button>
             ))}
           </div>
@@ -500,29 +581,52 @@ function AdminPage() {
               )}
             </li>
           ) : (
-            activityRows.map((r) => (
+            activityRows.map((r) => {
+              const badge = activityRoleBadge(r.kind, r.detail);
+              const extra = parseAccountEventDetail(r.detail);
+              const who = activityWhoLine(r);
+              return (
               <li key={r.id} className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-subtle">{r.kind}</p>
-                    <p className="font-medium">{r.daycare_name || (r.kind === "account" ? "New account" : "Activity")}</p>
-                    <p className="text-sm text-muted">{[r.address, r.city, r.province].filter(Boolean).join(", ") || "—"}</p>
-                    <p className="mt-1 text-sm">
-                      {r.provider_name || "—"} · {r.provider_email || "no email"}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs uppercase tracking-wide text-subtle">{r.kind}</p>
+                      {badge ? <RoleBadge label={badge} /> : null}
+                    </div>
+                    <p className="font-medium">{activityAccountHeadline(r)}</p>
+                    <p className="text-sm text-muted">
+                      {isAccountEventKind(r.kind)
+                        ? [r.city, r.province].filter(Boolean).join(", ") || "—"
+                        : [r.address, r.city, r.province].filter(Boolean).join(", ") || "—"}
                     </p>
+                    <p className="mt-1 text-sm">{who}</p>
+                    {isAccountEventKind(r.kind) && (extra.phone || extra.authMethod) ? (
+                      <p className="mt-0.5 text-xs text-subtle">
+                        {[extra.phone, extra.authMethod].filter(Boolean).join(" · ")}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="text-right text-xs text-muted">
-                    <p>{new Date(r.created_at).toLocaleString()}</p>
+                    <p>{new Date(r.created_at).toLocaleString("en-CA", { timeZone: "America/Winnipeg", dateStyle: "medium", timeStyle: "short" })}</p>
                     <p className="mt-1">email {r.email_status}</p>
                     {r.slug ? (
                       <Link to="/daycare/$slug" params={{ slug: r.slug }} className="text-primary underline-offset-4 hover:underline">
                         View listing
                       </Link>
+                    ) : isAccountEventKind(r.kind) ? (
+                      <Link
+                        to="/admin"
+                        search={{ tab: "people", role: r.kind === "signup" ? "provider" : "parent" }}
+                        className="text-primary underline-offset-4 hover:underline"
+                      >
+                        Open People
+                      </Link>
                     ) : null}
                   </div>
                 </div>
               </li>
-            ))
+              );
+            })
           )}
         </ul>
         </>
@@ -530,6 +634,111 @@ function AdminPage() {
     </DeskShell>
       {reauth.dialog}
     </TwoFactorGate>
+  );
+}
+
+function RoleBadge({ label }: { label: string }) {
+  return (
+    <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+      {label}
+    </span>
+  );
+}
+
+function PeoplePanel({
+  rows,
+  all,
+  q,
+  setQ,
+  role,
+  onRole,
+}: {
+  rows: AdminPersonRow[];
+  all: AdminPersonRow[];
+  q: string;
+  setQ: (v: string) => void;
+  role: "all" | AccountNotifyRole;
+  onRole: (v: "all" | AccountNotifyRole) => void;
+}) {
+  return (
+    <>
+      <div className="mb-4">
+        <h2 className="font-display text-2xl">People</h2>
+        <p className="mt-1 text-sm text-muted">
+          Parents and daycare providers who created an account in the last {ADMIN_PEOPLE_DAYS} days. Search by name or email.
+        </p>
+      </div>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <Stat label="In this window" value={all.length} accent />
+        <Stat label="Parents" value={all.filter((p) => p.role === "parent").length} />
+        <Stat label="Daycare providers" value={all.filter((p) => p.role === "provider").length} />
+      </dl>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search name or email…"
+          className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
+        />
+        <div className="flex flex-wrap gap-2">
+          {([
+            ["all", "All"],
+            ["parent", "Parents"],
+            ["provider", "Daycare providers"],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onRole(key)}
+              className={role === key ? "rounded-full bg-primary px-3 py-2 text-sm text-primary-fg" : "rounded-full bg-surface px-3 py-2 text-sm ring-1 ring-border"}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <ul className="mt-6 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
+        {rows.length === 0 ? (
+          <li className="p-8 text-center">
+            {all.length === 0 ? (
+              <>
+                <p className="font-medium">No new parents or daycare providers in the last {ADMIN_PEOPLE_DAYS} days.</p>
+                <p className="mt-2 text-sm text-muted">New signups appear here with name, email, and role. Activity still logs the same people.</p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">No people match that filter.</p>
+                <p className="mt-2 text-sm text-muted">Clear the search or switch the role chip to All.</p>
+              </>
+            )}
+          </li>
+        ) : (
+          rows.map((p) => (
+            <li key={p.userId} className="p-4">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium">{p.name?.trim() || "—"}</p>
+                    <RoleBadge label={p.role === "provider" ? "Daycare" : "Parent"} />
+                  </div>
+                  <p className="mt-1 text-sm">{p.email || "no email"}</p>
+                  <p className="text-sm text-muted">
+                    {[p.city, p.phone].filter(Boolean).join(" · ") || "—"}
+                  </p>
+                </div>
+                <p className="text-right text-xs text-muted">
+                  {new Date(p.createdAt).toLocaleString("en-CA", {
+                    timeZone: "America/Winnipeg",
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </p>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
+    </>
   );
 }
 

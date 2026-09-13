@@ -67,3 +67,23 @@ test("activity has kind filters and money says pending is not settled", () => {
   const fr = packKeys(copy, "fr");
   assert.deepEqual(fr, en);
 });
+
+test("account and signup activity always name who, with People + first-class chips", () => {
+  const admin = src("src/routes/admin.tsx");
+  const nav = src("src/lib/desk-nav.ts");
+  assert.match(admin, /activityAccountHeadline/);
+  assert.match(admin, /activityWhoLine/);
+  assert.match(admin, /RoleBadge/);
+  assert.match(admin, /PeoplePanel/);
+  assert.match(admin, /Daycare providers/);
+  assert.match(admin, /tab === "people"/);
+  assert.match(admin, /validateSearch/);
+  assert.doesNotMatch(admin, /kind === "account" \? "New account"/);
+  assert.match(nav, /id: "people"/);
+  assert.match(nav, /Parents and daycare accounts/);
+  assert.match(nav, /id: "screening"/);
+  assert.match(admin, /tab === "screening"/);
+  assert.match(admin, /tab === "people"/);
+  assert.match(src("src/lib/account-notify.ts"), /"screening"/);
+  assert.match(src("src/lib/account-notify.ts"), /"people"/);
+});

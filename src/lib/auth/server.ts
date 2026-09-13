@@ -43,7 +43,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
-import { emailAndPasswordConfig, emailAndPasswordEnabled } from "./email-password";
+import { emailAndPasswordConfig, emailAndPasswordEnabled, emailVerificationConfig } from "./email-password";
 import { GROK_PROVIDERS, BROKER_PROVIDERS } from "./providers";
 import { APPLE_CLIENT_ID, appleClientSecret, appleIdpConfigured } from "./apple-idp";
 import {
@@ -386,7 +386,12 @@ export const auth = betterAuth({
 
   // Local email/password — toggled only via `./email-password` (not a plugin).
   // Must pass the full config so forget-password can email a reset link.
+  // requireEmailVerification stays unset so a slow mailbox does not lock sign-in.
   ...(emailAndPasswordEnabled ? { emailAndPassword: emailAndPasswordConfig } : {}),
+
+  // Verify-your-email on signup. Uses sendTransactionalMail (Resend → SendGrid → Titan).
+  // Independent of Admin notify. sendOnSignUp is the primary; pingNewAccount is backup.
+  emailVerification: emailVerificationConfig,
 
   // `__Host-` prefixed cookies: the browser REFUSES any same-named cookie that
   // carries a `Domain` attribute, so a sibling `*.grok.me` app cannot "toss" a

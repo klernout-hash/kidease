@@ -1750,6 +1750,24 @@ export const copy = {
     screeningRoleStaff: "Staff",
     screeningRoleVolunteer: "Volunteer",
     screeningRoleResident: "Household resident",
+    verifyEmailSubject: "Verify your email — KidEase",
+    verifyEmailLead: "Thanks for signing up with KidEase. Please verify this email so we can reach you about your account.",
+    verifyEmailCta: "Verify email",
+    verifyEmailExpiry: "This link expires in about 24 hours. If you did not create a KidEase account, you can ignore this email.",
+    providerOnboardSubject: "Next steps to get verified on KidEase",
+    providerOnboardLead: "Thanks for joining KidEase as a daycare provider.",
+    providerOnboardHonesty:
+      "KidEase reviews what you upload. KidEase does not run police checks and does not issue Vulnerable Sector Checks. Only local police / RCMP (or BC CRRP) can.",
+    providerOnboardStep1: "Complete your listing — name, address, hours, and open spots.",
+    providerOnboardStep2: "Add your current licence number.",
+    providerOnboardStep3: "Claim the listing if we already have it from the public registry.",
+    providerOnboardStep4:
+      "When you are ready, upload a current Vulnerable Sector Check on Screening. In Manitoba, also upload a Child Abuse Registry check, and a Prior Contact check for home-based households.",
+    providerOnboardStep5:
+      "KidEase Admin reviews those files. Parents may see a centre-level Screening on file badge after required current documents are cleared. Individual PDFs and names stay private.",
+    providerOnboardOpenScreening: "Open Screening",
+    providerOnboardClaim: "Claim a listing",
+    providerOnboardCompleteListing: "Complete listing",
   },
   fr: {
     app: "KidEase",
@@ -3507,6 +3525,26 @@ export const copy = {
     screeningRoleStaff: "Personnel",
     screeningRoleVolunteer: "Bénévole",
     screeningRoleResident: "Résident du foyer",
+    verifyEmailSubject: "Confirmez votre courriel — KidEase",
+    verifyEmailLead:
+      "Merci de vous inscrire à KidEase. Veuillez confirmer ce courriel pour que nous puissions vous joindre au sujet de votre compte.",
+    verifyEmailCta: "Confirmer le courriel",
+    verifyEmailExpiry:
+      "Ce lien expire dans environ 24 heures. Si vous n’avez pas créé de compte KidEase, ignorez ce message.",
+    providerOnboardSubject: "Prochaines étapes pour être vérifié sur KidEase",
+    providerOnboardLead: "Merci de joindre KidEase comme fournisseur de garde.",
+    providerOnboardHonesty:
+      "KidEase examine ce que vous téléversez. KidEase ne fait pas de contrôles policiers et ne délivre pas de vérifications du secteur vulnérable. Seule la police locale / la GRC (ou le CRRP de la C.-B.) le peut.",
+    providerOnboardStep1: "Complétez votre fiche — nom, adresse, heures et places.",
+    providerOnboardStep2: "Ajoutez votre numéro de permis actuel.",
+    providerOnboardStep3: "Réclamez la fiche si nous l’avons déjà à partir du registre public.",
+    providerOnboardStep4:
+      "Quand vous êtes prêt, téléversez une vérification du secteur vulnérable à jour dans Filtrage. Au Manitoba, ajoutez aussi le registre des mauvais traitements et, pour un milieu familial, une vérification des contacts antérieurs.",
+    providerOnboardStep5:
+      "L’Admin KidEase examine ces dossiers. Les parents peuvent voir un badge Dossier de filtrage au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
+    providerOnboardOpenScreening: "Ouvrir Filtrage",
+    providerOnboardClaim: "Réclamer une fiche",
+    providerOnboardCompleteListing: "Compléter la fiche",
   },
 } as const;
 

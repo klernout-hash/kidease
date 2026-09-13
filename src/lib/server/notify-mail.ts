@@ -25,10 +25,8 @@ export const VISITOR_AUTO_REPLY_TEXT =
 
 export const ACTOR_CONFIRM_SUBJECT = "We got your request — KidEase";
 
-/** Parent signup, provider signup, Enroll Now, new listing, claim, spot request. */
+/** Enroll Now, new listing, claim, spot / tour / waitlist. Signup uses verify-email + next-steps instead. */
 export const ACTOR_CONFIRM_KINDS = [
-  "account",
-  "signup",
   "enroll",
   "listing",
   "claim",
@@ -42,8 +40,6 @@ export type ActorConfirmKind = (typeof ACTOR_CONFIRM_KINDS)[number];
 const ACTOR_CONFIRM_KIND_SET = new Set<string>(ACTOR_CONFIRM_KINDS);
 
 const ACTOR_CONFIRM_FIRST_LINE: Record<ActorConfirmKind, string> = {
-  account: "Thanks for signing up with KidEase.",
-  signup: "Thanks for signing up as a provider with KidEase.",
   enroll: "Thanks for sending your enrolment to KidEase.",
   listing: "Thanks for sending your daycare listing to KidEase.",
   claim: "Thanks for sending your listing claim to KidEase.",
