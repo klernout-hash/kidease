@@ -1,7 +1,9 @@
 import { getSql } from "@/lib/db";
 import { lookupUser } from "@/lib/server/notify";
 import { sendProviderNextStepsMail } from "@/lib/server/provider-onboard-mail";
+import { claimActorMailDay, releaseActorMailDay } from "@/lib/server/actor-mail-dedupe";
 import {
+  PROVIDER_ONBOARD_PURPOSE,
   shouldSendProviderNextSteps,
   shouldSendVerifyEmail,
   signupUserMailIndependentOfAdmin,
@@ -32,9 +34,30 @@ async function requestVerificationEmail(email: string) {
   });
 }
 
+async function sendNextStepsOnceToday(input: {
+  userId: string;
+  email: string;
+  name?: string | null;
+}) {
+  const claimed = await claimActorMailDay({
+    purpose: PROVIDER_ONBOARD_PURPOSE,
+    email: input.email,
+    userId: input.userId,
+  });
+  if (!claimed) return { status: "skipped" as const };
+  try {
+    await sendProviderNextStepsMail({ to: input.email, name: input.name });
+    return { status: "sent" as const };
+  } catch (err) {
+    await releaseActorMailDay({ purpose: PROVIDER_ONBOARD_PURPOSE, email: input.email });
+    throw err;
+  }
+}
+
 /**
  * Actor mail after a new parent / provider account.
  * Runs even when Admin SMS/email failed — never gated on adminStatus === "sent".
+ * Next-steps fire on provider signup (same-day dedupe vs first listing).
  */
 export async function afterNewAccountUserMail(userId: string, role: "parent" | "provider") {
   signupUserMailIndependentOfAdmin();
@@ -46,23 +69,29 @@ export async function afterNewAccountUserMail(userId: string, role: "parent" | "
       console.error("[kidease-mail] verify-email backup failed", err);
     }
   }
-  if (shouldSendProviderNextSteps({ role, email: actor.email, emailVerified: actor.emailVerified })) {
+  if (shouldSendProviderNextSteps({ role, email: actor.email })) {
     try {
-      await sendProviderNextStepsMail({ to: actor.email! });
+      await sendNextStepsOnceToday({ userId, email: actor.email!, name: actor.name });
     } catch (err) {
       console.error("[kidease-mail] provider next-steps failed", err);
     }
   }
 }
 
-/** After Better Auth marks the mailbox verified — send provider next-steps if this is a daycare account. */
-export async function sendProviderNextStepsIfReady(userId: string) {
+/** Provider signup or first listing — same-day Winnipeg dedupe. */
+export async function sendProviderNextStepsIfReady(userId: string, roleHint?: "parent" | "provider") {
   const actor = await lookupUser(userId);
-  const role = (await profileRole(userId)) === "provider" ? "provider" : "parent";
-  if (!shouldSendProviderNextSteps({ role, email: actor.email, emailVerified: true })) return;
+  const role =
+    roleHint === "provider" || roleHint === "parent"
+      ? roleHint
+      : (await profileRole(userId)) === "provider"
+        ? "provider"
+        : "parent";
+  if (!shouldSendProviderNextSteps({ role, email: actor.email })) return { status: "skipped" as const };
   try {
-    await sendProviderNextStepsMail({ to: actor.email! });
+    return await sendNextStepsOnceToday({ userId, email: actor.email!, name: actor.name });
   } catch (err) {
-    console.error("[kidease-mail] provider next-steps after verify failed", err);
+    console.error("[kidease-mail] provider next-steps failed", err);
+    return { status: "failed" as const };
   }
 }

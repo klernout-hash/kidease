@@ -18,7 +18,7 @@ export function recentlySentVerifyEmail(email: string, windowMs = 90_000, now = 
 }
 
 /** Send a Better Auth verify link. Never log the URL or token. */
-export async function sendVerifyEmail(input: { to: string; url: string }) {
+export async function sendVerifyEmail(input: { to: string; url: string; name?: string | null }) {
   const to = input.to.trim().toLowerCase();
   if (!to || !to.includes("@")) throw new Error("A registered email is required.");
   if (recentlySentVerifyEmail(to)) return { status: "skipped" as const };
@@ -26,8 +26,8 @@ export async function sendVerifyEmail(input: { to: string; url: string }) {
     purpose: "verify_email",
     to,
     subject: VERIFY_EMAIL_SUBJECT,
-    text: verifyEmailText(input.url),
-    html: verifyEmailHtml(input.url),
+    text: verifyEmailText(input.url, input.name),
+    html: verifyEmailHtml(input.url, input.name),
     replyTo: KIDEASE_OPERATOR_EMAIL,
   });
   return result.status;

@@ -18,12 +18,12 @@ export async function sendVerificationEmail({
   user,
   url,
 }: {
-  user: { email: string };
+  user: { email: string; name?: string | null };
   url: string;
 }) {
   try {
     const { sendVerifyEmail } = await import("@/lib/server/verify-mail");
-    await sendVerifyEmail({ to: user.email, url });
+    await sendVerifyEmail({ to: user.email, url, name: user.name });
   } catch (err) {
     console.error("[kidease-mail] verify-email send failed", err);
   }
