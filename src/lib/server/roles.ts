@@ -166,6 +166,8 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   const member = owned ? false : await isActiveCentreMember(sql, userId);
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
   const unread = await unreadInboxCount(sql, userId);
+  const { countUnreadNotifications } = await import("@/lib/server/notifications");
+  const notificationUnread = await countUnreadNotifications(userId).catch(() => 0);
   const stripeLive = stripeChargesLive();
   const actor = await lookupUser(userId);
   return {
@@ -174,6 +176,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     email: actor.email ?? null,
     home: landingPath(desks),
     unread,
+    notificationUnread,
     stripeLive,
     ledgerLabel: paymentSourceLabel(stripeLive),
     providerSubscriptions: canSeeProviderSubscriptions(stored, process.env, owned),

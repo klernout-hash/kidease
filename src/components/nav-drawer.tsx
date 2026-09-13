@@ -9,10 +9,15 @@ import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
 import { RateKidEaseControl } from "@/components/rate-kidease";
 import { ShareKidEaseButton } from "@/components/share-button";
+import { MenuGlyph, MenuRow } from "@/components/menu-row";
+import { NotificationUnreadDot } from "@/components/notification-bell";
+import { useSessionDesks } from "@/components/session-desks";
 import { localePath } from "@/lib/locale-path";
+import { failClosedUnread } from "@/lib/notifications";
 import { useCopy } from "@/lib/use-copy";
+import type { MenuIconId } from "@/lib/menu-icons";
 
-type Item = { to: string; label: string; search?: Record<string, string> };
+type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId };
 
 export function NavDrawer({
   open,
@@ -45,7 +50,9 @@ export function NavDrawer({
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
-  const { locale } = useCopy();
+  const { t, locale } = useCopy();
+  const { session } = useSessionDesks();
+  const unread = failClosedUnread(session?.notificationUnread);
   const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
 
   useEffect(() => {
@@ -112,17 +119,27 @@ export function NavDrawer({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
+          {signedIn ? (
+            <MenuRow
+              to="/notifications"
+              label={t("notifications")}
+              icon="notifications"
+              appearance="drawer"
+              onClick={onClose}
+              badge={<NotificationUnreadDot unread={unread} />}
+            />
+          ) : null}
           {items.map((item) => (
             <span key={item.to + item.label}>
               {item.to === "/about" ? <div className="my-3 h-px bg-border" /> : null}
-              <Link
+              <MenuRow
                 to={item.to}
                 search={item.search}
+                label={item.label}
+                icon={item.icon}
+                appearance="drawer"
                 onClick={onClose}
-                className="flex min-h-12 items-center rounded-xl px-3 text-[15px] font-medium text-fg hover:bg-surface"
-              >
-                {item.label}
-              </Link>
+              />
             </span>
           ))}
           <ShareKidEaseButton appearance="drawer" onDone={onClose} />
@@ -135,15 +152,17 @@ export function NavDrawer({
                 to={accountHref}
                 search={accountSearch}
                 onClick={onClose}
-                className="flex min-h-12 items-center justify-center rounded-xl bg-primary px-3 text-center text-base font-medium text-primary-fg"
+                className="flex min-h-12 items-center gap-3 rounded-xl bg-primary px-3 text-base font-medium text-primary-fg"
               >
+                <MenuGlyph id="account" className="text-primary-fg" />
                 {accountLabel}
               </Link>
               {isAdmin ? (
                 <AdminDeskLink
                   onClick={onClose}
-                  className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
+                  className="mt-2 flex min-h-12 items-center gap-3 rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
                 >
+                  <MenuGlyph id="admin" />
                   Admin
                 </AdminDeskLink>
               ) : null}
@@ -153,9 +172,10 @@ export function NavDrawer({
                   onClose();
                   onSignOut();
                 }}
-                className="mt-2 flex min-h-12 w-full items-center justify-center rounded-xl px-3 text-center text-base text-fg ring-1 ring-border"
+                className="mt-2 flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-base text-fg ring-1 ring-border"
               >
-                Sign out
+                <MenuGlyph id="logout" />
+                {t("signOut")}
               </button>
             </>
           ) : (
@@ -164,24 +184,31 @@ export function NavDrawer({
                 to={loginTo}
                 search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
                 onClick={onClose}
-                className="flex min-h-12 items-center justify-center rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
+                className="flex min-h-12 items-center gap-3 rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
               >
+                <MenuGlyph id="parent" className="text-primary-fg" />
                 {parentLabel}
               </Link>
               <Link
                 to={loginTo}
                 search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
                 onClick={onClose}
-                className="mt-2 flex min-h-12 items-center justify-center rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
+                className="mt-2 flex min-h-12 items-center gap-3 rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
               >
+                <MenuGlyph id="daycare" />
                 {providerLabel}
               </Link>
             </>
           )}
-          <div className="mt-4 overflow-visible rounded-full bg-surface ring-1 ring-border">
+          <div className="mt-4 flex items-center gap-3 overflow-visible rounded-full bg-surface px-3 ring-1 ring-border">
+            <MenuGlyph id="language" />
             <LanguageSelect className="w-full justify-start" />
           </div>
           <div className="mt-3 rounded-xl bg-surface px-3 py-3 ring-1 ring-border">
+            <div className="mb-2 flex items-center gap-3 px-0">
+              <MenuGlyph id="appearance" />
+              <span className="text-[13px] font-medium text-muted">{t("appearance")}</span>
+            </div>
             <AppearanceControl />
           </div>
         </nav>

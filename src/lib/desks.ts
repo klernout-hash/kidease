@@ -568,6 +568,8 @@ export type SessionDesks = {
   email?: string | null;
   home: "/admin" | "/support" | "/provider" | "/parent";
   unread: number;
+  /** In-app notification unread. Fail closed: 0 when the query errors. */
+  notificationUnread: number;
   stripeLive: boolean;
   ledgerLabel: string;
   /** Subscription tab on the centre desk (live for directors; admin always). */
