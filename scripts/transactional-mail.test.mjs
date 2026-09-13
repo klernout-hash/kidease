@@ -257,4 +257,8 @@ test("2FA and reset paths use the shared fallback sender", () => {
   assert.match(reset, /purpose:\s*"password_reset"/);
   assert.match(claim, /sendTransactionalMail/);
   assert.match(claim, /purpose:\s*"claim"/);
+  const verify = readFileSync(join(root, "src/lib/server/verify-mail.ts"), "utf8");
+  const onboard = readFileSync(join(root, "src/lib/server/provider-onboard-mail.ts"), "utf8");
+  assert.match(verify, /purpose:\s*"verify_email"/);
+  assert.match(onboard, /purpose:\s*"provider_onboard"/);
 });

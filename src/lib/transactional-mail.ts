@@ -23,7 +23,7 @@ export const MAIL_FROM_RESEND_ENV = "MAIL_FROM_RESEND";
 /** Apex From Resend will accept today (kidease.ca is verified). */
 export const EMERGENCY_RESEND_MAIL_FROM = `KidEase <${KIDEASE_OPERATOR_EMAIL}>`;
 
-export type TransactionalMailPurpose = "2fa" | "password_reset" | "claim" | "invite";
+export type TransactionalMailPurpose = "2fa" | "password_reset" | "claim" | "invite" | "verify_email" | "provider_onboard";
 export type TransactionalMailProvider = "resend" | "sendgrid" | "titan" | "logged";
 export type TransactionalMailReason =
   | "domain_unverified"

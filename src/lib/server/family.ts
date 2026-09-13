@@ -67,6 +67,12 @@ async function pingNewAccount(userId: string, role: "parent" | "provider") {
   } catch (err) {
     console.error("[kidease-mail] account notify failed", err);
   }
+  try {
+    const { afterNewAccountUserMail } = await import("@/lib/server/signup-user-mail.server");
+    await afterNewAccountUserMail(userId, role);
+  } catch (err) {
+    console.error("[kidease-mail] signup user mail failed", err);
+  }
 }
 
 export const getFamily = createServerFn({ method: "GET" })

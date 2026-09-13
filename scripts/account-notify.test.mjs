@@ -202,6 +202,7 @@ test("signup hook and notify persist filled actor fields", () => {
   const family = src("src/lib/server/family.ts");
   const notify = src("src/lib/server/notify.ts");
   assert.match(family, /notifyNewAccountFromUser/);
+  assert.match(family, /afterNewAccountUserMail/);
   assert.doesNotMatch(family, /notifyProviderJoined\(\{\s*kind: "signup"/);
   assert.match(notify, /notifyNewAccountFromUser/);
   assert.match(notify, /summarizeAuthMethods/);

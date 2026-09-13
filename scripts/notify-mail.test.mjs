@@ -173,15 +173,20 @@ test("auto-reply is skipped when admin notify was only logged locally", async ()
   assert.equal(autoReplies, 0);
 });
 
-test("actor confirmation kinds are signup, enroll, claim, spot, and tour request", () => {
-  for (const kind of ["account", "signup", "enroll", "listing", "claim", "spot_request", "tour_request", "waitlist_request"]) {
+test("actor confirmation kinds are enroll, listing, claim, spot, and tour request — not signup", () => {
+  for (const kind of ["enroll", "listing", "claim", "spot_request", "tour_request", "waitlist_request"]) {
     assert.equal(isActorConfirmKind(kind), true);
     assert.equal(shouldSendActorConfirmation(kind, "sent", "parent@example.com"), true);
   }
   assert.deepEqual(
     [...ACTOR_CONFIRM_KINDS],
-    ["account", "signup", "enroll", "listing", "claim", "spot_request", "tour_request", "waitlist_request"],
+    ["enroll", "listing", "claim", "spot_request", "tour_request", "waitlist_request"],
   );
+  for (const kind of ["account", "signup"]) {
+    assert.equal(isActorConfirmKind(kind), false);
+    assert.equal(shouldSendActorConfirmation(kind, "sent", "parent@example.com"), false);
+    assert.equal(shouldSendActorConfirmation(kind, "failed", "parent@example.com"), false);
+  }
 });
 
 test("actor confirmation is not sent for contact, support, payment, or promo", () => {
@@ -192,15 +197,15 @@ test("actor confirmation is not sent for contact, support, payment, or promo", (
 });
 
 test("actor confirmation is skipped when admin notify failed or was only logged", () => {
-  assert.equal(shouldSendActorConfirmation("account", "failed", "parent@example.com"), false);
+  assert.equal(shouldSendActorConfirmation("enroll", "failed", "parent@example.com"), false);
   assert.equal(shouldSendActorConfirmation("spot_request", "logged", "parent@example.com"), false);
   assert.equal(shouldSendActorConfirmation("claim", "queued", "parent@example.com"), false);
 });
 
 test("actor confirmation is skipped when there is no actor email", () => {
-  assert.equal(shouldSendActorConfirmation("account", "sent", null), false);
-  assert.equal(shouldSendActorConfirmation("account", "sent", ""), false);
-  assert.equal(shouldSendActorConfirmation("account", "sent", "   "), false);
+  assert.equal(shouldSendActorConfirmation("enroll", "sent", null), false);
+  assert.equal(shouldSendActorConfirmation("enroll", "sent", ""), false);
+  assert.equal(shouldSendActorConfirmation("enroll", "sent", "   "), false);
 });
 
 test("confirmation copy keeps the 24-hour promise and Thank you, and does not invent spots or fees", () => {
@@ -211,8 +216,6 @@ test("confirmation copy keeps the 24-hour promise and Thank you, and does not in
     assert.match(text, /Thank you$/);
     assert.doesNotMatch(text, /\$|fee|spot is held|open spots|deposit/i);
   }
-  assert.match(actorConfirmationText("account"), /signing up with KidEase/);
-  assert.match(actorConfirmationText("signup"), /signing up as a provider/);
   assert.match(actorConfirmationText("enroll"), /enrolment/);
   assert.match(actorConfirmationText("listing"), /daycare listing/);
   assert.match(actorConfirmationText("claim"), /listing claim/);
@@ -230,7 +233,7 @@ test("confirmation reply_to is Kyle, not the parent or provider", () => {
 test("confirmation runs after admin sent and signup still succeeds if confirmation throws", async () => {
   let confirms = 0;
   await afterEnrollmentAdminNotify({
-    kind: "account",
+    kind: "enroll",
     adminStatus: "sent",
     actorEmail: "parent@example.com",
     sendConfirmation: async () => {
