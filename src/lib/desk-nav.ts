@@ -1,6 +1,7 @@
-import { TODAY_PRIMARY_NAV_IDS, type TodayPrimaryNavId } from "@/lib/today-urgency";
-
 export type DeskId = "admin" | "support" | "daycare" | "parent";
+
+export const DAYCARE_PRIMARY_NAV_IDS = ["today", "messages", "tours", "listings"] as const;
+export type DaycarePrimaryNavId = (typeof DAYCARE_PRIMARY_NAV_IDS)[number];
 
 export type DeskIcon = "credit-card";
 
@@ -155,10 +156,10 @@ export function visiblePrimaryDeskNav(
 ): DeskItem[] {
   const items = visibleDeskNav(desk, opts);
   if (desk !== "daycare") return items;
-  const order = new Map(TODAY_PRIMARY_NAV_IDS.map((id, i) => [id, i]));
+  const order = new Map(DAYCARE_PRIMARY_NAV_IDS.map((id, i) => [id, i]));
   return items
-    .filter((item) => order.has(item.id as TodayPrimaryNavId))
-    .sort((a, b) => (order.get(a.id as TodayPrimaryNavId) ?? 0) - (order.get(b.id as TodayPrimaryNavId) ?? 0));
+    .filter((item) => order.has(item.id as DaycarePrimaryNavId))
+    .sort((a, b) => (order.get(a.id as DaycarePrimaryNavId) ?? 0) - (order.get(b.id as DaycarePrimaryNavId) ?? 0));
 }
 
 /** Daycare hamburger / Account: keep every other route off the primary four. */
@@ -168,7 +169,7 @@ export function visibleSecondaryDeskNav(
 ): DeskItem[] {
   const items = visibleDeskNav(desk, opts);
   if (desk !== "daycare") return [];
-  const primary = new Set<string>(TODAY_PRIMARY_NAV_IDS);
+  const primary = new Set<string>(DAYCARE_PRIMARY_NAV_IDS);
   const rest = items.filter((item) => !primary.has(item.id) && item.id !== "account");
   const account = items.filter((item) => item.id === "account");
   return [...rest, ...account];

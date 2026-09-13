@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  DAYCARE_PRIMARY_NAV_IDS,
   visibleDeskNav,
   visiblePrimaryDeskNav,
   visibleSecondaryDeskNav,
@@ -11,14 +12,15 @@ import {
 } from "../src/lib/desk-nav.ts";
 import { PROVIDER_TAB_KEYS } from "../src/lib/desks.ts";
 import {
-  buildTodayRows,
+  collectPendingTourRows,
+  collectUnreadMessageRows,
+  collectConfirmedTodayRows,
   formatSlaCountdown,
   isConfirmedTourToday,
   todayEmptyTruth,
   tourSlaRemainingMs,
-  TODAY_PRIMARY_NAV_IDS,
-} from "../src/lib/today-urgency.ts";
-import { TOUR_SLA_HOURS } from "../src/lib/demand-heat.ts";
+  TODAY_TOUR_SLA_HOURS,
+} from "../src/lib/today-sla.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -29,7 +31,7 @@ function src(rel) {
 const now = Date.parse("2026-09-13T15:00:00.000Z");
 
 test("daycare primary nav is Today, Messages, Tour times, My listings", () => {
-  assert.deepEqual([...TODAY_PRIMARY_NAV_IDS], ["today", "messages", "tours", "listings"]);
+  assert.deepEqual([...DAYCARE_PRIMARY_NAV_IDS], ["today", "messages", "tours", "listings"]);
   const primary = visiblePrimaryDeskNav("daycare", {
     providerSubscriptions: true,
     showPayCtas: true,
@@ -70,86 +72,64 @@ test("parent and admin primary nav stay unchanged", () => {
   assert.equal(admin.includes("daycares"), true);
 });
 
-test("Today rows order tours, unread, action required, then confirmed today", () => {
+test("Today rows order tours, unread, then confirmed today and hide secrets", () => {
   const created = new Date(now - 2 * 60 * 60 * 1000).toISOString();
-  const rows = buildTodayRows({
-    fallbackName: "Parent",
-    now,
-    tours: [
-      {
-        id: "t1",
-        conversationId: "c1",
-        daycareId: "d1",
-        daycareName: "Bonnie",
-        daycareSlug: "bonnie",
-        childId: null,
-        childName: null,
-        parentName: "Alex",
-        preferredTimes: [{ date: "2026-09-20", time: "10:00" }],
-        parentNote: "peanut allergy secret",
-        status: "pending",
-        centreNote: null,
-        createdAt: created,
-        respondedAt: null,
-      },
-      {
-        id: "t2",
-        conversationId: "c2",
-        daycareId: "d1",
-        daycareName: "Bonnie",
-        daycareSlug: "bonnie",
-        childId: null,
-        childName: null,
-        parentName: "Sam",
-        preferredTimes: [{ date: "2026-09-13", time: "16:00" }],
-        parentNote: null,
-        status: "accepted",
-        centreNote: null,
-        createdAt: created,
-        respondedAt: created,
-      },
-    ],
-    threads: [{ id: "c3", daycareName: "Jordan", unread: true, lastAt: new Date(now - 1000).toISOString() }],
-    listings: [
-      {
-        id: "d1",
-        name: "Bonnie",
-        nameFr: "Bonnie",
-        slug: "bonnie",
-        address: "1 Main",
-        city: "Winnipeg",
-        province: "MB",
-        postalCode: "R3C 1A1",
-        hours: "",
-        licenseNumber: "",
-        photos: [],
-        claimStatus: "waiting",
-        live: false,
-        infantMonthly: 0,
-        toddlerMonthly: 0,
-        preschoolMonthly: 0,
-        partTimeMonthly: 0,
-        agesKnown: false,
-        ageMinMonths: 0,
-        ageMaxMonths: 0,
-      },
-    ],
-    screening: [{ daycareId: "d1", daycareName: "Bonnie", screeningOnFile: false, people: [] }],
-  });
+  const tours = [
+    {
+      id: "t1",
+      conversationId: "c1",
+      daycareId: "d1",
+      daycareName: "Bonnie",
+      daycareSlug: "bonnie",
+      childId: null,
+      childName: null,
+      parentName: "Alex",
+      preferredTimes: [{ date: "2026-09-20", time: "10:00" }],
+      parentNote: "peanut allergy secret",
+      status: "pending",
+      centreNote: null,
+      createdAt: created,
+      respondedAt: null,
+    },
+    {
+      id: "t2",
+      conversationId: "c2",
+      daycareId: "d1",
+      daycareName: "Bonnie",
+      daycareSlug: "bonnie",
+      childId: null,
+      childName: null,
+      parentName: "Sam",
+      preferredTimes: [{ date: "2026-09-13", time: "16:00" }],
+      parentNote: null,
+      status: "accepted",
+      centreNote: null,
+      createdAt: created,
+      respondedAt: created,
+    },
+  ];
+  const pending = collectPendingTourRows(tours, "Parent", now);
+  const unread = collectUnreadMessageRows(
+    [{ id: "c3", daycareName: "Jordan", unread: true, lastAt: new Date(now - 1000).toISOString() }],
+    "Parent",
+  );
+  const confirmed = collectConfirmedTodayRows(tours, "Parent", now);
+  const rows = [...pending, ...unread, ...confirmed];
   assert.equal(rows[0]?.kind, "tour_request");
   assert.equal(rows[0]?.canDecide, true);
   assert.equal(rows.some((r) => r.kind === "unread"), true);
-  assert.equal(rows.some((r) => r.kind === "action" && r.detail === "verified"), true);
   assert.equal(rows.some((r) => r.kind === "confirmed_tour"), true);
   assert.doesNotMatch(JSON.stringify(rows), /peanut allergy/);
   assert.equal(isConfirmedTourToday({ status: "accepted", preferredTimes: [{ date: "2026-09-13", time: "16:00" }] }, now), true);
+  assert.match(src("src/lib/today-urgency.ts"), /collectActionRequired/);
+  assert.match(src("src/lib/today-urgency.ts"), /detail: "verified"/);
 });
 
 test("SLA countdown uses 48h and empty truth never says no leads", () => {
   const created = new Date(now - 47 * 60 * 60 * 1000).toISOString();
   const remaining = tourSlaRemainingMs(created, now);
   const sla = formatSlaCountdown(remaining);
-  assert.equal(TOUR_SLA_HOURS, 48);
+  assert.equal(TODAY_TOUR_SLA_HOURS, 48);
   assert.equal(sla.overdue, false);
   assert.equal(sla.hours, 1);
   const overdue = formatSlaCountdown(tourSlaRemainingMs(new Date(now - 50 * 60 * 60 * 1000).toISOString(), now));

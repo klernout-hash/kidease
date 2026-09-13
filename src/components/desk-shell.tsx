@@ -5,6 +5,7 @@ import { Shell } from "@/components/shell";
 import { useSessionDesks } from "@/components/desk-switcher";
 import {
   DESK_META,
+  visibleDeskNav,
   visiblePrimaryDeskNav,
   visibleSecondaryDeskNav,
   type DeskIcon,
@@ -203,7 +204,7 @@ export function DeskShell({
     showPayCtas: session?.showPayCtas,
     centreOwner: session?.centreOwner,
   };
-  const primary = visiblePrimaryDeskNav(desk, opts);
+  const primary = desk === "daycare" ? visiblePrimaryDeskNav(desk, opts) : visibleDeskNav(desk, opts);
   const secondary = visibleSecondaryDeskNav(desk, opts);
 
   return (
