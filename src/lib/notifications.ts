@@ -1,5 +1,5 @@
-import { DAYCARE_INBOX_HREF, PARENT_REQUESTS_HREF, type LeadKind } from "@/lib/lead-requests";
-import type { CopyKey } from "@/lib/copy";
+import { DAYCARE_INBOX_HREF, PARENT_REQUESTS_HREF, type LeadKind } from "./lead-requests.ts";
+import type { CopyKey } from "./copy.ts";
 
 export const NOTIFICATION_KINDS = ["lead", "tour", "claim", "inbox", "search_alert", "admin_queue"] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];

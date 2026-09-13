@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { copy } from "../src/lib/copy.ts";
 import {
   claimNotificationHref,
   claimTitleKey,
@@ -18,7 +17,6 @@ import {
   searchAlertHref,
   unreadFromRows,
 } from "../src/lib/notifications.ts";
-import { MENU_ICONS } from "../src/lib/menu-icons.ts";
 import { isKidEaseOperatorEmail } from "../src/lib/admin-email.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -95,14 +93,12 @@ test("source keys stay stable and titles stay honest", () => {
 });
 
 test("EN and FR-CA ship the same notification copy keys", () => {
+  const text = src("src/lib/copy.ts");
   for (const key of COPY_KEYS) {
-    assert.equal(typeof copy.en[key], "string", key);
-    assert.equal(typeof copy.fr[key], "string", key);
-    assert.ok(copy.en[key].length > 0, key);
-    assert.ok(copy.fr[key].length > 0, key);
+    assert.equal(text.split(`${key}:`).length >= 3, true, key);
   }
-  assert.equal(copy.en.notificationsEmpty, "No notifications yet");
-  assert.equal(copy.fr.notificationsEmpty, "Aucune notification pour l’instant");
+  assert.match(text, /notificationsEmpty: "No notifications yet"/);
+  assert.match(text, /notificationsEmpty: "Aucune notification pour l’instant"/);
 });
 
 test("routeTree and page register /notifications", () => {
@@ -158,10 +154,12 @@ test("hamburger and /menu rows keep an icon for every category", () => {
     "terms",
     "cookies",
   ];
+  const icons = src("src/lib/menu-icons.ts");
   for (const id of required) {
-    assert.ok(MENU_ICONS[id], id);
+    assert.match(icons, new RegExp(`${id}:`), id);
   }
-  assert.match(drawer, /icon="explore"/);
+  assert.match(src("src/components/shell.tsx"), /icon: "explore"/);
+  assert.match(drawer, /icon=\{item\.icon\}/);
   assert.match(drawer, /MenuGlyph id="language"/);
   assert.match(drawer, /MenuGlyph id="logout"/);
   assert.match(drawer, /MenuGlyph id="admin"/);

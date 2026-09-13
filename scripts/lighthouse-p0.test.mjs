@@ -87,7 +87,8 @@ test("brand mark ships the SVG, and logos get a long cache hint", () => {
   assert.match(src("src/routes/__root.tsx"), /logo-transparent\.svg\?v=17/);
   assert.match(src("src/routes/menu.tsx"), /\[font-family:system-ui,Segoe_UI,sans-serif\]/);
   assert.match(src("src/routes/menu.tsx"), /ke-menu-main/);
-  assert.match(src("src/routes/menu.tsx"), /ke-menu-chevron/);
+  assert.match(src("src/routes/menu.tsx"), /MenuRow/);
+  assert.match(src("src/components/menu-row.tsx"), /ke-menu-chevron/);
   assert.match(src("src/routes/menu.tsx"), /ke-menu-group/);
   assert.match(src("src/styles.css"), /\.ke-menu-main h1/);
   assert.match(src("src/components/shell.tsx"), /menuLite/);
