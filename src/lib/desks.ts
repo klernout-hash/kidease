@@ -30,6 +30,7 @@ export const DESK_QUERY_ALIASES: Record<string, DeskKey> = {
 };
 
 export const PROVIDER_TAB_KEYS = [
+  "today",
   "requests",
   "money",
   "listings",

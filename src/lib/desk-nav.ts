@@ -1,3 +1,5 @@
+import { TODAY_PRIMARY_NAV_IDS, type TodayPrimaryNavId } from "@/lib/today-urgency";
+
 export type DeskId = "admin" | "support" | "daycare" | "parent";
 
 export type DeskIcon = "credit-card";
@@ -35,19 +37,20 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "account", label: "Account", hint: "Profile and preferences", href: "/account", search: { tab: "profile", desk: "support" } },
   ],
   daycare: [
+    { id: "today", label: "Today", hint: "What needs you now" },
+    { id: "messages", label: "Messages", hint: "Parent inquiries + tours", href: "/inbox", search: { view: "centre" } },
+    { id: "tours", label: "Tour times", hint: "When families can visit" },
+    { id: "listings", label: "My listings", hint: "Spots, photos, fees" },
     { id: "requests", label: "Lead inbox", hint: "Tours, waitlist, and spots" },
     { id: "employees", label: "Employees", hint: "Add an employee" },
     { id: "screening", label: "Screening", hint: "Required documents" },
     { id: "money", label: "Money", hint: "Bills you send" },
-    { id: "listings", label: "My listings", hint: "Spots, photos, fees" },
-    { id: "tours", label: "Tour times", hint: "When families can visit" },
-    { id: "add", label: "Add a new Daycare listing", hint: "Another location" },
     { id: "licence", label: "Licence", hint: "Trust checklist + photo" },
     { id: "contract", label: "Contract", hint: "Agreement + enrolment packs" },
     { id: "promote", label: "Promote", hint: "Priority placement" },
     { id: "subscription", label: "Subscription", hint: "Centre plans", icon: "credit-card", href: "/provider/subscription" },
     { id: "claim", label: "Claim a centre", href: "/claim" },
-    { id: "messages", label: "Messages", hint: "Parent inquiries + tours", href: "/inbox", search: { view: "centre" } },
+    { id: "add", label: "Add a new Daycare listing", hint: "Another location" },
     { id: "account", label: "Account", hint: "Sign-in and preferences", href: "/account", search: { tab: "profile", desk: "director" } },
   ],
   parent: [
@@ -63,10 +66,21 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   ],
 };
 
-export function providerNavSearch(
-  id: string,
-): { desk: "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote" | "employees" | "screening" } {
+export type DaycareDesk =
+  | "today"
+  | "requests"
+  | "money"
+  | "listings"
+  | "tours"
+  | "licence"
+  | "contract"
+  | "promote"
+  | "employees"
+  | "screening";
+
+export function providerNavSearch(id: string): { desk: DaycareDesk } {
   if (
+    id === "today" ||
     id === "money" ||
     id === "listings" ||
     id === "tours" ||
@@ -79,7 +93,8 @@ export function providerNavSearch(
     return { desk: id };
   }
   if (id === "add") return { desk: "listings" };
-  return { desk: "requests" };
+  if (id === "requests") return { desk: "requests" };
+  return { desk: "today" };
 }
 
 export function parentNavSearch(
@@ -131,4 +146,30 @@ export function visibleDeskNav(
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
     return true;
   });
+}
+
+/** Daycare rail/tabs: Today, Messages, Tour times, My listings. */
+export function visiblePrimaryDeskNav(
+  desk: DeskId,
+  opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean; centreOwner?: boolean },
+): DeskItem[] {
+  const items = visibleDeskNav(desk, opts);
+  if (desk !== "daycare") return items;
+  const order = new Map(TODAY_PRIMARY_NAV_IDS.map((id, i) => [id, i]));
+  return items
+    .filter((item) => order.has(item.id as TodayPrimaryNavId))
+    .sort((a, b) => (order.get(a.id as TodayPrimaryNavId) ?? 0) - (order.get(b.id as TodayPrimaryNavId) ?? 0));
+}
+
+/** Daycare hamburger / Account: keep every other route off the primary four. */
+export function visibleSecondaryDeskNav(
+  desk: DeskId,
+  opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean; centreOwner?: boolean },
+): DeskItem[] {
+  const items = visibleDeskNav(desk, opts);
+  if (desk !== "daycare") return [];
+  const primary = new Set<string>(TODAY_PRIMARY_NAV_IDS);
+  const rest = items.filter((item) => !primary.has(item.id) && item.id !== "account");
+  const account = items.filter((item) => item.id === "account");
+  return [...rest, ...account];
 }
