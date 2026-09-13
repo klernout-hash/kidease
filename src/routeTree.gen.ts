@@ -22,6 +22,7 @@ import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as DaycaresRouteImport } from './routes/daycares'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -32,6 +33,7 @@ import { Route as HelpRouteImport } from './routes/help'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ImgRouteImport } from './routes/img'
 import { Route as InboxRouteImport } from './routes/inbox'
+import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as MenuRouteImport } from './routes/menu'
@@ -57,9 +59,7 @@ import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
-import { Route as DaycaresRouteImport } from './routes/daycares'
 import { Route as DaycaresCityRouteImport } from './routes/daycares_.$city'
-import { Route as ListingSlugRouteImport } from './routes/listing.$slug'
 import { Route as FrIndexRouteImport } from './routes/fr.index'
 import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
@@ -70,11 +70,14 @@ import { Route as FrFaqRouteImport } from './routes/fr.faq'
 import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
 import { Route as FrHelpRouteImport } from './routes/fr.help'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
+import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
+import { Route as JobsPostRouteImport } from './routes/jobs_.post'
+import { Route as ListingSlugRouteImport } from './routes/listing.$slug'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
@@ -94,6 +97,7 @@ import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
+import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
 
@@ -163,6 +167,11 @@ const CookiesRoute = CookiesRouteImport.update({
   path: '/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DaycaresRoute = DaycaresRouteImport.update({
+  id: '/daycares',
+  path: '/daycares',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeleteAccountRoute = DeleteAccountRouteImport.update({
   id: '/delete-account',
   path: '/delete-account',
@@ -211,6 +220,11 @@ const ImgRoute = ImgRouteImport.update({
 const InboxRoute = InboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JobsRoute = JobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -338,19 +352,9 @@ const DaycareSlugRoute = DaycareSlugRouteImport.update({
   path: '/daycare/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DaycaresRoute = DaycaresRouteImport.update({
-  id: '/daycares',
-  path: '/daycares',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DaycaresCityRoute = DaycaresCityRouteImport.update({
-  id: '/daycares/$city',
+  id: '/daycares_/$city',
   path: '/daycares/$city',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListingSlugRoute = ListingSlugRouteImport.update({
-  id: '/listing/$slug',
-  path: '/listing/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FrIndexRoute = FrIndexRouteImport.update({
@@ -403,6 +407,11 @@ const FrHowItWorksRoute = FrHowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => FrRoute,
 } as any)
+const FrJobsRoute = FrJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrLoginRoute = FrLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -427,6 +436,16 @@ const InboxIdRoute = InboxIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => InboxRoute,
+} as any)
+const JobsPostRoute = JobsPostRouteImport.update({
+  id: '/jobs_/post',
+  path: '/jobs/post',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListingSlugRoute = ListingSlugRouteImport.update({
+  id: '/listing/$slug',
+  path: '/listing/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PayIndexRoute = PayIndexRouteImport.update({
   id: '/',
@@ -523,6 +542,11 @@ const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
   path: '/daycare/city/$city',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FrJobsPostRoute = FrJobsPostRouteImport.update({
+  id: '/jobs_/post',
+  path: '/jobs/post',
+  getParentRoute: () => FrRoute,
+} as any)
 const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
   id: '/bill/$billId',
   path: '/bill/$billId',
@@ -548,9 +572,9 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
-  '/daycares': typeof DaycaresRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
@@ -559,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
+  '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
@@ -584,9 +609,7 @@ export interface FileRoutesByFullPath {
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
-  '/daycares': typeof DaycaresRoute
   '/daycares/$city': typeof DaycaresCityRoute
-  '/listing/$slug': typeof ListingSlugRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
@@ -596,11 +619,14 @@ export interface FileRoutesByFullPath {
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
+  '/jobs/post': typeof JobsPostRoute
+  '/listing/$slug': typeof ListingSlugRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
@@ -621,6 +647,7 @@ export interface FileRoutesByFullPath {
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
 }
@@ -638,9 +665,9 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
-  '/daycares': typeof DaycaresRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
@@ -648,6 +675,7 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
+  '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
@@ -672,9 +700,7 @@ export interface FileRoutesByTo {
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
-  '/daycares': typeof DaycaresRoute
   '/daycares/$city': typeof DaycaresCityRoute
-  '/listing/$slug': typeof ListingSlugRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
@@ -684,11 +710,14 @@ export interface FileRoutesByTo {
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
+  '/jobs/post': typeof JobsPostRoute
+  '/listing/$slug': typeof ListingSlugRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
@@ -709,6 +738,7 @@ export interface FileRoutesByTo {
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
 }
@@ -727,9 +757,9 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
-  '/daycares': typeof DaycaresRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
@@ -738,6 +768,7 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
+  '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
@@ -763,9 +794,7 @@ export interface FileRoutesById {
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
-  '/daycares': typeof DaycaresRoute
-  '/daycares/$city': typeof DaycaresCityRoute
-  '/listing/$slug': typeof ListingSlugRoute
+  '/daycares_/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
@@ -775,11 +804,14 @@ export interface FileRoutesById {
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
+  '/jobs_/post': typeof JobsPostRoute
+  '/listing/$slug': typeof ListingSlugRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
@@ -800,6 +832,7 @@ export interface FileRoutesById {
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/jobs_/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
 }
@@ -819,9 +852,9 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
+    | '/daycares'
     | '/delete-account'
     | '/explore'
-    | '/daycares'
     | '/faq'
     | '/forgot-password'
     | '/fr'
@@ -830,6 +863,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/img'
     | '/inbox'
+    | '/jobs'
     | '/login'
     | '/meet-the-team'
     | '/menu'
@@ -855,9 +889,7 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
-    | '/daycares'
     | '/daycares/$city'
-    | '/listing/$slug'
     | '/fr/about'
     | '/fr/benefits'
     | '/fr/contact'
@@ -867,11 +899,14 @@ export interface FileRouteTypes {
     | '/fr/get-app'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/jobs'
     | '/fr/login'
     | '/fr/privacy'
     | '/fr/search'
     | '/fr/terms'
     | '/inbox/$id'
+    | '/jobs/post'
+    | '/listing/$slug'
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
@@ -892,6 +927,7 @@ export interface FileRouteTypes {
     | '/api/sms/status'
     | '/api/stripe/webhook'
     | '/daycare/city/$city'
+    | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
   fileRoutesByTo: FileRoutesByTo
@@ -909,9 +945,9 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
+    | '/daycares'
     | '/delete-account'
     | '/explore'
-    | '/daycares'
     | '/faq'
     | '/forgot-password'
     | '/get-app'
@@ -919,6 +955,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/img'
     | '/inbox'
+    | '/jobs'
     | '/login'
     | '/meet-the-team'
     | '/menu'
@@ -943,9 +980,7 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
-    | '/daycares'
     | '/daycares/$city'
-    | '/listing/$slug'
     | '/fr/about'
     | '/fr/benefits'
     | '/fr/contact'
@@ -955,11 +990,14 @@ export interface FileRouteTypes {
     | '/fr/get-app'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/jobs'
     | '/fr/login'
     | '/fr/privacy'
     | '/fr/search'
     | '/fr/terms'
     | '/inbox/$id'
+    | '/jobs/post'
+    | '/listing/$slug'
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
@@ -980,6 +1018,7 @@ export interface FileRouteTypes {
     | '/api/sms/status'
     | '/api/stripe/webhook'
     | '/daycare/city/$city'
+    | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
   id:
@@ -997,9 +1036,9 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
+    | '/daycares'
     | '/delete-account'
     | '/explore'
-    | '/daycares'
     | '/faq'
     | '/forgot-password'
     | '/fr'
@@ -1008,6 +1047,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/img'
     | '/inbox'
+    | '/jobs'
     | '/login'
     | '/meet-the-team'
     | '/menu'
@@ -1033,9 +1073,7 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
-    | '/daycares'
-    | '/daycares/$city'
-    | '/listing/$slug'
+    | '/daycares_/$city'
     | '/fr/about'
     | '/fr/benefits'
     | '/fr/contact'
@@ -1045,11 +1083,14 @@ export interface FileRouteTypes {
     | '/fr/get-app'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/jobs'
     | '/fr/login'
     | '/fr/privacy'
     | '/fr/search'
     | '/fr/terms'
     | '/inbox/$id'
+    | '/jobs_/post'
+    | '/listing/$slug'
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
@@ -1070,6 +1111,7 @@ export interface FileRouteTypes {
     | '/api/sms/status'
     | '/api/stripe/webhook'
     | '/daycare/city/$city'
+    | '/fr/jobs_/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
   fileRoutesById: FileRoutesById
@@ -1088,6 +1130,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
+  DaycaresRoute: typeof DaycaresRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
@@ -1098,6 +1141,7 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   ImgRoute: typeof ImgRoute
   InboxRoute: typeof InboxRouteWithChildren
+  JobsRoute: typeof JobsRoute
   LoginRoute: typeof LoginRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MenuRoute: typeof MenuRoute
@@ -1123,8 +1167,8 @@ export interface RootRouteChildren {
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
-  DaycaresRoute: typeof DaycaresRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
+  JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
   SignIdRoute: typeof SignIdRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
@@ -1237,6 +1281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CookiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/daycares': {
+      id: '/daycares'
+      path: '/daycares'
+      fullPath: '/daycares'
+      preLoaderRoute: typeof DaycaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/delete-account': {
       id: '/delete-account'
       path: '/delete-account'
@@ -1305,6 +1356,13 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/inbox'
       preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jobs': {
+      id: '/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof JobsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1482,25 +1540,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DaycareSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/daycares': {
-      id: '/daycares'
-      path: '/daycares'
-      fullPath: '/daycares'
-      preLoaderRoute: typeof DaycaresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/daycares/$city': {
-      id: '/daycares/$city'
+    '/daycares_/$city': {
+      id: '/daycares_/$city'
       path: '/daycares/$city'
       fullPath: '/daycares/$city'
       preLoaderRoute: typeof DaycaresCityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/listing/$slug': {
-      id: '/listing/$slug'
-      path: '/listing/$slug'
-      fullPath: '/listing/$slug'
-      preLoaderRoute: typeof ListingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fr/': {
@@ -1573,6 +1617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrHowItWorksRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/jobs': {
+      id: '/fr/jobs'
+      path: '/jobs'
+      fullPath: '/fr/jobs'
+      preLoaderRoute: typeof FrJobsRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/login': {
       id: '/fr/login'
       path: '/login'
@@ -1607,6 +1658,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/inbox/$id'
       preLoaderRoute: typeof InboxIdRouteImport
       parentRoute: typeof InboxRoute
+    }
+    '/jobs_/post': {
+      id: '/jobs_/post'
+      path: '/jobs/post'
+      fullPath: '/jobs/post'
+      preLoaderRoute: typeof JobsPostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listing/$slug': {
+      id: '/listing/$slug'
+      path: '/listing/$slug'
+      fullPath: '/listing/$slug'
+      preLoaderRoute: typeof ListingSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/pay/': {
       id: '/pay/'
@@ -1741,6 +1806,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DaycareCityCityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fr/jobs_/post': {
+      id: '/fr/jobs_/post'
+      path: '/jobs/post'
+      fullPath: '/fr/jobs/post'
+      preLoaderRoute: typeof FrJobsPostRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/pay/bill/$billId': {
       id: '/pay/bill/$billId'
       path: '/bill/$billId'
@@ -1768,11 +1840,13 @@ interface FrRouteChildren {
   FrGetAppRoute: typeof FrGetAppRoute
   FrHelpRoute: typeof FrHelpRoute
   FrHowItWorksRoute: typeof FrHowItWorksRoute
+  FrJobsRoute: typeof FrJobsRoute
   FrLoginRoute: typeof FrLoginRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
   FrSearchRoute: typeof FrSearchRoute
   FrTermsRoute: typeof FrTermsRoute
   FrIndexRoute: typeof FrIndexRoute
+  FrJobsPostRoute: typeof FrJobsPostRoute
 }
 
 const FrRouteChildren: FrRouteChildren = {
@@ -1785,11 +1859,13 @@ const FrRouteChildren: FrRouteChildren = {
   FrGetAppRoute: FrGetAppRoute,
   FrHelpRoute: FrHelpRoute,
   FrHowItWorksRoute: FrHowItWorksRoute,
+  FrJobsRoute: FrJobsRoute,
   FrLoginRoute: FrLoginRoute,
   FrPrivacyRoute: FrPrivacyRoute,
   FrSearchRoute: FrSearchRoute,
   FrTermsRoute: FrTermsRoute,
   FrIndexRoute: FrIndexRoute,
+  FrJobsPostRoute: FrJobsPostRoute,
 }
 
 const FrRouteWithChildren = FrRoute._addFileChildren(FrRouteChildren)
@@ -1855,6 +1931,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
+  DaycaresRoute: DaycaresRoute,
   DeleteAccountRoute: DeleteAccountRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
@@ -1865,6 +1942,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   ImgRoute: ImgRoute,
   InboxRoute: InboxRouteWithChildren,
+  JobsRoute: JobsRoute,
   LoginRoute: LoginRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
   MenuRoute: MenuRoute,
@@ -1890,8 +1968,8 @@ const rootRouteChildren: RootRouteChildren = {
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
-  DaycaresRoute: DaycaresRoute,
   DaycaresCityRoute: DaycaresCityRoute,
+  JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
   SignIdRoute: SignIdRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,

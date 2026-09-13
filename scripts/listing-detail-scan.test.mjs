@@ -49,7 +49,7 @@ test("Support verify page holds listing explanations", () => {
   assert.match(verify, /id="unclaimed"/);
   assert.match(verify, /verifyUnclaimedBody/);
   const footer = src("src/components/site-footer.tsx");
-  const support = footer.slice(footer.indexOf('t("support")'), footer.indexOf("ke-footer-legal"));
+  const support = footer.slice(footer.indexOf('t("footerKidEase")'), footer.indexOf("ke-footer-legal"));
   assert.match(support, /to="\/verify"/);
   assert.match(src("src/routes/menu.tsx"), /to="\/verify"/);
 });

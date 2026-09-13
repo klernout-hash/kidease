@@ -288,7 +288,7 @@
     padding-block: 1.35rem 1.15rem;
   }
   .ke-footer-inner {
-    max-width: 44rem;
+    max-width: 56rem;
     margin-inline: auto;
   }
   .ke-footer-cols {
@@ -298,8 +298,8 @@
   }
   @media (min-width: 640px) {
     .ke-footer-cols {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1.15rem 1.75rem;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1.15rem 1.5rem;
     }
   }
   .ke-footer-title {

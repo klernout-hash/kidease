@@ -22,30 +22,38 @@ test("footer exposes Rate KidEase next to Get the app in Parents", () => {
   assert.match(footer, /rateKidEaseFromMenu/);
 });
 
-test("footer keeps Parents / Daycares / Support groups without a duplicate legal row", () => {
+test("footer keeps Parents / Daycares / Caregivers / KidEase groups without a duplicate legal row", () => {
   assert.match(footer, /ke-footer-cols/);
-  assert.match(footer, /t\("support"\)/);
+  assert.match(footer, /t\("footerKidEase"\)/);
+  assert.match(footer, /t\("footerCaregivers"\)/);
   assert.match(footer, />Parents</);
   assert.match(footer, /Garderies/);
   assert.match(footer, /Daycares/);
   assert.doesNotMatch(footer, /aria-label=\{fr \? "Juridique" : "Legal"\}/);
   const privacyLinks = footer.match(/localePath\("\/privacy"/g) ?? [];
-  assert.equal(privacyLinks.length, 1, "privacy lives in Support only; verify-listings goes to /verify");
+  assert.equal(privacyLinks.length, 1, "privacy lives in KidEase only; verify-listings goes to /verify");
   assert.match(footer, /localePath\("\/about"/);
   assert.match(footer, /to="\/verify"/);
   assert.match(footer, /verifyListings/);
 });
 
-test("hamburger and footer audience sections are Parents, then Daycares, then Support", () => {
+test("hamburger and footer audience sections are Parents, Daycares, Caregivers, then KidEase/Support", () => {
   const footerParents = footer.indexOf(">Parents<");
   const footerDaycares = footer.indexOf('fr ? "Garderies" : "Daycares"');
-  const footerSupport = footer.indexOf('t("support")');
-  assert.ok(footerParents > 0 && footerDaycares > footerParents && footerSupport > footerDaycares);
+  const footerCaregivers = footer.indexOf('t("footerCaregivers")');
+  const footerKidEase = footer.indexOf('t("footerKidEase")');
+  assert.ok(
+    footerParents > 0 &&
+      footerDaycares > footerParents &&
+      footerCaregivers > footerDaycares &&
+      footerKidEase > footerCaregivers,
+  );
 
   const menuParents = menu.indexOf('title="Parents"');
   const menuDaycares = menu.indexOf('title={fr ? "Garderies" : "Daycares"}');
+  const menuCaregivers = menu.indexOf('t("footerCaregivers")');
   const menuSupport = menu.indexOf('title={fr ? "Soutien" : "Support"}');
-  assert.ok(menuParents > 0 && menuDaycares > menuParents && menuSupport > menuDaycares);
+  assert.ok(menuParents > 0 && menuDaycares > menuParents && menuCaregivers > menuDaycares && menuSupport > menuCaregivers);
 });
 
 test("footer legal bar stays compact and uses FR-CA copy keys", () => {
@@ -64,7 +72,7 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.match(copy, /operatorSignIn: "Connexion opérateur"/);
 });
 
-test("Support column drops the inbox email and uses Contact Us copy", () => {
+test("KidEase column drops the inbox email and uses Contact Us copy", () => {
   assert.match(footer, /t\("helpTitle"\)/);
   assert.match(footer, /t\("contactTitle"\)/);
   assert.match(footer, /localePath\("\/contact"/);
@@ -81,8 +89,8 @@ test("Support column drops the inbox email and uses Contact Us copy", () => {
   assert.match(copy, /contactTitle: "Nous joindre"/);
 });
 
-test("Support column includes About and Meet the Team before legal links", () => {
-  const support = footer.slice(footer.indexOf('t("support")'), footer.indexOf("ke-footer-legal"));
+test("KidEase column includes About and Meet the Team before legal links", () => {
+  const support = footer.slice(footer.indexOf('t("footerKidEase")'), footer.indexOf("ke-footer-legal"));
   assert.match(support, /localePath\("\/about"/);
   assert.match(support, /to="\/team"/);
   assert.match(support, /to="\/verify"/);
@@ -97,7 +105,7 @@ test("Support column includes About and Meet the Team before legal links", () =>
 });
 
 test("Daycares column keeps verify listings and drops About, Team, and Manitoba Child Care", () => {
-  const daycares = footer.slice(footer.indexOf("Garderies"), footer.indexOf('t("support")'));
+  const daycares = footer.slice(footer.indexOf("Garderies"), footer.indexOf('t("footerCaregivers")'));
   assert.match(daycares, /to="\/verify"/);
   assert.match(daycares, /verifyListings/);
   assert.doesNotMatch(daycares, /to="\/about"/);
@@ -124,9 +132,23 @@ test("Parents column keeps product links and omits city hubs", () => {
   assert.match(src("public/sitemap.xml"), /\/daycare\/city\/winnipeg/);
 });
 
+test("Daycares and Caregivers columns link Find daycare jobs; KidEase links Add jobs at KidEase", () => {
+  const daycares = footer.slice(footer.indexOf("Garderies"), footer.indexOf('t("footerCaregivers")'));
+  const caregivers = footer.slice(footer.indexOf('t("footerCaregivers")'), footer.indexOf('t("footerKidEase")'));
+  const kidease = footer.slice(footer.indexOf('t("footerKidEase")'), footer.indexOf("ke-footer-legal"));
+  assert.match(daycares, /localePath\("\/jobs"/);
+  assert.match(daycares, /findDaycareJobs/);
+  assert.match(caregivers, /localePath\("\/jobs"/);
+  assert.match(caregivers, /findDaycareJobs/);
+  assert.match(kidease, /localePath\("\/jobs\/post"/);
+  assert.match(kidease, /addJobsAtKidEase/);
+  assert.doesNotMatch(footer, /Open Road/i);
+  assert.doesNotMatch(footer, /openroad/i);
+});
+
 test("footer CSS clusters columns instead of stretching full width", () => {
-  assert.match(css, /\.ke-footer-inner \{[\s\S]*?max-width: 44rem;/);
+  assert.match(css, /\.ke-footer-inner \{[\s\S]*?max-width: 56rem;/);
   assert.match(css, /grid-template-columns: 1fr 1fr;/);
-  assert.match(css, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
   assert.doesNotMatch(css, /gap: 3rem 4rem/);
 });

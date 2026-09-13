@@ -130,12 +130,18 @@ function MenuPage() {
           <Row to="/provider" label={fr ? "Espace garderie" : "Daycare desk"} />
           <Row to="/account" search={{ tab: "profile", desk: "director" }} label={t("account")} />
           <Row href="https://childcaresearch.gov.mb.ca/en" label={t("mbChildcare")} />
+          <Row to="/jobs" label={t("findDaycareJobs")} />
+        </Group>
+
+        <Group title={t("footerCaregivers")} defer>
+          <Row to="/jobs" label={t("findDaycareJobs")} />
         </Group>
 
         <Group title={fr ? "Soutien" : "Support"} defer>
           <Row to="/help" label={fr ? "Centre d’aide" : "Help Centre"} />
           <Row to="/faq" label="FAQ" />
           <Row to="/how-it-works" label={t("howItWorksCta")} />
+          <Row to="/jobs/post" label={t("addJobsAtKidEase")} />
           <Row to="/verify" label={t("verifyListings")} />
           <Row to="/privacy" label={t("privacy")} />
           <Row to="/terms" label={t("terms")} />

@@ -74,12 +74,21 @@ export function SiteFooter() {
                 </Item>
                 <Item to="/provider">{fr ? "Espace garderie" : "Daycare desk"}</Item>
                 <Item to="/verify">{t("verifyListings")}</Item>
+                <Item to={localePath("/jobs", locale)}>{t("findDaycareJobs")}</Item>
               </ul>
             </section>
 
             <section>
-              <p className="ke-footer-title">{t("support")}</p>
+              <p className="ke-footer-title">{t("footerCaregivers")}</p>
               <ul className="ke-footer-list">
+                <Item to={localePath("/jobs", locale)}>{t("findDaycareJobs")}</Item>
+              </ul>
+            </section>
+
+            <section>
+              <p className="ke-footer-title">{t("footerKidEase")}</p>
+              <ul className="ke-footer-list">
+                <Item to={localePath("/jobs/post", locale)}>{t("addJobsAtKidEase")}</Item>
                 <Item to={localePath("/help", locale)}>{t("helpTitle")}</Item>
                 <Item to={localePath("/contact", locale)}>{t("contactTitle")}</Item>
                 <Item to={localePath("/faq", locale)}>FAQ</Item>

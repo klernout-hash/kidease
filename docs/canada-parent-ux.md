@@ -28,3 +28,11 @@ Unclaimed catalogue rows still derive facility from amenities only (`home`, `nur
 - Out of scope (unchanged): Clerk, Meta Live, DocuSign, Stripe, US religion laundry lists.
 - Search `/fr/search` remains the FR marketing landing; chips live on `/search` with FR-CA chrome when the locale is French.
 - After merge, claim one live centre, fill facility + schedule + a program fee, confirm spots, then confirm the public listing pills/table and `?fac=home` / `?open=immediate` hide when data cannot match.
+
+## Footer
+
+Four audience columns: **Parents** / **Daycares** / **Caregivers & jobs** / **KidEase**.
+
+- Daycares: **Find daycare jobs** → `/jobs` (`/fr/jobs`). Honest Canada waitlist — no invented openings.
+- KidEase: **Add jobs at KidEase** → `/jobs/post` (`/fr/jobs/post`). Centre note uses existing `submitPublicMessage` (`kind: "contact"`).
+- Caregivers column is the fourth menu. Open Road brand stays out. King-admin / auth unchanged.
