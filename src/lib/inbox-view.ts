@@ -24,12 +24,8 @@ export function parseInboxSearch(s: Record<string, unknown>): InboxSearch {
   };
 }
 
-export function inboxSearch(view: InboxView | undefined, extra?: { detail?: boolean; tour?: string }): InboxSearch {
-  return {
-    ...(view === "centre" ? { view: "centre" as const } : view === "family" ? { view: "family" as const } : {}),
-    ...(extra?.detail ? { detail: true as const } : {}),
-    ...(extra?.tour ? { tour: extra.tour } : {}),
-  };
+export function inboxSearch(view: InboxView | undefined): { view?: InboxView } {
+  return view === "centre" ? { view: "centre" } : view === "family" ? { view: "family" } : {};
 }
 
 /** Provider / Daycare desk only — parent inbox stays family. */
