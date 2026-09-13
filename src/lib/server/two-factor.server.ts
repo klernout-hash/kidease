@@ -88,6 +88,8 @@ export function expireThisSessionCookies() {
   expirePair(REAUTH_COOKIE, SHARED_REAUTH_COOKIE);
 }
 
+export { assertAdminIdleFresh } from "./reauth.server";
+
 export function isCurrentUserTwoFactorVerified(userId: string): boolean {
   return isTwoFactorVerifiedAny(userId, twoFactorCookieCandidates(), secret());
 }

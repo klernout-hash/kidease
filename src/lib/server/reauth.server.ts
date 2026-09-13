@@ -66,3 +66,24 @@ export function isAdminIdleFresh(): boolean {
 }
 
 export const ADMIN_IDLE_MESSAGE = "Admin session timed out. Sign in again.";
+
+export async function assertAdminIdleFresh(userId: string) {
+  if (isAdminIdleFresh()) {
+    writeAdminIdleCookie();
+    return;
+  }
+  const { readSessionToken } = await import("@/lib/auth/server");
+  const token = readSessionToken();
+  if (!token) throw new Error(ADMIN_IDLE_MESSAGE);
+  const { getSql } = await import("@/lib/db");
+  const sql = await getSql();
+  const rows = await sql<{ createdAt: string }>`
+    select "createdAt" from "session" where token = ${token} and "userId" = ${userId} limit 1
+  `.catch(() => []);
+  const created = rows[0]?.createdAt ? new Date(rows[0].createdAt).getTime() : 0;
+  if (created && Date.now() - created < ADMIN_IDLE_TTL_MS) {
+    writeAdminIdleCookie();
+    return;
+  }
+  throw new Error(ADMIN_IDLE_MESSAGE);
+}

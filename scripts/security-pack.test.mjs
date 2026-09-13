@@ -171,7 +171,8 @@ describe("5) cookie / CSRF harden", () => {
     assert.equal(ADMIN_IDLE_TTL_MS, 30 * 60 * 1000);
     assert.ok(ADMIN_IDLE_TTL_MS < TWO_FACTOR_DEVICE_TTL_MS);
     assert.match(src("src/lib/server/roles.ts"), /assertAdminIdleFresh/);
-    assert.match(src("src/lib/server/admin-idle.ts"), /ADMIN_IDLE_TTL_MS/);
+    assert.match(src("src/lib/server/reauth.server.ts"), /ADMIN_IDLE_TTL_MS/);
+    assert.match(src("src/lib/server/two-factor.server.ts"), /assertAdminIdleFresh/);
     const expired = expireAuthCookieHeaders(true);
     assert.ok(expired.some((c) => c.startsWith(`${REAUTH_COOKIE}=`) && /Secure; HttpOnly; SameSite=Lax/i.test(c)));
     assert.ok(expired.some((c) => c.startsWith(`${ADMIN_IDLE_COOKIE}=`)));
