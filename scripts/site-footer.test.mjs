@@ -113,13 +113,15 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
 test("Support column keeps help, contact, FAQ, and legal links", () => {
   const supportTo = FOOTER_SUPPORT.map((link) => link.to);
   assert.ok(supportTo.includes("/help"));
+  assert.ok(FOOTER_SUPPORT.some((link) => link.to === "/help" && link.localePaired));
   assert.ok(supportTo.includes("/contact"));
   assert.ok(supportTo.includes("/faq"));
   assert.ok(supportTo.includes("/how-it-works"));
   assert.ok(supportTo.includes("/privacy"));
   assert.ok(supportTo.includes("/terms"));
   assert.ok(supportTo.includes("/cookies"));
-  assert.ok(supportTo.includes("/delete-account"));
+  assert.ok(!supportTo.includes("/delete-account"));
+  assert.doesNotMatch(nav, /delete-account/);
   assert.doesNotMatch(footer, /SUPPORT_INBOX_EMAIL/);
   assert.doesNotMatch(footer, /mailto:/);
   assert.doesNotMatch(nav, /SUPPORT_INBOX_EMAIL/);
@@ -156,7 +158,7 @@ test("Parents column keeps product links and omits city hubs", () => {
   assert.ok(parentTo.includes("/get-app"));
   assert.ok(FOOTER_PARENTS.some((link) => link.labelKey === "parentSignIn"));
   assert.ok(FOOTER_PARENTS.some((link) => link.labelKey === "saved"));
-  assert.ok(FOOTER_PARENTS.some((link) => link.labelKey === "rateKidEase"));
+  assert.ok(FOOTER_PARENTS.some((link) => link.to === "/get-app" && link.labelKey === "rateKidEase"));
   assert.doesNotMatch(nav, /cityHubs/);
   assert.doesNotMatch(nav, /cityHubPath/);
   assert.doesNotMatch(nav, /daycare\/city/);
@@ -204,7 +206,6 @@ test("EN footer labels sort alphabetically in every column", () => {
     "About",
     "Contact Us",
     "Cookies",
-    "Delete my account",
     "FAQ",
     "Help Centre",
     "How It Works",
@@ -250,7 +251,6 @@ test("FR-CA footer labels sort by the French string in every column", () => {
     "L’équipe",
     "Nous joindre",
     "Se désabonner",
-    "Supprimer mon compte",
     "Témoins",
   ]);
 });
@@ -282,7 +282,6 @@ test("footer does not drop destinations when columns are renamed and reordered",
     "/terms|{}|paired",
     "/cookies|{}|paired",
     "/unsubscribe|{}|bare",
-    "/delete-account|{}|bare",
   ]) {
     assert.ok(all.includes(dest), `missing ${dest}`);
   }

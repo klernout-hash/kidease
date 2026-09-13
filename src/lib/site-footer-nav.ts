@@ -65,7 +65,6 @@ export const FOOTER_SUPPORT: FooterLinkDef[] = [
   copyLink("/terms", "terms", { localePaired: true }),
   copyLink("/cookies", "cookies", { localePaired: true }),
   copyLink("/unsubscribe", "unsubscribe"),
-  copyLink("/delete-account", "deleteAccount"),
 ];
 
 export const FOOTER_COLUMNS: Record<FooterColumnId, FooterLinkDef[]> = {
