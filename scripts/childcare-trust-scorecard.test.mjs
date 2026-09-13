@@ -15,8 +15,8 @@ function src(rel) {
 }
 
 test("footer How we verify listings goes to /verify, not /about", () => {
-  const footer = src("src/components/site-footer.tsx");
-  assert.match(footer, /to="\/verify"/);
+  const footer = src("src/lib/site-footer-nav.ts");
+  assert.match(footer, /"\/verify"/);
   assert.match(footer, /verifyListings/);
   assert.doesNotMatch(footer, /to="\/about">\{t\("verifyListings"\)\}/);
   assert.match(src("src/routes/verify.tsx"), /createFileRoute\("\/verify"\)/);

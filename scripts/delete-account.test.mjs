@@ -27,7 +27,7 @@ test("menu, legal, footer, and parent desk all point at /delete-account", () => 
   assert.match(src("src/routes/menu.tsx"), /to="\/delete-account"/);
   assert.doesNotMatch(src("src/routes/menu.tsx"), /to="\/account"[\s\S]{0,80}deleteAccount/);
   assert.match(src("src/components/legal-doc.tsx"), /to="\/delete-account"/);
-  assert.match(src("src/components/site-footer.tsx"), /to="\/delete-account"/);
+  assert.match(src("src/lib/site-footer-nav.ts"), /"\/delete-account"/);
   assert.match(src("src/components/parent-desk.tsx"), /to="\/delete-account"/);
   assert.doesNotMatch(src("src/components/parent-desk.tsx"), /deleteAccount\(\)/);
 });

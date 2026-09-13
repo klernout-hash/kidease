@@ -115,7 +115,7 @@ describe("plugin wiring and honest copy", () => {
     assert.match(home, /RateKidEasePrompt/);
     assert.match(home, /Guest www homepage/);
     assert.match(home, /!user \? \(/);
-    assert.match(src("src/components/site-footer.tsx"), /t\("rateKidEase"\)/);
+    assert.match(src("src/lib/site-footer-nav.ts"), /rateKidEase/);
     assert.match(src("src/components/nav-drawer.tsx"), /RateKidEaseControl/);
     assert.match(src("src/components/shell.tsx"), /RateKidEaseControl/);
     assert.match(rate, /to: "\/get-app"/);

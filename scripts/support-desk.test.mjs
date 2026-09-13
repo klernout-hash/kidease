@@ -118,9 +118,10 @@ test("public help moved to /help; /support is the staff desk", () => {
   assert.match(help, /createFileRoute\("\/help"\)/);
   assert.match(help, /kind: "support"/);
 
-  const footer = readFileSync(join(root, "src/components/site-footer.tsx"), "utf8");
-  assert.match(footer, /localePath\("\/help"/);
-  assert.doesNotMatch(footer, /to="\/support"/);
+  const footer = readFileSync(join(root, "src/lib/site-footer-nav.ts"), "utf8");
+  assert.match(footer, /"\/help"/);
+  assert.doesNotMatch(footer, /to: "\/support"/);
+  assert.doesNotMatch(footer, /copyLink\("\/support"/);
 
   const store = readFileSync(join(root, "src/lib/store-listing.ts"), "utf8");
   assert.match(store, /supportPath: "\/help"/);
