@@ -10,8 +10,8 @@
  *   the names of specific checks never go to guests or parents.
  */
 
-import { isHomeBasedFacility, normalizeFacilityType } from "@/lib/facility-type";
-import type { CentreMemberRole } from "@/lib/centre-roles";
+import { isHomeBasedFacility, normalizeFacilityType } from "./facility-type.ts";
+import type { CentreMemberRole } from "./centre-roles.ts";
 
 export const SCREENING_ROLES = [
   "owner",
