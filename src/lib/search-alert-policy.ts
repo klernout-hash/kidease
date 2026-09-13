@@ -7,7 +7,7 @@
  *
  * Relative imports only — scripts/*.test.mjs load this file with Node.
  */
-import { classifyFacilityType, type FacilityType } from "./facility-type.ts";
+import { classifyFacilityType, normalizeFacilityType, type FacilityType } from "./facility-type.ts";
 import { isPublicListing, listingVisibilityInputFromDb } from "./listing-visibility.ts";
 
 export const ALERT_TZ = "America/Winnipeg";
@@ -114,14 +114,19 @@ export function underPushSmsDailyCap(sentToday: number): boolean {
 }
 
 export function alertFacilityType(row: Pick<AlertMatchFacts, "amenities" | "name" | "facilityType">): FacilityType {
-  if (row.facilityType) return row.facilityType;
-  return classifyFacilityType({ amenities: row.amenities || "", name: row.name || "" }).type;
+  return classifyFacilityType({
+    amenities: row.amenities || "",
+    name: row.name || "",
+    facilityType: row.facilityType,
+  }).type;
 }
 
-export function licensedTypeLabel(type: FacilityType): string {
-  if (type === "nursery") return "nursery";
-  if (type === "home") return "home";
-  if (type === "school") return "school-based";
+export function licensedTypeLabel(type: FacilityType | string): string {
+  const kind = normalizeFacilityType(type) ?? "child_care_centre";
+  if (kind === "nursery_preschool") return "nursery";
+  if (kind === "family_home") return "home";
+  if (kind === "group_home") return "group child care home";
+  if (kind === "school_age") return "school-age";
   return "centre";
 }
 
@@ -178,7 +183,7 @@ export function honestAlertCopy(input: {
   if (input.kind === "request_reply") {
     return { title: `${input.name} replied.`, body: "Open the thread to read the reply." };
   }
-  const type = licensedTypeLabel(input.facilityType ?? "centre");
+  const type = licensedTypeLabel(input.facilityType ?? "child_care_centre");
   const place = (input.originLabel || "").split(",")[0]?.trim() || "you";
   return {
     title: `New licensed ${type} near ${place}.`,

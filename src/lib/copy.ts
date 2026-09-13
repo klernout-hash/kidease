@@ -204,10 +204,11 @@ export const copy = {
     railGuestFavorites: "Guest Favorites near you",
     railByAge: "By age group",
     railByCare: "By facility type",
-    railDaycareCentres: "Daycare Centres",
-    railNursery: "Nursery",
-    railHome: "Home",
-    railSchool: "School-based",
+    railDaycareCentres: "Child care centres",
+    railNursery: "Nursery schools",
+    railHome: "Family child care",
+    railGroupHome: "Group child care homes",
+    railSchool: "School-age",
     exploreForYou: "For you",
     pipelineRequested: "Requested",
     pipelineConfirmed: "Confirmed",
@@ -240,20 +241,25 @@ export const copy = {
     filterCareHome: "Home",
     filterCareBeforeAfter: "Before-after",
     facilityType: "Facility type",
-    facilityTypeCentre: "Centre",
-    facilityTypeNursery: "Nursery",
-    facilityTypeHome: "Home",
-    facilityTypeSchool: "School-based",
+    facilityTypeCentre: "Child care centre",
+    facilityTypeNursery: "Nursery school / preschool",
+    facilityTypeHome: "Family child care",
+    facilityTypeGroupHome: "Group child care home",
+    facilityTypeSchool: "School-age",
     facilityTypeLeadCentre:
-      "A licensed centre is child care in a dedicated building or room — not a private home. In Manitoba this is Facility Type Centre: usually full-day care with staff ratios set by the licence.",
+      "A licensed child care centre is care in a dedicated building or room — not a private home. In Manitoba this is Facility Type Centre: usually full-day care with staff ratios set by the licence.",
     facilityTypeLeadNursery:
-      "A licensed nursery (often a nursery school) is usually a part-day early learning program for preschool-age children. In Manitoba this is Facility Type Nursery, separate from a full-day centre or a licensed home.",
+      "A licensed nursery school (preschool) is usually a part-day early learning program for preschool-age children. In Manitoba this is Facility Type Nursery, separate from a full-day centre or a licensed home.",
     facilityTypeLeadHome:
-      "A licensed home is regulated child care in a caregiver’s residence, with a smaller group than a centre. KidEase only lists provincially licensed homes — not nannies or unlicensed sitters.",
+      "Licensed family child care is regulated care in a caregiver’s residence, with a smaller group than a centre. KidEase only lists provincially licensed homes — not nannies or unlicensed sitters.",
+    facilityTypeLeadGroupHome:
+      "A licensed group child care home (group family) is regulated care in a caregiver’s residence with a larger group than family child care. In Manitoba this is its own licence class — not a centre and not an unlicensed sitter.",
+    facilityTypeLeadSchool:
+      "School-age / before-after care is licensed care for school-aged children, often in a school or a dedicated room, before and after the school day. In Manitoba this is separate from a full-day centre or nursery school.",
     facilityTypeGap:
-      "Facility type inferred as {type}. No registry class (nursery or home amenity) on file. Name hint: {hint}. Do not treat the hint as a classification.",
+      "Facility type inferred as {type}. No registry class (nursery, home, or group-home amenity) on file. Name hint: {hint}. Do not treat the hint as a classification.",
     facilityTypeGapPlain:
-      "Facility type inferred as Centre. No Manitoba-style registry class (Centre / Nursery / Home amenity) on file.",
+      "Facility type inferred as child care centre. No Manitoba-style registry class (centre / nursery / family home / group home amenity) on file.",
     noFacilityTypeResults: "No licensed {type} in this radius",
     noFacilityTypeResultsLead:
       "Licensed care is nearby, but none is classified as {type}. Clear the category to see every licensed type, or widen the search.",
@@ -1099,7 +1105,7 @@ export const copy = {
     listingsVerify: "Listings & verification",
     listingsVerifyLead:
       "Listing pages stay short on purpose. Facility type, claim status, and licence badges are KidEase checks — not a government certificate. The explanations live here.",
-    verifyFacilityTitle: "Centre, nursery, and home",
+    verifyFacilityTitle: "Licensed facility types in Canada",
     verifyUnclaimedTitle: "Unclaimed listings",
     verifyUnclaimedBody:
       "Unclaimed means no operator has proven they run this centre on KidEase yet. Facts may come from the public registry. The listing stays searchable. Claimed or Claim verified means the operator, not that KidEase police-checked staff.",
@@ -1523,9 +1529,11 @@ export const copy = {
     filterSchedFull: "Full-time",
     filterSchedPart: "Part-time",
     filterSchedFlex: "Flexible",
-    filterFacCentre: "Centre",
-    filterFacHome: "Home-family",
-    filterFacSchool: "School-based",
+    filterFacCentre: "Child care centre",
+    filterFacHome: "Family child care",
+    filterFacSchool: "School-age",
+    filterFacGroupHome: "Group child care home",
+    filterFacNursery: "Nursery school / preschool",
     filterApply: "Apply",
     filterClear: "Clear",
     requestInfoTitle: "Request info",
@@ -1555,7 +1563,8 @@ export const copy = {
     valuesTitle: "Values",
     updatedLabel: "Updated",
     deskFacility: "Facility type",
-    deskFacilityLead: "Centre, home-family, school-based, or nursery. Saved to your listing.",
+    deskFacilityLead:
+      "Child care centre, family child care, group child care home, nursery school / preschool, or school-age. Saved to your listing and Explore filters.",
     deskSchedule: "Schedule options",
     deskScheduleLead: "What you actually offer. Empty stays hidden on parent search.",
     deskOpenings: "Openings",
@@ -1793,9 +1802,10 @@ export const copy = {
     railByAge: "Par groupe d’âge",
     railByCare: "Par type d’établissement",
     railDaycareCentres: "Centres de garde",
-    railNursery: "Nursery",
+    railNursery: "Nurseries / prématernelles",
     railHome: "Milieux familiaux",
-    railSchool: "En milieu scolaire",
+    railGroupHome: "Milieux familiaux de groupe",
+    railSchool: "Parascolaire",
     exploreForYou: "Pour vous",
     pipelineRequested: "Demandée",
     pipelineConfirmed: "Confirmée",
@@ -1828,20 +1838,25 @@ export const copy = {
     filterCareHome: "Milieu familial",
     filterCareBeforeAfter: "Avant-après",
     facilityType: "Type d’établissement",
-    facilityTypeCentre: "Centre",
-    facilityTypeNursery: "Nursery",
+    facilityTypeCentre: "Centre de garde",
+    facilityTypeNursery: "Nursery / prématernelle",
     facilityTypeHome: "Milieu familial",
-    facilityTypeSchool: "En milieu scolaire",
+    facilityTypeGroupHome: "Milieu familial de groupe",
+    facilityTypeSchool: "Parascolaire",
     facilityTypeLeadCentre:
-      "Un centre permis offre la garde dans un local dédié — pas dans une résidence privée. Au Manitoba, c’est le type d’établissement Centre : souvent une journée complète, avec des ratios fixés par le permis.",
+      "Un centre de garde permis offre la garde dans un local dédié — pas dans une résidence privée. Au Manitoba, c’est le type d’établissement Centre : souvent une journée complète, avec des ratios fixés par le permis.",
     facilityTypeLeadNursery:
       "Une nursery permise (souvent une nursery school / prématernelle) est en général un programme d’apprentissage à temps partiel pour les enfants d’âge préscolaire. Au Manitoba, c’est le type Nursery, distinct d’un centre à temps plein ou d’un milieu familial.",
     facilityTypeLeadHome:
       "Un milieu familial permis est une garde réglementée chez la responsable, en plus petit groupe qu’un centre. KidEase n’inscrit que les milieux familiaux permis par la province — pas les nounous ni la garde sans permis.",
+    facilityTypeLeadGroupHome:
+      "Un milieu familial de groupe permis est une garde réglementée chez la responsable, en plus grand groupe qu’un milieu familial. Au Manitoba, c’est une classe de permis distincte — pas un centre et pas une nounou sans permis.",
+    facilityTypeLeadSchool:
+      "Le service parascolaire (avant-après l’école) est une garde permise pour les enfants d’âge scolaire, souvent dans une école ou un local dédié. Au Manitoba, c’est distinct d’un centre à temps plein ou d’une nursery.",
     facilityTypeGap:
-      "Type d’établissement déduit : {type}. Aucune classe de registre (attribut nursery ou home) au dossier. Indice du nom : {hint}. Ne pas traiter l’indice comme une classification.",
+      "Type d’établissement déduit : {type}. Aucune classe de registre (attribut nursery, home ou group-home) au dossier. Indice du nom : {hint}. Ne pas traiter l’indice comme une classification.",
     facilityTypeGapPlain:
-      "Type d’établissement déduit : Centre. Aucune classe de registre manitobaine (Centre / Nursery / Home) au dossier.",
+      "Type d’établissement déduit : centre de garde. Aucune classe de registre manitobaine (centre / nursery / milieu familial / milieu familial de groupe) au dossier.",
     noFacilityTypeResults: "Aucun {type} permis dans ce rayon",
     noFacilityTypeResultsLead:
       "Il y a de la garde permise à proximité, mais aucune fiche classée comme {type}. Retirez la catégorie pour voir tous les types, ou élargissez la recherche.",
@@ -2691,7 +2706,7 @@ export const copy = {
     listingsVerify: "Fiches et vérification",
     listingsVerifyLead:
       "Les fiches restent courtes volontairement. Le type d’établissement, le statut de réclamation et les badges de permis sont des vérifications KidEase — pas un certificat gouvernemental. Les explications sont ici.",
-    verifyFacilityTitle: "Centre, nursery et milieu familial",
+    verifyFacilityTitle: "Types d’établissement permis au Canada",
     verifyUnclaimedTitle: "Fiches non réclamées",
     verifyUnclaimedBody:
       "Non réclamée signifie qu’aucun exploitant n’a encore prouvé qu’il dirige ce centre sur KidEase. Les faits peuvent venir du registre public. La fiche reste trouvable. Réclamée ou Réclamation vérifiée désigne l’exploitant, pas une vérification policière du personnel.",
@@ -3117,9 +3132,11 @@ export const copy = {
     filterSchedFull: "Temps plein",
     filterSchedPart: "Temps partiel",
     filterSchedFlex: "Flexible",
-    filterFacCentre: "Centre",
+    filterFacCentre: "Centre de garde",
     filterFacHome: "Milieu familial",
-    filterFacSchool: "En milieu scolaire",
+    filterFacSchool: "Parascolaire",
+    filterFacGroupHome: "Milieu familial de groupe",
+    filterFacNursery: "Nursery / prématernelle",
     filterApply: "Appliquer",
     filterClear: "Effacer",
     requestInfoTitle: "Demander des infos",
@@ -3149,7 +3166,8 @@ export const copy = {
     valuesTitle: "Valeurs",
     updatedLabel: "Mis à jour",
     deskFacility: "Type d’établissement",
-    deskFacilityLead: "Centre, milieu familial, scolaire ou nursery. Enregistré sur votre fiche.",
+    deskFacilityLead:
+      "Centre de garde, milieu familial, milieu familial de groupe, nursery / prématernelle ou parascolaire. Enregistré sur votre fiche et dans les filtres Explorer.",
     deskSchedule: "Horaires offerts",
     deskScheduleLead: "Ce que vous offrez vraiment. Vide = masqué dans la recherche.",
     deskOpenings: "Places",

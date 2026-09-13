@@ -384,7 +384,7 @@ function AdminPage() {
                   </span>
                   <span className="mt-1 block">{catalogHealth.reason}</span>
                   <span className="mt-2 block" data-facility-type-taxonomy>
-                    Facility types: Centre (fallback), Nursery (`nursery` amenity from Manitoba Facility Type), Home (`home` amenity). Name tokens are an admin gap only — never assigned at random.
+                    Facility types: child care centre (fallback), family child care (`home`), group child care home (`group-home`), nursery school (`nursery`), school-age (`in-school`). Name tokens are an admin gap only — never assigned at random. US-style aliases map and stay off empty filters.
                   </span>
                 </p>
               ) : null}

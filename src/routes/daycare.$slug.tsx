@@ -884,10 +884,11 @@ function Listing() {
 }
 
 const FACILITY_LABEL: Record<FacilityType, CopyKey> = {
-  centre: "facilityTypeCentre",
-  nursery: "facilityTypeNursery",
-  home: "facilityTypeHome",
-  school: "facilityTypeSchool",
+  child_care_centre: "facilityTypeCentre",
+  family_home: "facilityTypeHome",
+  group_home: "facilityTypeGroupHome",
+  nursery_preschool: "facilityTypeNursery",
+  school_age: "facilityTypeSchool",
 };
 
 function facilityTypeLabelKey(type: FacilityType): CopyKey {

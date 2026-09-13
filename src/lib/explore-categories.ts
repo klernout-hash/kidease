@@ -13,7 +13,7 @@ import {
   matchesRailAge,
   type RailAge,
 } from "@/lib/care-type";
-import { classifyFacilityType } from "@/lib/facility-type";
+import { classifyFacilityType, isHomeBasedFacility } from "@/lib/facility-type";
 import { listingAgeUnknown } from "@/lib/now-loops";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare } from "@/lib/types";
@@ -68,8 +68,8 @@ export function exploreTags(item: ExploreTaggedListing): ExploreCategory[] {
   }
   if (isBeforeAfterProgram(item)) tags.push("before-after");
   const facility = classifyFacilityType(item).type;
-  if (facility === "home") tags.push("home");
-  if (facility === "nursery") tags.push("nursery");
+  if (isHomeBasedFacility(facility)) tags.push("home");
+  if (facility === "nursery_preschool") tags.push("nursery");
   return tags;
 }
 

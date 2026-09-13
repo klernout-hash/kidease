@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BadgeCheck, BookOpen, Home, School, Shield, Wallet } from "lucide-react";
+import { BadgeCheck, BookOpen, Home, School, Shield, Users, Wallet, Backpack } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
@@ -48,8 +48,10 @@ export function VerifyPage() {
           <ul className="mt-4 space-y-3">
             {[
               { icon: School, title: t("facilityTypeCentre"), body: t("facilityTypeLeadCentre") },
-              { icon: BookOpen, title: t("facilityTypeNursery"), body: t("facilityTypeLeadNursery") },
               { icon: Home, title: t("facilityTypeHome"), body: t("facilityTypeLeadHome") },
+              { icon: Users, title: t("facilityTypeGroupHome"), body: t("facilityTypeLeadGroupHome") },
+              { icon: BookOpen, title: t("facilityTypeNursery"), body: t("facilityTypeLeadNursery") },
+              { icon: Backpack, title: t("facilityTypeSchool"), body: t("facilityTypeLeadSchool") },
             ].map((item) => (
               <li key={item.title} className="flex gap-3 rounded-xl bg-surface p-5 ring-1 ring-border">
                 <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">

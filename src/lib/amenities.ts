@@ -16,6 +16,7 @@ export function amenityLabel(key: string, locale: string) {
     "mud-kitchen": { en: "Mud kitchen", fr: "Cuisine de boue" },
     licensed: { en: "Licensed", fr: "Permis" },
     home: { en: "Home-scale", fr: "Échelle familiale" },
+    "group-home": { en: "Group child care home", fr: "Milieu familial de groupe" },
     yard: { en: "Fenced yard", fr: "Cour clôturée" },
     "small-group": { en: "Max 8 children", fr: "Max. 8 enfants" },
     gym: { en: "Gym access", fr: "Accès au gymnase" },

@@ -28,10 +28,11 @@ export function ListingBadges({
     : "rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium";
   const facility = classifyFacilityType(item);
   const FACILITY_BADGE: Record<FacilityType, CopyKey> = {
-    centre: "facilityTypeCentre",
-    nursery: "facilityTypeNursery",
-    home: "facilityTypeHome",
-    school: "facilityTypeSchool",
+    child_care_centre: "facilityTypeCentre",
+    family_home: "facilityTypeHome",
+    group_home: "facilityTypeGroupHome",
+    nursery_preschool: "facilityTypeNursery",
+    school_age: "facilityTypeSchool",
   };
 
   return (

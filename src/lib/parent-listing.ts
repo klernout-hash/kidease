@@ -8,7 +8,8 @@
 import { amenityLabel } from "@/lib/amenities";
 import {
   classifyFacilityType,
-  isFacilityType,
+  normalizeFacilityType,
+  FACILITY_TYPES,
   type FacilityType,
 } from "@/lib/facility-type";
 import { hasAmenity } from "@/lib/licensing";
@@ -26,9 +27,9 @@ export type ParentOpening = (typeof PARENT_OPENINGS)[number];
 export const PARENT_SCHEDULES = ["full", "part", "flexible"] as const;
 export type ParentSchedule = (typeof PARENT_SCHEDULES)[number];
 
-/** Parent-facing facility chips. Nursery maps to Centre; school-based is distinct. */
-export const PARENT_FACILITIES = ["centre", "home", "school"] as const;
-export type ParentFacility = (typeof PARENT_FACILITIES)[number];
+/** Parent-facing facility chips — same Canada set as the daycare desk. Empty types stay hidden. */
+export const PARENT_FACILITIES = FACILITY_TYPES;
+export type ParentFacility = FacilityType;
 
 export const OPENING_WINDOWS = ["immediate", "upcoming", "none"] as const;
 export type OpeningWindow = (typeof OPENING_WINDOWS)[number];
@@ -147,7 +148,7 @@ export function isParentSchedule(value: string): value is ParentSchedule {
 }
 
 export function isParentFacility(value: string): value is ParentFacility {
-  return FAC_IDS.has(value);
+  return normalizeFacilityType(value) != null;
 }
 
 export function isOpeningWindow(value: string): value is OpeningWindow {
@@ -193,7 +194,9 @@ export function parseParentListingSearch(s: Record<string, unknown>): ParentList
     ages: parseCsvQuery(s.ages, isParentAgeBand) as ParentAgeBand[],
     open: parseCsvQuery(s.open, isParentOpening) as ParentOpening[],
     sched: parseCsvQuery(s.sched, isParentSchedule) as ParentSchedule[],
-    fac: parseCsvQuery(s.fac, isParentFacility) as ParentFacility[],
+    fac: uniqueTokens(parseCsvQuery(s.fac, isParentFacility).map((id) => normalizeFacilityType(id) ?? id)).filter(
+      (id): id is ParentFacility => FAC_IDS.has(id),
+    ),
   };
 }
 
@@ -220,8 +223,7 @@ export function normalizeOpeningWindow(value: unknown): OpeningWindow | null {
 }
 
 export function normalizeFacilityTypeColumn(value: unknown): FacilityType | null {
-  const raw = String(value ?? "").trim();
-  return isFacilityType(raw) ? raw : null;
+  return normalizeFacilityType(value);
 }
 
 export function normalizeFinancial(value: unknown, amenities = ""): ListingFinancial {
@@ -346,9 +348,10 @@ export function parentListingToSql(fields: Partial<ParentListingFields>) {
 }
 
 const FACILITY_AMENITY: Partial<Record<FacilityType, string>> = {
-  home: "home",
-  nursery: "nursery",
-  school: "in-school",
+  family_home: "home",
+  group_home: "group-home",
+  nursery_preschool: "nursery",
+  school_age: "in-school",
 };
 
 const FINANCIAL_AMENITY: Record<FinancialFlag, string> = {
@@ -380,7 +383,7 @@ export function mergeListingAmenities(
       .map((part) => part.trim())
       .filter(Boolean),
   );
-  for (const drop of ["home", "nursery", "in-school"]) keys.delete(drop);
+  for (const drop of ["home", "group-home", "nursery", "in-school"]) keys.delete(drop);
   if (next.facilityType && FACILITY_AMENITY[next.facilityType]) {
     keys.add(FACILITY_AMENITY[next.facilityType]!);
   }
@@ -413,7 +416,7 @@ export function mergeListingAmenities(
 }
 
 export function listingFacilityClass(item: {
-  facilityType?: FacilityType | null;
+  facilityType?: FacilityType | string | null;
   amenities?: string | null;
   name?: string | null;
 }) {
@@ -425,14 +428,11 @@ export function listingFacilityClass(item: {
 }
 
 export function parentFacilityOf(item: {
-  facilityType?: FacilityType | null;
+  facilityType?: FacilityType | string | null;
   amenities?: string | null;
   name?: string | null;
 }): ParentFacility {
-  const type = listingFacilityClass(item).type;
-  if (type === "home") return "home";
-  if (type === "school") return "school";
-  return "centre";
+  return listingFacilityClass(item).type;
 }
 
 /**
@@ -658,13 +658,24 @@ export function parentScheduleLabel(id: ParentSchedule, locale: string): string 
   return locale === "fr" ? map[id].fr : map[id].en;
 }
 
-export function parentFacilityLabel(id: ParentFacility, locale: string): string {
+export function parentFacilityLabel(id: ParentFacility | string, locale: string): string {
+  const kind = normalizeFacilityType(id) ?? "child_care_centre";
   const map: Record<ParentFacility, { en: string; fr: string }> = {
-    centre: { en: "Centre", fr: "Centre" },
-    home: { en: "Home-family", fr: "Milieu familial" },
-    school: { en: "School-based", fr: "En milieu scolaire" },
+    child_care_centre: { en: "Child care centre", fr: "Centre de garde" },
+    family_home: { en: "Family child care", fr: "Milieu familial" },
+    group_home: { en: "Group child care home", fr: "Milieu familial de groupe" },
+    nursery_preschool: { en: "Nursery school / preschool", fr: "Nursery / prématernelle" },
+    school_age: { en: "School-age", fr: "Parascolaire" },
   };
-  return locale === "fr" ? map[id].fr : map[id].en;
+  return locale === "fr" ? map[kind].fr : map[kind].en;
+}
+
+export function facilityTypeCopyKey(type: FacilityType): "facilityTypeCentre" | "facilityTypeHome" | "facilityTypeGroupHome" | "facilityTypeNursery" | "facilityTypeSchool" {
+  if (type === "family_home") return "facilityTypeHome";
+  if (type === "group_home") return "facilityTypeGroupHome";
+  if (type === "nursery_preschool") return "facilityTypeNursery";
+  if (type === "school_age") return "facilityTypeSchool";
+  return "facilityTypeCentre";
 }
 
 export function parentOpeningLabel(id: ParentOpening, locale: string): string {

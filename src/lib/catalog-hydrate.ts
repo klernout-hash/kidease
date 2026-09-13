@@ -234,13 +234,25 @@ export function hydrateCentre(
   const address = raw.address || "";
   const postal = raw.postalCode || "";
   const kindEn =
-    facility.type === "nursery" ? "licensed nursery" : facility.type === "home" ? "licensed home" : "licensed childcare centre";
+    facility.type === "nursery_preschool"
+      ? "licensed nursery school"
+      : facility.type === "family_home"
+        ? "licensed family child care"
+        : facility.type === "group_home"
+          ? "licensed group child care home"
+          : facility.type === "school_age"
+            ? "licensed school-age program"
+            : "licensed childcare centre";
   const kindFr =
-    facility.type === "nursery"
-      ? "nursery permise"
-      : facility.type === "home"
+    facility.type === "nursery_preschool"
+      ? "nursery / prématernelle permise"
+      : facility.type === "family_home"
         ? "milieu familial permis"
-        : "centre de garde permis";
+        : facility.type === "group_home"
+          ? "milieu familial de groupe permis"
+          : facility.type === "school_age"
+            ? "service parascolaire permis"
+            : "centre de garde permis";
   const desc =
     raw.description ||
     `${name} is a ${kindEn}${address ? ` at ${address}` : ""}${city ? `, ${city}` : ""} ${postal} (${province}). Hours and spaces follow the provincial or territorial registry.`.trim();

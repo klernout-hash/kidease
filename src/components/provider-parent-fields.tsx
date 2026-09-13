@@ -11,6 +11,7 @@ import {
   PROMO_TEXT_MAX,
   curriculumLabel,
   emptyFinancial,
+  facilityTypeCopyKey,
   parentAgeLabel,
   parentScheduleLabel,
   safetyLabel,
@@ -19,7 +20,7 @@ import {
   type OpeningWindow,
   type ParentSchedule,
 } from "@/lib/parent-listing";
-import { FACILITY_TYPES, type FacilityType } from "@/lib/facility-type";
+import { FACILITY_TYPES, normalizeFacilityType, type FacilityType } from "@/lib/facility-type";
 import { amenityLabel } from "@/lib/amenities";
 import { useCopy } from "@/lib/use-copy";
 import type { Daycare } from "@/lib/types";
@@ -42,7 +43,7 @@ export type ParentDeskState = {
 
 export function parentDeskFromDaycare(daycare: Daycare): ParentDeskState {
   return {
-    facilityType: daycare.facilityType ?? null,
+    facilityType: normalizeFacilityType(daycare.facilityType) ?? null,
     scheduleOptions: daycare.scheduleOptions ?? [],
     openingWindow: daycare.openingWindow ?? null,
     programs: daycare.programs ?? [],
@@ -99,13 +100,7 @@ export function ProviderParentFields({
               aria-pressed={value.facilityType === type}
               onClick={() => onChange({ ...value, facilityType: value.facilityType === type ? null : type })}
             >
-              {type === "centre"
-                ? t("filterFacCentre")
-                : type === "home"
-                  ? t("filterFacHome")
-                  : type === "school"
-                    ? t("filterFacSchool")
-                    : t("facilityTypeNursery")}
+              {t(facilityTypeCopyKey(type))}
             </ChipButton>
           ))}
         </div>
