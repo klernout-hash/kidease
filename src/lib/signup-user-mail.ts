@@ -1,7 +1,10 @@
 /**
- * Site-owned signup mail for parents / daycare providers.
- * Verify-your-email + provider next-steps are independent of Admin notify.
- * CRM nurture is later and out of scope here. Kept free of DB / Start so tests can import it.
+ * Site-owned signup mail. Sequence (Kyle, 2026-09-13):
+ * 1) Signup (parent or daycare): verify-your-email only. Independent of Admin notify.
+ * 2) Provider next-steps only after emailVerified becomes true. Include listing name if any.
+ * 3) Do not send both at signup. Joan’s Titan “both” send was a one-off recovery.
+ * 4) Optional one-time verify-only nudge after 24–48h if still unverified.
+ * CRM nurture is later and out of scope. Kept free of DB / Start so tests can import it.
  */
 
 export const VERIFY_EMAIL_SUBJECT = "Verify your email — KidEase";
@@ -9,6 +12,9 @@ export const VERIFY_EMAIL_SUBJECT_FR = "Confirmez votre courriel — KidEase";
 export const PROVIDER_ONBOARD_SUBJECT = "Next steps to get verified on KidEase";
 export const PROVIDER_ONBOARD_SUBJECT_FR = "Prochaines étapes pour être vérifié sur KidEase";
 export const PROVIDER_ONBOARD_PURPOSE = "provider_onboard";
+export const VERIFY_EMAIL_NUDGE_PURPOSE = "verify_email_nudge";
+export const VERIFY_NUDGE_MIN_MS = 24 * 60 * 60 * 1000;
+export const VERIFY_NUDGE_MAX_MS = 48 * 60 * 60 * 1000;
 
 export function signupMailAppOrigin(origin?: string | null): string {
   const raw = (origin || "").trim() || "https://www.kidease.ca";
@@ -39,13 +45,43 @@ export function shouldSendVerifyEmail(input: {
   return Boolean((input.email || "").trim()) && !input.emailVerified;
 }
 
-/** Next-steps fire on provider signup and/or first listing — not gated on mailbox verify. */
+/** Signup never bundles next-steps with verify-your-email. */
+export function signupSendsNextSteps(): false {
+  return false;
+}
+
+/** Next-steps only after the mailbox is verified — never at unverified signup. */
 export function shouldSendProviderNextSteps(input: {
   role?: string | null;
   email?: string | null;
   emailVerified?: boolean | null;
 }): boolean {
-  return input.role === "provider" && Boolean((input.email || "").trim());
+  return input.role === "provider" && Boolean((input.email || "").trim()) && input.emailVerified === true;
+}
+
+export function listingDisplayName(listingName?: string | null): string {
+  return (listingName || "").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+export function isVerifyNudgeWindow(createdAt: Date, now: Date = new Date()): boolean {
+  const age = now.getTime() - createdAt.getTime();
+  return age >= VERIFY_NUDGE_MIN_MS && age < VERIFY_NUDGE_MAX_MS;
+}
+
+/** One-time verify-only resend. Parents and providers. Never next-steps. */
+export function shouldSendVerifyNudge(input: {
+  email?: string | null;
+  emailVerified?: boolean | null;
+  createdAt?: Date | string | null;
+  alreadyNudged?: boolean;
+  now?: Date;
+}): boolean {
+  if (input.alreadyNudged) return false;
+  if (!shouldSendVerifyEmail(input)) return false;
+  if (!input.createdAt) return false;
+  const created = input.createdAt instanceof Date ? input.createdAt : new Date(input.createdAt);
+  if (Number.isNaN(created.getTime())) return false;
+  return isVerifyNudgeWindow(created, input.now);
 }
 
 /** Winnipeg calendar day (YYYY-MM-DD) so two triggers the same day do not spam. */
@@ -126,18 +162,31 @@ export function verifyEmailHtml(url: string, name?: string | null): string {
  * Honest provider onboarding (EN + FR-CA). KidEase reviews uploads.
  * It does not issue Vulnerable Sector Checks — only local police / RCMP (or BC CRRP) can.
  */
-export function providerOnboardText(origin?: string | null, name?: string | null): string {
+export function providerOnboardText(origin?: string | null, name?: string | null, listingName?: string | null): string {
   const listings = providerListingsHref(origin);
   const claim = providerClaimHref(origin);
   const screening = providerScreeningHref(origin);
+  const listing = listingDisplayName(listingName);
+  const enLead = listing
+    ? `Thanks for joining KidEase as a daycare provider. We already have “${listing}” on file.`
+    : "Thanks for joining KidEase as a daycare provider.";
+  const frLead = listing
+    ? `Merci de joindre KidEase comme fournisseur de garde. Nous avons déjà « ${listing} » au dossier.`
+    : "Merci de joindre KidEase comme fournisseur de garde.";
+  const enStep1 = listing
+    ? `1. Complete your listing — ${listing} — address, hours, and open spots: ${listings}`
+    : `1. Complete your listing — name, address, hours, and open spots: ${listings}`;
+  const frStep1 = listing
+    ? `1. Complétez votre fiche — ${listing} — adresse, heures et places : ${listings}`
+    : `1. Complétez votre fiche — nom, adresse, heures et places : ${listings}`;
   return [
     hello(name, "en"),
     "",
-    "Thanks for joining KidEase as a daycare provider.",
+    enLead,
     "",
     "Here are the next steps to get verified. KidEase reviews what you upload. KidEase does not run police checks and does not issue Vulnerable Sector Checks. Only local police / RCMP (or British Columbia’s Criminal Records Review Program) can.",
     "",
-    `1. Complete your listing — name, address, hours, and open spots: ${listings}`,
+    enStep1,
     "2. Add your current licence number.",
     `3. Claim the listing if we already have it from the public registry: ${claim}`,
     `4. When you are ready, upload a current Vulnerable Sector Check on Screening. In Manitoba, also upload a Child Abuse Registry check, and a Prior Contact check for home-based households: ${screening}`,
@@ -149,11 +198,11 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     "",
     hello(name, "fr"),
     "",
-    "Merci de joindre KidEase comme fournisseur de garde.",
+    frLead,
     "",
     "Voici les prochaines étapes pour être vérifié. KidEase examine ce que vous téléversez. KidEase ne fait pas de contrôles policiers et ne délivre pas de vérifications du secteur vulnérable. Seule la police locale / la GRC (ou le CRRP de la C.-B.) le peut.",
     "",
-    `1. Complétez votre fiche — nom, adresse, heures et places : ${listings}`,
+    frStep1,
     "2. Ajoutez votre numéro de permis actuel.",
     `3. Réclamez la fiche si nous l’avons déjà à partir du registre public : ${claim}`,
     `4. Quand vous êtes prêt, téléversez une vérification du secteur vulnérable à jour dans Filtrage. Au Manitoba, ajoutez aussi le registre des mauvais traitements et, pour un milieu familial, une vérification des contacts antérieurs : ${screening}`,
@@ -163,12 +212,23 @@ export function providerOnboardText(origin?: string | null, name?: string | null
   ].join("\n");
 }
 
-export function providerOnboardHtml(origin?: string | null, name?: string | null): string {
+export function providerOnboardHtml(origin?: string | null, name?: string | null, listingName?: string | null): string {
   const listings = escapeAttr(providerListingsHref(origin));
   const claim = escapeAttr(providerClaimHref(origin));
   const screening = escapeAttr(providerScreeningHref(origin));
+  const listing = listingDisplayName(listingName);
+  const listingHtml = listing ? escapeHtml(listing) : "";
   const enHi = escapeHtml(hello(name, "en"));
   const frHi = escapeHtml(hello(name, "fr"));
+  const enLead = listingHtml
+    ? `Thanks for joining KidEase as a daycare provider. We already have “${listingHtml}” on file. KidEase reviews what you upload. KidEase does not run police checks and does not issue Vulnerable Sector Checks. Only local police / RCMP (or BC CRRP) can.`
+    : "Thanks for joining KidEase as a daycare provider. KidEase reviews what you upload. KidEase does not run police checks and does not issue Vulnerable Sector Checks. Only local police / RCMP (or BC CRRP) can.";
+  const frLead = listingHtml
+    ? `${frHi} Merci de joindre KidEase comme fournisseur de garde. Nous avons déjà « ${listingHtml} » au dossier. KidEase examine vos téléversements et ne fait pas de contrôles policiers. Complétez la fiche, ajoutez le permis, réclamez au besoin, puis téléversez le VSC (et au Manitoba le registre des mauvais traitements) dans Filtrage.`
+    : `${frHi} Merci de joindre KidEase comme fournisseur de garde. KidEase examine vos téléversements et ne fait pas de contrôles policiers. Complétez la fiche, ajoutez le permis, réclamez au besoin, puis téléversez le VSC (et au Manitoba le registre des mauvais traitements) dans Filtrage.`;
+  const enStep1 = listingHtml
+    ? `Complete your listing — ${listingHtml} — address, hours, and open spots.`
+    : "Complete your listing — name, address, hours, and open spots.";
   return `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
@@ -176,9 +236,9 @@ export function providerOnboardHtml(origin?: string | null, name?: string | null
       <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
       <h1 style="margin:12px 0 0;font-size:24px;">Next steps to get verified</h1>
       <p style="margin:16px 0 0;">${enHi}</p>
-      <p style="margin:12px 0 0;color:#5c6578;">Thanks for joining KidEase as a daycare provider. KidEase reviews what you upload. KidEase does not run police checks and does not issue Vulnerable Sector Checks. Only local police / RCMP (or BC CRRP) can.</p>
+      <p style="margin:12px 0 0;color:#5c6578;">${enLead}</p>
       <ol style="margin:16px 0 0;padding-left:20px;color:#1c2438;line-height:1.55;">
-        <li>Complete your listing — name, address, hours, and open spots.</li>
+        <li>${enStep1}</li>
         <li>Add your current licence number.</li>
         <li>Claim the listing if we already have it from the public registry.</li>
         <li>When ready, upload a current Vulnerable Sector Check on Screening. Manitoba also needs a Child Abuse Registry check (and Prior Contact for home-based households).</li>
@@ -188,7 +248,7 @@ export function providerOnboardHtml(origin?: string | null, name?: string | null
         <a href="${listings}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600;">Complete listing</a>
       </p>
       <p style="margin:12px 0 0;"><a href="${claim}" style="color:#1a3790;font-weight:600;">Claim a listing</a> · <a href="${screening}" style="color:#1a3790;font-weight:600;">Open Screening</a></p>
-      <p style="margin:28px 0 0;font-size:13px;color:#5c6578;">${frHi} Merci de joindre KidEase comme fournisseur de garde. KidEase examine vos téléversements et ne fait pas de contrôles policiers. Complétez la fiche, ajoutez le permis, réclamez au besoin, puis téléversez le VSC (et au Manitoba le registre des mauvais traitements) dans Filtrage.</p>
+      <p style="margin:28px 0 0;font-size:13px;color:#5c6578;">${frLead}</p>
     </td></tr>
   </table>
 </body></html>`;

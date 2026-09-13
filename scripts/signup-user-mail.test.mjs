@@ -6,14 +6,15 @@ import { fileURLToPath } from "node:url";
 import {
   PROVIDER_ONBOARD_SUBJECT,
   VERIFY_EMAIL_SUBJECT,
+  isVerifyNudgeWindow,
   providerOnboardText,
   providerScreeningHref,
-  sameWinnipegDay,
   shouldSendProviderNextSteps,
   shouldSendVerifyEmail,
+  shouldSendVerifyNudge,
+  signupSendsNextSteps,
   signupUserMailIndependentOfAdmin,
   verifyEmailText,
-  winnipegDayKey,
 } from "../src/lib/signup-user-mail.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -63,10 +64,12 @@ test("verify email copy is a welcome/confirm with a real link, EN + FR-CA", () =
   assert.match(copy, /verifyEmailSubject: "Confirmez votre courriel — KidEase"/);
 });
 
-test("provider next-steps fire on signup without waiting for mailbox verify", () => {
+test("signup sends verify-email only — next-steps wait for emailVerified", () => {
+  assert.equal(signupSendsNextSteps(), false);
   assert.equal(
     shouldSendProviderNextSteps({ role: "provider", email: "jane@example.com", emailVerified: false }),
-    true,
+    false,
+    "unverified provider signup must not get next-steps",
   );
   assert.equal(
     shouldSendProviderNextSteps({ role: "provider", email: "jane@example.com", emailVerified: true }),
@@ -75,32 +78,69 @@ test("provider next-steps fire on signup without waiting for mailbox verify", ()
   assert.equal(
     shouldSendProviderNextSteps({ role: "parent", email: "sam@family.ca", emailVerified: true }),
     false,
+    "parents never get daycare next-steps",
   );
   const family = src("src/lib/server/family.ts");
-  assert.match(family, /ownerCount === 0/);
-  assert.match(family, /sendProviderNextStepsIfReady/);
-  assert.match(family, /first-listing next-steps/);
-});
-
-test("same-day Winnipeg dedupe key is a calendar date", () => {
-  const noon = new Date("2026-09-13T17:00:00Z");
-  assert.equal(winnipegDayKey(noon), "2026-09-13");
-  assert.equal(sameWinnipegDay(noon, new Date("2026-09-13T23:00:00Z")), true);
-  assert.equal(sameWinnipegDay(noon, new Date("2026-09-14T12:00:00Z")), false);
-  const dedupe = src("src/lib/server/actor-mail-dedupe.ts");
-  assert.match(dedupe, /on conflict \(purpose, email, winnipeg_day\) do nothing/);
-  assert.match(src("migrations/0048_actor_mail_sends.sql"), /actor_mail_sends/);
+  assert.doesNotMatch(family, /sendProviderNextStepsIfReady/);
+  assert.doesNotMatch(family, /first-listing next-steps/);
   const server = src("src/lib/server/signup-user-mail.server.ts");
-  assert.match(server, /claimActorMailDay/);
-  assert.match(server, /releaseActorMailDay/);
+  assert.match(server, /signupSendsNextSteps/);
+  assert.match(server, /emailVerified:\s*actor\.emailVerified/);
+  const emailPw = src("src/lib/auth/email-password.ts");
+  assert.match(emailPw, /afterEmailVerification/);
+  assert.match(emailPw, /sendProviderNextStepsIfReady/);
 });
 
-test("provider next-steps copy is honest and bilingual, and points at listing + Screening", () => {
+test("verify-only nudge is one-time inside a 24–48h window", () => {
+  const created = new Date("2026-09-11T18:00:00Z");
+  assert.equal(isVerifyNudgeWindow(created, new Date("2026-09-12T17:00:00Z")), false);
+  assert.equal(isVerifyNudgeWindow(created, new Date("2026-09-12T19:00:00Z")), true);
+  assert.equal(isVerifyNudgeWindow(created, new Date("2026-09-13T19:00:00Z")), false);
+  assert.equal(
+    shouldSendVerifyNudge({
+      email: "joan@example.com",
+      emailVerified: false,
+      createdAt: created,
+      now: new Date("2026-09-12T19:00:00Z"),
+    }),
+    true,
+  );
+  assert.equal(
+    shouldSendVerifyNudge({
+      email: "joan@example.com",
+      emailVerified: true,
+      createdAt: created,
+      now: new Date("2026-09-12T19:00:00Z"),
+    }),
+    false,
+  );
+  assert.equal(
+    shouldSendVerifyNudge({
+      email: "joan@example.com",
+      emailVerified: false,
+      createdAt: created,
+      alreadyNudged: true,
+      now: new Date("2026-09-12T19:00:00Z"),
+    }),
+    false,
+  );
+  const server = src("src/lib/server/signup-user-mail.server.ts");
+  assert.match(server, /runVerifyEmailNudgeJob/);
+  assert.match(server, /VERIFY_EMAIL_NUDGE_PURPOSE/);
+  assert.match(src("src/routes/api/digest.ts"), /runVerifyEmailNudgeJob/);
+  const dedupe = src("src/lib/server/actor-mail-dedupe.ts");
+  assert.match(dedupe, /claimActorMailOnce/);
+  assert.match(dedupe, /1970-01-01/);
+});
+
+test("provider next-steps copy is honest and bilingual, and can name an existing listing", () => {
   assert.equal(PROVIDER_ONBOARD_SUBJECT, "Next steps to get verified on KidEase");
   assert.equal(providerScreeningHref("https://www.kidease.ca"), "https://www.kidease.ca/provider?desk=screening");
-  const text = providerOnboardText("https://www.kidease.ca", "Joan");
+  const text = providerOnboardText("https://www.kidease.ca", "Joan", "Little Fox Child Care");
   assert.match(text, /Hi Joan,/);
   assert.match(text, /Thanks for joining KidEase as a daycare provider/);
+  assert.match(text, /We already have “Little Fox Child Care” on file/);
+  assert.match(text, /Complete your listing — Little Fox Child Care —/);
   assert.match(text, /does not run police checks/);
   assert.match(text, /does not issue Vulnerable Sector Checks/);
   assert.match(text, /Child Abuse Registry/);
@@ -112,14 +152,19 @@ test("provider next-steps copy is honest and bilingual, and points at listing + 
   assert.match(text, /Admin reviews/);
   assert.match(text, /Screening on file/);
   assert.match(text, /Bonjour Joan,/);
-  assert.match(text, /Merci de joindre KidEase comme fournisseur de garde/);
+  assert.match(text, /Nous avons déjà « Little Fox Child Care » au dossier/);
   assert.match(text, /ne fait pas de contrôles policiers/);
   assert.doesNotMatch(text, /Background checked by KidEase/i);
   assert.doesNotMatch(text, /police-checked by kidease/i);
   assert.doesNotMatch(text, /KidEase (ran|issued) a (police|Vulnerable)/i);
+  const unnamed = providerOnboardText("https://www.kidease.ca", "Joan");
+  assert.doesNotMatch(unnamed, /We already have/);
+  assert.match(unnamed, /Complete your listing — name, address, hours, and open spots/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /providerOnboardSubject: "Next steps to get verified on KidEase"/);
   assert.match(copy, /providerOnboardSubject: "Prochaines étapes pour être vérifié sur KidEase"/);
+  assert.match(copy, /providerOnboardListingOnFile: "We already have/);
+  assert.match(copy, /providerOnboardListingOnFile: "Nous avons déjà/);
 });
 
 test("signup user mail is site-owned transactional mail — no GHL", () => {
@@ -130,6 +175,7 @@ test("signup user mail is site-owned transactional mail — no GHL", () => {
     "src/lib/server/signup-user-mail.server.ts",
     "src/lib/server/actor-mail-dedupe.ts",
     "src/lib/auth/email-password.ts",
+    "src/routes/api/digest.ts",
   ];
   for (const rel of files) {
     const body = src(rel);

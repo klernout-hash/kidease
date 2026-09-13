@@ -1758,7 +1758,9 @@ export const copy = {
     providerOnboardLead: "Thanks for joining KidEase as a daycare provider.",
     providerOnboardHonesty:
       "KidEase reviews what you upload. KidEase does not run police checks and does not issue Vulnerable Sector Checks. Only local police / RCMP (or BC CRRP) can.",
+    providerOnboardListingOnFile: "We already have “{name}” on file.",
     providerOnboardStep1: "Complete your listing — name, address, hours, and open spots.",
+    providerOnboardStep1Named: "Complete your listing — {name} — address, hours, and open spots.",
     providerOnboardStep2: "Add your current licence number.",
     providerOnboardStep3: "Claim the listing if we already have it from the public registry.",
     providerOnboardStep4:
@@ -3535,7 +3537,9 @@ export const copy = {
     providerOnboardLead: "Merci de joindre KidEase comme fournisseur de garde.",
     providerOnboardHonesty:
       "KidEase examine ce que vous téléversez. KidEase ne fait pas de contrôles policiers et ne délivre pas de vérifications du secteur vulnérable. Seule la police locale / la GRC (ou le CRRP de la C.-B.) le peut.",
+    providerOnboardListingOnFile: "Nous avons déjà « {name} » au dossier.",
     providerOnboardStep1: "Complétez votre fiche — nom, adresse, heures et places.",
+    providerOnboardStep1Named: "Complétez votre fiche — {name} — adresse, heures et places.",
     providerOnboardStep2: "Ajoutez votre numéro de permis actuel.",
     providerOnboardStep3: "Réclamez la fiche si nous l’avons déjà à partir du registre public.",
     providerOnboardStep4:

@@ -503,7 +503,7 @@ export const GROUPS = [
         concealed: true,
         vercel: "both",
         required: false,
-        notes: "Bearer for /api/digest, /api/search-alerts, /api/seed-catalog, /api/docusign/poll.",
+        notes: "Bearer for /api/digest (also one-time verify-email nudge), /api/search-alerts, /api/seed-catalog, /api/docusign/poll.",
       },
       {
         name: "SENTRY_DSN",

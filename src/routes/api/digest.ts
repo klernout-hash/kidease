@@ -14,8 +14,17 @@ async function run(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
   const result = await sendDailyDigest();
+  let verifyEmailNudge: { ok: boolean; sent?: number; skipped?: number; failed?: number; scanned?: number } = {
+    ok: false,
+  };
+  try {
+    const { runVerifyEmailNudgeJob } = await import("@/lib/server/signup-user-mail.server");
+    verifyEmailNudge = await runVerifyEmailNudgeJob();
+  } catch (err) {
+    console.error("[kidease-mail] verify-email nudge job failed", err);
+  }
   await logSecurityEvent({ kind: "digest_run", ip, detail: "ok" });
-  return Response.json(result);
+  return Response.json({ ...result, verifyEmailNudge });
 }
 
 export const Route = createFileRoute("/api/digest")({

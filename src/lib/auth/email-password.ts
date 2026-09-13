@@ -29,6 +29,7 @@ export async function sendVerificationEmail({
   }
 }
 
+/** Next-steps only after the mailbox is verified — never bundled with signup verify mail. */
 export async function afterEmailVerification(user: { id: string }) {
   try {
     const { sendProviderNextStepsIfReady } = await import("@/lib/server/signup-user-mail.server");
