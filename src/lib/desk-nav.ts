@@ -1,3 +1,5 @@
+import type { CopyKey } from "./copy.ts";
+
 export type DeskId = "admin" | "support" | "daycare" | "parent";
 
 export const DAYCARE_PRIMARY_NAV_IDS = ["today", "messages", "tours", "listings"] as const;
@@ -9,6 +11,8 @@ export type DeskItem = {
   id: string;
   label: string;
   hint?: string;
+  labelKey?: CopyKey;
+  hintKey?: CopyKey;
   href?: string;
   search?: Record<string, string>;
   icon?: DeskIcon;
@@ -38,21 +42,21 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "account", label: "Account", hint: "Profile and preferences", href: "/account", search: { tab: "profile", desk: "support" } },
   ],
   daycare: [
-    { id: "today", label: "Today", hint: "What needs you now" },
-    { id: "messages", label: "Messages", hint: "Parent inquiries + tours", href: "/inbox", search: { view: "centre" } },
-    { id: "tours", label: "Tour times", hint: "When families can visit" },
-    { id: "listings", label: "My listings", hint: "Spots, photos, fees" },
-    { id: "requests", label: "Lead inbox", hint: "Tours, waitlist, and spots" },
-    { id: "employees", label: "Employees", hint: "Add an employee" },
-    { id: "screening", label: "Screening", hint: "Required documents" },
-    { id: "money", label: "Money", hint: "Bills you send" },
-    { id: "licence", label: "Licence", hint: "Trust checklist + photo" },
-    { id: "contract", label: "Contract", hint: "Agreement + enrolment packs" },
-    { id: "promote", label: "Promote", hint: "Priority placement" },
-    { id: "subscription", label: "Subscription", hint: "Centre plans", icon: "credit-card", href: "/provider/subscription" },
-    { id: "claim", label: "Claim a centre", href: "/claim" },
-    { id: "add", label: "Add a new Daycare listing", hint: "Another location" },
-    { id: "account", label: "Account", hint: "Sign-in and preferences", href: "/account", search: { tab: "profile", desk: "director" } },
+    { id: "today", label: "Today", hint: "What needs you now", labelKey: "todayHome", hintKey: "deskNavTodayHint" },
+    { id: "messages", label: "Messages", hint: "Parent inquiries + tours", labelKey: "messages", hintKey: "deskNavMessagesHint", href: "/inbox", search: { view: "centre" } },
+    { id: "tours", label: "Tour times", hint: "When families can visit", labelKey: "tourTimes", hintKey: "deskNavToursHint" },
+    { id: "listings", label: "My listings", hint: "Spots, photos, fees", labelKey: "deskNavListings", hintKey: "deskNavListingsHint" },
+    { id: "requests", label: "Lead inbox", hint: "Tours, waitlist, and spots", labelKey: "leadInbox", hintKey: "deskNavRequestsHint" },
+    { id: "employees", label: "Employees", hint: "Add an employee", labelKey: "employeesTitle", hintKey: "deskNavEmployeesHint" },
+    { id: "screening", label: "Screening", hint: "Required documents", labelKey: "listingCoachOpenScreening", hintKey: "deskNavScreeningHint" },
+    { id: "money", label: "Money", hint: "Bills you send", labelKey: "deskNavMoney", hintKey: "deskNavMoneyHint" },
+    { id: "licence", label: "Licence", hint: "Trust checklist + photo", labelKey: "listingCoachOpenLicence", hintKey: "deskNavLicenceHint" },
+    { id: "contract", label: "Contract", hint: "Agreement + enrolment packs", labelKey: "deskNavContract", hintKey: "deskNavContractHint" },
+    { id: "promote", label: "Promote", hint: "Priority placement", labelKey: "deskNavPromote", hintKey: "deskNavPromoteHint" },
+    { id: "subscription", label: "Subscription", hint: "Centre plans", labelKey: "deskNavSubscription", hintKey: "deskNavSubscriptionHint", icon: "credit-card", href: "/provider/subscription" },
+    { id: "claim", label: "Claim a centre", labelKey: "deskNavClaim", href: "/claim" },
+    { id: "add", label: "Add a new Daycare listing", hint: "Another location", labelKey: "deskNavAddListing", hintKey: "deskNavAddListingHint" },
+    { id: "account", label: "Account", hint: "Sign-in and preferences", labelKey: "account", hintKey: "deskNavAccountHint", href: "/account", search: { tab: "profile", desk: "director" } },
   ],
   parent: [
     { id: "explore", label: "For you", hint: "Matches near you" },
@@ -110,10 +114,10 @@ export function parentNavSearch(
   return {};
 }
 
-export const DESK_META: Record<DeskId, { eyebrow: string; title: string }> = {
+export const DESK_META: Record<DeskId, { eyebrow: string; title: string; eyebrowKey?: CopyKey; titleKey?: CopyKey }> = {
   admin: { eyebrow: "Operator", title: "Admin" },
   support: { eyebrow: "Support", title: "Cases" },
-  daycare: { eyebrow: "Daycare", title: "Daycare desk" },
+  daycare: { eyebrow: "Daycare", title: "Daycare desk", eyebrowKey: "deskDirector", titleKey: "daycareDeskTitle" },
   parent: { eyebrow: "Parent", title: "Family desk" },
 };
 

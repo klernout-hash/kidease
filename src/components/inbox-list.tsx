@@ -66,7 +66,7 @@ export function InboxList() {
                 title={t("noInboxCentre")}
                 body={t("noInboxCentreLead")}
                 action={t("emptyProviderInboxCta")}
-                actionTo="/provider"
+                actionTo="/inbox?view=centre"
               />
             ) : (
               <EmptyState title={t("noInbox")} body={t("noInboxLead")} action={t("emptyFindCare")} actionTo="/search" />

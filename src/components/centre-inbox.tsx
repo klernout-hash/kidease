@@ -169,14 +169,14 @@ export function CentreInboxDesk({
             className="h-11 w-full rounded-md border border-border bg-surface pl-9 pr-3 text-sm"
           />
         </label>
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="flex flex-wrap gap-1.5" data-ke="inbox-stage-filters">
           {INBOX_FILTERS.map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => setFilter(parseInboxFilter(id))}
               className={cn(
-                "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ring-1",
+                "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium ring-1",
                 filter === id ? "bg-primary text-primary-fg ring-primary" : "bg-surface text-muted ring-border",
               )}
             >
@@ -201,7 +201,7 @@ export function CentreInboxDesk({
                 <p className="font-medium">{t("inboxEmptyNeedYou")}</p>
                 <p className="mt-1 text-sm text-muted">{t("inboxEmptyNeedYouLead")}</p>
                 <Button size="sm" className="mt-3" asChild>
-                  <Link to="/provider" search={{ desk: "today" }}>
+                  <Link to="/inbox" search={inboxSearch("centre")} data-ke="inbox-empty-cta">
                     {t("inboxEmptyNeedYouCta")}
                   </Link>
                 </Button>
@@ -403,7 +403,7 @@ export function CentreInboxDesk({
     >
       <div
         data-ke="centre-inbox"
-        className="grid min-h-[70dvh] overflow-hidden rounded-xl bg-surface ring-1 ring-border lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)_minmax(16rem,20rem)]"
+        className="grid min-h-[70dvh] overflow-hidden rounded-xl bg-surface ring-1 ring-border lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)_minmax(16rem,20rem)]"
       >
         <div className={cn(selectedId ? "hidden lg:flex lg:flex-col" : "flex flex-col")}>{listPane}</div>
         <div className={cn(!selectedId ? "hidden lg:flex lg:flex-col" : "flex flex-col")}>{threadPane}</div>

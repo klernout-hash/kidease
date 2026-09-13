@@ -538,9 +538,12 @@ export function sanitizeStickyDesk(
 }
 
 /**
- * Header pills. Only kyle@kidease.ca Admin sessions see Admin / Parent / Daycare.
- * Parent and Daycare accounts never get the Admin pill — even if a stale desk
- * list included it. Support stays in the account menu.
+ * Header pills — only desks this session is allowed to open.
+ * Admin: kyle@kidease.ca + profiles.role = admin. Parent/Daycare-only never
+ * see Admin, even if a stale desk list included it.
+ * Parent: stored parent/admin/support only. Daycare-only (provider role) does
+ * not get a Parent pill just because desksFor also keeps /parent reachable.
+ * Admin (kyle) still sees Admin + Parent + Daycare. Support stays in the menu.
  */
 export function headerDesks(
   desks: DeskKey[],
@@ -548,10 +551,18 @@ export function headerDesks(
   email?: string | null,
 ): DeskKey[] {
   const visible = desks.filter((desk) => canVisitDesk(desks, desk, role, email));
-  if (visible.includes("admin")) {
-    return (["admin", "parent", "provider"] as const).filter((d) => visible.includes(d));
+  const gated = visible.filter((desk) => {
+    if (desk === "admin") return canSeeAdminDesk(role, email);
+    if (desk === "parent" && role != null) {
+      const stored = parseAppRole(role);
+      return stored === "parent" || stored === "admin" || stored === "support" || stored === "support_lead";
+    }
+    return true;
+  });
+  if (gated.includes("admin")) {
+    return (["admin", "parent", "provider"] as const).filter((d) => gated.includes(d));
   }
-  return visible;
+  return gated;
 }
 
 /** Header / menu switcher — only when this session actually has two visible desks. */
