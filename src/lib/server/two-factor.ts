@@ -10,10 +10,11 @@ import {
   friendlyTwoFactorMailError,
   resendMessageId,
   twoFactorMailFrom,
+  twoFactorWaitSeconds,
 } from "@/lib/two-factor-start";
+import { TWO_FACTOR_DEVICE_TTL_MS } from "@/lib/two-factor-cookie";
 
 const TTL_MS = 10 * 60 * 1000;
-const DEVICE_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_ATTEMPTS = TWO_FACTOR_MAX_ATTEMPTS;
 
 function secret() {
@@ -116,20 +117,27 @@ export const startTwoFactor = createServerFn({ method: "POST" })
       order by created_at desc limit 1
     `.catch(() => []);
     const last = recent[0];
+    const lastSnapshot = last
+      ? {
+          createdAtMs: new Date(last.created_at).getTime(),
+          expiresAtMs: new Date(last.expires_at).getTime(),
+          attempts: last.attempts,
+        }
+      : null;
     const decision = decideTwoFactorStart({
       force: data.force,
-      last: last
-        ? {
-            createdAtMs: new Date(last.created_at).getTime(),
-            expiresAtMs: new Date(last.expires_at).getTime(),
-            attempts: last.attempts,
-          }
-        : null,
+      last: lastSnapshot,
     });
-    // Auto-start only: remounts must not remint a code still sitting in Titan/Resend.
-    // "Send a new code" (`force`) never takes this path.
+    // Auto-start remounts wait/reuse. Explicit resend waits only for the short
+    // cooldown — never because a previous unused code is still valid.
     if (decision === "wait") {
-      return { ok: true as const, emailed, wait: true as const, sent: false as const };
+      return {
+        ok: true as const,
+        emailed,
+        wait: true as const,
+        sent: false as const,
+        waitSeconds: twoFactorWaitSeconds({ force: data.force, last: lastSnapshot }),
+      };
     }
     if (decision === "reuse") {
       return { ok: true as const, emailed, wait: true as const, reused: true as const, sent: false as const };
@@ -142,7 +150,8 @@ export const startTwoFactor = createServerFn({ method: "POST" })
     } catch (err) {
       throw new Error(friendlyTwoFactorMailError(err));
     }
-    // Persist after a successful send so a mail failure leaves the previous code valid.
+    // Persist after a successful send. A mint replaces every unused code for this user.
+    await sql`delete from login_challenges where user_id = ${context.userId}`;
     await sql.query(
       `insert into login_challenges (id, user_id, email, code_hash, expires_at) values ($1,$2,$3,$4,$5)`,
       [id, context.userId, email, hashCode(code), new Date(Date.now() + TTL_MS).toISOString()],
@@ -188,7 +197,8 @@ export const verifyTwoFactor = createServerFn({ method: "POST" })
       throw new Error("That code is not correct.");
     }
     await sql`delete from login_challenges where user_id = ${context.userId}`;
-    const { writeTwoFactorDeviceCookie } = await import("./two-factor.server");
-    writeTwoFactorDeviceCookie(context.userId, DEVICE_MS);
+    const { writeTwoFactorDeviceCookie, writeTwoFactorSessionCookie } = await import("./two-factor.server");
+    writeTwoFactorSessionCookie(context.userId);
+    if (data.remember) writeTwoFactorDeviceCookie(context.userId, TWO_FACTOR_DEVICE_TTL_MS);
     return { ok: true as const };
   });

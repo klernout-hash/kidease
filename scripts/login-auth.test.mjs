@@ -32,6 +32,8 @@ import {
   readSessionTokenFromHeader,
   SESSION_TOKEN_COOKIE,
   SHARED_SESSION_TOKEN_COOKIE,
+  SHARED_TWO_FACTOR_DEVICE_COOKIE,
+  TWO_FACTOR_DEVICE_COOKIE,
   shareOutboundAuthCookies,
 } from "../src/lib/auth/cookies.ts";
 import { requestWithLegacyOAuthCallback } from "../src/lib/auth/legacy-oauth-callback.ts";
@@ -206,6 +208,10 @@ describe("apex/www session cookies", () => {
     const names = expired.headers.getSetCookie().map((c) => c.split("=", 1)[0]);
     assert.ok(names.includes(SESSION_TOKEN_COOKIE));
     assert.ok(names.includes(SHARED_SESSION_TOKEN_COOKIE));
+    assert.ok(!names.includes(TWO_FACTOR_DEVICE_COOKIE));
+    assert.ok(!names.includes(SHARED_TWO_FACTOR_DEVICE_COOKIE));
+    assert.ok(!local.some((c) => c.includes(TWO_FACTOR_DEVICE_COOKIE)));
+    assert.ok(!publicHost.some((c) => c.includes(TWO_FACTOR_DEVICE_COOKIE)));
   });
 
   it("auth handler aliases inbound cookies and shares outbound ones", () => {
@@ -218,6 +224,7 @@ describe("apex/www session cookies", () => {
     assert.match(authApi, /isAuthSignOutPath/);
     assert.match(server, /SHARED_SESSION_TOKEN_COOKIE/);
     assert.match(twoFa, /SHARED_TWO_FACTOR_COOKIE/);
+    assert.match(twoFa, /SHARED_TWO_FACTOR_DEVICE_COOKIE/);
     assert.match(twoFa, /KIDEASE_COOKIE_DOMAIN/);
   });
 
