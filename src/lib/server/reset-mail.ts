@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
-import { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
+import { assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 
 export { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
