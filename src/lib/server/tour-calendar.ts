@@ -11,6 +11,7 @@ import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
 import { isCentreOwner, listCentreOwnerEmails } from "@/lib/server/thread-access";
 import { serializePreferredTimes, tourSystemBody, type PreferredTime } from "@/lib/threads";
+import { holdExpiresAtIso } from "@/lib/tour-hold";
 import {
   expandWeeklyRepeats,
   formatTourSlotRange,
@@ -37,6 +38,8 @@ type WindowRow = {
   timezone: string;
   start_at: string | Date;
   booked?: number | string | null;
+  pending?: number | string | null;
+  accepted?: number | string | null;
 };
 
 export type CentreTourWindow = PublicTourSlot & { daycareId: string };
@@ -58,6 +61,8 @@ function mapWindow(row: WindowRow): PublicTourSlot | null {
     endTime: clock(row.end_time),
     capacity: row.capacity,
     booked: row.booked,
+    pending: row.pending,
+    accepted: row.accepted,
     timezone: row.timezone,
     startAt: row.start_at instanceof Date ? row.start_at.toISOString() : String(row.start_at ?? ""),
   });
@@ -69,12 +74,23 @@ async function windowsForDaycare(
   opts?: { upcomingOnly?: boolean },
 ): Promise<PublicTourSlot[]> {
   const upcoming = opts?.upcomingOnly !== false;
+  await import("@/lib/server/tour-holds")
+    .then((mod) => mod.expireDueTourHolds({ notify: true }))
+    .catch(() => undefined);
   const rows = await sql<WindowRow>`
     select w.id, w.daycare_id, w.window_date, w.start_time, w.end_time, w.capacity, w.timezone, w.start_at,
            coalesce((
              select count(*)::int from tour_requests t
              where t.window_id = w.id and t.status in ('pending', 'accepted')
-           ), 0) as booked
+           ), 0) as booked,
+           coalesce((
+             select count(*)::int from tour_requests t
+             where t.window_id = w.id and t.status = 'pending'
+           ), 0) as pending,
+           coalesce((
+             select count(*)::int from tour_requests t
+             where t.window_id = w.id and t.status = 'accepted'
+           ), 0) as accepted
     from tour_windows w
     where w.daycare_id = ${daycareId}
       and (${upcoming} = false or w.start_at > now())
@@ -271,12 +287,23 @@ export const bookTourSlot = createServerFn({ method: "POST" })
     }
     if (listed) await upsertDaycare(sql, listed);
 
+    await import("@/lib/server/tour-holds")
+      .then((mod) => mod.expireDueTourHolds({ notify: true }))
+      .catch(() => undefined);
     const windows = await sql<WindowRow>`
       select w.id, w.daycare_id, w.window_date, w.start_time, w.end_time, w.capacity, w.timezone, w.start_at,
              coalesce((
                select count(*)::int from tour_requests t
                where t.window_id = w.id and t.status in ('pending', 'accepted')
-             ), 0) as booked
+             ), 0) as booked,
+             coalesce((
+               select count(*)::int from tour_requests t
+               where t.window_id = w.id and t.status = 'pending'
+             ), 0) as pending,
+             coalesce((
+               select count(*)::int from tour_requests t
+               where t.window_id = w.id and t.status = 'accepted'
+             ), 0) as accepted
       from tour_windows w
       where w.id = ${data.windowId} and w.daycare_id = ${data.daycareId}
       limit 1
@@ -380,12 +407,14 @@ export const bookTourSlot = createServerFn({ method: "POST" })
       insert into tour_requests (
         id, conversation_id, user_id, daycare_id, child_id, child_name,
         preferred_times, parent_note, status, window_id,
-        parent_first_name, parent_last_name, parent_phone, contact_email
+        parent_first_name, parent_last_name, parent_phone, contact_email,
+        hold_expires_at
       ) values (
         ${tourId}, ${cid}, ${userId}, ${data.daycareId},
         ${childId || null}, ${childName || null},
         ${serializePreferredTimes(times)}, ${note}, ${"pending"}, ${slot.id},
-        ${firstName || null}, ${lastName || null}, ${phone || null}, ${email || null}
+        ${firstName || null}, ${lastName || null}, ${phone || null}, ${email || null},
+        ${holdExpiresAtIso()}
       )
     `;
     try {

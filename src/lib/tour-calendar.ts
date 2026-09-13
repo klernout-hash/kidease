@@ -3,6 +3,8 @@
  * Empty listings stay empty. KidEase never invents tour slots.
  */
 
+import { tourInventoryState, type TourInventoryState } from "./tour-hold.ts";
+
 export const DEFAULT_TOUR_TIMEZONE = "America/Winnipeg";
 
 export const CANADA_TOUR_TIMEZONES = [
@@ -40,6 +42,9 @@ export type PublicTourSlot = {
   capacity: number;
   booked: number;
   remaining: number;
+  pending: number;
+  accepted: number;
+  inventory: TourInventoryState;
   timezone: string;
   startAt: string;
 };
@@ -154,8 +159,11 @@ export function toPublicTourSlot(input: {
   endTime: unknown;
   capacity: unknown;
   booked?: unknown;
+  pending?: unknown;
+  accepted?: unknown;
   timezone?: unknown;
   startAt?: unknown;
+  now?: Date;
 }): PublicTourSlot | null {
   const draft = normalizeTourWindow({
     date: input.date,
@@ -166,8 +174,15 @@ export function toPublicTourSlot(input: {
   const id = String(input.id || "").trim();
   if (!draft || !id) return null;
   const timezone = resolveTourTimezone(input.timezone == null ? null : String(input.timezone));
-  const booked = Math.max(0, Math.floor(Number(input.booked) || 0));
+  const pending = Math.max(0, Math.floor(Number(input.pending) || 0));
+  const accepted = Math.max(0, Math.floor(Number(input.accepted) || 0));
+  const booked = Math.max(
+    0,
+    Math.floor(Number(input.booked) || 0) || pending + accepted,
+  );
+  const remaining = remainingTourSeats(draft.capacity, booked);
   const start = windowStartAt(draft, timezone);
+  const bookable = isTourWindowBookable(draft, timezone, input.now ?? new Date());
   return {
     id,
     date: draft.date,
@@ -175,7 +190,10 @@ export function toPublicTourSlot(input: {
     endTime: draft.endTime,
     capacity: draft.capacity,
     booked,
-    remaining: remainingTourSeats(draft.capacity, booked),
+    remaining,
+    pending,
+    accepted,
+    inventory: tourInventoryState({ remaining, pending, accepted, bookable }),
     timezone,
     startAt: start ? start.toISOString() : String(input.startAt ?? ""),
   };

@@ -26,6 +26,7 @@ test("tour display maps to Requested → Confirmed → Completed → Enrolled / 
   assert.equal(tourToPipelineStage("enrolled"), "enrolled");
   assert.equal(tourToPipelineStage("declined"), "lost");
   assert.equal(tourToPipelineStage("lost"), "lost");
+  assert.equal(tourToPipelineStage("expired"), "lost");
   assert.equal(tourToPipelineStage(null), null);
 });
 

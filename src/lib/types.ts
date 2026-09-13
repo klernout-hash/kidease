@@ -261,7 +261,7 @@ export type Conversation = {
   unread?: boolean;
 };
 
-export type TourStatus = "pending" | "accepted" | "completed" | "enrolled" | "declined" | "lost";
+export type TourStatus = "pending" | "accepted" | "completed" | "enrolled" | "declined" | "lost" | "expired";
 
 export type PreferredTime = {
   date: string;
@@ -284,6 +284,7 @@ export type TourRequest = {
   createdAt: string;
   respondedAt: string | null;
   windowId?: string | null;
+  holdExpiresAt?: string | null;
   parentPhone?: string | null;
   parentEmail?: string | null;
 };

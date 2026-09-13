@@ -1,5 +1,6 @@
-import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, WAITLIST_PULSE_EVENT } from "@/lib/inngest";
+import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT } from "@/lib/inngest";
 import { runSearchAlertJob } from "@/lib/server/search-alerts";
+import { runExpireTourHoldsJob } from "@/lib/server/tour-holds";
 import { runWaitlistPulseJob } from "@/lib/server/waitlist-pulse";
 import { inngest } from "./client";
 
@@ -50,4 +51,17 @@ export const waitlistPulse = inngest.createFunction(
   },
 );
 
-export const functions = [searchAlertsHourly, waitlistPulse];
+export const expireTourHoldsHourly = inngest.createFunction(
+  {
+    id: "tour-holds-hourly",
+    name: "Expire tour soft-holds (hourly)",
+    triggers: [{ cron: TOUR_HOLDS_CRON }, { event: TOUR_HOLDS_EVENT }],
+  },
+  async ({ event, step }) => {
+    const data = event && typeof event === "object" && "data" in event ? event.data : undefined;
+    const dryRun = Boolean(data && typeof data === "object" && "dryRun" in data && data.dryRun);
+    return step.run("expire-tour-holds", () => runExpireTourHoldsJob({ dryRun }));
+  },
+);
+
+export const functions = [searchAlertsHourly, waitlistPulse, expireTourHoldsHourly];

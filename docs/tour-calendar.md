@@ -8,9 +8,11 @@ Kyle: built-in calendar for **tours + availability only**. Not staff scheduling,
 | --- | --- |
 | **Daycare desk → Tour times** | `/provider?desk=tours`. Date/time blocks, capacity (1–12 families), timezone default **America/Winnipeg** with a Canada-zone override. Optional “repeat weekly for 4 weeks”. |
 | **Public listing** | **Book a tour** stays a separate CTA from **Request info**. It opens a slot picker. Upcoming posted times also render on `/daycare/{slug}` (`#listing-tours`). |
-| **Parent / guest** | Signed-in or guest. Guest needs first, last, phone, email (same honesty as Request info). Booking writes `tour_requests` + `lead_requests` (`kind=tour`) into the daycare inbox. Confirm/decline stays on the desk (`TourCard` + lead inbox). |
+| **Parent / guest** | Signed-in or guest. Guest needs first, last, phone, email (same honesty as Request info). Booking writes a **soft-hold** (`tour_requests.status=pending`, `hold_expires_at` + 48h) + `lead_requests` (`kind=tour`). This is a visit request, not Instant Book placement. |
 | **Empty honesty** | No posted windows → “has not posted tour times”. All past/full → “none open right now”. KidEase does not invent slots or fall back to free-form preferred times. |
-| **Neon** | Migration **0045**. `daycares.timezone`, `tour_windows`, `tour_requests.window_id` + guest contact columns. |
+| **Neon** | Migrations **0045** + **0049**. `daycares.timezone`, `tour_windows`, `tour_requests.window_id` + guest contact + `hold_expires_at`. Status may be `expired` when a soft-hold times out. |
+| **Inventory** | Posted windows show **Open / Soft-hold / Confirmed / Blocked**. Pending holds a seat; expired / declined / cancelled frees it. |
+| **Provider SLA** | Today + Tour card: **Accept · Propose time · Decline (+ reason)**. Confirm / cancel / reschedule emails both sides (Resend via `notifyThreadParty`) and uses the existing push path when `FEATURE_PUSH` is on. |
 
 ## Desk → listing proof path
 

@@ -102,6 +102,8 @@ export function TodayUrgencyHome({
   const [threads, setThreads] = useState<Conversation[]>([]);
   const [screening, setScreening] = useState<Array<{ daycareId: string; daycareName: string; screeningOnFile: boolean; people: Array<{ docs: Array<{ status: string }> }> }>>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [declineFor, setDeclineFor] = useState<string | null>(null);
+  const [declineReason, setDeclineReason] = useState("");
 
   useEffect(() => {
     void listInbox({ data: { view: "centre" } })
@@ -155,10 +157,19 @@ export function TodayUrgencyHome({
   const emptyDesk = emptyHref?.to === "/provider" ? emptyHref.search.desk : null;
 
   async function decide(tourId: string, status: "accepted" | "declined") {
+    if (status === "declined" && declineReason.trim().length < 2) {
+      setDeclineFor(tourId);
+      toast.error(t("tourDeclineNeedReason"));
+      return;
+    }
     setBusy(`${tourId}:${status}`);
     try {
-      await respondTourRequest({ data: { tourId, status } });
+      await respondTourRequest({
+        data: { tourId, status, note: status === "declined" ? declineReason.trim() : undefined },
+      });
       toast.success(status === "accepted" ? t("tourAccepted") : t("tourDeclined"));
+      setDeclineFor(null);
+      setDeclineReason("");
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -214,25 +225,42 @@ export function TodayUrgencyHome({
                   </p>
                 </div>
                 {row.kind === "tour_request" && row.tourId ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      disabled={busy !== null}
-                      onClick={() => void decide(row.tourId!, "accepted")}
-                    >
-                      {busy === `${row.tourId}:accepted` ? t("loading") : t("acceptTour")}
-                    </Button>
-                    <Button size="sm" variant="secondary" asChild>
-                      <TodayLink href={row.href}>{t("todayProposeTime")}</TodayLink>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={busy !== null}
-                      onClick={() => void decide(row.tourId!, "declined")}
-                    >
-                      {busy === `${row.tourId}:declined` ? t("loading") : t("declineTour")}
-                    </Button>
+                  <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+                    {declineFor === row.tourId ? (
+                      <textarea
+                        rows={2}
+                        placeholder={t("tourDeclineReason")}
+                        className="w-full min-w-[16rem] rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                        value={declineReason}
+                        onChange={(e) => setDeclineReason(e.target.value)}
+                      />
+                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        disabled={busy !== null}
+                        onClick={() => void decide(row.tourId!, "accepted")}
+                      >
+                        {busy === `${row.tourId}:accepted` ? t("loading") : t("acceptTour")}
+                      </Button>
+                      <Button size="sm" variant="secondary" asChild>
+                        <TodayLink href={row.href}>{t("todayProposeTime")}</TodayLink>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={busy !== null}
+                        onClick={() => {
+                          if (declineFor !== row.tourId) {
+                            setDeclineFor(row.tourId!);
+                            return;
+                          }
+                          void decide(row.tourId!, "declined");
+                        }}
+                      >
+                        {busy === `${row.tourId}:declined` ? t("loading") : t("declineTour")}
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <Button size="sm" variant="secondary" asChild>

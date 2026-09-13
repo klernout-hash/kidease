@@ -3,14 +3,15 @@
  */
 
 import { isOpenLeadStatus, type LeadRequest } from "./lead-requests.ts";
+import { TOUR_HOLD_SLA_HOURS, tourHoldRemainingMs } from "./tour-hold.ts";
 import type { Conversation, PreferredTime, TourRequest } from "./types.ts";
 
-export const TODAY_TOUR_SLA_HOURS = 48;
+export const TODAY_TOUR_SLA_HOURS = TOUR_HOLD_SLA_HOURS;
 
 export type TodayTone = "navy" | "ok" | "danger";
 export type TodayKind = "tour_request" | "unread" | "action" | "confirmed_tour";
 export type TodayHref =
-  | { to: "/inbox/$id"; params: { id: string }; search?: { view: "centre" } }
+  | { to: "/inbox/$id"; params: { id: string }; search?: { view: "centre"; tour?: string } }
   | { to: "/inbox"; search: { view: "centre" } }
   | {
       to: "/provider";
@@ -63,16 +64,18 @@ export function earliestPreferredStart(times: PreferredTime[]): number | null {
   return next;
 }
 
-export function tourSlaDeadlineMs(createdAt: string): number | null {
-  const start = Date.parse(createdAt);
-  if (!Number.isFinite(start)) return null;
-  return start + TODAY_TOUR_SLA_HOURS * 60 * 60 * 1000;
+export function tourSlaDeadlineMs(createdAt: string, holdExpiresAt?: string | null): number | null {
+  const remaining = tourHoldRemainingMs({ createdAt, holdExpiresAt }, 0);
+  if (remaining == null) return null;
+  return remaining;
 }
 
-export function tourSlaRemainingMs(createdAt: string, now = Date.now()): number | null {
-  const deadline = tourSlaDeadlineMs(createdAt);
-  if (deadline == null) return null;
-  return deadline - now;
+export function tourSlaRemainingMs(
+  createdAt: string,
+  now = Date.now(),
+  holdExpiresAt?: string | null,
+): number | null {
+  return tourHoldRemainingMs({ createdAt, holdExpiresAt }, now);
 }
 
 export function formatSlaCountdown(remainingMs: number | null): { overdue: boolean; hours: number; minutes: number } {
@@ -132,7 +135,7 @@ export function collectPendingTourRows(tours: TourRequest[], fallbackName: strin
   return tours
     .filter((tour) => tour.status === "pending")
     .map((tour) => {
-      const remaining = tourSlaRemainingMs(tour.createdAt, now);
+      const remaining = tourSlaRemainingMs(tour.createdAt, now, tour.holdExpiresAt);
       const overdue = remaining != null && remaining <= 0;
       return {
         id: `tour:${tour.id}`,
@@ -143,7 +146,7 @@ export function collectPendingTourRows(tours: TourRequest[], fallbackName: strin
         href: {
           to: "/inbox/$id" as const,
           params: { id: tour.conversationId },
-          search: { view: "centre" as const },
+          search: { view: "centre" as const, tour: tour.id },
         },
         tourId: tour.id,
         conversationId: tour.conversationId,

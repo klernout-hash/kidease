@@ -113,13 +113,16 @@ test("cron secrets are header-only", () => {
   );
   const digest = src("src/routes/api/digest.ts");
   const alerts = src("src/routes/api/search-alerts.ts");
+  const holds = src("src/routes/api/tour-holds.ts");
   const seed = src("src/routes/api/seed-catalog.ts");
   assert.match(digest, /cronAuthorized/);
   assert.match(digest, /runVerifyEmailNudgeJob/);
   assert.match(alerts, /cronAuthorized/);
+  assert.match(holds, /cronAuthorized/);
   assert.match(seed, /cronAuthorized/);
   assert.doesNotMatch(digest, /searchParams\.get\("secret"\)/);
   assert.doesNotMatch(alerts, /searchParams\.get\("secret"\)/);
+  assert.doesNotMatch(holds, /searchParams\.get\("secret"\)/);
   assert.doesNotMatch(seed, /searchParams\.get\("secret"\)/);
 });
 

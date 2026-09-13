@@ -86,7 +86,8 @@ test("tour status only moves pending → accepted|declined", () => {
   assert.equal(canRespondTour("accepted"), false);
   assert.equal(nextTourStatus("pending", "accepted"), "accepted");
   assert.equal(nextTourStatus("pending", "declined"), "declined");
-  assert.equal(nextTourStatus("accepted", "declined"), null);
+  assert.equal(nextTourStatus("accepted", "declined"), "declined");
+  assert.equal(nextTourStatus("accepted", "lost"), "lost");
   assert.equal(nextTourStatus("pending", "pending"), null);
 });
 

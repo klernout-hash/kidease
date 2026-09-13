@@ -6,7 +6,7 @@
  * Do not buy Stream or Sendbird.
  */
 
-export const TOUR_STATUSES = ["pending", "accepted", "completed", "enrolled", "declined", "lost"] as const;
+export const TOUR_STATUSES = ["pending", "accepted", "completed", "enrolled", "declined", "lost", "expired"] as const;
 export type TourStatus = (typeof TOUR_STATUSES)[number];
 
 export const MIN_TOUR_SLOTS = 1;
@@ -35,9 +35,11 @@ export function canRespondTour(status: string): boolean {
   return status === "pending";
 }
 
-export function nextTourStatus(current: string, next: string): "accepted" | "declined" | null {
-  if (!canRespondTour(current)) return null;
-  if (next === "accepted" || next === "declined") return next;
+export function nextTourStatus(current: string, next: string): "accepted" | "declined" | "lost" | "expired" | null {
+  if (current === "pending" && (next === "accepted" || next === "declined" || next === "lost" || next === "expired")) {
+    return next;
+  }
+  if (current === "accepted" && (next === "lost" || next === "declined")) return next;
   return null;
 }
 
@@ -146,7 +148,7 @@ export function tourSystemBody(input: {
 }
 
 export function tourStatusBody(input: {
-  status: "accepted" | "declined" | "completed" | "enrolled" | "lost";
+  status: "accepted" | "declined" | "completed" | "enrolled" | "lost" | "expired";
   daycareName: string;
   note?: string | null;
   locale?: "en" | "fr" | string;
@@ -163,11 +165,32 @@ export function tourStatusBody(input: {
     if (input.status === "enrolled") {
       return fr ? `Inscription confirmée à ${input.daycareName}.` : `Enrolled at ${input.daycareName}.`;
     }
+    if (input.status === "expired") {
+      return fr
+        ? `La réserve de visite à ${input.daycareName} a expiré. La plage est de nouveau libre.`
+        : `The tour hold at ${input.daycareName} expired. The time is open again.`;
+    }
     if (input.status === "lost") {
       return fr ? `La visite à ${input.daycareName} n’a pas abouti.` : `The tour at ${input.daycareName} did not lead to enrolment.`;
     }
     return fr ? `${input.daycareName} a décliné la visite.` : `${input.daycareName} declined the tour request.`;
   })();
+  if (!note) return head;
+  return fr ? `${head}\nNote : ${note}` : `${head}\nNote: ${note}`;
+}
+
+export function tourRescheduleBody(input: {
+  daycareName: string;
+  times: PreferredTime[];
+  note?: string | null;
+  locale?: "en" | "fr" | string;
+}): string {
+  const slots = formatPreferredTimes(input.times, input.locale);
+  const note = (input.note || "").trim();
+  const fr = input.locale === "fr";
+  const head = fr
+    ? `${input.daycareName} propose un nouveau moment : ${slots}.`
+    : `${input.daycareName} proposed a new tour time: ${slots}.`;
   if (!note) return head;
   return fr ? `${head}\nNote : ${note}` : `${head}\nNote: ${note}`;
 }

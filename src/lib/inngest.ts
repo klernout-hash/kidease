@@ -20,6 +20,11 @@ export const SEARCH_ALERTS_EVENT = "kidease/search-alerts.run";
 /** Director / capacity "spot open" — one event per pulse row (idempotent). */
 export const WAITLIST_PULSE_EVENT = "kidease/waitlist.pulse";
 
+/** Hourly :50 — expire overdue tour soft-holds and free the seat. */
+export const TOUR_HOLDS_CRON = "TZ=America/Winnipeg 50 * * * *";
+
+export const TOUR_HOLDS_EVENT = "kidease/tour-holds.expire";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }
@@ -42,6 +47,17 @@ export function shouldDeferSearchAlertsToInngest(
   request: Request,
   env: EnvMap = process.env,
 ): boolean {
+  return shouldDeferCronToInngest(request, env);
+}
+
+export function shouldDeferTourHoldsToInngest(
+  request: Request,
+  env: EnvMap = process.env,
+): boolean {
+  return shouldDeferCronToInngest(request, env);
+}
+
+function shouldDeferCronToInngest(request: Request, env: EnvMap): boolean {
   if (!inngestConfigured(env)) return false;
   const url = new URL(request.url);
   if (url.searchParams.get("dryRun") === "1") return false;

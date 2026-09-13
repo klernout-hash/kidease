@@ -2,7 +2,7 @@
  * Tour → enrol pipeline shown on parent shortlist/inbox and the centre desk.
  *
  * Stored tour statuses stay honest: pending / accepted / declined plus
- * completed / enrolled / lost when a real action happened.
+ * completed / enrolled / lost / expired when a real action happened.
  * Display labels: Requested → Confirmed → Completed → Enrolled / Lost.
  * Booking accepted/active is Enrolled. Booking declined/cancelled is Lost.
  * Missing tour + missing booking → no status (never invented).
@@ -17,6 +17,7 @@ export const TOUR_PIPELINE_STATUSES = [
   "enrolled",
   "declined",
   "lost",
+  "expired",
 ] as const;
 
 export type TourPipelineStatus = (typeof TOUR_PIPELINE_STATUSES)[number];
@@ -34,7 +35,7 @@ export function tourToPipelineStage(status: string | null | undefined): Pipeline
   if (status === "accepted") return "confirmed";
   if (status === "completed") return "completed";
   if (status === "enrolled") return "enrolled";
-  if (status === "declined" || status === "lost") return "lost";
+  if (status === "declined" || status === "lost" || status === "expired") return "lost";
   return null;
 }
 
@@ -65,7 +66,7 @@ export function threadPipelineStage(input: {
 
 export function canAdvanceTour(current: string, next: string): next is TourStatus {
   if (!isTourPipelineStatus(next)) return false;
-  if (current === "pending") return next === "accepted" || next === "declined" || next === "lost";
+  if (current === "pending") return next === "accepted" || next === "declined" || next === "lost" || next === "expired";
   if (current === "accepted") return next === "completed" || next === "lost" || next === "enrolled";
   if (current === "completed") return next === "enrolled" || next === "lost";
   return false;
