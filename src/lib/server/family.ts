@@ -1390,14 +1390,6 @@ export const createListing = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-mail] listing notify failed", err);
     }
-    if (ownerCount === 0) {
-      try {
-        const { sendProviderNextStepsIfReady } = await import("@/lib/server/signup-user-mail.server");
-        await sendProviderNextStepsIfReady(context.userId, "provider");
-      } catch (err) {
-        console.error("[kidease-mail] first-listing next-steps failed", err);
-      }
-    }
     return { id, slug };
   });
 

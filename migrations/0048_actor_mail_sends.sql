@@ -1,5 +1,5 @@
--- Same-day dedupe for site-owned actor mail (provider next-steps).
--- Winnipeg calendar day so signup + first listing do not send twice.
+-- Dedupe for site-owned actor mail (provider next-steps, verify-email nudge).
+-- Once-ever rows use winnipeg_day = 1970-01-01 so next-steps are not paired with signup.
 -- Idempotent for PGLite + Neon.
 
 create table if not exists actor_mail_sends (
