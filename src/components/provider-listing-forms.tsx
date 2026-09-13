@@ -141,6 +141,35 @@ export function CapacityForm({
     ...parentDeskFromDaycare(daycare),
   });
   const [refreshing, setRefreshing] = useState(false);
+  const dirty =
+    state.name !== daycare.name ||
+    state.address !== daycare.address ||
+    state.city !== daycare.city ||
+    state.province !== daycare.province ||
+    state.postalCode !== daycare.postalCode ||
+    state.phone !== (daycare.phone ?? "") ||
+    state.email !== (daycare.contactEmail ?? "") ||
+    state.spotsInfant !== daycare.spotsInfant ||
+    state.spotsToddler !== daycare.spotsToddler ||
+    state.spotsPreschool !== daycare.spotsPreschool ||
+    state.infantMonthly !== (daycare.infantMonthly ?? 0) ||
+    state.toddlerMonthly !== (daycare.toddlerMonthly ?? 0) ||
+    state.preschoolMonthly !== (daycare.preschoolMonthly ?? 0) ||
+    state.ageMinMonths !== (daycare.agesKnown ? daycare.ageMinMonths : 12) ||
+    state.ageMaxMonths !== (daycare.agesKnown ? daycare.ageMaxMonths : 60) ||
+    state.hours !== daycare.hours ||
+    state.licenseNumber !== (daycare.licenseNumber ?? "") ||
+    Boolean(state.storefront) ||
+    state.interiors.length > 0 ||
+    Boolean(state.licensePhoto) ||
+    JSON.stringify(state.staffLanguages) !== JSON.stringify(daycare.staffLanguages ?? []) ||
+    JSON.stringify(state.culturalPrograms) !== JSON.stringify(daycare.culturalPrograms ?? []) ||
+    state.culturalTeamNote !== (daycare.culturalTeamNote ?? "") ||
+    state.tagline !== (daycare.tagline ?? "") ||
+    state.description !== (daycare.description ?? "") ||
+    state.partTimeMonthly !== (daycare.partTimeMonthly ?? 0) ||
+    state.promoText !== (daycare.promoText ?? "") ||
+    state.valuesNote !== (daycare.valuesNote ?? "");
   const draft = {
     ...daycare,
     hours: state.hours,
@@ -346,7 +375,7 @@ export function CapacityForm({
           </div>
         </>
       )}
-      <Button type="submit" variant="secondary">
+      <Button type="submit" variant="secondary" disabled={!dirty}>
         {t("saveChanges")}
       </Button>
     </form>

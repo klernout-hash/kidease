@@ -15,7 +15,9 @@ import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-que
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
+import { TodayUrgencyHome } from "@/components/today-urgency-home";
 import { DirectorProStrip } from "@/components/director-pro-strip";
+import { type DaycareDesk } from "@/lib/desk-nav";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isOpenLeadStatus } from "@/lib/lead-requests";
 import type { LeadRequest } from "@/lib/lead-requests";
@@ -49,10 +51,9 @@ import { CentreEmployeesPanel } from "@/components/centre-employees";
 import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 
-type DaycareDesk = "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote" | "employees" | "screening";
-
-const DESKS: DaycareDesk[] = ["requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
+const DEFAULT_DESK: DaycareDesk = "today";
 
 export const Route = createFileRoute("/provider")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -75,7 +76,7 @@ function ProviderPage() {
   const search = Route.useSearch();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const childRoute = pathname === "/provider/subscription" || pathname.startsWith("/provider/subscription/");
-  const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? "requests");
+  const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? DEFAULT_DESK);
   const [showNewForm, setShowNewForm] = useState(false);
   const [listings, setListings] = useState<Daycare[]>([]);
   const [stats, setStats] = useState<
@@ -120,6 +121,15 @@ function ProviderPage() {
     culturalPrograms: [] as string[],
     culturalTeamNote: "",
   });
+  const listingFormDirty =
+    Boolean(form.name.trim() || form.address.trim() || form.postalCode.trim() || form.licenseNumber.trim() || form.storefront) ||
+    form.city !== "Winnipeg" ||
+    form.infantMonthly !== 1200 ||
+    form.toddlerMonthly !== 1100 ||
+    form.preschoolMonthly !== 1000 ||
+    form.staffLanguages.length > 0 ||
+    form.culturalPrograms.length > 0 ||
+    Boolean(form.culturalTeamNote.trim());
 
   async function load() {
     const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
@@ -212,13 +222,13 @@ function ProviderPage() {
           return;
         }
         if (OWNER_DESKS.has(id as DaycareDesk) && !centreOwner) {
-          setDesk("requests");
+          setDesk(DEFAULT_DESK);
           return;
         }
         setDesk(id as DaycareDesk);
       }}
     >
-      {listings.length === 0 && centreOwner ? (
+      {desk !== "today" && listings.length === 0 && centreOwner ? (
         <ProviderOnboarding
           showForm={showNewForm}
           onShowForm={() => {
@@ -227,26 +237,21 @@ function ProviderPage() {
           }}
         />
       ) : null}
-      {search.claimed && listings[0] ? (
+      {desk !== "today" && search.claimed && listings[0] ? (
         <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20">
           <h2 className="font-display text-2xl">{t("claimSuccessTitle")}</h2>
           <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
         </section>
       ) : null}
-      <DirectorNudgeQueue listings={listings} stats={stats} onConfirmed={() => void load()} />
-      <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
-      {listings.length ? (
-        <FreePageExplainer
-          listings={listings.map((d) => ({
-            slug: d.slug,
-            name: d.name,
-            nameFr: d.nameFr,
-            lat: d.lat,
-            lng: d.lng,
-          }))}
+      {desk === "today" ? (
+        <TodayUrgencyHome
+          listings={listings}
+          tours={tours}
+          leads={leads}
+          onChanged={() => void load()}
+          onOpenDesk={(next) => setDesk(next)}
         />
       ) : null}
-      <PayCtas>{subscription ? <ProviderPlanBanner subscription={subscription} /> : null}</PayCtas>
       {desk === "requests" ? (
         <section className="space-y-8">
           <PayCtas>
@@ -323,6 +328,20 @@ function ProviderPage() {
 
       {desk === "listings" ? (
         <>
+          <DirectorNudgeQueue listings={listings} stats={stats} onConfirmed={() => void load()} />
+          <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
+          {listings.length ? (
+            <FreePageExplainer
+              listings={listings.map((d) => ({
+                slug: d.slug,
+                name: d.name,
+                nameFr: d.nameFr,
+                lat: d.lat,
+                lng: d.lng,
+              }))}
+            />
+          ) : null}
+          <PayCtas>{subscription ? <ProviderPlanBanner subscription={subscription} /> : null}</PayCtas>
           {listings.map((d) => {
             const st = stats.find((s) => s.daycareId === d.id);
             const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
@@ -484,7 +503,7 @@ function ProviderPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <Button type="submit">{t("createListing")}</Button>
+                <Button type="submit" disabled={!listingFormDirty}>{t("createListing")}</Button>
               </div>
             </form>
           </section>
