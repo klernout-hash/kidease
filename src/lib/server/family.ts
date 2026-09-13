@@ -1101,6 +1101,7 @@ export const getMyRole = createServerFn({ method: "GET" })
       email: session.email,
       home: session.home,
       unread: session.unread,
+      notificationUnread: session.notificationUnread,
       stripeLive: session.stripeLive,
       ledgerLabel: session.ledgerLabel,
       providerSubscriptions: session.providerSubscriptions,

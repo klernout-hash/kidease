@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { AdminDeskLink } from "@/components/admin-desk-link";
+import { MenuGlyph } from "@/components/menu-row";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { canSeeAdminDesk, canVisitDesk, showDeskSwitcher } from "@/lib/desks";
 import { useCopy } from "@/lib/use-copy";
@@ -33,7 +34,10 @@ export function MenuDeskTools() {
           <h2 className="px-1 text-[15px] font-bold text-fg">{fr ? "Équipe" : "Staff"}</h2>
           <div className="mt-2">
             <AdminDeskLink className="flex min-h-14 items-center justify-between gap-3 border-b border-border px-1 text-[15px] text-fg last:border-b-0">
-              {fr ? "Espace admin" : "Admin desk"}
+              <span className="flex items-center gap-3">
+                <MenuGlyph id="admin" />
+                {fr ? "Espace admin" : "Admin desk"}
+              </span>
               <span className="ke-menu-chevron" aria-hidden />
             </AdminDeskLink>
             {session?.desks.includes("support") ? (
@@ -41,7 +45,10 @@ export function MenuDeskTools() {
                 to="/support"
                 className="flex min-h-14 items-center justify-between gap-3 border-b border-border px-1 text-[15px] text-fg last:border-b-0"
               >
-                {fr ? "Espace soutien" : "Support desk"}
+                <span className="flex items-center gap-3">
+                  <MenuGlyph id="support" />
+                  {fr ? "Espace soutien" : "Support desk"}
+                </span>
                 <span className="ke-menu-chevron" aria-hidden />
               </Link>
             ) : null}

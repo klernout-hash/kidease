@@ -37,6 +37,7 @@ import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -241,6 +242,11 @@ const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParentRoute = ParentRouteImport.update({
@@ -593,6 +599,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
+  '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
   '/pay': typeof PayRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -686,6 +693,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
+  '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
@@ -780,6 +788,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
+  '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
   '/pay': typeof PayRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -876,6 +885,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/meet-the-team'
     | '/menu'
+    | '/notifications'
     | '/parent'
     | '/pay'
     | '/privacy'
@@ -969,6 +979,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/meet-the-team'
     | '/menu'
+    | '/notifications'
     | '/parent'
     | '/privacy'
     | '/provider'
@@ -1062,6 +1073,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/meet-the-team'
     | '/menu'
+    | '/notifications'
     | '/parent'
     | '/pay'
     | '/privacy'
@@ -1157,6 +1169,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MenuRoute: typeof MenuRoute
+  NotificationsRoute: typeof NotificationsRoute
   ParentRoute: typeof ParentRoute
   PayRoute: typeof PayRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
@@ -1397,6 +1410,13 @@ declare module '@tanstack/react-router' {
       path: '/menu'
       fullPath: '/menu'
       preLoaderRoute: typeof MenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parent': {
@@ -1966,6 +1986,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
   MenuRoute: MenuRoute,
+  NotificationsRoute: NotificationsRoute,
   ParentRoute: ParentRoute,
   PayRoute: PayRouteWithChildren,
   PrivacyRoute: PrivacyRoute,

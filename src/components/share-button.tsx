@@ -108,8 +108,13 @@ function ShareControl({
     >
       {appearance === "menu" || appearance === "nav" || appearance === "drawer" || appearance === "row" ? (
         <>
-          {shown}
-          {appearance === "row" ? <Share2 className="size-4 text-muted" strokeWidth={1.7} aria-hidden /> : null}
+          <span className="flex min-w-0 items-center gap-3">
+            {appearance === "drawer" || appearance === "row" ? (
+              <Share2 className="size-5 shrink-0 text-muted" strokeWidth={1.7} aria-hidden />
+            ) : null}
+            {shown}
+          </span>
+          {appearance === "row" ? <span className="ke-menu-chevron" aria-hidden /> : null}
         </>
       ) : (
         <>

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Heart, ClipboardCheck, Menu, MessageCircle, Search } from "lucide-react";
+import { NotificationBell } from "@/components/notification-bell";
 import { RateKidEaseControl } from "@/components/rate-kidease";
 import { ShareKidEaseButton } from "@/components/share-button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -61,13 +62,13 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
 
   const homeTo = localePath("/", locale);
   const drawerItems = [
-    { to: "/search", label: t("explore") },
-    { to: "/compare", label: t("compare") },
-    { to: "/benefits", label: t("benefitsTab") },
-    { to: "/get-app", label: t("getApp") },
-    { to: localePath("/about", locale), label: t("about") },
-    { to: "/team", label: t("team") },
-    { to: localePath("/contact", locale), label: t("contact") },
+    { to: "/search", label: t("explore"), icon: "explore" as const },
+    { to: "/compare", label: t("compare"), icon: "compare" as const },
+    { to: "/benefits", label: t("benefitsTab"), icon: "benefits" as const },
+    { to: "/get-app", label: t("getApp"), icon: "getApp" as const },
+    { to: localePath("/about", locale), label: t("about"), icon: "about" as const },
+    { to: "/team", label: t("team"), icon: "team" as const },
+    { to: localePath("/contact", locale), label: t("contact"), icon: "contact" as const },
   ];
 
   if (verifyLite) {
@@ -160,6 +161,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               providerLabel={t("providerLogin")}
               loginTo={loginTo}
             />
+            {user ? <NotificationBell className="hidden [[data-channel=website]_&]:grid" /> : null}
             <button
               type="button"
               className="hidden size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface [[data-channel=website]_&]:grid"

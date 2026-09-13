@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
+import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { rateKidEaseFromMenu } from "@/lib/store-review";
 import { useCopy } from "@/lib/use-copy";
@@ -64,8 +64,13 @@ export function RateKidEaseControl({
       )}
       onClick={onClick}
     >
-      {label}
-      {appearance === "row" ? <ChevronRight className="size-4 text-muted" /> : null}
+      <span className="flex min-w-0 items-center gap-3">
+        {appearance === "row" || appearance === "drawer" ? (
+          <Star className="size-5 shrink-0 text-muted" strokeWidth={1.7} aria-hidden />
+        ) : null}
+        {label}
+      </span>
+      {appearance === "row" ? <span className="ke-menu-chevron" aria-hidden /> : null}
     </button>
   );
 }
