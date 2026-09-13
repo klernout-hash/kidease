@@ -79,22 +79,25 @@ test("operator copy notes Titan email, not Google", () => {
   assert.match(support, /operatorEmailNote/);
 });
 
-test("reset and verification mail stay on Resend, not Titan SMTP", () => {
+test("reset and verification mail fall back to Titan SMTP when Resend is unverified", () => {
   assert.equal(emailAndPasswordEnabled, true);
   const emailPassword = src("src/lib/auth/email-password.ts");
   const resetMail = src("src/lib/server/reset-mail.ts");
   const twoFa = src("src/lib/server/two-factor.ts");
+  const sender = src("src/lib/transactional-mail.ts");
   const security = src("SECURITY.md");
   assert.match(emailPassword, /sendPasswordResetEmail/);
   assert.match(emailPassword, /reset-mail/);
-  assert.match(resetMail, /api\.resend\.com\/emails/);
-  assert.doesNotMatch(emailPassword, /smtp\.titan\.email/);
-  assert.doesNotMatch(resetMail, /smtp\.titan\.email/);
-  assert.match(twoFa, /api\.resend\.com\/emails/);
-  assert.doesNotMatch(twoFa, /smtp\.titan\.email/);
+  assert.match(resetMail, /sendTransactionalMail/);
+  assert.match(twoFa, /sendTransactionalMail/);
+  assert.match(sender, /api\.resend\.com\/emails/);
+  assert.match(sender, /titan_fallback_success/);
+  assert.match(sender, /smtp\.titan\.email|sendTitan|Titan SMTP/);
   assert.match(security, /noreply@send\.kidease\.ca/);
-  assert.match(security, /Do \*\*not\*\* send auth mail through Titan SMTP/);
-  assert.match(security, /Allowlist `noreply@send\.kidease\.ca`/);
+  assert.match(security, /Titan SMTP/);
+  assert.match(security, /MAIL_FROM_RESEND/);
+  assert.match(security, /allowlist `noreply@send\.kidease\.ca`/i);
+  assert.doesNotMatch(security, /Do \*\*not\*\* send auth mail through Titan SMTP/);
 });
 
 test("Google IdP and admin-email bootstrap stay unchanged", () => {

@@ -4,6 +4,7 @@ import { transactionalMailFrom } from "@/lib/mail-from";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { requireAdmin } from "@/lib/server/roles";
 import { reportError } from "@/lib/observe";
+import { readOtpMailHealth } from "@/lib/transactional-mail";
 import {
   adminMailHtml,
   adminMailStatusFromEnv,
@@ -27,7 +28,18 @@ export const getAdminMailStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<AdminMailStatus> => {
     await requireAdmin(context.userId);
-    return adminMailStatusFromEnv();
+    const status = adminMailStatusFromEnv();
+    const otp = readOtpMailHealth();
+    return {
+      ...status,
+      otpMail: {
+        ...status.otpMail,
+        lastEvent: otp.lastEvent,
+        lastPurpose: otp.lastPurpose,
+        lastReason: otp.lastReason,
+        lastVia: otp.lastVia,
+      },
+    };
   });
 
 export const listAdminMailbox = createServerFn({ method: "GET" })

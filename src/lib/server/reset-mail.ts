@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { transactionalMailFrom } from "@/lib/mail-from";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
+import { sendTransactionalMail } from "@/lib/transactional-mail";
 
 export { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
 
@@ -9,10 +9,6 @@ export { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigur
 export const getResetMailReady = createServerFn({ method: "GET" }).handler(() => {
   return resetMailConfigured();
 });
-
-function fromAddress() {
-  return transactionalMailFrom();
-}
 
 /** Send a password reset link to the registered mailbox. Never log the URL or token. */
 export async function sendPasswordResetEmail(input: { to: string; url: string }) {
@@ -34,36 +30,13 @@ export async function sendPasswordResetEmail(input: { to: string; url: string })
     </td></tr>
   </table>
 </body></html>`;
-  const from = fromAddress();
-  const resend = process.env.RESEND_API_KEY?.trim();
-  if (resend) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [to], reply_to: ADMIN_EMAIL, subject, text, html }),
-    });
-    if (!res.ok) throw new Error(`Email could not be sent (${res.status}).`);
-    return "sent" as const;
-  }
-  const sendgrid = process.env.SENDGRID_API_KEY?.trim();
-  if (sendgrid) {
-    const fromMatch = from.match(/^(.*)<([^>]+)>$/);
-    const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${sendgrid}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: to }] }],
-        from: { email: fromMatch?.[2]?.trim() || ADMIN_EMAIL, name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
-        reply_to: { email: ADMIN_EMAIL },
-        subject,
-        content: [
-          { type: "text/plain", value: text },
-          { type: "text/html", value: html },
-        ],
-      }),
-    });
-    if (!res.ok) throw new Error(`Email could not be sent (${res.status}).`);
-    return "sent" as const;
-  }
-  throw new Error(RESET_MAIL_NOT_CONFIGURED);
+  const result = await sendTransactionalMail({
+    purpose: "password_reset",
+    to,
+    subject,
+    text,
+    html,
+    replyTo: ADMIN_EMAIL,
+  });
+  return result.status;
 }

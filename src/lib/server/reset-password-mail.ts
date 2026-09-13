@@ -1,6 +1,5 @@
-import { transactionalMailFrom } from "@/lib/mail-from";
-
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
+import { ADMIN_EMAIL } from "@/lib/server/notify";
+import { sendTransactionalMail } from "@/lib/transactional-mail";
 
 export async function sendResetPasswordMail(input: {
   to: string;
@@ -25,44 +24,13 @@ export async function sendResetPasswordMail(input: {
   </table>
 </body></html>`;
 
-  const resend = process.env.RESEND_API_KEY?.trim();
-  if (resend) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: transactionalMailFrom(), to: [to], reply_to: ADMIN_EMAIL, subject, text, html }),
-    });
-    if (!res.ok) throw new Error(`Could not send reset email (${res.status})`);
-    return "sent" as const;
-  }
-
-  const sendgrid = process.env.SENDGRID_API_KEY?.trim();
-  if (sendgrid) {
-    const fromMatch = transactionalMailFrom().match(/^(.*)<([^>]+)>$/);
-    const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${sendgrid}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: to }] }],
-        from: {
-          email: fromMatch?.[2]?.trim() || ADMIN_EMAIL,
-          name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase",
-        },
-        reply_to: { email: ADMIN_EMAIL },
-        subject,
-        content: [
-          { type: "text/plain", value: text },
-          { type: "text/html", value: html },
-        ],
-      }),
-    });
-    if (!res.ok) throw new Error(`Could not send reset email (${res.status})`);
-    return "sent" as const;
-  }
-
-  console.info("[kidease-reset]", to);
-  if (process.env.VERCEL_ENV === "production") {
-    throw new Error("Email is not configured");
-  }
-  return "logged" as const;
+  const result = await sendTransactionalMail({
+    purpose: "password_reset",
+    to,
+    subject,
+    text,
+    html,
+    replyTo: ADMIN_EMAIL,
+  });
+  return result.status;
 }

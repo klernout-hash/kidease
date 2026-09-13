@@ -1,4 +1,5 @@
 import { DEFAULT_TRANSACTIONAL_MAIL_FROM, transactionalMailFrom } from "./mail-from.ts";
+import { SUPPORT_INBOX_EMAIL } from "./support.ts";
 
 /** Auto-start / remount cooldown. Does not apply to an explicit "Send a new code". */
 export const TWO_FACTOR_AUTO_COOLDOWN_MS = 45_000;
@@ -80,7 +81,7 @@ export function twoFactorResendWaitCopy(seconds: number): string {
 export function friendlyTwoFactorMailError(error: unknown): string {
   const raw = (error instanceof Error ? error.message : String(error || "")).toLowerCase();
   if (raw.includes("not configured")) {
-    return "Email is not configured, so we could not send a new code.";
+    return `Email is not configured, so we could not send a new code. Email ${SUPPORT_INBOX_EMAIL} if you need a sign-in.`;
   }
-  return "We could not send a new code. Try again in a moment.";
+  return `We could not send a new code. Try again in a moment, or email ${SUPPORT_INBOX_EMAIL}. We did not treat this as sent.`;
 }

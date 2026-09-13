@@ -43,6 +43,16 @@ export type TitanMessage = TitanListItem & {
   references: string;
 };
 
+export type OtpMailStatus = {
+  resendConfigured: boolean;
+  sendgridConfigured: boolean;
+  titanConfigured: boolean;
+  lastEvent: string | null;
+  lastPurpose: string | null;
+  lastReason: string | null;
+  lastVia: string | null;
+};
+
 export type AdminMailStatus = {
   mailbox: string;
   inboxUrl: string;
@@ -51,6 +61,7 @@ export type AdminMailStatus = {
   canSend: boolean;
   sendVia: "titan" | "resend" | "sendgrid" | null;
   setupMessage: string | null;
+  otpMail: OtpMailStatus;
 };
 
 type EnvMap = Record<string, string | undefined>;
@@ -128,6 +139,15 @@ export function adminMailStatusFromEnv(env: EnvMap = process.env): AdminMailStat
     canSend: Boolean(sendVia),
     sendVia,
     setupMessage: cfg.ok ? null : TITAN_PASSWORD_MISSING,
+    otpMail: {
+      resendConfigured: resend,
+      sendgridConfigured: sendgrid,
+      titanConfigured: cfg.ok,
+      lastEvent: null,
+      lastPurpose: null,
+      lastReason: null,
+      lastVia: null,
+    },
   };
 }
 

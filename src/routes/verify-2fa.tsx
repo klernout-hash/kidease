@@ -137,6 +137,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   const staff = staffTwoFactorRequired(dest);
   const [code, setCode] = useState("");
   const [hint, setHint] = useState("");
+  const [delivered, setDelivered] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -189,7 +190,9 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
             return leave(dest);
           }
           return startTwoFactor({ data: { force: false } }).then((res) => {
-            if (!cancelled) setHint(res.emailed);
+            if (cancelled) return;
+            setHint(res.emailed);
+            setDelivered(res.sent || Boolean(res.wait) || Boolean("reused" in res && res.reused));
           });
         })
         .catch((err) => {
@@ -198,6 +201,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
             captureLoginFunnel({ step: "two_factor_skipped", reason: "status_unavailable" });
             return leave(dest);
           }
+          setDelivered(false);
           setError(err instanceof Error ? err.message : "Could not send a code. Use Send a new code, or go back to sign in.");
           setCanSkip(false);
         })
@@ -265,8 +269,10 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         <h1 className="mt-6 text-3xl font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">
           Check your email
         </h1>
-        <p className="mt-2 text-sm text-muted">
-          We sent a 6-digit code{hint ? ` to ${hint}` : ""}. Enter it to finish signing in.
+        <p className="mt-2 text-sm text-muted" data-ke="otp-send-copy">
+          {delivered === false
+            ? "We could not email a sign-in code. Nothing was sent. Try Send a new code, or email support@kidease.ca."
+            : `We sent a 6-digit code${hint ? ` to ${hint}` : ""}. Enter it to finish signing in.`}
         </p>
         <form ref={formRef} className="mt-6 space-y-3 ph-no-capture" onSubmit={onSubmit}>
           <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} />
@@ -322,15 +328,18 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
                     setResendWait(seconds);
                     setNotice(twoFactorResendWaitCopy(seconds));
                   } else {
+                    setDelivered(false);
                     setError("Please wait a moment, then try Send a new code again.");
                   }
                   if (!staff) setCanSkip(true);
                   return;
                 }
+                setDelivered(true);
                 setNotice("A new code is on its way. Use the latest email.");
               })
               .catch((err) => {
-                setError(err instanceof Error ? err.message : "Could not send a code");
+                setDelivered(false);
+                setError(err instanceof Error ? err.message : "Could not send a code. Email support@kidease.ca.");
                 if (!staff) setCanSkip(true);
               })
               .finally(() => {
@@ -361,6 +370,14 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
           <Link to="/login" className="underline-offset-4 hover:underline">
             Back to sign in
           </Link>
+          {delivered === false ? (
+            <>
+              {" · "}
+              <a href="mailto:support@kidease.ca" className="underline-offset-4 hover:underline">
+                Email support@kidease.ca
+              </a>
+            </>
+          ) : null}
         </p>
       </div>
     </main>

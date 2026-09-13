@@ -81,9 +81,11 @@ describe("forgot-password flow", () => {
     const authApi = read("src/routes/api/auth/$.ts");
     assert.match(mail, /assertResetMailConfigured/);
     assert.match(mail, /getResetMailReady/);
-    assert.match(mail, /RESEND_API_KEY/);
-    assert.match(mail, /SENDGRID_API_KEY/);
+    assert.match(mail, /sendTransactionalMail/);
     assert.match(config, /RESET_MAIL_NOT_CONFIGURED/);
+    assert.match(config, /RESEND_API_KEY/);
+    assert.match(config, /SENDGRID_API_KEY/);
+    assert.match(config, /TITAN_APP_PASSWORD/);
     assert.doesNotMatch(mail, /kidease-reset/);
     assert.match(authApi, /assertResetMailConfigured/);
     assert.match(authApi, /\/request-password-reset/);
@@ -104,6 +106,7 @@ describe("forgot-password flow", () => {
     assert.equal(resetMailConfigured({ RESEND_API_KEY: "  " }), false);
     assert.equal(resetMailConfigured({ RESEND_API_KEY: "re_test" }), true);
     assert.equal(resetMailConfigured({ SENDGRID_API_KEY: "sg_test" }), true);
+    assert.equal(resetMailConfigured({ TITAN_APP_PASSWORD: "not-a-real-password" }), true);
     assert.throws(() => assertResetMailConfigured({}), { message: RESET_MAIL_NOT_CONFIGURED });
   });
 });

@@ -67,6 +67,10 @@ test("Send a new code surfaces wait or send failure instead of a silent success"
   assert.match(routeFile, /twoFactorResendWaitCopy/);
   assert.match(routeFile, /Wait \$\{.*\}s then resend|twoFactorResendWaitCopy\(resendWait\)/);
   assert.doesNotMatch(routeFile, /previous code is still valid/);
+  assert.match(routeFile, /We could not email a sign-in code/);
+  assert.match(routeFile, /Nothing was sent/);
+  assert.match(routeFile, /support@kidease\.ca/);
+  assert.match(routeFile, /setDelivered\(false\)/);
 });
 
 test("verify-2fa offers Remember this device for 30 days and only sends it when checked", () => {

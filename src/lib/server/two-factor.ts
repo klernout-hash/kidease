@@ -8,11 +8,10 @@ import {
   TWO_FACTOR_MAX_ATTEMPTS,
   decideTwoFactorStart,
   friendlyTwoFactorMailError,
-  resendMessageId,
-  twoFactorMailFrom,
   twoFactorWaitSeconds,
 } from "@/lib/two-factor-start";
 import { TWO_FACTOR_DEVICE_TTL_MS } from "@/lib/two-factor-cookie";
+import { sendTransactionalMail } from "@/lib/transactional-mail";
 
 const TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = TWO_FACTOR_MAX_ATTEMPTS;
@@ -55,41 +54,17 @@ async function sendCodeEmail(to: string, code: string) {
     </td></tr>
   </table>
 </body></html>`;
-  const from = twoFactorMailFrom();
-  const resend = process.env.RESEND_API_KEY?.trim();
-  if (resend) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [to], reply_to: ADMIN_EMAIL, subject, text, html }),
-    });
-    if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
-    const messageId = resendMessageId(await res.json().catch(() => null));
-    if (messageId) console.info("[kidease-2fa] resend", messageId);
-    return "sent" as const;
-  }
-  const sendgrid = process.env.SENDGRID_API_KEY?.trim();
-  if (sendgrid) {
-    const fromMatch = from.match(/^(.*)<([^>]+)>$/);
-    const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${sendgrid}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: to }] }],
-        from: { email: fromMatch?.[2]?.trim() || ADMIN_EMAIL, name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
-        reply_to: { email: ADMIN_EMAIL },
-        subject,
-        content: [
-          { type: "text/plain", value: text },
-          { type: "text/html", value: html },
-        ],
-      }),
-    });
-    if (!res.ok) throw new Error(`SendGrid ${res.status}: ${await res.text()}`);
-    return "sent" as const;
-  }
-  console.info("[kidease-2fa]", to, code);
-  return process.env.VERCEL_ENV === "production" ? Promise.reject(new Error("Email is not configured")) : Promise.resolve("logged" as const);
+  const result = await sendTransactionalMail({
+    purpose: "2fa",
+    to,
+    subject,
+    text,
+    html,
+    replyTo: ADMIN_EMAIL,
+  });
+  if (result.via === "resend") console.info("[kidease-2fa] resend", result.via);
+  if (result.status === "logged") console.info("[kidease-2fa]", to, code);
+  return result.status;
 }
 
 export const getTwoFactorStatus = createServerFn({ method: "GET" })

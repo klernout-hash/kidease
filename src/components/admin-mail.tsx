@@ -129,6 +129,18 @@ export function AdminMailPanel() {
           <p className="mt-1 text-sm text-muted">
             Inbox is Titan for <span className="text-fg">{mailbox}</span>. Open rows in KidEase. Titan’s website is a third-party tab — if that tab crashes, stay here.
           </p>
+          {status?.otpMail ? (
+            <p className="mt-2 text-xs text-subtle" data-ke="otp-mail-health">
+              OTP mail: {status.otpMail.resendConfigured ? "Resend on" : "Resend off"}
+              {" · "}
+              {status.otpMail.sendgridConfigured ? "SendGrid on" : "SendGrid off"}
+              {" · "}
+              {status.otpMail.titanConfigured ? "Titan fallback ready" : "Titan fallback unset"}
+              {status.otpMail.lastEvent
+                ? ` · last ${status.otpMail.lastEvent}${status.otpMail.lastReason ? ` (${status.otpMail.lastReason})` : ""}${status.otpMail.lastVia ? ` via ${status.otpMail.lastVia}` : ""}`
+                : ""}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {status?.titanLinked ? (

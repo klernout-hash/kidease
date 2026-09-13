@@ -31,11 +31,13 @@ Dashboard monitors should hit `https://www.kidease.ca/` and `https://www.kidease
 
 Support desk (`/support*`) is staff-only (`profiles.role` = `admin`, `support`, or `support_lead`). It does **not** weaken `/admin*` admin-only tools. Public Help Centre is `/help`. Cloudflare Access can later include `/support*` (see `docs/support.md`).
 
-## Transactional email (Resend)
+## Transactional email (Resend, then SendGrid, then Titan SMTP)
 
-OTP and other Resend mail default From is `KidEase <noreply@send.kidease.ca>`. Apex SPF is Titan-only (`include:spf.titan.email -all`). Do **not** add Resend includes on `@` / `kidease.ca`. Production Vercel (`kidease-git`) must set `MAIL_FROM=KidEase <noreply@send.kidease.ca>`. Leftover `MAIL_FROM=kyle@kidease.ca` or `login@send.kidease.ca` is remapped in code. Reply-To stays `ADMIN_EMAIL` / `kyle@kidease.ca`. Titan Admin → Mail still sends as the kyle@ mailbox on `smtp.titan.email`.
+OTP and other Resend mail default From is `KidEase <noreply@send.kidease.ca>`. Apex SPF is Titan-only (`include:spf.titan.email -all`). Do **not** add Resend includes on `@` / `kidease.ca`. Production Vercel (`kidease-git`) should set `MAIL_FROM=KidEase <noreply@send.kidease.ca>` once that host exists in the Resend dashboard. Leftover `MAIL_FROM=kyle@kidease.ca` or `login@send.kidease.ca` is remapped for generic transactional From. Reply-To stays `ADMIN_EMAIL` / `kyle@kidease.ca`.
 
-Password reset and 2FA / verification codes for `kyle@kidease.ca` stay on this Resend path (`noreply@send.kidease.ca` → Titan inbox). Do **not** send auth mail through Titan SMTP. Titan SMTP is only for Admin → Mail replies. If a reset or OTP never arrives: confirm `RESEND_API_KEY` and `MAIL_FROM` on Vercel kidease-git, then check Titan junk and Cloudflare Email Security quarantine. Allowlist `noreply@send.kidease.ca` in Titan if the send subdomain is filtered. Do not change apex SPF to include Resend. Do not invent a Resend API key.
+Password reset and 2FA / verification codes try Resend first. If Resend rejects `send.kidease.ca` (403 / domain not verified), OTP retries a documented emergency From (`MAIL_FROM_RESEND`, or apex `kyle@kidease.ca` — Resend already has `kidease.ca` verified), then SendGrid if configured, then **Titan SMTP** (`smtp.titan.email`) using `TITAN_APP_PASSWORD` / `TITAN_USER`. Titan SMTP From must be `kyle@kidease.ca` / `TITAN_USER`, never `noreply@send.kidease.ca`. Keep `TITAN_APP_PASSWORD` set on Vercel kidease-git. If every provider fails, the UI says the code was not sent and points at `support@kidease.ca`.
+
+Still add `send.kidease.ca` in Resend + Squarespace DNS when you can, then allowlist `noreply@send.kidease.ca` in Titan if that host is filtered. Do not change apex SPF to include Resend. Do not invent a Resend API key.
 
 Admin / operator login (`/login?intent=admin`, `/login?next=/admin`, `role=admin`, `desk=admin`) leads with email + password for the Titan mailbox. Google / Facebook stay available on Parent and Daycare desks. `kyle@kidease.ca` does not use Google OAuth.
 

@@ -78,7 +78,7 @@ function ForgotPassword() {
           </p>
           {mailReady ? null : (
             <p className="mt-3 text-sm text-danger">
-              This environment cannot send reset emails yet (missing RESEND_API_KEY or SENDGRID_API_KEY).
+              This environment cannot send reset emails yet (missing RESEND_API_KEY or SENDGRID_API_KEY or TITAN_APP_PASSWORD).
               If the account was created with Apple or Google, use that button on the sign-in page.
             </p>
           )}
