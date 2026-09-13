@@ -43,6 +43,7 @@ export const FOOTER_DAYCARES: FooterLinkDef[] = [
   }),
   literalLink("/provider", "Daycare desk", "Espace garderie"),
   copyLink("/verify", "verifyListings"),
+  copyLink("/daycare-requirements", "daycareRequirements"),
   copyLink("/jobs", "findDaycareJobs", { localePaired: true }),
 ];
 
@@ -61,6 +62,7 @@ export const FOOTER_SUPPORT: FooterLinkDef[] = [
   copyLink("/about", "about", { localePaired: true }),
   copyLink("/team", "team"),
   copyLink("/verify", "verifyListings"),
+  copyLink("/daycare-requirements", "daycareRequirements"),
   copyLink("/privacy", "privacy", { localePaired: true }),
   copyLink("/terms", "terms", { localePaired: true }),
   copyLink("/cookies", "cookies", { localePaired: true }),

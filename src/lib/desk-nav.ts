@@ -18,6 +18,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "verify", label: "Licence & photos", hint: "Review uploads" },
     { id: "daycares", label: "Daycares", hint: "By province" },
     { id: "trust", label: "Trust", hint: "Registries + reports" },
+    { id: "screening", label: "Screening", hint: "Document review" },
     { id: "mail", label: "Mail", hint: "Titan inbox" },
     { id: "contracts", label: "Contracts", hint: "Provider agreement + enrolment packs" },
     { id: "money", label: "Money", hint: "Bills and fees" },
@@ -35,6 +36,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   daycare: [
     { id: "requests", label: "Lead inbox", hint: "Tours, waitlist, and spots" },
     { id: "employees", label: "Employees", hint: "Add an employee" },
+    { id: "screening", label: "Screening", hint: "Required documents" },
     { id: "money", label: "Money", hint: "Bills you send" },
     { id: "listings", label: "My listings", hint: "Spots, photos, fees" },
     { id: "tours", label: "Tour times", hint: "When families can visit" },
@@ -62,7 +64,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
 
 export function providerNavSearch(
   id: string,
-): { desk: "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote" | "employees" } {
+): { desk: "requests" | "money" | "listings" | "tours" | "licence" | "contract" | "promote" | "employees" | "screening" } {
   if (
     id === "money" ||
     id === "listings" ||
@@ -70,7 +72,8 @@ export function providerNavSearch(
     id === "licence" ||
     id === "contract" ||
     id === "promote" ||
-    id === "employees"
+    id === "employees" ||
+    id === "screening"
   ) {
     return { desk: id };
   }

@@ -50,6 +50,8 @@ export type AdminCentreRow = {
   licenseVerificationSource: string | null;
   staffScreeningAttested: boolean;
   staffScreeningAttestedAt: string | null;
+  screeningOnFile: boolean;
+  screeningOnFileAt: string | null;
   licensePhoto: string | null;
   storefrontPhoto: string | null;
   isTest: boolean;
@@ -175,6 +177,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
       license_verification_source: string | null;
       staff_screening_attested: number | boolean | null;
       staff_screening_attested_at: string | null;
+      screening_on_file: number | boolean | null;
+      screening_on_file_at: string | null;
       license_photo: string | null;
       photos: string | null;
       visibility?: string | null;
@@ -208,6 +212,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         d.license_verification_source,
         d.staff_screening_attested,
         d.staff_screening_attested_at,
+        d.screening_on_file,
+        d.screening_on_file_at,
         coalesce(c.license_photo, d.license_photo) as license_photo,
         d.photos,
         d.visibility,
@@ -257,6 +263,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         license_verification_source: string | null;
         staff_screening_attested: number | boolean | null;
         staff_screening_attested_at: string | null;
+        screening_on_file: number | boolean | null;
+        screening_on_file_at: string | null;
         license_photo: string | null;
         photos: string | null;
         visibility?: string | null;
@@ -290,6 +298,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           null::text as license_verification_source,
           0 as staff_screening_attested,
           null::timestamptz as staff_screening_attested_at,
+          0 as screening_on_file,
+          null::timestamptz as screening_on_file_at,
           null::text as license_photo,
           d.photos,
           d.visibility,
@@ -344,6 +354,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         licenseVerificationSource: r.license_verification_source,
         staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
         staffScreeningAttestedAt: r.staff_screening_attested_at,
+        screeningOnFile: r.screening_on_file === 1 || r.screening_on_file === true,
+        screeningOnFileAt: r.screening_on_file_at,
         isTest: isAdminOnlyListing({
           id: r.daycare_id,
           slug: r.slug,

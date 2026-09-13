@@ -115,6 +115,9 @@ export type Daycare = {
   staffScreeningAttested?: boolean;
   staffScreeningAttestedAt?: string | null;
   staffScreeningAttestedBy?: string | null;
+  screeningOnFile?: boolean;
+  screeningOnFileAt?: string | null;
+  screeningOnFileBy?: string | null;
   stripeIdentityVerified?: boolean;
   priority?: boolean;
   priorityUntil?: string | null;

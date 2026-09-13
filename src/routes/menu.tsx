@@ -143,6 +143,7 @@ function MenuPage() {
           <MenuRow to="/how-it-works" label={t("howItWorksCta")} icon="howItWorks" />
           <MenuRow to="/jobs/post" label={t("addJobsAtKidEase")} icon="jobs" />
           <MenuRow to="/verify" label={t("verifyListings")} icon="verify" />
+          <MenuRow to="/daycare-requirements" label={t("daycareRequirements")} icon="verify" />
           <MenuRow to="/privacy" label={t("privacy")} icon="privacy" />
           <MenuRow to="/terms" label={t("terms")} icon="terms" />
           <MenuRow to="/cookies" label={t("cookies")} icon="cookies" />

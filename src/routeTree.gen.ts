@@ -22,6 +22,7 @@ import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as DaycareRequirementsRouteImport } from './routes/daycare-requirements'
 import { Route as DaycaresRouteImport } from './routes/daycares'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as ExploreRouteImport } from './routes/explore'
@@ -172,6 +173,11 @@ const CookiesRoute = CookiesRouteImport.update({
 const DaycaresRoute = DaycaresRouteImport.update({
   id: '/daycares',
   path: '/daycares',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DaycareRequirementsRoute = DaycareRequirementsRouteImport.update({
+  id: '/daycare-requirements',
+  path: '/daycare-requirements',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeleteAccountRoute = DeleteAccountRouteImport.update({
@@ -585,6 +591,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/daycares': typeof DaycaresRoute
+  '/daycare-requirements': typeof DaycareRequirementsRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
@@ -680,6 +687,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/daycares': typeof DaycaresRoute
+  '/daycare-requirements': typeof DaycareRequirementsRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
@@ -774,6 +782,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/daycares': typeof DaycaresRoute
+  '/daycare-requirements': typeof DaycareRequirementsRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
@@ -871,6 +880,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/daycares'
+    | '/daycare-requirements'
     | '/delete-account'
     | '/explore'
     | '/faq'
@@ -966,6 +976,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/daycares'
+    | '/daycare-requirements'
     | '/delete-account'
     | '/explore'
     | '/faq'
@@ -1059,6 +1070,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/daycares'
+    | '/daycare-requirements'
     | '/delete-account'
     | '/explore'
     | '/faq'
@@ -1155,6 +1167,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
   DaycaresRoute: typeof DaycaresRoute
+  DaycareRequirementsRoute: typeof DaycareRequirementsRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
@@ -1494,6 +1507,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daycare-requirements': {
+      id: '/daycare-requirements'
+      path: '/daycare-requirements'
+      fullPath: '/daycare-requirements'
+      preLoaderRoute: typeof DaycareRequirementsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify': {
@@ -1972,6 +1992,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
   DaycaresRoute: DaycaresRoute,
+  DaycareRequirementsRoute: DaycareRequirementsRoute,
   DeleteAccountRoute: DeleteAccountRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
