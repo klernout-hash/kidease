@@ -4,9 +4,12 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  NOT_LIVE_UNTIL_VERIFIED_EN,
+  NOT_LIVE_UNTIL_VERIFIED_FR,
   PROVIDER_ONBOARD_SUBJECT,
   VERIFY_EMAIL_SUBJECT,
   isVerifyNudgeWindow,
+  providerOnboardHtml,
   providerOnboardText,
   providerScreeningHref,
   shouldSendProviderNextSteps,
@@ -14,8 +17,11 @@ import {
   shouldSendVerifyNudge,
   signupSendsNextSteps,
   signupUserMailIndependentOfAdmin,
+  verifyEmailHtml,
+  verifyEmailIncludesNotLiveLine,
   verifyEmailText,
 } from "../src/lib/signup-user-mail.ts";
+import { isPlatformLive } from "../src/lib/live.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -50,7 +56,7 @@ test("verify-your-email is independent of Admin notify success", () => {
 
 test("verify email copy is a welcome/confirm with a real link, EN + FR-CA", () => {
   assert.equal(VERIFY_EMAIL_SUBJECT, "Verify your email — KidEase");
-  const text = verifyEmailText("https://www.kidease.ca/api/auth/verify-email?token=test", "Joan");
+  const text = verifyEmailText("https://www.kidease.ca/api/auth/verify-email?token=test", "Joan", "provider");
   assert.match(text, /Hi Joan,/);
   assert.match(text, /Thanks for signing up with KidEase/);
   assert.match(text, /https:\/\/www\.kidease\.ca\/api\/auth\/verify-email\?token=test/);
@@ -62,6 +68,39 @@ test("verify email copy is a welcome/confirm with a real link, EN + FR-CA", () =
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /verifyEmailSubject: "Verify your email — KidEase"/);
   assert.match(copy, /verifyEmailSubject: "Confirmez votre courriel — KidEase"/);
+});
+
+test("daycare verify and next-steps say the listing is not live until verified", () => {
+  assert.equal(
+    NOT_LIVE_UNTIL_VERIFIED_EN,
+    "Your daycare will not be listed live on KidEase for parents until it is verified.",
+  );
+  assert.equal(
+    NOT_LIVE_UNTIL_VERIFIED_FR,
+    "Votre service de garde ne sera pas affiché en direct sur KidEase pour les parents tant qu’il n’est pas vérifié.",
+  );
+  assert.equal(verifyEmailIncludesNotLiveLine("provider"), true);
+  assert.equal(verifyEmailIncludesNotLiveLine(undefined), true);
+  assert.equal(verifyEmailIncludesNotLiveLine("parent"), false);
+  const verify = verifyEmailText("https://www.kidease.ca/api/auth/verify-email?token=test", "Joan", "provider");
+  assert.match(verify, /Your daycare will not be listed live on KidEase for parents until it is verified/);
+  assert.match(verify, /Votre service de garde ne sera pas affiché en direct sur KidEase pour les parents tant qu’il n’est pas vérifié/);
+  assert.match(verifyEmailHtml("https://www.kidease.ca/x", "Joan", "provider"), /listed live on KidEase for parents/);
+  const parentVerify = verifyEmailText("https://www.kidease.ca/api/auth/verify-email?token=test", "Sam", "parent");
+  assert.doesNotMatch(parentVerify, /listed live on KidEase/);
+  const next = providerOnboardText("https://www.kidease.ca", "Joan", "Little Fox Child Care");
+  assert.match(next, /Your daycare will not be listed live on KidEase for parents until it is verified/);
+  assert.match(next, /Votre service de garde ne sera pas affiché en direct sur KidEase pour les parents tant qu’il n’est pas vérifié/);
+  assert.match(providerOnboardHtml("https://www.kidease.ca", "Joan"), /listed live on KidEase for parents/);
+  const copy = src("src/lib/copy.ts");
+  assert.match(copy, /listingNotLiveUntilVerified:/);
+  assert.match(copy, /Your daycare will not be listed live on KidEase for parents until it is verified/);
+  assert.match(copy, /Votre service de garde ne sera pas affiché en direct sur KidEase pour les parents tant qu’il n’est pas vérifié/);
+  assert.equal(isPlatformLive("new-centre", false), false);
+  assert.equal(isPlatformLive("new-centre", false, { claimStatus: "unclaimed" }), false);
+  assert.equal(isPlatformLive("new-centre", false, { claimStatus: "pending" }), false);
+  assert.match(src("src/lib/server/verify-mail.ts"), /lookupVerifyAudience/);
+  assert.match(src("src/lib/server/verify-mail.ts"), /verifyEmailText\(input\.url, input\.name, audience\)/);
 });
 
 test("signup sends verify-email only — next-steps wait for emailVerified", () => {
