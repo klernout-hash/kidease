@@ -649,11 +649,11 @@ export async function notifyAccountCreated(p: {
     actorName: p.name,
     actorEmail: p.email,
     actorPhone: p.phone,
-    city: p.city,
-    province: p.province,
+    city: p.city ?? undefined,
+    province: p.province ?? undefined,
     authMethod: p.authMethod,
     actorRole: role,
-    daycareName: p.daycareName,
+    daycareName: p.daycareName ?? undefined,
   });
 }
 
