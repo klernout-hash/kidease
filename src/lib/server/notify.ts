@@ -3,6 +3,19 @@ import { nid } from "@/lib/utils";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import {
+  accountNotifyRows,
+  accountNotifyText,
+  accountNotifyTitle,
+  accountRoleFromKind,
+  accountSmsBody,
+  adminAccountDeepLink,
+  isAccountEventKind,
+  serializeAccountEventDetail,
+  summarizeAuthMethods,
+  type AccountNotifyInput,
+  type AccountNotifyRole,
+} from "@/lib/account-notify";
+import {
   afterEnrollmentAdminNotify,
   afterPublicAdminNotify,
   actorConfirmationReplyTo,
@@ -51,7 +64,19 @@ export type PlatformEvent = {
   slug?: string;
   actorName?: string | null;
   actorEmail?: string | null;
+  actorPhone?: string | null;
+  authMethod?: string | null;
+  actorRole?: AccountNotifyRole;
   detail?: string;
+};
+
+export type LookupUser = {
+  email: string | null;
+  name: string | null;
+  emailVerified: boolean;
+  phone: string | null;
+  city: string | null;
+  authMethods: string[];
 };
 
 export type ProviderJoinPayload = {
@@ -69,7 +94,7 @@ function appOrigin() {
   return process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
 }
 
-export async function lookupUser(userId: string) {
+export async function lookupUser(userId: string): Promise<LookupUser> {
   const sql = await getSql();
   const rows = await sql
     .query<{ email: string | null; name: string | null; emailVerified: boolean | null }>(
@@ -77,17 +102,64 @@ export async function lookupUser(userId: string) {
       [userId],
     )
     .catch(() => [] as { email: string | null; name: string | null; emailVerified: boolean | null }[]);
+  const profiles = await sql
+    .query<{ display_name: string | null; phone: string | null; city: string | null }>(
+      `select display_name, phone, city from profiles where user_id = $1 limit 1`,
+      [userId],
+    )
+    .catch(() => [] as { display_name: string | null; phone: string | null; city: string | null }[]);
+  const accounts = await sql
+    .query<{ providerId: string | null }>(`select "providerId" from "account" where "userId" = $1`, [userId])
+    .catch(() => [] as { providerId: string | null }[]);
+  const display = (profiles[0]?.display_name || "").trim();
+  const authName = (rows[0]?.name || "").trim();
   return {
     email: rows[0]?.email ?? null,
-    name: rows[0]?.name ?? null,
+    name: display || authName || null,
     emailVerified: Boolean(rows[0]?.emailVerified),
+    phone: profiles[0]?.phone?.trim() || null,
+    city: profiles[0]?.city?.trim() || null,
+    authMethods: accounts.map((a) => a.providerId).filter((id): id is string => Boolean(id)),
   };
+}
+
+async function lookupProviderPlace(userId: string) {
+  const sql = await getSql();
+  const rows = await sql<{ name: string | null; city: string | null; province: string | null }>`
+    select d.name, d.city, d.province
+    from provider_daycares p
+    join daycares d on d.id = p.daycare_id
+    where p.user_id = ${userId}
+    order by d.created_at desc
+    limit 1
+  `.catch(() => []);
+  return rows[0] ?? null;
 }
 
 function listingUrl(slug?: string) {
   const origin = appOrigin();
   if (slug) return `${origin}/daycare/${slug}`;
   return `${origin}/admin`;
+}
+
+function eventLink(p: PlatformEvent) {
+  const role = p.actorRole || accountRoleFromKind(p.kind);
+  if (role && isAccountEventKind(p.kind)) return adminAccountDeepLink(appOrigin(), role);
+  return listingUrl(p.slug);
+}
+
+function accountInputFromEvent(p: PlatformEvent): AccountNotifyInput {
+  const role = p.actorRole || accountRoleFromKind(p.kind) || "parent";
+  return {
+    role,
+    name: p.actorName,
+    email: p.actorEmail,
+    phone: p.actorPhone,
+    city: p.city,
+    province: p.province,
+    authMethod: p.authMethod,
+    daycareName: p.daycareName,
+  };
 }
 
 function whenWinnipeg() {
@@ -306,22 +378,27 @@ export async function sendDailyDigest() {
 function emailCopy(p: PlatformEvent) {
   const when = whenWinnipeg();
   const title = p.title || defaultTitle(p.kind);
-  const location = [p.address, p.city, p.province].filter(Boolean).join(", ") || "—";
-  const link = listingUrl(p.slug);
-  const rows: Array<[string, string]> = [
-    ["Who", [p.actorName, p.actorEmail].filter(Boolean).join(" · ") || "—"],
-    ["Daycare", p.daycareName || "—"],
-    ["Location", location],
-    ["When", `${when} (Winnipeg)`],
-  ];
-  if (p.detail) rows.push(["Details", p.detail]);
-  const text = [title, "", ...rows.map(([k, v]) => `${k}: ${v}`), "", `Open: ${link}`].join("\n");
+  const link = eventLink(p);
+  const account = isAccountEventKind(p.kind);
+  const rows: Array<[string, string]> = account
+    ? accountNotifyRows(accountInputFromEvent(p), when)
+    : [
+        ["Who", [p.actorName, p.actorEmail].filter(Boolean).join(" · ") || "—"],
+        ["Daycare", p.daycareName || "—"],
+        ["Location", [p.address, p.city, p.province].filter(Boolean).join(", ") || "—"],
+        ["When", `${when} (Winnipeg)`],
+      ];
+  if (p.detail && !account) rows.push(["Details", p.detail]);
+  const text = account
+    ? accountNotifyText(accountInputFromEvent(p), when, link)
+    : [title, "", ...rows.map(([k, v]) => `${k}: ${v}`), "", `Open: ${link}`].join("\n");
   const htmlRows = rows
     .map(
       ([k, v]) =>
         `<p style="margin:16px 0 0;"><strong>${esc(k)}</strong><br/>${esc(v).replace(/\n/g, "<br/>")}</p>`,
     )
     .join("");
+  const cta = account ? "Open Admin" : "Open KidEase";
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
@@ -332,7 +409,7 @@ function emailCopy(p: PlatformEvent) {
     <tr><td style="padding:8px 28px 28px;">
       ${htmlRows}
       <p style="margin:24px 0 0;">
-        <a href="${link}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">Open KidEase</a>
+        <a href="${esc(link)}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">${esc(cta)}</a>
       </p>
     </td></tr>
   </table>
@@ -444,10 +521,12 @@ async function sendVisitorAutoReply(to: string, name: string) {
 }
 
 /** Parallel to email. sendSms no-ops when FEATURE_SMS is off or Twilio env is missing. */
-async function deliverSms(kind: PlatformKind, title: string, detail?: string) {
+async function deliverSms(kind: PlatformKind, title: string, detail?: string, bodyOverride?: string) {
   if (!SMS_KINDS.has(kind)) return "skip";
   const snippet = (detail || title).replace(/\s+/g, " ").slice(0, 120);
-  const body = `KidEase ${kind === "chat" ? "Live Chat" : title}: ${snippet}`;
+  const body =
+    (bodyOverride || "").trim() ||
+    `KidEase ${kind === "chat" ? "Live Chat" : title}: ${snippet}`;
   const result = await sendSms({ to: ADMIN_SMS, body, audience: "internal" });
   if (result.ok) return "sent";
   if (result.skipped) {
@@ -476,40 +555,58 @@ async function ensureEventsTable() {
       email_to text not null,
       email_status text not null default 'queued',
       email_error text,
+      detail text,
       created_at timestamptz not null default now()
     )
   `,
     )
     .catch(() => undefined);
+  await sql.query(`alter table platform_events add column if not exists detail text`).catch(() => undefined);
 }
 
 export async function notifyPlatform(p: PlatformEvent) {
-  const { title, text, html } = emailCopy(p);
+  const account = isAccountEventKind(p.kind);
+  const role = p.actorRole || accountRoleFromKind(p.kind) || undefined;
+  const filled: PlatformEvent = {
+    ...p,
+    title: p.title || (account && role ? accountNotifyTitle(role) : p.title),
+    actorRole: role,
+    authMethod: p.authMethod,
+  };
+  const { title, text, html } = emailCopy(filled);
   await ensureEventsTable();
   const sql = await getSql();
   const id = nid("ev");
+  const persistDetail = account
+    ? serializeAccountEventDetail({
+        role,
+        phone: filled.actorPhone,
+        authMethod: filled.authMethod,
+      })
+    : (filled.detail ?? null);
   const { status, error } = await sendMailThenPersist({
-    send: () => deliverEmail(title, text, html, ADMIN_EMAIL, p.actorEmail ?? undefined),
+    send: () => deliverEmail(title, text, html, ADMIN_EMAIL, filled.actorEmail ?? undefined),
     persist: async ({ status, error }) => {
       await sql.query(
         `insert into platform_events (
       id, kind, daycare_name, address, city, province, slug,
-      provider_name, provider_email, listing_url, email_to, email_status, email_error
-    ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+      provider_name, provider_email, listing_url, email_to, email_status, email_error, detail
+    ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
         [
           id,
-          p.kind,
-          p.daycareName ?? null,
-          p.address ?? p.detail ?? null,
-          p.city ?? null,
-          p.province ?? null,
-          p.slug ?? null,
-          p.actorName ?? null,
-          p.actorEmail ?? null,
-          listingUrl(p.slug),
+          filled.kind,
+          filled.daycareName ?? null,
+          filled.address ?? (account ? null : filled.detail ?? null),
+          filled.city ?? null,
+          filled.province ?? null,
+          filled.slug ?? null,
+          filled.actorName ?? null,
+          filled.actorEmail ?? null,
+          eventLink(filled),
           ADMIN_EMAIL,
           status,
           error,
+          persistDetail,
         ],
       );
     },
@@ -517,7 +614,8 @@ export async function notifyPlatform(p: PlatformEvent) {
     onPersistError: (e) => console.error("[platform_events]", e),
   });
   try {
-    await deliverSms(p.kind, title, p.detail);
+    const sms = account ? accountSmsBody(accountInputFromEvent(filled)) : undefined;
+    await deliverSms(filled.kind, title, filled.detail, sms);
   } catch (err) {
     console.error("[kidease-sms]", err instanceof Error ? err.message : err);
   }
@@ -538,16 +636,40 @@ export async function notifyAccountCreated(p: {
   name?: string | null;
   email?: string | null;
   role?: "parent" | "provider";
+  phone?: string | null;
+  city?: string | null;
+  province?: string | null;
+  authMethod?: string | null;
+  daycareName?: string | null;
 }) {
-  const role = p.role === "provider" ? "daycare provider" : "parent";
-  const result = await notifyPlatform({
-    kind: "account",
-    title: p.role === "provider" ? "New daycare provider account" : "New parent account",
+  const role: AccountNotifyRole = p.role === "provider" ? "provider" : "parent";
+  return notifyPlatform({
+    kind: role === "provider" ? "signup" : "account",
+    title: accountNotifyTitle(role),
     actorName: p.name,
     actorEmail: p.email,
-    detail: `A ${role} just signed up on KidEase.${p.email ? ` Email: ${p.email}` : ""}`,
+    actorPhone: p.phone,
+    city: p.city,
+    province: p.province,
+    authMethod: p.authMethod,
+    actorRole: role,
+    daycareName: p.daycareName,
   });
-  return result;
+}
+
+export async function notifyNewAccountFromUser(userId: string, role: AccountNotifyRole) {
+  const actor = await lookupUser(userId);
+  const place = role === "provider" ? await lookupProviderPlace(userId) : null;
+  return notifyAccountCreated({
+    role,
+    name: actor.name,
+    email: actor.email,
+    phone: actor.phone,
+    city: actor.city || place?.city,
+    province: place?.province,
+    authMethod: summarizeAuthMethods(actor.authMethods),
+    daycareName: place?.name,
+  });
 }
 
 export async function notifyProviderJoined(p: ProviderJoinPayload) {
@@ -560,6 +682,7 @@ export async function notifyProviderJoined(p: ProviderJoinPayload) {
     slug: p.slug,
     actorName: p.providerName,
     actorEmail: p.providerEmail,
+    actorRole: p.kind === "signup" ? "provider" : undefined,
   });
 }
 
@@ -747,10 +870,11 @@ export const listPlatformEvents = createServerFn({ method: "GET" })
       provider_email: string | null;
       listing_url: string | null;
       email_status: string;
+      detail: string | null;
       created_at: string;
     }>`
       select id, kind, daycare_name, address, city, province, slug,
-             provider_name, provider_email, listing_url, email_status, created_at
+             provider_name, provider_email, listing_url, email_status, detail, created_at
       from platform_events
       order by created_at desc
       limit 100

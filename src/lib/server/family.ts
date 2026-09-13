@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { ensureSeed, upsertDaycare } from "./seed";
-import { lookupUser, notifyAccountCreated, notifyPlatform, notifyProviderJoined } from "./notify";
+import { lookupUser, notifyNewAccountFromUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
 import { splitPhotoList } from "@/lib/listing-photo";
@@ -62,21 +62,8 @@ async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: st
 }
 
 async function pingNewAccount(userId: string, role: "parent" | "provider") {
-  const actor = await lookupUser(userId);
   try {
-    if (role === "provider") {
-      await notifyProviderJoined({
-        kind: "signup",
-        providerName: actor.name,
-        providerEmail: actor.email,
-      });
-      return;
-    }
-    await notifyAccountCreated({
-      name: actor.name,
-      email: actor.email,
-      role: "parent",
-    });
+    await notifyNewAccountFromUser(userId, role);
   } catch (err) {
     console.error("[kidease-mail] account notify failed", err);
   }
