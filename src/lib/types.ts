@@ -149,6 +149,8 @@ export type Daycare = {
   safetyFeatures?: string[];
   /** Optional public promo blurb from the daycare desk. */
   promoText?: string | null;
+  /** Centre timezone for posted tour times. Default America/Winnipeg. */
+  timezone?: string;
   /** Claimed + centre inbox + transactional mail configured. */
   inboxMailReady?: boolean;
 };
@@ -272,6 +274,9 @@ export type TourRequest = {
   centreNote: string | null;
   createdAt: string;
   respondedAt: string | null;
+  windowId?: string | null;
+  parentPhone?: string | null;
+  parentEmail?: string | null;
 };
 
 export type Message = {

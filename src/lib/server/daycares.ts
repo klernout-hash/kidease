@@ -117,6 +117,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
     agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
     visibility: d.visibility,
     isTest: d.isTest,
+    timezone: "America/Winnipeg",
   }));
 }
 

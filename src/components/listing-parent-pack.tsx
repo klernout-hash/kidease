@@ -62,6 +62,7 @@ export function ListingJumpNav() {
   const { t } = useCopy();
   const links = [
     ["listing-programs", "jumpPrograms"],
+    ["listing-tours", "tourTimesJump"],
     ["listing-reviews", "jumpReviews"],
     ["listing-photos", "jumpPhotos"],
     ["listing-location", "jumpLocation"],

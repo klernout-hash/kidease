@@ -1,6 +1,7 @@
 import { splitPhotoList } from "@/lib/listing-photo";
 import { listingCultureFrom } from "@/lib/listing-culture";
 import { parentListingFrom } from "@/lib/parent-listing";
+import { resolveTourTimezone } from "@/lib/tour-calendar";
 import type { Daycare } from "@/lib/types";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
@@ -80,6 +81,7 @@ export type DaycareRow = {
   values_note?: string | null;
   safety_features?: unknown;
   promo_text?: string | null;
+  timezone?: string | null;
 };
 
 export function mapDaycare(r: DaycareRow): Daycare {
@@ -190,6 +192,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
       amenities: r.amenities,
       staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
     }),
+    timezone: resolveTourTimezone(r.timezone),
   }));
 }
 

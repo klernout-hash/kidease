@@ -10,6 +10,7 @@ import { ListingRail } from "@/components/listing-rail";
 import { RequestSpotSheet } from "@/components/request-spot";
 import { RequestTourSheet } from "@/components/request-tour";
 import { RequestInfoSheet } from "@/components/request-info";
+import { ListingTourTimes } from "@/components/listing-tour-times";
 import {
   ListingHeaderPills,
   ListingJumpNav,
@@ -202,11 +203,14 @@ function Listing() {
       setInfoOpen(true);
       return;
     }
-    if (!user) {
-      goLogin(ask === "tour" ? "needSignInTour" : "guestSignInReturn", ask);
+    if (ask === "tour") {
+      setTourOpen(true);
       return;
     }
-    if (ask === "tour") setTourOpen(true);
+    if (!user) {
+      goLogin("guestSignInReturn", ask);
+      return;
+    }
     if (ask === "spot") setRequestOpen(true);
     if (ask === "waitlist") {
       window.setTimeout(() => {
@@ -335,10 +339,6 @@ function Listing() {
 
   function onTour() {
     if (!live) return;
-    if (!user) {
-      goLogin("needSignInTour", "tour");
-      return;
-    }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "tour" });
     capturePostHogEvent("listing_request_started", { intent: "tour" });
     setTourOpen(true);
@@ -644,6 +644,7 @@ function Listing() {
             </section>
 
             <ListingProgramsTable item={d} />
+            <ListingTourTimes daycare={d} onBook={onTour} />
             <ListingSnapshotGrid item={d} />
 
             <section id="listing-fees" className="mt-8 scroll-mt-24">
@@ -876,7 +877,12 @@ function Listing() {
       ) : null}
 
       <RequestSpotSheet daycare={d} open={requestOpen} intent="spot" onClose={() => setRequestOpen(false)} />
-      <RequestTourSheet daycare={d} open={tourOpen} onClose={() => setTourOpen(false)} />
+      <RequestTourSheet
+        daycare={d}
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onRequestInfo={() => setInfoOpen(true)}
+      />
       <RequestInfoSheet daycare={d} open={infoOpen} onClose={() => setInfoOpen(false)} />
       <CompareBar />
     </Shell>
