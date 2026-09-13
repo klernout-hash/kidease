@@ -48,8 +48,8 @@ test("Support verify page holds listing explanations", () => {
   assert.match(verify, /facilityTypeLeadCentre/);
   assert.match(verify, /id="unclaimed"/);
   assert.match(verify, /verifyUnclaimedBody/);
-  const footer = src("src/components/site-footer.tsx");
-  const support = footer.slice(footer.indexOf('t("footerKidEase")'), footer.indexOf("ke-footer-legal"));
-  assert.match(support, /to="\/verify"/);
+  const footer = src("src/lib/site-footer-nav.ts");
+  const support = footer.slice(footer.indexOf("FOOTER_SUPPORT"), footer.indexOf("FOOTER_COLUMNS"));
+  assert.match(support, /"\/verify"/);
   assert.match(src("src/routes/menu.tsx"), /to="\/verify"/);
 });
