@@ -11,8 +11,8 @@ import {
 import { locateHere } from "@/lib/proximity";
 import { startChannelListener } from "@/lib/runtime";
 import { startWebVitals } from "@/lib/web-vitals";
-import { resolveDefaultSearchOrigin } from "@/lib/default-origin";
-import { readSavedOrigin, reverseGeocode } from "@/lib/geo";
+import { resolveDefaultSearchOrigin, readClientTimeZone, trustedSavedOrigin } from "@/lib/default-origin";
+import { clearSavedOrigin, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { urlHasGeocodableSearchQuery } from "@/lib/search-query";
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
 import { LANGUAGES } from "@/lib/languages";
@@ -88,12 +88,15 @@ export function NativeBoot() {
   }, []);
 
   useEffect(() => {
+    const timeZone = readClientTimeZone();
+    const rawSaved = readSavedOrigin();
+    const saved = trustedSavedOrigin(rawSaved, { timeZone });
+    if (rawSaved && !saved) clearSavedOrigin();
     if (urlHasGeocodableSearchQuery()) {
       setLocated(true);
       return;
     }
-    const saved = readSavedOrigin();
-    if (saved) setOrigin(resolveDefaultSearchOrigin({ saved }), "saved");
+    if (saved) setOrigin({ ...saved, explicit: rawSaved?.explicit === true }, "saved");
     setLocated(true);
     let cancelled = false;
     const consent = readLocationConsent();
@@ -109,6 +112,7 @@ export function NativeBoot() {
         saved,
         gps: pos,
         gpsAllowed: true,
+        timeZone,
       });
       if (resolved.source === "gps") {
         const here = locateHere(resolved.lat, resolved.lng);
@@ -117,11 +121,12 @@ export function NativeBoot() {
             lat: here.lat,
             lng: here.lng,
             label: here.label || reverseGeocode(here.lat, here.lng),
+            explicit: true,
           },
           "gps",
         );
-      } else if (saved) {
-        setOrigin(resolved, "saved");
+      } else if (resolved.source === "saved" && saved) {
+        setOrigin({ ...resolved, explicit: true }, "saved");
       }
       setLocated(true);
     });

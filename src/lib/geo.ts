@@ -193,14 +193,26 @@ export function reverseGeocode(lat: number, lng: number): string {
 
 export const ORIGIN_STORAGE_KEY = "kidease-origin";
 
-export function readSavedOrigin(): (LatLng & { label: string }) | null {
+export type StoredOrigin = LatLng & {
+  label: string;
+  explicit?: boolean;
+  source?: "gps" | "manual" | "saved" | "ip" | "default";
+};
+
+export function readSavedOrigin(): StoredOrigin | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(ORIGIN_STORAGE_KEY);
     if (!raw) return null;
-    const v = JSON.parse(raw) as { lat?: number; lng?: number; label?: string };
+    const v = JSON.parse(raw) as StoredOrigin;
     if (typeof v.lat === "number" && typeof v.lng === "number" && v.label) {
-      return { lat: v.lat, lng: v.lng, label: v.label };
+      return {
+        lat: v.lat,
+        lng: v.lng,
+        label: v.label,
+        explicit: v.explicit === true,
+        source: v.source,
+      };
     }
   } catch {
     /* ignore */
@@ -208,10 +220,28 @@ export function readSavedOrigin(): (LatLng & { label: string }) | null {
   return null;
 }
 
-export function writeSavedOrigin(origin: LatLng & { label: string }) {
+export function writeSavedOrigin(origin: StoredOrigin) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(ORIGIN_STORAGE_KEY, JSON.stringify(origin));
+    window.localStorage.setItem(
+      ORIGIN_STORAGE_KEY,
+      JSON.stringify({
+        lat: origin.lat,
+        lng: origin.lng,
+        label: origin.label,
+        explicit: origin.explicit === true,
+        source: origin.source,
+      }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearSavedOrigin() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(ORIGIN_STORAGE_KEY);
   } catch {
     /* ignore */
   }

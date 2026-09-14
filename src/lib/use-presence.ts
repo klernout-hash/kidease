@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { originFromDeviceFix } from "@/lib/default-origin";
+import { originFromDeviceFix, readClientTimeZone } from "@/lib/default-origin";
 import { locateHere } from "@/lib/proximity";
 import { movedEnough } from "@/lib/presence";
 import { watchDeviceLocation } from "@/lib/native";
@@ -20,7 +20,7 @@ export function useLivePresence(active: boolean) {
         trackLocation("heartbeat", origin.lat, origin.lng, origin.label, { radiusKm });
         return;
       }
-      const resolved = originFromDeviceFix(pos, origin);
+      const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
       if (resolved.source !== "gps") return;
       const here = locateHere(resolved.lat, resolved.lng);
       setOrigin({ lat: here.lat, lng: here.lng, label: here.label }, "gps");

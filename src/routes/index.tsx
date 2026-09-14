@@ -36,7 +36,7 @@ import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { BootPending } from "@/components/boot-pending";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
-import { originFromDeviceFix } from "@/lib/default-origin";
+import { originFromDeviceFix, readClientTimeZone, trustedSavedOrigin } from "@/lib/default-origin";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
@@ -169,7 +169,7 @@ function Home() {
   }, [locationConsent]);
 
   useEffect(() => {
-    if (readSavedOrigin()) return;
+    if (trustedSavedOrigin(readSavedOrigin(), { timeZone: readClientTimeZone() })) return;
     const source = useAppStore.getState().originSource;
     if (source === "gps" || source === "manual") return;
     setOrigin(
@@ -226,7 +226,7 @@ function Home() {
 
   async function applyCity(raw: string) {
     const hit = (await resolveLocationQuery(raw)) ?? geocode(raw);
-    if (hit) setOrigin(hit);
+    if (hit) setOrigin({ ...hit, explicit: true }, "manual");
     const fields = guestHeroSearch(raw, hit);
     goSearch(fields.q, { name: fields.name });
   }
@@ -234,7 +234,7 @@ function Home() {
   async function applyPlace(raw: string) {
     const hit = (await resolveLocationQuery(raw)) ?? geocode(raw);
     if (hit) {
-      setOrigin(hit);
+      setOrigin({ ...hit, explicit: true }, "manual");
       setPlace(hit.label);
       setQuery(hit.label);
       return hit;
@@ -249,9 +249,9 @@ function Home() {
     setBusy(false);
     if (pos) {
       setLocationConsent("granted");
-      const resolved = originFromDeviceFix(pos, boot.origin);
+      const resolved = originFromDeviceFix(pos, boot.origin, { timeZone: readClientTimeZone() });
       const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
-      setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
+      setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
       setPlace(label);
       void hapticLight();
       return true;
@@ -355,7 +355,7 @@ function Home() {
               value={q}
               onChange={setQ}
               onResolved={(hit) => {
-                setOrigin(hit);
+                setOrigin({ ...hit, explicit: true }, "manual");
                 setQ(hit.label);
                 goSearch(hit.label);
               }}
@@ -395,7 +395,7 @@ function Home() {
         start={homeStart}
         onWhereChange={setPlace}
         onWhereResolved={(hit) => {
-          setOrigin(hit);
+          setOrigin({ ...hit, explicit: true }, "manual");
           setPlace(hit.label);
           setQuery(hit.label);
         }}

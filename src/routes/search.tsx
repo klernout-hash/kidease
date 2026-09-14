@@ -11,7 +11,7 @@ import { DaycareCard } from "@/components/daycare-card";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
 import { reverseGeocode } from "@/lib/geo";
-import { originFromDeviceFix } from "@/lib/default-origin";
+import { originFromDeviceFix, readClientTimeZone } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { bootSearchOrigin } from "@/lib/search-origin";
@@ -281,7 +281,7 @@ function SearchPage() {
   useEffect(() => {
     const saved = takeSavedSearchToApply();
     if (!saved) return;
-    setOrigin({ lat: saved.centerLat, lng: saved.centerLng, label: saved.centerLabel });
+    setOrigin({ lat: saved.centerLat, lng: saved.centerLng, label: saved.centerLabel, explicit: true });
     setRadiusKm(saved.radiusKm);
     if (saved.ageBand === "school-age") {
       setSchoolAgeOnly(true);
@@ -474,8 +474,9 @@ function SearchPage() {
   }
 
   function applyPlace(place: { lat: number; lng: number; label: string }) {
-    setOrigin(place);
+    setOrigin({ ...place, explicit: true }, "manual");
     setQuery(place.label);
+    writeExploreSearch({ q: place.label, name: nameQuery, from: needBy, to: needUntil });
   }
 
   function writeExploreSearch(next: { q?: string; name?: string; from?: string; to?: string }) {
@@ -560,15 +561,14 @@ function SearchPage() {
 
   async function applyQuery() {
     const label = query.trim();
-    let nextQ = label;
     if (label) {
       const hit = await resolveLocationQuery(label);
       if (hit) {
         applyPlace(hit);
-        nextQ = hit.label;
+        return;
       }
     }
-    writeExploreSearch({ q: nextQ, name: nameQuery, from: needBy, to: needUntil });
+    writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
   }
 
   async function geo() {
@@ -578,9 +578,9 @@ function SearchPage() {
     }
     const pos = await getDeviceLocation({ precise: true });
     if (pos) {
-      const resolved = originFromDeviceFix(pos, origin);
+      const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
       const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
-      setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
+      setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
       void hapticLight();
     } else {
       setLocationConsent("denied");
@@ -592,9 +592,9 @@ function SearchPage() {
     const pos = await getDeviceLocation({ precise: true });
     if (pos) {
       setLocationConsent("granted");
-      const resolved = originFromDeviceFix(pos, origin);
+      const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
       const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
-      setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
+      setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
       void hapticLight();
     } else {
       setLocationConsent("denied");
@@ -1340,12 +1340,15 @@ function SearchPage() {
                       activeSlug={active}
                       onSelect={(slug) => setActive(slug)}
                       onRelocate={(pos) => {
-                        const resolved = originFromDeviceFix(pos, origin);
+                        const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
                         const label =
                           resolved.source === "gps"
                             ? reverseGeocode(pos.lat, pos.lng)
                             : resolved.label;
-                        setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
+                        setOrigin(
+                          { lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" },
+                          resolved.source,
+                        );
                         void hapticLight();
                       }}
                       onLocate={() => void geo()}
