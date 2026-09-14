@@ -19,6 +19,8 @@ test("parent login search returns visitors to the page they left", () => {
     next: "/daycare/maple-grove",
   });
   assert.equal(parentLoginSearch("search").next, "/search");
+  assert.equal(parentLoginSearch("/admin").next, "/parent");
+  assert.equal(parentLoginSearch("/support/inbox").next, "/parent");
 });
 
 test("listing detail keeps website CTAs, login next, and a back link", () => {

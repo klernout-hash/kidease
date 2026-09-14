@@ -15,6 +15,7 @@ import {
   isAdminLoginIntent,
   isCloudflareAccessPath,
   parseDeskQuery,
+  readRememberedRole,
   postLoginDestKind,
   resolvePostLoginPath,
   sanitizePostLoginNext,
@@ -173,7 +174,11 @@ export function assignPostAuthDest(dest: string): void {
       next: params.get("next") || dest,
     });
     if (!adminIntent) {
-      url = role === "provider" || desk === "provider" ? DESK_PATH.provider : DESK_PATH.parent;
+      const remembered = readRememberedRole();
+      url =
+        role === "provider" || desk === "provider" || remembered === "provider"
+          ? DESK_PATH.provider
+          : DESK_PATH.parent;
     }
   }
   window.location.assign(url.startsWith("/") && !url.startsWith("//") ? url : "/parent");

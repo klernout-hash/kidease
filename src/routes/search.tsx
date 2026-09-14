@@ -1153,7 +1153,7 @@ function SearchPage() {
         />
 
         <div
-          className="mt-3 flex flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap"
+          className="mt-3 flex flex-wrap items-center gap-2 overflow-x-auto overscroll-x-contain whitespace-nowrap [scrollbar-width:thin] sm:flex-nowrap"
           data-search-row="live-filters-map"
         >
           <div className="flex h-11 shrink-0 rounded-full bg-surface p-0.5 ring-1 ring-border sm:min-w-[13.5rem]">

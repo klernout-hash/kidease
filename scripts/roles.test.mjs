@@ -157,6 +157,8 @@ test("sticky desk persists across tabs and home landing honors it", () => {
   assert.equal(homeLandPath({ role: "admin", sticky: "provider" }), "/provider");
   assert.equal(homeLandPath({ role: "provider", sticky: "parent" }), null);
   assert.equal(homeLandPath({ role: "parent" }), null);
+  assert.equal(homeLandPath({ role: "admin", sticky: "admin", remembered: "parent" }), null);
+  assert.equal(homeLandPath({ role: "admin", sticky: "admin", remembered: "provider" }), "/provider");
   assert.equal(highlightDesk("/account", "parent", "provider"), "provider");
   assert.deepEqual(accountSearch("provider"), { tab: "profile", desk: "director" });
   assert.deepEqual(accountSearch("admin"), { tab: "profile", desk: "admin" });

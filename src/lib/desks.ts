@@ -84,7 +84,12 @@ export function homeLandPath(input: {
   role?: AppRole | null;
   desks?: DeskKey[] | null;
   sticky?: DeskKey | null;
+  remembered?: "parent" | "provider" | null;
 }): "/admin" | "/support" | "/provider" | null {
+  if (input.remembered === "parent") return null;
+  if (input.remembered === "provider") {
+    return input.sticky === "parent" ? null : "/provider";
+  }
   const desks = input.desks?.length ? input.desks : input.role ? desksFor({ role: input.role }) : null;
   const sticky = input.sticky;
   if (sticky && (!desks || desks.includes(sticky))) {

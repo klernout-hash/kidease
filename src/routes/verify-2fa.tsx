@@ -261,7 +261,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   }
 
   return (
-    <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] place-items-center px-4 py-10">
+    <main className="ke-auth-viewport mx-auto grid place-items-center px-4 py-10">
       <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border sm:p-8">
         <div className="flex justify-center">
           <BrandMark size="md" />
@@ -284,8 +284,13 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               onChange={(e) => setRemember(e.target.checked)}
               disabled={busy}
               autoComplete="off"
+              autoCorrect="off"
               name="kidease-remember-device"
               data-ke="remember-device"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-bwignore="true"
+              data-form-type="other"
             />
             <span>
               <span className="font-medium">Remember this device for 30 days</span>

@@ -652,6 +652,10 @@ html[data-channel="website"] .ke-listings-narrow {
   height: 100vh;
   height: 100dvh;
 }
+.ke-auth-viewport {
+  min-height: calc(100vh - 4.5rem);
+  min-height: calc(100dvh - 4.5rem);
+}
 html[data-channel="website"] .ke-card,
 html[data-channel="website"] .ke-web-grid .ke-card,
 html[data-channel="website"] .ke-web-grid > article {

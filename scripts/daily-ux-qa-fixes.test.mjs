@@ -139,6 +139,8 @@ test("Parent and Daycare login never bounce through Cloudflare Access", () => {
   assert.equal(isCloudflareAccessPath("/login"), false);
   assert.equal(resolvePostLoginPath({ role: "parent", sticky: "admin", next: "/admin" }), "/parent");
   assert.equal(resolvePostLoginPath({ role: "provider", sticky: "admin" }), "/provider");
+  assert.match(src("src/routes/index.tsx"), /remembered: readRememberedRole\(\)/);
+  assert.match(src("src/lib/auth/parent-login.ts"), /isCloudflareAccessPath\(dest\) \? "\/parent"/);
   assert.equal(isAdminLoginIntent({ role: "parent", next: "/admin" }), false);
   assert.equal(isAdminLoginIntent({ next: "/admin" }), true);
   const funnel = src("src/lib/auth/login-funnel.ts");
@@ -157,8 +159,11 @@ test("login consent checkboxes stay user-driven and Turnstile does not auto-show
   assert.match(twoFa, /useState\(false\)/);
   assert.match(twoFa, /data-ke="remember-device"/);
   assert.match(twoFa, /autoComplete="off"/);
+  assert.match(twoFa, /data-lpignore="true"/);
+  assert.match(twoFa, /name="kidease-remember-device"/);
   assert.match(src("src/components/turnstile-field.tsx"), /appearance: "interaction-only"/);
   assert.match(src("src/components/casl-consent-fields.tsx"), /autoComplete="off"/);
+  assert.match(src("src/components/casl-consent-fields.tsx"), /data-lpignore="true"/);
 });
 
 test("Firefox layout uses standards appearance and dvh fallbacks", () => {
@@ -166,6 +171,10 @@ test("Firefox layout uses standards appearance and dvh fallbacks", () => {
   assert.match(css, /-moz-appearance: none/);
   assert.match(css, /min-height: 100vh;\s*\n\s*min-height: 100dvh/);
   assert.match(css, /\.min-h-dvh \{/);
+  assert.match(css, /\.ke-auth-viewport \{/);
+  assert.match(css, /min-height: calc\(100vh - 4\.5rem\)/);
+  assert.match(src("src/routes/login.tsx"), /ke-auth-viewport/);
+  assert.match(src("src/routes/search.tsx"), /scrollbar-width:thin/);
 });
 
 test("building photo 404s fall back to the committed placeholder, no invented JPEGs", () => {

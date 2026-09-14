@@ -24,7 +24,14 @@ import { ChipButton } from "@/components/chip";
 import { HERO_SIZES, STEP_SIZES } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily, getMyRole } from "@/lib/server/family";
-import { consumeJustSignedOut, DESK_LANDED_KEY, homeLandPath, readStickyDesk, type AppRole } from "@/lib/desks";
+import {
+  consumeJustSignedOut,
+  DESK_LANDED_KEY,
+  homeLandPath,
+  readRememberedRole,
+  readStickyDesk,
+  type AppRole,
+} from "@/lib/desks";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { BootPending } from "@/components/boot-pending";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
@@ -308,7 +315,7 @@ function Home() {
     }
     if (consumeJustSignedOut()) return;
     if (!user) return;
-    const dest = homeLandPath({ role, sticky: readStickyDesk() });
+    const dest = homeLandPath({ role, sticky: readStickyDesk(), remembered: readRememberedRole() });
     if (!dest) return;
     try {
       sessionStorage.setItem(DESK_LANDED_KEY, "1");
