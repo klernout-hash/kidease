@@ -8,14 +8,12 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { failClosedUnread } from "@/lib/notifications";
 import { useSessionDesks } from "@/components/session-desks";
+import { ShareKidEaseButton } from "@/components/share-button";
 
 const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
 );
 
-const ShareKidEaseButton = lazy(() =>
-  import("@/components/share-button").then((m) => ({ default: m.ShareKidEaseButton })),
-);
 const RateKidEaseMenuRow = lazy(() =>
   import("@/components/rate-kidease").then((m) => ({ default: m.RateKidEaseMenuRow })),
 );
@@ -96,8 +94,8 @@ function MenuPage() {
           <MenuRow to="/search" label={t("explore")} icon="explore" />
           <MenuRow to="/benefits" label={t("benefitsTab")} icon="benefits" />
           <MenuRow to="/get-app" label={t("getApp")} icon="getApp" />
+          <ShareKidEaseButton appearance="row" />
           <Suspense fallback={null}>
-            <ShareKidEaseButton appearance="row" />
             <RateKidEaseMenuRow />
           </Suspense>
           <MenuRow to="/about" label={t("about")} icon="about" />

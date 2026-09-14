@@ -88,7 +88,7 @@ test("preferOsShare is mobile/native only — desktop falls through to clipboard
 
 test("share feedback names copied, started, and fallback outcomes", () => {
   assert.equal(shareFeedbackKey("shared"), "shareStarted");
-  assert.equal(shareFeedbackKey("copied"), "shareCopiedFallback");
+  assert.equal(shareFeedbackKey("copied"), "linkCopied");
   assert.equal(shareFeedbackKey("failed"), "shareFailed");
   assert.equal(shareFeedbackKey("cancelled"), null);
 });
@@ -174,8 +174,10 @@ test("Share KidEase lives in the header profile menu, app menu, and drawer", () 
   assert.match(shell, /ShareKidEaseButton/);
   assert.match(shell, /appearance="menu"/);
   assert.doesNotMatch(shell, /appearance="nav"/);
+  assert.match(menu, /import \{ ShareKidEaseButton \}/);
   assert.match(menu, /ShareKidEaseButton/);
   assert.match(menu, /appearance="row"/);
+  assert.doesNotMatch(menu, /lazy\(\(\) =>\s*import\("@\/components\/share-button"/);
   assert.match(drawer, /ShareKidEaseButton/);
   assert.match(drawer, /appearance="drawer"/);
 });
@@ -192,8 +194,9 @@ test("listing cards and listing detail share the centre deep link", () => {
   assert.match(listing, /ShareListingButton/);
   assert.match(listing, /d\.slug/);
   assert.match(button, /listingSharePayload/);
-  assert.match(button, /shareCopiedFallback/);
+  assert.match(button, /linkCopied/);
   assert.match(button, /shareStarted/);
+  assert.match(button, /dataKe="share-kidease"/);
   assert.match(button, /aria-live="polite"/);
   assert.match(button, /shareListingAria/);
   assert.match(button, /aria-label=\{feedback \? feedback : ariaLabel\}/);
