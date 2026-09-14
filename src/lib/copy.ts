@@ -12,37 +12,56 @@ export const copy = {
     benefitsShort: "Childcare Benefits Program",
     benefitsTitle: "Help paying for care",
     benefitsLead:
-      "Most reduced fees under the Canada-Wide Early Learning and Child Care program are applied automatically at participating daycares. Extra help for lower-income families (fee subsidies) is a separate application, and it works differently in every province.",
-    benefitsApply: "Apply on the official site",
+      "Canada Child Benefit is a monthly tax-free CRA payment — not a daycare invoice discount. Reduced ~$10-a-day fees at participating licensed centres are applied at the centre. Income-tested fee subsidies are a separate provincial or territorial application and can stack where the rules allow.",
+    benefitsReviewed:
+      "Last reviewed September 2026. CCB and Child Disability Benefit amounts are for July 2026–June 2027 (based on 2025 income). Provincial figures follow current published rules and can change. KidEase does not process applications, host government forms, or calculate your exact payment — confirm on the official site.",
+    benefitsSectionFederal: "Federal benefits",
+    benefitsSectionCwelcc: "CWELCC",
+    benefitsSectionProvincial: "Provincial fee subsidies",
+    benefitsProvincialLead:
+      "Fee subsidies are income-tested programs run by each province or territory. They are separate from CWELCC reduced fees and from the Canada Child Benefit. Amounts vary — use the official page or estimator. KidEase does not invent a calculator.",
+    benefitsApply: "Official program page",
     benefitsBcT: "British Columbia",
-    benefitsBc: "Affordable Child Care Benefit — apply through My Family Services.",
+    benefitsBc:
+      "Affordable Child Care Benefit is a monthly payment based on income, family size, and type of care. Renew each year in My Family Services. KidEase does not publish a dollar table — use the official estimator. Some centres are also $10-a-Day ChildCareBC sites (a different list).",
     benefitsMbT: "Manitoba",
-    benefitsMb: "Child Care Subsidy for eligible families using licensed care.",
+    benefitsMb:
+      "Effective September 13, 2026, Child Care Subsidy–eligible families no longer pay a family contribution or non-subsidized daily fee (effectively $0 parent fees while eligible, within absence rules). $10-a-day at funded licensed centres is separate and usually already on the invoice. Apply on the Manitoba Child Care Subsidy page.",
     benefitsAbT: "Alberta",
-    benefitsAb: "Child Care Subsidy (for school-age) + Affordability Grant / $15-a-day fees for younger children.",
+    benefitsAb:
+      "Affordability Grant / reduced fees at participating licensed daycare and family day homes for children up to kindergarten (about $326.25/month full-time). Child Care Subsidy is income-tested, mainly for full-time kindergarten to Grade 6: facility kindergarten from about $644/month under $50,000 down toward about $161 near $85,000–$90,000; school-age amounts are lower. Optional extended-hours subsidy is about $100/month when eligible. Use Alberta’s estimator — KidEase does not calculate your amount.",
     benefitsOnT: "Ontario",
-    benefitsOn: "Fee subsidy is managed locally. Find your CMSM or DSSAB.",
+    benefitsOn:
+      "Fee subsidy is managed by your local CMSM or DSSAB and is income-tested. For eligible children in CWELCC-enrolled programs, the province notes the income-tested parent portion can be reduced by about 50%. Waitlists are common. KidEase does not process Ontario subsidy.",
     benefitsQcT: "Quebec",
-    benefitsQc: "Reduced contribution spaces and the childcare tax credit through Revenu Québec.",
+    benefitsQc:
+      "Quebec uses its own system: reduced-contribution spaces (CPE / subsidized garderie) plus the refundable tax credit for childcare expenses through Revenu Québec for unsubsidized care. Ask the centre if the space is reduced-contribution.",
     benefitsFedT: "Canada Child Benefit",
-    benefitsFed: "Federal monthly payment for eligible families.",
+    benefitsFed: "Federal monthly tax-free CRA payment for eligible families. Not a daycare invoice discount.",
     benefitsSkT: "Saskatchewan",
     benefitsSk:
-      "$10-a-day regulated child care for children under 6. Low-income families may also access support through the Saskatchewan Employment Incentive.",
+      "$10-a-day regulated child care for children under 6 at participating licensed centres. Low-income families may also access support through the Saskatchewan Employment Incentive. Amounts vary — see the official page.",
     benefitsNsT: "Nova Scotia",
-    benefitsNs: "Reduced parent fees + Nova Scotia Child Care Subsidy Program for eligible families.",
+    benefitsNs:
+      "Reduced parent fees at participating licensed centres plus the Nova Scotia Child Care Subsidy Program for eligible families. Amounts vary — see the official page or apply form.",
     benefitsNbT: "New Brunswick",
-    benefitsNb: "Parent Subsidy Program and Childcare Assistance Program for eligible families.",
+    benefitsNb:
+      "Parent Subsidy Program and Childcare Assistance Program for eligible families in designated facilities. Amounts vary — see the official guide or Parent Portal.",
     benefitsPeT: "Prince Edward Island",
-    benefitsPe: "$10-a-day regulated child care + Child Care Subsidy Program.",
+    benefitsPe:
+      "$10-a-day regulated child care at participating licensed centres plus the Child Care Subsidy Program. Amounts vary — use the official PEI registry calculator.",
     benefitsNlT: "Newfoundland and Labrador",
-    benefitsNl: "$10-a-day regulated child care + Child Care Subsidy Program.",
+    benefitsNl:
+      "$10-a-day regulated child care at participating licensed centres plus the Child Care Subsidy Program. Amounts vary — see the official subsidy page.",
     benefitsYtT: "Yukon",
-    benefitsYt: "Universal child care program (average $10-a-day) + Child Care Subsidy.",
+    benefitsYt:
+      "Universal child care (average $10-a-day) lowers licensed-space fees automatically. Lower-income families can also apply for the Yukon Child Care Subsidy. Amounts vary — see Yukon’s official pages.",
     benefitsNtT: "Northwest Territories",
-    benefitsNt: "Child Care Fee Reduction Subsidy (average $10-a-day) + possible Income Assistance support.",
+    benefitsNt:
+      "Child Care Fee Reduction (average $10-a-day) at participating licensed programs, plus possible Income Assistance support. Amounts vary — see the official ECE pages.",
     benefitsNuT: "Nunavut",
-    benefitsNu: "$10-a-day regulated child care + Daycare Subsidy for eligible families.",
+    benefitsNu:
+      "$10-a-day regulated child care at participating licensed programs plus a Daycare Subsidy for eligible families. Amounts vary — see the official Nunavut pages.",
     benefitsNote: "KidEase does not process these applications. Official government sites open in a new tab.",
     saved: "Saved",
     enrolled: "Enrolled",
@@ -1941,37 +1960,56 @@ export const copy = {
     benefitsShort: "Programme d’aide à la garde d’enfants",
     benefitsTitle: "Aide pour payer la garde",
     benefitsLead:
-      "La plupart des tarifs réduits du programme pancanadien d’apprentissage et de garde des jeunes enfants s’appliquent automatiquement dans les garderies participantes. Une aide supplémentaire pour les familles à plus faible revenu (subvention) se demande à part, et elle change selon la province.",
-    benefitsApply: "Présenter une demande sur le site officiel",
+      "L’Allocation canadienne pour enfants est un paiement mensuel non imposable de l’ARC — pas un rabais sur la facture de garderie. Les tarifs réduits d’environ 10 $ par jour dans les centres permis participants sont appliqués au centre. Les subventions selon le revenu sont une demande provinciale ou territoriale distincte et peuvent se cumuler là où les règles le permettent.",
+    benefitsReviewed:
+      "Dernière revue : septembre 2026. Les montants de l’ACE et de la prestation pour enfants handicapés concernent juillet 2026–juin 2027 (selon le revenu de 2025). Les chiffres provinciaux suivent les règles publiées et peuvent changer. KidEase ne traite pas les demandes, n’héberge aucun formulaire gouvernemental et ne calcule pas votre paiement exact — confirmez sur le site officiel.",
+    benefitsSectionFederal: "Prestations fédérales",
+    benefitsSectionCwelcc: "AGJE / CWELCC",
+    benefitsSectionProvincial: "Subventions provinciales",
+    benefitsProvincialLead:
+      "Les subventions selon le revenu sont gérées par chaque province ou territoire. Elles sont distinctes des tarifs réduits AGJE et de l’Allocation canadienne pour enfants. Les montants varient — utilisez la page ou l’estimateur officiel. KidEase n’invente pas de calculateur.",
+    benefitsApply: "Page officielle du programme",
     benefitsBcT: "Colombie-Britannique",
-    benefitsBc: "Prestation pour la garde d’enfants abordable — via My Family Services.",
+    benefitsBc:
+      "La Prestation pour la garde d’enfants abordable est un paiement mensuel selon le revenu, la taille de la famille et le type de garde. Renouvelez chaque année dans My Family Services. KidEase ne publie pas de tableau de montants — utilisez l’estimateur officiel. Certains centres sont aussi des sites 10 $ par jour ChildCareBC (une autre liste).",
     benefitsMbT: "Manitoba",
-    benefitsMb: "Subvention pour les familles admissibles utilisant un service permis.",
+    benefitsMb:
+      "À compter du 13 septembre 2026, les familles admissibles à la subvention pour la garde d’enfants n’ont plus de contribution familiale ni de frais quotidiens non subventionnés (essentiellement 0 $ de frais parentaux tant qu’elles restent admissibles, selon les règles d’absence). Le 10 $ par jour dans les centres permis financés est distinct et figure généralement déjà sur la facture. Demande sur la page manitobaine de subvention.",
     benefitsAbT: "Alberta",
-    benefitsAb: "Subvention pour les enfants d’âge scolaire + subvention d’abordabilité / tarifs 15 $ par jour pour les plus jeunes.",
+    benefitsAb:
+      "Subvention d’abordabilité / tarifs réduits dans les garderies et milieux familiaux permis participants pour les enfants jusqu’à la maternelle (environ 326,25 $/mois à temps plein). La subvention pour la garde d’enfants est selon le revenu, surtout de la maternelle à temps plein à la 6e année : maternelle en installation d’environ 644 $/mois sous 50 000 $ jusqu’à environ 161 $ près de 85 000–90 000 $; montants plus bas pour l’âge scolaire. Subvention optionnelle pour heures prolongées d’environ 100 $/mois si admissible. Utilisez l’estimateur de l’Alberta — KidEase ne calcule pas votre montant.",
     benefitsOnT: "Ontario",
-    benefitsOn: "La subvention est gérée localement. Trouvez votre CMSM ou DSSAB.",
+    benefitsOn:
+      "La subvention est gérée par votre CMSM ou DSSAB local et selon le revenu. Pour les enfants admissibles dans un programme inscrit à l’AGJE, la province indique que la part parentale selon le revenu peut être réduite d’environ 50 %. Les listes d’attente sont fréquentes. KidEase ne traite pas la subvention ontarienne.",
     benefitsQcT: "Québec",
-    benefitsQc: "Places à contribution réduite et crédit d’impôt via Revenu Québec.",
+    benefitsQc:
+      "Le Québec a son propre régime : places à contribution réduite (CPE / garderie subventionnée) et crédit d’impôt remboursable pour frais de garde via Revenu Québec pour les places non subventionnées. Demandez au centre si la place est à contribution réduite.",
     benefitsFedT: "Allocation canadienne pour enfants",
-    benefitsFed: "Paiement fédéral mensuel pour les familles admissibles.",
+    benefitsFed: "Paiement fédéral mensuel non imposable de l’ARC pour les familles admissibles. Pas un rabais sur une facture de garderie.",
     benefitsSkT: "Saskatchewan",
     benefitsSk:
-      "Garde réglementée à 10 $ par jour pour les enfants de moins de 6 ans. Les familles à faible revenu peuvent aussi obtenir de l’aide via le Saskatchewan Employment Incentive.",
+      "Garde réglementée à 10 $ par jour pour les enfants de moins de 6 ans dans les centres permis participants. Les familles à faible revenu peuvent aussi obtenir de l’aide via le Saskatchewan Employment Incentive. Les montants varient — voir la page officielle.",
     benefitsNsT: "Nouvelle-Écosse",
-    benefitsNs: "Frais parentaux réduits + programme de subvention pour les familles admissibles.",
+    benefitsNs:
+      "Frais parentaux réduits dans les centres permis participants + programme de subvention pour les familles admissibles. Les montants varient — voir la page officielle ou le formulaire.",
     benefitsNbT: "Nouveau-Brunswick",
-    benefitsNb: "Programme de subvention parentale et programme d’aide à la garde pour les familles admissibles.",
+    benefitsNb:
+      "Programme de subvention parentale et programme d’aide à la garde pour les familles admissibles dans un établissement désigné. Les montants varient — voir le guide officiel ou le portail des parents.",
     benefitsPeT: "Île-du-Prince-Édouard",
-    benefitsPe: "Garde réglementée à 10 $ par jour + programme de subvention.",
+    benefitsPe:
+      "Garde réglementée à 10 $ par jour dans les centres permis participants + programme de subvention. Les montants varient — utilisez le calculateur officiel du registre de l’Î.-P.-É.",
     benefitsNlT: "Terre-Neuve-et-Labrador",
-    benefitsNl: "Garde réglementée à 10 $ par jour + programme de subvention.",
+    benefitsNl:
+      "Garde réglementée à 10 $ par jour dans les centres permis participants + programme de subvention. Les montants varient — voir la page officielle.",
     benefitsYtT: "Yukon",
-    benefitsYt: "Programme universel (environ 10 $ par jour) + subvention pour la garde d’enfants.",
+    benefitsYt:
+      "Le programme universel (environ 10 $ par jour) réduit automatiquement les frais des places permises. Les familles à plus faible revenu peuvent aussi demander la subvention yukonnaise. Les montants varient — voir les pages officielles.",
     benefitsNtT: "Territoires du Nord-Ouest",
-    benefitsNt: "Subvention à la réduction des frais (environ 10 $ par jour) + aide possible au revenu.",
+    benefitsNt:
+      "Réduction des frais (environ 10 $ par jour) dans les programmes permis participants, plus une aide possible au revenu. Les montants varient — voir les pages officielles de l’ÉPE.",
     benefitsNuT: "Nunavut",
-    benefitsNu: "Garde réglementée à 10 $ par jour + subvention pour les familles admissibles.",
+    benefitsNu:
+      "Garde réglementée à 10 $ par jour dans les programmes permis participants + subvention pour les familles admissibles. Les montants varient — voir les pages officielles du Nunavut.",
     benefitsNote: "KidEase ne traite pas ces demandes. Les sites officiels s’ouvrent dans un nouvel onglet.",
     saved: "Favoris",
     enrolled: "Inscriptions",

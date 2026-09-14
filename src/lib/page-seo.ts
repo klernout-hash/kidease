@@ -232,7 +232,7 @@ export const MARKETING_PAGE_SEO = {
   benefits: {
     title: "Childcare benefits and subsidies · KidEase",
     description:
-      "CWELCC and provincial fee subsidies for licensed childcare. KidEase links to official government sites and does not host applications.",
+      "Canada Child Benefit 2026–27 amounts, CWELCC $10-a-day fees, and provincial fee subsidies. Official government links only — KidEase does not process applications.",
     path: "/benefits",
   },
   help: {
@@ -350,7 +350,7 @@ export const MARKETING_PAGE_SEO_FR = {
   benefits: {
     title: "Prestations et subventions pour la garde · KidEase",
     description:
-      "AGJE et subventions provinciales pour la garde permise. KidEase pointe vers les sites officiels et n’héberge pas les demandes.",
+      "Montants de l’Allocation canadienne pour enfants 2026-2027, tarifs AGJE et subventions provinciales. Liens officiels seulement — KidEase ne traite pas les demandes.",
     path: "/fr/benefits",
   },
   login: {
