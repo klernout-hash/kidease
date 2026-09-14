@@ -204,7 +204,7 @@ export function BenefitsPage() {
             <h3 className="text-lg font-semibold">{fr ? "Prestation pour enfants handicapés" : "Child Disability Benefit"}</h3>
             <p className="mt-2 text-sm leading-6 text-muted">
               {fr
-                ? `Jusqu’à environ ${money(CDB.maxYear)}/an (${money(CDB.maxMonth)}/mois) par enfant admissible au crédit d’impôt pour personnes handicapées (CIPH). Versée avec l’ACE lorsque vous y avez droit — pas une demande KidEase.`
+                ? `Jusqu’à ${money(CDB.maxYear)}/an (${money(CDB.maxMonth)}/mois) par enfant admissible au crédit d’impôt pour personnes handicapées (CIPH). Versée avec l’ACE lorsque vous y avez droit — pas une demande KidEase.`
                 : `Up to about ${money(CDB.maxYear)}/year (${money(CDB.maxMonth)}/month) per child eligible for the Disability Tax Credit (DTC). Paid with CCB when you qualify — not a KidEase application.`}
             </p>
             <div className="mt-3">
