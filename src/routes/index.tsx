@@ -460,15 +460,9 @@ function Home() {
               <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
               {locationForm}
               <ul className="mt-4 flex flex-wrap gap-2" data-ke="hero-trust-chips">
-                <li className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border">
-                  {t("trustLicensedOnly")}
-                </li>
-                <li className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border">
-                  {t("sortOpen")}
-                </li>
-                <li className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border">
-                  {t("requestInfo")}
-                </li>
+                <li className="ke-chip">{t("trustLicensedOnly")}</li>
+                <li className="ke-chip">{t("sortOpen")}</li>
+                <li className="ke-chip">{t("requestInfo")}</li>
               </ul>
               {!manual ? <CityHubLinks className="mt-5" /> : null}
               <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>

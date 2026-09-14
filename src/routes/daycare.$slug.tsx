@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound, redirect, useNavigate } from "@tanstac
 import { MapPinned, MessageCircle, Star } from "lucide-react";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { ShareListingButton } from "@/components/share-button";
+import { FreeListingShareActions } from "@/components/free-listing-share";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -552,6 +553,7 @@ function Listing() {
                   <ListingOverflowItems />
                   <div className="px-1 py-1">
                     <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
+                    <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
                   </div>
                 </ListingMoreActions>
                 <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" />
@@ -861,6 +863,7 @@ function Listing() {
             <ListingOverflowItems />
             <div className="px-1 py-1">
               <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
+              <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
             </div>
           </ListingMoreActions>
         </div>

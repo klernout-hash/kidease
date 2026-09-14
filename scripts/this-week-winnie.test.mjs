@@ -65,7 +65,8 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(src("src/components/daycare-lead-inbox.tsx"), /providerRequestsEmpty/);
 
   assert.match(card, /CompareChip/);
-  assert.match(listing, /CompareChip/);
+  assert.match(listing, /compareAdd/);
+  assert.match(listing, /toggleCompareItem/);
   assert.match(shell, /to: "\/compare"/);
   assert.match(compare, /compareFeesCwelcc/);
   assert.match(compare, /compareVacancy/);
