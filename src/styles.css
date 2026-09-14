@@ -268,9 +268,6 @@
     box-shadow: inset 0 0 0 1px var(--color-fg);
   }
   .ke-chip-carousel {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 0.5rem;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     padding-block: 0.15rem 0.35rem;
@@ -282,7 +279,13 @@
   .ke-chip-carousel::-webkit-scrollbar {
     display: none;
   }
-  .ke-chip-carousel > * {
+  .ke-chip-carousel-track {
+    display: flex;
+    width: max-content;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+  .ke-chip-carousel-track > * {
     flex: 0 0 auto;
     max-width: none;
   }

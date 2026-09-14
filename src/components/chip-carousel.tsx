@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ export function ChipCarousel({
 }) {
   const { t } = useCopy();
   const scroller = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState(false);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
@@ -35,8 +36,9 @@ export function ChipCarousel({
     setCanNext(overflowing && left < max - 2);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = scroller.current;
+    const inner = track.current;
     if (!el) return;
 
     const onScroll = () => sync();
@@ -45,15 +47,17 @@ export function ChipCarousel({
 
     const ro = new ResizeObserver(() => sync());
     ro.observe(el);
-    for (const child of el.children) ro.observe(child);
+    if (inner) ro.observe(inner);
 
     sync();
-    const frame = requestAnimationFrame(sync);
+    const later = window.setTimeout(sync, 80);
+    const fonts = document.fonts?.ready.then(sync);
     return () => {
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       ro.disconnect();
-      cancelAnimationFrame(frame);
+      window.clearTimeout(later);
+      void fonts;
     };
   }, [children, sync]);
 
@@ -66,7 +70,7 @@ export function ChipCarousel({
 
   return (
     <div
-      className={cn("flex min-w-0 max-w-full items-center gap-1", className)}
+      className={cn("flex w-full min-w-0 max-w-full items-center gap-1 overflow-x-hidden", className)}
       data-chip-carousel=""
       data-search-row={row}
     >
@@ -87,7 +91,9 @@ export function ChipCarousel({
         aria-label={label}
         className="ke-chip-carousel min-w-0 flex-1"
       >
-        {children}
+        <div ref={track} className="ke-chip-carousel-track">
+          {children}
+        </div>
       </div>
       {overflow ? (
         <button

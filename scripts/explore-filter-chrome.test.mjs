@@ -26,8 +26,11 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
   assert.match(carousel, /disabled=\{!canNext\}/);
   assert.match(carousel, /scrollBy/);
   assert.match(css, /\.ke-chip-carousel/);
+  assert.match(css, /\.ke-chip-carousel-track/);
+  assert.match(css, /width:\s*max-content/);
   assert.match(css, /scrollbar-width:\s*none/);
   assert.match(css, /flex-wrap:\s*nowrap/);
+  assert.match(carousel, /w-full min-w-0 max-w-full/);
 
   assert.match(search, /data-search-row="live-filters-map"/);
   assert.match(chips, /data-search-row="categories"/);
