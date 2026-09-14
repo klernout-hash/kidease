@@ -382,6 +382,7 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.match(search, /listingMatchesExploreFilter/);
   assert.doesNotMatch(lib, /Tiny Tots/);
   assert.match(search, /ExploreCategoryChips/);
+  assert.match(search, /searchFor/);
   assert.match(search, /writeCategorySearch/);
   assert.match(search, /writeRailSelection/);
   assert.match(search, /searchFiltersReady/);

@@ -270,6 +270,10 @@
     background: var(--color-fg);
     box-shadow: inset 0 0 0 1px var(--color-fg);
   }
+  a.ke-chip {
+    text-decoration: none;
+    cursor: pointer;
+  }
   .ke-explore-filter-bar .ke-chip,
   .ke-explore-cat {
     transition:

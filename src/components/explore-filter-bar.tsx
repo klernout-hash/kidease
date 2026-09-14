@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 import { Map, SlidersHorizontal } from "lucide-react";
 import { ChipButton } from "@/components/chip";
 import { ChipCarousel } from "@/components/chip-carousel";
@@ -91,6 +92,7 @@ export function ExploreFilterBar({
   onNearMe,
   openSpotsOn,
   onOpenSpots,
+  openSpotsSearch,
   tenOn,
   onTen,
   filtersOpen,
@@ -108,6 +110,7 @@ export function ExploreFilterBar({
   onNearMe: () => void;
   openSpotsOn: boolean;
   onOpenSpots: () => void;
+  openSpotsSearch?: Record<string, unknown>;
   tenOn: boolean;
   onTen: () => void;
   filtersOpen: boolean;
@@ -147,9 +150,21 @@ export function ExploreFilterBar({
         <ChipButton on={nearMeOn} aria-pressed={nearMeOn} onClick={onNearMe}>
           {t("nearMe")}
         </ChipButton>
-        <ChipButton on={openSpotsOn} aria-pressed={openSpotsOn} onClick={onOpenSpots}>
-          {t("sortOpen")}
-        </ChipButton>
+        {openSpotsSearch ? (
+          <Link
+            to="/search"
+            search={openSpotsSearch as never}
+            className={cn("ke-chip", openSpotsOn && "ke-chip-on")}
+            aria-pressed={openSpotsOn}
+            onClick={onOpenSpots}
+          >
+            {t("sortOpen")}
+          </Link>
+        ) : (
+          <ChipButton on={openSpotsOn} aria-pressed={openSpotsOn} onClick={onOpenSpots}>
+            {t("sortOpen")}
+          </ChipButton>
+        )}
         <ChipButton on={tenOn} aria-pressed={tenOn} onClick={onTen}>
           {t("filterTen")}
         </ChipButton>

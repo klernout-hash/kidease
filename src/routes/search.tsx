@@ -537,7 +537,7 @@ function SearchPage() {
     });
   }
 
-  function writeRailSelection(next: { ages?: RailAge[]; openings?: boolean; cat?: ExploreCategory }) {
+  function exploreSearchPatch(next: { ages?: RailAge[]; openings?: boolean; cat?: ExploreCategory }) {
     const ages = next.ages ?? parseExploreRailAges(incoming);
     const age = formatExploreRailAges(ages);
     const openings = (next.openings ?? exploreOpeningsSelected(incoming)) ? ("1" as const) : undefined;
@@ -550,20 +550,22 @@ function SearchPage() {
           : keepFacility
             ? incoming.cat
             : undefined;
-    void navigate({
-      search: withParentSearch({
-        q: incoming.q ?? query,
-        name: incoming.name,
-        from: incoming.from,
-        to: incoming.to,
-        sort: incoming.sort,
-        cat,
-        age,
-        start: incoming.start,
-        favorites: incoming.favorites,
-        openings,
-      }),
+    return withParentSearch({
+      q: (incoming.q ?? query).trim() || undefined,
+      name: incoming.name,
+      from: incoming.from,
+      to: incoming.to,
+      sort: incoming.sort,
+      cat,
+      age,
+      start: incoming.start,
+      favorites: incoming.favorites,
+      openings,
     });
+  }
+
+  function writeRailSelection(next: { ages?: RailAge[]; openings?: boolean; cat?: ExploreCategory }) {
+    void navigate({ search: exploreSearchPatch(next) });
   }
 
   /** Age chips 1–4 write `?age=`. All / facility chips clear the age band. */
@@ -1179,6 +1181,15 @@ function SearchPage() {
             <ExploreCategoryChips
               selected={selectedAges}
               counts={exploreCatCounts}
+              searchFor={(cat) =>
+                cat
+                  ? exploreSearchPatch({ ages: toggleExploreRailAge(selectedAges, cat) })
+                  : exploreSearchPatch({
+                      ages: [],
+                      openings: false,
+                      cat: isFacilityExploreCategory(incoming.cat) ? incoming.cat : undefined,
+                    })
+              }
               onSelect={(cat) => writeAgeSearch(cat && isRailAge(cat) ? cat : undefined)}
             />
           }
@@ -1188,6 +1199,7 @@ function SearchPage() {
             void geo();
           }}
           openSpotsOn={openingsOn}
+          openSpotsSearch={exploreSearchPatch({ openings: !openingsOn })}
           onOpenSpots={() => writeRailSelection({ openings: !openingsOn })}
           tenOn={ten}
           onTen={() => setTen((v) => !v)}

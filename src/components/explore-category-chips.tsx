@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
+import { Link } from "@tanstack/react-router";
 import { Baby, Backpack, Shapes, Smile, type LucideIcon } from "lucide-react";
-import { ChipButton } from "@/components/chip";
 import { isRailAge, RAIL_AGES, type RailAge } from "@/lib/care-type";
 import { EXPLORE_CATEGORY_COPY, type ExploreCategory } from "@/lib/explore-categories";
 import { useCopy } from "@/lib/use-copy";
@@ -15,11 +15,13 @@ const CAT_ICON: Partial<Record<ExploreCategory, LucideIcon>> = {
 
 export function ExploreCategoryChips({
   selected,
+  searchFor,
   onSelect,
 }: {
   selected?: readonly RailAge[];
   counts?: Record<ExploreCategory, number>;
-  onSelect: (cat?: RailAge) => void;
+  searchFor: (cat?: RailAge) => Record<string, unknown>;
+  onSelect?: (cat?: RailAge) => void;
 }) {
   const { t } = useCopy();
   const picked = (selected ?? []).filter(isRailAge);
@@ -27,13 +29,16 @@ export function ExploreCategoryChips({
 
   return (
     <>
-      <ExploreCatChip
-        label={t("catAll")}
-        on={allOn}
-        aria-pressed={allOn}
-        data-explore-cat="all"
-        onClick={() => onSelect(undefined)}
-      />
+      {picked.length ? (
+        <ExploreCatChip
+          label={t("catAll")}
+          on={allOn}
+          aria-pressed={allOn}
+          data-explore-cat="all"
+          search={searchFor(undefined)}
+          onClick={() => onSelect?.(undefined)}
+        />
+      ) : null}
       {RAIL_AGES.map((cat) => {
         const Icon = CAT_ICON[cat];
         const on = picked.includes(cat);
@@ -45,7 +50,8 @@ export function ExploreCategoryChips({
             on={on}
             aria-pressed={on}
             data-explore-cat={cat}
-            onClick={() => onSelect(cat)}
+            search={searchFor(cat)}
+            onClick={() => onSelect?.(cat)}
           />
         );
       })}
@@ -58,16 +64,23 @@ function ExploreCatChip({
   label,
   on,
   className,
+  search,
   ...props
 }: {
   icon?: LucideIcon;
   label: string;
   on: boolean;
-} & ComponentProps<typeof ChipButton>) {
+  search: Record<string, unknown>;
+} & Omit<ComponentProps<typeof Link>, "to" | "search" | "className">) {
   return (
-    <ChipButton on={on} className={cn("ke-explore-cat", className)} {...props}>
+    <Link
+      to="/search"
+      search={search as never}
+      className={cn("ke-chip ke-explore-cat", on && "ke-chip-on", className)}
+      {...props}
+    >
       {Icon ? <Icon className="size-4 shrink-0" aria-hidden="true" /> : null}
       <span>{label}</span>
-    </ChipButton>
+    </Link>
   );
 }

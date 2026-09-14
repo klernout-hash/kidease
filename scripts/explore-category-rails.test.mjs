@@ -171,4 +171,6 @@ test("phone and desktop rail chrome stays first-class", () => {
   assert.match(listingRail, /hidden items-center gap-2 sm:flex/);
   assert.match(chips, /data-explore-cat="all"/);
   assert.match(chips, /t\("catAll"\)/);
+  assert.match(chips, /to="\/search"/);
+  assert.match(chips, /searchFor/);
 });
