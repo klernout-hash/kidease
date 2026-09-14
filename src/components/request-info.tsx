@@ -26,16 +26,18 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const sla = listingInfoSlaReady(daycare);
 
   useEffect(() => {
     if (!open) return;
     setDone(false);
-    if (user?.primaryEmail) setEmail(user.primaryEmail);
+    setFormError(null);
+    if (user?.primaryEmail) setEmail((cur) => cur || user.primaryEmail || "");
     if (user?.displayName) {
       const [first, ...rest] = user.displayName.trim().split(/\s+/);
-      setFirstName(first || "");
-      if (rest.length) setLastName(rest.join(" "));
+      setFirstName((cur) => cur || first || "");
+      if (rest.length) setLastName((cur) => cur || rest.join(" "));
     }
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -47,7 +49,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose, user]);
+  }, [open, onClose]);
 
   if (!open) return null;
   const name = locale === "fr" ? daycare.nameFr : daycare.name;
@@ -60,6 +62,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
       return;
     }
     setBusy(true);
+    setFormError(null);
     try {
       await createInfoRequest({
         data: {
@@ -75,14 +78,16 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
       capturePostHogEvent("listing_request_submitted", { intent: "info" });
       setDone(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("requestInfoNeedFields"));
+      const message = err instanceof Error ? err.message : t("requestInfoNeedFields");
+      setFormError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="presentation">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center" role="presentation">
       <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("cancel")} onClick={onClose} />
       <div
         role="dialog"
@@ -91,7 +96,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
         className="relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-xl bg-surface shadow-card ring-1 ring-border md:rounded-xl"
       >
         {done ? (
-          <div className="flex flex-col items-center px-6 py-10 text-center" data-request-info-success>
+          <div className="flex flex-col items-center px-6 py-10 text-center" data-request-info-success data-ke="request-info-success">
             <span className="grid size-14 place-items-center rounded-full bg-ok text-primary-fg">
               <Check className="size-7" strokeWidth={2.5} />
             </span>
@@ -166,6 +171,11 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
               </label>
               <p className="mt-3 text-xs text-muted">{t("requestInfoPrivacy")}</p>
               <p className="mt-1 text-xs text-subtle">{sla ? t("requestInfoSla") : t("requestInfoSlaHonest")}</p>
+              {formError ? (
+                <p className="mt-3 text-sm text-danger" data-ke="request-info-error" role="alert">
+                  {formError}
+                </p>
+              ) : null}
             </div>
             <div className="grid grid-cols-2 gap-2 border-t border-border px-5 py-3">
               <Button type="button" variant="secondary" onClick={onClose}>

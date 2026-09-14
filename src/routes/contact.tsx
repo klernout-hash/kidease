@@ -44,12 +44,12 @@ export function Contact() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [busy, setBusy] = useState(false);
-  const { onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
+  const { token, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } =
     useTurnstileToken();
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
-    const challenge = takeChallenge();
+    const challenge = token.trim();
     if (turnstileRequired && !challenge) {
       setFormError("Please complete the security check, then try again.");
       setSent(false);
@@ -58,18 +58,22 @@ export function Contact() {
     setBusy(true);
     setFormError(null);
     setSent(false);
+    const label = t(subject);
+    const payload = {
+      kind: "contact" as const,
+      name,
+      email,
+      subject: isParent ? `${t("roleParentTitle")} — ${label}` : label,
+      body,
+      turnstileToken: challenge,
+    };
     try {
-      const label = t(subject);
-      await submitPublicMessage({
-        data: {
-          kind: "contact",
-          name,
-          email,
-          subject: isParent ? `${t("roleParentTitle")} — ${label}` : label,
-          body,
-          turnstileToken: challenge,
-        },
-      });
+      try {
+        await submitPublicMessage({ data: payload });
+      } catch {
+        await submitPublicMessage({ data: payload });
+      }
+      resetTurnstile();
       setSent(true);
       setBody("");
     } catch (err) {

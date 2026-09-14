@@ -19,7 +19,7 @@ test("footer How we verify listings goes to /verify, not /about", () => {
   const verifyDaycares = FOOTER_DAYCARES.filter((link) => link.labelKey === "verifyListings");
   const verifySupport = FOOTER_SUPPORT.filter((link) => link.labelKey === "verifyListings");
   assert.ok(verifyDaycares.length >= 1 && verifyDaycares.every((link) => link.to === "/verify"));
-  assert.ok(verifySupport.length >= 1 && verifySupport.every((link) => link.to === "/verify"));
+  assert.equal(verifySupport.length, 0);
   assert.ok(!FOOTER_DAYCARES.some((link) => link.labelKey === "verifyListings" && link.to === "/about"));
   assert.ok(!FOOTER_SUPPORT.some((link) => link.labelKey === "verifyListings" && link.to === "/about"));
   assert.match(src("src/routes/verify.tsx"), /createFileRoute\("\/verify"\)/);
@@ -29,7 +29,7 @@ test("footer How we verify listings goes to /verify, not /about", () => {
   assert.match(src("src/routeTree.gen.ts"), /from '\.\/routes\/verify'/);
   assert.match(src("src/routeTree.gen.ts"), /id:\s*'\/verify'/);
   assert.ok(FOOTER_DAYCARES.some((link) => link.to === "/daycare-requirements" && link.labelKey === "daycareRequirements"));
-  assert.ok(FOOTER_SUPPORT.some((link) => link.to === "/daycare-requirements" && link.labelKey === "daycareRequirements"));
+  assert.ok(!FOOTER_SUPPORT.some((link) => link.to === "/daycare-requirements"));
   assert.ok(!FOOTER_DAYCARES.some((link) => link.to === "/delete-account"));
   assert.ok(!FOOTER_SUPPORT.some((link) => link.to === "/delete-account"));
   assert.match(src("src/routes/daycare-requirements.tsx"), /createFileRoute\("\/daycare-requirements"\)/);
@@ -100,6 +100,6 @@ test("search SSR loader seeds first paint instead of an empty null list", () => 
   assert.match(search, /searchDaycares/);
   assert.match(search, /resolveRequestSearchOrigin/);
   assert.match(search, /pendingComponent: BootPending/);
-  assert.match(search, /boot\.items\.length > 0 \? boot\.items : null/);
+  assert.match(search, /boot\.items\.length > 0 && originsMatchSearchQuery\(boot\.origin, incoming\.q\) \? boot\.items : null/);
   assert.match(search, /items === null \? \(/);
 });

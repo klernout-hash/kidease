@@ -347,6 +347,15 @@ function ProfilePane() {
             </label>
             <p className="text-right text-[12px] text-subtle">{bio.length}/400</p>
             <CaslConsentFields value={consents} onChange={setConsents} />
+            <p className="text-[12px] text-subtle">
+              <Link
+                to="/unsubscribe"
+                search={{ token: undefined, channel: undefined }}
+                className="underline-offset-4 hover:underline"
+              >
+                {t("unsubscribe")}
+              </Link>
+            </p>
             <div className="pt-2">
               <p className="text-sm font-medium">{t("anchorWorkLabel")}</p>
               <p className="mt-1 text-[13px] text-muted">{t("anchorNeedWork")}</p>

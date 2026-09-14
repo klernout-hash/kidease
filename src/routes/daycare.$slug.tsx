@@ -69,7 +69,8 @@ import { listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-fo
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
-import { formatMonth, money, formatAgeRange, displayCentreName } from "@/lib/utils";
+import { listingAgeRangeText } from "@/lib/listing-ages";
+import { formatMonth, money, displayCentreName } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
 import { ListingMap } from "@/components/listing-map";
@@ -296,6 +297,7 @@ function Listing() {
   const live = Boolean(d.live);
   const known = Boolean(d.availabilityKnown);
   const licensed = publicLicenseBadge(d);
+  const agesLabel = listingAgeRangeText(d);
   const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
   const mapsDir = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
@@ -582,9 +584,7 @@ function Listing() {
 
             <dl className="mt-6 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
               {hours.trim() ? <Meta label={t("hours")} value={hours} /> : null}
-              {d.agesKnown ? (
-                <Meta label={t("ages")} value={formatAgeRange(d.ageMinMonths, d.ageMaxMonths)} />
-              ) : null}
+              {agesLabel ? <Meta label={t("ages")} value={agesLabel} /> : null}
               <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
               <Meta
                 label={t("spotsAvailable")}
@@ -884,7 +884,7 @@ function Listing() {
         onRequestInfo={() => setInfoOpen(true)}
       />
       <RequestInfoSheet daycare={d} open={infoOpen} onClose={() => setInfoOpen(false)} />
-      <CompareBar />
+      <CompareBar hidden={infoOpen || requestOpen || tourOpen} />
     </Shell>
   );
 }

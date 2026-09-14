@@ -14,6 +14,11 @@ import { originFromDeviceFix } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { bootSearchOrigin } from "@/lib/search-origin";
+import {
+  originFromSearchQuery,
+  originsMatchSearchQuery,
+  searchQueryFromUnknown,
+} from "@/lib/search-query";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence, presenceFreshness } from "@/lib/presence";
@@ -98,8 +103,11 @@ const CompareBar = lazy(() =>
 );
 
 export const Route = createFileRoute("/search")({
-  loader: async () => {
-    const origin = await resolveRequestSearchOrigin();
+  loader: async ({ location }) => {
+    const fromQ = originFromSearchQuery(searchQueryFromUnknown(location.search));
+    const origin = fromQ
+      ? { lat: fromQ.lat, lng: fromQ.lng, label: fromQ.label, source: "manual" as const }
+      : await resolveRequestSearchOrigin();
     const items = await withTimeoutFallback(
       searchDaycares({
         data: {
@@ -189,7 +197,9 @@ function SearchPage() {
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
   const query = useAppStore((s) => s.query);
   const setQuery = useAppStore((s) => s.setQuery);
-  const [items, setItems] = useState<Card[] | null>(boot.items.length > 0 ? boot.items : null);
+  const [items, setItems] = useState<Card[] | null>(
+    boot.items.length > 0 && originsMatchSearchQuery(boot.origin, incoming.q) ? boot.items : null,
+  );
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);
@@ -1143,7 +1153,7 @@ function SearchPage() {
         />
 
         <div
-          className="mt-3 flex flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap"
+          className="mt-3 flex flex-wrap items-center gap-2 overflow-x-auto overscroll-x-contain whitespace-nowrap [scrollbar-width:thin] sm:flex-nowrap"
           data-search-row="live-filters-map"
         >
           <div className="flex h-11 shrink-0 rounded-full bg-surface p-0.5 ring-1 ring-border sm:min-w-[13.5rem]">

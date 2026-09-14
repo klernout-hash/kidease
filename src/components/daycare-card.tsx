@@ -10,6 +10,7 @@ import { cn, displayCentreName, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
+import { listingAgeRangeText } from "@/lib/listing-ages";
 import { listingPill } from "@/lib/listing-card";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
@@ -69,8 +70,7 @@ export const DaycareCard = memo(function DaycareCard({
   const pillKey = listingPill(item)?.labelKey;
   const pill = pillKey ? t(pillKey as CopyKey) : "";
   const showLicensedChip = Boolean(license && pillKey !== license.labelKey);
-  const ages =
-    item.ageMaxMonths > item.ageMinMonths ? `${item.ageMinMonths}–${item.ageMaxMonths} months` : "";
+  const ages = listingAgeRangeText(item, "months");
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
   const facility = classifyFacilityType(item);
   const typeLabel = facilityTypeSeoKind(facility.type, locale === "fr" ? "fr" : "en");

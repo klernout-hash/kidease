@@ -84,7 +84,12 @@ export function homeLandPath(input: {
   role?: AppRole | null;
   desks?: DeskKey[] | null;
   sticky?: DeskKey | null;
+  remembered?: "parent" | "provider" | null;
 }): "/admin" | "/support" | "/provider" | null {
+  if (input.remembered === "parent") return null;
+  if (input.remembered === "provider") {
+    return input.sticky === "parent" ? null : "/provider";
+  }
   const desks = input.desks?.length ? input.desks : input.role ? desksFor({ role: input.role }) : null;
   const sticky = input.sticky;
   if (sticky && (!desks || desks.includes(sticky))) {
@@ -203,6 +208,31 @@ export function pathnameOfDest(raw: string): string {
   return trimmed.split("?")[0] || "";
 }
 
+/**
+ * Paths Cloudflare Access may wall (staff only). Parent / Daycare / login
+ * must never be treated as Access destinations. See docs/cloudflare.md.
+ */
+export function isCloudflareAccessPath(raw: string): boolean {
+  const path = pathnameOfDest(raw);
+  if (!path) return false;
+  return (
+    path === "/admin" ||
+    path.startsWith("/admin/") ||
+    path.startsWith("/admin-") ||
+    path === "/support" ||
+    path.startsWith("/support/")
+  );
+}
+
+function familyLoginDesk(input: {
+  desk?: DeskKey | null;
+  role?: "parent" | "provider" | "admin" | null;
+}): "parent" | "provider" | null {
+  if (input.role === "parent" || input.desk === "parent") return "parent";
+  if (input.role === "provider" || input.desk === "provider") return "provider";
+  return null;
+}
+
 export function isAuthLoopPath(raw: string): boolean {
   const path = pathnameOfDest(raw);
   if (!path) return false;
@@ -265,6 +295,8 @@ export function funnelDestPath(raw: string): string {
  * wins — including for admin — so Kyle can open Parent desk on the same
  * session. `?desk=` / `?role=parent` also prefer that desk over primaryDesk
  * (admin), which would otherwise dump them on /admin or /provider.
+ * Parent / Daycare login never lands on a Cloudflare Access path, even if
+ * sticky desk or leftover `next` is /admin or /support.
  * Auth-loop `next` values and `/` fall through to desk resolution so a
  * successful sign-in is not scored as a home bounce.
  */
@@ -275,11 +307,18 @@ export function resolvePostLoginPath(input: {
   desks?: DeskKey[] | null;
   sticky?: DeskKey | null;
 }): string {
+  const familyDesk = familyLoginDesk(input);
   const next = sanitizePostLoginNext(input.next);
-  if (next) return next;
+  if (next) {
+    if (familyDesk && isCloudflareAccessPath(next)) return DESK_PATH[familyDesk];
+    return next;
+  }
   const fromRole: DeskKey | null =
     input.role === "parent" ? "parent" : input.role === "provider" ? "provider" : input.role === "admin" ? "admin" : null;
-  const preferred = input.desk ?? fromRole ?? input.sticky ?? null;
+  let preferred = input.desk ?? fromRole ?? input.sticky ?? null;
+  if (familyDesk && (preferred === "admin" || preferred === "support")) {
+    preferred = familyDesk;
+  }
   if (input.desks?.length) return DESK_PATH[pickLandingDesk(input.desks, preferred)];
   if (preferred) return DESK_PATH[preferred];
   return DESK_PATH.parent;
@@ -321,9 +360,13 @@ export function isAdminLoginIntent(search: {
   intent?: string | null;
   next?: string | null;
 }): boolean {
-  if ((search.role || "").trim().toLowerCase() === "admin") return true;
+  const role = (search.role || "").trim().toLowerCase();
+  if (role === "parent" || role === "provider") return false;
+  const desk = parseDeskQuery(search.desk);
+  if (desk === "parent" || desk === "provider") return false;
+  if (role === "admin") return true;
   if ((search.intent || "").trim().toLowerCase() === "admin") return true;
-  if (parseDeskQuery(search.desk) === "admin") return true;
+  if (desk === "admin") return true;
   const next = sanitizePostLoginNext(search.next);
   if (!next) return false;
   const path = pathnameOfDest(next);
@@ -581,6 +624,10 @@ export type SessionDesks = {
   email?: string | null;
   home: "/admin" | "/support" | "/provider" | "/parent";
   unread: number;
+  /** Parent / family inbox unread (conversation.user_id = session). */
+  unreadFamily?: number;
+  /** Centre inbox unread (director / staff threads). */
+  unreadCentre?: number;
   /** In-app notification unread. Fail closed: 0 when the query errors. */
   notificationUnread: number;
   stripeLive: boolean;

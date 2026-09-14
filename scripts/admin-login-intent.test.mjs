@@ -31,6 +31,9 @@ test("parent and daycare login stay off the admin email-first path", () => {
   assert.equal(isAdminLoginIntent({ intent: "up" }), false);
   assert.equal(isAdminLoginIntent({ role: "parent", desk: "parent", intent: "in", next: "/parent" }), false);
   assert.equal(isAdminLoginIntent({ role: "provider", desk: "director", intent: "in", next: "/provider" }), false);
+  assert.equal(isAdminLoginIntent({ role: "parent", next: "/admin" }), false);
+  assert.equal(isAdminLoginIntent({ role: "provider", next: "/admin" }), false);
+  assert.equal(isAdminLoginIntent({ desk: "parent", next: "/admin" }), false);
   assert.equal(isAdminLoginIntent({ next: "/search" }), false);
   assert.equal(isAdminLoginIntent({ next: "/daycare/example" }), false);
 });

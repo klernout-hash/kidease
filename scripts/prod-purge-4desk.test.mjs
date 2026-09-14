@@ -84,7 +84,8 @@ test("P0 mail UX stays honest when Resend fails", () => {
   );
   assert.match(publicFormErrorMessage(new Error("Resend 403"), "Could not send."), /Could not send/);
   assert.match(src("src/routes/contact.tsx"), /data-ke="contact-thanks"/);
-  assert.match(src("src/routes/contact.tsx"), /takeChallenge/);
+  assert.match(src("src/routes/contact.tsx"), /token\.trim\(\)/);
+  assert.doesNotMatch(src("src/routes/contact.tsx"), /takeChallenge/);
   assert.match(src("src/routes/contact.tsx"), /contactSendFailed/);
   assert.match(src("src/routes/help.tsx"), /data-ke="help-thanks"/);
   assert.match(src("src/routes/forgot-password.tsx"), /Could not send a reset email/);

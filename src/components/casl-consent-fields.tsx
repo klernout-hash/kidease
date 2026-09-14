@@ -28,6 +28,11 @@ export function CaslConsentFields({
           <input
             type="checkbox"
             className="mt-1 size-4 accent-primary"
+            autoComplete="off"
+            autoCorrect="off"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
             checked={value.smsService}
             onChange={(e) => onChange({ ...value, smsService: e.target.checked })}
           />
@@ -42,6 +47,11 @@ export function CaslConsentFields({
           <input
             type="checkbox"
             className="mt-1 size-4 accent-primary"
+            autoComplete="off"
+            autoCorrect="off"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
             checked={value.emailService}
             onChange={(e) => onChange({ ...value, emailService: e.target.checked })}
           />
@@ -56,6 +66,11 @@ export function CaslConsentFields({
           <input
             type="checkbox"
             className="mt-1 size-4 accent-primary"
+            autoComplete="off"
+            autoCorrect="off"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
             checked={value.emailCommercial}
             onChange={(e) => onChange({ ...value, emailCommercial: e.target.checked })}
           />

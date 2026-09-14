@@ -59,6 +59,21 @@ Vous avez été invité(e) à joindre ${input.centreName} sur KidEase. Ouvrez le
   });
 }
 
+export async function trySendEmployeeInviteEmail(input: {
+  to: string;
+  centreName: string;
+  roleLabel: string;
+  url: string;
+  invitedName?: string | null;
+}): Promise<{ mailed: boolean }> {
+  try {
+    const mail = await sendEmployeeInviteEmail(input);
+    return { mailed: mail.status === "sent" };
+  } catch {
+    return { mailed: false };
+  }
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")

@@ -52,7 +52,7 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
     if (!canInvite) return;
     setBusy(true);
     try {
-      await inviteCentreEmployee({
+      const res = await inviteCentreEmployee({
         data: {
           daycareId: form.daycareId,
           email: form.email,
@@ -60,7 +60,8 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
           role: form.role,
         },
       });
-      toast.success(t("employeeInviteSent"));
+      if (res?.mailed) toast.success(t("employeeInviteSent"));
+      else toast.message(t("employeeInviteSaved"));
       setForm((prev) => ({ ...prev, email: "", name: "" }));
       await load();
     } catch (err) {

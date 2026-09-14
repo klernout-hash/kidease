@@ -89,6 +89,7 @@ export function ListingReadinessCoach({
     >
       <p className="font-medium">{coach.verified ? t("listingVerified") : t("listingVerifiedPending")}</p>
       <p className="mt-1 text-muted">{coach.verified ? t("listingVerifiedLead") : t("listingVerifiedPendingLead")}</p>
+      <p className="mt-2 text-xs text-subtle">{t("listingVerifiedNotHealth")}</p>
       <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">{t("listingCoachBlockers")}</p>
       <ul className="mt-2 space-y-1.5">
         {coach.blockers.map((row) => (

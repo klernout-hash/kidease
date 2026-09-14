@@ -42,3 +42,26 @@ export function resolveInboxView(input: {
   if (fromSearch) return fromSearch;
   return inboxViewForDesk(input.sticky);
 }
+
+function unreadCount(n: unknown): number {
+  const value = typeof n === "number" && Number.isFinite(n) ? Math.floor(n) : 0;
+  return value > 0 ? value : 0;
+}
+
+/** Badge must match the inbox list for the active desk (family vs centre). */
+export function inboxUnreadForDesk(
+  session:
+    | {
+        unread?: number;
+        unreadFamily?: number;
+        unreadCentre?: number;
+      }
+    | null
+    | undefined,
+  desk?: DeskKey | string | null,
+): number {
+  if (!session) return 0;
+  const view = inboxViewForDesk(desk);
+  if (view === "centre") return unreadCount(session.unreadCentre ?? session.unread);
+  return unreadCount(session.unreadFamily ?? session.unread);
+}

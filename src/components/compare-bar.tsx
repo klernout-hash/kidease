@@ -5,7 +5,7 @@ import { compareSlugsHref } from "@/lib/now-loops";
 import { useCopy } from "@/lib/use-copy";
 import { Button } from "@/components/ui/button";
 
-export function CompareBar() {
+export function CompareBar({ hidden = false }: { hidden?: boolean }) {
   const { t } = useCopy();
   const [ids, setIds] = useState<string[]>([]);
   const [href, setHref] = useState("/compare");
@@ -25,7 +25,7 @@ export function CompareBar() {
     };
   }, []);
 
-  if (!ids.length) return null;
+  if (hidden || !ids.length) return null;
 
   const ready = ids.length >= 2;
 

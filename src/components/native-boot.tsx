@@ -13,6 +13,7 @@ import { startChannelListener } from "@/lib/runtime";
 import { startWebVitals } from "@/lib/web-vitals";
 import { resolveDefaultSearchOrigin } from "@/lib/default-origin";
 import { readSavedOrigin, reverseGeocode } from "@/lib/geo";
+import { urlHasGeocodableSearchQuery } from "@/lib/search-query";
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
 import { LANGUAGES } from "@/lib/languages";
 import { isFrPath } from "@/lib/locale-path";
@@ -87,6 +88,10 @@ export function NativeBoot() {
   }, []);
 
   useEffect(() => {
+    if (urlHasGeocodableSearchQuery()) {
+      setLocated(true);
+      return;
+    }
     const saved = readSavedOrigin();
     if (saved) setOrigin(resolveDefaultSearchOrigin({ saved }), "saved");
     setLocated(true);

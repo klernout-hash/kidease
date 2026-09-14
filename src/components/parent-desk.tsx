@@ -400,7 +400,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             <PayCtas>
             <div className="mt-4">
               <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
-                <ParentPlusPanel />
+                <ParentPlusPanel offerCheckout={bills.filter((b) => billIsOpen(b.status)).length > 0} />
               </Suspense>
             </div>
             </PayCtas>

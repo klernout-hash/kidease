@@ -1,4 +1,4 @@
-import { ListingReadinessCoach } from "@/components/listing-readiness-coach";
+import { ListingHealthPanel } from "@/components/listing-health";
 import { listingCompleteness, photoFreshness, photoTimestamp, type CompletenessField } from "@/lib/listing-readiness";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
@@ -63,5 +63,5 @@ export function CompletenessBanner({ item }: { item: Daycare }) {
 }
 
 export function CompletenessChecklist({ item }: { item: Daycare }) {
-  return <ListingReadinessCoach item={item} variant="card" />;
+  return <ListingHealthPanel item={item} />;
 }

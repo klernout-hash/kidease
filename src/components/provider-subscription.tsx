@@ -249,6 +249,9 @@ export function ProviderSubscriptionPanel() {
           <span className="capitalize">{state.entitlements.entitledPlan}</span>
           {!state.entitlements.paid ? ` — ${t.entitledFree}` : null}
         </p>
+        {!state.entitlements.paid ? (
+          <p className="mt-3 rounded-xl bg-bg p-4 text-sm text-muted ring-1 ring-border">{t.savedFree}</p>
+        ) : null}
         <p className="mt-1 text-xs text-subtle">{t.sites(state.siteCount)}</p>
         {state.subscriptionStatus ? (
           <p className="mt-1 text-xs text-subtle">
@@ -308,7 +311,7 @@ export function ProviderSubscriptionPanel() {
               ) : null}
               <Button
                 className="mt-5 w-full"
-                variant={current ? "secondary" : "primary"}
+                variant={current || !state.entitlements.paid ? "secondary" : "primary"}
                 disabled={busy || (current && !canCharge)}
                 onClick={() => void subscribe(plan.id)}
               >

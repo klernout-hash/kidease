@@ -341,10 +341,11 @@ export const PRIVACY_EN: LegalDoc = {
           items: [
             "Transactional mail we send without a marketing opt-in: sign-in codes, password reset, claim codes, request and support notices, and similar service mail. These are not promotional.",
             "Search-alert email and any future KidEase news or offers need an unchecked-by-default CASL checkbox. We store who consented, when, the wording they saw, and the email or mobile. Unsubscribe at kidease.ca/unsubscribe, in alert or profile settings, or by replying STOP / ARRÊT to a text.",
-            "We do not send promotional KidEase campaigns today. FEATURE_SMS stays off until express SMS consent is on file. When SMS is on, we will only text a parent or provider who granted consent, and we honour STOP immediately.",
+            "We do not send promotional KidEase campaigns today. SMS alerts stay off until you grant express consent in your profile or alert settings. When enabled, we only text people who opted in, and we honour STOP immediately.",
             "Push or lock-screen alerts, when we enable them, will be opt-in on the device. You can turn them off in the operating system. We will not use push for ads.",
           ],
         },
+        { type: "link", to: "/unsubscribe", label: "Unsubscribe from marketing email or SMS" },
       ],
     },
     {
@@ -696,10 +697,11 @@ export const PRIVACY_FR: LegalDoc = {
           items: [
             "Courriels transactionnels sans consentement marketing : codes, réinitialisation, codes de revendication, avis de demande et de soutien.",
             "Les alertes de recherche et toute nouvelle ou offre KidEase exigent une case LCAP non cochée par défaut. Nous enregistrons qui a consenti, quand, le texte vu, et le courriel ou le cellulaire. Désabonnement à kidease.ca/unsubscribe, dans le profil, ou en répondant STOP / ARRÊT.",
-            "Nous n’envoyons pas de campagnes promotionnelles aujourd’hui. FEATURE_SMS reste fermé tant qu’un consentement texto n’est pas au dossier. Une fois activé, nous n’enverrons un texto qu’à une personne qui a consenti, et nous honorons STOP tout de suite.",
+            "Nous n’envoyons pas de campagnes promotionnelles aujourd’hui. Les textos restent fermés tant que vous n’avez pas donné un consentement exprès dans votre profil ou vos alertes. Une fois activé, nous n’écrivons qu’aux personnes qui ont consenti, et nous honorons STOP tout de suite.",
             "Les notifications push, lorsqu’elles seront activées, seront facultatives sur l’appareil. Pas de publicité par push.",
           ],
         },
+        { type: "link", to: "/unsubscribe", label: "Se désabonner des courriels ou textos marketing" },
       ],
     },
     {

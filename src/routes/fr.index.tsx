@@ -10,7 +10,14 @@ import { SiteFooter } from "@/components/site-footer";
 import { TrustBar } from "@/components/trust-bar";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { consumeJustSignedOut, DESK_LANDED_KEY, homeLandPath, readStickyDesk, type AppRole } from "@/lib/desks";
+import {
+  consumeJustSignedOut,
+  DESK_LANDED_KEY,
+  homeLandPath,
+  readRememberedRole,
+  readStickyDesk,
+  type AppRole,
+} from "@/lib/desks";
 import { getMyRole } from "@/lib/server/family";
 import { MARKETING_PAGE_SEO_FR, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 import { STEP_SIZES } from "@/lib/photo";
@@ -46,7 +53,7 @@ function FrHome() {
     }
     if (consumeJustSignedOut()) return;
     if (!user) return;
-    const dest = homeLandPath({ role, sticky: readStickyDesk() });
+    const dest = homeLandPath({ role, sticky: readStickyDesk(), remembered: readRememberedRole() });
     if (!dest) return;
     try {
       sessionStorage.setItem(DESK_LANDED_KEY, "1");

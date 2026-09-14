@@ -20,7 +20,7 @@ function plusMoney(amount: number, locale: "en" | "fr") {
   }).format(amount);
 }
 
-export function ParentPlusPanel() {
+export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: boolean }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const showPay = useShowPayCtas();
@@ -116,7 +116,7 @@ export function ParentPlusPanel() {
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {live ? (
-          <Button disabled={busy || current} onClick={() => void start()}>
+          <Button disabled={busy || current || !offerCheckout} onClick={() => void start()}>
             {current ? t("parentPlusCurrent") : t("parentPlusSubscribe")}
           </Button>
         ) : (
@@ -128,6 +128,7 @@ export function ParentPlusPanel() {
           </Button>
         ) : null}
       </div>
+      {!offerCheckout && !current ? <p className="mt-3 text-sm text-muted">{t("parentPlusNoBill")}</p> : null}
       {!state.stripeLive ? <p className="mt-3 text-sm text-muted">{t("parentPlusRehearsal")}</p> : null}
       {state.status ? <p className="mt-2 text-xs text-subtle">{state.status}</p> : null}
     </div>

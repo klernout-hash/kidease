@@ -157,6 +157,8 @@ test("sticky desk persists across tabs and home landing honors it", () => {
   assert.equal(homeLandPath({ role: "admin", sticky: "provider" }), "/provider");
   assert.equal(homeLandPath({ role: "provider", sticky: "parent" }), null);
   assert.equal(homeLandPath({ role: "parent" }), null);
+  assert.equal(homeLandPath({ role: "admin", sticky: "admin", remembered: "parent" }), null);
+  assert.equal(homeLandPath({ role: "admin", sticky: "admin", remembered: "provider" }), "/provider");
   assert.equal(highlightDesk("/account", "parent", "provider"), "provider");
   assert.deepEqual(accountSearch("provider"), { tab: "profile", desk: "director" });
   assert.deepEqual(accountSearch("admin"), { tab: "profile", desk: "admin" });
@@ -182,6 +184,11 @@ test("post-login dest honors /parent for admin instead of dumping them on Provid
     "/provider",
   );
   assert.equal(resolvePostLoginPath({ desks: adminDesks }), "/admin");
+  assert.equal(resolvePostLoginPath({ role: "parent", sticky: "admin" }), "/parent");
+  assert.equal(resolvePostLoginPath({ role: "provider", sticky: "admin" }), "/provider");
+  assert.equal(resolvePostLoginPath({ next: "/admin", role: "parent" }), "/parent");
+  assert.equal(resolvePostLoginPath({ next: "/support", desk: "provider" }), "/provider");
+  assert.equal(resolvePostLoginPath({ next: "/admin" }), "/admin");
   assert.equal(resolvePostLoginPath({ next: "/search", desks: ["parent"] }), "/search");
   assert.equal(resolvePostLoginPath({ next: "/login?next=/parent", desks: adminDesks }), "/parent");
   assert.equal(resolvePostLoginPath({ next: "/verify-2fa?next=/provider" }), "/provider");

@@ -43,9 +43,13 @@ export function ProviderPlanBanner({ subscription }: { subscription: ProviderDes
         </div>
         <Link
           to="/provider/subscription"
-          className="inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+          className={
+            subscription.paid
+              ? "inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+              : "inline-flex min-h-11 items-center rounded-full bg-surface px-4 text-sm font-medium text-fg ring-1 ring-border"
+          }
         >
-          {subscription.paid ? t("planCurrent") : t("planUpgrade")}
+          {subscription.paid ? t("planCurrent") : t("planViewPlans")}
         </Link>
       </div>
     </section>

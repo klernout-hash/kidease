@@ -21,6 +21,7 @@ import {
   deskQueryValue,
   funnelDestPath,
   isAdminLoginIntent,
+  isCloudflareAccessPath,
   loginRoleFromDesk,
   parseDeskQuery,
   postLoginDestKind,
@@ -256,8 +257,9 @@ export function LoginScreen({
         desk: deskFromPathname(dest) ?? undefined,
       });
       markContinued(dest, { method: "social" });
+      const socialDest = !operator && isCloudflareAccessPath(dest) ? "/parent" : dest;
       await signIn(providerId, {
-        callbackURL: staffTwoFactorRequired(dest) ? twoFactorUrl(dest) : dest,
+        callbackURL: staffTwoFactorRequired(socialDest) ? twoFactorUrl(socialDest) : socialDest,
         errorCallbackURL: loginErrorCallbackUrl({
           next: search.next,
           role,
@@ -296,7 +298,7 @@ export function LoginScreen({
   return (
     <Shell bare>
       <main
-        className="mx-auto grid min-h-[calc(100dvh-4.5rem)] w-full min-w-0 max-w-5xl overflow-x-hidden lg:grid-cols-2"
+        className="ke-auth-viewport mx-auto grid w-full min-w-0 max-w-5xl overflow-x-hidden lg:grid-cols-2"
         data-ke="login-split"
       >
         <div className="relative hidden min-w-0 overflow-hidden lg:block">

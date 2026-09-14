@@ -4,6 +4,7 @@
  * Relative .ts imports so Node tests can load this file.
  */
 
+import { listingAgesConfirmed } from "./listing-ages.ts";
 import { classifyFacilityType, facilityTypeSeoKind } from "./facility-type.ts";
 import { cityHubCityName, cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
@@ -70,14 +71,7 @@ function clean(value: string | null | undefined) {
 }
 
 function agesKnown(src: ListingSeoSource) {
-  if (src.agesKnown) {
-    const min = Number(src.ageMinMonths);
-    const max = Number(src.ageMaxMonths);
-    return Number.isFinite(min) && Number.isFinite(max) && max > min && max > 0;
-  }
-  const min = Number(src.ageMinMonths);
-  const max = Number(src.ageMaxMonths);
-  return Number.isFinite(min) && Number.isFinite(max) && max > min && max > 0;
+  return listingAgesConfirmed(src);
 }
 
 function agePhrase(src: ListingSeoSource, locale: ListingSeoLocale) {

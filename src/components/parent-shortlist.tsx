@@ -71,13 +71,13 @@ export function ParentShortlist({
         onRemove={(id) => setPicked((cur) => cur.filter((x) => x !== id))}
       />
 
-      <div className="ke-listings">
+      <div className="ke-listings ke-listings-narrow">
         {visible.map((item) => {
           const on = picked.includes(item.id);
           const atCap = !on && picked.length >= MAX_SHORTLIST_COMPARE;
           return (
-            <div key={item.id} className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
+            <div key={item.id} className="min-w-0 space-y-2">
+              <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 overflow-hidden">
                 <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm">
                   <input
                     type="checkbox"
