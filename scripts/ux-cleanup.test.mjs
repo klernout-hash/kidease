@@ -72,7 +72,8 @@ test("Home is search-first above the fold with one primary", () => {
   const hero = home.slice(home.indexOf("from-soft"), home.indexOf("id=\"how\""));
   assert.match(hero, /locationForm/);
   assert.match(hero, /from-soft/);
-  assert.match(hero, /data-ke="hero-trust-chips"/);
+  assert.match(home, /HomePopularCities/);
+  assert.doesNotMatch(hero, /hero-trust-chips/);
   assert.doesNotMatch(hero, /howItWorksCta/);
   assert.doesNotMatch(hero, /requestDeviceLocation/);
   assert.doesNotMatch(hero, /size="lg"/);
