@@ -1286,6 +1286,22 @@ export const copy = {
     aboutCommit4: "A clean, easy-to-use experience",
     aboutCommit5: "Respect for your privacy",
     aboutClose: "KidEase is here to support Canadian families in one of the most important decisions they make.",
+    donateToKids: "Donate to Kids",
+    donateTitle: "Donate to Kids",
+    donateLead:
+      "Support children’s hospitals in Canada. KidEase links you to each foundation’s official donate page — we do not process gifts on this site.",
+    donateMatch: "Every dollar donated through KidEase, KidEase will match.",
+    donateOptional: "Giving is optional. You do not need to donate to search, save listings, or use KidEase.",
+    donateSickKidsName: "SickKids Foundation",
+    donateSickKidsWhy:
+      "SickKids Foundation is Canada’s largest charitable funder of childhood research and care — a name parents already know and trust. Gifts support life-saving research, advanced paediatric equipment, and family programs for children facing serious illness.",
+    donateSickKidsCta: "Donate to SickKids",
+    donateCchfName: "Canada’s Children’s Hospital Foundations (CCHF)",
+    donateCchfWhy:
+      "CCHF is a collective network supporting 13 children’s hospital foundations across Canada — including BC Children’s, Alberta Children’s, CHEO, and IWK Health Centre. Giving through CCHF can support a hospital closer to home, so the impact feels local wherever KidEase families live.",
+    donateCchfCta: "Donate to CCHF",
+    donateExternalNote:
+      "Official foundation sites open in a new tab. Charitable tax receipts are issued by the foundation, not by KidEase.",
     team: "Meet the Team",
     teamIntro:
       "KidEase was founded in Winnipeg by two entrepreneurs who wanted a simpler, safer way for Canadian families to find licensed daycare — anywhere in the country.",
@@ -3220,6 +3236,23 @@ export const copy = {
     aboutCommit4: "Une expérience simple et claire",
     aboutCommit5: "Le respect de votre vie privée",
     aboutClose: "KidEase est là pour accompagner les familles canadiennes dans l’une des décisions les plus importantes.",
+    donateToKids: "Faire un don aux enfants",
+    donateTitle: "Faire un don aux enfants",
+    donateLead:
+      "Soutenez les hôpitaux pour enfants au Canada. KidEase vous dirige vers la page de don officielle de chaque fondation — nous ne traitons pas les dons sur ce site.",
+    donateMatch: "Chaque dollar donné par l’intermédiaire de KidEase, KidEase l’égalera.",
+    donateOptional:
+      "Le don est facultatif. Vous n’avez pas besoin de donner pour chercher, enregistrer des fiches ou utiliser KidEase.",
+    donateSickKidsName: "Fondation SickKids",
+    donateSickKidsWhy:
+      "La Fondation SickKids est le plus important bailleur de fonds caritatif de la recherche et des soins pédiatriques au Canada — un nom que les parents connaissent déjà. Les dons soutiennent la recherche qui sauve des vies, l’équipement pédiatrique de pointe et les programmes d’accompagnement des familles dont un enfant est gravement malade.",
+    donateSickKidsCta: "Donner à SickKids",
+    donateCchfName: "Fondations des hôpitaux pour enfants du Canada (CCHF)",
+    donateCchfWhy:
+      "La CCHF est un réseau collectif qui appuie 13 fondations d’hôpitaux pour enfants au Canada — dont BC Children’s, Alberta Children’s, le CHEO et le IWK Health Centre. Un don par la CCHF peut soutenir un hôpital plus près de chez vous, pour un impact local partout où vivent les familles KidEase.",
+    donateCchfCta: "Donner à la CCHF",
+    donateExternalNote:
+      "Les sites officiels des fondations s’ouvrent dans un nouvel onglet. Les reçus officiels sont délivrés par la fondation, pas par KidEase.",
     team: "L’équipe",
     teamIntro:
       "KidEase a été fondée à Winnipeg par deux entrepreneurs qui voulaient un moyen plus simple et plus sûr pour les familles canadiennes de trouver une garderie permise — partout au pays.",

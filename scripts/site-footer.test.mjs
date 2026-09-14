@@ -137,6 +137,7 @@ test("KidEase column is company/product; Support does not repeat About, Team, or
   const kideaseTo = FOOTER_KIDEASE.map((link) => link.to);
   const supportTo = FOOTER_SUPPORT.map((link) => link.to);
   assert.ok(kideaseTo.includes("/about"));
+  assert.ok(kideaseTo.includes("/donate"));
   assert.ok(kideaseTo.includes("/team"));
   assert.ok(kideaseTo.includes("/how-it-works"));
   assert.ok(!supportTo.includes("/about"));
@@ -214,6 +215,7 @@ test("EN footer labels sort alphabetically in every column", () => {
   ]);
   assert.deepEqual(labels(FOOTER_KIDEASE, "en"), [
     "About",
+    "Donate to Kids",
     "How It Works",
     "KidEase Careers",
     "Meet the Team",
@@ -253,6 +255,7 @@ test("FR-CA footer labels sort by the French string in every column", () => {
     "Carrières KidEase",
     "Comment ça fonctionne",
     "Évaluer KidEase",
+    "Faire un don aux enfants",
     "L’équipe",
   ]);
   assert.deepEqual(labels(FOOTER_SUPPORT, "fr"), [
@@ -288,6 +291,7 @@ test("footer does not drop destinations when columns are renamed and reordered",
     "/faq|{}|paired",
     "/how-it-works|{}|paired",
     "/about|{}|paired",
+    "/donate|{}|paired",
     "/team|{}|bare",
     "/privacy|{}|paired",
     "/terms|{}|paired",

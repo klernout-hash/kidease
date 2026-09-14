@@ -25,6 +25,7 @@ export const LOCALE_PAIRED_PATHS = [
   "/terms",
   "/cookies",
   "/about",
+  "/donate",
   "/faq",
   "/how-it-works",
   "/get-app",

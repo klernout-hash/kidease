@@ -277,6 +277,12 @@ export const MARKETING_PAGE_SEO = {
       "KidEase was founded in Winnipeg by Kyle Lernout and Kevin Lamont to help Canadian families find licensed daycare.",
     path: "/team",
   },
+  donate: {
+    title: "Donate to Kids · KidEase",
+    description:
+      "Donate to SickKids Foundation or Canada’s Children’s Hospital Foundations. KidEase will match every dollar donated through KidEase. Giving is optional.",
+    path: "/donate",
+  },
   tourChecklist: {
     title: "Daycare tour checklist · KidEase",
     description:
@@ -334,6 +340,12 @@ export const MARKETING_PAGE_SEO_FR = {
     description:
       "KidEase est un répertoire pancanadien de garderies permises, fondé à Winnipeg. De vraies photos de devanture et une recherche au kilomètre — pas de nounous ni de gardiens.",
     path: "/fr/about",
+  },
+  donate: {
+    title: "Faire un don aux enfants · KidEase",
+    description:
+      "Donnez à la Fondation SickKids ou aux Fondations des hôpitaux pour enfants du Canada. KidEase égalera chaque dollar donné par l’intermédiaire de KidEase. Le don est facultatif.",
+    path: "/fr/donate",
   },
   search: {
     title: "Chercher une garderie permise près de vous · KidEase",
