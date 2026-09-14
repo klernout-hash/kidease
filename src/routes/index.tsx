@@ -21,6 +21,7 @@ import {
   HERO_LCP_SIZES,
 } from "@/components/building-photo";
 import { ChipButton } from "@/components/chip";
+import { HomePopularCities } from "@/components/home-popular-cities";
 import { HERO_SIZES, STEP_SIZES } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily, getMyRole } from "@/lib/server/family";
@@ -47,6 +48,7 @@ import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
 import { CITY_HUB_DEFS, cityHubChipLabel, cityHubSearchQuery } from "@/lib/city-hubs";
 import { compactExploreSearch, guestHeroSearch } from "@/lib/explore-search";
+import { popularHomeCities } from "@/lib/home-popular-cities";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { RateKidEasePrompt } from "@/components/rate-kidease";
@@ -112,6 +114,7 @@ function Home() {
   const boot = Route.useLoaderData();
   const { user, isPending } = useCurrentUserState();
   const origin = useAppStore((s) => s.origin);
+  const originSource = useAppStore((s) => s.originSource);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const liveOnly = useAppStore((s) => s.liveOnly);
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
@@ -120,6 +123,30 @@ function Home() {
   const distanceUnit = useAppStore((s) => s.distanceUnit);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
+  const popularCities = useMemo(
+    () =>
+      popularHomeCities(
+        {
+          lat: originSource ? origin.lat : boot.origin.lat,
+          lng: originSource ? origin.lng : boot.origin.lng,
+          label: originSource ? origin.label : boot.origin.label,
+          source: originSource ?? boot.origin.source,
+          timeZone: readClientTimeZone(),
+        },
+        locale,
+      ),
+    [
+      boot.origin.lat,
+      boot.origin.lng,
+      boot.origin.label,
+      boot.origin.source,
+      locale,
+      origin.lat,
+      origin.label,
+      origin.lng,
+      originSource,
+    ],
+  );
   const [role, setRole] = useState<AppRole | null>(null);
   const [q, setQ] = useState("");
   const [place, setPlace] = useState(origin.label);
@@ -315,16 +342,6 @@ function Home() {
     void navigate({ to: dest });
   }, [isPending, user, role, navigate]);
 
-  const cityChips = (
-    <div className="mt-4 flex flex-wrap gap-2">
-      {CITY_CHIPS.map((c) => (
-        <ChipButton key={c.slug} className="whitespace-nowrap" onClick={() => applyCity(c.q)}>
-          {c.label}
-        </ChipButton>
-      ))}
-    </div>
-  );
-
   const locationForm = (
     <>
       {manual ? (
@@ -361,7 +378,11 @@ function Home() {
               {t("search")}
             </Button>
           </form>
-          {cityChips}
+          <HomePopularCities
+            cities={popularCities}
+            label={t("heroPopular")}
+            onSelect={(query) => void applyCity(query)}
+          />
         </>
       ) : (
         <button
@@ -459,11 +480,6 @@ function Home() {
               </h1>
               <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
               {locationForm}
-              <ul className="mt-4 flex flex-wrap gap-2" data-ke="hero-trust-chips">
-                <li className="ke-chip">{t("trustLicensedOnly")}</li>
-                <li className="ke-chip">{t("sortOpen")}</li>
-                <li className="ke-chip">{t("requestInfo")}</li>
-              </ul>
               {!manual ? <CityHubLinks className="mt-5" /> : null}
               <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>
             </div>

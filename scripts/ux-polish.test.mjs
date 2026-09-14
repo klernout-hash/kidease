@@ -50,7 +50,8 @@ test("app home uses one location bar; website does not stack rails and the featu
   assert.match(home, /ke-web-grid/);
   assert.match(home, /const \[manual, setManual\] = useState\(true\)/);
   assert.match(form, /PlaceSearch/);
-  assert.match(form, /cityChips/);
+  assert.match(form, /HomePopularCities/);
+  assert.doesNotMatch(form, /cityChips/);
   assert.match(form, /min-h-12/);
   assert.doesNotMatch(form, /ExploreSearchBar/);
   assert.match(webBlock, /locationForm/);
