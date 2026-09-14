@@ -89,3 +89,17 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
   assert.match(search, /splitSearchResults/);
   assert.match(search, /searchFiltersReady/);
 });
+
+test("listing cards render one Request info CTA, not a stacked ghost layer", () => {
+  const card = src("src/components/daycare-card.tsx");
+  const requestMatches = card.match(/cardRequestInfo/g) ?? [];
+  assert.equal(requestMatches.length, 1);
+  assert.match(card, /data-ke="card-request-info"/);
+  assert.match(card, /appearance-none/);
+  assert.match(card, /\[-moz-appearance:none\]/);
+  assert.match(card, /CompareChip/);
+  const compareAt = card.indexOf("<CompareChip");
+  const compareBlock = card.slice(compareAt, card.indexOf("/>", compareAt) + 2);
+  assert.doesNotMatch(compareBlock, /left-2 bottom-2/);
+  assert.doesNotMatch(card, /className="ke-tile group relative w-full"/);
+});
