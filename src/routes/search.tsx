@@ -902,7 +902,7 @@ function SearchPage() {
         : (items?.length ?? 0) > 0 && fabric.live === 0
           ? {
               title: t("licensedNotLiveTitle"),
-              body: t("licensedNotLiveLead").replace("{n}", String(resultCount)),
+              body: t("noLiveResultsLead"),
               action: t("showAll"),
               onAction: () => setLiveOnly(false),
               secondary: t("noLiveResultsClaim"),
@@ -1064,22 +1064,12 @@ function SearchPage() {
                 </span>
               ) : (
                 <>
-                  {liveOnly
-                    ? (fabric.live > 0 ? t("searchLiveCount") : t("searchLiveEmptyCount"))
-                        .replace("{live}", String(fabric.live))
-                        .replace("{n}", String(resultCount))
-                    : resultCount === 1
-                      ? t("searchResultCountOne")
-                      : t("searchResultCount").replace("{n}", String(resultCount))}
-                  {DOT}
                   {shownRadius} {u}
                   {DOT}
                   {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
-                  {items !== null && fabric.live > 0
+                  {fabric.live > 0
                     ? `${DOT}${t("liveInArea").replace("{n}", String(fabric.live))}`
-                    : resultCount > 0
-                      ? `${DOT}${t("liveVsAllNone").replace("{n}", String(resultCount))}`
-                      : null}
+                    : null}
                 </>
               )}
             </p>
