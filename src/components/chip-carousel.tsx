@@ -27,7 +27,7 @@ export function ChipCarousel({
   const wrap = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
-  const [overflow, setOverflow] = useState(false);
+  const [overflow, setOverflow] = useState(compact);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
 
@@ -97,7 +97,7 @@ export function ChipCarousel({
         onClick={() => go(-1)}
         className={cn(
           "absolute left-0 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-fg shadow-card ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30",
-          overflow ? (!canPrev ? "opacity-30" : "") : "hidden",
+          overflow && canPrev ? "" : "hidden",
         )}
       >
         <ChevronLeft className="size-4" strokeWidth={2} />
@@ -108,7 +108,8 @@ export function ChipCarousel({
         aria-label={label}
         className={cn(
           "ke-chip-carousel w-full min-w-0",
-          overflow ? (compact ? "px-10" : "px-12") : "px-0",
+          overflow && canPrev ? (compact ? "pl-10" : "pl-12") : "pl-0",
+          overflow && canNext ? (compact ? "pr-10" : "pr-12") : "pr-0",
         )}
       >
         <div ref={track} className="ke-chip-carousel-track">
@@ -123,7 +124,7 @@ export function ChipCarousel({
         onClick={() => go(1)}
         className={cn(
           "absolute right-0 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-fg shadow-card ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30",
-          overflow ? (!canNext ? "opacity-30" : "") : "hidden",
+          overflow && canNext ? "" : "hidden",
         )}
       >
         <ChevronRight className="size-4" strokeWidth={2} />
