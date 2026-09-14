@@ -100,6 +100,6 @@ test("search SSR loader seeds first paint instead of an empty null list", () => 
   assert.match(search, /searchDaycares/);
   assert.match(search, /resolveRequestSearchOrigin/);
   assert.match(search, /pendingComponent: BootPending/);
-  assert.match(search, /boot\.items\.length > 0 \? boot\.items : null/);
+  assert.match(search, /boot\.items\.length > 0 && originsMatchSearchQuery\(boot\.origin, incoming\.q\) \? boot\.items : null/);
   assert.match(search, /items === null \? \(/);
 });

@@ -50,7 +50,8 @@ describe("home / session / splash cannot stay pending forever", () => {
     const hook = src("src/lib/auth/use-current-user.ts");
     assert.match(hook, /SESSION_SETTLE_MS/);
     assert.match(hook, /useSettledUser/);
-    assert.match(hook, /isPending && expired/);
+    assert.match(hook, /isPending && !expired/);
+    assert.match(hook, /if \(expired\) return \{ user: lastUser, isPending: false \}/);
     const verify = src("src/lib/auth/verify.server.ts");
     assert.match(verify, /get-session-timeout/);
     const authApi = src("src/routes/api/auth/$.ts");
