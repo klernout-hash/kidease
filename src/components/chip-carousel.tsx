@@ -72,6 +72,7 @@ export function ChipCarousel({
     <div
       className={cn("flex w-full min-w-0 max-w-full items-center gap-1 overflow-x-hidden", className)}
       data-chip-carousel=""
+      data-chip-overflow={overflow ? "1" : "0"}
       data-search-row={row}
     >
       {overflow ? (
@@ -89,7 +90,7 @@ export function ChipCarousel({
         ref={scroller}
         role="group"
         aria-label={label}
-        className="ke-chip-carousel min-w-0 flex-1"
+        className="ke-chip-carousel min-w-0 w-0 flex-1"
       >
         <div ref={track} className="ke-chip-carousel-track">
           {children}

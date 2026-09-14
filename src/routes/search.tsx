@@ -832,6 +832,21 @@ function SearchPage() {
     (careType !== "any" ? 1 : 0) +
     (schoolAgeOnly ? 1 : 0) +
     (resolvedExploreCategory(incoming) ? 1 : 0);
+  const sheetFilterCount =
+    (avail !== "any" ? 1 : 0) +
+    (ten ? 1 : 0) +
+    (meals ? 1 : 0) +
+    (outdoor ? 1 : 0) +
+    (inclusive ? 1 : 0) +
+    (extended ? 1 : 0) +
+    (infantOnly ? 1 : 0) +
+    (catchmentOnly ? 1 : 0) +
+    (confirmedOnly ? 1 : 0) +
+    (readyOnly ? 1 : 0) +
+    (claimVerifiedOnly ? 1 : 0) +
+    (favoritesOnly ? 1 : 0) +
+    (careType !== "any" ? 1 : 0) +
+    (isFacilityExploreCategory(resolvedExploreCategory(incoming)) ? 1 : 0);
   const anchors = resolveSearchAnchors({ home: origin, work: workOrigin, mode: anchorMode });
   const catalog = items ?? [];
   const fabric = areaPresence(catalog);
@@ -1178,15 +1193,19 @@ function SearchPage() {
           </ChipButton>
           <ChipButton
             className="gap-1.5"
-            on={filters || extraFilters > 0 || parentSearchActive(parentFilters)}
+            on={
+              filters ||
+              sheetFilterCount > 0 ||
+              parentSearchActive(parentFilters)
+            }
             aria-pressed={filters}
             onClick={() => setFilters((v) => !v)}
           >
             <SlidersHorizontal className="size-3.5" />
             {t("filters")}
-            {extraFilters ? (
+            {sheetFilterCount ? (
               <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">
-                {extraFilters}
+                {sheetFilterCount}
               </span>
             ) : null}
           </ChipButton>
