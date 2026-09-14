@@ -18,10 +18,16 @@ test("/search chrome is three control rows and keeps existing filter math", () =
   const explore = src("src/routes/explore.tsx");
   const home = src("src/routes/index.tsx");
 
-  assert.equal((search.match(/data-search-row=/g) ?? []).length, 1);
+  assert.equal((search.match(/data-search-row=/g) ?? []).length, 2);
   assert.match(bar, /data-search-row="where-when-name"/);
   assert.match(chips, /data-search-row="categories"/);
   assert.match(search, /data-search-row="live-filters-map"/);
+  assert.match(search, /data-search-row="fit-place"/);
+  assert.match(search, /ChipCarousel/);
+  assert.match(chips, /ChipCarousel/);
+  assert.match(search, /writeAgeSearch/);
+  assert.match(search, /nearMe/);
+  assert.match(search, /hideKeys=\{\["ages"\]\}/);
   assert.match(search, /data-search-h1/);
   assert.match(search, /data-listing-count/);
 

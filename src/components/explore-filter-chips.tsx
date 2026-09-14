@@ -25,10 +25,12 @@ export function ExploreFilterChips({
   value,
   visible,
   onApply,
+  hideKeys,
 }: {
   value: ParentListingSearch;
   visible: ParentChipVisibility;
   onApply: (next: ParentListingSearch) => void;
+  hideKeys?: ChipKey[];
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -64,7 +66,7 @@ export function ExploreFilterChips({
       options: visible.facilities.map((id) => ({ id, label: parentFacilityLabel(id, loc) })),
       selected: value.fac,
     },
-  ].filter((group) => group.options.length > 0);
+  ].filter((group) => group.options.length > 0 && !hideKeys?.includes(group.key));
 
   if (!groups.length) return null;
 

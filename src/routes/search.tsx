@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
+import { ChipCarousel } from "@/components/chip-carousel";
 import { ExploreCategoryChips } from "@/components/explore-category-chips";
 import { ExploreFilterChips } from "@/components/explore-filter-chips";
 import { DaycareCard } from "@/components/daycare-card";
@@ -79,6 +80,7 @@ import {
   EXPLORE_CATEGORY_COPY,
   countExploreCategories,
   isExploreCategory,
+  isFacilityExploreCategory,
   listingMatchesExploreFilter,
   resolvedExploreCategory,
   type ExploreCategory,
@@ -532,6 +534,24 @@ function SearchPage() {
         to: incoming.to,
         sort: incoming.sort,
         cat,
+        age,
+        start: incoming.start,
+        favorites: incoming.favorites,
+      }),
+    });
+  }
+
+  /** Row B age chips. Clearing age keeps a facility chip from Filters. */
+  function writeAgeSearch(age?: RailAge) {
+    const keepFacility = isFacilityExploreCategory(incoming.cat);
+    void navigate({
+      search: withParentSearch({
+        q: incoming.q ?? query,
+        name: incoming.name,
+        from: incoming.from,
+        to: incoming.to,
+        sort: incoming.sort,
+        cat: age ?? (keepFacility ? incoming.cat : undefined),
         age,
         start: incoming.start,
         favorites: incoming.favorites,
@@ -1141,53 +1161,26 @@ function SearchPage() {
         {!gated ? (
           <p className="mt-2 text-sm text-muted">{t("searchNeedAgeStart")}</p>
         ) : null}
-        <ExploreFilterChips
-          value={parentFilters}
-          visible={visibleParentChipOptions(items ?? [])}
-          onApply={writeParentFilters}
-        />
-        <ExploreCategoryChips
-          selected={activeCat}
-          counts={exploreCatCounts}
-          onSelect={writeCategorySearch}
-        />
 
-        <div
-          className="mt-3 flex flex-wrap items-center gap-2 overflow-x-auto overscroll-x-contain whitespace-nowrap [scrollbar-width:thin] sm:flex-nowrap"
-          data-search-row="live-filters-map"
-        >
-          <div className="flex h-11 shrink-0 rounded-full bg-surface p-0.5 ring-1 ring-border sm:min-w-[13.5rem]">
-            <button
-              type="button"
-              onClick={() => setLiveOnly(true)}
-              className={cn(
-                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
-                liveOnly ? "bg-ok text-primary-fg" : "text-muted",
-              )}
-            >
-              {items !== null && fabric.live > 0
-                ? t("liveToggleCount").replace("{n}", String(fabric.live))
-                : t("liveOnly")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setLiveOnly(false)}
-              data-listing-count={items !== null ? resultCount : undefined}
-              className={cn(
-                "min-w-0 flex-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold sm:px-4 sm:text-[13px]",
-                !liveOnly ? "bg-fg text-bg" : "text-muted",
-              )}
-            >
-              {items !== null ? t("allToggleCount").replace("{n}", String(resultCount)) : t("showAll")}
-            </button>
-          </div>
-          <button
-            type="button"
+        <ChipCarousel className="mt-3" label={t("searchRowScope")} data-search-row="live-filters-map">
+          <ChipButton on={liveOnly} aria-pressed={liveOnly} onClick={() => setLiveOnly(true)}>
+            {items !== null && fabric.live > 0
+              ? t("liveToggleCount").replace("{n}", String(fabric.live))
+              : t("liveOnly")}
+          </ChipButton>
+          <ChipButton
+            on={!liveOnly}
+            aria-pressed={!liveOnly}
+            data-listing-count={items !== null ? resultCount : undefined}
+            onClick={() => setLiveOnly(false)}
+          >
+            {items !== null ? t("allToggleCount").replace("{n}", String(resultCount)) : t("showAll")}
+          </ChipButton>
+          <ChipButton
+            className="gap-1.5"
+            on={filters || extraFilters > 0 || parentSearchActive(parentFilters)}
+            aria-pressed={filters}
             onClick={() => setFilters((v) => !v)}
-            className={cn(
-              "inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-xs font-semibold ring-1 sm:text-[13px]",
-              filters || extraFilters ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border",
-            )}
           >
             <SlidersHorizontal className="size-3.5" />
             {t("filters")}
@@ -1196,30 +1189,61 @@ function SearchPage() {
                 {extraFilters}
               </span>
             ) : null}
-          </button>
-          {workOrigin ? (
-            <ChipButton
-              on={anchorMode !== "home"}
-              aria-pressed={anchorMode !== "home"}
-              onClick={() => setAnchorMode(anchorMode === "home" ? "work" : "home")}
-            >
-              {t("nearWork")}
-            </ChipButton>
-          ) : null}
-          <button
-            type="button"
+          </ChipButton>
+          <ChipButton
+            on={view === "map"}
+            aria-pressed={view === "map"}
             onClick={() => {
               dismissPopovers();
               setView(view === "map" ? "list" : "map");
             }}
-            className={cn(
-              "inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-xs font-semibold ring-1 sm:text-[13px]",
-              view === "map" ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border",
-            )}
           >
             {t("map")}
-          </button>
-        </div>
+          </ChipButton>
+        </ChipCarousel>
+
+        <ExploreCategoryChips
+          selected={activeCat && isRailAge(activeCat) ? activeCat : undefined}
+          counts={exploreCatCounts}
+          onSelect={(cat) => writeAgeSearch(cat && isRailAge(cat) ? cat : undefined)}
+        />
+
+        <ChipCarousel className="mt-3" label={t("searchRowFit")} data-search-row="fit-place">
+          <ChipButton
+            on={originSource === "gps" && anchorMode === "home"}
+            aria-pressed={originSource === "gps" && anchorMode === "home"}
+            onClick={() => {
+              setAnchorMode("home");
+              void geo();
+            }}
+          >
+            {t("nearMe")}
+          </ChipButton>
+          <ChipButton
+            on={Boolean(workOrigin) && anchorMode !== "home"}
+            aria-pressed={Boolean(workOrigin) && anchorMode !== "home"}
+            onClick={() => {
+              if (!workOrigin) {
+                setFilters(true);
+                setAnchorMode("work");
+                return;
+              }
+              setAnchorMode(anchorMode === "home" ? "work" : "home");
+            }}
+          >
+            {t("nearWork")}
+          </ChipButton>
+          <ChipButton
+            on={avail === "open"}
+            aria-pressed={avail === "open"}
+            onClick={() => setAvail((v) => (v === "open" ? "any" : "open"))}
+          >
+            {t("sortOpen")}
+          </ChipButton>
+          <ChipButton on={ten} aria-pressed={ten} onClick={() => setTen((v) => !v)}>
+            {t("filterTen")}
+          </ChipButton>
+        </ChipCarousel>
 
         {askLocation ? (
           <div className="mt-3">
@@ -1261,6 +1285,33 @@ function SearchPage() {
             ) : anchors.mode === "work" && workOrigin ? (
               <p className="text-xs text-muted">{t("anchorWorkHint")}</p>
             ) : null}
+            {(["home", "nursery", "before-after"] as const).some(
+              (cat) => exploreCatCounts[cat] > 0 || activeCat === cat,
+            ) ? (
+              <div>
+                <p className="mb-2 text-sm font-medium">{t("exploreFacilityTypes")}</p>
+                <div className="flex flex-wrap gap-2">
+                  {(["home", "nursery", "before-after"] as const)
+                    .filter((cat) => exploreCatCounts[cat] > 0 || activeCat === cat)
+                    .map((cat) => (
+                      <ChipButton
+                        key={cat}
+                        on={activeCat === cat}
+                        aria-pressed={activeCat === cat}
+                        onClick={() => writeCategorySearch(activeCat === cat ? undefined : cat)}
+                      >
+                        {t(EXPLORE_CATEGORY_COPY[cat])}
+                      </ChipButton>
+                    ))}
+                </div>
+              </div>
+            ) : null}
+            <ExploreFilterChips
+              value={parentFilters}
+              visible={visibleParentChipOptions(items ?? [])}
+              hideKeys={["ages"]}
+              onApply={writeParentFilters}
+            />
             {filterChips}
             {radiusSlider}
             <div className="flex flex-wrap gap-2">
