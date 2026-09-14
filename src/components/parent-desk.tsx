@@ -33,6 +33,7 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
 import { PayCtas } from "@/components/pay-chrome";
+import { DeleteChildControl } from "@/components/delete-child-control";
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -557,9 +558,18 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                             ) : null}
                           </div>
                         </div>
-                        <Button size="sm" variant="secondary" onClick={() => setEditing(c)}>
-                          {t("editChild")}
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => setEditing(c)}>
+                            {t("editChild")}
+                          </Button>
+                          <DeleteChildControl
+                            child={{ id: c.id, name: c.name }}
+                            onDeleted={() => {
+                              setEditing(null);
+                              void load();
+                            }}
+                          />
+                        </div>
                       </div>
                       <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
                         <p className="text-sm font-medium">{t("sendChildProfile")}</p>

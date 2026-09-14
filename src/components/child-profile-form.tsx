@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { emptyChild } from "@/lib/child-profile";
 import { addChild, updateChild } from "@/lib/server/family";
+import { DeleteChildControl } from "@/components/delete-child-control";
 import { useCopy } from "@/lib/use-copy";
 import type { Child } from "@/lib/types";
 
@@ -288,6 +289,12 @@ export function ChildProfileForm({
           <Button type="button" variant="secondary" onClick={onCancel}>
             {t("cancel")}
           </Button>
+        ) : null}
+        {draft.id ? (
+          <DeleteChildControl
+            child={{ id: draft.id, name: draft.name }}
+            onDeleted={onSaved}
+          />
         ) : null}
       </div>
       {saved ? (
