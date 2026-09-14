@@ -88,6 +88,11 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
   assert.match(explore, /redirect\(\{ to: "\/search" \}\)/);
   assert.match(search, /splitSearchResults/);
   assert.match(search, /searchFiltersReady/);
+  assert.match(search, /ExploreCategoryRails/);
+  assert.match(search, /t\("exploreBrowseHint"\)/);
+  assert.doesNotMatch(search, /searchNeedAgeStart/);
+  assert.doesNotMatch(search, /presenceLive/);
+  assert.doesNotMatch(search, /licensedNotLiveTitle/);
 });
 
 test("listing cards render one Request info CTA, not a stacked ghost layer", () => {

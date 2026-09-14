@@ -214,7 +214,8 @@ test("server overlay, search sorts, desks, and docs stay honest", () => {
   assert.match(search, /sortMatch/);
   assert.match(search, /sortUrgency/);
   assert.match(search, /needBy/);
-  assert.match(search, /sort === "match" \|\| sort === "urgency"/);
+  assert.match(search, /\["match", t\("sortMatch"\)\]/);
+  assert.match(search, /\["urgency", t\("sortUrgency"\)\]/);
   assert.match(search, /DaycareCard/);
 
   assert.match(src("src/components/daycare-card.tsx"), /MatchCue/);

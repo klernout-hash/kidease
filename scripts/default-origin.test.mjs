@@ -7,6 +7,7 @@ import {
   isCoarseFix,
   isTrustedAnonymousIp,
   isUntrustedAnonymousToronto,
+  isUntrustedTorontoOrigin,
   originFromDeviceFix,
   originFromIpHint,
   parseIpGeoHeaders,
@@ -122,6 +123,15 @@ describe("GPS and saved origin still allow multi-city search", () => {
     assert.equal(resolved.source, "default");
   });
 
+  it("rejects Toronto SSR fallback when the parent did not choose it", () => {
+    const resolved = resolveDefaultSearchOrigin({
+      fallback: { lat: 43.6532, lng: -79.3832, label: "Toronto, ON" },
+    });
+    assert.equal(isUntrustedTorontoOrigin({ lat: 43.6532, lng: -79.3832, label: "Toronto, ON" }), true);
+    assert.equal(resolved.label, WINNIPEG.label);
+    assert.equal(resolved.source, "default");
+  });
+
   it("keeps a saved Toronto origin the parent already chose", () => {
     const resolved = resolveDefaultSearchOrigin({
       saved: { lat: 43.6532, lng: -79.3832, label: "Toronto, ON" },
@@ -161,6 +171,7 @@ describe("wiring keeps explicit search and documents the fallback", () => {
     assert.match(boot, /incomingQ/);
     assert.match(boot, /resolveLocationQuery/);
     assert.match(boot, /resolveDefaultSearchOrigin/);
+    assert.match(boot, /isUntrustedTorontoOrigin/);
     assert.doesNotMatch(boot, /setOrigin\(WINNIPEG\)/);
   });
 

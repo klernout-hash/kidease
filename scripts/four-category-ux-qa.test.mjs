@@ -18,8 +18,8 @@ function src(rel) {
 
 test("Guest: live vs all counts, empty-search lead, and listing login handoff", () => {
   const search = src("src/routes/search.tsx");
-  assert.match(search, /licensedNotLiveTitle/);
-  assert.match(search, /noLiveResultsLead/);
+  assert.match(search, /exploreBrowseHint/);
+  assert.match(search, /ExploreCategoryRails/);
   assert.match(search, /areaPresence\(catalog\)/);
   assert.match(search, /parentLoginSearch\("\/search"\)/);
   const listing = src("src/routes/daycare.$slug.tsx");
@@ -45,8 +45,9 @@ test("Parent: request empty copy, inbox subtitle, and search ↔ child wayfindin
   assert.match(inbox, /inboxHasThreads/);
   assert.doesNotMatch(inbox, /items && items.length \? <p className="mt-2 text-sm text-muted">\{t\("noInboxLead"\)\}/);
   const search = src("src/routes/search.tsx");
-  assert.match(search, /wayfindChildProfile/);
-  assert.match(search, /tab: "children"/);
+  assert.match(search, /changeLocation/);
+  assert.match(search, /parentLoginSearch\("\/search"\)/);
+  assert.match(src("src/lib/copy.ts"), /wayfindChildProfile/);
   const card = src("src/components/child-care-card.tsx");
   assert.match(card, /tab: "children"/);
   const rails = src("src/components/parent-desk-rails.tsx");
