@@ -1274,7 +1274,10 @@ function SearchPage() {
         ) : null}
 
         {filters ? (
-          <div className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border">
+          <div
+            className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border"
+            data-ke="explore-filters-sheet"
+          >
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold">{t("filters")}</p>
               <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>

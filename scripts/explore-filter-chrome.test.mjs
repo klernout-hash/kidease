@@ -22,8 +22,9 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
   assert.match(carousel, /overflow-x: auto|ke-chip-carousel/);
   assert.match(carousel, /chipCarouselPrev/);
   assert.match(carousel, /chipCarouselNext/);
-  assert.match(carousel, /disabled=\{!canPrev\}/);
-  assert.match(carousel, /disabled=\{!canNext\}/);
+  assert.match(carousel, /disabled=\{overflow \? !canPrev : undefined\}/);
+  assert.match(carousel, /disabled=\{overflow \? !canNext : undefined\}/);
+  assert.match(carousel, /data-chip-scroll/);
   assert.match(carousel, /scrollBy/);
   assert.match(css, /\.ke-chip-carousel/);
   assert.match(css, /\.ke-chip-carousel-track/);
@@ -31,8 +32,11 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
   assert.match(css, /scrollbar-width:\s*none/);
   assert.match(css, /flex-wrap:\s*nowrap/);
   assert.match(carousel, /w-full min-w-0 max-w-full/);
-  assert.match(carousel, /w-0 flex-1/);
+  assert.match(carousel, /inner\.scrollWidth/);
   assert.match(carousel, /data-chip-overflow/);
+  assert.match(carousel, /data-chip-scroll/);
+  assert.match(carousel, /lg:hidden/);
+  assert.match(search, /data-ke="explore-filters-sheet"/);
 
   assert.match(search, /data-search-row="live-filters-map"/);
   assert.match(chips, /data-search-row="categories"/);

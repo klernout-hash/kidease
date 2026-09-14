@@ -3,9 +3,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
+const SCROLL_SCRIPT = `window.__keChipCarousel||(window.__keChipCarousel=1,document.addEventListener("click",function(e){var b=e.target.closest("[data-chip-scroll]");if(!b)return;var p=b.closest("[data-chip-carousel]")&&b.closest("[data-chip-carousel]").querySelector(".ke-chip-carousel");if(!p)return;var d=Number(b.getAttribute("data-chip-scroll"))||1;p.scrollBy({left:d*Math.max(p.clientWidth*0.7,140),behavior:"smooth"});}));`;
+
 /**
  * One labelled chip row that scrolls sideways instead of wrapping
- * into a dense grid. Arrows show only when the row overflows.
+ * into a dense grid. Arrows show when the row overflows. On small
+ * screens they stay visible even before hydration so Map is reachable.
  */
 export function ChipCarousel({
   children,
@@ -19,41 +22,47 @@ export function ChipCarousel({
   "data-search-row"?: string;
 }) {
   const { t } = useCopy();
+  const wrap = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState(false);
   const [canPrev, setCanPrev] = useState(false);
-  const [canNext, setCanNext] = useState(false);
+  const [canNext, setCanNext] = useState(true);
 
   const sync = useCallback(() => {
-    const el = scroller.current;
-    if (!el) return;
-    const max = el.scrollWidth - el.clientWidth;
-    const overflowing = max > 2;
-    const left = el.scrollLeft;
+    const port = scroller.current;
+    const inner = track.current;
+    if (!port || !inner) return;
+    const visible = port.clientWidth;
+    const content = inner.scrollWidth;
+    const overflowing = content > visible + 2;
+    const left = port.scrollLeft;
+    const max = content - visible;
     setOverflow(overflowing);
     setCanPrev(overflowing && left > 2);
     setCanNext(overflowing && left < max - 2);
   }, []);
 
   useLayoutEffect(() => {
-    const el = scroller.current;
+    const port = scroller.current;
     const inner = track.current;
-    if (!el) return;
+    const outer = wrap.current;
+    if (!port || !inner) return;
 
     const onScroll = () => sync();
-    el.addEventListener("scroll", onScroll, { passive: true });
+    port.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
 
     const ro = new ResizeObserver(() => sync());
-    ro.observe(el);
-    if (inner) ro.observe(inner);
+    ro.observe(port);
+    ro.observe(inner);
+    if (outer) ro.observe(outer);
 
     sync();
     const later = window.setTimeout(sync, 80);
     const fonts = document.fonts?.ready.then(sync);
     return () => {
-      el.removeEventListener("scroll", onScroll);
+      port.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       ro.disconnect();
       window.clearTimeout(later);
@@ -62,51 +71,57 @@ export function ChipCarousel({
   }, [children, sync]);
 
   function go(dir: -1 | 1) {
-    const el = scroller.current;
-    if (!el) return;
-    const step = Math.max(Math.round(el.clientWidth * 0.7), 140);
-    el.scrollBy({ left: dir * step, behavior: "smooth" });
+    const port = scroller.current;
+    if (!port) return;
+    const step = Math.max(Math.round(port.clientWidth * 0.7), 140);
+    port.scrollBy({ left: dir * step, behavior: "smooth" });
   }
 
   return (
     <div
-      className={cn("flex w-full min-w-0 max-w-full items-center gap-1 overflow-x-hidden", className)}
+      ref={wrap}
+      className={cn("relative w-full min-w-0 max-w-full", className)}
       data-chip-carousel=""
       data-chip-overflow={overflow ? "1" : "0"}
       data-search-row={row}
     >
-      {overflow ? (
-        <button
-          type="button"
-          aria-label={t("chipCarouselPrev")}
-          disabled={!canPrev}
-          onClick={() => go(-1)}
-          className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-fg ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30"
-        >
-          <ChevronLeft className="size-4" strokeWidth={2} />
-        </button>
-      ) : null}
+      <script dangerouslySetInnerHTML={{ __html: SCROLL_SCRIPT }} />
+      <button
+        type="button"
+        aria-label={t("chipCarouselPrev")}
+        data-chip-scroll="-1"
+        disabled={overflow ? !canPrev : undefined}
+        onClick={() => go(-1)}
+        className={cn(
+          "absolute left-0 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-fg shadow-card ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30",
+          overflow ? (!canPrev ? "opacity-30" : "") : "lg:hidden",
+        )}
+      >
+        <ChevronLeft className="size-4" strokeWidth={2} />
+      </button>
       <div
         ref={scroller}
         role="group"
         aria-label={label}
-        className="ke-chip-carousel min-w-0 w-0 flex-1"
+        className={cn("ke-chip-carousel w-full min-w-0 px-12", overflow ? "lg:px-12" : "lg:px-0")}
       >
         <div ref={track} className="ke-chip-carousel-track">
           {children}
         </div>
       </div>
-      {overflow ? (
-        <button
-          type="button"
-          aria-label={t("chipCarouselNext")}
-          disabled={!canNext}
-          onClick={() => go(1)}
-          className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-fg ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30"
-        >
-          <ChevronRight className="size-4" strokeWidth={2} />
-        </button>
-      ) : null}
+      <button
+        type="button"
+        aria-label={t("chipCarouselNext")}
+        data-chip-scroll="1"
+        disabled={overflow ? !canNext : undefined}
+        onClick={() => go(1)}
+        className={cn(
+          "absolute right-0 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-fg shadow-card ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30",
+          overflow ? (!canNext ? "opacity-30" : "") : "lg:hidden",
+        )}
+      >
+        <ChevronRight className="size-4" strokeWidth={2} />
+      </button>
     </div>
   );
 }
