@@ -283,6 +283,8 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
               disabled={busy}
+              autoComplete="off"
+              name="kidease-remember-device"
               data-ke="remember-device"
             />
             <span>

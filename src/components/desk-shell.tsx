@@ -27,7 +27,7 @@ function DeskItemIcon({ name, className }: { name?: DeskIcon; className?: string
 
 function navClass(on: boolean) {
   return cn(
-    "min-h-11 shrink-0 rounded-full px-3 py-2 text-sm md:min-h-0 md:rounded-xl",
+    "min-h-11 rounded-full px-3 py-2 text-sm md:min-h-0 md:shrink-0 md:rounded-xl",
     on ? "bg-primary text-primary-fg" : "text-muted ring-1 ring-border hover:text-fg md:ring-0 md:hover:bg-surface",
   );
 }
@@ -241,7 +241,10 @@ export function DeskShell({
               <DeskSwitcher compact />
             </Suspense>
           </div>
-          <nav className="mt-5 flex gap-2 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
+          <nav
+            data-ke="desk-tab-nav"
+            className="mt-5 flex max-w-full flex-wrap gap-2 pb-1 md:flex-col md:overflow-visible md:pb-0"
+          >
             {primary.map((item) => {
               const on = itemIsOn(item, active, pathname);
               if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} />;

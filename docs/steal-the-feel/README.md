@@ -4,7 +4,9 @@ Implementable UX polish kit for KidEase (Canada only). Steal **clarity patterns*
 
 Brand stays KidEase navy `#1A3790`. Soft wash is `#EEF2FB`. One type scale, one radius, one shadow — see [TOKENS.md](./TOKENS.md).
 
-This folder is a brief + checklist. It does **not** change production behaviour.
+This folder is a brief + checklist. Token files here are a proposal, not a `src/styles.css` apply.
+
+The same PR also lands the Daily Scorecard + Full-Site UX/Role QA **code** fixes that both reports agree on (geo-filter, privacy copy, ghost desk hide, completeness vs Verified, Checkout honesty, SMS consent, unread badge, shortlist wrap, tab scroller), plus login/Access routing so Parent and Daycare never bounce through Cloudflare Access, and Firefox layout fallbacks. Catalogue fill, sitemap reconcile, disabling Admin Access, and flag enables stay out.
 
 ## Principles
 
@@ -50,9 +52,8 @@ Attached feel-pass frames (Home / Search / Listing). Direction only — not prod
 | Tokens | `src/styles.css` `@theme` | Several radii and two shadows. Primary already `#1a3790`. Hero already washes `#eef2fb`. |
 | Desk chrome | `src/components/desk-switcher.tsx` | `showDeskSwitcher` when the session has two visible desks — appears if the session is not a pure guest. |
 
-## Out of scope
+## Out of scope (this kit folder)
 
-- Production layout or copy changes in this PR.
 - Competitor brand marks, screenshots of other products, or cloned type ramps.
 - Invented vacancy, reviews, or licence badges.
-- Provider / admin desks (except: hide desk switcher for guest review).
+- Mass catalogue fill, sitemap count reconcile, enabling FEATURE_SMS / FEATURE_PUSH / stores / live payouts.

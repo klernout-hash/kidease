@@ -12,6 +12,9 @@ import {
   DESK_PATH,
   deskFromPathname,
   funnelDestPath,
+  isAdminLoginIntent,
+  isCloudflareAccessPath,
+  parseDeskQuery,
   postLoginDestKind,
   resolvePostLoginPath,
   sanitizePostLoginNext,
@@ -158,7 +161,21 @@ export async function shouldOpenTwoFactorPage(
 
 export function assignPostAuthDest(dest: string): void {
   if (typeof window === "undefined") return;
-  const url = sanitizePostLoginNext(dest) ?? resolvePostLoginPath({ next: dest });
+  let url = sanitizePostLoginNext(dest) ?? resolvePostLoginPath({ next: dest });
+  if (isCloudflareAccessPath(url)) {
+    const params = new URLSearchParams(window.location.search);
+    const role = params.get("role");
+    const desk = parseDeskQuery(params.get("desk"));
+    const adminIntent = isAdminLoginIntent({
+      role,
+      desk: params.get("desk"),
+      intent: params.get("intent"),
+      next: params.get("next") || dest,
+    });
+    if (!adminIntent) {
+      url = role === "provider" || desk === "provider" ? DESK_PATH.provider : DESK_PATH.parent;
+    }
+  }
   window.location.assign(url.startsWith("/") && !url.startsWith("//") ? url : "/parent");
 }
 

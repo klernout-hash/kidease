@@ -12,6 +12,7 @@ type TurnstileApi = {
       "error-callback"?: () => void;
       retry?: "auto" | "never";
       "refresh-expired"?: "auto" | "manual" | "never";
+      appearance?: "always" | "execute" | "interaction-only";
       size?: "normal" | "flexible" | "compact";
     },
   ) => string;
@@ -121,6 +122,7 @@ export const TurnstileField = memo(function TurnstileField({
         widgetId.current = api.render(host.current, {
           sitekey: siteKey,
           size: narrow ? "compact" : "flexible",
+          appearance: "interaction-only",
           retry: "auto",
           "refresh-expired": "auto",
           callback: (token) => {

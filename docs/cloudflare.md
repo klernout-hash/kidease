@@ -65,6 +65,8 @@ Mid-session re-entry to `/admin` showing the Cloudflare Access login wall is alm
 
 App-side: `scripts/request-guard.mjs` `isSensitiveDeskPath` is the allow-list that may 302 preview → www. `/parent`, `/provider`, `/login`, `/`, and `/api/auth/*` never go through that hop.
 
+Parent / Daycare login also refuse leftover `/admin` or `/support` destinations (`resolvePostLoginPath` + `assignPostAuthDest`). A parent `?role=` / `?desk=` must not paint the operator email-first form (`isAdminLoginIntent`) or full-document-assign into Access. Admin still uses a real document GET to `/admin` so Access can run once. Do not disable Access on `/admin*`.
+
 ## robots.txt Content-Signal (Lighthouse SEO)
 
 Origin `public/robots.txt` is standard robots exclusion only (`User-agent`, `Allow`, `Disallow`, `Sitemap`). Production used to serve a Cloudflare-managed prefix:

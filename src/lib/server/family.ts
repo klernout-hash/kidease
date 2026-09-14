@@ -1117,7 +1117,9 @@ export const getMyRole = createServerFn({ method: "GET" })
       desks: session.desks,
       email: session.email,
       home: session.home,
-      unread: session.unread,
+      unread: session.unreadFamily ?? session.unread,
+      unreadFamily: session.unreadFamily ?? session.unread,
+      unreadCentre: session.unreadCentre ?? 0,
       notificationUnread: session.notificationUnread,
       stripeLive: session.stripeLive,
       ledgerLabel: session.ledgerLabel,
@@ -1154,9 +1156,11 @@ export const getProvider = createServerFn({ method: "GET" })
     const entitlements = await loadProfileEntitlements(sql, context.userId);
     const since = analyticsSinceDate(entitlements.analyticsDays);
     const weekSince = analyticsSinceDate(7);
-    const listings = await overlayDemandSnapshots(
-      await overlayFeaturedCity(await overlayQuality(owned.map(mapDaycare))),
-    );
+    const listings = (
+      await overlayDemandSnapshots(
+        await overlayFeaturedCity(await overlayQuality(owned.map(mapDaycare))),
+      )
+    ).filter((d) => !isAdminOnlyListing(d));
     const stats = [];
     for (const d of listings) {
       const views = await sql<{ n: number }>`

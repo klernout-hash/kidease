@@ -35,6 +35,7 @@ function noticeKindKey(kind: SearchAlertNotice["kind"]): CopyKey {
   if (kind === "request_reply") return "alertRequestReply";
   return "alertNewCentre";
 }
+import { caslStatement } from "@/lib/casl";
 import { useCopy } from "@/lib/use-copy";
 import { clampRadiusKm } from "@/lib/proximity";
 
@@ -87,12 +88,13 @@ export function SavedSearchesPanel() {
             <input
               type="checkbox"
               className="mt-1 size-4 accent-primary"
+              autoComplete="off"
               checked={prefs.emailEnabled}
               onChange={(e) => setPrefs((cur) => ({ ...cur, emailEnabled: e.target.checked }))}
             />
             <span>
               <span>{t("alertEmail")}</span>
-              <span className="mt-1 block text-[12px] text-muted">{t("caslEmailServiceLabel")}. {t("caslNotRequired")}</span>
+              <span className="mt-1 block text-[12px] text-muted">{caslStatement(locale === "fr" ? "fr" : "en", "emailService")}</span>
             </span>
           </label>
           {prefs.emailEnabled && !prefs.emailConfigured ? (
@@ -112,12 +114,13 @@ export function SavedSearchesPanel() {
             <input
               type="checkbox"
               className="mt-1 size-4 accent-primary"
+              autoComplete="off"
               checked={prefs.smsEnabled}
               onChange={(e) => setPrefs((cur) => ({ ...cur, smsEnabled: e.target.checked }))}
             />
             <span>
               <span>{t("caslSmsLabel")}</span>
-              <span className="mt-1 block text-[12px] text-muted">{t("caslNotRequired")}</span>
+              <span className="mt-1 block text-[12px] text-muted">{caslStatement(locale === "fr" ? "fr" : "en", "smsService")}</span>
             </span>
           </label>
           {prefs.smsEnabled && !prefs.smsChannelLive ? (

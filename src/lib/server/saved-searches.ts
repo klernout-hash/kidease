@@ -244,7 +244,7 @@ export const getSearchAlertPrefs = createServerFn({ method: "GET" })
     const consents = await listConsents(context.userId);
     if (!row) {
       return {
-        emailEnabled: true,
+        emailEnabled: consents.emailService,
         inAppEnabled: true,
         smsEnabled: consents.smsService,
         emailCommercial: consents.emailCommercial,

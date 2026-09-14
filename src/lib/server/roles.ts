@@ -50,7 +50,13 @@ async function ownsCentre(sql: Awaited<ReturnType<typeof getSql>>, userId: strin
   return owned.length > 0;
 }
 
-async function unreadInboxCount(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
+async function unreadInboxCount(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  userId: string,
+  view: "all" | "family" | "centre" = "all",
+) {
+  const familyOnly = view === "family";
+  const centreOnly = view === "centre";
   const rows = await sql<{ n: number }>`
     select count(*)::int as n
     from conversations c
@@ -65,6 +71,8 @@ async function unreadInboxCount(sql: Awaited<ReturnType<typeof getSql>>, userId:
           where m.user_id = ${userId} and m.daycare_id = c.daycare_id and m.status = 'active'
         )
       )
+      and (${familyOnly} = false or c.user_id = ${userId})
+      and (${centreOnly} = false or c.user_id <> ${userId})
       and exists (
         select 1 from messages m
         where m.conversation_id = c.id
@@ -165,7 +173,11 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   const owned = await ownsCentre(sql, userId);
   const member = owned ? false : await isActiveCentreMember(sql, userId);
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
-  const unread = await unreadInboxCount(sql, userId);
+  const [unread, unreadFamily, unreadCentre] = await Promise.all([
+    unreadInboxCount(sql, userId),
+    unreadInboxCount(sql, userId, "family"),
+    unreadInboxCount(sql, userId, "centre"),
+  ]);
   const { countUnreadNotifications } = await import("@/lib/server/notifications");
   const notificationUnread = await countUnreadNotifications(userId).catch(() => 0);
   const stripeLive = stripeChargesLive();
@@ -176,6 +188,8 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     email: actor.email ?? null,
     home: landingPath(desks),
     unread,
+    unreadFamily,
+    unreadCentre,
     notificationUnread,
     stripeLive,
     ledgerLabel: paymentSourceLabel(stripeLive),

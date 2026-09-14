@@ -182,6 +182,11 @@ test("post-login dest honors /parent for admin instead of dumping them on Provid
     "/provider",
   );
   assert.equal(resolvePostLoginPath({ desks: adminDesks }), "/admin");
+  assert.equal(resolvePostLoginPath({ role: "parent", sticky: "admin" }), "/parent");
+  assert.equal(resolvePostLoginPath({ role: "provider", sticky: "admin" }), "/provider");
+  assert.equal(resolvePostLoginPath({ next: "/admin", role: "parent" }), "/parent");
+  assert.equal(resolvePostLoginPath({ next: "/support", desk: "provider" }), "/provider");
+  assert.equal(resolvePostLoginPath({ next: "/admin" }), "/admin");
   assert.equal(resolvePostLoginPath({ next: "/search", desks: ["parent"] }), "/search");
   assert.equal(resolvePostLoginPath({ next: "/login?next=/parent", desks: adminDesks }), "/parent");
   assert.equal(resolvePostLoginPath({ next: "/verify-2fa?next=/provider" }), "/provider");

@@ -4,6 +4,13 @@ import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { getDeviceLocation } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
 
+export {
+  originFromSearchQuery,
+  originsMatchSearchQuery,
+  searchQueryFromUnknown,
+  urlHasGeocodableSearchQuery,
+} from "@/lib/search-query";
+
 /** Empty /search: precise Canada GPS, else saved / SSR IP, else Winnipeg. Typed q stays multi-city. */
 export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOrigin | null) {
   const setOrigin = useAppStore.getState().setOrigin;
@@ -13,11 +20,11 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
     setQuery(incomingQ);
     const local = geocode(incomingQ);
     if (local) {
-      setOrigin(local);
+      setOrigin(local, "manual");
       return;
     }
     const hit = await resolveLocationQuery(incomingQ);
-    if (hit) setOrigin(hit);
+    if (hit) setOrigin(hit, "manual");
     return;
   }
 

@@ -126,7 +126,9 @@ test("Today and listing editor use Action required + coach, not a Superhost publ
   assert.match(provider, /ProviderTrustChecklist/);
   assert.match(provider, /ProviderScreeningPanel/);
   assert.match(provider, /focus\?: ListingCoachFocus/);
-  assert.match(src("src/components/listing-completeness.tsx"), /ListingReadinessCoach/);
+  assert.match(src("src/components/listing-completeness.tsx"), /ListingHealthPanel/);
+  assert.doesNotMatch(src("src/components/listing-completeness.tsx"), /ListingReadinessCoach/);
+  assert.match(coach, /listingVerifiedNotHealth/);
   assert.match(src("src/components/provider-trust.tsx"), /listing-health-license/);
   assert.match(src("src/components/provider-trust.tsx"), /listing-health-capacity/);
   assert.match(src("src/components/provider-screening.tsx"), /listing-coach-screening/);

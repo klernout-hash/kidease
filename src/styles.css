@@ -179,6 +179,7 @@
   }
   html.standalone,
   html.standalone body {
+    min-height: 100vh;
     min-height: 100dvh;
   }
   input,
@@ -190,6 +191,7 @@
   select.ke-lang-select {
     appearance: none;
     -webkit-appearance: none;
+    -moz-appearance: none;
     line-height: 1.45;
     overflow: visible;
     text-align-last: center;
@@ -589,6 +591,9 @@
     z-index: 10;
     top: 4.75rem;
   }
+  html[data-channel="app"] .ke-listings-narrow {
+    grid-template-columns: 1fr;
+  }
   html[data-channel="app"] .ke-app-search .ke-listings-narrow {
     grid-template-columns: 1fr;
     gap: 0.85rem;
@@ -636,6 +641,16 @@ html[data-channel="website"] .ke-listings {
 html[data-channel="website"] .ke-listings-narrow {
   grid-template-columns: 1fr;
   gap: 1.25rem;
+}
+
+/* Firefox + older Chromium: Tailwind dvh utilities need a vh fallback. */
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.h-dvh {
+  height: 100vh;
+  height: 100dvh;
 }
 html[data-channel="website"] .ke-card,
 html[data-channel="website"] .ke-web-grid .ke-card,

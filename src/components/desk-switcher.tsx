@@ -10,7 +10,7 @@ import {
   showDeskSwitcher,
   type DeskKey,
 } from "@/lib/desks";
-import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
+import { inboxSearch, inboxUnreadForDesk, inboxViewForDesk } from "@/lib/inbox-view";
 import { useSessionDesks } from "@/components/session-desks";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
@@ -219,7 +219,7 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
     return (
       <div role="navigation" aria-label={t("deskSwitcherLabel")} className="flex items-center gap-1">
         <DeskPills desks={desks} current={current} onPick={setSticky} t={t} />
-        <InboxLink pathname={pathname} current={current} unread={session.unread} />
+        <InboxLink pathname={pathname} current={current} unread={inboxUnreadForDesk(session, current)} />
       </div>
     );
   }
@@ -228,11 +228,11 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
     <div role="navigation" aria-label={t("deskSwitcherLabel")} className="shrink-0">
       <div className={cn(chrome, "md:hidden")}>
         <DeskMenu desks={desks} current={current} onPick={setSticky} t={t} />
-        <InboxLink pathname={pathname} current={current} unread={session.unread} />
+        <InboxLink pathname={pathname} current={current} unread={inboxUnreadForDesk(session, current)} />
       </div>
       <div className={cn(chrome, "hidden md:flex")}>
         <DeskPills desks={desks} current={current} onPick={setSticky} t={t} />
-        <InboxLink pathname={pathname} current={current} unread={session.unread} />
+        <InboxLink pathname={pathname} current={current} unread={inboxUnreadForDesk(session, current)} />
       </div>
     </div>
   );

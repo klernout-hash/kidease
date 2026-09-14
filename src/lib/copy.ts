@@ -629,9 +629,9 @@ export const copy = {
     waitlistOptInOff: "Waitlist pulse turned off",
     waitlistOptInNeedSignIn: "Sign in to get a waitlist pulse",
     waitlistOptInSaved: "We’ll notify you when this centre opens a spot.",
-    waitlistOptInSmsHint: "SMS needs FEATURE_SMS plus a stored CASL consent on your profile. Phone push stays off.",
+    waitlistOptInSmsHint: "Texts only send if you opted in to SMS on your profile. Phone push stays off.",
     waitlistPulseNotify: "Notify waitlist — spot open",
-    waitlistPulseLead: "One pulse per spot event. Matched parents who opted in get an in-app notice; SMS only with CASL + FEATURE_SMS.",
+    waitlistPulseLead: "One pulse per spot event. Matched parents who opted in get an in-app notice; SMS only with stored CASL consent.",
     waitlistPulseSent: "Waitlist pulse queued.",
     waitlistPulseRateLimited: "Already pulsed for this spot event. Wait before sending again.",
     searchAlertRadius: "Radius",
@@ -643,7 +643,9 @@ export const copy = {
     markAlertsRead: "Mark all read",
     noChildrenLead: "Add a child profile first. Centres only see the details you send.",
     noPaymentsLead:
-      "When a centre sends a bill, it shows up here so you can pay with Stripe Checkout. You pay the centre bill amount. KidEase’s platform fee comes from the daycare payout. Parent Plus is a separate KidEase subscription. Booking card deposits are not charged on the deposit page.",
+      "No centre bills yet. Free search and messages stay on. Parent Plus checkout stays off until a centre sends a bill, or you already subscribe. When a bill arrives, you pay the centre amount with Stripe Checkout. KidEase’s platform fee comes from the daycare payout. Booking card deposits are not charged on the deposit page.",
+    parentPlusNoBill:
+      "Parent Plus is optional. Live Checkout stays off here until a centre sends a bill, or you already subscribe.",
     emptyFindCare: "Find licensed care",
     emptyAddChild: "Add a child",
     pendingHonesty: "Pending totals are not settled.",
@@ -805,6 +807,7 @@ export const copy = {
     planNetwork: "Network",
     planCurrent: "Current plan",
     planUpgrade: "Upgrade plan",
+    planViewPlans: "View plans",
     planInquiryUsage: "Messages and tours this month",
     planInquiryUnlimited: "Unlimited inquiries",
     planOrgLocked: "Organization dashboard is on Network. Listings, vacancy, claim, and licence stay on Free.",
@@ -1513,7 +1516,7 @@ export const copy = {
       "Required Canada facts are filled. KidEase is not the provincial regulator and does not issue licences or Vulnerable Sector Checks.",
     listingVerifiedPending: "Listing Verified is waiting",
     listingVerifiedPendingLead:
-      "Required items block Listing Verified. Nice-to-have items help parents compare. KidEase is not the regulator — it does not issue licences or Vulnerable Sector Checks.",
+      "Required items block Listing Verified. A 100% listing-health score is not Listing Verified. Nice-to-have items help parents compare. KidEase is not the regulator — it does not issue licences or Vulnerable Sector Checks.",
     listingCoachBlockers: "Required for Listing Verified",
     listingCoachNice: "Nice to have",
     listingCoachNeedProvince: "Province or territory",
@@ -1527,7 +1530,9 @@ export const copy = {
     listingCoachOpenScreening: "Screening",
     listingHealthTitle: "Listing health",
     listingHealthLead:
-      "Percent complete from fees, ages, photo, hours, and a real vacancy confirm. Incomplete listings stay searchable. KidEase does not invent missing facts or timestamps.",
+      "Percent complete from fees, ages, photo, hours, and a real vacancy confirm. This percent is not Listing Verified. Incomplete listings stay searchable. KidEase does not invent missing facts or timestamps.",
+    listingVerifiedNotHealth:
+      "Listing Verified is not the listing-health percent. A 100% complete listing can still be waiting on licence, screening, or capacity.",
     listingHealthReady: "Listing is complete",
     listingHealthComplete: "complete",
     listingHealthEdit: "Edit",
@@ -2533,9 +2538,9 @@ export const copy = {
     waitlistOptInOff: "Alerte de liste d’attente désactivée",
     waitlistOptInNeedSignIn: "Connectez-vous pour une alerte de liste d’attente",
     waitlistOptInSaved: "Nous vous aviserons quand ce centre ouvrira une place.",
-    waitlistOptInSmsHint: "Les textos exigent FEATURE_SMS et un consentement LCAP sur votre profil. Le push téléphone reste fermé.",
+    waitlistOptInSmsHint: "Les textos ne partent que si vous avez consenti aux SMS sur votre profil. Le push téléphone reste fermé.",
     waitlistPulseNotify: "Avis liste d’attente — place ouverte",
-    waitlistPulseLead: "Un avis par événement de place. Les parents inscrits reçoivent un avis dans l’appli; texto seulement avec LCAP + FEATURE_SMS.",
+    waitlistPulseLead: "Un avis par événement de place. Les parents inscrits reçoivent un avis dans l’appli; texto seulement avec un consentement LCAP enregistré.",
     waitlistPulseSent: "Avis de liste d’attente en file.",
     waitlistPulseRateLimited: "Déjà envoyé pour cet événement de place. Attendez avant de renvoyer.",
     searchAlertRadius: "Rayon",
@@ -2547,7 +2552,9 @@ export const copy = {
     markAlertsRead: "Tout marquer comme lu",
     noChildrenLead: "Ajoutez d’abord un profil d’enfant. Les centres ne voient que ce que vous envoyez.",
     noPaymentsLead:
-      "Quand un centre envoie une facture, elle apparaît ici pour que vous puissiez payer avec Stripe Checkout. Vous payez le montant de la facture du centre. Les frais de plateforme KidEase viennent du versement à la garderie. Plus parents est un abonnement KidEase distinct. Les dépôts par carte de réservation ne sont pas débités sur la page de dépôt.",
+      "Aucune facture de centre pour l’instant. La recherche et les messages restent gratuits. Le checkout Plus parents reste fermé tant qu’un centre n’envoie pas de facture, ou que vous n’êtes pas déjà abonné. Quand une facture arrive, vous payez le montant du centre avec Stripe Checkout. Les frais de plateforme KidEase viennent du versement à la garderie. Les dépôts par carte de réservation ne sont pas débités sur la page de dépôt.",
+    parentPlusNoBill:
+      "Plus parents est facultatif. Le checkout en direct reste fermé ici tant qu’un centre n’envoie pas de facture, ou que vous n’êtes pas déjà abonné.",
     emptyFindCare: "Trouver une place",
     emptyAddChild: "Ajouter un enfant",
     pendingHonesty: "Les totaux en attente ne sont pas réglés.",
@@ -2709,6 +2716,7 @@ export const copy = {
     planNetwork: "Réseau",
     planCurrent: "Forfait actuel",
     planUpgrade: "Changer de forfait",
+    planViewPlans: "Voir les forfaits",
     planInquiryUsage: "Messages et visites ce mois-ci",
     planInquiryUnlimited: "Demandes illimitées",
     planOrgLocked: "Le tableau de bord organisme est sur Réseau. Les fiches, les places, la réclamation et le permis restent gratuits.",
@@ -3420,7 +3428,7 @@ export const copy = {
       "Les faits canadiens obligatoires sont remplis. KidEase n’est pas l’organisme de réglementation et n’émet ni permis ni vérifications du secteur vulnérable.",
     listingVerifiedPending: "Fiche vérifiée en attente",
     listingVerifiedPendingLead:
-      "Les éléments obligatoires bloquent Fiche vérifiée. Les éléments facultatifs aident les parents à comparer. KidEase n’est pas l’organisme de réglementation — il n’émet ni permis ni vérifications du secteur vulnérable.",
+      "Les éléments obligatoires bloquent Fiche vérifiée. Un score de santé à 100 % n’est pas Fiche vérifiée. Les éléments facultatifs aident les parents à comparer. KidEase n’est pas l’organisme de réglementation — il n’émet ni permis ni vérifications du secteur vulnérable.",
     listingCoachBlockers: "Obligatoire pour Fiche vérifiée",
     listingCoachNice: "Facultatif",
     listingCoachNeedProvince: "Province ou territoire",
@@ -3434,7 +3442,9 @@ export const copy = {
     listingCoachOpenScreening: "Filtrage",
     listingHealthTitle: "Santé de la fiche",
     listingHealthLead:
-      "Pourcentage selon les tarifs, âges, photo, heures et une vraie confirmation de places. Les fiches incomplètes restent trouvables. KidEase n’invente pas les faits ni les horodatages manquants.",
+      "Pourcentage selon les tarifs, âges, photo, heures et une vraie confirmation de places. Ce pourcentage n’est pas Fiche vérifiée. Les fiches incomplètes restent trouvables. KidEase n’invente pas les faits ni les horodatages manquants.",
+    listingVerifiedNotHealth:
+      "Fiche vérifiée n’est pas le pourcentage de santé de la fiche. Une fiche 100 % complète peut encore attendre le permis, le filtrage ou la capacité.",
     listingHealthReady: "La fiche est complète",
     listingHealthComplete: "complète",
     listingHealthEdit: "Modifier",
