@@ -23,12 +23,18 @@ test("PIPEDA / store-review delete-account URL is a real public route", () => {
   assert.match(src("src/lib/copy.ts"), /Se connecter pour supprimer mon compte/);
 });
 
-test("menu, legal, and parent desk point at /delete-account; public footer does not", () => {
-  assert.match(src("src/routes/menu.tsx"), /to="\/delete-account"/);
-  assert.doesNotMatch(src("src/routes/menu.tsx"), /to="\/account"[\s\S]{0,80}deleteAccount/);
+test("in-app Delete my account lives on Account only; public footer and desks do not", () => {
+  const account = src("src/routes/account.tsx");
+  const parentDesk = src("src/components/parent-desk.tsx");
+  const menu = src("src/routes/menu.tsx");
+  assert.match(account, /data-ke="account-delete"/);
+  assert.match(account, /to="\/delete-account"/);
+  assert.doesNotMatch(account, /deleteAccount\(\)/);
+  assert.doesNotMatch(parentDesk, /deleteAccount/);
+  assert.doesNotMatch(parentDesk, /delete-account/);
+  assert.doesNotMatch(menu, /to="\/delete-account"/);
+  assert.doesNotMatch(menu, /deleteAccount/);
   assert.match(src("src/components/legal-doc.tsx"), /to="\/delete-account"/);
-  assert.match(src("src/components/parent-desk.tsx"), /to="\/delete-account"/);
-  assert.doesNotMatch(src("src/components/parent-desk.tsx"), /deleteAccount\(\)/);
   assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /delete-account/);
   assert.doesNotMatch(src("src/components/site-footer.tsx"), /delete-account/);
 });

@@ -147,7 +147,6 @@ function MenuPage() {
           <MenuRow to="/privacy" label={t("privacy")} icon="privacy" />
           <MenuRow to="/terms" label={t("terms")} icon="terms" />
           <MenuRow to="/cookies" label={t("cookies")} icon="cookies" />
-          <MenuRow to="/delete-account" label={t("deleteAccount")} icon="deleteAccount" />
         </Group>
 
         {user ? (

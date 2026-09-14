@@ -88,7 +88,6 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
-  const [accountToolsReady, setAccountToolsReady] = useState(false);
 
   const selectTab = useCallback((id: string) => {
     const next = id as ParentTab;
@@ -219,11 +218,6 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
     setTab(initialTab);
     startTransition(() => setContentTab(initialTab));
   }, [initialTab]);
-
-  useEffect(() => {
-    if (!exploreReady) return;
-    return scheduleIdle(() => setAccountToolsReady(true));
-  }, [exploreReady]);
 
   useEffect(() => {
     function refresh() {
@@ -646,16 +640,6 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             </>
           )}
         </div>
-      ) : null}
-
-      {accountToolsReady ? (
-      <section className="mt-14 rounded-xl bg-surface p-5 ring-1 ring-border">
-        <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
-        <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
-        <Button variant="ghost" className="mt-4 text-danger" asChild>
-          <Link to="/delete-account">{t("deleteAccount")}</Link>
-        </Button>
-      </section>
       ) : null}
     </DeskShell>
   );
