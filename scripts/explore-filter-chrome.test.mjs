@@ -10,8 +10,9 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("Explore filter chrome is three labelled carousels, not wrapped chip grids", () => {
+test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => {
   const search = src("src/routes/search.tsx");
+  const bar = src("src/components/explore-filter-bar.tsx");
   const chips = src("src/components/explore-category-chips.tsx");
   const carousel = src("src/components/chip-carousel.tsx");
   const filters = src("src/components/explore-filter-chips.tsx");
@@ -26,6 +27,7 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
   assert.match(carousel, /disabled=\{overflow \? !canNext : undefined\}/);
   assert.match(carousel, /data-chip-scroll/);
   assert.match(carousel, /scrollBy/);
+  assert.match(carousel, /compact/);
   assert.match(css, /\.ke-chip-carousel/);
   assert.match(css, /\.ke-chip-carousel-track/);
   assert.match(css, /width:\s*max-content/);
@@ -34,56 +36,72 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
   assert.match(carousel, /w-full min-w-0 max-w-full/);
   assert.match(carousel, /inner\.scrollWidth/);
   assert.match(carousel, /data-chip-overflow/);
-  assert.match(carousel, /data-chip-scroll/);
-  assert.match(carousel, /lg:hidden/);
+  assert.match(carousel, /data-chip-compact/);
   assert.match(search, /data-ke="explore-filters-sheet"/);
 
-  assert.match(search, /data-search-row="live-filters-map"/);
-  assert.match(search, /t\("showAll"\)/);
-  assert.match(search, /t\("liveOnly"\)/);
-  assert.doesNotMatch(search, /allToggleCount/);
-  assert.doesNotMatch(search, /liveToggleCount/);
-  assert.doesNotMatch(search, /searchResultCount/);
-  assert.doesNotMatch(search, /liveVsAllNone/);
-  assert.doesNotMatch(search, /searchLiveCount/);
-  assert.doesNotMatch(search, /searchLiveEmptyCount/);
-  assert.doesNotMatch(search, /liveInArea/);
-  assert.doesNotMatch(search, /data-ke="licensed-not-live"/);
-  assert.doesNotMatch(search, /licensedNotLiveLead/);
-  assert.match(chips, /data-search-row="categories"/);
-  assert.match(search, /data-search-row="fit-place"/);
-  assert.match(search, /t\("searchRowScope"\)/);
-  assert.match(chips, /t\("searchRowWho"\)/);
-  assert.match(search, /t\("searchRowFit"\)/);
+  assert.match(bar, /data-search-row="filter-bar"/);
+  assert.match(bar, /data-ke="explore-filter-bar"/);
+  assert.match(bar, /ke-explore-scope/);
+  assert.match(bar, /role="tablist"/);
+  assert.match(bar, /t\("live"\)/);
+  assert.match(bar, /t\("scopeAll"\)/);
+  assert.match(bar, /t\("filters"\)/);
+  assert.match(bar, /t\("map"\)/);
+  assert.match(bar, /t\("nearMe"\)/);
+  assert.match(bar, /t\("sortOpen"\)/);
+  assert.match(bar, /t\("filterTen"\)/);
+  assert.match(bar, /ke-explore-icon-btn/);
+  assert.match(bar, /data-ke="explore-filters-toggle"/);
+  assert.match(bar, /SlidersHorizontal/);
+  assert.match(bar, /<Map /);
+  assert.doesNotMatch(bar, /t\("nearWork"\)/);
+  assert.doesNotMatch(bar, /t\("catAllAges"\)/);
+  assert.doesNotMatch(bar, /t\("liveOnly"\)/);
+  assert.doesNotMatch(bar, /t\("showAll"\)/);
+  assert.doesNotMatch(search, /data-search-row="live-filters-map"/);
+  assert.doesNotMatch(search, /data-search-row="fit-place"/);
+  assert.doesNotMatch(chips, /data-search-row="categories"/);
+  assert.doesNotMatch(chips, /catAllAges/);
+  assert.doesNotMatch(chips, /t\("catAll"\)/);
+  assert.doesNotMatch(chips, /ChipCarousel/);
 
   const chrome = search.slice(search.indexOf("<ExploreSearchBar"), search.indexOf("{askLocation"));
-  assert.match(chrome, /setLiveOnly\(true\)/);
-  assert.match(chrome, /setLiveOnly\(false\)/);
-  assert.match(chrome, /t\("filters"\)/);
-  assert.match(chrome, /t\("map"\)/);
+  assert.match(chrome, /ExploreFilterBar/);
   assert.match(chrome, /ExploreCategoryChips/);
-  assert.match(chrome, /t\("nearMe"\)/);
-  assert.match(chrome, /t\("nearWork"\)/);
-  assert.match(chrome, /t\("sortOpen"\)/);
-  assert.match(chrome, /t\("filterTen"\)/);
+  assert.match(chrome, /onLiveOnly=\{setLiveOnly\}/);
+  assert.match(chrome, /t\("nearMe"\)|onNearMe/);
+  assert.doesNotMatch(chrome, /t\("nearWork"\)/);
   assert.doesNotMatch(chrome, /ExploreFilterChips/);
   assert.doesNotMatch(chrome, /t\("chipAge"\)/);
   assert.doesNotMatch(chrome, /t\("chipFacility"\)/);
   assert.doesNotMatch(chrome, /flex-wrap items-center gap-2 overflow-x-auto/);
+  assert.doesNotMatch(chrome, /<ChipCarousel/);
 
+  assert.match(search, /data-ke="near-work"/);
+  assert.match(search, /t\("nearWork"\)/);
+  assert.match(search, /t\("nearWorkLead"\)/);
   assert.match(search, /hideKeys=\{\["ages"\]\}/);
   assert.match(search, /exploreFacilityTypes/);
   assert.match(search, /writeCategorySearch\(activeCat === cat \? undefined : cat\)/);
   assert.match(filters, /hideKeys/);
-  assert.match(chips, /catAllAges/);
   assert.match(chips, /isRailAge/);
-  assert.doesNotMatch(chips, /t\("catAll"\)/);
+  assert.match(chips, /RAIL_AGES/);
+  assert.match(chips, /catInfants|EXPLORE_CATEGORY_COPY/);
+  assert.doesNotMatch(chips, /visibleExploreCategories/);
 
   assert.match(copy, /catAllAges: "All ages"/);
   assert.match(copy, /nearMe: "Near me"/);
-  assert.match(copy, /searchRowScope: "Listings and view"/);
+  assert.match(copy, /scopeAll: "All"/);
+  assert.match(copy, /searchRowFilters: "Quick filters"/);
+  assert.match(copy, /nearWorkLead:/);
   assert.match(copy, /Tous les âges/);
   assert.match(copy, /Près de moi/);
+  assert.match(copy, /scopeAll: "Tout"/);
+
+  assert.match(css, /\.ke-explore-filter-bar/);
+  assert.match(css, /\.ke-explore-scope-tab/);
+  assert.match(css, /\.ke-explore-icon-btn/);
+  assert.match(css, /@media \(max-width: 639px\)/);
 
   assert.match(explore, /redirect\(\{ to: "\/search" \}\)/);
   assert.match(search, /splitSearchResults/);

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { WINNIPEG, writeSavedOrigin } from "./geo";
+import { WINNIPEG, writeSavedOrigin, type StoredOrigin } from "./geo";
 import type { OriginSource } from "./presence";
 import { applyDocumentLocale } from "./languages";
 import type { AgeGroup, Locale } from "./types";
@@ -11,7 +11,7 @@ import { applyTheme, writeThemePreference, type ResolvedTheme, type ThemePrefere
 
 export type SortKey = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency";
 
-type Origin = { lat: number; lng: number; label: string };
+type Origin = { lat: number; lng: number; label: string; explicit?: boolean };
 
 type SearchState = {
   locale: Locale;
@@ -62,10 +62,16 @@ export const useAppStore = create<SearchState>()((set) => ({
   },
   origin: { lat: WINNIPEG.lat, lng: WINNIPEG.lng, label: WINNIPEG.label },
   setOrigin: (origin, source = "manual") => {
+    const next = { lat: origin.lat, lng: origin.lng, label: origin.label };
     if (source === "manual" || source === "gps" || source === "saved") {
-      writeSavedOrigin(origin);
+      const stored: StoredOrigin = {
+        ...next,
+        explicit: source === "manual" || source === "gps" || origin.explicit === true,
+        source,
+      };
+      writeSavedOrigin(stored);
     }
-    set({ origin, located: true, originSource: source, originAt: Date.now() });
+    set({ origin: next, located: true, originSource: source, originAt: Date.now() });
   },
   workOrigin: null,
   setWorkOrigin: (workOrigin) => {

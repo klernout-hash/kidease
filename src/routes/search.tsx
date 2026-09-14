@@ -1,17 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { SlidersHorizontal, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
-import { ChipCarousel } from "@/components/chip-carousel";
 import { ExploreCategoryChips } from "@/components/explore-category-chips";
+import { ExploreFilterBar } from "@/components/explore-filter-bar";
 import { ExploreFilterChips } from "@/components/explore-filter-chips";
 import { DaycareCard } from "@/components/daycare-card";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
 import { reverseGeocode } from "@/lib/geo";
-import { originFromDeviceFix } from "@/lib/default-origin";
+import { originFromDeviceFix, readClientTimeZone } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { bootSearchOrigin } from "@/lib/search-origin";
@@ -281,7 +281,7 @@ function SearchPage() {
   useEffect(() => {
     const saved = takeSavedSearchToApply();
     if (!saved) return;
-    setOrigin({ lat: saved.centerLat, lng: saved.centerLng, label: saved.centerLabel });
+    setOrigin({ lat: saved.centerLat, lng: saved.centerLng, label: saved.centerLabel, explicit: true });
     setRadiusKm(saved.radiusKm);
     if (saved.ageBand === "school-age") {
       setSchoolAgeOnly(true);
@@ -474,8 +474,9 @@ function SearchPage() {
   }
 
   function applyPlace(place: { lat: number; lng: number; label: string }) {
-    setOrigin(place);
+    setOrigin({ ...place, explicit: true }, "manual");
     setQuery(place.label);
+    writeExploreSearch({ q: place.label, name: nameQuery, from: needBy, to: needUntil });
   }
 
   function writeExploreSearch(next: { q?: string; name?: string; from?: string; to?: string }) {
@@ -560,15 +561,14 @@ function SearchPage() {
 
   async function applyQuery() {
     const label = query.trim();
-    let nextQ = label;
     if (label) {
       const hit = await resolveLocationQuery(label);
       if (hit) {
         applyPlace(hit);
-        nextQ = hit.label;
+        return;
       }
     }
-    writeExploreSearch({ q: nextQ, name: nameQuery, from: needBy, to: needUntil });
+    writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
   }
 
   async function geo() {
@@ -578,9 +578,9 @@ function SearchPage() {
     }
     const pos = await getDeviceLocation({ precise: true });
     if (pos) {
-      const resolved = originFromDeviceFix(pos, origin);
+      const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
       const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
-      setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
+      setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
       void hapticLight();
     } else {
       setLocationConsent("denied");
@@ -592,9 +592,9 @@ function SearchPage() {
     const pos = await getDeviceLocation({ precise: true });
     if (pos) {
       setLocationConsent("granted");
-      const resolved = originFromDeviceFix(pos, origin);
+      const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
       const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
-      setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
+      setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
       void hapticLight();
     } else {
       setLocationConsent("denied");
@@ -1138,90 +1138,41 @@ function SearchPage() {
           onLocate={() => void geo()}
           onSubmit={() => void applyQuery()}
         />
-        <ChipCarousel className="mt-3" label={t("searchRowScope")} data-search-row="live-filters-map">
-          <ChipButton on={liveOnly} aria-pressed={liveOnly} onClick={() => setLiveOnly(true)}>
-            {t("liveOnly")}
-          </ChipButton>
-          <ChipButton
-            on={!liveOnly}
-            aria-pressed={!liveOnly}
-            data-listing-count={items !== null ? resultCount : undefined}
-            onClick={() => setLiveOnly(false)}
-          >
-            {t("showAll")}
-          </ChipButton>
-          <ChipButton
-            className="gap-1.5"
-            on={
-              filters ||
-              sheetFilterCount > 0 ||
-              parentSearchActive(parentFilters)
-            }
-            aria-pressed={filters}
-            onClick={() => setFilters((v) => !v)}
-          >
-            <SlidersHorizontal className="size-3.5" />
-            {t("filters")}
-            {sheetFilterCount ? (
-              <span className="grid size-4 place-items-center rounded-full bg-bg text-[10px] text-fg">
-                {sheetFilterCount}
-              </span>
-            ) : null}
-          </ChipButton>
-          <ChipButton
-            on={view === "map"}
-            aria-pressed={view === "map"}
-            onClick={() => {
-              dismissPopovers();
-              setView(view === "map" ? "list" : "map");
-            }}
-          >
-            {t("map")}
-          </ChipButton>
-        </ChipCarousel>
-
-        <ExploreCategoryChips
-          selected={activeCat && isRailAge(activeCat) ? activeCat : undefined}
-          counts={exploreCatCounts}
-          onSelect={(cat) => writeAgeSearch(cat && isRailAge(cat) ? cat : undefined)}
+        <ExploreFilterBar
+          className="mt-3"
+          liveOnly={liveOnly}
+          listingCount={items !== null ? resultCount : undefined}
+          onLiveOnly={setLiveOnly}
+          ageChips={
+            <ExploreCategoryChips
+              selected={activeCat && isRailAge(activeCat) ? activeCat : undefined}
+              counts={exploreCatCounts}
+              onSelect={(cat) => writeAgeSearch(cat && isRailAge(cat) ? cat : undefined)}
+            />
+          }
+          nearMeOn={originSource === "gps" && anchorMode === "home"}
+          onNearMe={() => {
+            setAnchorMode("home");
+            void geo();
+          }}
+          openSpotsOn={avail === "open"}
+          onOpenSpots={() => setAvail((v) => (v === "open" ? "any" : "open"))}
+          tenOn={ten}
+          onTen={() => setTen((v) => !v)}
+          filtersOpen={
+            filters ||
+            sheetFilterCount > 0 ||
+            parentSearchActive(parentFilters) ||
+            (Boolean(workOrigin) && anchorMode !== "home")
+          }
+          filterCount={sheetFilterCount}
+          onFilters={() => setFilters((v) => !v)}
+          mapOn={view === "map"}
+          onMap={() => {
+            dismissPopovers();
+            setView(view === "map" ? "list" : "map");
+          }}
         />
-
-        <ChipCarousel className="mt-3" label={t("searchRowFit")} data-search-row="fit-place">
-          <ChipButton
-            on={originSource === "gps" && anchorMode === "home"}
-            aria-pressed={originSource === "gps" && anchorMode === "home"}
-            onClick={() => {
-              setAnchorMode("home");
-              void geo();
-            }}
-          >
-            {t("nearMe")}
-          </ChipButton>
-          <ChipButton
-            on={Boolean(workOrigin) && anchorMode !== "home"}
-            aria-pressed={Boolean(workOrigin) && anchorMode !== "home"}
-            onClick={() => {
-              if (!workOrigin) {
-                setFilters(true);
-                setAnchorMode("work");
-                return;
-              }
-              setAnchorMode(anchorMode === "home" ? "work" : "home");
-            }}
-          >
-            {t("nearWork")}
-          </ChipButton>
-          <ChipButton
-            on={avail === "open"}
-            aria-pressed={avail === "open"}
-            onClick={() => setAvail((v) => (v === "open" ? "any" : "open"))}
-          >
-            {t("sortOpen")}
-          </ChipButton>
-          <ChipButton on={ten} aria-pressed={ten} onClick={() => setTen((v) => !v)}>
-            {t("filterTen")}
-          </ChipButton>
-        </ChipCarousel>
 
         {askLocation ? (
           <div className="mt-3">
@@ -1250,24 +1201,28 @@ function SearchPage() {
                 <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>
               </div>
             </div>
-            <DualAnchorBar
-              mode={anchorMode}
-              onMode={setAnchorMode}
-              home={origin}
-              work={workOrigin}
-              workQuery={workQuery}
-              onWorkQuery={setWorkQuery}
-              onWorkResolved={(place) => {
-                setWorkOrigin(place);
-                setWorkQuery(place.label);
-                if (anchorMode === "home") setAnchorMode("both");
-              }}
-              onClearWork={() => {
-                setWorkOrigin(null);
-                setWorkQuery("");
-                setAnchorMode("home");
-              }}
-            />
+            <div data-ke="near-work">
+              <p className="text-sm font-medium">{t("nearWork")}</p>
+              <p className="mt-0.5 text-xs text-muted">{t("nearWorkLead")}</p>
+              <DualAnchorBar
+                mode={anchorMode}
+                onMode={setAnchorMode}
+                home={origin}
+                work={workOrigin}
+                workQuery={workQuery}
+                onWorkQuery={setWorkQuery}
+                onWorkResolved={(place) => {
+                  setWorkOrigin(place);
+                  setWorkQuery(place.label);
+                  if (anchorMode === "home") setAnchorMode("both");
+                }}
+                onClearWork={() => {
+                  setWorkOrigin(null);
+                  setWorkQuery("");
+                  setAnchorMode("home");
+                }}
+              />
+            </div>
             {anchors.mode === "both" && workOrigin ? (
               <p className="text-xs text-muted">
                 {t("anchorBothHint").replace("{n}", String(shownRadius)).replace("{u}", u)}
@@ -1385,12 +1340,15 @@ function SearchPage() {
                       activeSlug={active}
                       onSelect={(slug) => setActive(slug)}
                       onRelocate={(pos) => {
-                        const resolved = originFromDeviceFix(pos, origin);
+                        const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
                         const label =
                           resolved.source === "gps"
                             ? reverseGeocode(pos.lat, pos.lng)
                             : resolved.label;
-                        setOrigin({ lat: resolved.lat, lng: resolved.lng, label }, resolved.source);
+                        setOrigin(
+                          { lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" },
+                          resolved.source,
+                        );
                         void hapticLight();
                       }}
                       onLocate={() => void geo()}

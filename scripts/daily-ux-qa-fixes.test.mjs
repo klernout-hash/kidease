@@ -40,7 +40,7 @@ test("q=Winnipeg geocodes locally and does not match an Edmonton origin", () => 
   assert.match(search, /originsMatchSearchQuery\(boot\.origin, incoming\.q\)/);
   assert.match(search, /searchQueryFromUnknown\(location\.search\)/);
   assert.match(src("src/components/native-boot.tsx"), /urlHasGeocodableSearchQuery/);
-  assert.match(src("src/lib/search-origin.ts"), /setOrigin\(local, "manual"\)/);
+  assert.match(src("src/lib/search-origin.ts"), /setOrigin\(\{ \.\.\.local, explicit: true \}, "manual"\)/);
 });
 
 test("public privacy and parent waitlist copy do not leak FEATURE_SMS", () => {

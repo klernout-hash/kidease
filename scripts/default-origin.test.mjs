@@ -132,9 +132,22 @@ describe("GPS and saved origin still allow multi-city search", () => {
     assert.equal(resolved.source, "default");
   });
 
-  it("keeps a saved Toronto origin the parent already chose", () => {
-    const resolved = resolveDefaultSearchOrigin({
+  it("keeps a saved Toronto origin only when the parent explicitly chose it", () => {
+    const inferred = resolveDefaultSearchOrigin({
       saved: { lat: 43.6532, lng: -79.3832, label: "Toronto, ON" },
+      ip: {
+        country: "CA",
+        region: "ON",
+        city: "Toronto",
+        lat: 43.6532,
+        lng: -79.3832,
+      },
+    });
+    assert.equal(inferred.label, WINNIPEG.label);
+    assert.equal(inferred.source, "default");
+
+    const resolved = resolveDefaultSearchOrigin({
+      saved: { lat: 43.6532, lng: -79.3832, label: "Toronto, ON", explicit: true },
       ip: {
         country: "CA",
         region: "ON",
@@ -172,6 +185,9 @@ describe("wiring keeps explicit search and documents the fallback", () => {
     assert.match(boot, /resolveLocationQuery/);
     assert.match(boot, /resolveDefaultSearchOrigin/);
     assert.match(boot, /isUntrustedTorontoOrigin/);
+    assert.match(boot, /shouldRequestExploreGeolocation/);
+    assert.match(boot, /trustedSavedOrigin/);
+    assert.match(boot, /readClientTimeZone/);
     assert.doesNotMatch(boot, /setOrigin\(WINNIPEG\)/);
   });
 

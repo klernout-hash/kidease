@@ -3,7 +3,7 @@
  * Never invent ages, amenities, CWELCC, or openings. Never write tags back
  * as a licence class. A listing may wear more than one tag.
  *
- * Age chips 1–4 also set `?age=` so /search Row B is the only age chrome.
+ * Age chips 1–4 also set `?age=` so /search filter-bar age chips stay the only age chrome.
  */
 
 import {

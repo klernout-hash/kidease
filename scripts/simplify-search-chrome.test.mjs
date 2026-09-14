@@ -10,26 +10,29 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("/search chrome is three control rows and keeps existing filter math", () => {
+test("/search chrome is one filter bar and keeps existing filter math", () => {
   const search = src("src/routes/search.tsx");
   const bar = src("src/components/explore-search-bar.tsx");
+  const filterBar = src("src/components/explore-filter-bar.tsx");
   const chips = src("src/components/explore-category-chips.tsx");
   const copy = src("src/lib/copy.ts");
   const explore = src("src/routes/explore.tsx");
   const home = src("src/routes/index.tsx");
 
-  assert.equal((search.match(/data-search-row=/g) ?? []).length, 2);
+  assert.equal((search.match(/data-search-row=/g) ?? []).length, 0);
   assert.match(bar, /data-search-row="where-when-name"/);
-  assert.match(chips, /data-search-row="categories"/);
-  assert.match(search, /data-search-row="live-filters-map"/);
-  assert.match(search, /data-search-row="fit-place"/);
-  assert.match(search, /ChipCarousel/);
-  assert.match(chips, /ChipCarousel/);
+  assert.match(filterBar, /data-search-row="filter-bar"/);
+  assert.doesNotMatch(chips, /data-search-row=/);
+  assert.doesNotMatch(search, /data-search-row="live-filters-map"/);
+  assert.doesNotMatch(search, /data-search-row="fit-place"/);
+  assert.match(search, /ExploreFilterBar/);
+  assert.match(filterBar, /ChipCarousel/);
+  assert.doesNotMatch(chips, /ChipCarousel/);
   assert.match(search, /writeAgeSearch/);
   assert.match(search, /nearMe/);
   assert.match(search, /hideKeys=\{\["ages"\]\}/);
   assert.match(search, /data-search-h1/);
-  assert.match(search, /data-listing-count/);
+  assert.match(filterBar, /data-listing-count/);
 
   assert.doesNotMatch(search, /SearchAgeGate/);
   assert.doesNotMatch(search, /searchAgeGateTitle/);

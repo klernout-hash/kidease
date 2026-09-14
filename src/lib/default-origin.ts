@@ -6,21 +6,24 @@ import { CITIES, PROVINCES, WINNIPEG, haversineKm, type LatLng } from "./geo.ts"
  *
  * KidEase is a Canada-wide proximity product founded in Winnipeg. Anonymous
  * first paint must not silently become Toronto because a CDN, Vercel/CF IP
- * header, or coarse browser/Places guess mapped “Canada” to that city.
+ * header, CF colo (YYZ), Vercel iad mis-map, IP-based “GPS”, or an old
+ * default that was persisted to localStorage.
  *
  * Priority (first match wins):
  *  1. Explicit query / city chip / Places pick — caller applies this (multi-city).
- *  2. Precise GPS in Canada when the parent granted when-in-use location.
- *  3. Saved origin the parent already chose (typed, chip, or earlier precise GPS).
+ *  2. Street-grade GPS in Canada (request on Explore when consent is not denied
+ *     and there is no trusted saved city). Laptop/IP “GPS” that lands on
+ *     Toronto is rejected when the locale is Manitoba / America/Winnipeg.
+ *  3. Saved origin the parent already chose (explicit typed/chip/Places, or
+ *     earlier street GPS). Stale inferred Toronto is not a choice.
  *  4. Trusted anonymous IP: Manitoba, or another Canadian city whose province
  *     matches the header — except inferred Toronto (common wrong CA default).
  *  5. Winnipeg, MB.
  *
- * Coarse GPS / IP-level accuracy uses the same trust rules as (4). Typed
- * “Toronto” and a precise Toronto fix still work.
+ * Typed “Toronto” and a street-grade Toronto fix still work.
  */
 
-export type SearchOrigin = LatLng & { label: string };
+export type SearchOrigin = LatLng & { label: string; explicit?: boolean };
 
 export type OriginResolveSource = "gps" | "manual" | "saved" | "ip" | "default";
 
@@ -32,11 +35,19 @@ export type IpGeoHint = {
   city?: string;
   region?: string;
   country?: string;
+  timeZone?: string;
+  colo?: string;
 };
 
 export type DeviceFix = LatLng & { accuracyM?: number };
 
 export type ResolvedOrigin = SearchOrigin & { source: OriginResolveSource };
+
+export type SavedOriginHint = Partial<LatLng> & {
+  label?: string;
+  explicit?: boolean;
+  source?: OriginResolveSource | string;
+};
 
 export const PRODUCT_HOME: SearchOrigin = {
   lat: WINNIPEG.lat,
@@ -47,7 +58,16 @@ export const PRODUCT_HOME: SearchOrigin = {
 /** Cell / IP-class accuracy. Street GPS is typically well under 1 km. */
 export const COARSE_ACCURACY_M = 25_000;
 
+/**
+ * Real device GPS is usually tens of metres. Browser location that is actually
+ * an IP/Wi-Fi guess often claims 500 m–20 km and still pins Toronto.
+ */
+export const STREET_GPS_ACCURACY_M = 150;
+
 const TORONTO = CITIES.find((c) => c.label === "Toronto, ON")!;
+
+/** Cloudflare / typical GTA edge colos that get mis-read as “the user is in Toronto”. */
+const TORONTO_EDGE_COLOS = new Set(["YYZ", "YTZ", "YTO"]);
 
 export function productHomeOrigin(): ResolvedOrigin {
   return { ...PRODUCT_HOME, source: "default" };
@@ -58,9 +78,38 @@ export function isCoarseFix(fix: Pick<DeviceFix, "accuracyM"> | null | undefined
   return typeof accuracy === "number" && Number.isFinite(accuracy) && accuracy > COARSE_ACCURACY_M;
 }
 
+export function isStreetGpsFix(fix: Pick<DeviceFix, "accuracyM"> | null | undefined) {
+  const accuracy = fix?.accuracyM;
+  return typeof accuracy === "number" && Number.isFinite(accuracy) && accuracy <= STREET_GPS_ACCURACY_M;
+}
+
 export function isPreciseCanadaFix(fix: DeviceFix | null | undefined) {
   if (!fix || !isInCanada(fix.lat, fix.lng)) return false;
   return !isCoarseFix(fix);
+}
+
+export function readClientTimeZone(): string | null {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return tz && tz.trim() ? tz.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+export function timezoneLooksLikeManitoba(tz?: string | null) {
+  const n = (tz || "").trim();
+  return n === "America/Winnipeg" || n === "America/Rainy_River";
+}
+
+export function parseCfColo(cfRay?: string | null) {
+  const raw = (cfRay || "").trim();
+  const m = raw.match(/-([A-Za-z]{3})$/);
+  return m?.[1] ? m[1].toUpperCase() : "";
+}
+
+export function isTorontoEdgeColo(colo?: string | null) {
+  return TORONTO_EDGE_COLOS.has((colo || "").trim().toUpperCase());
 }
 
 function normalizeCountry(value?: string | null) {
@@ -145,27 +194,28 @@ export function parseIpGeoHeaders(headers: HeaderReader | null | undefined): IpG
     headerNumber(headers, "x-vercel-ip-latitude") ?? headerNumber(headers, "cf-iplatitude");
   const lng =
     headerNumber(headers, "x-vercel-ip-longitude") ?? headerNumber(headers, "cf-iplongitude");
-  if (!country && !region && !city && lat == null && lng == null) return null;
+  const timeZone = header(headers, "x-vercel-ip-timezone") || header(headers, "cf-timezone");
+  const colo = parseCfColo(header(headers, "cf-ray"));
+  if (!country && !region && !city && lat == null && lng == null && !timeZone && !colo) return null;
   return {
     country: country || undefined,
     region: region || undefined,
     city: city || undefined,
     lat,
     lng,
+    timeZone: timeZone || undefined,
+    colo: colo || undefined,
   };
 }
 
-/**
- * Inferred Toronto (IP / coarse GPS / ON-only headers) is the usual wrong
- * “Canada default”. Explicit Toronto search is not handled here.
- */
-export function isUntrustedAnonymousToronto(hint: {
+export function isTorontoLikeOrigin(hint: {
   city?: string;
-  region?: string;
+  label?: string;
   lat?: number;
   lng?: number;
-}) {
-  const city = cityFromHint(hint);
+} | null | undefined) {
+  if (!hint) return false;
+  const city = cityFromHint({ city: hint.city || hint.label, lat: hint.lat, lng: hint.lng });
   if (city?.label === TORONTO.label) return true;
   if (
     typeof hint.lat === "number" &&
@@ -174,8 +224,43 @@ export function isUntrustedAnonymousToronto(hint: {
   ) {
     return true;
   }
+  const label = (hint.label || hint.city || "").trim().toLowerCase();
+  if (label === "toronto" || label.startsWith("toronto,")) return true;
+  return false;
+}
+
+export function localeSuggestsManitoba(input: {
+  timeZone?: string | null;
+  ip?: IpGeoHint | null;
+} = {}) {
+  if (timezoneLooksLikeManitoba(input.timeZone) || timezoneLooksLikeManitoba(input.ip?.timeZone)) {
+    return true;
+  }
+  if (normalizeRegion(input.ip?.region) === "MB") return true;
+  if (cityFromHint(input.ip)?.province === "MB") return true;
+  return false;
+}
+
+/**
+ * Inferred Toronto (IP / coarse GPS / ON-only headers / GTA edge colo) is the
+ * usual wrong “Canada default”. Explicit Toronto search is not handled here.
+ */
+export function isUntrustedAnonymousToronto(hint: {
+  city?: string;
+  region?: string;
+  lat?: number;
+  lng?: number;
+  timeZone?: string;
+  colo?: string;
+}) {
+  if (isTorontoLikeOrigin(hint)) return true;
+  const namedCity = cityFromHint({ city: hint.city, lat: hint.lat, lng: hint.lng });
   const region = normalizeRegion(hint.region);
-  if (region === "ON" && !cityFromHint({ city: hint.city })) return true;
+  if (region === "ON" && !namedCity) return true;
+  const edgeOnly = isTorontoEdgeColo(hint.colo) && !namedCity;
+  if (edgeOnly && (region === "ON" || localeSuggestsManitoba({ timeZone: hint.timeZone, ip: hint }))) {
+    return true;
+  }
   return false;
 }
 
@@ -188,6 +273,12 @@ export function isTrustedAnonymousIp(hint: IpGeoHint | null | undefined) {
   const city = cityFromHint(hint);
   if (city?.province === "MB") return true;
   if (isUntrustedAnonymousToronto(hint)) return false;
+  if (
+    localeSuggestsManitoba({ timeZone: hint.timeZone, ip: hint }) &&
+    isTorontoLikeOrigin(hint)
+  ) {
+    return false;
+  }
   if (city && (!region || region === city.province)) {
     if (country === "CA" || region || (hint.lat != null && hint.lng != null && isInCanada(hint.lat, hint.lng))) {
       return true;
@@ -205,6 +296,9 @@ export function originFromIpHint(hint: IpGeoHint | null | undefined): ResolvedOr
   if (!isTrustedAnonymousIp(hint)) return productHomeOrigin();
   const city = cityFromHint(hint);
   if (city) {
+    if (isTorontoLikeOrigin(city) && localeSuggestsManitoba({ timeZone: hint?.timeZone, ip: hint })) {
+      return productHomeOrigin();
+    }
     if (
       typeof hint?.lat === "number" &&
       typeof hint?.lng === "number" &&
@@ -238,11 +332,24 @@ export function placesBiasOrigin(origin?: Partial<LatLng> | null): SearchOrigin 
   return PRODUCT_HOME;
 }
 
+function gpsConflictsWithManitobaLocale(
+  fix: DeviceFix,
+  input: { timeZone?: string | null; ip?: IpGeoHint | null },
+) {
+  if (!isTorontoLikeOrigin(fix)) return false;
+  if (!localeSuggestsManitoba(input)) return false;
+  return !isStreetGpsFix(fix);
+}
+
 export function originFromDeviceFix(
   fix: DeviceFix | null | undefined,
   fallback: SearchOrigin = PRODUCT_HOME,
+  locale?: { timeZone?: string | null; ip?: IpGeoHint | null },
 ): ResolvedOrigin {
   if (!fix || !isInCanada(fix.lat, fix.lng)) {
+    return { ...canadaOriginOrWinnipeg(fallback), source: "default" };
+  }
+  if (locale && gpsConflictsWithManitobaLocale(fix, locale)) {
     return { ...canadaOriginOrWinnipeg(fallback), source: "default" };
   }
   if (isPreciseCanadaFix(fix)) {
@@ -261,52 +368,87 @@ export function originFromDeviceFix(
   return { ...canadaOriginOrWinnipeg(fallback), source: "default" };
 }
 
+/**
+ * Saved Toronto is only a “choice” when the parent typed/picked it or we
+ * stored street GPS. Old kidease-origin blobs from the pre-Winnipeg default
+ * look like `{ lat, lng, label: "Toronto, ON" }` with no explicit flag.
+ */
+export function isExplicitSavedOrigin(saved: SavedOriginHint | null | undefined) {
+  return saved?.explicit === true;
+}
+
+export function trustedSavedOrigin(
+  saved: SavedOriginHint | null | undefined,
+  locale: { timeZone?: string | null; ip?: IpGeoHint | null } = {},
+): SearchOrigin | null {
+  if (!saved || typeof saved.lat !== "number" || typeof saved.lng !== "number") return null;
+  if (!isInCanada(saved.lat, saved.lng)) return null;
+  const origin: SearchOrigin = {
+    lat: saved.lat,
+    lng: saved.lng,
+    label: saved.label || PRODUCT_HOME.label,
+    explicit: saved.explicit === true,
+  };
+  if (!isTorontoLikeOrigin(origin)) return origin;
+  if (saved.explicit === true) return origin;
+  if (localeSuggestsManitoba(locale)) return null;
+  return null;
+}
+
+export function shouldRequestExploreGeolocation(input: {
+  consent?: string | null;
+  savedTrusted?: boolean;
+}) {
+  if (input.consent === "denied") return false;
+  if (input.consent === "granted") return true;
+  return !input.savedTrusted;
+}
+
 export function resolveDefaultSearchOrigin(input: {
-  saved?: (Partial<LatLng> & { label?: string }) | null;
+  saved?: SavedOriginHint | null;
   gps?: DeviceFix | null;
   gpsAllowed?: boolean;
   ip?: IpGeoHint | null;
   fallback?: SearchOrigin | null;
+  timeZone?: string | null;
 }): ResolvedOrigin {
-  if (input.gpsAllowed && isPreciseCanadaFix(input.gps)) {
-    const city = cityFromHint(input.gps!);
-    return {
-      lat: input.gps!.lat,
-      lng: input.gps!.lng,
-      label: city?.label || input.saved?.label || PRODUCT_HOME.label,
-      source: "gps",
-    };
+  const locale = { timeZone: input.timeZone, ip: input.ip };
+
+  if (input.gpsAllowed && input.gps && isPreciseCanadaFix(input.gps)) {
+    if (!gpsConflictsWithManitobaLocale(input.gps, locale)) {
+      const city = cityFromHint(input.gps);
+      return {
+        lat: input.gps.lat,
+        lng: input.gps.lng,
+        label: city?.label || input.saved?.label || PRODUCT_HOME.label,
+        source: "gps",
+      };
+    }
   }
 
-  const saved = input.saved;
-  if (
-    saved &&
-    typeof saved.lat === "number" &&
-    typeof saved.lng === "number" &&
-    isInCanada(saved.lat, saved.lng)
-  ) {
-    return {
-      lat: saved.lat,
-      lng: saved.lng,
-      label: saved.label || PRODUCT_HOME.label,
-      source: "saved",
-    };
+  const saved = trustedSavedOrigin(input.saved, locale);
+  if (saved) {
+    return { ...saved, source: "saved" };
   }
 
   if (input.gpsAllowed && input.gps && isInCanada(input.gps.lat, input.gps.lng)) {
-    const inferred = originFromDeviceFix(input.gps, input.fallback || PRODUCT_HOME);
+    const inferred = originFromDeviceFix(input.gps, input.fallback || PRODUCT_HOME, locale);
     if (inferred.source === "gps") return inferred;
   }
 
   if (input.ip) {
-    const fromIp = originFromIpHint(input.ip);
+    const fromIp = originFromIpHint({
+      ...input.ip,
+      timeZone: input.ip.timeZone || input.timeZone || undefined,
+    });
     if (fromIp.source === "ip") return fromIp;
   }
 
   if (
     input.fallback &&
     isInCanada(input.fallback.lat, input.fallback.lng) &&
-    !isUntrustedTorontoOrigin(input.fallback)
+    !isUntrustedTorontoOrigin(input.fallback) &&
+    !(localeSuggestsManitoba(locale) && isTorontoLikeOrigin(input.fallback))
   ) {
     return { ...input.fallback, source: input.fallback.label === PRODUCT_HOME.label ? "default" : "ip" };
   }

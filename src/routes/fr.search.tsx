@@ -102,7 +102,7 @@ function FrExplore() {
   async function applyPlace(raw: string) {
     const hit = (await resolveLocationQuery(raw)) ?? geocode(raw);
     if (hit) {
-      setOrigin(hit);
+      setOrigin({ ...hit, explicit: true }, "manual");
       setPlace(hit.label);
       setQuery(hit.label);
       return hit;
@@ -126,7 +126,7 @@ function FrExplore() {
           start={start}
           onWhereChange={setPlace}
           onWhereResolved={(hit) => {
-            setOrigin(hit);
+            setOrigin({ ...hit, explicit: true }, "manual");
             setPlace(hit.label);
             setQuery(hit.label);
           }}
