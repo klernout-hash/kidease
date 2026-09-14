@@ -9,6 +9,7 @@ import type { LeadRequest } from "@/lib/lead-requests";
 import { ActionRequiredBanner } from "@/components/listing-readiness-coach";
 import {
   buildTodayRows,
+  collectActionRequired,
   formatSlaCountdown,
   todayEmptyTruth,
   type TodayHref,
@@ -145,13 +146,15 @@ export function TodayUrgencyHome({
     [tours, threads, listings, screening, t],
   );
   const opsRows = useMemo(() => rows.filter((row) => row.kind !== "action"), [rows]);
-  const listingActionOpen = useMemo(
-    () => coachListings.some((listing) => !listingVerifiedCoach(listing).verified),
-    [coachListings],
+  const actionRequired = useMemo(
+    () =>
+      collectActionRequired({ listings: coachListings, screening }).length > 0 ||
+      coachListings.some((listing) => !listingVerifiedCoach(listing).verified),
+    [coachListings, screening],
   );
   const empty = useMemo(
-    () => (listingActionOpen ? null : todayEmptyTruth({ rows: opsRows, tours, leads })),
-    [listingActionOpen, opsRows, tours, leads],
+    () => (actionRequired ? null : todayEmptyTruth({ rows: opsRows, tours, leads })),
+    [actionRequired, opsRows, tours, leads],
   );
   const emptyHref = empty?.href;
   const emptyDesk = emptyHref?.to === "/provider" ? emptyHref.search.desk : null;

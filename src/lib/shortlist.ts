@@ -7,7 +7,7 @@
 import { amenityLabel } from "@/lib/amenities";
 import { LANGUAGES } from "@/lib/languages";
 import { isClaimVerified } from "@/lib/trust";
-import { formatAgeRange } from "@/lib/utils";
+import { listingAgeRangeText } from "@/lib/listing-ages";
 
 export const PENDING_SAVE_KEY = "kidease-pending-save";
 export const SHORTLIST_EVENT = "kidease-shortlist";
@@ -162,9 +162,7 @@ export function formatListingCulture(raw: string | null | undefined, locale: "en
 }
 
 export function formatListingAges(item: Pick<ShortlistListing, "agesKnown" | "ageMinMonths" | "ageMaxMonths">) {
-  if (item.agesKnown === false) return "";
-  if (!(item.ageMaxMonths > item.ageMinMonths) && item.ageMinMonths <= 0) return "";
-  return formatAgeRange(item.ageMinMonths, item.ageMaxMonths);
+  return listingAgeRangeText(item);
 }
 
 export function listingSpotsTotal(item: Pick<ShortlistListing, "spotsTotal" | "spotsInfant" | "spotsToddler" | "spotsPreschool">) {

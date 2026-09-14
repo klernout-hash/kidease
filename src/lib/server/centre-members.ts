@@ -18,7 +18,7 @@ import { getSql } from "@/lib/db";
 import { lookupUser } from "@/lib/server/notify";
 import { logSecurityEvent } from "@/lib/server/security-events";
 import { loadCentreRole } from "@/lib/server/centre-access";
-import { employeeInviteUrl, sendEmployeeInviteEmail } from "@/lib/server/invite-mail";
+import { employeeInviteUrl, trySendEmployeeInviteEmail } from "@/lib/server/invite-mail";
 import { nid } from "@/lib/utils";
 
 export type CentreTeamRow = {
@@ -245,17 +245,19 @@ export const inviteCentreEmployee = createServerFn({ method: "POST" })
       daycareId,
       detail: `invited ${email} as ${decision.role}`,
     });
-    const mail = await sendEmployeeInviteEmail({
+    const payload = {
       to: email,
       centreName: centre[0].name,
       roleLabel: roleLabel(decision.role),
       url: employeeInviteUrl(token),
       invitedName: name,
-    });
+    };
+    let mailed = (await trySendEmployeeInviteEmail(payload)).mailed;
+    if (!mailed) mailed = (await trySendEmployeeInviteEmail(payload)).mailed;
     return {
       ok: true as const,
       inviteId: id,
-      mailed: mail.status === "sent",
+      mailed,
       hourlyMax: CENTRE_INVITE_HOURLY_MAX,
       dailyMax: CENTRE_INVITE_DAILY_MAX,
     };

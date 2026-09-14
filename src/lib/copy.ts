@@ -1816,6 +1816,8 @@ export const copy = {
     employeeRevoked: "Access revoked.",
     employeeRevokeFailed: "Could not revoke that login.",
     employeeInviteSent: "Invite sent. They can open the email link to join.",
+    employeeInviteSaved:
+      "Invite saved. The email could not be sent yet — they can still join from a resent invite, or try again.",
     employeeInviteFailed: "Could not send that invite.",
     employeeOwnerOnly: "Only the centre owner can invite or revoke employees.",
     employeeStaffForbidden: "This tab is for the centre owner. Ask the director if you need Money or licence access.",
@@ -3729,6 +3731,8 @@ export const copy = {
     employeeRevoked: "Accès révoqué.",
     employeeRevokeFailed: "Impossible de révoquer cette connexion.",
     employeeInviteSent: "Invitation envoyée. Ils peuvent ouvrir le lien du courriel.",
+    employeeInviteSaved:
+      "Invitation enregistrée. Le courriel n’a pas encore pu partir — renvoyez l’invitation ou réessayez.",
     employeeInviteFailed: "Impossible d’envoyer cette invitation.",
     employeeOwnerOnly: "Seul le propriétaire du centre peut inviter ou révoquer des employés.",
     employeeStaffForbidden:

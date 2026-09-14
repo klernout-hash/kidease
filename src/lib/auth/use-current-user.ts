@@ -29,9 +29,9 @@ export const DEV_USER: AppUser = {
 
 /** `useCurrentUserState()` result: the user plus the session-loading flag. */
 export type CurrentUserState = {
-  /** The user — `null` BOTH while the session loads and when signed out. */
+  /** Signed-in user. While a session refetch is pending, the last known user is kept. */
   user: AppUser | null;
-  /** True while the session is still resolving — don't treat `user: null` as signed out yet. */
+  /** True only while the first session is still resolving with no last-known user. */
   isPending: boolean;
 };
 
@@ -73,15 +73,31 @@ export function useCurrentUser(): AppUser | null {
   return useCurrentUserState().user;
 }
 
+function mapAuthUser(
+  user: { id: string; name?: string | null; email?: string | null; image?: string | null } | null | undefined,
+): AppUser | null {
+  if (!user) return null;
+  return {
+    id: user.id,
+    displayName: user.name ?? null,
+    primaryEmail: user.email ?? null,
+    profileImageUrl: user.image ?? null,
+    isDevFallback: false,
+  };
+}
+
 /**
  * Same as `useCurrentUserState`, but a hung `/api/auth/get-session` must not
- * leave public desks on “Loading” forever. After `timeoutMs`, treat as signed out.
+ * leave public desks on “Loading” forever. After `timeoutMs`, treat as signed
+ * out unless a last-known user exists from this tab session.
  */
 export function useSettledUser(timeoutMs = SESSION_SETTLE_MS): CurrentUserState {
   if (!authEnabled) return { user: DEV_USER, isPending: false };
   const { data, isPending } = authClient.useSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [expired, setExpired] = useState(false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [lastUser, setLastUser] = useState<AppUser | null>(null);
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!isPending) {
@@ -91,18 +107,13 @@ export function useSettledUser(timeoutMs = SESSION_SETTLE_MS): CurrentUserState 
     const t = window.setTimeout(() => setExpired(true), timeoutMs);
     return () => window.clearTimeout(t);
   }, [isPending, timeoutMs]);
-  const user = data?.user;
-  if (isPending && expired) return { user: null, isPending: false };
-  return {
-    user: user
-      ? {
-          id: user.id,
-          displayName: user.name ?? null,
-          primaryEmail: user.email ?? null,
-          profileImageUrl: user.image ?? null,
-          isDevFallback: false,
-        }
-      : null,
-    isPending,
-  };
+  const mapped = mapAuthUser(data?.user);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (mapped) setLastUser(mapped);
+  }, [mapped?.id, mapped?.displayName, mapped?.primaryEmail, mapped?.profileImageUrl]);
+  if (mapped) return { user: mapped, isPending: false };
+  if (isPending && !expired) return { user: lastUser, isPending: !lastUser };
+  if (expired) return { user: lastUser, isPending: false };
+  return { user: null, isPending: false };
 }

@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CityHubLinks } from "@/components/city-hub-links";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
@@ -56,10 +56,6 @@ import {
   type SearchAge,
   type SearchStart,
 } from "@/lib/now-loops";
-
-const CompareBar = lazy(() =>
-  import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })),
-);
 
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -698,9 +694,6 @@ function Home() {
         </section>
       </div>
 
-      <Suspense fallback={null}>
-        <CompareBar />
-      </Suspense>
       <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />
     </Shell>
   );

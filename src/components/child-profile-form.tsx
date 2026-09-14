@@ -20,8 +20,10 @@ export function ChildProfileForm({
   const { t } = useCopy();
   const [draft, setDraft] = useState<Draft>(initial ?? emptyChild());
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
+    setSaved(false);
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
@@ -33,6 +35,7 @@ export function ChildProfileForm({
       if (draft.id) await updateChild({ data: { ...(draft as Child), id: draft.id } });
       else await addChild({ data: draft });
       toast.success(t("profileSaved"));
+      setSaved(true);
       onSaved();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("profileSaved"));
@@ -287,6 +290,11 @@ export function ChildProfileForm({
           </Button>
         ) : null}
       </div>
+      {saved ? (
+        <p role="status" data-ke="child-saved" className="text-sm font-medium text-ok">
+          {t("profileSaved")}
+        </p>
+      ) : null}
     </form>
   );
 }
