@@ -42,7 +42,7 @@ test("Explore location suggestions dismiss on route, scroll, blur, menu, and vie
   const search = src("src/routes/search.tsx");
   assert.match(search, /dismissPopovers\(\)/);
   assert.match(search, /setView\(view === "map" \? "list" : "map"\)/);
-  assert.match(search, /whitespace-nowrap/);
+  assert.match(search, /ChipCarousel/);
   assert.match(search, /CityHubLinks/);
   assert.match(search, /headingKey="otherCities"/);
   assert.match(search, /!whereSet \? <CityHubLinks className="mt-3"/);
