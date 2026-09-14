@@ -28,7 +28,6 @@ test("search count stays on a loading state instead of flashing 0 centres", () =
   const search = src("src/routes/search.tsx");
   assert.match(search, /searchCountLoading/);
   assert.match(search, /items === null \? \(/);
-  assert.match(search, /fabric\.live > 0/);
   assert.doesNotMatch(search, /searchResultCountOne/);
   assert.doesNotMatch(search, /searchResultCount/);
   assert.doesNotMatch(search, /liveVsAllNone/);

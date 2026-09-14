@@ -1067,9 +1067,6 @@ function SearchPage() {
                   {shownRadius} {u}
                   {DOT}
                   {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
-                  {fabric.live > 0
-                    ? `${DOT}${t("liveInArea").replace("{n}", String(fabric.live))}`
-                    : null}
                 </>
               )}
             </p>
@@ -1098,15 +1095,6 @@ function SearchPage() {
             )}
           </div>
         </div>
-
-        {items !== null && resultCount > 0 && fabric.live === 0 ? (
-          <p
-            className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm leading-6 text-muted ring-1 ring-border"
-            data-ke="licensed-not-live"
-          >
-            {t("licensedNotLiveLead").replace("{n}", String(resultCount))}
-          </p>
-        ) : null}
 
         {!whereSet ? <CityHubLinks className="mt-3" /> : null}
 
@@ -1169,9 +1157,7 @@ function SearchPage() {
 
         <ChipCarousel className="mt-3" label={t("searchRowScope")} data-search-row="live-filters-map">
           <ChipButton on={liveOnly} aria-pressed={liveOnly} onClick={() => setLiveOnly(true)}>
-            {items !== null && fabric.live > 0
-              ? t("liveToggleCount").replace("{n}", String(fabric.live))
-              : t("liveOnly")}
+            {t("liveOnly")}
           </ChipButton>
           <ChipButton
             on={!liveOnly}

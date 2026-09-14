@@ -40,13 +40,16 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
 
   assert.match(search, /data-search-row="live-filters-map"/);
   assert.match(search, /t\("showAll"\)/);
+  assert.match(search, /t\("liveOnly"\)/);
   assert.doesNotMatch(search, /allToggleCount/);
+  assert.doesNotMatch(search, /liveToggleCount/);
   assert.doesNotMatch(search, /searchResultCount/);
   assert.doesNotMatch(search, /liveVsAllNone/);
   assert.doesNotMatch(search, /searchLiveCount/);
   assert.doesNotMatch(search, /searchLiveEmptyCount/);
-  assert.match(search, /data-ke="licensed-not-live"/);
-  assert.match(search, /licensedNotLiveLead"\)\.replace\("\{n\}", String\(resultCount\)\)/);
+  assert.doesNotMatch(search, /liveInArea/);
+  assert.doesNotMatch(search, /data-ke="licensed-not-live"/);
+  assert.doesNotMatch(search, /licensedNotLiveLead/);
   assert.match(chips, /data-search-row="categories"/);
   assert.match(search, /data-search-row="fit-place"/);
   assert.match(search, /t\("searchRowScope"\)/);
@@ -82,7 +85,6 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
   assert.match(copy, /Tous les âges/);
   assert.match(copy, /Près de moi/);
 
-  assert.match(search, /licensedNotLiveLead/);
   assert.match(explore, /redirect\(\{ to: "\/search" \}\)/);
   assert.match(search, /splitSearchResults/);
   assert.match(search, /searchFiltersReady/);
