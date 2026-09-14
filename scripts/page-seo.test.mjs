@@ -22,6 +22,7 @@ function src(rel) {
 
 const REQUIRED_PAGES = [
   ["about", "src/routes/about.tsx"],
+  ["donate", "src/routes/donate.tsx"],
   ["benefits", "src/routes/benefits.tsx"],
   ["help", "src/routes/help.tsx"],
   ["faq", "src/routes/faq.tsx"],

@@ -25,6 +25,7 @@ import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DaycareRequirementsRouteImport } from './routes/daycare-requirements'
 import { Route as DaycaresRouteImport } from './routes/daycares'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
+import { Route as DonateRouteImport } from './routes/donate'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -68,6 +69,7 @@ import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
 import { Route as FrContactRouteImport } from './routes/fr.contact'
 import { Route as FrCookiesRouteImport } from './routes/fr.cookies'
+import { Route as FrDonateRouteImport } from './routes/fr.donate'
 import { Route as FrExploreRouteImport } from './routes/fr.explore'
 import { Route as FrFaqRouteImport } from './routes/fr.faq'
 import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
@@ -184,6 +186,11 @@ const DaycaresRoute = DaycaresRouteImport.update({
 const DeleteAccountRoute = DeleteAccountRouteImport.update({
   id: '/delete-account',
   path: '/delete-account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonateRoute = DonateRouteImport.update({
+  id: '/donate',
+  path: '/donate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -401,6 +408,11 @@ const FrCookiesRoute = FrCookiesRouteImport.update({
   path: '/cookies',
   getParentRoute: () => FrRoute,
 } as any)
+const FrDonateRoute = FrDonateRouteImport.update({
+  id: '/donate',
+  path: '/donate',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrExploreRoute = FrExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -599,6 +611,7 @@ export interface FileRoutesByFullPath {
   '/daycare-requirements': typeof DaycareRequirementsRoute
   '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
+  '/donate': typeof DonateRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -641,6 +654,7 @@ export interface FileRoutesByFullPath {
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
+  '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
   '/fr/get-app': typeof FrGetAppRoute
@@ -696,6 +710,7 @@ export interface FileRoutesByTo {
   '/daycare-requirements': typeof DaycareRequirementsRoute
   '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
+  '/donate': typeof DonateRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -736,6 +751,7 @@ export interface FileRoutesByTo {
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
+  '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
   '/fr/get-app': typeof FrGetAppRoute
@@ -792,6 +808,7 @@ export interface FileRoutesById {
   '/daycare-requirements': typeof DaycareRequirementsRoute
   '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
+  '/donate': typeof DonateRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -834,6 +851,7 @@ export interface FileRoutesById {
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
+  '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
   '/fr/get-app': typeof FrGetAppRoute
@@ -891,6 +909,7 @@ export interface FileRouteTypes {
     | '/daycare-requirements'
     | '/daycares'
     | '/delete-account'
+    | '/donate'
     | '/explore'
     | '/faq'
     | '/forgot-password'
@@ -933,6 +952,7 @@ export interface FileRouteTypes {
     | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
+    | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
     | '/fr/get-app'
@@ -988,6 +1008,7 @@ export interface FileRouteTypes {
     | '/daycare-requirements'
     | '/daycares'
     | '/delete-account'
+    | '/donate'
     | '/explore'
     | '/faq'
     | '/forgot-password'
@@ -1028,6 +1049,7 @@ export interface FileRouteTypes {
     | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
+    | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
     | '/fr/get-app'
@@ -1083,6 +1105,7 @@ export interface FileRouteTypes {
     | '/daycare-requirements'
     | '/daycares'
     | '/delete-account'
+    | '/donate'
     | '/explore'
     | '/faq'
     | '/forgot-password'
@@ -1125,6 +1148,7 @@ export interface FileRouteTypes {
     | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
+    | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
     | '/fr/get-app'
@@ -1181,6 +1205,7 @@ export interface RootRouteChildren {
   DaycareRequirementsRoute: typeof DaycareRequirementsRoute
   DaycaresRoute: typeof DaycaresRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
+  DonateRoute: typeof DonateRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -1254,6 +1279,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donate': {
+      id: '/donate'
+      path: '/donate'
+      fullPath: '/donate'
+      preLoaderRoute: typeof DonateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account': {
@@ -1634,6 +1666,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrAboutRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/donate': {
+      id: '/fr/donate'
+      path: '/donate'
+      fullPath: '/fr/donate'
+      preLoaderRoute: typeof FrDonateRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/benefits': {
       id: '/fr/benefits'
       path: '/benefits'
@@ -1915,6 +1954,7 @@ interface FrRouteChildren {
   FrBenefitsRoute: typeof FrBenefitsRoute
   FrContactRoute: typeof FrContactRoute
   FrCookiesRoute: typeof FrCookiesRoute
+  FrDonateRoute: typeof FrDonateRoute
   FrExploreRoute: typeof FrExploreRoute
   FrFaqRoute: typeof FrFaqRoute
   FrGetAppRoute: typeof FrGetAppRoute
@@ -1934,6 +1974,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrBenefitsRoute: FrBenefitsRoute,
   FrContactRoute: FrContactRoute,
   FrCookiesRoute: FrCookiesRoute,
+  FrDonateRoute: FrDonateRoute,
   FrExploreRoute: FrExploreRoute,
   FrFaqRoute: FrFaqRoute,
   FrGetAppRoute: FrGetAppRoute,
@@ -2014,6 +2055,7 @@ const rootRouteChildren: RootRouteChildren = {
   DaycareRequirementsRoute: DaycareRequirementsRoute,
   DaycaresRoute: DaycaresRoute,
   DeleteAccountRoute: DeleteAccountRoute,
+  DonateRoute: DonateRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
