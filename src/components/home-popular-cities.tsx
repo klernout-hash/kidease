@@ -11,7 +11,7 @@ export function HomePopularCities({
 }) {
   if (!cities.length) return null;
   return (
-    <nav aria-label={label} className="mt-3 max-w-md text-sm text-muted" data-ke="hero-popular-cities">
+    <nav aria-label={label} className="mt-3 text-sm text-muted" data-ke="hero-popular-cities">
       <p className="flex flex-nowrap items-baseline gap-x-1 overflow-x-auto whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:whitespace-normal [&::-webkit-scrollbar]:hidden">
         <span className="shrink-0">{label}:</span>
         {cities.map((city, index) => (
