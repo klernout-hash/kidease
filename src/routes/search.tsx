@@ -22,7 +22,7 @@ import {
 } from "@/lib/search-query";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
-import { areaPresence, presenceFreshness } from "@/lib/presence";
+import { areaPresence } from "@/lib/presence";
 import { readSearchCache, searchCacheKey, writeSearchCache } from "@/lib/search-cache";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useLivePresence } from "@/lib/use-presence";
@@ -96,6 +96,7 @@ import {
   type SavedSearchFilters,
 } from "@/lib/saved-search";
 import { CityHubLinks } from "@/components/city-hub-links";
+import { ExploreCategoryRails } from "@/components/explore-category-rails";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
@@ -168,7 +169,6 @@ export const Route = createFileRoute("/search")({
 
 const PRESETS_KM = [1, 5, 10, 15, 25, 40, 50];
 const PRESETS_MI = [1, 3, 5, 10, 15, 25, 31];
-const DOT = " \u00b7 ";
 
 function unitLabel(unit: DistanceUnit, t: (k: "km" | "mi") => string) {
   return unit === "mi" ? t("mi") : t("km");
@@ -230,7 +230,6 @@ function SearchPage() {
   const [saveBusy, setSaveBusy] = useState(false);
   const [workQuery, setWorkQuery] = useState("");
   const [anchorsHydrated, setAnchorsHydrated] = useState(false);
-  const originAt = useAppStore((s) => s.originAt);
   const originSource = useAppStore((s) => s.originSource);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
   const setDistanceUnit = useAppStore((s) => s.setDistanceUnit);
@@ -792,7 +791,28 @@ function SearchPage() {
   }, [gated, list, searchAge, searchStart]);
   const shownList = gated ? split.primary : list;
   const resultCount = shownList.length + (gated ? split.ageUnknown.length : 0);
-  const showSearchEmpty = items !== null && shownList.length === 0 && (!gated || split.ageUnknown.length === 0);
+  const extraListingFilters =
+    avail !== "any" ||
+    ten ||
+    meals ||
+    outdoor ||
+    inclusive ||
+    extended ||
+    infantOnly ||
+    catchmentOnly ||
+    confirmedOnly ||
+    readyOnly ||
+    claimVerifiedOnly ||
+    favoritesOnly ||
+    careType !== "any" ||
+    Boolean(nameQuery.trim()) ||
+    parentSearchActive(parentFilters);
+  const railItems =
+    extraListingFilters || (liveOnly && shownList.length > 0) ? shownList : (items ?? []);
+  const showSearchEmpty =
+    items !== null &&
+    railItems.length === 0 &&
+    (!gated || split.ageUnknown.length === 0);
   const [ageUnknownOpen, setAgeUnknownOpen] = useState(false);
   useEffect(() => {
     if (gated && shownList.length === 0 && split.ageUnknown.length > 0) {
@@ -899,16 +919,6 @@ function SearchPage() {
             secondaryTo: undefined as string | undefined,
             onSecondary: () => setLiveOnly(false),
           }
-        : (items?.length ?? 0) > 0 && fabric.live === 0
-          ? {
-              title: t("licensedNotLiveTitle"),
-              body: t("noLiveResultsLead"),
-              action: t("showAll"),
-              onAction: () => setLiveOnly(false),
-              secondary: t("noLiveResultsClaim"),
-              onSecondary: undefined as (() => void) | undefined,
-              secondaryTo: "/claim",
-            }
           : dualEmpty
             ? {
                 title: t("noDualResults"),
@@ -931,7 +941,6 @@ function SearchPage() {
   const whereLabel = (incoming.q || query || origin.label || "").trim();
   const city = (whereLabel || origin.label).split(",")[0];
   const whereSet = Boolean(whereLabel);
-  const freshness = presenceFreshness(originAt, originSource);
   const mapOrigin = anchors.primary;
 
   function chip(on: boolean, label: string, action: () => void) {
@@ -1063,40 +1072,18 @@ function SearchPage() {
                   <span>{t("searchCountLoading")}</span>
                 </span>
               ) : (
-                <>
-                  {shownRadius} {u}
-                  {DOT}
-                  {freshness === "live" ? t("presenceLive") : freshness === "fresh" ? t("presenceFresh") : t("presenceStale")}
-                </>
+                t("exploreBrowseHint").replace("{n}", String(fabric.live))
               )}
             </p>
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <Link
-              to="/"
-              search={{ change: "1" }}
-              className="pb-0.5 text-sm font-medium text-primary"
-            >
-              {t("changeLocation")}
-            </Link>
-            {user ? (
-              <>
-                <Link to="/parent" search={{ tab: "children" }} className="text-sm font-medium text-primary">
-                  {t("wayfindChildProfile")}
-                </Link>
-                <button type="button" onClick={openSaveSearch} className="text-sm font-medium text-primary">
-                  {t("saveSearch")}
-                </button>
-              </>
-            ) : (
-              <Link to="/login" search={parentLoginSearch("/search")} className="text-sm font-medium text-primary">
-                {t("saveSearchNeedSignIn")}
-              </Link>
-            )}
-          </div>
+          <Link
+            to="/"
+            search={{ change: "1" }}
+            className="shrink-0 pb-0.5 text-sm font-medium text-primary"
+          >
+            {t("changeLocation")}
+          </Link>
         </div>
-
-        {!whereSet ? <CityHubLinks className="mt-3" /> : null}
 
         {saveOpen ? (
           <div className="mt-3 rounded-xl bg-surface p-4 ring-1 ring-border">
@@ -1151,10 +1138,6 @@ function SearchPage() {
           onLocate={() => void geo()}
           onSubmit={() => void applyQuery()}
         />
-        {!gated ? (
-          <p className="mt-2 text-sm text-muted">{t("searchNeedAgeStart")}</p>
-        ) : null}
-
         <ChipCarousel className="mt-3" label={t("searchRowScope")} data-search-row="live-filters-map">
           <ChipButton on={liveOnly} aria-pressed={liveOnly} onClick={() => setLiveOnly(true)}>
             {t("liveOnly")}
@@ -1256,7 +1239,16 @@ function SearchPage() {
           >
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold">{t("filters")}</p>
-              <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>
+              <div className="flex items-center gap-2">
+                {user ? (
+                  <ChipButton onClick={openSaveSearch}>{t("saveSearch")}</ChipButton>
+                ) : (
+                  <Link to="/login" search={parentLoginSearch("/search")} className="text-sm font-medium text-primary">
+                    {t("saveSearchNeedSignIn")}
+                  </Link>
+                )}
+                <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>
+              </div>
             </div>
             <DualAnchorBar
               mode={anchorMode}
@@ -1454,30 +1446,7 @@ function SearchPage() {
               {whereSet ? <CityHubLinks className="mt-4" headingKey="otherCities" /> : null}
             </div>
           ) : (
-            <section
-              className="mt-6"
-              onMouseOver={(e) => {
-                const node = (e.target as HTMLElement).closest("[data-slug]");
-                const slug = node?.getAttribute("data-slug");
-                if (slug) setActive(slug);
-              }}
-            >
-              {sort === "match" || sort === "urgency" ? (
-                <>
-                  <h2 className="text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
-                    {sort === "match" ? t("sortMatch") : t("sortUrgency")}
-                  </h2>
-                  <p className="mt-1 text-xs text-muted">
-                    {sort === "match" ? t("sortMatchLead") : t("sortUrgencyLead")}
-                  </p>
-                </>
-              ) : null}
-              <div className="ke-listings mt-4">
-                {shownList.map((item, i) => (
-                  <DaycareCard key={item.id} item={item} eager={i < 4} />
-                ))}
-              </div>
-            </section>
+            <ExploreCategoryRails items={railItems} onHover={setActive} />
           )}
           {gated && split.ageUnknown.length ? (
             <div className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">

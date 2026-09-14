@@ -124,6 +124,10 @@ export const copy = {
     licensedNotLiveTitle: "Licensed centres nearby — none live on KidEase yet",
     licensedNotLiveLead:
       "{n} licensed centres are in this area. None have gone live on KidEase, so fees and spots may be out of date. Browse All listings, or a director can claim a listing.",
+    exploreBrowseHint: "{n} live · browse directory",
+    openingsRail: "Openings",
+    openingsRailEmpty: "No confirmed openings nearby",
+    openingsRailEmptyLead: "We only show openings a centre has posted. Check back, or browse nearby.",
     mapUnavailable: "Map is taking too long. Licensed centres are still listed on this page.",
     mapRetry: "Retry map",
     mapShowList: "Show list instead",
@@ -2044,6 +2048,11 @@ export const copy = {
     licensedNotLiveTitle: "Centres permis près d’ici — aucun encore actif sur KidEase",
     licensedNotLiveLead:
       "{n} centres permis sont dans ce secteur. Aucun n’est encore actif sur KidEase, donc les tarifs et les places peuvent être périmés. Consultez Toutes les fiches, ou un directeur peut réclamer une fiche.",
+    exploreBrowseHint: "{n} en ligne · parcourir le répertoire",
+    openingsRail: "Places libres",
+    openingsRailEmpty: "Aucune place confirmée près de vous",
+    openingsRailEmptyLead:
+      "Nous n’affichons que les places qu’un centre a confirmées. Revenez plus tard, ou parcourez les alentours.",
     mapUnavailable: "La carte met trop de temps. Les centres permis restent listés sur cette page.",
     mapRetry: "Réessayer la carte",
     mapShowList: "Afficher la liste",

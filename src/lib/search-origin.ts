@@ -1,5 +1,9 @@
 import { resolveLocationQuery } from "@/components/place-search";
-import { resolveDefaultSearchOrigin, type SearchOrigin } from "@/lib/default-origin";
+import {
+  isUntrustedTorontoOrigin,
+  resolveDefaultSearchOrigin,
+  type SearchOrigin,
+} from "@/lib/default-origin";
 import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { getDeviceLocation } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
@@ -35,7 +39,7 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
     saved: readSavedOrigin(),
     gps: pos,
     gpsAllowed,
-    fallback: ssrOrigin,
+    fallback: isUntrustedTorontoOrigin(ssrOrigin) ? null : ssrOrigin,
   });
   const label =
     resolved.source === "gps" && pos ? reverseGeocode(pos.lat, pos.lng) : resolved.label;

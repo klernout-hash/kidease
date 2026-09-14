@@ -135,10 +135,13 @@ describe("QA 2026-09-10: map hang + licensed-not-live honesty", () => {
     const search = src("src/routes/search.tsx");
     assert.match(copy, /licensedNotLiveTitle/);
     assert.match(copy, /licensedNotLiveLead/);
+    assert.match(copy, /exploreBrowseHint: "\{n\} live · browse directory"/);
     assert.match(copy, /0 live on KidEase · \{n\} licensed nearby/);
     assert.match(copy, /0 en ligne sur KidEase · \{n\} permis près d’ici/);
     assert.doesNotMatch(search, /data-ke="licensed-not-live"/);
-    assert.match(search, /fabric\.live === 0/);
+    assert.doesNotMatch(search, /licensedNotLiveLead/);
+    assert.match(search, /fabric\.live/);
+    assert.match(search, /ExploreCategoryRails/);
     assert.doesNotMatch(copy, /searchLiveEmptyCount: "0 live · \{n\} listed"/);
   });
 });

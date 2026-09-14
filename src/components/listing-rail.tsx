@@ -13,6 +13,8 @@ export function ListingRail({
   hideTitle = false,
   eagerThumbs = true,
   className,
+  railId,
+  empty,
 }: {
   title: string;
   items: Card[];
@@ -22,20 +24,37 @@ export function ListingRail({
   /** Off on marketing home so hidden app rails do not preload against the LCP hero. */
   eagerThumbs?: boolean;
   className?: string;
+  railId?: string;
+  empty?: { title?: string; body: string };
 }) {
   const { t } = useCopy();
   const scroller = useRef<HTMLDivElement>(null);
   const shown = items.slice(0, limit);
-  if (!shown.length) return null;
+  if (!shown.length && !empty) return null;
 
   function go(dir: -1 | 1) {
     scroller.current?.scrollBy({ left: dir * 208, behavior: "smooth" });
   }
 
-  const showChevrons = shown.length > 3;
+  const showChevrons = shown.length > 1;
+
+  if (!shown.length && empty) {
+    return (
+      <section
+        className={cn("mt-8 first:mt-4 md:mt-10", className)}
+        data-ke="explore-rail-empty"
+        data-rail={railId}
+      >
+        <h2 className="min-h-7 text-[1.2rem] font-semibold tracking-[-0.03em] md:min-h-8 md:text-[1.45rem]">
+          {empty.title || title}
+        </h2>
+        <p className="mt-2 max-w-xl text-sm text-muted">{empty.body}</p>
+      </section>
+    );
+  }
 
   return (
-    <section className={cn("mt-8 first:mt-4 md:mt-10", className)}>
+    <section className={cn("mt-8 first:mt-4 md:mt-10", className)} data-rail={railId}>
       {hideTitle && !seeAllHref && !showChevrons ? (
         <h2 className="sr-only">{title}</h2>
       ) : (
@@ -55,7 +74,7 @@ export function ListingRail({
               </a>
             ) : null}
             {showChevrons ? (
-              <div className="hidden items-center gap-2 sm:flex">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   aria-label={t("railPrev")}

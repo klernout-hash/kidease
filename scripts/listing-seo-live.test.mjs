@@ -128,8 +128,9 @@ test("listing route sets unique head tags and JSON-LD; grok OG does not overwrit
   assert.match(copy, /liveToggleCount: "Live · \{n\}"/);
   assert.match(copy, /liveToggleCount: "En ligne · \{n\}"/);
   const search = src("src/routes/search.tsx");
-  assert.match(search, /fabric\.live === 0/);
-  assert.match(search, /noLiveResultsClaim/);
-  assert.match(search, /secondaryTo: "\/claim"/);
+  assert.match(search, /fabric\.live/);
+  assert.match(search, /exploreBrowseHint/);
+  assert.match(search, /ExploreCategoryRails/);
+  assert.doesNotMatch(search, /licensedNotLiveLead/);
   assert.doesNotMatch(search, /\{t\("liveOnly"\)\} · \{fabric\.live\}/);
 });

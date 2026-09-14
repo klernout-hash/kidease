@@ -303,11 +303,26 @@ export function resolveDefaultSearchOrigin(input: {
     if (fromIp.source === "ip") return fromIp;
   }
 
-  if (input.fallback && isInCanada(input.fallback.lat, input.fallback.lng)) {
+  if (
+    input.fallback &&
+    isInCanada(input.fallback.lat, input.fallback.lng) &&
+    !isUntrustedTorontoOrigin(input.fallback)
+  ) {
     return { ...input.fallback, source: input.fallback.label === PRODUCT_HOME.label ? "default" : "ip" };
   }
 
   return productHomeOrigin();
+}
+
+/** SSR / CDN Toronto must not become Explore landing unless the parent chose it. */
+export function isUntrustedTorontoOrigin(origin: SearchOrigin | null | undefined) {
+  if (!origin) return false;
+  if (origin.label === PRODUCT_HOME.label) return false;
+  return isUntrustedAnonymousToronto({
+    city: origin.label,
+    lat: origin.lat,
+    lng: origin.lng,
+  });
 }
 
 export function resolveAnonymousOriginFromHeaders(

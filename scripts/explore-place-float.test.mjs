@@ -45,7 +45,7 @@ test("Explore location suggestions dismiss on route, scroll, blur, menu, and vie
   assert.match(search, /ChipCarousel/);
   assert.match(search, /CityHubLinks/);
   assert.match(search, /headingKey="otherCities"/);
-  assert.match(search, /!whereSet \? <CityHubLinks className="mt-3"/);
+  assert.doesNotMatch(search, /!whereSet \? <CityHubLinks className="mt-3"/);
 
   const hubs = src("src/components/city-hub-links.tsx");
   assert.match(hubs, /overflow-x-auto/);
