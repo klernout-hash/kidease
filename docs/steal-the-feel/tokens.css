@@ -1,0 +1,49 @@
+/**
+ * Proposed Home / Search / Listing tokens.
+ * Copy into `src/styles.css` `@theme` in a follow-up. Not imported today.
+ *
+ * One type scale, one radius (14px), one shadow.
+ * Primary #1A3790 · soft #EEF2FB · 8pt grid.
+ */
+@theme {
+  --color-primary: #1a3790;
+  --color-primary-fg: #ffffff;
+  --color-soft: #eef2fb;
+  --color-soft-strong: #d5dff3;
+  --color-fg: #1c2438;
+  --color-muted: #5c6578;
+  --color-border: #e3ddd3;
+  --color-ok: #1a7a5a;
+  --color-danger: #b42318;
+  --color-ring: #1a3790;
+
+  --font-sans: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.15;
+  --text-title: 1.5rem;
+  --text-title--line-height: 1.2;
+  --text-section: 1.25rem;
+  --text-section--line-height: 1.25;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-meta: 0.875rem;
+  --text-meta--line-height: 1.4;
+  --text-tiny: 0.75rem;
+  --text-tiny--line-height: 1.3;
+
+  --spacing-1: 0.5rem;
+  --spacing-2: 1rem;
+  --spacing-3: 1.5rem;
+  --spacing-4: 2rem;
+  --spacing-6: 3rem;
+  --spacing-8: 4rem;
+
+  --radius-md: 14px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 0 rgba(28, 36, 56, 0.04), 0 18px 40px -24px rgba(26, 55, 144, 0.28);
+
+  --height-control: 3rem;
+}
