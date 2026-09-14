@@ -327,6 +327,26 @@ export const updateChild = createServerFn({ method: "POST" })
     return { id: rows[0].id };
   });
 
+export const deleteChild = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => input)
+  .handler(async ({ context, data }) => {
+    const id = String(data.id || "").trim();
+    if (!id) throw new Error("Child not found");
+    const sql = await getSql();
+    await sql`
+      update bookings set child_id = null
+      where child_id = ${id} and user_id = ${context.userId}
+    `;
+    const rows = await sql<{ id: string }>`
+      delete from children
+      where id = ${id} and user_id = ${context.userId}
+      returning id
+    `;
+    if (!rows[0]) throw new Error("Child not found");
+    return { id: rows[0].id };
+  });
+
 export const toggleSave = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((daycareId: string) => daycareId)

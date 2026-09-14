@@ -137,7 +137,7 @@ describe("QA 2026-09-10: map hang + licensed-not-live honesty", () => {
     assert.match(copy, /licensedNotLiveLead/);
     assert.match(copy, /0 live on KidEase · \{n\} licensed nearby/);
     assert.match(copy, /0 en ligne sur KidEase · \{n\} permis près d’ici/);
-    assert.match(search, /data-ke="licensed-not-live"/);
+    assert.doesNotMatch(search, /data-ke="licensed-not-live"/);
     assert.match(search, /fabric\.live === 0/);
     assert.doesNotMatch(copy, /searchLiveEmptyCount: "0 live · \{n\} listed"/);
   });

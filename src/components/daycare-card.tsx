@@ -91,9 +91,9 @@ export const DaycareCard = memo(function DaycareCard({
   const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
 
   return (
-    <article data-slug={item.slug} className="ke-tile group relative w-full">
-      <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
-        <div className="relative">
+    <article data-slug={item.slug} className="ke-tile group w-full">
+      <div className="relative">
+        <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
           <PhotoCarousel
             photos={photos}
             eager={eager}
@@ -123,8 +123,22 @@ export const DaycareCard = memo(function DaycareCard({
               {live ? t("storefrontPhoto") : t("notOnKidEase")}
             </span>
           ) : null}
-        </div>
+        </Link>
+        <CompareChip
+          id={item.id}
+          slug={item.slug}
+          className="pointer-events-auto absolute bottom-2 right-2 z-20"
+        />
+        <ShareListingButton
+          slug={item.slug}
+          name={name}
+          appearance="photo"
+          className="pointer-events-auto absolute right-12 top-2 z-20"
+        />
+        <SaveListingButton daycareId={item.id} />
+      </div>
 
+      <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
         <div className="mt-2 space-y-px text-fg">
           <div className="flex items-start justify-between gap-2">
             <h3 className="min-w-0 truncate text-[13px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
@@ -197,23 +211,12 @@ export const DaycareCard = memo(function DaycareCard({
         to="/daycare/$slug"
         params={{ slug: item.slug }}
         search={{ ask: "info" }}
-        className="mt-2 inline-flex h-9 items-center rounded-full bg-primary px-3 text-[12px] font-semibold text-primary-fg"
+        data-ke="card-request-info"
+        className="relative z-10 mt-2 inline-flex h-9 appearance-none items-center rounded-full border-0 bg-primary px-3 text-[12px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
         onClick={(e) => e.stopPropagation()}
       >
         {t("cardRequestInfo")}
       </Link>
-      <CompareChip
-        id={item.id}
-        slug={item.slug}
-        className="pointer-events-auto absolute left-2 bottom-2 z-20"
-      />
-      <ShareListingButton
-        slug={item.slug}
-        name={name}
-        appearance="photo"
-        className="pointer-events-auto absolute right-12 top-2 z-20"
-      />
-      <SaveListingButton daycareId={item.id} />
     </article>
   );
 });

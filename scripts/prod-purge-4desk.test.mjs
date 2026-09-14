@@ -56,7 +56,10 @@ test("P0 Admin chrome is hidden from guests and non-kyle sessions", () => {
 test("P0 catalogue counts match visible cards and dead hubs redirect", () => {
   const search = src("src/routes/search.tsx");
   assert.match(search, /const shownList = gated \? split\.primary : list/);
-  assert.match(search, /allToggleCount"\)\.replace\("\{n\}", String\(resultCount\)\)/);
+  assert.match(search, /data-listing-count=\{items !== null \? resultCount : undefined\}/);
+  assert.match(search, /t\("showAll"\)/);
+  assert.doesNotMatch(search, /allToggleCount/);
+  assert.doesNotMatch(search, /licensedNotLiveLead/);
   assert.match(search, /items=\{shownList\}/);
   assert.doesNotMatch(search, /shownList\.length > 0 \? shownList : catalog/);
   assert.match(src("src/routes/listing.$slug.tsx"), /\/daycare\/\$slug/);

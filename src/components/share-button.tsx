@@ -44,6 +44,7 @@ function ShareControl({
   appearance,
   className,
   onDone,
+  dataKe,
 }: {
   payload: SharePayload;
   label: string;
@@ -51,6 +52,7 @@ function ShareControl({
   appearance: ShareAppearance;
   className?: string;
   onDone?: () => void;
+  dataKe?: string;
 }) {
   const { t } = useCopy();
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -60,7 +62,7 @@ function ShareControl({
     e.stopPropagation();
     const outcome = await runShare(payload, {
       started: t("shareStarted"),
-      copied: t("shareCopiedFallback"),
+      copied: t("linkCopied"),
       failed: t("shareFailed"),
     });
     if ((outcome === "shared" || outcome === "copied") && payload.url?.includes("/daycare/")) {
@@ -71,7 +73,7 @@ function ShareControl({
       setFeedback(t(key));
       window.setTimeout(() => setFeedback(null), FEEDBACK_MS);
     }
-    onDone?.();
+    if (outcome === "shared" || outcome === "copied") onDone?.();
   }
 
   const iconClass =
@@ -86,6 +88,7 @@ function ShareControl({
   return (
     <button
       type="button"
+      data-ke={dataKe}
       role={appearance === "menu" ? "menuitem" : undefined}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
@@ -149,6 +152,7 @@ export function ShareKidEaseButton({
       appearance={appearance}
       className={className}
       onDone={onDone}
+      dataKe="share-kidease"
     />
   );
 }

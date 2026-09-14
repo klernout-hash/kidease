@@ -11,6 +11,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ChipButton } from "@/components/chip";
+import { ChipCarousel } from "@/components/chip-carousel";
+import { isRailAge } from "@/lib/care-type";
 import {
   EXPLORE_CATEGORY_COPY,
   visibleExploreCategories,
@@ -39,20 +41,20 @@ export function ExploreCategoryChips({
   onSelect: (cat?: ExploreCategory) => void;
 }) {
   const { t } = useCopy();
-  const visible = visibleExploreCategories(counts, selected);
+  const visible = visibleExploreCategories(counts, selected).filter((cat) => isRailAge(cat));
+  const ageOn = selected && isRailAge(selected) ? selected : undefined;
 
   return (
-    <div
-      className="ke-explore-cats mt-3"
+    <ChipCarousel
+      className="mt-3"
+      label={t("searchRowWho")}
       data-search-row="categories"
-      role="group"
-      aria-label={t("exploreCategories")}
     >
       <ExploreCatChip
         icon={LayoutGrid}
-        label={t("catAll")}
-        on={!selected}
-        aria-pressed={!selected}
+        label={t("catAllAges")}
+        on={!ageOn}
+        aria-pressed={!ageOn}
         data-explore-cat="all"
         onClick={() => onSelect(undefined)}
       />
@@ -63,14 +65,14 @@ export function ExploreCategoryChips({
             key={cat}
             icon={Icon}
             label={t(EXPLORE_CATEGORY_COPY[cat])}
-            on={selected === cat}
-            aria-pressed={selected === cat}
+            on={ageOn === cat}
+            aria-pressed={ageOn === cat}
             data-explore-cat={cat}
-            onClick={() => onSelect(selected === cat ? undefined : cat)}
+            onClick={() => onSelect(ageOn === cat ? undefined : cat)}
           />
         );
       })}
-    </div>
+    </ChipCarousel>
   );
 }
 

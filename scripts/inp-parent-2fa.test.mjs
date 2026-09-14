@@ -22,7 +22,8 @@ test("parent desk defers heavy tab content so nav highlight paints first", () =>
   assert.match(desk, /scheduleIdle/);
   assert.match(desk, /yieldToMain/);
   assert.match(desk, /useDeferredValue/);
-  assert.match(desk, /accountToolsReady/);
+  assert.doesNotMatch(desk, /accountToolsReady/);
+  assert.doesNotMatch(desk, /deleteAccount/);
   assert.match(desk, /startTransition\(\(\) => \{\s*setPicked/);
   assert.match(shortlist, /SAVED_EAGER_CARDS/);
   assert.match(desk, /savedReady/);

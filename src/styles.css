@@ -267,6 +267,31 @@
     background: var(--color-fg);
     box-shadow: inset 0 0 0 1px var(--color-fg);
   }
+  .ke-chip-carousel {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-block: 0.15rem 0.35rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    touch-action: pan-x;
+  }
+  .ke-chip-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  .ke-chip-carousel-track {
+    display: flex;
+    width: max-content;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+  .ke-chip-carousel-track > * {
+    flex: 0 0 auto;
+    max-width: none;
+  }
+  .ke-chip-carousel .ke-chip {
+    max-width: none;
+  }
   .ke-explore-cats {
     display: flex;
     flex-wrap: nowrap;

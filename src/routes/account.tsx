@@ -389,6 +389,18 @@ function ProfilePane() {
           </>
         ) : null}
         <RateKidEasePrompt className="mt-8" />
+        {user ? (
+          <section
+            className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border"
+            data-ke="account-delete"
+          >
+            <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
+            <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
+            <Button variant="ghost" className="mt-4 text-danger" asChild>
+              <Link to="/delete-account">{t("deleteAccount")}</Link>
+            </Button>
+          </section>
+        ) : null}
       </main>
     </AccountDeskFrame>
   );

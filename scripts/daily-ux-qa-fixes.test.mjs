@@ -174,7 +174,8 @@ test("Firefox layout uses standards appearance and dvh fallbacks", () => {
   assert.match(css, /\.ke-auth-viewport \{/);
   assert.match(css, /min-height: calc\(100vh - 4\.5rem\)/);
   assert.match(src("src/routes/login.tsx"), /ke-auth-viewport/);
-  assert.match(src("src/routes/search.tsx"), /scrollbar-width:thin/);
+  assert.match(css, /scrollbar-width:\s*none/);
+  assert.match(src("src/components/chip-carousel.tsx"), /ke-chip-carousel/);
 });
 
 test("building photo 404s fall back to the committed placeholder, no invented JPEGs", () => {

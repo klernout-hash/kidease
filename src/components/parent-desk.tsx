@@ -33,6 +33,7 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
 import { PayCtas } from "@/components/pay-chrome";
+import { DeleteChildControl } from "@/components/delete-child-control";
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -87,7 +88,6 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
-  const [accountToolsReady, setAccountToolsReady] = useState(false);
 
   const selectTab = useCallback((id: string) => {
     const next = id as ParentTab;
@@ -218,11 +218,6 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
     setTab(initialTab);
     startTransition(() => setContentTab(initialTab));
   }, [initialTab]);
-
-  useEffect(() => {
-    if (!exploreReady) return;
-    return scheduleIdle(() => setAccountToolsReady(true));
-  }, [exploreReady]);
 
   useEffect(() => {
     function refresh() {
@@ -557,9 +552,18 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                             ) : null}
                           </div>
                         </div>
-                        <Button size="sm" variant="secondary" onClick={() => setEditing(c)}>
-                          {t("editChild")}
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => setEditing(c)}>
+                            {t("editChild")}
+                          </Button>
+                          <DeleteChildControl
+                            child={{ id: c.id, name: c.name }}
+                            onDeleted={() => {
+                              setEditing(null);
+                              void load();
+                            }}
+                          />
+                        </div>
                       </div>
                       <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
                         <p className="text-sm font-medium">{t("sendChildProfile")}</p>
@@ -636,16 +640,6 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             </>
           )}
         </div>
-      ) : null}
-
-      {accountToolsReady ? (
-      <section className="mt-14 rounded-xl bg-surface p-5 ring-1 ring-border">
-        <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
-        <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
-        <Button variant="ghost" className="mt-4 text-danger" asChild>
-          <Link to="/delete-account">{t("deleteAccount")}</Link>
-        </Button>
-      </section>
       ) : null}
     </DeskShell>
   );

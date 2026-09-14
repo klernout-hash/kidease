@@ -41,6 +41,27 @@ test("H-05 child profile save is visible, not toast-only", () => {
   assert.match(form, /setSaved\(true\)/);
 });
 
+test("parent can delete an owned child profile after confirm", () => {
+  const family = src("src/lib/server/family.ts");
+  const desk = src("src/components/parent-desk.tsx");
+  const form = src("src/components/child-profile-form.tsx");
+  const control = src("src/components/delete-child-control.tsx");
+  const copy = src("src/lib/copy.ts");
+  const deleteFn = family.slice(family.indexOf("export const deleteChild"), family.indexOf("export const toggleSave"));
+  assert.match(deleteFn, /authMiddleware/);
+  assert.match(deleteFn, /user_id = \$\{context\.userId\}/);
+  assert.match(deleteFn, /delete from children/);
+  assert.doesNotMatch(deleteFn, /callerIsAdmin/);
+  assert.match(control, /data-ke="delete-child"/);
+  assert.match(control, /data-ke="delete-child-dialog"/);
+  assert.match(control, /data-ke="delete-child-confirm"/);
+  assert.match(control, /role="dialog"/);
+  assert.match(desk, /DeleteChildControl/);
+  assert.match(form, /DeleteChildControl/);
+  assert.match(copy, /deleteChildTitle: "Delete this child profile\?"/);
+  assert.match(copy, /Supprimer ce profil d’enfant\?/);
+});
+
 test("M-01 public ages require confirmed min/max and never invent 12–60", () => {
   assert.equal(listingAgesConfirmed({ agesKnown: false, ageMinMonths: 12, ageMaxMonths: 60 }), false);
   assert.equal(listingAgeRangeText({ agesKnown: false, ageMinMonths: 12, ageMaxMonths: 60 }), "");
