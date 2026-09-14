@@ -39,6 +39,9 @@ test("Explore filter chrome is three labelled carousels, not wrapped chip grids"
   assert.match(search, /data-ke="explore-filters-sheet"/);
 
   assert.match(search, /data-search-row="live-filters-map"/);
+  assert.match(search, /t\("showAll"\)/);
+  assert.doesNotMatch(search, /allToggleCount/);
+  assert.match(search, /licensedNotLiveLead"\)\.replace\("\{n\}", String\(resultCount\)\)/);
   assert.match(chips, /data-search-row="categories"/);
   assert.match(search, /data-search-row="fit-place"/);
   assert.match(search, /t\("searchRowScope"\)/);

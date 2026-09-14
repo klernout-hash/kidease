@@ -1189,7 +1189,7 @@ function SearchPage() {
             data-listing-count={items !== null ? resultCount : undefined}
             onClick={() => setLiveOnly(false)}
           >
-            {items !== null ? t("allToggleCount").replace("{n}", String(resultCount)) : t("showAll")}
+            {t("showAll")}
           </ChipButton>
           <ChipButton
             className="gap-1.5"
