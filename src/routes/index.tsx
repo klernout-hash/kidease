@@ -130,7 +130,7 @@ function Home() {
   const [manual, setManual] = useState(true);
   const [denied, setDenied] = useState(locationConsent === "denied");
   const [askLocation, setAskLocation] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [, setBusy] = useState(false);
   const [featured, setFeatured] = useState<Card[]>(boot.featured ?? []);
   const [recent, setRecent] = useState<Card[]>([]);
   const [enrollOpen, setEnrollOpen] = useState(false);
@@ -296,16 +296,6 @@ function Home() {
   }, [shown, availableNow]);
   const recentLooking = useMemo(() => recent.filter((r) => isLiveLookingCard(r)), [recent]);
 
-  async function requestDeviceLocation() {
-    const ok = await pinHere();
-    if (ok) {
-      goSearch();
-      return;
-    }
-    setDenied(true);
-    setManual(true);
-  }
-
   useEffect(() => {
     if (isPending) return;
     try {
@@ -365,8 +355,7 @@ function Home() {
             />
             <Button
               type="submit"
-              variant="secondary"
-              className="mt-2 min-h-12 w-full"
+              className="mt-2 min-h-12 w-full rounded-[14px]"
               disabled={!q.trim()}
             >
               {t("search")}
@@ -461,7 +450,7 @@ function Home() {
     <Shell bare>
       <JsonLd json={organizationGraphJsonLdScript()} />
       <div className="ke-web-only [[data-channel=app]_&]:hidden">
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#eef2fb] via-bg to-bg">
+        <section className="relative overflow-hidden bg-gradient-to-b from-soft via-bg to-bg">
           <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20 xl:py-24">
             <div>
               <BrandMark size="md" align="start" />
@@ -469,35 +458,23 @@ function Home() {
                 {t("tagline")}
               </h1>
               <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch">
-                <Button
-                  size="lg"
-                  className="h-14 min-h-14 w-full px-7 text-base sm:w-auto"
-                  onClick={() => void requestDeviceLocation()}
-                  disabled={busy}
-                >
-                  <Search className="size-5" />
-                  {busy ? t("loading") : t("heroCta")}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  className="h-14 min-h-14 w-full px-7 text-base sm:w-auto"
-                  onClick={() =>
-                    document
-                      .getElementById("how")
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                  }
-                >
-                  {t("howItWorksCta")}
-                </Button>
-              </div>
               {locationForm}
+              <ul className="mt-4 flex flex-wrap gap-2" data-ke="hero-trust-chips">
+                <li className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border">
+                  {t("trustLicensedOnly")}
+                </li>
+                <li className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border">
+                  {t("sortOpen")}
+                </li>
+                <li className="rounded-full bg-surface px-3 py-1.5 text-sm text-muted ring-1 ring-border">
+                  {t("requestInfo")}
+                </li>
+              </ul>
               {!manual ? <CityHubLinks className="mt-5" /> : null}
               <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>
             </div>
             <div className="relative">
-              <div className="overflow-hidden rounded-xl shadow-lift ring-1 ring-border">
+              <div className="overflow-hidden rounded-[14px] shadow-card ring-1 ring-border">
                 <HeroYard />
               </div>
             </div>
@@ -581,7 +558,7 @@ function Home() {
               </>
             )}
             <div className="mt-8">
-              <Button size="lg" onClick={() => goSearch(origin.label)}>
+              <Button size="md" variant="secondary" className="rounded-[14px]" onClick={() => goSearch(origin.label)}>
                 <Search className="size-5" />
                 {t("heroCta")}
               </Button>
@@ -693,7 +670,7 @@ function Home() {
             </>
           )}
           <div className="mt-8">
-            <Button size="lg" className="w-full" onClick={() => goSearch(origin.label)}>
+            <Button size="md" variant="secondary" className="w-full rounded-[14px]" onClick={() => goSearch(origin.label)}>
               <Search className="size-5" />
               {t("heroCta")}
             </Button>

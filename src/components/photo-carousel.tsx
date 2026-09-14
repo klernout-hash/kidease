@@ -1,22 +1,21 @@
 import { useEffect, useState } from "react";
-import { BuildingPhoto } from "@/components/building-photo";
+import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
+import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { cn } from "@/lib/utils";
 
 export function PhotoCarousel({
   photos,
   eager = false,
   className,
-  rounded = "rounded-[0.9rem]",
+  rounded = "rounded-[14px]",
 }: {
   photos: string[];
   eager?: boolean;
   className?: string;
   rounded?: string;
 }) {
-  const slides = (photos.length ? photos : ["/photos/storefront-placeholder.jpg"]).filter(
-    (p) => p && !p.includes("-logo"),
-  );
-  const list = slides.length ? slides : ["/photos/storefront-placeholder.jpg"];
+  const slides = photos.filter((p) => p && !p.includes("-logo") && isRealListingPhoto(p));
+  const list = slides;
   const [i, setI] = useState(0);
 
   useEffect(() => {
@@ -28,6 +27,10 @@ export function PhotoCarousel({
     const t = window.setInterval(() => setI((n) => (n + 1) % list.length), 4200);
     return () => window.clearInterval(t);
   }, [list.length]);
+
+  if (!list.length) {
+    return <ListingPhotoFallback className={cn("relative overflow-hidden", rounded, className)} />;
+  }
 
   return (
     <div className={cn("relative overflow-hidden bg-surface-2", rounded, className)}>

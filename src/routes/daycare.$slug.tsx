@@ -1,8 +1,7 @@
 import { createFileRoute, Link, notFound, redirect, useNavigate } from "@tanstack/react-router";
-import { MapPinned, MessageCircle, Phone, Star } from "lucide-react";
+import { MapPinned, MessageCircle, Star } from "lucide-react";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { ShareListingButton } from "@/components/share-button";
-import { FreeListingShareActions } from "@/components/free-listing-share";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
@@ -44,7 +43,7 @@ import { TrustBadge } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
 import type { CopyKey } from "@/lib/copy";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
-import { CompareChip } from "@/components/compare-chip";
+import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { honestVacancy, liveLookingOnly } from "@/lib/now-loops";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
@@ -299,7 +298,6 @@ function Listing() {
   const licensed = publicLicenseBadge(d);
   const agesLabel = listingAgeRangeText(d);
   const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
-  const mapsDir = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
 
@@ -364,40 +362,73 @@ function Listing() {
   const waitlisted = known && spots <= 0;
   const cityHub = cityHubDefForPlace(d.city, d.province);
 
+  function ListingOverflowItems() {
+    return (
+      <>
+        {live ? <ListingMoreItem onClick={onTour}>{t("bookTour")}</ListingMoreItem> : null}
+        {live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
+        {live ? (
+          <ListingMoreItem onClick={() => void onMessage()}>
+            <MessageCircle className="size-4" /> {t("message")}
+          </ListingMoreItem>
+        ) : null}
+        <ListingMoreItem onClick={() => toggleCompareItem({ id: d.id, slug: d.slug })}>
+          {comparing ? t("comparing") : t("compareAdd")}
+        </ListingMoreItem>
+        <ListingMoreItem onClick={() => void openDirections(d.lat, d.lng, name)}>
+          <MapPinned className="size-4" /> {t("directions")}
+        </ListingMoreItem>
+        {!d.claimed ? (
+          <Link
+            to="/claim"
+            search={{ q: d.name }}
+            role="menuitem"
+            className="flex min-h-11 items-center px-3 text-sm font-medium text-fg hover:bg-surface-2"
+          >
+            {t("claimCtaShort")}
+          </Link>
+        ) : null}
+        <a
+          href={licenseRecordUrl(d.province, d.name, d.licenseNumber)}
+          target="_blank"
+          rel="noreferrer"
+          role="menuitem"
+          className="flex min-h-11 items-center px-3 text-sm font-medium text-fg hover:bg-surface-2"
+        >
+          {t("viewLicenceRecord")}
+        </a>
+        <a
+          href={subsidyEstimatorUrl(d.province)}
+          target="_blank"
+          rel="noreferrer"
+          role="menuitem"
+          className="flex min-h-11 items-center px-3 text-sm font-medium text-fg hover:bg-surface-2"
+        >
+          {t("checkSubsidy")}
+        </a>
+      </>
+    );
+  }
+
   function ListingActions() {
     return (
       <>
         {live ? (
-          <Button onClick={onInfo}>{t("requestInfo")}</Button>
+          <Button className="rounded-[14px]" data-ke="listing-primary-cta" onClick={onInfo}>
+            {t("requestInfo")}
+          </Button>
         ) : (
-          <Button asChild>
+          <Button className="rounded-[14px]" data-ke="listing-primary-cta" asChild>
             <Link to="/search">{t("searchNearby")}</Link>
           </Button>
         )}
         {live ? (
-          <Button variant="secondary" onClick={onTour}>
+          <Button className="rounded-[14px]" variant="secondary" onClick={onTour}>
             {t("bookTour")}
           </Button>
-        ) : !d.claimed ? (
-          <Button asChild variant="secondary">
-            <Link to="/claim" search={{ q: d.name }}>
-              {t("claimThisFreePage")}
-            </Link>
-          </Button>
         ) : (
-          <p className="text-xs text-muted">{t("requestUnavailable")}</p>
+          <p className="text-xs text-muted">{t("parentRequestNotLive")}</p>
         )}
-        {!live ? <p className="text-xs text-muted">{t("parentRequestNotLive")}</p> : null}
-        {live ? (
-          <Button variant="ghost" onClick={onRequest}>
-            {t("requestSpotCta")}
-          </Button>
-        ) : null}
-        {live ? (
-          <Button variant="secondary" onClick={() => void onMessage()}>
-            <MessageCircle className="size-4" /> {t("message")}
-          </Button>
-        ) : null}
       </>
     );
   }
@@ -433,8 +464,9 @@ function Listing() {
           <span aria-hidden>/</span>
           <span className="text-fg">{name}</span>
         </nav>
-        <div id="listing-photos" className="scroll-mt-24 overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-          <div className="relative aspect-[16/10] bg-surface-2 md:aspect-[2/1]">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(17rem,22rem)]">
+        <div id="listing-photos" className="scroll-mt-24 overflow-hidden rounded-[14px] bg-surface shadow-card ring-1 ring-border">
+          <div className="relative aspect-[16/10] max-h-[min(20rem,42dvh)] bg-surface-2 lg:max-h-[22rem]">
             {photos[photo]?.includes("-logo") ? (
               <img
                 src={photos[photo]}
@@ -445,7 +477,7 @@ function Listing() {
               <BuildingPhoto
                 eager
                 priority
-                src={photos[photo] ?? "/photos/storefront-placeholder.jpg"}
+                src={photos[photo] ?? LISTING_PLACEHOLDER}
                 sizes={DETAIL_SIZES}
                 width={768}
                 height={576}
@@ -486,6 +518,48 @@ function Listing() {
             </div>
           ) : null}
         </div>
+        <div className="min-w-0 lg:sticky lg:top-20 lg:pt-1">
+            <p className="text-sm text-muted">
+              {d.address}, {d.city}, {d.province} {d.postalCode}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-3xl md:text-4xl">{name}</h1>
+              {licensed ? <TrustBadge badge={licensed} /> : null}
+            </div>
+            <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
+            <ListingHeaderPills item={d} />
+            <p className="mt-2 text-xs font-medium text-subtle">{t("freeListingNotAd")}</p>
+            <div className="mt-4 hidden rounded-[14px] bg-surface p-5 shadow-card ring-1 ring-border lg:block">
+              <p className="text-sm text-muted">{t("monthlyFrom")}</p>
+              <p className="font-display text-3xl tabular-nums">
+                {from > 0 ? (
+                  <>
+                    {money(from, locale)}
+                    <span className="text-base text-muted">{t("month")}</span>
+                  </>
+                ) : (
+                  <span className="text-xl">{t("feeUnknown")}</span>
+                )}
+              </p>
+              <p className="mt-3 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
+              {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
+              <div className="mt-4 grid gap-2">
+                <ListingActions />
+                {live && waitlisted ? (
+                  <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
+                ) : null}
+                <ListingMoreActions>
+                  <ListingOverflowItems />
+                  <div className="px-1 py-1">
+                    <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
+                  </div>
+                </ListingMoreActions>
+                <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" />
+              </div>
+              <p className="mt-3 text-xs text-subtle">{t("privacyNote")}</p>
+            </div>
+        </div>
+        </div>
         {interiors.length ? (
           <section className="mt-3 rounded-xl bg-surface p-4 shadow-card ring-1 ring-border">
             <h2 className="font-display text-xl">{t("interiors")}</h2>
@@ -505,75 +579,58 @@ function Listing() {
           </section>
         ) : null}
 
-        <div className="mt-6 grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="mt-6 min-w-0">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-sm text-muted">
-                  {d.address}, {d.city}, {d.province} {d.postalCode}
-                </p>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <h1 className="font-display text-3xl md:text-4xl">{name}</h1>
-                  {licensed ? <TrustBadge badge={licensed} /> : null}
-                </div>
-                <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
-                <ListingHeaderPills item={d} />
-                <ListingJumpNav />
-                <p className="mt-2 text-xs font-medium text-subtle">{t("freeListingNotAd")}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <CompareChip id={d.id} slug={d.slug} />
-                  {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
-                    <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
-                  ) : null}
-                  <ListingBadges item={ranked} />
-                  <Link
-                    to="/verify"
-                    className="text-xs font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    {t("learnMore")}
-                  </Link>
-                </div>
-                {live ? <p className="mt-2 text-sm text-muted">{t("liveListingLine")}</p> : null}
-                <CompletenessBanner item={d} />
-                {!live ? (
-                  <p className="mt-3 text-sm text-muted">
-                    {t("unclaimedNotice")}{" "}
-                    <Link
-                      to="/verify"
-                      hash="unclaimed"
-                      className="font-medium text-primary underline-offset-4 hover:underline"
-                    >
-                      {t("unclaimedWhatMeans")}
-                    </Link>
-                  </p>
-                ) : null}
-                {!d.claimed ? (
-                  <p className="mt-3 text-sm">
-                    {t("isThisYours")}{" "}
-                    <Link to="/claim" search={{ q: d.name }} className="text-primary underline-offset-4 hover:underline">
-                      {t("claimThisFreePage")}
-                    </Link>
-                  </p>
-                ) : null}
-              </div>
-              {d.reviewCount > 0 && d.ratingX10 > 0 ? (
-                <div className="space-y-1">
-                  <GoogleRating item={d} ratingX10={d.ratingX10} reviewCount={d.reviewCount} />
-                  <a
-                    href={googleReviewsHref}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block text-xs text-primary underline-offset-4 hover:underline"
-                  >
-                    {t("viewOnGoogle")}
-                  </a>
-                </div>
-              ) : licensed ? (
-                <p className="text-sm text-muted">{t(licensed.labelKey as CopyKey)}</p>
+            <ListingJumpNav />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
+                <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
               ) : null}
+              <ListingBadges item={ranked} compact />
+              <Link
+                to="/verify"
+                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {t("learnMore")}
+              </Link>
             </div>
+            {live ? <p className="mt-2 text-sm text-muted">{t("liveListingLine")}</p> : null}
+            <CompletenessBanner item={d} />
+            {!live ? (
+              <p className="mt-3 text-sm text-muted">
+                {t("unclaimedNotice")}{" "}
+                <Link
+                  to="/verify"
+                  hash="unclaimed"
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {t("unclaimedWhatMeans")}
+                </Link>
+              </p>
+            ) : null}
+            {!d.claimed ? (
+              <p className="mt-3 text-sm">
+                {t("isThisYours")}{" "}
+                <Link to="/claim" search={{ q: d.name }} className="text-primary underline-offset-4 hover:underline">
+                  {t("claimThisFreePage")}
+                </Link>
+              </p>
+            ) : null}
+            {d.reviewCount > 0 && d.ratingX10 > 0 ? (
+              <div className="mt-3 space-y-1">
+                <GoogleRating item={d} ratingX10={d.ratingX10} reviewCount={d.reviewCount} />
+                <a
+                  href={googleReviewsHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block text-xs text-primary underline-offset-4 hover:underline"
+                >
+                  {t("viewOnGoogle")}
+                </a>
+              </div>
+            ) : null}
 
-            <div className="mt-6 grid gap-2 rounded-xl bg-surface p-4 ring-1 ring-border lg:hidden">
+            <div className="mt-6 grid gap-2 rounded-[14px] bg-surface p-4 ring-1 ring-border lg:hidden">
               <p className="text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
               {!user && live ? <p className="text-xs text-subtle">{t("guestBrowse")}</p> : null}
               <ListingActions />
@@ -610,25 +667,26 @@ function Listing() {
                 <Meta label={t("facilityType")} value={t(facilityTypeLabelKey(classifyFacilityType(d).type))} />
                 <Meta label={t("lastInspection")} value={t("seeOfficialRecord")} />
               </dl>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button asChild variant="secondary">
-                  <a href={licenseRecordUrl(d.province, d.name, d.licenseNumber)} target="_blank" rel="noreferrer">
-                    {t("viewLicenceRecord")}
-                  </a>
-                </Button>
-                <Button asChild variant="ghost">
-                  <a href={subsidyEstimatorUrl(d.province)} target="_blank" rel="noreferrer">
-                    {t("checkSubsidy")}
-                  </a>
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => toggleCompareItem({ id: d.id, slug: d.slug })}>
-                  {comparing ? t("comparing") : t("compareAdd")}
-                </Button>
-                <ShareListingButton slug={d.slug} name={name} appearance="labeled" />
-                <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
-                <Button asChild variant="ghost">
-                  <Link to="/tour-checklist">{t("tourChecklist")}</Link>
-                </Button>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <a
+                  href={licenseRecordUrl(d.province, d.name, d.licenseNumber)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {t("viewLicenceRecord")}
+                </a>
+                <a
+                  href={subsidyEstimatorUrl(d.province)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium text-muted underline-offset-4 hover:underline"
+                >
+                  {t("checkSubsidy")}
+                </a>
+                <Link to="/tour-checklist" className="text-sm font-medium text-muted underline-offset-4 hover:underline">
+                  {t("tourChecklist")}
+                </Link>
               </div>
               <p className="mt-3 text-xs text-subtle">
                 {cwelccKind(d.province) === "qc" ? t("cwelccQcNote") : t("cwelccAskNote")}
@@ -691,10 +749,10 @@ function Listing() {
                 <ListingMap lat={d.lat} lng={d.lng} title={`${name} — Google Maps`} />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button type="button" onClick={() => void openDirections(d.lat, d.lng, name)}>
+                <Button type="button" variant="secondary" className="rounded-[14px]" onClick={() => void openDirections(d.lat, d.lng, name)}>
                   {t("directions")}
                 </Button>
-                <Button asChild variant="secondary">
+                <Button asChild variant="ghost">
                   <a href={mapsPlace} target="_blank" rel="noreferrer">
                     {t("openGoogleMaps")}
                   </a>
@@ -779,50 +837,6 @@ function Listing() {
               <ListingReviewForm daycareId={d.id} slug={d.slug} />
             </section>
           </div>
-
-          <aside className="hidden h-fit rounded-xl bg-surface p-6 shadow-lift ring-1 ring-border lg:sticky lg:top-20 lg:block">
-            <p className="text-sm text-muted">{t("monthlyFrom")}</p>
-            <p className="font-display text-3xl tabular-nums">
-              {from > 0 ? (
-                <>
-                  {money(from, locale)}
-                  <span className="text-base text-muted">{t("month")}</span>
-                </>
-              ) : (
-                <span className="text-xl">{t("feeUnknown")}</span>
-              )}
-            </p>
-            <p className="mt-3 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
-            {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
-            <div className="mt-4 grid gap-2">
-              <ListingActions />
-              {live && waitlisted ? (
-                <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
-              ) : null}
-              <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full hover:bg-surface-2/70" />
-              <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
-              <div className="grid grid-cols-3 gap-2">
-                <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" />
-                {d.phone ? (
-                  <Button variant="ghost" asChild>
-                    <a href={`tel:${d.phone}`} aria-label={t("call")}>
-                      <Phone className="size-4" />
-                    </a>
-                  </Button>
-                ) : (
-                  <Button variant="ghost" disabled aria-label={t("call")}>
-                    <Phone className="size-4" />
-                  </Button>
-                )}
-                <Button variant="ghost" asChild>
-                  <a href={mapsDir} target="_blank" rel="noreferrer" aria-label={t("directions")}>
-                    <MapPinned className="size-4" />
-                  </a>
-                </Button>
-              </div>
-            </div>
-            <p className="mt-3 text-xs text-subtle">{t("privacyNote")}</p>
-          </aside>
         </div>
 
         {data.nearby.length ? (
@@ -832,46 +846,23 @@ function Listing() {
 
       {!requestOpen ? (
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden [[data-channel=app]_&]:bottom-20">
-        <div className="mx-auto flex max-w-lg items-center gap-1.5 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mx-auto flex max-w-lg items-center gap-2">
           {live ? (
-            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" onClick={onInfo}>
+            <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" onClick={onInfo}>
               {t("requestInfo")}
             </Button>
           ) : (
-            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" asChild>
+            <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" asChild>
               <Link to="/search">{t("searchNearbyShort")}</Link>
             </Button>
           )}
-          {live ? (
-            <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" onClick={onTour}>
-              {t("bookTour")}
-            </Button>
-            ) : !d.claimed ? (
-              <Button className="h-11 shrink-0 px-3.5 text-[13px] whitespace-nowrap" variant="secondary" asChild>
-                <Link to="/claim" search={{ q: d.name }}>
-                  {t("claimCtaShort")}
-                </Link>
-              </Button>
-            ) : null}
-          {live ? (
-            <Button className="shrink-0" variant="secondary" size="icon" onClick={() => void onMessage()} aria-label={t("message")}>
-              <MessageCircle className="size-5" />
-            </Button>
-          ) : null}
-          {d.phone ? (
-            <Button className="shrink-0" variant="secondary" size="icon" asChild>
-              <a href={`tel:${d.phone}`} aria-label={t("call")}>
-                <Phone className="size-5" />
-              </a>
-            </Button>
-          ) : null}
-          <Button className="shrink-0" variant="secondary" size="icon" asChild>
-            <a href={mapsDir} target="_blank" rel="noreferrer" aria-label={t("directions")}>
-              <MapPinned className="size-5" />
-            </a>
-          </Button>
           <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="bar" className="shrink-0" />
-          <ShareListingButton slug={d.slug} name={name} appearance="icon" className="shrink-0 bg-surface text-fg ring-1 ring-border hover:bg-surface-2" />
+          <ListingMoreActions compact>
+            <ListingOverflowItems />
+            <div className="px-1 py-1">
+              <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
+            </div>
+          </ListingMoreActions>
         </div>
       </div>
       ) : null}

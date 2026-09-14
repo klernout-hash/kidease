@@ -29,6 +29,7 @@ import {
   liveLookingGaps,
 } from "@/lib/now-loops";
 import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
+import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 
 export const DaycareCard = memo(function DaycareCard({
@@ -64,6 +65,7 @@ export const DaycareCard = memo(function DaycareCard({
   } as const;
   const away = located ? `${displayDistance(distanceKm, distanceUnit)} ${distanceUnit === "mi" ? t("miAway") : t("kmAway")}` : "";
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
+  const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
 
   const license = publicLicenseBadge(item);
   const cardTrust = trustBadgesFor(item, "card");
@@ -101,7 +103,11 @@ export const DaycareCard = memo(function DaycareCard({
             className={cn("bg-[#EBEBEB]", compact ? "aspect-[20/19]" : "aspect-[4/3]")}
           />
           <div className="pointer-events-none absolute left-2 top-2 z-[2] flex flex-col items-start gap-1">
-            {pill ? (
+            {hollowPhoto ? (
+              <span className="inline-flex rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white">
+                {live ? t("photoPending") : t("notOnKidEase")}
+              </span>
+            ) : pill ? (
               <span
                 className="inline-flex rounded-full bg-white/92 px-2 py-0.5 text-[10px] font-semibold leading-none text-[#222] shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/5 backdrop-blur-[8px]"
                 title={license && pillKey === license.labelKey ? t(license.tipKey as CopyKey) : undefined}
@@ -109,32 +115,33 @@ export const DaycareCard = memo(function DaycareCard({
                 {item.priority ? `✦ ${pill}` : pill}
               </span>
             ) : null}
-            {showLicensedChip && license && !isCatalogueMatchedBadge(license) ? (
+            {!compact && !hollowPhoto && showLicensedChip && license && !isCatalogueMatchedBadge(license) ? (
               <span className="pointer-events-auto">
                 <TrustBadge badge={license} compact />
               </span>
             ) : null}
-            <span className="pointer-events-auto">
-              <GuestFavoriteBadge item={item} compact surface="photo" />
-            </span>
+            {!compact && !hollowPhoto ? (
+              <span className="pointer-events-auto">
+                <GuestFavoriteBadge item={item} compact surface="photo" />
+              </span>
+            ) : null}
           </div>
-          {photos.length === 0 || photos.every((p) => p.includes("placeholder")) ? (
-            <span className="pointer-events-none absolute bottom-2 left-2 z-[2] rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white">
-              {live ? t("storefrontPhoto") : t("notOnKidEase")}
-            </span>
-          ) : null}
         </Link>
-        <CompareChip
-          id={item.id}
-          slug={item.slug}
-          className="pointer-events-auto absolute bottom-2 right-2 z-20"
-        />
-        <ShareListingButton
-          slug={item.slug}
-          name={name}
-          appearance="photo"
-          className="pointer-events-auto absolute right-12 top-2 z-20"
-        />
+        {!compact ? (
+          <CompareChip
+            id={item.id}
+            slug={item.slug}
+            className="pointer-events-auto absolute bottom-2 right-2 z-20"
+          />
+        ) : null}
+        {!compact ? (
+          <ShareListingButton
+            slug={item.slug}
+            name={name}
+            appearance="photo"
+            className="pointer-events-auto absolute right-12 top-2 z-20"
+          />
+        ) : null}
         <SaveListingButton daycareId={item.id} />
       </div>
 
@@ -152,7 +159,7 @@ export const DaycareCard = memo(function DaycareCard({
               </span>
             ) : null}
           </div>
-          {cardTrust.length ? (
+          {!compact && cardTrust.length ? (
             <div
               className="pt-0.5"
               onClick={(e) => {
@@ -179,16 +186,16 @@ export const DaycareCard = memo(function DaycareCard({
           ) : incompleteLabel ? (
             <p className="truncate text-[12px] font-normal leading-4 text-muted">{incompleteLabel}</p>
           ) : null}
-          {spotsKnown || freshnessText || photoText || (canShowMatchScore(item) && typeof item.matchScore === "number") || (item.urgencyScore ?? 0) > 0 ? (
+          {spotsKnown ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {spotsKnown ? <span className="ke-honesty">{spotsKnown}</span> : null}
-              {freshnessText ? <span className="ke-honesty">{freshnessText}</span> : null}
-              {photoText ? <span className="ke-honesty">{photoText}</span> : null}
-              <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact />
-              <UrgencyCue score={item.urgencyScore} compact />
+              <span className="ke-honesty">{spotsKnown}</span>
+              {!compact && freshnessText ? <span className="ke-honesty">{freshnessText}</span> : null}
+              {!compact && !hollowPhoto && photoText ? <span className="ke-honesty">{photoText}</span> : null}
+              {!compact ? <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact /> : null}
+              {!compact ? <UrgencyCue score={item.urgencyScore} compact /> : null}
             </div>
           ) : null}
-          {ageChips.length ? (
+          {!compact && ageChips.length ? (
             <div className="flex flex-wrap gap-1 pt-1">
               {ageChips.map((band) => (
                 <span key={band} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium">
@@ -212,7 +219,7 @@ export const DaycareCard = memo(function DaycareCard({
         params={{ slug: item.slug }}
         search={{ ask: "info" }}
         data-ke="card-request-info"
-        className="relative z-10 mt-2 inline-flex h-9 appearance-none items-center rounded-full border-0 bg-primary px-3 text-[12px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
+        className="relative z-10 mt-2 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-3 text-[12px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
         onClick={(e) => e.stopPropagation()}
       >
         {t("cardRequestInfo")}

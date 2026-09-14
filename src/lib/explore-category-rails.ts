@@ -1,6 +1,7 @@
 import { RAIL_AGES, matchesRailAge, type RailAge } from "@/lib/care-type";
 import type { CopyKey } from "@/lib/copy";
-import { honestVacancy } from "@/lib/now-loops";
+import { hasRealPhoto } from "@/lib/listing-readiness";
+import { honestVacancy, isLiveLookingCard } from "@/lib/now-loops";
 import type { DaycareCard as Card } from "@/lib/types";
 import { uniqueById } from "@/lib/utils";
 
@@ -17,10 +18,32 @@ function take(rows: Card[], n = 18) {
   return uniqueById(rows).slice(0, n);
 }
 
-/** Closest first in the current result pool. */
+/**
+ * Live / complete listings first. Hollow stay in the set — we never invent
+ * ages, fees, or photos to pad a rail.
+ */
+export function exploreCardFillRank(row: Pick<Card, "live" | "photos" | "agesKnown" | "ageMinMonths" | "ageMaxMonths" | "infantMonthly" | "toddlerMonthly" | "preschoolMonthly" | "partTimeMonthly" | "amenities" | "province" | "feeConfirmed">): number {
+  const looking = isLiveLookingCard(row);
+  const live = Boolean(row.live);
+  const photo = hasRealPhoto(row);
+  if (looking && live) return 3;
+  if (live) return 2;
+  if (photo) return 1;
+  return 0;
+}
+
+export function preferCompleteCards<T extends Card>(rows: readonly T[]): T[] {
+  return [...rows].sort((a, b) => {
+    const fill = exploreCardFillRank(b) - exploreCardFillRank(a);
+    if (fill) return fill;
+    return a.distanceKm - b.distanceKm || (b.spotsTotal || 0) - (a.spotsTotal || 0);
+  });
+}
+
+/** Closest first in the current result pool, complete cards ahead of hollow. */
 export function exploreNearYouItems(items: Card[], n = 18): Card[] {
   return take(
-    [...items].sort((a, b) => a.distanceKm - b.distanceKm),
+    preferCompleteCards(items),
     n,
   );
 }
@@ -30,16 +53,19 @@ export function exploreOpeningsItems(items: Card[], n = 18): Card[] {
   return take(
     items
       .filter((row) => honestVacancy(row).kind === "open")
-      .sort((a, b) => (b.spotsTotal || 0) - (a.spotsTotal || 0) || a.distanceKm - b.distanceKm),
+      .sort(
+        (a, b) =>
+          exploreCardFillRank(b) - exploreCardFillRank(a) ||
+          (b.spotsTotal || 0) - (a.spotsTotal || 0) ||
+          a.distanceKm - b.distanceKm,
+      ),
     n,
   );
 }
 
 export function exploreAgeRailItems(items: Card[], age: RailAge, n = 18): Card[] {
   return take(
-    items
-      .filter((row) => matchesRailAge(row, age))
-      .sort((a, b) => a.distanceKm - b.distanceKm),
+    preferCompleteCards(items.filter((row) => matchesRailAge(row, age))),
     n,
   );
 }

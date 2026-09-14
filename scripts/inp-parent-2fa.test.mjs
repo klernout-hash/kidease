@@ -84,7 +84,7 @@ test("verify-2fa keeps OTP state under Shell and never silently ignores a Verify
 test("rail cards skip offscreen paint and listing cards are memoized", () => {
   const css = src("src/styles.css");
   assert.match(css, /\.ke-rail-card \{[\s\S]*content-visibility: auto;/);
-  assert.match(css, /contain-intrinsic-size: var\(--ke-card-w, 11\.25rem\) 260px;/);
+  assert.match(css, /contain-intrinsic-size: var\(--ke-card-w, 11\.25rem\) 22\.5rem;/);
   assert.match(src("src/components/daycare-card.tsx"), /export const DaycareCard = memo\(/);
   assert.match(src("src/components/turnstile-field.tsx"), /export const TurnstileField = memo\(/);
   assert.match(src("src/components/turnstile-field.tsx"), /min-h-\[65px\]/);

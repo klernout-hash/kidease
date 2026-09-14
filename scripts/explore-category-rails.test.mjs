@@ -31,11 +31,14 @@ test("Explore list is six parent category rails with arrows, not a stacked grid"
   assert.match(rails, /data-ke="explore-category-rails"/);
   assert.match(rails, /railId="near-you"/);
   assert.match(rails, /railId="openings"/);
-  assert.match(rails, /openingsRailEmpty/);
+  assert.match(rails, /openings\.length/);
+  assert.doesNotMatch(rails, /openingsRailEmpty/);
   assert.match(rails, /EXPLORE_RAIL_AGES\.map/);
 
   assert.match(lib, /export function exploreNearYouItems/);
   assert.match(lib, /export function exploreOpeningsItems/);
+  assert.match(lib, /export function preferCompleteCards/);
+  assert.match(lib, /export function exploreCardFillRank/);
   assert.match(lib, /honestVacancy\(row\)\.kind === "open"/);
   assert.match(lib, /matchesRailAge/);
   assert.match(lib, /distanceKm/);
@@ -48,4 +51,16 @@ test("Explore list is six parent category rails with arrows, not a stacked grid"
   assert.match(copy, /exploreBrowseHint: "\{n\} live · browse directory"/);
   assert.match(copy, /openingsRail: "Openings"/);
   assert.match(copy, /Aucune place confirmée près de vous/);
+});
+
+test("rails hide empty openings and prefer complete cards without inventing data", () => {
+  const lib = src("src/lib/explore-category-rails.ts");
+  const rails = src("src/components/explore-category-rails.tsx");
+  assert.match(lib, /export function preferCompleteCards/);
+  assert.match(lib, /export function exploreCardFillRank/);
+  assert.match(lib, /isLiveLookingCard/);
+  assert.match(lib, /hasRealPhoto/);
+  assert.doesNotMatch(lib, /spotsTotal \|\| 4/);
+  assert.match(rails, /openings\.length \? \(/);
+  assert.doesNotMatch(rails, /openingsRailEmpty/);
 });

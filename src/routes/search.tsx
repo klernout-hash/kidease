@@ -97,6 +97,7 @@ import {
 } from "@/lib/saved-search";
 import { CityHubLinks } from "@/components/city-hub-links";
 import { ExploreCategoryRails } from "@/components/explore-category-rails";
+import { preferCompleteCards } from "@/lib/explore-category-rails";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
@@ -807,8 +808,9 @@ function SearchPage() {
     careType !== "any" ||
     Boolean(nameQuery.trim()) ||
     parentSearchActive(parentFilters);
-  const railItems =
-    extraListingFilters || (liveOnly && shownList.length > 0) ? shownList : (items ?? []);
+  const railItems = preferCompleteCards(
+    extraListingFilters || (liveOnly && shownList.length > 0) ? shownList : (items ?? []),
+  );
   const showSearchEmpty =
     items !== null &&
     railItems.length === 0 &&
@@ -1330,7 +1332,7 @@ function SearchPage() {
           {view === "map" ? (
             mapEnabled ? (
               <div className="mt-4 space-y-3">
-                <div className="h-[62dvh] min-h-[18rem] overflow-hidden rounded-xl shadow-card ring-1 ring-border lg:h-[70vh]">
+                <div className="h-[min(40dvh,22rem)] min-h-[14rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(50vh,28rem)]">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={shownList}

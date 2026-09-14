@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   CARD_SIZES,
   DETAIL_SIZES,
@@ -19,6 +19,29 @@ export const HERO_LCP_WEBP_SRCSET =
 export const HERO_LCP_SIZES = HERO_SIZES;
 
 const FALLBACK = "/photos/storefront-placeholder-480.webp";
+
+/** Honest empty still — labelled elsewhere. Never dressed as a centre photo. */
+export function ListingPhotoFallback({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      className={cn("grid place-items-center bg-surface-2 text-muted", className)}
+      style={style}
+      data-ke="photo-fallback"
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 48 48" className="size-12" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M8 22 24 10l16 12v18H8Z" />
+        <path d="M20 40V28h8v12" />
+      </svg>
+    </div>
+  );
+}
 
 export function BuildingPhoto({
   src,
@@ -73,7 +96,13 @@ export function BuildingPhoto({
   }, [eager, src]);
 
   if (broken) {
-    return <div className={cn("bg-surface-2", className)} aria-hidden="true" />;
+    const sized = className?.includes("aspect-") || className?.includes("size-full") || className?.includes("h-full");
+    return (
+      <ListingPhotoFallback
+        className={className}
+        style={sized ? undefined : { aspectRatio: `${width} / ${height}` }}
+      />
+    );
   }
 
   const ready = active ? cur || FALLBACK : undefined;

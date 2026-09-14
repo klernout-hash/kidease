@@ -31,15 +31,9 @@ export function ExploreCategoryRails({
       }}
     >
       <ListingRail title={t("nearYou")} items={nearYou} railId="near-you" />
-      <ListingRail
-        title={t("openingsRail")}
-        items={openings}
-        railId="openings"
-        empty={{
-          title: t("openingsRailEmpty"),
-          body: t("openingsRailEmptyLead"),
-        }}
-      />
+      {openings.length ? (
+        <ListingRail title={t("openingsRail")} items={openings} railId="openings" />
+      ) : null}
       {EXPLORE_RAIL_AGES.map((age) => (
         <ListingRail
           key={age}

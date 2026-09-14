@@ -30,9 +30,10 @@ test("mobile listing CTAs use short labels that stay inside pills", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /searchNearbyShort/);
   assert.match(listing, /claimCtaShort/);
-  assert.match(listing, /overflow-x-auto/);
-  assert.match(listing, /whitespace-nowrap/);
-  assert.match(listing, /h-11 shrink-0 px-3.5 text-\[13px\]/);
+  assert.match(listing, /listing-sticky-cta/);
+  assert.match(listing, /ListingMoreActions/);
+  assert.doesNotMatch(listing, /overflow-x-auto overscroll-x-contain/);
+  assert.doesNotMatch(listing, /h-11 shrink-0 px-3.5 text-\[13px\]/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /searchNearbyShort: "Search nearby"/);
   assert.match(copy, /claimCtaShort: "Claim daycare"/);

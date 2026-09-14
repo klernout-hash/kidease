@@ -41,23 +41,23 @@ export function ListingBadges({
         {t(FACILITY_BADGE[facility.type])}
       </span>
       {item.priority ? <PriorityPill /> : null}
-      <GuestFavoriteBadge item={item} compact={compact} />
+      {!compact ? <GuestFavoriteBadge item={item} compact={compact} /> : null}
       <TrustSignals item={item} surface="parent" compact={compact} />
       {feeBadge ? <span className={cn(pill, "bg-primary text-primary-fg")}>{t(feeBadge)}</span> : null}
-      {live ? (
+      {live && !feeBadge ? (
         <span className={cn(pill, "bg-ok text-primary-fg")}>{t("live")}</span>
       ) : null}
       <span className={cn(pill, vacancy.kind === "open" ? "" : "text-muted", vacancy.kind === "waitlist" && "bg-fg/80 text-surface")}>
         {vacancy.kind === "open" ? `${vacancy.spots} ${t("spots")}` : t(vacancy.labelKey)}
       </span>
-      {(vacancy.kind === "open" || vacancy.kind === "waitlist") && freshness.kind !== "unknown" && freshness.text ? (
+      {!compact && (vacancy.kind === "open" || vacancy.kind === "waitlist") && freshness.kind !== "unknown" && freshness.text ? (
         <span className={cn(pill, "text-muted")}>{freshness.text}</span>
       ) : null}
-      {photosAge.kind !== "unknown" && photosAge.text ? (
+      {!compact && photosAge.kind !== "unknown" && photosAge.text ? (
         <span className={cn(pill, "text-muted")}>{photosAge.text}</span>
       ) : null}
-      <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact={compact} />
-      <UrgencyCue score={item.urgencyScore} compact={compact} />
+      {!compact ? <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact={compact} /> : null}
+      {!compact ? <UrgencyCue score={item.urgencyScore} compact={compact} /> : null}
     </div>
   );
 }
