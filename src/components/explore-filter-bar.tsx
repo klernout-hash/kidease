@@ -52,12 +52,14 @@ function IconToggle({
   count,
   onClick,
   children,
+  "data-ke": dataKe,
 }: {
   pressed: boolean;
   label: string;
   count?: number;
   onClick: () => void;
   children: ReactNode;
+  "data-ke"?: string;
 }) {
   return (
     <button
@@ -66,6 +68,7 @@ function IconToggle({
       aria-pressed={pressed}
       aria-label={count ? `${label} · ${count}` : label}
       title={label}
+      data-ke={dataKe}
       onClick={onClick}
     >
       {children}
@@ -131,7 +134,7 @@ export function ExploreFilterBar({
 
       <ChipCarousel
         compact
-        className="ke-explore-filter-scroll min-w-0 flex-1"
+        className="ke-explore-filter-scroll"
         label={t("searchRowFilters")}
       >
         <LiveAllSegment
@@ -157,6 +160,7 @@ export function ExploreFilterBar({
           pressed={filtersOpen || filterCount > 0}
           label={t("filters")}
           count={filterCount || undefined}
+          data-ke="explore-filters-toggle"
           onClick={onFilters}
         >
           <SlidersHorizontal className="size-4 shrink-0" aria-hidden="true" />

@@ -313,6 +313,14 @@
     width: 100%;
     min-width: 0;
     max-width: 100%;
+    overflow: hidden;
+  }
+  .ke-explore-filter-bar > [data-chip-carousel] {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
   .ke-explore-scope {
     display: inline-flex;
@@ -361,13 +369,14 @@
   }
   .ke-explore-filter-actions {
     position: relative;
-    z-index: 2;
+    z-index: 20;
     display: flex;
     flex: 0 0 auto;
     align-items: center;
     gap: 0.35rem;
     padding-left: 0.15rem;
     background: var(--color-bg);
+    isolation: isolate;
   }
   .ke-explore-filter-actions::before {
     content: "";

@@ -51,6 +51,7 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   assert.match(bar, /t\("sortOpen"\)/);
   assert.match(bar, /t\("filterTen"\)/);
   assert.match(bar, /ke-explore-icon-btn/);
+  assert.match(bar, /data-ke="explore-filters-toggle"/);
   assert.match(bar, /SlidersHorizontal/);
   assert.match(bar, /<Map /);
   assert.doesNotMatch(bar, /t\("nearWork"\)/);
@@ -84,6 +85,9 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   assert.match(search, /writeCategorySearch\(activeCat === cat \? undefined : cat\)/);
   assert.match(filters, /hideKeys/);
   assert.match(chips, /isRailAge/);
+  assert.match(chips, /RAIL_AGES/);
+  assert.match(chips, /catInfants|EXPLORE_CATEGORY_COPY/);
+  assert.doesNotMatch(chips, /visibleExploreCategories/);
 
   assert.match(copy, /catAllAges: "All ages"/);
   assert.match(copy, /nearMe: "Near me"/);

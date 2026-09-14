@@ -1,12 +1,8 @@
 import type { ComponentProps } from "react";
 import { Baby, Backpack, Shapes, Smile, type LucideIcon } from "lucide-react";
 import { ChipButton } from "@/components/chip";
-import { isRailAge } from "@/lib/care-type";
-import {
-  EXPLORE_CATEGORY_COPY,
-  visibleExploreCategories,
-  type ExploreCategory,
-} from "@/lib/explore-categories";
+import { isRailAge, RAIL_AGES } from "@/lib/care-type";
+import { EXPLORE_CATEGORY_COPY, type ExploreCategory } from "@/lib/explore-categories";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -19,20 +15,18 @@ const CAT_ICON: Partial<Record<ExploreCategory, LucideIcon>> = {
 
 export function ExploreCategoryChips({
   selected,
-  counts,
   onSelect,
 }: {
   selected?: ExploreCategory;
-  counts: Record<ExploreCategory, number>;
+  counts?: Record<ExploreCategory, number>;
   onSelect: (cat?: ExploreCategory) => void;
 }) {
   const { t } = useCopy();
-  const visible = visibleExploreCategories(counts, selected).filter((cat) => isRailAge(cat));
   const ageOn = selected && isRailAge(selected) ? selected : undefined;
 
   return (
     <>
-      {visible.map((cat) => {
+      {RAIL_AGES.map((cat) => {
         const Icon = CAT_ICON[cat];
         return (
           <ExploreCatChip

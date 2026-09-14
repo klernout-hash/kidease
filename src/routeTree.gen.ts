@@ -56,8 +56,8 @@ import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
-import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
+import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
@@ -171,14 +171,14 @@ const CookiesRoute = CookiesRouteImport.update({
   path: '/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DaycaresRoute = DaycaresRouteImport.update({
-  id: '/daycares',
-  path: '/daycares',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DaycareRequirementsRoute = DaycareRequirementsRouteImport.update({
   id: '/daycare-requirements',
   path: '/daycare-requirements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DaycaresRoute = DaycaresRouteImport.update({
+  id: '/daycares',
+  path: '/daycares',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeleteAccountRoute = DeleteAccountRouteImport.update({
@@ -341,14 +341,14 @@ const ApiSearchAlertsRoute = ApiSearchAlertsRouteImport.update({
   path: '/api/search-alerts',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
-  id: '/api/tour-holds',
-  path: '/api/tour-holds',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiSeedCatalogRoute = ApiSeedCatalogRouteImport.update({
   id: '/api/seed-catalog',
   path: '/api/seed-catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
+  id: '/api/tour-holds',
+  path: '/api/tour-holds',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
@@ -596,8 +596,8 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
-  '/daycares': typeof DaycaresRoute
   '/daycare-requirements': typeof DaycareRequirementsRoute
+  '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
@@ -630,8 +630,8 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
-  '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
+  '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
@@ -693,8 +693,8 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
-  '/daycares': typeof DaycaresRoute
   '/daycare-requirements': typeof DaycareRequirementsRoute
+  '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
@@ -725,8 +725,8 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
-  '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
+  '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
@@ -789,8 +789,8 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
-  '/daycares': typeof DaycaresRoute
   '/daycare-requirements': typeof DaycareRequirementsRoute
+  '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
@@ -823,8 +823,8 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/search-alerts': typeof ApiSearchAlertsRoute
-  '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
+  '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
@@ -888,8 +888,8 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
-    | '/daycares'
     | '/daycare-requirements'
+    | '/daycares'
     | '/delete-account'
     | '/explore'
     | '/faq'
@@ -922,8 +922,8 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/inngest'
     | '/api/search-alerts'
-    | '/api/tour-holds'
     | '/api/seed-catalog'
+    | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/checkin/$id'
@@ -985,8 +985,8 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
-    | '/daycares'
     | '/daycare-requirements'
+    | '/daycares'
     | '/delete-account'
     | '/explore'
     | '/faq'
@@ -1017,8 +1017,8 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/inngest'
     | '/api/search-alerts'
-    | '/api/tour-holds'
     | '/api/seed-catalog'
+    | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/checkin/$id'
@@ -1080,8 +1080,8 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
-    | '/daycares'
     | '/daycare-requirements'
+    | '/daycares'
     | '/delete-account'
     | '/explore'
     | '/faq'
@@ -1114,8 +1114,8 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/inngest'
     | '/api/search-alerts'
-    | '/api/tour-holds'
     | '/api/seed-catalog'
+    | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/checkin/$id'
@@ -1178,8 +1178,8 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
-  DaycaresRoute: typeof DaycaresRoute
   DaycareRequirementsRoute: typeof DaycareRequirementsRoute
+  DaycaresRoute: typeof DaycaresRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
@@ -1212,8 +1212,8 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
-  ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
+  ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
@@ -1331,6 +1331,13 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/cookies'
       preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daycare-requirements': {
+      id: '/daycare-requirements'
+      path: '/daycare-requirements'
+      fullPath: '/daycare-requirements'
+      preLoaderRoute: typeof DaycareRequirementsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daycares': {
@@ -1522,13 +1529,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/daycare-requirements': {
-      id: '/daycare-requirements'
-      path: '/daycare-requirements'
-      fullPath: '/daycare-requirements'
-      preLoaderRoute: typeof DaycareRequirementsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/verify': {
       id: '/verify'
       path: '/verify'
@@ -1571,18 +1571,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSearchAlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/tour-holds': {
-      id: '/api/tour-holds'
-      path: '/api/tour-holds'
-      fullPath: '/api/tour-holds'
-      preLoaderRoute: typeof ApiTourHoldsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/seed-catalog': {
       id: '/api/seed-catalog'
       path: '/api/seed-catalog'
       fullPath: '/api/seed-catalog'
       preLoaderRoute: typeof ApiSeedCatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tour-holds': {
+      id: '/api/tour-holds'
+      path: '/api/tour-holds'
+      fullPath: '/api/tour-holds'
+      preLoaderRoute: typeof ApiTourHoldsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/unsubscribe': {
@@ -2011,8 +2011,8 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
-  DaycaresRoute: DaycaresRoute,
   DaycareRequirementsRoute: DaycareRequirementsRoute,
+  DaycaresRoute: DaycaresRoute,
   DeleteAccountRoute: DeleteAccountRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
@@ -2045,8 +2045,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
-  ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
+  ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,

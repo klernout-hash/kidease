@@ -341,7 +341,7 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.doesNotMatch(search, /SearchAgeGate/);
   assert.doesNotMatch(search, /hideAge/);
   assert.match(search, /start: incoming\.start/);
-  assert.match(chips, /visibleExploreCategories/);
+  assert.match(chips, /RAIL_AGES/);
   assert.match(search, /s\.cat/);
   assert.match(search, /isExploreCategory/);
   assert.match(search, /ke-listings/);
@@ -351,7 +351,7 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.doesNotMatch(search, /ExploreRails/);
   assert.doesNotMatch(search, /FacilityTypeRails/);
   assert.match(chips, /data-explore-cat/);
-  assert.match(chips, /visibleExploreCategories/);
+  assert.match(chips, /RAIL_AGES/);
   assert.match(lib, /listingAgeUnknown/);
   assert.match(chips, /EXPLORE_CATEGORY_COPY/);
   assert.match(src("src/lib/copy.ts"), /catInfants: "Infants"/);
