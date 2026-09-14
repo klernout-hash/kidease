@@ -1301,6 +1301,19 @@ export const copy = {
     teamGoalT: "Our Shared Goal",
     teamGoal:
       "Together, Kyle and Kevin built KidEase as a Canada-wide, trustworthy tool for finding licensed daycare — with real information, real photos, and real proximity.",
+    donateToKids: "Donate to Kids",
+    donateHeadline: "Every dollar donated through KidEase, KidEase will match.",
+    donateLead:
+      "Choose a Canadian children’s hospital foundation. You give on their official donate page; KidEase matches that gift. Donations are optional — not required to search, claim a listing, or use KidEase.",
+    donateSickKidsName: "SickKids Foundation",
+    donateSickKidsBody:
+      "Canada’s leading charitable funder of childhood research and care. A widely recognized, high-trust name whose gifts support life-saving research, advanced paediatric equipment, and family programs for children facing serious illness.",
+    donateCchfName: "Canada’s Children’s Hospital Foundations (CCHF)",
+    donateCchfBody:
+      "A national network supporting 13 major children’s hospitals — including BC Children’s, Alberta Children’s, CHEO, and IWK Health Centre — so impact can feel local wherever you are in Canada. Their donate page lets you support the network.",
+    donateCta: "Donate on their official site",
+    donateNote:
+      "KidEase does not process donations or store payment details. Official foundation sites open in a new tab. The match is KidEase’s stated program: we match every dollar given through these links. Giving is never required to use KidEase.",
     contact: "Contact",
     contactTitle: "Contact Us",
     contactIntro: "Have a question, suggestion, or need help using KidEase? We’d love to hear from you.",
@@ -3235,6 +3248,19 @@ export const copy = {
     teamGoalT: "Notre objectif commun",
     teamGoal:
       "Ensemble, Kyle et Kevin ont créé KidEase : un outil pancanadien, clair et digne de confiance pour trouver une garderie permise — avec de vraies infos, de vraies photos et une vraie proximité.",
+    donateToKids: "Donner pour les enfants",
+    donateHeadline: "Chaque dollar donné par l’intermédiaire de KidEase, KidEase le verse en contrepartie.",
+    donateLead:
+      "Choisissez une fondation d’hôpital pour enfants au Canada. Vous donnez sur leur page officielle; KidEase égale ce don. Les dons sont facultatifs — pas exigés pour chercher, réclamer une fiche ou utiliser KidEase.",
+    donateSickKidsName: "Fondation SickKids",
+    donateSickKidsBody:
+      "Le principal bailleur de fonds caritatif de la recherche et des soins pour les enfants au Canada. Un nom largement reconnu, en qui les familles ont confiance, dont les dons soutiennent la recherche qui sauve des vies, l’équipement pédiatrique avancé et les programmes d’appui aux familles.",
+    donateCchfName: "Fondations des hôpitaux pour enfants du Canada (CCHF)",
+    donateCchfBody:
+      "Un réseau national qui appuie 13 grands hôpitaux pour enfants — dont BC Children’s, Alberta Children’s, le CHEO et le IWK Health Centre — pour que l’impact puisse se sentir local, où que vous soyez au Canada. Leur page de don permet de soutenir le réseau.",
+    donateCta: "Donner sur leur site officiel",
+    donateNote:
+      "KidEase ne traite pas les dons et ne conserve aucun renseignement de paiement. Les sites officiels des fondations s’ouvrent dans un nouvel onglet. La contrepartie est l’engagement annoncé par KidEase : nous égalons chaque dollar donné par ces liens. Donner n’est jamais exigé pour utiliser KidEase.",
     contact: "Contact",
     contactTitle: "Nous joindre",
     contactIntro: "Une question, une suggestion, ou besoin d’aide avec KidEase ? Écrivez-nous.",

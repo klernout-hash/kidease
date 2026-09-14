@@ -67,6 +67,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     { to: "/benefits", label: t("benefitsTab"), icon: "benefits" as const },
     { to: "/get-app", label: t("getApp"), icon: "getApp" as const },
     { to: localePath("/about", locale), label: t("about"), icon: "about" as const },
+    { to: localePath("/donate", locale), label: t("donateToKids"), icon: "donate" as const },
     { to: "/team", label: t("team"), icon: "team" as const },
     { to: localePath("/contact", locale), label: t("contact"), icon: "contact" as const },
   ];

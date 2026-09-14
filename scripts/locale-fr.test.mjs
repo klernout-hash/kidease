@@ -79,6 +79,7 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/help"));
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/get-app"));
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/benefits"));
+  assert.ok(SITEMAP_FR_PATHS.includes("/fr/donate"));
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/login"));
   assert.ok(!SITEMAP_FR_PATHS.includes("/fr/explore"));
   const paths = sitemapPublicPaths();
@@ -94,6 +95,7 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
     "/fr/contact",
     "/fr/get-app",
     "/fr/benefits",
+    "/fr/donate",
     "/fr/login",
     "/fr/jobs",
     "/fr/jobs/post",
@@ -120,6 +122,7 @@ test("FR routes and language toggle are wired to the existing locale store", () 
     "src/routes/fr.contact.tsx",
     "src/routes/fr.get-app.tsx",
     "src/routes/fr.benefits.tsx",
+    "src/routes/fr.donate.tsx",
     "src/routes/fr.login.tsx",
     "src/routes/fr.jobs.tsx",
     "src/routes/fr.jobs_.post.tsx",

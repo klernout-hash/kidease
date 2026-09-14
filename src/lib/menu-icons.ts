@@ -14,6 +14,7 @@ import {
   Cookie,
   FileText,
   Heart,
+  HeartHandshake,
   HelpCircle,
   Info,
   Landmark,
@@ -54,6 +55,7 @@ export type MenuIconId =
   | "benefits"
   | "getApp"
   | "about"
+  | "donate"
   | "team"
   | "contact"
   | "share"
@@ -90,6 +92,7 @@ export const MENU_ICONS: Record<MenuIconId, LucideIcon> = {
   benefits: Landmark,
   getApp: Smartphone,
   about: Info,
+  donate: HeartHandshake,
   team: Users,
   contact: Mail,
   share: Share2,
