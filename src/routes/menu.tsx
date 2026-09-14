@@ -99,6 +99,7 @@ function MenuPage() {
             <RateKidEaseMenuRow />
           </Suspense>
           <MenuRow to="/about" label={t("about")} icon="about" />
+          <MenuRow to="/donate" label={t("donateToKids")} icon="donate" />
           <MenuRow to="/team" label={t("team")} icon="team" />
           <MenuRow to="/contact" label={t("contact")} icon="contact" />
         </Group>

@@ -30,6 +30,7 @@ const REQUIRED_PAGES = [
   ["compare", "src/routes/compare.tsx"],
   ["claim", "src/routes/claim.tsx"],
   ["team", "src/routes/team.tsx"],
+  ["donate", "src/routes/donate.tsx"],
   ["tourChecklist", "src/routes/tour-checklist.tsx"],
   ["search", "src/routes/search.tsx"],
 ];

@@ -7,10 +7,17 @@ Providers: Enroll Now / Claim listing, free, live spots and fees, storefront pho
 Fees: unclaimed listings say fee not confirmed — never invent a price. Live listings (claimed centres) show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
 Privacy: PIPEDA. We do not sell data. Children’s details only for the parent and a centre they contact. Processors include Google Maps/Places, Better Auth / Google sign-in, Resend, Titan (operator mail), Vercel, Neon, Cloudflare when proxied, Stripe when enabled, PostHog when product analytics is allowed (page views and masked session replay — not ads). Location is GPS or typed address for distance search only — not shared with other parents, no background tracking. Cookie policy at /cookies. Website visitors choose Essential or Allow analytics before PostHog loads. No advertising trackers. The native app does not show this banner.
 App: website + iPhone + Android, same accounts.
+Donate to Kids at https://www.kidease.ca/donate is optional philanthropy — not required to use KidEase. KidEase does not process donations. Official SickKids Foundation and Canada’s Children’s Hospital Foundations (CCHF) pages open in a new tab. KidEase states it will match every dollar given through those links.
 
 ${BENEFITS_BRIEF}`;
 
 const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
+  {
+    keys: ["donate", "donation", "sickkids", "cchf", "charity", "match dollar"],
+    lines: [
+      "Donate to Kids is optional. KidEase does not process payments. Official SickKids Foundation and Canada’s Children’s Hospital Foundations (CCHF) donate pages open from kidease.ca/donate. KidEase states it will match every dollar given through those links. You can use KidEase without donating.",
+    ],
+  },
   {
     keys: ["enroll", "provider", "claim", "listing", "centre owner", "daycare owner", "partner"],
     lines: [
