@@ -16,8 +16,9 @@ test("Explore hides empty category rails and keeps #209 single-bar filters", () 
   const bar = src("src/components/explore-filter-bar.tsx");
   const origin = src("src/lib/default-origin.ts");
 
-  assert.match(rails, /openings\.length \? \(/);
-  assert.doesNotMatch(rails, /openingsRailEmpty/);
+  assert.match(rails, /showOpenings/);
+  assert.match(rails, /openingsSelected \|\| \(!filtered && openings\.length > 0\)/);
+  assert.match(rails, /persist=\{forced\}/);
   assert.match(search, /preferCompleteCards/);
   assert.match(search, /h-\[min\(40dvh,22rem\)\]/);
   assert.doesNotMatch(search, /62dvh/);

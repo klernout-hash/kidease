@@ -111,8 +111,35 @@ function exploreCategoryToSearchAge(cat) {
   return ["infant", "toddler", "preschool", "school-age"].includes(cat) ? cat : undefined;
 }
 
+function csvTokens(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean);
+  if (typeof value !== "string") return [];
+  return value.split(",").map((part) => part.trim()).filter(Boolean);
+}
+
+function parseExploreRailAges(search) {
+  const fromAge = ["infant", "toddler", "preschool", "school-age"].filter((age) =>
+    csvTokens(search.age).includes(age),
+  );
+  if (fromAge.length) return fromAge;
+  if (["infant", "toddler", "preschool", "school-age"].includes(search.cat)) return [search.cat];
+  return [];
+}
+
+function formatExploreRailAges(ages) {
+  const unique = ["infant", "toddler", "preschool", "school-age"].filter((age) => ages.includes(age));
+  return unique.length ? unique.join(",") : undefined;
+}
+
+function toggleExploreRailAge(ages, age) {
+  const next = ages.includes(age) ? ages.filter((item) => item !== age) : [...ages, age];
+  return ["infant", "toddler", "preschool", "school-age"].filter((item) => next.includes(item));
+}
+
 function resolvedExploreCategory(search) {
   if (EXPLORE_CATEGORIES.includes(search.cat)) return search.cat;
+  const ages = parseExploreRailAges(search);
+  if (ages.length === 1) return ages[0];
   if (EXPLORE_CATEGORIES.includes(search.age)) return search.age;
   if (search.care === "home" || search.care === "nursery" || search.care === "before-after") {
     return search.care;
@@ -301,6 +328,23 @@ test("age chips 1–4 set the age-first search gate; facility chips do not", () 
   assert.equal(resolvedExploreCategory({ cat: "home", age: "infant" }), "home");
 });
 
+test("multi-select age query uses comma-separated ?age= and keeps All exclusive", () => {
+  assert.deepEqual(parseExploreRailAges({ age: "infant,toddler,preschool" }), [
+    "infant",
+    "toddler",
+    "preschool",
+  ]);
+  assert.deepEqual(parseExploreRailAges({ age: ["toddler", "infant"] }), ["infant", "toddler"]);
+  assert.deepEqual(parseExploreRailAges({ cat: "school-age" }), ["school-age"]);
+  assert.deepEqual(parseExploreRailAges({}), []);
+  assert.equal(formatExploreRailAges(["preschool", "infant"]), "infant,preschool");
+  assert.equal(formatExploreRailAges([]), undefined);
+  assert.deepEqual(toggleExploreRailAge(["infant"], "toddler"), ["infant", "toddler"]);
+  assert.deepEqual(toggleExploreRailAge(["infant", "toddler"], "infant"), ["toddler"]);
+  assert.deepEqual(toggleExploreRailAge(["infant", "toddler"], "toddler"), ["infant"]);
+  assert.equal(resolvedExploreCategory({ age: "infant,toddler" }), undefined);
+});
+
 test("zero-count tags stay off the page empty-state; All still includes unknown ages", () => {
   const rows = [
     listing({ amenities: "licensed,home", agesKnown: true, ageMinMonths: 0, ageMaxMonths: 18 }),
@@ -332,10 +376,14 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.match(lib, /exploreCategoryToSearchAge/);
   assert.match(lib, /listingMatchesExploreFilter/);
   assert.match(lib, /isFacilityExploreCategory/);
+  assert.match(lib, /parseExploreRailAges/);
+  assert.match(lib, /formatExploreRailAges/);
+  assert.match(lib, /toggleExploreRailAge/);
   assert.match(search, /listingMatchesExploreFilter/);
   assert.doesNotMatch(lib, /Tiny Tots/);
   assert.match(search, /ExploreCategoryChips/);
   assert.match(search, /writeCategorySearch/);
+  assert.match(search, /writeRailSelection/);
   assert.match(search, /searchFiltersReady/);
   assert.match(search, /splitSearchResults/);
   assert.doesNotMatch(search, /SearchAgeGate/);

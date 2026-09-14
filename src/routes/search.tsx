@@ -79,10 +79,14 @@ import {
 import {
   EXPLORE_CATEGORY_COPY,
   countExploreCategories,
+  exploreOpeningsSelected,
+  formatExploreRailAges,
   isExploreCategory,
   isFacilityExploreCategory,
   listingMatchesExploreFilter,
+  parseExploreRailAges,
   resolvedExploreCategory,
+  toggleExploreRailAge,
   type ExploreCategory,
 } from "@/lib/explore-categories";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
@@ -137,11 +141,12 @@ export const Route = createFileRoute("/search")({
       from?: string;
       to?: string;
       sort?: SortKey;
-      age?: RailAge;
+      age?: string;
       start?: SearchStart;
       cat?: ExploreCategory;
       care?: CareType;
       favorites?: "1";
+      openings?: "1";
       ages?: string;
       open?: string;
       sched?: string;
@@ -155,7 +160,9 @@ export const Route = createFileRoute("/search")({
     ) {
       out.sort = sort as SortKey;
     }
-    if (typeof s.age === "string" && isRailAge(s.age)) out.age = s.age;
+    const ageCsv = formatExploreRailAges(parseExploreRailAges({ age: s.age, cat: s.cat }));
+    if (ageCsv) out.age = ageCsv;
+    if (s.openings === "1" || s.openings === true || s.openings === 1) out.openings = "1";
     if (typeof s.start === "string" && isSearchStart(s.start)) out.start = s.start;
     if (typeof s.cat === "string" && isExploreCategory(s.cat)) out.cat = s.cat;
     if (typeof s.care === "string" && isCareType(s.care)) out.care = s.care;
@@ -251,8 +258,11 @@ function SearchPage() {
 
   useEffect(() => {
     if (incoming.sort) setSort(incoming.sort);
+    const selectedAges = parseExploreRailAges(incoming);
     const cat = resolvedExploreCategory(incoming);
-    const ageGate = (cat && isRailAge(cat) ? cat : incoming.age) as RailAge | undefined;
+    const ageGate = (
+      selectedAges.length === 1 ? selectedAges[0] : cat && isRailAge(cat) ? cat : undefined
+    ) as RailAge | undefined;
     if (ageGate === "school-age") {
       setSchoolAgeOnly(true);
       setAgeGroup("any");
@@ -268,7 +278,7 @@ function SearchPage() {
     if (incoming.start === "now" || incoming.start === "this-month" || incoming.start === "next-month") {
       setNeedBy(startWindowToDate(incoming.start));
     }
-  }, [incoming.sort, incoming.age, incoming.cat, incoming.care, incoming.favorites, incoming.start, setSort, setAgeGroup]);
+  }, [incoming.sort, incoming.age, incoming.cat, incoming.care, incoming.favorites, incoming.start, incoming.openings, setSort, setAgeGroup]);
 
   useEffect(() => {
     setNameQuery(incoming.name ?? "");
@@ -465,6 +475,7 @@ function SearchPage() {
         cat: incoming.cat,
         care: incoming.care,
         favorites: incoming.favorites,
+        openings: incoming.openings,
         ages: undefined,
         open: undefined,
         sched: undefined,
@@ -494,6 +505,7 @@ function SearchPage() {
         cat: incoming.cat,
         care: incoming.care,
         favorites: incoming.favorites,
+        openings: incoming.openings,
       }),
     });
   }
@@ -520,13 +532,24 @@ function SearchPage() {
         cat,
         care: incoming.care,
         favorites: incoming.favorites,
+        openings: incoming.openings,
       }),
     });
   }
 
-  /** Age chips 1–4 write `?age=`. All / facility chips clear the age band. */
-  function writeCategorySearch(cat?: ExploreCategory) {
-    const age = cat && isRailAge(cat) ? cat : undefined;
+  function writeRailSelection(next: { ages?: RailAge[]; openings?: boolean; cat?: ExploreCategory }) {
+    const ages = next.ages ?? parseExploreRailAges(incoming);
+    const age = formatExploreRailAges(ages);
+    const openings = (next.openings ?? exploreOpeningsSelected(incoming)) ? ("1" as const) : undefined;
+    const keepFacility = isFacilityExploreCategory(next.cat ?? incoming.cat);
+    const cat =
+      next.cat !== undefined
+        ? next.cat
+        : ages.length === 1
+          ? ages[0]
+          : keepFacility
+            ? incoming.cat
+            : undefined;
     void navigate({
       search: withParentSearch({
         q: incoming.q ?? query,
@@ -538,26 +561,28 @@ function SearchPage() {
         age,
         start: incoming.start,
         favorites: incoming.favorites,
+        openings,
       }),
+    });
+  }
+
+  /** Age chips 1–4 write `?age=`. All / facility chips clear the age band. */
+  function writeCategorySearch(cat?: ExploreCategory) {
+    const age = cat && isRailAge(cat) ? [cat] : [];
+    writeRailSelection({
+      ages: age,
+      cat,
+      openings: cat ? exploreOpeningsSelected(incoming) : false,
     });
   }
 
   /** Row B age chips. Clearing age keeps a facility chip from Filters. */
   function writeAgeSearch(age?: RailAge) {
-    const keepFacility = isFacilityExploreCategory(incoming.cat);
-    void navigate({
-      search: withParentSearch({
-        q: incoming.q ?? query,
-        name: incoming.name,
-        from: incoming.from,
-        to: incoming.to,
-        sort: incoming.sort,
-        cat: age ?? (keepFacility ? incoming.cat : undefined),
-        age,
-        start: incoming.start,
-        favorites: incoming.favorites,
-      }),
-    });
+    if (!age) {
+      writeRailSelection({ ages: [], openings: false, cat: isFacilityExploreCategory(incoming.cat) ? incoming.cat : undefined });
+      return;
+    }
+    writeRailSelection({ ages: toggleExploreRailAge(parseExploreRailAges(incoming), age) });
   }
 
   async function applyQuery() {
@@ -775,11 +800,14 @@ function SearchPage() {
     nameQuery,
     parentFilters,
   ]);
-  const searchAge = isSearchAge(incoming.age)
-    ? incoming.age
-    : isSearchAge(incoming.cat)
-      ? incoming.cat
-      : undefined;
+  const selectedAges = parseExploreRailAges(incoming);
+  const openingsOn = exploreOpeningsSelected(incoming);
+  const searchAge =
+    selectedAges.length === 1
+      ? selectedAges[0]
+      : isSearchAge(incoming.cat)
+        ? incoming.cat
+        : undefined;
   const searchStart = isSearchStart(incoming.start) ? incoming.start : undefined;
   const gated = searchFiltersReady(searchAge, searchStart, {
     q: incoming.q ?? query,
@@ -853,7 +881,9 @@ function SearchPage() {
     (favoritesOnly ? 1 : 0) +
     (careType !== "any" ? 1 : 0) +
     (schoolAgeOnly ? 1 : 0) +
-    (resolvedExploreCategory(incoming) ? 1 : 0);
+    (selectedAges.length ? 1 : 0) +
+    (openingsOn ? 1 : 0) +
+    (resolvedExploreCategory(incoming) && !isRailAge(resolvedExploreCategory(incoming)) ? 1 : 0);
   const sheetFilterCount =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +
@@ -1140,14 +1170,14 @@ function SearchPage() {
           onLocate={() => void geo()}
           onSubmit={() => void applyQuery()}
         />
+        <div className="ke-explore-filter-sticky mt-3">
         <ExploreFilterBar
-          className="mt-3"
           liveOnly={liveOnly}
           listingCount={items !== null ? resultCount : undefined}
           onLiveOnly={setLiveOnly}
           ageChips={
             <ExploreCategoryChips
-              selected={activeCat && isRailAge(activeCat) ? activeCat : undefined}
+              selected={selectedAges}
               counts={exploreCatCounts}
               onSelect={(cat) => writeAgeSearch(cat && isRailAge(cat) ? cat : undefined)}
             />
@@ -1157,8 +1187,8 @@ function SearchPage() {
             setAnchorMode("home");
             void geo();
           }}
-          openSpotsOn={avail === "open"}
-          onOpenSpots={() => setAvail((v) => (v === "open" ? "any" : "open"))}
+          openSpotsOn={openingsOn}
+          onOpenSpots={() => writeRailSelection({ openings: !openingsOn })}
           tenOn={ten}
           onTen={() => setTen((v) => !v)}
           filtersOpen={
@@ -1175,6 +1205,7 @@ function SearchPage() {
             setView(view === "map" ? "list" : "map");
           }}
         />
+        </div>
 
         {askLocation ? (
           <div className="mt-3">
@@ -1406,7 +1437,13 @@ function SearchPage() {
               {whereSet ? <CityHubLinks className="mt-4" headingKey="otherCities" /> : null}
             </div>
           ) : (
-            <ExploreCategoryRails items={railItems} onHover={setActive} />
+            <ExploreCategoryRails
+              items={railItems}
+              directory={items ?? []}
+              selectedAges={selectedAges}
+              openingsSelected={openingsOn}
+              onHover={setActive}
+            />
           )}
           {gated && split.ageUnknown.length ? (
             <div className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">
