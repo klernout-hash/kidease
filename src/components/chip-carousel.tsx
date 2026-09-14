@@ -7,18 +7,20 @@ const SCROLL_SCRIPT = `window.__keChipCarousel||(window.__keChipCarousel=1,docum
 
 /**
  * One labelled chip row that scrolls sideways instead of wrapping
- * into a dense grid. Arrows show when the row overflows. On small
- * screens they stay visible even before hydration so Map is reachable.
+ * into a dense grid. Arrows show only when the row overflows so a
+ * parent bar can keep Filters / Map sticky on the right.
  */
 export function ChipCarousel({
   children,
   label,
   className,
+  compact = false,
   "data-search-row": row,
 }: {
   children: ReactNode;
   label: string;
   className?: string;
+  compact?: boolean;
   "data-search-row"?: string;
 }) {
   const { t } = useCopy();
@@ -82,6 +84,7 @@ export function ChipCarousel({
       ref={wrap}
       className={cn("relative w-full min-w-0 max-w-full", className)}
       data-chip-carousel=""
+      data-chip-compact={compact ? "1" : "0"}
       data-chip-overflow={overflow ? "1" : "0"}
       data-search-row={row}
     >
@@ -94,7 +97,7 @@ export function ChipCarousel({
         onClick={() => go(-1)}
         className={cn(
           "absolute left-0 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-fg shadow-card ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30",
-          overflow ? (!canPrev ? "opacity-30" : "") : "lg:hidden",
+          overflow ? (!canPrev ? "opacity-30" : "") : "hidden",
         )}
       >
         <ChevronLeft className="size-4" strokeWidth={2} />
@@ -103,7 +106,10 @@ export function ChipCarousel({
         ref={scroller}
         role="group"
         aria-label={label}
-        className={cn("ke-chip-carousel w-full min-w-0 px-12", overflow ? "lg:px-12" : "lg:px-0")}
+        className={cn(
+          "ke-chip-carousel w-full min-w-0",
+          overflow ? (compact ? "px-10" : "px-12") : "px-0",
+        )}
       >
         <div ref={track} className="ke-chip-carousel-track">
           {children}
@@ -117,7 +123,7 @@ export function ChipCarousel({
         onClick={() => go(1)}
         className={cn(
           "absolute right-0 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-fg shadow-card ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30",
-          overflow ? (!canNext ? "opacity-30" : "") : "lg:hidden",
+          overflow ? (!canNext ? "opacity-30" : "") : "hidden",
         )}
       >
         <ChevronRight className="size-4" strokeWidth={2} />
