@@ -20,7 +20,7 @@ import {
   writeReviewUrlForPlatform,
 } from "../src/lib/store-review.ts";
 import { STORE } from "../src/lib/store-listing.ts";
-import { FOOTER_PARENTS } from "../src/lib/site-footer-nav.ts";
+import { FOOTER_KIDEASE } from "../src/lib/site-footer-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -116,7 +116,7 @@ describe("plugin wiring and honest copy", () => {
     assert.match(home, /RateKidEasePrompt/);
     assert.match(home, /Guest www homepage/);
     assert.match(home, /!user \? \(/);
-    assert.ok(FOOTER_PARENTS.some((link) => link.to === "/get-app" && link.labelKey === "rateKidEase"));
+    assert.ok(FOOTER_KIDEASE.some((link) => link.to === "/get-app" && link.labelKey === "rateKidEase"));
     assert.match(src("src/components/nav-drawer.tsx"), /RateKidEaseControl/);
     assert.match(src("src/components/shell.tsx"), /RateKidEaseControl/);
     assert.match(rate, /to: "\/get-app"/);

@@ -296,7 +296,7 @@ export const MARKETING_PAGE_SEO = {
     path: "/jobs",
   },
   jobsPost: {
-    title: "Add jobs at KidEase · Licensed centres",
+    title: "KidEase Careers · Licensed centres",
     description:
       "Licensed centres can tell KidEase about an opening. This is a waitlist note, not a live job board. We do not publish unverified roles.",
     path: "/jobs/post",
@@ -366,7 +366,7 @@ export const MARKETING_PAGE_SEO_FR = {
     path: "/fr/jobs",
   },
   jobsPost: {
-    title: "Afficher des postes sur KidEase · Centres permis",
+    title: "Carrières KidEase · Centres permis",
     description:
       "Les centres permis peuvent parler à KidEase d’une ouverture. C’est une note d’attente, pas un babillard en direct. Nous n’affichons pas de postes non vérifiés.",
     path: "/fr/jobs/post",

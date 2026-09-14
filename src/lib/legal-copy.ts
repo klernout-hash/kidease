@@ -345,6 +345,7 @@ export const PRIVACY_EN: LegalDoc = {
             "Push or lock-screen alerts, when we enable them, will be opt-in on the device. You can turn them off in the operating system. We will not use push for ads.",
           ],
         },
+        { type: "link", to: "/unsubscribe", label: "Unsubscribe from marketing email or SMS" },
       ],
     },
     {
@@ -700,6 +701,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Les notifications push, lorsqu’elles seront activées, seront facultatives sur l’appareil. Pas de publicité par push.",
           ],
         },
+        { type: "link", to: "/unsubscribe", label: "Se désabonner des courriels ou textos marketing" },
       ],
     },
     {

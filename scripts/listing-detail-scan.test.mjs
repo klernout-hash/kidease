@@ -49,9 +49,12 @@ test("Support verify page holds listing explanations", () => {
   assert.match(verify, /id="unclaimed"/);
   assert.match(verify, /verifyUnclaimedBody/);
   const footer = src("src/lib/site-footer-nav.ts");
+  const daycares = footer.slice(footer.indexOf("FOOTER_DAYCARES"), footer.indexOf("FOOTER_KIDEASE"));
   const support = footer.slice(footer.indexOf("FOOTER_SUPPORT"), footer.indexOf("FOOTER_COLUMNS"));
-  assert.match(support, /"\/verify"/);
-  assert.match(support, /"\/daycare-requirements"/);
+  assert.match(daycares, /"\/verify"/);
+  assert.match(daycares, /"\/daycare-requirements"/);
+  assert.doesNotMatch(support, /"\/verify"/);
+  assert.doesNotMatch(support, /"\/daycare-requirements"/);
   assert.match(src("src/routes/menu.tsx"), /to="\/verify"/);
   assert.match(src("src/routes/menu.tsx"), /to="\/daycare-requirements"/);
 });

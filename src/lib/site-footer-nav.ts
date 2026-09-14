@@ -31,8 +31,6 @@ export const FOOTER_PARENTS: FooterLinkDef[] = [
   copyLink("/compare", "compare"),
   copyLink("/parent", "saved", { search: { tab: "saved" } }),
   copyLink("/get-app", "getApp"),
-  // Web footer is website-only; same destination as rateKidEaseFromMenu() on www.
-  copyLink("/get-app", "rateKidEase"),
 ];
 
 /** Daycares column — keep the live Daycares / Garderies label. */
@@ -47,26 +45,24 @@ export const FOOTER_DAYCARES: FooterLinkDef[] = [
   copyLink("/jobs", "findDaycareJobs", { localePaired: true }),
 ];
 
-/** KidEase column (was Caregivers & jobs) — jobs links live here. */
+/** KidEase column — company / product. Careers stays /jobs/post (no careers route). */
 export const FOOTER_KIDEASE: FooterLinkDef[] = [
-  copyLink("/jobs", "findDaycareJobs", { localePaired: true }),
-  copyLink("/jobs/post", "addJobsAtKidEase", { localePaired: true }),
-];
-
-/** Support column (was KidEase) — help, contact, legal. */
-export const FOOTER_SUPPORT: FooterLinkDef[] = [
-  copyLink("/help", "helpTitle", { localePaired: true }),
-  copyLink("/contact", "contactTitle", { localePaired: true }),
-  literalLink("/faq", "FAQ", "FAQ", { localePaired: true }),
-  copyLink("/how-it-works", "howItWorksCta", { localePaired: true }),
   copyLink("/about", "about", { localePaired: true }),
   copyLink("/team", "team"),
-  copyLink("/verify", "verifyListings"),
-  copyLink("/daycare-requirements", "daycareRequirements"),
+  copyLink("/how-it-works", "howItWorksCta", { localePaired: true }),
+  copyLink("/jobs/post", "addJobsAtKidEase", { localePaired: true }),
+  // Web footer is website-only; same destination as rateKidEaseFromMenu() on www.
+  copyLink("/get-app", "rateKidEase"),
+];
+
+/** Support column — help and legal only. Unsubscribe lives on Privacy + email, not here. */
+export const FOOTER_SUPPORT: FooterLinkDef[] = [
+  copyLink("/help", "helpTitle", { localePaired: true }),
+  literalLink("/faq", "FAQ", "FAQ", { localePaired: true }),
+  copyLink("/contact", "contactTitle", { localePaired: true }),
   copyLink("/privacy", "privacy", { localePaired: true }),
   copyLink("/terms", "terms", { localePaired: true }),
   copyLink("/cookies", "cookies", { localePaired: true }),
-  copyLink("/unsubscribe", "unsubscribe"),
 ];
 
 export const FOOTER_COLUMNS: Record<FooterColumnId, FooterLinkDef[]> = {
