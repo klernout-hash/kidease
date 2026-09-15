@@ -15,7 +15,15 @@ const REQUIRED = [
   "public/photos/hero-768.webp",
   "public/photos/hero-480.avif",
   "public/photos/hero-480.webp",
+  "public/photos/hero-1200-k2.jpg",
+  "public/photos/hero-1200-k2.webp",
+  "public/photos/hero-1200-k2.avif",
+  "public/photos/hero-768-k2.avif",
+  "public/photos/hero-768-k2.webp",
+  "public/photos/hero-480-k2.avif",
+  "public/photos/hero-480-k2.webp",
   "public/photos/playroom-1200.jpg",
+  "public/photos/playroom-1200-k2.jpg",
   "public/photos/community.jpg",
   "public/photos/welcome.jpg",
   "public/photos/cottage.jpg",
@@ -46,12 +54,12 @@ test("marketing feel photos stay on existing /photos paths", () => {
   }
 
   const source = readFileSync(join(root, "src/components/building-photo.tsx"), "utf8");
-  assert.match(source, /\/photos\/hero-1200\.jpg/);
-  assert.match(source, /\/photos\/cottage-768\.avif/);
-  assert.match(source, /\/photos\/kitchen-1200\.webp/);
+  assert.match(source, /\/photos\/hero-1200-k2\.jpg/);
+  assert.match(source, /\/photos\/cottage-768-k2\.avif/);
+  assert.match(source, /\/photos\/kitchen-1200-k2\.webp/);
   assert.match(source, /HERO_LCP_AVIF_SRCSET/);
-  assert.match(source, /hero-480\.avif 480w/);
-  assert.match(source, /hero-768\.avif 768w/);
+  assert.match(source, /hero-480-k2\.avif 480w/);
+  assert.match(source, /hero-768-k2\.avif 768w/);
   assert.match(source, /export function FeelPhoto/);
   assert.match(source, /export function HeroYard/);
   assert.match(source, /feelSrcSet/);
