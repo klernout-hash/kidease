@@ -867,6 +867,7 @@ function SearchPage() {
       n_age_unknown: split.ageUnknown.length,
     });
   }, [gated, items, shownList.length, split.ageUnknown.length, resultCount]);
+  const resolvedCat = resolvedExploreCategory(incoming);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +
@@ -885,7 +886,7 @@ function SearchPage() {
     (schoolAgeOnly ? 1 : 0) +
     (selectedAges.length ? 1 : 0) +
     (openingsOn ? 1 : 0) +
-    (resolvedExploreCategory(incoming) && !isRailAge(resolvedExploreCategory(incoming)) ? 1 : 0);
+    (resolvedCat && !isRailAge(resolvedCat) ? 1 : 0);
   const sheetFilterCount =
     (avail !== "any" ? 1 : 0) +
     (ten ? 1 : 0) +

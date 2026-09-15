@@ -167,7 +167,7 @@ export function parseExploreRailAges(search: { age?: unknown; cat?: unknown }): 
   const tokens = csvTokens(search.age);
   const fromAge = RAIL_AGES.filter((age) => tokens.includes(age));
   if (fromAge.length) return fromAge;
-  if (isRailAge(search.cat)) return [search.cat];
+  if (typeof search.cat === "string" && isRailAge(search.cat)) return [search.cat];
   return [];
 }
 

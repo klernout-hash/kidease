@@ -71,6 +71,7 @@ function ExploreCatChip({
   label: string;
   on: boolean;
   search: Record<string, unknown>;
+  className?: string;
 } & Omit<ComponentProps<typeof Link>, "to" | "search" | "className">) {
   return (
     <Link
