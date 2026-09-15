@@ -59,9 +59,12 @@ test("desk shell uses a phone scroll row and a full-height More sheet, not a flo
   const shell = src("src/components/desk-shell.tsx");
   assert.match(shell, /data-ke="desk-more-sheet"/);
   assert.match(shell, /data-ke="desk-more-open"/);
+  const moreIdx = shell.indexOf("data-ke=\"desk-more-open\"");
+  const navClose = shell.lastIndexOf("</nav>", moreIdx);
+  assert.ok(moreIdx > navClose);
   assert.match(shell, /role="dialog"/);
   assert.match(shell, /aria-modal="true"/);
-  assert.match(shell, /top-\[8dvh\]/);
+  assert.match(shell, /top-\[calc\(4\.25rem\+env\(safe-area-inset-top\)\)\]/);
   assert.match(shell, /overflow-x-auto/);
   assert.match(shell, /hidden text-xs font-medium uppercase[\s\S]*md:block/);
   assert.doesNotMatch(shell, /DaycareMoreMenu/);

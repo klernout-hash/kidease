@@ -122,6 +122,10 @@ test("shortlist chips wrap; Parent/Daycare phone desk nav scrolls instead of wra
   const phone = shell.slice(shell.indexOf("function PhoneDeskNav"), shell.indexOf("export function DeskShell"));
   assert.match(phone, /flex-nowrap/);
   assert.doesNotMatch(phone, /flex-wrap/);
+  assert.match(phone, /data-ke="desk-more-open"/);
+  const moreIdx = phone.indexOf("data-ke=\"desk-more-open\"");
+  const navEnd = phone.indexOf("</nav>");
+  assert.equal(moreIdx > navEnd, true, "More stays pinned outside the scrolling primaries");
   assert.match(src("src/styles.css"), /html\[data-channel="app"\] \.ke-listings-narrow/);
 });
 

@@ -1,5 +1,4 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { CreditCard, Menu, X } from "lucide-react";
 import { Shell } from "@/components/shell";
@@ -150,10 +149,10 @@ function DeskMoreSheet({
     };
   }, [open, onClose]);
 
-  if (typeof document === "undefined" || !open || !items.length) return null;
+  if (!open || !items.length) return null;
 
-  return createPortal(
-    <div className="pointer-events-auto md:hidden" data-ke="desk-more-sheet">
+  return (
+    <div className="pointer-events-auto" data-ke="desk-more-sheet">
       <button
         type="button"
         className="fixed inset-0 z-[70] bg-fg/40 backdrop-blur-[2px]"
@@ -165,7 +164,7 @@ function DeskMoreSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="fixed inset-x-0 bottom-0 top-[8dvh] z-[80] flex flex-col rounded-t-2xl bg-surface shadow-lift ring-1 ring-border"
+        className="fixed inset-x-0 bottom-0 top-[calc(4.25rem+env(safe-area-inset-top))] z-[80] flex flex-col rounded-t-2xl bg-surface shadow-lift ring-1 ring-border"
       >
         <div className="flex shrink-0 flex-col items-center pt-2">
           <span className="h-1 w-10 rounded-full bg-border" aria-hidden />
@@ -184,7 +183,7 @@ function DeskMoreSheet({
             <X className="size-5" strokeWidth={1.75} />
           </button>
         </div>
-        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 pb-[max(1.25rem,calc(5.5rem+env(safe-area-inset-bottom)))]">
           {items.map((item) => {
             const on = itemIsOn(item, active, pathname);
             const { label, hint } = deskItemText(item, t);
@@ -236,8 +235,7 @@ function DeskMoreSheet({
           })}
         </nav>
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }
 
@@ -263,27 +261,29 @@ function PhoneDeskNav({
 
   return (
     <>
-      <nav
-        data-ke="desk-tab-nav"
-        aria-label={label}
-        className="flex max-w-full flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {primary.map((item) => {
-          const on = itemIsOn(item, active, pathname);
-          const className = "shrink-0 whitespace-nowrap";
-          if (item.href) {
+      <div className="flex items-center gap-2">
+        <nav
+          data-ke="desk-tab-nav"
+          aria-label={label}
+          className="flex min-w-0 flex-1 flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {primary.map((item) => {
+            const on = itemIsOn(item, active, pathname);
+            const className = "shrink-0 whitespace-nowrap";
+            if (item.href) {
+              return (
+                <span key={item.id} className={className}>
+                  <DeskNavLink item={item} on={on} t={t} />
+                </span>
+              );
+            }
             return (
               <span key={item.id} className={className}>
-                <DeskNavLink item={item} on={on} t={t} />
+                <DeskNavButton item={item} on={on} onSelect={onSelect} t={t} />
               </span>
             );
-          }
-          return (
-            <span key={item.id} className={className}>
-              <DeskNavButton item={item} on={on} onSelect={onSelect} t={t} />
-            </span>
-          );
-        })}
+          })}
+        </nav>
         {secondary.length ? (
           <button
             type="button"
@@ -298,7 +298,7 @@ function PhoneDeskNav({
             <span className="font-medium">{t("deskNavMore")}</span>
           </button>
         ) : null}
-      </nav>
+      </div>
       <DeskMoreSheet
         items={secondary}
         active={active}
