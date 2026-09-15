@@ -13,9 +13,9 @@ function src(rel) {
 test("home LCP hero is preloaded and sized instead of a late 1200-only AVIF", () => {
   const photo = src("src/components/building-photo.tsx");
   assert.match(photo, /HERO_LCP_AVIF_SRCSET/);
-  assert.match(photo, /\/photos\/hero-480-k2\.avif 480w/);
-  assert.match(photo, /\/photos\/hero-768-k2\.avif 768w/);
-  assert.match(photo, /\/photos\/hero-1200-k2\.avif 1200w/);
+  assert.match(photo, /\/photos\/hero-480-k2\.avif\?v=1 480w/);
+  assert.match(photo, /\/photos\/hero-768-k2\.avif\?v=1 768w/);
+  assert.match(photo, /\/photos\/hero-1200-k2\.avif\?v=1 1200w/);
   assert.match(photo, /fetchPriority=\{priority \? "high" : eager \? "auto" : "low"\}/);
   assert.match(photo, /fetchPriority=\{eager \? "high" : "auto"\}/);
   const listing = src("src/routes/daycare.$slug.tsx");
