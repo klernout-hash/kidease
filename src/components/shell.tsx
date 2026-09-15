@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Heart, ClipboardCheck, Menu, MessageCircle, Search } from "lucide-react";
+import { Menu } from "lucide-react";
+import { AppTabBar } from "@/components/app-tab-bar";
 import { NotificationBell } from "@/components/notification-bell";
 import { RateKidEaseControl } from "@/components/rate-kidease";
 import { ShareKidEaseButton } from "@/components/share-button";
@@ -21,7 +22,6 @@ import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
-import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { rememberResumePath } from "@/lib/retention";
@@ -102,38 +102,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
           </div>
         </header>
         <div className="[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]">{children}</div>
-        <nav className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
-          <div className="mx-auto grid max-w-lg grid-cols-5 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
-            <Tab
-              to="/"
-              label={t("search")}
-              icon={Search}
-              active={false}
-            />
-            <Tab
-              to="/parent"
-              search={{ tab: "saved" }}
-              label={t("saved")}
-              icon={Heart}
-              active={false}
-            />
-            <Tab
-              to="/parent"
-              search={{ tab: "enrolled" }}
-              label={t("enrolled")}
-              icon={ClipboardCheck}
-              active={false}
-            />
-            <Tab
-              to="/inbox"
-              search={inboxSearch(inboxViewForDesk(sticky))}
-              label={t("messages")}
-              icon={MessageCircle}
-              active={false}
-            />
-            <Tab to="/menu" label={locale === "fr" ? "Menu" : "Menu"} icon={Menu} active />
-          </div>
-        </nav>
+        <AppTabBar />
       </div>
     );
   }
@@ -214,46 +183,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         {children}
       </div>
       {hideFooter || bare ? null : <SiteFooter />}
-      {hideTabs ? null : (
-        <nav className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block">
-          <div className="mx-auto grid max-w-lg grid-cols-5 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
-            <Tab
-              to="/"
-              label={t("search")}
-              icon={Search}
-              active={
-                pathname === "/" ||
-                pathname === "/fr" ||
-                pathname.startsWith("/search") ||
-                pathname.startsWith("/fr/search") ||
-                pathname.startsWith("/daycare")
-              }
-            />
-            <Tab
-              to="/parent"
-              search={{ tab: "saved" }}
-              label={t("saved")}
-              icon={Heart}
-              active={pathname.startsWith("/parent") && tab === "saved"}
-            />
-            <Tab
-              to="/parent"
-              search={{ tab: "enrolled" }}
-              label={t("enrolled")}
-              icon={ClipboardCheck}
-              active={pathname.startsWith("/parent") && tab === "enrolled"}
-            />
-            <Tab
-              to="/inbox"
-              search={inboxSearch(inboxViewForDesk(sticky))}
-              label={t("messages")}
-              icon={MessageCircle}
-              active={pathname.startsWith("/inbox")}
-            />
-            <Tab to="/menu" label={locale === "fr" ? "Menu" : "Menu"} icon={Menu} active={pathname.startsWith("/menu")} />
-          </div>
-        </nav>
-      )}
+      {hideTabs ? null : <AppTabBar />}
       {hideTabs || pathname.startsWith("/search") || pathname.startsWith("/parent") || pathname.startsWith("/menu") ? null : <LiveChatSlot />}
     </div>
   );
@@ -361,33 +291,5 @@ function HeaderProfile({
         </div>
       ) : null}
     </div>
-  );
-}
-
-function Tab({
-  to,
-  label,
-  icon: Icon,
-  active,
-  search,
-}: {
-  to: string;
-  label: string;
-  icon: typeof Search;
-  active: boolean;
-  search?: Record<string, string>;
-}) {
-  return (
-    <Link
-      to={to}
-      search={search}
-      className={cn(
-        "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 text-[9px] font-medium tracking-wide",
-        active ? "text-primary" : "text-muted",
-      )}
-    >
-      <Icon className="size-5" strokeWidth={active ? 2.2 : 1.7} fill={active && Icon === Heart ? "currentColor" : "none"} />
-      {label}
-    </Link>
   );
 }

@@ -60,6 +60,7 @@ test("verify-2fa keeps OTP state under Shell and never silently ignores a Verify
   assert.match(route, /<VerifyTwoFactorForm dest=\{dest\} userId=\{user\.id\} \/>/);
   assert.match(route, /<ShellLite>/);
   assert.match(src("src/components/shell-lite.tsx"), /export function ShellLite/);
+  assert.match(src("src/components/shell-lite.tsx"), /<AppTabBar \/>/);
   assert.match(src("src/routes/menu.tsx"), /ShellLite/);
   assert.match(route, /submitLock/);
   assert.match(route, /explainBlocker/);

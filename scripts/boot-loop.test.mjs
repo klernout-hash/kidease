@@ -119,7 +119,10 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(src("src/components/kidease-toaster.tsx"), /pointerEvents: "none"/);
     assert.match(index, /ke-web-only/);
     assert.match(index, /ke-app-only/);
-    assert.match(shell, /ke-app-only/);
+    assert.match(shell, /AppTabBar/);
+    assert.match(src("src/components/app-tab-bar.tsx"), /ke-app-only/);
+    assert.match(src("src/components/shell-lite.tsx"), /AppTabBar/);
+    assert.doesNotMatch(src("src/components/shell-lite.tsx"), /MenuAppTabs/);
     assert.match(footer, /ke-web-only/);
     assert.match(help, /width=\{44\}/);
     assert.match(help, /maxWidth: 44/);
