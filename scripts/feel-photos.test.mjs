@@ -17,6 +17,7 @@ const REQUIRED = [
   "public/photos/hero-480.webp",
   "public/photos/playroom-1200.jpg",
   "public/photos/community.jpg",
+  "public/photos/welcome.jpg",
   "public/photos/cottage.jpg",
   "public/photos/cottage-768.avif",
   "public/photos/cottage-768.webp",
@@ -71,4 +72,5 @@ test("marketing feel photos stay on existing /photos paths", () => {
   assert.match(readFileSync(join(root, "src/routes/help.tsx"), "utf8"), /FeelBanner/);
   assert.match(readFileSync(join(root, "src/routes/claim.tsx"), "utf8"), /\/photos\/brick\.jpg/);
   assert.match(readFileSync(join(root, "src/routes/help.tsx"), "utf8"), /\/photos\/cottage\.jpg/);
+  assert.match(readFileSync(join(root, "src/routes/login.tsx"), "utf8"), /\/photos\/welcome\.jpg/);
 });
