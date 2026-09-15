@@ -13,9 +13,9 @@ import { cn } from "@/lib/utils";
 
 /** Mobile Lighthouse LCP: sized AVIF, not a late-discovered 1200-only file. */
 export const HERO_LCP_AVIF_SRCSET =
-  "/photos/hero-480.avif 480w, /photos/hero-768.avif 768w, /photos/hero-1200.avif 1200w";
+  "/photos/hero-480-k2.avif 480w, /photos/hero-768-k2.avif 768w, /photos/hero-1200-k2.avif 1200w";
 export const HERO_LCP_WEBP_SRCSET =
-  "/photos/hero-480.webp 480w, /photos/hero-768.webp 768w, /photos/hero-1200.webp 1200w";
+  "/photos/hero-480-k2.webp 480w, /photos/hero-768-k2.webp 768w, /photos/hero-1200-k2.webp 1200w";
 export const HERO_LCP_SIZES = HERO_SIZES;
 
 const FALLBACK = "/photos/storefront-placeholder-480.webp";
@@ -149,9 +149,9 @@ type FeelSource = {
 const FEEL_SOURCES: Record<string, FeelSource> = {
   "/photos/hero.jpg": {
     variants: [
-      { width: 480, avif: "/photos/hero-480.avif", webp: "/photos/hero-480.webp", jpg: "/photos/hero-1200.jpg" },
-      { width: 768, avif: "/photos/hero-768.avif", webp: "/photos/hero-768.webp", jpg: "/photos/hero-1200.jpg" },
-      { width: 1200, avif: "/photos/hero-1200.avif", webp: "/photos/hero-1200.webp", jpg: "/photos/hero-1200.jpg" },
+      { width: 480, avif: "/photos/hero-480-k2.avif", webp: "/photos/hero-480-k2.webp", jpg: "/photos/hero-1200-k2.jpg" },
+      { width: 768, avif: "/photos/hero-768-k2.avif", webp: "/photos/hero-768-k2.webp", jpg: "/photos/hero-1200-k2.jpg" },
+      { width: 1200, avif: "/photos/hero-1200-k2.avif", webp: "/photos/hero-1200-k2.webp", jpg: "/photos/hero-1200-k2.jpg" },
     ],
     avifSrcSet: HERO_LCP_AVIF_SRCSET,
     webpSrcSet: HERO_LCP_WEBP_SRCSET,
@@ -161,30 +161,30 @@ const FEEL_SOURCES: Record<string, FeelSource> = {
   },
   "/photos/playroom.jpg": {
     variants: [
-      { width: 1200, avif: "/photos/playroom-1200.avif", webp: "/photos/playroom-1200.webp", jpg: "/photos/playroom-1200.jpg" },
+      { width: 1200, avif: "/photos/playroom-1200-k2.avif", webp: "/photos/playroom-1200-k2.webp", jpg: "/photos/playroom-1200-k2.jpg" },
     ],
     width: 1200,
     height: 900,
   },
   "/photos/playroom-1200.jpg": {
     variants: [
-      { width: 1200, avif: "/photos/playroom-1200.avif", webp: "/photos/playroom-1200.webp", jpg: "/photos/playroom-1200.jpg" },
+      { width: 1200, avif: "/photos/playroom-1200-k2.avif", webp: "/photos/playroom-1200-k2.webp", jpg: "/photos/playroom-1200-k2.jpg" },
     ],
     width: 1200,
     height: 900,
   },
   "/photos/cottage.jpg": {
     variants: [
-      { width: 768, avif: "/photos/cottage-768.avif", webp: "/photos/cottage-768.webp", jpg: "/photos/cottage-768.jpg" },
-      { width: 1200, avif: "/photos/cottage-1200.avif", webp: "/photos/cottage-1200.webp", jpg: "/photos/cottage-1200.jpg" },
+      { width: 768, avif: "/photos/cottage-768-k2.avif", webp: "/photos/cottage-768-k2.webp", jpg: "/photos/cottage-768-k2.jpg" },
+      { width: 1200, avif: "/photos/cottage-1200-k2.avif", webp: "/photos/cottage-1200-k2.webp", jpg: "/photos/cottage-1200-k2.jpg" },
     ],
     width: 1200,
     height: 900,
   },
   "/photos/kitchen.jpg": {
     variants: [
-      { width: 768, avif: "/photos/kitchen-768.avif", webp: "/photos/kitchen-768.webp", jpg: "/photos/kitchen-768.jpg" },
-      { width: 1200, avif: "/photos/kitchen-1200.avif", webp: "/photos/kitchen-1200.webp", jpg: "/photos/kitchen-1200.jpg" },
+      { width: 768, avif: "/photos/kitchen-768-k2.avif", webp: "/photos/kitchen-768-k2.webp", jpg: "/photos/kitchen-768-k2.jpg" },
+      { width: 1200, avif: "/photos/kitchen-1200-k2.avif", webp: "/photos/kitchen-1200-k2.webp", jpg: "/photos/kitchen-1200-k2.jpg" },
     ],
     width: 1200,
     height: 900,

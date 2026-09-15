@@ -13,9 +13,9 @@ function src(rel) {
 test("home LCP hero is preloaded and sized instead of a late 1200-only AVIF", () => {
   const photo = src("src/components/building-photo.tsx");
   assert.match(photo, /HERO_LCP_AVIF_SRCSET/);
-  assert.match(photo, /\/photos\/hero-480\.avif 480w/);
-  assert.match(photo, /\/photos\/hero-768\.avif 768w/);
-  assert.match(photo, /\/photos\/hero-1200\.avif 1200w/);
+  assert.match(photo, /\/photos\/hero-480-k2\.avif 480w/);
+  assert.match(photo, /\/photos\/hero-768-k2\.avif 768w/);
+  assert.match(photo, /\/photos\/hero-1200-k2\.avif 1200w/);
   assert.match(photo, /fetchPriority=\{priority \? "high" : eager \? "auto" : "low"\}/);
   assert.match(photo, /fetchPriority=\{eager \? "high" : "auto"\}/);
   const listing = src("src/routes/daycare.$slug.tsx");
@@ -31,9 +31,9 @@ test("home LCP hero is preloaded and sized instead of a late 1200-only AVIF", ()
   assert.doesNotMatch(home, /eager=\{i < 3\}/);
   assert.match(home, /eagerThumbs=\{false\}/);
 
-  const avif480 = statSync(join(root, "public/photos/hero-480.avif")).size;
-  const avif768 = statSync(join(root, "public/photos/hero-768.avif")).size;
-  const avif1200 = statSync(join(root, "public/photos/hero-1200.avif")).size;
+  const avif480 = statSync(join(root, "public/photos/hero-480-k2.avif")).size;
+  const avif768 = statSync(join(root, "public/photos/hero-768-k2.avif")).size;
+  const avif1200 = statSync(join(root, "public/photos/hero-1200-k2.avif")).size;
   assert.ok(avif480 < avif768, "480 AVIF should be smaller than 768");
   assert.ok(avif768 < avif1200, "768 AVIF should be smaller than 1200");
   assert.ok(avif480 < 40_000, "mobile 1x hero should stay well under the 1200 file");

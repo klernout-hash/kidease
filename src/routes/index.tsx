@@ -92,7 +92,7 @@ export const Route = createFileRoute("/")({
           rel: "preload",
           as: "image",
           type: "image/avif",
-          href: "/photos/hero-768.avif",
+          href: "/photos/hero-768-k2.avif",
           imageSrcSet: HERO_LCP_AVIF_SRCSET,
           imageSizes: HERO_LCP_SIZES,
           fetchPriority: "high",
