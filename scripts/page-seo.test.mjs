@@ -33,6 +33,7 @@ const REQUIRED_PAGES = [
   ["team", "src/routes/team.tsx"],
   ["tourChecklist", "src/routes/tour-checklist.tsx"],
   ["search", "src/routes/search.tsx"],
+  ["startADaycare", "src/routes/start-a-daycare.tsx"],
 ];
 
 test("marketing pages have unique titles and descriptions that are not the home leak", () => {

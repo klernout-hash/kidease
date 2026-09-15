@@ -29,6 +29,7 @@ const PUBLIC_PATHS = [
   "/get-app",
   "/claim",
   "/compare",
+  "/start-a-daycare",
 ];
 
 test("robots.txt keeps admin disallows and points Sitemap at the www URL", () => {

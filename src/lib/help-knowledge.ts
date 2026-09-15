@@ -20,6 +20,13 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
     ],
   },
   {
+    keys: ["start a daycare", "open a daycare", "ouvrir une garderie", "start daycare", "open daycare", "how to start"],
+    lines: [
+      "KidEase does not issue licences. Open a licensed daycare through your province or territory first — rules differ across Canada. The Start a Daycare page at kidease.ca/start-a-daycare walks through the high-level steps.",
+      "After you are licensed, claim or enroll at kidease.ca/claim so parents can find your fees and spots. Official registries are linked from How we verify listings and Daycare requirements.",
+    ],
+  },
+  {
     keys: ["search", "near me", "location", "map", "km", "radius", "find"],
     lines: [
       "Tap Search Daycares Near Me or Explore. We use your location (or an address / city / postal code) and list every licensed centre inside the radius you set in Filters (1–50 km, or miles). Add a work or school address and toggle Near you, Work, or Both — Both only shows centres inside both circles.",

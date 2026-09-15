@@ -29,6 +29,7 @@ import {
   Shield,
   ShieldCheck,
   Smartphone,
+  Sprout,
   Star,
   Trash2,
   User,
@@ -70,6 +71,7 @@ export type MenuIconId =
   | "deleteAccount"
   | "tourChecklist"
   | "verify"
+  | "startDaycare"
   | "appearance";
 
 export const MENU_ICONS: Record<MenuIconId, LucideIcon> = {
@@ -107,6 +109,7 @@ export const MENU_ICONS: Record<MenuIconId, LucideIcon> = {
   deleteAccount: Trash2,
   tourChecklist: ClipboardCheck,
   verify: ShieldCheck,
+  startDaycare: Sprout,
   appearance: Palette,
 };
 

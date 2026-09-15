@@ -33,6 +33,7 @@ export const LOCALE_PAIRED_PATHS = [
   "/login",
   "/jobs",
   "/jobs/post",
+  "/start-a-daycare",
 ] as const;
 
 export type LocalePairedPath = (typeof LOCALE_PAIRED_PATHS)[number];

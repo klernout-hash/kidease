@@ -52,6 +52,7 @@ export const FOOTER_KIDEASE: FooterLinkDef[] = [
   copyLink("/team", "team"),
   copyLink("/how-it-works", "howItWorksCta", { localePaired: true }),
   copyLink("/jobs/post", "addJobsAtKidEase", { localePaired: true }),
+  copyLink("/start-a-daycare", "startADaycare", { localePaired: true }),
   // Web footer is website-only; same destination as rateKidEaseFromMenu() on www.
   copyLink("/get-app", "rateKidEase"),
 ];
