@@ -26,7 +26,7 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | `FEATURE_SMS` | off | `sendSms` in `src/lib/server/sms.ts`. No-ops if flag off, secrets missing, or no CASL grant. Waitlist pulse + claim-status SMS. **Programmable SMS (Messages API), not Twilio Verify.** | Consent on profile / search alerts / Plus checkout always (capture before flip). Alerts show a stub until send is armed. | Chat lab + `alertSmsStub`. |
 | `FEATURE_PUSH` | off | `sendPushToDevices` (FCM HTTP v1 / APNs). Register `POST /api/push/register` uses **armed** (Production requires secrets). | Native Capacitor only after `getPushClientStatus().enabled`. www never prompts. | Chat lab dry-run. Inbox / www stay silent. |
 | `FEATURE_VIDEO` | off | `createVideoRoom` / `createVideoAccessToken`. Admin `/video/lab` may mint to verify credentials. | Inbox Video icon only when `videoSurfaceEnabled` (flag armed **and** `VIDEO_SDK_WIRED`). `/video/$roomId` is honest when off / no secrets / SDK missing. | Coming-soon copy on `/video/$roomId`. |
-| `FEATURE_INAPP_CHAT` | off | None. Composer refuses send. | Chat lab disabled composer. Live threads stay on `/inbox`. | `docs/chat.md`. |
+| `FEATURE_INAPP_CHAT` | off | None. Composer refuses send. | Guest HelpBot + chat lab only. Live parent ↔ centre threads stay on `/inbox` (not this flag). | `docs/chat.md`. |
 | `FEATURE_PROVIDER_SUBSCRIPTIONS` | **on** | Stripe checkout still needs live keys. | Director Subscription tab. | Admin can preview when killed. |
 | `SHOW_PAY_CTAS` | **off** | Does not delete Stripe. Checkout still needs live keys **and** this flag (or admin). | Parent Plus, Upgrade, Subscribe, Pro $49 / Network $39 / promote pay buttons. | `/provider/subscription` stays honest: listing and claim stay free. Admin Stripe catalog stays. |
 
@@ -59,7 +59,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_SMS` | no | Default **off**. Leave `0` until Twilio + CASL are ready. |
 | `FEATURE_PUSH` | no | Default **off**. Leave `0` until FCM / APNs + a native binary exist. |
 | `FEATURE_VIDEO` | no | Default **off**. Leave `0` until Twilio Video credentials exist. |
-| `FEATURE_INAPP_CHAT` | no | Default **off**. Chat lab composer stays disabled even if set to `1`. |
+| `FEATURE_INAPP_CHAT` | no | Default **off**. Guest HelpBot + chat lab only. Do not flip this to enable parent ↔ centre `/inbox` — that path is already live. |
 | `FEATURE_PROVIDER_SUBSCRIPTIONS` | no | Default **on** when unset. |
 | `SHOW_PAY_CTAS` | no | Default **off**. Leave `0` on Production. Set `1` to restore Upgrade / Subscribe chrome. Does not flip SMS / Push / Video. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |

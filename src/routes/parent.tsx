@@ -13,9 +13,9 @@ const ParentDesk = lazy(() =>
 
 export const Route = createFileRoute("/parent")({
   validateSearch: (s: Record<string, unknown>) => {
-    const out: { tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children"; preview?: "support" } = {};
+    const out: { tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care"; preview?: "support" } = {};
     const tab = s.tab;
-    if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "alerts" || tab === "children") out.tab = tab;
+    if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "alerts" || tab === "children" || tab === "care") out.tab = tab;
     if (s.preview === "support") out.preview = "support";
     return out;
   },
@@ -38,7 +38,9 @@ function ParentPage() {
               ? "explore"
               : search.tab === "children"
                 ? "children"
-                : "explore";
+                : search.tab === "care"
+                  ? "care"
+                  : "explore";
 
   if (isPending) {
     return (

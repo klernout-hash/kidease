@@ -1,9 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { centreCanWriteCare } from "@/lib/centre-roles";
+import {
+  careStatusBody,
+  isAttendanceStatus,
+  type AttendanceStatus,
+  type CareAttendanceAction,
+} from "@/lib/daily-care";
 import { nid } from "@/lib/utils";
+import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
+import { insertCareStatusMessage } from "./daily-care";
 
-export type AttendanceStatus = "scheduled" | "arrived" | "departed" | "absent";
+export type { AttendanceStatus };
 
 export type AttendanceRow = {
   id: string;
@@ -42,13 +51,12 @@ export const getWeekSchedule = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const days = weekDays(data.weekStart);
-    const owned = data.daycareId
-      ? await sql<{ daycare_id: string }>`
-          select daycare_id from provider_daycares
-          where user_id = ${context.userId} and daycare_id = ${data.daycareId}
-        `
-      : [];
-    const isProvider = Boolean(owned[0]);
+    const accessible = data.daycareId
+      ? (await loadCentreRole(sql, context.userId, data.daycareId))
+        ? [data.daycareId]
+        : []
+      : await listAccessibleDaycareIds(sql, context.userId);
+    const isProvider = accessible.length > 0;
 
     const kids = isProvider
       ? await sql<{
@@ -65,7 +73,13 @@ export const getWeekSchedule = createServerFn({ method: "POST" })
           from bookings b
           join daycares d on d.id = b.daycare_id
           left join children ch on ch.id = b.child_id
-          where b.daycare_id = ${data.daycareId}
+          where b.daycare_id in (
+              select daycare_id from provider_daycares where user_id = ${context.userId}
+              union
+              select daycare_id from centre_members
+              where user_id = ${context.userId} and status = 'active'
+            )
+            and (${data.daycareId ?? ""} = '' or b.daycare_id = ${data.daycareId ?? ""})
             and b.status in ('accepted', 'active')
           order by child_name
         `
@@ -108,6 +122,10 @@ export const getWeekSchedule = createServerFn({ method: "POST" })
         and (
           parent_user_id = ${context.userId}
           or daycare_id in (select daycare_id from provider_daycares where user_id = ${context.userId})
+          or daycare_id in (
+            select daycare_id from centre_members
+            where user_id = ${context.userId} and status = 'active'
+          )
         )
       order by child_name, day
     `.catch(() => []);
@@ -154,15 +172,16 @@ export const saveAttendance = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const provider = await sql<{ daycare_id: string }>`
-      select daycare_id from provider_daycares
-      where user_id = ${context.userId} and daycare_id = ${data.daycareId}
-    `;
+    if (!isAttendanceStatus(data.status)) throw new Error("Invalid attendance status");
+    const centreRole = await loadCentreRole(sql, context.userId, data.daycareId);
+    const staffOk = centreCanWriteCare(centreRole);
     const parentOk = data.parentUserId === context.userId;
-    if (!provider[0] && !parentOk) {
+    if (!staffOk && !parentOk) {
       const ownBooking = await sql<{ id: string }>`
         select id from bookings
         where id = ${data.bookingId ?? ""} and user_id = ${context.userId}
+          and daycare_id = ${data.daycareId}
+          and status in ('accepted', 'active')
       `;
       if (!ownBooking[0]) throw new Error("Not allowed");
     }
@@ -188,5 +207,20 @@ export const saveAttendance = createServerFn({ method: "POST" })
         booking_id = coalesce(excluded.booking_id, attendance.booking_id),
         conversation_id = coalesce(excluded.conversation_id, attendance.conversation_id)
     `;
+
+    const action: CareAttendanceAction | null =
+      data.status === "arrived" ? "check_in" : data.status === "departed" ? "check_out" : data.status === "absent" ? "absent" : null;
+    if (action) {
+      const centre = await sql<{ name: string }>`select name from daycares where id = ${data.daycareId} limit 1`;
+      const daycareName = centre[0]?.name || "the centre";
+      await insertCareStatusMessage({
+        conversationId: data.conversationId ?? null,
+        daycareId: data.daycareId,
+        daycareName,
+        parentUserId: data.parentUserId ?? (parentOk ? context.userId : null),
+        body: careStatusBody({ kind: action, childName: data.childName, daycareName }),
+        actorUserId: context.userId,
+      }).catch(() => undefined);
+    }
     return { ok: true as const };
   });
