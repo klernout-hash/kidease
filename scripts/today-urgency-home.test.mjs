@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   DAYCARE_PRIMARY_NAV_IDS,
+  PARENT_PRIMARY_NAV_IDS,
   visibleDeskNav,
   visiblePrimaryDeskNav,
   visibleSecondaryDeskNav,
@@ -30,24 +31,25 @@ function src(rel) {
 
 const now = Date.parse("2026-09-13T15:00:00.000Z");
 
-test("daycare primary nav is Today, Messages, Tour times, My listings", () => {
-  assert.deepEqual([...DAYCARE_PRIMARY_NAV_IDS], ["today", "messages", "tours", "listings"]);
+test("daycare primary nav is Today, Messages, Listings, Money", () => {
+  assert.deepEqual([...DAYCARE_PRIMARY_NAV_IDS], ["today", "messages", "listings", "money"]);
   const primary = visiblePrimaryDeskNav("daycare", {
     providerSubscriptions: true,
     showPayCtas: true,
     centreOwner: true,
   }).map((i) => i.id);
-  assert.deepEqual(primary, ["today", "messages", "tours", "listings"]);
+  assert.deepEqual(primary, ["today", "messages", "listings", "money"]);
   assert.equal(primary.length <= 4, true);
   const secondary = visibleSecondaryDeskNav("daycare", {
     providerSubscriptions: true,
     showPayCtas: true,
     centreOwner: true,
   }).map((i) => i.id);
+  assert.equal(secondary.includes("tours"), true);
   assert.equal(secondary.includes("requests"), true);
   assert.equal(secondary.includes("employees"), true);
   assert.equal(secondary.includes("screening"), true);
-  assert.equal(secondary.includes("money"), true);
+  assert.equal(secondary.includes("money"), false);
   assert.equal(secondary.includes("licence"), true);
   assert.equal(secondary.includes("contract"), true);
   assert.equal(secondary.includes("promote"), true);
@@ -56,20 +58,23 @@ test("daycare primary nav is Today, Messages, Tour times, My listings", () => {
   assert.equal(secondary.includes("add"), true);
   assert.equal(secondary.at(-1), "account");
   assert.equal(secondary.includes("today"), false);
+  assert.equal(secondary.includes("messages"), false);
   assert.equal(visibleDeskNav("daycare").some((i) => i.label === "Lead inbox"), true);
   assert.equal(providerNavSearch("today").desk, "today");
   assert.equal(providerNavSearch("requests").desk, "requests");
   assert.equal(PROVIDER_TAB_KEYS.includes("today"), true);
 });
 
-test("parent and admin primary nav stay unchanged", () => {
+test("parent phone primaries are For you, Daily care, Children, Pay", () => {
+  assert.deepEqual([...PARENT_PRIMARY_NAV_IDS], ["explore", "care", "children", "payments"]);
   const parent = visiblePrimaryDeskNav("parent").map((i) => i.id);
-  assert.equal(parent.includes("explore"), true);
-  assert.equal(parent.includes("children"), true);
-  assert.equal(visibleSecondaryDeskNav("parent").length, 0);
+  assert.deepEqual(parent, ["explore", "care", "children", "payments"]);
+  const secondary = visibleSecondaryDeskNav("parent").map((i) => i.id);
+  assert.deepEqual(secondary, ["bookings", "saved", "alerts", "messages", "search", "account"]);
   const admin = visiblePrimaryDeskNav("admin").map((i) => i.id);
   assert.equal(admin.includes("queue"), true);
   assert.equal(admin.includes("daycares"), true);
+  assert.equal(visibleSecondaryDeskNav("admin").length, 0);
 });
 
 test("Today rows order tours, unread, then confirmed today and hide secrets", () => {
