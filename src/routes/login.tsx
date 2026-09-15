@@ -303,7 +303,7 @@ export function LoginScreen({
       >
         <div className="relative hidden min-w-0 overflow-hidden lg:block">
           <img
-            src="/photos/community.jpg"
+            src="/photos/welcome.jpg"
             alt=""
             className="absolute inset-0 size-full object-cover"
             loading="lazy"
