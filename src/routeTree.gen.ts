@@ -46,6 +46,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as StartADaycareRouteImport } from './routes/start-a-daycare'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -79,6 +80,7 @@ import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
+import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -293,6 +295,11 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StartADaycareRoute = StartADaycareRouteImport.update({
+  id: '/start-a-daycare',
+  path: '/start-a-daycare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
@@ -456,6 +463,11 @@ const FrPrivacyRoute = FrPrivacyRouteImport.update({
 const FrSearchRoute = FrSearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrStartADaycareRoute = FrStartADaycareRouteImport.update({
+  id: '/start-a-daycare',
+  path: '/start-a-daycare',
   getParentRoute: () => FrRoute,
 } as any)
 const FrTermsRoute = FrTermsRouteImport.update({
@@ -632,6 +644,7 @@ export interface FileRoutesByFullPath {
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
+  '/start-a-daycare': typeof StartADaycareRoute
   '/support': typeof SupportRouteWithChildren
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
@@ -664,6 +677,7 @@ export interface FileRoutesByFullPath {
   '/fr/login': typeof FrLoginRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
+  '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -729,6 +743,7 @@ export interface FileRoutesByTo {
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
+  '/start-a-daycare': typeof StartADaycareRoute
   '/support': typeof SupportRouteWithChildren
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
@@ -761,6 +776,7 @@ export interface FileRoutesByTo {
   '/fr/login': typeof FrLoginRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
+  '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -829,6 +845,7 @@ export interface FileRoutesById {
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
+  '/start-a-daycare': typeof StartADaycareRoute
   '/support': typeof SupportRouteWithChildren
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
@@ -861,6 +878,7 @@ export interface FileRoutesById {
   '/fr/login': typeof FrLoginRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
+  '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/terms': typeof FrTermsRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -930,6 +948,7 @@ export interface FileRouteTypes {
     | '/provider'
     | '/reset-password'
     | '/search'
+    | '/start-a-daycare'
     | '/support'
     | '/team'
     | '/terms'
@@ -962,6 +981,7 @@ export interface FileRouteTypes {
     | '/fr/login'
     | '/fr/privacy'
     | '/fr/search'
+    | '/fr/start-a-daycare'
     | '/fr/terms'
     | '/inbox/$id'
     | '/invite/$token'
@@ -1027,6 +1047,7 @@ export interface FileRouteTypes {
     | '/provider'
     | '/reset-password'
     | '/search'
+    | '/start-a-daycare'
     | '/support'
     | '/team'
     | '/terms'
@@ -1059,6 +1080,7 @@ export interface FileRouteTypes {
     | '/fr/login'
     | '/fr/privacy'
     | '/fr/search'
+    | '/fr/start-a-daycare'
     | '/fr/terms'
     | '/inbox/$id'
     | '/invite/$token'
@@ -1126,6 +1148,7 @@ export interface FileRouteTypes {
     | '/provider'
     | '/reset-password'
     | '/search'
+    | '/start-a-daycare'
     | '/support'
     | '/team'
     | '/terms'
@@ -1158,6 +1181,7 @@ export interface FileRouteTypes {
     | '/fr/login'
     | '/fr/privacy'
     | '/fr/search'
+    | '/fr/start-a-daycare'
     | '/fr/terms'
     | '/inbox/$id'
     | '/invite/$token'
@@ -1226,6 +1250,7 @@ export interface RootRouteChildren {
   ProviderRoute: typeof ProviderRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
+  StartADaycareRoute: typeof StartADaycareRoute
   SupportRoute: typeof SupportRouteWithChildren
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
@@ -1279,13 +1304,6 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/donate': {
-      id: '/donate'
-      path: '/donate'
-      fullPath: '/donate'
-      preLoaderRoute: typeof DonateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account': {
@@ -1384,6 +1402,13 @@ declare module '@tanstack/react-router' {
       path: '/delete-account'
       fullPath: '/delete-account'
       preLoaderRoute: typeof DeleteAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donate': {
+      id: '/donate'
+      path: '/donate'
+      fullPath: '/donate'
+      preLoaderRoute: typeof DonateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -1526,6 +1551,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/start-a-daycare': {
+      id: '/start-a-daycare'
+      path: '/start-a-daycare'
+      fullPath: '/start-a-daycare'
+      preLoaderRoute: typeof StartADaycareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/support': {
       id: '/support'
       path: '/support'
@@ -1666,13 +1698,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrAboutRouteImport
       parentRoute: typeof FrRoute
     }
-    '/fr/donate': {
-      id: '/fr/donate'
-      path: '/donate'
-      fullPath: '/fr/donate'
-      preLoaderRoute: typeof FrDonateRouteImport
-      parentRoute: typeof FrRoute
-    }
     '/fr/benefits': {
       id: '/fr/benefits'
       path: '/benefits'
@@ -1692,6 +1717,13 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/fr/cookies'
       preLoaderRoute: typeof FrCookiesRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/donate': {
+      id: '/fr/donate'
+      path: '/donate'
+      fullPath: '/fr/donate'
+      preLoaderRoute: typeof FrDonateRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/explore': {
@@ -1755,6 +1787,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/fr/search'
       preLoaderRoute: typeof FrSearchRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/start-a-daycare': {
+      id: '/fr/start-a-daycare'
+      path: '/start-a-daycare'
+      fullPath: '/fr/start-a-daycare'
+      preLoaderRoute: typeof FrStartADaycareRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/terms': {
@@ -1964,6 +2003,7 @@ interface FrRouteChildren {
   FrLoginRoute: typeof FrLoginRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
   FrSearchRoute: typeof FrSearchRoute
+  FrStartADaycareRoute: typeof FrStartADaycareRoute
   FrTermsRoute: typeof FrTermsRoute
   FrIndexRoute: typeof FrIndexRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
@@ -1984,6 +2024,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrLoginRoute: FrLoginRoute,
   FrPrivacyRoute: FrPrivacyRoute,
   FrSearchRoute: FrSearchRoute,
+  FrStartADaycareRoute: FrStartADaycareRoute,
   FrTermsRoute: FrTermsRoute,
   FrIndexRoute: FrIndexRoute,
   FrJobsPostRoute: FrJobsPostRoute,
@@ -2076,6 +2117,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProviderRoute: ProviderRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
+  StartADaycareRoute: StartADaycareRoute,
   SupportRoute: SupportRouteWithChildren,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,

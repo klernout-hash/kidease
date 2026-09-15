@@ -1306,6 +1306,66 @@ export const copy = {
     aboutCommit4: "A clean, easy-to-use experience",
     aboutCommit5: "Respect for your privacy",
     aboutClose: "KidEase is here to support Canadian families in one of the most important decisions they make.",
+    startADaycare: "Start a Daycare",
+    startDaycareTitle: "Start a licensed daycare in Canada",
+    startDaycareHonestyT: "KidEase does not licence daycares",
+    startDaycareHonesty:
+      "KidEase does not issue licences. We do not replace provincial or territorial licensing. We do not guarantee approval, funding, or a grant. Only the government that licences childcare where you operate can do that.",
+    startDaycareNotLicence1: "We do not issue, renew, or inspect licences.",
+    startDaycareNotLicence2: "We do not replace your province or territory’s licensing office.",
+    startDaycareNotLicence3: "We do not guarantee approval or funding.",
+    startDaycareOfficialT: "Licensing is provincial and territorial",
+    startDaycareOfficial:
+      "Requirements differ in every province and territory. Use the official childcare pages and public registry where you will operate — not a blog post, and not KidEase.",
+    startDaycareCanadaElcc: "Canada early learning and child care",
+    startDaycareHero:
+      "Want to open a licensed daycare? This is a Canada-wide overview of the process — then a path to join KidEase as a provider after, or while, you pursue a provincial or territorial licence.",
+    startDaycareIntro:
+      "Enroll today! means claim or create your KidEase listing so parents can find you. It is not a payment to become licensed, and it is not a government application.",
+    startDaycareEnrollLead: "Join KidEase as a provider. Claiming a listing is free.",
+    startDaycareClaimExisting: "Claim an existing licensed centre",
+    startDaycareStepsT: "The process, honestly",
+    startDaycareStep1T: "Research provincial or territorial licensing",
+    startDaycareStep1:
+      "Read your province or territory’s official childcare licensing pages first. Facility types, staff credentials, space, and timelines are not the same across Canada. Use the official registry — KidEase’s verify and daycare-requirements pages point there too.",
+    startDaycareStep2T: "Choose a facility type",
+    startDaycareStep2:
+      "Most jurisdictions licence centres, family or home daycares, and sometimes nursery or preschool programs. Each type has different space, outdoor, and staffing rules. Pick the type you can actually operate before you lease or renovate.",
+    startDaycareStep3T: "Training and screening",
+    startDaycareStep3:
+      "Expect early childhood education credentials for some roles, first aid, and Vulnerable Sector Checks from police or the RCMP. Some provinces also require a child-abuse registry search. KidEase never issues those documents.",
+    startDaycareStep4T: "Space, ratios, and safety",
+    startDaycareStep4:
+      "Licensing looks at indoor and outdoor space per child, age-group ratios, sleep rooms, fire safety, and playgrounds. Build or renovate to the published standard for your facility type — inspectors will measure.",
+    startDaycareStep5T: "Insurance and business setup",
+    startDaycareStep5:
+      "Most operators need commercial general liability (and often abuse-limit coverage), a business registration, and a plan for fees, payroll, and waitlists. Insurance is not a KidEase product.",
+    startDaycareStep6T: "Apply to the province or territory",
+    startDaycareStep6:
+      "Submit the official application, floor plans, policies, and screening packages to the licensing office. Wait for inspection and a written licence before you advertise as licensed. KidEase cannot speed this up.",
+    startDaycareStep7T: "List or claim on KidEase",
+    startDaycareStep7:
+      "Once you are licensed, find your centre in our Canada-wide catalogue and claim it — or enroll if we do not have you yet. Claiming the listing is free.",
+    startDaycareKidEaseT: "What KidEase helps with after you are licensed",
+    startDaycareKidEase1: "Claim your listing so parents see a Live daycare with your name on it.",
+    startDaycareKidEase2: "Message families who are looking nearby — in the app, not a generic inbox dump.",
+    startDaycareKidEase3: "Publish monthly fees and open spots so search results stay honest.",
+    startDaycareGrantsT: "Grants and government supports",
+    startDaycareGrants:
+      "Some provinces and territories offer start-up, space-creation, or operating supports. Those are government applications — often competitive or budget-limited. KidEase does not award grants and will not get you funded.",
+    startDaycareFinderT: "Find your province or territory",
+    startDaycareFinderPh: "Type to filter — Manitoba, Québec, Yukon…",
+    startDaycareFinderHint: "All 13 provinces and territories. Selecting one stays on this page.",
+    startDaycareSelectPt: "Select a province or territory to see official licensing and funding links.",
+    startDaycareNoMatch: "No province or territory matches that search.",
+    startDaycareLicensingT: "Licensing",
+    startDaycareFundingT: "Funding and grants",
+    startDaycareOfficialLink: "Official government page",
+    startDaycareProgramsChange:
+      "Programs change. Confirm amounts, deadlines, and eligibility on the government site. Figures are typical ceilings, not a KidEase promise.",
+    startDaycareCompetitive: "Eligibility is competitive or limited by budget where the government says so.",
+    startDaycareReviewed: "Reviewed September 2026",
+    enrollToday: "Enroll today!",
     donateToKids: "Donate to Kids",
     donateTitle: "Donate to Kids",
     donateLead:
@@ -3276,6 +3336,66 @@ export const copy = {
     aboutCommit4: "Une expérience simple et claire",
     aboutCommit5: "Le respect de votre vie privée",
     aboutClose: "KidEase est là pour accompagner les familles canadiennes dans l’une des décisions les plus importantes.",
+    startADaycare: "Ouvrir une garderie",
+    startDaycareTitle: "Ouvrir une garderie permise au Canada",
+    startDaycareHonestyT: "KidEase ne délivre pas de permis",
+    startDaycareHonesty:
+      "KidEase ne délivre pas de permis. Nous ne remplaçons pas le permis provincial ou territorial. Nous ne garantissons ni l’approbation, ni le financement, ni une subvention. Seul le gouvernement qui délivre les permis là où vous exploitez peut le faire.",
+    startDaycareNotLicence1: "Nous ne délivrons, ne renouvelons ni n’inspectons les permis.",
+    startDaycareNotLicence2: "Nous ne remplaçons pas le bureau des permis de votre province ou territoire.",
+    startDaycareNotLicence3: "Nous ne garantissons ni l’approbation ni le financement.",
+    startDaycareOfficialT: "Le permis est provincial et territorial",
+    startDaycareOfficial:
+      "Les exigences diffèrent dans chaque province et territoire. Utilisez les pages officielles de garde et le registre public là où vous exploitez — pas un blogue, et pas KidEase.",
+    startDaycareCanadaElcc: "Apprentissage et garde des jeunes enfants au Canada",
+    startDaycareHero:
+      "Vous voulez ouvrir une garderie permise ? Voici un aperçu pancanadien du processus — puis un chemin pour joindre KidEase comme fournisseur, après ou pendant votre demande de permis provincial ou territorial.",
+    startDaycareIntro:
+      "Inscrivez-vous aujourd’hui ! signifie réclamer ou créer votre fiche KidEase pour que les parents vous trouvent. Ce n’est pas un paiement pour devenir permis, ni une demande gouvernementale.",
+    startDaycareEnrollLead: "Joignez KidEase comme fournisseur. Réclamer une fiche est gratuit.",
+    startDaycareClaimExisting: "Réclamez un centre déjà permis",
+    startDaycareStepsT: "Le processus, honnêtement",
+    startDaycareStep1T: "Renseignez-vous sur le permis provincial ou territorial",
+    startDaycareStep1:
+      "Lisez d’abord les pages officielles de permis de garde de votre province ou territoire. Types d’établissement, qualifications, espaces et délais ne sont pas les mêmes partout au Canada. Utilisez le registre officiel — les pages de vérification et d’exigences de KidEase y mènent aussi.",
+    startDaycareStep2T: "Choisissez un type d’établissement",
+    startDaycareStep2:
+      "La plupart des provinces et territoires délivrent des permis pour les centres, les milieux familiaux et parfois les nurseries ou prématernelles. Chaque type a ses règles d’espace, d’extérieur et de personnel. Choisissez un type que vous pouvez vraiment exploiter avant de louer ou de rénover.",
+    startDaycareStep3T: "Formation et filtrage",
+    startDaycareStep3:
+      "Attendez-vous à des titres en éducation à la petite enfance pour certains rôles, aux premiers soins et à une vérification du secteur vulnérable par la police ou la GRC. Certaines provinces exigent aussi une recherche au registre des mauvais traitements. KidEase ne délivre jamais ces documents.",
+    startDaycareStep4T: "Espace, ratios et sécurité",
+    startDaycareStep4:
+      "Le permis examine l’espace intérieur et extérieur par enfant, les ratios par âge, les salles de sommeil, la sécurité-incendie et les aires de jeu. Construisez ou rénovez selon la norme publiée pour votre type — les inspecteurs mesureront.",
+    startDaycareStep5T: "Assurance et mise en place de l’entreprise",
+    startDaycareStep5:
+      "La plupart des exploitants ont besoin d’une assurance responsabilité civile commerciale (souvent avec une limite pour abus), d’une immatriculation et d’un plan pour les frais, la paie et les listes d’attente. L’assurance n’est pas un produit KidEase.",
+    startDaycareStep6T: "Présentez une demande à la province ou au territoire",
+    startDaycareStep6:
+      "Soumettez la demande officielle, les plans, les politiques et les dossiers de filtrage au bureau des permis. Attendez l’inspection et un permis écrit avant de vous présenter comme permis. KidEase ne peut pas accélérer cela.",
+    startDaycareStep7T: "Inscrivez ou réclamez votre fiche sur KidEase",
+    startDaycareStep7:
+      "Une fois permis, trouvez votre centre dans notre catalogue pancanadien et réclamez-le — ou inscrivez-vous s’il n’y est pas encore. Réclamer la fiche est gratuit.",
+    startDaycareKidEaseT: "Ce que KidEase aide après l’obtention du permis",
+    startDaycareKidEase1: "Réclamez votre fiche pour que les parents voient une garderie En ligne à votre nom.",
+    startDaycareKidEase2: "Écrivez aux familles du quartier — dans l’application, pas une boîte générique.",
+    startDaycareKidEase3: "Publiez les frais mensuels et les places ouvertes pour que la recherche reste honnête.",
+    startDaycareGrantsT: "Subventions et aides gouvernementales",
+    startDaycareGrants:
+      "Certaines provinces et certains territoires offrent un soutien au démarrage, à la création de places ou au fonctionnement. Ce sont des demandes gouvernementales — souvent concurrentielles ou limitées au budget. KidEase n’accorde pas de subventions et ne vous fera pas financer.",
+    startDaycareFinderT: "Trouvez votre province ou territoire",
+    startDaycareFinderPh: "Tapez pour filtrer — Manitoba, Québec, Yukon…",
+    startDaycareFinderHint: "Les 13 provinces et territoires. Le choix reste sur cette page.",
+    startDaycareSelectPt: "Choisissez une province ou un territoire pour voir les liens officiels de permis et de financement.",
+    startDaycareNoMatch: "Aucune province ni territoire ne correspond.",
+    startDaycareLicensingT: "Permis",
+    startDaycareFundingT: "Financement et subventions",
+    startDaycareOfficialLink: "Page gouvernementale officielle",
+    startDaycareProgramsChange:
+      "Les programmes changent. Confirmez les montants, les dates et l’admissibilité sur le site gouvernemental. Les chiffres sont des plafonds typiques, pas une promesse KidEase.",
+    startDaycareCompetitive: "L’admissibilité est concurrentielle ou limitée au budget lorsque le gouvernement le dit.",
+    startDaycareReviewed: "Révisé en septembre 2026",
+    enrollToday: "Inscrivez-vous aujourd’hui !",
     donateToKids: "Faire un don aux enfants",
     donateTitle: "Faire un don aux enfants",
     donateLead:

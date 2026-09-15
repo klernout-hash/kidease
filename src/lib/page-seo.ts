@@ -307,6 +307,12 @@ export const MARKETING_PAGE_SEO = {
       "Licensed centres can tell KidEase about an opening. This is a waitlist note, not a live job board. We do not publish unverified roles.",
     path: "/jobs/post",
   },
+  startADaycare: {
+    title: "Start a licensed daycare in Canada · KidEase",
+    description:
+      "How to start licensed child care in Canada, with a province finder for official licensing and grant pages. KidEase does not issue licences or award grants. Enroll today joins KidEase as a provider.",
+    path: "/start-a-daycare",
+  },
 } as const;
 
 /** French counterparts for shipped official-language URLs. Catalogue bodies stay EN. */
@@ -382,6 +388,12 @@ export const MARKETING_PAGE_SEO_FR = {
     description:
       "Les centres permis peuvent parler à KidEase d’une ouverture. C’est une note d’attente, pas un babillard en direct. Nous n’affichons pas de postes non vérifiés.",
     path: "/fr/jobs/post",
+  },
+  startADaycare: {
+    title: "Ouvrir une garderie permise au Canada · KidEase",
+    description:
+      "Comment ouvrir un service de garde permis au Canada, avec un filtre par province pour les pages officielles de permis et de subventions. KidEase ne délivre pas de permis et n’accorde pas de subventions.",
+    path: "/fr/start-a-daycare",
   },
 } as const;
 

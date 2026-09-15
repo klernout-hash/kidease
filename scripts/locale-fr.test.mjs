@@ -98,6 +98,7 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
     "/fr/login",
     "/fr/jobs",
     "/fr/jobs/post",
+    "/fr/start-a-daycare",
   ]) {
     assert.match(sitemap, new RegExp(`<loc>https://www.kidease.ca${path}</loc>`));
   }
@@ -125,6 +126,7 @@ test("FR routes and language toggle are wired to the existing locale store", () 
     "src/routes/fr.login.tsx",
     "src/routes/fr.jobs.tsx",
     "src/routes/fr.jobs_.post.tsx",
+    "src/routes/fr.start-a-daycare.tsx",
   ]) {
     assert.equal(existsSync(join(root, file)), true, file);
   }
