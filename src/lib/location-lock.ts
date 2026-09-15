@@ -233,10 +233,10 @@ export function listingMatchesLocationLock(
   if (province && province !== lock.province) return false;
   if (!lock.city) return !province || province === lock.province;
   const cityKey = normalizeCityKey(listing.city);
-  if (!cityKey) return !province || province === lock.province;
+  if (!cityKey) return province === lock.province;
   if (lock.metroKeys.includes(cityKey)) return true;
   if (knownCityOutsideLock(cityKey, lock)) return false;
-  return !province || province === lock.province;
+  return province === lock.province;
 }
 
 export function filterByLocationLock<T extends LocationLockListing>(

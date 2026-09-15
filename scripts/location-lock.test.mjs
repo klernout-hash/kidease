@@ -52,6 +52,31 @@ test("locked Winnipeg excludes Edmonton, Toronto, and Vancouver", () => {
   assert.equal(listingMatchesLocationLock({ city: "Vancouver", province: "BC" }, WINNIPEG_LOCK), false);
   assert.equal(listingMatchesLocationLock({ city: "Winnipeg", province: "MB" }, WINNIPEG_LOCK), true);
   assert.equal(listingMatchesLocationLock({ city: "Brandon", province: "MB" }, WINNIPEG_LOCK), false);
+  assert.equal(listingMatchesLocationLock({ city: "", province: "" }, WINNIPEG_LOCK), false);
+  assert.equal(listingMatchesLocationLock({ city: "Mystery Suburb", province: "" }, WINNIPEG_LOCK), false);
+  assert.equal(listingMatchesLocationLock({ city: "", province: "MB" }, WINNIPEG_LOCK), true);
+});
+
+test("GPS or saved Winnipeg locks as tightly as an explicit city pick", () => {
+  const gps = resolveLocationLock({ lat: WINNIPEG.lat, lng: WINNIPEG.lng, label: WINNIPEG.label });
+  const picked = resolveLocationLock({ q: "Winnipeg, MB" });
+  assert.equal(gps?.province, "MB");
+  assert.equal(gps?.city, "Winnipeg");
+  assert.equal(picked?.province, "MB");
+  assert.equal(picked?.city, "Winnipeg");
+  assert.equal(listingMatchesLocationLock({ city: "Toronto", province: "ON" }, gps), false);
+  assert.equal(listingMatchesLocationLock({ city: "Vancouver", province: "BC" }, gps), false);
+  assert.equal(listingMatchesLocationLock({ city: "Edmonton", province: "AB" }, gps), false);
+});
+
+test("BC lock never backfills Manitoba or Ontario", () => {
+  const lock = resolveLocationLock({ lat: 49.2827, lng: -123.1207, label: "Vancouver, BC" });
+  assert.equal(lock?.province, "BC");
+  assert.equal(lock?.city, "Vancouver");
+  assert.equal(listingMatchesLocationLock({ city: "Vancouver", province: "BC" }, lock), true);
+  assert.equal(listingMatchesLocationLock({ city: "Winnipeg", province: "MB" }, lock), false);
+  assert.equal(listingMatchesLocationLock({ city: "Toronto", province: "ON" }, lock), false);
+  assert.equal(listingMatchesLocationLock({ city: "Edmonton", province: "AB" }, lock), false);
 });
 
 test("changing city to Calgary unlocks Calgary/AB only", () => {
