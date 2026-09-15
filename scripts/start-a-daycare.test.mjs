@@ -7,7 +7,11 @@ import { FOOTER_KIDEASE, FOOTER_DAYCARES } from "../src/lib/site-footer-nav.ts";
 import { LOCALE_PAIRED_PATHS } from "../src/lib/locale-path.ts";
 import { SITEMAP_STATIC_PATHS } from "../src/lib/sitemap.ts";
 import { MARKETING_PAGE_SEO, MARKETING_PAGE_SEO_FR } from "../src/lib/page-seo.ts";
-import { filterStartDaycarePts, START_DAYCARE_PTS } from "../src/lib/start-daycare-hub.ts";
+import {
+  filterStartDaycarePts,
+  parseStartDaycareSearch,
+  START_DAYCARE_PTS,
+} from "../src/lib/start-daycare-hub.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -27,6 +31,11 @@ test("Start a Daycare is one page with honesty first and live claim CTAs", () =>
   const page = src("src/routes/start-a-daycare.tsx");
   assert.match(page, /createFileRoute\("\/start-a-daycare"\)/);
   assert.ok(!/createFileRoute\("\/start-a-daycare\//.test(page));
+  assert.doesNotMatch(page, /start-a-daycare\/\$/);
+  assert.doesNotMatch(page, /start-a-daycare\/:pt/);
+  assert.match(page, /search=\{\{ pt: item\.code/);
+  assert.match(page, /to=\{finderPath\}/);
+  assert.match(page, /method="get"/);
   const honesty = page.indexOf("startDaycareHonestyT");
   const steps = page.indexOf("startDaycareStepsT");
   const finder = page.indexOf("startDaycareFinderT");
@@ -74,6 +83,9 @@ test("Province finder covers all 13 PTs with official government links only", ()
   assert.match(qc.fundingEn, /project call|Québec\.ca|subsidized/i);
   assert.doesNotMatch(qc.fundingEn, /\$350,000/);
   assert.doesNotMatch(src("src/lib/start-daycare-hub.ts"), /KidEase will get you funded/);
+  assert.deepEqual(parseStartDaycareSearch({ pt: "mb", q: "Man" }), { pt: "MB", q: "Man" });
+  assert.deepEqual(parseStartDaycareSearch({ pt: "/manitoba" }), {});
+  assert.equal(parseStartDaycareSearch({ pt: "QC" }).pt, "QC");
 });
 
 test("Start a Daycare has paired FR SEO, sitemap, and locale URL", () => {
@@ -82,6 +94,7 @@ test("Start a Daycare has paired FR SEO, sitemap, and locale URL", () => {
   assert.equal(MARKETING_PAGE_SEO.startADaycare.path, "/start-a-daycare");
   assert.equal(MARKETING_PAGE_SEO_FR.startADaycare.path, "/fr/start-a-daycare");
   assert.match(src("src/routes/fr.start-a-daycare.tsx"), /createFileRoute\("\/fr\/start-a-daycare"\)/);
+  assert.doesNotMatch(src("src/routeTree.gen.ts"), /start-a-daycare\/\$/);
   const sitemap = src("public/sitemap.xml");
   assert.match(sitemap, /https:\/\/www\.kidease\.ca\/start-a-daycare/);
   assert.match(sitemap, /https:\/\/www\.kidease\.ca\/fr\/start-a-daycare/);

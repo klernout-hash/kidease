@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   ArrowUpRight,
@@ -12,7 +12,6 @@ import {
   Shield,
   Wallet,
 } from "lucide-react";
-import { ChipButton } from "@/components/chip";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
@@ -20,13 +19,17 @@ import { canadaFallbackUrl } from "@/lib/province-registry";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import {
   filterStartDaycarePts,
+  parseStartDaycareSearch,
+  startDaycarePath,
   startDaycarePt,
   type StartDaycarePt,
 } from "@/lib/start-daycare-hub";
+import { cn } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 
 export const Route = createFileRoute("/start-a-daycare")({
+  validateSearch: parseStartDaycareSearch,
   head: () => pageSeoHead(MARKETING_PAGE_SEO.startADaycare),
   component: StartADaycarePage,
 });
@@ -111,10 +114,12 @@ function ProvincePanel({ pt, locale }: { pt: StartDaycarePt; locale: string }) {
 
 export function StartADaycarePage() {
   const { t, locale } = useCopy();
-  const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  const search = useSearch({ strict: false }) as { pt?: string; q?: string };
+  const [query, setQuery] = useState(search.q ?? "");
   const filtered = useMemo(() => filterStartDaycarePts(query), [query]);
-  const pt = startDaycarePt(selected);
+  const selected = startDaycarePt(search.pt)?.code;
+  const pt = startDaycarePt(selected) ?? (filtered.length === 1 ? filtered[0] : undefined);
+  const finderPath = startDaycarePath(locale);
 
   return (
     <Shell bare>
@@ -181,33 +186,48 @@ export function StartADaycarePage() {
             {t("startDaycareFinderT")}
           </h2>
           <p className="mt-2 text-sm text-muted">{t("startDaycareFinderHint")}</p>
-          <label className="mt-5 block">
-            <span className="sr-only">{t("startDaycareFinderPh")}</span>
-            <span className="relative block">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-subtle" aria-hidden />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("startDaycareFinderPh")}
-                autoComplete="off"
-                className="h-12 w-full rounded-full bg-surface pl-11 pr-5 shadow-card ring-1 ring-border outline-none focus:ring-2 focus:ring-primary"
-              />
-            </span>
-          </label>
+          <form method="get" action={finderPath} className="mt-5" role="search">
+            {selected ? <input type="hidden" name="pt" value={selected} /> : null}
+            <label className="block">
+              <span className="sr-only">{t("startDaycareFinderPh")}</span>
+              <span className="relative block">
+                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-subtle" aria-hidden />
+                <input
+                  name="q"
+                  defaultValue={search.q ?? ""}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("startDaycareFinderPh")}
+                  autoComplete="off"
+                  className="h-12 w-full rounded-full bg-surface pl-11 pr-5 shadow-card ring-1 ring-border outline-none focus:ring-2 focus:ring-primary"
+                />
+              </span>
+            </label>
+          </form>
           <div className="mt-4 flex flex-wrap gap-2">
-            {filtered.map((item) => (
-              <ChipButton
-                key={item.code}
-                on={selected === item.code}
-                onClick={() => setSelected(item.code)}
-                aria-pressed={selected === item.code}
-              >
-                {locale === "fr" ? item.nameFr : item.nameEn}
-              </ChipButton>
-            ))}
+            {filtered.map((item) => {
+              const on = selected === item.code || (filtered.length === 1 && item.code === pt?.code);
+              return (
+                <Link
+                  key={item.code}
+                  to={finderPath}
+                  search={{ pt: item.code, q: query.trim() || undefined }}
+                  hash="start-daycare-pt"
+                  className={cn("ke-chip", on && "ke-chip-on")}
+                  aria-current={on ? "true" : undefined}
+                >
+                  {locale === "fr" ? item.nameFr : item.nameEn}
+                </Link>
+              );
+            })}
           </div>
           {filtered.length === 0 ? <p className="mt-4 text-sm text-muted">{t("startDaycareNoMatch")}</p> : null}
-          {pt ? <ProvincePanel pt={pt} locale={locale} /> : <p className="mt-5 text-sm text-muted">{t("startDaycareSelectPt")}</p>}
+          {pt ? (
+            <div id="start-daycare-pt">
+              <ProvincePanel pt={pt} locale={locale} />
+            </div>
+          ) : (
+            <p className="mt-5 text-sm text-muted">{t("startDaycareSelectPt")}</p>
+          )}
         </section>
 
         <h2 className="mt-12 text-2xl">{t("startDaycareGrantsT")}</h2>

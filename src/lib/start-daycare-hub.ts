@@ -301,3 +301,17 @@ export function startDaycarePt(code: string | null | undefined): StartDaycarePt 
   const v = (code || "").trim().toUpperCase();
   return START_DAYCARE_PTS.find((pt) => pt.code === v);
 }
+
+/** Same-page query only — never `/start-a-daycare/:pt`. */
+export function parseStartDaycareSearch(s: Record<string, unknown>): { pt?: string; q?: string } {
+  const raw = typeof s.pt === "string" ? s.pt.trim().toUpperCase() : "";
+  const q = typeof s.q === "string" ? s.q.trim().slice(0, 80) : "";
+  const out: { pt?: string; q?: string } = {};
+  if (startDaycarePt(raw)) out.pt = raw;
+  if (q) out.q = q;
+  return out;
+}
+
+export function startDaycarePath(locale: string): "/start-a-daycare" | "/fr/start-a-daycare" {
+  return locale === "fr" ? "/fr/start-a-daycare" : "/start-a-daycare";
+}
