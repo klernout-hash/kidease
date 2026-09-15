@@ -83,8 +83,8 @@ export const copy = {
     createAccount: "Create account",
     haveAccount: "Already have an account? Sign in",
     needAccount: "Need an account? Create one",
-    loginLead: "Save centres, request a spot, and message educators.",
-    loginLeadParent: "Create your parent account to search, save centres, and request a spot.",
+    loginLead: "Save licensed centres across Canada, request a spot, and message educators.",
+    loginLeadParent: "Create your parent account to search licensed care across Canada, save centres, and request a spot.",
     loginLeadProvider: "Create your provider account to claim your listing and manage spots and fees.",
     loginLeadListing: "Sign in to book a tour, request a spot, or message this centre. You'll return here after.",
     loginLeadSearchSave: "Sign in to save this search. You can keep browsing licensed centres as a guest.",
@@ -303,19 +303,19 @@ export const copy = {
     facilityTypeGroupHome: "Group child care home",
     facilityTypeSchool: "School-age",
     facilityTypeLeadCentre:
-      "A licensed child care centre is care in a dedicated building or room — not a private home. In Manitoba this is Facility Type Centre: usually full-day care with staff ratios set by the licence.",
+      "A licensed child care centre is care in a dedicated building or room — not a private home. Usually full-day care with staff ratios set by the provincial or territorial licence.",
     facilityTypeLeadNursery:
-      "A licensed nursery school (preschool) is usually a part-day early learning program for preschool-age children. In Manitoba this is Facility Type Nursery, separate from a full-day centre or a licensed home.",
+      "A licensed nursery school (preschool) is usually a part-day early learning program for preschool-age children, separate from a full-day centre or a licensed home.",
     facilityTypeLeadHome:
       "Licensed family child care is regulated care in a caregiver’s residence, with a smaller group than a centre. KidEase only lists provincially licensed homes — not nannies or unlicensed sitters.",
     facilityTypeLeadGroupHome:
-      "A licensed group child care home (group family) is regulated care in a caregiver’s residence with a larger group than family child care. In Manitoba this is its own licence class — not a centre and not an unlicensed sitter.",
+      "A licensed group child care home (group family) is regulated care in a caregiver’s residence with a larger group than family child care. It is its own licence class — not a centre and not an unlicensed sitter.",
     facilityTypeLeadSchool:
-      "School-age / before-after care is licensed care for school-aged children, often in a school or a dedicated room, before and after the school day. In Manitoba this is separate from a full-day centre or nursery school.",
+      "School-age / before-after care is licensed care for school-aged children, often in a school or a dedicated room, before and after the school day. It is separate from a full-day centre or nursery school.",
     facilityTypeGap:
       "Facility type inferred as {type}. No registry class (nursery, home, or group-home amenity) on file. Name hint: {hint}. Do not treat the hint as a classification.",
     facilityTypeGapPlain:
-      "Facility type inferred as child care centre. No Manitoba-style registry class (centre / nursery / family home / group home amenity) on file.",
+      "Facility type inferred as child care centre. No registry class (centre / nursery / family home / group home amenity) on file.",
     noFacilityTypeResults: "No licensed {type} in this radius",
     noFacilityTypeResultsLead:
       "Licensed care is nearby, but none is classified as {type}. Clear the category to see every licensed type, or widen the search.",
@@ -849,7 +849,7 @@ export const copy = {
     roleParent: "Parent",
     roleProvider: "Provider",
     switchRole: "Using as",
-    footerCopy: "KidEase is a Winnipeg-based, Canada-wide project serving families across the country.",
+    footerCopy: "KidEase is a Canada-wide project serving families across the country.",
     pipeda: "PIPEDA & child safety",
     pipedaBody:
       "KidEase is built around PIPEDA’s consent, limiting-collection, and safeguarding principles. We store the minimum needed to run search, enrolment, and payments: your account, child care profiles you add (allergies, routines, emergency contacts), messages you send, and payment records. We do not sell personal information. Children’s details are visible only to you and to a centre you contact or book. Video check-in is a parent-initiated room — we do not offer continuous livestreams of children. Card payments, when enabled, run through Stripe. Messages are encrypted in transit (HTTPS).",
@@ -1228,9 +1228,9 @@ export const copy = {
     verifyTitle: "How we verify listings",
     verifyLeadPage:
       "KidEase checks licences against trusted sources. We do not scrape government sites, invent licence numbers, or treat being in the catalogue as a live government match.",
-    verifyMbTitle: "Manitoba catalogue match",
+    verifyMbTitle: "Catalogue match",
     verifyMbBody:
-      "Manitoba listings can show Catalogue-matched when the licence number is in the bundled KidEase snapshot. That is not a live scrape of childcaresearch.gov.mb.ca. Official inspections stay on the government site.",
+      "Some listings can show Catalogue-matched when the licence number is in a bundled KidEase snapshot for that province. That is not a live scrape of a government site. Official inspections stay on the government registry.",
     verifyStubTitle: "Other provinces stay fail-closed",
     verifyStubBody:
       "Ontario, Alberta, British Columbia, Saskatchewan, Québec, and the remaining provinces and territories have stub adapters. They never light a live government match. Staff review the official registry before a listing can show Registry-checked.",
@@ -1244,7 +1244,7 @@ export const copy = {
       "The official provincial or territorial registry is always the source of truth for inspections, complaints, and licence status.",
     verifyScreeningTitle: "Screening documents — not a KidEase police check",
     verifyScreeningBody:
-      "Daycares upload required certificates (Manitoba: Criminal Record Check with Vulnerable Sector Search, Child Abuse Registry Check, and Prior Contact for home-based households). KidEase Admin reviews the file. KidEase does not issue Vulnerable Sector Checks — only local police or RCMP (or BC CRRP) can. Parents see a centre-level Screening on file badge after required current documents are cleared. Individual PDFs and names stay private.",
+      "Daycares upload required certificates — typically a Criminal Record Check with Vulnerable Sector Search, plus any extra provincial registry checks. KidEase Admin reviews the file. KidEase does not issue Vulnerable Sector Checks — only local police or RCMP (or BC CRRP) can. Parents see a centre-level Screening on file badge after required current documents are cleared. Individual PDFs and names stay private.",
     daycareRequirements: "Daycare requirements",
     reqTitle: "What licensed daycares must provide",
     reqLead:
@@ -1254,16 +1254,16 @@ export const copy = {
       "A licensed centre, nursery, or home. A Claim verified listing means KidEase confirmed the operator. Screening on file means Admin confirmed required current documents are on file for people at that centre. It is not a KidEase background check of every educator.",
     reqDaycaresTitle: "What daycares must provide",
     reqDaycaresBody:
-      "A current provincial or territorial licence. For people 18+ who work with children: a Criminal Record Check with Vulnerable Sector Search from local police or RCMP. In Manitoba, a Child Abuse Registry Check as well, and a Prior Contact Check for home-based households where that rule applies.",
+      "A current provincial or territorial licence. For people 18+ who work with children: a Criminal Record Check with Vulnerable Sector Search from local police or RCMP. Some provinces also require extra registry checks (for example a child abuse registry check, or a prior-contact check for home-based households).",
     reqKidEaseTitle: "What KidEase does",
     reqKidEaseBody:
       "KidEase matches licences, reviews claim ownership, stores screening documents privately, and lets Admin clear or reject them. We never publish individual certificates or say KidEase ran a police check.",
     reqPoliceTitle: "What police / RCMP do",
     reqPoliceBody:
       "Only a local police service or the RCMP (or British Columbia’s Criminal Records Review Program) can issue a Vulnerable Sector Check. Private companies and KidEase cannot.",
-    reqMbTitle: "Manitoba first",
+    reqMbTitle: "What varies by province",
     reqMbBody:
-      "Manitoba packs are seeded: Vulnerable Sector Search, Child Abuse Registry Check, and Prior Contact for home-based roles. Other provinces start with a VSC stub and will expand.",
+      "Required documents follow each province or territory. A Vulnerable Sector Check is the common starting point. Some provinces also require extra registry checks — for example Manitoba’s Child Abuse Registry and Prior Contact for home-based roles. Other jurisdictions start with a VSC stub on KidEase and will expand.",
     reqPrivacyBody:
       "Screening files are PIPEDA-sensitive. They stay on the daycare and Admin desks. Guests and parents never see the PDF, the person’s name, or the name of an individual check on a listing.",
     listingsVerify: "Listings & verification",
@@ -1275,7 +1275,7 @@ export const copy = {
       "Unclaimed means no operator has proven they run this centre on KidEase yet. Facts may come from the public registry. The listing stays searchable. Claimed or Claim verified means the operator, not that KidEase police-checked staff.",
     learnMore: "Learn more",
     unclaimedWhatMeans: "What does unclaimed mean?",
-    mbChildcare: "Manitoba Child Care",
+    mbChildcare: "Official provincial registries",
     neverSell: "We respect your privacy. Your data is never sold.",
     comingSoon: "Coming soon",
     operatorSignIn: "Operator sign-in",
@@ -1387,7 +1387,7 @@ export const copy = {
       "KidEase was founded in Winnipeg by two entrepreneurs who wanted a simpler, safer way for Canadian families to find licensed daycare — anywhere in the country.",
     kyleRole: "Co-Founder",
     kyleBio1:
-      "Kyle is a Winnipeg-based business operator with extensive experience in local operations, customer service, and building practical tools that solve real problems for families and businesses in Manitoba.",
+      "Kyle is a Winnipeg-based business operator with extensive experience in local operations, customer service, and building practical tools that solve real problems for Canadian families and businesses.",
     kyleBio2:
       "As Co-Founder of KidEase, Kyle focuses on making sure the platform stays practical, accurate, and genuinely useful for parents searching for licensed care close to home — anywhere in Canada.",
     kevinRole: "Co-Founder",
@@ -1448,7 +1448,7 @@ export const copy = {
     contactDirect: "Direct contact",
     contactResponse: "We typically respond within 1–2 business days.",
     contactLocation:
-      "KidEase is a Winnipeg-based project, built to serve families across Canada.",
+      "KidEase is based in Winnipeg and serves families across Canada.",
     contactPrivacy: "Your message is private. We do not share or sell your contact information.",
     contactSent: "Thanks — we received your message and will reply within 1–2 business days.",
     contactSendFailed: "Could not send. Email {email} directly. We did not record this as sent.",
@@ -1495,7 +1495,7 @@ export const copy = {
     tourTimesNoneOpen: "No tour times are open right now.",
     tourTimesNoneOpenLead: "Every posted visit is full or in the past. Request info to ask about another time.",
     tourTimesTimezone: "Timezone",
-    tourTimesTimezoneLead: "Times are shown in this centre’s timezone. Default is America/Winnipeg.",
+    tourTimesTimezoneLead: "Times are shown in this centre’s timezone.",
     tourTimesDate: "Date",
     tourTimesStart: "Start",
     tourTimesEnd: "End",
@@ -2021,7 +2021,7 @@ export const copy = {
     providerOnboardStep2: "Add your current licence number.",
     providerOnboardStep3: "Claim the listing if we already have it from the public registry.",
     providerOnboardStep4:
-      "When you are ready, upload a current Vulnerable Sector Check on Screening. In Manitoba, also upload a Child Abuse Registry check, and a Prior Contact check for home-based households.",
+      "When you are ready, upload a current Vulnerable Sector Check on Screening. Your province may also require extra registry checks (for example Manitoba Child Abuse Registry and Prior Contact for home-based households).",
     providerOnboardStep5:
       "KidEase Admin reviews those files. Parents may see a centre-level Screening on file badge after required current documents are cleared. Individual PDFs and names stay private.",
     providerOnboardOpenScreening: "Open Screening",
@@ -2108,8 +2108,8 @@ export const copy = {
     createAccount: "Créer un compte",
     haveAccount: "Déjà un compte? Connexion",
     needAccount: "Besoin d'un compte? Créez-en un",
-    loginLead: "Enregistrez des centres, demandez une place et écrivez aux éducatrices.",
-    loginLeadParent: "Créez votre compte parent pour chercher, enregistrer des centres et demander une place.",
+    loginLead: "Enregistrez des centres permis partout au Canada, demandez une place et écrivez aux éducatrices.",
+    loginLeadParent: "Créez votre compte parent pour chercher une garde permise partout au Canada, enregistrer des centres et demander une place.",
     loginLeadProvider: "Créez votre compte fournisseur pour réclamer votre fiche et gérer les places et les tarifs.",
     loginLeadListing: "Connectez-vous pour réserver une visite, demander une place ou écrire à ce centre. Vous reviendrez ici ensuite.",
     loginLeadSearchSave: "Connectez-vous pour enregistrer cette recherche. Vous pouvez continuer à parcourir les centres permis sans compte.",
@@ -2329,19 +2329,19 @@ export const copy = {
     facilityTypeGroupHome: "Milieu familial de groupe",
     facilityTypeSchool: "Parascolaire",
     facilityTypeLeadCentre:
-      "Un centre de garde permis offre la garde dans un local dédié — pas dans une résidence privée. Au Manitoba, c’est le type d’établissement Centre : souvent une journée complète, avec des ratios fixés par le permis.",
+      "Un centre de garde permis offre la garde dans un local dédié — pas dans une résidence privée. Souvent une journée complète, avec des ratios fixés par le permis provincial ou territorial.",
     facilityTypeLeadNursery:
-      "Une nursery permise (souvent une nursery school / prématernelle) est en général un programme d’apprentissage à temps partiel pour les enfants d’âge préscolaire. Au Manitoba, c’est le type Nursery, distinct d’un centre à temps plein ou d’un milieu familial.",
+      "Une nursery permise (souvent une nursery school / prématernelle) est en général un programme d’apprentissage à temps partiel pour les enfants d’âge préscolaire, distinct d’un centre à temps plein ou d’un milieu familial.",
     facilityTypeLeadHome:
       "Un milieu familial permis est une garde réglementée chez la responsable, en plus petit groupe qu’un centre. KidEase n’inscrit que les milieux familiaux permis par la province — pas les nounous ni la garde sans permis.",
     facilityTypeLeadGroupHome:
-      "Un milieu familial de groupe permis est une garde réglementée chez la responsable, en plus grand groupe qu’un milieu familial. Au Manitoba, c’est une classe de permis distincte — pas un centre et pas une nounou sans permis.",
+      "Un milieu familial de groupe permis est une garde réglementée chez la responsable, en plus grand groupe qu’un milieu familial. C’est une classe de permis distincte — pas un centre et pas une nounou sans permis.",
     facilityTypeLeadSchool:
-      "Le service parascolaire (avant-après l’école) est une garde permise pour les enfants d’âge scolaire, souvent dans une école ou un local dédié. Au Manitoba, c’est distinct d’un centre à temps plein ou d’une nursery.",
+      "Le service parascolaire (avant-après l’école) est une garde permise pour les enfants d’âge scolaire, souvent dans une école ou un local dédié. C’est distinct d’un centre à temps plein ou d’une nursery.",
     facilityTypeGap:
       "Type d’établissement déduit : {type}. Aucune classe de registre (attribut nursery, home ou group-home) au dossier. Indice du nom : {hint}. Ne pas traiter l’indice comme une classification.",
     facilityTypeGapPlain:
-      "Type d’établissement déduit : centre de garde. Aucune classe de registre manitobaine (centre / nursery / milieu familial / milieu familial de groupe) au dossier.",
+      "Type d’établissement déduit : centre de garde. Aucune classe de registre (centre / nursery / milieu familial / milieu familial de groupe) au dossier.",
     noFacilityTypeResults: "Aucun {type} permis dans ce rayon",
     noFacilityTypeResultsLead:
       "Il y a de la garde permise à proximité, mais aucune fiche classée comme {type}. Retirez la catégorie pour voir tous les types, ou élargissez la recherche.",
@@ -2879,7 +2879,7 @@ export const copy = {
     roleParent: "Parent",
     roleProvider: "Fournisseur",
     switchRole: "Espace",
-    footerCopy: "KidEase est un projet basé à Winnipeg, au service des familles partout au Canada.",
+    footerCopy: "KidEase est un projet pancanadien, au service des familles partout au pays.",
     pipeda: "PIPEDA et sécurité des enfants",
     pipedaBody:
       "KidEase s'appuie sur le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous conservons le minimum pour la recherche, l'inscription et les paiements. Nous ne vendons pas de renseignements personnels. Les détails sur les enfants ne sont visibles que par vous et par un centre que vous contactez. La visio est lancée par le parent — pas de diffusion continue d'enfants. Les paiements par carte, lorsqu'ils sont activés, passent par Stripe. Les messages sont chiffrés en transit (HTTPS).",
@@ -3258,9 +3258,9 @@ export const copy = {
     verifyTitle: "Comment nous vérifions les fiches",
     verifyLeadPage:
       "KidEase vérifie les permis auprès de sources de confiance. Nous ne collectons pas les sites gouvernementaux, n’inventons pas de numéros de permis et ne traitons pas le catalogue comme une correspondance gouvernementale en direct.",
-    verifyMbTitle: "Appariement au catalogue du Manitoba",
+    verifyMbTitle: "Appariement au catalogue",
     verifyMbBody:
-      "Les fiches manitobaines peuvent afficher Apparié au catalogue lorsque le numéro est dans l’instantané KidEase. Ce n’est pas une collecte en direct de childcaresearch.gov.mb.ca. Les inspections officielles restent sur le site gouvernemental.",
+      "Certaines fiches peuvent afficher Apparié au catalogue lorsque le numéro de permis figure dans un instantané KidEase pour cette province. Ce n’est pas une collecte en direct d’un site gouvernemental. Les inspections officielles restent sur le registre officiel.",
     verifyStubTitle: "Les autres provinces restent en échec fermé",
     verifyStubBody:
       "L’Ontario, l’Alberta, la Colombie-Britannique, la Saskatchewan, le Québec et les autres provinces et territoires ont des adaptateurs fictifs. Ils n’allument jamais une correspondance gouvernementale en direct. Le personnel consulte le registre officiel avant qu’une fiche puisse afficher Vérifié au registre.",
@@ -3274,7 +3274,7 @@ export const copy = {
       "Le registre provincial ou territorial officiel reste toujours la source de vérité pour les inspections, les plaintes et le statut du permis.",
     verifyScreeningTitle: "Documents de filtrage — pas un contrôle policier KidEase",
     verifyScreeningBody:
-      "Les garderies téléversent les certificats requis (Manitoba : contrôle du casier avec secteur vulnérable, registre des mauvais traitements, et contacts antérieurs pour les milieux familiaux). Admin KidEase examine le dossier. KidEase ne délivre pas de vérification du secteur vulnérable — seul le service de police local ou la GRC (ou le programme de la C.-B.) le peut. Les parents voient un badge Dossier de filtrage au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
+      "Les garderies téléversent les certificats requis — en général un contrôle du casier avec secteur vulnérable, plus toute vérification de registre exigée par la province. Admin KidEase examine le dossier. KidEase ne délivre pas de vérification du secteur vulnérable — seul le service de police local ou la GRC (ou le programme de la C.-B.) le peut. Les parents voient un badge Dossier de filtrage au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
     daycareRequirements: "Exigences pour les garderies",
     reqTitle: "Ce que les garderies permises doivent fournir",
     reqLead:
@@ -3284,16 +3284,16 @@ export const copy = {
       "Un centre, une nursery ou un milieu familial permis. Réclamation vérifiée signifie que KidEase a confirmé l’exploitant. Dossier de filtrage signifie qu’Admin a confirmé que les documents requis et à jour sont au dossier. Ce n’est pas une vérification d’antécédents KidEase de chaque éducatrice.",
     reqDaycaresTitle: "Ce que les garderies doivent fournir",
     reqDaycaresBody:
-      "Un permis provincial ou territorial à jour. Pour les personnes de 18 ans et plus qui travaillent auprès des enfants : un contrôle du casier judiciaire avec vérification du secteur vulnérable auprès de la police locale ou de la GRC. Au Manitoba, aussi une vérification du registre des mauvais traitements, et une vérification des contacts antérieurs pour les milieux familiaux lorsque cette règle s’applique.",
+      "Un permis provincial ou territorial à jour. Pour les personnes de 18 ans et plus qui travaillent auprès des enfants : un contrôle du casier judiciaire avec vérification du secteur vulnérable auprès de la police locale ou de la GRC. Certaines provinces exigent aussi d’autres vérifications de registre (par exemple un registre des mauvais traitements, ou une vérification des contacts antérieurs pour les milieux familiaux).",
     reqKidEaseTitle: "Ce que fait KidEase",
     reqKidEaseBody:
       "KidEase apparie les permis, examine la propriété de la fiche, conserve les documents de filtrage en privé et laisse Admin les accepter ou les refuser. Nous ne publions jamais les certificats individuels et ne disons pas que KidEase a fait un contrôle policier.",
     reqPoliceTitle: "Ce que font la police et la GRC",
     reqPoliceBody:
       "Seul un service de police local ou la GRC (ou le Programme de vérification des casiers judiciaires de la Colombie-Britannique) peut délivrer une vérification du secteur vulnérable. Les entreprises privées et KidEase ne le peuvent pas.",
-    reqMbTitle: "Le Manitoba d’abord",
+    reqMbTitle: "Ce qui varie selon la province",
     reqMbBody:
-      "Les trousses manitobaines sont complètes : secteur vulnérable, registre des mauvais traitements, et contacts antérieurs pour les rôles en milieu familial. Les autres provinces commencent par une exigence VSC provisoire.",
+      "Les documents requis suivent chaque province ou territoire. Une vérification du secteur vulnérable est le point de départ habituel. Certaines provinces exigent aussi d’autres vérifications de registre — par exemple le registre des mauvais traitements du Manitoba et les contacts antérieurs pour les rôles en milieu familial. Les autres provinces commencent par une exigence VSC provisoire sur KidEase.",
     reqPrivacyBody:
       "Les dossiers de filtrage sont sensibles au sens de la LPRPDE. Ils restent sur les bureaux garderie et Admin. Les invités et les parents ne voient jamais le PDF, le nom de la personne, ni le nom d’une vérification individuelle sur une fiche.",
     listingsVerify: "Fiches et vérification",
@@ -3305,7 +3305,7 @@ export const copy = {
       "Non réclamée signifie qu’aucun exploitant n’a encore prouvé qu’il dirige ce centre sur KidEase. Les faits peuvent venir du registre public. La fiche reste trouvable. Réclamée ou Réclamation vérifiée désigne l’exploitant, pas une vérification policière du personnel.",
     learnMore: "En savoir plus",
     unclaimedWhatMeans: "Que signifie non réclamée ?",
-    mbChildcare: "Garde d’enfants au Manitoba",
+    mbChildcare: "Registres provinciaux officiels",
     neverSell: "Nous respectons votre vie privée. Vos données ne sont jamais vendues.",
     comingSoon: "Bientôt",
     operatorSignIn: "Connexion opérateur",
@@ -3418,7 +3418,7 @@ export const copy = {
       "KidEase a été fondée à Winnipeg par deux entrepreneurs qui voulaient un moyen plus simple et plus sûr pour les familles canadiennes de trouver une garderie permise — partout au pays.",
     kyleRole: "Cofondateur",
     kyleBio1:
-      "Kyle est un entrepreneur de Winnipeg, avec une vaste expérience des opérations locales, du service à la clientèle et d’outils pratiques qui règlent de vrais problèmes pour les familles et les entreprises au Manitoba.",
+      "Kyle est un entrepreneur de Winnipeg, avec une vaste expérience des opérations locales, du service à la clientèle et d’outils pratiques qui règlent de vrais problèmes pour les familles et les entreprises au Canada.",
     kyleBio2:
       "Comme cofondateur de KidEase, Kyle veille à ce que la plateforme reste pratique, exacte et vraiment utile pour les parents qui cherchent une place permise près de chez eux — partout au Canada.",
     kevinRole: "Cofondateur",
@@ -3479,7 +3479,7 @@ export const copy = {
     contactDirect: "Contact direct",
     contactResponse: "Nous répondons généralement en 1 ou 2 jours ouvrables.",
     contactLocation:
-      "KidEase est un projet basé à Winnipeg, conçu pour servir les familles partout au Canada.",
+      "KidEase est établi à Winnipeg et sert les familles partout au Canada.",
     contactPrivacy: "Votre message est privé. Nous ne partageons ni ne vendons vos coordonnées.",
     contactSent: "Merci — nous avons reçu votre message et répondrons en 1 ou 2 jours ouvrables.",
     contactSendFailed: "Envoi impossible. Écrivez à {email}. Nous n’avons pas enregistré ce message comme envoyé.",
@@ -3528,7 +3528,7 @@ export const copy = {
     tourTimesNoneOpen: "Aucune plage de visite n’est ouverte en ce moment.",
     tourTimesNoneOpenLead: "Chaque visite affichée est complète ou passée. Demandez des infos pour un autre moment.",
     tourTimesTimezone: "Fuseau horaire",
-    tourTimesTimezoneLead: "Les heures s’affichent dans le fuseau du centre. Par défaut : America/Winnipeg.",
+    tourTimesTimezoneLead: "Les heures s’affichent dans le fuseau du centre.",
     tourTimesDate: "Date",
     tourTimesStart: "Début",
     tourTimesEnd: "Fin",
@@ -4059,7 +4059,7 @@ export const copy = {
     providerOnboardStep2: "Ajoutez votre numéro de permis actuel.",
     providerOnboardStep3: "Réclamez la fiche si nous l’avons déjà à partir du registre public.",
     providerOnboardStep4:
-      "Quand vous êtes prêt, téléversez une vérification du secteur vulnérable à jour dans Filtrage. Au Manitoba, ajoutez aussi le registre des mauvais traitements et, pour un milieu familial, une vérification des contacts antérieurs.",
+      "Quand vous êtes prêt, téléversez une vérification du secteur vulnérable à jour dans Filtrage. Votre province peut aussi exiger d’autres vérifications de registre (par exemple le registre des mauvais traitements au Manitoba et, pour un milieu familial, une vérification des contacts antérieurs).",
     providerOnboardStep5:
       "L’Admin KidEase examine ces dossiers. Les parents peuvent voir un badge Dossier de filtrage au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
     providerOnboardOpenScreening: "Ouvrir Filtrage",

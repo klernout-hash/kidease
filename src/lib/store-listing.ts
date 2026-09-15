@@ -35,7 +35,7 @@ export const STORE = {
   shortDescriptionFr: "Trouvez des garderies permises au Canada. Frais, places, inscription.",
   description: `KidEase helps Canadian parents find licensed childcare within a kilometre radius they choose.
 
-Search from GPS or a postal code. See monthly parent fees (including Manitoba $10-a-day funded spaces), open spots, hours, languages, and a street-level storefront photo of the building.
+Search from GPS or a postal code. See monthly parent fees (including $10-a-day or reduced-fee spaces where a province funds them), open spots, hours, languages, and a street-level storefront photo of the building.
 
 Request a spot, message the centre, and pay a first-month deposit in-app. Providers manage listings, capacity, and family conversations from the same app.
 
@@ -57,7 +57,7 @@ Payments for childcare deposits are real-world services (not digital in-app purc
 Privacy policy, terms, cookie policy, and account deletion live in the app.`,
   descriptionFr: `KidEase aide les parents canadiens à trouver une garde permise dans un rayon en kilomètres.
 
-Cherchez par GPS ou code postal. Voyez les frais mensuels (y compris les places financées 10 $ par jour au Manitoba), les places ouvertes, les heures, les langues et une photo aérienne du bâtiment.
+Cherchez par GPS ou code postal. Voyez les frais mensuels (y compris les places à 10 $ par jour ou à tarif réduit là où une province les finance), les places ouvertes, les heures, les langues et une photo aérienne du bâtiment.
 
 Demandez une place, écrivez au centre et versez un dépôt du premier mois. Les fournisseurs gèrent fiches, capacité et messages.
 

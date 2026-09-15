@@ -207,7 +207,7 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     enStep1,
     "2. Add your current licence number.",
     `3. Claim the listing if we already have it from the public registry: ${claim}`,
-    `4. When you are ready, upload a current Vulnerable Sector Check on Screening. In Manitoba, also upload a Child Abuse Registry check, and a Prior Contact check for home-based households: ${screening}`,
+    `4. When you are ready, upload a current Vulnerable Sector Check on Screening. Your province may also require extra registry checks (for example a Child Abuse Registry check, and a Prior Contact check for home-based households): ${screening}`,
     "5. KidEase Admin reviews those files. Parents may see a centre-level “Screening on file” badge after required current documents are cleared. Individual PDFs and names stay private.",
     "",
     "Questions: kyle@kidease.ca",
@@ -225,7 +225,7 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     frStep1,
     "2. Ajoutez votre numéro de permis actuel.",
     `3. Réclamez la fiche si nous l’avons déjà à partir du registre public : ${claim}`,
-    `4. Quand vous êtes prêt, téléversez une vérification du secteur vulnérable à jour dans Filtrage. Au Manitoba, ajoutez aussi le registre des mauvais traitements et, pour un milieu familial, une vérification des contacts antérieurs : ${screening}`,
+    `4. Quand vous êtes prêt, téléversez une vérification du secteur vulnérable à jour dans Filtrage. Votre province peut aussi exiger d’autres vérifications de registre (par exemple le registre des mauvais traitements et, pour un milieu familial, une vérification des contacts antérieurs) : ${screening}`,
     "5. L’Admin KidEase examine ces dossiers. Les parents peuvent voir un badge « Dossier de filtrage » au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
     "",
     "Questions : kyle@kidease.ca",
@@ -244,8 +244,8 @@ export function providerOnboardHtml(origin?: string | null, name?: string | null
     ? `Thanks for joining KidEase as a daycare provider. We already have “${listingHtml}” on file. KidEase reviews what you upload. KidEase does not run police checks and does not issue Vulnerable Sector Checks. Only local police / RCMP (or BC CRRP) can.`
     : "Thanks for joining KidEase as a daycare provider. KidEase reviews what you upload. KidEase does not run police checks and does not issue Vulnerable Sector Checks. Only local police / RCMP (or BC CRRP) can.";
   const frLead = listingHtml
-    ? `${frHi} Merci de joindre KidEase comme fournisseur de garde. Nous avons déjà « ${listingHtml} » au dossier. KidEase examine vos téléversements et ne fait pas de contrôles policiers. Complétez la fiche, ajoutez le permis, réclamez au besoin, puis téléversez le VSC (et au Manitoba le registre des mauvais traitements) dans Filtrage.`
-    : `${frHi} Merci de joindre KidEase comme fournisseur de garde. KidEase examine vos téléversements et ne fait pas de contrôles policiers. Complétez la fiche, ajoutez le permis, réclamez au besoin, puis téléversez le VSC (et au Manitoba le registre des mauvais traitements) dans Filtrage.`;
+    ? `${frHi} Merci de joindre KidEase comme fournisseur de garde. Nous avons déjà « ${listingHtml} » au dossier. KidEase examine vos téléversements et ne fait pas de contrôles policiers. Complétez la fiche, ajoutez le permis, réclamez au besoin, puis téléversez le VSC (et les vérifications de registre exigées par votre province) dans Filtrage.`
+    : `${frHi} Merci de joindre KidEase comme fournisseur de garde. KidEase examine vos téléversements et ne fait pas de contrôles policiers. Complétez la fiche, ajoutez le permis, réclamez au besoin, puis téléversez le VSC (et les vérifications de registre exigées par votre province) dans Filtrage.`;
   const enStep1 = listingHtml
     ? `Complete your listing — ${listingHtml} — address, hours, and open spots.`
     : "Complete your listing — name, address, hours, and open spots.";
@@ -262,7 +262,7 @@ export function providerOnboardHtml(origin?: string | null, name?: string | null
         <li>${enStep1}</li>
         <li>Add your current licence number.</li>
         <li>Claim the listing if we already have it from the public registry.</li>
-        <li>When ready, upload a current Vulnerable Sector Check on Screening. Manitoba also needs a Child Abuse Registry check (and Prior Contact for home-based households).</li>
+        <li>When ready, upload a current Vulnerable Sector Check on Screening. Your province may also require extra registry checks (for example a Child Abuse Registry check, and Prior Contact for home-based households).</li>
         <li>Admin reviews the files. Parents may see centre-level Screening on file — never individual PDFs or names.</li>
       </ol>
       <p style="margin:24px 0 0;">
