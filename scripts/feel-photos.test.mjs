@@ -58,8 +58,8 @@ test("marketing feel photos stay on existing /photos paths", () => {
   assert.match(source, /\/photos\/cottage-768-k2\.avif/);
   assert.match(source, /\/photos\/kitchen-1200-k2\.webp/);
   assert.match(source, /HERO_LCP_AVIF_SRCSET/);
-  assert.match(source, /hero-480-k2\.avif 480w/);
-  assert.match(source, /hero-768-k2\.avif 768w/);
+  assert.match(source, /hero-480-k2\.avif\?v=1 480w/);
+  assert.match(source, /hero-768-k2\.avif\?v=1 768w/);
   assert.match(source, /export function FeelPhoto/);
   assert.match(source, /export function HeroYard/);
   assert.match(source, /feelSrcSet/);

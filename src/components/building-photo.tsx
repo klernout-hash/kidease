@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 /** Mobile Lighthouse LCP: sized AVIF, not a late-discovered 1200-only file. */
 export const HERO_LCP_AVIF_SRCSET =
-  "/photos/hero-480-k2.avif 480w, /photos/hero-768-k2.avif 768w, /photos/hero-1200-k2.avif 1200w";
+  "/photos/hero-480-k2.avif?v=1 480w, /photos/hero-768-k2.avif?v=1 768w, /photos/hero-1200-k2.avif?v=1 1200w";
 export const HERO_LCP_WEBP_SRCSET =
   "/photos/hero-480-k2.webp 480w, /photos/hero-768-k2.webp 768w, /photos/hero-1200-k2.webp 1200w";
 export const HERO_LCP_SIZES = HERO_SIZES;
