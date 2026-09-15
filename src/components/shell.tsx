@@ -11,6 +11,8 @@ import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
 import { HeaderSocial } from "@/components/header-social";
+import { MenuLeafBack } from "@/components/menu-leaf-back";
+import { isMenuLeafPath } from "@/lib/menu-leaf";
 import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
 import { NavDrawer } from "@/components/nav-drawer";
@@ -59,6 +61,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     pathname.startsWith("/verify-2fa") ||
     pathname.startsWith("/menu");
   const onProfile = onAccount && accountTab === "profile";
+  const menuLeaf = isMenuLeafPath(pathname);
 
   const homeTo = localePath("/", locale);
   const drawerItems = [
@@ -140,10 +143,17 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
         <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 py-2">
           <div className="flex min-w-0 items-center gap-0.5">
+            {menuLeaf ? <MenuLeafBack /> : null}
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
-            <HeaderSocial />
+            {menuLeaf ? (
+              <div className="max-md:hidden">
+                <HeaderSocial />
+              </div>
+            ) : (
+              <HeaderSocial />
+            )}
           </div>
           <div className="flex items-center gap-1.5">
             {user ? <DeskSwitcher /> : null}
