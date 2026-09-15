@@ -53,6 +53,9 @@ const TourCard = lazy(() =>
 const ParentRequestsList = lazy(() =>
   import("@/components/parent-requests").then((m) => ({ default: m.ParentRequestsList })),
 );
+const DailyCareDesk = lazy(() =>
+  import("@/components/daily-care-desk").then((m) => ({ default: m.DailyCareDesk })),
+);
 
 function scheduleIdle(work: () => void): () => void {
   const ric = typeof requestIdleCallback === "function" ? requestIdleCallback : null;
@@ -64,7 +67,7 @@ function scheduleIdle(work: () => void): () => void {
   return () => window.clearTimeout(id);
 }
 
-type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "alerts";
+type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "alerts" | "care";
 
 export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   const { user } = useCurrentUserState();
@@ -281,6 +284,14 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
           tours={tours}
           bookings={bookings}
         />
+      ) : null}
+
+      {contentTab === "care" ? (
+        <div className="mt-6">
+          <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
+            <DailyCareDesk role="parent" />
+          </Suspense>
+        </div>
       ) : null}
 
       {contentTab === "alerts" ? (

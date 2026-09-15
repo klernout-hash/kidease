@@ -2,7 +2,7 @@
 
 Admin → Chat lab (`/admin-chat`) is a **flag checklist**, not a chat product.
 
-Parent ↔ centre messages stay on `/inbox` (text only; poll/reload). Do **not** buy Stream or Sendbird. Do **not** treat `FEATURE_INAPP_CHAT=1` as working delivery.
+Parent ↔ centre messages stay on `/inbox` (text; poll/reload) for claimed centres, inquiry threads, and enrolled/linked families. Daily-care check-in and journals also post a short status line on that thread. Do **not** buy Stream or Sendbird. Do **not** treat `FEATURE_INAPP_CHAT=1` as working delivery — that flag is the guest HelpBot / admin lab only and stays **off**.
 
 ## What staff see
 

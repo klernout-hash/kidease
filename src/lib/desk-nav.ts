@@ -60,6 +60,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   ],
   parent: [
     { id: "explore", label: "For you", hint: "Matches near you" },
+    { id: "care", label: "Daily care", hint: "Presence, journal, messages", labelKey: "dailyCare", hintKey: "dailyCareHint" },
     { id: "children", label: "Children", hint: "Up to 4 profiles" },
     { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots" },
     { id: "saved", label: "My shortlist", hint: "Compare up to 5" },
@@ -104,12 +105,13 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
 
 export function parentNavSearch(
   id: string,
-): { tab?: "explore" | "saved" | "enrolled" | "requests" | "payments" | "alerts" | "children" } {
+): { tab?: "explore" | "saved" | "enrolled" | "requests" | "payments" | "alerts" | "children" | "care" } {
   if (id === "saved") return { tab: "saved" };
   if (id === "bookings") return { tab: "enrolled" };
   if (id === "payments") return { tab: "payments" };
   if (id === "alerts") return { tab: "alerts" };
   if (id === "children") return { tab: "children" };
+  if (id === "care") return { tab: "care" };
   if (id === "explore") return { tab: "explore" };
   return {};
 }

@@ -17,6 +17,7 @@ import {
   type TodayTone,
 } from "@/lib/today-urgency";
 import { listingVerifiedCoach } from "@/lib/listing-verified";
+import { DailyCareDesk } from "@/components/daily-care-desk";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { Conversation, Daycare, TourRequest } from "@/lib/types";
@@ -281,6 +282,7 @@ export function TodayUrgencyHome({
           ))}
         </ul>
       ) : null}
+      <DailyCareDesk role="provider" />
     </section>
   );
 }

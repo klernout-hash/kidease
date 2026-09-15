@@ -49,7 +49,8 @@ export function InboxList() {
       ) : (
         <>
           <h2 className="font-display text-2xl">{t("inboxFamilyTitle")}</h2>
-          {items && items.length ? <p className="mt-2 text-sm text-muted">{t("inboxHasThreads")}</p> : null}
+          <p className="mt-2 text-sm text-muted">{t("careInboxLive")}</p>
+          {items && items.length ? <p className="mt-1 text-sm text-muted">{t("inboxHasThreads")}</p> : null}
         </>
       )}
       <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">

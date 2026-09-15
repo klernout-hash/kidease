@@ -83,6 +83,11 @@ export function centreCanWriteInbox(role: CentreMemberRole | null | undefined): 
   return centreCanWriteLeads(role);
 }
 
+/** Check-in/out + daily journal. Same write set as inbox — not read-only. */
+export function centreCanWriteCare(role: CentreMemberRole | null | undefined): boolean {
+  return centreCanWriteInbox(role);
+}
+
 export function centreCanMutateVacancies(role: CentreMemberRole | null | undefined): boolean {
   return role === "owner" || role === "manager" || role === "staff";
 }
