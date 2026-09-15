@@ -99,6 +99,10 @@ test("hamburger stays Parents, Daycares, Caregivers, Support; footer is Parents,
 test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.match(footer, /ke-footer-inner/);
   assert.match(footer, /t\("footerCopy"\)/);
+  assert.equal(copyValue("footerCopy", "en"), "KidEase is a Canada-wide project serving families across the country.");
+  assert.equal(copyValue("footerCopy", "fr"), "KidEase est un projet pancanadien au service des familles partout au Canada.");
+  assert.doesNotMatch(copyValue("footerCopy", "en"), /Winnipeg|Manitoba/);
+  assert.doesNotMatch(copyValue("footerCopy", "fr"), /Winnipeg|Manitoba/);
   assert.match(footer, /t\("neverSell"\)/);
   assert.match(footer, /t\("appStore"\)/);
   assert.match(footer, /t\("googlePlay"\)/);
@@ -155,6 +159,9 @@ test("Daycares column keeps verify listings and drops About, Team, and Manitoba 
   assert.doesNotMatch(nav, /mbChildcare/);
   assert.doesNotMatch(nav, /childcaresearch\.gov\.mb\.ca/);
   assert.doesNotMatch(footer, /mbChildcare/);
+  assert.doesNotMatch(menu, /mbChildcare/);
+  assert.doesNotMatch(menu, /childcaresearch\.gov\.mb\.ca/);
+  assert.match(menu, /listingsVerify/);
 });
 
 test("Parents column keeps product links and omits city hubs", () => {

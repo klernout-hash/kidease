@@ -13,7 +13,7 @@ export const Route = createFileRoute("/verify")({
       {
         name: "description",
         content:
-          "KidEase explains how listing badges work: Manitoba catalogue matches, fail-closed stub registries, claim review, and official government records.",
+          "KidEase explains how listing badges work: provincial catalogue matches, fail-closed stub registries, claim review, and official government records.",
       },
     ],
   }),
