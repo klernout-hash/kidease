@@ -171,7 +171,9 @@ test("provider default desk is Today and clutter stays off that path", () => {
   assert.match(shell, /visiblePrimaryDeskNav/);
   assert.match(shell, /visibleSecondaryDeskNav/);
   assert.match(shell, /bg-primary text-primary-fg/);
-  assert.doesNotMatch(shell, /underline/);
+  // Active desk nav is a filled pill, not an underline. `no-underline` is required
+  // so Messages deep-links (`<a>`) do not render as text links.
+  assert.doesNotMatch(shell, /(?<!no-)underline/);
   const todayBlock = provider.slice(provider.indexOf('desk === "today"'), provider.indexOf('desk === "requests"'));
   assert.doesNotMatch(todayBlock, /DirectorNudgeQueue|VacancyConfirmLoop|FreePageExplainer|ProviderPlanBanner|CompletenessChecklist|DemandCues|DirectorProStrip/);
   assert.match(provider, /desk === "listings"[\s\S]*DirectorNudgeQueue/);

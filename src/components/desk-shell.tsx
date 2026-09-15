@@ -23,8 +23,14 @@ function DeskItemIcon({ name, className }: { name?: DeskIcon; className?: string
 
 function navClass(on: boolean) {
   return cn(
-    "min-h-11 rounded-full px-3 py-2 text-sm md:min-h-0 md:shrink-0 md:rounded-xl",
-    on ? "bg-primary text-primary-fg" : "text-muted ring-1 ring-border hover:text-fg md:ring-0 md:hover:bg-surface",
+    // inline-flex so <a> deep-links (Messages, Find care) match <button> pills.
+    // Anchors are display:inline by default — min-height/ring then collapse into
+    // a vertical sliver beside the label.
+    "inline-flex box-border h-11 min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-sm leading-none no-underline hover:no-underline",
+    "md:h-auto md:min-h-0 md:flex-col md:items-stretch md:justify-start md:whitespace-normal md:rounded-xl md:py-2 md:leading-normal",
+    on
+      ? "bg-primary text-primary-fg ring-1 ring-primary"
+      : "bg-transparent text-muted ring-1 ring-border hover:text-fg md:ring-0 md:hover:bg-surface",
   );
 }
 
@@ -33,6 +39,31 @@ function deskItemText(item: DeskItem, t: (key: CopyKey) => string) {
     label: item.labelKey ? t(item.labelKey) : item.label,
     hint: item.hintKey ? t(item.hintKey) : item.hint,
   };
+}
+
+function DeskNavFace({
+  item,
+  on,
+  t,
+}: {
+  item: DeskItem;
+  on: boolean;
+  t: (key: CopyKey) => string;
+}) {
+  const { label, hint } = deskItemText(item, t);
+  return (
+    <>
+      <span className="flex items-center gap-2 font-medium leading-none">
+        <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
+        {label}
+      </span>
+      {hint ? (
+        <span className={cn("mt-0.5 hidden text-xs md:block", on ? "text-primary-fg/70" : "text-subtle")}>
+          {hint}
+        </span>
+      ) : null}
+    </>
+  );
 }
 
 function DeskNavButton({
@@ -46,18 +77,14 @@ function DeskNavButton({
   onSelect: (id: string) => void;
   t: (key: CopyKey) => string;
 }) {
-  const { label, hint } = deskItemText(item, t);
   return (
-    <button type="button" onClick={() => onSelect(item.id)} className={cn(navClass(on), "text-left")}>
-      <span className="flex items-center gap-2 font-medium">
-        <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
-        {label}
-      </span>
-      {hint ? (
-        <span className={cn("mt-0.5 hidden text-xs md:block", on ? "text-primary-fg/70" : "text-subtle")}>
-          {hint}
-        </span>
-      ) : null}
+    <button
+      type="button"
+      data-ke="desk-primary-pill"
+      onClick={() => onSelect(item.id)}
+      className={cn(navClass(on), "text-left")}
+    >
+      <DeskNavFace item={item} on={on} t={t} />
     </button>
   );
 }
@@ -71,22 +98,14 @@ function DeskNavLink({
   on: boolean;
   t: (key: CopyKey) => string;
 }) {
-  const { label, hint } = deskItemText(item, t);
   return (
     <Link
       to={item.href!}
       {...(item.search ? { search: item.search } : {})}
-      className={navClass(on)}
+      data-ke="desk-primary-pill"
+      className={cn(navClass(on), "text-left")}
     >
-      <span className="flex items-center gap-2 font-medium">
-        <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
-        {label}
-      </span>
-      {hint ? (
-        <span className={cn("mt-0.5 hidden text-xs md:block", on ? "text-primary-fg/70" : "text-subtle")}>
-          {hint}
-        </span>
-      ) : null}
+      <DeskNavFace item={item} on={on} t={t} />
     </Link>
   );
 }
@@ -188,7 +207,7 @@ function DeskMoreSheet({
             const on = itemIsOn(item, active, pathname);
             const { label, hint } = deskItemText(item, t);
             const rowClass = cn(
-              "flex w-full items-start justify-between gap-3 rounded-xl px-3 py-3 text-left",
+              "flex w-full items-start justify-between gap-3 rounded-xl px-3 py-3 text-left no-underline hover:no-underline",
               on ? "bg-primary text-primary-fg" : "text-fg hover:bg-bg",
             );
             const body = (
@@ -269,19 +288,8 @@ function PhoneDeskNav({
         >
           {primary.map((item) => {
             const on = itemIsOn(item, active, pathname);
-            const className = "shrink-0 whitespace-nowrap";
-            if (item.href) {
-              return (
-                <span key={item.id} className={className}>
-                  <DeskNavLink item={item} on={on} t={t} />
-                </span>
-              );
-            }
-            return (
-              <span key={item.id} className={className}>
-                <DeskNavButton item={item} on={on} onSelect={onSelect} t={t} />
-              </span>
-            );
+            if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} />;
+            return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} />;
           })}
         </nav>
         {secondary.length ? (
@@ -292,7 +300,7 @@ function PhoneDeskNav({
             aria-haspopup="dialog"
             aria-label={t("deskNavMore")}
             onClick={() => setMoreOpen(true)}
-            className={cn(navClass(secondaryOn && !moreOpen), "flex shrink-0 items-center gap-2 whitespace-nowrap")}
+            className={cn(navClass(secondaryOn && !moreOpen), "gap-2")}
           >
             <Menu className="size-3.5 shrink-0" strokeWidth={1.8} />
             <span className="font-medium">{t("deskNavMore")}</span>
