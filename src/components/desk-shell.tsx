@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { CreditCard, Menu } from "lucide-react";
+import { CreditCard, Menu, X } from "lucide-react";
 import { Shell } from "@/components/shell";
 import { useSessionDesks } from "@/components/desk-switcher";
 import {
@@ -15,10 +16,6 @@ import {
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
-
-const DeskSwitcher = lazy(() =>
-  import("@/components/desk-switcher").then((m) => ({ default: m.DeskSwitcher })),
-);
 
 function DeskItemIcon({ name, className }: { name?: DeskIcon; className?: string }) {
   if (name === "credit-card") return <CreditCard className={className} strokeWidth={1.8} />;
@@ -103,79 +100,123 @@ function itemIsOn(item: DeskItem, active: string, pathname: string): boolean {
   return active === item.id;
 }
 
-function DaycareMoreMenu({
+function DeskMoreSheet({
   items,
   active,
   pathname,
   onSelect,
   t,
+  open,
+  onClose,
 }: {
   items: DeskItem[];
   active: string;
   pathname: string;
   onSelect: (id: string) => void;
   t: (key: CopyKey) => string;
+  open: boolean;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const secondaryOn = items.some((item) => itemIsOn(item, active, pathname));
+  const titleId = useId();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") onClose();
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        "a[href], button:not([disabled]), select, textarea, input",
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
     };
-    document.addEventListener("mousedown", onDoc);
     window.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onDoc);
+      document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, onClose]);
 
-  if (!items.length) return null;
+  if (typeof document === "undefined" || !open || !items.length) return null;
 
-  return (
-    <div ref={rootRef} className="relative shrink-0">
+  return createPortal(
+    <div className="pointer-events-auto md:hidden" data-ke="desk-more-sheet">
       <button
         type="button"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={t("deskNavMore")}
-        onClick={() => setOpen((v) => !v)}
-        className={cn(navClass(secondaryOn && !open), "flex items-center gap-2")}
+        className="fixed inset-0 z-[70] bg-fg/40 backdrop-blur-[2px]"
+        aria-label={t("close")}
+        onClick={onClose}
+      />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="fixed inset-x-0 bottom-0 top-[8dvh] z-[80] flex flex-col rounded-t-2xl bg-surface shadow-lift ring-1 ring-border"
       >
-        <Menu className="size-3.5 shrink-0" strokeWidth={1.8} />
-        <span className="font-medium">{t("deskNavMore")}</span>
-      </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute left-0 top-full z-30 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-xl bg-surface p-2 shadow-lift ring-1 ring-border md:w-56"
-        >
+        <div className="flex shrink-0 flex-col items-center pt-2">
+          <span className="h-1 w-10 rounded-full bg-border" aria-hidden />
+        </div>
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-2">
+          <h2 id={titleId} className="font-display text-xl">
+            {t("deskNavMore")}
+          </h2>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            className="grid size-11 place-items-center rounded-full text-fg hover:bg-bg"
+            aria-label={t("close")}
+          >
+            <X className="size-5" strokeWidth={1.75} />
+          </button>
+        </div>
+        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {items.map((item) => {
             const on = itemIsOn(item, active, pathname);
-            const { label } = deskItemText(item, t);
-            if (item.href) {
-              return (
-                <Link
-                  key={item.id}
-                  role="menuitem"
-                  to={item.href}
-                  {...(item.search ? { search: item.search } : {})}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm",
-                    on ? "bg-primary text-primary-fg" : "text-muted hover:bg-bg hover:text-fg",
-                  )}
-                >
+            const { label, hint } = deskItemText(item, t);
+            const rowClass = cn(
+              "flex w-full items-start justify-between gap-3 rounded-xl px-3 py-3 text-left",
+              on ? "bg-primary text-primary-fg" : "text-fg hover:bg-bg",
+            );
+            const body = (
+              <>
+                <span className="min-w-0">
                   <span className="flex items-center gap-2 font-medium">
                     <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
                     {label}
                   </span>
+                  {hint ? (
+                    <span className={cn("mt-0.5 block text-xs", on ? "text-primary-fg/70" : "text-subtle")}>
+                      {hint}
+                    </span>
+                  ) : null}
+                </span>
+              </>
+            );
+            if (item.href) {
+              return (
+                <Link
+                  key={item.id}
+                  to={item.href}
+                  {...(item.search ? { search: item.search } : {})}
+                  onClick={onClose}
+                  className={rowClass}
+                >
+                  {body}
                 </Link>
               );
             }
@@ -183,23 +224,91 @@ function DaycareMoreMenu({
               <button
                 key={item.id}
                 type="button"
-                role="menuitem"
                 onClick={() => {
-                  setOpen(false);
+                  onClose();
                   onSelect(item.id);
                 }}
-                className={cn(
-                  "flex w-full items-center rounded-lg px-3 py-2 text-left text-sm",
-                  on ? "bg-primary text-primary-fg" : "text-muted hover:bg-bg hover:text-fg",
-                )}
+                className={rowClass}
               >
-                <span className="font-medium">{label}</span>
+                {body}
               </button>
             );
           })}
-        </div>
-      ) : null}
-    </div>
+        </nav>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function PhoneDeskNav({
+  primary,
+  secondary,
+  active,
+  pathname,
+  onSelect,
+  t,
+  label,
+}: {
+  primary: DeskItem[];
+  secondary: DeskItem[];
+  active: string;
+  pathname: string;
+  onSelect: (id: string) => void;
+  t: (key: CopyKey) => string;
+  label: string;
+}) {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const secondaryOn = secondary.some((item) => itemIsOn(item, active, pathname));
+
+  return (
+    <>
+      <nav
+        data-ke="desk-tab-nav"
+        aria-label={label}
+        className="flex max-w-full flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {primary.map((item) => {
+          const on = itemIsOn(item, active, pathname);
+          const className = "shrink-0 whitespace-nowrap";
+          if (item.href) {
+            return (
+              <span key={item.id} className={className}>
+                <DeskNavLink item={item} on={on} t={t} />
+              </span>
+            );
+          }
+          return (
+            <span key={item.id} className={className}>
+              <DeskNavButton item={item} on={on} onSelect={onSelect} t={t} />
+            </span>
+          );
+        })}
+        {secondary.length ? (
+          <button
+            type="button"
+            data-ke="desk-more-open"
+            aria-expanded={moreOpen}
+            aria-haspopup="dialog"
+            aria-label={t("deskNavMore")}
+            onClick={() => setMoreOpen(true)}
+            className={cn(navClass(secondaryOn && !moreOpen), "flex shrink-0 items-center gap-2 whitespace-nowrap")}
+          >
+            <Menu className="size-3.5 shrink-0" strokeWidth={1.8} />
+            <span className="font-medium">{t("deskNavMore")}</span>
+          </button>
+        ) : null}
+      </nav>
+      <DeskMoreSheet
+        items={secondary}
+        active={active}
+        pathname={pathname}
+        onSelect={onSelect}
+        t={t}
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+      />
+    </>
   );
 }
 
@@ -225,8 +334,10 @@ export function DeskShell({
     showPayCtas: session?.showPayCtas,
     centreOwner: session?.centreOwner,
   };
-  const primary = desk === "daycare" ? visiblePrimaryDeskNav(desk, opts) : visibleDeskNav(desk, opts);
-  const secondary = visibleSecondaryDeskNav(desk, opts);
+  const phoneMore = desk === "parent" || desk === "daycare";
+  const allItems = visibleDeskNav(desk, opts);
+  const primary = phoneMore ? visiblePrimaryDeskNav(desk, opts) : allItems;
+  const secondary = phoneMore ? visibleSecondaryDeskNav(desk, opts) : [];
   const eyebrow = meta.eyebrowKey ? t(meta.eyebrowKey) : meta.eyebrow;
   const title = meta.titleKey ? t(meta.titleKey) : meta.title;
 
@@ -234,28 +345,43 @@ export function DeskShell({
     <Shell>
       <div className={cn("mx-auto flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-8 md:py-10", wide ? "max-w-[90rem]" : "max-w-6xl")}>
         <aside className="md:sticky md:top-24 md:w-56 md:shrink-0">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{eyebrow}</p>
-          <h1 className="mt-2 font-display text-3xl">{title}</h1>
-          <div className="mt-3 md:hidden">
-            <Suspense fallback={<div className="ke-skel h-11 rounded-full" aria-hidden="true" />}>
-              <DeskSwitcher compact />
-            </Suspense>
-          </div>
+          <p className="hidden text-xs font-medium uppercase tracking-[0.18em] text-subtle md:block">{eyebrow}</p>
+          <h1 className="font-display text-3xl md:mt-2">{title}</h1>
           <nav
-            data-ke="desk-tab-nav"
-            className="mt-5 flex max-w-full flex-wrap gap-2 pb-1 md:flex-col md:overflow-visible md:pb-0"
+            data-ke="desk-desktop-nav"
+            className="mt-5 hidden flex-col gap-2 md:flex"
           >
-            {primary.map((item) => {
+            {allItems.map((item) => {
               const on = itemIsOn(item, active, pathname);
               if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} />;
               return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} />;
             })}
-            {desk === "daycare" ? (
-              <DaycareMoreMenu items={secondary} active={active} pathname={pathname} onSelect={onSelect} t={t} />
-            ) : null}
           </nav>
         </aside>
-        <div className="min-w-0 flex-1">{children}</div>
+        <div className="min-w-0 flex-1">
+          <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-30 -mx-4 mb-5 border-b border-border bg-bg px-4 py-2 md:hidden">
+            {phoneMore ? (
+              <PhoneDeskNav
+                primary={primary}
+                secondary={secondary}
+                active={active}
+                pathname={pathname}
+                onSelect={onSelect}
+                t={t}
+                label={title}
+              />
+            ) : (
+              <nav data-ke="desk-tab-nav" className="flex max-w-full flex-wrap gap-2 pb-1">
+                {allItems.map((item) => {
+                  const on = itemIsOn(item, active, pathname);
+                  if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} />;
+                  return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} />;
+                })}
+              </nav>
+            )}
+          </div>
+          {children}
+        </div>
       </div>
     </Shell>
   );

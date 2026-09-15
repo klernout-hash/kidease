@@ -1,9 +1,9 @@
 /**
  * Daycare Today home: urgency rows from tours, unread threads, and listing gaps.
  * Never invents SLA, leads, or next times. Previews stay name-only — no notes.
+ * TODAY_PRIMARY_NAV_IDS is the Today-home helper set — not the phone rail.
  */
 
-import { DAYCARE_PRIMARY_NAV_IDS, type DaycarePrimaryNavId } from "@/lib/desk-nav";
 import { listingCompleteness } from "@/lib/listing-readiness";
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import { listingVerifiedCoach } from "@/lib/listing-verified";
@@ -35,8 +35,8 @@ export {
 } from "@/lib/today-sla";
 export type { TodayEmptyTruth, TodayHref, TodayKind, TodayRow, TodayTone } from "@/lib/today-sla";
 
-export const TODAY_PRIMARY_NAV_IDS = DAYCARE_PRIMARY_NAV_IDS;
-export type TodayPrimaryNavId = DaycarePrimaryNavId;
+export const TODAY_PRIMARY_NAV_IDS = ["today", "messages", "tours", "listings"] as const;
+export type TodayPrimaryNavId = (typeof TODAY_PRIMARY_NAV_IDS)[number];
 
 export type ScreeningGapCentre = {
   daycareId: string;

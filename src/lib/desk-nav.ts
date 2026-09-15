@@ -2,8 +2,18 @@ import type { CopyKey } from "./copy.ts";
 
 export type DeskId = "admin" | "support" | "daycare" | "parent";
 
-export const DAYCARE_PRIMARY_NAV_IDS = ["today", "messages", "tours", "listings"] as const;
+/** Phone rail: Today · Messages · Listings · Money. Tour times and the rest go in More. */
+export const DAYCARE_PRIMARY_NAV_IDS = ["today", "messages", "listings", "money"] as const;
 export type DaycarePrimaryNavId = (typeof DAYCARE_PRIMARY_NAV_IDS)[number];
+
+/** Phone rail: For you · Daily care · Children · Pay. Overflow (incl. Messages, Find care) goes in More. */
+export const PARENT_PRIMARY_NAV_IDS = ["explore", "care", "children", "payments"] as const;
+export type ParentPrimaryNavId = (typeof PARENT_PRIMARY_NAV_IDS)[number];
+
+const PHONE_PRIMARY_NAV: Partial<Record<DeskId, readonly string[]>> = {
+  daycare: DAYCARE_PRIMARY_NAV_IDS,
+  parent: PARENT_PRIMARY_NAV_IDS,
+};
 
 export type DeskIcon = "credit-card";
 
@@ -59,16 +69,16 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "account", label: "Account", hint: "Sign-in and preferences", labelKey: "account", hintKey: "deskNavAccountHint", href: "/account", search: { tab: "profile", desk: "director" } },
   ],
   parent: [
-    { id: "explore", label: "For you", hint: "Matches near you" },
+    { id: "explore", label: "For you", hint: "Matches near you", labelKey: "exploreForYou" },
     { id: "care", label: "Daily care", hint: "Presence, journal, messages", labelKey: "dailyCare", hintKey: "dailyCareHint" },
-    { id: "children", label: "Children", hint: "Up to 4 profiles" },
-    { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots" },
-    { id: "saved", label: "My shortlist", hint: "Compare up to 5" },
-    { id: "alerts", label: "Search alerts", hint: "Saved searches + notify" },
-    { id: "payments", label: "Pay", hint: "Bills from your centre" },
-    { id: "messages", label: "Messages", hint: "Centre threads + tours", href: "/inbox", search: { view: "family" } },
-    { id: "search", label: "Find care", href: "/search" },
-    { id: "account", label: "Account", hint: "Family profile and alerts", href: "/account", search: { tab: "profile", desk: "parent" } },
+    { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children" },
+    { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots", labelKey: "myRequests" },
+    { id: "saved", label: "My shortlist", hint: "Compare up to 5", labelKey: "myShortlist" },
+    { id: "alerts", label: "Search alerts", hint: "Saved searches + notify", labelKey: "searchAlerts" },
+    { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments" },
+    { id: "messages", label: "Messages", hint: "Centre threads + tours", labelKey: "messages", href: "/inbox", search: { view: "family" } },
+    { id: "search", label: "Find care", labelKey: "wayfindFindCare", href: "/search" },
+    { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
 };
 
@@ -120,7 +130,7 @@ export const DESK_META: Record<DeskId, { eyebrow: string; title: string; eyebrow
   admin: { eyebrow: "Operator", title: "Admin" },
   support: { eyebrow: "Support", title: "Cases" },
   daycare: { eyebrow: "Daycare", title: "Daycare desk", eyebrowKey: "deskDirector", titleKey: "daycareDeskTitle" },
-  parent: { eyebrow: "Parent", title: "Family desk" },
+  parent: { eyebrow: "Parent", title: "Family desk", eyebrowKey: "deskParent", titleKey: "familyDeskTitle" },
 };
 
 /** Hide Subscription only when the live director flag is off. Hide Promote pay chrome when SHOW_PAY_CTAS is off. */
@@ -155,27 +165,29 @@ export function visibleDeskNav(
   });
 }
 
-/** Daycare rail/tabs: Today, Messages, Tour times, My listings. */
+/** Phone primaries for Parent / Daycare. Admin and Support stay a full list. */
 export function visiblePrimaryDeskNav(
   desk: DeskId,
   opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean; centreOwner?: boolean },
 ): DeskItem[] {
   const items = visibleDeskNav(desk, opts);
-  if (desk !== "daycare") return items;
-  const order = new Map(DAYCARE_PRIMARY_NAV_IDS.map((id, i) => [id, i]));
+  const ids = PHONE_PRIMARY_NAV[desk];
+  if (!ids) return items;
+  const order = new Map(ids.map((id, i) => [id, i]));
   return items
-    .filter((item) => order.has(item.id as DaycarePrimaryNavId))
-    .sort((a, b) => (order.get(a.id as DaycarePrimaryNavId) ?? 0) - (order.get(b.id as DaycarePrimaryNavId) ?? 0));
+    .filter((item) => order.has(item.id))
+    .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 }
 
-/** Daycare hamburger / Account: keep every other route off the primary four. */
+/** Phone More sheet: every remaining Parent / Daycare destination. Account last. */
 export function visibleSecondaryDeskNav(
   desk: DeskId,
   opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean; centreOwner?: boolean },
 ): DeskItem[] {
   const items = visibleDeskNav(desk, opts);
-  if (desk !== "daycare") return [];
-  const primary = new Set<string>(DAYCARE_PRIMARY_NAV_IDS);
+  const ids = PHONE_PRIMARY_NAV[desk];
+  if (!ids) return [];
+  const primary = new Set<string>(ids);
   const rest = items.filter((item) => !primary.has(item.id) && item.id !== "account");
   const account = items.filter((item) => item.id === "account");
   return [...rest, ...account];
