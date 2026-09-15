@@ -42,6 +42,8 @@ test("TEST / ghost leftover rows are admin-only even when flags are missing", ()
   assert.equal(isAdminOnlyListing({ name: "TEST-Ghost copy" }), true);
   assert.equal(isAdminOnlyListing({ slug: "winnipeg-ghost-listing" }), true);
   assert.equal(isAdminOnlyListing({ address: "100 KidEase Test Lane" }), true);
+  assert.equal(isAdminOnlyListing({ name: "QA TEST Daycare Listing" }), true);
+  assert.equal(looksLikeTestFixture({ name: "QA TEST Daycare Listing" }), true);
   assert.equal(isPublicListing({ name: "Teston Child Care", slug: "teston-child-care" }), true);
   assert.equal(isPublicListing({ name: "Testing Academy Daycare", slug: "testing-academy" }), true);
 });
@@ -82,6 +84,7 @@ test("nearby SQL excludes admin-only and test rows so map pins stay clean", () =
   assert.match(PUBLIC_LISTING_SQL, /coalesce\(visibility, 'public'\) = 'public'/);
   assert.match(PUBLIC_LISTING_SQL, /coalesce\(is_test, 0\) = 0/);
   assert.match(PUBLIC_LISTING_SQL, /name not like 'TEST %'/);
+  assert.match(PUBLIC_LISTING_SQL, /name not ilike '%qa test%'/);
   assert.match(PUBLIC_LISTING_SQL, /name not like 'TEST-%'/);
   assert.match(PUBLIC_LISTING_SQL, /id not ilike 'ke-test-%'/);
   assert.match(PUBLIC_LISTING_SQL, /slug not ilike 'test-ghost%'/);

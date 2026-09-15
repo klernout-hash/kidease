@@ -630,23 +630,17 @@
   }
   .ke-listing-rail-port {
     position: relative;
+    padding-inline-start: 2px;
   }
-  .ke-listing-rail-port::before,
   .ke-listing-rail-port::after {
     content: "";
     position: absolute;
     top: 0;
+    right: 0;
     bottom: 0.5rem;
     width: 1.15rem;
     z-index: 2;
     pointer-events: none;
-  }
-  .ke-listing-rail-port::before {
-    left: 0;
-    background: linear-gradient(to right, var(--color-bg), transparent);
-  }
-  .ke-listing-rail-port::after {
-    right: 0;
     background: linear-gradient(to left, var(--color-bg), transparent);
   }
   .ke-listing-rail-arrow {
@@ -660,8 +654,9 @@
     overflow-x: auto;
     overflow-y: visible;
     scroll-snap-type: x mandatory;
-    scroll-padding-inline: 0.15rem;
+    scroll-padding-inline: 0.25rem;
     padding-block: 0.25rem 0.5rem;
+    padding-inline-start: 0.15rem;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
     touch-action: pan-x;
@@ -686,7 +681,6 @@
     [data-ke="explore-category-rails"] {
       --ke-card-w: 13rem;
     }
-    .ke-listing-rail-port::before,
     .ke-listing-rail-port::after {
       width: 0;
     }

@@ -8,6 +8,8 @@ export function searchCacheKey(input: {
   radiusKm: number;
   sort: string;
   ageGroup: string;
+  label?: string;
+  q?: string;
   startDate?: string | null;
   lat2?: number;
   lng2?: number;
@@ -19,6 +21,8 @@ export function searchCacheKey(input: {
     input.radiusKm,
     input.sort,
     input.ageGroup,
+    input.label || "",
+    input.q || "",
     input.startDate || "",
     input.mode || "home",
     typeof input.lat2 === "number" ? input.lat2.toFixed(3) : "",

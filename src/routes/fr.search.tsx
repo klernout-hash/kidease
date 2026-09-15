@@ -46,13 +46,15 @@ export const Route = createFileRoute("/fr/search")({
           radiusKm: 25,
           sort: "distance",
           ageGroup: "any",
+          label: origin.label,
+          q: origin.label,
         },
       }),
       LOADER_SETTLE_MS,
       [] as Card[],
     );
     const featured = await withTimeoutFallback(
-      featuredDaycares({ data: { lat: origin.lat, lng: origin.lng } }),
+      featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label } }),
       LOADER_SETTLE_MS,
       [] as Card[],
     );

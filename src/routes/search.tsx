@@ -21,6 +21,7 @@ import {
   searchQueryFromUnknown,
 } from "@/lib/search-query";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
+import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence } from "@/lib/presence";
 import { readSearchCache, searchCacheKey, writeSearchCache } from "@/lib/search-cache";
@@ -124,6 +125,8 @@ export const Route = createFileRoute("/search")({
           radiusKm: 25,
           sort: "distance",
           ageGroup: "any",
+          label: origin.label,
+          q: searchQueryFromUnknown(location.search) || origin.label,
         },
       }),
       LOADER_SETTLE_MS,
@@ -208,7 +211,12 @@ function SearchPage() {
   const query = useAppStore((s) => s.query);
   const setQuery = useAppStore((s) => s.setQuery);
   const [items, setItems] = useState<Card[] | null>(
-    boot.items.length > 0 && originsMatchSearchQuery(boot.origin, incoming.q) ? boot.items : null,
+    boot.items.length > 0 && originsMatchSearchQuery(boot.origin, incoming.q)
+      ? filterByLocationLock(
+          boot.items,
+          resolveLocationLock({ ...boot.origin, q: incoming.q }),
+        )
+      : null,
   );
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
@@ -379,6 +387,8 @@ function SearchPage() {
     sort,
     ageGroup: "any" as const,
     fsa: fsaOf(query) || fsaOf(origin.label),
+    label: origin.label,
+    q: incoming.q ?? query,
     startDate: needBy || null,
     lat2: workOrigin?.lat,
     lng2: workOrigin?.lng,
@@ -390,18 +400,30 @@ function SearchPage() {
     radiusKm,
     sort,
     ageGroup: "any" as const,
+    label: origin.label,
+    q: incoming.q ?? query,
     startDate: needBy || null,
     lat2: workOrigin?.lat,
     lng2: workOrigin?.lng,
     mode: anchorMode,
   };
+  const locationLock = useMemo(
+    () =>
+      resolveLocationLock({
+        lat: origin.lat,
+        lng: origin.lng,
+        label: origin.label,
+        q: incoming.q ?? query,
+      }),
+    [origin.lat, origin.lng, origin.label, incoming.q, query],
+  );
 
   useEffect(() => {
     let live = true;
     const key = searchCacheKey(cacheInput);
     const cached = readSearchCache(key);
     if (cached) {
-      setItems(cached);
+      setItems(filterByLocationLock(cached, locationLock));
       setSearchFailed(false);
     } else {
       setRefreshing(true);
@@ -413,9 +435,10 @@ function SearchPage() {
       })
         .then((rows) => {
           if (!live) return;
-          setItems(rows);
+          const locked = filterByLocationLock(rows, locationLock);
+          setItems(locked);
           setSearchFailed(false);
-          writeSearchCache(key, rows);
+          writeSearchCache(key, locked);
           captureMarketplaceFunnel({ step: "search", source: "search", dest_path: "/search" });
         })
         .catch(() => {
@@ -450,6 +473,7 @@ function SearchPage() {
     sort,
     query,
     origin.label,
+    incoming.q,
     needBy,
     workOrigin?.lat,
     workOrigin?.lng,
@@ -490,6 +514,15 @@ function SearchPage() {
     setQuery(place.label);
     writeExploreSearch({ q: place.label, name: nameQuery, from: needBy, to: needUntil });
   }
+
+  useEffect(() => {
+    const label = origin.label.trim();
+    if (!label) return;
+    if ((incoming.q || "").trim()) return;
+    writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
+    // Persist the locked city so refresh cannot silently go national.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- write only when q is missing
+  }, [origin.label, incoming.q]);
 
   function writeExploreSearch(next: { q?: string; name?: string; from?: string; to?: string }) {
     const fields = compactExploreSearch(next);
@@ -712,9 +745,10 @@ function SearchPage() {
       data: searchData,
     })
       .then((rows) => {
-        setItems(rows);
+        const locked = filterByLocationLock(rows, locationLock);
+        setItems(locked);
         setSearchFailed(false);
-        writeSearchCache(searchCacheKey(cacheInput), rows);
+        writeSearchCache(searchCacheKey(cacheInput), locked);
       })
       .catch(() => {
         setItems([]);
@@ -746,7 +780,7 @@ function SearchPage() {
   }
 
   const list = useMemo(() => {
-    let rows = items ?? [];
+    let rows = filterByLocationLock(items ?? [], locationLock);
     if (liveOnly) rows = rows.filter((r) => r.live);
     if (avail === "open") rows = rows.filter((r) => honestVacancy(r).kind === "open");
     if (avail === "waitlist") rows = rows.filter((r) => honestVacancy(r).kind === "waitlist");
@@ -796,6 +830,7 @@ function SearchPage() {
     favoritesOnly,
     careType,
     schoolAgeOnly,
+    locationLock,
     incoming.cat,
     incoming.age,
     incoming.care,
@@ -1452,7 +1487,7 @@ function SearchPage() {
           ) : (
             <ExploreCategoryRails
               items={railItems}
-              directory={items ?? []}
+              directory={filterByLocationLock(items ?? [], locationLock)}
               selectedAges={selectedAges}
               openingsSelected={openingsOn}
               onHover={setActive}

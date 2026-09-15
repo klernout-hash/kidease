@@ -72,8 +72,8 @@ export function exploreAgeRailItems(items: Card[], age: RailAge, n = 18): Card[]
 
 /**
  * Selected age rails stay visible. Known-age matches first, then honest
- * licensed directory cards whose ages are unknown — never a confirmed
- * band that does not serve this age.
+ * unknown-age cards from the same locked result pool — never another
+ * province or a confirmed band that does not serve this age.
  */
 export function listingFillsSelectedAgeRail(
   row: Pick<Card, "agesKnown" | "ageMinMonths" | "ageMaxMonths" | "amenities">,
@@ -94,5 +94,5 @@ export function exploreAgeRailItemsWithFill(items: Card[], age: RailAge, n = 18)
 }
 
 export function exploreRailsToShow(selectedAges: readonly RailAge[]): RailAge[] {
-  return selectedAges.length ? RAIL_AGES.filter((age) => selectedAges.includes(age)) : [...RAIL_AGES];
+  return selectedAges.length ? RAIL_AGES.filter((age) => selectedAges.includes(age)) : [];
 }

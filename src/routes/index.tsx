@@ -74,7 +74,7 @@ export const Route = createFileRoute("/")({
   loader: async () => {
     const origin = await resolveRequestSearchOrigin();
     const featured = await withTimeoutFallback(
-      featuredDaycares({ data: { lat: origin.lat, lng: origin.lng } }),
+      featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label } }),
       LOADER_SETTLE_MS,
       [] as Card[],
     );
@@ -209,7 +209,7 @@ function Home() {
   useEffect(() => {
     const loc = origin.lat ? origin : boot.origin;
     setPlace(origin.label);
-    void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng } })
+    void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label } })
       .then((rows) => {
         const next = uniqueById(rows);
         setFeatured(next);
@@ -218,7 +218,15 @@ function Home() {
       .catch(() => setFeatured([]));
     void withTimeoutFallback(
       searchDaycares({
-        data: { lat: loc.lat, lng: loc.lng, radiusKm, sort: "match", ageGroup: "any" },
+        data: {
+          lat: loc.lat,
+          lng: loc.lng,
+          radiusKm,
+          sort: "match",
+          ageGroup: "any",
+          label: loc.label,
+          q: loc.label,
+        },
       }),
       LOADER_SETTLE_MS,
       [] as Card[],

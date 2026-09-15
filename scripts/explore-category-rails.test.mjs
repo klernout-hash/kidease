@@ -66,7 +66,7 @@ function listingFillsSelectedAgeRail(row, age) {
 
 function exploreRailsToShow(selectedAges) {
   const all = ["infant", "toddler", "preschool", "school-age"];
-  return selectedAges.length ? all.filter((age) => selectedAges.includes(age)) : all;
+  return selectedAges.length ? all.filter((age) => selectedAges.includes(age)) : [];
 }
 
 test("Explore list is stacked category rails with arrows, not a grid", () => {
@@ -148,8 +148,19 @@ test("selected rails stay visible and fill from honest directory cards", () => {
   assert.equal(listingFillsSelectedAgeRail(infant, "infant"), true);
   assert.equal(listingFillsSelectedAgeRail(unknown, "infant"), true);
   assert.equal(listingFillsSelectedAgeRail(toddlerOnly, "infant"), false);
-  assert.deepEqual(exploreRailsToShow([]), ["infant", "toddler", "preschool", "school-age"]);
+  assert.deepEqual(exploreRailsToShow([]), []);
   assert.deepEqual(exploreRailsToShow(["preschool", "infant"]), ["infant", "preschool"]);
+});
+
+test("deselecting ages restores Near you only — no ghost age rails", () => {
+  const lib = src("src/lib/explore-category-rails.ts");
+  const rails = src("src/components/explore-category-rails.tsx");
+  const search = src("src/routes/search.tsx");
+  assert.match(lib, /selectedAges\.length \? RAIL_AGES\.filter/);
+  assert.match(lib, /: \[\]/);
+  assert.match(rails, /exploreRailsToShow\(picked\)/);
+  assert.match(search, /ages: \[\]/);
+  assert.match(search, /writeAgeSearch\(cat && isRailAge\(cat\) \? cat : undefined\)/);
 });
 
 test("phone and desktop rail chrome stays first-class", () => {
