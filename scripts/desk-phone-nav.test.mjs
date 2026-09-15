@@ -55,6 +55,23 @@ test("Messages and Find care are deduped off Parent primaries; Daycare Messages 
   assert.equal(DESK_NAV.daycare.find((i) => i.id === "messages")?.href, "/inbox");
 });
 
+test("phone primary pills share the same chrome for buttons and Messages links", () => {
+  const shell = src("src/components/desk-shell.tsx");
+  assert.match(shell, /function navClass/);
+  assert.match(shell, /inline-flex box-border h-11 min-h-11/);
+  assert.match(shell, /no-underline/);
+  const link = shell.slice(shell.indexOf("function DeskNavLink"), shell.indexOf("function itemIsOn"));
+  const button = shell.slice(shell.indexOf("function DeskNavButton"), shell.indexOf("function DeskNavLink"));
+  assert.match(link, /data-ke="desk-primary-pill"/);
+  assert.match(button, /data-ke="desk-primary-pill"/);
+  assert.match(link, /navClass\(on\)/);
+  assert.match(button, /navClass\(on\)/);
+  assert.match(link, /<Link/);
+  assert.match(button, /<button/);
+  const phone = shell.slice(shell.indexOf("function PhoneDeskNav"), shell.indexOf("export function DeskShell"));
+  assert.match(phone, /navClass\(secondaryOn && !moreOpen\)/);
+});
+
 test("desk shell uses a phone scroll row and a full-height More sheet, not a floating card", () => {
   const shell = src("src/components/desk-shell.tsx");
   assert.match(shell, /data-ke="desk-more-sheet"/);
