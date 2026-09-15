@@ -109,6 +109,8 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
               radiusKm,
               sort: "match",
               ageGroup: "any",
+              label: loc.label,
+              q: loc.label,
               startDate: soonestStartDate(startBookings),
             },
           }),

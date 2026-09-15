@@ -27,8 +27,9 @@ export function ExploreCategoryRails({
   const { t } = useCopy();
   const picked = selectedAges ?? [];
   const filtered = picked.length > 0;
-  const pool = directory?.length ? directory : items;
-  const nearYou = exploreNearYouItems(filtered ? items : pool);
+  const pool = items;
+  const fillPool = directory?.length ? directory : items;
+  const nearYou = exploreNearYouItems(pool);
   const openings = exploreOpeningsItems(pool);
   const showOpenings = openingsSelected || (!filtered && openings.length > 0);
   const ages = exploreRailsToShow(picked);
@@ -60,7 +61,7 @@ export function ExploreCategoryRails({
       ) : null}
       {ages.map((age) => {
         const forced = filtered && picked.includes(age);
-        const ageItems = forced ? exploreAgeRailItemsWithFill(pool, age) : exploreAgeRailItems(items, age);
+        const ageItems = forced ? exploreAgeRailItemsWithFill(fillPool, age) : exploreAgeRailItems(items, age);
         return (
           <ListingRail
             key={age}

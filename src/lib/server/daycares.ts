@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
+import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, recommendedRank } from "@/lib/proximity";
 import { catalogByIdsGet, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
 import { isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
@@ -38,6 +39,8 @@ type SearchInput = {
   sort: "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency";
   ageGroup: "any" | AgeGroup;
   fsa?: string;
+  label?: string;
+  q?: string;
   startDate?: string | null;
   lat2?: number;
   lng2?: number;
@@ -256,13 +259,23 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     mode: data.mode,
   });
   const origin = anchors.primary;
-  const listings = anchors.intersect && anchors.secondary
-    ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
-    : await nearbyListings(origin, data.radiusKm);
+  const lock = resolveLocationLock({
+    lat: origin.lat,
+    lng: origin.lng,
+    label: data.label,
+    q: data.q,
+  });
+  const listings = filterByLocationLock(
+    anchors.intersect && anchors.secondary
+      ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
+      : await nearbyListings(origin, data.radiusKm),
+    lock,
+  );
   let cards: DaycareCard[] = [];
   for (const d of listings) {
     cards.push(toCard(d, origin, data.fsa));
   }
+  cards = filterByLocationLock(cards, lock);
   cards = await overlayClaimed(cards, mergeClaimedCard);
   cards = await overlayParentReviews(cards);
   cards = await overlayQuality(cards);
@@ -298,7 +311,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
     return compareProximity(a, b);
   });
-  return publicListings(uniqueById(cards)).map(slimCard);
+  return publicListings(uniqueById(filterByLocationLock(cards, lock))).map(slimCard);
 }
 
 export const searchDaycares = createServerFn({ method: "POST" })
@@ -315,9 +328,10 @@ export const searchDaycares = createServerFn({ method: "POST" })
     ),
   );
 
-async function loadFeatured(origin: { lat: number; lng: number }): Promise<DaycareCard[]> {
+async function loadFeatured(origin: { lat: number; lng: number; label?: string }): Promise<DaycareCard[]> {
+  const lock = resolveLocationLock(origin);
   const nearby: DaycareCard[] = [];
-  for (const d of await nearbyListings(origin, 40)) {
+  for (const d of filterByLocationLock(await nearbyListings(origin, 40), lock)) {
     nearby.push(toCard(d, origin));
   }
   nearby.sort(compareProximity);
@@ -326,13 +340,13 @@ async function loadFeatured(origin: { lat: number; lng: number }): Promise<Dayca
   const ranked = sortFeaturedCityAfterPriority(
     await overlayFeaturedCity(await overlayPriority(scored)),
   );
-  return publicListings(uniqueById(ranked)).slice(0, 12).map(slimCard);
+  return publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, 12).map(slimCard);
 }
 
 export const featuredDaycares = createServerFn({ method: "POST" })
-  .validator((input: { lat: number; lng: number }) => input)
+  .validator((input: { lat: number; lng: number; label?: string }) => input)
   .handler(async ({ data }) =>
-    withTimeoutFallback(loadFeatured({ lat: data.lat, lng: data.lng }), LOADER_SETTLE_MS, []),
+    withTimeoutFallback(loadFeatured({ lat: data.lat, lng: data.lng, label: data.label }), LOADER_SETTLE_MS, []),
   );
 
 export const getDaycare = createServerFn({ method: "GET" })
