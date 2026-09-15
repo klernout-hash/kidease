@@ -108,6 +108,9 @@ test("Daily care is wired on parent desk and daycare Today without touching mark
   assert.match(src("src/components/daily-care-desk.tsx"), /saveAttendance/);
   assert.match(src("src/components/daily-care-desk.tsx"), /postDailyJournal/);
   assert.match(src("src/components/daily-care-desk.tsx"), /sendConnectedMessage/);
+  assert.match(src("src/components/daily-care-desk.tsx"), /listCareOps/);
+  assert.match(src("src/components/daily-care-desk.tsx"), /CareOpsPanel/);
+  assert.match(src("src/components/daily-care-desk.tsx"), /CareChildOps/);
   assert.match(src("src/components/daily-care-desk.tsx"), /accept="image\/jpeg,image\/png,image\/webp,image\/gif"/);
   assert.doesNotMatch(src("src/components/daily-care-desk.tsx"), /video\/mp4|FEATURE_VIDEO/);
   const helpers = src("src/lib/now-loops.ts");
@@ -124,4 +127,5 @@ test("Daily care is wired on parent desk and daycare Today without touching mark
   assert.match(src("src/lib/copy.ts"), /dailyCare: "Soins du jour"/);
   assert.match(src("src/lib/casl.ts"), /emailCommercial/);
   assert.doesNotMatch(src("src/lib/server/daily-care.ts"), /FEATURE_SMS|sendSms|emailCommercial/);
+  assert.doesNotMatch(src("src/lib/server/care-ops.ts"), /FEATURE_SMS|sendSms|emailCommercial/);
 });
