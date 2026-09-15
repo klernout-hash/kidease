@@ -12,7 +12,7 @@ export const Route = createFileRoute("/daycare-requirements")({
       {
         name: "description",
         content:
-          "What parents should expect and what licensed daycares must provide: provincial licence, Vulnerable Sector Checks from police, and Manitoba Child Abuse Registry documents. KidEase reviews files — it does not issue police checks.",
+          "What parents should expect and what licensed daycares must provide: a provincial or territorial licence, Vulnerable Sector Checks from police, and any extra provincial registry documents. KidEase reviews files — it does not issue police checks.",
       },
     ],
   }),

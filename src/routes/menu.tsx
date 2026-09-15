@@ -128,7 +128,7 @@ function MenuPage() {
           />
           <MenuRow to="/provider" label={t("daycareDesk")} icon="daycare" />
           <MenuRow to="/account" search={{ tab: "profile", desk: "director" }} label={t("account")} icon="account" />
-          <MenuRow href="https://childcaresearch.gov.mb.ca/en" label={t("mbChildcare")} icon="verify" />
+          <MenuRow to="/verify" label={t("mbChildcare")} icon="verify" />
           <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
         </Group>
 
