@@ -62,7 +62,9 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   assert.doesNotMatch(search, /data-search-row="fit-place"/);
   assert.doesNotMatch(chips, /data-search-row="categories"/);
   assert.doesNotMatch(chips, /catAllAges/);
-  assert.doesNotMatch(chips, /t\("catAll"\)/);
+  assert.match(chips, /t\("catAll"\)/);
+  assert.match(chips, /data-explore-cat="all"/);
+  assert.match(chips, /to="\/search"/);
   assert.doesNotMatch(chips, /ChipCarousel/);
 
   const chrome = search.slice(search.indexOf("<ExploreSearchBar"), search.indexOf("{askLocation"));
@@ -99,9 +101,11 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   assert.match(copy, /scopeAll: "Tout"/);
 
   assert.match(css, /\.ke-explore-filter-bar/);
+  assert.match(css, /\.ke-explore-filter-sticky/);
   assert.match(css, /\.ke-explore-scope-tab/);
   assert.match(css, /\.ke-explore-icon-btn/);
   assert.match(css, /@media \(max-width: 639px\)/);
+  assert.match(search, /ke-explore-filter-sticky/);
 
   assert.match(explore, /redirect\(\{ to: "\/search" \}\)/);
   assert.match(search, /splitSearchResults/);

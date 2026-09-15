@@ -3,7 +3,8 @@
  * Never invent ages, amenities, CWELCC, or openings. Never write tags back
  * as a licence class. A listing may wear more than one tag.
  *
- * Age chips 1–4 also set `?age=` so /search filter-bar age chips stay the only age chrome.
+ * Age chips 1–4 also set `?age=` (comma-separated when stacked) so /search
+ * filter-bar age chips stay the only age chrome.
  */
 
 import {
@@ -73,12 +74,25 @@ export function exploreTags(item: ExploreTaggedListing): ExploreCategory[] {
   return tags;
 }
 
+function csvTokens(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean);
+  }
+  if (typeof value !== "string") return [];
+  const raw = value.trim();
+  if (!raw) return [];
+  return raw.split(",").map((part) => part.trim()).filter(Boolean);
+}
+
 /** All stays visible. Age/facility chips with zero hits stay off the row. */
 export function visibleExploreCategories(
   counts: Record<ExploreCategory, number>,
-  selected?: ExploreCategory | null,
+  selected?: ExploreCategory | readonly ExploreCategory[] | null,
 ): ExploreCategory[] {
-  return EXPLORE_CATEGORIES.filter((cat) => counts[cat] > 0 || cat === selected);
+  const picked = new Set(
+    (Array.isArray(selected) ? selected : selected ? [selected] : []).filter(isExploreCategory),
+  );
+  return EXPLORE_CATEGORIES.filter((cat) => counts[cat] > 0 || picked.has(cat));
 }
 
 export function isFacilityExploreCategory(cat?: ExploreCategory | null): boolean {
@@ -139,9 +153,34 @@ export function resolvedExploreCategory(search: {
   care?: unknown;
 }): ExploreCategory | undefined {
   if (isExploreCategory(search.cat)) return search.cat;
+  const ages = parseExploreRailAges(search);
+  if (ages.length === 1) return ages[0];
   if (isExploreCategory(search.age)) return search.age;
   if (search.care === "home" || search.care === "nursery" || search.care === "before-after") {
     return search.care;
   }
   return undefined;
+}
+
+/** `?age=infant,toddler` (and repeated / array values) — stable RAIL_AGES order. */
+export function parseExploreRailAges(search: { age?: unknown; cat?: unknown }): RailAge[] {
+  const tokens = csvTokens(search.age);
+  const fromAge = RAIL_AGES.filter((age) => tokens.includes(age));
+  if (fromAge.length) return fromAge;
+  if (typeof search.cat === "string" && isRailAge(search.cat)) return [search.cat];
+  return [];
+}
+
+export function formatExploreRailAges(ages: readonly RailAge[]): string | undefined {
+  const unique = RAIL_AGES.filter((age) => ages.includes(age));
+  return unique.length ? unique.join(",") : undefined;
+}
+
+export function toggleExploreRailAge(ages: readonly RailAge[], age: RailAge): RailAge[] {
+  const next = ages.includes(age) ? ages.filter((item) => item !== age) : [...ages, age];
+  return RAIL_AGES.filter((item) => next.includes(item));
+}
+
+export function exploreOpeningsSelected(search: { openings?: unknown }): boolean {
+  return search.openings === "1" || search.openings === 1 || search.openings === true;
 }

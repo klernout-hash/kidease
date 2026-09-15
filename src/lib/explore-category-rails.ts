@@ -1,7 +1,7 @@
 import { RAIL_AGES, matchesRailAge, type RailAge } from "@/lib/care-type";
 import type { CopyKey } from "@/lib/copy";
 import { hasRealPhoto } from "@/lib/listing-readiness";
-import { honestVacancy, isLiveLookingCard } from "@/lib/now-loops";
+import { honestVacancy, isLiveLookingCard, listingAgeUnknown } from "@/lib/now-loops";
 import type { DaycareCard as Card } from "@/lib/types";
 import { uniqueById } from "@/lib/utils";
 
@@ -68,4 +68,31 @@ export function exploreAgeRailItems(items: Card[], age: RailAge, n = 18): Card[]
     preferCompleteCards(items.filter((row) => matchesRailAge(row, age))),
     n,
   );
+}
+
+/**
+ * Selected age rails stay visible. Known-age matches first, then honest
+ * licensed directory cards whose ages are unknown — never a confirmed
+ * band that does not serve this age.
+ */
+export function listingFillsSelectedAgeRail(
+  row: Pick<Card, "agesKnown" | "ageMinMonths" | "ageMaxMonths" | "amenities">,
+  age: RailAge,
+): boolean {
+  if (matchesRailAge(row, age)) return true;
+  return listingAgeUnknown(row);
+}
+
+export function exploreAgeRailItemsWithFill(items: Card[], age: RailAge, n = 18): Card[] {
+  const matched = preferCompleteCards(items.filter((row) => matchesRailAge(row, age)));
+  if (matched.length >= n) return take(matched, n);
+  const seen = new Set(matched.map((row) => row.id));
+  const fill = preferCompleteCards(
+    items.filter((row) => !seen.has(row.id) && listingFillsSelectedAgeRail(row, age) && !matchesRailAge(row, age)),
+  );
+  return take([...matched, ...fill], n);
+}
+
+export function exploreRailsToShow(selectedAges: readonly RailAge[]): RailAge[] {
+  return selectedAges.length ? RAIL_AGES.filter((age) => selectedAges.includes(age)) : [...RAIL_AGES];
 }
