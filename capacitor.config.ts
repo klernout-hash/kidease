@@ -70,7 +70,8 @@ const config: CapacitorConfig = {
     },
   },
   android: {
-    allowMixedContent: true,
+    // Mixed content only for on-device http live reload. Store binaries stay https.
+    allowMixedContent: remote.startsWith("http://"),
     backgroundColor: "#FFFFFF",
   },
   ios: {

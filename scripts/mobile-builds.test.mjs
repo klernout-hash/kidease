@@ -28,6 +28,7 @@ describe("Capacitor production config", () => {
     assert.match(cap, /www\.kidease\.ca/);
     assert.doesNotMatch(cap, /hostname:\s*"kidease\.app"/);
     assert.match(cap, /CAP_SERVER_URL/);
+    assert.match(cap, /allowMixedContent:\s*remote\.startsWith\("http:\/\/"\)/);
     assert.doesNotMatch(cap, /ACCESS_BACKGROUND_LOCATION|NSLocationAlways/);
     assert.equal(CAP_APP_ID, "ca.daycarenearme.app");
     assert.equal(CAP_APP_NAME, "KidEase");
@@ -64,6 +65,8 @@ describe("when-in-use location purpose", () => {
     assert.match(patch, /remote-notification/);
     assert.match(patch, /stripAndroidPermission[\s\S]*ACCESS_BACKGROUND_LOCATION/);
     assert.match(patch, /stripPlistKey[\s\S]*NSLocationAlways/);
+    assert.match(patch, /ensureAndroidAppLinks|autoVerify/);
+    assert.match(patch, /App\.entitlements/);
   });
 });
 
@@ -93,6 +96,19 @@ describe("native project scaffolding", () => {
     assert.match(manifest, /ACCESS_FINE_LOCATION/);
     assert.match(manifest, /POST_NOTIFICATIONS/);
     assert.doesNotMatch(manifest, /ACCESS_BACKGROUND_LOCATION/);
+    assert.match(manifest, /android:autoVerify="true"/);
+    assert.match(manifest, /android:host="www\.kidease\.ca"/);
+    assert.match(manifest, /android:host="kidease\.ca"/);
+    assert.match(manifest, /android:scheme="KidEase"/);
+    assert.match(manifest, /android:allowBackup="false"/);
+
+    const entitlements = read("ios/App/App/App.entitlements");
+    assert.match(entitlements, /applinks:www\.kidease\.ca/);
+    assert.match(entitlements, /applinks:kidease\.ca/);
+    assert.match(entitlements, /webcredentials:www\.kidease\.ca/);
+    assert.doesNotMatch(entitlements, /aps-environment/);
+    assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /CODE_SIGN_ENTITLEMENTS = App\/App.entitlements/);
+    assert.doesNotMatch(read("ios/App/App.xcodeproj/project.pbxproj"), /DEVELOPMENT_TEAM = [A-Z0-9]{10}/);
 
     const strings = read("android/app/src/main/res/values/strings.xml");
     assert.match(strings, /location_permission_rationale/);
@@ -124,6 +140,7 @@ describe("mobile build docs stay honest", () => {
     assert.doesNotMatch(doc, /store listing is live|listed on the App Store/i);
     assert.match(doc, /not\*\* live|are \*\*not\*\* live/);
     assert.match(doc, /store-readiness\.md/);
+    assert.match(doc, /STORE-LAUNCH\.md/);
     assert.doesNotMatch(doc, /-----BEGIN|AuthKey_|sk_live_|AIza[0-9A-Za-z_-]{20,}/);
   });
 
@@ -137,5 +154,19 @@ describe("mobile build docs stay honest", () => {
     assert.match(checklist, /\[x\] Get-app page shows App Store \/ Play as Coming soon/);
     assert.match(checklist, /apple-app-site-association/);
     assert.match(checklist, /assetlinks\.json/);
+    assert.match(checklist, /STORE-LAUNCH\.md/);
+  });
+
+  it("keeps the Nov 1 Canada launch checklist honest about accounts", () => {
+    const launch = read("docs/STORE-LAUNCH.md");
+    assert.match(launch, /1 Nov 2026|1 November 2026/);
+    assert.match(launch, /ca\.daycarenearme\.app/);
+    assert.match(launch, /XXXXXXXXXX/);
+    assert.match(launch, /APPLE_TEAM_ID/);
+    assert.match(launch, /ANDROID_CERT_SHA256S/);
+    assert.match(launch, /TestFlight/);
+    assert.doesNotMatch(launch, /submitted to (the )?App Store|uploaded to (TestFlight|Play)/i);
+    assert.doesNotMatch(launch, /APPLE_TEAM_ID=[A-Z0-9]{10}/);
+    assert.doesNotMatch(launch, /sha256_cert_fingerprints": \["[0-9A-F:]{10,}/);
   });
 });

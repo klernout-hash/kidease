@@ -27,7 +27,7 @@
  *
  * Apple Pay domain association is composed here too (env-only; 404 when unset).
  */
-import { CAP_APP_ID, CAP_PROD_HOSTNAME } from "./native-permissions.mjs";
+import { CAP_APP_ID, CAP_APP_LINK_PATHS, CAP_PROD_HOSTNAME } from "./native-permissions.mjs";
 import { applePayDomainAssociationPayload } from "./well-known-apple-pay.mjs";
 
 export { CAP_APP_ID, CAP_PROD_HOSTNAME };
@@ -95,12 +95,10 @@ export function buildAppleAppSiteAssociation(env = process.env) {
           appID,
           paths: ["*"],
           appIDs: [appID],
-          components: [
-            {
-              "/": "/*",
-              comment: "Open KidEase https URLs in the Capacitor app",
-            },
-          ],
+          components: CAP_APP_LINK_PATHS.map(({ path, comment }) => ({
+            "/": path,
+            comment,
+          })),
         },
       ],
     },

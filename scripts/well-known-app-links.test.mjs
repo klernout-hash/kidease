@@ -69,7 +69,11 @@ test("AASA JSON names the Team ID + bundle id and covers all paths", () => {
   assert.equal(aasa.applinks.details[0].appID, appID);
   assert.deepEqual(aasa.applinks.details[0].appIDs, [appID]);
   assert.deepEqual(aasa.applinks.details[0].paths, ["*"]);
-  assert.equal(aasa.applinks.details[0].components[0]["/"], "/*");
+  const components = aasa.applinks.details[0].components;
+  assert.equal(components[0]["/"], "/daycare/*");
+  assert.equal(components.at(-1)["/"], "/*");
+  assert.ok(components.some((row) => row["/"] === "/delete-account"));
+  assert.ok(components.some((row) => row["/"] === "/fr/*"));
   assert.deepEqual(aasa.webcredentials.apps, [appID]);
 
   const filled = buildAppleAppSiteAssociation({ APPLE_TEAM_ID: "TEAMID0001" });
@@ -180,6 +184,8 @@ test("env example documents Team ID and fingerprint fill-in without fake hashes"
   assert.match(wellKnownReadme, /APPLE_TEAM_ID/);
   assert.match(wellKnownReadme, /ANDROID_CERT_SHA256S/);
   assert.match(wellKnownReadme, /XXXXXXXXXX/);
+  assert.match(wellKnownReadme, /TODO/);
+  assert.match(wellKnownReadme, /\/daycare\/\*/);
   assert.match(wellKnownReadme, /Do not invent/);
 
   const docs = read("docs/store-readiness.md");
@@ -190,4 +196,6 @@ test("env example documents Team ID and fingerprint fill-in without fake hashes"
   assert.match(docs, /ANDROID_CERT_SHA256S/);
   assert.match(docs, /ANDROID_SHA256_CERT_FINGERPRINTS/);
   assert.match(docs, /application\/json/);
+  assert.match(docs, /STORE-LAUNCH\.md/);
+  assert.match(docs, /\/daycare\/\*/);
 });

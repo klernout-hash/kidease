@@ -82,6 +82,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>KidEase</string>
+				<string>ca.daycarenearme.app</string>
 			</array>
 		</dict>
 	</array>

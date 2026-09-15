@@ -27,10 +27,13 @@
 			"resize": "body"
 		},
 		"Geolocation": {},
+		"PushNotifications": {
+			"presentationOptions": ["badge", "sound", "alert"]
+		},
 		"InAppReview": {}
 	},
 	"android": {
-		"allowMixedContent": true,
+		"allowMixedContent": false,
 		"backgroundColor": "#FFFFFF"
 	},
 	"ios": {

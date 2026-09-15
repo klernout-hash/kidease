@@ -2,9 +2,9 @@
 
 These files must stay **HTTP 200** `application/json`. Do not invent a Team ID or Play SHA.
 
-| File | Swap later |
+| File | TODO after Kyle has accounts |
 | --- | --- |
-| `apple-app-site-association` (+ `.json` alias + site-root `/apple-app-site-association`) | Set `APPLE_TEAM_ID` on Vercel (10 chars). Placeholder is `XXXXXXXXXX`. |
-| `assetlinks.json` | Set `ANDROID_CERT_SHA256S` on Vercel (colon hex). Array stays empty until then. |
+| `apple-app-site-association` (+ `.json` alias + site-root `/apple-app-site-association`) | **TODO:** set `APPLE_TEAM_ID` on Vercel (10 chars from Apple Membership). Placeholder in git is `XXXXXXXXXX`. Paths cover `/daycare/*`, `/search`, `/get-app`, `/login`, `/help`, `/privacy`, `/terms`, `/delete-account`, `/fr/*`, and `/*`. |
+| `assetlinks.json` | **TODO:** set `ANDROID_CERT_SHA256S` on Vercel (Play App Signing SHA-256, colon hex). `sha256_cert_fingerprints` stays `[]` until then. Package is already `ca.daycarenearme.app`. |
 
-Builders: `scripts/well-known-app-links.mjs`. Docs: `docs/store-readiness.md`.
+Builders: `scripts/well-known-app-links.mjs`. Docs: `docs/STORE-LAUNCH.md`, `docs/store-readiness.md`.

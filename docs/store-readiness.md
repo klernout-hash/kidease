@@ -10,13 +10,16 @@ Goal: soft launch via **TestFlight** + **Play internal testing**, then public li
 
 ---
 
-## 0) Current status (2026-09-05)
+Canada date: **1 Nov 2026**. Short owner timeline: [`STORE-LAUNCH.md`](STORE-LAUNCH.md).
+
+## 0) Current status (2026-09-15)
 
 - [x] Capacitor In-App Review plugin + Rate KidEase menu (placeholders for store IDs — see `docs/store-review.md`)
 - [x] Capacitor shell configured (`ca.daycarenearme.app`)
 - [x] Icons / splash pipeline (pin fill pass)
 - [x] Geolocation while-using only (good for review)
 - [x] Get-app page shows App Store / Play as Coming soon
+- [x] iOS Associated Domains + Android App Links intent-filters committed (`www.kidease.ca` / `kidease.ca`)
 - [ ] Apple Developer Program enrolled
 - [ ] Google Play Console opened
 - [ ] Native ios/android projects signed and archived
@@ -82,11 +85,11 @@ Goal: soft launch via **TestFlight** + **Play internal testing**, then public li
 ## 3) Engineering (agents / builds)
 
 ### Capacitor
-- [ ] `ios/` and `android/` projects generated and `npx cap sync`
-- [ ] Production server URL points at `https://www.kidease.ca` (or approved CAP_SERVER_URL)
-- [ ] Hostname / scheme consistent (`kidease.app` vs `kidease.ca` resolved)
-- [ ] Icons + splash from current pipeline
-- [ ] Status bar / safe area OK on notched phones
+- [x] `ios/` and `android/` projects generated and `npx cap sync` (re-run `npm run cap:prepare` on the laptop that archives)
+- [x] Production server URL points at `https://www.kidease.ca` (or approved CAP_SERVER_URL)
+- [x] Hostname / scheme consistent (`www.kidease.ca`; custom schemes `KidEase` + `ca.daycarenearme.app`)
+- [x] Icons + splash from current pipeline
+- [ ] Status bar / safe area OK on notched phones (device smoke)
 
 ### PWA (helps mobile score before stores)
 - [ ] Web manifest + icons
@@ -121,7 +124,18 @@ Expected AASA shape (bundle id is already `ca.daycarenearme.app`):
         "appID": "XXXXXXXXXX.ca.daycarenearme.app",
         "paths": ["*"],
         "appIDs": ["XXXXXXXXXX.ca.daycarenearme.app"],
-        "components": [{ "/": "/*" }]
+        "components": [
+          { "/": "/daycare/*" },
+          { "/": "/search" },
+          { "/": "/get-app" },
+          { "/": "/login" },
+          { "/": "/help" },
+          { "/": "/privacy" },
+          { "/": "/terms" },
+          { "/": "/delete-account" },
+          { "/": "/fr/*" },
+          { "/": "/*" }
+        ]
       }
     ]
   },
@@ -148,7 +162,7 @@ Expected `assetlinks.json` shape:
 
 `sha256_cert_fingerprints` stays **empty on purpose** until Play App Signing exists. After Play Console enroll: App integrity → App signing → copy the **App signing** certificate SHA-256 (and the upload cert if shown). Set `ANDROID_CERT_SHA256S` on Vercel (comma-separated if both). `ANDROID_SHA256_CERT_FINGERPRINTS` is still accepted as an alias. Do not invent a hash.
 
-Xcode: add Associated Domains `applinks:www.kidease.ca` and `applinks:kidease.ca` when the Team is selected. Android: add an `https` VIEW / BROWSABLE intent-filter with `android:autoVerify="true"` for those hosts when you next touch the manifest.
+Xcode already has Associated Domains in `ios/App/App/App.entitlements` (`applinks` + `webcredentials` for `www.kidease.ca` and `kidease.ca`). Selecting Kyle’s Team in Signing & Capabilities is still required so Apple can issue a profile that includes them. Android already has an `https` VIEW / BROWSABLE intent-filter with `android:autoVerify="true"` for those hosts — verification stays red until `ANDROID_CERT_SHA256S` is a real Play signing hash.
 
 #### Kyle — paste on Vercel Production (`kidease-git`) once the store apps exist
 
@@ -174,7 +188,8 @@ curl -sI https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-as
 
 - [ ] `APPLE_TEAM_ID` set on Vercel after Apple enroll
 - [ ] `ANDROID_CERT_SHA256S` set on Vercel after Play App Signing
-- [ ] Associated Domains + Android App Links intent-filter on the store binaries
+- [x] Associated Domains + Android App Links intent-filter committed (unsigned until Team / Play signing exist)
+- [ ] Associated Domains + App Links **verify** on a signed TestFlight / Play binary
 
 ### Quality gates before upload
 - [ ] Typecheck / build green
