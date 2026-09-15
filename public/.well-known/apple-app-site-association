@@ -4,18 +4,60 @@
     "details": [
       {
         "appID": "XXXXXXXXXX.ca.daycarenearme.app",
-        "paths": ["*"],
-        "appIDs": ["XXXXXXXXXX.ca.daycarenearme.app"],
+        "paths": [
+          "*"
+        ],
+        "appIDs": [
+          "XXXXXXXXXX.ca.daycarenearme.app"
+        ],
         "components": [
           {
+            "/": "/daycare/*",
+            "comment": "Centre listing"
+          },
+          {
+            "/": "/search",
+            "comment": "Search"
+          },
+          {
+            "/": "/get-app",
+            "comment": "Get the app"
+          },
+          {
+            "/": "/login",
+            "comment": "Sign in"
+          },
+          {
+            "/": "/help",
+            "comment": "Support"
+          },
+          {
+            "/": "/privacy",
+            "comment": "Privacy policy"
+          },
+          {
+            "/": "/terms",
+            "comment": "Terms of use"
+          },
+          {
+            "/": "/delete-account",
+            "comment": "Account deletion (PIPEDA / Apple)"
+          },
+          {
+            "/": "/fr/*",
+            "comment": "French locale"
+          },
+          {
             "/": "/*",
-            "comment": "Open KidEase https URLs in the Capacitor app"
+            "comment": "Remaining KidEase https URLs in the Capacitor app"
           }
         ]
       }
     ]
   },
   "webcredentials": {
-    "apps": ["XXXXXXXXXX.ca.daycarenearme.app"]
+    "apps": [
+      "XXXXXXXXXX.ca.daycarenearme.app"
+    ]
   }
 }
