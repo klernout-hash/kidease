@@ -32,9 +32,12 @@ Set these as encrypted environment variables. Names only in `.env.example` — n
 | `DOCUSIGN_TEMPLATE_PROVIDER_AGREEMENT` | Template ID for the provider agreement (optional) |
 | `DOCUSIGN_TEMPLATE_ENROLMENT_PACK` | Template ID for the enrolment pack (optional) |
 | `DOCUSIGN_TEMPLATE_ROLE` | Template role name. Default `Provider` |
+| `DOCUSIGN_BRAND_ID` | Optional signing Brand ID (`brandId` on envelope create). Production: KidEase sub-account brand. Leave unset to keep the account default brand. |
 | `APP_ORIGIN` | `https://www.kidease.ca` so Connect callbacks hit production |
 
 Optional overrides: `DOCUSIGN_AUTH_BASE`, `DOCUSIGN_BASE_URI`. Demo defaults to `account-d.docusign.com` / `demo.docusign.net`.
+
+When `DOCUSIGN_BRAND_ID` is set, Admin → Contracts sends include that `brandId` on both template and document envelope create bodies. Point Production at the KidEase API Account ID plus this brand so envelopes use the KidEase signing brand. Preview/demo can leave it unset. Do not hardcode the GUID. The Open Road parent-account brand stays untouched because this is env-driven per account.
 
 Webhook and poll reject query-string secrets. Vercel Cron sends `Authorization: Bearer $CRON_SECRET` to `/api/docusign/poll` (reuse the existing cron secret).
 

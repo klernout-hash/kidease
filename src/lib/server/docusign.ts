@@ -1,12 +1,9 @@
 import { createPrivateKey, createSign } from "node:crypto";
 import { getSql } from "@/lib/db";
+import { centreEnvelopeCreateBody } from "@/lib/docusign-envelope";
 import {
   contractPdfKey,
   defaultTemplateId,
-  packEmailBlurb,
-  packEmailSubject,
-  parsePackKind,
-  templateRoleName,
   type PackKind,
 } from "@/lib/docusign-packs";
 import {
@@ -155,27 +152,6 @@ async function dsBytes(cfg: JwtConfig, token: string, path: string) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-function webhookNotification() {
-  return {
-    url: `${appOrigin()}/api/docusign/webhook`,
-    loggingEnabled: "true",
-    requireAcknowledgment: "true",
-    includeDocuments: "false",
-    envelopeEvents: [
-      { envelopeEventStatusCode: "sent" },
-      { envelopeEventStatusCode: "delivered" },
-      { envelopeEventStatusCode: "completed" },
-      { envelopeEventStatusCode: "declined" },
-      { envelopeEventStatusCode: "voided" },
-    ],
-    eventData: {
-      version: "restv2.1",
-      format: "json",
-      includeData: ["recipients"],
-    },
-  };
-}
-
 export async function listDocusignTemplatesSafe(): Promise<DocusignTemplateList> {
   const cfg = docusignConfig();
   if (!cfg) return { templates: [], error: null };
@@ -214,7 +190,6 @@ export async function createCentreEnvelope(input: {
   templateId?: string | null;
   centreName?: string;
 }): Promise<EnvelopeResult> {
-  const packKind = parsePackKind(input.packKind);
   const cfg = docusignConfig();
   if (!cfg) {
     return {
@@ -232,64 +207,12 @@ export async function createCentreEnvelope(input: {
     console.error("[docusign] create envelope auth failed", err);
     throw new Error(classifyDocusignFailure(err).message);
   }
-  const subject = packEmailSubject(packKind, input.centreName || input.documentName);
-  const templateId = (input.templateId || "").trim();
   let created: { envelopeId: string; status?: string };
   try {
-    created = templateId
-    ? await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
-        method: "POST",
-        body: JSON.stringify({
-          emailSubject: subject,
-          emailBlurb: packEmailBlurb(packKind),
-          templateId,
-          templateRoles: [
-            {
-              email: input.signerEmail,
-              name: input.signerName,
-              roleName: templateRoleName(),
-            },
-          ],
-          eventNotification: webhookNotification(),
-          status: "sent",
-        }),
-      })
-    : await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
-        method: "POST",
-        body: JSON.stringify({
-          emailSubject: subject,
-          emailBlurb: packEmailBlurb(packKind),
-          documents: [
-            {
-              documentBase64: Buffer.from(input.body, "utf8").toString("base64"),
-              name: input.documentName,
-              fileExtension: "txt",
-              documentId: "1",
-            },
-          ],
-          recipients: {
-            signers: [
-              {
-                email: input.signerEmail,
-                name: input.signerName,
-                recipientId: "1",
-                tabs: {
-                  signHereTabs: [
-                    {
-                      anchorString: "By signing in DocuSign",
-                      anchorUnits: "pixels",
-                      anchorXOffset: "0",
-                      anchorYOffset: "20",
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-          eventNotification: webhookNotification(),
-          status: "sent",
-        }),
-      });
+    created = await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
+      method: "POST",
+      body: JSON.stringify(centreEnvelopeCreateBody(input)),
+    });
   } catch (err) {
     console.error("[docusign] create envelope failed", err);
     throw new Error(classifyDocusignFailure(err).message);
