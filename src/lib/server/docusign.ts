@@ -1,12 +1,9 @@
 import { createPrivateKey, createSign } from "node:crypto";
 import { getSql } from "@/lib/db";
+import { centreEnvelopeCreateBody } from "@/lib/docusign-envelope";
 import {
   contractPdfKey,
   defaultTemplateId,
-  packEmailBlurb,
-  packEmailSubject,
-  parsePackKind,
-  templateRoleName,
   type PackKind,
 } from "@/lib/docusign-packs";
 import {
@@ -46,20 +43,6 @@ type JwtConfig = {
 
 function env(name: string) {
   return (process.env[name] || "").trim();
-}
-
-export function docusignBrandId(source: Record<string, string | undefined> = process.env) {
-  return (source.DOCUSIGN_BRAND_ID || "").trim();
-}
-
-/** Adds `brandId` when DOCUSIGN_BRAND_ID is set. Unset keeps the account default brand. */
-export function withEnvelopeBrand<T extends Record<string, unknown>>(
-  body: T,
-  source: Record<string, string | undefined> = process.env,
-): T & { brandId?: string } {
-  const brandId = docusignBrandId(source);
-  if (!brandId) return { ...body };
-  return { ...body, brandId };
 }
 
 function normalizePem(raw: string) {
@@ -169,27 +152,6 @@ async function dsBytes(cfg: JwtConfig, token: string, path: string) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-function webhookNotification() {
-  return {
-    url: `${appOrigin()}/api/docusign/webhook`,
-    loggingEnabled: "true",
-    requireAcknowledgment: "true",
-    includeDocuments: "false",
-    envelopeEvents: [
-      { envelopeEventStatusCode: "sent" },
-      { envelopeEventStatusCode: "delivered" },
-      { envelopeEventStatusCode: "completed" },
-      { envelopeEventStatusCode: "declined" },
-      { envelopeEventStatusCode: "voided" },
-    ],
-    eventData: {
-      version: "restv2.1",
-      format: "json",
-      includeData: ["recipients"],
-    },
-  };
-}
-
 export async function listDocusignTemplatesSafe(): Promise<DocusignTemplateList> {
   const cfg = docusignConfig();
   if (!cfg) return { templates: [], error: null };
@@ -216,74 +178,6 @@ export async function listDocusignTemplatesSafe(): Promise<DocusignTemplateList>
 export async function listDocusignTemplates(): Promise<DocusignTemplate[]> {
   const listed = await listDocusignTemplatesSafe();
   return listed.templates;
-}
-
-type CentreEnvelopeInput = {
-  packKind?: PackKind;
-  documentName: string;
-  body: string;
-  signerName: string;
-  signerEmail: string;
-  templateId?: string | null;
-  centreName?: string;
-};
-
-export function centreEnvelopeCreateBody(
-  input: CentreEnvelopeInput,
-  source: Record<string, string | undefined> = process.env,
-) {
-  const packKind = parsePackKind(input.packKind);
-  const subject = packEmailSubject(packKind, input.centreName || input.documentName);
-  const templateId = (input.templateId || "").trim();
-  const definition = templateId
-    ? {
-        emailSubject: subject,
-        emailBlurb: packEmailBlurb(packKind),
-        templateId,
-        templateRoles: [
-          {
-            email: input.signerEmail,
-            name: input.signerName,
-            roleName: templateRoleName(source),
-          },
-        ],
-        eventNotification: webhookNotification(),
-        status: "sent",
-      }
-    : {
-        emailSubject: subject,
-        emailBlurb: packEmailBlurb(packKind),
-        documents: [
-          {
-            documentBase64: Buffer.from(input.body, "utf8").toString("base64"),
-            name: input.documentName,
-            fileExtension: "txt",
-            documentId: "1",
-          },
-        ],
-        recipients: {
-          signers: [
-            {
-              email: input.signerEmail,
-              name: input.signerName,
-              recipientId: "1",
-              tabs: {
-                signHereTabs: [
-                  {
-                    anchorString: "By signing in DocuSign",
-                    anchorUnits: "pixels",
-                    anchorXOffset: "0",
-                    anchorYOffset: "20",
-                  },
-                ],
-              },
-            },
-          ],
-        },
-        eventNotification: webhookNotification(),
-        status: "sent",
-      };
-  return withEnvelopeBrand(definition, source);
 }
 
 export async function createCentreEnvelope(input: {

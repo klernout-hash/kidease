@@ -30,7 +30,7 @@ import {
   centreEnvelopeCreateBody,
   docusignBrandId,
   withEnvelopeBrand,
-} from "../src/lib/server/docusign.ts";
+} from "../src/lib/docusign-envelope.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -167,10 +167,12 @@ test("envelope create includes brandId only when DOCUSIGN_BRAND_ID is set", () =
   assert.equal(Object.hasOwn(unbrandedDocument, "brandId"), false);
 
   const server = src("src/lib/server/docusign.ts");
+  const envelope = src("src/lib/docusign-envelope.ts");
   assert.match(server, /centreEnvelopeCreateBody/);
-  assert.match(server, /DOCUSIGN_BRAND_ID/);
-  assert.match(server, /brandId/);
+  assert.match(envelope, /DOCUSIGN_BRAND_ID/);
+  assert.match(envelope, /brandId/);
   assert.doesNotMatch(server, /8d229b55-e59a-49b5-a380-67bd91d7ef1d/);
+  assert.doesNotMatch(envelope, /8d229b55-e59a-49b5-a380-67bd91d7ef1d/);
 });
 
 test("Send stays off unless DocuSign is live and photo allowlist stays images", () => {
