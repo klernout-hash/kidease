@@ -40,6 +40,7 @@ import { JURISDICTIONS } from "@/lib/province-registry";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
 import { listAdminContracts, type AdminContractRow, type AdminPackRow } from "@/lib/server/contracts";
 import { AdminContractsPanel, CentrePackChips } from "@/components/admin-contracts";
+import type { DocusignConfigIssue } from "@/lib/docusign-config";
 import type { DocusignConnectIssue } from "@/lib/docusign-errors";
 import type { DocusignTemplateOption } from "@/lib/docusign-packs";
 import { AdminMailPanel } from "@/components/admin-mail";
@@ -120,6 +121,7 @@ function AdminPage() {
     enrolment_pack: string | null;
   }>({ provider_agreement: null, enrolment_pack: null });
   const [contractError, setContractError] = useState<DocusignConnectIssue | null>(null);
+  const [contractEnvIssues, setContractEnvIssues] = useState<DocusignConfigIssue[]>([]);
   const [contractBusy, setContractBusy] = useState<string | null>(null);
   const [ledger, setLedger] = useState<AdminMoneyLedger>({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 });
   const [busy, setBusy] = useState<string | null>(null);
@@ -163,6 +165,7 @@ function AdminPage() {
         defaultTemplateIds: { provider_agreement: null, enrolment_pack: null },
         templateRole: "Provider",
         docusignError: null,
+        docusignEnvIssues: [],
       })),
       listJurisdictions().catch(() => []),
       listListingReports().catch(() => []),
@@ -179,6 +182,7 @@ function AdminPage() {
     setContractTemplates(envelopes.templates || []);
     setContractDefaults(envelopes.defaultTemplateIds || { provider_agreement: null, enrolment_pack: null });
     setContractError(envelopes.docusignError || null);
+    setContractEnvIssues(envelopes.docusignEnvIssues || []);
     setJurisdictions(regs);
     setReports(flags);
     setCatalogHealth(health);
@@ -514,6 +518,7 @@ function AdminPage() {
           templates={contractTemplates}
           defaultTemplateIds={contractDefaults}
           docusignError={contractError}
+          docusignEnvIssues={contractEnvIssues}
           busy={contractBusy}
           setBusy={setContractBusy}
           onRefresh={refresh}

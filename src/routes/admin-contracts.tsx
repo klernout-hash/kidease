@@ -7,6 +7,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
 import { AdminContractsPanel } from "@/components/admin-contracts";
+import type { DocusignConfigIssue } from "@/lib/docusign-config";
 import type { DocusignConnectIssue } from "@/lib/docusign-errors";
 import type { DocusignTemplateOption } from "@/lib/docusign-packs";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
@@ -34,6 +35,7 @@ function AdminContractsPage() {
     enrolment_pack: string | null;
   }>({ provider_agreement: null, enrolment_pack: null });
   const [docusignError, setDocusignError] = useState<DocusignConnectIssue | null>(null);
+  const [docusignEnvIssues, setDocusignEnvIssues] = useState<DocusignConfigIssue[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
 
   async function refresh() {
@@ -44,12 +46,14 @@ function AdminContractsPage() {
       defaultTemplateIds: { provider_agreement: null, enrolment_pack: null },
       templateRole: "Provider",
       docusignError: null,
+      docusignEnvIssues: [],
     }));
     setRows(res.rows);
     setMode(res.mode);
     setTemplates(res.templates || []);
     setDefaults(res.defaultTemplateIds || { provider_agreement: null, enrolment_pack: null });
     setDocusignError(res.docusignError || null);
+    setDocusignEnvIssues(res.docusignEnvIssues || []);
   }
 
   const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role));
@@ -96,6 +100,7 @@ function AdminContractsPage() {
         templates={templates}
         defaultTemplateIds={defaults}
         docusignError={docusignError}
+        docusignEnvIssues={docusignEnvIssues}
         busy={busy}
         setBusy={setBusy}
         onRefresh={refresh}

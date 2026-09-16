@@ -31,6 +31,14 @@ import {
   docusignBrandId,
   withEnvelopeBrand,
 } from "../src/lib/docusign-envelope.ts";
+import {
+  docusignConfig,
+  docusignConfigIssues,
+  docusignMode,
+  normalizeDocusignPem,
+} from "../src/lib/docusign-config.ts";
+import { formatDocusignEnvIssues } from "../src/lib/docusign-copy.ts";
+import { runtimeEnv, runtimeProcessEnv } from "../src/lib/runtime-env.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -175,6 +183,114 @@ test("envelope create includes brandId only when DOCUSIGN_BRAND_ID is set", () =
   assert.doesNotMatch(envelope, /8d229b55-e59a-49b5-a380-67bd91d7ef1d/);
 });
 
+const SAMPLE_PEM = "-----BEGIN RSA PRIVATE KEY-----\\nMIIB\\n-----END RSA PRIVATE KEY-----";
+
+function jwtEnv(overrides = {}) {
+  return {
+    DOCUSIGN_INTEGRATION_KEY: "ik-1",
+    DOCUSIGN_USER_ID: "user-1",
+    DOCUSIGN_ACCOUNT_ID: "acct-1",
+    DOCUSIGN_PRIVATE_KEY: SAMPLE_PEM,
+    ...overrides,
+  };
+}
+
+test("docusignConfig is live when JWT names are set and PEM has BEGIN", () => {
+  const env = jwtEnv();
+  assert.equal(docusignMode(env), "live");
+  const cfg = docusignConfig(env);
+  assert.ok(cfg);
+  assert.equal(cfg.integrationKey, "ik-1");
+  assert.equal(cfg.userId, "user-1");
+  assert.equal(cfg.accountId, "acct-1");
+  assert.match(cfg.privateKey, /BEGIN RSA PRIVATE KEY/);
+  assert.match(cfg.privateKey, /\n/);
+  assert.deepEqual(docusignConfigIssues(env), []);
+});
+
+test("docusignConfig accepts DOCUSIGN_CLIENT_ID and quoted / base64 PEM", () => {
+  const pem = "-----BEGIN PRIVATE KEY-----\nMIIB\n-----END PRIVATE KEY-----";
+  const quoted = jwtEnv({
+    DOCUSIGN_INTEGRATION_KEY: "",
+    DOCUSIGN_CLIENT_ID: " client-id ",
+    DOCUSIGN_PRIVATE_KEY: `"${SAMPLE_PEM}\\n"`,
+  });
+  assert.equal(docusignMode(quoted), "live");
+  assert.equal(docusignConfig(quoted)?.integrationKey, "client-id");
+
+  const b64 = jwtEnv({
+    DOCUSIGN_PRIVATE_KEY: Buffer.from(pem, "utf8").toString("base64"),
+  });
+  assert.equal(docusignMode(b64), "live");
+  assert.match(docusignConfig(b64)?.privateKey || "", /BEGIN PRIVATE KEY/);
+});
+
+test("docusignConfig is demo and names the specific missing key", () => {
+  assert.equal(docusignMode({}), "demo");
+  const empty = docusignConfigIssues({});
+  assert.deepEqual(
+    empty.map((row) => row.name),
+    ["DOCUSIGN_INTEGRATION_KEY", "DOCUSIGN_USER_ID", "DOCUSIGN_ACCOUNT_ID", "DOCUSIGN_PRIVATE_KEY"],
+  );
+  assert.ok(empty.every((row) => row.reason === "missing"));
+
+  const noUser = docusignConfigIssues(jwtEnv({ DOCUSIGN_USER_ID: "  " }));
+  assert.deepEqual(noUser, [{ name: "DOCUSIGN_USER_ID", reason: "missing" }]);
+  assert.equal(docusignMode(jwtEnv({ DOCUSIGN_USER_ID: "" })), "demo");
+
+  const badPem = docusignConfigIssues(jwtEnv({ DOCUSIGN_PRIVATE_KEY: "not-a-pem" }));
+  assert.deepEqual(badPem, [{ name: "DOCUSIGN_PRIVATE_KEY", reason: "not_pem" }]);
+  assert.equal(docusignMode(jwtEnv({ DOCUSIGN_PRIVATE_KEY: "not-a-pem" })), "demo");
+
+  assert.equal(formatDocusignEnvIssues("en", noUser), "Missing: DOCUSIGN_USER_ID.");
+  assert.match(formatDocusignEnvIssues("en", badPem), /BEGIN/);
+  assert.doesNotMatch(formatDocusignEnvIssues("en", badPem), /not-a-pem/);
+  assert.match(formatDocusignEnvIssues("fr", noUser), /DOCUSIGN_USER_ID/);
+});
+
+test("runtimeEnv reads live process env and ignores a mocked snapshot when injected", () => {
+  const probe = "KIDEASE_RUNTIME_ENV_PROBE";
+  const prev = process.env[probe];
+  process.env[probe] = "  live-value  ";
+  try {
+    assert.equal(runtimeEnv(probe), "live-value");
+    assert.equal(runtimeEnv(probe, { [probe]: "injected" }), "injected");
+    assert.equal(runtimeEnv(probe, {}), "");
+    assert.equal(runtimeProcessEnv()[probe], "  live-value  ");
+  } finally {
+    if (prev === undefined) delete process.env[probe];
+    else process.env[probe] = prev;
+  }
+
+  const runtimeSrc = src("src/lib/runtime-env.ts");
+  const runtimeCode = runtimeSrc
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "")
+    .replace(/'(?:\\.|[^'\\])*'/g, "")
+    .replace(/"(?:\\.|[^"\\])*"/g, "");
+  assert.doesNotMatch(runtimeCode, /process\.env/);
+  assert.match(runtimeSrc, /globalThis/);
+  assert.match(runtimeSrc, /Function\(/);
+
+  const configSrc = src("src/lib/docusign-config.ts");
+  assert.doesNotMatch(configSrc, /process\.env/);
+  assert.match(configSrc, /runtimeEnv/);
+  const server = src("src/lib/server/docusign.ts");
+  assert.match(server, /docusign-config/);
+  assert.doesNotMatch(server, /process\.env\[name\]/);
+  const vite = src("vite.config.ts");
+  assert.match(vite, /keepProcessEnv:\s*true/);
+  const copy = src("src/lib/docusign-copy.ts");
+  assert.match(copy, /formatDocusignEnvIssues/);
+  assert.match(src("src/components/admin-contracts.tsx"), /docusign-missing-env/);
+});
+
+test("normalizeDocusignPem keeps BEGIN after oneline Vercel pastes", () => {
+  assert.match(normalizeDocusignPem(SAMPLE_PEM), /BEGIN RSA PRIVATE KEY/);
+  assert.match(normalizeDocusignPem(`"${SAMPLE_PEM}"`), /BEGIN RSA PRIVATE KEY/);
+  assert.equal(normalizeDocusignPem("not-a-pem").includes("BEGIN"), false);
+});
+
 test("Send stays off unless DocuSign is live and photo allowlist stays images", () => {
   const contracts = src("src/components/admin-contracts.tsx");
   const copy = src("src/lib/docusign-copy.ts");
@@ -204,6 +320,7 @@ test("DocuSign JWT auth failure returns an empty list and never throws", async (
   const contracts = src("src/lib/server/contracts.ts");
   assert.match(contracts, /listDocusignTemplatesSafe/);
   assert.match(contracts, /docusignError/);
+  assert.match(contracts, /docusignEnvIssues/);
   assert.match(contracts, /emptyAdminContractsPayload/);
   assert.match(src("src/components/admin-contracts.tsx"), /docusign-consent-banner/);
   assert.match(src("src/lib/docusign-copy.ts"), /DocuSign not connected — finish JWT consent/);

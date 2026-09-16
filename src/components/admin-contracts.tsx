@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signedPdfPath, type DocusignTemplateOption } from "@/lib/docusign-packs";
-import { ds } from "@/lib/docusign-copy";
+import { ds, formatDocusignEnvIssues } from "@/lib/docusign-copy";
+import type { DocusignConfigIssue } from "@/lib/docusign-config";
 import type { DocusignConnectIssue } from "@/lib/docusign-errors";
 import { useCopy } from "@/lib/use-copy";
 import type { Locale } from "@/lib/types";
@@ -20,6 +21,7 @@ export function AdminContractsPanel({
   templates = [],
   defaultTemplateIds = { provider_agreement: null, enrolment_pack: null },
   docusignError = null,
+  docusignEnvIssues = [],
   busy,
   setBusy,
   onRefresh,
@@ -29,6 +31,7 @@ export function AdminContractsPanel({
   templates?: DocusignTemplateOption[];
   defaultTemplateIds?: { provider_agreement: string | null; enrolment_pack: string | null };
   docusignError?: DocusignConnectIssue | null;
+  docusignEnvIssues?: DocusignConfigIssue[];
   busy: string | null;
   setBusy: (v: string | null) => void;
   onRefresh: () => Promise<void>;
@@ -73,6 +76,11 @@ export function AdminContractsPanel({
         <Stat label={ds(locale, "centres")} value={counts.all} />
       </dl>
       <p className="mt-4 text-sm text-muted">{mode === "live" ? ds(locale, "leadLive") : ds(locale, "leadOff")}</p>
+      {mode !== "live" && docusignEnvIssues.length ? (
+        <p data-ke="docusign-missing-env" className="mt-2 text-sm text-muted">
+          {formatDocusignEnvIssues(locale, docusignEnvIssues)}
+        </p>
+      ) : null}
       {docusignError ? (
         <p
           role="status"

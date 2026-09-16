@@ -21,8 +21,10 @@ import {
   persistSignedPdf,
   voidCentreEnvelope,
 } from "@/lib/server/docusign";
-import type { DocusignTemplateOption } from "@/lib/docusign-packs";
+import { docusignConfigIssues, type DocusignConfigIssue } from "@/lib/docusign-config";
+import { templateRoleName, type DocusignTemplateOption } from "@/lib/docusign-packs";
 import { classifyDocusignFailure, type DocusignConnectIssue } from "@/lib/docusign-errors";
+import { runtimeProcessEnv } from "@/lib/runtime-env";
 
 export type ContractStatus = "draft" | "sent" | "viewed" | "signed" | "declined" | "voided";
 
@@ -81,6 +83,7 @@ export type AdminContractsPayload = {
   templateRole: string;
   rows: AdminContractRow[];
   docusignError: DocusignConnectIssue | null;
+  docusignEnvIssues: DocusignConfigIssue[];
 };
 
 function emptyAdminContractsPayload(
@@ -91,9 +94,10 @@ function emptyAdminContractsPayload(
     mode,
     templates: [],
     defaultTemplateIds: defaultTemplateIds(),
-    templateRole: (process.env.DOCUSIGN_TEMPLATE_ROLE || "Provider").trim() || "Provider",
+    templateRole: templateRoleName(runtimeProcessEnv()),
     rows: [],
     docusignError,
+    docusignEnvIssues: docusignConfigIssues(),
   };
 }
 
@@ -271,9 +275,10 @@ async function loadAdminContractsPayload(): Promise<AdminContractsPayload> {
       mode: docusignMode(),
       templates,
       defaultTemplateIds: defaultTemplateIds(),
-      templateRole: (process.env.DOCUSIGN_TEMPLATE_ROLE || "Provider").trim() || "Provider",
+      templateRole: templateRoleName(runtimeProcessEnv()),
       rows: mapped,
       docusignError,
+      docusignEnvIssues: docusignConfigIssues(),
     };
 }
 

@@ -1,5 +1,7 @@
 import type { Locale } from "./types";
 
+type DocusignEnvIssue = { name: string; reason: "missing" | "not_pem" };
+
 type DsKey =
   | "needSign"
   | "out"
@@ -144,4 +146,18 @@ const fr: Record<DsKey, string> = {
 
 export function ds(locale: Locale, key: DsKey) {
   return locale === "fr" ? fr[key] : en[key];
+}
+
+/** Operator-facing names only — never values. */
+export function formatDocusignEnvIssues(locale: Locale, issues: DocusignEnvIssue[]): string {
+  if (!issues.length) return "";
+  const bits = issues.map((issue) => {
+    if (issue.reason === "not_pem") {
+      return locale === "fr"
+        ? `${issue.name} n’est pas un PEM (ligne BEGIN requise)`
+        : `${issue.name} is not a PEM (needs a BEGIN line)`;
+    }
+    return issue.name;
+  });
+  return locale === "fr" ? `Manquant : ${bits.join(", ")}.` : `Missing: ${bits.join(", ")}.`;
 }
