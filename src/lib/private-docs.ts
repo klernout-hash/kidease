@@ -109,7 +109,7 @@ export async function postPrivateDocForm(
   if (!res.ok || !json.ok) {
     throw new Error(json.error || PRIVATE_DOC_BAD_FILE);
   }
-  return { ok: true as const, ...json };
+  return { ...json, ok: true as const };
 }
 
 export function openPrivateDocHref(href: string) {
