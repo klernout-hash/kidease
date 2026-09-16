@@ -15,6 +15,13 @@ import {
   requirementsFor,
   screeningLetterHtml,
 } from "../src/lib/provider-screening.ts";
+import {
+  inferPrivateDocMime,
+  licenseDocHref,
+  licenseReviewMarker,
+  screeningDocHref,
+} from "../src/lib/private-docs.ts";
+import { allowPrivateDocType, isPrivateDocKey } from "../src/lib/server/r2.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -174,6 +181,46 @@ test("upload parser accepts a small data URL and rejects junk", () => {
   assert.equal(ok.ok, true);
   assert.equal(parseScreeningUpload({ dataUrl: "http://evil", mime: "application/pdf" }).ok, false);
   assert.equal(parseScreeningUpload({ dataUrl: "data:,x", mime: "text/plain" }).ok, false);
+  const inferred = parseScreeningUpload({
+    dataUrl: `data:application/pdf;base64,${"QQ=="}`,
+    mime: "",
+    filename: "criminal-record.pdf",
+  });
+  assert.equal(inferred.ok, true);
+  assert.equal(inferred.ok && inferred.mime, "application/pdf");
+  assert.equal(inferPrivateDocMime({ mime: "image/jpg", filename: "licence.JPG" }), "image/jpeg");
+});
+
+test("private screening and licence docs persist as R2 keys and reopen via auth routes", () => {
+  assert.equal(allowPrivateDocType("application/pdf"), "application/pdf");
+  assert.equal(allowPrivateDocType("image/jpg"), "image/jpeg");
+  assert.throws(() => allowPrivateDocType("text/html"), /PDF or image/);
+  assert.equal(isPrivateDocKey("screening/abc/vsc-1.pdf"), true);
+  assert.equal(isPrivateDocKey("licenses/abc/lic_1.pdf"), true);
+  assert.equal(isPrivateDocKey("originals/wpg/1001.jpg"), false);
+  assert.equal(screeningDocHref("sd_1"), "/api/screening-documents/sd_1");
+  assert.equal(licenseDocHref("ke-1"), "/api/license-docs/ke-1");
+  assert.equal(licenseReviewMarker("data:image/jpeg;base64,aaaa"), "data:image");
+  assert.equal(licenseReviewMarker("licenses/ke-1/lic_1.pdf"), "licenses/ke-1/lic_1.pdf");
+  assert.match(src("src/lib/admin-verify.ts"), /hasStoredPrivateDoc/);
+  assert.match(src("src/lib/admin-verify.ts"), /data:application\/pdf/);
+  assert.match(src("src/lib/server/provider-screening.ts"), /persistPrivateDoc/);
+  assert.match(src("src/lib/server/provider-screening.ts"), /R2_SCREENING_PREFIX/);
+  assert.doesNotMatch(src("src/lib/server/provider-screening.ts"), /storageRef: file\.dataUrl/);
+  assert.match(src("src/components/provider-screening.tsx"), /screeningDocHref/);
+  assert.match(src("src/components/provider-screening.tsx"), /postPrivateDocForm/);
+  assert.match(src("src/components/admin-screening.tsx"), /screeningDocHref/);
+  assert.doesNotMatch(src("src/components/admin-screening.tsx"), /window\.open\(file\.dataUrl/);
+  assert.match(src("src/components/provider-listing-forms.tsx"), /licenseDocHref/);
+  assert.match(src("src/routes/admin.tsx"), /licenseDocHref/);
+  assert.match(src("src/routes/api/screening-documents.ts"), /saveScreeningUpload/);
+  assert.match(src("src/routes/api/screening-documents.\$id.ts"), /authorizeScreeningDocument/);
+  assert.match(src("src/routes/api/license-docs.\$daycareId.ts"), /R2_LICENSE_PREFIX/);
+  assert.match(src("src/routeTree.gen.ts"), /id:\s*'\/api\/screening-documents\/\$id'/);
+  assert.match(src("src/routeTree.gen.ts"), /id:\s*'\/api\/license-docs\/\$daycareId'/);
+  assert.match(src("src/lib/server/admin-centres.ts"), /licenseReviewMarker/);
+  assert.match(src("src/lib/server/map-row.ts"), /licensePhotoOnFile/);
+  assert.doesNotMatch(src("src/lib/server/catalog-neon.ts"), /license_photo/);
 });
 
 test("migration seeds MB thoroughly and stubs other provinces", () => {

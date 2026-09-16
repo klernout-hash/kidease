@@ -36,6 +36,7 @@ import { listJurisdictions, listListingReports, reviewLicense, type AdminReportR
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
 import { AdminLicenseActions, AdminTrustPanel } from "@/components/admin-trust";
 import { AdminScreeningQueue } from "@/components/admin-screening";
+import { licenseDocHref, openPrivateDocHref } from "@/lib/private-docs";
 import { JURISDICTIONS } from "@/lib/province-registry";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
 import { listAdminContracts, type AdminContractRow, type AdminPackRow } from "@/lib/server/contracts";
@@ -930,7 +931,13 @@ function CentreRow({
             <div className="mt-3 flex flex-wrap gap-3">
               {c.licensePhoto ? (
                 <figure className="space-y-1">
-                  <img src={c.licensePhoto} alt={`Licence for ${c.name}`} className="h-24 w-36 rounded-lg object-cover ring-1 ring-black/10" />
+                  <button
+                    type="button"
+                    className="rounded-lg bg-bg px-3 py-2 text-left text-sm font-medium text-primary ring-1 ring-black/10 hover:underline"
+                    onClick={() => openPrivateDocHref(licenseDocHref(c.daycareId))}
+                  >
+                    View licence document
+                  </button>
                   <figcaption className={`text-[11px] ${muted}`}>Licence photo</figcaption>
                 </figure>
               ) : null}

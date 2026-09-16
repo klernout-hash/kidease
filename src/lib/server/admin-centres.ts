@@ -11,12 +11,12 @@ import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { asIsoString, compareTimeDesc } from "@/lib/sort-time";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { licenseReviewMarker } from "@/lib/private-docs";
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
-  const license = (licensePhoto || "").trim();
   const storefront = splitPhotoList(photos).find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
   return {
-    licensePhoto: license || null,
+    licensePhoto: licenseReviewMarker(licensePhoto),
     storefrontPhoto: storefront || null,
   };
 }

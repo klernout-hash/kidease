@@ -6,8 +6,10 @@
 import {
   allowContentType,
   allowContractPdfType,
+  allowPrivateDocType,
   decodeObjectBody,
   humanR2Error,
+  isPrivateDocKey,
   objectUrl,
   presignS3Get,
   R2_CONTRACT_MAX_BYTES,
@@ -120,6 +122,47 @@ export async function putContractPdf(input: { key: string; body: Buffer }): Prom
   if (!body.byteLength) throw new Error("Object body is required.");
   if (body.byteLength > R2_CONTRACT_MAX_BYTES) {
     throw new Error(`Signed PDF is too large (max ${R2_CONTRACT_MAX_BYTES} bytes).`);
+  }
+  const url = objectUrl(config, key);
+  const signed = signS3Request({
+    method: "PUT",
+    url,
+    headers: {
+      "content-type": contentType,
+      "content-length": String(body.byteLength),
+    },
+    body,
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+  });
+  try {
+    const res = await r2Fetch(signed, "PUT", body);
+    return {
+      key,
+      bytes: body.byteLength,
+      contentType,
+      etag: res.headers.get("etag"),
+    };
+  } catch (err) {
+    throw new Error(humanR2Error(err, config.secretAccessKey));
+  }
+}
+
+export async function putPrivateDoc(input: {
+  key: string;
+  contentType: string;
+  body: Buffer;
+}): Promise<R2PutResult> {
+  const config = requireConfig();
+  const key = sanitizeObjectKey(input.key);
+  if (!isPrivateDocKey(key)) {
+    throw new Error("Private document key must stay under screening/ or licenses/.");
+  }
+  const contentType = allowPrivateDocType(input.contentType);
+  const body = input.body;
+  if (!body.byteLength) throw new Error("Object body is required.");
+  if (body.byteLength > R2_MAX_OBJECT_BYTES) {
+    throw new Error(`Object is too large (max ${R2_MAX_OBJECT_BYTES} bytes).`);
   }
   const url = objectUrl(config, key);
   const signed = signS3Request({

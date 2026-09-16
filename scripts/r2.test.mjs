@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   allowContentType,
+  allowPrivateDocType,
   amzDateParts,
   contentTypeForPhotoPath,
   decodeObjectBody,
@@ -124,6 +125,9 @@ test("object keys and image types are tightly allow-listed", () => {
   assert.throws(() => sanitizeObjectKey(""), /required/);
   assert.equal(allowContentType("image/jpeg; charset=binary"), "image/jpeg");
   assert.throws(() => allowContentType("text/html"), /JPEG/);
+  assert.equal(allowPrivateDocType("application/pdf"), "application/pdf");
+  assert.equal(allowPrivateDocType("image/jpg"), "image/jpeg");
+  assert.throws(() => allowPrivateDocType("image/gif"), /PDF or image/);
   const tiny = decodeObjectBody(Buffer.from("jpeg").toString("base64"));
   assert.equal(tiny.toString(), "jpeg");
   assert.throws(() => decodeObjectBody(""), /required/);
@@ -217,6 +221,8 @@ test("admin media route is registered and env example has names only", async () 
   assert.match(envExample, /R2_SECRET_ACCESS_KEY=/);
   assert.match(envExample, /R2_ENDPOINT=/);
   assert.match(envExample, /R2_READ_ORIGINALS=/);
+  assert.match(envExample, /screening\//);
+  assert.match(envExample, /\/api\/screening-documents/);
   assert.match(envExample, /R2_PUBLIC_BASE_URL=/);
   assert.match(envExample, /VITE_R2_PUBLIC_BASE_URL=/);
   assert.match(envExample, /CF_IMAGE_RESIZE=/);
