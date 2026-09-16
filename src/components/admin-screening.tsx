@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
-  getScreeningDocumentFile,
   reviewScreeningDocument,
   type AdminScreeningQueueRow,
 } from "@/lib/server/provider-screening";
 import { docKindLabel } from "@/lib/provider-screening";
+import { openPrivateDocHref, screeningDocHref } from "@/lib/private-docs";
 import { useCopy } from "@/lib/use-copy";
 
 export function AdminScreeningQueue({
@@ -35,20 +35,8 @@ export function AdminScreeningQueue({
     }
   }
 
-  async function openFile(id: string) {
-    try {
-      const file = await getScreeningDocumentFile({ data: { documentId: id } });
-      const opened = window.open(file.dataUrl, "_blank", "noopener");
-      if (!opened) {
-        const a = document.createElement("a");
-        a.href = file.dataUrl;
-        a.download = file.filename;
-        a.rel = "noopener";
-        a.click();
-      }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : t("screeningUpload"));
-    }
+  function openFile(id: string) {
+    openPrivateDocHref(screeningDocHref(id));
   }
 
   return (
@@ -89,8 +77,8 @@ export function AdminScreeningQueue({
                 className="h-11 w-full rounded-full bg-bg px-4 text-sm ring-1 ring-border"
               />
               <div className="flex flex-wrap gap-2">
-                <Button type="button" size="sm" variant="secondary" disabled={busy !== null} onClick={() => void openFile(row.id)}>
-                  {t("screeningUpload")}
+                <Button type="button" size="sm" variant="secondary" disabled={busy !== null} onClick={() => openFile(row.id)}>
+                  {t("screeningViewFile")}
                 </Button>
                 <Button type="button" size="sm" disabled={busy !== null} onClick={() => void decide(row.id, "approve")}>
                   {t("screeningApprove")}

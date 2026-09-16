@@ -108,6 +108,9 @@ import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
+import { Route as ApiLicenseDocsDaycareIdRouteImport } from './routes/api/license-docs.$daycareId'
+import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
+import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screening-documents.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -605,6 +608,21 @@ const ApiContractsIdPdfRoute = ApiContractsIdPdfRouteImport.update({
   path: '/api/contracts/$id/pdf',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLicenseDocsDaycareIdRoute = ApiLicenseDocsDaycareIdRouteImport.update({
+  id: '/api/license-docs/$daycareId',
+  path: '/api/license-docs/$daycareId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiScreeningDocumentsRoute = ApiScreeningDocumentsRouteImport.update({
+  id: '/api/screening-documents',
+  path: '/api/screening-documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiScreeningDocumentsIdRoute = ApiScreeningDocumentsIdRouteImport.update({
+  id: '/api/screening-documents/$id',
+  path: '/api/screening-documents/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -706,6 +724,9 @@ export interface FileRoutesByFullPath {
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
+  '/api/screening-documents': typeof ApiScreeningDocumentsRoute
+  '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -805,6 +826,9 @@ export interface FileRoutesByTo {
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
+  '/api/screening-documents': typeof ApiScreeningDocumentsRoute
+  '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -907,6 +931,9 @@ export interface FileRoutesById {
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
+  '/api/screening-documents': typeof ApiScreeningDocumentsRoute
+  '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1010,6 +1037,9 @@ export interface FileRouteTypes {
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
+    | '/api/license-docs/$daycareId'
+    | '/api/screening-documents'
+    | '/api/screening-documents/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1109,6 +1139,9 @@ export interface FileRouteTypes {
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
+    | '/api/license-docs/$daycareId'
+    | '/api/screening-documents'
+    | '/api/screening-documents/$id'
   id:
     | '__root__'
     | '/'
@@ -1210,6 +1243,9 @@ export interface FileRouteTypes {
     | '/fr/jobs_/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
+    | '/api/license-docs/$daycareId'
+    | '/api/screening-documents'
+    | '/api/screening-documents/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1288,6 +1324,9 @@ export interface RootRouteChildren {
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
   ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
+  ApiLicenseDocsDaycareIdRoute: typeof ApiLicenseDocsDaycareIdRoute
+  ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRoute
+  ApiScreeningDocumentsIdRoute: typeof ApiScreeningDocumentsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1985,6 +2024,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiContractsIdPdfRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/license-docs/$daycareId': {
+      id: '/api/license-docs/$daycareId'
+      path: '/api/license-docs/$daycareId'
+      fullPath: '/api/license-docs/$daycareId'
+      preLoaderRoute: typeof ApiLicenseDocsDaycareIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/screening-documents': {
+      id: '/api/screening-documents'
+      path: '/api/screening-documents'
+      fullPath: '/api/screening-documents'
+      preLoaderRoute: typeof ApiScreeningDocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/screening-documents/$id': {
+      id: '/api/screening-documents/$id'
+      path: '/api/screening-documents/$id'
+      fullPath: '/api/screening-documents/$id'
+      preLoaderRoute: typeof ApiScreeningDocumentsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -2155,6 +2215,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,
   ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
+  ApiLicenseDocsDaycareIdRoute: ApiLicenseDocsDaycareIdRoute,
+  ApiScreeningDocumentsRoute: ApiScreeningDocumentsRoute,
+  ApiScreeningDocumentsIdRoute: ApiScreeningDocumentsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

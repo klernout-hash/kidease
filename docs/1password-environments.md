@@ -117,7 +117,7 @@ See `docs/docusign.md`.
 
 | Name | Conceal | Vercel | Notes |
 | --- | --- | --- | --- |
-| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | yes | both | S3 API. Never prefix `VITE_`. |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | yes | both | S3 API. Never prefix `VITE_`. Required on Production so screening/licence PDFs persist and reload. |
 | `R2_ACCOUNT_ID` / `R2_ENDPOINT` | yes | both | Private API host, not `media.kidease.ca`. |
 | `R2_BUCKET` | no | both | Default `kidease-media`. |
 | `R2_PUBLIC_BASE_URL` / `VITE_R2_PUBLIC_BASE_URL` | no | both | `https://media.kidease.ca` |

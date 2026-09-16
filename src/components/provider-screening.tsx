@@ -5,12 +5,18 @@ import {
   addScreeningPerson,
   generateScreeningLetter,
   listProviderScreening,
-  uploadScreeningDocument,
   type ScreeningCentreView,
   type ScreeningDocView,
   type ScreeningPersonView,
 } from "@/lib/server/provider-screening";
-import { docKindLabel, type ScreeningDocStatus } from "@/lib/provider-screening";
+import { docKindLabel, SCREENING_MAX_BYTES, type ScreeningDocStatus } from "@/lib/provider-screening";
+import {
+  openPrivateDocHref,
+  postPrivateDocForm,
+  PRIVATE_DOC_BAD_FILE,
+  SCREENING_DOC_API,
+  screeningDocHref,
+} from "@/lib/private-docs";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 
@@ -42,23 +48,13 @@ const ROLE_COPY: Record<string, CopyKey> = {
   home_resident: "screeningRoleResident",
 };
 
-function readScreeningFile(file: File | undefined, onReady: (dataUrl: string, mime: string, name: string) => void, onBad: () => void) {
+function readScreeningFile(file: File | undefined, onReady: (file: File) => void, onBad: () => void) {
   if (!file) return;
-  if (file.size > 4 * 1024 * 1024) {
+  if (file.size > SCREENING_MAX_BYTES) {
     onBad();
     return;
   }
-  const reader = new FileReader();
-  reader.onload = () => {
-    const result = typeof reader.result === "string" ? reader.result : "";
-    if (!result.startsWith("data:")) {
-      onBad();
-      return;
-    }
-    onReady(result, file.type || "application/octet-stream", file.name);
-  };
-  reader.onerror = () => onBad();
-  reader.readAsDataURL(file);
+  onReady(file);
 }
 
 function StatusPill({ status }: { status: ScreeningDocStatus }) {
@@ -124,6 +120,17 @@ function DocRow({
         {doc.kind === "vsc" ? (
           <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={onLetter}>
             {t("screeningGenerateLetter")}
+          </Button>
+        ) : null}
+        {doc.hasFile && doc.id ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => openPrivateDocHref(screeningDocHref(doc.id as string))}
+          >
+            {t("screeningViewFile")}
+            {doc.filename ? ` · ${doc.filename}` : ""}
           </Button>
         ) : null}
         <label className="inline-flex h-11 min-h-11 cursor-pointer items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-fg">
@@ -196,28 +203,27 @@ export function ProviderScreeningPanel() {
   ) {
     readScreeningFile(
       file,
-      (dataUrl, mime, filename) => {
+      (next) => {
         setBusy(true);
-        void uploadScreeningDocument({
-          data: {
+        void postPrivateDocForm(
+          SCREENING_DOC_API,
+          {
             daycareId: centre.daycareId,
             personId: person.id,
             kind: doc.kind,
-            dataUrl,
-            mime,
-            filename,
             issuedOn,
             expiresOn,
           },
-        })
+          next,
+        )
           .then(() => {
             toast.success(t("screeningStatusReview"));
             return load();
           })
-          .catch((err) => toast.error(err instanceof Error ? err.message : t("screeningUpload")))
+          .catch((err) => toast.error(err instanceof Error ? err.message : PRIVATE_DOC_BAD_FILE))
           .finally(() => setBusy(false));
       },
-      () => toast.error(t("screeningUpload")),
+      () => toast.error(PRIVATE_DOC_BAD_FILE),
     );
   }
 

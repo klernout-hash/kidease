@@ -1,0 +1,105 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { getSql } from "@/lib/db";
+import { PRIVATE_DOC_BAD_FILE } from "@/lib/private-docs";
+import { assertCanMutateListing } from "@/lib/access-control";
+import { loadCentreRole, listOwnedDaycareIds } from "@/lib/server/centre-access";
+import {
+  licenseObjectTail,
+  loadPrivateDoc,
+  persistPrivateDoc,
+  privateDocResponse,
+  readUploadFile,
+} from "@/lib/server/private-docs";
+import { R2_LICENSE_PREFIX } from "@/lib/server/r2";
+import { resolveAdminAccess } from "@/lib/server/roles";
+import { writeTrustEvent } from "@/lib/server/trust";
+
+function fail(err: unknown, fallback = "Request failed") {
+  const message = err instanceof Error ? err.message : fallback;
+  const status =
+    err && typeof err === "object" && "status" in err && typeof (err as { status: unknown }).status === "number"
+      ? (err as { status: number }).status
+      : message === "Unauthorized" || message === "Not authorized"
+        ? 401
+        : /not found/i.test(message)
+          ? 404
+          : 400;
+  return Response.json({ ok: false, error: message }, { status });
+}
+
+async function authorizeLicenseDoc(userId: string, daycareId: string, write: boolean) {
+  const admin = (await resolveAdminAccess(userId)).ok;
+  if (admin) return;
+  if (write) {
+    const owned = await listOwnedDaycareIds(await getSql(), userId);
+    assertCanMutateListing(owned, daycareId);
+    return;
+  }
+  const role = await loadCentreRole(await getSql(), userId, daycareId);
+  if (!role) throw new Error("Not authorized");
+}
+
+export const Route = createFileRoute("/api/license-docs/$daycareId")({
+  server: {
+    handlers: {
+      GET: async ({ params }) => {
+        try {
+          const { requireUserId } = await import("@/lib/auth/verify.server");
+          const userId = await requireUserId();
+          const daycareId = params.daycareId;
+          await authorizeLicenseDoc(userId, daycareId, false);
+          const sql = await getSql();
+          const rows = await sql<{
+            license_photo: string | null;
+          }>`
+            select coalesce(c.license_photo, d.license_photo) as license_photo
+            from daycares d
+            left join listing_claims c on c.daycare_id = d.id
+            where d.id = ${daycareId}
+            order by c.created_at desc nulls last
+            limit 1
+          `.catch(() => []);
+          const ref = rows[0]?.license_photo;
+          if (!ref) throw new Error("File not found");
+          return privateDocResponse(await loadPrivateDoc(ref, null, "licence"));
+        } catch (err) {
+          return fail(err);
+        }
+      },
+      POST: async ({ request, params }) => {
+        try {
+          const { requireUserId } = await import("@/lib/auth/verify.server");
+          const userId = await requireUserId();
+          const daycareId = params.daycareId;
+          await authorizeLicenseDoc(userId, daycareId, true);
+          const form = await request.formData();
+          const file = form.get("file");
+          if (!(file instanceof File)) throw new Error(PRIVATE_DOC_BAD_FILE);
+          const stored = await persistPrivateDoc({
+            prefix: R2_LICENSE_PREFIX,
+            keyTail: licenseObjectTail(daycareId),
+            body: await readUploadFile(file),
+            mime: file.type,
+          });
+          const sql = await getSql();
+          await sql`
+            update daycares set license_photo = ${stored.storageRef} where id = ${daycareId}
+          `;
+          await sql`
+            update listing_claims set license_photo = ${stored.storageRef}
+            where daycare_id = ${daycareId} and user_id = ${userId}
+          `.catch(() => undefined);
+          await writeTrustEvent(sql, {
+            daycareId,
+            actorUserId: userId,
+            kind: "license_photo",
+            note: "Provincial licence document uploaded for Admin review.",
+          }).catch(() => undefined);
+          return Response.json({ ok: true, mime: stored.mime });
+        } catch (err) {
+          return fail(err);
+        }
+      },
+    },
+  },
+});

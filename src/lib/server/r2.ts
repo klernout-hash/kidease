@@ -31,6 +31,8 @@ export const R2_MAX_OBJECT_BYTES = 4 * 1024 * 1024;
 /** Signed DocuSign packs are larger than listing photos. */
 export const R2_CONTRACT_MAX_BYTES = 15 * 1024 * 1024;
 export const R2_CONTRACT_PREFIX = "contracts";
+export const R2_SCREENING_PREFIX = "screening";
+export const R2_LICENSE_PREFIX = "licenses";
 export const R2_PRESIGN_TTL_SEC = 5 * 60;
 export const R2_KEY_MAX = 512;
 export const R2_ORIGINALS_PREFIX = "originals";
@@ -251,6 +253,25 @@ export function allowContractPdfType(raw: string): string {
     ?.trim();
   if (type !== "application/pdf") throw new Error("Signed copies must be PDF.");
   return type;
+}
+
+const PRIVATE_DOC_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
+
+export function allowPrivateDocType(raw: string): string {
+  const type = String(raw || "")
+    .trim()
+    .toLowerCase()
+    .split(";")[0]
+    ?.trim();
+  const normalized = type === "image/jpg" ? "image/jpeg" : type;
+  if (!normalized || !(PRIVATE_DOC_TYPES as readonly string[]).includes(normalized)) {
+    throw new Error("Upload a PDF or image (JPEG, PNG, or WebP).");
+  }
+  return normalized;
+}
+
+export function isPrivateDocKey(key: string): boolean {
+  return key.startsWith(`${R2_SCREENING_PREFIX}/`) || key.startsWith(`${R2_LICENSE_PREFIX}/`);
 }
 
 export function decodeObjectBody(bodyBase64: string): Buffer {

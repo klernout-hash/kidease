@@ -81,6 +81,8 @@ export type Daycare = {
   replySample?: number;
   googlePlaceId?: string | null;
   licenseNumber: string | null;
+  /** True when a provincial licence scan is on file. Never the file bytes. */
+  licensePhotoOnFile?: boolean;
   languages: string;
   /** Languages spoken by staff. Optional; empty = hidden on the public listing. */
   staffLanguages?: string[];

@@ -182,8 +182,8 @@ function ClaimPage() {
 
   async function sendEnroll(e: React.FormEvent) {
     e.preventDefault();
-    if (!enrollLicense.startsWith("data:image")) {
-      toast.error("Upload a photo of your provincial licence");
+    if (!enrollLicense.startsWith("data:image") && !enrollLicense.startsWith("data:application/pdf")) {
+      toast.error("Upload a photo or PDF of your provincial licence");
       return;
     }
     setEnrollBusy(true);
@@ -269,9 +269,13 @@ function ClaimPage() {
             <label className="block text-sm font-medium">
               Provincial licence photo
               <span className="mt-1 block text-xs font-normal text-muted">Required. Photo or scan of the current licence.</span>
-              <input required type="file" accept="image/*" className="mt-2 block w-full text-sm" onChange={(e) => readLicense(e.target.files?.[0], "claim")} />
+              <input required type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="mt-2 block w-full text-sm" onChange={(e) => readLicense(e.target.files?.[0], "claim")} />
             </label>
-            {license ? <img src={license} alt="Licence preview" className="max-h-40 rounded-md object-contain ring-1 ring-border" /> : null}
+            {license.startsWith("data:image") ? (
+              <img src={license} alt="Licence preview" className="max-h-40 rounded-md object-contain ring-1 ring-border" />
+            ) : license ? (
+              <p className="text-sm text-muted">PDF selected</p>
+            ) : null}
             <TurnstileField onToken={claimChallenge.onToken} />
             <div className="flex flex-wrap gap-2">
               <Button type="submit" disabled={busy}>
@@ -430,9 +434,13 @@ function ClaimPage() {
           <label className="block text-sm font-medium">
             Provincial licence photo
             <span className="mt-1 block text-xs font-normal text-muted">Required for compliance review. Clear photo or scan of the current licence.</span>
-            <input required type="file" accept="image/*" className="mt-2 block w-full text-sm" onChange={(e) => readLicense(e.target.files?.[0], "enroll")} />
+            <input required type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="mt-2 block w-full text-sm" onChange={(e) => readLicense(e.target.files?.[0], "enroll")} />
           </label>
-          {enrollLicense ? <img src={enrollLicense} alt="Licence preview" className="max-h-40 rounded-md object-contain ring-1 ring-border" /> : null}
+          {enrollLicense.startsWith("data:image") ? (
+            <img src={enrollLicense} alt="Licence preview" className="max-h-40 rounded-md object-contain ring-1 ring-border" />
+          ) : enrollLicense ? (
+            <p className="text-sm text-muted">PDF selected</p>
+          ) : null}
           <label className="block text-sm font-medium">
             {t("enrollMessage")}
             <textarea

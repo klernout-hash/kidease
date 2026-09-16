@@ -12,6 +12,12 @@
 
 import { isHomeBasedFacility, normalizeFacilityType } from "./facility-type.ts";
 import type { CentreMemberRole } from "./centre-roles.ts";
+import {
+  inferPrivateDocMime,
+  isAllowedPrivateDocMime,
+  PRIVATE_DOC_BAD_FILE,
+  PRIVATE_DOC_MAX_BYTES,
+} from "./private-docs.ts";
 
 export const SCREENING_ROLES = [
   "owner",
@@ -59,13 +65,13 @@ export const CA_PROVINCE_CODES = [
 ] as const;
 export type CaProvinceCode = (typeof CA_PROVINCE_CODES)[number];
 
-export const SCREENING_MAX_BYTES = 4 * 1024 * 1024;
+export const SCREENING_MAX_BYTES = PRIVATE_DOC_MAX_BYTES;
 export const SCREENING_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
 
 export const SCREENING_NOT_OWNER = "Only the centre owner can manage screening for the whole team.";
 export const SCREENING_FORBIDDEN = "You can only open your own screening items.";
 export const SCREENING_REJECT_REASON = "Add a short reason so the centre knows what to fix.";
-export const SCREENING_BAD_FILE = "Upload a PDF or image under 4 MB.";
+export const SCREENING_BAD_FILE = PRIVATE_DOC_BAD_FILE;
 export const SCREENING_PERSON_NAME = "Enter the person’s name as it should appear on the police letter.";
 
 export type ScreeningRequirement = {
@@ -288,12 +294,12 @@ export function parseScreeningUpload(input: {
   | { ok: true; dataUrl: string; mime: string; filename: string }
   | { ok: false; error: string } {
   const dataUrl = (input.dataUrl || "").trim();
-  const mime = (input.mime || "").trim().toLowerCase().split(";")[0]?.trim() || "";
   const filename = (input.filename || "document").trim().slice(0, 160) || "document";
+  const mime = inferPrivateDocMime({ mime: input.mime, filename, dataUrl });
   if (!dataUrl.startsWith("data:") || !dataUrl.includes(",")) {
     return { ok: false, error: SCREENING_BAD_FILE };
   }
-  if (!(SCREENING_MIME as readonly string[]).includes(mime)) {
+  if (!isAllowedPrivateDocMime(mime)) {
     return { ok: false, error: SCREENING_BAD_FILE };
   }
   const payload = dataUrl.slice(dataUrl.indexOf(",") + 1);

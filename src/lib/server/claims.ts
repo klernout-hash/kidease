@@ -46,9 +46,22 @@ function makeCode() {
   return out;
 }
 
-function asImage(raw?: string | null) {
+async function persistLicenseInput(raw?: string | null, daycareId?: string | null) {
   const v = (raw || "").trim();
-  return v.startsWith("data:image") ? v : null;
+  if (!v) return null;
+  const { parsePrivateUpload, persistPrivateDoc, licenseObjectTail } = await import("@/lib/server/private-docs");
+  const { R2_LICENSE_PREFIX } = await import("@/lib/server/r2");
+  const { isPrivateR2Key } = await import("@/lib/private-docs");
+  if (isPrivateR2Key(v)) return v;
+  const parsed = parsePrivateUpload({ dataUrl: v, filename: "licence" });
+  if (!parsed.ok) return null;
+  const stored = await persistPrivateDoc({
+    prefix: R2_LICENSE_PREFIX,
+    keyTail: licenseObjectTail(daycareId || "claim"),
+    body: parsed.body,
+    mime: parsed.mime,
+  });
+  return stored.storageRef;
 }
 
 async function storeLicensePhoto(sql: Awaited<ReturnType<typeof getSql>>, daycareId: string | null, photo: string) {
@@ -169,8 +182,8 @@ export const verifyClaim = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { assertTurnstileToken } = await import("@/lib/server/turnstile");
     await assertTurnstileToken(data.turnstileToken);
-    const photo = asImage(data.licensePhoto);
-    if (!photo) throw new Error("Upload a photo of your provincial licence");
+    const photo = await persistLicenseInput(data.licensePhoto, data.daycareId);
+    if (!photo) throw new Error("Upload a photo or PDF of your provincial licence");
     const sql = await getSql();
     const rows = await sql<{ id: string; code: string }>`
       select id, code from listing_claims
@@ -262,10 +275,10 @@ export const submitEnrollLicense = createServerFn({ method: "POST" })
     const centre = data.centre.trim();
     const city = data.city.trim();
     const body = data.body.trim();
-    const photo = asImage(data.licensePhoto);
+    const photo = await persistLicenseInput(data.licensePhoto, data.daycareId);
     if (!name || !email || !centre || !city || !body) throw new Error("Missing fields");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email");
-    if (!photo) throw new Error("Upload a photo of your provincial licence");
+    if (!photo) throw new Error("Upload a photo or PDF of your provincial licence");
     if (data.daycareId) {
       const listed = await catalogByIdGet(data.daycareId);
       if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
@@ -370,7 +383,7 @@ export const updateListing = createServerFn({ method: "POST" })
     const photosChanged = listingPhotosChanged(previousPhotos, photos);
     const minAge = Math.max(0, Math.min(216, Math.round(data.ageMinMonths)));
     const maxAge = Math.max(minAge, Math.min(216, Math.round(data.ageMaxMonths)));
-    const license = asImage(data.licensePhoto);
+    const license = await persistLicenseInput(data.licensePhoto, data.daycareId);
     const hours = (data.hours ?? "").trim();
     const licenseNumber = (data.licenseNumber ?? "").trim().slice(0, 80);
     const licenseExpiry = (data.licenseExpiry ?? "").trim().slice(0, 10) || null;

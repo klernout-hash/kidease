@@ -6,6 +6,7 @@
 
 import { isWaitingClaim } from "@/lib/listing-status";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
+import { hasStoredPrivateDoc } from "@/lib/private-docs";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
 export type VerifyCentre = {
@@ -19,6 +20,8 @@ export type VerifyCentre = {
 export function hasReviewablePhoto(src?: string | null) {
   const p = (src || "").trim();
   if (!p) return false;
+  if (p === "on-file" || p === "data:image" || p === "data:application/pdf") return true;
+  if (hasStoredPrivateDoc(p)) return true;
   if (p.startsWith("data:image")) return true;
   return isRealListingPhoto(p);
 }

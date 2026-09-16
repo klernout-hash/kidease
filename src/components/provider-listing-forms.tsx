@@ -17,6 +17,13 @@ import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
 import { useCopy } from "@/lib/use-copy";
 import { cn, money, formatAgeRange } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
+import {
+  licenseDocHref,
+  openPrivateDocHref,
+  postPrivateDocForm,
+  PRIVATE_DOC_BAD_FILE,
+  PRIVATE_DOC_MAX_BYTES,
+} from "@/lib/private-docs";
 
 export function PromotePanel({ daycare, onSaved }: { daycare: Daycare; onSaved: () => void }) {
   const { t, locale } = useCopy();
@@ -222,7 +229,7 @@ export function CapacityForm({
             email: state.email,
             storefront: state.storefront || undefined,
             interiors: state.interiors,
-            licensePhoto: state.licensePhoto || undefined,
+            licensePhoto: undefined,
             spotsInfant: state.spotsInfant,
             spotsToddler: state.spotsToddler,
             spotsPreschool: state.spotsPreschool,
@@ -258,13 +265,39 @@ export function CapacityForm({
     >
       {mode === "licence" ? (
         <>
-          <p className="text-sm text-muted">Upload a clear photo or scan of the current provincial licence. Required for compliance review.</p>
+          <p className="text-sm text-muted">Upload a clear photo or PDF scan of the current provincial licence. Required for compliance review.</p>
           <Field label={t("licenceNo")} value={state.licenseNumber} onChange={(v) => setState({ ...state, licenseNumber: v })} />
           <label className="block text-sm font-medium">
-            Provincial licence photo
-            <input type="file" accept="image/*" className="mt-2 block w-full text-sm" onChange={(e) => readImage(e.target.files?.[0], "license")} />
+            {t("licensePhoto")}
+            <input
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+              className="mt-2 block w-full text-sm"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                if (file.size > PRIVATE_DOC_MAX_BYTES) {
+                  toast.error(PRIVATE_DOC_BAD_FILE);
+                  return;
+                }
+                void postPrivateDocForm(licenseDocHref(daycare.id), {}, file)
+                  .then(() => {
+                    toast.success(t("licenceOnFile"));
+                    onSaved();
+                  })
+                  .catch((err) => toast.error(err instanceof Error ? err.message : PRIVATE_DOC_BAD_FILE));
+              }}
+            />
           </label>
-          {state.licensePhoto ? <img src={state.licensePhoto} alt="Licence preview" className="max-h-48 rounded-md object-contain ring-1 ring-border" /> : null}
+          {daycare.licensePhotoOnFile ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm text-ok">{t("licenceOnFile")}</p>
+              <Button type="button" size="sm" variant="secondary" onClick={() => openPrivateDocHref(licenseDocHref(daycare.id))}>
+                {t("licenceViewFile")}
+              </Button>
+            </div>
+          ) : null}
         </>
       ) : (
         <>

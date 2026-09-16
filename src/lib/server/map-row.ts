@@ -46,6 +46,7 @@ export type DaycareRow = {
   cultural_team_note?: string | null;
   amenities: string;
   photos: string;
+  license_photo?: string | null;
   verified: number;
   contact_email?: string | null;
   claimed_at?: string | null;
@@ -124,6 +125,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     reviewCount: r.review_count,
     googlePlaceId: null,
     licenseNumber: r.license_number,
+    licensePhotoOnFile: Boolean((r.license_photo || "").trim()),
     languages: r.languages,
     ...listingCultureFrom(r),
     amenities: r.amenities,
