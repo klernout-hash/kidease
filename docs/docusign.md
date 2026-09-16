@@ -11,7 +11,9 @@ DocuSign emails the provider. When the envelope completes, KidEase stores the co
 - Provider desk: **Contract** tab
 - Authenticated download: `/api/contracts/{id}/pdf` (admin or that centre’s owner). Not a public listing photo.
 
-Until JWT keys are set, **Send (DocuSign off)** stays disabled. Centres can still sign the in-app bilingual document from `/sign/{id}`.
+Until JWT keys are set, **Send (DocuSign off)** stays disabled. Admin names the missing `DOCUSIGN_*` keys (never values). Centres can still sign the in-app bilingual document from `/sign/{id}`.
+
+KidEase reads these names at runtime through `globalThis.process` so Vite/Nitro cannot empty-string-replace Sensitive Vercel secrets at build time. After saving env on Production, redeploy — Admin → Contracts should show live when the four JWT names are present and the PEM has a `BEGIN` line.
 
 If JWT consent is still pending (`user_not_found` / `invalid_grant`), Admin Contracts stays up and shows **DocuSign not connected — finish JWT consent**. That failure must not throw into ErrorBoundary.
 
@@ -26,7 +28,7 @@ Set these as encrypted environment variables. Names only in `.env.example` — n
 | `DOCUSIGN_INTEGRATION_KEY` | Apps and Keys → Integration Key (also accepted as `DOCUSIGN_CLIENT_ID`) |
 | `DOCUSIGN_USER_ID` | Apps and Keys → User ID (GUID of the impersonated user, usually Kyle) |
 | `DOCUSIGN_ACCOUNT_ID` | Apps and Keys → API Account ID |
-| `DOCUSIGN_PRIVATE_KEY` | RSA private key PEM. On Vercel, keep `\n` as the two characters `\` `n` |
+| `DOCUSIGN_PRIVATE_KEY` | RSA private key PEM. On Vercel, keep `\n` as the two characters `\` `n`. Quoted PEM and whole-PEM base64 are also accepted. |
 | `DOCUSIGN_ENV` | `demo` (developer account) or `production` |
 | `DOCUSIGN_WEBHOOK_SECRET` | Connect HMAC key (header only — never `?secret=` on the URL) |
 | `DOCUSIGN_TEMPLATE_PROVIDER_AGREEMENT` | Template ID for the provider agreement (optional) |

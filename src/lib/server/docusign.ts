@@ -17,8 +17,16 @@ import {
   mapEnvelopeStatus,
   parseConnectPayload,
 } from "@/lib/server/docusign-connect";
+import {
+  docusignConfig,
+  docusignMode,
+  type DocusignJwtConfig as JwtConfig,
+  type DocusignMode,
+} from "@/lib/docusign-config";
+import { runtimeEnv, runtimeProcessEnv } from "@/lib/runtime-env";
 
-export type DocusignMode = "live" | "demo";
+export type { DocusignMode };
+export { docusignConfig, docusignMode };
 
 export type EnvelopeResult = {
   mode: DocusignMode;
@@ -32,55 +40,15 @@ export type DocusignTemplate = {
   name: string;
 };
 
-type JwtConfig = {
-  integrationKey: string;
-  userId: string;
-  accountId: string;
-  privateKey: string;
-  authBase: string;
-  baseUri: string;
-};
-
-function env(name: string) {
-  return (process.env[name] || "").trim();
-}
-
-function normalizePem(raw: string) {
-  return raw.replace(/\\n/g, "\n").replace(/\r/g, "").trim();
-}
-
-export function docusignConfig(): JwtConfig | null {
-  const integrationKey = env("DOCUSIGN_INTEGRATION_KEY") || env("DOCUSIGN_CLIENT_ID");
-  const userId = env("DOCUSIGN_USER_ID");
-  const accountId = env("DOCUSIGN_ACCOUNT_ID");
-  const privateKey = normalizePem(env("DOCUSIGN_PRIVATE_KEY"));
-  if (!integrationKey || !userId || !accountId || !privateKey.includes("BEGIN")) return null;
-  const demo = env("DOCUSIGN_ENV").toLowerCase() !== "production";
-  return {
-    integrationKey,
-    userId,
-    accountId,
-    privateKey,
-    authBase: env("DOCUSIGN_AUTH_BASE") || (demo ? "https://account-d.docusign.com" : "https://account.docusign.com"),
-    baseUri: (env("DOCUSIGN_BASE_URI") || (demo ? "https://demo.docusign.net" : "https://na4.docusign.net")).replace(
-      /\/$/,
-      "",
-    ),
-  };
-}
-
-export function docusignMode(): DocusignMode {
-  return docusignConfig() ? "live" : "demo";
-}
-
 export function appOrigin() {
-  return (env("APP_ORIGIN") || env("VITE_APP_URL") || "https://www.kidease.ca").replace(/\/$/, "");
+  return (runtimeEnv("APP_ORIGIN") || runtimeEnv("VITE_APP_URL") || "https://www.kidease.ca").replace(/\/$/, "");
 }
 
 export function defaultTemplateIds() {
+  const env = runtimeProcessEnv();
   return {
-    provider_agreement: defaultTemplateId("provider_agreement"),
-    enrolment_pack: defaultTemplateId("enrolment_pack"),
+    provider_agreement: defaultTemplateId("provider_agreement", env),
+    enrolment_pack: defaultTemplateId("enrolment_pack", env),
   };
 }
 
