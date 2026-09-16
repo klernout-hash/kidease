@@ -48,6 +48,20 @@ function env(name: string) {
   return (process.env[name] || "").trim();
 }
 
+export function docusignBrandId(source: Record<string, string | undefined> = process.env) {
+  return (source.DOCUSIGN_BRAND_ID || "").trim();
+}
+
+/** Adds `brandId` when DOCUSIGN_BRAND_ID is set. Unset keeps the account default brand. */
+export function withEnvelopeBrand<T extends Record<string, unknown>>(
+  body: T,
+  source: Record<string, string | undefined> = process.env,
+): T & { brandId?: string } {
+  const brandId = docusignBrandId(source);
+  if (!brandId) return { ...body };
+  return { ...body, brandId };
+}
+
 function normalizePem(raw: string) {
   return raw.replace(/\\n/g, "\n").replace(/\r/g, "").trim();
 }
@@ -204,6 +218,74 @@ export async function listDocusignTemplates(): Promise<DocusignTemplate[]> {
   return listed.templates;
 }
 
+type CentreEnvelopeInput = {
+  packKind?: PackKind;
+  documentName: string;
+  body: string;
+  signerName: string;
+  signerEmail: string;
+  templateId?: string | null;
+  centreName?: string;
+};
+
+export function centreEnvelopeCreateBody(
+  input: CentreEnvelopeInput,
+  source: Record<string, string | undefined> = process.env,
+) {
+  const packKind = parsePackKind(input.packKind);
+  const subject = packEmailSubject(packKind, input.centreName || input.documentName);
+  const templateId = (input.templateId || "").trim();
+  const definition = templateId
+    ? {
+        emailSubject: subject,
+        emailBlurb: packEmailBlurb(packKind),
+        templateId,
+        templateRoles: [
+          {
+            email: input.signerEmail,
+            name: input.signerName,
+            roleName: templateRoleName(source),
+          },
+        ],
+        eventNotification: webhookNotification(),
+        status: "sent",
+      }
+    : {
+        emailSubject: subject,
+        emailBlurb: packEmailBlurb(packKind),
+        documents: [
+          {
+            documentBase64: Buffer.from(input.body, "utf8").toString("base64"),
+            name: input.documentName,
+            fileExtension: "txt",
+            documentId: "1",
+          },
+        ],
+        recipients: {
+          signers: [
+            {
+              email: input.signerEmail,
+              name: input.signerName,
+              recipientId: "1",
+              tabs: {
+                signHereTabs: [
+                  {
+                    anchorString: "By signing in DocuSign",
+                    anchorUnits: "pixels",
+                    anchorXOffset: "0",
+                    anchorYOffset: "20",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+        eventNotification: webhookNotification(),
+        status: "sent",
+      };
+  return withEnvelopeBrand(definition, source);
+}
+
 export async function createCentreEnvelope(input: {
   contractId: string;
   packKind?: PackKind;
@@ -214,7 +296,6 @@ export async function createCentreEnvelope(input: {
   templateId?: string | null;
   centreName?: string;
 }): Promise<EnvelopeResult> {
-  const packKind = parsePackKind(input.packKind);
   const cfg = docusignConfig();
   if (!cfg) {
     return {
@@ -232,64 +313,12 @@ export async function createCentreEnvelope(input: {
     console.error("[docusign] create envelope auth failed", err);
     throw new Error(classifyDocusignFailure(err).message);
   }
-  const subject = packEmailSubject(packKind, input.centreName || input.documentName);
-  const templateId = (input.templateId || "").trim();
   let created: { envelopeId: string; status?: string };
   try {
-    created = templateId
-    ? await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
-        method: "POST",
-        body: JSON.stringify({
-          emailSubject: subject,
-          emailBlurb: packEmailBlurb(packKind),
-          templateId,
-          templateRoles: [
-            {
-              email: input.signerEmail,
-              name: input.signerName,
-              roleName: templateRoleName(),
-            },
-          ],
-          eventNotification: webhookNotification(),
-          status: "sent",
-        }),
-      })
-    : await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
-        method: "POST",
-        body: JSON.stringify({
-          emailSubject: subject,
-          emailBlurb: packEmailBlurb(packKind),
-          documents: [
-            {
-              documentBase64: Buffer.from(input.body, "utf8").toString("base64"),
-              name: input.documentName,
-              fileExtension: "txt",
-              documentId: "1",
-            },
-          ],
-          recipients: {
-            signers: [
-              {
-                email: input.signerEmail,
-                name: input.signerName,
-                recipientId: "1",
-                tabs: {
-                  signHereTabs: [
-                    {
-                      anchorString: "By signing in DocuSign",
-                      anchorUnits: "pixels",
-                      anchorXOffset: "0",
-                      anchorYOffset: "20",
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-          eventNotification: webhookNotification(),
-          status: "sent",
-        }),
-      });
+    created = await ds<{ envelopeId: string; status?: string }>(cfg, token, "/envelopes", {
+      method: "POST",
+      body: JSON.stringify(centreEnvelopeCreateBody(input)),
+    });
   } catch (err) {
     console.error("[docusign] create envelope failed", err);
     throw new Error(classifyDocusignFailure(err).message);

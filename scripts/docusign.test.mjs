@@ -26,6 +26,11 @@ import {
   listDocusignTemplatesFromApi,
   readDocusignOrNull,
 } from "../src/lib/docusign-errors.ts";
+import {
+  centreEnvelopeCreateBody,
+  docusignBrandId,
+  withEnvelopeBrand,
+} from "../src/lib/server/docusign.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -114,14 +119,58 @@ test("env example lists DocuSign names only and FEATURE_SMS stays off", () => {
   assert.match(envExample, /DOCUSIGN_WEBHOOK_SECRET=/);
   assert.match(envExample, /DOCUSIGN_TEMPLATE_PROVIDER_AGREEMENT=/);
   assert.match(envExample, /DOCUSIGN_TEMPLATE_ENROLMENT_PACK=/);
+  assert.match(envExample, /DOCUSIGN_BRAND_ID=/);
   assert.match(envExample, /FEATURE_SMS=0/);
   assert.doesNotMatch(envExample, /BEGIN (RSA )?PRIVATE KEY/);
   assert.doesNotMatch(envExample, /DOCUSIGN_WEBHOOK_SECRET=\S+/);
+  assert.doesNotMatch(envExample, /DOCUSIGN_BRAND_ID=\S+/);
   const docs = src("docs/docusign.md");
   assert.match(docs, /JWT consent/);
   assert.match(docs, /api\/docusign\/webhook/);
   assert.match(docs, /query-string secrets/);
+  assert.match(docs, /DOCUSIGN_BRAND_ID/);
+  assert.match(docs, /brandId/);
   assert.doesNotMatch(docs, /\/api\/docusign\/webhook\?/);
+});
+
+test("envelope create includes brandId only when DOCUSIGN_BRAND_ID is set", () => {
+  assert.equal(docusignBrandId({}), "");
+  assert.equal(docusignBrandId({ DOCUSIGN_BRAND_ID: "  " }), "");
+  assert.equal(docusignBrandId({ DOCUSIGN_BRAND_ID: "  brand-guid  " }), "brand-guid");
+  assert.equal(withEnvelopeBrand({ emailSubject: "Hi" }, {}).brandId, undefined);
+  assert.equal(withEnvelopeBrand({ emailSubject: "Hi" }, { DOCUSIGN_BRAND_ID: "" }).brandId, undefined);
+  assert.equal(
+    withEnvelopeBrand({ emailSubject: "Hi" }, { DOCUSIGN_BRAND_ID: " brand-guid " }).brandId,
+    "brand-guid",
+  );
+
+  const shared = {
+    documentName: "KidEase Licensed Centre Agreement",
+    body: "By signing in DocuSign",
+    signerName: "Director",
+    signerEmail: "director@example.com",
+    centreName: "Little Stars",
+  };
+  const branded = { DOCUSIGN_BRAND_ID: "brand-guid" };
+  const template = centreEnvelopeCreateBody({ ...shared, templateId: "tmpl-1" }, branded);
+  const document = centreEnvelopeCreateBody({ ...shared, templateId: "" }, branded);
+  const unbrandedTemplate = centreEnvelopeCreateBody({ ...shared, templateId: "tmpl-1" }, {});
+  const unbrandedDocument = centreEnvelopeCreateBody({ ...shared, templateId: null }, {});
+
+  assert.equal(template.brandId, "brand-guid");
+  assert.equal(template.templateId, "tmpl-1");
+  assert.equal(document.brandId, "brand-guid");
+  assert.ok(Array.isArray(document.documents));
+  assert.equal(unbrandedTemplate.brandId, undefined);
+  assert.equal(unbrandedDocument.brandId, undefined);
+  assert.equal(Object.hasOwn(unbrandedTemplate, "brandId"), false);
+  assert.equal(Object.hasOwn(unbrandedDocument, "brandId"), false);
+
+  const server = src("src/lib/server/docusign.ts");
+  assert.match(server, /centreEnvelopeCreateBody/);
+  assert.match(server, /DOCUSIGN_BRAND_ID/);
+  assert.match(server, /brandId/);
+  assert.doesNotMatch(server, /8d229b55-e59a-49b5-a380-67bd91d7ef1d/);
 });
 
 test("Send stays off unless DocuSign is live and photo allowlist stays images", () => {
