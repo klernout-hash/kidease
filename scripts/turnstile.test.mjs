@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it, beforeEach } from "node:test";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { turnstileMode } from "../src/lib/turnstile-mode.ts";
 import {
   clientIpFromHeaders,
   isTurnstileIdempotencyKey,
@@ -11,6 +15,12 @@ import {
   turnstileRemoteIp,
   verifyTurnstileResponse,
 } from "../src/lib/server/turnstile-verify.ts";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+function src(rel) {
+  return readFileSync(join(root, rel), "utf8");
+}
 
 function jsonResponse(body, status = 200) {
   return {
@@ -190,5 +200,44 @@ describe("Turnstile siteverify", () => {
     });
     assert.equal(result.ok, true);
     assert.equal(result.skipped, true);
+  });
+});
+
+describe("Turnstile login surfaces and production gate", () => {
+  it("enforces only in production when both keys are set", () => {
+    assert.equal(turnstileMode({ siteKey: "", secretKey: "", production: true }), "off");
+    assert.equal(turnstileMode({ siteKey: "site", secretKey: "secret", production: false }), "optional");
+    assert.equal(turnstileMode({ siteKey: "site", secretKey: "secret", production: true }), "enforce");
+  });
+
+  it("mounts a visible managed widget on parent, daycare, admin, FR, and reauth password paths", () => {
+    const field = src("src/components/turnstile-field.tsx");
+    const login = src("src/routes/login.tsx");
+    const frLogin = src("src/routes/fr.login.tsx");
+    const reauthUi = src("src/components/reauth-dialog.tsx");
+    const reauthApi = src("src/lib/server/reauth.ts");
+    const authApi = src("src/routes/api/auth/$.ts");
+    const twoFa = src("src/routes/verify-2fa.tsx");
+    assert.match(field, /appearance: "always"/);
+    assert.match(field, /data-ke="turnstile"/);
+    assert.match(login, /<TurnstileField /);
+    assert.match(login, /signUp\.email/);
+    assert.match(frLogin, /from "@\/routes\/login"/);
+    assert.match(frLogin, /<LoginScreen /);
+    assert.match(reauthUi, /<TurnstileField /);
+    assert.match(reauthUi, /confirmReauthPassword/);
+    assert.match(reauthApi, /await assertTurnstileToken\(data\.turnstileToken\)/);
+    assert.match(twoFa, /<TurnstileField /);
+    assert.match(authApi, /authPathNeedsTurnstile/);
+    assert.match(authApi, /\/sign-in\/email/);
+    assert.match(authApi, /\/sign-up\/email/);
+  });
+
+  it("rejects an empty token when Production keys enforce siteverify", async () => {
+    const missing = await verifyTurnstileResponse({ token: "", secret: "prod-secret", mode: "enforce" });
+    assert.equal(missing.ok, false);
+    assert.equal(missing.skipped, false);
+    assert.deepEqual(missing.errorCodes, ["missing-input-response"]);
+    assert.equal(turnstileFailureMessage(missing.errorCodes), "Please complete the security check.");
   });
 });

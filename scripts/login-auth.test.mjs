@@ -298,4 +298,27 @@ describe("Turnstile is single-use and required when the widget is on", () => {
     assert.match(read("src/routes/api/auth/$.ts"), /headers: request\.headers/);
     assert.match(read("src/routes/api/auth/$.ts"), /readTurnstileTokenFromBody/);
   });
+
+  it("shows a visible managed widget on every password login and reauth surface", () => {
+    const field = read("src/components/turnstile-field.tsx");
+    const login = read("src/routes/login.tsx");
+    const frLogin = read("src/routes/fr.login.tsx");
+    const reauthUi = read("src/components/reauth-dialog.tsx");
+    const reauthApi = read("src/lib/server/reauth.ts");
+    const authApi = read("src/routes/api/auth/$.ts");
+    assert.match(field, /appearance: "always"/);
+    assert.match(field, /data-ke="turnstile"/);
+    assert.doesNotMatch(field, /appearance: "interaction-only"/);
+    assert.match(login, /<TurnstileField /);
+    assert.match(login, /mode === "up"/);
+    assert.match(login, /operator \? "admin-email-first" : "email-sign-in"/);
+    assert.match(frLogin, /LoginScreen/);
+    assert.match(reauthUi, /<TurnstileField /);
+    assert.match(reauthUi, /turnstileToken: challenge/);
+    assert.match(reauthApi, /assertTurnstileToken/);
+    assert.match(reauthApi, /turnstileToken/);
+    assert.match(authApi, /\/sign-in\/email/);
+    assert.match(authApi, /\/sign-up\/email/);
+    assert.match(authApi, /assertTurnstileToken/);
+  });
 });

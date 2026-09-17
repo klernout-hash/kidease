@@ -37,6 +37,10 @@ That red inline copy is **KidEase siteverify**, not a WAF 403. The widget token 
 
 If the widget never appears, that is still the `/_serverFn/*` WAF skip above.
 
+The login widget is the **managed / checkbox** challenge (`appearance: "always"`). Parent, Daycare, Admin, `/fr/login`, sign-up, forgot/reset password, 2FA, and the password reauth dialog all mount `TurnstileField` so the Cloudflare button is visible when both keys exist. Do not switch back to `interaction-only` — that hid the checkbox on most Production logins.
+
+Preview without keys stays `off` (widget hidden, server skips). Preview with keys is `optional` (widget shows; missing token is allowed). Production with both `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` **enforces** siteverify. Capacitor uses the same www keys (`https://www.kidease.ca`); do not invent a native site key.
+
 ## Access vs Bot Fight
 
 Cloudflare **Access** still guards `/admin*` (and later `/support*`) — that is a login wall for staff, not a WAF block on `/api/auth/*`. Do not put Access in front of `/api/auth/*` or `/login`. See `docs/support.md`.

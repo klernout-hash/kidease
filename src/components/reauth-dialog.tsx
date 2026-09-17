@@ -8,6 +8,7 @@ import {
 } from "@/lib/server/reauth";
 import { REAUTH_REQUIRED_MESSAGE, isReauthRequiredMessage } from "@/lib/reauth";
 import { hourlyOtpWaitCopy, twoFactorResendWaitCopy } from "@/lib/two-factor-start";
+import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 
 export function isReauthRequired(err: unknown): boolean {
   return err instanceof Error && isReauthRequiredMessage(err.message);
@@ -40,6 +41,8 @@ export function ReauthDialog({
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [wait, setWait] = useState(0);
+  const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
+    useTurnstileToken();
 
   if (!open) return null;
 
@@ -48,11 +51,16 @@ export function ReauthDialog({
     setBusy(true);
     setError(null);
     try {
-      await confirmReauthPassword({ data: { password } });
+      const challenge = takeChallenge();
+      if (turnstileRequired && !challenge) {
+        throw new Error("Please complete the security check, then try again.");
+      }
+      await confirmReauthPassword({ data: { password, turnstileToken: challenge } });
       setPassword("");
       onVerified();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not confirm.");
+      resetTurnstile();
     } finally {
       setBusy(false);
     }
@@ -86,11 +94,16 @@ export function ReauthDialog({
     setBusy(true);
     setError(null);
     try {
-      await confirmReauthOtp({ data: { code } });
+      const challenge = takeChallenge();
+      if (turnstileRequired && !challenge) {
+        throw new Error("Please complete the security check, then try again.");
+      }
+      await confirmReauthOtp({ data: { code, turnstileToken: challenge } });
       setCode("");
       onVerified();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not confirm.");
+      resetTurnstile();
     } finally {
       setBusy(false);
     }
@@ -112,9 +125,10 @@ export function ReauthDialog({
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
             />
+            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
             {notice ? <p className="text-sm text-muted">{notice}</p> : null}
-            <Button type="submit" className="w-full" disabled={busy || !password}>
+            <Button type="submit" className="w-full" disabled={busy || !password || (turnstileRequired && !token.trim())}>
               {busy ? "Checking…" : "Confirm password"}
             </Button>
           </form>
@@ -131,9 +145,10 @@ export function ReauthDialog({
                 maxLength={6}
               />
             </label>
+            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger">{error}</p> : null}
             {notice ? <p className="text-sm text-muted">{notice}</p> : null}
-            <Button type="submit" className="w-full" disabled={busy || code.length !== 6}>
+            <Button type="submit" className="w-full" disabled={busy || code.length !== 6 || (turnstileRequired && !token.trim())}>
               {busy ? "Checking…" : "Confirm code"}
             </Button>
           </form>
