@@ -11,6 +11,7 @@ import { TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole } from "@/lib/server/family";
+import { isDaycareAlreadyListedMessage, listingCreateErrorMessage } from "@/lib/listing-identity";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
@@ -488,7 +489,10 @@ function ProviderPage() {
                     setForm((s) => ({ ...s, storefront: "" }));
                     return load();
                   })
-                  .catch((err) => toast.error(err instanceof Error ? err.message : "Error"));
+                  .catch((err) => {
+                    const message = listingCreateErrorMessage(err);
+                    toast.error(isDaycareAlreadyListedMessage(message) ? t("daycareAlreadyListed") : message || "Error");
+                  });
               }}
             >
               <Field label={t("centreName")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
