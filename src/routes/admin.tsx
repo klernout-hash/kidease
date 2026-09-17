@@ -256,8 +256,9 @@ function AdminPage() {
   const staffCentres = useMemo(() => staffQueueRows(centres, showQaFixtures), [centres, showQaFixtures]);
   const qaCount = useMemo(() => centres.filter((c) => c.isTest).length, [centres]);
   const queueUnavailable = Boolean(centresError) && !centresReady;
-  const queueLoading = !centresReady && !centresError;
-  const queueStat = (value: number) => (!centresReady ? "—" : value);
+  const queuePending = !centresReady && !centresError;
+  const queueLoading = queuePending;
+  const queueStat = (value: number) => (queueUnavailable || queuePending ? "—" : value);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -482,6 +483,7 @@ function AdminPage() {
               busy={busy}
               onDecide={onDecide}
               error={queueUnavailable ? centresError : null}
+              pending={queuePending}
             />
           </div>
         </>
@@ -523,7 +525,10 @@ function AdminPage() {
             </div>
             <div className="mt-6">
               {queueLoading ? (
-                <AdminReviewLoading />
+                <>
+                  <p className="sr-only">Loading the admin queue…</p>
+                  <AdminReviewLoading />
+                </>
               ) : queueUnavailable ? (
                 <AdminReviewNotice title="Queue unavailable" body={centresError || "This list could not be loaded."} tone="danger" marker="error" />
               ) : verifyListed.length === 0 ? (

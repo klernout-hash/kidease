@@ -57,8 +57,8 @@ test("admin queue and verify sorts no longer localeCompare submittedAt", () => {
     assert.doesNotMatch(text, /createdAt\.localeCompare/);
   }
   assert.match(admin, /compareTimeDesc\(a\.submittedAt, b\.submittedAt\)/);
-  assert.match(server, /asIsoString\(r\.submitted_at\)/);
-  assert.match(server, /compareTimeDesc\(a\.submittedAt, b\.submittedAt\)/);
+  assert.match(src("src/lib/admin-centres-map.ts"), /asIsoString\(r\.submitted_at\)/);
+  assert.match(src("src/lib/admin-centres-map.ts"), /compareTimeDesc\(a\.submittedAt, b\.submittedAt\)/);
   assert.match(money, /compareTimeDesc\(a\.createdAt, b\.createdAt\)/);
   assert.match(pipeline, /compareTimeDesc\(a\.updatedAt, b\.updatedAt\)/);
 });

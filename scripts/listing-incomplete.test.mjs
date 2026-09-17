@@ -151,8 +151,9 @@ test("missing[] is structured for CRM and does not send a GHL webhook", () => {
 
 test("admin list and desk expose Incomplete with missing chips and Waiting/Screening links", () => {
   const centres = src("src/lib/server/admin-centres.ts");
-  assert.match(centres, /incompleteMissing/);
-  assert.match(centres, /hasProviderLink/);
+  const mapped = src("src/lib/admin-centres-map.ts");
+  assert.match(mapped, /incompleteMissing/);
+  assert.match(mapped, /hasProviderLink/);
   assert.match(centres, /provider_link_user_id/);
   assert.match(centres, /listIncompleteAdminCentres/);
   assert.match(centres, /infant_monthly/);
