@@ -53,6 +53,10 @@ import {
 import { centreCanCreateListing, centreCanMutateVacancies } from "@/lib/centre-roles";
 import { enqueueProviderCreatedListing } from "@/lib/server/listing-queue";
 import { assertNewListingAllowed } from "@/lib/server/listing-guard";
+import {
+  DUPLICATE_LISTING_MESSAGE,
+  resolveCreateListingDuplicate,
+} from "@/lib/listing-identity";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -1350,15 +1354,23 @@ export const createListing = createServerFn({ method: "POST" })
     if (!centreCanCreateListing({ ownerCount, memberOnly: staffOnly })) {
       throw new Error("Only the centre owner can add a listing.");
     }
-    await assertNewListingAllowed({
-      userId: context.userId,
-      name: data.name,
-      address: data.address,
-      city: data.city,
-      province: "MB",
-      postalCode: data.postalCode,
-      licenseNumber: data.licenseNumber,
-    });
+    try {
+      await assertNewListingAllowed({
+        userId: context.userId,
+        name: data.name,
+        address: data.address,
+        city: data.city,
+        province: "MB",
+        postalCode: data.postalCode,
+        licenseNumber: data.licenseNumber,
+      });
+    } catch (err) {
+      const duplicate = resolveCreateListingDuplicate(err);
+      if (duplicate) {
+        return { ok: false as const, message: DUPLICATE_LISTING_MESSAGE };
+      }
+      throw err;
+    }
     const id = nid("d");
     const slug = data.name
       .toLowerCase()
@@ -1454,7 +1466,7 @@ export const createListing = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-mail] listing notify failed", err);
     }
-    return { id, slug };
+    return { ok: true as const, id, slug };
   });
 
 export const updateCapacity = createServerFn({ method: "POST" })
