@@ -14,6 +14,18 @@ export const getReauthStatus = createServerFn({ method: "GET" })
     return { ok: isCurrentUserRecentlyReauthed(context.userId), windowMs: REAUTH_WINDOW_MS };
   });
 
+/**
+ * Soft session-continue into Admin is only OK when the idle cookie is still
+ * fresh (or a brand-new session can mint it). Otherwise require password again.
+ */
+export const canContinueAdminSession = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { bootstrapAdminIdleFromSession } = await import("./reauth.server");
+    const ok = await bootstrapAdminIdleFromSession(context.userId);
+    return { ok };
+  });
+
 export const confirmReauthPassword = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { password: string }) => ({
@@ -23,8 +35,9 @@ export const confirmReauthPassword = createServerFn({ method: "POST" })
     if (!data.password) throw new Error("Enter your current password.");
     const ok = await verifyUserPassword(context.userId, data.password);
     if (!ok) throw new Error("That password is not correct.");
-    const { writeReauthCookie } = await import("./reauth.server");
+    const { writeAdminIdleCookie, writeReauthCookie } = await import("./reauth.server");
     writeReauthCookie(context.userId);
+    writeAdminIdleCookie();
     return { ok: true as const };
   });
 
@@ -43,10 +56,11 @@ export const confirmReauthOtp = createServerFn({ method: "POST" })
     if (data.code.length !== 6) throw new Error("Enter the 6-digit code from your email.");
     const { consumeTwoFactorCode } = await import("./two-factor");
     await consumeTwoFactorCode(context.userId, data.code);
-    const { writeReauthCookie } = await import("./reauth.server");
+    const { writeAdminIdleCookie, writeReauthCookie } = await import("./reauth.server");
     const { writeTwoFactorSessionCookie } = await import("./two-factor.server");
     writeTwoFactorSessionCookie(context.userId);
     writeReauthCookie(context.userId);
+    writeAdminIdleCookie();
     return { ok: true as const };
   });
 
