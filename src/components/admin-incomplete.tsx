@@ -42,14 +42,17 @@ export function AdminIncompleteQueue({
   contracts,
   busy,
   onDecide,
+  error,
 }: {
   rows: AdminCentreRow[];
   contracts: { daycareId: string; packs?: AdminPackRow[] }[];
   busy: string | null;
   onDecide: (id: string, d: Decision) => void;
+  error?: string | null;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
+  const loadFailed = Boolean(error);
 
   return (
     <section className="overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-border">
@@ -59,11 +62,19 @@ export function AdminIncompleteQueue({
           <h2 className="mt-1 font-display text-2xl">{t("adminIncompleteTitle")}</h2>
         </div>
         <p className="text-sm text-muted">
-          {rows.length === 0 ? t("adminIncompleteCaughtUp") : t("adminIncompleteCount").replace("{n}", String(rows.length))}
+          {loadFailed
+            ? error
+            : rows.length === 0
+              ? t("adminIncompleteCaughtUp")
+              : t("adminIncompleteCount").replace("{n}", String(rows.length))}
         </p>
       </div>
       <p className="border-t border-border px-5 py-3 text-sm text-muted">{t("adminIncompleteLead")}</p>
-      {rows.length === 0 ? (
+      {loadFailed ? (
+        <p className="border-t border-border px-5 py-8 text-sm text-danger" role="alert">
+          {error}
+        </p>
+      ) : rows.length === 0 ? (
         <p className="border-t border-border px-5 py-8 text-sm text-muted">{t("adminIncompleteEmpty")}</p>
       ) : (
         <ul className="divide-y divide-border border-t border-border">
