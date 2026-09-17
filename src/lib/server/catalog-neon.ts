@@ -153,6 +153,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     slug,
     name,
     licenseNumber: row.license_number,
+    address: row.address,
     visibility: row.visibility,
     isTest: row.is_test,
   });

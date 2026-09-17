@@ -93,6 +93,8 @@ export function isHiddenListingSlug(slug) {
   if (s === "test-ghost" || s.startsWith("test-ghost-")) return true;
   if (s.startsWith("ke-test-")) return true;
   if (s.includes("ghost-listing")) return true;
+  // Case-insensitive QA prefixes. Keep "teston-…" public (no separator after test).
+  if (/^test([_-]|$)/i.test(s) || /^qa[_-]/i.test(s) || s === "qa") return true;
   return false;
 }
 

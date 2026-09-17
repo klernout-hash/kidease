@@ -61,11 +61,20 @@ test("public rails and search drop TEST / ghost leftover rows", () => {
   const ghost = GHOST_LISTING;
   const real = { id: "mb-1", slug: "bonnie-bairns", name: "Bonnie Bairns" };
   assert.deepEqual(
-    publicListings([ghost, real, { id: "g2", name: "ghost listing" }]).map((row) => row.slug),
+    publicListings([
+      ghost,
+      real,
+      { id: "g2", name: "ghost listing" },
+      { id: "d1", slug: "test-test-p23f", name: "Test Test", visibility: "public", isTest: 0 },
+      { id: "d2", slug: "test-test-nozo", name: "Test Test", visibility: "public", isTest: 0 },
+      { id: "d3", slug: "test-test-p2tk", name: "Test Test", visibility: "public", isTest: 0 },
+    ]).map((row) => row.slug),
     ["bonnie-bairns"],
   );
   assert.equal(isAdminOnlyListing({ name: "TEST Ghost Claim Lab" }), true);
+  assert.equal(isAdminOnlyListing({ name: "Test Test", slug: "test-test-p23f" }), true);
   assert.equal(isPublicListing(real), true);
+  assert.equal(isPublicListing({ name: "Joan Kids World", slug: "joan-kids-world" }), true);
   assert.match(src("src/lib/server/daycares.ts"), /publicListings\(uniqueById/);
   assert.match(src("src/lib/parent-rails.ts"), /isPublicListing/);
 });

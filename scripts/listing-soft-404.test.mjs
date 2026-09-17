@@ -41,7 +41,11 @@ test("request-guard 404s QA ghost slugs including test-ghost", () => {
   assert.equal(isHiddenListingSlug("test-ghost"), true);
   assert.equal(isHiddenListingSlug("test-ghost-claim-lab"), true);
   assert.equal(isHiddenListingSlug("ke-test-ghost-001"), true);
+  assert.equal(isHiddenListingSlug("test-test-p23f"), true);
+  assert.equal(isHiddenListingSlug("test-test-nozo"), true);
+  assert.equal(isHiddenListingSlug("test-test-p2tk"), true);
   assert.equal(isHiddenListingSlug("bonnie-bairns-childcare-services-1"), false);
+  assert.equal(isHiddenListingSlug("teston-child-care"), false);
   assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/daycare/test-ghost" }), {
     action: "not_found",
     status: 404,

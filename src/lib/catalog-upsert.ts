@@ -5,6 +5,7 @@
  */
 
 import { correctCentreNameTypos, normalizeListingSlug } from "./listing-slug.ts";
+import { listingVisibilityWrite } from "./listing-visibility.ts";
 
 export type CatalogUpsertInput = {
   id: string;
@@ -130,6 +131,15 @@ where daycares.claimed_at is null
 export function daycareUpsertParams(d: CatalogUpsertInput): unknown[] {
   const reviewCount =
     typeof d.reviewCount === "number" ? d.reviewCount : (d.reviews?.length ?? 0);
+  const flags = listingVisibilityWrite({
+    id: d.id,
+    slug: d.slug,
+    name: d.name,
+    licenseNumber: d.licenseNumber,
+    address: d.address,
+    visibility: d.visibility,
+    isTest: d.isTest,
+  });
   return [
     d.id,
     normalizeListingSlug(d.slug) || d.slug,
@@ -168,7 +178,7 @@ export function daycareUpsertParams(d: CatalogUpsertInput): unknown[] {
     d.googlePlaceId?.trim() || null,
     d.contactEmail?.trim() || null,
     d.website?.trim() || null,
-    d.visibility === "admin_only" ? "admin_only" : "public",
-    d.isTest ? 1 : 0,
+    flags.visibility,
+    flags.isTest,
   ];
 }

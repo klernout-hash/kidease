@@ -6,9 +6,12 @@ import {
   isAdminOnlyListing,
   isPublicListing,
   listingVisibilityOf,
+  listingVisibilityWrite,
   looksLikeTestFixture,
   PUBLIC_LISTING_SQL,
   publicListings,
+  QA_FIXTURE_NAME_RE,
+  QA_FIXTURE_SLUG_RE,
 } from "../src/lib/listing-visibility.ts";
 import { allowSeedTestListings, catalogRowsForSeed } from "../src/lib/catalog-seed.ts";
 import { turnstileMode } from "../src/lib/turnstile-mode.ts";
@@ -46,6 +49,30 @@ test("TEST / ghost leftover rows are admin-only even when flags are missing", ()
   assert.equal(looksLikeTestFixture({ name: "QA TEST Daycare Listing" }), true);
   assert.equal(isPublicListing({ name: "Teston Child Care", slug: "teston-child-care" }), true);
   assert.equal(isPublicListing({ name: "Testing Academy Daycare", slug: "testing-academy" }), true);
+  assert.equal(isPublicListing({ name: "Joan Kids World", slug: "joan-kids-world" }), true);
+});
+
+test("Title Case Test Test / qa- smoke slugs stay non-public even with public flags", () => {
+  for (const slug of ["test-test-p23f", "test-test-nozo", "test-test-p2tk"]) {
+    assert.equal(looksLikeTestFixture({ name: "Test Test", slug }), true);
+    assert.equal(isPublicListing({ name: "Test Test", slug, visibility: "public", isTest: 0 }), false);
+    assert.equal(isAdminOnlyListing({ slug, visibility: "public", isTest: 0 }), true);
+    assert.equal(QA_FIXTURE_SLUG_RE.test(slug), true);
+  }
+  assert.equal(QA_FIXTURE_NAME_RE.test("Test Test"), true);
+  assert.equal(QA_FIXTURE_NAME_RE.test("test"), true);
+  assert.equal(QA_FIXTURE_NAME_RE.test("TEST-Ghost copy"), true);
+  assert.equal(QA_FIXTURE_NAME_RE.test("Teston Child Care"), false);
+  assert.equal(looksLikeTestFixture({ name: "qa-smoke centre", slug: "qa-smoke-centre" }), true);
+  assert.equal(isPublicListing({ name: "QA Lab Daycare", slug: "qa-lab-daycare" }), false);
+  assert.deepEqual(listingVisibilityWrite({ name: "Test Test", slug: "test-test-p23f" }), {
+    visibility: "admin_only",
+    isTest: 1,
+  });
+  assert.deepEqual(listingVisibilityWrite({ name: "Bonnie Bairns", slug: "bonnie-bairns" }), {
+    visibility: "public",
+    isTest: 0,
+  });
 });
 
 test("production and Vercel Production never seed fixtures", () => {
@@ -83,9 +110,10 @@ test("nearby SQL excludes admin-only and test rows so map pins stay clean", () =
   assert.match(nearby, /PUBLIC_LISTING_SQL/);
   assert.match(PUBLIC_LISTING_SQL, /coalesce\(visibility, 'public'\) = 'public'/);
   assert.match(PUBLIC_LISTING_SQL, /coalesce\(is_test, 0\) = 0/);
-  assert.match(PUBLIC_LISTING_SQL, /name not like 'TEST %'/);
+  assert.match(PUBLIC_LISTING_SQL, /name !~\* '\^test\(\[ _-\]\|\$\)'/);
+  assert.match(PUBLIC_LISTING_SQL, /slug !~\* '\^test\(\[_-\]\|\$\)'/);
+  assert.match(PUBLIC_LISTING_SQL, /name !~\* '\^qa\[ _-\]'/);
   assert.match(PUBLIC_LISTING_SQL, /name not ilike '%qa test%'/);
-  assert.match(PUBLIC_LISTING_SQL, /name not like 'TEST-%'/);
   assert.match(PUBLIC_LISTING_SQL, /id not ilike 'ke-test-%'/);
   assert.match(PUBLIC_LISTING_SQL, /slug not ilike 'test-ghost%'/);
 });
@@ -117,10 +145,16 @@ test("production seed and migration hide leftover TEST fixtures", () => {
   const api = readFileSync(new URL("../src/routes/api/seed-catalog.ts", import.meta.url), "utf8");
   const ops = readFileSync(new URL("./seed-catalog-to-neon.mjs", import.meta.url), "utf8");
   const migration = readFileSync(new URL("../migrations/0039_hide_test_fixtures.sql", import.meta.url), "utf8");
+  const titleCase = readFileSync(new URL("../migrations/0051_hide_test_test_fixtures.sql", import.meta.url), "utf8");
   assert.match(seed, /allowSeedTestListings/);
   assert.match(api, /catalogRowsForSeed/);
   assert.match(ops, /catalogRowsForSeed/);
   assert.match(migration, /visibility = 'admin_only'/);
   assert.match(migration, /name like 'TEST %'/);
   assert.doesNotMatch(migration, /delete from daycares/i);
+  assert.match(titleCase, /name ~\* '\^test\(\[ _-\]\|\$\)'/);
+  assert.match(titleCase, /test-test-p23f/);
+  assert.match(titleCase, /Joan Kids World/);
+  assert.doesNotMatch(titleCase, /delete from daycares/i);
+  assert.doesNotMatch(titleCase, /joan-kids/i);
 });

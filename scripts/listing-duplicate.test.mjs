@@ -191,6 +191,9 @@ test("createListing blocks duplicates before insert and still queues first-time 
   assert.match(createListing, /resolveCreateListingDuplicate/);
   assert.match(createListing, /message: DUPLICATE_LISTING_MESSAGE/);
   assert.match(createListing, /ok: false as const/);
+  assert.match(createListing, /listingVisibilityWrite/);
+  assert.match(createListing, /visibilityWrite\.visibility/);
+  assert.match(createListing, /visibilityWrite\.isTest/);
 
   const guard = src("src/lib/server/listing-guard.ts");
   assert.match(guard, /DUPLICATE_LISTING_MESSAGE/);

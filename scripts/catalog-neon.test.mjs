@@ -130,6 +130,23 @@ describe("upsert blank-preservation", () => {
     assert.equal(params[36], null);
   });
 
+  it("marks obvious QA names as admin_only / is_test even when the row says public", () => {
+    const leaked = daycareUpsertParams(
+      sampleListing({
+        id: "d-qa",
+        slug: "test-test-p23f",
+        name: "Test Test",
+        visibility: "public",
+        isTest: false,
+      }),
+    );
+    assert.equal(leaked[37], "admin_only");
+    assert.equal(leaked[38], 1);
+    const real = daycareUpsertParams(sampleListing());
+    assert.equal(real[37], "public");
+    assert.equal(real[38], 0);
+  });
+
   it("seedDaycare uses the shared upsert SQL", () => {
     const seed = src("src/lib/server/seed.ts");
     assert.match(seed, /DAYCARE_UPSERT_SQL/);
@@ -230,7 +247,7 @@ describe("runtime SoT prefers Neon when populated", () => {
     assert.match(neon, /st_dwithin/i);
     assert.match(neon, /st_makepoint\(\$1, \$2\)/);
     assert.match(neon, /PUBLIC_LISTING_SQL/);
-    assert.match(src("src/lib/listing-visibility.ts"), /name not like 'TEST %'/);
+    assert.match(src("src/lib/listing-visibility.ts"), /name !~\* '\^test\(\[ _-\]\|\$\)'/);
     assert.match(src("src/lib/server/daycares.ts"), /catalogByIdsGet/);
     assert.match(src("src/lib/server/daycares.ts"), /isPublicListing/);
   });
