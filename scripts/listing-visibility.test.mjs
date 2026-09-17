@@ -8,6 +8,7 @@ import {
   listingVisibilityOf,
   listingVisibilityWrite,
   looksLikeTestFixture,
+  providerDeskShowsListing,
   PUBLIC_LISTING_SQL,
   publicListings,
   QA_FIXTURE_NAME_RE,
@@ -15,6 +16,25 @@ import {
 } from "../src/lib/listing-visibility.ts";
 import { allowSeedTestListings, catalogRowsForSeed } from "../src/lib/catalog-seed.ts";
 import { turnstileMode } from "../src/lib/turnstile-mode.ts";
+
+test("invited staff still see Ghost Claim Lab on the daycare desk", () => {
+  assert.equal(
+    providerDeskShowsListing(GHOST_LISTING, { owner: false, member: true }),
+    true,
+  );
+  assert.equal(
+    providerDeskShowsListing(GHOST_LISTING, { owner: true, member: true }),
+    false,
+  );
+  assert.equal(
+    providerDeskShowsListing(GHOST_LISTING, { owner: false, member: false }),
+    false,
+  );
+  assert.equal(
+    providerDeskShowsListing({ slug: "bonnie-bairns", name: "Bonnie Bairns" }, { owner: true, member: false }),
+    true,
+  );
+});
 
 test("ghost claim lab is admin-only by slug, licence, id, and title", () => {
   assert.equal(isAdminOnlyListing(GHOST_LISTING), true);
