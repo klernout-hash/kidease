@@ -39,7 +39,7 @@
 import { betterAuth } from "better-auth";
 import { bearer, genericOAuth } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { getCookie } from "@tanstack/react-start/server";
+import { getCookie, getRequest } from "@tanstack/react-start/server";
 import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
@@ -66,7 +66,14 @@ import {
 } from "./broker-env";
 import { pgliteDialect } from "./pglite-dialect";
 import { PREVIEW_ALLOWED_HOSTS } from "./preview";
-import { SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE, unsignedSessionToken } from "./cookies";
+import {
+  aliasInboundAuthCookies,
+  isKideasePublicHost,
+  readSessionTokenFromHeader,
+  SESSION_TOKEN_COOKIE,
+  SHARED_SESSION_TOKEN_COOKIE,
+  unsignedSessionToken,
+} from "./cookies";
 import { AUTH_FORGOT_MAX, AUTH_LOGIN_MAX, AUTH_SIGNUP_MAX } from "@/lib/auth-rate-limit";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
@@ -438,9 +445,14 @@ export const auth = betterAuth({
 
 export function readSessionToken(): string | null {
   // DB + idle bootstrap need the unsigned token; cookie value is signed.
-  return unsignedSessionToken(
-    getCookie(SESSION_TOKEN_COOKIE) ?? getCookie(SHARED_SESSION_TOKEN_COOKIE) ?? null,
-  );
+  const fromStore =
+    getCookie(SESSION_TOKEN_COOKIE) ?? getCookie(SHARED_SESSION_TOKEN_COOKIE) ?? null;
+  if (fromStore) return unsignedSessionToken(fromStore);
+  const request = getRequest();
+  const header = request?.headers.get("cookie");
+  const host = request?.headers.get("x-forwarded-host") || request?.headers.get("host");
+  const raw = isKideasePublicHost(host) ? aliasInboundAuthCookies(header) : header;
+  return unsignedSessionToken(readSessionTokenFromHeader(raw));
 }
 
 // Re-exported for convenience; the array lives in the dependency-free
