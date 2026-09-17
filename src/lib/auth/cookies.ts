@@ -98,19 +98,46 @@ export function pickCookieValue(
   return null;
 }
 
+const HMAC_SHA256_BASE64URL = /^[A-Za-z0-9_-]+$/;
+const HMAC_SHA256_BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
+const HMAC_SHA256_HEX = /^[0-9a-fA-F]+$/;
+
+function unwrapCookieToken(raw: string): string {
+  const trimmed = raw.trim().replace(/^"|"$/g, "");
+  if (!trimmed.includes("%")) return trimmed;
+  try {
+    return decodeURIComponent(trimmed);
+  } catch {
+    return trimmed;
+  }
+}
+
 /**
- * Better Auth `setSignedCookie` stores `token.signature` (HMAC, 44 chars ending `=`).
- * The `session` table stores the unsigned token. Strip before any DB lookup.
- * Leaves unsigned tokens and bearer values unchanged.
+ * Better Auth `setSignedCookie` (better-call) HMACs the session token as
+ * `token.signature`. Production 1.7 uses SHA-256 **base64urlnopad** (43 chars,
+ * no `=`). #239 only stripped 44-char padded base64, so `session.token` lookups
+ * never matched. Also accept padded base64 and hex.
+ */
+export function isSessionCookieSignature(sig: string): boolean {
+  if (!sig) return false;
+  if (sig.length === 43 && HMAC_SHA256_BASE64URL.test(sig)) return true;
+  if (sig.length === 44 && sig.endsWith("=") && HMAC_SHA256_BASE64.test(sig)) return true;
+  if (sig.length === 64 && HMAC_SHA256_HEX.test(sig)) return true;
+  return false;
+}
+
+/**
+ * The `session` table stores the unsigned token. Strip a Better Auth cookie
+ * HMAC before any DB lookup. Leaves unsigned tokens and bearer values unchanged.
  */
 export function unsignedSessionToken(raw: string | null | undefined): string | null {
   if (raw == null) return null;
-  const value = String(raw).trim();
+  const value = unwrapCookieToken(String(raw));
   if (!value) return null;
   const dot = value.lastIndexOf(".");
   if (dot < 1) return value;
   const sig = value.slice(dot + 1);
-  if (sig.length === 44 && sig.endsWith("=")) return value.slice(0, dot);
+  if (isSessionCookieSignature(sig)) return value.slice(0, dot);
   return value;
 }
 

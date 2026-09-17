@@ -218,7 +218,7 @@ test("private screening and licence docs persist as R2 keys and reopen via auth 
   assert.match(src("src/routes/api/license-docs.\$daycareId.ts"), /R2_LICENSE_PREFIX/);
   assert.match(src("src/routeTree.gen.ts"), /id:\s*'\/api\/screening-documents\/\$id'/);
   assert.match(src("src/routeTree.gen.ts"), /id:\s*'\/api\/license-docs\/\$daycareId'/);
-  assert.match(src("src/lib/server/admin-centres.ts"), /licenseReviewMarker/);
+  assert.match(src("src/lib/admin-centres-map.ts"), /licenseReviewMarker/);
   assert.match(src("src/lib/server/map-row.ts"), /licensePhotoOnFile/);
   assert.doesNotMatch(src("src/lib/server/catalog-neon.ts"), /license_photo/);
 });

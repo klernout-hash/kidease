@@ -223,8 +223,9 @@ function AdminPage() {
 
   const staffCentres = useMemo(() => staffQueueRows(centres, showQaFixtures), [centres, showQaFixtures]);
   const qaCount = useMemo(() => centres.filter((c) => c.isTest).length, [centres]);
+  const queuePending = !centresReady && !centresError;
   const queueUnavailable = Boolean(centresError) && !centresReady;
-  const queueStat = (value: number) => (queueUnavailable ? "—" : value);
+  const queueStat = (value: number) => (queueUnavailable || queuePending ? "—" : value);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -416,6 +417,7 @@ function AdminPage() {
               busy={busy}
               onDecide={onDecide}
               error={queueUnavailable ? centresError : null}
+              pending={queuePending}
             />
           </div>
         </>
@@ -447,7 +449,7 @@ function AdminPage() {
                 <h2 className="mt-1 font-display text-2xl">Licence and photo review</h2>
               </div>
               <p className="text-sm text-muted">
-                {queueUnavailable ? "Unavailable" : verifyQueue.length === 0 ? "Caught up" : `${verifyQueue.length} to review`}
+                {queueUnavailable ? "Unavailable" : queuePending ? "Loading" : verifyQueue.length === 0 ? "Caught up" : `${verifyQueue.length} to review`}
               </p>
             </div>
             <p className="border-t border-border px-5 py-3 text-sm text-muted">
@@ -457,6 +459,8 @@ function AdminPage() {
               <p className="border-t border-border px-5 py-8 text-sm text-danger" role="alert">
                 {centresError}
               </p>
+            ) : queuePending ? (
+              <p className="border-t border-border px-5 py-8 text-sm text-muted">Loading the admin queue…</p>
             ) : verifyQueue.length === 0 ? (
               <p className="border-t border-border px-5 py-8 text-sm text-muted">No claims or licence photos are waiting.</p>
             ) : (
@@ -502,13 +506,15 @@ function AdminPage() {
                   <h2 className="mt-1 font-display text-2xl">Waiting on you</h2>
                 </div>
                 <p className="text-sm text-primary-fg/75">
-                  {queueUnavailable ? "Unavailable" : waitingOnYou.length === 0 ? "Caught up" : `${waitingOnYou.length} to review`}
+                  {queueUnavailable ? "Unavailable" : queuePending ? "Loading" : waitingOnYou.length === 0 ? "Caught up" : `${waitingOnYou.length} to review`}
                 </p>
               </div>
               {queueUnavailable ? (
                 <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/80" role="alert">
                   {centresError}
                 </p>
+              ) : queuePending ? (
+                <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/70">Loading the admin queue…</p>
               ) : waitingOnYou.length === 0 ? (
                 <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/70">No submitted daycares are waiting.</p>
               ) : (
@@ -541,6 +547,8 @@ function AdminPage() {
                   <p className="rounded-xl bg-surface px-5 py-8 text-center text-danger ring-1 ring-danger/20" role="alert">
                     {centresError}
                   </p>
+                ) : queuePending ? (
+                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">Loading the admin queue…</p>
                 ) : byProvince.length === 0 ? (
                   <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">No daycares match that search yet.</p>
                 ) : (

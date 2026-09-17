@@ -236,5 +236,9 @@ export const assertAdminDesk = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const access = await resolveAdminAccess(context.userId);
     if (!access.ok) throw new Error("Not authorized");
+    // Slide / mint idle when possible so /admin navigation keeps the desk
+    // alive. Do not throw — data loaders still surface a real idle timeout.
+    const { bootstrapAdminIdleFromSession } = await import("./reauth.server");
+    await bootstrapAdminIdleFromSession(context.userId).catch(() => false);
     return { ok: true as const };
   });
