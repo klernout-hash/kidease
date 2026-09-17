@@ -94,7 +94,6 @@ test("search page ships list+map together on desktop with numbered pin sync", ()
   assert.match(search, /ExploreCategoryRails/);
   assert.match(search, /lg:hidden/);
   assert.match(search, /hidden lg:block/);
-  assert.match(search, /data-channel=website/);
   assert.match(search, /ExploreFilterBar/);
 
   assert.match(list, /data-ke="search-result"/);
@@ -113,7 +112,6 @@ test("search page ships list+map together on desktop with numbered pin sync", ()
 
   assert.match(css, /\.ke-search-split/);
   assert.match(css, /@media \(min-width: 1024px\)/);
-  assert.match(css, /html\[data-channel="website"\] \.ke-search-split/);
   assert.match(css, /\.ke-num-pin/);
   assert.match(css, /background:\s*#1a3790/);
   assert.doesNotMatch(css, /\.ke-num-pin[\s\S]{0,120}#00/);

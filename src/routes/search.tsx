@@ -1490,7 +1490,7 @@ function SearchPage() {
               </div>
             ) : (
               <>
-                <div className="lg:hidden [[data-channel=website]_&]:hidden">
+                <div className="lg:hidden">
                   <ExploreCategoryRails
                     items={railItems}
                     directory={filterByLocationLock(items ?? [], locationLock)}
@@ -1499,7 +1499,7 @@ function SearchPage() {
                     onHover={setActive}
                   />
                 </div>
-                <div className="mt-4 hidden lg:block [[data-channel=website]_&]:block">
+                <div className="mt-4 hidden lg:block">
                   <SearchResultsList
                     items={mapList}
                     totalCount={shownList.length}
@@ -1535,7 +1535,7 @@ function SearchPage() {
           <div
             className={cn(
               "ke-search-split-map mt-4 space-y-3",
-              view === "map" ? "block" : "hidden lg:block [[data-channel=website]_&]:block",
+              view === "map" ? "block" : "hidden lg:block",
             )}
             data-ke="search-split-map"
           >

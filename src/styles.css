@@ -1060,20 +1060,6 @@ html[data-channel="website"] .ke-web-grid > article {
     min-height: 22rem;
   }
 }
-html[data-channel="website"] .ke-search-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(22rem, 40%);
-  align-items: start;
-  gap: 1.5rem;
-}
-html[data-channel="website"] .ke-search-split-map {
-  position: sticky;
-  top: calc(6.5rem + env(safe-area-inset-top, 0px));
-}
-html[data-channel="website"] .ke-search-split-map .ke-search-map-frame {
-  height: min(70dvh, calc(100dvh - 11rem));
-  min-height: 22rem;
-}
 .ke-search-result {
   display: flex;
   align-items: flex-start;
@@ -1087,6 +1073,7 @@ html[data-channel="website"] .ke-search-split-map .ke-search-map-frame {
 .ke-search-result.is-active,
 .ke-search-result[data-active="true"] {
   box-shadow: 0 0 0 2px var(--color-primary);
+  background: color-mix(in oklab, var(--color-soft) 70%, var(--color-surface));
 }
 .ke-search-result-n {
   display: inline-grid;
