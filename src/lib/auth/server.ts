@@ -66,7 +66,7 @@ import {
 } from "./broker-env";
 import { pgliteDialect } from "./pglite-dialect";
 import { PREVIEW_ALLOWED_HOSTS } from "./preview";
-import { SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE } from "./cookies";
+import { SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE, unsignedSessionToken } from "./cookies";
 import { AUTH_FORGOT_MAX, AUTH_LOGIN_MAX, AUTH_SIGNUP_MAX } from "@/lib/auth-rate-limit";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
@@ -437,7 +437,10 @@ export const auth = betterAuth({
 });
 
 export function readSessionToken(): string | null {
-  return getCookie(SESSION_TOKEN_COOKIE) ?? getCookie(SHARED_SESSION_TOKEN_COOKIE) ?? null;
+  // DB + idle bootstrap need the unsigned token; cookie value is signed.
+  return unsignedSessionToken(
+    getCookie(SESSION_TOKEN_COOKIE) ?? getCookie(SHARED_SESSION_TOKEN_COOKIE) ?? null,
+  );
 }
 
 // Re-exported for convenience; the array lives in the dependency-free

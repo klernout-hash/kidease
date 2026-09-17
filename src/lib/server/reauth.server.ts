@@ -67,23 +67,33 @@ export function isAdminIdleFresh(): boolean {
 
 export const ADMIN_IDLE_MESSAGE = "Admin session timed out. Sign in again.";
 
-export async function assertAdminIdleFresh(userId: string) {
+/**
+ * When the idle cookie is missing, allow a brand-new Better Auth session
+ * (created within ADMIN_IDLE_TTL_MS) to mint the cookie. Uses the unsigned
+ * session token — the signed cookie value never matches `session.token`.
+ */
+export async function bootstrapAdminIdleFromSession(userId: string, nowMs = Date.now()): Promise<boolean> {
   if (isAdminIdleFresh()) {
     writeAdminIdleCookie();
-    return;
+    return true;
   }
   const { readSessionToken } = await import("@/lib/auth/server");
   const token = readSessionToken();
-  if (!token) throw new Error(ADMIN_IDLE_MESSAGE);
+  if (!token) return false;
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
   const rows = await sql<{ createdAt: string }>`
     select "createdAt" from "session" where token = ${token} and "userId" = ${userId} limit 1
   `.catch(() => []);
   const created = rows[0]?.createdAt ? new Date(rows[0].createdAt).getTime() : 0;
-  if (created && Date.now() - created < ADMIN_IDLE_TTL_MS) {
+  if (created && nowMs - created < ADMIN_IDLE_TTL_MS) {
     writeAdminIdleCookie();
-    return;
+    return true;
   }
+  return false;
+}
+
+export async function assertAdminIdleFresh(userId: string) {
+  if (await bootstrapAdminIdleFromSession(userId)) return;
   throw new Error(ADMIN_IDLE_MESSAGE);
 }

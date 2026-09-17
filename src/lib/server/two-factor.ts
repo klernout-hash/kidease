@@ -237,7 +237,9 @@ export const verifyTwoFactor = createServerFn({ method: "POST" })
         ip: hints.ip,
       });
     }
-    const { writeReauthCookie } = await import("./reauth.server");
+    const { writeAdminIdleCookie, writeReauthCookie } = await import("./reauth.server");
     writeReauthCookie(context.userId);
+    // Admin idle must start on step-up, not only after the first requireAdmin call.
+    writeAdminIdleCookie();
     return { ok: true as const };
   });

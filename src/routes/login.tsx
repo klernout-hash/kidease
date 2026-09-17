@@ -41,6 +41,7 @@ import {
   waitForSignedInSession,
 } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { canContinueAdminSession } from "@/lib/server/reauth";
 import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
 
@@ -141,18 +142,31 @@ export function LoginScreen({
     continued.current = true;
     setBusy(true);
     setError(null);
-    void continueAfterSignIn({
-      next: search.next,
-      desk: deskHint,
-      role: role ?? null,
-      sticky: readStickyDesk(),
-      method: "session",
-    }).catch(() => {
+    void (async () => {
+      // Admin idle cookie is independent of Better Auth session. Soft-continuing
+      // an old session after "Sign in again" must not skip password re-entry.
+      if (operator) {
+        const idle = await canContinueAdminSession().catch(() => ({ ok: false }));
+        if (!idle.ok) {
+          continued.current = false;
+          setBusy(false);
+          setError("Admin session timed out. Enter your password to continue.");
+          return;
+        }
+      }
+      await continueAfterSignIn({
+        next: search.next,
+        desk: deskHint,
+        role: role ?? null,
+        sticky: readStickyDesk(),
+        method: "session",
+      });
+    })().catch(() => {
       continued.current = false;
       setError("Could not open your desk. Use Retry, or open https://www.kidease.ca/login.");
       setBusy(false);
     });
-  }, [sessionPending, user, dest, busy, search.next, deskHint, role]);
+  }, [sessionPending, user, dest, busy, search.next, deskHint, role, operator]);
 
   async function finish() {
     const session = await waitForSignedInSession(() => authClient.getSession());
@@ -183,13 +197,24 @@ export function LoginScreen({
     continued.current = true;
     setBusy(true);
     setError(null);
-    void continueAfterSignIn({
-      next: search.next,
-      desk: deskHint,
-      role: role ?? null,
-      sticky: readStickyDesk(),
-      method: "session",
-    }).catch(() => {
+    void (async () => {
+      if (operator) {
+        const idle = await canContinueAdminSession().catch(() => ({ ok: false }));
+        if (!idle.ok) {
+          continued.current = false;
+          setBusy(false);
+          setError("Admin session timed out. Enter your password to continue.");
+          return;
+        }
+      }
+      await continueAfterSignIn({
+        next: search.next,
+        desk: deskHint,
+        role: role ?? null,
+        sticky: readStickyDesk(),
+        method: "session",
+      });
+    })().catch(() => {
       continued.current = false;
       setError("Could not open your desk. Use Retry, or open https://www.kidease.ca/login.");
       setBusy(false);
@@ -211,7 +236,9 @@ export function LoginScreen({
         throw new Error("Please complete the security check, then try again.");
       }
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
-      if (user) {
+      // Operator / Admin idle recovery must mint a new session.createdAt so
+      // assertAdminIdleFresh can bootstrap the idle cookie after password entry.
+      if (user || operator) {
         await dropExistingSession();
       }
       if (mode === "up") {

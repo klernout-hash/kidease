@@ -98,6 +98,22 @@ export function pickCookieValue(
   return null;
 }
 
+/**
+ * Better Auth `setSignedCookie` stores `token.signature` (HMAC, 44 chars ending `=`).
+ * The `session` table stores the unsigned token. Strip before any DB lookup.
+ * Leaves unsigned tokens and bearer values unchanged.
+ */
+export function unsignedSessionToken(raw: string | null | undefined): string | null {
+  if (raw == null) return null;
+  const value = String(raw).trim();
+  if (!value) return null;
+  const dot = value.lastIndexOf(".");
+  if (dot < 1) return value;
+  const sig = value.slice(dot + 1);
+  if (sig.length === 44 && sig.endsWith("=")) return value.slice(0, dot);
+  return value;
+}
+
 /** Prefer the host-only cookie, then the shared apex/www alias. */
 export function readSessionTokenFromHeader(header?: string | null): string | null {
   return pickCookieValue(header, [SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE]);
