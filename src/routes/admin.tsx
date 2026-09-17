@@ -31,11 +31,12 @@ import {
 } from "@/lib/account-notify";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { listAdminPeople, type AdminPersonRow } from "@/lib/server/admin-people";
-import { decideCentre, listAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
+import { decideCentre, listAdminCentres, listIncompleteAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
 import { AdminLicenseActions, AdminTrustPanel } from "@/components/admin-trust";
 import { AdminScreeningQueue } from "@/components/admin-screening";
+import { AdminIncompleteQueue } from "@/components/admin-incomplete";
 import { licenseDocHref, openPrivateDocHref } from "@/lib/private-docs";
 import { JURISDICTIONS } from "@/lib/province-registry";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
@@ -230,6 +231,8 @@ function AdminPage() {
     [filtered],
   );
 
+  const incompleteQueue = useMemo(() => listIncompleteAdminCentres(filtered), [filtered]);
+
   const byProvince = useMemo(() => {
     const map = new Map<string, AdminCentreRow[]>();
     for (const c of filtered) {
@@ -364,7 +367,27 @@ function AdminPage() {
     <TwoFactorGate next={adminDeskHref(search)}>
     <LoginFunnelDeskLand desk="admin" />
     <DeskShell desk="admin" active={tab} onSelect={(id) => setTab(id as AdminDeskTab)}>
-      {tab === "verify" ? (
+      {tab === "incomplete" ? (
+        <>
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Needs complete" value={incompleteQueue.length} accent />
+            <Stat label="Waiting claims" value={waitingOnYou.length} />
+            <Stat label="Licence review" value={filtered.filter((c) => needsLicenseReview(c)).length} />
+            <Stat label="Live" value={counts.approved} />
+          </dl>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
+              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setShowQaFixtures(e.target.checked)} />
+              Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
+            </label>
+          </div>
+          <div className="mt-8">
+            <AdminIncompleteQueue rows={incompleteQueue} contracts={contracts} busy={busy} onDecide={onDecide} />
+          </div>
+        </>
+      ) : tab === "verify" ? (
         <>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="Needs a look" value={verifyQueue.length} accent />
@@ -411,6 +434,7 @@ function AdminPage() {
         <>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="Waiting on you" value={counts.waiting} accent />
+            <Stat label="Needs complete" value={incompleteQueue.length} />
             <Stat label="Live" value={counts.approved} />
             <Stat label="Declined" value={counts.declined} />
             <Stat label="In this list" value={counts.all} />
