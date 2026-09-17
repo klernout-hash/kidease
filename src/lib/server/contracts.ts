@@ -23,7 +23,8 @@ import {
 } from "@/lib/server/docusign";
 import { docusignConfigIssues, type DocusignConfigIssue } from "@/lib/docusign-config";
 import { templateRoleName, type DocusignTemplateOption } from "@/lib/docusign-packs";
-import { classifyDocusignFailure, type DocusignConnectIssue } from "@/lib/docusign-errors";
+import { classifyDocusignFailure, docusignRateLimitIssue, type DocusignConnectIssue } from "@/lib/docusign-errors";
+import { docusignIsRateLimited } from "@/lib/docusign-template-cache";
 import { runtimeProcessEnv } from "@/lib/runtime-env";
 
 export type ContractStatus = "draft" | "sent" | "viewed" | "signed" | "declined" | "voided";
@@ -329,6 +330,7 @@ export const sendCentreContract = createServerFn({ method: "POST" })
     const signerEmail = (data.signerEmail || owner[0]?.email || centre.contact_email || "").trim().toLowerCase();
     const signerName = (data.signerName || owner[0]?.name || "Centre operator").trim();
     if (!validEmail(signerEmail)) throw new Error("This centre needs a signer email first");
+    if (docusignIsRateLimited()) throw new Error(docusignRateLimitIssue().message);
 
     const open = await sql<{ id: string; envelope_id: string | null }>`
       select id, envelope_id from daycare_contracts

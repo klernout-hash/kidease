@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { signedPdfPath, type DocusignTemplateOption } from "@/lib/docusign-packs";
 import { ds, docusignLeadKey, formatDocusignEnvIssues } from "@/lib/docusign-copy";
 import type { DocusignConfigIssue } from "@/lib/docusign-config";
-import type { DocusignConnectIssue } from "@/lib/docusign-errors";
+import { classifyDocusignFailure, type DocusignConnectIssue } from "@/lib/docusign-errors";
 import { useCopy } from "@/lib/use-copy";
 import type { Locale } from "@/lib/types";
 import {
@@ -88,10 +88,14 @@ export function AdminContractsPanel({
       {docusignError ? (
         <p
           role="status"
-          data-ke="docusign-consent-banner"
+          data-ke={
+            docusignError.code === "rate_limit" ? "docusign-rate-limit-banner" : "docusign-consent-banner"
+          }
           className="mt-3 rounded-xl bg-primary/10 px-5 py-4 text-sm text-fg ring-1 ring-border"
         >
-          {docusignError.message || ds(locale, "consentBanner")}
+          {docusignError.code === "rate_limit"
+            ? ds(locale, "rateLimitBanner")
+            : docusignError.message || ds(locale, "consentBanner")}
         </p>
       ) : mode !== "live" && !docusignLoadFailed ? (
         <p className="mt-3 rounded-xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border">{ds(locale, "envHint")}</p>
@@ -206,7 +210,9 @@ function PackRow({
       );
       await onRefresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not send contract");
+      const raw = err instanceof Error ? err.message : "Could not send contract";
+      const issue = classifyDocusignFailure(raw);
+      alert(issue.code === "rate_limit" ? ds(locale, "rateLimitBanner") : raw);
     } finally {
       setBusy(null);
     }
