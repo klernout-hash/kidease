@@ -75,7 +75,13 @@ test("P0 catalogue counts match visible cards and dead hubs redirect", () => {
 
 test("P0 email sign-in drops a different session before Connexion", () => {
   const login = src("src/routes/login.tsx");
-  assert.match(login, /if \(user\) \{\s*await dropExistingSession\(\);/);
+  // Existing session still drops; Admin password sign-in also drops so
+  // session.createdAt is fresh for idle bootstrap. Must stay before Connexion.
+  assert.match(login, /if \(user \|\| operator\) \{\s*await dropExistingSession\(\);/);
+  const onEmail = login.slice(login.indexOf("async function onEmail"));
+  const dropAt = onEmail.search(/await dropExistingSession\(\);/);
+  const signInAt = onEmail.search(/authClient\.signIn\.email/);
+  assert.ok(dropAt !== -1 && signInAt !== -1 && dropAt < signInAt);
   assert.match(src("src/lib/auth/client.ts"), /export async function dropExistingSession/);
   assert.match(src("src/lib/auth/client.ts"), /clearShortlistCache/);
   assert.match(src("src/components/parent-desk.tsx"), /data-ke="parent-identity"/);
