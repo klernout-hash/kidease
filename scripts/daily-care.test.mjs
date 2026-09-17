@@ -109,6 +109,8 @@ test("Daily care is wired on parent desk and daycare Today without touching mark
   assert.match(src("src/components/daily-care-desk.tsx"), /postDailyJournal/);
   assert.match(src("src/components/daily-care-desk.tsx"), /sendConnectedMessage/);
   assert.match(src("src/components/daily-care-desk.tsx"), /accept="image\/jpeg,image\/png,image\/webp,image\/gif"/);
+  assert.match(src("src/components/daily-care-desk.tsx"), /carePhotoTooBig/);
+  assert.match(src("src/components/daily-care-desk.tsx"), /UploadLimitHint/);
   assert.doesNotMatch(src("src/components/daily-care-desk.tsx"), /video\/mp4|FEATURE_VIDEO/);
   const helpers = src("src/lib/now-loops.ts");
   const care = src("src/lib/daily-care.ts");

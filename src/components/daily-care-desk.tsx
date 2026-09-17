@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { readListingImage } from "@/components/provider-listing-forms";
+import { UploadLimitHint } from "@/components/upload-limit-hint";
 import {
   attendanceFromAction,
   DAILY_CARE_HONESTY,
@@ -303,6 +304,7 @@ export function DailyCareDesk({
                             e.currentTarget.value = "";
                           }}
                         />
+                        <UploadLimitHint hint={t("carePhotoTooBig")} />
                       </label>
                       <Button size="sm" disabled={busy !== null} onClick={() => void publishJournal(row)}>
                         {busy === `${key}:journal` ? t("loading") : t("careJournalPost")}

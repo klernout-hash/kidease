@@ -9,11 +9,12 @@ import {
   type ScreeningDocView,
   type ScreeningPersonView,
 } from "@/lib/server/provider-screening";
-import { docKindLabel, SCREENING_MAX_BYTES, type ScreeningDocStatus } from "@/lib/provider-screening";
+import { docKindLabel, type ScreeningDocStatus } from "@/lib/provider-screening";
+import { isPrivateDocTooBig } from "@/lib/upload-limits";
+import { UploadLimitHint } from "@/components/upload-limit-hint";
 import {
   openPrivateDocHref,
   postPrivateDocForm,
-  PRIVATE_DOC_BAD_FILE,
   SCREENING_DOC_API,
   screeningDocHref,
 } from "@/lib/private-docs";
@@ -50,7 +51,7 @@ const ROLE_COPY: Record<string, CopyKey> = {
 
 function readScreeningFile(file: File | undefined, onReady: (file: File) => void, onBad: () => void) {
   if (!file) return;
-  if (file.size > SCREENING_MAX_BYTES) {
+  if (isPrivateDocTooBig(file.size)) {
     onBad();
     return;
   }
@@ -86,6 +87,7 @@ function DocRow({
   const { t } = useCopy();
   const [issuedOn, setIssuedOn] = useState(doc.issuedOn ?? "");
   const [expiresOn, setExpiresOn] = useState(doc.expiresOn ?? "");
+  const [fileError, setFileError] = useState<string | null>(null);
   return (
     <li className="rounded-lg bg-bg p-3 ring-1 ring-border">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -143,12 +145,21 @@ function DocRow({
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) return;
+              if (isPrivateDocTooBig(file.size)) {
+                const message = t("uploadDocTooBig");
+                setFileError(message);
+                toast.error(message);
+                e.target.value = "";
+                return;
+              }
+              setFileError(null);
               onUpload(file, issuedOn, expiresOn);
               e.target.value = "";
             }}
           />
         </label>
       </div>
+      <UploadLimitHint hint={t("uploadDocHint")} error={fileError} />
     </li>
   );
 }
@@ -220,10 +231,10 @@ export function ProviderScreeningPanel() {
             toast.success(t("screeningStatusReview"));
             return load();
           })
-          .catch((err) => toast.error(err instanceof Error ? err.message : PRIVATE_DOC_BAD_FILE))
+          .catch((err) => toast.error(err instanceof Error ? err.message : t("uploadDocTooBig")))
           .finally(() => setBusy(false));
       },
-      () => toast.error(PRIVATE_DOC_BAD_FILE),
+      () => toast.error(t("uploadDocTooBig")),
     );
   }
 

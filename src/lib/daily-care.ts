@@ -9,6 +9,8 @@
  * for claimed centres, enrolled/linked children, and inquiry threads.
  */
 
+import { LISTING_PHOTO_MAX_BYTES } from "./upload-limits.ts";
+
 export const ATTENDANCE_STATUSES = ["scheduled", "arrived", "departed", "absent"] as const;
 export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 
@@ -20,7 +22,7 @@ export const DAILY_CARE_HONESTY =
   "Ops-lite: check-in, a daily journal, and in-app messages. Not medication, accidents, room counts, or billing.";
 
 export const JOURNAL_MAX_PHOTOS = 4;
-export const JOURNAL_MAX_PHOTO_BYTES = 1_800_000;
+export const JOURNAL_MAX_PHOTO_BYTES = LISTING_PHOTO_MAX_BYTES;
 export const JOURNAL_MAX_BODY = 2_000;
 export const JOURNAL_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 
