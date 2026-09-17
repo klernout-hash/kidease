@@ -55,6 +55,11 @@ export function isNativeSocialProvider(providerId: string): boolean {
   return providerId === "apple" || providerId === "google" || providerId === "facebook";
 }
 
+/** Parent / Daycare login: Google is the prompted social path. */
+export function googleFirstProviders(providers: readonly GrokProvider[]): GrokProvider[] {
+  return [...providers].sort((a, b) => Number(b.idp === "google") - Number(a.idp === "google"));
+}
+
 export function visibleSignInProviders(opts: {
   nativeGoogle: boolean;
   broker: boolean;
