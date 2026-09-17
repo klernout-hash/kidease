@@ -28,11 +28,16 @@ export const CENTRE_INVITE_BAD_EMAIL = "Enter a valid work email.";
 export const CENTRE_INVITE_SELF = "You cannot invite your own login.";
 export const CENTRE_INVITE_DUPLICATE = "That email already has access or a pending invite.";
 export const CENTRE_INVITE_NOT_FOUND = "This invite is no longer valid.";
+export const CENTRE_INVITE_EXPIRED = "This invite has expired.";
+export const CENTRE_INVITE_USED = "This invite was already used.";
+export const CENTRE_INVITE_ALREADY = "You're already on this centre.";
 export const CENTRE_INVITE_EMAIL_MISMATCH =
   "Sign in with the email this invite was sent to.";
 export const CENTRE_STAFF_FORBIDDEN =
   "Staff cannot open Money, contracts, billing, or licence claim.";
 export const CENTRE_REVOKE_OWNER = "The centre owner cannot be revoked from this list.";
+/** After a valid accept, land on the daycare desk staff can actually use. */
+export const CENTRE_INVITE_ACCEPT_PATH = "/provider?desk=requests";
 
 export function isCentreMemberRole(value: string | null | undefined): value is CentreMemberRole {
   return (CENTRE_MEMBER_ROLES as readonly string[]).includes((value || "").trim());
@@ -187,24 +192,36 @@ export function decideInviteEmployee(input: {
   return { ok: true, role: input.inviteRole };
 }
 
+export function inviteEmailsMatch(
+  inviteEmail: string | null | undefined,
+  sessionEmail: string | null | undefined,
+): boolean {
+  const invited = normalizeInviteEmail(inviteEmail);
+  const session = normalizeInviteEmail(sessionEmail);
+  return Boolean(invited && session && invited === session);
+}
+
 export function decideAcceptInvite(input: {
   inviteStatus: string | null;
   inviteEmail: string;
   sessionEmail: string;
   expiresAtMs: number;
   nowMs?: number;
+  alreadyMember?: boolean;
 }): { ok: true } | { ok: false; error: string } {
+  if (!inviteEmailsMatch(input.inviteEmail, input.sessionEmail)) {
+    return { ok: false, error: CENTRE_INVITE_EMAIL_MISMATCH };
+  }
+  if (input.alreadyMember) return { ok: true };
+  if (input.inviteStatus === "accepted") {
+    return { ok: false, error: CENTRE_INVITE_ALREADY };
+  }
   if (!input.inviteStatus || input.inviteStatus !== "pending") {
     return { ok: false, error: CENTRE_INVITE_NOT_FOUND };
   }
   const now = input.nowMs ?? Date.now();
   if (!Number.isFinite(input.expiresAtMs) || input.expiresAtMs < now) {
-    return { ok: false, error: CENTRE_INVITE_NOT_FOUND };
-  }
-  const invited = (input.inviteEmail || "").trim().toLowerCase();
-  const session = (input.sessionEmail || "").trim().toLowerCase();
-  if (!invited || !session || invited !== session) {
-    return { ok: false, error: CENTRE_INVITE_EMAIL_MISMATCH };
+    return { ok: false, error: CENTRE_INVITE_EXPIRED };
   }
   return { ok: true };
 }

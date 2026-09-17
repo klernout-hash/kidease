@@ -8,7 +8,7 @@ import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
-import { isAdminOnlyListing, listingVisibilityWrite } from "@/lib/listing-visibility";
+import { isAdminOnlyListing, listingVisibilityWrite, providerDeskShowsListing } from "@/lib/listing-visibility";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
@@ -48,6 +48,8 @@ import {
   canCentreWriteLeadsFor,
   ensureOwnerMembership,
   listAccessibleDaycareIds,
+  listMemberDaycareIds,
+  listOwnedDaycareIds,
   loadCentreRole,
 } from "@/lib/server/centre-access";
 import { centreCanCreateListing, centreCanMutateVacancies } from "@/lib/centre-roles";
@@ -1172,7 +1174,13 @@ export const getProvider = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureSeed(sql);
-    const accessIds = await listAccessibleDaycareIds(sql, context.userId);
+    const [ownedIds, memberIds] = await Promise.all([
+      listOwnedDaycareIds(sql, context.userId),
+      listMemberDaycareIds(sql, context.userId),
+    ]);
+    const accessIds = [...new Set([...ownedIds, ...memberIds])];
+    const ownedSet = new Set(ownedIds);
+    const memberSet = new Set(memberIds);
     const owned = accessIds.length
       ? await sql.query<DaycareRow>(
           `select d.* from daycares d where d.id = any($1::text[])`,
@@ -1186,7 +1194,9 @@ export const getProvider = createServerFn({ method: "GET" })
       await overlayDemandSnapshots(
         await overlayFeaturedCity(await overlayQuality(owned.map(mapDaycare))),
       )
-    ).filter((d) => !isAdminOnlyListing(d));
+    ).filter((d) =>
+      providerDeskShowsListing(d, { owner: ownedSet.has(d.id), member: memberSet.has(d.id) }),
+    );
     const stats = [];
     for (const d of listings) {
       const views = await sql<{ n: number }>`
