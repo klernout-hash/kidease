@@ -61,12 +61,26 @@ import { money } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
 import { isQueueableClaimStatus, listingStatusFromClaim } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
+import {
+  ADMIN_CENTRE_STAT_COPY,
+  ADMIN_LEAD_STAT_META,
+  adminLeadStatHonesty,
+  adminStatSearchValue,
+  filterAdminCentresByStat,
+  isAdminCentreListStat,
+  isAdminLeadStat,
+  parseAdminStatFilter,
+  resolveAdminStat,
+  selectAdminStat,
+  tallyAdminCentreStats,
+  type AdminStatFilter,
+} from "@/lib/admin-stat-filter";
 import { AdminReviewsPanel } from "@/components/admin-reviews";
 import { compareTimeDesc } from "@/lib/sort-time";
 import { staffQueueRows } from "@/lib/listing-visibility";
 import { getCatalogHealth } from "@/lib/server/catalog-health";
 import { listAdminLeadCounts } from "@/lib/server/lead-requests";
-import { emptyLeadCounts, type LeadCounts } from "@/lib/lead-requests";
+import { DAYCARE_INBOX_HREF, emptyLeadCounts, type LeadCounts } from "@/lib/lead-requests";
 import type { CatalogRuntime } from "@/lib/catalog-source";
 import { paymentSourceLabel } from "@/lib/payment-source";
 import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
@@ -80,13 +94,15 @@ export const Route = createFileRoute("/admin")({
     const kind = kindRaw ? parseAdminActivityKind(kindRaw) : undefined;
     const role = s.role === "parent" || s.role === "provider" ? (s.role as AccountNotifyRole) : undefined;
     const q = typeof s.q === "string" && s.q.trim() ? s.q : undefined;
-    const out: { tab?: AdminDeskTab; kind?: string; role?: AccountNotifyRole; q?: string } = {};
+    const stat = parseAdminStatFilter(typeof s.stat === "string" ? s.stat : undefined);
+    const out: { tab?: AdminDeskTab; kind?: string; role?: AccountNotifyRole; q?: string; stat?: AdminStatFilter } = {};
     if (tab) out.tab = tab;
     else if (role) out.tab = "people";
     else if (kind && kind !== "all") out.tab = "activity";
     if (kind && kind !== "all") out.kind = kind;
     if (role) out.role = role;
     if (q) out.q = q;
+    if (stat) out.stat = stat;
     return out;
   },
   head: () => ({
@@ -119,6 +135,7 @@ function AdminPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const tab = resolveAdminTab(search);
+  const stat = resolveAdminStat(tab, search.stat);
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listPlatformEvents>>>([]);
   const [people, setPeople] = useState<AdminPersonRow[]>([]);
   const [centres, setCentres] = useState<AdminCentreRow[]>([]);
@@ -159,7 +176,20 @@ function AdminPage() {
         kind: next === "activity" ? prev.kind : undefined,
         role: next === "people" ? prev.role : undefined,
         q: next === "people" ? prev.q : undefined,
+        stat: undefined,
       }),
+      replace: true,
+    });
+  }
+
+  function onSelectStat(next: AdminStatFilter) {
+    const resolved = selectAdminStat(tab, next);
+    void navigate({
+      to: "/admin",
+      search: {
+        tab: resolved.tab,
+        stat: adminStatSearchValue(resolved.tab, resolved.stat),
+      },
       replace: true,
     });
   }
@@ -252,10 +282,27 @@ function AdminPage() {
   );
 
   const incompleteQueue = useMemo(() => listIncompleteAdminCentres(filtered), [filtered]);
+  const listed = useMemo(() => {
+    const rows =
+      stat === "license"
+        ? filtered.filter((c) => needsLicenseReview(c))
+        : stat === "photo"
+          ? filtered.filter((c) => needsPhotoReview(c))
+          : filterAdminCentresByStat(filtered, stat);
+    if (stat === "waiting") {
+      return [...rows].sort((a, b) => compareTimeDesc(a.submittedAt, b.submittedAt));
+    }
+    if (stat === "live" || stat === "declined" || stat === "license" || stat === "photo") {
+      return [...rows].sort((a, b) => compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name));
+    }
+    return rows;
+  }, [filtered, stat]);
+  const verifyListed = stat === "license" || stat === "photo" ? listed : verifyQueue;
+  const provinceRows = isAdminCentreListStat(stat) ? listed : filtered;
 
   const byProvince = useMemo(() => {
     const map = new Map<string, AdminCentreRow[]>();
-    for (const c of filtered) {
+    for (const c of provinceRows) {
       const code = provCode(c.province);
       const list = map.get(code) ?? [];
       list.push(c);
@@ -277,14 +324,9 @@ function AdminPage() {
       name: PROV_NAME[code] || JURISDICTIONS.find((j) => j.code === code)?.nameEn || code,
       rows: map.get(code) || [],
     }));
-  }, [filtered]);
+  }, [provinceRows]);
 
-  const counts = useMemo(() => {
-    const waiting = staffCentres.filter((c) => isQueueableClaimStatus(c.claimStatus)).length;
-    const approved = staffCentres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "live").length;
-    const declined = staffCentres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "declined").length;
-    return { waiting, approved, declined, all: staffCentres.length };
-  }, [staffCentres]);
+  const counts = useMemo(() => tallyAdminCentreStats(staffCentres), [staffCentres]);
 
   const activityKind = parseAdminActivityKind(search.kind);
   const peopleRole = search.role === "parent" || search.role === "provider" ? search.role : "all";
@@ -395,12 +437,12 @@ function AdminPage() {
       ) : null}
       {tab === "incomplete" ? (
         <>
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Needs complete" value={queueStat(incompleteQueue.length)} accent />
-            <Stat label="Waiting claims" value={queueStat(waitingOnYou.length)} />
-            <Stat label="Licence review" value={queueStat(filtered.filter((c) => needsLicenseReview(c)).length)} />
-            <Stat label="Live" value={queueStat(counts.approved)} />
-          </dl>
+          <div role="group" aria-label="Filter this list" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
+            <Stat label="Waiting claims" value={queueStat(waitingOnYou.length)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
+            <Stat label="Licence review" value={queueStat(filtered.filter((c) => needsLicenseReview(c)).length)} accent={stat === "license"} filterId="license" onSelect={() => onSelectStat("license")} />
+            <Stat label="Live" value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
+          </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
@@ -421,12 +463,12 @@ function AdminPage() {
         </>
       ) : tab === "verify" ? (
         <>
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Needs a look" value={queueStat(verifyQueue.length)} accent />
-            <Stat label="Licence review" value={queueStat(filtered.filter((c) => needsLicenseReview(c)).length)} />
-            <Stat label="Photo review" value={queueStat(filtered.filter((c) => needsPhotoReview(c)).length)} />
-            <Stat label="Waiting claims" value={queueStat(waitingOnYou.length)} />
-          </dl>
+          <div role="group" aria-label="Filter this list" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Needs a look" value={queueStat(verifyQueue.length)} accent={stat === "verify"} filterId="verify" onSelect={() => onSelectStat("verify")} />
+            <Stat label="Licence review" value={queueStat(filtered.filter((c) => needsLicenseReview(c)).length)} accent={stat === "license"} filterId="license" onSelect={() => onSelectStat("license")} />
+            <Stat label="Photo review" value={queueStat(filtered.filter((c) => needsPhotoReview(c)).length)} accent={stat === "photo"} filterId="photo" onSelect={() => onSelectStat("photo")} />
+            <Stat label="Waiting claims" value={queueStat(waitingOnYou.length)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
+          </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
@@ -440,14 +482,16 @@ function AdminPage() {
               {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from this production queue. Toggle Show QA fixtures to review the ghost listing separately.
             </p>
           ) : null}
-          <section className="mt-8 overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-border">
+          <section className="mt-8 overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-border" data-ke="admin-stat-list" data-ke-stat-list={stat}>
             <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-subtle">Verify</p>
-                <h2 className="mt-1 font-display text-2xl">Licence and photo review</h2>
+                <h2 className="mt-1 font-display text-2xl">
+                  {stat === "license" ? "Licence review" : stat === "photo" ? "Photo review" : "Licence and photo review"}
+                </h2>
               </div>
               <p className="text-sm text-muted">
-                {queueUnavailable ? "Unavailable" : verifyQueue.length === 0 ? "Caught up" : `${verifyQueue.length} to review`}
+                {queueUnavailable ? "Unavailable" : verifyListed.length === 0 ? "Caught up" : `${verifyListed.length} to review`}
               </p>
             </div>
             <p className="border-t border-border px-5 py-3 text-sm text-muted">
@@ -457,11 +501,11 @@ function AdminPage() {
               <p className="border-t border-border px-5 py-8 text-sm text-danger" role="alert">
                 {centresError}
               </p>
-            ) : verifyQueue.length === 0 ? (
+            ) : verifyListed.length === 0 ? (
               <p className="border-t border-border px-5 py-8 text-sm text-muted">No claims or licence photos are waiting.</p>
             ) : (
               <ul className="divide-y divide-border border-t border-border">
-                {verifyQueue.map((c) => (
+                {verifyListed.map((c) => (
                   <CentreRow key={c.daycareId} c={c} packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs} busy={busy} onDecide={onDecide} onLicense={onLicense} />
                 ))}
               </ul>
@@ -470,17 +514,17 @@ function AdminPage() {
         </>
       ) : tab === "queue" || tab === "daycares" ? (
         <>
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Waiting on you" value={queueStat(counts.waiting)} accent />
-            <Stat label="Needs complete" value={queueStat(incompleteQueue.length)} />
-            <Stat label="Live" value={queueStat(counts.approved)} />
-            <Stat label="Declined" value={queueStat(counts.declined)} />
-            <Stat label="In this list" value={queueStat(counts.all)} />
-            <Stat label="Open leads" value={leadCounts.open} />
-            <Stat label="Leads confirmed" value={leadCounts.confirmed} />
-            <Stat label="Leads answered" value={leadCounts.answered} />
-            <Stat label="Leads declined" value={leadCounts.declined} />
-          </dl>
+          <div role="group" aria-label="Filter this list" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
+            <Stat label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
+            <Stat label="Live" value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
+            <Stat label="Declined" value={queueStat(counts.declined)} accent={stat === "declined"} filterId="declined" onSelect={() => onSelectStat("declined")} />
+            <Stat label="In this list" value={queueStat(counts.all)} accent={stat === "all"} filterId="all" onSelect={() => onSelectStat("all")} />
+            <Stat label="Open leads" value={leadCounts.open} accent={stat === "leads-open"} filterId="leads-open" onSelect={() => onSelectStat("leads-open")} />
+            <Stat label="Leads confirmed" value={leadCounts.confirmed} accent={stat === "leads-confirmed"} filterId="leads-confirmed" onSelect={() => onSelectStat("leads-confirmed")} />
+            <Stat label="Leads answered" value={leadCounts.answered} accent={stat === "leads-answered"} filterId="leads-answered" onSelect={() => onSelectStat("leads-answered")} />
+            <Stat label="Leads declined" value={leadCounts.declined} accent={stat === "leads-declined"} filterId="leads-declined" onSelect={() => onSelectStat("leads-declined")} />
+          </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
@@ -494,31 +538,20 @@ function AdminPage() {
               {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from Live and Waiting counts. Toggle to review TEST Ghost Claim Lab separately.
             </p>
           ) : null}
-          {tab === "queue" ? (
-            <section className="mt-8 overflow-hidden rounded-2xl bg-[#1a3790] text-primary-fg shadow-card">
-              <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-fg/70">Urgency</p>
-                  <h2 className="mt-1 font-display text-2xl">Waiting on you</h2>
-                </div>
-                <p className="text-sm text-primary-fg/75">
-                  {queueUnavailable ? "Unavailable" : waitingOnYou.length === 0 ? "Caught up" : `${waitingOnYou.length} to review`}
-                </p>
-              </div>
-              {queueUnavailable ? (
-                <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/80" role="alert">
-                  {centresError}
-                </p>
-              ) : waitingOnYou.length === 0 ? (
-                <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/70">No submitted daycares are waiting.</p>
-              ) : (
-                <ul className="divide-y divide-white/10 border-t border-white/10">
-                  {waitingOnYou.map((c) => (
-                    <CentreRow key={c.daycareId} c={c} packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs} busy={busy} onDecide={onDecide} onLicense={onLicense} invert />
-                  ))}
-                </ul>
-              )}
-            </section>
+          {isAdminLeadStat(stat) ? (
+            <LeadStatPanel stat={stat} count={leadCounts[ADMIN_LEAD_STAT_META[stat].countKey]} />
+          ) : tab === "queue" ? (
+            <CentreStatList
+              stat={isAdminCentreListStat(stat) ? stat : "waiting"}
+              rows={listed}
+              unavailable={queueUnavailable}
+              error={centresError}
+              invert={stat === "waiting"}
+              contracts={contracts}
+              busy={busy}
+              onDecide={onDecide}
+              onLicense={onLicense}
+            />
           ) : (
             <section className="mt-8">
               {catalogHealth ? (
@@ -536,15 +569,23 @@ function AdminPage() {
                 </p>
               ) : null}
               <h2 className="font-display text-2xl">By province</h2>
+              {isAdminCentreListStat(stat) && stat !== "all" ? (
+                <p className="mt-2 text-sm text-muted" data-ke="admin-stat-list" data-ke-stat-list={stat}>
+                  {ADMIN_CENTRE_STAT_COPY[stat].title}
+                  {queueUnavailable ? "" : ` · ${listed.length} centre${listed.length === 1 ? "" : "s"}`}
+                </p>
+              ) : null}
               <div className="mt-5 space-y-3">
                 {queueUnavailable ? (
                   <p className="rounded-xl bg-surface px-5 py-8 text-center text-danger ring-1 ring-danger/20" role="alert">
                     {centresError}
                   </p>
-                ) : byProvince.length === 0 ? (
-                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">No daycares match that search yet.</p>
+                ) : listed.length === 0 ? (
+                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
+                    {isAdminCentreListStat(stat) ? ADMIN_CENTRE_STAT_COPY[stat].empty : "No daycares match that search yet."}
+                  </p>
                 ) : (
-                  byProvince.map((group) => {
+                  byProvince.filter((group) => stat === "all" || group.rows.length > 0).map((group) => {
                     const open = openProv[group.code] !== false;
                     const queued = group.rows.filter((c) => isQueued(c.claimStatus)).length;
                     return (
@@ -984,12 +1025,133 @@ function AdminCentresLoadBanner({
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
+function Stat({
+  label,
+  value,
+  accent,
+  onSelect,
+  filterId,
+}: {
+  label: string;
+  value: number | string;
+  accent?: boolean;
+  onSelect?: () => void;
+  filterId?: string;
+}) {
+  const labelClass = `block text-[11px] uppercase tracking-[0.14em] ${accent ? "text-primary-fg/70" : "text-subtle"}`;
+  const valueClass = "mt-1 block font-display text-2xl";
+  const boxClass = accent
+    ? "rounded-xl bg-primary px-4 py-3 text-left text-primary-fg"
+    : "rounded-xl bg-surface px-4 py-3 text-left ring-1 ring-border";
+  if (!onSelect) {
+    return (
+      <div className={boxClass}>
+        <dt className={labelClass}>{label}</dt>
+        <dd className={valueClass}>{value}</dd>
+      </div>
+    );
+  }
   return (
-    <div className={accent ? "rounded-xl bg-primary px-4 py-3 text-primary-fg" : "rounded-xl bg-surface px-4 py-3 ring-1 ring-border"}>
-      <dt className={`text-[11px] uppercase tracking-[0.14em] ${accent ? "text-primary-fg/70" : "text-subtle"}`}>{label}</dt>
-      <dd className="mt-1 font-display text-2xl">{value}</dd>
-    </div>
+    <button
+      type="button"
+      className={`${boxClass} w-full transition-colors hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40`}
+      aria-pressed={Boolean(accent)}
+      data-ke="admin-stat"
+      data-ke-stat={filterId}
+      onClick={onSelect}
+    >
+      <span className={labelClass}>{label}</span>
+      <span className={valueClass}>{value}</span>
+    </button>
+  );
+}
+
+function LeadStatPanel({ stat, count }: { stat: Parameters<typeof adminLeadStatHonesty>[0]; count: number }) {
+  const copy = adminLeadStatHonesty(stat, count);
+  return (
+    <section className="mt-8 overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-border" data-ke="admin-lead-stat" data-ke-stat-list={stat}>
+      <div className="px-5 py-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-subtle">Lead requests</p>
+        <h2 className="mt-1 font-display text-2xl">{copy.title}</h2>
+      </div>
+      <div className="border-t border-border px-5 py-8 text-sm text-muted">
+        <p>{copy.body}</p>
+        <p className="mt-3">
+          <a href={DAYCARE_INBOX_HREF} className="font-medium text-primary underline-offset-4 hover:underline">
+            Open centre lead inbox
+          </a>
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function CentreStatList({
+  stat,
+  rows,
+  unavailable,
+  error,
+  invert,
+  contracts,
+  busy,
+  onDecide,
+  onLicense,
+}: {
+  stat: "waiting" | "live" | "declined" | "all";
+  rows: AdminCentreRow[];
+  unavailable: boolean;
+  error: string | null;
+  invert?: boolean;
+  contracts: AdminContractRow[];
+  busy: string | null;
+  onDecide: (id: string, d: Decision) => void;
+  onLicense: (id: string, d: LicenseReviewAction) => void;
+}) {
+  const copy = ADMIN_CENTRE_STAT_COPY[stat];
+  const countLabel = unavailable ? "Unavailable" : rows.length === 0 ? copy.caughtUp || "None" : `${rows.length} to review`;
+  return (
+    <section
+      className={
+        invert
+          ? "mt-8 overflow-hidden rounded-2xl bg-[#1a3790] text-primary-fg shadow-card"
+          : "mt-8 overflow-hidden rounded-2xl bg-surface text-fg shadow-card ring-1 ring-border"
+      }
+      data-ke="admin-stat-list"
+      data-ke-stat-list={stat}
+    >
+      <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
+        <div>
+          <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${invert ? "text-primary-fg/70" : "text-subtle"}`}>
+            {copy.eyebrow}
+          </p>
+          <h2 className="mt-1 font-display text-2xl">{copy.title}</h2>
+        </div>
+        <p className={`text-sm ${invert ? "text-primary-fg/75" : "text-muted"}`}>{countLabel}</p>
+      </div>
+      {unavailable ? (
+        <p className={`border-t px-5 py-8 text-sm ${invert ? "border-white/10 text-primary-fg/80" : "border-border text-danger"}`} role="alert">
+          {error}
+        </p>
+      ) : rows.length === 0 ? (
+        <p className={`border-t px-5 py-8 text-sm ${invert ? "border-white/10 text-primary-fg/70" : "border-border text-muted"}`}>
+          {copy.empty}
+        </p>
+      ) : (
+        <ul className={`divide-y border-t ${invert ? "divide-white/10 border-white/10" : "divide-border border-border"}`}>
+          {rows.map((c) => (
+            <CentreRow
+              key={c.daycareId}
+              c={c}
+              packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs}
+              busy={busy}
+              onDecide={onDecide}
+              onLicense={onLicense}
+              invert={invert}
+            />
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

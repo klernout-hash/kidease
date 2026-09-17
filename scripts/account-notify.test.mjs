@@ -177,6 +177,7 @@ test("deep links land Admin on People or filtered Activity", () => {
   assert.equal(adminPeoplePath("parent"), "/admin?tab=people&role=parent");
   assert.equal(adminAccountDeepLink("https://kidease.ca", "provider"), "https://kidease.ca/admin?tab=people&role=provider");
   assert.equal(adminDeskHref({ tab: "people", role: "provider" }), "/admin?tab=people&role=provider");
+  assert.equal(adminDeskHref({ tab: "queue", stat: "declined" }), "/admin?tab=queue&stat=declined");
   assert.equal(parseAdminActivityKind("parents"), "account");
   assert.equal(parseAdminActivityKind("daycare providers"), "signup");
   assert.equal(parseAdminActivityKind("providers"), "signup");

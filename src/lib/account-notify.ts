@@ -354,12 +354,14 @@ export function adminDeskHref(search: {
   kind?: string | null;
   role?: string | null;
   q?: string | null;
+  stat?: string | null;
 }): string {
   const params = new URLSearchParams();
   if (search.tab) params.set("tab", search.tab);
   if (search.kind) params.set("kind", search.kind);
   if (search.role) params.set("role", search.role);
   if (search.q) params.set("q", search.q);
+  if (search.stat) params.set("stat", search.stat);
   const qs = params.toString();
   return qs ? `/admin?${qs}` : "/admin";
 }
