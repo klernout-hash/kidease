@@ -30,6 +30,7 @@ import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { TrustSignals } from "@/components/trust-badge";
 import { feeBadgeKey, licenseRecordUrl } from "@/lib/licensing";
 import { displayDistance } from "@/lib/units";
+import { searchPinNumbers } from "@/lib/search-pins";
 
 type Props = {
   items: DaycareCard[];
@@ -37,7 +38,10 @@ type Props = {
   secondOrigin?: { lat: number; lng: number } | null;
   radiusKm: number;
   activeSlug?: string | null;
+  /** When true, pins use the same 1…N numbers as the results list. */
+  numbered?: boolean;
   onSelect: (slug: string) => void;
+  onHover?: (slug: string) => void;
   onRelocate?: (pos: { lat: number; lng: number }) => void;
   onLocate?: () => void;
   onFallback?: () => void;
@@ -69,7 +73,9 @@ export function MapView({
   secondOrigin,
   radiusKm,
   activeSlug,
+  numbered = false,
   onSelect,
+  onHover,
   onRelocate,
   onLocate,
   onFallback,
@@ -87,6 +93,8 @@ export function MapView({
   const markersBySlug = useRef(new Map<string, SlugPin>());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const onHoverRef = useRef(onHover);
+  onHoverRef.current = onHover;
 
   const locale = useAppStore((s) => s.locale);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
@@ -310,6 +318,7 @@ export function MapView({
       markersBySlug.current.clear();
 
       const clusters = clusterItems(items, zoom);
+      const pinBySlug = numbered ? searchPinNumbers(items) : new Map<string, number>();
       const nextPins: AnyPin[] = [];
       for (const node of clusters) {
         if (node.kind === "group") {
@@ -341,8 +350,14 @@ export function MapView({
         }
         const item = node.item;
         if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-        const content = logoPinEl("ke-logo-pin");
-        content.setAttribute("aria-label", displayCentreName(item.name));
+        const pinNumber = numbered ? pinBySlug.get(item.slug) : undefined;
+        const content = pinNumber
+          ? numberedPinEl(pinNumber, displayCentreName(item.name))
+          : logoPinEl("ke-logo-pin");
+        if (!pinNumber) content.setAttribute("aria-label", displayCentreName(item.name));
+        content.addEventListener("pointerenter", () => {
+          onHoverRef.current?.(item.slug);
+        });
         const overlay = createOverlay({
           map,
           position: { lat: item.lat, lng: item.lng },
@@ -361,7 +376,7 @@ export function MapView({
     }, 50);
 
     return () => window.clearTimeout(timer);
-  }, [items, locale, ready, zoom]);
+  }, [items, locale, ready, zoom, numbered]);
 
   useEffect(() => {
     const maps = mapsApiRef.current;
@@ -495,7 +510,12 @@ export function MapView({
       </div>
 
       {selected ? (
-        <div className="absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border lg:bottom-3">
+        <div
+          className={cn(
+            "absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border lg:bottom-3",
+            numbered && "lg:hidden",
+          )}
+        >
           {selected.live ? <span className="block h-1 bg-primary" /> : null}
           <div className="flex gap-3 p-3">
             <BuildingPhoto
@@ -595,6 +615,16 @@ function logoPinEl(className: string) {
   return content;
 }
 
+function numberedPinEl(n: number, name: string) {
+  const content = document.createElement("div");
+  content.className = "ke-num-pin";
+  content.textContent = String(n);
+  content.setAttribute("role", "button");
+  content.setAttribute("aria-label", `${n}. ${name}`);
+  content.dataset.resultIndex = String(n);
+  return content;
+}
+
 function clusterEl(count: number) {
   const content = document.createElement("div");
   content.className = "ke-logo-pin ke-logo-cluster";
@@ -611,7 +641,9 @@ function wrapOverlayPin(overlay: ListingOverlay): SlugPin {
       overlay.setMap(map);
     },
     setActive(on) {
-      overlay.getElement().classList.toggle("is-active", on);
+      const el = overlay.getElement();
+      el.classList.toggle("is-active", on);
+      el.querySelector(".ke-num-pin, .ke-logo-pin")?.classList.toggle("is-active", on);
       overlay.setZIndex(on ? 500 : 10);
     },
   };
