@@ -1535,7 +1535,7 @@ function SearchPage() {
             )}
             data-ke="search-split-map"
           >
-            {mapEnabled || view === "map" ? (
+            {mapEnabled ? (
               <div className="ke-search-map-frame h-[min(40dvh,22rem)] min-h-[14rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(70dvh,calc(100dvh-11rem))]">
                 <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                   <MapView

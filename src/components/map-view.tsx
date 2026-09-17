@@ -510,7 +510,12 @@ export function MapView({
       </div>
 
       {selected ? (
-        <div className="absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border lg:bottom-3">
+        <div
+          className={cn(
+            "absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border lg:bottom-3",
+            numbered && "lg:hidden",
+          )}
+        >
           {selected.live ? <span className="block h-1 bg-primary" /> : null}
           <div className="flex gap-3 p-3">
             <BuildingPhoto

@@ -56,6 +56,8 @@ test("empty results stay empty — no invented density", () => {
 });
 
 test("desktop split starts at the website / lg breakpoint; native stays stacked", () => {
+  const runtime = src("src/lib/runtime.ts");
+  assert.match(runtime, /STOREFRONT_MIN_PX = 1024/);
   assert.equal(SEARCH_SPLIT_MIN_PX, 1024);
   assert.equal(searchShowsSplitLayout(1440), true);
   assert.equal(searchShowsSplitLayout(1024), true);
@@ -101,6 +103,7 @@ test("search page ships list+map together on desktop with numbered pin sync", ()
   assert.match(map, /ke-num-pin/);
   assert.match(map, /dataset\.resultIndex/);
   assert.match(map, /onHoverRef\.current\?\.\(item\.slug\)/);
+  assert.match(map, /numbered && "lg:hidden"/);
   assert.doesNotMatch(map, /#00[a-fA-F0-9]{4}|#22c55e|#16a34a/);
 
   assert.match(css, /\.ke-search-split/);

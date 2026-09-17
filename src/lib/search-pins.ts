@@ -1,7 +1,6 @@
-import { STOREFRONT_MIN_PX } from "@/lib/runtime";
-
-/** Desktop search shows list + map together from the website / `lg` breakpoint. */
-export const SEARCH_SPLIT_MIN_PX = STOREFRONT_MIN_PX;
+/** Desktop search shows list + map together from the website / `lg` breakpoint.
+ * Keep in sync with `STOREFRONT_MIN_PX` in `src/lib/runtime.ts`. */
+export const SEARCH_SPLIT_MIN_PX = 1024;
 
 export type NumberedSearchResult<T extends { slug: string }> = {
   item: T;
