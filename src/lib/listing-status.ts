@@ -35,3 +35,12 @@ export function listingStatusLabel(
 export function isWaitingClaim(status: string | null | undefined) {
   return listingStatusFromClaim(status) === "waiting";
 }
+
+/**
+ * Tokens Admin Waiting / verify treat as an in-review claim.
+ * Unclaimed catalogue master data is not queueable — createListing must
+ * write waiting (or pending/verified) so Daycare → Admin is not a silent orphan.
+ */
+export function isQueueableClaimStatus(status: string | null | undefined) {
+  return WAITING.has((status || "").trim().toLowerCase());
+}

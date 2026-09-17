@@ -51,7 +51,7 @@ import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
-import { isWaitingClaim, listingStatusFromClaim } from "@/lib/listing-status";
+import { isQueueableClaimStatus, listingStatusFromClaim } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
 import { AdminReviewsPanel } from "@/components/admin-reviews";
 import { compareTimeDesc } from "@/lib/sort-time";
@@ -94,7 +94,7 @@ const PROV_ORDER = PROVINCES.map((p) => p.code);
 const PROV_NAME = Object.fromEntries(PROVINCES.map((p) => [p.code, p.name]));
 
 function isQueued(status: string) {
-  return isWaitingClaim(status);
+  return isQueueableClaimStatus(status);
 }
 
 function provCode(raw: string | null | undefined) {
@@ -257,7 +257,7 @@ function AdminPage() {
   }, [filtered]);
 
   const counts = useMemo(() => {
-    const waiting = staffCentres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "waiting").length;
+    const waiting = staffCentres.filter((c) => isQueueableClaimStatus(c.claimStatus)).length;
     const approved = staffCentres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "live").length;
     const declined = staffCentres.filter((c) => listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt }) === "declined").length;
     return { waiting, approved, declined, all: staffCentres.length };

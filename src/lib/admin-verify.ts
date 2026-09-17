@@ -4,7 +4,7 @@
  * verify slice so operators can see the uploaded documents.
  */
 
-import { isWaitingClaim } from "@/lib/listing-status";
+import { isQueueableClaimStatus } from "@/lib/listing-status";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { hasStoredPrivateDoc } from "@/lib/private-docs";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
@@ -27,7 +27,7 @@ export function hasReviewablePhoto(src?: string | null) {
 }
 
 export function needsClaimReview(item: VerifyCentre) {
-  return isWaitingClaim(item.claimStatus);
+  return isQueueableClaimStatus(item.claimStatus);
 }
 
 export function needsLicenseReview(item: VerifyCentre) {

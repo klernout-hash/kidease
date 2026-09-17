@@ -673,8 +673,10 @@ export async function notifyNewAccountFromUser(userId: string, role: AccountNoti
 }
 
 export async function notifyProviderJoined(p: ProviderJoinPayload) {
+  const centre = (p.daycareName || "").trim();
   return notifyPlatform({
     kind: p.kind,
+    title: p.kind === "listing" && centre ? `New listing: ${centre}` : undefined,
     daycareName: p.daycareName,
     address: p.address,
     city: p.city,
