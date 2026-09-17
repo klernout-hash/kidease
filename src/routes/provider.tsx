@@ -11,7 +11,12 @@ import { TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider, setRole } from "@/lib/server/family";
-import { isDaycareAlreadyListedMessage, listingCreateErrorMessage } from "@/lib/listing-identity";
+import {
+  DUPLICATE_LISTING_MESSAGE,
+  duplicateListingUserMessage,
+  isDaycareAlreadyListedMessage,
+  listingCreateErrorMessage,
+} from "@/lib/listing-identity";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
@@ -487,14 +492,24 @@ function ProviderPage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 void createListing({ data: form })
-                  .then(() => {
+                  .then((res) => {
+                    if (res && res.ok === false) {
+                      toast.error(
+                        locale === "fr" ? t("daycareAlreadyListed") : res.message || DUPLICATE_LISTING_MESSAGE,
+                      );
+                      return;
+                    }
                     toast.success(t("createListing"));
                     setForm((s) => ({ ...s, storefront: "" }));
                     return load();
                   })
                   .catch((err) => {
                     const message = listingCreateErrorMessage(err);
-                    toast.error(isDaycareAlreadyListedMessage(message) ? t("daycareAlreadyListed") : message || "Error");
+                    toast.error(
+                      isDaycareAlreadyListedMessage(message)
+                        ? duplicateListingUserMessage(locale)
+                        : message || "Error",
+                    );
                   });
               }}
             >

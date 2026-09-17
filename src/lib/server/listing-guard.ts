@@ -1,13 +1,65 @@
 import { getSql } from "@/lib/db";
 import { getCatalog } from "@/lib/catalog";
 import {
-  DAYCARE_ALREADY_LISTED,
+  DUPLICATE_LISTING_MESSAGE,
+  duplicateListingError,
   findDuplicateListing,
   sameDaycareListing,
+  type ExistingListingIdentity,
   type ListingIdentityInput,
 } from "@/lib/listing-identity";
 
 export type CentrePlace = ListingIdentityInput;
+
+type ListingIdentityRow = {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  province: string | null;
+  postal_code: string | null;
+  license_number: string | null;
+  user_id: string | null;
+};
+
+function mapIdentityRows(rows: ListingIdentityRow[]): ExistingListingIdentity[] {
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    address: row.address,
+    city: row.city,
+    province: row.province,
+    postalCode: row.postal_code,
+    licenseNumber: row.license_number,
+    userId: row.user_id,
+  }));
+}
+
+async function loadExistingListingIdentities(
+  sql: Awaited<ReturnType<typeof getSql>>,
+): Promise<ExistingListingIdentity[]> {
+  const full = await sql<ListingIdentityRow>`
+    select d.id, d.name, d.address, d.city, d.province, d.postal_code, d.license_number, p.user_id
+    from daycares d
+    left join provider_daycares p on p.daycare_id = d.id
+  `.catch(() => null);
+  if (full) return mapIdentityRows(full);
+
+  const withPostal = await sql<ListingIdentityRow>`
+    select d.id, d.name, d.address, d.city, null::text as province, d.postal_code, d.license_number, p.user_id
+    from daycares d
+    left join provider_daycares p on p.daycare_id = d.id
+  `.catch(() => null);
+  if (withPostal) return mapIdentityRows(withPostal);
+
+  const basic = await sql<ListingIdentityRow>`
+    select d.id, d.name, d.address, d.city, null::text as province, null::text as postal_code,
+           null::text as license_number, p.user_id
+    from daycares d
+    left join provider_daycares p on p.daycare_id = d.id
+  `.catch(() => []);
+  return mapIdentityRows(basic);
+}
 
 export async function assertNewListingAllowed(input: ListingIdentityInput & { userId: string }) {
   const name = input.name.trim();
@@ -27,52 +79,8 @@ export async function assertNewListingAllowed(input: ListingIdentityInput & { us
   };
 
   const sql = await getSql();
-  const rows = await sql<{
-    id: string;
-    name: string;
-    address: string;
-    city: string;
-    province: string | null;
-    postal_code: string | null;
-    license_number: string | null;
-    user_id: string | null;
-  }>`
-    select d.id, d.name, d.address, d.city, d.province, d.postal_code, d.license_number, p.user_id
-    from daycares d
-    left join provider_daycares p on p.daycare_id = d.id
-  `.catch(async () => {
-    return sql<{
-      id: string;
-      name: string;
-      address: string;
-      city: string;
-      province: string | null;
-      postal_code: string | null;
-      license_number: string | null;
-      user_id: string | null;
-    }>`
-      select d.id, d.name, d.address, d.city, null::text as province, null::text as postal_code,
-             null::text as license_number, p.user_id
-      from daycares d
-      left join provider_daycares p on p.daycare_id = d.id
-    `.catch(() => []);
-  });
-
-  const neonHit = findDuplicateListing(
-    incoming,
-    rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      address: row.address,
-      city: row.city,
-      province: row.province,
-      postalCode: row.postal_code,
-      licenseNumber: row.license_number,
-      userId: row.user_id,
-    })),
-    input.userId,
-  );
-  if (neonHit) throw new Error(DAYCARE_ALREADY_LISTED);
+  const neonHit = findDuplicateListing(incoming, await loadExistingListingIdentities(sql), input.userId);
+  if (neonHit) throw duplicateListingError();
 
   const catalog = await getCatalog().catch(() => []);
   for (const listed of catalog) {
@@ -88,6 +96,6 @@ export async function assertNewListingAllowed(input: ListingIdentityInput & { us
     ) {
       continue;
     }
-    throw new Error(DAYCARE_ALREADY_LISTED);
+    throw new Error(DUPLICATE_LISTING_MESSAGE);
   }
 }
