@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   numberSearchResults,
+  SEARCH_MAP_LIST_LIMIT,
   SEARCH_SPLIT_MIN_PX,
   searchPinNumberForSlug,
   searchPinNumbers,
@@ -59,6 +60,7 @@ test("desktop split starts at the website / lg breakpoint; native stays stacked"
   const runtime = src("src/lib/runtime.ts");
   assert.match(runtime, /STOREFRONT_MIN_PX = 1024/);
   assert.equal(SEARCH_SPLIT_MIN_PX, 1024);
+  assert.equal(SEARCH_MAP_LIST_LIMIT, 40);
   assert.equal(searchShowsSplitLayout(1440), true);
   assert.equal(searchShowsSplitLayout(1024), true);
   assert.equal(searchShowsSplitLayout(1023), false);
@@ -80,6 +82,9 @@ test("search page ships list+map together on desktop with numbered pin sync", ()
   assert.match(search, /data-ke="search-split-map"/);
   assert.match(search, /ke-search-split/);
   assert.match(search, /SearchResultsList/);
+  assert.match(search, /SEARCH_MAP_LIST_LIMIT/);
+  assert.match(search, /mapList/);
+  assert.match(search, /lg:grid/);
   assert.match(search, /numbered/);
   assert.match(search, /onHover=\{setActive\}/);
   assert.match(search, /highlightResult/);
@@ -89,7 +94,7 @@ test("search page ships list+map together on desktop with numbered pin sync", ()
   assert.match(search, /ExploreCategoryRails/);
   assert.match(search, /lg:hidden/);
   assert.match(search, /hidden lg:block/);
-  assert.match(search, /max-lg:hidden/);
+  assert.match(search, /data-channel=website/);
   assert.match(search, /ExploreFilterBar/);
 
   assert.match(list, /data-ke="search-result"/);
@@ -108,6 +113,7 @@ test("search page ships list+map together on desktop with numbered pin sync", ()
 
   assert.match(css, /\.ke-search-split/);
   assert.match(css, /@media \(min-width: 1024px\)/);
+  assert.match(css, /html\[data-channel="website"\] \.ke-search-split/);
   assert.match(css, /\.ke-num-pin/);
   assert.match(css, /background:\s*#1a3790/);
   assert.doesNotMatch(css, /\.ke-num-pin[\s\S]{0,120}#00/);
@@ -121,6 +127,7 @@ test("search page ships list+map together on desktop with numbered pin sync", ()
 
   assert.match(copy, /searchResultPin: "Result \{n\}"/);
   assert.match(copy, /searchResultPin: "Résultat \{n\}"/);
+  assert.match(copy, /searchShowingOnMap:/);
   assert.match(card, /notOnKidEase/);
   assert.doesNotMatch(search, /Request Info/);
   assert.doesNotMatch(search, /Book a tour/);

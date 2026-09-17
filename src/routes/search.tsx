@@ -106,7 +106,7 @@ import { SearchResultsList } from "@/components/search-results-list";
 import { preferCompleteCards } from "@/lib/explore-category-rails";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
-import { SEARCH_SPLIT_MIN_PX } from "@/lib/search-pins";
+import { SEARCH_MAP_LIST_LIMIT, SEARCH_SPLIT_MIN_PX } from "@/lib/search-pins";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
 const CompareBar = lazy(() =>
@@ -266,7 +266,9 @@ function SearchPage() {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia(`(min-width: ${SEARCH_SPLIT_MIN_PX}px)`);
     const sync = () => {
-      if (mq.matches) setMapEnabled(true);
+      if (mq.matches || document.documentElement.dataset.channel === "website") {
+        setMapEnabled(true);
+      }
     };
     sync();
     mq.addEventListener("change", sync);
@@ -869,6 +871,7 @@ function SearchPage() {
     return splitSearchResults(list, searchAge, searchStart);
   }, [gated, list, searchAge, searchStart]);
   const shownList = gated ? split.primary : list;
+  const mapList = shownList.slice(0, SEARCH_MAP_LIST_LIMIT);
   const resultCount = shownList.length + (gated ? split.ageUnknown.length : 0);
   const extraListingFilters =
     avail !== "any" ||
@@ -1443,7 +1446,7 @@ function SearchPage() {
 
         <div
           className={cn(
-            "ke-search-results ke-search-split mt-2 contain-layout",
+            "ke-search-results ke-search-split mt-2 contain-layout lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(22rem,40%)] lg:items-start lg:gap-6",
             view !== "map" && "min-h-[22rem]",
             refreshing && "opacity-70",
           )}
@@ -1487,7 +1490,7 @@ function SearchPage() {
               </div>
             ) : (
               <>
-                <div className="lg:hidden">
+                <div className="lg:hidden [[data-channel=website]_&]:hidden">
                   <ExploreCategoryRails
                     items={railItems}
                     directory={filterByLocationLock(items ?? [], locationLock)}
@@ -1496,9 +1499,10 @@ function SearchPage() {
                     onHover={setActive}
                   />
                 </div>
-                <div className="mt-4 hidden lg:block">
+                <div className="mt-4 hidden lg:block [[data-channel=website]_&]:block">
                   <SearchResultsList
-                    items={shownList}
+                    items={mapList}
+                    totalCount={shownList.length}
                     activeSlug={active}
                     onHover={setActive}
                     onSelect={highlightResult}
@@ -1531,15 +1535,15 @@ function SearchPage() {
           <div
             className={cn(
               "ke-search-split-map mt-4 space-y-3",
-              view !== "map" && "max-lg:hidden",
+              view === "map" ? "block" : "hidden lg:block [[data-channel=website]_&]:block",
             )}
             data-ke="search-split-map"
           >
+            <div className="ke-search-map-frame h-[min(40dvh,22rem)] min-h-[14rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(70dvh,calc(100dvh-11rem))]">
             {mapEnabled ? (
-              <div className="ke-search-map-frame h-[min(40dvh,22rem)] min-h-[14rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(70dvh,calc(100dvh-11rem))]">
                 <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                   <MapView
-                    items={shownList}
+                    items={mapList}
                     origin={mapOrigin}
                     secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
                     radiusKm={radiusKm}
@@ -1563,8 +1567,10 @@ function SearchPage() {
                     onFallback={() => setView("list")}
                   />
                 </Suspense>
-              </div>
-            ) : null}
+            ) : (
+              <div className="ke-skel size-full" aria-hidden="true" />
+            )}
+            </div>
             {items !== null && showSearchEmpty && view === "map" ? (
               <div className="rounded-xl bg-surface ring-1 ring-border lg:hidden">
                 <EmptyState

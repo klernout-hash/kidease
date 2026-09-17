@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils";
 
 export function SearchResultsList({
   items,
+  totalCount,
   activeSlug,
   onHover,
   onSelect,
   distance,
 }: {
   items: Card[];
+  totalCount?: number;
   activeSlug?: string | null;
   onHover?: (slug: string) => void;
   onSelect?: (slug: string) => void;
@@ -20,10 +22,15 @@ export function SearchResultsList({
 }) {
   const { t } = useCopy();
   const numbered = numberSearchResults(items);
+  const total = totalCount ?? numbered.length;
   const heading =
-    numbered.length === 1
-      ? t("searchResultCountOne")
-      : t("searchResultCount").replace("{n}", String(numbered.length));
+    total > numbered.length
+      ? t("searchShowingOnMap")
+          .replace("{shown}", String(numbered.length))
+          .replace("{n}", String(total))
+      : numbered.length === 1
+        ? t("searchResultCountOne")
+        : t("searchResultCount").replace("{n}", String(numbered.length));
 
   return (
     <div className="ke-search-results-list" data-ke="search-results-list">

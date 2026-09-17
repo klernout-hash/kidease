@@ -2,6 +2,9 @@
  * Keep in sync with `STOREFRONT_MIN_PX` in `src/lib/runtime.ts`. */
 export const SEARCH_SPLIT_MIN_PX = 1024;
 
+/** Numbered cards/pins for one screen. Real results only — never pad. */
+export const SEARCH_MAP_LIST_LIMIT = 40;
+
 export type NumberedSearchResult<T extends { slug: string }> = {
   item: T;
   index: number;
