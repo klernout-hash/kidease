@@ -1,7 +1,8 @@
 import { getRequest } from "@tanstack/react-start/server";
 import { DEV_FALLBACK_USER_ID, resolveRequiredUserId } from "@/lib/access-control";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
-import { aliasInboundAuthCookies, isKideasePublicHost } from "./cookies";
+import { parseTimestampMs } from "@/lib/admin-idle";
+import { aliasInboundAuthCookies, isKideasePublicHost, unsignedSessionToken } from "./cookies";
 import { auth, authConfigured } from "./server";
 
 /**
@@ -46,19 +47,18 @@ export class UnauthorizedError extends Error {
 
 export type VerifiedUser = { id: string; email: string | null };
 
+export type VerifiedAuthSession = VerifiedUser & {
+  token: string | null;
+  createdAtMs: number;
+};
+
 /**
- * Resolve the signed-in user from the current request, or `null` when auth isn't
- * configured / nobody is signed in. Safe to call from server functions and SSR
- * loaders.
- *
- * `bearerToken` is for the LIVE PREVIEW: the app runs in a partitioned iframe
- * whose cookies don't reach the server, so `authMiddleware` forwards the session
- * as a bearer token, which we present as `Authorization: Bearer …` (the `bearer`
- * plugin resolves it). When deployed no token is passed and the cookie is used.
+ * Better Auth already verified the signed session cookie. Prefer this token /
+ * createdAt over re-parsing `__Host-grok-auth.session_token` for DB lookups.
  */
-export async function getSessionUser(
+export async function getVerifiedAuthSession(
   bearerToken?: string,
-): Promise<VerifiedUser | null> {
+): Promise<VerifiedAuthSession | null> {
   if (!authConfigured) return null;
   const request = getRequest();
   if (!request) return null;
@@ -81,7 +81,30 @@ export async function getSessionUser(
     "get-session-timeout",
   ).catch(() => null);
   if (!session?.user) return null;
-  return { id: session.user.id, email: session.user.email ?? null };
+  const rawToken = typeof session.session?.token === "string" ? session.session.token : null;
+  return {
+    id: session.user.id,
+    email: session.user.email ?? null,
+    token: unsignedSessionToken(rawToken),
+    createdAtMs: parseTimestampMs(session.session?.createdAt),
+  };
+}
+
+/**
+ * Resolve the signed-in user from the current request, or `null` when auth isn't
+ * configured / nobody is signed in. Safe to call from server functions and SSR
+ * loaders.
+ *
+ * `bearerToken` is for the LIVE PREVIEW: the app runs in a partitioned iframe
+ * whose cookies don't reach the server, so `authMiddleware` forwards the session
+ * as a bearer token, which we present as `Authorization: Bearer …` (the `bearer`
+ * plugin resolves it). When deployed no token is passed and the cookie is used.
+ */
+export async function getSessionUser(
+  bearerToken?: string,
+): Promise<VerifiedUser | null> {
+  const session = await getVerifiedAuthSession(bearerToken);
+  return session ? { id: session.id, email: session.email } : null;
 }
 
 /**
