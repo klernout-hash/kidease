@@ -28,26 +28,46 @@ function pemHasBegin(value: string) {
 
 function tryDecodePemBase64(raw: string): string {
   const compact = raw.replace(/\s+/g, "");
-  if (compact.length < 16 || /[^A-Za-z0-9+/=]/.test(compact)) return "";
+  if (compact.length < 16) return "";
+  const padded = compact.replace(/-/g, "+").replace(/_/g, "/");
+  if (/[^A-Za-z0-9+/=]/.test(padded)) return "";
   try {
-    return Buffer.from(compact, "base64").toString("utf8").replace(/\r/g, "").trim();
+    return Buffer.from(padded, "base64").toString("utf8").replace(/\r/g, "").trim();
   } catch {
     return "";
   }
 }
 
-/** Vercel pastes: quoted PEM, literal `\n`, optional whole-PEM base64. */
-export function normalizeDocusignPem(raw: string): string {
-  let v = String(raw || "")
-    .replace(/^\uFEFF/, "")
-    .trim();
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-    v = v.slice(1, -1).trim();
+function unwrapPemQuotes(raw: string): string {
+  let v = raw;
+  for (let i = 0; i < 3; i += 1) {
+    if (
+      (v.startsWith('"') && v.endsWith('"')) ||
+      (v.startsWith("'") && v.endsWith("'")) ||
+      (v.startsWith("`") && v.endsWith("`"))
+    ) {
+      v = v.slice(1, -1).trim();
+      continue;
+    }
+    break;
   }
-  v = v.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
+  return v;
+}
+
+/** Vercel pastes: quoted PEM, literal `\n`, double-escaped `\\n`, optional whole-PEM base64. */
+export function normalizeDocusignPem(raw: string): string {
+  let v = unwrapPemQuotes(
+    String(raw || "")
+      .replace(/^\uFEFF/, "")
+      .replace(/\u0000/g, "")
+      .trim(),
+  );
+  v = v.replace(/\\r\\n/g, "\n").replace(/\\\\n/g, "\n").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
   if (pemHasBegin(v)) return v;
   const decoded = tryDecodePemBase64(v);
-  return pemHasBegin(decoded) ? decoded : v;
+  if (pemHasBegin(decoded)) return decoded;
+  const decodedAgain = tryDecodePemBase64(decoded);
+  return pemHasBegin(decodedAgain) ? decodedAgain : v;
 }
 
 function integrationKey(source?: EnvMap) {
