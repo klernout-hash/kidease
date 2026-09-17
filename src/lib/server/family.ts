@@ -52,6 +52,7 @@ import {
 } from "@/lib/server/centre-access";
 import { centreCanCreateListing, centreCanMutateVacancies } from "@/lib/centre-roles";
 import { enqueueProviderCreatedListing } from "@/lib/server/listing-queue";
+import { assertNewListingAllowed } from "@/lib/server/listing-guard";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -1349,6 +1350,15 @@ export const createListing = createServerFn({ method: "POST" })
     if (!centreCanCreateListing({ ownerCount, memberOnly: staffOnly })) {
       throw new Error("Only the centre owner can add a listing.");
     }
+    await assertNewListingAllowed({
+      userId: context.userId,
+      name: data.name,
+      address: data.address,
+      city: data.city,
+      province: "MB",
+      postalCode: data.postalCode,
+      licenseNumber: data.licenseNumber,
+    });
     const id = nid("d");
     const slug = data.name
       .toLowerCase()

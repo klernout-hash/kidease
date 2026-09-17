@@ -36,7 +36,12 @@ test("createListing writes a queueable waiting claim, not Live", () => {
   const start = family.indexOf("export const createListing");
   const end = family.indexOf("export const updateCapacity", start);
   const createListing = family.slice(start, end === -1 ? undefined : end);
+  assert.match(createListing, /assertNewListingAllowed/);
   assert.match(createListing, /enqueueProviderCreatedListing/);
+  assert.ok(
+    createListing.indexOf("assertNewListingAllowed") < createListing.indexOf("enqueueProviderCreatedListing"),
+    "duplicate reject must not skip the first-create Waiting enqueue path",
+  );
   assert.match(src("src/lib/server/listing-queue.ts"), /claim_status = \$\{status\}/);
   assert.match(src("src/lib/server/listing-queue.ts"), /insert into listing_claims/);
   assert.match(src("src/lib/server/listing-queue.ts"), /claim_waiting/);
