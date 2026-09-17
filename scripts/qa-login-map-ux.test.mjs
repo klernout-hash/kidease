@@ -83,19 +83,28 @@ describe("QA 2026-09-10: login split does not overflow under 768", () => {
 });
 
 describe("login strength: email Connexion primary, logout, honest errors", () => {
-  it("puts email Connexion above Google so social cannot steal submit", () => {
+  it("puts Google above email for parent/provider; Admin stays email-first", () => {
     const login = src("src/routes/login.tsx");
+    const socialFirstIdx = login.indexOf('data-ke="social-first"');
     const emailIdx = login.indexOf('data-ke={operator ? "admin-email-first" : "email-sign-in"}');
-    const socialIdx = login.indexOf('data-ke="social-sign-in"');
-    const primaryIdx = login.indexOf('data-ke="email-primary"');
-    const googleIdx = login.indexOf('data-ke="social-secondary"');
-    assert.ok(emailIdx > 0 && socialIdx > emailIdx, "email form must render before social");
-    assert.ok(primaryIdx > 0 && googleIdx > primaryIdx, "Connexion submit must render before Google");
-    assert.match(login, /t\("orSocial"\)/);
+    assert.ok(socialFirstIdx > 0 && socialFirstIdx < emailIdx, "social-first block must render above email form");
+    assert.match(login, /data-ke="social-sign-in"/);
+    assert.match(login, /data-ke="social-primary"/);
+    assert.match(login, /data-ke="email-primary"/);
+    assert.match(login, /const socialFirst = !operator/);
+    assert.match(login, /googleFirstProviders/);
+    assert.match(login, /t\("orEmail"\)/);
     assert.match(login, /t\("signIn"\)/);
     assert.match(login, /continueGoogle/);
-    assert.match(src("src/lib/copy.ts"), /orSocial: "or continue with Google"/);
-    assert.match(src("src/lib/copy.ts"), /orSocial: "ou continuer avec Google"/);
+    assert.match(login, /data-ke="or-continue-email"/);
+    assert.match(src("src/lib/copy.ts"), /orEmail: "or continue with email"/);
+    assert.match(src("src/lib/copy.ts"), /orEmail: "ou continuer par courriel"/);
+    assert.match(src("src/components/app-shots.tsx"), /or continue with email/);
+    const shot = src("src/components/app-shots.tsx");
+    assert.ok(
+      shot.indexOf("Continue with Google") < shot.indexOf("or continue with email"),
+      "store shot must show Google above the email divider",
+    );
     assert.match(src(".env.example"), /^FEATURE_FACEBOOK_LOGIN=0$/m);
   });
 
