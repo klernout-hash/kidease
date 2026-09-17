@@ -17,12 +17,16 @@ import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
 import { useCopy } from "@/lib/use-copy";
 import { cn, money, formatAgeRange } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
+import { UploadLimitHint } from "@/components/upload-limit-hint";
+import {
+  isListingPhotoTooBig,
+  isPrivateDocTooBig,
+  LISTING_PHOTO_MAX_BYTES,
+} from "@/lib/upload-limits";
 import {
   licenseDocHref,
   openPrivateDocHref,
   postPrivateDocForm,
-  PRIVATE_DOC_BAD_FILE,
-  PRIVATE_DOC_MAX_BYTES,
 } from "@/lib/private-docs";
 
 export function PromotePanel({ daycare, onSaved }: { daycare: Daycare; onSaved: () => void }) {
@@ -97,12 +101,12 @@ export function Field({ label, value, onChange }: { label: string; value: string
   );
 }
 
-/** Shared FileReader + size cap for storefront / licence uploads. */
-export const LISTING_PHOTO_MAX_BYTES = 1_800_000;
+export { LISTING_PHOTO_MAX_BYTES };
 
+/** Shared FileReader + size cap for storefront / licence uploads. */
 export function readListingImage(file: File | undefined, onReady: (dataUrl: string) => void, onTooBig: () => void) {
   if (!file) return;
-  if (file.size > LISTING_PHOTO_MAX_BYTES) {
+  if (isListingPhotoTooBig(file.size)) {
     onTooBig();
     return;
   }
@@ -148,6 +152,8 @@ export function CapacityForm({
     ...parentDeskFromDaycare(daycare),
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [licenseError, setLicenseError] = useState<string | null>(null);
   const dirty =
     state.name !== daycare.name ||
     state.address !== daycare.address ||
@@ -201,6 +207,14 @@ export function CapacityForm({
   const existingInteriors = classifyListingPhotos(daycare.photos).interiors;
 
   function readImage(file: File | undefined, into: "storefront" | "interiors" | "license") {
+    if (!file) return;
+    if (isListingPhotoTooBig(file.size)) {
+      const message = t("photoTooBig");
+      setPhotoError(message);
+      toast.error(message);
+      return;
+    }
+    setPhotoError(null);
     readListingImage(
       file,
       (value) => {
@@ -208,7 +222,11 @@ export function CapacityForm({
         else if (into === "license") setState((s) => ({ ...s, licensePhoto: value }));
         else setState((s) => ({ ...s, interiors: [...s.interiors, value].slice(0, 5) }));
       },
-      () => toast.error(t("photoTooBig")),
+      () => {
+        const message = t("photoTooBig");
+        setPhotoError(message);
+        toast.error(message);
+      },
     );
   }
 
@@ -277,18 +295,26 @@ export function CapacityForm({
                 const file = e.target.files?.[0];
                 e.target.value = "";
                 if (!file) return;
-                if (file.size > PRIVATE_DOC_MAX_BYTES) {
-                  toast.error(PRIVATE_DOC_BAD_FILE);
+                if (isPrivateDocTooBig(file.size)) {
+                  const message = t("uploadDocTooBig");
+                  setLicenseError(message);
+                  toast.error(message);
                   return;
                 }
+                setLicenseError(null);
                 void postPrivateDocForm(licenseDocHref(daycare.id), {}, file)
                   .then(() => {
                     toast.success(t("licenceOnFile"));
                     onSaved();
                   })
-                  .catch((err) => toast.error(err instanceof Error ? err.message : PRIVATE_DOC_BAD_FILE));
+                  .catch((err) => {
+                    const message = err instanceof Error ? err.message : t("uploadDocTooBig");
+                    setLicenseError(message);
+                    toast.error(message);
+                  });
               }}
             />
+            <UploadLimitHint hint={t("uploadDocHint")} error={licenseError} />
           </label>
           {daycare.licensePhotoOnFile ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -318,10 +344,12 @@ export function CapacityForm({
                 {t("storefrontCta")}
               </span>
               <input type="file" accept="image/*" className="sr-only" onChange={(e) => readImage(e.target.files?.[0], "storefront")} />
+              <UploadLimitHint hint={t("uploadPhotoHint")} error={photoError} />
             </label>
           </div>
           <h3 className="font-display text-xl">{t("interiors")}</h3>
           <p className="text-sm text-muted">{t("interiorPhotoNote")}</p>
+          <UploadLimitHint hint={t("uploadPhotoHint")} error={photoError} />
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {existingInteriors.map((src) => (
               <img key={src} src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover ring-1 ring-border" />

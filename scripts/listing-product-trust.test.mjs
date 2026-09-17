@@ -210,7 +210,8 @@ test("create listing form can attach a storefront before publish", () => {
   assert.match(claims, /applyStorefrontPhoto\((?:current\[0\]\?\.photos \?\? ""|prevPhotos), data\.storefront\)/);
   assert.match(claims, /last_photo_updated_at/);
   const forms = src("src/components/provider-listing-forms.tsx");
-  assert.match(forms, /LISTING_PHOTO_MAX_BYTES = 1_800_000/);
+  assert.match(forms, /LISTING_PHOTO_MAX_BYTES/);
+  assert.match(forms, /uploadPhotoHint/);
   assert.match(forms, /readAsDataURL/);
   assert.match(forms, /mode === "listing"/);
   assert.match(forms, /storefrontCta/);

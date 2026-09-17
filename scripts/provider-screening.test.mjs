@@ -250,6 +250,8 @@ test("public copy and desks stay honest and PIPEDA-tight", () => {
   assert.doesNotMatch(copy, /KidEase background-checked/);
   assert.match(trust, /Never emit "Background checked by KidEase"/);
   assert.match(src("src/components/provider-screening.tsx"), /ProviderScreeningPanel/);
+  assert.match(src("src/components/provider-screening.tsx"), /uploadDocHint/);
+  assert.match(src("src/components/provider-screening.tsx"), /uploadDocTooBig/);
   assert.match(src("src/components/admin-screening.tsx"), /AdminScreeningQueue/);
   assert.match(src("src/routes/admin.tsx"), /tab === "screening"/);
   assert.match(src("src/routes/provider.tsx"), /desk === "screening"/);

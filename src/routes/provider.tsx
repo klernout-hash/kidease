@@ -32,6 +32,8 @@ import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field, PromotePanel, readListingImage } from "@/components/provider-listing-forms";
+import { UploadLimitHint } from "@/components/upload-limit-hint";
+import { isListingPhotoTooBig } from "@/lib/upload-limits";
 import { TourAvailabilityDesk } from "@/components/tour-availability-desk";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
@@ -139,6 +141,7 @@ function ProviderPage() {
     culturalPrograms: [] as string[],
     culturalTeamNote: "",
   });
+  const [storefrontError, setStorefrontError] = useState<string | null>(null);
   const listingFormDirty =
     Boolean(form.name.trim() || form.address.trim() || form.postalCode.trim() || form.licenseNumber.trim() || form.storefront) ||
     form.city !== "Winnipeg" ||
@@ -519,14 +522,28 @@ function ProviderPage() {
                       type="file"
                       accept="image/*"
                       className="sr-only"
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (isListingPhotoTooBig(file.size)) {
+                          const message = t("photoTooBig");
+                          setStorefrontError(message);
+                          toast.error(message);
+                          return;
+                        }
+                        setStorefrontError(null);
                         readListingImage(
-                          e.target.files?.[0],
+                          file,
                           (value) => setForm((s) => ({ ...s, storefront: value })),
-                          () => toast.error(t("photoTooBig")),
-                        )
-                      }
+                          () => {
+                            const message = t("photoTooBig");
+                            setStorefrontError(message);
+                            toast.error(message);
+                          },
+                        );
+                      }}
                     />
+                    <UploadLimitHint hint={t("uploadPhotoHint")} error={storefrontError} />
                   </label>
                 </div>
               </div>
