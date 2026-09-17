@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { authClient, authEnabled, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
-import type { GrokProvider } from "@/lib/auth/providers";
+import { googleFirstProviders, type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canContinueAdminSession } from "@/lib/server/reauth";
 import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
+import type { CopyKey } from "@/lib/copy";
 
 type Role = "parent" | "provider" | "admin";
 type DeskAlias = "parent" | "director" | "centre" | "admin" | "support" | "provider";
@@ -302,6 +303,9 @@ export function LoginScreen({
     }
   }
 
+  const socialFirst = !operator && (providers.length > 0 || !authEnabled);
+  const orderedProviders = googleFirstProviders(providers);
+
   const title = operator
     ? t("operatorSignIn")
     : role === "provider"
@@ -352,7 +356,26 @@ export function LoginScreen({
                 {t("operatorEmailNote")}
               </p>
             ) : null}
-          <form onSubmit={onEmail} className="mt-6 space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
+            {socialFirst ? (
+              <div className="mt-6" data-ke="social-first">
+                <SocialSignInButtons
+                  providers={orderedProviders}
+                  authEnabled={authEnabled}
+                  busy={busy}
+                  t={t}
+                  onSocial={onSocial}
+                />
+                <div
+                  className="mt-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle"
+                  data-ke="or-continue-email"
+                >
+                  <span className="h-px flex-1 bg-border" />
+                  {t("orEmail")}
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              </div>
+            ) : null}
+          <form onSubmit={onEmail} className={`${socialFirst ? "mt-4" : "mt-6"} space-y-3 ph-no-capture`} data-ke={operator ? "admin-email-first" : "email-sign-in"}>
             {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}
@@ -456,42 +479,6 @@ export function LoginScreen({
             {mode === "up" ? t("haveAccount") : t("needAccount")}
           </button>
           ) : null}
-          {!operator && (providers.length > 0 || !authEnabled) ? (
-          <div className="mt-6">
-            <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
-              <span className="h-px flex-1 bg-border" />
-              {t("orSocial")}
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <div className="space-y-2" data-ke="social-sign-in">
-              {authEnabled ? (
-                providers.map((p: GrokProvider) => (
-                  <Button
-                    key={p.providerId}
-                    type="button"
-                    variant={p.idp === "apple" ? "apple" : "secondary"}
-                    size="md"
-                    className="w-full font-normal"
-                    data-ke="social-secondary"
-                    disabled={busy}
-                    onClick={() => void onSocial(p.providerId)}
-                  >
-                    {p.idp === "apple" ? <AppleMark /> : p.idp === "facebook" ? <FacebookMark /> : null}
-                    {p.idp === "apple"
-                      ? t("continueApple")
-                      : p.idp === "google"
-                        ? t("continueGoogle")
-                        : p.idp === "facebook"
-                          ? t("continueFacebook")
-                          : p.label}
-                  </Button>
-                ))
-              ) : (
-                <p className="text-sm text-muted">Sign-in is disabled.</p>
-              )}
-            </div>
-          </div>
-          ) : null}
           <p className="mt-6 text-center text-xs text-subtle">
             <a
               href={search.next && search.next.startsWith("/") ? search.next : "/"}
@@ -516,6 +503,50 @@ export function LoginScreen({
         </div>
       </main>
     </Shell>
+  );
+}
+
+function SocialSignInButtons({
+  providers,
+  authEnabled,
+  busy,
+  t,
+  onSocial,
+}: {
+  providers: GrokProvider[];
+  authEnabled: boolean;
+  busy: boolean;
+  t: (key: CopyKey) => string;
+  onSocial: (providerId: string) => void;
+}) {
+  return (
+    <div className="space-y-2" data-ke="social-sign-in">
+      {authEnabled ? (
+        providers.map((p) => (
+          <Button
+            key={p.providerId}
+            type="button"
+            variant={p.idp === "apple" ? "apple" : "secondary"}
+            size="md"
+            className="w-full font-normal"
+            data-ke="social-primary"
+            disabled={busy}
+            onClick={() => void onSocial(p.providerId)}
+          >
+            {p.idp === "apple" ? <AppleMark /> : p.idp === "facebook" ? <FacebookMark /> : null}
+            {p.idp === "apple"
+              ? t("continueApple")
+              : p.idp === "google"
+                ? t("continueGoogle")
+                : p.idp === "facebook"
+                  ? t("continueFacebook")
+                  : p.label}
+          </Button>
+        ))
+      ) : (
+        <p className="text-sm text-muted">Sign-in is disabled.</p>
+      )}
+    </div>
   );
 }
 
