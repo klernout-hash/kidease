@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { CENTRE_INVITE_ACCEPT_PATH } from "@/lib/centre-roles";
 import {
   acceptCentreInvite,
   inviteCentreEmployee,
@@ -10,6 +11,15 @@ import {
 } from "@/lib/server/centre-members";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
+
+function inviteActionMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message.trim()) return err.message.trim();
+  if (err && typeof err === "object" && "message" in err) {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message.trim();
+  }
+  return fallback;
+}
 
 const ROLE_COPY: Record<string, CopyKey> = {
   owner: "employeeRoleOwner",
@@ -198,22 +208,41 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
 
 export function AcceptEmployeeInvite({ token }: { token: string }) {
   const { t } = useCopy();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onJoin() {
+    if (busy) return;
+    if (!(token || "").trim()) {
+      const message = t("employeeInviteGone");
+      setError(message);
+      toast.error(message);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await acceptCentreInvite({ data: token });
+      toast.success(t("employeeAccepted"));
+      window.location.assign(CENTRE_INVITE_ACCEPT_PATH);
+    } catch (err) {
+      const message = inviteActionMessage(err, t("employeeAcceptFailed"));
+      setError(message);
+      toast.error(message);
+      setBusy(false);
+    }
+  }
+
   return (
-    <Button
-      type="button"
-      className="min-h-11"
-      onClick={() => {
-        void acceptCentreInvite({ data: token })
-          .then(() => {
-            toast.success(t("employeeAccepted"));
-            window.location.assign("/provider?desk=requests");
-          })
-          .catch((err) => {
-            toast.error(err instanceof Error ? err.message : t("employeeAcceptFailed"));
-          });
-      }}
-    >
-      {t("employeeAccept")}
-    </Button>
+    <div className="space-y-3">
+      <Button type="button" className="min-h-11" disabled={busy} onClick={() => void onJoin()}>
+        {busy ? t("employeeAccepting") : t("employeeAccept")}
+      </Button>
+      {error ? (
+        <p className="text-sm text-danger" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }

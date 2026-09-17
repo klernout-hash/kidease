@@ -3,9 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import {
   CENTRE_INVITE_DAILY_MAX,
+  CENTRE_INVITE_EXPIRED,
   CENTRE_INVITE_HOURLY_MAX,
   CENTRE_INVITE_NOT_FOUND,
   CENTRE_INVITE_TTL_MS,
+  CENTRE_INVITE_USED,
   decideAcceptInvite,
   decideInviteEmployee,
   decideRevokeEmployee,
@@ -347,9 +349,11 @@ export const peekCentreInvite = createServerFn({ method: "GET" })
     `.catch(() => []);
     const row = rows[0];
     if (!row) return { ok: false as const, error: CENTRE_INVITE_NOT_FOUND };
+    if (row.status === "accepted") return { ok: false as const, error: CENTRE_INVITE_USED };
+    if (row.status !== "pending") return { ok: false as const, error: CENTRE_INVITE_NOT_FOUND };
     const expiresAtMs = new Date(row.expires_at).getTime();
-    if (row.status !== "pending" || expiresAtMs < Date.now()) {
-      return { ok: false as const, error: CENTRE_INVITE_NOT_FOUND };
+    if (!Number.isFinite(expiresAtMs) || expiresAtMs < Date.now()) {
+      return { ok: false as const, error: CENTRE_INVITE_EXPIRED };
     }
     return {
       ok: true as const,
@@ -383,23 +387,30 @@ export const acceptCentreInvite = createServerFn({ method: "POST" })
     const invite = rows[0];
     if (!invite) throw new Error(CENTRE_INVITE_NOT_FOUND);
     const actor = await lookupUser(context.userId);
-    const decision = decideAcceptInvite({
-      inviteStatus: invite.status,
-      inviteEmail: invite.email,
-      sessionEmail: actor.email || "",
-      expiresAtMs: new Date(invite.expires_at).getTime(),
-    });
-    if (!decision.ok) throw new Error(decision.error);
-
-    const existing = await sql<{ id: string }>`
-      select id from centre_members
+    let sessionEmail = actor.email || "";
+    if (!normalizeInviteEmail(sessionEmail)) {
+      const { getSessionUser } = await import("@/lib/auth/verify.server");
+      sessionEmail = (await getSessionUser())?.email || "";
+    }
+    const existing = await sql<{ id: string; status: string }>`
+      select id, status from centre_members
       where daycare_id = ${invite.daycare_id} and user_id = ${context.userId}
       limit 1
     `.catch(() => []);
+    const decision = decideAcceptInvite({
+      inviteStatus: invite.status,
+      inviteEmail: invite.email,
+      sessionEmail,
+      expiresAtMs: new Date(invite.expires_at).getTime(),
+      alreadyMember: existing[0]?.status === "active",
+    });
+    if (!decision.ok) throw new Error(decision.error);
+
     if (existing[0]) {
       await sql`
         update centre_members
-        set role = ${invite.role}, status = 'active', revoked_at = null, revoked_by = null,
+        set role = case when role = 'owner' then role else ${invite.role} end,
+            status = 'active', revoked_at = null, revoked_by = null,
             invited_by = coalesce(invited_by, ${context.userId})
         where id = ${existing[0].id}
       `;
@@ -409,17 +420,21 @@ export const acceptCentreInvite = createServerFn({ method: "POST" })
         values (${nid("cm")}, ${invite.daycare_id}, ${context.userId}, ${invite.role}, 'active', ${context.userId})
       `;
     }
-    await sql`
-      update centre_invites
-      set status = 'accepted', accepted_at = now(), accepted_user_id = ${context.userId}
-      where id = ${invite.id}
-    `;
+    if (invite.status === "pending") {
+      await sql`
+        update centre_invites
+        set status = 'accepted', accepted_at = now(), accepted_user_id = ${context.userId}
+        where id = ${invite.id} and status = 'pending'
+      `;
+    }
     await logSecurityEvent({
       kind: "employee_accept",
       actorUserId: context.userId,
       daycareId: invite.daycare_id,
       detail: `accepted ${invite.role}`,
     });
+    const { writeProfileRole } = await import("@/lib/server/roles");
+    await writeProfileRole(context.userId, "provider").catch(() => undefined);
     if (invite.name) {
       await sql`
         update "user" set name = ${invite.name}

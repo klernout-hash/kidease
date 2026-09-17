@@ -4,9 +4,14 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  CENTRE_INVITE_ACCEPT_PATH,
+  CENTRE_INVITE_ALREADY,
   CENTRE_INVITE_BAD_EMAIL,
   CENTRE_INVITE_DUPLICATE,
+  CENTRE_INVITE_EMAIL_MISMATCH,
+  CENTRE_INVITE_EXPIRED,
   CENTRE_INVITE_HOURLY_MAX,
+  CENTRE_INVITE_NOT_FOUND,
   CENTRE_INVITE_NOT_OWNER,
   CENTRE_INVITE_RATE_LIMITED,
   CENTRE_INVITE_SELF,
@@ -21,6 +26,7 @@ import {
   decideAcceptInvite,
   decideInviteEmployee,
   decideRevokeEmployee,
+  inviteEmailsMatch,
   maxCentreRole,
   parseCentreInviteRole,
   sessionCentreCaps,
@@ -119,14 +125,25 @@ test("accept invite requires matching mailbox and a live pending token", () => {
     expiresAtMs: Date.now() + 60_000,
   });
   assert.equal(ok.ok, true);
+  assert.equal(inviteEmailsMatch("lead@centre.ca", " LEAD@centre.ca "), true);
+  assert.equal(inviteEmailsMatch("lead@centre.ca", "other@centre.ca"), false);
   assert.equal(
     decideAcceptInvite({
       inviteStatus: "pending",
       inviteEmail: "lead@centre.ca",
       sessionEmail: "other@centre.ca",
       expiresAtMs: Date.now() + 60_000,
-    }).ok,
-    false,
+    }).error,
+    CENTRE_INVITE_EMAIL_MISMATCH,
+  );
+  assert.equal(
+    decideAcceptInvite({
+      inviteStatus: "pending",
+      inviteEmail: "lead@centre.ca",
+      sessionEmail: "lead@centre.ca",
+      expiresAtMs: Date.now() - 1,
+    }).error,
+    CENTRE_INVITE_EXPIRED,
   );
   assert.equal(
     decideAcceptInvite({
@@ -134,8 +151,27 @@ test("accept invite requires matching mailbox and a live pending token", () => {
       inviteEmail: "lead@centre.ca",
       sessionEmail: "lead@centre.ca",
       expiresAtMs: Date.now() + 60_000,
+    }).error,
+    CENTRE_INVITE_NOT_FOUND,
+  );
+  assert.equal(
+    decideAcceptInvite({
+      inviteStatus: "accepted",
+      inviteEmail: "lead@centre.ca",
+      sessionEmail: "lead@centre.ca",
+      expiresAtMs: Date.now() + 60_000,
+    }).error,
+    CENTRE_INVITE_ALREADY,
+  );
+  assert.equal(
+    decideAcceptInvite({
+      inviteStatus: "accepted",
+      inviteEmail: "lead@centre.ca",
+      sessionEmail: "lead@centre.ca",
+      expiresAtMs: Date.now() - 1,
+      alreadyMember: true,
     }).ok,
-    false,
+    true,
   );
   assert.equal(decideRevokeEmployee({ actorRole: "owner", targetRole: "staff", targetKind: "member" }).ok, true);
   assert.equal(
@@ -153,6 +189,9 @@ test("EN and FR-CA employee labels exist and match", () => {
     "employeeRoleStaff",
     "employeeRevoke",
     "employeeInviteTitle",
+    "employeeInviteWrongEmail",
+    "employeeInviteSignInAs",
+    "employeeAccepting",
   ]) {
     assert.equal((dict.match(new RegExp(`${key}:`, "g")) || []).length, 2, key);
   }
@@ -172,6 +211,14 @@ test("wire: Neon membership, Better Auth invite, owner revoke, king-admin untouc
   assert.match(src("src/lib/server/invite-mail.ts"), /purpose: "invite"/);
   assert.match(src("src/lib/transactional-mail.ts"), /"invite"/);
   assert.match(src("src/routes/invite.$token.tsx"), /createFileRoute\("\/invite\/\$token"\)/);
+  assert.match(src("src/routes/invite.$token.tsx"), /inviteEmailsMatch/);
+  assert.match(src("src/routes/invite.$token.tsx"), /employeeInviteWrongEmail/);
+  assert.match(src("src/components/centre-employees.tsx"), /CENTRE_INVITE_ACCEPT_PATH/);
+  assert.match(src("src/components/centre-employees.tsx"), /disabled=\{busy\}/);
+  assert.equal(CENTRE_INVITE_ACCEPT_PATH, "/provider?desk=requests");
+  assert.match(src("src/lib/server/centre-members.ts"), /alreadyMember/);
+  assert.match(src("src/lib/server/centre-members.ts"), /writeProfileRole/);
+  assert.match(src("src/lib/server/family.ts"), /providerDeskShowsListing/);
   assert.match(src("src/routeTree.gen.ts"), /id:\s*'\/invite\/\$token'/);
   assert.match(src("src/lib/server/family.ts"), /delete from centre_members/);
   assert.match(src("src/routes/provider.tsx"), /employees/);
