@@ -99,7 +99,12 @@ export type AdminCentreRow = {
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
   const storefront = splitPhotoList(photos).find(
-    (p) => p.startsWith("data:image") || p.startsWith("/photos/") || p.startsWith("/img/") || /^https?:\/\//i.test(p),
+    (p) =>
+      p.startsWith("data:image") ||
+      p.startsWith("/photos/buildings/") ||
+      p.startsWith("/img/") ||
+      /^https?:\/\//i.test(p) ||
+      (p.startsWith("/") && !p.startsWith("/photos/") && !p.includes("placeholder") && !p.includes("-logo")),
   );
   return {
     licensePhoto: licenseReviewMarker(licensePhoto),

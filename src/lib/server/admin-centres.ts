@@ -8,8 +8,7 @@ import { writeTrustEvent } from "@/lib/server/trust";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
-import { asIsoString, compareTimeDesc } from "@/lib/sort-time";
-import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { compareTimeDesc } from "@/lib/sort-time";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { licenseReviewMarker } from "@/lib/private-docs";
 import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
@@ -69,6 +68,20 @@ export type AdminCentreRow = {
   missing: IncompleteMissingField[];
   updatedAt: string | null;
 };
+
+/** Licence + storefront photos for Admin verify — daycare photos, not the raw CSV. */
+function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
+  const storefront = splitPhotoList(photos).find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
+  return {
+    licensePhoto: licenseReviewMarker(licensePhoto),
+    storefrontPhoto: storefront || null,
+  };
+}
+
+function withReviewPhotos(row: AdminCentreRow, sql: AdminCentreSqlRow): AdminCentreRow {
+  const { licensePhoto, storefrontPhoto } = firstReviewPhoto(sql.photos, sql.license_photo);
+  return { ...row, licensePhoto, storefrontPhoto };
+}
 
 export type Decision = "approve" | "decline" | "waiting";
 
