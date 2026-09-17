@@ -22,10 +22,21 @@ import {
 import { allowContentType, allowContractPdfType } from "../src/lib/server/r2.ts";
 import {
   DOCUSIGN_CONSENT_MESSAGE,
+  DOCUSIGN_RATE_LIMIT_MESSAGE,
   classifyDocusignFailure,
   listDocusignTemplatesFromApi,
   readDocusignOrNull,
 } from "../src/lib/docusign-errors.ts";
+import {
+  RATE_LIMIT_BACKOFF_MS,
+  TEMPLATE_LIST_TTL_MS,
+  cachedDocusignTemplates,
+  docusignIsRateLimited,
+  listDocusignTemplatesCached,
+  readFreshDocusignTemplateList,
+  rememberDocusignRateLimit,
+  resetDocusignTemplateCache,
+} from "../src/lib/docusign-template-cache.ts";
 import {
   centreEnvelopeCreateBody,
   docusignBrandId,
@@ -371,6 +382,70 @@ test("DocuSign JWT auth failure returns an empty list and never throws", async (
   assert.match(src("src/lib/docusign-copy.ts"), /DocuSign not connected — finish JWT consent/);
   assert.match(src(".env.example"), /FEATURE_SMS=0/);
   assert.doesNotMatch(src(".env.example"), /^FEATURE_SMS=1$/m);
+});
+
+test("DocuSign 429 hourly quota is rate_limit, not unavailable", () => {
+  const hourly = new Error(
+    'DocuSign 429: {"errorCode":"HOURLY_APIINVOCATION_LIMIT_EXCEEDED","message":"The hourly API invocation limit of 3000 has been exceeded"}',
+  );
+  const classified = classifyDocusignFailure(hourly);
+  assert.equal(classified.code, "rate_limit");
+  assert.equal(classified.message, DOCUSIGN_RATE_LIMIT_MESSAGE);
+  assert.notEqual(classified.message, "DocuSign is unavailable right now.");
+  assert.equal(classifyDocusignFailure(new Error("429 Too Many Requests")).code, "rate_limit");
+  assert.equal(classifyDocusignFailure(new Error(DOCUSIGN_RATE_LIMIT_MESSAGE)).code, "rate_limit");
+  assert.equal(
+    classifyDocusignFailure(new Error("DocuSign auth 400: invalid_grant user_not_found")).code,
+    "consent",
+  );
+  assert.equal(classifyDocusignFailure(new Error("DocuSign 500: boom")).code, "unavailable");
+
+  const contractsUi = src("src/components/admin-contracts.tsx");
+  assert.match(contractsUi, /docusign-rate-limit-banner/);
+  assert.match(contractsUi, /rateLimitBanner/);
+  assert.match(src("src/lib/docusign-copy.ts"), /hourly API limit reached/);
+  assert.match(src("src/lib/server/docusign.ts"), /listDocusignTemplatesCached/);
+  assert.match(src("src/lib/server/docusign.ts"), /docusignIsRateLimited/);
+  assert.match(src("src/lib/server/contracts.ts"), /docusignIsRateLimited/);
+  const sendSrc = src("src/lib/server/contracts.ts");
+  const sendFn = sendSrc.slice(sendSrc.indexOf("export const sendCentreContract"));
+  assert.ok(
+    sendFn.indexOf("docusignIsRateLimited()") < sendFn.indexOf("voidCentreEnvelope"),
+    "Send must refuse a known rate limit before voiding the previous envelope",
+  );
+});
+
+test("template list cache is fresh briefly and backs off after 429", () => {
+  resetDocusignTemplateCache();
+  const now = 1_700_000_000_000;
+  const ok = {
+    templates: [{ templateId: "tmpl-1", name: "Provider Agreement" }],
+    error: null,
+  };
+  assert.equal(readFreshDocusignTemplateList(now), null);
+  assert.deepEqual(listDocusignTemplatesCached(ok, now), ok);
+  assert.deepEqual(readFreshDocusignTemplateList(now + TEMPLATE_LIST_TTL_MS - 1), ok);
+  assert.equal(readFreshDocusignTemplateList(now + TEMPLATE_LIST_TTL_MS + 1), null);
+
+  const limited = listDocusignTemplatesCached(
+    { templates: [], error: { code: "rate_limit", message: DOCUSIGN_RATE_LIMIT_MESSAGE } },
+    now + TEMPLATE_LIST_TTL_MS + 2,
+  );
+  assert.equal(limited.error?.code, "rate_limit");
+  assert.deepEqual(limited.templates, ok.templates);
+  assert.equal(docusignIsRateLimited(now + TEMPLATE_LIST_TTL_MS + 3), true);
+  assert.deepEqual(cachedDocusignTemplates(), ok.templates);
+  rememberDocusignRateLimit(now + TEMPLATE_LIST_TTL_MS + 3, RATE_LIMIT_BACKOFF_MS);
+  assert.equal(
+    docusignIsRateLimited(now + TEMPLATE_LIST_TTL_MS + 3 + RATE_LIMIT_BACKOFF_MS - 1),
+    true,
+  );
+  assert.equal(
+    docusignIsRateLimited(now + TEMPLATE_LIST_TTL_MS + 3 + RATE_LIMIT_BACKOFF_MS + 1),
+    false,
+  );
+  resetDocusignTemplateCache();
+  assert.equal(docusignIsRateLimited(now), false);
 });
 
 test("legal copy names DocuSign in EN and FR", () => {

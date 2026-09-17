@@ -8,10 +8,18 @@ import {
 } from "@/lib/docusign-packs";
 import {
   classifyDocusignFailure,
+  docusignRateLimitIssue,
   listDocusignTemplatesFromApi,
   readDocusignOrNull,
   type DocusignTemplateList,
 } from "@/lib/docusign-errors";
+import {
+  cachedDocusignTemplates,
+  docusignIsRateLimited,
+  listDocusignTemplatesCached,
+  readFreshDocusignTemplateList,
+  rememberDocusignRateLimit,
+} from "@/lib/docusign-template-cache";
 import {
   authorizedWebhook,
   mapEnvelopeStatus,
@@ -85,7 +93,11 @@ async function accessToken(cfg: JwtConfig) {
       assertion,
     }),
   });
-  if (!res.ok) throw new Error(`DocuSign auth ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    const err = new Error(`DocuSign auth ${res.status}: ${await res.text()}`);
+    if (classifyDocusignFailure(err).code === "rate_limit") rememberDocusignRateLimit();
+    throw err;
+  }
   const json = (await res.json()) as { access_token?: string };
   if (!json.access_token) throw new Error("DocuSign did not return an access token");
   return json.access_token;
@@ -102,7 +114,13 @@ async function ds<T>(cfg: JwtConfig, token: string, path: string, init?: Request
     headers,
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(`DocuSign ${res.status}: ${text.slice(0, 500)}`);
+  if (!res.ok) {
+    const err = new Error(`DocuSign ${res.status}: ${text.slice(0, 500)}`);
+    if (res.status === 429 || classifyDocusignFailure(err).code === "rate_limit") {
+      rememberDocusignRateLimit();
+    }
+    throw err;
+  }
   return (text ? JSON.parse(text) : {}) as T;
 }
 
@@ -115,12 +133,24 @@ async function dsBytes(cfg: JwtConfig, token: string, path: string) {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`DocuSign ${res.status}: ${text.slice(0, 500)}`);
+    const err = new Error(`DocuSign ${res.status}: ${text.slice(0, 500)}`);
+    if (res.status === 429 || classifyDocusignFailure(err).code === "rate_limit") {
+      rememberDocusignRateLimit();
+    }
+    throw err;
   }
   return Buffer.from(await res.arrayBuffer());
 }
 
 export async function listDocusignTemplatesSafe(): Promise<DocusignTemplateList> {
+  const cached = readFreshDocusignTemplateList();
+  if (cached) return cached;
+  if (docusignIsRateLimited()) {
+    return {
+      templates: cachedDocusignTemplates(),
+      error: docusignRateLimitIssue(),
+    };
+  }
   const cfg = docusignConfig();
   if (!cfg) return { templates: [], error: null };
   const listed = await listDocusignTemplatesFromApi(async () => {
@@ -137,10 +167,11 @@ export async function listDocusignTemplatesSafe(): Promise<DocusignTemplateList>
         name: (row.name || row.templateId || "Template").trim(),
       }));
   });
-  if (listed.error) {
-    console.error("[docusign] list templates failed", listed.error.code, listed.error.message);
+  const next = listDocusignTemplatesCached(listed);
+  if (next.error) {
+    console.error("[docusign] list templates failed", next.error.code, next.error.message);
   }
-  return listed;
+  return next;
 }
 
 export async function listDocusignTemplates(): Promise<DocusignTemplate[]> {
@@ -167,13 +198,16 @@ export async function createCentreEnvelope(input: {
       status: "sent",
     };
   }
+  if (docusignIsRateLimited()) {
+    throw new Error(docusignRateLimitIssue().message);
+  }
 
   let token: string;
   try {
     token = await accessToken(cfg);
   } catch (err) {
     console.error("[docusign] create envelope auth failed", err);
-    throw new Error(classifyDocusignFailure(err).message);
+    throw classifiedDocusignError(err);
   }
   let created: { envelopeId: string; status?: string };
   try {
@@ -183,7 +217,7 @@ export async function createCentreEnvelope(input: {
     });
   } catch (err) {
     console.error("[docusign] create envelope failed", err);
-    throw new Error(classifyDocusignFailure(err).message);
+    throw classifiedDocusignError(err);
   }
 
   return {
@@ -299,9 +333,15 @@ export async function applyEnvelopeEvent(input: { envelopeId: string; status: st
   return { ok: true as const, envelopeId: input.envelopeId, status };
 }
 
+function classifiedDocusignError(err: unknown) {
+  const issue = classifyDocusignFailure(err);
+  if (issue.code === "rate_limit") rememberDocusignRateLimit();
+  return new Error(issue.message);
+}
+
 export async function pollOpenEnvelopes(limit = 25) {
   const cfg = docusignConfig();
-  if (!cfg) return { ok: true as const, checked: 0, updated: 0, stored: 0 };
+  if (!cfg || docusignIsRateLimited()) return { ok: true as const, checked: 0, updated: 0, stored: 0 };
   const sql = await getSql();
   const rows = await sql
     .query<{ id: string; daycare_id: string; envelope_id: string; status: string; signed_pdf_key: string | null }>(
