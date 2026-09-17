@@ -14,9 +14,26 @@ import {
   type AdminCentreSqlRow,
 } from "@/lib/admin-centres-map";
 import { selectIncompleteRows } from "@/lib/listing-incomplete";
+import { splitPhotoList } from "@/lib/listing-photo";
+import { isRealListingPhoto } from "@/lib/listing-readiness";
+import { licenseReviewMarker } from "@/lib/private-docs";
 import { compareTimeDesc } from "@/lib/sort-time";
 
 export type { AdminCentreRow };
+
+/** Licence + storefront photos for Admin verify — daycare photos, not the raw CSV. */
+function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
+  const storefront = splitPhotoList(photos).find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
+  return {
+    licensePhoto: licenseReviewMarker(licensePhoto),
+    storefrontPhoto: storefront || null,
+  };
+}
+
+function withReviewPhotos(row: AdminCentreRow, sql: AdminCentreSqlRow): AdminCentreRow {
+  const { licensePhoto, storefrontPhoto } = firstReviewPhoto(sql.photos, sql.license_photo);
+  return { ...row, licensePhoto, storefrontPhoto };
+}
 
 export type Decision = "approve" | "decline" | "waiting";
 
@@ -245,7 +262,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
       }
     }
 
-    return sortAdminCentreRows(rows.map(mapAdminCentreSqlRow));
+    return sortAdminCentreRows(rows.map((r) => withReviewPhotos(mapAdminCentreSqlRow(r), r)));
   });
 
 /** Incomplete / Needs-complete slice — same rows as listAdminCentres, filtered in-process. */
