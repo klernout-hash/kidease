@@ -90,16 +90,21 @@ test("sitemap generation includes public listing URLs and drops the ghost", asyn
   );
   assert.equal(isSafeSitemapSlug("test-ghost"), false);
   assert.equal(isSafeSitemapSlug("test-ghost-claim-lab"), false);
+  assert.equal(isSafeSitemapSlug("test-test-p23f"), false);
+  assert.equal(isSafeSitemapSlug("teston-child-care"), true);
   const slugs = publicSitemapSlugs(
     [
       { slug: "test-ghost-claim-lab", visibility: "admin_only", isTest: true },
       { slug: "leftover-qa", name: "TEST Extra Claim Lab" },
+      { slug: "test-test-p23f", name: "Test Test", visibility: "public", isTest: 0 },
+      { slug: "test-test-nozo", name: "Test Test", visibility: "public", isTest: 0 },
       { slug: "not a slug" },
       { slug: "sunny-side-child-care" },
+      { slug: "joan-kids-world", name: "Joan Kids World" },
     ],
     50,
   );
-  assert.deepEqual(slugs, ["sunny-side-child-care"]);
+  assert.deepEqual(slugs, ["sunny-side-child-care", "joan-kids-world"]);
   const xml = renderSitemapXml({
     paths: sitemapPublicPaths(["/daycare/city/winnipeg"]),
     listingSlugs: slugs,

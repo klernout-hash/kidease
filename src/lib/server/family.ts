@@ -8,7 +8,7 @@ import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
-import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { isAdminOnlyListing, listingVisibilityWrite } from "@/lib/listing-visibility";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
@@ -1377,6 +1377,13 @@ export const createListing = createServerFn({ method: "POST" })
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")
       .slice(0, 40) + "-" + id.slice(-4);
+    const visibilityWrite = listingVisibilityWrite({
+      id,
+      slug,
+      name: data.name,
+      licenseNumber: data.licenseNumber,
+      address: data.address,
+    });
     const photos = applyStorefrontPhoto(STOCK_CREATE_PHOTOS, data.storefront);
     const photoAt =
       data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)
@@ -1389,7 +1396,7 @@ export const createListing = createServerFn({ method: "POST" })
         age_min_months, age_max_months, infant_monthly, toddler_monthly, preschool_monthly,
         part_time_monthly, spots_infant, spots_toddler, spots_preschool, waitlist,
         rating_x10, review_count, license_number, languages, amenities, photos, verified,
-        last_photo_updated_at
+        last_photo_updated_at, visibility, is_test
       ) values (
         ${id}, ${slug}, ${data.name}, ${data.name},
         ${"Newly listed licensed centre."}, ${"Nouveau centre permis."},
@@ -1402,7 +1409,7 @@ export const createListing = createServerFn({ method: "POST" })
         ${6}, ${72}, ${data.infantMonthly}, ${data.toddlerMonthly}, ${data.preschoolMonthly},
         ${Math.round(data.toddlerMonthly * 0.6)}, 2, 2, 2, 0, 40, 0,
         ${data.licenseNumber}, ${"en"}, ${"meals,inclusive"},
-        ${photos}, 0, ${photoAt}
+        ${photos}, 0, ${photoAt}, ${visibilityWrite.visibility}, ${visibilityWrite.isTest}
       )
     `.catch(async () => {
       await sql`
@@ -1411,7 +1418,8 @@ export const createListing = createServerFn({ method: "POST" })
           address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
           age_min_months, age_max_months, infant_monthly, toddler_monthly, preschool_monthly,
           part_time_monthly, spots_infant, spots_toddler, spots_preschool, waitlist,
-          rating_x10, review_count, license_number, languages, amenities, photos, verified
+          rating_x10, review_count, license_number, languages, amenities, photos, verified,
+          visibility, is_test
         ) values (
           ${id}, ${slug}, ${data.name}, ${data.name},
           ${"Newly listed licensed centre."}, ${"Nouveau centre permis."},
@@ -1424,10 +1432,17 @@ export const createListing = createServerFn({ method: "POST" })
           ${6}, ${72}, ${data.infantMonthly}, ${data.toddlerMonthly}, ${data.preschoolMonthly},
           ${Math.round(data.toddlerMonthly * 0.6)}, 2, 2, 2, 0, 40, 0,
           ${data.licenseNumber}, ${"en"}, ${"meals,inclusive"},
-          ${photos}, 0
+          ${photos}, 0, ${visibilityWrite.visibility}, ${visibilityWrite.isTest}
         )
       `;
     });
+    if (visibilityWrite.isTest) {
+      await sql`
+        update daycares
+        set visibility = ${visibilityWrite.visibility}, is_test = ${visibilityWrite.isTest}
+        where id = ${id}
+      `.catch(() => undefined);
+    }
     const culture = cultureFieldsToSql({
       staffLanguages: data.staffLanguages,
       culturalPrograms: data.culturalPrograms,
