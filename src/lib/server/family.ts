@@ -51,6 +51,7 @@ import {
   loadCentreRole,
 } from "@/lib/server/centre-access";
 import { centreCanCreateListing, centreCanMutateVacancies } from "@/lib/centre-roles";
+import { enqueueProviderCreatedListing } from "@/lib/server/listing-queue";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -1419,6 +1420,11 @@ export const createListing = createServerFn({ method: "POST" })
     `.catch(() => undefined);
     await sql`insert into provider_daycares (user_id, daycare_id) values (${context.userId}, ${id})`;
     await ensureOwnerMembership(sql, context.userId, id);
+    await enqueueProviderCreatedListing(sql, {
+      daycareId: id,
+      userId: context.userId,
+      daycareName: data.name,
+    });
     if (data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)) {
       await sql`update daycares set last_photo_updated_at = now() where id = ${id}`.catch(() => undefined);
     }

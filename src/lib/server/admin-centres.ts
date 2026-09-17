@@ -12,6 +12,7 @@ import { asIsoString, compareTimeDesc } from "@/lib/sort-time";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { licenseReviewMarker } from "@/lib/private-docs";
+import { normalizeAdminClaimStatus } from "@/lib/listing-queue";
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
   const storefront = splitPhotoList(photos).find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
@@ -63,15 +64,13 @@ async function requireOperator(userId: string) {
   return requireAdmin(userId);
 }
 
-function normalizeStatus(claimStatus: string | null, claimedAt: string | null, claimRow: string | null) {
-  if (claimStatus === "approved" || (claimedAt && claimStatus !== "declined" && claimStatus !== "waiting" && claimStatus !== "pending")) {
-    return "approved";
-  }
-  if (claimStatus === "declined" || claimRow === "declined") return "declined";
-  if (claimStatus === "waiting" || claimRow === "waiting" || claimRow === "verified") return "waiting";
-  if (claimStatus === "pending" || claimRow === "pending") return "pending";
-  if (claimedAt) return "approved";
-  return claimStatus || "unclaimed";
+function normalizeStatus(claimStatus: string | null, claimedAt: string | null, claimRow: string | null, hasProviderLink = false) {
+  return normalizeAdminClaimStatus({
+    claimStatus,
+    claimedAt,
+    claimRowStatus: claimRow,
+    hasProviderLink,
+  });
 }
 
 async function deliverToProvider(to: string, subject: string, text: string) {
@@ -200,7 +199,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         coalesce(c.user_id, pd.user_id) as provider_user_id,
         u.name as provider_name,
         u.email as provider_email,
-        coalesce(c.created_at, d.claimed_at) as submitted_at,
+        coalesce(c.created_at, d.claimed_at, d.created_at) as submitted_at,
         c.reviewed_at,
         c.review_note,
         d.license_number,
@@ -286,7 +285,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           coalesce(c.user_id, pd.user_id) as provider_user_id,
           u.name as provider_name,
           u.email as provider_email,
-          coalesce(c.created_at, d.claimed_at) as submitted_at,
+          coalesce(c.created_at, d.claimed_at, d.created_at) as submitted_at,
           c.reviewed_at,
           c.review_note,
           d.license_number,
@@ -324,7 +323,12 @@ export const listAdminCentres = createServerFn({ method: "GET" })
     );
 
     const mapped: AdminCentreRow[] = rows.map((r) => {
-      const status = normalizeStatus(r.claim_status, r.claimed_at, r.claim_row_status);
+      const status = normalizeStatus(
+        r.claim_status,
+        r.claimed_at,
+        r.claim_row_status,
+        Boolean(r.provider_user_id),
+      );
       return {
         daycareId: r.daycare_id,
         slug: r.slug,
