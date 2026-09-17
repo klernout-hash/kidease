@@ -59,7 +59,8 @@ export function normalizeDocusignPem(raw: string): string {
   let v = unwrapPemQuotes(
     String(raw || "")
       .replace(/^\uFEFF/, "")
-      .replace(/\u0000/g, "")
+      .split(String.fromCharCode(0))
+      .join("")
       .trim(),
   );
   v = v.replace(/\\r\\n/g, "\n").replace(/\\\\n/g, "\n").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
