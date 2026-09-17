@@ -31,6 +31,13 @@ import {
 } from "@/lib/account-notify";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { listAdminPeople, type AdminPersonRow } from "@/lib/server/admin-people";
+import {
+  ADMIN_IDLE_TIMEOUT_MESSAGE,
+  adminCentresLoadMessage,
+  isAdminIdleTimeoutMessage,
+  settleAdminCentresLoad,
+} from "@/lib/admin-centres-load";
+import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
 import { decideCentre, listAdminCentres, listIncompleteAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
@@ -115,6 +122,8 @@ function AdminPage() {
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listPlatformEvents>>>([]);
   const [people, setPeople] = useState<AdminPersonRow[]>([]);
   const [centres, setCentres] = useState<AdminCentreRow[]>([]);
+  const [centresError, setCentresError] = useState<string | null>(null);
+  const [centresReady, setCentresReady] = useState(false);
   const [contracts, setContracts] = useState<AdminContractRow[]>([]);
   const [contractMode, setContractMode] = useState<"live" | "demo">("demo");
   const [contractTemplates, setContractTemplates] = useState<DocusignTemplateOption[]>([]);
@@ -155,10 +164,10 @@ function AdminPage() {
   }
 
   async function refresh() {
-    const [events, accounts, list, cash, envelopes, regs, flags, health, leads, screening] = await Promise.all([
+    const [events, accounts, centresLoad, cash, envelopes, regs, flags, health, leads, screening] = await Promise.all([
       listPlatformEvents().catch(() => []),
       listAdminPeople().catch(() => []),
-      listAdminCentres().catch(() => []),
+      settleAdminCentresLoad(() => listAdminCentres()),
       listAdminMoney().catch(() => ({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 })),
       listAdminContracts().catch(() => ({
         mode: "demo" as const,
@@ -177,7 +186,13 @@ function AdminPage() {
     ]);
     setRows(events);
     setPeople(accounts);
-    setCentres(list);
+    if (centresLoad.ok) {
+      setCentres(centresLoad.list);
+      setCentresError(null);
+      setCentresReady(true);
+    } else {
+      setCentresError(adminCentresLoadMessage(centresLoad.error));
+    }
     setLedger(cash);
     setContracts(envelopes.rows);
     setContractMode(envelopes.mode);
@@ -205,6 +220,8 @@ function AdminPage() {
 
   const staffCentres = useMemo(() => staffQueueRows(centres, showQaFixtures), [centres, showQaFixtures]);
   const qaCount = useMemo(() => centres.filter((c) => c.isTest).length, [centres]);
+  const queueUnavailable = Boolean(centresError) && !centresReady;
+  const queueStat = (value: number) => (queueUnavailable ? "—" : value);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -367,13 +384,19 @@ function AdminPage() {
     <TwoFactorGate next={adminDeskHref(search)}>
     <LoginFunnelDeskLand desk="admin" />
     <DeskShell desk="admin" active={tab} onSelect={(id) => setTab(id as AdminDeskTab)}>
+      {centresError ? (
+        <AdminCentresLoadBanner
+          message={centresError}
+          onRetry={() => void refresh()}
+        />
+      ) : null}
       {tab === "incomplete" ? (
         <>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Needs complete" value={incompleteQueue.length} accent />
-            <Stat label="Waiting claims" value={waitingOnYou.length} />
-            <Stat label="Licence review" value={filtered.filter((c) => needsLicenseReview(c)).length} />
-            <Stat label="Live" value={counts.approved} />
+            <Stat label="Needs complete" value={queueStat(incompleteQueue.length)} accent />
+            <Stat label="Waiting claims" value={queueStat(waitingOnYou.length)} />
+            <Stat label="Licence review" value={queueStat(filtered.filter((c) => needsLicenseReview(c)).length)} />
+            <Stat label="Live" value={queueStat(counts.approved)} />
           </dl>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
@@ -384,16 +407,22 @@ function AdminPage() {
             </label>
           </div>
           <div className="mt-8">
-            <AdminIncompleteQueue rows={incompleteQueue} contracts={contracts} busy={busy} onDecide={onDecide} />
+            <AdminIncompleteQueue
+              rows={incompleteQueue}
+              contracts={contracts}
+              busy={busy}
+              onDecide={onDecide}
+              error={queueUnavailable ? centresError : null}
+            />
           </div>
         </>
       ) : tab === "verify" ? (
         <>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Needs a look" value={verifyQueue.length} accent />
-            <Stat label="Licence review" value={filtered.filter((c) => needsLicenseReview(c)).length} />
-            <Stat label="Photo review" value={filtered.filter((c) => needsPhotoReview(c)).length} />
-            <Stat label="Waiting claims" value={waitingOnYou.length} />
+            <Stat label="Needs a look" value={queueStat(verifyQueue.length)} accent />
+            <Stat label="Licence review" value={queueStat(filtered.filter((c) => needsLicenseReview(c)).length)} />
+            <Stat label="Photo review" value={queueStat(filtered.filter((c) => needsPhotoReview(c)).length)} />
+            <Stat label="Waiting claims" value={queueStat(waitingOnYou.length)} />
           </dl>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
@@ -414,12 +443,18 @@ function AdminPage() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-subtle">Verify</p>
                 <h2 className="mt-1 font-display text-2xl">Licence and photo review</h2>
               </div>
-              <p className="text-sm text-muted">{verifyQueue.length === 0 ? "Caught up" : `${verifyQueue.length} to review`}</p>
+              <p className="text-sm text-muted">
+                {queueUnavailable ? "Unavailable" : verifyQueue.length === 0 ? "Caught up" : `${verifyQueue.length} to review`}
+              </p>
             </div>
             <p className="border-t border-border px-5 py-3 text-sm text-muted">
               Open the uploaded licence and storefront. Mark the registry match. This is not an inspection score.
             </p>
-            {verifyQueue.length === 0 ? (
+            {queueUnavailable ? (
+              <p className="border-t border-border px-5 py-8 text-sm text-danger" role="alert">
+                {centresError}
+              </p>
+            ) : verifyQueue.length === 0 ? (
               <p className="border-t border-border px-5 py-8 text-sm text-muted">No claims or licence photos are waiting.</p>
             ) : (
               <ul className="divide-y divide-border border-t border-border">
@@ -433,11 +468,11 @@ function AdminPage() {
       ) : tab === "queue" || tab === "daycares" ? (
         <>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Waiting on you" value={counts.waiting} accent />
-            <Stat label="Needs complete" value={incompleteQueue.length} />
-            <Stat label="Live" value={counts.approved} />
-            <Stat label="Declined" value={counts.declined} />
-            <Stat label="In this list" value={counts.all} />
+            <Stat label="Waiting on you" value={queueStat(counts.waiting)} accent />
+            <Stat label="Needs complete" value={queueStat(incompleteQueue.length)} />
+            <Stat label="Live" value={queueStat(counts.approved)} />
+            <Stat label="Declined" value={queueStat(counts.declined)} />
+            <Stat label="In this list" value={queueStat(counts.all)} />
             <Stat label="Open leads" value={leadCounts.open} />
             <Stat label="Leads confirmed" value={leadCounts.confirmed} />
             <Stat label="Leads answered" value={leadCounts.answered} />
@@ -463,9 +498,15 @@ function AdminPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-fg/70">Urgency</p>
                   <h2 className="mt-1 font-display text-2xl">Waiting on you</h2>
                 </div>
-                <p className="text-sm text-primary-fg/75">{waitingOnYou.length === 0 ? "Caught up" : `${waitingOnYou.length} to review`}</p>
+                <p className="text-sm text-primary-fg/75">
+                  {queueUnavailable ? "Unavailable" : waitingOnYou.length === 0 ? "Caught up" : `${waitingOnYou.length} to review`}
+                </p>
               </div>
-              {waitingOnYou.length === 0 ? (
+              {queueUnavailable ? (
+                <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/80" role="alert">
+                  {centresError}
+                </p>
+              ) : waitingOnYou.length === 0 ? (
                 <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/70">No submitted daycares are waiting.</p>
               ) : (
                 <ul className="divide-y divide-white/10 border-t border-white/10">
@@ -493,7 +534,11 @@ function AdminPage() {
               ) : null}
               <h2 className="font-display text-2xl">By province</h2>
               <div className="mt-5 space-y-3">
-                {byProvince.length === 0 ? (
+                {queueUnavailable ? (
+                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-danger ring-1 ring-danger/20" role="alert">
+                    {centresError}
+                  </p>
+                ) : byProvince.length === 0 ? (
                   <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">No daycares match that search yet.</p>
                 ) : (
                   byProvince.map((group) => {
@@ -903,7 +948,39 @@ function CashStat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+function AdminCentresLoadBanner({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  const idle = isAdminIdleTimeoutMessage(message);
+  return (
+    <div
+      className="mb-6 rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger ring-1 ring-danger/20"
+      data-ke="admin-centres-error"
+      role="alert"
+    >
+      <p className="font-medium">{idle ? ADMIN_IDLE_TIMEOUT_MESSAGE : message}</p>
+      <p className="mt-1 text-danger/80">
+        Waiting and Incomplete counts are unavailable until this load succeeds.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-3">
+        <button type="button" className="font-medium underline-offset-4 hover:underline" onClick={onRetry}>
+          Try again
+        </button>
+        {idle ? (
+          <Link to="/login" search={ADMIN_LOGIN_SEARCH} className="font-medium underline-offset-4 hover:underline">
+            Sign in again
+          </Link>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
   return (
     <div className={accent ? "rounded-xl bg-primary px-4 py-3 text-primary-fg" : "rounded-xl bg-surface px-4 py-3 ring-1 ring-border"}>
       <dt className={`text-[11px] uppercase tracking-[0.14em] ${accent ? "text-primary-fg/70" : "text-subtle"}`}>{label}</dt>
