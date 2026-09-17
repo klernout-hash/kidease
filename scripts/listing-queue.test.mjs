@@ -4,7 +4,6 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { GHOST_LISTING } from "../src/lib/ghost-listing.ts";
-import { needsClaimReview } from "../src/lib/admin-verify.ts";
 import { isPlatformLive } from "../src/lib/live.ts";
 import {
   catalogImportWrite,
@@ -104,8 +103,9 @@ test("claim / licence-photo path stays queueable at pending then waiting", () =>
   assert.equal(isWaitingOnAdminQueue("verified"), true);
   assert.equal(isWaitingOnAdminQueue("approved"), false);
   assert.equal(isWaitingOnAdminQueue("declined"), false);
-  assert.equal(needsClaimReview({ claimStatus: "waiting" }), true);
-  assert.equal(needsClaimReview({ claimStatus: "unclaimed" }), false);
+  assert.equal(isWaitingOnAdminQueue("waiting"), true);
+  assert.equal(isWaitingOnAdminQueue("unclaimed"), false);
+  assert.match(src("src/lib/admin-verify.ts"), /isQueueableClaimStatus\(item\.claimStatus\)/);
 });
 
 test("QA fixtures stay opt-in and unclaimed QA is not a production waiting claim", () => {

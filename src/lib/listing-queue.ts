@@ -6,8 +6,8 @@
  * Waiting can see it. Catalogue upserts stay unclaimed and stay off the queue.
  */
 
-import { isQueueableClaimStatus } from "@/lib/listing-status";
-import { isAdminOnlyListing, type ListingVisibilityInput } from "@/lib/listing-visibility";
+import { isQueueableClaimStatus } from "./listing-status.ts";
+import { isAdminOnlyListing, type ListingVisibilityInput } from "./listing-visibility.ts";
 
 export const PROVIDER_CREATED_CLAIM_STATUS = "waiting" as const;
 
