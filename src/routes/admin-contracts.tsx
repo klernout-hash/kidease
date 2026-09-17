@@ -36,6 +36,7 @@ function AdminContractsPage() {
   }>({ provider_agreement: null, enrolment_pack: null });
   const [docusignError, setDocusignError] = useState<DocusignConnectIssue | null>(null);
   const [docusignEnvIssues, setDocusignEnvIssues] = useState<DocusignConfigIssue[]>([]);
+  const [docusignLoadFailed, setDocusignLoadFailed] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
   async function refresh() {
@@ -47,6 +48,7 @@ function AdminContractsPage() {
       templateRole: "Provider",
       docusignError: null,
       docusignEnvIssues: [],
+      docusignLoadFailed: true,
     }));
     setRows(res.rows);
     setMode(res.mode);
@@ -54,6 +56,7 @@ function AdminContractsPage() {
     setDefaults(res.defaultTemplateIds || { provider_agreement: null, enrolment_pack: null });
     setDocusignError(res.docusignError || null);
     setDocusignEnvIssues(res.docusignEnvIssues || []);
+    setDocusignLoadFailed(Boolean(res.docusignLoadFailed));
   }
 
   const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role));
@@ -101,6 +104,7 @@ function AdminContractsPage() {
         defaultTemplateIds={defaults}
         docusignError={docusignError}
         docusignEnvIssues={docusignEnvIssues}
+        docusignLoadFailed={docusignLoadFailed}
         busy={busy}
         setBusy={setBusy}
         onRefresh={refresh}

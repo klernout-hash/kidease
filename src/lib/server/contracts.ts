@@ -84,6 +84,7 @@ export type AdminContractsPayload = {
   rows: AdminContractRow[];
   docusignError: DocusignConnectIssue | null;
   docusignEnvIssues: DocusignConfigIssue[];
+  docusignLoadFailed?: boolean;
 };
 
 function emptyAdminContractsPayload(

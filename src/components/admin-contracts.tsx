@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signedPdfPath, type DocusignTemplateOption } from "@/lib/docusign-packs";
-import { ds, formatDocusignEnvIssues } from "@/lib/docusign-copy";
+import { ds, docusignLeadKey, formatDocusignEnvIssues } from "@/lib/docusign-copy";
 import type { DocusignConfigIssue } from "@/lib/docusign-config";
 import type { DocusignConnectIssue } from "@/lib/docusign-errors";
 import { useCopy } from "@/lib/use-copy";
@@ -22,6 +22,7 @@ export function AdminContractsPanel({
   defaultTemplateIds = { provider_agreement: null, enrolment_pack: null },
   docusignError = null,
   docusignEnvIssues = [],
+  docusignLoadFailed = false,
   busy,
   setBusy,
   onRefresh,
@@ -32,6 +33,7 @@ export function AdminContractsPanel({
   defaultTemplateIds?: { provider_agreement: string | null; enrolment_pack: string | null };
   docusignError?: DocusignConnectIssue | null;
   docusignEnvIssues?: DocusignConfigIssue[];
+  docusignLoadFailed?: boolean;
   busy: string | null;
   setBusy: (v: string | null) => void;
   onRefresh: () => Promise<void>;
@@ -75,7 +77,9 @@ export function AdminContractsPanel({
         <Stat label={ds(locale, "signed")} value={counts.signed} />
         <Stat label={ds(locale, "centres")} value={counts.all} />
       </dl>
-      <p className="mt-4 text-sm text-muted">{mode === "live" ? ds(locale, "leadLive") : ds(locale, "leadOff")}</p>
+      <p className="mt-4 text-sm text-muted">
+        {ds(locale, docusignLeadKey({ mode, issues: docusignEnvIssues, loadFailed: docusignLoadFailed }))}
+      </p>
       {mode !== "live" && docusignEnvIssues.length ? (
         <p data-ke="docusign-missing-env" className="mt-2 text-sm text-muted">
           {formatDocusignEnvIssues(locale, docusignEnvIssues)}
@@ -89,7 +93,7 @@ export function AdminContractsPanel({
         >
           {docusignError.message || ds(locale, "consentBanner")}
         </p>
-      ) : mode !== "live" ? (
+      ) : mode !== "live" && !docusignLoadFailed ? (
         <p className="mt-3 rounded-xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border">{ds(locale, "envHint")}</p>
       ) : null}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">

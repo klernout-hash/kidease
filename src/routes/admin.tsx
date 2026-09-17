@@ -124,6 +124,7 @@ function AdminPage() {
   }>({ provider_agreement: null, enrolment_pack: null });
   const [contractError, setContractError] = useState<DocusignConnectIssue | null>(null);
   const [contractEnvIssues, setContractEnvIssues] = useState<DocusignConfigIssue[]>([]);
+  const [contractLoadFailed, setContractLoadFailed] = useState(false);
   const [contractBusy, setContractBusy] = useState<string | null>(null);
   const [ledger, setLedger] = useState<AdminMoneyLedger>({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 });
   const [busy, setBusy] = useState<string | null>(null);
@@ -168,6 +169,7 @@ function AdminPage() {
         templateRole: "Provider",
         docusignError: null,
         docusignEnvIssues: [],
+        docusignLoadFailed: true,
       })),
       listJurisdictions().catch(() => []),
       listListingReports().catch(() => []),
@@ -185,6 +187,7 @@ function AdminPage() {
     setContractDefaults(envelopes.defaultTemplateIds || { provider_agreement: null, enrolment_pack: null });
     setContractError(envelopes.docusignError || null);
     setContractEnvIssues(envelopes.docusignEnvIssues || []);
+    setContractLoadFailed(Boolean(envelopes.docusignLoadFailed));
     setJurisdictions(regs);
     setReports(flags);
     setCatalogHealth(health);
@@ -544,6 +547,7 @@ function AdminPage() {
           defaultTemplateIds={contractDefaults}
           docusignError={contractError}
           docusignEnvIssues={contractEnvIssues}
+          docusignLoadFailed={contractLoadFailed}
           busy={contractBusy}
           setBusy={setContractBusy}
           onRefresh={refresh}

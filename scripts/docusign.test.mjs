@@ -37,8 +37,8 @@ import {
   docusignMode,
   normalizeDocusignPem,
 } from "../src/lib/docusign-config.ts";
-import { formatDocusignEnvIssues } from "../src/lib/docusign-copy.ts";
-import { runtimeEnv, runtimeProcessEnv } from "../src/lib/runtime-env.ts";
+import { docusignLeadKey, formatDocusignEnvIssues } from "../src/lib/docusign-copy.ts";
+import { mergeRuntimeEnvMaps, runtimeEnv, runtimeProcessEnv } from "../src/lib/runtime-env.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -271,6 +271,8 @@ test("runtimeEnv reads live process env and ignores a mocked snapshot when injec
   assert.doesNotMatch(runtimeCode, /process\.env/);
   assert.match(runtimeSrc, /globalThis/);
   assert.match(runtimeSrc, /Function\(/);
+  assert.match(runtimeSrc, /createRequire/);
+  assert.match(runtimeSrc, /node:process/);
 
   const configSrc = src("src/lib/docusign-config.ts");
   assert.doesNotMatch(configSrc, /process\.env/);
@@ -282,12 +284,55 @@ test("runtimeEnv reads live process env and ignores a mocked snapshot when injec
   assert.match(vite, /keepProcessEnv:\s*true/);
   const copy = src("src/lib/docusign-copy.ts");
   assert.match(copy, /formatDocusignEnvIssues/);
+  assert.match(copy, /docusignLeadKey/);
   assert.match(src("src/components/admin-contracts.tsx"), /docusign-missing-env/);
+  assert.match(src("src/components/admin-contracts.tsx"), /docusignLoadFailed/);
+  assert.match(src("src/routes/admin.tsx"), /docusignLoadFailed:\s*true/);
+  assert.match(src("src/routes/admin-contracts.tsx"), /docusignLoadFailed:\s*true/);
+});
+
+test("runtimeProcessEnv prefers node:process over an emptied globalThis process shim", () => {
+  const probe = "KIDEASE_RUNTIME_ENV_PROBE_NODE";
+  const prev = process.env[probe];
+  const real = globalThis.process;
+  process.env[probe] = "from-node-process";
+  globalThis.process = { env: { NODE_ENV: "production", [probe]: "" } };
+  try {
+    assert.equal(runtimeEnv(probe), "from-node-process");
+    assert.equal(
+      mergeRuntimeEnvMaps({ [probe]: "" }, { [probe]: "kept" })[probe],
+      "kept",
+    );
+  } finally {
+    globalThis.process = real;
+    if (prev === undefined) delete process.env[probe];
+    else process.env[probe] = prev;
+  }
+});
+
+test("demo lead copy names PEM or load failure instead of collapsing to keys not set", () => {
+  assert.equal(docusignLeadKey({ mode: "live" }), "leadLive");
+  assert.equal(docusignLeadKey({ mode: "demo", loadFailed: true }), "leadLoadFailed");
+  assert.equal(
+    docusignLeadKey({ mode: "demo", issues: [{ name: "DOCUSIGN_PRIVATE_KEY", reason: "not_pem" }] }),
+    "leadPem",
+  );
+  assert.equal(
+    docusignLeadKey({ mode: "demo", issues: [{ name: "DOCUSIGN_USER_ID", reason: "missing" }] }),
+    "leadOff",
+  );
+  assert.equal(docusignLeadKey({ mode: "demo", issues: [] }), "leadUnknown");
 });
 
 test("normalizeDocusignPem keeps BEGIN after oneline Vercel pastes", () => {
   assert.match(normalizeDocusignPem(SAMPLE_PEM), /BEGIN RSA PRIVATE KEY/);
   assert.match(normalizeDocusignPem(`"${SAMPLE_PEM}"`), /BEGIN RSA PRIVATE KEY/);
+  assert.match(normalizeDocusignPem(`\`"${SAMPLE_PEM}"\``), /BEGIN RSA PRIVATE KEY/);
+  const doubleEscaped = "-----BEGIN RSA PRIVATE KEY-----\\\\nMIIB\\\\n-----END RSA PRIVATE KEY-----";
+  assert.match(normalizeDocusignPem(doubleEscaped), /BEGIN RSA PRIVATE KEY/);
+  assert.match(normalizeDocusignPem(doubleEscaped), /\n/);
+  const pem = "-----BEGIN PRIVATE KEY-----\nMIIB\n-----END PRIVATE KEY-----";
+  assert.match(normalizeDocusignPem(Buffer.from(pem, "utf8").toString("base64url")), /BEGIN PRIVATE KEY/);
   assert.equal(normalizeDocusignPem("not-a-pem").includes("BEGIN"), false);
 });
 
