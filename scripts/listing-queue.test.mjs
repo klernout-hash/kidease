@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { GHOST_LISTING } from "../src/lib/ghost-listing.ts";
 import { isPlatformLive } from "../src/lib/live.ts";
+import { adminQueueWaitingRows, mapAdminCentreSqlRow } from "../src/lib/admin-centres-map.ts";
 import {
   catalogImportWrite,
   isAdminListEligible,
@@ -14,6 +15,45 @@ import {
 } from "../src/lib/listing-queue.ts";
 import { isQueueableClaimStatus, isWaitingClaim } from "../src/lib/listing-status.ts";
 import { staffQueueRows } from "../src/lib/listing-visibility.ts";
+
+function neonSqlCentre(overrides = {}) {
+  return {
+    daycare_id: "d_placeholder",
+    slug: "placeholder",
+    name: "Placeholder Daycare",
+    address: "1 Main St",
+    city: "Winnipeg",
+    province: "MB",
+    phone: null,
+    contact_email: null,
+    claim_status: "waiting",
+    claimed_at: null,
+    claim_id: null,
+    claim_row_status: null,
+    provider_user_id: null,
+    provider_name: null,
+    provider_email: null,
+    submitted_at: "2026-09-16T18:00:00.000Z",
+    reviewed_at: null,
+    review_note: null,
+    license_number: null,
+    license_status: "unverified",
+    license_expiry: null,
+    licensed_capacity: null,
+    registry_match_state: "unmatched",
+    license_verified_at: null,
+    license_verification_source: null,
+    staff_screening_attested: 0,
+    staff_screening_attested_at: null,
+    screening_on_file: 0,
+    screening_on_file_at: null,
+    license_photo: null,
+    photos: null,
+    visibility: "public",
+    is_test: 0,
+    ...overrides,
+  };
+}
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -113,6 +153,75 @@ test("claim / licence-photo path stays queueable at pending then waiting", () =>
   assert.match(src("src/lib/admin-verify.ts"), /isQueueableClaimStatus\(item\.claimStatus\)/);
 });
 
+test("Joan Kids World stays on Waiting when Show QA is unchecked", () => {
+  const joan = mapAdminCentreSqlRow(
+    neonSqlCentre({
+      daycare_id: "d_d85jtifbkh2t",
+      slug: "kids-world-daycare",
+      name: "Kids World Daycare",
+      claim_status: "waiting",
+      claim_id: "cl_joan",
+      claim_row_status: "waiting",
+      provider_user_id: "user_joan",
+      provider_link_user_id: "user_joan",
+      provider_name: "Joan Mbabazi",
+      visibility: "public",
+      is_test: 0,
+    }),
+  );
+  const peninsula = mapAdminCentreSqlRow(
+    neonSqlCentre({
+      daycare_id: "bc-3572",
+      slug: "peninsula-montessori",
+      name: "Peninsula Montessori",
+      claim_status: "pending",
+      claim_id: "cl_pen",
+      claim_row_status: "pending",
+      visibility: "public",
+      is_test: 0,
+    }),
+  );
+  const qa = mapAdminCentreSqlRow(
+    neonSqlCentre({
+      daycare_id: "d_test_1",
+      slug: "test-test-waiting",
+      name: "Test Test",
+      claim_status: "waiting",
+      claim_id: "cl_qa",
+      visibility: "admin_only",
+      is_test: 1,
+    }),
+  );
+
+  assert.equal(joan.isTest, false);
+  assert.equal(joan.claimStatus, "waiting");
+  assert.equal(isAdminListEligible({
+    id: joan.daycareId,
+    name: joan.name,
+    slug: joan.slug,
+    claimStatus: joan.claimStatus,
+    hasListingClaim: joan.hasListingClaim,
+    hasProviderLink: joan.hasProviderLink,
+    visibility: "public",
+    isTest: 0,
+  }), true);
+  assert.equal(qa.isTest, true);
+
+  const waiting = adminQueueWaitingRows([joan, peninsula, qa], false);
+  assert.deepEqual(
+    waiting.map((r) => r.daycareId),
+    ["d_d85jtifbkh2t", "bc-3572"],
+  );
+  assert.equal(
+    waiting.some((r) => r.name === "Kids World Daycare"),
+    true,
+  );
+  assert.equal(
+    adminQueueWaitingRows([joan, peninsula, qa], true).length,
+    3,
+  );
+});
+
 test("QA fixtures stay opt-in and unclaimed QA is not a production waiting claim", () => {
   const liveWaiting = {
     id: "mb-1",
@@ -141,8 +250,11 @@ test("admin surfaces use queueable status, not unclaimed-as-waiting", () => {
   assert.match(admin, /staffQueueRows/);
   assert.match(admin, /AdminIncompleteQueue/);
   const centres = src("src/lib/server/admin-centres.ts");
-  assert.match(centres, /normalizeAdminClaimStatus/);
-  assert.match(centres, /hasProviderLink/);
+  assert.match(centres, /mapAdminCentreSqlRow/);
+  assert.match(centres, /exists \(select 1 from listing_claims/);
+  assert.match(centres, /exists \(select 1 from provider_daycares/);
+  assert.match(centres, /throw first/);
+  assert.doesNotMatch(centres, /order by created_at desc nulls last[\s\S]*\.catch\(\(\) => \[\]\)/);
   assert.match(src("src/lib/admin-verify.ts"), /isQueueableClaimStatus/);
   assert.match(src("src/lib/server/notify.ts"), /New listing: \$\{centre\}/);
 });

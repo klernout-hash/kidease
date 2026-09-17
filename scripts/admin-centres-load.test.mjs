@@ -48,11 +48,17 @@ test("successful empty lists stay empty; failures do not become []", async () =>
 test("admin refresh does not swallow listAdminCentres as an empty queue", () => {
   const admin = src("src/routes/admin.tsx");
   const incomplete = src("src/components/admin-incomplete.tsx");
+  const centres = src("src/lib/server/admin-centres.ts");
   assert.doesNotMatch(admin, /listAdminCentres\(\)\.catch\(\(\) => \[\]\)/);
+  assert.match(centres, /throw first/);
+  assert.doesNotMatch(centres, /Could not load the admin queue[\s\S]*\.catch\(\(\) => \[\]\)/);
   assert.match(admin, /settleAdminCentresLoad\(\(\) => listAdminCentres\(\)\)/);
   assert.match(admin, /data-ke="admin-centres-error"/);
   assert.match(admin, /Waiting and Incomplete counts are unavailable/);
   assert.match(admin, /queueUnavailable/);
+  assert.match(admin, /queuePending/);
+  assert.match(admin, /Loading the admin queue/);
   assert.match(incomplete, /error\?: string \| null/);
+  assert.match(incomplete, /pending\?: boolean/);
   assert.match(incomplete, /loadFailed/);
 });
