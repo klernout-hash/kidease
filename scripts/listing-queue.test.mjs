@@ -139,6 +139,7 @@ test("admin surfaces use queueable status, not unclaimed-as-waiting", () => {
   const admin = src("src/routes/admin.tsx");
   assert.match(admin, /isQueueableClaimStatus/);
   assert.match(admin, /staffQueueRows/);
+  assert.match(admin, /AdminIncompleteQueue/);
   const centres = src("src/lib/server/admin-centres.ts");
   assert.match(centres, /normalizeAdminClaimStatus/);
   assert.match(centres, /hasProviderLink/);

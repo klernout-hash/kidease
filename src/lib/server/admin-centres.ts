@@ -13,6 +13,11 @@ import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { licenseReviewMarker } from "@/lib/private-docs";
 import { normalizeAdminClaimStatus } from "@/lib/listing-queue";
+import {
+  incompleteMissing,
+  selectIncompleteRows,
+  type IncompleteMissingField,
+} from "@/lib/listing-incomplete";
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
   const storefront = splitPhotoList(photos).find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
@@ -56,6 +61,10 @@ export type AdminCentreRow = {
   licensePhoto: string | null;
   storefrontPhoto: string | null;
   isTest: boolean;
+  hasProviderLink: boolean;
+  hasListingClaim: boolean;
+  missing: IncompleteMissingField[];
+  updatedAt: string | null;
 };
 
 export type Decision = "approve" | "decline" | "waiting";
@@ -180,6 +189,18 @@ export const listAdminCentres = createServerFn({ method: "GET" })
       screening_on_file_at: string | null;
       license_photo: string | null;
       photos: string | null;
+      hours?: string | null;
+      infant_monthly?: number | null;
+      toddler_monthly?: number | null;
+      preschool_monthly?: number | null;
+      part_time_monthly?: number | null;
+      ages_confirmed?: number | boolean | null;
+      age_min_months?: number | null;
+      age_max_months?: number | null;
+      provider_link_user_id?: string | null;
+      last_photo_updated_at?: string | null;
+      last_vacancy_updated_at?: string | null;
+      created_at?: string | null;
       visibility?: string | null;
       is_test?: number | boolean | null;
     }>`
@@ -197,6 +218,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         c.id as claim_id,
         c.status as claim_row_status,
         coalesce(c.user_id, pd.user_id) as provider_user_id,
+        pd.user_id as provider_link_user_id,
         u.name as provider_name,
         u.email as provider_email,
         coalesce(c.created_at, d.claimed_at, d.created_at) as submitted_at,
@@ -215,6 +237,17 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         d.screening_on_file_at,
         coalesce(c.license_photo, d.license_photo) as license_photo,
         d.photos,
+        d.hours,
+        d.infant_monthly,
+        d.toddler_monthly,
+        d.preschool_monthly,
+        d.part_time_monthly,
+        d.ages_confirmed,
+        d.age_min_months,
+        d.age_max_months,
+        d.last_photo_updated_at,
+        d.last_vacancy_updated_at,
+        d.created_at,
         d.visibility,
         d.is_test
       from daycares d
@@ -266,6 +299,18 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         screening_on_file_at: string | null;
         license_photo: string | null;
         photos: string | null;
+        hours?: string | null;
+        infant_monthly?: number | null;
+        toddler_monthly?: number | null;
+        preschool_monthly?: number | null;
+        part_time_monthly?: number | null;
+        ages_confirmed?: number | boolean | null;
+        age_min_months?: number | null;
+        age_max_months?: number | null;
+        provider_link_user_id?: string | null;
+        last_photo_updated_at?: string | null;
+        last_vacancy_updated_at?: string | null;
+        created_at?: string | null;
         visibility?: string | null;
         is_test?: number | boolean | null;
       }>`
@@ -283,6 +328,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           c.id as claim_id,
           c.status as claim_row_status,
           coalesce(c.user_id, pd.user_id) as provider_user_id,
+          pd.user_id as provider_link_user_id,
           u.name as provider_name,
           u.email as provider_email,
           coalesce(c.created_at, d.claimed_at, d.created_at) as submitted_at,
@@ -301,6 +347,17 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           null::timestamptz as screening_on_file_at,
           null::text as license_photo,
           d.photos,
+          d.hours,
+          d.infant_monthly,
+          d.toddler_monthly,
+          d.preschool_monthly,
+          d.part_time_monthly,
+          d.ages_confirmed,
+          d.age_min_months,
+          d.age_max_months,
+          null::timestamptz as last_photo_updated_at,
+          null::timestamptz as last_vacancy_updated_at,
+          d.created_at,
           d.visibility,
           d.is_test
         from daycares d
@@ -323,12 +380,15 @@ export const listAdminCentres = createServerFn({ method: "GET" })
     );
 
     const mapped: AdminCentreRow[] = rows.map((r) => {
-      const status = normalizeStatus(
-        r.claim_status,
-        r.claimed_at,
-        r.claim_row_status,
-        Boolean(r.provider_user_id),
-      );
+      const hasProviderLink = Boolean(r.provider_link_user_id);
+      const status = normalizeStatus(r.claim_status, r.claimed_at, r.claim_row_status, hasProviderLink);
+      const photos = firstReviewPhoto(r.photos, r.license_photo);
+      const screeningOnFile = r.screening_on_file === 1 || r.screening_on_file === true;
+      const submittedAt = asIsoString(r.submitted_at);
+      const updatedAt = [r.last_photo_updated_at, r.last_vacancy_updated_at, r.reviewed_at, submittedAt, r.created_at]
+        .map((value) => asIsoString(value))
+        .filter((value): value is string => Boolean(value))
+        .sort((a, b) => compareTimeDesc(a, b))[0] || submittedAt;
       return {
         daycareId: r.daycare_id,
         slug: r.slug,
@@ -346,7 +406,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         providerUserId: r.provider_user_id,
         providerName: r.provider_name,
         providerEmail: r.provider_email,
-        submittedAt: asIsoString(r.submitted_at),
+        submittedAt,
         reviewedAt: r.reviewed_at,
         reviewNote: r.review_note,
         licenseNumber: r.license_number,
@@ -358,7 +418,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         licenseVerificationSource: r.license_verification_source,
         staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
         staffScreeningAttestedAt: r.staff_screening_attested_at,
-        screeningOnFile: r.screening_on_file === 1 || r.screening_on_file === true,
+        screeningOnFile,
         screeningOnFileAt: r.screening_on_file_at,
         isTest: isAdminOnlyListing({
           id: r.daycare_id,
@@ -369,7 +429,31 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           visibility: r.visibility,
           isTest: r.is_test,
         }),
-        ...firstReviewPhoto(r.photos, r.license_photo),
+        ...photos,
+        hasProviderLink,
+        hasListingClaim: Boolean(r.claim_id),
+        missing: incompleteMissing({
+          claimStatus: status,
+          claimedAt: r.claimed_at,
+          claimRowStatus: r.claim_row_status,
+          hasProviderLink,
+          hasListingClaim: Boolean(r.claim_id),
+          live: status === "approved",
+          licensePhoto: photos.licensePhoto,
+          screeningOnFile,
+          photos: r.photos,
+          storefrontPhoto: photos.storefrontPhoto,
+          province: r.province,
+          infantMonthly: r.infant_monthly ?? null,
+          toddlerMonthly: r.toddler_monthly ?? null,
+          preschoolMonthly: r.preschool_monthly ?? null,
+          partTimeMonthly: r.part_time_monthly ?? null,
+          agesKnown: r.ages_confirmed === 1 || r.ages_confirmed === true,
+          ageMinMonths: r.age_min_months ?? 0,
+          ageMaxMonths: r.age_max_months ?? 0,
+          hours: r.hours,
+        }),
+        updatedAt,
       };
     });
 
@@ -377,6 +461,13 @@ export const listAdminCentres = createServerFn({ method: "GET" })
     mapped.sort((a, b) => rank(a.claimStatus) - rank(b.claimStatus) || compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name));
     return mapped;
   });
+
+/** Incomplete / Needs-complete slice — same rows as listAdminCentres, filtered in-process. */
+export function listIncompleteAdminCentres(rows: AdminCentreRow[]): AdminCentreRow[] {
+  return selectIncompleteRows(rows).sort(
+    (a, b) => compareTimeDesc(a.updatedAt || a.submittedAt, b.updatedAt || b.submittedAt) || a.name.localeCompare(b.name),
+  );
+}
 
 export const decideCentre = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
