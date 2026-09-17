@@ -95,6 +95,20 @@ export function isPublicListing(d: ListingVisibilityInput | null | undefined): b
   return !isAdminOnlyListing(d);
 }
 
+/**
+ * Daycare desk "My listings". Catalogue QA fixtures stay hidden so Claim Lab
+ * does not clutter a director's real centres. Invited staff (member, not owner)
+ * still see the centre they just joined — including TEST Ghost Claim Lab.
+ */
+export function providerDeskShowsListing(
+  listing: ListingVisibilityInput | null | undefined,
+  access: { owner: boolean; member: boolean },
+): boolean {
+  if (!listing) return false;
+  if (!isAdminOnlyListing(listing)) return true;
+  return access.member && !access.owner;
+}
+
 export function publicListings<T extends ListingVisibilityInput>(rows: T[]): T[] {
   return rows.filter((row) => isPublicListing(row));
 }

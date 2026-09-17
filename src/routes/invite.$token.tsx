@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { AcceptEmployeeInvite } from "@/components/centre-employees";
-import { peekCentreInvite } from "@/lib/server/centre-members";
+import { signOut } from "@/lib/auth/client";
 import { useSettledUser } from "@/lib/auth/use-current-user";
+import { inviteEmailsMatch } from "@/lib/centre-roles";
+import { peekCentreInvite } from "@/lib/server/centre-members";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/invite/$token")({
@@ -49,9 +51,29 @@ function InvitePage() {
             </p>
             {isPending ? (
               <p className="mt-6 text-muted">{t("loading")}</p>
-            ) : user ? (
+            ) : user && inviteEmailsMatch(peek.email, user.primaryEmail) ? (
               <div className="mt-6">
                 <AcceptEmployeeInvite token={token} />
+              </div>
+            ) : user ? (
+              <div className="mt-6 space-y-4">
+                <p className="rounded-xl bg-surface p-5 text-sm ring-1 ring-border" role="alert">
+                  {t("employeeInviteWrongEmail")
+                    .replace("{signedIn}", user.primaryEmail || t("employeeNoName"))
+                    .replace("{email}", peek.email)}
+                </p>
+                <Button
+                  type="button"
+                  className="min-h-11"
+                  onClick={() => {
+                    const next = `/invite/${encodeURIComponent(token)}`;
+                    void signOut(
+                      `/login?role=provider&desk=director&intent=in&next=${encodeURIComponent(next)}`,
+                    );
+                  }}
+                >
+                  {t("employeeInviteSignInAs").replace("{email}", peek.email)}
+                </Button>
               </div>
             ) : (
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">

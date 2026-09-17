@@ -169,8 +169,8 @@ test("director My listings drops TEST Ghost Claim Lab", () => {
   const start = family.indexOf("export const getProvider");
   const end = family.indexOf("export const createListing", start);
   const getProvider = family.slice(start, end === -1 ? undefined : end);
-  assert.match(getProvider, /isAdminOnlyListing/);
-  assert.match(getProvider, /\.filter\(\(d\) => !isAdminOnlyListing\(d\)\)/);
+  assert.match(getProvider, /providerDeskShowsListing/);
+  assert.doesNotMatch(getProvider, /\.filter\(\(d\) => !isAdminOnlyListing\(d\)\)/);
 });
 
 test("listing health percent is separate from Listing Verified", () => {
