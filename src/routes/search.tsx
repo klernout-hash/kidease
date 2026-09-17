@@ -102,9 +102,11 @@ import {
 } from "@/lib/saved-search";
 import { CityHubLinks } from "@/components/city-hub-links";
 import { ExploreCategoryRails } from "@/components/explore-category-rails";
+import { SearchResultsList } from "@/components/search-results-list";
 import { preferCompleteCards } from "@/lib/explore-category-rails";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
+import { SEARCH_SPLIT_MIN_PX } from "@/lib/search-pins";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
 const CompareBar = lazy(() =>
@@ -259,6 +261,17 @@ function SearchPage() {
   useEffect(() => {
     if (view === "map") setMapEnabled(true);
   }, [view]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia(`(min-width: ${SEARCH_SPLIT_MIN_PX}px)`);
+    const sync = () => {
+      if (mq.matches) setMapEnabled(true);
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     void bootSearchOrigin(incoming.q, boot.origin);
@@ -1026,6 +1039,33 @@ function SearchPage() {
   const presets = distanceUnit === "mi" ? PRESETS_MI : PRESETS_KM;
   const u = unitLabel(distanceUnit, t);
 
+  function highlightResult(slug: string) {
+    setActive(slug);
+    const node = document.querySelector<HTMLElement>(
+      `[data-ke="search-result"][data-slug="${CSS.escape(slug)}"]`,
+    );
+    node?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
+  const compactDistance = (
+    <div className="flex flex-wrap items-center gap-1.5" data-ke="search-distance-presets">
+      <span className="mr-1 text-sm font-medium">{t("radius")}</span>
+      {presets.map((n) => {
+        const current = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
+        return (
+          <ChipButton
+            key={n}
+            on={current === n}
+            onClick={() => setRadiusKm(distanceUnit === "mi" ? miToKm(n) : n)}
+            aria-pressed={current === n}
+          >
+            {n} {u}
+          </ChipButton>
+        );
+      })}
+    </div>
+  );
+
   const radiusSlider = (
     <div>
       <div className="mb-2 flex items-center justify-between text-sm">
@@ -1403,75 +1443,130 @@ function SearchPage() {
 
         <div
           className={cn(
-            "ke-search-results mt-2 contain-layout",
+            "ke-search-results ke-search-split mt-2 contain-layout",
             view !== "map" && "min-h-[22rem]",
             refreshing && "opacity-70",
           )}
+          data-ke="search-split"
         >
-          {view === "map" ? (
-            mapEnabled ? (
-              <div className="mt-4 space-y-3">
-                <div className="h-[min(40dvh,22rem)] min-h-[14rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(50vh,28rem)]">
-                  <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
-                    <MapView
-                      items={shownList}
-                      origin={mapOrigin}
-                      secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
-                      radiusKm={radiusKm}
-                      activeSlug={active}
-                      onSelect={(slug) => setActive(slug)}
-                      onRelocate={(pos) => {
-                        const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
-                        const label =
-                          resolved.source === "gps"
-                            ? reverseGeocode(pos.lat, pos.lng)
-                            : resolved.label;
-                        setOrigin(
-                          { lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" },
-                          resolved.source,
-                        );
-                        void hapticLight();
-                      }}
-                      onLocate={() => void geo()}
-                      onFallback={() => setView("list")}
-                    />
-                  </Suspense>
+          <div
+            className={cn("ke-search-split-list min-w-0", view === "map" && "max-lg:hidden")}
+            data-ke="search-split-list"
+          >
+            {items === null ? (
+              <div className="mt-4 space-y-8" aria-busy="true" aria-label={t("searchCountLoading")}>
+                {Array.from({ length: 2 }).map((_, rail) => (
+                  <div key={rail} aria-hidden="true">
+                    <div className="ke-skel mb-3 h-7 w-44" />
+                    <div className="ke-rail">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="ke-rail-card space-y-2">
+                          <div className="ke-skel aspect-[20/19] w-full" />
+                          <div className="ke-skel h-3.5 w-4/5" />
+                          <div className="ke-skel h-3 w-1/2" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : showSearchEmpty ? (
+              <div className="mt-6 space-y-4">
+                <div className="rounded-xl bg-surface ring-1 ring-border">
+                  <EmptyState
+                    title={emptyState.title}
+                    body={emptyState.body}
+                    action={emptyState.action}
+                    onAction={emptyState.onAction}
+                    secondary={emptyState.secondary}
+                    onSecondary={emptyState.onSecondary}
+                    secondaryTo={emptyState.secondaryTo}
+                  />
                 </div>
-                {items !== null && showSearchEmpty ? (
-                  <div className="rounded-xl bg-surface ring-1 ring-border">
-                    <EmptyState
-                      title={emptyState.title}
-                      body={emptyState.body}
-                      action={emptyState.action}
-                      onAction={emptyState.onAction}
-                      secondary={emptyState.secondary}
-                      onSecondary={emptyState.onSecondary}
-                      secondaryTo={emptyState.secondaryTo}
-                    />
+                {whereSet ? <CityHubLinks className="mt-4" headingKey="otherCities" /> : null}
+              </div>
+            ) : (
+              <>
+                <div className="lg:hidden">
+                  <ExploreCategoryRails
+                    items={railItems}
+                    directory={filterByLocationLock(items ?? [], locationLock)}
+                    selectedAges={selectedAges}
+                    openingsSelected={openingsOn}
+                    onHover={setActive}
+                  />
+                </div>
+                <div className="mt-4 hidden lg:block">
+                  <SearchResultsList
+                    items={shownList}
+                    activeSlug={active}
+                    onHover={setActive}
+                    onSelect={highlightResult}
+                    distance={compactDistance}
+                  />
+                </div>
+              </>
+            )}
+            {gated && split.ageUnknown.length ? (
+              <div className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">
+                <p className="font-semibold">{t("ageNotConfirmed")}</p>
+                <p className="mt-1 text-sm text-muted">{t("ageNotConfirmedLead")}</p>
+                <button
+                  type="button"
+                  className="mt-3 text-sm font-medium text-primary"
+                  onClick={() => setAgeUnknownOpen((v) => !v)}
+                >
+                  {ageUnknownOpen ? t("ageNotConfirmedHide") : t("ageNotConfirmedOpen")}
+                </button>
+                {ageUnknownOpen ? (
+                  <div className="ke-listings mt-4">
+                    {split.ageUnknown.map((item) => (
+                      <DaycareCard key={item.id} item={item} />
+                    ))}
                   </div>
                 ) : null}
               </div>
-            ) : null
-          ) : items === null ? (
-            <div className="mt-4 space-y-8" aria-busy="true" aria-label={t("searchCountLoading")}>
-              {Array.from({ length: 2 }).map((_, rail) => (
-                <div key={rail} aria-hidden="true">
-                  <div className="ke-skel mb-3 h-7 w-44" />
-                  <div className="ke-rail">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="ke-rail-card space-y-2">
-                        <div className="ke-skel aspect-[20/19] w-full" />
-                        <div className="ke-skel h-3.5 w-4/5" />
-                        <div className="ke-skel h-3 w-1/2" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : showSearchEmpty ? (
-            <div className="mt-6 space-y-4">
-              <div className="rounded-xl bg-surface ring-1 ring-border">
+            ) : null}
+          </div>
+          <div
+            className={cn(
+              "ke-search-split-map mt-4 space-y-3",
+              view !== "map" && "max-lg:hidden",
+            )}
+            data-ke="search-split-map"
+          >
+            {mapEnabled || view === "map" ? (
+              <div className="ke-search-map-frame h-[min(40dvh,22rem)] min-h-[14rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(70dvh,calc(100dvh-11rem))]">
+                <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
+                  <MapView
+                    items={shownList}
+                    origin={mapOrigin}
+                    secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
+                    radiusKm={radiusKm}
+                    activeSlug={active}
+                    numbered
+                    onSelect={highlightResult}
+                    onHover={setActive}
+                    onRelocate={(pos) => {
+                      const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
+                      const label =
+                        resolved.source === "gps"
+                          ? reverseGeocode(pos.lat, pos.lng)
+                          : resolved.label;
+                      setOrigin(
+                        { lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" },
+                        resolved.source,
+                      );
+                      void hapticLight();
+                    }}
+                    onLocate={() => void geo()}
+                    onFallback={() => setView("list")}
+                  />
+                </Suspense>
+              </div>
+            ) : null}
+            {items !== null && showSearchEmpty && view === "map" ? (
+              <div className="rounded-xl bg-surface ring-1 ring-border lg:hidden">
                 <EmptyState
                   title={emptyState.title}
                   body={emptyState.body}
@@ -1482,37 +1577,8 @@ function SearchPage() {
                   secondaryTo={emptyState.secondaryTo}
                 />
               </div>
-              {whereSet ? <CityHubLinks className="mt-4" headingKey="otherCities" /> : null}
-            </div>
-          ) : (
-            <ExploreCategoryRails
-              items={railItems}
-              directory={filterByLocationLock(items ?? [], locationLock)}
-              selectedAges={selectedAges}
-              openingsSelected={openingsOn}
-              onHover={setActive}
-            />
-          )}
-          {gated && split.ageUnknown.length ? (
-            <div className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">
-              <p className="font-semibold">{t("ageNotConfirmed")}</p>
-              <p className="mt-1 text-sm text-muted">{t("ageNotConfirmedLead")}</p>
-              <button
-                type="button"
-                className="mt-3 text-sm font-medium text-primary"
-                onClick={() => setAgeUnknownOpen((v) => !v)}
-              >
-                {ageUnknownOpen ? t("ageNotConfirmedHide") : t("ageNotConfirmedOpen")}
-              </button>
-              {ageUnknownOpen ? (
-                <div className="ke-listings mt-4">
-                  {split.ageUnknown.map((item) => (
-                    <DaycareCard key={item.id} item={item} />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
       <Suspense fallback={null}>

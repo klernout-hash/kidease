@@ -180,9 +180,11 @@ export function ExploreFilterBar({
         >
           <SlidersHorizontal className="size-4 shrink-0" aria-hidden="true" />
         </IconToggle>
-        <IconToggle pressed={mapOn} label={t("map")} onClick={onMap} data-ke="explore-map-toggle">
-          <Map className="size-4 shrink-0" aria-hidden="true" />
-        </IconToggle>
+        <span className="lg:hidden">
+          <IconToggle pressed={mapOn} label={t("map")} onClick={onMap} data-ke="explore-map-toggle">
+            <Map className="size-4 shrink-0" aria-hidden="true" />
+          </IconToggle>
+        </span>
       </div>
     </div>
   );
