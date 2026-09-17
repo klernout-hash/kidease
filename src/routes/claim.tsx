@@ -56,6 +56,8 @@ function ClaimPage() {
   const [enrollManual, setEnrollManual] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const enrollBox = useRef<HTMLDivElement>(null);
+  const claimFileRef = useRef<HTMLInputElement>(null);
+  const enrollFileRef = useRef<HTMLInputElement>(null);
   const claimChallenge = useTurnstileToken();
   const enrollChallenge = useTurnstileToken();
 
@@ -153,6 +155,11 @@ function ClaimPage() {
   async function verify(e: React.FormEvent) {
     e.preventDefault();
     if (!pending) return;
+    const picked = claimFileRef.current?.files?.[0];
+    if (picked && isListingPhotoTooBig(picked.size)) {
+      rejectLicense("claim", claimFileRef.current);
+      return;
+    }
     if (!license.startsWith("data:image")) {
       toast.error("Upload a photo of your provincial licence");
       return;
@@ -169,13 +176,23 @@ function ClaimPage() {
     }
   }
 
-  function readLicense(file: File | undefined, into: "claim" | "enroll") {
+  function rejectLicense(into: "claim" | "enroll", input?: HTMLInputElement | null) {
+    const message = t("uploadClaimDocTooBig");
+    if (into === "claim") {
+      setLicenseError(message);
+      setLicense("");
+    } else {
+      setEnrollLicenseError(message);
+      setEnrollLicense("");
+    }
+    if (input) input.value = "";
+    toast.error(message);
+  }
+
+  function readLicense(file: File | undefined, into: "claim" | "enroll", input?: HTMLInputElement | null) {
     if (!file) return;
     if (isListingPhotoTooBig(file.size)) {
-      const message = t("uploadClaimDocTooBig");
-      if (into === "claim") setLicenseError(message);
-      else setEnrollLicenseError(message);
-      toast.error(message);
+      rejectLicense(into, input);
       return;
     }
     if (into === "claim") setLicenseError(null);
@@ -191,6 +208,11 @@ function ClaimPage() {
 
   async function sendEnroll(e: React.FormEvent) {
     e.preventDefault();
+    const picked = enrollFileRef.current?.files?.[0];
+    if (picked && isListingPhotoTooBig(picked.size)) {
+      rejectLicense("enroll", enrollFileRef.current);
+      return;
+    }
     if (!enrollLicense.startsWith("data:image") && !enrollLicense.startsWith("data:application/pdf")) {
       toast.error("Upload a photo or PDF of your provincial licence");
       return;
@@ -278,7 +300,15 @@ function ClaimPage() {
             <label className="block text-sm font-medium">
               Provincial licence photo
               <span className="mt-1 block text-xs font-normal text-muted">Required. Photo or scan of the current licence.</span>
-              <input required type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="mt-2 block w-full text-sm" onChange={(e) => readLicense(e.target.files?.[0], "claim")} />
+              <input
+                ref={claimFileRef}
+                required
+                type="file"
+                accept="application/pdf,image/jpeg,image/png,image/webp"
+                className="mt-2 block w-full text-sm"
+                data-ke="claim-license-file"
+                onChange={(e) => readLicense(e.target.files?.[0], "claim", e.currentTarget)}
+              />
               <UploadLimitHint hint={t("uploadClaimDocHint")} error={licenseError} />
             </label>
             {license.startsWith("data:image") ? (
@@ -444,7 +474,15 @@ function ClaimPage() {
           <label className="block text-sm font-medium">
             Provincial licence photo
             <span className="mt-1 block text-xs font-normal text-muted">Required for compliance review. Clear photo or scan of the current licence.</span>
-            <input required type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="mt-2 block w-full text-sm" onChange={(e) => readLicense(e.target.files?.[0], "enroll")} />
+            <input
+              ref={enrollFileRef}
+              required
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+              className="mt-2 block w-full text-sm"
+              data-ke="enroll-license-file"
+              onChange={(e) => readLicense(e.target.files?.[0], "enroll", e.currentTarget)}
+            />
             <UploadLimitHint hint={t("uploadClaimDocHint")} error={enrollLicenseError} />
           </label>
           {enrollLicense.startsWith("data:image") ? (

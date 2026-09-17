@@ -93,6 +93,8 @@ test("screening, licence, listing, and claim upload UIs show limits and too-big 
   assert.match(claim, /uploadClaimDocHint/);
   assert.match(claim, /uploadClaimDocTooBig/);
   assert.match(claim, /isListingPhotoTooBig/);
+  assert.match(claim, /data-ke="enroll-license-file"/);
+  assert.match(claim, /rejectLicense/);
   assert.doesNotMatch(claim, /file\.size > 1_800_000/);
   assert.match(care, /UploadLimitHint/);
   assert.match(care, /carePhotoTooBig/);
