@@ -13,6 +13,7 @@ type TurnstileApi = {
       retry?: "auto" | "never";
       "refresh-expired"?: "auto" | "manual" | "never";
       appearance?: "always" | "execute" | "interaction-only";
+      theme?: "auto" | "light" | "dark";
       size?: "normal" | "flexible" | "compact";
     },
   ) => string;
@@ -122,7 +123,10 @@ export const TurnstileField = memo(function TurnstileField({
         widgetId.current = api.render(host.current, {
           sitekey: siteKey,
           size: narrow ? "compact" : "flexible",
-          appearance: "interaction-only",
+          // Managed/checkbox must stay visible so parents and daycares see
+          // Cloudflare branding. interaction-only hid the widget on most logins.
+          appearance: "always",
+          theme: "auto",
           retry: "auto",
           "refresh-expired": "auto",
           callback: (token) => {
@@ -183,7 +187,7 @@ export const TurnstileField = memo(function TurnstileField({
 
   if (siteKey === undefined || siteKey === null) return null;
   return (
-    <div className="min-h-[65px] max-w-full overflow-x-hidden">
+    <div className="min-h-[65px] max-w-full overflow-x-hidden" data-ke="turnstile">
       <div ref={host} className="cf-turnstile max-w-full" />
       {loadError ? <p className="mt-2 text-sm text-danger">{loadError}</p> : null}
     </div>

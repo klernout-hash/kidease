@@ -28,10 +28,13 @@ export const canContinueAdminSession = createServerFn({ method: "GET" })
 
 export const confirmReauthPassword = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { password: string }) => ({
+  .validator((input: { password: string; turnstileToken?: string }) => ({
     password: String(input?.password || ""),
+    turnstileToken: String(input?.turnstileToken || ""),
   }))
   .handler(async ({ context, data }) => {
+    const { assertTurnstileToken } = await import("./turnstile");
+    await assertTurnstileToken(data.turnstileToken);
     if (!data.password) throw new Error("Enter your current password.");
     const ok = await verifyUserPassword(context.userId, data.password);
     if (!ok) throw new Error("That password is not correct.");
@@ -49,10 +52,13 @@ export const startReauthOtp = createServerFn({ method: "POST" })
 
 export const confirmReauthOtp = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { code: string }) => ({
+  .validator((input: { code: string; turnstileToken?: string }) => ({
     code: String(input?.code || "").replace(/\D/g, "").slice(0, 6),
+    turnstileToken: String(input?.turnstileToken || ""),
   }))
   .handler(async ({ context, data }) => {
+    const { assertTurnstileToken } = await import("./turnstile");
+    await assertTurnstileToken(data.turnstileToken);
     if (data.code.length !== 6) throw new Error("Enter the 6-digit code from your email.");
     const { consumeTwoFactorCode } = await import("./two-factor");
     await consumeTwoFactorCode(context.userId, data.code);

@@ -160,14 +160,15 @@ test("Parent and Daycare login never bounce through Cloudflare Access", () => {
   assert.doesNotMatch(guard.slice(guard.indexOf("export function isSensitiveDeskPath"), guard.indexOf("function queryString")), /\/provider/);
 });
 
-test("login consent checkboxes stay user-driven and Turnstile does not auto-show a checked box", () => {
+test("login consent checkboxes stay user-driven; Turnstile is a visible managed widget", () => {
   const twoFa = src("src/routes/verify-2fa.tsx");
   assert.match(twoFa, /useState\(false\)/);
   assert.match(twoFa, /data-ke="remember-device"/);
   assert.match(twoFa, /autoComplete="off"/);
   assert.match(twoFa, /data-lpignore="true"/);
   assert.match(twoFa, /name="kidease-remember-device"/);
-  assert.match(src("src/components/turnstile-field.tsx"), /appearance: "interaction-only"/);
+  assert.match(src("src/components/turnstile-field.tsx"), /appearance: "always"/);
+  assert.doesNotMatch(src("src/components/turnstile-field.tsx"), /appearance: "interaction-only"/);
   assert.match(src("src/components/casl-consent-fields.tsx"), /autoComplete="off"/);
   assert.match(src("src/components/casl-consent-fields.tsx"), /data-lpignore="true"/);
 });
