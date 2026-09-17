@@ -20,7 +20,7 @@ import {
   WRONG_PASSWORD_MESSAGE,
 } from "../src/lib/auth/login-errors.ts";
 import { friendlyResetMailError } from "../src/lib/auth/reset-errors.ts";
-import { NATIVE_APPLE, visibleSignInProviders } from "../src/lib/auth/providers.ts";
+import { NATIVE_APPLE, NATIVE_FACEBOOK, NATIVE_GOOGLE, googleFirstProviders, visibleSignInProviders } from "../src/lib/auth/providers.ts";
 import {
   aliasInboundAuthCookies,
   applyExpiredAuthCookies,
@@ -133,6 +133,10 @@ describe("password sign-in errors", () => {
     assert.deepEqual(
       visibleSignInProviders({ nativeApple: true, nativeGoogle: false, broker: false }),
       [NATIVE_APPLE],
+    );
+    assert.deepEqual(
+      googleFirstProviders([NATIVE_APPLE, NATIVE_GOOGLE, NATIVE_FACEBOOK]).map((p) => p.idp),
+      ["google", "apple", "facebook"],
     );
     const login = read("src/routes/login.tsx");
     const loader = read("src/lib/server/sign-in-providers.ts");
@@ -312,6 +316,8 @@ describe("Turnstile is single-use and required when the widget is on", () => {
     assert.match(login, /<TurnstileField /);
     assert.match(login, /mode === "up"/);
     assert.match(login, /operator \? "admin-email-first" : "email-sign-in"/);
+    assert.match(login, /data-ke="social-first"/);
+    assert.match(login, /const socialFirst = !operator/);
     assert.match(frLogin, /LoginScreen/);
     assert.match(reauthUi, /<TurnstileField /);
     assert.match(reauthUi, /turnstileToken: challenge/);
