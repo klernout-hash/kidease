@@ -5,7 +5,7 @@ import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-erro
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import type { GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
-import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
+import { LOADER_SETTLE_MS, withTimeout, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { PasswordField } from "@/components/password-field";
@@ -44,6 +44,12 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canContinueAdminSession } from "@/lib/server/reauth";
 import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
+import {
+  ADMIN_IDLE_CHECK_MS,
+  LOGIN_CONTINUE_MS,
+  LOGIN_POST_MS,
+  releaseStuckLogin,
+} from "@/lib/auth/login-stall";
 
 type Role = "parent" | "provider" | "admin";
 type DeskAlias = "parent" | "director" | "centre" | "admin" | "support" | "provider";
@@ -116,6 +122,7 @@ export function LoginScreen({
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
   const submitLock = useRef(false);
   const continued = useRef(false);
+  const attempt = useRef(0);
   const [stalled, setStalled] = useState(false);
 
   useEffect(() => {
@@ -128,54 +135,67 @@ export function LoginScreen({
   }, []);
 
   useEffect(() => {
-    if (!busy) {
-      setStalled(false);
-      return;
-    }
-    const id = window.setTimeout(() => setStalled(true), LOGIN_STALL_MS);
+    if (!busy) return;
+    const id = window.setTimeout(() => {
+      attempt.current += 1;
+      const released = releaseStuckLogin("stall");
+      continued.current = released.keepContinued;
+      submitLock.current = false;
+      setBusy(released.busy);
+      setStalled(true);
+      setError(released.error);
+    }, LOGIN_STALL_MS);
     return () => window.clearTimeout(id);
   }, [busy]);
 
   useEffect(() => {
     if (sessionPending || !user || busy || continued.current) return;
     if (consumeJustSignedOut()) return;
+    const id = ++attempt.current;
     continued.current = true;
     setBusy(true);
+    setStalled(false);
     setError(null);
     void (async () => {
       // Admin idle cookie is independent of Better Auth session. Soft-continuing
       // an old session after "Sign in again" must not skip password re-entry.
+      // keepContinued stays true on failure so this effect cannot re-arm and
+      // pin the button on “Opening your desk…”.
       if (operator) {
-        const idle = await canContinueAdminSession().catch(() => ({ ok: false }));
+        const idle = await withTimeoutFallback(canContinueAdminSession(), ADMIN_IDLE_CHECK_MS, { ok: false });
+        if (attempt.current !== id) return;
         if (!idle.ok) {
-          continued.current = false;
-          setBusy(false);
-          setError("Admin session timed out. Enter your password to continue.");
+          const released = releaseStuckLogin("admin-password");
+          continued.current = released.keepContinued;
+          setBusy(released.busy);
+          setError(released.error);
           return;
         }
       }
-      await continueAfterSignIn({
-        next: search.next,
-        desk: deskHint,
-        role: role ?? null,
-        sticky: readStickyDesk(),
-        method: "session",
-      });
+      await withTimeout(
+        continueAfterSignIn({
+          next: search.next,
+          desk: deskHint,
+          role: role ?? null,
+          sticky: readStickyDesk(),
+          method: "session",
+        }),
+        LOGIN_CONTINUE_MS,
+        "continue-timeout",
+      );
     })().catch(() => {
-      continued.current = false;
-      setError("Could not open your desk. Use Retry, or open https://www.kidease.ca/login.");
-      setBusy(false);
+      if (attempt.current !== id) return;
+      const released = releaseStuckLogin("open-failed");
+      continued.current = released.keepContinued;
+      setError(released.error);
+      setBusy(released.busy);
     });
   }, [sessionPending, user, dest, busy, search.next, deskHint, role, operator]);
 
   async function finish() {
     const session = await waitForSignedInSession(() => authClient.getSession());
     if (role === "parent" || role === "provider") {
-      try {
-        await setRole({ data: role });
-      } catch {
-        /* RoleBoot will retry once the session is visible */
-      }
+      await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
     }
     continued.current = true;
     captureLoginFunnel({
@@ -194,30 +214,40 @@ export function LoginScreen({
   }
 
   function openDesk() {
+    const id = ++attempt.current;
     continued.current = true;
     setBusy(true);
+    setStalled(false);
     setError(null);
     void (async () => {
       if (operator) {
-        const idle = await canContinueAdminSession().catch(() => ({ ok: false }));
+        const idle = await withTimeoutFallback(canContinueAdminSession(), ADMIN_IDLE_CHECK_MS, { ok: false });
+        if (attempt.current !== id) return;
         if (!idle.ok) {
-          continued.current = false;
-          setBusy(false);
-          setError("Admin session timed out. Enter your password to continue.");
+          const released = releaseStuckLogin("admin-password");
+          continued.current = released.keepContinued;
+          setBusy(released.busy);
+          setError(released.error);
           return;
         }
       }
-      await continueAfterSignIn({
-        next: search.next,
-        desk: deskHint,
-        role: role ?? null,
-        sticky: readStickyDesk(),
-        method: "session",
-      });
+      await withTimeout(
+        continueAfterSignIn({
+          next: search.next,
+          desk: deskHint,
+          role: role ?? null,
+          sticky: readStickyDesk(),
+          method: "session",
+        }),
+        LOGIN_CONTINUE_MS,
+        "continue-timeout",
+      );
     })().catch(() => {
-      continued.current = false;
-      setError("Could not open your desk. Use Retry, or open https://www.kidease.ca/login.");
-      setBusy(false);
+      if (attempt.current !== id) return;
+      const released = releaseStuckLogin("open-failed");
+      continued.current = released.keepContinued;
+      setError(released.error);
+      setBusy(released.busy);
     });
   }
 
@@ -225,7 +255,9 @@ export function LoginScreen({
     e.preventDefault();
     if (submitLock.current) return;
     submitLock.current = true;
+    const id = ++attempt.current;
     setBusy(true);
+    setStalled(false);
     setError(null);
     try {
       if (operator && email.trim().toLowerCase() !== OPERATOR_EMAIL) {
@@ -244,16 +276,24 @@ export function LoginScreen({
       if (mode === "up") {
         const hygiene = localPasswordIssue(password, email);
         if (hygiene) throw new Error(hygiene);
-        const res = await authClient.signUp.email({
-          email,
-          password,
-          name: name || email.split("@")[0],
-          fetchOptions: turnstileFetchOptions(challenge),
-        });
+        const res = await withTimeout(
+          authClient.signUp.email({
+            email,
+            password,
+            name: name || email.split("@")[0],
+            fetchOptions: turnstileFetchOptions(challenge),
+          }),
+          LOGIN_POST_MS,
+          "sign-in-timeout",
+        );
         if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
         rememberToken(res.data);
       } else {
-        const res = await authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(challenge) });
+        const res = await withTimeout(
+          authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(challenge) }),
+          LOGIN_POST_MS,
+          "sign-in-timeout",
+        );
         if (res.error) {
           throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
         }
@@ -261,18 +301,22 @@ export function LoginScreen({
       }
       await finish();
     } catch (err) {
+      if (attempt.current !== id) return;
       const message = friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed";
       captureLoginFunnel({ step: "failed", method: "email", reason: funnelFailReason(message), native: isNative() });
       setError(message);
       resetTurnstile();
     } finally {
-      submitLock.current = false;
-      setBusy(false);
+      if (attempt.current === id) {
+        submitLock.current = false;
+        setBusy(false);
+      }
     }
   }
 
   async function onSocial(providerId: string) {
     setBusy(true);
+    setStalled(false);
     setError(null);
     if (role === "parent" || role === "provider") rememberRole(role);
     try {
@@ -285,7 +329,7 @@ export function LoginScreen({
       });
       markContinued(dest, { method: "social" });
       const socialDest = !operator && isCloudflareAccessPath(dest) ? "/parent" : dest;
-      await signIn(providerId, {
+      await withTimeout(signIn(providerId, {
         callbackURL: staffTwoFactorRequired(socialDest) ? twoFactorUrl(socialDest) : socialDest,
         errorCallbackURL: loginErrorCallbackUrl({
           next: search.next,
@@ -293,7 +337,7 @@ export function LoginScreen({
           desk: search.desk,
           intent: search.intent,
         }),
-      });
+      }), LOGIN_POST_MS, "sign-in-timeout");
     } catch (err) {
       const message = err instanceof Error ? friendlyAuthError(err.message) : "Sign-in failed";
       captureLoginFunnel({ step: "failed", method: "social", reason: funnelFailReason(message), native: isNative() });
@@ -346,7 +390,7 @@ export function LoginScreen({
               <BrandMark size="md" />
             </div>
             <h1 className="mt-4 font-display text-2xl sm:mt-6 sm:text-3xl">{mode === "up" && role && !operator ? t("createAccount") : title}</h1>
-            <p className="mt-2 text-sm text-muted">{user && !sessionPending ? "Opening your desk…" : lead}</p>
+            <p className="mt-2 text-sm text-muted" data-ke="login-lead">{busy && !error ? "Opening your desk…" : lead}</p>
             {operator && !user ? (
               <p className="mt-1 text-xs text-subtle" data-ke="admin-titan-note">
                 {t("operatorEmailNote")}
@@ -397,10 +441,13 @@ export function LoginScreen({
                   type="button"
                   className="min-h-11 font-medium text-primary underline-offset-4 hover:underline"
                   onClick={() => {
-                    continued.current = false;
+                    attempt.current += 1;
+                    continued.current = true;
+                    submitLock.current = false;
                     setError(null);
                     setStalled(false);
                     setBusy(false);
+                    resetTurnstile();
                   }}
                 >
                   Retry
@@ -521,7 +568,7 @@ export function LoginScreen({
 
 function funnelFailReason(message: string): string {
   const raw = message.toLowerCase();
-  if (raw.includes("security filter")) return "cloudflare";
+  if (raw.includes("security filter") || raw.includes("cloudflare") || raw.includes("taking too long")) return "cloudflare";
   if (raw.includes("security check")) return "turnstile";
   if (raw.includes("too many")) return "rate_limit";
   if (raw.includes("session")) return "session";

@@ -55,8 +55,11 @@ describe("assertAdminIdleFresh bootstrap", () => {
 
   it("blocks soft session-continue into Admin when idle is stale", () => {
     const login = src("src/routes/login.tsx");
+    const stall = src("src/lib/auth/login-stall.ts");
     assert.match(login, /canContinueAdminSession/);
-    assert.match(login, /Admin session timed out\. Enter your password/);
+    assert.match(stall, /Admin session timed out\. Enter your password/);
+    assert.match(login, /releaseStuckLogin\("admin-password"\)/);
     assert.match(login, /user \|\| operator/);
+    assert.doesNotMatch(login, /continued\.current = false/);
   });
 });

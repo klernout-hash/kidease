@@ -39,7 +39,50 @@ If the widget never appears, that is still the `/_serverFn/*` WAF skip above.
 
 The login widget is the **managed / checkbox** challenge (`appearance: "always"`). Parent, Daycare, Admin, `/fr/login`, sign-up, forgot/reset password, 2FA, and the password reauth dialog all mount `TurnstileField` so the Cloudflare button is visible when both keys exist. Do not switch back to `interaction-only` — that hid the checkbox on most Production logins.
 
+The host div must **not** use class `cf-turnstile`. An implicit `api.js` (no `render=explicit`) auto-renders that class **without** the React callback. The checkbox can show Success while Sign in stays disabled because React never received the token. The widget also mirrors the hidden `cf-turnstile-response` input, and the auth POST sends the token as `x-turnstile-token`, `x-captcha-response`, `cf-turnstile-response`, and JSON `turnstileToken` so a proxy that strips one header still siteverifies.
+
 Preview without keys stays `off` (widget hidden, server skips). Preview with keys is `optional` (widget shows; missing token is allowed). Production with both `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` **enforces** siteverify. Capacitor uses the same www keys (`https://www.kidease.ca`); do not invent a native site key.
+
+## Stuck on “Opening your desk…” after Turnstile Success
+
+Two app bugs stacked with Cloudflare challenges (fixed in the login client):
+
+1. **Success did not enable Sign in.** `turnstile.reset()` can call the success callback before it returns. The old code cleared React state *after* reset, so the checkbox stayed on Success and the button stayed disabled (`turnstileRequired && !token`).
+2. **Admin soft-continue looped.** `/login?role=admin&desk=admin&intent=admin&next=/admin` with any Better Auth session set `busy` and the lead to “Opening your desk…”. If the idle cookie was stale, the effect set `continued` back to false, which started the same path again and cleared the error. A hung `POST /api/auth/sign-out`, `POST /api/auth/sign-in/email`, or `/_serverFn` (Managed Challenge on XHR never completes) never left `busy`.
+
+After the fix, those hops time out, the form shows an error, and Retry stays on the password form instead of re-arming the spinner. Cloudflare Access on `/admin` is unchanged.
+
+### Kyle — Cloudflare dashboard (do these clicks)
+
+Zone **kidease.ca** (covers `www`). Do **not** put the whole site under Access, Bot Fight, or “I'm Under Attack”.
+
+1. **Security → WAF → Custom rules → Create rule.** Name: `Allow KidEase auth`.
+   Expression (Edit expression):
+
+   ```
+   (starts_with(http.request.uri.path, "/api/auth/")) or
+   (starts_with(http.request.uri.path, "/_serverFn/")) or
+   (http.request.uri.path eq "/login") or
+   (http.request.uri.path eq "/fr/login") or
+   (http.request.uri.path eq "/forgot-password") or
+   (http.request.uri.path eq "/reset-password") or
+   (http.request.uri.path eq "/verify-2fa")
+   ```
+
+   Action: **Skip**. Check **Super Bot Fight Mode**, **Browser Integrity Check**, **Security Level**, and **User Agent Blocking**. Do **not** choose **Block** or **Managed Challenge** for these paths. Managed Challenge on a `fetch()` to `/api/auth/*` or `/_serverFn/*` never shows a checkbox — the browser hangs on “Opening your desk…”.
+2. **Security → Bots.** If **Bot Fight Mode** is on for the zone, turn it off (it challenges API POSTs and cannot skip by path). Use Super Bot Fight only with the skip rule above. Security Level stays **Medium**, not “I'm Under Attack”.
+3. **Turnstile → the KidEase widget.** Mode **Managed** (checkbox), not Invisible. Hostnames: `kidease.ca` and `www.kidease.ca`. Leave **Pre-clearance off** so the widget does not also mint a `cf_clearance` that Bot Fight then demands on the auth POST. Env (Vercel Production, server only, no `VITE_` prefix): `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`. Both set → production **enforces** siteverify. Unset either → widget off. No second native site key.
+4. **Zero Trust → Access → Applications.** Keep the staff app on `www.kidease.ca` only, path include list **only**:
+
+   | Path | Why |
+   | --- | --- |
+   | `/admin` and `/admin/*` | Admin desk |
+   | `/admin-contracts` and `/admin-contracts/*` | Contracts |
+   | `/admin-chat` and `/admin-chat/*` | Chat lab |
+   | `/api/admin/*` | Admin JSON |
+
+   **Do not** include `*`, `/`, `/login`, `/parent`, `/provider`, `/api/auth/*`, `/api/auth/callback/*`, or `/_serverFn/*`. Google SSO lands on `/api/auth/callback/google` — Access there drops the session before the desk opens. If a second application matches the whole hostname, disable it or narrow it. Session duration 24h. Cookie SameSite **Lax** on `www.kidease.ca` (not Path=/admin only).
+5. Hard-refresh `https://www.kidease.ca/login` after the skip rule is live. DevTools: `POST /api/auth/sign-in/email` and `GET /api/auth/callback/google` must be JSON or a redirect from the app, not `Attention Required` HTML and not `cloudflareaccess.com`.
 
 ## Access vs Bot Fight
 

@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { getTurnstileSiteKey } from "@/lib/server/turnstile";
+import { beginTurnstileReset, coalesceTurnstileToken, readTurnstileResponseValue } from "@/lib/turnstile-widget";
 
 type TurnstileApi = {
   render: (
@@ -12,6 +13,8 @@ type TurnstileApi = {
       "error-callback"?: () => void;
       retry?: "auto" | "never";
       "refresh-expired"?: "auto" | "manual" | "never";
+      "response-field"?: boolean;
+      "response-field-name"?: string;
       appearance?: "always" | "execute" | "interaction-only";
       theme?: "auto" | "light" | "dark";
       size?: "normal" | "flexible" | "compact";
@@ -54,14 +57,17 @@ function loadTurnstile(): Promise<TurnstileApi | null> {
 
 function resetWidget(widgetId: string | null, onToken: (token: string) => void) {
   const api = typeof window !== "undefined" ? window.turnstile : undefined;
-  if (widgetId && api) {
+  // Clear React state first. reset() may synchronously call the success
+  // callback; wiping the token afterwards leaves Success on screen and the
+  // sign-in button disabled.
+  beginTurnstileReset(onToken, () => {
+    if (!widgetId || !api) return;
     try {
       api.reset(widgetId);
     } catch {
       /* widget already gone */
     }
-  }
-  onToken("");
+  });
 }
 
 export const TurnstileField = memo(function TurnstileField({
@@ -129,6 +135,8 @@ export const TurnstileField = memo(function TurnstileField({
           theme: "auto",
           retry: "auto",
           "refresh-expired": "auto",
+          "response-field": true,
+          "response-field-name": "cf-turnstile-response",
           callback: (token) => {
             setLoadError(null);
             onTokenRef.current(token);
@@ -185,10 +193,26 @@ export const TurnstileField = memo(function TurnstileField({
     };
   }, []);
 
+  // Setting input.value does not notify React. Poll the hidden field so a
+  // Success checkbox still enables Sign in when the callback never fires
+  // (implicit api.js, or a reset that raced the callback).
+  useEffect(() => {
+    if (!siteKey) return;
+    const publish = () => {
+      const live = readTurnstileResponseValue(host.current);
+      if (live) onTokenRef.current(live);
+    };
+    const id = window.setInterval(publish, 300);
+    publish();
+    return () => window.clearInterval(id);
+  }, [siteKey]);
+
   if (siteKey === undefined || siteKey === null) return null;
   return (
     <div className="min-h-[65px] max-w-full overflow-x-hidden" data-ke="turnstile">
-      <div ref={host} className="cf-turnstile max-w-full" />
+      {/* No cf-turnstile class: implicit api.js auto-renders that class
+          without our callback, so Success never enables the button. */}
+      <div ref={host} className="max-w-full" data-ke-turnstile-host="" />
       {loadError ? <p className="mt-2 text-sm text-danger">{loadError}</p> : null}
     </div>
   );
@@ -204,7 +228,8 @@ export function useTurnstileToken() {
   };
   /** Capture the current token and remint so a retry cannot reuse it. */
   const takeChallenge = () => {
-    const challenge = token.trim();
+    const live = typeof document !== "undefined" ? readTurnstileResponseValue(document) : "";
+    const challenge = coalesceTurnstileToken(token, live);
     if (challenge) reset();
     return challenge;
   };

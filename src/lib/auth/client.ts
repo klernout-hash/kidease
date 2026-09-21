@@ -5,6 +5,8 @@ import { resetPostHogIdentity } from "@/lib/posthog";
 import { clearSearchCache } from "@/lib/search-cache";
 import { clearShortlistCache, takePendingSave } from "@/lib/shortlist";
 import { parseRetryAfterSeconds, rateLimitWaitCopy } from "@/lib/auth-rate-limit";
+import { rejectAfter } from "@/lib/timeout";
+import { attachTurnstileToRequest } from "@/lib/turnstile-widget";
 import {
   CLOUDFLARE_AUTH_BLOCK_MESSAGE,
   looksLikeCloudflareAuthBlock,
@@ -102,11 +104,7 @@ export async function signIn(
 
   const hadBearer = Boolean(getBearerToken());
   if (hadBearer || !inLivePreview()) {
-    try {
-      await authClient.signOut();
-    } catch {
-      /* proceed */
-    }
+    await signOutBestEffort();
   }
   setBearerToken(null);
 
@@ -208,6 +206,18 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
 
 const SIGN_OUT_WAIT_MS = 4000;
 
+/** Sign-out must not pin Parent / Daycare / Admin login if Cloudflare holds the POST. */
+async function signOutBestEffort(): Promise<void> {
+  try {
+    await Promise.race([
+      authClient.signOut(),
+      rejectAfter(SIGN_OUT_WAIT_MS, "sign-out-timeout"),
+    ]);
+  } catch {
+    /* proceed — the next sign-in replaces the cookie */
+  }
+}
+
 /** Drop client session crumbs so the next paint cannot look half-logged-in. */
 export function clearClientAuthState(): void {
   setBearerToken(null);
@@ -233,26 +243,13 @@ export function clearClientAuthState(): void {
  */
 export async function dropExistingSession(): Promise<void> {
   clearClientAuthState();
-  try {
-    await authClient.signOut();
-  } catch {
-    /* proceed — new sign-in replaces the cookie */
-  }
+  await signOutBestEffort();
   clearClientAuthState();
 }
 
 export async function signOut(redirectTo = "/"): Promise<void> {
   clearClientAuthState();
-  try {
-    await Promise.race([
-      authClient.signOut(),
-      new Promise<never>((_, reject) => {
-        window.setTimeout(() => reject(new Error("sign-out-timeout")), SIGN_OUT_WAIT_MS);
-      }),
-    ]);
-  } catch {
-    /* cookies may still expire via /sign-out Set-Cookie; never retry-storm */
-  }
+  await signOutBestEffort();
   clearClientAuthState();
   const dest = new URL(redirectTo, window.location.origin);
   const path = `${dest.pathname}${dest.search}${dest.hash}` || "/";
@@ -267,10 +264,12 @@ export function turnstileFetchOptions(token: string) {
       "Content-Type": "application/json",
       "x-turnstile-token": trimmed,
       "x-captcha-response": trimmed,
+      "cf-turnstile-response": trimmed,
     },
-    onRequest(ctx: { headers: Headers }) {
-      ctx.headers.set("x-turnstile-token", trimmed);
-      ctx.headers.set("x-captcha-response", trimmed);
+    onRequest(ctx: { headers: Headers; body?: unknown }): void {
+      // Mutate in place. Returning a partial context fails Better Auth's
+      // RequestContext type (url, method, signal) and breaks `tsc`.
+      attachTurnstileToRequest(ctx, trimmed);
     },
   };
 }
