@@ -81,6 +81,14 @@ export function listingInteriors(raw: string | string[] | null | undefined): str
   return classifyListingPhotos(raw).interiors;
 }
 
+/** First photo the listing hero should paint. Empty when the centre has none. */
+export function primaryListingPhoto(raw: string | string[] | null | undefined): string {
+  const classified = classifyListingPhotos(raw);
+  const list = [classified.storefront, ...classified.interiors].filter(Boolean);
+  list.sort((a, b) => Number(isOfficialBuildingPhoto(b)) - Number(isOfficialBuildingPhoto(a)));
+  return list[0] || "";
+}
+
 /** Same persist rule as updateListing: real storefront first; drop stock placeholders. */
 export function applyStorefrontPhoto(current: string, storefront?: string) {
   if (!storefront || !(storefront.startsWith("data:image") || storefront.startsWith("/"))) {

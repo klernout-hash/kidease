@@ -2,7 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ListChecks, MapPin, MessageCircle, Search } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
-import { FeelPhoto, HeroYard } from "@/components/building-photo";
+import {
+  FeelPhoto,
+  HeroYard,
+  HERO_LCP_AVIF_SRCSET,
+  HERO_LCP_SIZES,
+} from "@/components/building-photo";
 import { CityHubLinks } from "@/components/city-hub-links";
 import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
@@ -24,7 +29,24 @@ import { STEP_SIZES } from "@/lib/photo";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/fr/")({
-  head: () => pageSeoHead(MARKETING_PAGE_SEO_FR.home),
+  head: () => {
+    const seo = pageSeoHead(MARKETING_PAGE_SEO_FR.home);
+    return {
+      ...seo,
+      links: [
+        ...seo.links,
+        {
+          rel: "preload",
+          as: "image",
+          type: "image/avif",
+          href: "/photos/hero-768-k2.avif?v=1",
+          imageSrcSet: HERO_LCP_AVIF_SRCSET,
+          imageSizes: HERO_LCP_SIZES,
+          fetchPriority: "high",
+        },
+      ],
+    };
+  },
   component: FrHome,
 });
 

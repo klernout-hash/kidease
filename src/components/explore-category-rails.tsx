@@ -51,6 +51,7 @@ export function ExploreCategoryRails({
           title={t("openingsRail")}
           items={openings}
           railId="openings"
+          eagerThumbs={false}
           persist={openingsSelected}
           empty={
             openingsSelected && !openings.length
@@ -61,13 +62,16 @@ export function ExploreCategoryRails({
       ) : null}
       {ages.map((age) => {
         const forced = filtered && picked.includes(age);
-        const ageItems = forced ? exploreAgeRailItemsWithFill(fillPool, age) : exploreAgeRailItems(items, age);
+        const ageItems = forced
+          ? exploreAgeRailItemsWithFill(fillPool, age)
+          : exploreAgeRailItems(items, age);
         return (
           <ListingRail
             key={age}
             title={t(EXPLORE_AGE_RAIL_COPY[age])}
             items={ageItems}
             railId={age}
+            eagerThumbs={false}
             persist={forced}
             empty={
               forced && !ageItems.length

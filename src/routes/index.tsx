@@ -35,9 +35,9 @@ import {
 } from "@/lib/desks";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { BootPending } from "@/components/boot-pending";
-import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
+import { LOADER_SETTLE_MS, ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
-import { originFromDeviceFix, readClientTimeZone, trustedSavedOrigin } from "@/lib/default-origin";
+import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, trustedSavedOrigin } from "@/lib/default-origin";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
@@ -72,15 +72,16 @@ export const Route = createFileRoute("/")({
     return change ? { change: "1" as const } : {};
   },
   loader: async () => {
-    const origin = await resolveRequestSearchOrigin();
-    const featured = await withTimeoutFallback(
+    const origin = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
+    const painted = await withPaintBudget(
       featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label } }),
-      LOADER_SETTLE_MS,
-      [] as Card[],
+      PAINT_BUDGET_MS,
     );
-    return { featured, origin };
+    return { featured: painted.value ?? [], featuredReady: painted.ready, origin };
   },
-  pendingMs: 200,
+  staleTime: 60_000,
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: BootPending,
   head: () => {
     const seo = pageSeoHead(MARKETING_PAGE_SEO.home);
@@ -159,6 +160,7 @@ function Home() {
   const [askLocation, setAskLocation] = useState(false);
   const [, setBusy] = useState(false);
   const [featured, setFeatured] = useState<Card[]>(boot.featured ?? []);
+  const [featuredReady, setFeaturedReady] = useState(boot.featuredReady !== false);
   const [recent, setRecent] = useState<Card[]>([]);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [familyKids, setFamilyKids] = useState<Child[]>([]);
@@ -213,9 +215,13 @@ function Home() {
       .then((rows) => {
         const next = uniqueById(rows);
         setFeatured(next);
+        setFeaturedReady(true);
         setExplore((cur) => (cur.length ? cur : next));
       })
-      .catch(() => setFeatured([]));
+      .catch(() => {
+        setFeatured([]);
+        setFeaturedReady(true);
+      });
     void withTimeoutFallback(
       searchDaycares({
         data: {
@@ -553,12 +559,16 @@ function Home() {
               />
             ) : (
               <>
-                <div className="ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5">
-                  {shown.slice(0, 9).map((item) => (
-                    <DaycareCard key={item.id} item={item} />
-                  ))}
-                </div>
-                {shown.length === 0 ? (
+                {!featuredReady && shown.length === 0 ? (
+                  <HomeCardSkeleton />
+                ) : (
+                  <div className="ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5">
+                    {shown.slice(0, 9).map((item) => (
+                      <DaycareCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                )}
+                {featuredReady && shown.length === 0 ? (
                   <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
                     <EmptyState
                       title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
@@ -584,7 +594,7 @@ function Home() {
           </div>
         </section>
 
-        <section className="ke-gutter mx-auto max-w-6xl py-16">
+        <section className="ke-defer-paint ke-gutter mx-auto max-w-6xl py-16">
           <h2 className="text-3xl md:text-4xl">{t("trustWhyTitle")}</h2>
           <ul className="mt-8 grid gap-4 md:grid-cols-2">
             <Why icon={BadgeCheck} text={t("trustWhy1")} />
@@ -595,7 +605,7 @@ function Home() {
           <p className="mt-8 max-w-2xl text-muted">{t("trustWhyLocal")}</p>
         </section>
 
-        <section className="bg-surface">
+        <section className="ke-defer-paint bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">
             <h2 className="text-3xl md:text-4xl">{t("quotesTitle")}</h2>
             <p className="mt-4 max-w-2xl text-muted">{t("quotesLead")}</p>
@@ -672,7 +682,9 @@ function Home() {
               <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} />
               <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} />
               <FacilityTypeRails items={shown} />
-              {shown.length === 0 ? (
+              {!featuredReady && shown.length === 0 ? (
+                <HomeCardSkeleton />
+              ) : shown.length === 0 ? (
                 <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
                     <EmptyState
                       title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
@@ -698,6 +710,20 @@ function Home() {
 
       <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />
     </Shell>
+  );
+}
+
+function HomeCardSkeleton() {
+  return (
+    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="space-y-2" aria-hidden="true">
+          <div className="ke-skel aspect-[4/3] w-full" />
+          <div className="ke-skel h-4 w-3/4" />
+          <div className="ke-skel h-3 w-1/2" />
+        </div>
+      ))}
+    </div>
   );
 }
 

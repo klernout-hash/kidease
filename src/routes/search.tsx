@@ -11,9 +11,10 @@ import { DaycareCard } from "@/components/daycare-card";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
 import { reverseGeocode } from "@/lib/geo";
-import { originFromDeviceFix, readClientTimeZone } from "@/lib/default-origin";
+import { originFromDeviceFix, productHomeOrigin, readClientTimeZone } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
-import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
+import { CARD_SIZES, CARD_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
+import { ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { bootSearchOrigin } from "@/lib/search-origin";
 import {
   originFromSearchQuery,
@@ -116,8 +117,8 @@ export const Route = createFileRoute("/search")({
     const fromQ = originFromSearchQuery(searchQueryFromUnknown(location.search));
     const origin = fromQ
       ? { lat: fromQ.lat, lng: fromQ.lng, label: fromQ.label, source: "manual" as const }
-      : await resolveRequestSearchOrigin();
-    const items = await withTimeoutFallback(
+      : await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
+    const painted = await withPaintBudget(
       searchDaycares({
         data: {
           lat: origin.lat,
@@ -129,12 +130,13 @@ export const Route = createFileRoute("/search")({
           q: searchQueryFromUnknown(location.search) || origin.label,
         },
       }),
-      LOADER_SETTLE_MS,
-      [] as Card[],
+      PAINT_BUDGET_MS,
     );
-    return { items, origin };
+    return { items: painted.value ?? [], itemsReady: painted.ready, origin };
   },
-  pendingMs: 200,
+  staleTime: 60_000,
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: BootPending,
   validateSearch: (s: Record<string, unknown>) => {
     const fields = parseExploreSearchFields(s);
@@ -174,7 +176,24 @@ export const Route = createFileRoute("/search")({
     const parent = compactParentListingSearch(parseParentListingSearch(s));
     return { ...out, ...parent };
   },
-  head: () => pageSeoHead(MARKETING_PAGE_SEO.search),
+  head: ({ loaderData }) => {
+    const seo = pageSeoHead(MARKETING_PAGE_SEO.search);
+    const src = loaderData?.items?.[0]?.photos?.[0];
+    const image =
+      src && !src.startsWith("data:")
+        ? [
+            {
+              rel: "preload" as const,
+              as: "image" as const,
+              href: photoUrl(src, 480),
+              imageSrcSet: photoSrcSet(src, CARD_WIDTHS),
+              imageSizes: CARD_SIZES,
+              fetchPriority: "high" as const,
+            },
+          ]
+        : [];
+    return { ...seo, links: [...seo.links, ...image] };
+  },
   component: SearchPage,
 });
 

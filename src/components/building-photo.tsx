@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
 import {
   CARD_SIZES,
   DETAIL_SIZES,
@@ -64,7 +64,6 @@ export function BuildingPhoto({
   height?: number;
 }) {
   const ref = useRef<HTMLImageElement>(null);
-  const [active, setActive] = useState(eager);
   const [cur, setCur] = useState(src || FALLBACK);
   const [broken, setBroken] = useState(false);
   const [skipTransform, setSkipTransform] = useState(false);
@@ -75,28 +74,36 @@ export function BuildingPhoto({
     setSkipTransform(false);
   }, [src]);
 
-  useEffect(() => {
-    if (eager) {
-      setActive(true);
+  const ready = cur || FALLBACK;
+  const delivered = skipTransform ? publicPhotoUrl(ready) : photoUrl(ready, width);
+
+  function fail(event?: SyntheticEvent<HTMLImageElement>) {
+    const failed = event?.currentTarget?.currentSrc || event?.currentTarget?.src || delivered;
+    if (!skipTransform && isResizedPhotoUrl(failed || photoUrl(ready, width))) {
+      setSkipTransform(true);
       return;
     }
+    if (cur !== FALLBACK) setCur(FALLBACK);
+    else setBroken(true);
+  }
+
+  useEffect(() => {
+    if (!eager && !priority) return;
     const node = ref.current;
-    if (!node) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setActive(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: "200px 0px", threshold: 0.01 },
-    );
-    io.observe(node);
-    return () => io.disconnect();
-  }, [eager, src]);
+    if (!node || broken) return;
+    // Eager heroes can 404 before hydrate; onError does not replay. Lazy cards
+    // stay on native loading=lazy — `complete` is not a reliable "failed" bit there.
+    if (node.complete && node.naturalWidth === 0 && node.getAttribute("src")) {
+      fail();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (broken) {
-    const sized = className?.includes("aspect-") || className?.includes("size-full") || className?.includes("h-full");
+    const sized =
+      className?.includes("aspect-") ||
+      className?.includes("size-full") ||
+      className?.includes("h-full");
     return (
       <ListingPhotoFallback
         className={className}
@@ -105,31 +112,20 @@ export function BuildingPhoto({
     );
   }
 
-  const ready = active ? cur || FALLBACK : undefined;
-  const blank = "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
-  const delivered = ready ? (skipTransform ? publicPhotoUrl(ready) : photoUrl(ready, width)) : blank;
-
   return (
     <img
       ref={ref}
       src={delivered}
-      srcSet={ready && !skipTransform ? photoSrcSet(ready, srcsetWidthsFor(width)) : undefined}
+      srcSet={!skipTransform ? photoSrcSet(ready, srcsetWidthsFor(width)) : undefined}
       sizes={sizes}
       width={width}
       height={height}
       alt=""
-      className={cn("bg-surface-2 text-transparent", className)}
-      loading={eager ? "eager" : "lazy"}
-      decoding="async"
+      className={cn("ke-photo bg-surface-2 text-transparent", className)}
+      loading={priority || eager ? "eager" : "lazy"}
+      decoding={priority ? "auto" : "async"}
       fetchPriority={priority ? "high" : eager ? "auto" : "low"}
-      onError={() => {
-        if (ready && !skipTransform && isResizedPhotoUrl(photoUrl(ready, width))) {
-          setSkipTransform(true);
-          return;
-        }
-        if (cur !== FALLBACK) setCur(FALLBACK);
-        else setBroken(true);
-      }}
+      onError={fail}
     />
   );
 }
@@ -234,7 +230,7 @@ export function FeelPhoto({
           height={height ?? feel.height}
           fetchPriority={eager ? "high" : "auto"}
           loading={eager ? "eager" : "lazy"}
-          decoding="async"
+          decoding={eager ? "auto" : "async"}
           className={cn("w-full object-cover", className)}
         />
       </picture>

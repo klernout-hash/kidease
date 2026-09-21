@@ -11,7 +11,11 @@ import {
 import { locateHere } from "@/lib/proximity";
 import { startChannelListener } from "@/lib/runtime";
 import { startWebVitals } from "@/lib/web-vitals";
-import { resolveDefaultSearchOrigin, readClientTimeZone, trustedSavedOrigin } from "@/lib/default-origin";
+import {
+  resolveDefaultSearchOrigin,
+  readClientTimeZone,
+  trustedSavedOrigin,
+} from "@/lib/default-origin";
 import { clearSavedOrigin, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { urlHasGeocodableSearchQuery } from "@/lib/search-query";
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
@@ -64,7 +68,17 @@ export function NativeBoot() {
   }, [setLocale, setLiveOnly, setDistanceUnit, setLocationConsent, setWorkOrigin, setAnchorMode]);
 
   useLayoutEffect(() => {
-    void hideNativeSplash();
+    // Hide after the shell has painted so the splash does not drop onto a blank WebView.
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => {
+        void hideNativeSplash();
+      });
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
   }, []);
 
   useEffect(() => {
@@ -100,7 +114,8 @@ export function NativeBoot() {
     setLocated(true);
     let cancelled = false;
     const consent = readLocationConsent();
-    const askGps = consent === "granted" || (consent !== "denied" && (isStandalone() || isNative()));
+    const askGps =
+      consent === "granted" || (consent !== "denied" && (isStandalone() || isNative()));
     if (!askGps) {
       return () => {
         cancelled = true;

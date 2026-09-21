@@ -43,9 +43,11 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1400,
-      launchAutoHide: true,
-      backgroundColor: "#FFFFFF",
+      // Stay up until NativeBoot hides it after first paint. Auto-hide at 1.4s
+      // revealed a white WebView while www.kidease.ca was still booting.
+      launchShowDuration: 0,
+      launchAutoHide: false,
+      backgroundColor: "#F6F3EE",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
       splashFullScreen: true,
@@ -53,7 +55,7 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: "DARK",
-      backgroundColor: "#FFFFFF",
+      backgroundColor: "#F6F3EE",
     },
     Keyboard: {
       resize: "body",
@@ -72,11 +74,11 @@ const config: CapacitorConfig = {
   android: {
     // Mixed content only for on-device http live reload. Store binaries stay https.
     allowMixedContent: remote.startsWith("http://"),
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F6F3EE",
   },
   ios: {
     contentInset: "automatic",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F6F3EE",
     preferredContentMode: "mobile",
     scheme: "KidEase",
   },

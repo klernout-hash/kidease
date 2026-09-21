@@ -21,9 +21,9 @@ import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { JsonLd } from "@/components/json-ld";
-import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto } from "@/lib/listing-photo";
+import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, primaryListingPhoto } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
-import { DETAIL_SIZES } from "@/lib/photo";
+import { DETAIL_SIZES, HERO_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
 import { getDaycare, getListingSeo } from "@/lib/server/daycares";
 import { cityHubCityName, cityHubDefForPlace } from "@/lib/city-hubs";
@@ -106,9 +106,22 @@ export const Route = createFileRoute("/daycare/$slug")({
     const canonical = listingCanonicalUrl(loaderData.slug);
     const jsonLd = listingJsonLdScript(loaderData);
     const crumbs = listingBreadcrumbJsonLdScript(loaderData);
+    const hero = primaryListingPhoto(loaderData.photos);
+    const image = hero
+      ? [
+          {
+            rel: "preload" as const,
+            as: "image" as const,
+            href: photoUrl(hero, 768),
+            imageSrcSet: photoSrcSet(hero, HERO_WIDTHS),
+            imageSizes: DETAIL_SIZES,
+            fetchPriority: "high" as const,
+          },
+        ]
+      : [];
     return {
       meta: listingSeoHeadTags(loaderData),
-      links: canonical ? [{ rel: "canonical", href: canonical }] : [],
+      links: [...(canonical ? [{ rel: "canonical", href: canonical }] : []), ...image],
       scripts: [
         ...(jsonLd ? [{ type: "application/ld+json", children: jsonLd }] : []),
         ...(crumbs ? [{ type: "application/ld+json", children: crumbs }] : []),
@@ -263,10 +276,30 @@ function Listing() {
   }
 
   if (!data) {
+    const earlyPhoto = primaryListingPhoto(seo?.photos);
+    const earlyName = seo ? displayCentreName(locale === "fr" ? seo.nameFr : seo.name) : "";
     return (
       <Shell>
         <ListingJsonLd src={seo} locale={seoLocale} />
-        <PageSkeleton hero cards={3} />
+        <main className="ke-gutter mx-auto max-w-6xl py-6">
+          {earlyPhoto ? (
+            <div className="overflow-hidden rounded-[14px] bg-surface shadow-card ring-1 ring-border">
+              <div className="relative aspect-[16/10] max-h-[min(20rem,42dvh)] bg-surface-2 lg:max-h-[22rem]">
+                <BuildingPhoto
+                  eager
+                  priority
+                  src={earlyPhoto}
+                  sizes={DETAIL_SIZES}
+                  width={768}
+                  height={576}
+                  className="size-full object-cover"
+                />
+              </div>
+            </div>
+          ) : null}
+          {earlyName ? <h1 className="mt-4 font-display text-3xl md:text-4xl">{earlyName}</h1> : null}
+          <PageSkeleton hero={!earlyPhoto} cards={2} />
+        </main>
       </Shell>
     );
   }
