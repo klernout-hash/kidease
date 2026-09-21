@@ -42,7 +42,7 @@ import { decideCentre, listAdminCentres, listIncompleteAdminCentres, type AdminC
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
 import { AdminTrustPanel } from "@/components/admin-trust";
-import { AdminCentreStatList, AdminReviewCard } from "@/components/admin-review-card";
+import { AdminCentreStatList, AdminReviewCard, AdminReviewLoading, AdminReviewNotice } from "@/components/admin-review-card";
 import { AdminScreeningQueue } from "@/components/admin-screening";
 import { AdminIncompleteQueue } from "@/components/admin-incomplete";
 import { JURISDICTIONS } from "@/lib/province-registry";
@@ -253,7 +253,8 @@ function AdminPage() {
   const staffCentres = useMemo(() => staffQueueRows(centres, showQaFixtures), [centres, showQaFixtures]);
   const qaCount = useMemo(() => centres.filter((c) => c.isTest).length, [centres]);
   const queueUnavailable = Boolean(centresError) && !centresReady;
-  const queueStat = (value: number) => (queueUnavailable ? "—" : value);
+  const queueLoading = !centresReady && !centresError;
+  const queueStat = (value: number) => (!centresReady ? "—" : value);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -481,46 +482,98 @@ function AdminPage() {
               {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from this production queue. Toggle Show QA fixtures to review the ghost listing separately.
             </p>
           ) : null}
-          <section className="mt-8 overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-border" data-ke="admin-stat-list" data-ke-stat-list={stat}>
-            <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-subtle">Verify</p>
-                <h2 className="mt-1 font-display text-2xl">
+          <section className="mt-10" data-ke="admin-stat-list" data-ke-stat-list={stat}>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="max-w-2xl">
+                <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-subtle">Licence & photos</p>
+                <h2 className="mt-2 font-display text-3xl tracking-tight">
                   {stat === "license" ? "Licence review" : stat === "photo" ? "Photo review" : "Licence and photo review"}
                 </h2>
+                <p className="mt-3 text-sm leading-6 text-muted">
+                  Open the uploaded licence and storefront. Mark the registry match. This is not an inspection score.
+                </p>
               </div>
-              <p className="text-sm text-muted">
-                {queueUnavailable ? "Unavailable" : verifyListed.length === 0 ? "Caught up" : `${verifyListed.length} to review`}
+              <p className="text-sm tabular-nums text-muted">
+                {queueLoading || queueUnavailable ? "—" : verifyListed.length === 0 ? "Caught up" : `${verifyListed.length} to review`}
               </p>
             </div>
-            <p className="border-t border-border px-5 py-3 text-sm text-muted">
-              Open the uploaded licence and storefront. Mark the registry match. This is not an inspection score.
-            </p>
-            {queueUnavailable ? (
-              <p className="border-t border-border px-5 py-8 text-sm text-danger" role="alert">
-                {centresError}
-              </p>
-            ) : verifyListed.length === 0 ? (
-              <p className="border-t border-border px-5 py-8 text-sm text-muted">No claims or licence photos are waiting.</p>
-            ) : (
-              <ul className="space-y-4 border-t border-border bg-bg p-3 sm:p-4">
-                {verifyListed.map((c) => (
-                  <li key={c.daycareId}>
-                    <AdminReviewCard
-                      centre={c}
-                      packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs}
-                      busy={busy}
-                      onDecide={onDecide}
-                      onLicense={onLicense}
-                      mode="verify"
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div className="mt-6">
+              {queueLoading ? (
+                <AdminReviewLoading />
+              ) : queueUnavailable ? (
+                <AdminReviewNotice title="Queue unavailable" body={centresError || "This list could not be loaded."} tone="danger" marker="error" />
+              ) : verifyListed.length === 0 ? (
+                <AdminReviewNotice title="Caught up" body="No claims or licence photos are waiting." marker="empty" />
+              ) : (
+                <ul className="space-y-4">
+                  {verifyListed.map((c) => (
+                    <li key={c.daycareId}>
+                      <AdminReviewCard
+                        centre={c}
+                        packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs}
+                        busy={busy}
+                        onDecide={onDecide}
+                        onLicense={onLicense}
+                        mode="verify"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </section>
         </>
-      ) : tab === "queue" || tab === "daycares" ? (
+      ) : tab === "queue" ? (
+        <>
+          <div role="group" aria-label="Filter this list" className="flex gap-1 overflow-x-auto rounded-full bg-surface p-1 ring-1 ring-border" data-ke="admin-queue-filters">
+            <Stat compact label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
+            <Stat compact label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
+            <Stat compact label="Live" value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
+            <Stat compact label="Declined" value={queueStat(counts.declined)} accent={stat === "declined"} filterId="declined" onSelect={() => onSelectStat("declined")} />
+          </div>
+          <details className="mt-3 rounded-2xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="admin-queue-aside">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm text-muted marker:content-none [&::-webkit-details-marker]:hidden">
+              <span>Other counts</span>
+              <span className="text-xs text-subtle">Leads and the full list</span>
+            </summary>
+            <div className="mt-2 flex flex-wrap gap-2 pb-1">
+              <Stat compact label="In this list" value={queueStat(counts.all)} accent={stat === "all"} filterId="all" onSelect={() => onSelectStat("all")} />
+              <Stat compact label="Open leads" value={leadCounts.open} accent={stat === "leads-open"} filterId="leads-open" onSelect={() => onSelectStat("leads-open")} />
+              <Stat compact label="Leads confirmed" value={leadCounts.confirmed} accent={stat === "leads-confirmed"} filterId="leads-confirmed" onSelect={() => onSelectStat("leads-confirmed")} />
+              <Stat compact label="Leads answered" value={leadCounts.answered} accent={stat === "leads-answered"} filterId="leads-answered" onSelect={() => onSelectStat("leads-answered")} />
+              <Stat compact label="Leads declined" value={leadCounts.declined} accent={stat === "leads-declined"} filterId="leads-declined" onSelect={() => onSelectStat("leads-declined")} />
+            </div>
+          </details>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
+              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setShowQaFixtures(e.target.checked)} />
+              Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
+            </label>
+          </div>
+          {!showQaFixtures && qaCount > 0 ? (
+            <p className="mt-3 text-xs text-muted">
+              {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from Live and Waiting counts. Toggle to review TEST Ghost Claim Lab separately.
+            </p>
+          ) : null}
+          {isAdminLeadStat(stat) ? (
+            <LeadStatPanel stat={stat} count={leadCounts[ADMIN_LEAD_STAT_META[stat].countKey]} />
+          ) : (
+            <AdminCentreStatList
+              stat={isAdminCentreListStat(stat) ? stat : "waiting"}
+              rows={listed}
+              unavailable={queueUnavailable}
+              loading={queueLoading}
+              error={centresError}
+              contracts={contracts}
+              busy={busy}
+              onDecide={onDecide}
+              onLicense={onLicense}
+            />
+          )}
+        </>
+      ) : tab === "daycares" ? (
         <>
           <div role="group" aria-label="Filter this list" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
@@ -548,17 +601,6 @@ function AdminPage() {
           ) : null}
           {isAdminLeadStat(stat) ? (
             <LeadStatPanel stat={stat} count={leadCounts[ADMIN_LEAD_STAT_META[stat].countKey]} />
-          ) : tab === "queue" ? (
-            <AdminCentreStatList
-              stat={isAdminCentreListStat(stat) ? stat : "waiting"}
-              rows={listed}
-              unavailable={queueUnavailable}
-              error={centresError}
-              contracts={contracts}
-              busy={busy}
-              onDecide={onDecide}
-              onLicense={onLicense}
-            />
           ) : (
             <section className="mt-8">
               {catalogHealth ? (
@@ -583,14 +625,16 @@ function AdminPage() {
                 </p>
               ) : null}
               <div className="mt-5 space-y-3">
-                {queueUnavailable ? (
-                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-danger ring-1 ring-danger/20" role="alert">
-                    {centresError}
-                  </p>
+                {queueLoading ? (
+                  <AdminReviewLoading />
+                ) : queueUnavailable ? (
+                  <AdminReviewNotice title="Queue unavailable" body={centresError || "This list could not be loaded."} tone="danger" marker="error" />
                 ) : listed.length === 0 ? (
-                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
-                    {isAdminCentreListStat(stat) ? ADMIN_CENTRE_STAT_COPY[stat].empty : "No daycares match that search yet."}
-                  </p>
+                  <AdminReviewNotice
+                    title="No matches"
+                    body={isAdminCentreListStat(stat) ? ADMIN_CENTRE_STAT_COPY[stat].empty : "No daycares match that search yet."}
+                    marker="empty"
+                  />
                 ) : (
                   byProvince.filter((group) => stat === "all" || group.rows.length > 0).map((group) => {
                     const open = openProv[group.code] !== false;
@@ -1018,16 +1062,16 @@ function AdminCentresLoadBanner({
   const idle = isAdminIdleTimeoutMessage(message);
   return (
     <div
-      className="mb-6 rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger ring-1 ring-danger/20"
+      className="mb-6 rounded-2xl bg-surface px-5 py-4 ring-1 ring-border"
       data-ke="admin-centres-error"
       role="alert"
     >
-      <p className="font-medium">{idle ? ADMIN_IDLE_TIMEOUT_MESSAGE : message}</p>
-      <p className="mt-1 text-danger/80">
+      <p className="font-display text-lg tracking-tight text-danger">{idle ? ADMIN_IDLE_TIMEOUT_MESSAGE : message}</p>
+      <p className="mt-1 text-sm leading-6 text-muted">
         Waiting and Incomplete counts are unavailable until this load succeeds.
       </p>
-      <div className="mt-3 flex flex-wrap gap-3">
-        <button type="button" className="font-medium underline-offset-4 hover:underline" onClick={onRetry}>
+      <div className="mt-3 flex flex-wrap gap-3 text-sm">
+        <button type="button" className="font-medium text-primary underline-offset-4 hover:underline" onClick={onRetry}>
           Try again
         </button>
         {idle ? (
@@ -1046,15 +1090,35 @@ function Stat({
   accent,
   onSelect,
   filterId,
+  compact,
 }: {
   label: string;
   value: number | string;
   accent?: boolean;
   onSelect?: () => void;
   filterId?: string;
+  compact?: boolean;
 }) {
+  if (compact) {
+    const boxClass = accent
+      ? "inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-primary px-3.5 text-sm text-primary-fg"
+      : "inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm text-muted hover:text-fg";
+    return (
+      <button
+        type="button"
+        className={`${boxClass} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40`}
+        aria-pressed={Boolean(accent)}
+        data-ke="admin-stat"
+        data-ke-stat={filterId}
+        onClick={onSelect}
+      >
+        <span>{label}</span>
+        <span className="tabular-nums">{value}</span>
+      </button>
+    );
+  }
   const labelClass = `block text-[11px] uppercase tracking-[0.14em] ${accent ? "text-primary-fg/70" : "text-subtle"}`;
-  const valueClass = "mt-1 block font-display text-2xl";
+  const valueClass = "mt-1 block font-display text-2xl tabular-nums";
   const boxClass = accent
     ? "rounded-xl bg-primary px-4 py-3 text-left text-primary-fg"
     : "rounded-xl bg-surface px-4 py-3 text-left ring-1 ring-border";

@@ -8,6 +8,7 @@ import {
   reviewCardLayout,
   reviewClaimKind,
   reviewDecisionFacts,
+  trustDetailRow,
 } from "../src/lib/admin-review-card.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -25,19 +26,24 @@ test("waiting queue is its own review section, not the dark dump", () => {
   assert.doesNotMatch(admin, /bg-\[#1a3790\]/);
   assert.match(card, /Daycares in this queue are waiting for a decision/);
   assert.match(card, /data-ke="admin-review-actions"/);
+  assert.match(card, /data-ke="admin-review-loading"/);
+  assert.match(card, /admin-review-empty/);
+  assert.match(card, /admin-review-error/);
   assert.match(card, /Keep waiting/);
+  assert.match(src("src/routes/admin.tsx"), /data-ke="admin-queue-aside"/);
 });
 
 test("card face is decision facts; contracts, payments, and registry tools sit under More", () => {
   const card = src("src/components/admin-review-card.tsx");
   const actionsAt = card.indexOf('data-ke="admin-review-actions"');
   const moreAt = card.indexOf('data-ke="admin-review-more"');
-  const trustAt = card.indexOf("<TrustSignals");
-  const packsAt = card.indexOf("<CentrePackChips");
-  assert.ok(actionsAt > 0 && moreAt > actionsAt, "primary actions render before More");
-  assert.ok(trustAt > moreAt, "trust chips render inside More");
-  assert.ok(packsAt > moreAt, "contract chips render inside More");
-  assert.match(card, /Contracts, payments, registry/);
+  const trustAt = card.indexOf('data-ke="admin-review-trust"');
+  const packsAt = card.indexOf('data-ke="admin-review-contracts"');
+  assert.ok(actionsAt > 0 && moreAt > actionsAt, "primary actions render before Details");
+  assert.ok(trustAt > moreAt, "trust rows render inside Details");
+  assert.ok(packsAt > moreAt, "contract rows render inside Details");
+  assert.doesNotMatch(card, /TrustSignals|CentrePackChips/);
+  assert.match(card, /Files, trust, and contracts/);
 
   const decision = reviewCardLayout("decision");
   assert.deepEqual(decision.face, ["identity", "facts", "decision"]);
@@ -90,6 +96,22 @@ test("plain licence, screening, and photo status — no payment or contract nois
     const blob = row.map((fact) => fact.status).join(" ");
     assert.doesNotMatch(blob, /payment|contract|agreement|enrolment|unverified/i);
   }
+});
+
+test("details panel turns trust badges into labelled rows", () => {
+  assert.deepEqual(trustDetailRow("pay_ledger", "Payments: not charged yet"), {
+    label: "Payments",
+    value: "Not charged yet",
+  });
+  assert.deepEqual(trustDetailRow("staff_none", "Staff screening: not attested"), {
+    label: "Screening",
+    value: "Not attested",
+  });
+  assert.deepEqual(trustDetailRow("license_unverified", "Unverified"), {
+    label: "Licence",
+    value: "Unverified",
+  });
+  assert.equal(trustDetailRow("claim_review", "Owner claim in review").label, "Ownership");
 });
 
 test("claim type distinguishes an owner claim from a new listing", () => {

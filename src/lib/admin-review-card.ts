@@ -47,6 +47,20 @@ export function reviewClaimKind(input: {
   return { id: "listing", label: "Listing" };
 }
 
+function withoutLead(value: string, pattern: RegExp) {
+  const next = value.replace(pattern, "").trim();
+  if (!next || next === value) return value;
+  return next.charAt(0).toUpperCase() + next.slice(1);
+}
+
+/** Short row labels for the details panel. Official badge text stays the value. */
+export function trustDetailRow(id: string, value: string): { label: string; value: string } {
+  if (id.startsWith("license")) return { label: "Licence", value };
+  if (id.startsWith("claim")) return { label: "Ownership", value };
+  if (id.startsWith("pay")) return { label: "Payments", value: withoutLead(value, /^Payments:\s*/i) };
+  return { label: "Screening", value: withoutLead(value, /^Staff screening:\s*/i) };
+}
+
 export function reviewDecisionFacts(input: {
   licensePhoto?: string | null;
   licenseStatus?: string | null;
