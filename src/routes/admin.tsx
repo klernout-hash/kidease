@@ -3,7 +3,7 @@ import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
-import { ListingStatusBadge, LedgerHonesty } from "@/components/listing-status-badge";
+import { LedgerHonesty } from "@/components/listing-status-badge";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -41,25 +41,24 @@ import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
 import { decideCentre, listAdminCentres, listIncompleteAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
-import { AdminLicenseActions, AdminTrustPanel } from "@/components/admin-trust";
+import { AdminTrustPanel } from "@/components/admin-trust";
+import { AdminCentreStatList, AdminReviewCard, AdminReviewLoading, AdminReviewNotice } from "@/components/admin-review-card";
 import { AdminScreeningQueue } from "@/components/admin-screening";
 import { AdminIncompleteQueue } from "@/components/admin-incomplete";
-import { licenseDocHref, openPrivateDocHref } from "@/lib/private-docs";
 import { JURISDICTIONS } from "@/lib/province-registry";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
-import { listAdminContracts, type AdminContractRow, type AdminPackRow } from "@/lib/server/contracts";
-import { AdminContractsPanel, CentrePackChips } from "@/components/admin-contracts";
+import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
+import { AdminContractsPanel } from "@/components/admin-contracts";
 import type { DocusignConfigIssue } from "@/lib/docusign-config";
 import type { DocusignConnectIssue } from "@/lib/docusign-errors";
 import type { DocusignTemplateOption } from "@/lib/docusign-packs";
 import { AdminMailPanel } from "@/components/admin-mail";
 import { AdminSentryTest } from "@/components/admin-sentry-test";
 import { AdminStripeCatalog } from "@/components/admin-stripe-catalog";
-import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
-import { isQueueableClaimStatus, listingStatusFromClaim } from "@/lib/listing-status";
+import { isQueueableClaimStatus } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
 import {
   ADMIN_CENTRE_STAT_COPY,
@@ -254,7 +253,8 @@ function AdminPage() {
   const staffCentres = useMemo(() => staffQueueRows(centres, showQaFixtures), [centres, showQaFixtures]);
   const qaCount = useMemo(() => centres.filter((c) => c.isTest).length, [centres]);
   const queueUnavailable = Boolean(centresError) && !centresReady;
-  const queueStat = (value: number) => (queueUnavailable ? "—" : value);
+  const queueLoading = !centresReady && !centresError;
+  const queueStat = (value: number) => (!centresReady ? "—" : value);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -482,37 +482,98 @@ function AdminPage() {
               {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from this production queue. Toggle Show QA fixtures to review the ghost listing separately.
             </p>
           ) : null}
-          <section className="mt-8 overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-border" data-ke="admin-stat-list" data-ke-stat-list={stat}>
-            <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-subtle">Verify</p>
-                <h2 className="mt-1 font-display text-2xl">
+          <section className="mt-10" data-ke="admin-stat-list" data-ke-stat-list={stat}>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="max-w-2xl">
+                <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-subtle">Licence & photos</p>
+                <h2 className="mt-2 font-display text-3xl tracking-tight">
                   {stat === "license" ? "Licence review" : stat === "photo" ? "Photo review" : "Licence and photo review"}
                 </h2>
+                <p className="mt-3 text-sm leading-6 text-muted">
+                  Open the uploaded licence and storefront. Mark the registry match. This is not an inspection score.
+                </p>
               </div>
-              <p className="text-sm text-muted">
-                {queueUnavailable ? "Unavailable" : verifyListed.length === 0 ? "Caught up" : `${verifyListed.length} to review`}
+              <p className="text-sm tabular-nums text-muted">
+                {queueLoading || queueUnavailable ? "—" : verifyListed.length === 0 ? "Caught up" : `${verifyListed.length} to review`}
               </p>
             </div>
-            <p className="border-t border-border px-5 py-3 text-sm text-muted">
-              Open the uploaded licence and storefront. Mark the registry match. This is not an inspection score.
-            </p>
-            {queueUnavailable ? (
-              <p className="border-t border-border px-5 py-8 text-sm text-danger" role="alert">
-                {centresError}
-              </p>
-            ) : verifyListed.length === 0 ? (
-              <p className="border-t border-border px-5 py-8 text-sm text-muted">No claims or licence photos are waiting.</p>
-            ) : (
-              <ul className="divide-y divide-border border-t border-border">
-                {verifyListed.map((c) => (
-                  <CentreRow key={c.daycareId} c={c} packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs} busy={busy} onDecide={onDecide} onLicense={onLicense} />
-                ))}
-              </ul>
-            )}
+            <div className="mt-6">
+              {queueLoading ? (
+                <AdminReviewLoading />
+              ) : queueUnavailable ? (
+                <AdminReviewNotice title="Queue unavailable" body={centresError || "This list could not be loaded."} tone="danger" marker="error" />
+              ) : verifyListed.length === 0 ? (
+                <AdminReviewNotice title="Caught up" body="No claims or licence photos are waiting." marker="empty" />
+              ) : (
+                <ul className="space-y-4">
+                  {verifyListed.map((c) => (
+                    <li key={c.daycareId}>
+                      <AdminReviewCard
+                        centre={c}
+                        packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs}
+                        busy={busy}
+                        onDecide={onDecide}
+                        onLicense={onLicense}
+                        mode="verify"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </section>
         </>
-      ) : tab === "queue" || tab === "daycares" ? (
+      ) : tab === "queue" ? (
+        <>
+          <div role="group" aria-label="Filter this list" className="flex gap-1 overflow-x-auto rounded-full bg-surface p-1 ring-1 ring-border" data-ke="admin-queue-filters">
+            <Stat compact label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
+            <Stat compact label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
+            <Stat compact label="Live" value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
+            <Stat compact label="Declined" value={queueStat(counts.declined)} accent={stat === "declined"} filterId="declined" onSelect={() => onSelectStat("declined")} />
+          </div>
+          <details className="mt-3 rounded-2xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="admin-queue-aside">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm text-muted marker:content-none [&::-webkit-details-marker]:hidden">
+              <span>Other counts</span>
+              <span className="text-xs text-subtle">Leads and the full list</span>
+            </summary>
+            <div className="mt-2 flex flex-wrap gap-2 pb-1">
+              <Stat compact label="In this list" value={queueStat(counts.all)} accent={stat === "all"} filterId="all" onSelect={() => onSelectStat("all")} />
+              <Stat compact label="Open leads" value={leadCounts.open} accent={stat === "leads-open"} filterId="leads-open" onSelect={() => onSelectStat("leads-open")} />
+              <Stat compact label="Leads confirmed" value={leadCounts.confirmed} accent={stat === "leads-confirmed"} filterId="leads-confirmed" onSelect={() => onSelectStat("leads-confirmed")} />
+              <Stat compact label="Leads answered" value={leadCounts.answered} accent={stat === "leads-answered"} filterId="leads-answered" onSelect={() => onSelectStat("leads-answered")} />
+              <Stat compact label="Leads declined" value={leadCounts.declined} accent={stat === "leads-declined"} filterId="leads-declined" onSelect={() => onSelectStat("leads-declined")} />
+            </div>
+          </details>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
+              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setShowQaFixtures(e.target.checked)} />
+              Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
+            </label>
+          </div>
+          {!showQaFixtures && qaCount > 0 ? (
+            <p className="mt-3 text-xs text-muted">
+              {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from Live and Waiting counts. Toggle to review TEST Ghost Claim Lab separately.
+            </p>
+          ) : null}
+          {isAdminLeadStat(stat) ? (
+            <LeadStatPanel stat={stat} count={leadCounts[ADMIN_LEAD_STAT_META[stat].countKey]} />
+          ) : (
+            <AdminCentreStatList
+              stat={isAdminCentreListStat(stat) ? stat : "waiting"}
+              rows={listed}
+              unavailable={queueUnavailable}
+              loading={queueLoading}
+              error={centresError}
+              contracts={contracts}
+              busy={busy}
+              onDecide={onDecide}
+              onLicense={onLicense}
+            />
+          )}
+        </>
+      ) : tab === "daycares" ? (
         <>
           <div role="group" aria-label="Filter this list" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
@@ -540,18 +601,6 @@ function AdminPage() {
           ) : null}
           {isAdminLeadStat(stat) ? (
             <LeadStatPanel stat={stat} count={leadCounts[ADMIN_LEAD_STAT_META[stat].countKey]} />
-          ) : tab === "queue" ? (
-            <CentreStatList
-              stat={isAdminCentreListStat(stat) ? stat : "waiting"}
-              rows={listed}
-              unavailable={queueUnavailable}
-              error={centresError}
-              invert={stat === "waiting"}
-              contracts={contracts}
-              busy={busy}
-              onDecide={onDecide}
-              onLicense={onLicense}
-            />
           ) : (
             <section className="mt-8">
               {catalogHealth ? (
@@ -576,14 +625,16 @@ function AdminPage() {
                 </p>
               ) : null}
               <div className="mt-5 space-y-3">
-                {queueUnavailable ? (
-                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-danger ring-1 ring-danger/20" role="alert">
-                    {centresError}
-                  </p>
+                {queueLoading ? (
+                  <AdminReviewLoading />
+                ) : queueUnavailable ? (
+                  <AdminReviewNotice title="Queue unavailable" body={centresError || "This list could not be loaded."} tone="danger" marker="error" />
                 ) : listed.length === 0 ? (
-                  <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
-                    {isAdminCentreListStat(stat) ? ADMIN_CENTRE_STAT_COPY[stat].empty : "No daycares match that search yet."}
-                  </p>
+                  <AdminReviewNotice
+                    title="No matches"
+                    body={isAdminCentreListStat(stat) ? ADMIN_CENTRE_STAT_COPY[stat].empty : "No daycares match that search yet."}
+                    marker="empty"
+                  />
                 ) : (
                   byProvince.filter((group) => stat === "all" || group.rows.length > 0).map((group) => {
                     const open = openProv[group.code] !== false;
@@ -601,12 +652,20 @@ function AdminPage() {
                           </span>
                         </button>
                         {open ? (
-                          <ul className="divide-y divide-border border-t border-border">
+                          <ul className="space-y-3 border-t border-border bg-bg p-3 sm:p-4">
                             {group.rows.length === 0 ? (
-                              <li className="px-5 py-4 text-sm text-muted">No claims in this jurisdiction yet. Registry review stays manual.</li>
+                              <li className="px-2 py-2 text-sm text-muted">No claims in this jurisdiction yet. Registry review stays manual.</li>
                             ) : (
                               group.rows.map((c) => (
-                                <CentreRow key={c.daycareId} c={c} packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs} busy={busy} onDecide={onDecide} onLicense={onLicense} />
+                                <li key={c.daycareId}>
+                                  <AdminReviewCard
+                                    centre={c}
+                                    packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs}
+                                    busy={busy}
+                                    onDecide={onDecide}
+                                    onLicense={onLicense}
+                                  />
+                                </li>
                               ))
                             )}
                           </ul>
@@ -1003,16 +1062,16 @@ function AdminCentresLoadBanner({
   const idle = isAdminIdleTimeoutMessage(message);
   return (
     <div
-      className="mb-6 rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger ring-1 ring-danger/20"
+      className="mb-6 rounded-2xl bg-surface px-5 py-4 ring-1 ring-border"
       data-ke="admin-centres-error"
       role="alert"
     >
-      <p className="font-medium">{idle ? ADMIN_IDLE_TIMEOUT_MESSAGE : message}</p>
-      <p className="mt-1 text-danger/80">
+      <p className="font-display text-lg tracking-tight text-danger">{idle ? ADMIN_IDLE_TIMEOUT_MESSAGE : message}</p>
+      <p className="mt-1 text-sm leading-6 text-muted">
         Waiting and Incomplete counts are unavailable until this load succeeds.
       </p>
-      <div className="mt-3 flex flex-wrap gap-3">
-        <button type="button" className="font-medium underline-offset-4 hover:underline" onClick={onRetry}>
+      <div className="mt-3 flex flex-wrap gap-3 text-sm">
+        <button type="button" className="font-medium text-primary underline-offset-4 hover:underline" onClick={onRetry}>
           Try again
         </button>
         {idle ? (
@@ -1031,15 +1090,35 @@ function Stat({
   accent,
   onSelect,
   filterId,
+  compact,
 }: {
   label: string;
   value: number | string;
   accent?: boolean;
   onSelect?: () => void;
   filterId?: string;
+  compact?: boolean;
 }) {
+  if (compact) {
+    const boxClass = accent
+      ? "inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-primary px-3.5 text-sm text-primary-fg"
+      : "inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm text-muted hover:text-fg";
+    return (
+      <button
+        type="button"
+        className={`${boxClass} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40`}
+        aria-pressed={Boolean(accent)}
+        data-ke="admin-stat"
+        data-ke-stat={filterId}
+        onClick={onSelect}
+      >
+        <span>{label}</span>
+        <span className="tabular-nums">{value}</span>
+      </button>
+    );
+  }
   const labelClass = `block text-[11px] uppercase tracking-[0.14em] ${accent ? "text-primary-fg/70" : "text-subtle"}`;
-  const valueClass = "mt-1 block font-display text-2xl";
+  const valueClass = "mt-1 block font-display text-2xl tabular-nums";
   const boxClass = accent
     ? "rounded-xl bg-primary px-4 py-3 text-left text-primary-fg"
     : "rounded-xl bg-surface px-4 py-3 text-left ring-1 ring-border";
@@ -1086,170 +1165,3 @@ function LeadStatPanel({ stat, count }: { stat: Parameters<typeof adminLeadStatH
   );
 }
 
-function CentreStatList({
-  stat,
-  rows,
-  unavailable,
-  error,
-  invert,
-  contracts,
-  busy,
-  onDecide,
-  onLicense,
-}: {
-  stat: "waiting" | "live" | "declined" | "all";
-  rows: AdminCentreRow[];
-  unavailable: boolean;
-  error: string | null;
-  invert?: boolean;
-  contracts: AdminContractRow[];
-  busy: string | null;
-  onDecide: (id: string, d: Decision) => void;
-  onLicense: (id: string, d: LicenseReviewAction) => void;
-}) {
-  const copy = ADMIN_CENTRE_STAT_COPY[stat];
-  const countLabel = unavailable ? "Unavailable" : rows.length === 0 ? copy.caughtUp || "None" : `${rows.length} to review`;
-  return (
-    <section
-      className={
-        invert
-          ? "mt-8 overflow-hidden rounded-2xl bg-[#1a3790] text-primary-fg shadow-card"
-          : "mt-8 overflow-hidden rounded-2xl bg-surface text-fg shadow-card ring-1 ring-border"
-      }
-      data-ke="admin-stat-list"
-      data-ke-stat-list={stat}
-    >
-      <div className="flex flex-wrap items-end justify-between gap-2 px-5 py-4">
-        <div>
-          <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${invert ? "text-primary-fg/70" : "text-subtle"}`}>
-            {copy.eyebrow}
-          </p>
-          <h2 className="mt-1 font-display text-2xl">{copy.title}</h2>
-        </div>
-        <p className={`text-sm ${invert ? "text-primary-fg/75" : "text-muted"}`}>{countLabel}</p>
-      </div>
-      {unavailable ? (
-        <p className={`border-t px-5 py-8 text-sm ${invert ? "border-white/10 text-primary-fg/80" : "border-border text-danger"}`} role="alert">
-          {error}
-        </p>
-      ) : rows.length === 0 ? (
-        <p className={`border-t px-5 py-8 text-sm ${invert ? "border-white/10 text-primary-fg/70" : "border-border text-muted"}`}>
-          {copy.empty}
-        </p>
-      ) : (
-        <ul className={`divide-y border-t ${invert ? "divide-white/10 border-white/10" : "divide-border border-border"}`}>
-          {rows.map((c) => (
-            <CentreRow
-              key={c.daycareId}
-              c={c}
-              packs={contracts.find((row) => row.daycareId === c.daycareId)?.packs}
-              busy={busy}
-              onDecide={onDecide}
-              onLicense={onLicense}
-              invert={invert}
-            />
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function CentreRow({
-  c,
-  packs,
-  busy,
-  onDecide,
-  onLicense,
-  invert,
-}: {
-  c: AdminCentreRow;
-  packs?: AdminPackRow[];
-  busy: string | null;
-  onDecide: (id: string, d: Decision) => void;
-  onLicense: (id: string, d: LicenseReviewAction) => void;
-  invert?: boolean;
-}) {
-  const muted = invert ? "text-primary-fg/70" : "text-muted";
-  const status = listingStatusFromClaim(c.claimStatus, { live: c.live, claimedAt: c.claimedAt });
-  return (
-    <li className="px-5 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-medium">{c.name}</p>
-            <ListingStatusBadge claimStatus={c.claimStatus} live={c.live} claimedAt={c.claimedAt} invert={invert} />
-            {c.isTest ? (
-              <span
-                className={
-                  invert
-                    ? "rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-primary-fg"
-                    : "rounded-full bg-warn/15 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-warn"
-                }
-              >
-                QA test
-              </span>
-            ) : null}
-          </div>
-          <p className={`mt-1 text-sm ${muted}`}>
-            {[c.city, c.province].filter(Boolean).join(", ")}
-            {c.address ? ` · ${c.address}` : ""}
-          </p>
-          <p className={`mt-0.5 text-sm ${muted}`}>
-            {c.providerName || "—"} · {c.providerEmail || c.contactEmail || "no email"}
-          </p>
-          {packs?.length ? <CentrePackChips packs={packs} /> : null}
-          {c.licensePhoto || c.storefrontPhoto ? (
-            <div className="mt-3 flex flex-wrap gap-3">
-              {c.licensePhoto ? (
-                <figure className="space-y-1">
-                  <button
-                    type="button"
-                    className="rounded-lg bg-bg px-3 py-2 text-left text-sm font-medium text-primary ring-1 ring-black/10 hover:underline"
-                    onClick={() => openPrivateDocHref(licenseDocHref(c.daycareId))}
-                  >
-                    View licence document
-                  </button>
-                  <figcaption className={`text-[11px] ${muted}`}>Licence photo</figcaption>
-                </figure>
-              ) : null}
-              {c.storefrontPhoto ? (
-                <figure className="space-y-1">
-                  <img src={c.storefrontPhoto} alt={`Storefront for ${c.name}`} className="h-24 w-36 rounded-lg object-cover ring-1 ring-black/10" />
-                  <figcaption className={`text-[11px] ${muted}`}>Storefront</figcaption>
-                </figure>
-              ) : (
-                <p className={`mt-2 text-xs ${muted}`}>No storefront photo uploaded yet.</p>
-              )}
-            </div>
-          ) : (
-            <p className={`mt-2 text-xs ${muted}`}>No licence or storefront photo on this claim yet.</p>
-          )}
-          {c.reviewedAt ? (
-            <p className={`mt-0.5 text-xs ${muted}`}>
-              Reviewed {new Date(c.reviewedAt).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}
-              {c.reviewNote ? ` · ${c.reviewNote}` : ""}
-            </p>
-          ) : null}
-          <AdminLicenseActions item={c} busy={busy !== null} onReview={(action) => onLicense(c.daycareId, action)} />
-        </div>
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button size="sm" variant="ghost" asChild>
-            <Link to="/daycare/$slug" params={{ slug: c.slug }}>
-              View listing
-            </Link>
-          </Button>
-          <Button size="sm" variant={status === "live" ? "primary" : "secondary"} disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
-            Approve
-          </Button>
-          <Button size="sm" variant={status === "waiting" ? "primary" : "secondary"} disabled={busy !== null || status === "declined"} onClick={() => onDecide(c.daycareId, "waiting")}>
-            Waiting
-          </Button>
-          <Button size="sm" variant={status === "declined" ? "danger" : "secondary"} disabled={busy !== null || status === "declined"} onClick={() => onDecide(c.daycareId, "decline")}>
-            Decline
-          </Button>
-        </div>
-      </div>
-    </li>
-  );
-}

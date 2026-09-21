@@ -108,6 +108,7 @@ export function AdminLicenseActions({
   item,
   busy,
   onReview,
+  showSignals = true,
 }: {
   item: {
     daycareId: string;
@@ -125,31 +126,44 @@ export function AdminLicenseActions({
   };
   busy: boolean;
   onReview: (action: "matched" | "mismatch" | "expired" | "suspended" | "unverified") => void;
+  /** Trust chips (payments, screening, claim) stay off the decision face unless asked. */
+  showSignals?: boolean;
 }) {
+  const actions: { id: "matched" | "mismatch" | "expired" | "suspended" | "unverified"; label: string; tone?: string }[] = [
+    { id: "matched", label: "Mark registry-matched" },
+    { id: "mismatch", label: "Mark mismatch" },
+    { id: "expired", label: "Mark expired", tone: "text-danger" },
+    { id: "suspended", label: "Mark suspended", tone: "text-danger" },
+    { id: "unverified", label: "Clear to unverified", tone: "text-muted" },
+  ];
+  const meta = [
+    item.licenseNumber || "not on file",
+    item.licenseExpiry ? `exp ${item.licenseExpiry}` : "",
+    item.licensedCapacity ? `cap ${item.licensedCapacity}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <div className="mt-3 space-y-2">
-      <TrustSignals item={item as TrustListing} surface="admin" compact />
-      <p className="text-xs text-muted">
-        Licence {item.licenseNumber || "not on file"}
-        {item.licenseExpiry ? ` · exp ${item.licenseExpiry}` : ""}
-        {item.licensedCapacity ? ` · cap ${item.licensedCapacity}` : ""}
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <button type="button" disabled={busy} onClick={() => onReview("matched")} className="rounded-full bg-ok/15 px-3 py-1.5 text-xs text-ok disabled:opacity-50">
-          Mark registry-matched
-        </button>
-        <button type="button" disabled={busy} onClick={() => onReview("mismatch")} className="rounded-full bg-surface-2 px-3 py-1.5 text-xs disabled:opacity-50">
-          Mark mismatch
-        </button>
-        <button type="button" disabled={busy} onClick={() => onReview("expired")} className="rounded-full bg-danger/10 px-3 py-1.5 text-xs text-danger disabled:opacity-50">
-          Mark expired
-        </button>
-        <button type="button" disabled={busy} onClick={() => onReview("suspended")} className="rounded-full bg-danger/10 px-3 py-1.5 text-xs text-danger disabled:opacity-50">
-          Mark suspended
-        </button>
-        <button type="button" disabled={busy} onClick={() => onReview("unverified")} className="rounded-full bg-surface-2 px-3 py-1.5 text-xs text-muted disabled:opacity-50">
-          Clear to unverified
-        </button>
+    <div className="overflow-hidden rounded-xl bg-bg ring-1 ring-border" data-ke="admin-registry-menu">
+      {showSignals ? (
+        <div className="border-b border-border px-3 py-3">
+          <TrustSignals item={item as TrustListing} surface="admin" compact />
+        </div>
+      ) : null}
+      <p className="border-b border-border px-3 py-2.5 text-sm text-muted">Licence {meta}</p>
+      <div className="divide-y divide-border">
+        {actions.map((action) => (
+          <button
+            key={action.id}
+            type="button"
+            disabled={busy}
+            onClick={() => onReview(action.id)}
+            className={`flex min-h-11 w-full items-center justify-between px-3 text-left text-sm hover:bg-surface disabled:opacity-50 ${action.tone || "text-fg"}`}
+          >
+            {action.label}
+          </button>
+        ))}
       </div>
     </div>
   );

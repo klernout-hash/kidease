@@ -148,9 +148,9 @@ export const ADMIN_CENTRE_STAT_COPY: Record<
   { eyebrow: string; title: string; empty: string; caughtUp?: string }
 > = {
   waiting: {
-    eyebrow: "Urgency",
-    title: "Waiting on you",
-    empty: "No submitted daycares are waiting.",
+    eyebrow: "Review queue",
+    title: "Daycares waiting for review",
+    empty: "No daycares are waiting for review.",
     caughtUp: "Caught up",
   },
   live: {
