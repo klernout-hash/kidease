@@ -1167,18 +1167,42 @@ export const setRole = createServerFn({ method: "POST" })
     return { role: written.role };
   });
 
+async function overlayClaimLicensePhotos(sql: Awaited<ReturnType<typeof getSql>>, rows: DaycareRow[]) {
+  const missing = rows.filter((row) => !(row.license_photo || "").trim()).map((row) => row.id);
+  if (!missing.length) return rows;
+  const claims = await sql
+    .query<{ daycare_id: string; license_photo: string }>(
+      `select distinct on (daycare_id) daycare_id, license_photo
+       from listing_claims
+       where daycare_id = any($1::text[])
+         and license_photo is not null
+         and btrim(license_photo) <> ''
+       order by daycare_id, created_at desc nulls last`,
+      [missing],
+    )
+    .catch(() => [] as Array<{ daycare_id: string; license_photo: string }>);
+  if (!claims.length) return rows;
+  const byId = new Map(claims.map((claim) => [claim.daycare_id, claim.license_photo]));
+  return rows.map((row) => {
+    if ((row.license_photo || "").trim()) return row;
+    const photo = byId.get(row.id);
+    return photo ? { ...row, license_photo: photo } : row;
+  });
+}
+
 export const getProvider = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureSeed(sql);
     const accessIds = await listAccessibleDaycareIds(sql, context.userId);
-    const owned = accessIds.length
+    const ownedRows = accessIds.length
       ? await sql.query<DaycareRow>(
           `select d.* from daycares d where d.id = any($1::text[])`,
           [accessIds],
         )
       : [];
+    const owned = await overlayClaimLicensePhotos(sql, ownedRows);
     const entitlements = await loadProfileEntitlements(sql, context.userId);
     const since = analyticsSinceDate(entitlements.analyticsDays);
     const weekSince = analyticsSinceDate(7);

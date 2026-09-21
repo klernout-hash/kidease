@@ -179,7 +179,7 @@ test("provider default desk is Today and clutter stays off that path", () => {
   assert.match(provider, /desk === "listings"[\s\S]*DirectorNudgeQueue/);
   assert.match(provider, /desk === "listings"[\s\S]*VacancyConfirmLoop/);
   assert.match(provider, /CompletenessChecklist/);
-  assert.match(src("src/components/provider-listing-forms.tsx"), /disabled=\{!dirty\}/);
+  assert.match(src("src/components/provider-listing-forms.tsx"), /disabled=\{!dirty/);
 });
 
 test("Sprint 1 does not rewrite public, parent, or admin IA", () => {

@@ -21,9 +21,17 @@ function claimKey(d: Daycare): CopyKey {
 
 export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare; onSaved: () => void }) {
   const { t, locale } = useCopy();
+  const serverRev = `${daycare.id}|${daycare.licenseNumber ?? ""}|${daycare.licenseExpiry ?? ""}|${daycare.licensedCapacity ?? ""}`;
+  const [appliedRev, setAppliedRev] = useState(serverRev);
   const [licenseNumber, setLicenseNumber] = useState(daycare.licenseNumber ?? "");
   const [licenseExpiry, setLicenseExpiry] = useState(daycare.licenseExpiry ?? "");
   const [capacity, setCapacity] = useState(daycare.licensedCapacity ? String(daycare.licensedCapacity) : "");
+  if (appliedRev !== serverRev) {
+    setAppliedRev(serverRev);
+    setLicenseNumber(daycare.licenseNumber ?? "");
+    setLicenseExpiry(daycare.licenseExpiry ?? "");
+    setCapacity(daycare.licensedCapacity ? String(daycare.licensedCapacity) : "");
+  }
   const [busy, setBusy] = useState<string | null>(null);
   const attested = Boolean(daycare.staffScreeningAttested);
 

@@ -22,8 +22,13 @@ import {
 } from "@/lib/parent-listing";
 import type { FacilityType } from "@/lib/facility-type";
 import { writeTrustEvent } from "@/lib/server/trust";
-import { assertCanMutateListing, decideStartClaim } from "@/lib/access-control";
-import { ensureOwnerMembership } from "@/lib/server/centre-access";
+import { LISTING_NOT_FOUND, decideStartClaim } from "@/lib/access-control";
+import { nonNegativeInt } from "@/lib/spot-counts";
+import {
+  assertCentreCanMutateListing,
+  assertCentreCanMutateVacancies,
+  ensureOwnerMembership,
+} from "@/lib/server/centre-access";
 
 export type ClaimHit = {
   id: string;
@@ -65,9 +70,11 @@ async function persistLicenseInput(raw?: string | null, daycareId?: string | nul
 }
 
 async function storeLicensePhoto(sql: Awaited<ReturnType<typeof getSql>>, daycareId: string | null, photo: string) {
-  if (daycareId) {
-    await sql`update daycares set license_photo = ${photo} where id = ${daycareId}`.catch(() => undefined);
-  }
+  if (!daycareId) return;
+  const rows = await sql<{ id: string }>`
+    update daycares set license_photo = ${photo} where id = ${daycareId} returning id
+  `;
+  if (!rows[0]) throw new Error(LISTING_NOT_FOUND);
 }
 
 export const searchClaimable = createServerFn({ method: "POST" })
@@ -369,11 +376,7 @@ export const updateListing = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const own = await sql<{ user_id: string }>`
-      select user_id from provider_daycares
-      where user_id = ${context.userId} and daycare_id = ${data.daycareId}
-    `;
-    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
+    await assertCentreCanMutateListing(sql, context.userId, data.daycareId);
     const current = await sql<{ photos: string; amenities: string }>`
       select photos, amenities from daycares where id = ${data.daycareId}
     `;
@@ -381,8 +384,14 @@ export const updateListing = createServerFn({ method: "POST" })
     let photos = applyStorefrontPhoto(current[0]?.photos ?? "", data.storefront);
     photos = applyInteriorPhotos(photos, data.interiors);
     const photosChanged = listingPhotosChanged(previousPhotos, photos);
-    const minAge = Math.max(0, Math.min(216, Math.round(data.ageMinMonths)));
-    const maxAge = Math.max(minAge, Math.min(216, Math.round(data.ageMaxMonths)));
+    const minAge = Math.min(216, nonNegativeInt(data.ageMinMonths));
+    const maxAge = Math.max(minAge, Math.min(216, nonNegativeInt(data.ageMaxMonths)));
+    const spotsInfant = nonNegativeInt(data.spotsInfant);
+    const spotsToddler = nonNegativeInt(data.spotsToddler);
+    const spotsPreschool = nonNegativeInt(data.spotsPreschool);
+    const infantMonthly = nonNegativeInt(data.infantMonthly);
+    const toddlerMonthly = nonNegativeInt(data.toddlerMonthly);
+    const preschoolMonthly = nonNegativeInt(data.preschoolMonthly);
     const license = await persistLicenseInput(data.licensePhoto, data.daycareId);
     const hours = (data.hours ?? "").trim();
     const licenseNumber = (data.licenseNumber ?? "").trim().slice(0, 80);
@@ -391,7 +400,7 @@ export const updateListing = createServerFn({ method: "POST" })
       typeof data.licensedCapacity === "number" && data.licensedCapacity > 0
         ? Math.min(400, Math.round(data.licensedCapacity))
         : null;
-    await sql`
+    const wrote = await sql<{ id: string }>`
       update daycares set
         name = ${data.name.trim()},
         name_fr = ${data.name.trim()},
@@ -402,12 +411,12 @@ export const updateListing = createServerFn({ method: "POST" })
         phone = ${data.phone.trim() || null},
         contact_email = ${data.email.trim() || null},
         photos = ${photos},
-        spots_infant = ${Math.max(0, data.spotsInfant)},
-        spots_toddler = ${Math.max(0, data.spotsToddler)},
-        spots_preschool = ${Math.max(0, data.spotsPreschool)},
-        infant_monthly = ${data.infantMonthly},
-        toddler_monthly = ${data.toddlerMonthly},
-        preschool_monthly = ${data.preschoolMonthly},
+        spots_infant = ${spotsInfant},
+        spots_toddler = ${spotsToddler},
+        spots_preschool = ${spotsPreschool},
+        infant_monthly = ${infantMonthly},
+        toddler_monthly = ${toddlerMonthly},
+        preschool_monthly = ${preschoolMonthly},
         age_min_months = ${minAge},
         age_max_months = ${maxAge},
         ages_confirmed = 1,
@@ -425,8 +434,9 @@ export const updateListing = createServerFn({ method: "POST" })
           else last_photo_updated_at
         end
       where id = ${data.daycareId}
+      returning id
     `.catch(async () => {
-      await sql`
+      return sql<{ id: string }>`
         update daycares set
           name = ${data.name.trim()},
           name_fr = ${data.name.trim()},
@@ -437,18 +447,20 @@ export const updateListing = createServerFn({ method: "POST" })
           phone = ${data.phone.trim() || null},
           contact_email = ${data.email.trim() || null},
           photos = ${photos},
-          spots_infant = ${Math.max(0, data.spotsInfant)},
-          spots_toddler = ${Math.max(0, data.spotsToddler)},
-          spots_preschool = ${Math.max(0, data.spotsPreschool)},
-          infant_monthly = ${data.infantMonthly},
-          toddler_monthly = ${data.toddlerMonthly},
-          preschool_monthly = ${data.preschoolMonthly},
+          spots_infant = ${spotsInfant},
+          spots_toddler = ${spotsToddler},
+          spots_preschool = ${spotsPreschool},
+          infant_monthly = ${infantMonthly},
+          toddler_monthly = ${toddlerMonthly},
+          preschool_monthly = ${preschoolMonthly},
           age_min_months = ${minAge},
           age_max_months = ${maxAge},
           ages_confirmed = 1
         where id = ${data.daycareId}
+        returning id
       `;
     });
+    if (!wrote[0]) throw new Error(LISTING_NOT_FOUND);
     const culture = cultureFieldsToSql({
       staffLanguages: data.staffLanguages,
       culturalPrograms: data.culturalPrograms,
@@ -460,7 +472,7 @@ export const updateListing = createServerFn({ method: "POST" })
         cultural_programs = ${culture.culturalProgramsJson}::jsonb,
         cultural_team_note = ${culture.culturalTeamNote}
       where id = ${data.daycareId}
-    `.catch(() => undefined);
+    `;
     const facilityType = normalizeFacilityTypeColumn(data.facilityType);
     const openingWindow = normalizeOpeningWindow(data.openingWindow);
     const pack = parentListingToSql({
@@ -511,7 +523,7 @@ export const updateListing = createServerFn({ method: "POST" })
         description_fr = case when ${description} = '' then description_fr else ${description} end,
         part_time_monthly = coalesce(${partTime}, part_time_monthly)
       where id = ${data.daycareId}
-    `.catch(() => undefined);
+    `;
     if (license) {
       await storeLicensePhoto(sql, data.daycareId, license);
       await sql`
@@ -547,16 +559,14 @@ export const refreshVacancy = createServerFn({ method: "POST" })
   .validator((input: { daycareId: string }) => input)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const own = await sql<{ user_id: string }>`
-      select user_id from provider_daycares
-      where user_id = ${context.userId} and daycare_id = ${data.daycareId}
-    `;
-    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
-    await sql`
+    await assertCentreCanMutateVacancies(sql, context.userId, data.daycareId);
+    const wrote = await sql<{ id: string }>`
       update daycares
       set last_vacancy_updated_at = now()
       where id = ${data.daycareId}
+      returning id
     `;
+    if (!wrote[0]) throw new Error(LISTING_NOT_FOUND);
     return { ok: true as const, lastVacancyUpdatedAt: new Date().toISOString() };
   });
 

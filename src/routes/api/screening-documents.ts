@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PRIVATE_DOC_BAD_FILE } from "@/lib/private-docs";
+import { asUploadPart, inferPrivateDocMime, PRIVATE_DOC_BAD_FILE } from "@/lib/private-docs";
 import { readUploadFile } from "@/lib/server/private-docs";
 import { saveScreeningUpload } from "@/lib/server/provider-screening";
 
@@ -22,15 +22,15 @@ export const Route = createFileRoute("/api/screening-documents")({
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
           const form = await request.formData();
-          const file = form.get("file");
-          if (!(file instanceof File)) throw new Error(PRIVATE_DOC_BAD_FILE);
+          const file = asUploadPart(form.get("file"));
+          if (!file) throw new Error(PRIVATE_DOC_BAD_FILE);
           const saved = await saveScreeningUpload({
             userId,
             daycareId: String(form.get("daycareId") || ""),
             personId: String(form.get("personId") || ""),
             kind: String(form.get("kind") || ""),
             body: await readUploadFile(file),
-            mime: file.type,
+            mime: inferPrivateDocMime({ mime: file.type, filename: file.name }),
             filename: file.name,
             issuedOn: String(form.get("issuedOn") || ""),
             expiresOn: String(form.get("expiresOn") || ""),

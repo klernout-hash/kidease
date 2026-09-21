@@ -115,17 +115,8 @@ export function readListingImage(file: File | undefined, onReady: (dataUrl: stri
   reader.readAsDataURL(file);
 }
 
-export function CapacityForm({
-  daycare,
-  onSaved,
-  mode,
-}: {
-  daycare: Daycare;
-  onSaved: () => void;
-  mode: "listing" | "licence";
-}) {
-  const { t } = useCopy();
-  const [state, setState] = useState({
+function listingFormState(daycare: Daycare) {
+  return {
     name: daycare.name,
     address: daycare.address,
     city: daycare.city,
@@ -150,10 +141,59 @@ export function CapacityForm({
     culturalPrograms: daycare.culturalPrograms ?? [],
     culturalTeamNote: daycare.culturalTeamNote ?? "",
     ...parentDeskFromDaycare(daycare),
+  };
+}
+
+function listingDeskRevision(daycare: Daycare) {
+  return JSON.stringify({
+    id: daycare.id,
+    name: daycare.name,
+    address: daycare.address,
+    city: daycare.city,
+    province: daycare.province,
+    postalCode: daycare.postalCode,
+    phone: daycare.phone ?? "",
+    email: daycare.contactEmail ?? "",
+    spotsInfant: daycare.spotsInfant,
+    spotsToddler: daycare.spotsToddler,
+    spotsPreschool: daycare.spotsPreschool,
+    infantMonthly: daycare.infantMonthly ?? 0,
+    toddlerMonthly: daycare.toddlerMonthly ?? 0,
+    preschoolMonthly: daycare.preschoolMonthly ?? 0,
+    ageMinMonths: daycare.agesKnown ? daycare.ageMinMonths : 12,
+    ageMaxMonths: daycare.agesKnown ? daycare.ageMaxMonths : 60,
+    hours: daycare.hours,
+    licenseNumber: daycare.licenseNumber ?? "",
+    licensePhotoOnFile: Boolean(daycare.licensePhotoOnFile),
+    staffLanguages: daycare.staffLanguages ?? [],
+    culturalPrograms: daycare.culturalPrograms ?? [],
+    culturalTeamNote: daycare.culturalTeamNote ?? "",
+    parent: parentDeskFromDaycare(daycare),
   });
+}
+
+export function CapacityForm({
+  daycare,
+  onSaved,
+  mode,
+}: {
+  daycare: Daycare;
+  onSaved: () => void;
+  mode: "listing" | "licence";
+}) {
+  const { t } = useCopy();
+  const serverRev = listingDeskRevision(daycare);
+  const [appliedRev, setAppliedRev] = useState(serverRev);
+  const [state, setState] = useState(() => listingFormState(daycare));
+  if (appliedRev !== serverRev) {
+    setAppliedRev(serverRev);
+    setState(listingFormState(daycare));
+  }
   const [refreshing, setRefreshing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [licenseError, setLicenseError] = useState<string | null>(null);
+  const savedParent = parentDeskFromDaycare(daycare);
   const dirty =
     state.name !== daycare.name ||
     state.address !== daycare.address ||
@@ -182,7 +222,15 @@ export function CapacityForm({
     state.description !== (daycare.description ?? "") ||
     state.partTimeMonthly !== (daycare.partTimeMonthly ?? 0) ||
     state.promoText !== (daycare.promoText ?? "") ||
-    state.valuesNote !== (daycare.valuesNote ?? "");
+    state.valuesNote !== (daycare.valuesNote ?? "") ||
+    state.facilityType !== savedParent.facilityType ||
+    state.openingWindow !== savedParent.openingWindow ||
+    JSON.stringify(state.scheduleOptions) !== JSON.stringify(savedParent.scheduleOptions) ||
+    JSON.stringify(state.programs) !== JSON.stringify(savedParent.programs) ||
+    JSON.stringify(state.financial) !== JSON.stringify(savedParent.financial) ||
+    JSON.stringify(state.curriculumTags) !== JSON.stringify(savedParent.curriculumTags) ||
+    JSON.stringify(state.safetyFeatures) !== JSON.stringify(savedParent.safetyFeatures) ||
+    JSON.stringify(state.amenityKeys) !== JSON.stringify(savedParent.amenityKeys);
   const draft = {
     ...daycare,
     hours: state.hours,
@@ -235,6 +283,8 @@ export function CapacityForm({
       className="mt-4 space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
+        if (saving) return;
+        setSaving(true);
         void updateListing({
           data: {
             daycareId: daycare.id,
@@ -278,7 +328,9 @@ export function CapacityForm({
           },
         })
           .then(onSaved)
-          .then(() => toast.success(t("saveChanges")));
+          .then(() => toast.success(t("saveChanges")))
+          .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
+          .finally(() => setSaving(false));
       }}
     >
       {mode === "licence" ? (
@@ -445,7 +497,7 @@ export function CapacityForm({
           </div>
         </>
       )}
-      <Button type="submit" variant="secondary" disabled={!dirty}>
+      <Button type="submit" variant="secondary" disabled={!dirty || saving}>
         {t("saveChanges")}
       </Button>
     </form>

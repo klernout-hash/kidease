@@ -378,7 +378,14 @@ export const getDaycare = createServerFn({ method: "GET" })
       const sql = await Promise.race([getSql(), rejectAfter(6000, "listing-sql-timeout")]);
       await upsertDaycare(sql, found);
       const claimedRow = await sql<DaycareRow>`
-        select * from daycares where id = ${found.id} and claimed_at is not null limit 1
+        select * from daycares d
+        where d.id = ${found.id}
+          and (
+            d.claimed_at is not null
+            or exists (select 1 from provider_daycares pd where pd.daycare_id = d.id)
+            or exists (select 1 from listing_claims lc where lc.daycare_id = d.id)
+          )
+        limit 1
       `.catch(() => [] as DaycareRow[]);
       const daycare = claimedRow[0] ? mapDaycare(claimedRow[0]) : toDaycare(found);
       if (!daycare.reviewCount) {

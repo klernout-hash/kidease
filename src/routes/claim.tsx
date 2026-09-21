@@ -160,8 +160,8 @@ function ClaimPage() {
       rejectLicense("claim", claimFileRef.current);
       return;
     }
-    if (!license.startsWith("data:image")) {
-      toast.error("Upload a photo of your provincial licence");
+    if (!license.startsWith("data:image") && !license.startsWith("data:application/pdf")) {
+      toast.error("Upload a photo or PDF of your provincial licence");
       return;
     }
     setBusy(true);

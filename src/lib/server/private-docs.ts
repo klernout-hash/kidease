@@ -135,8 +135,13 @@ export function privateDocResponse(doc: LoadedPrivateDoc): Response {
   });
 }
 
-export async function readUploadFile(file: File | Blob | null | undefined): Promise<Buffer> {
-  if (!file) throw new Error(PRIVATE_DOC_BAD_FILE);
+export async function readUploadFile(
+  file: { arrayBuffer: () => Promise<ArrayBuffer>; size?: number } | null | undefined,
+): Promise<Buffer> {
+  if (!file || typeof file.arrayBuffer !== "function") throw new Error(PRIVATE_DOC_BAD_FILE);
+  if (typeof file.size === "number" && (file.size <= 0 || file.size > PRIVATE_DOC_MAX_BYTES)) {
+    throw new Error(PRIVATE_DOC_BAD_FILE);
+  }
   const bytes = Buffer.from(await file.arrayBuffer());
   if (!bytes.byteLength || bytes.byteLength > PRIVATE_DOC_MAX_BYTES) {
     throw new Error(PRIVATE_DOC_BAD_FILE);

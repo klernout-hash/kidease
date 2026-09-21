@@ -11,11 +11,13 @@ import {
   decideScreeningAccess,
   deskRoleToScreeningRole,
   effectiveDocStatus,
+  visibleScreeningStatus,
   parseScreeningUpload,
   requirementsFor,
   screeningLetterHtml,
 } from "../src/lib/provider-screening.ts";
 import {
+  asUploadPart,
   inferPrivateDocMime,
   licenseDocHref,
   licenseReviewMarker,
@@ -156,6 +158,38 @@ test("Admin reject requires a reason; approve only from the review queue", () =>
 test("cleared documents past expiry read as expired", () => {
   assert.equal(effectiveDocStatus({ status: "cleared", expiresOn: "2020-01-01" }), "expired");
   assert.equal(effectiveDocStatus({ status: "cleared", expiresOn: "2099-01-01" }), "cleared");
+});
+
+test("review status without a stored file reads as missing", () => {
+  assert.equal(visibleScreeningStatus({ status: "admin_review", storageRef: null }), "missing");
+  assert.equal(visibleScreeningStatus({ status: "uploaded", storageRef: "https://evil.example/doc.pdf" }), "missing");
+  assert.equal(
+    visibleScreeningStatus({ status: "admin_review", storageRef: "screening/centre/person/vsc-1.pdf" }),
+    "admin_review",
+  );
+  assert.equal(
+    visibleScreeningStatus({ status: "cleared", storageRef: null, expiresOn: "2099-01-01" }),
+    "cleared",
+  );
+});
+
+test("multipart uploads accept a file-like part from another realm", () => {
+  const part = asUploadPart({
+    size: 12,
+    type: "application/pdf",
+    name: "vsc.pdf",
+    arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+  });
+  assert.equal(part?.name, "vsc.pdf");
+  assert.equal(part?.type, "application/pdf");
+  assert.equal(asUploadPart({ size: 1, type: "application/pdf" }), null);
+  assert.equal(asUploadPart(null), null);
+  const screening = src("src/routes/api/screening-documents.ts");
+  const licence = src("src/routes/api/license-docs.$daycareId.ts");
+  assert.match(screening, /asUploadPart/);
+  assert.match(licence, /asUploadPart/);
+  assert.doesNotMatch(screening, /instanceof File/);
+  assert.doesNotMatch(licence, /instanceof File/);
 });
 
 test("VSC letter is a police request and never claims KidEase issued the check", () => {
