@@ -382,7 +382,8 @@ test("mocked Stripe checkout never calls api.stripe.com and refuses a missing se
 test("handlers stay wired to the decision helpers (no silent IDOR regression)", () => {
   const claims = src("src/lib/server/claims.ts");
   assert.match(claims, /decideStartClaim/);
-  assert.match(claims, /assertCanMutateListing/);
+  assert.match(claims, /assertCentreCanMutateListing/);
+  assert.match(src("src/lib/server/centre-access.ts"), /if \(!centreCanMutateListingDetails\(role\)\) throw new Error\(LISTING_NOT_YOURS\)/);
 
   const family = src("src/lib/server/family.ts");
   assert.match(family, /assertCanMutateListing/);
