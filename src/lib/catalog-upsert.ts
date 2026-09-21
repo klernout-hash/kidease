@@ -1,6 +1,8 @@
 /**
  * Shared INSERT … ON CONFLICT for licensed listings.
- * Unclaimed rows get full catalogue fields. Claimed rows are never updated.
+ * Fresh catalogue rows get full catalogue fields.
+ * Claimed rows, and any row a provider owns, has a claim on, or staffs,
+ * are left alone so open spots and profile edits survive later imports.
  * Filled phone / email / website are never replaced with blank.
  */
 
@@ -126,6 +128,15 @@ on conflict (id) do update set
   visibility = excluded.visibility,
   is_test = excluded.is_test
 where daycares.claimed_at is null
+  and not exists (
+    select 1 from provider_daycares pd where pd.daycare_id = daycares.id
+  )
+  and not exists (
+    select 1 from listing_claims lc where lc.daycare_id = daycares.id
+  )
+  and not exists (
+    select 1 from centre_members cm where cm.daycare_id = daycares.id
+  )
 `;
 
 export function daycareUpsertParams(d: CatalogUpsertInput): unknown[] {

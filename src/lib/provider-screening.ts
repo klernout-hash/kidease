@@ -13,6 +13,7 @@
 import { isHomeBasedFacility, normalizeFacilityType } from "./facility-type.ts";
 import type { CentreMemberRole } from "./centre-roles.ts";
 import {
+  hasStoredPrivateDoc,
   inferPrivateDocMime,
   isAllowedPrivateDocMime,
   PRIVATE_DOC_BAD_FILE,
@@ -201,6 +202,18 @@ export function effectiveDocStatus(
     if (Number.isFinite(exp) && exp < startOfUtcDay(now).getTime()) return "expired";
   }
   return doc.status;
+}
+
+/** Uploaded / in-review only counts once a private file is actually stored. */
+export function visibleScreeningStatus(
+  doc: { status: ScreeningDocStatus; expiresOn?: string | null; storageRef?: string | null },
+  now: Date = new Date(),
+): ScreeningDocStatus {
+  const status = effectiveDocStatus(doc, now);
+  if ((status === "uploaded" || status === "admin_review") && !hasStoredPrivateDoc(doc.storageRef)) {
+    return "missing";
+  }
+  return status;
 }
 
 export function isCurrentCleared(

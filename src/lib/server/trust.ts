@@ -7,7 +7,8 @@ import { notifyPlatform } from "@/lib/server/notify";
 import { JURISDICTIONS } from "@/lib/province-registry";
 import { lookupRegistry } from "@/lib/server/registry-adapters";
 import { type LicenseStatus, type RegistryMatchState } from "@/lib/trust";
-import { assertCanMutateListing } from "@/lib/access-control";
+import { LISTING_NOT_FOUND, assertCanMutateListing } from "@/lib/access-control";
+import { assertCentreCanMutateListing } from "@/lib/server/centre-access";
 
 const REPORT_REASONS = new Set(["license", "unlicensed", "ownership", "photo", "other"]);
 
@@ -76,26 +77,23 @@ export const saveLicenseFields = createServerFn({ method: "POST" })
   .validator((input: { daycareId: string; licenseNumber: string; licenseExpiry?: string; licensedCapacity?: number }) => input)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const own = await sql<{ user_id: string }>`
-      select user_id from provider_daycares
-      where user_id = ${context.userId} and daycare_id = ${data.daycareId}
-      limit 1
-    `;
-    assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
+    await assertCentreCanMutateListing(sql, context.userId, data.daycareId);
     const number = data.licenseNumber.trim().slice(0, 80);
     const expiry = (data.licenseExpiry || "").trim().slice(0, 10) || null;
     const capacity =
-      typeof data.licensedCapacity === "number" && data.licensedCapacity > 0
+      typeof data.licensedCapacity === "number" && Number.isFinite(data.licensedCapacity) && data.licensedCapacity > 0
         ? Math.min(400, Math.round(data.licensedCapacity))
         : null;
-    await sql`
+    const wrote = await sql<{ id: string }>`
       update daycares
       set license_number = ${number || null},
           license_expiry = ${expiry},
-          licensed_capacity = ${capacity},
+          licensed_capacity = coalesce(${capacity}, licensed_capacity),
           license_verification_source = coalesce(license_verification_source, ${"provider"})
       where id = ${data.daycareId}
+      returning id
     `;
+    if (!wrote[0]) throw new Error(LISTING_NOT_FOUND);
     await writeTrustEvent(sql, {
       daycareId: data.daycareId,
       actorUserId: context.userId,

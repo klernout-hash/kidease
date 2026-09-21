@@ -10,7 +10,7 @@ import {
   decideAdminScreeningReview,
   decideScreeningAccess,
   deskRoleToScreeningRole,
-  effectiveDocStatus,
+  visibleScreeningStatus,
   isHomeBasedForScreening,
   isScreeningDocKind,
   isScreeningRole,
@@ -113,18 +113,30 @@ type DocRow = {
 };
 
 async function syncScreeningPeople(sql: Sql, daycareId: string) {
-  const members = await sql<{
+  let members: Array<{
     id: string;
     user_id: string;
     role: string;
     email: string | null;
     name: string | null;
-  }>`
-    select m.id, m.user_id, m.role, u.email, u.name
-    from centre_members m
-    left join "user" u on u.id = m.user_id
-    where m.daycare_id = ${daycareId} and m.status = 'active'
-  `.catch(() => []);
+  }>;
+  try {
+    members = await sql<{
+      id: string;
+      user_id: string;
+      role: string;
+      email: string | null;
+      name: string | null;
+    }>`
+      select m.id, m.user_id, m.role, u.email, u.name
+      from centre_members m
+      left join "user" u on u.id = m.user_id
+      where m.daycare_id = ${daycareId} and m.status = 'active'
+    `;
+  } catch {
+    // Member list failed — keep existing people instead of archiving them.
+    return;
+  }
 
   for (const member of members) {
     const role = deskRoleToScreeningRole(member.role);
@@ -248,48 +260,58 @@ async function upsertDocument(
     patch: Record<string, unknown>;
   },
 ) {
-  const existing = await sql<{ id: string }>`
-    select id from provider_screening_documents
-    where person_id = ${input.personId} and doc_kind = ${input.kind}
-    limit 1
-  `.catch(() => []);
-  const id = existing[0]?.id || nid("sd");
-  if (!existing[0]) {
-    await sql`
-      insert into provider_screening_documents (id, daycare_id, person_id, doc_kind, status)
-      values (${id}, ${input.daycareId}, ${input.personId}, ${input.kind}, ${"missing"})
-    `;
-  }
-  const issuedOn = (input.patch.issuedOn as string | null | undefined) ?? undefined;
-  const expiresOn = (input.patch.expiresOn as string | null | undefined) ?? undefined;
-  const status = (input.patch.status as string | undefined) ?? undefined;
-  const storageRef = (input.patch.storageRef as string | null | undefined) ?? undefined;
-  const storageMime = (input.patch.storageMime as string | null | undefined) ?? undefined;
-  const filename = (input.patch.filename as string | null | undefined) ?? undefined;
-  const reviewerNotes = (input.patch.reviewerNotes as string | null | undefined) ?? undefined;
-  const reviewedBy = (input.patch.reviewedBy as string | null | undefined) ?? undefined;
-  const reviewedAt = (input.patch.reviewedAt as string | null | undefined) ?? undefined;
-  const letterAt = (input.patch.letterGeneratedAt as string | null | undefined) ?? undefined;
-  const uploadedBy = (input.patch.uploadedBy as string | null | undefined) ?? undefined;
-  const uploadedAt = (input.patch.uploadedAt as string | null | undefined) ?? undefined;
-  await sql`
-    update provider_screening_documents
-    set status = coalesce(${status ?? null}, status),
-        issued_on = coalesce(${issuedOn ?? null}, issued_on),
-        expires_on = coalesce(${expiresOn ?? null}, expires_on),
-        storage_ref = coalesce(${storageRef ?? null}, storage_ref),
-        storage_mime = coalesce(${storageMime ?? null}, storage_mime),
-        original_filename = coalesce(${filename ?? null}, original_filename),
-        reviewer_notes = coalesce(${reviewerNotes ?? null}, reviewer_notes),
-        reviewed_by = coalesce(${reviewedBy ?? null}, reviewed_by),
-        reviewed_at = coalesce(${reviewedAt ?? null}, reviewed_at),
-        letter_generated_at = coalesce(${letterAt ?? null}, letter_generated_at),
-        uploaded_by = coalesce(${uploadedBy ?? null}, uploaded_by),
-        uploaded_at = coalesce(${uploadedAt ?? null}, uploaded_at),
-        updated_at = now()
-    where id = ${id}
+  const id = nid("sd");
+  const issuedOn = (input.patch.issuedOn as string | null | undefined) ?? null;
+  const expiresOn = (input.patch.expiresOn as string | null | undefined) ?? null;
+  const status = (input.patch.status as string | undefined) ?? "missing";
+  const storageRef = (input.patch.storageRef as string | null | undefined) ?? null;
+  const storageMime = (input.patch.storageMime as string | null | undefined) ?? null;
+  const filename = (input.patch.filename as string | null | undefined) ?? null;
+  const reviewerNotes = (input.patch.reviewerNotes as string | null | undefined) ?? null;
+  const reviewedBy = (input.patch.reviewedBy as string | null | undefined) ?? null;
+  const reviewedAt = (input.patch.reviewedAt as string | null | undefined) ?? null;
+  const letterAt = (input.patch.letterGeneratedAt as string | null | undefined) ?? null;
+  const uploadedBy = (input.patch.uploadedBy as string | null | undefined) ?? null;
+  const uploadedAt = (input.patch.uploadedAt as string | null | undefined) ?? null;
+  const rows = await sql<{ id: string; storage_ref: string | null; status: string }>`
+    insert into provider_screening_documents (
+      id, daycare_id, person_id, doc_kind, status,
+      issued_on, expires_on, storage_ref, storage_mime, original_filename,
+      reviewer_notes, reviewed_by, reviewed_at, letter_generated_at,
+      uploaded_by, uploaded_at
+    ) values (
+      ${id}, ${input.daycareId}, ${input.personId}, ${input.kind}, ${status},
+      ${issuedOn}, ${expiresOn}, ${storageRef}, ${storageMime}, ${filename},
+      ${reviewerNotes}, ${reviewedBy}, ${reviewedAt}, ${letterAt},
+      ${uploadedBy}, ${uploadedAt}
+    )
+    on conflict (person_id, doc_kind) do update set
+      status = case
+        when excluded.status in ('uploaded', 'admin_review')
+         and coalesce(
+           nullif(btrim(excluded.storage_ref), ''),
+           nullif(btrim(provider_screening_documents.storage_ref), '')
+         ) is null
+        then provider_screening_documents.status
+        else coalesce(excluded.status, provider_screening_documents.status)
+      end,
+      issued_on = coalesce(excluded.issued_on, provider_screening_documents.issued_on),
+      expires_on = coalesce(excluded.expires_on, provider_screening_documents.expires_on),
+      storage_ref = coalesce(nullif(btrim(excluded.storage_ref), ''), provider_screening_documents.storage_ref),
+      storage_mime = coalesce(excluded.storage_mime, provider_screening_documents.storage_mime),
+      original_filename = coalesce(excluded.original_filename, provider_screening_documents.original_filename),
+      reviewer_notes = coalesce(excluded.reviewer_notes, provider_screening_documents.reviewer_notes),
+      reviewed_by = coalesce(excluded.reviewed_by, provider_screening_documents.reviewed_by),
+      reviewed_at = coalesce(excluded.reviewed_at, provider_screening_documents.reviewed_at),
+      letter_generated_at = coalesce(excluded.letter_generated_at, provider_screening_documents.letter_generated_at),
+      uploaded_by = coalesce(excluded.uploaded_by, provider_screening_documents.uploaded_by),
+      uploaded_at = coalesce(excluded.uploaded_at, provider_screening_documents.uploaded_at),
+      updated_at = now()
+    returning id, storage_ref, status
   `;
-  return id;
+  const saved = rows[0];
+  if (!saved) throw new Error("Document did not save. Try the upload again.");
+  return { id: saved.id, storageRef: saved.storage_ref, status: saved.status };
 }
 
 function buildPersonView(input: {
@@ -304,9 +326,10 @@ function buildPersonView(input: {
   const docs = reqs.map((req): ScreeningDocView => {
     const row = input.docs.find((d) => d.doc_kind === req.docKind);
     const status = row
-      ? effectiveDocStatus({
+      ? visibleScreeningStatus({
           status: row.status as ScreeningDocStatus,
           expiresOn: row.expires_on,
+          storageRef: row.storage_ref,
         })
       : "missing";
     return {
@@ -550,7 +573,7 @@ export async function saveScreeningUpload(input: {
   });
   const issuedOn = (input.issuedOn || "").trim().slice(0, 10) || null;
   const expiresOn = (input.expiresOn || "").trim().slice(0, 10) || null;
-  const id = await upsertDocument(sql, {
+  const saved = await upsertDocument(sql, {
     daycareId: input.daycareId,
     personId: row.id,
     kind: input.kind,
@@ -565,6 +588,10 @@ export async function saveScreeningUpload(input: {
       uploadedAt: new Date().toISOString(),
     },
   });
+  if (!hasStoredPrivateDoc(saved.storageRef) || (saved.status !== "admin_review" && saved.status !== "uploaded")) {
+    throw new Error("Document did not save. Try the upload again.");
+  }
+  const id = saved.id;
   await sql`
     update provider_screening_documents
     set reviewer_notes = null
@@ -682,11 +709,12 @@ export const listAdminScreeningQueue = createServerFn({ method: "GET" })
       uploaded_at: string | null;
       issued_on: string | null;
       expires_on: string | null;
+      storage_ref: string | null;
     }>`
       select d.id, d.daycare_id, c.name, c.city, c.province, c.slug,
              p.display_name, p.screening_role, d.doc_kind, d.status,
              d.original_filename, d.uploaded_at, d.issued_on::text as issued_on,
-             d.expires_on::text as expires_on
+             d.expires_on::text as expires_on, d.storage_ref
       from provider_screening_documents d
       join daycares c on c.id = d.daycare_id
       join provider_screening_people p on p.id = d.person_id
@@ -694,7 +722,7 @@ export const listAdminScreeningQueue = createServerFn({ method: "GET" })
       order by d.updated_at desc
       limit 80
     `.catch(() => []);
-    return rows.map((r) => ({
+    return rows.filter((r) => hasStoredPrivateDoc(r.storage_ref)).map((r) => ({
       id: r.id,
       daycareId: r.daycare_id,
       daycareName: r.name,
@@ -723,12 +751,16 @@ export const reviewScreeningDocument = createServerFn({ method: "POST" })
       daycare_id: string;
       status: string;
       doc_kind: string;
+      storage_ref: string | null;
     }>`
-      select id, daycare_id, status, doc_kind
+      select id, daycare_id, status, doc_kind, storage_ref
       from provider_screening_documents where id = ${data.documentId} limit 1
     `.catch(() => []);
     const row = rows[0];
     if (!row) throw new Error("Document not found");
+    if (data.action === "approve" && !hasStoredPrivateDoc(row.storage_ref)) {
+      throw new Error("This document has no file on record.");
+    }
     const decision = decideAdminScreeningReview({
       action: data.action,
       reason: data.reason,

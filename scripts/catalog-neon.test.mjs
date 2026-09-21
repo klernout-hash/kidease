@@ -119,6 +119,10 @@ describe("upsert blank-preservation", () => {
 
   it("SQL never updates claimed rows and never blanks filled contacts", () => {
     assert.match(DAYCARE_UPSERT_SQL, /where daycares\.claimed_at is null/);
+    assert.match(DAYCARE_UPSERT_SQL, /provider_daycares pd where pd\.daycare_id = daycares\.id/);
+    assert.match(DAYCARE_UPSERT_SQL, /listing_claims lc where lc\.daycare_id = daycares\.id/);
+    assert.match(DAYCARE_UPSERT_SQL, /centre_members cm where cm\.daycare_id = daycares\.id/);
+    assert.doesNotMatch(DAYCARE_UPSERT_SQL, /claim_status/);
     assert.match(DAYCARE_UPSERT_SQL, /excluded\.phone is null or btrim\(excluded\.phone\) = ''/);
     assert.match(DAYCARE_UPSERT_SQL, /excluded\.contact_email is null or btrim\(excluded\.contact_email\) = ''/);
     assert.match(DAYCARE_UPSERT_SQL, /excluded\.website is null or btrim\(excluded\.website\) = ''/);

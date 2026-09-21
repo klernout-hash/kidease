@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSql } from "@/lib/db";
-import { PRIVATE_DOC_BAD_FILE } from "@/lib/private-docs";
-import { assertCanMutateListing } from "@/lib/access-control";
-import { loadCentreRole, listOwnedDaycareIds } from "@/lib/server/centre-access";
+import { asUploadPart, inferPrivateDocMime, PRIVATE_DOC_BAD_FILE } from "@/lib/private-docs";
+import { assertCentreCanMutateListing, loadCentreRole } from "@/lib/server/centre-access";
 import {
   licenseObjectTail,
   loadPrivateDoc,
@@ -31,8 +30,7 @@ async function authorizeLicenseDoc(userId: string, daycareId: string, write: boo
   const admin = (await resolveAdminAccess(userId)).ok;
   if (admin) return;
   if (write) {
-    const owned = await listOwnedDaycareIds(await getSql(), userId);
-    assertCanMutateListing(owned, daycareId);
+    await assertCentreCanMutateListing(await getSql(), userId, daycareId);
     return;
   }
   const role = await loadCentreRole(await getSql(), userId, daycareId);
@@ -73,13 +71,13 @@ export const Route = createFileRoute("/api/license-docs/$daycareId")({
           const daycareId = params.daycareId;
           await authorizeLicenseDoc(userId, daycareId, true);
           const form = await request.formData();
-          const file = form.get("file");
-          if (!(file instanceof File)) throw new Error(PRIVATE_DOC_BAD_FILE);
+          const file = asUploadPart(form.get("file"));
+          if (!file) throw new Error(PRIVATE_DOC_BAD_FILE);
           const stored = await persistPrivateDoc({
             prefix: R2_LICENSE_PREFIX,
             keyTail: licenseObjectTail(daycareId),
             body: await readUploadFile(file),
-            mime: file.type,
+            mime: inferPrivateDocMime({ mime: file.type, filename: file.name }),
           });
           const sql = await getSql();
           await sql`

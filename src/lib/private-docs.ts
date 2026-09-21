@@ -15,6 +15,39 @@ export const LICENSE_DOC_API = "/api/license-docs";
 
 export const PRIVATE_DOC_BAD_FILE = "Upload a PDF or image under 4 MB.";
 
+export type UploadPart = {
+  arrayBuffer: () => Promise<ArrayBuffer>;
+  size: number;
+  type: string;
+  name: string;
+};
+
+/**
+ * Accept a multipart file without `instanceof File`.
+ * Undici's File on Vercel is a different realm, so `instanceof File` rejects a real upload.
+ */
+export function asUploadPart(value: unknown): UploadPart | null {
+  if (!value || typeof value !== "object") return null;
+  const file = value as {
+    arrayBuffer?: () => Promise<ArrayBuffer>;
+    size?: unknown;
+    type?: unknown;
+    name?: unknown;
+  };
+  if (typeof file.arrayBuffer !== "function") return null;
+  const size = typeof file.size === "number" ? file.size : Number(file.size);
+  if (!Number.isFinite(size) || size < 0) return null;
+  const type = typeof file.type === "string" ? file.type : "";
+  const name = typeof file.name === "string" && file.name.trim() ? file.name.trim() : "document";
+  const read = file.arrayBuffer.bind(value);
+  return {
+    arrayBuffer: () => read(),
+    size,
+    type,
+    name,
+  };
+}
+
 export function inferPrivateDocMime(input: {
   mime?: string | null;
   filename?: string | null;

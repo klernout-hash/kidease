@@ -1,5 +1,8 @@
 import type { Sql } from "@/lib/db";
+import { LISTING_NOT_YOURS } from "@/lib/access-control";
 import {
+  centreCanMutateListingDetails,
+  centreCanMutateVacancies,
   centreCanWriteLeads,
   parseCentreMemberRole,
   type CentreMemberRole,
@@ -47,6 +50,16 @@ export async function loadCentreRole(
     limit 1
   `.catch(() => []);
   return parseCentreMemberRole(member[0]?.role);
+}
+
+export async function assertCentreCanMutateListing(sql: Sql, userId: string, daycareId: string) {
+  const role = await loadCentreRole(sql, userId, daycareId);
+  if (!centreCanMutateListingDetails(role)) throw new Error(LISTING_NOT_YOURS);
+}
+
+export async function assertCentreCanMutateVacancies(sql: Sql, userId: string, daycareId: string) {
+  const role = await loadCentreRole(sql, userId, daycareId);
+  if (!centreCanMutateVacancies(role)) throw new Error(LISTING_NOT_YOURS);
 }
 
 export async function hasCentreDeskAccess(sql: Sql, userId: string, daycareId: string): Promise<boolean> {
