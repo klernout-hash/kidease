@@ -266,8 +266,10 @@ export function turnstileFetchOptions(token: string) {
       "x-captcha-response": trimmed,
       "cf-turnstile-response": trimmed,
     },
-    onRequest(ctx: { headers: Headers; body?: unknown }) {
-      return attachTurnstileToRequest(ctx, trimmed);
+    onRequest(ctx: { headers: Headers; body?: unknown }): void {
+      // Mutate in place. Returning a partial context fails Better Auth's
+      // RequestContext type (url, method, signal) and breaks `tsc`.
+      attachTurnstileToRequest(ctx, trimmed);
     },
   };
 }
