@@ -24,6 +24,7 @@ import {
   markContinued,
 } from "@/lib/auth/login-funnel";
 import { sanitizePostLoginNext, staffTwoFactorRequired } from "@/lib/desks";
+import { LOGIN_TAKING_TOO_LONG_MESSAGE } from "@/lib/auth/login-stall";
 import { isNative } from "@/lib/native";
 import { yieldToMain } from "@/lib/yield-main";
 
@@ -149,6 +150,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   const [remember, setRemember] = useState(false);
   const [resendWait, setResendWait] = useState(0);
   const submitLock = useRef(false);
+  const attempt = useRef(0);
   const formRef = useRef<HTMLFormElement>(null);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
     useTurnstileToken();
@@ -163,11 +165,14 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   }, []);
 
   useEffect(() => {
-    if (!busy) {
-      setStalled(false);
-      return;
-    }
-    const id = window.setTimeout(() => setStalled(true), LOGIN_STALL_MS);
+    if (!busy) return;
+    const id = window.setTimeout(() => {
+      attempt.current += 1;
+      submitLock.current = false;
+      setBusy(false);
+      setStalled(true);
+      setError(LOGIN_TAKING_TOO_LONG_MESSAGE);
+    }, LOGIN_STALL_MS);
     return () => window.clearTimeout(id);
   }, [busy]);
 
@@ -230,7 +235,9 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
       return;
     }
     submitLock.current = true;
+    const id = ++attempt.current;
     setBusy(true);
+    setStalled(false);
     setError(null);
     void yieldToMain()
       .then(() => verifyTwoFactor({ data: { code, remember, turnstileToken: takeChallenge() } }))
@@ -239,11 +246,13 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         return leave(dest);
       })
       .catch((err) => {
+        if (attempt.current !== id) return;
         captureLoginFunnel({ step: "two_factor_failed", reason: "code", native: isNative() });
         setError(err instanceof Error ? err.message : "Could not verify");
         resetTurnstile();
       })
       .finally(() => {
+        if (attempt.current !== id) return;
         submitLock.current = false;
         setBusy(false);
       });

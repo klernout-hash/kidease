@@ -1,3 +1,5 @@
+import { LOGIN_TAKING_TOO_LONG_MESSAGE } from "./login-stall.ts";
+
 /** Map Better Auth / Turnstile / mail failures to copy we can show on login. */
 
 /** Cloudflare WAF/Bot Fight HTML 403 — not a Better Auth JSON error. */
@@ -148,6 +150,9 @@ export function friendlyAuthError(
     raw === "cloudflare_block"
   ) {
     return CLOUDFLARE_AUTH_BLOCK_MESSAGE;
+  }
+  if (raw.includes("sign-in-timeout") || raw.includes("continue-timeout") || raw.includes("taking too long")) {
+    return LOGIN_TAKING_TOO_LONG_MESSAGE;
   }
   if (raw.includes("please complete the security check")) {
     return TURNSTILE_REQUIRED_MESSAGE;
