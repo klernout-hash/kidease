@@ -1,4 +1,10 @@
-import { createRootRoute, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
+import {
+  createRootRoute,
+  HeadContent,
+  Outlet,
+  Scripts,
+  useRouterState,
+} from "@tanstack/react-router";
 import { documentLangFromPath } from "@/lib/locale-path";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
@@ -36,9 +42,13 @@ export const Route = createRootRoute({
           <p className="ke-crash-kicker">KidEase</p>
           <h1 className="ke-crash-title">Something went wrong</h1>
           <p>
-            Refresh the page, or go back to kidease.ca. If it keeps happening, email {SUPPORT_INBOX_EMAIL}.
+            Refresh the page, or go back to kidease.ca. If it keeps happening, email{" "}
+            {SUPPORT_INBOX_EMAIL}.
           </p>
-          <p className="ke-crash-actions" style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "16px" }}>
+          <p
+            className="ke-crash-actions"
+            style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "16px" }}
+          >
             <a href="/search" style={{ fontWeight: 600 }}>
               Explore
             </a>
@@ -97,8 +107,8 @@ export const Route = createRootRoute({
         crossOrigin: "anonymous",
       },
       { rel: "preload", href: "/logo-transparent.svg?v=17", as: "image", type: "image/svg+xml" },
-      { rel: "preconnect", href: "https://maps.googleapis.com" },
-      { rel: "preconnect", href: "https://maps.gstatic.com" },
+      { rel: "dns-prefetch", href: "https://maps.googleapis.com" },
+      { rel: "dns-prefetch", href: "https://maps.gstatic.com" },
     ],
   }),
   component: RootDocument,
@@ -126,6 +136,11 @@ function RootDocument() {
         <style
           dangerouslySetInnerHTML={{
             __html:
+              "html,body{margin:0;background:#f6f3ee;color:#1c2438}" +
+              'html[data-resolved-theme="dark"],html[data-resolved-theme="dark"] body{background:#14161c;color:#f3efe8}' +
+              ".ke-skel{border-radius:14px;background:#eee8df}" +
+              'html[data-resolved-theme="dark"] .ke-skel{background:#262b36}' +
+              "img.ke-photo{background-color:#eee8df}" +
               "[data-ke-mark]{display:inline-flex;flex-direction:column}" +
               "[data-ke-mark] img{display:block;object-fit:contain;max-width:80px;max-height:80px}" +
               "[data-ke-mark=sm] img{width:36px;height:36px}" +
@@ -133,6 +148,8 @@ function RootDocument() {
               "[data-ke-mark=lg] img{width:80px;height:80px}",
           }}
         />
+        <link rel="preload" href={appCss} as="style" />
+        <link rel="preconnect" href="https://media.kidease.ca" />
         <script src="/channel-boot.js" />
         <script src="/theme-boot.js" />
         <script src="/asset-recover.js" />

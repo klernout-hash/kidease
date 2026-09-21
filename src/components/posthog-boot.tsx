@@ -14,8 +14,16 @@ export function PostHogBoot() {
   const { user, isPending } = useCurrentUserState();
 
   useEffect(() => {
-    startPostHog();
-    captureRetentionTouch();
+    const start = () => {
+      startPostHog();
+      captureRetentionTouch();
+    };
+    if (typeof requestIdleCallback === "function") {
+      const id = requestIdleCallback(start, { timeout: 2500 });
+      return () => cancelIdleCallback(id);
+    }
+    const timer = window.setTimeout(start, 1);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {

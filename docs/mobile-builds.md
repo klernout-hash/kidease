@@ -103,7 +103,7 @@ The `@capacitor/geolocation` plugin requests **when-in-use** at runtime. Do not 
 Install a **debug** or internal build on a real phone (not a simulator-only pass). The store listing is not live; this is engineering QA.
 
 - [ ] App icon is the navy KidEase pin on white (not a Capacitor placeholder).
-- [ ] Splash / first paint is white, then **https://www.kidease.ca** loads (licensed directory, not a blank `localhost`).
+- [ ] Splash stays on the warm page colour (`#F6F3EE`) until the shell paints, then **https://www.kidease.ca** loads (licensed directory, not a blank `localhost`). It must not auto-hide onto a white WebView.
 - [ ] Cold start reaches Home / Explore without a native crash.
 - [ ] Location prompt appears **once**, wording matches the daycare-finder purpose, and the system sheet is **While Using** (iOS) / precise-or-approximate while in use (Android) — not Always / all the time.
 - [ ] Allow location → nearby licensed centres appear; deny → typed city / postal code still works.

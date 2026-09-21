@@ -138,3 +138,32 @@ This repo does not change Cloudflare **AI Crawl Control**. For Search / GEO grow
 4. Do **not** turn “Add content signals to robots.txt” back on.
 
 App-side sitemap and robots already advertise `https://www.kidease.ca/sitemap.xml` and `https://www.kidease.ca/sitemap-listings.xml` (the latter is a sitemap index of paginated listing urlsets).
+
+## Cache so open and photos stay fast
+
+The app no longer waits on catalogue SQL before it sends HTML, and listing cards request sized `/img` or `/cdn-cgi/image/` URLs directly in the document. Repeat views stay slow if Cloudflare does not cache those responses. Do this in the dashboard — the repo cannot flip the zone cache.
+
+### `www.kidease.ca` — sized photos (`/img`)
+
+`/img?src=/photos/…&w=480` is a Vercel function (sharp). The origin sends `Cache-Control` and `Cloudflare-CDN-Cache-Control: public, max-age=31536000, immutable` plus `Vary: Accept`. Query-string URLs are not cached until a rule says so.
+
+1. [Cloudflare Dashboard](https://dash.cloudflare.com) → zone **kidease.ca** → **Caching** → **Cache Rules** → **Create rule**.
+2. Name: `Cache KidEase sized photos`.
+3. If: `http.request.uri.path eq "/img"`.
+4. Then: **Eligible for cache**. Cache key: **include query string**. Edge TTL: **Respect origin**. Browser TTL: **Respect origin**.
+5. Do **not** cache `/`, `/search`, `/api/*`, or `/_serverFn/*`. Those stay `max-age=0` so HTML never points at a deleted JS hash.
+
+After the rule, a second request for the same `/img?src=&w=` URL should be `cf-cache-status: HIT`.
+
+### `media.kidease.ca` — originals and transforms
+
+1. Same zone → **Caching** → **Cache Rules**.
+2. Name: `Cache KidEase media`.
+3. If: hostname equals `media.kidease.ca` and path starts with `/photos/` **or** `/cdn-cgi/image/`.
+4. Then: **Eligible for cache**. Edge TTL at least a day (originals are immutable object keys). Include the full path. Transforms must vary on the width in the path (it is already in the URL).
+5. **Images → Transformations** must be on before `VITE_CF_IMAGE_RESIZE=1`. Until that smoke test passes, leave the flag unset — the app uses `/img` and falls back to the original `https://media.kidease.ca/photos/…` URL. Steps are in `docs/image-resizing.md`.
+
+### What stays outside the app
+
+- Vercel cold starts still delay the first HTML byte. Provisioned concurrency is a Vercel setting, not a code change.
+- Turning on image transformations is the dashboard flag above. The app will not request `/cdn-cgi/image/` until `CF_IMAGE_RESIZE` and `VITE_CF_IMAGE_RESIZE` are both `1`.

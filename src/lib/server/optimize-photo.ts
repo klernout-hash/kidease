@@ -14,9 +14,12 @@ const mem = new Map<string, Cached>();
 const r2Miss = new Set<string>();
 
 function photoHeaders(type: string, placeholder: boolean): HeadersInit {
+  const cache = placeholder ? "public, max-age=86400" : "public, max-age=31536000, immutable";
   return {
     "content-type": type,
-    "cache-control": placeholder ? "public, max-age=86400" : "public, max-age=31536000, immutable",
+    "cache-control": cache,
+    "cdn-cache-control": cache,
+    "cloudflare-cdn-cache-control": cache,
     vary: "Accept",
     ...(placeholder ? { "x-kidease-photo": "per-listing-placeholder" } : {}),
   };
@@ -52,9 +55,7 @@ export async function optimizePhoto(request: Request): Promise<Response> {
   if (!ALLOW.test(src)) {
     return new Response("invalid src", { status: 400 });
   }
-  const width = PHOTO_WIDTHS.includes(widthRaw as (typeof PHOTO_WIDTHS)[number])
-    ? widthRaw
-    : 480;
+  const width = PHOTO_WIDTHS.includes(widthRaw as (typeof PHOTO_WIDTHS)[number]) ? widthRaw : 480;
 
   const accept = request.headers.get("accept") || "";
   const format: "avif" | "webp" = accept.includes("image/avif") ? "avif" : "webp";
@@ -93,7 +94,11 @@ export async function optimizePhoto(request: Request): Promise<Response> {
   }
 }
 
-async function encodeListingOriginal(buf: Buffer, width: number, format: "avif" | "webp"): Promise<Buffer> {
+async function encodeListingOriginal(
+  buf: Buffer,
+  width: number,
+  format: "avif" | "webp",
+): Promise<Buffer> {
   let pipeline = sharp(buf, { failOn: "none" }).rotate().resize({
     width,
     withoutEnlargement: true,

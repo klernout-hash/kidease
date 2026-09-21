@@ -117,6 +117,12 @@ source JPEG.
 `listingPhotosFor` applies the honesty overlay and does not invent new
 id→path assignments. Do not delete `public/photos`.
 
+## Cache (or the first visitor still waits on sharp)
+
+`/img` encodes on the Vercel function the first time a width is requested. The response is `public, max-age=31536000, immutable` with the same value on `CDN-Cache-Control` and `Cloudflare-CDN-Cache-Control`, and `Vary: Accept` (AVIF vs WebP). Cloudflare will not store a query-string URL until the cache rule in `docs/cloudflare.md` (“Cache KidEase sized photos”) is on. Check `cf-cache-status` on the second load.
+
+Leave `CF_IMAGE_RESIZE` unset until the `/cdn-cgi/image/` smoke test in this doc returns an image. With the flag on, cards skip `/img` and hit `media.kidease.ca`, which needs the “Cache KidEase media” rule in the same runbook.
+
 ## See also
 
 - `scripts/r2-public-photos.md` — sync keys to R2

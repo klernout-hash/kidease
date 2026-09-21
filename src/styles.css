@@ -745,6 +745,14 @@
     background: color-mix(in oklab, var(--color-surface-2) 88%, var(--color-border));
     animation: ke-skel 1.4s ease-in-out infinite;
   }
+  /* Below-fold marketing blocks. Hero and listing rails stay in the first paint. */
+  .ke-defer-paint {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 32rem;
+  }
+  img.ke-photo {
+    background-color: var(--color-surface-2);
+  }
   /* /menu LCP is the heading. Do not wait on Plus Jakarta or Lucide. */
   .ke-menu-main,
   .ke-menu-main h1,
