@@ -49,7 +49,7 @@ test("/search chrome is one filter bar and keeps existing filter math", () => {
 
   assert.match(bar, /SEARCH_STARTS/);
   assert.match(bar, /onStartChange/);
-  assert.match(copy, /searchWhenHint: "Add dates"/);
+  assert.match(copy, /searchWhenHint: "Start date"/);
   assert.match(copy, /searchNeedAgeStart: "Add age and dates to match openings\."/);
   assert.match(copy, /otherCities: "Other cities"/);
   assert.match(copy, /nearWork: "Near work"/);

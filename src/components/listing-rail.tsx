@@ -16,6 +16,7 @@ export function ListingRail({
   railId,
   empty,
   persist = false,
+  visual = false,
 }: {
   title: string;
   items: Card[];
@@ -29,6 +30,8 @@ export function ListingRail({
   empty?: { title?: string; body: string };
   /** Keep the row even when sparse so a selected Explore filter never disappears. */
   persist?: boolean;
+  /** Large photo cards for home and parent discovery sections. */
+  visual?: boolean;
 }) {
   const { t } = useCopy();
   const scroller = useRef<HTMLDivElement>(null);
@@ -67,7 +70,12 @@ export function ListingRail({
       ) : (
         <div className={cn("ke-listing-rail-head mb-2 flex items-center justify-between gap-3", !hideTitle && "md:mb-3")}>
           {hideTitle ? <h2 className="sr-only">{title}</h2> : (
-            <h2 className="ke-listing-rail-title min-w-0 text-base font-semibold tracking-[-0.03em] md:text-[1.05rem]">
+            <h2
+              className={cn(
+                "ke-listing-rail-title min-w-0 font-semibold tracking-[-0.03em]",
+                visual ? "text-lg md:text-xl" : "text-base md:text-[1.05rem]",
+              )}
+            >
               {title}
             </h2>
           )}
@@ -104,10 +112,15 @@ export function ListingRail({
         </div>
       )}
       <div className="ke-listing-rail-port">
-        <div ref={scroller} className="ke-rail">
+        <div ref={scroller} className={cn("ke-rail", visual && "ke-rail--visual")}>
           {shown.map((item, i) => (
             <div key={item.id} className="ke-rail-card">
-              <DaycareCard item={item} compact eager={eagerThumbs && i < 2} />
+              <DaycareCard
+                item={item}
+                presentation={visual ? "visual" : "rail"}
+                compact={!visual}
+                eager={eagerThumbs && i < 2}
+              />
             </div>
           ))}
         </div>

@@ -115,15 +115,16 @@ export function ParentDeskRails({
 
   return (
     <div className="pb-4">
-      <ListingRail title={t("railBestMatch")} items={match} seeAllHref={parentRailSearchHref({ sort: "match" })} />
+      <ListingRail title={t("railBestMatch")} items={match} seeAllHref={parentRailSearchHref({ sort: "match" })} visual />
       {extraReady ? (
         <>
-          <ListingRail title={t("railNeedSoon")} items={urgency} seeAllHref={parentRailSearchHref({ sort: "urgency" })} />
+          <ListingRail title={t("railNeedSoon")} items={urgency} seeAllHref={parentRailSearchHref({ sort: "urgency" })} visual />
           <ListingRail
             title={t("railGuestFavorites")}
             items={favorites}
             seeAllHref={parentRailSearchHref({ favorites: true })}
             eagerThumbs={false}
+            visual
           />
           <section className="mt-8 first:mt-4 md:mt-10">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -153,9 +154,10 @@ export function ParentDeskRails({
               className="mt-0 first:mt-0 md:mt-0"
               items={ageRail}
               eagerThumbs={false}
+              visual
             />
           </section>
-          <FacilityTypeRails items={pool} />
+          <FacilityTypeRails items={pool} visual />
         </>
       ) : null}
     </div>

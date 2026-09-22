@@ -31,10 +31,12 @@ export function FacilityTypeRails({
   items,
   rows,
   eagerThumbs = false,
+  visual = false,
 }: {
   items?: Card[];
   rows?: Partial<Record<FacilityType, Card[]>>;
   eagerThumbs?: boolean;
+  visual?: boolean;
 }) {
   const { t } = useCopy();
   const resolved: Record<FacilityType, Card[]> = {
@@ -54,6 +56,7 @@ export function FacilityTypeRails({
           items={resolved[kind]}
           seeAllHref={`/search?fac=${kind}`}
           eagerThumbs={eagerThumbs}
+          visual={visual}
         />
       ))}
     </>

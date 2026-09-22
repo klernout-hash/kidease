@@ -76,17 +76,18 @@ test("Explore list is stacked category rails with arrows, not a grid", () => {
   const listingRail = src("src/components/listing-rail.tsx");
   const copy = src("src/lib/copy.ts");
 
-  assert.match(search, /ExploreCategoryRails/);
+  assert.doesNotMatch(search, /<ExploreCategoryRails/);
   assert.match(search, /railItems/);
+  assert.match(search, /visualItems/);
+  assert.match(search, /presentation="visual"/);
+  assert.match(search, /data-ke="search-result-list"/);
   assert.match(search, /exploreBrowseHint/);
   assert.doesNotMatch(search, /searchNeedAgeStart/);
   assert.doesNotMatch(search, /presenceLive/);
   assert.doesNotMatch(search, /licensedNotLiveTitle/);
   assert.doesNotMatch(search, /licensedNotLiveLead/);
   assert.doesNotMatch(search, /wayfindChildProfile/);
-  assert.match(search, /ExploreCategoryRails[\s\S]*items=\{railItems\}/);
-  assert.match(search, /selectedAges=\{selectedAges\}/);
-  assert.match(search, /ke-listings/);
+  assert.match(search, /selected=\{selectedAges\}/);
 
   assert.match(rails, /data-ke="explore-category-rails"/);
   assert.match(rails, /railId="near-you"/);

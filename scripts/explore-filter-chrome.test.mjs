@@ -110,7 +110,8 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   assert.match(explore, /redirect\(\{ to: "\/search" \}\)/);
   assert.match(search, /splitSearchResults/);
   assert.match(search, /searchFiltersReady/);
-  assert.match(search, /ExploreCategoryRails/);
+  assert.match(search, /data-ke="search-result-list"/);
+  assert.match(search, /presentation="visual"/);
   assert.match(search, /t\("exploreBrowseHint"\)/);
   assert.doesNotMatch(search, /searchNeedAgeStart/);
   assert.doesNotMatch(search, /presenceLive/);
@@ -119,8 +120,10 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
 
 test("listing cards render one Request info CTA, not a stacked ghost layer", () => {
   const card = src("src/components/daycare-card.tsx");
-  const requestMatches = card.match(/cardRequestInfo/g) ?? [];
-  assert.equal(requestMatches.length, 1);
+  const visual = card.slice(card.indexOf('presentation === "visual"'), card.indexOf("aspect-[3/2]"));
+  const rail = card.slice(card.indexOf("aspect-[3/2]"));
+  assert.equal((visual.match(/cardRequestInfo/g) ?? []).length, 1);
+  assert.equal((rail.match(/cardRequestInfo/g) ?? []).length, 1);
   assert.match(card, /data-ke="card-request-info"/);
   assert.match(card, /appearance-none/);
   assert.match(card, /\[-moz-appearance:none\]/);

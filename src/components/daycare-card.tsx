@@ -38,12 +38,15 @@ export const DaycareCard = memo(function DaycareCard({
   showDistance = true,
   compact = false,
   eager = false,
+  presentation = "rail",
 }: {
   item: Card;
   showDistance?: boolean;
   cta?: "book" | "details";
   compact?: boolean;
   eager?: boolean;
+  /** Rail keeps the dense tile. Visual is the photo-led search and home card. */
+  presentation?: "rail" | "visual";
 }) {
   const { t, locale } = useCopy();
   const name = displayCentreName(locale === "fr" ? item.nameFr : item.name);
@@ -92,6 +95,80 @@ export const DaycareCard = memo(function DaycareCard({
     feeBadge === "badgeTen" ? "$10" : feeBadge === "badgeFifteen" ? "$15" : feeOk ? money(item.fromPrice, locale) : "";
   const priceUnit = feeBadge === "badgeTen" || feeBadge === "badgeFifteen" ? " / day" : feeOk ? t("month") : "";
   const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
+
+  if (presentation === "visual") {
+    const placeLine = [item.city, away].filter(Boolean).join(" · ");
+    const careLine = [ages, hours].filter(Boolean).join(" · ");
+    return (
+      <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group w-full">
+        <div className="relative">
+          <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
+            <PhotoCarousel
+              photos={photos}
+              eager={eager}
+              rounded="rounded-[14px]"
+              className="aspect-[4/3] bg-[#EBEBEB]"
+            />
+            <div className="pointer-events-none absolute left-3 top-3 z-[2] flex max-w-[70%] flex-col items-start gap-1.5">
+              {hollowPhoto ? (
+                <span className="inline-flex rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white">
+                  {live ? t("photoPending") : t("notOnKidEase")}
+                </span>
+              ) : null}
+              {!hollowPhoto && license && !isCatalogueMatchedBadge(license) ? (
+                <span className="pointer-events-auto">
+                  <TrustBadge badge={license} compact />
+                </span>
+              ) : null}
+              {!hollowPhoto ? (
+                <span className="pointer-events-auto">
+                  <GuestFavoriteBadge item={item} compact surface="photo" />
+                </span>
+              ) : null}
+            </div>
+          </Link>
+          <SaveListingButton daycareId={item.id} />
+        </div>
+        <Link to="/daycare/$slug" params={{ slug: item.slug }} className="mt-2 block text-inherit no-underline">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] font-semibold leading-5 tracking-[-0.02em] text-fg">
+              {name}
+            </h3>
+            {showParentAverage ? (
+              <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 text-[13px] leading-none tabular-nums">
+                <Star className="size-3 fill-fg text-fg" strokeWidth={0} />
+                <span className="font-semibold">{((item.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
+                <span className="font-normal text-muted">({item.parentReviewCount})</span>
+              </span>
+            ) : null}
+          </div>
+          {placeLine ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{placeLine}</p> : null}
+          {publicApprovalEligible(item) ? (
+            <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
+              {t("kideaseApprovedMarker")}
+            </p>
+          ) : null}
+          {careLine ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{careLine}</p> : null}
+          {priceAmount ? (
+            <p className="mt-1 text-[14px] leading-5 tabular-nums">
+              <span className="font-semibold">{priceAmount}</span>
+              <span className="font-normal text-muted">{priceUnit}</span>
+            </p>
+          ) : null}
+        </Link>
+        <Link
+          to="/daycare/$slug"
+          params={{ slug: item.slug }}
+          search={{ ask: "info" }}
+          data-ke="card-request-info"
+          className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {t("cardRequestInfo")}
+        </Link>
+      </article>
+    );
+  }
 
   return (
     <article data-slug={item.slug} className="ke-tile group w-full">

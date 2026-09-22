@@ -23,7 +23,7 @@ export function AppTabBar() {
       <div className="mx-auto grid max-w-lg grid-cols-5 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
         <Tab
           to="/"
-          label={t("search")}
+          label={t("explore")}
           icon={Search}
           active={
             pathname === "/" ||
@@ -78,8 +78,9 @@ function Tab({
       to={to}
       search={search}
       data-ke="app-tab"
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 text-[9px] font-medium tracking-wide",
+        "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 text-[11px] font-medium tracking-wide",
         active ? "text-primary" : "text-muted",
       )}
     >
