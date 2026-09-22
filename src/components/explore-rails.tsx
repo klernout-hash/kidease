@@ -68,7 +68,7 @@ export function ExploreRails({
 
   return (
     <div
-      className="min-h-[22rem] pb-8"
+      className="min-h-[10rem] pb-3"
       onMouseOver={(e) => {
         const node = (e.target as HTMLElement).closest("[data-slug]");
         const slug = node?.getAttribute("data-slug");

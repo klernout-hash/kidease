@@ -27,7 +27,7 @@ test("390px guest chrome wraps instead of forcing a horizontal page scroll", () 
   const pill = src("src/components/explore-search-bar.tsx");
   assert.match(pill, /flex flex-col/);
   assert.match(pill, /lg:flex-row/);
-  assert.match(pill, /size-12 shrink-0/);
+  assert.match(pill, /size-11 shrink-0/);
 });
 
 test("PWA manifest is installable and points at pin icons", () => {

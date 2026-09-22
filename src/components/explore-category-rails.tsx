@@ -36,7 +36,7 @@ export function ExploreCategoryRails({
 
   return (
     <div
-      className="ke-explore-rail-stack min-h-[22rem] pb-8"
+      className="ke-explore-rail-stack min-h-[10rem] pb-3"
       data-ke="explore-category-rails"
       data-explore-rails={filtered ? "selected" : "all"}
       onMouseOver={(e) => {

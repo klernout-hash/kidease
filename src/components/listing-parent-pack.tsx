@@ -33,10 +33,10 @@ export function ListingHeaderPills({ item }: { item: Daycare }) {
         day: "numeric",
       })
     : "";
-  const pill = "rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium";
+  const pill = "ke-chip-meta";
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-1.5" data-listing-header-pills>
+    <div className="mt-1.5 flex flex-wrap items-center gap-1" data-listing-header-pills>
       <span className={`${pill} ${vacancy.kind === "open" ? "" : "text-muted"}`}>
         {opening
           ? parentOpeningLabel(opening, loc)
@@ -69,12 +69,12 @@ export function ListingJumpNav() {
     ["listing-fees", "jumpFees"],
   ] as const;
   return (
-    <nav className="mt-5 flex flex-wrap gap-2 text-sm" aria-label={t("jumpPrograms")}>
+    <nav className="mt-3 flex flex-wrap gap-1.5 text-xs" aria-label={t("jumpPrograms")}>
       {links.map(([id, key]) => (
         <a
           key={id}
           href={`#${id}`}
-          className="rounded-full bg-surface px-3 py-1.5 ring-1 ring-border hover:bg-surface-2"
+          className="inline-flex min-h-9 items-center rounded-full bg-surface px-2.5 py-1 ring-1 ring-border hover:bg-surface-2"
         >
           {t(key)}
         </a>
@@ -88,31 +88,31 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
   const loc = locale === "fr" ? "fr" : "en";
   const rows = listingPrograms(item);
   return (
-    <section id="listing-programs" className="mt-8 scroll-mt-24">
+    <section id="listing-programs" className="mt-5 scroll-mt-20">
       <h2 className="font-display text-2xl">{t("programsTitle")}</h2>
       {rows.length ? (
         <div className="mt-3 overflow-x-auto rounded-lg ring-1 ring-border">
           <table className="w-full min-w-[28rem] text-sm">
             <thead className="bg-surface-2 text-left text-xs text-muted">
               <tr>
-                <th className="px-4 py-2 font-medium">{t("programsAge")}</th>
-                <th className="px-4 py-2 font-medium">{t("chipSchedule")}</th>
-                <th className="px-4 py-2 font-medium">{t("programsFee")}</th>
+                <th className="px-3 py-1.5 font-medium">{t("programsAge")}</th>
+                <th className="px-3 py-1.5 font-medium">{t("chipSchedule")}</th>
+                <th className="px-3 py-1.5 font-medium">{t("programsFee")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((row) => (
                 <tr key={row.band}>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2">
                     <p className="font-medium">{parentAgeLabel(row.band, loc)}</p>
                     <p className="text-xs text-muted">{formatAgeRange(row.ageMinMonths, row.ageMaxMonths)}</p>
                   </td>
-                  <td className="px-4 py-3 text-muted">
+                  <td className="px-3 py-2 text-muted">
                     {row.schedules.length
                       ? row.schedules.map((id) => parentScheduleLabel(id, loc)).join(" · ")
                       : t("programsAsk")}
                   </td>
-                  <td className="px-4 py-3 tabular-nums">
+                  <td className="px-3 py-2 tabular-nums">
                     {programFeeKnown(row, item) && row.monthlyFee
                       ? money(row.monthlyFee, locale)
                       : t("programsAsk")}
@@ -123,7 +123,7 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
           </table>
         </div>
       ) : (
-        <p className="mt-3 rounded-lg bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("programsAsk")}</p>
+        <p className="ke-empty mt-2 text-left">{t("programsAsk")}</p>
       )}
     </section>
   );
@@ -145,7 +145,7 @@ export function ListingSnapshotGrid({ item }: { item: Daycare }) {
   const values = (item.valuesNote || "").trim();
   if (!chips.length && !promo && !values) return null;
   return (
-    <section className="mt-8" data-listing-snapshot>
+    <section className="mt-5" data-listing-snapshot>
       <h2 className="font-display text-2xl">{t("snapshotTitle")}</h2>
       {promo ? <p className="mt-2 max-w-prose text-muted">{promo}</p> : null}
       {values ? (
@@ -157,7 +157,7 @@ export function ListingSnapshotGrid({ item }: { item: Daycare }) {
       {chips.length ? (
         <ul className="mt-3 flex flex-wrap gap-2">
           {chips.map((label) => (
-            <li key={label} className="ke-chip">
+            <li key={label} className="ke-chip-meta">
               {label}
             </li>
           ))}

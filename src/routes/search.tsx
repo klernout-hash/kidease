@@ -1145,11 +1145,11 @@ function SearchPage() {
 
   return (
     <Shell>
-      <div className="ke-gutter mx-auto max-w-7xl pb-10 pt-4">
+      <div className="ke-dense ke-gutter mx-auto max-w-7xl pb-6 pt-2">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1
-              className="truncate font-display text-[1.65rem] leading-tight tracking-[-0.03em]"
+              className="truncate font-display text-[1.35rem] leading-tight tracking-[-0.03em]"
               data-search-h1=""
             >
               {city}
@@ -1212,7 +1212,7 @@ function SearchPage() {
         ) : null}
 
         <ExploreSearchBar
-          className="mt-4"
+          className="mt-2"
           values={{ where: query, name: nameQuery, from: needBy, to: needUntil }}
           origin={origin}
           start={searchStart ?? ""}
@@ -1423,7 +1423,7 @@ function SearchPage() {
         <div
           className={cn(
             "ke-search-results mt-2 contain-layout",
-            view !== "map" && "min-h-[22rem]",
+            view !== "map" && "min-h-[10rem]",
             refreshing && "opacity-70",
           )}
         >
@@ -1479,7 +1479,7 @@ function SearchPage() {
                   <div className="ke-rail">
                     {Array.from({ length: 4 }).map((_, i) => (
                       <div key={i} className="ke-rail-card space-y-2">
-                        <div className="ke-skel aspect-[20/19] w-full" />
+                        <div className="ke-skel aspect-[3/2] w-full" />
                         <div className="ke-skel h-3.5 w-4/5" />
                         <div className="ke-skel h-3 w-1/2" />
                       </div>

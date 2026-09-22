@@ -14,7 +14,7 @@ test("website listing tiles are Airbnb-dense, not the old 268px cards", () => {
   const css = src("src/styles.css");
   assert.match(css, /html\[data-channel="website"\] \{[\s\S]*--ke-card-w:\s*11\.5rem;/);
   assert.doesNotMatch(css, /--ke-card-w:\s*16\.75rem/);
-  assert.match(css, /\.ke-rail \{[\s\S]*gap:\s*0\.75rem;/);
+  assert.match(css, /\.ke-rail \{[\s\S]*?gap:\s*0\.5rem;/);
   assert.match(
     css,
     /html\[data-channel="website"\] \.ke-listings \{[\s\S]*grid-template-columns: 1fr;/,
@@ -41,8 +41,9 @@ test("listing card copy stays a compact single stack with 44px save target", () 
   assert.match(card, /truncate text-\[13px\] font-semibold/);
   assert.match(card, /truncate text-\[13px\] font-normal leading-4/);
   assert.match(card, /text-\[13px\] leading-4 tabular-nums/);
-  assert.match(card, /aspect-\[20\/19\]/);
-  assert.match(card, /aspect-\[4\/3\]/);
+  assert.match(card, /aspect-\[3\/2\]/);
+  assert.doesNotMatch(card, /aspect-\[20\/19\]/);
+  assert.doesNotMatch(card, /aspect-\[4\/3\]/);
   assert.match(card, /SaveListingButton/);
   assert.match(save, /grid size-11 place-items-center rounded-full/);
   assert.doesNotMatch(card, /Guest favourite/);
@@ -56,7 +57,7 @@ test("rails, search skeletons, and featured grids share the tighter footprint", 
   const photo = src("src/lib/photo.ts");
   assert.match(rail, /scrollBy\(\{ left: dir \* step/);
   assert.match(search, /ke-rail-card/);
-  assert.match(search, /aspect-\[20\/19\]/);
+  assert.match(search, /aspect-\[3\/2\]/);
   assert.doesNotMatch(search, /lg:grid-cols-5 xl:grid-cols-6/);
   assert.match(home, /ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5/);
   assert.match(photo, /200px/);

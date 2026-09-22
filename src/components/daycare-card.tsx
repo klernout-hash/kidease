@@ -6,7 +6,7 @@ import { PhotoCarousel } from "@/components/photo-carousel";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
-import { cn, displayCentreName, money } from "@/lib/utils";
+import { displayCentreName, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
@@ -101,7 +101,7 @@ export const DaycareCard = memo(function DaycareCard({
             photos={photos}
             eager={eager}
             rounded="rounded-[14px]"
-            className={cn("bg-[#EBEBEB]", compact ? "aspect-[20/19]" : "aspect-[4/3]")}
+            className="aspect-[3/2] bg-[#EBEBEB]"
           />
           <div className="pointer-events-none absolute left-2 top-2 z-[2] flex flex-col items-start gap-1">
             {hollowPhoto ? (
@@ -147,7 +147,7 @@ export const DaycareCard = memo(function DaycareCard({
       </div>
 
       <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
-        <div className="mt-2 space-y-px text-fg">
+        <div className="mt-1.5 space-y-px text-fg">
           <div className="flex items-start justify-between gap-2">
             <h3 className="min-w-0 truncate text-[13px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
               {name}

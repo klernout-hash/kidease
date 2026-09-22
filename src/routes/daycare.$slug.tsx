@@ -286,7 +286,7 @@ function Listing() {
         <main className="ke-gutter mx-auto max-w-6xl py-6">
           {earlyPhoto ? (
             <div className="overflow-hidden rounded-[14px] bg-surface shadow-card ring-1 ring-border">
-              <div className="relative aspect-[16/10] max-h-[min(20rem,42dvh)] bg-surface-2 lg:max-h-[22rem]">
+              <div className="ke-listing-hero relative">
                 <BuildingPhoto
                   eager
                   priority
@@ -299,7 +299,7 @@ function Listing() {
               </div>
             </div>
           ) : null}
-          {earlyName ? <h1 className="mt-4 font-display text-3xl md:text-4xl">{earlyName}</h1> : null}
+          {earlyName ? <h1 className="mt-2 font-display text-[1.4rem] leading-tight md:text-[1.65rem]">{earlyName}</h1> : null}
           <PageSkeleton hero={!earlyPhoto} cards={2} />
         </main>
       </Shell>
@@ -474,9 +474,9 @@ function Listing() {
     <Shell>
       <ListingJsonLd src={jsonLdSrc} locale={seoLocale} />
       <JsonLd json={jsonLdSrc ? listingBreadcrumbJsonLdScript(jsonLdSrc, seoLocale) : ""} />
-      <article className="ke-gutter mx-auto max-w-5xl overflow-x-hidden py-6 pb-28 md:pb-10">
-        <nav className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
-          <Link to="/" className="min-h-11 inline-flex items-center hover:text-fg hover:underline">
+      <article className="ke-dense ke-gutter mx-auto max-w-5xl overflow-x-hidden py-3 pb-28 md:pb-8">
+        <nav className="mb-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0 text-muted">
+          <Link to="/" className="ke-crumb hover:text-fg hover:underline">
             KidEase
           </Link>
           {cityHub ? (
@@ -485,7 +485,7 @@ function Listing() {
               <Link
                 to="/daycare/city/$city"
                 params={{ city: cityHub.slug }}
-                className="min-h-11 inline-flex items-center hover:text-fg hover:underline"
+                className="ke-crumb hover:text-fg hover:underline"
               >
                 {locale === "fr" ? `Garderies à ${cityHubCityName(cityHub, "fr")}` : `Daycare in ${cityHubCityName(cityHub, "en")}`}
               </Link>
@@ -493,7 +493,7 @@ function Listing() {
           ) : (
             <>
               <span aria-hidden>/</span>
-              <Link to="/search" className="min-h-11 inline-flex items-center hover:text-fg hover:underline">
+              <Link to="/search" className="ke-crumb hover:text-fg hover:underline">
                 {t("backToExplore")}
               </Link>
             </>
@@ -501,14 +501,14 @@ function Listing() {
           <span aria-hidden>/</span>
           <span className="text-fg">{name}</span>
         </nav>
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(17rem,22rem)]">
-        <div id="listing-photos" className="scroll-mt-24 overflow-hidden rounded-[14px] bg-surface shadow-card ring-1 ring-border">
-          <div className="relative aspect-[16/10] max-h-[min(20rem,42dvh)] bg-surface-2 lg:max-h-[22rem]">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
+        <div id="listing-photos" className="scroll-mt-20 overflow-hidden rounded-[14px] bg-surface shadow-card ring-1 ring-border">
+          <div className="ke-listing-hero relative">
             {photos[photo]?.includes("-logo") ? (
               <img
                 src={photos[photo]}
                 alt=""
-                className="size-full object-contain bg-surface p-10"
+                className="size-full object-contain bg-surface p-3"
               />
             ) : (
               <BuildingPhoto
@@ -559,17 +559,17 @@ function Listing() {
             <p className="text-sm text-muted">
               {d.address}, {d.city}, {d.province} {d.postalCode}
             </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-3xl md:text-4xl">{name}</h1>
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+              <h1 className="font-display text-[1.4rem] leading-tight md:text-[1.65rem]">{name}</h1>
               {licensed ? <TrustBadge badge={licensed} /> : null}
             </div>
             <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} />
-            <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
+            <p className="mt-1 text-sm text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
             <ListingHeaderPills item={d} />
             <p className="mt-2 text-xs font-medium text-subtle">{t("freeListingNotAd")}</p>
-            <div className="mt-4 hidden rounded-[14px] bg-surface p-5 shadow-card ring-1 ring-border lg:block">
-              <p className="text-sm text-muted">{t("monthlyFrom")}</p>
-              <p className="font-display text-3xl tabular-nums">
+            <div className="ke-panel mt-2 hidden px-3 py-2.5 shadow-card lg:block">
+              <p className="text-xs text-muted">{t("monthlyFrom")}</p>
+              <p className="font-display text-2xl tabular-nums">
                 {from > 0 ? (
                   <>
                     {money(from, locale)}
@@ -579,9 +579,9 @@ function Listing() {
                   <span className="text-xl">{t("feeUnknown")}</span>
                 )}
               </p>
-              <p className="mt-3 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
+              <p className="mt-1.5 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
               {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
-              <div className="mt-4 grid gap-2">
+              <div className="mt-2 grid gap-1.5">
                 <ListingActions />
                 {live && waitlisted ? (
                   <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
@@ -618,7 +618,7 @@ function Listing() {
           </section>
         ) : null}
 
-        <div className="mt-6 min-w-0">
+        <div className="mt-4 min-w-0">
           <div className="min-w-0">
             <ListingJumpNav />
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -669,7 +669,7 @@ function Listing() {
               </div>
             ) : null}
 
-            <div className="mt-6 grid gap-2 rounded-[14px] bg-surface p-4 ring-1 ring-border lg:hidden">
+            <div className="ke-panel mt-3 grid gap-1.5 px-3 py-2.5 lg:hidden">
               <p className="text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
               {!user && live ? <p className="text-xs text-subtle">{t("guestBrowse")}</p> : null}
               <ListingActions />
@@ -678,7 +678,7 @@ function Listing() {
               ) : null}
             </div>
 
-            <dl className="mt-6 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm md:grid-cols-4">
               {hours.trim() ? <Meta label={t("hours")} value={hours} /> : null}
               {agesLabel ? <Meta label={t("ages")} value={agesLabel} /> : null}
               <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
@@ -692,13 +692,13 @@ function Listing() {
               />
             </dl>
 
-            <section className="mt-8 rounded-xl bg-surface p-5 ring-1 ring-border">
+            <section className="ke-panel mt-4 px-3 py-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-2xl">{t("licenceRecord")}</h2>
                 {licensed ? <TrustBadge badge={licensed} compact /> : null}
               </div>
               <p className="mt-2 text-sm text-muted">{t("licenceRecordLead")}</p>
-              <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <dl className="mt-2 grid gap-x-3 gap-y-1.5 text-sm sm:grid-cols-2">
                 <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
                 {licensed ? (
                   <Meta label={t("licenseStatus")} value={t(licensed.labelKey as CopyKey)} />
@@ -762,7 +762,7 @@ function Listing() {
                   ) : null}
                 </ul>
               ) : (
-                <p className="mt-3 rounded-lg bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("feeUnknownLead")}</p>
+                <p className="ke-empty mt-2 text-left">{t("feeUnknownLead")}</p>
               )}
               <p className="mt-3 text-sm">
                 <Link to="/benefits" className="font-medium text-primary underline-offset-4 hover:underline">
@@ -807,7 +807,7 @@ function Listing() {
               {known ? (
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {data.availability.map((row) => (
-                    <div key={row.month} className="rounded-lg bg-surface p-3 text-sm ring-1 ring-border">
+                    <div key={row.month} className="rounded-lg bg-surface px-2.5 py-2 text-sm ring-1 ring-border">
                       <p className="font-medium">{formatMonth(row.month, locale)}</p>
                       <p className="mt-1 text-muted tabular-nums">
                         {t("infant")} {row.infant} · {t("toddler")} {row.toddler} · {t("preschool")} {row.preschool}
@@ -816,7 +816,7 @@ function Listing() {
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 rounded-lg bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("availUnknownLead")}</p>
+                <p className="ke-empty mt-2 text-left">{t("availUnknownLead")}</p>
               )}
               <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
               {live ? (
@@ -834,7 +834,7 @@ function Listing() {
                     .split(",")
                     .filter(Boolean)
                     .map((key) => (
-                      <li key={key} className="ke-chip">
+                      <li key={key} className="ke-chip-meta">
                         {amenityLabel(key, locale)}
                       </li>
                     ))}
@@ -856,9 +856,9 @@ function Listing() {
                 </p>
               ) : null}
               {data.reviews.length ? (
-                <ul className="mt-3 space-y-4">
+                <ul className="mt-2 space-y-2">
                   {data.reviews.map((r) => (
-                    <li key={r.id} className="rounded-lg bg-surface p-4 ring-1 ring-border">
+                    <li key={r.id} className="rounded-lg bg-surface px-3 py-2 ring-1 ring-border">
                       <div className="flex items-center justify-between">
                         <p className="font-medium">{r.author}</p>
                         <span className="inline-flex items-center gap-1 text-sm">
@@ -939,16 +939,16 @@ function facilityTypeLabelKey(type: FacilityType): CopyKey {
 
 function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-surface p-3 ring-1 ring-border">
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className="mt-1">{value}</dd>
+    <div className="ke-fact">
+      <dt className="text-[11px] leading-4 text-muted">{label}</dt>
+      <dd className="truncate text-sm font-medium leading-5">{value}</dd>
     </div>
   );
 }
 
 function PriceRow({ label, value, extra }: { label: string; value: string; extra: string }) {
   return (
-    <li className="flex items-center justify-between gap-3 px-4 py-3">
+    <li className="flex items-center justify-between gap-3 px-3 py-1.5">
       <span>{label}</span>
       <span className="shrink-0 tabular-nums">
         {value}
