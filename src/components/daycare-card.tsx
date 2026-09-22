@@ -147,9 +147,9 @@ export const DaycareCard = memo(function DaycareCard({
       </div>
 
       <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
-        <div className="mt-1.5 space-y-px text-fg">
+        <div className="mt-1 space-y-px text-fg">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="min-w-0 truncate text-[13px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
+            <h3 className="min-w-0 truncate text-[12px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
               {name}
             </h3>
             {showParentAverage ? (
@@ -177,14 +177,14 @@ export const DaycareCard = memo(function DaycareCard({
             </div>
           ) : null}
           {showDistance ? (
-            <p className="truncate text-[13px] font-normal leading-4 text-muted">
+            <p className="truncate text-[12px] font-normal leading-4 text-muted">
               {item.city}
               {away ? ` · ${away}` : ""}
             </p>
           ) : (
-            <p className="truncate text-[13px] font-normal leading-4 text-muted">{item.city}</p>
+            <p className="truncate text-[12px] font-normal leading-4 text-muted">{item.city}</p>
           )}
-          {line3 ? <p className="truncate text-[13px] font-normal leading-4 text-muted">{line3}</p> : null}
+          {line3 ? <p className="truncate text-[12px] font-normal leading-4 text-muted">{line3}</p> : null}
           {gaps.length ? (
             <p className="truncate text-[12px] font-normal leading-4 text-muted">
               {gaps.map((gap) => t(GAP_COPY[gap])).join(" · ")}
@@ -211,7 +211,7 @@ export const DaycareCard = memo(function DaycareCard({
             </div>
           ) : null}
           {priceAmount ? (
-            <p className="pt-0.5 text-[13px] leading-4 tabular-nums">
+            <p className="pt-0.5 text-[12px] leading-4 tabular-nums">
               <span className="font-semibold">{priceAmount}</span>
               <span className="font-normal text-muted">{priceUnit}</span>
             </p>
@@ -225,7 +225,7 @@ export const DaycareCard = memo(function DaycareCard({
         params={{ slug: item.slug }}
         search={{ ask: "info" }}
         data-ke="card-request-info"
-        className="relative z-10 mt-2 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-3 text-[12px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
+        className="relative z-10 mt-1.5 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-2.5 text-[11px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
         onClick={(e) => e.stopPropagation()}
       >
         {t("cardRequestInfo")}

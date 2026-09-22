@@ -183,7 +183,7 @@ function DeskMoreSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="fixed inset-x-0 bottom-0 top-[calc(4.25rem+env(safe-area-inset-top))] z-[80] flex flex-col rounded-t-2xl bg-surface shadow-lift ring-1 ring-border"
+        className="fixed inset-x-0 bottom-0 top-[calc(3.2rem+env(safe-area-inset-top))] z-[80] flex flex-col rounded-t-2xl bg-surface shadow-lift ring-1 ring-border"
       >
         <div className="flex shrink-0 flex-col items-center pt-2">
           <span className="h-1 w-10 rounded-full bg-border" aria-hidden />
@@ -351,10 +351,10 @@ export function DeskShell({
 
   return (
     <Shell>
-      <div className={cn("ke-dense mx-auto flex flex-col gap-4 px-4 py-3 md:flex-row md:items-start md:gap-5 md:py-4", wide ? "max-w-[90rem]" : "max-w-6xl")}>
-        <aside className="md:sticky md:top-20 md:w-48 md:shrink-0">
+      <div className={cn("ke-dense mx-auto flex flex-col gap-3 px-3 py-2 md:flex-row md:items-start md:gap-4 md:py-3", wide ? "max-w-[90rem]" : "max-w-6xl")}>
+        <aside className="md:sticky md:top-14 md:w-44 md:shrink-0">
           <p className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-subtle md:block">{eyebrow}</p>
-          <h1 className="font-display text-[1.35rem] leading-tight md:mt-0.5">{title}</h1>
+          <h1 className="font-display text-[1.2rem] leading-tight md:mt-0.5">{title}</h1>
           <nav
             data-ke="desk-desktop-nav"
             className="mt-2 hidden flex-col gap-0.5 md:flex"
@@ -367,7 +367,7 @@ export function DeskShell({
           </nav>
         </aside>
         <div className="min-w-0 flex-1">
-          <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-30 -mx-4 mb-3 border-b border-border bg-bg px-4 py-1.5 md:hidden">
+          <div className="sticky top-[calc(3.2rem+env(safe-area-inset-top))] z-30 -mx-3 mb-2 border-b border-border bg-bg px-3 py-1 md:hidden">
             {phoneMore ? (
               <PhoneDeskNav
                 primary={primary}

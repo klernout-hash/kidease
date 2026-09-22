@@ -87,7 +87,7 @@ export function ExploreSearchBar({
 
   function segmentClass(field: Field, index: number) {
     return cn(
-      "relative flex min-h-[3.15rem] min-w-0 flex-1 flex-col justify-center overflow-visible px-3.5 py-1.5 text-left transition-colors",
+      "relative flex min-h-[2.75rem] min-w-0 flex-1 flex-col justify-center overflow-visible px-3 py-1 text-left transition-colors",
       "lg:px-4",
       index === 0 && "rounded-t-[2rem] lg:rounded-none lg:rounded-l-full",
       index === 2 && "rounded-b-[2rem] lg:rounded-none lg:rounded-r-full",
@@ -109,7 +109,7 @@ export function ExploreSearchBar({
         onSubmit();
       }}
     >
-      <div className="relative z-20 flex flex-col min-h-[9.45rem] divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-lift ring-1 ring-border/80 lg:min-h-[3.15rem] lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
+      <div className="relative z-20 flex flex-col min-h-[8.4rem] divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-lift ring-1 ring-border/80 lg:min-h-[2.75rem] lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
         <div className={segmentClass("where", 0)} onClick={() => setActive("where")}>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">

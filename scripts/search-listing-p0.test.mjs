@@ -50,8 +50,8 @@ test("search reserves rail space so Priority listings and the form do not shift"
   assert.doesNotMatch(search, /grid grid-cols-2 gap-x-3 gap-y-4/);
   assert.match(search, /min-h-5/);
   assert.match(place, /relative z-40 min-w-0 flex-1 overflow-visible/);
-  assert.match(bar, /min-h-\[9\.45rem\]/);
-  assert.match(bar, /min-h-\[3\.15rem\]/);
+  assert.match(bar, /min-h-\[8\.4rem\]/);
+  assert.match(bar, /min-h-\[2\.75rem\]/);
   assert.match(bar, /className="min-h-6"/);
   assert.match(rails, /min-h-\[10rem\]/);
   assert.doesNotMatch(rails, /FacilityTypeRails/);

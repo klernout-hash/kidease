@@ -81,7 +81,7 @@ test("desk shell uses a phone scroll row and a full-height More sheet, not a flo
   assert.ok(moreIdx > navClose);
   assert.match(shell, /role="dialog"/);
   assert.match(shell, /aria-modal="true"/);
-  assert.match(shell, /top-\[calc\(4\.25rem\+env\(safe-area-inset-top\)\)\]/);
+  assert.match(shell, /top-\[calc\(3\.2rem\+env\(safe-area-inset-top\)\)\]/);
   assert.match(shell, /overflow-x-auto/);
   assert.match(shell, /hidden text-\[11px\] font-medium uppercase[\s\S]*md:block/);
   assert.doesNotMatch(shell, /DaycareMoreMenu/);

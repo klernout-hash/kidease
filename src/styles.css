@@ -43,18 +43,18 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 600;
   --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 22px;
-  --radius-xl: 32px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
   --radius-device: 36px;
   --shadow-card: 0 1px 0 rgba(28, 36, 56, 0.04), 0 18px 40px -24px rgba(26, 55, 144, 0.28);
   --shadow-lift: 0 1px 0 rgba(28, 36, 56, 0.04), 0 24px 48px -20px rgba(26, 55, 144, 0.32);
   --ke-card-w: 11.25rem;
-  /* Marketplace density. Cards and callouts use these; tap targets stay ≥44px. */
-  --spacing-box: 0.75rem;
-  --spacing-box-tight: 0.5rem;
-  --spacing-section: 1.15rem;
+  /* Marketplace density. 14px root scales rem spacing; these tighten boxes further. */
+  --spacing-box: 0.625rem;
+  --spacing-box-tight: 0.35rem;
+  --spacing-section: 0.8rem;
 }
 
 @layer base {
@@ -112,6 +112,7 @@
   }
   html {
     color-scheme: light;
+    font-size: 14px;
   }
   html,
   body,
@@ -145,8 +146,8 @@
   body {
     font-family: var(--font-sans);
     font-weight: 400;
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: 14px;
+    line-height: 1.4;
     overflow-x: hidden;
     overscroll-behavior-x: none;
   }
@@ -257,9 +258,9 @@
     min-height: 2.75rem;
     min-width: 2.75rem;
     max-width: 100%;
-    padding: 0.4rem 0.75rem;
+    padding: 0.15rem 0.55rem;
     border-radius: 9999px;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 500;
     line-height: 1.2;
     white-space: nowrap;
@@ -346,14 +347,14 @@
   .ke-explore-cat {
     flex: 0 0 auto;
     gap: 0.4rem;
-    padding-inline: 0.85rem;
+    padding-inline: 0.6rem;
   }
   .ke-explore-filter-sticky {
     position: sticky;
-    top: calc(4rem + env(safe-area-inset-top, 0px));
+    top: calc(3.2rem + env(safe-area-inset-top, 0px));
     z-index: 40;
-    margin-inline: calc(-1 * clamp(16px, 4vw, 64px));
-    padding-inline: clamp(16px, 4vw, 64px);
+    margin-inline: calc(-1 * clamp(12px, 3vw, 40px));
+    padding-inline: clamp(12px, 3vw, 40px);
     padding-block: 0.2rem 0.3rem;
     background: color-mix(in oklab, var(--color-bg) 92%, transparent);
     backdrop-filter: blur(12px);
@@ -504,7 +505,7 @@
     }
   }
   .ke-gutter {
-    padding-inline: clamp(16px, 4vw, 64px);
+    padding-inline: clamp(12px, 3vw, 40px);
   }
   .ke-site-footer {
     border-top: 1px solid var(--color-border);
@@ -818,10 +819,10 @@
     border: 1px solid var(--color-border);
   }
   .ke-trust {
-    margin-top: 0.45rem;
+    margin-top: 0.35rem;
     border-radius: var(--radius-md);
     background: var(--color-soft);
-    padding: 0.4rem 0.7rem 0.45rem;
+    padding: 0.3rem 0.55rem 0.35rem;
     box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-primary) 22%, transparent);
   }
   .ke-fact {
@@ -841,13 +842,13 @@
     line-height: 1.3;
   }
   .ke-listing-hero {
-    aspect-ratio: 2 / 1;
-    max-height: min(13rem, 34dvh);
+    aspect-ratio: 5 / 2;
+    max-height: min(9rem, 28dvh);
     background: var(--color-surface-2);
   }
   @media (min-width: 1024px) {
     .ke-listing-hero {
-      max-height: 15rem;
+      max-height: 11rem;
     }
   }
   .ke-crumb {
@@ -924,7 +925,7 @@
     position: fixed;
     left: 0;
     right: 0;
-    top: calc(4.25rem + env(safe-area-inset-top));
+    top: calc(3.2rem + env(safe-area-inset-top));
     bottom: calc(5.25rem + env(safe-area-inset-bottom));
     z-index: 1;
     overflow: hidden;
@@ -1270,11 +1271,19 @@ html[data-channel="website"] .ke-web-grid > article {
 .ke-dense .px-5.py-8,
 .ke-dense .px-5.py-6,
 .ke-dense .px-5.py-4,
-.ke-dense :is(.rounded-xl, .rounded-2xl).px-4.py-3 {
-  padding: 0.45rem 0.75rem;
+.ke-dense :is(.rounded-xl, .rounded-2xl).px-4.py-3,
+.ke-dense .px-4.py-3 {
+  padding: 0.35rem 0.6rem;
+}
+.ke-dense .min-h-14 {
+  min-height: 2.65rem;
+}
+.ke-dense .text-\[15px\] {
+  font-size: 13px;
+  line-height: 1.3;
 }
 .ke-dense .mt-10 {
-  margin-top: 1.25rem;
+  margin-top: 1rem;
 }
 .ke-dense .mt-8 {
   margin-top: var(--spacing-section);
@@ -1290,28 +1299,58 @@ html[data-channel="website"] .ke-web-grid > article {
   margin-bottom: 0.7rem;
 }
 .ke-dense .gap-6 {
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 .ke-dense .space-y-8 > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 1rem;
+  margin-top: 0.85rem;
 }
 .ke-dense .space-y-6 > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 0.75rem;
+  margin-top: 0.6rem;
 }
 .ke-dense .space-y-4 > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
 }
 .ke-dense :is(h1, h2).text-3xl {
-  font-size: 1.375rem;
+  font-size: 1.25rem;
   line-height: 1.2;
 }
 .ke-dense :is(h1, h2, h3).text-2xl {
-  font-size: 1.125rem;
+  font-size: 1.05rem;
   line-height: 1.25;
 }
 @media (min-width: 768px) {
   .ke-dense .md\:text-4xl {
-    font-size: 1.625rem;
+    font-size: 1.45rem;
     line-height: 1.15;
   }
+}
+
+/* Header hugs the smaller mark. Sticky filters track the same height. */
+html {
+  font-size: 14px;
+}
+header .min-h-16 {
+  min-height: 3.2rem;
+  padding-block: 0.15rem;
+}
+header :is(button, a).min-w-12 {
+  gap: 0;
+  padding-block: 0;
+}
+header :is(button, a) .size-9 {
+  width: 1.65rem;
+  height: 1.65rem;
+}
+[data-ke-mark="sm"] > span:last-child {
+  margin-top: 0;
+  font-size: 10px;
+  line-height: 1.15;
+}
+input,
+select:not(.ke-header-chrome),
+textarea {
+  font-size: 16px;
+}
+select.ke-lang-select.ke-header-chrome {
+  font-size: 11px;
 }
