@@ -65,6 +65,7 @@ import {
   honestVacancy,
   isSearchAge,
   isSearchStart,
+  listingAgeUnknown,
   searchFiltersReady,
   splitSearchResults,
   startWindowToDate,
@@ -72,6 +73,7 @@ import {
   type SearchStart,
 } from "@/lib/now-loops";
 import {
+  RAIL_AGES,
   isCareType,
   isRailAge,
   matchesCareType,
@@ -103,8 +105,7 @@ import {
   type SavedSearchFilters,
 } from "@/lib/saved-search";
 import { CityHubLinks } from "@/components/city-hub-links";
-import { ExploreCategoryRails } from "@/components/explore-category-rails";
-import { preferCompleteCards } from "@/lib/explore-category-rails";
+import { EXPLORE_AGE_RAIL_COPY, preferCompleteCards } from "@/lib/explore-category-rails";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
@@ -241,6 +242,7 @@ function SearchPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);
+  const [listWindow, setListWindow] = useState({ key: "", count: 12 });
   const [need, setNeed] = useState("");
   const [matchNote, setMatchNote] = useState<string | null>(null);
   const [matchBusy, setMatchBusy] = useState(false);
@@ -896,6 +898,32 @@ function SearchPage() {
   const railItems = preferCompleteCards(
     publicListings(extraListingFilters || (liveOnly && shownList.length > 0) ? shownList : (items ?? [])),
   );
+  const visualItems = railItems.filter((row) => {
+    if (
+      selectedAges.length &&
+      !selectedAges.some((age) => matchesRailAge(row, age) || listingAgeUnknown(row))
+    ) {
+      return false;
+    }
+    if (openingsOn && honestVacancy(row).kind !== "open") return false;
+    return true;
+  });
+  const listKey = [
+    selectedAges.join(","),
+    openingsOn ? "1" : "0",
+    query,
+    nameQuery,
+    sort,
+    liveOnly ? "1" : "0",
+    avail,
+    incoming.age ?? "",
+    incoming.cat ?? "",
+    incoming.openings ?? "",
+  ].join("|");
+  if (listWindow.key !== listKey) {
+    setListWindow({ key: listKey, count: 12 });
+  }
+  const visibleCards = visualItems.slice(0, listWindow.key === listKey ? listWindow.count : 12);
   const showSearchEmpty =
     items !== null &&
     railItems.length === 0 &&
@@ -1214,9 +1242,19 @@ function SearchPage() {
 
         <ExploreSearchBar
           className="mt-2"
+          startCollapsed
           values={{ where: query, name: nameQuery, from: needBy, to: needUntil }}
           origin={origin}
           start={searchStart ?? ""}
+          childSummary={selectedAges.map((age) => t(EXPLORE_AGE_RAIL_COPY[age])).join(", ")}
+          childAges={RAIL_AGES.map((age) => ({
+            id: age,
+            label: t(EXPLORE_AGE_RAIL_COPY[age]),
+            on: selectedAges.includes(age),
+          }))}
+          onChildAge={(id) => {
+            if (isRailAge(id)) writeAgeSearch(id);
+          }}
           onWhereChange={setQuery}
           onWhereResolved={applyPlace}
           onNameChange={setNameQuery}
@@ -1289,6 +1327,25 @@ function SearchPage() {
             className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border"
             data-ke="explore-filters-sheet"
           >
+            <div>
+              <p className="text-sm font-semibold">{t("recommendedForYou")}</p>
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {(
+                  [
+                    [avail === "open", t("filterOpen"), () => setAvail((v) => (v === "open" ? "any" : "open"))],
+                    [meals, t("filterMeals"), () => setMeals((v) => !v)],
+                    [outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v)],
+                    [extended, t("filterExtended"), () => setExtended((v) => !v)],
+                    [infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v)],
+                    [ten, t("filterTen"), () => setTen((v) => !v)],
+                  ] as [boolean, string, () => void][]
+                ).map(([on, label, toggle]) => (
+                  <button key={label} type="button" className="ke-care-tile" aria-pressed={on} onClick={toggle}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold">{t("filters")}</p>
               <div className="flex items-center gap-2">
@@ -1431,7 +1488,7 @@ function SearchPage() {
           {view === "map" ? (
             mapEnabled ? (
               <div className="mt-4 space-y-3">
-                <div className="h-[min(40dvh,22rem)] min-h-[14rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(50vh,28rem)]">
+                <div className="h-[min(72dvh,36rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(62vh,34rem)]">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={shownList}
@@ -1473,23 +1530,16 @@ function SearchPage() {
               </div>
             ) : null
           ) : items === null ? (
-            <div className="mt-4 space-y-8" aria-busy="true" aria-label={t("searchCountLoading")}>
-              {Array.from({ length: 2 }).map((_, rail) => (
-                <div key={rail} aria-hidden="true">
-                  <div className="ke-skel mb-3 h-7 w-44" />
-                  <div className="ke-rail">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="ke-rail-card space-y-2">
-                        <div className="ke-skel aspect-[3/2] w-full" />
-                        <div className="ke-skel h-3.5 w-4/5" />
-                        <div className="ke-skel h-3 w-1/2" />
-                      </div>
-                    ))}
-                  </div>
+            <div className="ke-result-stack" aria-busy="true" aria-label={t("searchCountLoading")}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="space-y-2" aria-hidden="true">
+                  <div className="ke-skel aspect-[4/3] w-full rounded-[14px]" />
+                  <div className="ke-skel h-4 w-3/5" />
+                  <div className="ke-skel h-3 w-2/5" />
                 </div>
               ))}
             </div>
-          ) : showSearchEmpty ? (
+          ) : showSearchEmpty || visualItems.length === 0 ? (
             <div className="mt-6 space-y-4">
               <div className="rounded-xl bg-surface ring-1 ring-border">
                 <EmptyState
@@ -1505,13 +1555,30 @@ function SearchPage() {
               {whereSet ? <CityHubLinks className="mt-4" headingKey="otherCities" /> : null}
             </div>
           ) : (
-            <ExploreCategoryRails
-              items={railItems}
-              directory={filterByLocationLock(items ?? [], locationLock)}
-              selectedAges={selectedAges}
-              openingsSelected={openingsOn}
-              onHover={setActive}
-            />
+            <div
+              className="ke-result-stack"
+              data-ke="search-result-list"
+              onMouseOver={(e) => {
+                const node = (e.target as HTMLElement).closest("[data-slug]");
+                const slug = node?.getAttribute("data-slug");
+                if (slug) setActive(slug);
+              }}
+            >
+              {visibleCards.map((item, i) => (
+                <DaycareCard key={item.id} item={item} presentation="visual" eager={i < 2} />
+              ))}
+              {visualItems.length > visibleCards.length ? (
+                <div className="md:col-span-2 min-[1100px]:col-span-3">
+                  <button
+                    type="button"
+                    className="inline-flex min-h-12 items-center rounded-full bg-fg px-5 text-sm font-semibold text-surface"
+                    onClick={() => setListWindow({ key: listKey, count: visibleCards.length + 12 })}
+                  >
+                    {t("showMoreCentres")}
+                  </button>
+                </div>
+              ) : null}
+            </div>
           )}
           {gated && split.ageUnknown.length ? (
             <div className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">
@@ -1525,9 +1592,9 @@ function SearchPage() {
                 {ageUnknownOpen ? t("ageNotConfirmedHide") : t("ageNotConfirmedOpen")}
               </button>
               {ageUnknownOpen ? (
-                <div className="ke-listings mt-4">
+                <div className="ke-result-stack mt-4">
                   {split.ageUnknown.map((item) => (
-                    <DaycareCard key={item.id} item={item} />
+                    <DaycareCard key={item.id} item={item} presentation="visual" />
                   ))}
                 </div>
               ) : null}

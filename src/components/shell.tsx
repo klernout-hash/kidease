@@ -48,7 +48,13 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     setOpen(false);
   }, []);
 
-  const hideTabs = stripLocalePrefix(pathname).startsWith("/login");
+  const barePath = stripLocalePrefix(pathname);
+  const guestBrowse =
+    barePath === "/" ||
+    barePath === "/search" ||
+    barePath === "/explore" ||
+    barePath.startsWith("/daycare");
+  const hideTabs = barePath.startsWith("/login");
   const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
   const verifyLite = pathname.startsWith("/verify-2fa");
   const menuLite = pathname.startsWith("/menu");
@@ -125,7 +131,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            {user ? <DeskSwitcher /> : null}
+            {user && !guestBrowse ? <DeskSwitcher /> : null}
             <div className="hidden items-center overflow-visible rounded-full bg-surface/90 p-0.5 ring-1 ring-border [[data-channel=website]_&]:flex">
               <LanguageSelect compact />
               <span className="h-3.5 w-px shrink-0 bg-border" aria-hidden />
@@ -172,7 +178,9 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         accountSearch={accountSearch(sticky)}
         isAdmin={canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
         desksSlot={
-          user && showDeskSwitcher(session?.desks, session?.role, session?.email ?? user?.primaryEmail) ? (
+          user &&
+          !guestBrowse &&
+          showDeskSwitcher(session?.desks, session?.role, session?.email ?? user?.primaryEmail) ? (
             <DeskSwitcher compact />
           ) : null
         }

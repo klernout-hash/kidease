@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Map, SlidersHorizontal } from "lucide-react";
+import { List, Map, SlidersHorizontal } from "lucide-react";
 import { ChipButton } from "@/components/chip";
 import { ChipCarousel } from "@/components/chip-carousel";
 import { useCopy } from "@/lib/use-copy";
@@ -180,8 +180,17 @@ export function ExploreFilterBar({
         >
           <SlidersHorizontal className="size-4 shrink-0" aria-hidden="true" />
         </IconToggle>
-        <IconToggle pressed={mapOn} label={t("map")} onClick={onMap} data-ke="explore-map-toggle">
-          <Map className="size-4 shrink-0" aria-hidden="true" />
+        <IconToggle
+          pressed={mapOn}
+          label={mapOn ? t("list") : t("map")}
+          onClick={onMap}
+          data-ke="explore-map-toggle"
+        >
+          {mapOn ? (
+            <List className="size-4 shrink-0" aria-hidden="true" />
+          ) : (
+            <Map className="size-4 shrink-0" aria-hidden="true" />
+          )}
         </IconToggle>
       </div>
     </div>
