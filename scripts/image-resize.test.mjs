@@ -40,6 +40,12 @@ test("BuildingPhoto falls back to the original R2 URL when a transform 404s", ()
   assert.match(photo, /srcsetWidthsFor/);
   assert.match(detail, /DETAIL_SIZES/);
   assert.match(detail, /width=\{768\}/);
-  assert.match(map, /sizes="112px"/);
-  assert.match(map, /width=\{224\}/);
+  // Compact pin card (#265): 64px CSS thumb, 2× intrinsic. Not the old 112px sheet.
+  assert.match(map, /data-ke="map-pin-photo"/);
+  assert.match(map, /BuildingPhoto/);
+  assert.match(map, /sizes="64px"/);
+  assert.match(map, /width=\{128\}/);
+  assert.match(map, /height=\{96\}/);
+  assert.doesNotMatch(map, /sizes="112px"/);
+  assert.doesNotMatch(map, /width=\{224\}/);
 });

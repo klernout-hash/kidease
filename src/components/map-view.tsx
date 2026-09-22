@@ -33,6 +33,8 @@ import {
   type ListingOverlay,
   type MovableDot,
 } from "@/lib/google-maps";
+import { BuildingPhoto } from "@/components/building-photo";
+import { mapPinThumb } from "@/lib/listing-photo";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { displayDistance } from "@/lib/units";
 import { honestVacancy } from "@/lib/now-loops";
@@ -712,6 +714,7 @@ function MapPinPopup({
     .join(" · ");
   const approved = publicApprovalEligible(item);
   const destination = [item.name, item.address, item.city, item.province].filter(Boolean).join(", ");
+  const thumb = mapPinThumb(item.photos);
 
   return (
     <div
@@ -738,16 +741,29 @@ function MapPinPopup({
       <Link
         to="/daycare/$slug"
         params={{ slug: item.slug }}
-        className="block px-3 pb-1.5 pr-11 pt-2.5 text-inherit no-underline"
+        className="flex items-start gap-2 px-2 pb-1.5 pt-2 text-inherit no-underline"
       >
-        <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">{name}</p>
-        {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
-        {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
-        {approved ? (
-          <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
-            {t("kideaseApprovedMarker")}
-          </p>
+        {thumb ? (
+          <span data-ke="map-pin-photo" className="mt-0.5 shrink-0">
+            <BuildingPhoto
+              src={thumb}
+              className="aspect-[4/3] w-16 rounded-md object-cover"
+              sizes="64px"
+              width={128}
+              height={96}
+            />
+          </span>
         ) : null}
+        <span className="min-w-0 flex-1 pr-9">
+          <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">{name}</p>
+          {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
+          {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
+          {approved ? (
+            <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
+              {t("kideaseApprovedMarker")}
+            </p>
+          ) : null}
+        </span>
       </Link>
       <div className="px-2 pb-2">
         <button
