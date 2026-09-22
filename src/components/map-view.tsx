@@ -1,12 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LocateFixed, Minus, Navigation, Plus } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { LocateFixed, Minus, Navigation, Plus, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import type { DaycareCard } from "@/lib/types";
+import type { CopyKey } from "@/lib/copy";
+import type { DaycareCard, Locale } from "@/lib/types";
+import type { DistanceUnit } from "@/lib/units";
 import { cn, displayCentreName, money } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
-import { MAP_RADIUS_FIT_PAD, mapZoomForRadius, openDirections, readMapBase, writeMapBase, type MapBase } from "@/lib/maps";
+import {
+  MAP_RADIUS_FIT_PAD,
+  mapZoomForRadius,
+  openDirections,
+  placePinPopup,
+  readMapBase,
+  writeMapBase,
+  type MapBase,
+  type PinPopupBox,
+} from "@/lib/maps";
 import { bboxFromRadius } from "@/lib/proximity";
 import {
   createKidEaseMap,
@@ -22,10 +33,10 @@ import {
   type ListingOverlay,
   type MovableDot,
 } from "@/lib/google-maps";
-import { BuildingPhoto } from "@/components/building-photo";
-import { listingThumb } from "@/lib/listing-photo";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { displayDistance } from "@/lib/units";
+import { honestVacancy } from "@/lib/now-loops";
+import { publicApprovalEligible } from "@/lib/approve-live";
 
 type Props = {
   items: DaycareCard[];
@@ -33,7 +44,7 @@ type Props = {
   secondOrigin?: { lat: number; lng: number } | null;
   radiusKm: number;
   activeSlug?: string | null;
-  onSelect: (slug: string) => void;
+  onSelect: (slug: string | null) => void;
   onRelocate?: (pos: { lat: number; lng: number }) => void;
   onLocate?: () => void;
   onFallback?: () => void;
@@ -81,6 +92,11 @@ export function MapView({
   const circleRef = useRef<google.maps.Circle | null>(null);
   const circle2Ref = useRef<google.maps.Circle | null>(null);
   const markersBySlug = useRef(new Map<string, SlugPin>());
+  const popupRef = useRef<HTMLDivElement>(null);
+  const popupBoxRef = useRef<PinPopupBox | null>(null);
+  const popupPointRef = useRef<{ x: number; y: number; mapWidth: number; mapHeight: number } | null>(null);
+  const popupSlugRef = useRef<string | null>(activeSlug ?? null);
+  const pinClickAt = useRef(0);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   const originRef = useRef(origin);
@@ -109,13 +125,30 @@ export function MapView({
   }, []);
 
   const selected = useMemo(
-    () => items.find((i) => i.slug === (picked || activeSlug)) ?? null,
-    [items, picked, activeSlug],
+    () => (picked ? (items.find((i) => i.slug === picked) ?? null) : null),
+    [items, picked],
   );
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+  const dismissRef = useRef<() => void>(() => {});
+  dismissRef.current = () => {
+    popupBoxRef.current = null;
+    setPicked(null);
+    onSelectRef.current(null);
+  };
 
   useEffect(() => {
-    if (activeSlug) setPicked(activeSlug);
+    setPicked(activeSlug ?? null);
   }, [activeSlug]);
+
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") dismissRef.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected]);
 
   useEffect(() => {
     const el = host.current;
@@ -382,6 +415,7 @@ export function MapView({
           zIndex: item.live ? 20 : 10,
           collision: "OPTIONAL_AND_HIDES_LOWER_PRIORITY",
           onClick: () => {
+            pinClickAt.current = Date.now();
             setPicked(item.slug);
             onSelectRef.current(item.slug);
           },
@@ -398,11 +432,86 @@ export function MapView({
   useEffect(() => {
     const maps = mapsApiRef.current;
     if (!maps) return;
-    const slug = picked || activeSlug;
     for (const [id, pin] of markersBySlug.current) {
-      pin.setActive(id === slug, maps);
+      pin.setActive(id === picked, maps);
     }
-  }, [picked, activeSlug, zoom, items]);
+  }, [picked, zoom, items]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const maps = mapsApiRef.current;
+    if (!map || !maps || !ready) return;
+    const listener = maps.event.addListener(map, "click", () => {
+      if (Date.now() - pinClickAt.current < 400) return;
+      dismissRef.current();
+    });
+    return () => {
+      maps.event.removeListener(listener);
+    };
+  }, [ready]);
+
+  const popupSlug = selected?.slug ?? null;
+  if (popupSlugRef.current !== popupSlug) {
+    popupSlugRef.current = popupSlug;
+    popupBoxRef.current = null;
+    popupPointRef.current = null;
+  }
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const maps = mapsApiRef.current;
+    const slug = selected?.slug;
+    const lat = selected?.lat;
+    const lng = selected?.lng;
+    if (!map || !maps || !slug || !Number.isFinite(lat) || !Number.isFinite(lng) || !ready) return;
+
+    let overlay: google.maps.OverlayView | null = null;
+    const place = () => {
+      const el = popupRef.current;
+      const hostEl = host.current;
+      const current = selectedRef.current;
+      const projection = overlay?.getProjection();
+      if (!el || !hostEl || !current || !projection) return;
+      const point = projection.fromLatLngToContainerPixel(new maps.LatLng(current.lat, current.lng));
+      if (!point) return;
+      popupPointRef.current = {
+        x: point.x,
+        y: point.y,
+        mapWidth: hostEl.clientWidth,
+        mapHeight: hostEl.clientHeight,
+      };
+      const box = measurePinPopup(el, popupPointRef.current);
+      if (!box) return;
+      popupBoxRef.current = box;
+      applyPinPopupBox(el, box);
+    };
+
+    overlay = new maps.OverlayView();
+    overlay.onAdd = () => {};
+    overlay.draw = () => place();
+    overlay.onRemove = () => {};
+    overlay.setMap(map);
+    const idle = maps.event?.addListener?.(map, "idle", place);
+    const raf = window.requestAnimationFrame(place);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      if (idle) maps.event?.removeListener?.(idle);
+      overlay?.setMap(null);
+    };
+  }, [ready, selected?.slug, selected?.lat, selected?.lng]);
+
+  useLayoutEffect(() => {
+    const el = popupRef.current;
+    const point = popupPointRef.current;
+    if (!el || !point) {
+      el?.classList.remove("is-placed");
+      return;
+    }
+    const box = measurePinPopup(el, point);
+    if (!box) return;
+    popupBoxRef.current = box;
+    applyPinPopupBox(el, box);
+  });
 
   async function locateMe() {
     if (onLocate) {
@@ -527,61 +636,14 @@ export function MapView({
       </div>
 
       {selected ? (
-        <div
-          data-ke="map-selected-card"
-          className="absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-[14px] bg-surface shadow-card ring-1 ring-border"
-        >
-          <Link
-            to="/daycare/$slug"
-            params={{ slug: selected.slug }}
-            className="flex gap-3 p-2 text-inherit no-underline"
-          >
-            <BuildingPhoto
-              src={listingThumb(selected.photos)}
-              className="aspect-[4/3] w-28 shrink-0 rounded-[10px] object-cover"
-              sizes="112px"
-              width={224}
-              height={168}
-            />
-            <div className="min-w-0 flex-1 py-1">
-              <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">
-                {displayCentreName(locale === "fr" ? selected.nameFr : selected.name)}
-              </p>
-              <p className="mt-0.5 truncate text-[13px] text-muted">
-                {selected.city}
-                {" · "}
-                {displayDistance(selected.distanceKm, distanceUnit)} {distanceUnit === "mi" ? t("mi") : t("km")}
-              </p>
-              {listingAgeRangeText(selected, "months") ? (
-                <p className="mt-0.5 truncate text-[13px] text-muted">{listingAgeRangeText(selected, "months")}</p>
-              ) : null}
-              {selected.live && selected.fromPrice > 0 ? (
-                <p className="mt-1 text-sm tabular-nums">
-                  <span className="font-semibold">{money(selected.fromPrice, locale)}</span>
-                  <span className="text-muted">{t("month")}</span>
-                </p>
-              ) : null}
-            </div>
-          </Link>
-          <div className="grid grid-cols-2 gap-2 border-t border-border p-2">
-            <button
-              type="button"
-              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-[14px] bg-surface-2 text-sm font-semibold"
-              onClick={() => void openDirections(selected.lat, selected.lng, selected.name)}
-            >
-              <Navigation className="size-4" />
-              {t("directions")}
-            </button>
-            <Link
-              to="/daycare/$slug"
-              params={{ slug: selected.slug }}
-              search={selected.live ? { ask: "info" } : undefined}
-              className="inline-flex h-11 items-center justify-center rounded-[14px] bg-primary text-sm font-semibold text-primary-fg no-underline"
-            >
-              {selected.live ? t("requestInfo") : t("viewListing")}
-            </Link>
-          </div>
-        </div>
+        <MapPinPopup
+          popupRef={popupRef}
+          item={selected}
+          locale={locale}
+          distanceUnit={distanceUnit}
+          onClose={() => dismissRef.current()}
+          t={t}
+        />
       ) : null}
     </div>
   );
@@ -591,11 +653,127 @@ type ClusterNode =
   | { kind: "pin"; item: DaycareCard }
   | { kind: "group"; lat: number; lng: number; count: number; items: DaycareCard[] };
 
+function measurePinPopup(
+  el: HTMLElement,
+  point: { x: number; y: number; mapWidth: number; mapHeight: number },
+) {
+  const width = el.offsetWidth;
+  const height = el.offsetHeight;
+  if (width < 8 || height < 8) return null;
+  return placePinPopup({
+    pointX: point.x,
+    pointY: point.y,
+    width,
+    height,
+    mapWidth: point.mapWidth,
+    mapHeight: point.mapHeight,
+    padTop: 52,
+    padRight: 64,
+  });
+}
+
+function applyPinPopupBox(el: HTMLElement, box: PinPopupBox) {
+  el.style.left = `${box.left}px`;
+  el.style.top = `${box.top}px`;
+  el.style.setProperty("--ke-caret-x", `${box.caretX}px`);
+  el.dataset.placement = box.placement;
+  el.classList.add("is-placed");
+}
+
+function MapPinPopup({
+  item,
+  popupRef,
+  locale,
+  distanceUnit,
+  onClose,
+  t,
+}: {
+  item: DaycareCard;
+  popupRef: RefObject<HTMLDivElement | null>;
+  locale: Locale;
+  distanceUnit: DistanceUnit;
+  onClose: () => void;
+  t: (key: CopyKey) => string;
+}) {
+  const name = displayCentreName(locale === "fr" ? item.nameFr || item.name : item.name);
+  const unit = distanceUnit === "mi" ? t("mi") : t("km");
+  const away = Number.isFinite(item.distanceKm)
+    ? `${displayDistance(item.distanceKm, distanceUnit)} ${unit}`
+    : "";
+  const place = [item.city || item.address, away].filter(Boolean).join(" · ");
+  const ages = listingAgeRangeText(item, "months");
+  const vacancy = honestVacancy(item);
+  const facts = [
+    ages,
+    vacancy.kind === "open" && vacancy.spots > 0 ? `${vacancy.spots} ${t("spots")}` : "",
+    item.live && item.fromPrice > 0 ? `${money(item.fromPrice, locale)}${t("month")}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const approved = publicApprovalEligible(item);
+  const destination = [item.name, item.address, item.city, item.province].filter(Boolean).join(", ");
+
+  return (
+    <div
+      ref={popupRef}
+      data-ke="map-selected-card"
+      data-placement="above"
+      role="dialog"
+      aria-label={name}
+      className="ke-pin-popup rounded-[14px] bg-surface text-fg shadow-card ring-1 ring-border"
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        data-ke="map-pin-popup-close"
+        className="absolute right-0 top-0 z-[1] grid size-11 place-items-center text-muted"
+        aria-label={t("close")}
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
+      >
+        <X className="size-4" strokeWidth={2.4} />
+      </button>
+      <Link
+        to="/daycare/$slug"
+        params={{ slug: item.slug }}
+        className="block px-3 pb-1.5 pr-11 pt-2.5 text-inherit no-underline"
+      >
+        <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">{name}</p>
+        {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
+        {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
+        {approved ? (
+          <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
+            {t("kideaseApprovedMarker")}
+          </p>
+        ) : null}
+      </Link>
+      <div className="px-2 pb-2">
+        <button
+          type="button"
+          data-ke="map-pin-directions"
+          className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-surface-2 text-sm font-semibold ring-1 ring-border"
+          onClick={(event) => {
+            event.stopPropagation();
+            void openDirections(item.lat, item.lng, destination);
+          }}
+        >
+          <Navigation className="size-4" />
+          {t("getDirections")}
+        </button>
+      </div>
+      <span className="ke-pin-caret" aria-hidden />
+    </div>
+  );
+}
+
 function logoPinEl(className: string) {
   const content = document.createElement("div");
   content.className = className;
   content.innerHTML = PIN_SVG;
   content.setAttribute("role", "button");
+  content.setAttribute("aria-expanded", "false");
   return content;
 }
 
@@ -615,7 +793,9 @@ function wrapOverlayPin(overlay: ListingOverlay): SlugPin {
       overlay.setMap(map);
     },
     setActive(on) {
-      overlay.getElement().classList.toggle("is-active", on);
+      const el = overlay.getElement();
+      el.classList.toggle("is-active", on);
+      el.setAttribute("aria-expanded", on ? "true" : "false");
       overlay.setZIndex(on ? 500 : 10);
     },
   };

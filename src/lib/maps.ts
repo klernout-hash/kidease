@@ -1,4 +1,4 @@
-import { isNative } from "./native";
+import { isNative, nativePlatform } from "./native.ts";
 
 export type MapBase = "roadmap" | "satellite";
 
@@ -22,15 +22,91 @@ export function writeMapBase(base: MapBase) {
   }
 }
 
-export function directionsUrl(lat: number, lng: number, name?: string) {
-  const dest = `${lat},${lng}`;
+/** iOS, iPadOS, and macOS open Apple Maps. Android and other browsers open Google Maps. */
+export function preferAppleMaps() {
+  if (typeof window === "undefined") return false;
+  if (nativePlatform() === "ios") return true;
+  if (nativePlatform() === "android") return false;
+  const ua = window.navigator?.userAgent || "";
+  if (/Android/i.test(ua)) return false;
+  if (/iPad|iPhone|iPod/i.test(ua)) return true;
+  return /Macintosh|Mac OS X/i.test(ua);
+}
+
+/**
+ * Directions to a centre. Coordinates win when they exist; otherwise the name
+ * or address string already on the listing is the destination.
+ */
+export function directionsUrl(lat: number, lng: number, name?: string, opts?: { apple?: boolean }) {
+  const point = Number.isFinite(lat) && Number.isFinite(lng) ? `${lat},${lng}` : "";
+  const label = (name || "").trim();
+  const dest = point || label;
+  if (!dest) return "https://www.google.com/maps";
+  const apple = opts?.apple ?? preferAppleMaps();
+  if (apple) {
+    const q = new URLSearchParams({ daddr: dest, dirflg: "d" });
+    return `https://maps.apple.com/?${q.toString()}`;
+  }
   const q = new URLSearchParams({
     api: "1",
     destination: dest,
     travelmode: "driving",
   });
-  if (name) q.set("destination_place_id", "");
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&travelmode=driving`;
+  return `https://www.google.com/maps/dir/?${q.toString()}`;
+}
+
+export type PinPopupPlacement = "above" | "below";
+
+export type PinPopupBox = {
+  left: number;
+  top: number;
+  caretX: number;
+  placement: PinPopupPlacement;
+};
+
+/** Sit a listing popup on the logo pin and keep it inside the map. */
+export function placePinPopup(opts: {
+  pointX: number;
+  pointY: number;
+  width: number;
+  height: number;
+  mapWidth: number;
+  mapHeight: number;
+  pinHeight?: number;
+  pad?: number;
+  padTop?: number;
+  padRight?: number;
+  padBottom?: number;
+  padLeft?: number;
+  gap?: number;
+}): PinPopupBox {
+  const pinHeight = opts.pinHeight ?? 44;
+  const pad = opts.pad ?? 8;
+  const padTop = opts.padTop ?? pad;
+  const padRight = opts.padRight ?? pad;
+  const padBottom = opts.padBottom ?? pad;
+  const padLeft = opts.padLeft ?? pad;
+  const gap = opts.gap ?? 8;
+  const width = Math.max(0, opts.width);
+  const height = Math.max(0, opts.height);
+  const mapWidth = Math.max(0, opts.mapWidth);
+  const mapHeight = Math.max(0, opts.mapHeight);
+  let placement: PinPopupPlacement = "above";
+  let top = opts.pointY - pinHeight - gap - height;
+  if (top < padTop) {
+    placement = "below";
+    top = opts.pointY + gap;
+  }
+  const maxLeft = Math.max(padLeft, mapWidth - width - padRight);
+  const left = clamp(opts.pointX - width / 2, padLeft, maxLeft);
+  const maxTop = Math.max(padTop, mapHeight - height - padBottom);
+  top = clamp(top, padTop, maxTop);
+  const caretX = clamp(opts.pointX - left, 16, Math.max(16, width - 16));
+  return { left, top, caretX, placement };
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 export async function openDirections(lat: number, lng: number, name?: string) {
