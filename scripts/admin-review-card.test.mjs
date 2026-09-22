@@ -46,6 +46,11 @@ test("card face is decision facts; contracts, payments, and registry tools sit u
   assert.match(card, /Files, trust, and contracts/);
   assert.match(card, /licenceFileMissingCopy/);
   assert.match(card, /View licence document/);
+  assert.match(card, /Attach licence document/);
+  assert.match(card, /Replace licence document/);
+  assert.match(card, /data-ke="admin-licence-upload"/);
+  assert.match(card, /postPrivateDocForm\(licenseDocHref/);
+  assert.match(src("src/routes/admin.tsx"), /onLicenceUploaded/);
 
   const decision = reviewCardLayout("decision");
   assert.deepEqual(decision.face, ["identity", "facts", "decision"]);

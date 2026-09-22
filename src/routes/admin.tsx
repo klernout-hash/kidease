@@ -520,6 +520,9 @@ function AdminPage() {
                         busy={busy}
                         onDecide={onDecide}
                         onLicense={onLicense}
+                        onLicenceUploaded={() => {
+                          void refresh();
+                        }}
                         mode="verify"
                       />
                     </li>
@@ -581,6 +584,9 @@ function AdminPage() {
               busy={busy}
               onDecide={onDecide}
               onLicense={onLicense}
+              onLicenceUploaded={() => {
+                void refresh();
+              }}
             />
           )}
         </>
@@ -680,6 +686,9 @@ function AdminPage() {
                                     busy={busy}
                                     onDecide={onDecide}
                                     onLicense={onLicense}
+                                    onLicenceUploaded={() => {
+                                      void refresh();
+                                    }}
                                   />
                                 </li>
                               ))

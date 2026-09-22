@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { AdminLicenseActions } from "@/components/admin-trust";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
@@ -13,7 +14,9 @@ import {
   type ReviewFactTone,
 } from "@/lib/admin-review-card";
 import { ADMIN_CENTRE_STAT_COPY, type AdminCentreListStat } from "@/lib/admin-stat-filter";
-import { licenseDocHref, openPrivateDocHref } from "@/lib/private-docs";
+import { licenseDocHref, openPrivateDocHref, postPrivateDocForm } from "@/lib/private-docs";
+import { isPrivateDocTooBig } from "@/lib/upload-limits";
+import { UploadLimitHint } from "@/components/upload-limit-hint";
 import { signedPdfPath } from "@/lib/docusign-packs";
 import { approvalHealthSummary, canOfferApprove, licenceFileMissingCopy, type ApprovalHealth } from "@/lib/approve-live";
 import { listingStatusFromClaim } from "@/lib/listing-status";
@@ -61,25 +64,104 @@ function DetailTable({ rows }: { rows: { label: string; value: string; extra?: R
   );
 }
 
-function ReviewDocuments({ centre }: { centre: AdminCentreRow }) {
+function LicenceAttachControl({
+  daycareId,
+  hasFile,
+  disabled,
+  boxed,
+  onAttached,
+}: {
+  daycareId: string;
+  hasFile: boolean;
+  disabled: boolean;
+  boxed: boolean;
+  onAttached: () => void;
+}) {
+  const { t } = useCopy();
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <label className={cn("block px-2.5 py-2 text-sm", boxed && "border-t border-border")}>
+      <span className="font-medium text-fg">{hasFile ? "Replace licence document" : "Attach licence document"}</span>
+      <input
+        type="file"
+        accept="application/pdf,image/jpeg,image/png,image/webp"
+        className="mt-1.5 block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-surface file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary"
+        disabled={disabled || saving}
+        data-ke="admin-licence-upload"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (!file || saving) return;
+          if (isPrivateDocTooBig(file.size)) {
+            const message = t("uploadDocTooBig");
+            setError(message);
+            toast.error(message);
+            return;
+          }
+          setError(null);
+          setSaving(true);
+          void postPrivateDocForm(licenseDocHref(daycareId), {}, file)
+            .then(() => {
+              toast.success("Licence document saved.");
+              onAttached();
+            })
+            .catch((err) => {
+              const message = err instanceof Error ? err.message : t("uploadDocTooBig");
+              setError(message);
+              toast.error(message);
+            })
+            .finally(() => setSaving(false));
+        }}
+      />
+      <UploadLimitHint hint={saving ? "Saving licence document…" : t("uploadDocHint")} error={error} />
+    </label>
+  );
+}
+
+function ReviewDocuments({
+  centre,
+  locked,
+  onAttached,
+}: {
+  centre: AdminCentreRow;
+  locked: boolean;
+  onAttached?: () => void;
+}) {
+  const [attached, setAttached] = useState(false);
+  useEffect(() => {
+    setAttached(false);
+  }, [centre.daycareId, centre.licensePhoto]);
+  const hasFile = Boolean((centre.licensePhoto || "").trim()) || attached;
   const licenceMissing = licenceFileMissingCopy({
     licenseNumber: centre.licenseNumber,
     daycareId: centre.daycareId,
     storefrontPresent: Boolean(centre.storefrontPhoto),
   });
-  if (!centre.licensePhoto && !centre.storefrontPhoto) {
-    return (
-      <p className="ke-empty text-left">
-        {licenceFileMissingCopy({
-          licenseNumber: centre.licenseNumber,
-          daycareId: centre.daycareId,
-        })}
-      </p>
-    );
-  }
+  const bare = !hasFile && !centre.storefrontPhoto;
+  const upload = (
+    <LicenceAttachControl
+      daycareId={centre.daycareId}
+      hasFile={hasFile}
+      disabled={locked}
+      boxed={!bare}
+      onAttached={() => {
+        setAttached(true);
+        onAttached?.();
+      }}
+    />
+  );
   return (
-    <div className="overflow-hidden rounded-lg bg-bg ring-1 ring-border">
-      {centre.licensePhoto ? (
+    <div className={bare ? "space-y-2" : "overflow-hidden rounded-lg bg-bg ring-1 ring-border"}>
+      {bare ? (
+        <p className="ke-empty text-left">
+          {licenceFileMissingCopy({
+            licenseNumber: centre.licenseNumber,
+            daycareId: centre.daycareId,
+          })}
+        </p>
+      ) : hasFile ? (
         <button
           type="button"
           className="flex min-h-11 w-full items-center justify-between px-3 text-left text-sm font-medium text-primary hover:bg-surface"
@@ -90,7 +172,8 @@ function ReviewDocuments({ centre }: { centre: AdminCentreRow }) {
       ) : (
         <p className="px-2.5 py-2 text-sm text-muted">{licenceMissing}</p>
       )}
-      {centre.storefrontPhoto ? (
+      {upload}
+      {bare ? null : centre.storefrontPhoto ? (
         <figure className="border-t border-border p-2">
           <img
             src={centre.storefrontPhoto}
@@ -185,6 +268,7 @@ export function AdminReviewCard({
   busy,
   onDecide,
   onLicense,
+  onLicenceUploaded,
   mode = "decision",
 }: {
   centre: AdminCentreRow;
@@ -192,6 +276,7 @@ export function AdminReviewCard({
   busy: string | null;
   onDecide: (id: string, decision: Decision) => void;
   onLicense: (id: string, action: LicenseReviewAction) => void;
+  onLicenceUploaded?: () => void;
   mode?: ReviewCardMode;
 }) {
   const { t, locale } = useCopy();
@@ -276,7 +361,7 @@ export function AdminReviewCard({
         <div className="mt-3" data-ke="admin-review-documents">
           <SectionLabel>Files</SectionLabel>
           <div className="mt-2">
-            <ReviewDocuments centre={centre} />
+            <ReviewDocuments centre={centre} locked={locked} onAttached={onLicenceUploaded} />
           </div>
         </div>
       ) : null}
@@ -348,7 +433,7 @@ export function AdminReviewCard({
             <div>
               <SectionLabel>Files</SectionLabel>
               <div className="mt-2">
-                <ReviewDocuments centre={centre} />
+                <ReviewDocuments centre={centre} locked={locked} onAttached={onLicenceUploaded} />
               </div>
             </div>
           )}
@@ -406,6 +491,7 @@ export function AdminCentreStatList({
   busy,
   onDecide,
   onLicense,
+  onLicenceUploaded,
 }: {
   stat: AdminCentreListStat;
   rows: AdminCentreRow[];
@@ -416,6 +502,7 @@ export function AdminCentreStatList({
   busy: string | null;
   onDecide: (id: string, decision: Decision) => void;
   onLicense: (id: string, action: LicenseReviewAction) => void;
+  onLicenceUploaded?: () => void;
 }) {
   const copy = ADMIN_CENTRE_STAT_COPY[stat];
   const countLabel = loading || unavailable
@@ -457,6 +544,7 @@ export function AdminCentreStatList({
                   busy={busy}
                   onDecide={onDecide}
                   onLicense={onLicense}
+                  onLicenceUploaded={onLicenceUploaded}
                 />
               </li>
             ))}
