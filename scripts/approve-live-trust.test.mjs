@@ -7,11 +7,13 @@ import {
   adminLicenceFact,
   approvalHealthSummary,
   canOfferApprove,
+  approvalScreeningFact,
   collapseDuplicateReviewCards,
   liveSearchHit,
   planApproval,
   publicApprovalEligible,
   selectCanonicalClaim,
+  showPublicClaimPrompt,
   verifiedSearchPoint,
 } from "../src/lib/approve-live.ts";
 import { flushSearchMemo, rememberSearch } from "../src/lib/server/search-memo.ts";
@@ -264,4 +266,37 @@ test("approval clears the search memo and does not cache an empty Live result", 
   assert.match(migration, /53\.5461/);
   assert.match(migration, /extname = 'postgis'/);
   assert.doesNotMatch(migration, /storage_ref|license_photo/);
+});
+
+test("guest, parent, and daycare stay in sync with the approval strip", () => {
+  assert.equal(showPublicClaimPrompt({ live: true, claimed: false, claimStatus: "approved" }), false);
+  assert.equal(showPublicClaimPrompt({ live: false, claimed: false, claimStatus: "approved", claimedAt: "2026-09-01" }), false);
+  assert.equal(showPublicClaimPrompt({ live: false, claimed: false, claimStatus: "unclaimed" }), true);
+  assert.equal(approvalScreeningFact({ screeningOnFile: false, staffScreeningAttested: true }).status, "Attested");
+  assert.equal(
+    reviewDecisionFacts({ licenseNumber: "70051797", id: "ab-kh2t", staffScreeningAttested: true }).find((fact) => fact.id === "screening")?.status,
+    "Attested",
+  );
+
+  const page = src("src/routes/daycare.$slug.tsx");
+  assert.match(page, /showPublicClaimPrompt\(d\)/);
+  assert.match(page, /data-ke="listing-claim-prompt"/);
+  assert.match(page, /data-ke="listing-sticky-tour"/);
+  assert.match(page, /data-ke="listing-sticky-cta"/);
+  assert.doesNotMatch(page, /license_photo|storage_ref/);
+
+  const provider = src("src/routes/provider.tsx");
+  const trust = src("src/components/provider-trust.tsx");
+  const today = src("src/components/today-urgency-home.tsx");
+  assert.match(provider, /KidEaseApprovalStrip/);
+  assert.match(provider, /audience="daycare"/);
+  assert.match(provider, /officialLicenceNumber/);
+  assert.match(trust, /data-ke="provider-licence-status"/);
+  assert.match(trust, /data-ke="provider-screening-status"/);
+  assert.match(trust, /audience="daycare"/);
+  assert.doesNotMatch(trust, /trustClaimReviewTip"\)\}/);
+  assert.match(today, /KidEaseApprovalStrip/);
+  assert.match(src("src/lib/server/daycares.ts"), /screeningOnFile: Boolean\(d\.screeningOnFile\)/);
+  assert.match(src("src/lib/server/catalog-neon.ts"), /screening_on_file/);
+  assert.match(src("src/lib/copy.ts"), /Parents can find it in Live search/);
 });

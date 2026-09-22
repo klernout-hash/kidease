@@ -112,6 +112,8 @@ function toDaycare(d: CatalogDaycare): Daycare {
     spotsUpdatedAt: null,
     lastVacancyUpdatedAt: null,
     ...defaultTrustFields(),
+    staffScreeningAttested: Boolean(d.staffScreeningAttested),
+    screeningOnFile: Boolean(d.screeningOnFile),
     licenseStatus: normalizeLicenseStatus(d.licenseStatus),
     registryMatchState: normalizeMatchState(d.registryMatchState),
     licenseVerificationSource: d.licenseVerificationSource ?? null,

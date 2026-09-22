@@ -44,6 +44,9 @@ import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
 import { listingStatusFromClaim } from "@/lib/listing-status";
+import { publicApprovalEligible } from "@/lib/approve-live";
+import { KidEaseApprovalStrip } from "@/components/kidease-approval";
+import { officialLicenceNumber } from "@/lib/licensing";
 import { ProviderMoneyPanel } from "@/components/provider-money";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
@@ -399,9 +402,10 @@ function ProviderPage() {
                       <ListingStatusBadge claimStatus={d.claimStatus} live={d.live} />
                     </div>
                     <p className="text-sm text-muted">
-                      {d.address}, {d.city} · {d.licenseNumber}
+                      {d.address}, {d.city} · {officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustLicenseUnverified")}
                     </p>
                     <TrustSignals item={d} surface="provider" compact className="mt-2" />
+                    <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} audience="daycare" />
                   </div>
                   {d.priority ? <PriorityPill /> : null}
                   <PayCtas>

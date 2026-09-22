@@ -5,18 +5,20 @@ import { Button } from "@/components/ui/button";
 import { TrustSignals } from "@/components/trust-badge";
 import { Field } from "@/components/provider-listing-forms";
 import { attestStaffScreening, saveLicenseFields } from "@/lib/server/trust";
-import { claimVerificationState, formatAttestedOn } from "@/lib/trust";
-import { licenseRecordUrl } from "@/lib/licensing";
+import { claimVerificationState, formatAttestedOn, isHonestLicenseMatch } from "@/lib/trust";
+import { licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
+import { adminLicenceFact, approvalScreeningFact, publicApprovalEligible } from "@/lib/approve-live";
+import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { useCopy } from "@/lib/use-copy";
 import type { Daycare } from "@/lib/types";
 import type { CopyKey } from "@/lib/copy";
 
-function claimKey(d: Daycare): CopyKey {
+function claimCopy(d: Daycare): { label: CopyKey; tip: CopyKey } {
   const state = claimVerificationState(d);
-  if (state === "verified") return "trustClaimVerified";
-  if (state === "declined") return "trustClaimDeclined";
-  if (state === "unclaimed") return "trustClaimUnclaimed";
-  return "trustClaimReview";
+  if (state === "verified") return { label: "trustClaimVerified", tip: "trustClaimVerifiedTip" };
+  if (state === "declined") return { label: "trustClaimDeclined", tip: "trustClaimDeclinedTip" };
+  if (state === "unclaimed") return { label: "trustClaimUnclaimed", tip: "trustClaimUnclaimedTip" };
+  return { label: "trustClaimReview", tip: "trustClaimReviewTip" };
 }
 
 export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare; onSaved: () => void }) {
@@ -34,19 +36,37 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
   }
   const [busy, setBusy] = useState<string | null>(null);
   const attested = Boolean(daycare.staffScreeningAttested);
+  const claim = claimCopy(daycare);
+  const licence = adminLicenceFact(daycare);
+  const licenceNumber = officialLicenceNumber(daycare.licenseNumber, daycare.id);
+  const screening = approvalScreeningFact(daycare);
+  const screeningLabel =
+    screening.id === "on_file" ? t("trustScreeningOnFile") : screening.id === "attested" ? t("trustStaffAttested") : t("trustStaffNone");
+  const licenceTip =
+    licence.tone === "attention"
+      ? licence.status
+      : isHonestLicenseMatch(daycare)
+        ? t("trustLicensedMatchedTip")
+        : licenceNumber
+          ? t("licenceOnFile")
+          : t("trustLicenseUnverifiedTip");
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-ke="provider-trust">
+      <KidEaseApprovalStrip eligible={publicApprovalEligible(daycare)} audience="daycare" />
       <TrustSignals item={daycare} surface="provider" />
       <ol className="space-y-4">
         <li className="rounded-lg bg-bg p-4 ring-1 ring-border">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">1 · {t("trustChecklistClaim")}</p>
-          <p className="mt-1 font-medium">{t(claimKey(daycare))}</p>
-          <p className="mt-1 text-sm text-muted">{t("trustClaimReviewTip")}</p>
+          <p className="mt-1 font-medium">{t(claim.label)}</p>
+          <p className="mt-1 text-sm text-muted">{t(claim.tip)}</p>
         </li>
         <li id="listing-health-license" className="rounded-lg bg-bg p-4 ring-1 ring-border">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">2 · {t("trustChecklistLicense")}</p>
-          <p className="mt-1 text-sm text-muted">{t("trustLicenseUnverifiedTip")}</p>
+          <p className="mt-1 font-medium" data-ke="provider-licence-status">
+            {licenceNumber ? `${t("licenceOnFile")} · ${licenceNumber}` : t("trustLicenseUnverified")}
+          </p>
+          <p className="mt-1 text-sm text-muted">{licenceTip}</p>
           <form
             className="mt-3 grid gap-3 sm:grid-cols-3"
             onSubmit={(e) => {
@@ -105,6 +125,7 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
         </li>
         <li className="rounded-lg bg-bg p-4 ring-1 ring-border">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">3 · {t("trustChecklistStaff")}</p>
+          <p className="mt-1 font-medium" data-ke="provider-screening-status">{screeningLabel}</p>
           <h3 className="mt-1 font-medium">{t("trustAttestTitle")}</h3>
           <p className="mt-1 text-sm text-muted">{t("trustAttestLead")}</p>
           {attested ? (

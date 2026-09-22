@@ -2102,6 +2102,8 @@ export const copy = {
     kideaseApprovedScreening: "Screening requirement met",
     kideaseApprovedLive: "Live on KidEase",
     kideaseApprovedMarker: "KidEase approved",
+    kideaseApprovedDaycareBody:
+      "KidEase approved this centre because it met the licence and screening requirements. Parents can find it in Live search.",
   },
   fr: {
     app: "KidEase",
@@ -4215,6 +4217,8 @@ export const copy = {
     kideaseApprovedScreening: "Exigence de filtrage satisfaite",
     kideaseApprovedLive: "En direct sur KidEase",
     kideaseApprovedMarker: "Approuvé par KidEase",
+    kideaseApprovedDaycareBody:
+      "KidEase a approuvé ce centre parce qu’il a satisfait aux exigences de permis et de filtrage. Les parents peuvent le trouver dans la recherche En direct.",
   },
 } as const;
 

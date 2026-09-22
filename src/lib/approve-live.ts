@@ -11,6 +11,7 @@
 import { geocode, haversineKm, type LatLng } from "./geo.ts";
 import { isOperatorLicenseSource, normalizeLicenseStatus } from "./license-status.ts";
 import { normalizeCentreName, normalizeLicenseNumber } from "./listing-identity.ts";
+import { listingStatusFromClaim } from "./listing-status.ts";
 import { listingMatchesLocationLock, resolveLocationLock } from "./location-lock.ts";
 import { isPlatformLive } from "./live.ts";
 
@@ -113,6 +114,31 @@ export function hasApprovalScreening(
   centre: Pick<ApprovalCentre, "screeningOnFile" | "staffScreeningAttested">,
 ): boolean {
   return Boolean(centre.screeningOnFile || centre.staffScreeningAttested);
+}
+
+/** Same screening words Admin, the public strip, and the daycare desk share. */
+export function approvalScreeningFact(
+  centre: Pick<ApprovalCentre, "screeningOnFile" | "staffScreeningAttested">,
+): { id: "on_file" | "attested" | "missing"; status: string; tone: "ready" | "missing" } {
+  if (centre.screeningOnFile) return { id: "on_file", status: "On file", tone: "ready" };
+  if (centre.staffScreeningAttested) return { id: "attested", status: "Attested", tone: "ready" };
+  return { id: "missing", status: "Not attested", tone: "missing" };
+}
+
+/** Live centres are already on KidEase. Guests and parents must not see a claim prompt. */
+export function showPublicClaimPrompt(centre: {
+  claimed?: boolean | null;
+  live?: boolean | null;
+  claimStatus?: string | null;
+  claimedAt?: string | null;
+}): boolean {
+  if (centre.live) return false;
+  if (centre.claimed) return false;
+  const status = listingStatusFromClaim(centre.claimStatus, {
+    live: centre.live === true,
+    claimedAt: centre.claimedAt,
+  });
+  return status !== "live";
 }
 
 export function approvalLicenseSource(current?: string | null): string {

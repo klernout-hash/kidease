@@ -3,7 +3,7 @@
  * Presentation only — claim tokens and permissions stay on the server.
  */
 
-import { adminLicenceFact } from "./approve-live.ts";
+import { adminLicenceFact, approvalScreeningFact } from "./approve-live.ts";
 
 export type ReviewFactId = "licence" | "screening" | "photos";
 export type ReviewFactTone = "ready" | "missing" | "attention";
@@ -79,11 +79,13 @@ export function reviewDecisionFacts(input: {
     tone: licenceFact.tone,
   };
 
-  const screening: ReviewFact = input.screeningOnFile
-    ? { id: "screening", label: "Screening", status: "On file", tone: "ready" }
-    : input.staffScreeningAttested
-      ? { id: "screening", label: "Screening", status: "Attested", tone: "ready" }
-      : { id: "screening", label: "Screening", status: "Not attested", tone: "missing" };
+  const screeningFact = approvalScreeningFact(input);
+  const screening: ReviewFact = {
+    id: "screening",
+    label: "Screening",
+    status: screeningFact.status,
+    tone: screeningFact.tone,
+  };
 
   const photos: ReviewFact = (input.storefrontPhoto || "").trim()
     ? { id: "photos", label: "Photos", status: "Storefront on file", tone: "ready" }
