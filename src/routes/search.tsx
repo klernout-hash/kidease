@@ -17,9 +17,9 @@ import { CARD_SIZES, CARD_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { bootSearchOrigin } from "@/lib/search-origin";
 import {
+  anchorsForSearchMap,
   originFromSearchQuery,
   originsMatchSearchQuery,
-  searchMapOrigin,
   searchQueryFromUnknown,
 } from "@/lib/search-query";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
@@ -56,7 +56,6 @@ import {
   type ParentListingSearch,
 } from "@/lib/parent-listing";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
-import { resolveSearchAnchors } from "@/lib/dual-anchor";
 import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
@@ -403,17 +402,32 @@ function SearchPage() {
     anchorMode,
   ]);
 
-  const cameraHome = useMemo(
+  const viewAnchors = useMemo(
     () =>
-      searchMapOrigin({
+      anchorsForSearchMap({
         lat: origin.lat,
         lng: origin.lng,
         radiusKm,
-        q: incoming.q ?? query,
+        q: incoming.q,
+        query,
         label: origin.label,
+        work: workOrigin,
+        mode: anchorMode,
       }),
-    [origin.lat, origin.lng, origin.label, radiusKm, incoming.q, query],
+    [
+      origin.lat,
+      origin.lng,
+      origin.label,
+      radiusKm,
+      incoming.q,
+      query,
+      workOrigin?.lat,
+      workOrigin?.lng,
+      anchorMode,
+    ],
   );
+  const cameraHome = viewAnchors.home;
+  const placeQuery = viewAnchors.q;
   const searchData = {
     lat: cameraHome.lat,
     lng: cameraHome.lng,
@@ -422,11 +436,11 @@ function SearchPage() {
     ageGroup: "any" as const,
     fsa: fsaOf(query) || fsaOf(cameraHome.label),
     label: cameraHome.label,
-    q: incoming.q ?? query,
+    q: placeQuery,
     startDate: needBy || null,
-    lat2: workOrigin?.lat,
-    lng2: workOrigin?.lng,
-    mode: anchorMode,
+    lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
+    lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
+    mode: viewAnchors.mode,
   };
   const cacheInput = {
     lat: cameraHome.lat,
@@ -435,11 +449,11 @@ function SearchPage() {
     sort,
     ageGroup: "any" as const,
     label: cameraHome.label,
-    q: incoming.q ?? query,
+    q: placeQuery,
     startDate: needBy || null,
-    lat2: workOrigin?.lat,
-    lng2: workOrigin?.lng,
-    mode: anchorMode,
+    lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
+    lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
+    mode: viewAnchors.mode,
   };
   const locationLock = useMemo(
     () =>
@@ -447,9 +461,9 @@ function SearchPage() {
         lat: cameraHome.lat,
         lng: cameraHome.lng,
         label: cameraHome.label,
-        q: incoming.q ?? query,
+        q: placeQuery,
       }),
-    [cameraHome.lat, cameraHome.lng, cameraHome.label, incoming.q, query],
+    [cameraHome.lat, cameraHome.lng, cameraHome.label, placeQuery],
   );
 
   useEffect(() => {
@@ -669,6 +683,7 @@ function SearchPage() {
   function followDevice(pos: { lat: number; lng: number; accuracyM?: number }) {
     const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
     const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
+    setAnchorMode("home");
     setOrigin(
       { lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" },
       resolved.source,
@@ -1000,7 +1015,7 @@ function SearchPage() {
     (favoritesOnly ? 1 : 0) +
     (careType !== "any" ? 1 : 0) +
     (isFacilityExploreCategory(resolvedExploreCategory(incoming)) ? 1 : 0);
-  const anchors = resolveSearchAnchors({ home: cameraHome, work: workOrigin, mode: anchorMode });
+  const anchors = viewAnchors;
   const catalog = items ?? [];
   const fabric = areaPresence(catalog);
   const dualEmpty = anchors.intersect && !searchFailed && (items?.length ?? 0) === 0;

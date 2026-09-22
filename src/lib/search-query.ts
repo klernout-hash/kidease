@@ -1,3 +1,4 @@
+import { resolveSearchAnchors, type AnchorMode } from "./dual-anchor.ts";
 import { geocode, haversineKm } from "./geo.ts";
 
 /** Parse `q` from TanStack `location.search` (object or query string). */
@@ -48,10 +49,20 @@ export function alignSearchOrigin(input: {
   const label = named?.label || (input.label || "").trim();
   if (!named) return { lat: pin.lat, lng: pin.lng, label };
   const pinOk = Number.isFinite(pin.lat) && Number.isFinite(pin.lng) && !(pin.lat === 0 && pin.lng === 0);
-  if (!pinOk || haversineKm(pin, named) > Math.max(1, input.radiusKm)) {
+  const radius = Number(input.radiusKm);
+  const limit = Number.isFinite(radius) ? Math.max(1, radius) : 1;
+  // A non-finite radius must not count as "inside the city" and keep a device pin.
+  if (!pinOk || !(haversineKm(pin, named) <= limit)) {
     return { lat: named.lat, lng: named.lng, label: named.label };
   }
   return { lat: pin.lat, lng: pin.lng, label: label || named.label };
+}
+
+/** URL `q` wins. An empty string must not hide the text the search pill is showing. */
+export function placeQueryForCamera(q?: string | null, query?: string | null) {
+  const fromUrl = typeof q === "string" ? q.trim() : "";
+  if (fromUrl) return fromUrl;
+  return typeof query === "string" ? query.trim() : "";
 }
 
 /**
@@ -101,6 +112,45 @@ export function searchMapOrigin(input: {
     q: named.label,
     label: named.label,
   });
+}
+
+/**
+ * Camera for the Explore map and the search request behind it.
+ * A typed city (`?q=Edmonton`) owns the circle. A saved work pin or a device
+ * fix must not replace that city. Work/both still apply when the query is not
+ * a city. Locate / near me clears the city query before this runs.
+ */
+export function anchorsForSearchMap(input: {
+  lat: number;
+  lng: number;
+  radiusKm: number;
+  q?: string | null;
+  query?: string | null;
+  label?: string | null;
+  work?: { lat: number; lng: number } | null;
+  mode?: unknown;
+}) {
+  const q = placeQueryForCamera(input.q, input.query);
+  const home = searchMapOrigin({
+    lat: input.lat,
+    lng: input.lng,
+    radiusKm: input.radiusKm,
+    q,
+    label: input.label,
+  });
+  const cityOwned = Boolean(explicitCityQuery(q));
+  const anchors = resolveSearchAnchors({
+    home,
+    work: cityOwned ? null : input.work,
+    mode: cityOwned ? "home" : input.mode,
+  });
+  return {
+    ...anchors,
+    home,
+    q,
+    cityOwned,
+    mode: (cityOwned ? "home" : anchors.mode) as AnchorMode,
+  };
 }
 
 /**

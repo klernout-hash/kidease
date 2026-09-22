@@ -26,8 +26,16 @@ function applyTrustedSaved(timeZone: string | null) {
   return trusted;
 }
 
-/** Empty /search: street GPS, else saved / SSR IP, else Winnipeg. Typed q stays multi-city. */
+/**
+ * Empty /search: street GPS, else saved / SSR IP, else Winnipeg. Typed q stays multi-city.
+ * A later call (the city query arriving) invalidates an in-flight GPS boot so the
+ * device fix cannot land after Edmonton and pull the camera back to Manitoba.
+ */
+let bootGeneration = 0;
+
 export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOrigin | null) {
+  const generation = ++bootGeneration;
+  const stale = () => generation !== bootGeneration;
   const setOrigin = useAppStore.getState().setOrigin;
   const setQuery = useAppStore.getState().setQuery;
   const setLocationConsent = useAppStore.getState().setLocationConsent;
@@ -37,10 +45,11 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
     setQuery(incomingQ);
     const local = geocode(incomingQ);
     if (local) {
-      setOrigin({ ...local, explicit: true }, "manual");
+      if (!stale()) setOrigin({ ...local, explicit: true }, "manual");
       return;
     }
     const hit = await resolveLocationQuery(incomingQ);
+    if (stale()) return;
     if (hit) setOrigin({ ...hit, explicit: true }, "manual");
     return;
   }
@@ -52,6 +61,7 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
     savedTrusted: Boolean(saved),
   });
   const pos = askGps ? await getDeviceLocation({ precise: true }) : null;
+  if (stale()) return;
   if (pos && consent !== "granted") setLocationConsent("granted");
   const gpsAllowed = Boolean(pos) || consent === "granted";
   const fallback =

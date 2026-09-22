@@ -1,5 +1,5 @@
-import type { LatLng } from "./geo";
-import { isInCanada } from "./canada-origin";
+import type { LatLng } from "./geo.ts";
+import { isInCanada } from "./canada-origin.ts";
 
 export const ANCHOR_MODES = ["home", "work", "both"] as const;
 export type AnchorMode = (typeof ANCHOR_MODES)[number];

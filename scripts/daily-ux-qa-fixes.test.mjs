@@ -12,10 +12,13 @@ import {
 } from "../src/lib/desks.ts";
 import { isAdminOnlyListing } from "../src/lib/listing-visibility.ts";
 import {
+  alignSearchOrigin,
+  anchorsForSearchMap,
   explicitCityQuery,
   gpsMayMoveSearchOrigin,
   originFromSearchQuery,
   originsMatchSearchQuery,
+  placeQueryForCamera,
   searchMapOrigin,
   searchQueryFromUnknown,
   urlHasGeocodableSearchQuery,
@@ -79,9 +82,73 @@ test("Edmonton search keeps the map circle off a Manitoba device pin", () => {
   assert.equal(gpsMayMoveSearchOrigin({ originSource: "gps", q: "Edmonton, AB" }), false);
   assert.equal(gpsMayMoveSearchOrigin({ originSource: "gps", q: "Near Selkirk, MB" }), true);
 
+  // Production repro: list is Edmonton (home pin) while the map circle stays on a
+  // saved work / device fix near Powerview–Pine Falls because mode is "work".
+  const deviceFix = { lat: 50.605847, lng: -96.15279 };
+  const owned = anchorsForSearchMap({
+    lat: edmonton.lat,
+    lng: edmonton.lng,
+    radiusKm: 25,
+    q: "Edmonton",
+    query: "Edmonton",
+    label: "Edmonton, AB",
+    work: deviceFix,
+    mode: "work",
+  });
+  assert.equal(owned.cityOwned, true);
+  assert.equal(owned.mode, "home");
+  assert.equal(owned.secondary, null);
+  assert.ok(Math.abs(owned.primary.lat - edmonton.lat) < 0.01);
+  assert.ok(Math.abs(owned.primary.lng - edmonton.lng) < 0.01);
+
+  const fromDevice = anchorsForSearchMap({
+    lat: deviceFix.lat,
+    lng: deviceFix.lng,
+    radiusKm: 25,
+    q: "Edmonton",
+    label: "Near Winnipeg, MB",
+    work: deviceFix,
+    mode: "both",
+  });
+  assert.equal(fromDevice.cityOwned, true);
+  assert.equal(fromDevice.intersect, false);
+  assert.ok(Math.abs(fromDevice.primary.lat - edmonton.lat) < 0.01);
+  assert.ok(Math.abs(fromDevice.home.lng - edmonton.lng) < 0.01);
+
+  const deviceWork = anchorsForSearchMap({
+    lat: deviceFix.lat,
+    lng: deviceFix.lng,
+    radiusKm: 25,
+    q: "Near Selkirk, MB",
+    label: "Near Selkirk, MB",
+    work: deviceFix,
+    mode: "work",
+  });
+  assert.equal(deviceWork.cityOwned, false);
+  assert.equal(deviceWork.mode, "work");
+  assert.equal(deviceWork.primary.lat, deviceFix.lat);
+  assert.equal(deviceWork.primary.lng, deviceFix.lng);
+
+  assert.equal(placeQueryForCamera("", "Edmonton"), "Edmonton");
+  assert.equal(placeQueryForCamera("Edmonton", "Winnipeg"), "Edmonton");
+
+  const nanRadius = alignSearchOrigin({
+    lat: deviceFix.lat,
+    lng: deviceFix.lng,
+    radiusKm: Number.NaN,
+    q: "Edmonton",
+  });
+  assert.equal(nanRadius.label, "Edmonton, AB");
+  assert.ok(Math.abs(nanRadius.lat - edmonton.lat) < 0.01);
+
   const search = src("src/routes/search.tsx");
-  assert.match(search, /searchMapOrigin/);
-  assert.match(search, /home: cameraHome/);
+  assert.match(search, /anchorsForSearchMap/);
+  assert.match(search, /const anchors = viewAnchors/);
+  assert.match(search, /viewAnchors\.cityOwned/);
+  assert.match(search, /setAnchorMode\("home"\)/);
+  assert.match(src("src/components/map-view.tsx"), /originRef/);
+  assert.match(src("src/components/map-view.tsx"), /map\.setCenter/);
+  assert.match(src("src/lib/search-origin.ts"), /bootGeneration/);
   assert.match(src("src/lib/use-presence.ts"), /gpsMayMoveSearchOrigin/);
   assert.match(src("src/components/native-boot.tsx"), /gpsMayMoveSearchOrigin/);
 });
