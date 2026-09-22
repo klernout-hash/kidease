@@ -11,11 +11,13 @@ import {
   collapseDuplicateReviewCards,
   liveSearchHit,
   planApproval,
+  hasLicenceEvidence,
   publicApprovalEligible,
   selectCanonicalClaim,
   showPublicClaimPrompt,
   verifiedSearchPoint,
 } from "../src/lib/approve-live.ts";
+import { isPlatformLive } from "../src/lib/live.ts";
 import { flushSearchMemo, rememberSearch } from "../src/lib/server/search-memo.ts";
 import { reviewDecisionFacts } from "../src/lib/admin-review-card.ts";
 import { geocode } from "../src/lib/geo.ts";
@@ -189,12 +191,30 @@ test("duplicate Kids World cards collapse and Live records cannot be approved ag
 
 test("public approval strip is statuses only and stays off until trust really holds", () => {
   assert.equal(publicApprovalEligible(kidsWorld), false);
+  assert.equal(hasLicenceEvidence(kidsWorld), false);
+  assert.equal(
+    isPlatformLive("ab-kh2t", true, { claimStatus: "waiting", claimedAt: "2026-09-01" }),
+    false,
+    "Waiting stays off public Live even when claimed_at is set",
+  );
   assert.equal(
     publicApprovalEligible({
       ...kidsWorld,
       claimStatus: "approved",
       claimedAt: "2026-09-01",
       live: true,
+    }),
+    false,
+    "an unverified licence does not earn the trust strip",
+  );
+  assert.equal(
+    publicApprovalEligible({
+      ...kidsWorld,
+      claimStatus: "approved",
+      claimedAt: "2026-09-01",
+      live: true,
+      licenseStatus: "matched",
+      licenseVerificationSource: "admin",
     }),
     true,
   );
@@ -264,6 +284,9 @@ test("approval clears the search memo and does not cache an empty Live result", 
   assert.match(migration, /kids-world-daycare-kh2t/);
   assert.match(migration, /70051797/);
   assert.match(migration, /53\.5461/);
+  assert.match(migration, /city = 'Edmonton'/);
+  assert.match(migration, /name ilike '%kids world%'/);
+  assert.match(migration, /status = 'approved'/);
   assert.match(migration, /extname = 'postgis'/);
   assert.doesNotMatch(migration, /storage_ref|license_photo/);
 });

@@ -21,6 +21,7 @@ import { sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
 import { compareParentMatch } from "@/lib/parent-match";
 import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
+import { hasLicenceEvidence } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
@@ -54,7 +55,7 @@ function optionalCoord(value: unknown) {
 }
 
 function toDaycare(d: CatalogDaycare): Daycare {
-  return applyLocalRegistryTrust(applyListingReadiness({
+  const mapped = applyLocalRegistryTrust(applyListingReadiness({
     id: d.id,
     slug: d.slug,
     name: d.name,
@@ -125,6 +126,10 @@ function toDaycare(d: CatalogDaycare): Daycare {
     isTest: d.isTest,
     timezone: "America/Winnipeg",
   }));
+  return {
+    ...mapped,
+    live: Boolean(mapped.live) && hasLicenceEvidence(mapped),
+  };
 }
 
 function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {

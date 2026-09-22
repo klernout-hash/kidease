@@ -6,7 +6,7 @@
 
 import { getSql } from "@/lib/db";
 import type { CatalogDaycare } from "@/lib/catalog";
-import { verifiedSearchPoint } from "@/lib/approve-live";
+import { hasLicenceEvidence, verifiedSearchPoint } from "@/lib/approve-live";
 import { haversineKm, type LatLng } from "@/lib/geo";
 import { listingMatchesLocationLock, type LocationLock } from "@/lib/location-lock";
 import { isPublicListing, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
@@ -53,6 +53,7 @@ export async function mergeApprovedCityListings(
     if (!row?.id || seen.has(row.id)) continue;
     const listing = catalogRowToListing(row);
     if (!isPublicListing(listing)) continue;
+    if (!hasLicenceEvidence(listing)) continue;
     if (!listingMatchesLocationLock(listing, lock)) continue;
     const point = verifiedSearchPoint(listing);
     if (!point.eligible) continue;

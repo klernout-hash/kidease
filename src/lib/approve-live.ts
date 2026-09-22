@@ -110,6 +110,20 @@ export function hasApprovalLicence(
   return Boolean(officialLicenceNumber(centre.licenseNumber, centreId(centre)));
 }
 
+/**
+ * Licence evidence Admin and the public page share.
+ * A bare number, or Missing / unverified, is not enough for Live trust badges.
+ * Alberta needs an operator source. Manitoba may match the local catalogue.
+ */
+export function hasLicenceEvidence(
+  centre: Pick<ApprovalCentre, "id" | "daycareId" | "licenseNumber" | "licenseStatus" | "licenseVerificationSource" | "province">,
+): boolean {
+  if (!hasApprovalLicence(centre)) return false;
+  if (normalizeLicenseStatus(centre.licenseStatus) !== "matched") return false;
+  if (isOperatorLicenseSource(centre.licenseVerificationSource)) return true;
+  return (centre.province || "").trim().toUpperCase() === "MB";
+}
+
 export function hasApprovalScreening(
   centre: Pick<ApprovalCentre, "screeningOnFile" | "staffScreeningAttested">,
 ): boolean {
@@ -200,7 +214,7 @@ export function publicApprovalEligible(centre: ApprovalCentre): boolean {
   if (!APPROVED_CLAIM.has(status)) return false;
   if (centre.live === false) return false;
   if (centre.listingActive === false) return false;
-  if (!hasApprovalLicence(centre)) return false;
+  if (!hasLicenceEvidence(centre)) return false;
   if (!hasApprovalScreening(centre)) return false;
   if (!verifiedSearchPoint(centre).eligible) return false;
   const id = centreId(centre) || "centre";

@@ -25,8 +25,8 @@ set claim_status = 'approved',
       else 'admin'
     end,
     license_verified_at = coalesce(license_verified_at, now()),
-    city = case when coalesce(btrim(city), '') = '' then 'Edmonton' else city end,
-    province = case when coalesce(btrim(province), '') = '' then 'AB' else province end
+    city = 'Edmonton',
+    province = 'AB'
 where slug = 'kids-world-daycare-kh2t'
   and coalesce(license_status, 'unverified') not in ('expired', 'suspended');
 
@@ -60,13 +60,48 @@ where daycare_id = (select id from daycares where slug = 'kids-world-daycare-kh2
     limit 1
   );
 
+update listing_claims
+set status = 'approved',
+    reviewed_at = coalesce(reviewed_at, now())
+where daycare_id = (select id from daycares where slug = 'kids-world-daycare-kh2t' limit 1)
+  and status not in ('declined', 'superseded')
+  and id = (
+    select id
+    from listing_claims
+    where daycare_id = (select id from daycares where slug = 'kids-world-daycare-kh2t' limit 1)
+      and status not in ('declined', 'superseded')
+    order by
+      case when status = 'approved' then 0 when status in ('verified', 'waiting') then 1 else 2 end,
+      created_at desc
+    limit 1
+  );
+
 update daycares
 set listing_active = 0,
     claim_status = 'superseded'
 where slug is distinct from 'kids-world-daycare-kh2t'
-  and license_number = '70051797'
   and name ilike '%kids world%'
+  and (
+    upper(btrim(coalesce(province, ''))) in ('AB', 'ALBERTA')
+    or city ilike 'edmonton%'
+  )
   and coalesce(claim_status, '') is distinct from 'superseded';
+
+update listing_claims
+set status = 'superseded',
+    reviewed_at = coalesce(reviewed_at, now()),
+    review_note = coalesce(review_note, 'Superseded by kids-world-daycare-kh2t')
+where daycare_id in (
+  select id
+  from daycares
+  where slug is distinct from 'kids-world-daycare-kh2t'
+    and name ilike '%kids world%'
+    and (
+      upper(btrim(coalesce(province, ''))) in ('AB', 'ALBERTA')
+      or city ilike 'edmonton%'
+    )
+)
+and status <> 'superseded';
 
 do $$
 begin

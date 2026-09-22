@@ -3,6 +3,7 @@ import { listingCultureFrom } from "@/lib/listing-culture";
 import { parentListingFrom } from "@/lib/parent-listing";
 import { resolveTourTimezone } from "@/lib/tour-calendar";
 import type { Daycare } from "@/lib/types";
+import { hasLicenceEvidence } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
 import { isAdminOnlyListing, listingVisibilityOf } from "@/lib/listing-visibility";
@@ -93,7 +94,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
   const claimed = Boolean(r.claimed_at);
   const vacancyAt = r.last_vacancy_updated_at ?? null;
   const photoAt = r.last_photo_updated_at ?? null;
-  return applyLocalRegistryTrust(applyListingReadiness({
+  const mapped = applyLocalRegistryTrust(applyListingReadiness({
     id: r.id,
     slug: r.slug,
     name: r.name,
@@ -202,6 +203,10 @@ export function mapDaycare(r: DaycareRow): Daycare {
     }),
     timezone: resolveTourTimezone(r.timezone),
   }));
+  return {
+    ...mapped,
+    live: Boolean(mapped.live) && hasLicenceEvidence(mapped),
+  };
 }
 
 export function fromPrice(d: Daycare) {
