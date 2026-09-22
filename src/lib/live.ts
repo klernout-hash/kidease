@@ -26,7 +26,7 @@ export function canAppearOnPlatform(d: {
 
 /** Claim tokens that mean the listing is live on KidEase. Pending / unverified stay off. */
 const LIVE_CLAIM_STATUS = new Set(["approved", "live", "active", "published"]);
-const DEAD_CLAIM_STATUS = new Set(["declined", "rejected", "denied"]);
+const DEAD_CLAIM_STATUS = new Set(["declined", "rejected", "denied", "superseded"]);
 
 export type PlatformLiveExtra = {
   listingActive?: boolean | null;

@@ -13,6 +13,8 @@ import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { licenseReviewMarker } from "@/lib/private-docs";
 import { normalizeAdminClaimStatus } from "@/lib/listing-queue";
+import { collapseDuplicateReviewCards } from "@/lib/approve-live";
+import { runApproval } from "@/lib/server/approve-centre";
 import {
   incompleteMissing,
   selectIncompleteRows,
@@ -265,7 +267,13 @@ export const listAdminCentres = createServerFn({ method: "GET" })
          or d.id = 'ke-test-ghost-001'
          or d.id ilike 'ke-test-%'
          or d.name like 'TEST %'
-      order by d.id, c.created_at desc nulls last
+      order by d.id,
+        case
+          when c.status = 'approved' then 0
+          when c.status = 'superseded' then 2
+          else 1
+        end,
+        c.created_at desc nulls last
     `.catch(() =>
       sql<{
         daycare_id: string;
@@ -375,7 +383,13 @@ export const listAdminCentres = createServerFn({ method: "GET" })
            or d.id = 'ke-test-ghost-001'
            or d.id ilike 'ke-test-%'
            or d.name like 'TEST %'
-        order by d.id, c.created_at desc nulls last
+        order by d.id,
+        case
+          when c.status = 'approved' then 0
+          when c.status = 'superseded' then 2
+          else 1
+        end,
+        c.created_at desc nulls last
       `.catch(() => []),
     );
 
@@ -458,8 +472,9 @@ export const listAdminCentres = createServerFn({ method: "GET" })
     });
 
     const rank = (s: string) => (s === "waiting" || s === "pending" ? 0 : s === "approved" ? 1 : 2);
-    mapped.sort((a, b) => rank(a.claimStatus) - rank(b.claimStatus) || compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name));
-    return mapped;
+    const visible = collapseDuplicateReviewCards(mapped.filter((row) => row.claimStatus !== "superseded"));
+    visible.sort((a, b) => rank(a.claimStatus) - rank(b.claimStatus) || compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name));
+    return visible;
   });
 
 /** Incomplete / Needs-complete slice — same rows as listAdminCentres, filtered in-process. */
@@ -495,17 +510,20 @@ export const decideCentre = createServerFn({ method: "POST" })
     const centre = listed[0];
     if (!centre) throw new Error("Centre not found");
 
-    const claimStatus = decision === "approve" ? "approved" : decision === "decline" ? "declined" : "waiting";
-    const claimRowStatus = claimStatus;
+    let claimStatus = decision === "decline" ? "declined" : "waiting";
+    let approvalHealth: Awaited<ReturnType<typeof runApproval>>["health"] | null = null;
 
     if (decision === "approve") {
-      await sql`
-        update daycares
-        set claimed_at = coalesce(claimed_at, now()),
-            claim_status = ${claimStatus},
-            verified = 1
-        where id = ${data.daycareId}
-      `;
+      const approved = await runApproval(sql, {
+        daycareId: data.daycareId,
+        actorUserId: context.userId,
+        note: data.note,
+      });
+      if (!approved.ok) {
+        return { ok: false as const, status: approved.status, mailed: "skip", to: null, health: approved.health };
+      }
+      claimStatus = "approved";
+      approvalHealth = approved.health;
     } else {
       await sql`
         update daycares
@@ -518,12 +536,14 @@ export const decideCentre = createServerFn({ method: "POST" })
     const latest = await sql<{ id: string; user_id: string }>`
       select id, user_id from listing_claims
       where daycare_id = ${data.daycareId}
-      order by created_at desc limit 1
+        and status <> 'superseded'
+      order by case when status = 'approved' then 0 else 1 end, created_at desc
+      limit 1
     `;
-    if (latest[0]) {
+    if (latest[0] && decision !== "approve") {
       await sql`
         update listing_claims
-        set status = ${claimRowStatus},
+        set status = ${claimStatus},
             reviewed_at = now(),
             reviewed_by = ${context.userId},
             review_note = ${data.note?.trim() || null}
@@ -531,7 +551,7 @@ export const decideCentre = createServerFn({ method: "POST" })
       `.catch(async () => {
         await sql`
           update listing_claims
-          set status = ${claimRowStatus}
+          set status = ${claimStatus}
           where id = ${latest[0].id}
         `;
       });
@@ -603,8 +623,20 @@ export const decideCentre = createServerFn({ method: "POST" })
       actorUserId: context.userId,
       kind: `claim_${claimStatus}`,
       note: data.note?.trim() || null,
-      payload: JSON.stringify({ decision, claimStatus, mailed: mail }),
+      payload: JSON.stringify({
+        decision,
+        claimStatus,
+        mailed: mail,
+        health: approvalHealth?.ok ?? null,
+        failed: approvalHealth?.failed ?? [],
+      }),
     });
 
-    return { ok: true as const, status: claimStatus, mailed: mail, to: to || null };
+    return {
+      ok: true as const,
+      status: claimStatus,
+      mailed: mail,
+      to: to || null,
+      health: approvalHealth,
+    };
   });

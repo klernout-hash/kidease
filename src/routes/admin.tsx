@@ -42,7 +42,8 @@ import { decideCentre, listAdminCentres, listIncompleteAdminCentres, type AdminC
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
 import { AdminTrustPanel } from "@/components/admin-trust";
-import { AdminCentreStatList, AdminReviewCard, AdminReviewLoading, AdminReviewNotice } from "@/components/admin-review-card";
+import { AdminCentreStatList, AdminReviewCard, AdminReviewLoading, AdminReviewNotice, ApprovalHealthNotice } from "@/components/admin-review-card";
+import type { ApprovalHealth } from "@/lib/approve-live";
 import { AdminScreeningQueue } from "@/components/admin-screening";
 import { AdminIncompleteQueue } from "@/components/admin-incomplete";
 import { JURISDICTIONS } from "@/lib/province-registry";
@@ -153,6 +154,7 @@ function AdminPage() {
   const [contractBusy, setContractBusy] = useState<string | null>(null);
   const [ledger, setLedger] = useState<AdminMoneyLedger>({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 });
   const [busy, setBusy] = useState<string | null>(null);
+  const [approvalHealth, setApprovalHealth] = useState<ApprovalHealth | null>(null);
   const [note, setNote] = useState("");
   const [q, setQ] = useState("");
   const [moneyQ, setMoneyQ] = useState("");
@@ -373,13 +375,17 @@ function AdminPage() {
   async function onDecide(daycareId: string, decision: Decision) {
     setBusy(`${daycareId}:${decision}`);
     try {
-      await withReauth(
+      const result = await withReauth(
         () => decideCentre({ data: { daycareId, decision, note } }),
         reauth.prompt,
       );
       setNote("");
+      if (decision === "approve") {
+        setApprovalHealth(result.health ?? null);
+      }
       await refresh();
     } catch (err) {
+      setApprovalHealth(null);
       alert(err instanceof Error ? err.message : "Could not save that decision");
     } finally {
       setBusy(null);
@@ -557,6 +563,11 @@ function AdminPage() {
               {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from Live and Waiting counts. Toggle to review TEST Ghost Claim Lab separately.
             </p>
           ) : null}
+          {approvalHealth ? (
+            <div className="mt-4">
+              <ApprovalHealthNotice health={approvalHealth} />
+            </div>
+          ) : null}
           {isAdminLeadStat(stat) ? (
             <LeadStatPanel stat={stat} count={leadCounts[ADMIN_LEAD_STAT_META[stat].countKey]} />
           ) : (
@@ -616,6 +627,11 @@ function AdminPage() {
                     Facility types: child care centre (fallback), family child care (`home`), group child care home (`group-home`), nursery school (`nursery`), school-age (`in-school`). Name tokens are an admin gap only — never assigned at random. US-style aliases map and stay off empty filters.
                   </span>
                 </p>
+              ) : null}
+              {approvalHealth ? (
+                <div className="mb-5">
+                  <ApprovalHealthNotice health={approvalHealth} />
+                </div>
               ) : null}
               <h2 className="font-display text-2xl">By province</h2>
               {isAdminCentreListStat(stat) && stat !== "all" ? (

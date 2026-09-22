@@ -37,6 +37,8 @@ import {
 import { openConversation } from "@/lib/server/family";
 import { ListingCultureCard } from "@/components/listing-culture-card";
 import { SaveListingButton } from "@/components/save-listing-button";
+import { KidEaseApprovalStrip } from "@/components/kidease-approval";
+import { publicApprovalEligible } from "@/lib/approve-live";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
 import { publicLicenseBadge } from "@/lib/license-verify";
@@ -560,6 +562,7 @@ function Listing() {
               <h1 className="font-display text-3xl md:text-4xl">{name}</h1>
               {licensed ? <TrustBadge badge={licensed} /> : null}
             </div>
+            <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} />
             <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
             <ListingHeaderPills item={d} />
             <p className="mt-2 text-xs font-medium text-subtle">{t("freeListingNotAd")}</p>

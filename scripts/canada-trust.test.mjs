@@ -73,9 +73,9 @@ test("registry adapters do not scrape; stubs stay non-live", () => {
 });
 
 test("admin declined claims still hide Waiting and Decline", () => {
-  const ui = src("src/routes/admin.tsx");
-  assert.match(ui, /disabled=\{busy !== null \|\| status === "declined"\}/);
-  assert.match(ui, /c\.reviewNote/);
+  const ui = src("src/components/admin-review-card.tsx");
+  assert.match(ui, /disabled=\{locked \|\| status === "declined"\}/);
+  assert.match(ui, /centre\.reviewNote/);
   assert.match(src("src/components/admin-trust.tsx"), /Mark registry-matched/);
 });
 
@@ -93,7 +93,7 @@ test("shared badge system is used on parent, provider, and admin", () => {
   assert.match(provider, /TrustSignals/);
   const admin = src("src/routes/admin.tsx");
   assert.match(admin, /AdminTrustPanel/);
-  assert.match(admin, /AdminLicenseActions/);
+  assert.match(src("src/components/admin-review-card.tsx"), /AdminLicenseActions/);
   const badges = src("src/components/listing-badges.tsx");
   assert.match(badges, /TrustSignals/);
   assert.doesNotMatch(badges, /t\("licensed"\)/);

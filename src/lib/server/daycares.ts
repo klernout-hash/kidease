@@ -28,6 +28,7 @@ import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { rememberSearch, searchMemoKey } from "./search-memo";
+import { mergeApprovedCityListings } from "./approved-search";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
@@ -265,11 +266,14 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     label: data.label,
     q: data.q,
   });
-  const listings = filterByLocationLock(
-    anchors.intersect && anchors.secondary
-      ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
-      : await nearbyListings(origin, data.radiusKm),
-    lock,
+  const listings = await mergeApprovedCityListings(
+    filterByLocationLock(
+      anchors.intersect && anchors.secondary
+        ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
+        : await nearbyListings(origin, data.radiusKm),
+      lock,
+    ),
+    { origin, radiusKm: data.radiusKm, lock },
   );
   let cards: DaycareCard[] = [];
   for (const d of listings) {
@@ -331,7 +335,11 @@ export const searchDaycares = createServerFn({ method: "POST" })
 async function loadFeatured(origin: { lat: number; lng: number; label?: string }): Promise<DaycareCard[]> {
   const lock = resolveLocationLock(origin);
   const nearby: DaycareCard[] = [];
-  for (const d of filterByLocationLock(await nearbyListings(origin, 40), lock)) {
+  for (const d of await mergeApprovedCityListings(filterByLocationLock(await nearbyListings(origin, 40), lock), {
+    origin,
+    radiusKm: 40,
+    lock,
+  })) {
     nearby.push(toCard(d, origin));
   }
   nearby.sort(compareProximity);
