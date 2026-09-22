@@ -132,13 +132,14 @@ describe("listing photos prefer official buildings over /photos/wpg/", () => {
     );
   });
 
-  it("DaycareCard and catalog both call listingThumb / listingPhotosFor", () => {
+  it("DaycareCard and catalog keep listing photos; the map pin popup does not", () => {
     const card = readFileSync(join(root, "src/components/daycare-card.tsx"), "utf8");
     const catalog = `${readFileSync(join(root, "src/lib/catalog.ts"), "utf8")}\n${readFileSync(join(root, "src/lib/catalog-hydrate.ts"), "utf8")}`;
     const map = readFileSync(join(root, "src/components/map-view.tsx"), "utf8");
     assert.match(card, /PhotoCarousel/);
     assert.match(catalog, /listingPhotosFor/);
-    assert.match(map, /listingThumb/);
+    assert.match(map, /data-ke="map-selected-card"/);
+    assert.doesNotMatch(map, /listingThumb/);
   });
 });
 
