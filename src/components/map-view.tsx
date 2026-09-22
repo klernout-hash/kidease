@@ -83,6 +83,12 @@ export function MapView({
   const markersBySlug = useRef(new Map<string, SlugPin>());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const originRef = useRef(origin);
+  originRef.current = origin;
+  const secondOriginRef = useRef(secondOrigin);
+  secondOriginRef.current = secondOrigin ?? null;
+  const radiusRef = useRef(radiusKm);
+  radiusRef.current = radiusKm;
 
   const locale = useAppStore((s) => s.locale);
   const distanceUnit = useAppStore((s) => s.distanceUnit);
@@ -129,13 +135,19 @@ export function MapView({
         const maps = await loadGoogleMaps();
         if (cancelled || !el) return;
         el.innerHTML = "";
+        const framed = originRef.current;
         const created = await createKidEaseMap(maps, el, {
-          center: { lat: origin.lat, lng: origin.lng },
-          zoom: mapZoomForRadius(radiusKm),
+          center: { lat: framed.lat, lng: framed.lng },
+          zoom: mapZoomForRadius(radiusRef.current),
           mapTypeId: googleMapTypeId(readMapBase()),
         });
         if (cancelled) return;
         map = created.map;
+        // Google Maps can ignore a later fitBounds if it runs before the
+        // projection exists. The load above may also have closed over a device
+        // pin that the city query has since replaced. Pin the latest camera now.
+        const latest = originRef.current;
+        map.setCenter({ lat: latest.lat, lng: latest.lng });
         map.addListener("zoom_changed", () => {
           const next = map?.getZoom();
           if (typeof next === "number") setZoom(next);
@@ -213,15 +225,16 @@ export function MapView({
     const map = mapRef.current;
     const maps = mapsApiRef.current;
     if (!map || !maps || !ready) return;
-    map.panTo({ lat: origin.lat, lng: origin.lng });
+    const point = originRef.current;
+    map.setCenter({ lat: point.lat, lng: point.lng });
     const meters = Math.max(radiusKm, 0.5) * 1000;
     if (circleRef.current) {
-      circleRef.current.setCenter({ lat: origin.lat, lng: origin.lng });
+      circleRef.current.setCenter({ lat: point.lat, lng: point.lng });
       circleRef.current.setRadius(meters);
     } else {
       circleRef.current = new maps.Circle({
         map,
-        center: { lat: origin.lat, lng: origin.lng },
+        center: { lat: point.lat, lng: point.lng },
         radius: meters,
         strokeColor: "#1a3790",
         strokeWeight: 2,
@@ -264,7 +277,7 @@ export function MapView({
       circle2Ref.current?.setMap(null);
       workYouRef.current?.setMap(null);
     }
-    const box = bboxFromRadius(origin, radiusKm);
+    const box = bboxFromRadius(point, radiusKm);
     const bounds = new maps.LatLngBounds(
       { lat: box.minLat, lng: box.minLng },
       { lat: box.maxLat, lng: box.maxLng },
@@ -275,23 +288,46 @@ export function MapView({
       bounds.extend({ lat: box2.maxLat, lng: box2.maxLng });
     }
     map.fitBounds(bounds, MAP_RADIUS_FIT_PAD);
-    maps.event?.addListenerOnce?.(map, "idle", () => {
-      const minZoom = mapZoomForRadius(radiusKm);
+    let framing = true;
+    const idle = maps.event?.addListenerOnce?.(map, "idle", () => {
+      if (!framing) return;
+      const next = originRef.current;
+      const nextSecond = secondOriginRef.current;
+      map.setCenter({ lat: next.lat, lng: next.lng });
+      const boxNow = bboxFromRadius(next, radiusRef.current);
+      const nextBounds = new maps.LatLngBounds(
+        { lat: boxNow.minLat, lng: boxNow.minLng },
+        { lat: boxNow.maxLat, lng: boxNow.maxLng },
+      );
+      if (nextSecond) {
+        const box2 = bboxFromRadius(nextSecond, radiusRef.current);
+        nextBounds.extend({ lat: box2.minLat, lng: box2.minLng });
+        nextBounds.extend({ lat: box2.maxLat, lng: box2.maxLng });
+      }
+      map.fitBounds(nextBounds, MAP_RADIUS_FIT_PAD);
+      circleRef.current?.setCenter({ lat: next.lat, lng: next.lng });
+      youRef.current?.setPosition({ lat: next.lat, lng: next.lng });
+      const minZoom = mapZoomForRadius(radiusRef.current);
       const current = map.getZoom();
       if (typeof current === "number" && current < minZoom - 1) {
         map.setZoom(minZoom);
+        map.setCenter({ lat: next.lat, lng: next.lng });
       }
     });
     if (youRef.current) {
-      youRef.current.setPosition({ lat: origin.lat, lng: origin.lng });
+      youRef.current.setPosition({ lat: point.lat, lng: point.lng });
     } else {
       youRef.current = createYouAreHereDot({
         maps,
         map,
-        position: { lat: origin.lat, lng: origin.lng },
+        position: { lat: point.lat, lng: point.lng },
         AdvancedMarker: advancedMarkerRef.current,
       });
     }
+    return () => {
+      framing = false;
+      if (idle) maps.event?.removeListener?.(idle);
+    };
   }, [origin.lat, origin.lng, secondOrigin?.lat, secondOrigin?.lng, radiusKm, ready]);
 
   useEffect(() => {
