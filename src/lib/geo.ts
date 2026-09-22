@@ -148,14 +148,30 @@ function named(part: string) {
   return CITIES.find((c) => c.label.toLowerCase() === q || c.label.toLowerCase().includes(q));
 }
 
+/** FSA (A1A) or full postal (A1A1A1). City names like Halifax must not match /^h/. */
+function looksLikePostalQuery(query: string) {
+  const compact = query.replace(/[^a-z0-9]/gi, "");
+  return /^[a-z]\d[a-z](?:\d[a-z]\d)?$/i.test(compact);
+}
+
+function aliasMatches(query: string, alias: string) {
+  const a = alias.toLowerCase();
+  if (!a) return false;
+  if (query === a) return true;
+  if (query.length < 3 || a.length < 3) return false;
+  return query.includes(a) || a.includes(query);
+}
+
 export function geocode(query: string): (LatLng & { label: string }) | null {
   const q = query.trim().toLowerCase();
   if (!q) return null;
   const postal = q.replace(/\s+/g, "");
-  for (const f of FSA_CITY) {
-    if (f.re.test(postal)) {
-      const hit = named(f.label.toLowerCase());
-      if (hit) return { lat: hit.lat, lng: hit.lng, label: hit.label };
+  if (looksLikePostalQuery(postal)) {
+    for (const f of FSA_CITY) {
+      if (f.re.test(postal)) {
+        const hit = named(f.label.toLowerCase());
+        if (hit) return { lat: hit.lat, lng: hit.lng, label: hit.label };
+      }
     }
   }
   const prov = PROVINCES.find(
@@ -167,9 +183,7 @@ export function geocode(query: string): (LatLng & { label: string }) | null {
   );
   if (prov && q.length <= 22) return { lat: prov.lat, lng: prov.lng, label: prov.label };
   const hit = CITIES.find(
-    (c) =>
-      c.label.toLowerCase().includes(q) ||
-      c.aliases.some((a) => q.includes(a) || a.includes(q)),
+    (c) => c.label.toLowerCase().includes(q) || c.aliases.some((a) => aliasMatches(q, a)),
   );
   return hit ? { lat: hit.lat, lng: hit.lng, label: hit.label } : null;
 }

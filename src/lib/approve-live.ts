@@ -181,6 +181,29 @@ export function verifiedSearchPoint(
   return { lat: 0, lng: 0, source: "listing", eligible: false };
 }
 
+/**
+ * Centres that belong in this Live search. Licence evidence, an approved
+ * claim, and a verified pin or city point inside the radius. Waiting and
+ * unlicensed rows stay out. Name filtering stays with the caller.
+ */
+export function centresInLiveSearch<T extends ApprovalCentre>(
+  centres: readonly T[],
+  input: {
+    origin: LatLng;
+    radiusKm: number;
+    label?: string | null;
+  },
+): T[] {
+  return centres.filter((centre) =>
+    liveSearchHit({
+      origin: input.origin,
+      radiusKm: input.radiusKm,
+      label: input.label,
+      centre,
+    }),
+  );
+}
+
 export function liveSearchHit(input: {
   origin: LatLng;
   radiusKm: number;

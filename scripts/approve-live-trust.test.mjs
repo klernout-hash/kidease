@@ -429,8 +429,9 @@ test("kh2t approval, licence, Live, and Edmonton search move together", () => {
   assert.match(admin, /d\.license_verification_source/);
   assert.match(admin, /d\.screening_on_file/);
   const searchMerge = src("src/lib/server/approved-search.ts");
-  assert.match(searchMerge, /ALBERTA/);
-  assert.match(searchMerge, /hasLicenceEvidence/);
+  assert.match(searchMerge, /provinceSearchTokens/);
+  assert.match(searchMerge, /centresInLiveSearch/);
+  assert.match(src("src/lib/location-lock.ts"), /export function provinceSearchTokens/);
   const trust = src("src/lib/trust.ts");
   assert.match(trust, /if \(!evidence\) return \[]/);
   const migration = src("migrations/0053_approve_live_trust.sql");

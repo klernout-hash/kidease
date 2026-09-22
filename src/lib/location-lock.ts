@@ -43,6 +43,34 @@ export function normalizeProvinceCode(value: string | null | undefined): string 
   return PROVINCE_BY_KEY.get(key) || (/^[a-z]{2}$/.test(key) ? key.toUpperCase() : "");
 }
 
+function foldProvinceToken(value: string) {
+  return value.normalize("NFD").replace(/\p{M}/gu, "").toUpperCase();
+}
+
+/**
+ * Province strings a Live-search query must treat as the same place.
+ * AB and Alberta match. So do BC / British Columbia and Québec / QC.
+ */
+export function provinceSearchTokens(value: string | null | undefined): string[] {
+  const code = normalizeProvinceCode(value);
+  const tokens = new Set<string>();
+  const add = (raw: string | null | undefined) => {
+    const text = (raw || "").trim();
+    if (!text) return;
+    tokens.add(text.toUpperCase());
+    tokens.add(foldProvinceToken(text));
+  };
+  add(value);
+  add(code);
+  const prov = PROVINCES.find((item) => item.code === code);
+  if (prov) {
+    add(prov.code);
+    add(prov.name);
+    add(prov.nameFr);
+  }
+  return [...tokens];
+}
+
 function cityNameFromLabel(label: string): string {
   return label.replace(/^near\s+/i, "").split(",")[0]?.trim() || "";
 }

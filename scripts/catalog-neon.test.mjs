@@ -248,8 +248,10 @@ describe("runtime SoT prefers Neon when populated", () => {
     assert.match(nearby, /catalogNearFromJson/);
     assert.match(nearby, /void importCatalogSlice/);
     assert.match(nearby, /nearby-sql-timeout/);
-    assert.match(neon, /st_dwithin/i);
-    assert.match(neon, /st_makepoint\(\$1, \$2\)/);
+    const geo = src("src/lib/server/listing-geo-sql.ts");
+    assert.match(geo, /st_dwithin/i);
+    assert.match(geo, /st_makepoint\(\$1, \$2\)/);
+    assert.match(neon, /LISTING_WITHIN_RADIUS_SQL/);
     assert.match(neon, /PUBLIC_LISTING_SQL/);
     assert.match(src("src/lib/listing-visibility.ts"), /name !~\* '\^test\(\[ _-\]\|\$\)'/);
     assert.match(src("src/lib/server/daycares.ts"), /catalogByIdsGet/);

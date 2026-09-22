@@ -1,4 +1,4 @@
-import { geocode } from "./geo.ts";
+import { geocode, haversineKm } from "./geo.ts";
 
 /** Parse `q` from TanStack `location.search` (object or query string). */
 export function searchQueryFromUnknown(search: unknown): string {
@@ -29,6 +29,29 @@ export function originsMatchSearchQuery(
   if (!wanted) return true;
   if (!origin) return false;
   return Math.abs(origin.lat - wanted.lat) < epsilon && Math.abs(origin.lng - wanted.lng) < epsilon;
+}
+
+/**
+ * A named city owns the search when the stored pin is outside that city's
+ * radius. Edmonton in the query must not keep a Winnipeg pin and return 0.
+ * A pin already inside the radius stays, so a street search is unchanged.
+ */
+export function alignSearchOrigin(input: {
+  lat: number;
+  lng: number;
+  radiusKm: number;
+  q?: string | null;
+  label?: string | null;
+}): { lat: number; lng: number; label: string } {
+  const pin = { lat: Number(input.lat), lng: Number(input.lng) };
+  const named = originFromSearchQuery(input.q) || originFromSearchQuery(input.label);
+  const label = named?.label || (input.label || "").trim();
+  if (!named) return { lat: pin.lat, lng: pin.lng, label };
+  const pinOk = Number.isFinite(pin.lat) && Number.isFinite(pin.lng) && !(pin.lat === 0 && pin.lng === 0);
+  if (!pinOk || haversineKm(pin, named) > Math.max(1, input.radiusKm)) {
+    return { lat: named.lat, lng: named.lng, label: named.label };
+  }
+  return { lat: pin.lat, lng: pin.lng, label: label || named.label };
 }
 
 /** Typed `?q=Winnipeg` (etc.) owns origin — do not let saved GPS overwrite it. */

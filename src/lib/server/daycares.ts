@@ -30,6 +30,7 @@ import { uniqueById } from "@/lib/utils";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { rememberSearch, searchMemoKey } from "./search-memo";
 import { mergeApprovedCityListings } from "./approved-search";
+import { alignSearchOrigin } from "@/lib/search-query";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
@@ -256,6 +257,55 @@ function slimCard(card: DaycareCard): DaycareCard {
   };
 }
 
+function alignedSearchInput(data: SearchInput): SearchInput {
+  const aligned = alignSearchOrigin({
+    lat: data.lat,
+    lng: data.lng,
+    radiusKm: data.radiusKm,
+    q: data.q,
+    label: data.label,
+  });
+  return {
+    ...data,
+    lat: aligned.lat,
+    lng: aligned.lng,
+    label: aligned.label || data.label,
+  };
+}
+
+/** Live + licence rows only. Used when the full catalogue search times out or returns nothing. */
+async function liveCardsForSearch(data: SearchInput): Promise<DaycareCard[]> {
+  const origin = { lat: data.lat, lng: data.lng };
+  const lock = resolveLocationLock({
+    lat: origin.lat,
+    lng: origin.lng,
+    label: data.label,
+    q: data.q,
+  });
+  const listings = await mergeApprovedCityListings([], {
+    origin,
+    radiusKm: data.radiusKm,
+    lock,
+    label: data.label || data.q,
+  });
+  return publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa)))).map(slimCard);
+}
+
+function unionLiveCards(primary: DaycareCard[], live: DaycareCard[]): DaycareCard[] {
+  const seen = new Set(primary.map((card) => card.id));
+  const missing = live.filter((card) => card.id && !seen.has(card.id));
+  return missing.length ? [...missing, ...primary] : primary;
+}
+
+async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
+  const searched = alignedSearchInput(data);
+  const livePromise = liveCardsForSearch(searched);
+  const full = await withTimeoutFallback(runSearch(searched), LOADER_SETTLE_MS, null);
+  const live = await withTimeoutFallback(livePromise, full && full.length > 0 ? 800 : 2500, []);
+  if (!full || full.length === 0) return uniqueById(live);
+  return unionLiveCards(full, live);
+}
+
 async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   const work =
     typeof data.lat2 === "number" && typeof data.lng2 === "number"
@@ -280,7 +330,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
         : await nearbyListings(origin, data.radiusKm),
       lock,
     ),
-    { origin, radiusKm: data.radiusKm, lock },
+    { origin, radiusKm: data.radiusKm, lock, label: data.label || data.q },
   );
   let cards: DaycareCard[] = [];
   for (const d of listings) {
@@ -333,11 +383,7 @@ export const searchDaycares = createServerFn({ method: "POST" })
     lng2: optionalCoord(input.lng2),
     mode: parseAnchorMode(input.mode),
   }))
-  .handler(async ({ data }) =>
-    rememberSearch(searchMemoKey(data), () =>
-      withTimeoutFallback(runSearch(data), LOADER_SETTLE_MS, []),
-    ),
-  );
+  .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => searchIncludingLive(data)));
 
 async function loadFeatured(origin: { lat: number; lng: number; label?: string }): Promise<DaycareCard[]> {
   const lock = resolveLocationLock(origin);
@@ -346,6 +392,7 @@ async function loadFeatured(origin: { lat: number; lng: number; label?: string }
     origin,
     radiusKm: 40,
     lock,
+    label: origin.label,
   })) {
     nearby.push(toCard(d, origin));
   }
@@ -360,9 +407,27 @@ async function loadFeatured(origin: { lat: number; lng: number; label?: string }
 
 export const featuredDaycares = createServerFn({ method: "POST" })
   .validator((input: { lat: number; lng: number; label?: string }) => input)
-  .handler(async ({ data }) =>
-    withTimeoutFallback(loadFeatured({ lat: data.lat, lng: data.lng, label: data.label }), LOADER_SETTLE_MS, []),
-  );
+  .handler(async ({ data }) => {
+    const aligned = alignSearchOrigin({
+      lat: data.lat,
+      lng: data.lng,
+      radiusKm: 40,
+      q: data.label,
+      label: data.label,
+    });
+    const origin = { lat: aligned.lat, lng: aligned.lng, label: aligned.label || data.label };
+    const full = await withTimeoutFallback(loadFeatured(origin), LOADER_SETTLE_MS, null);
+    if (full && full.length > 0) return full;
+    return liveCardsForSearch({
+      lat: origin.lat,
+      lng: origin.lng,
+      radiusKm: 40,
+      sort: "distance",
+      ageGroup: "any",
+      label: origin.label,
+      q: origin.label,
+    });
+  });
 
 export const getDaycare = createServerFn({ method: "GET" })
   .validator((slug: string) => slug)
