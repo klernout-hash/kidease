@@ -51,9 +51,9 @@ export function CompletenessBanner({ item }: { item: Daycare }) {
   const complete = listingCompleteness(item);
   if (complete.ready) return null;
   return (
-    <div className="mt-3 rounded-xl bg-surface p-3 text-sm ring-1 ring-border">
+    <div className="text-sm">
       <p className="font-medium">{t("detailsIncomplete")}</p>
-      <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-muted">
+      <ul className="mt-1 list-disc space-y-0.5 pl-5 text-muted">
         {complete.missing.map((field) => (
           <li key={field}>{t(NEED_KEY[field])}</li>
         ))}

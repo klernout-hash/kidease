@@ -26,18 +26,60 @@ export function isLogoPhoto(src: string) {
   return src.includes("-logo");
 }
 
+const NEXT_PHOTO = /^(?:data:|https?:\/\/|\/)/i;
+
 /**
  * Split the persisted photos CSV without breaking `data:image…;base64,…` payloads.
- * Separators are commas that start the next path, data URL, or http(s) URL.
+ * JPEG payloads start with `/9j`, so a naive "comma then slash" split paints two
+ * broken tiles. The comma after `;base64` stays inside the data URL. A later comma
+ * starts the next path, data URL, or http(s) URL.
  */
 export function splitPhotoList(raw: string | string[] | null | undefined): string[] {
-  if (Array.isArray(raw)) return raw.map((p) => String(p).trim()).filter(Boolean);
+  if (Array.isArray(raw)) {
+    return splitPhotoList(raw.map((p) => String(p).trim()).filter(Boolean).join(","));
+  }
   const text = String(raw ?? "").trim();
   if (!text) return [];
-  return text
-    .split(/,(?=\s*(?:data:|\/|https?:))/i)
-    .map((p) => p.trim())
-    .filter(Boolean);
+  const parts: string[] = [];
+  let i = 0;
+  while (i < text.length) {
+    while (text[i] === ",") i += 1;
+    if (i >= text.length) break;
+    if (text.startsWith("data:", i)) {
+      const marker = text.indexOf(";base64,", i);
+      let end = text.length;
+      if (marker !== -1) {
+        let j = marker + ";base64,".length;
+        while (j < text.length) {
+          const comma = text.indexOf(",", j);
+          if (comma === -1) {
+            j = text.length;
+            break;
+          }
+          const rest = text.slice(comma + 1).trimStart();
+          if (NEXT_PHOTO.test(rest)) {
+            j = comma;
+            break;
+          }
+          j = comma + 1;
+        }
+        end = j;
+      } else {
+        const comma = text.indexOf(",", i);
+        end = comma === -1 ? text.length : comma;
+      }
+      const token = text.slice(i, end).trim();
+      if (token) parts.push(token);
+      i = end + 1;
+      continue;
+    }
+    const comma = text.indexOf(",", i);
+    const end = comma === -1 ? text.length : comma;
+    const token = text.slice(i, end).trim();
+    if (token) parts.push(token);
+    i = end + 1;
+  }
+  return parts;
 }
 
 /**

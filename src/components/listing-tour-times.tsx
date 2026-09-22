@@ -13,9 +13,11 @@ import type { Daycare } from "@/lib/types";
 export function ListingTourTimes({
   daycare,
   onBook,
+  canBook = true,
 }: {
   daycare: Daycare;
   onBook: () => void;
+  canBook?: boolean;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -43,17 +45,17 @@ export function ListingTourTimes({
   }, [daycare.id]);
 
   return (
-    <section id="listing-tours" className="mt-8 scroll-mt-24" data-listing-tour-times>
+    <section id="listing-tours" className="scroll-mt-24" data-listing-tour-times>
       <h2 className="font-display text-2xl">{t("tourTimesPublicHint")}</h2>
       <p className="mt-1 text-sm text-muted">{timezoneLabel(timezone, loc)}</p>
       {empty ? (
-        <p className="mt-3 rounded-lg bg-surface p-4 text-sm text-muted ring-1 ring-border" data-tour-empty={empty}>
+        <p className="mt-3 max-w-prose text-sm text-muted" data-tour-empty={empty}>
           {empty === "none_open" ? t("tourTimesNoneOpenLead") : t("tourTimesEmptyLead")}
         </p>
       ) : (
-        <ul className="mt-3 divide-y divide-border rounded-lg ring-1 ring-border">
+        <ul className="mt-3 divide-y divide-border">
           {slots.map((slot) => (
-            <li key={slot.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+            <li key={slot.id} className="flex items-center justify-between gap-3 py-3 text-sm">
               <span>{formatTourSlotRange(slot, loc)}</span>
               <span className="shrink-0 text-xs text-muted">
                 {slot.remaining === 1 ? `1 ${t("tourTimesSpotLeft")}` : `${slot.remaining} ${t("tourTimesSpotsLeft")}`}
@@ -62,9 +64,11 @@ export function ListingTourTimes({
           ))}
         </ul>
       )}
-      <Button className="mt-3 w-full sm:w-auto" variant={empty ? "secondary" : "primary"} onClick={onBook} size="lg">
-        {t("bookTour")}
-      </Button>
+      {canBook ? (
+        <Button className="mt-3" variant="secondary" onClick={onBook}>
+          {t("bookTour")}
+        </Button>
+      ) : null}
     </section>
   );
 }
