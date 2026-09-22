@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql, getSqlWithin } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getCatalog, catalogByIdGet } from "@/lib/catalog";
-import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { isAdminOnlyListing, listingVisibilityForOwners } from "@/lib/listing-visibility";
 import { nid } from "@/lib/utils";
 import { upsertDaycare } from "./seed";
 import { callerIsAdmin } from "./public-listing";
@@ -228,6 +228,23 @@ export const verifyClaim = createServerFn({ method: "POST" })
     await writeProfileRole(context.userId, "provider");
     const actor = await lookupUser(context.userId);
     const listedAfter = await catalogByIdGet(data.daycareId);
+    const flags = listingVisibilityForOwners(
+      {
+        id: listedAfter?.id || data.daycareId,
+        slug: listedAfter?.slug,
+        name: listedAfter?.name,
+        licenseNumber: listedAfter?.licenseNumber,
+        address: listedAfter?.address,
+        visibility: listedAfter?.visibility,
+        isTest: listedAfter?.isTest,
+      },
+      [actor.email],
+    );
+    await sql`
+      update daycares
+      set visibility = ${flags.visibility}, is_test = ${flags.isTest}
+      where id = ${data.daycareId}
+    `;
     let eventId: string | null = null;
     try {
       const result = await notifyProviderJoined({

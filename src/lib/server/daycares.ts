@@ -107,7 +107,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
       reviewCount: d.reviewCount,
       claimStatus: d.claimStatus,
       claimedAt: d.claimedAt,
-    }),
+    }) && !isAdminOnlyListing(d),
     contactEmail: null,
     feeConfirmed: Boolean(d.feeConfirmed),
     availabilityKnown: false,
@@ -129,7 +129,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
   }));
   return {
     ...mapped,
-    live: Boolean(mapped.live) && hasLicenceEvidence(mapped),
+    live: Boolean(mapped.live) && hasLicenceEvidence(mapped) && !isAdminOnlyListing(mapped),
   };
 }
 

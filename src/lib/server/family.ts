@@ -8,7 +8,7 @@ import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
-import { isAdminOnlyListing, listingVisibilityWrite } from "@/lib/listing-visibility";
+import { isAdminOnlyListing, listingVisibilityForOwners } from "@/lib/listing-visibility";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
@@ -1401,13 +1401,17 @@ export const createListing = createServerFn({ method: "POST" })
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")
       .slice(0, 40) + "-" + id.slice(-4);
-    const visibilityWrite = listingVisibilityWrite({
-      id,
-      slug,
-      name: data.name,
-      licenseNumber: data.licenseNumber,
-      address: data.address,
-    });
+    const actor = await lookupUser(context.userId);
+    const visibilityWrite = listingVisibilityForOwners(
+      {
+        id,
+        slug,
+        name: data.name,
+        licenseNumber: data.licenseNumber,
+        address: data.address,
+      },
+      [actor.email],
+    );
     const photos = applyStorefrontPhoto(STOCK_CREATE_PHOTOS, data.storefront);
     const photoAt =
       data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)
@@ -1490,7 +1494,6 @@ export const createListing = createServerFn({ method: "POST" })
       await sql`update daycares set last_photo_updated_at = now() where id = ${id}`.catch(() => undefined);
     }
     await writeProfileRole(context.userId, "provider");
-    const actor = await lookupUser(context.userId);
     try {
       await notifyProviderJoined({
         kind: "listing",

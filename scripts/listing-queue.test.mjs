@@ -47,7 +47,7 @@ test("createListing writes a queueable waiting claim, not Live", () => {
   assert.match(src("src/lib/server/listing-queue.ts"), /claim_waiting/);
   assert.doesNotMatch(createListing, /claimed_at = now\(\)/);
   assert.doesNotMatch(createListing, /claim_status = ['"]approved['"]/);
-  assert.match(createListing, /listingVisibilityWrite/);
+  assert.match(createListing, /listingVisibilityForOwners/);
   assert.match(createListing, /visibility, is_test/);
   assert.match(createListing, /visibilityWrite\.isTest/);
 });

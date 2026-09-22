@@ -12,6 +12,7 @@ import { geocode, haversineKm, type LatLng } from "./geo.ts";
 import { isOperatorLicenseSource, normalizeLicenseStatus } from "./license-status.ts";
 import { normalizeCentreName, normalizeLicenseNumber } from "./listing-identity.ts";
 import { listingStatusFromClaim } from "./listing-status.ts";
+import { isAdminOnlyListing } from "./listing-visibility.ts";
 import { listingMatchesLocationLock, resolveLocationLock } from "./location-lock.ts";
 import { isPlatformLive } from "./live.ts";
 
@@ -67,6 +68,8 @@ export type ApprovalCentre = {
   licenseVerificationSource?: string | null;
   screeningOnFile?: boolean | null;
   staffScreeningAttested?: boolean | null;
+  visibility?: string | null;
+  isTest?: boolean | number | null;
   claimStatus?: string | null;
   claimedAt?: string | null;
   listingActive?: boolean | null;
@@ -194,14 +197,15 @@ export function centresInLiveSearch<T extends ApprovalCentre>(
     label?: string | null;
   },
 ): T[] {
-  return centres.filter((centre) =>
-    liveSearchHit({
+  return centres.filter((centre) => {
+    if (isAdminOnlyListing(centre)) return false;
+    return liveSearchHit({
       origin: input.origin,
       radiusKm: input.radiusKm,
       label: input.label,
       centre,
-    }),
-  );
+    });
+  });
 }
 
 export function liveSearchHit(input: {
@@ -420,6 +424,7 @@ export function planApproval(
   };
   const city = geocode((centre.city || "").trim());
   const origin = city ?? (point.eligible ? point : null);
+  const qaFixture = isAdminOnlyListing(centre);
   const searchOk = Boolean(
     origin &&
       liveSearchHit({
@@ -449,7 +454,13 @@ export function planApproval(
     {
       id: "search_location",
       ok: searchOk,
-      detail: searchOk ? "Live search includes the verified location" : "Verified location is outside Live search",
+      detail: qaFixture
+        ? searchOk
+          ? "QA fixture stays out of public Live search"
+          : "Verified location is outside Live search"
+        : searchOk
+          ? "Live search includes the verified location"
+          : "Verified location is outside Live search",
     },
     {
       id: "trust",
@@ -493,6 +504,15 @@ export function planApproval(
 
 export function approvalHealthSummary(health: ApprovalHealth): { title: string; body: string } {
   if (health.ok) {
+    const qaHidden = health.checks.some(
+      (check) => check.id === "search_location" && check.detail.includes("QA fixture"),
+    );
+    if (qaHidden) {
+      return {
+        title: "Approval checks passed",
+        body: "Approved for daycare desk testing. This QA fixture stays out of public Live search.",
+      };
+    }
     return {
       title: "Approval checks passed",
       body: "Live, search, and trust succeeded. Parents can find this centre in Live search.",
