@@ -18,6 +18,7 @@ import { nearbyListings } from "@/lib/server/nearby";
 import { overlayClaimed } from "@/lib/server/claims";
 import { catchmentMatch, clampRadiusKm, distanceKm } from "@/lib/proximity";
 import { isPublicListing, listingVisibilityInputFromDb, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
+import { LISTING_DISTANCE_KM_SQL, LISTING_WITHIN_RADIUS_SQL } from "@/lib/server/listing-geo-sql";
 import { applyListingReadiness } from "@/lib/listing-readiness";
 import {
   isAgeBand,
@@ -89,16 +90,11 @@ select id, slug, name, city, province, postal_code, lat, lng, hours, amenities,
   age_min_months, age_max_months, spots_infant, spots_toddler, spots_preschool,
   claimed_at, claim_status, ages_confirmed, last_vacancy_updated_at, created_at,
   visibility, is_test,
-  st_distance(location, st_setsrid(st_makepoint($1, $2), 4326)::geography) / 1000.0 as distance_km
+  ${LISTING_DISTANCE_KM_SQL} as distance_km
 from daycares
-where location is not null
-  and ${PUBLIC_LISTING_SQL}
-  and st_dwithin(
-    location,
-    st_setsrid(st_makepoint($1, $2), 4326)::geography,
-    $3
-  )
-order by location <-> st_setsrid(st_makepoint($1, $2), 4326)::geography
+where ${PUBLIC_LISTING_SQL}
+  and ${LISTING_WITHIN_RADIUS_SQL}
+order by distance_km
 limit 400
 `;
 

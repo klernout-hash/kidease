@@ -111,10 +111,12 @@ test("matcher uses ST_DWithin like nearby.ts (lng, lat)", () => {
   const alerts = src("src/lib/server/search-alerts.ts");
   const nearby = src("src/lib/server/nearby.ts");
   const neon = src("src/lib/server/catalog-neon.ts");
+  const geo = src("src/lib/server/listing-geo-sql.ts");
   assert.match(alerts, /SEARCH_ALERT_MATCH_SQL/);
-  assert.match(alerts, /st_dwithin/i);
-  assert.match(alerts, /st_makepoint\(\$1, \$2\)/);
-  assert.match(`${nearby}\n${neon}`, /st_makepoint\(\$1, \$2\)/);
+  assert.match(alerts, /LISTING_WITHIN_RADIUS_SQL/);
+  assert.match(geo, /st_dwithin/i);
+  assert.match(geo, /st_makepoint\(\$1, \$2\)/);
+  assert.match(`${nearby}\n${neon}\n${geo}`, /st_makepoint\(\$1, \$2\)/);
   assert.match(alerts, /last_vacancy_updated_at/);
   assert.match(alerts, /sendPushNotification/);
   assert.match(alerts, /sendSms/);

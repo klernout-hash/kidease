@@ -2,13 +2,14 @@
  * Approved centres whose stored geography is missing or outside their city
  * still belong in that city's Live search. Distance uses the verified city
  * point; the normal PostGIS path keeps street pins that are already nearby.
+ * Province names and codes match (AB / Alberta, BC / British Columbia, …).
  */
 
 import { getSql } from "@/lib/db";
 import type { CatalogDaycare } from "@/lib/catalog";
-import { hasLicenceEvidence, verifiedSearchPoint } from "@/lib/approve-live";
+import { centresInLiveSearch, verifiedSearchPoint } from "@/lib/approve-live";
 import { haversineKm, type LatLng } from "@/lib/geo";
-import { listingMatchesLocationLock, type LocationLock } from "@/lib/location-lock";
+import { provinceSearchTokens, type LocationLock } from "@/lib/location-lock";
 import { isPublicListing, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { CATALOG_SELECT, catalogRowToListing, type CatalogDbRow } from "./catalog-neon";
 import type { NearbyListing } from "./nearby";
@@ -17,24 +18,34 @@ const APPROVED_CITY_SQL = `
 select ${CATALOG_SELECT}
 from daycares
 where ${PUBLIC_LISTING_SQL}
-  and coalesce(listing_active, 1) <> 0
-  and lower(coalesce(claim_status, '')) not in ('superseded', 'declined', 'rejected', 'denied')
+  and listing_active = 1
+  and lower(coalesce(claim_status, '')) in ('approved', 'live', 'active', 'published')
+  and upper(btrim(coalesce(province, ''))) = any($1::text[])
   and (
-    lower(coalesce(claim_status, '')) in ('approved', 'live', 'active', 'published')
+    regexp_replace(lower(btrim(coalesce(city, ''))), '[^a-z0-9]+', ' ', 'g') = any($2::text[])
     or (
-      claimed_at is not null
-      and lower(coalesce(claim_status, '')) not in ('waiting', 'pending', 'unclaimed')
+      lat between $3 and $4
+      and lng between $5 and $6
     )
   )
-  and (
-    upper(btrim(coalesce(province, ''))) = upper(btrim($1))
-    or (
-      upper(btrim($1)) = 'AB'
-      and upper(btrim(coalesce(province, ''))) in ('AB', 'ALBERTA')
-    )
-  )
-limit 300
+order by
+  case when lower(coalesce(claim_status, '')) in ('approved', 'live', 'active', 'published') then 0 else 1 end,
+  claimed_at desc nulls last
+limit 400
 `;
+
+function radiusBounds(origin: LatLng, radiusKm: number) {
+  const km = Math.max(1, radiusKm);
+  const dLat = km / 111;
+  const cos = Math.cos((origin.lat * Math.PI) / 180);
+  const dLng = km / (111 * (Math.abs(cos) < 0.2 ? 0.2 : cos));
+  return {
+    minLat: origin.lat - dLat,
+    maxLat: origin.lat + dLat,
+    minLng: origin.lng - dLng,
+    maxLng: origin.lng + dLng,
+  };
+}
 
 export async function mergeApprovedCityListings(
   listings: NearbyListing[],
@@ -42,35 +53,50 @@ export async function mergeApprovedCityListings(
     origin: LatLng;
     radiusKm: number;
     lock: LocationLock | null;
+    label?: string | null;
   },
 ): Promise<NearbyListing[]> {
   const lock = input.lock;
   if (!lock?.city || !lock.province) return listings;
+  const tokens = provinceSearchTokens(lock.province);
+  const cities = [...new Set(lock.metroKeys.map((key) => key.trim()).filter(Boolean))];
+  if (tokens.length === 0 || cities.length === 0) return listings;
+  const box = radiusBounds(input.origin, input.radiusKm);
   let rows: CatalogDbRow[] = [];
   try {
     const sql = await getSql();
-    rows = await sql.query<CatalogDbRow>(APPROVED_CITY_SQL, [lock.province]);
+    rows = await sql.query<CatalogDbRow>(APPROVED_CITY_SQL, [
+      tokens,
+      cities,
+      box.minLat,
+      box.maxLat,
+      box.minLng,
+      box.maxLng,
+    ]);
   } catch {
     return listings;
   }
   const seen = new Set(listings.map((row) => row.id));
   const merged = [...listings];
-  for (const row of rows) {
-    if (!row?.id || seen.has(row.id)) continue;
-    const listing = catalogRowToListing(row);
-    if (!isPublicListing(listing)) continue;
-    if (!hasLicenceEvidence(listing)) continue;
-    if (!listingMatchesLocationLock(listing, lock)) continue;
+  const label = input.label || [lock.city, lock.province].filter(Boolean).join(", ");
+  const candidates = rows
+    .filter((row) => row?.id && !seen.has(row.id))
+    .map((row) => catalogRowToListing(row))
+    .filter((listing) => isPublicListing(listing));
+  for (const listing of centresInLiveSearch(candidates, {
+    origin: input.origin,
+    radiusKm: input.radiusKm,
+    label,
+  })) {
+    if (seen.has(listing.id)) continue;
     const point = verifiedSearchPoint(listing);
     if (!point.eligible) continue;
-    const distanceKm = haversineKm(input.origin, point);
-    if (distanceKm > input.radiusKm) continue;
     seen.add(listing.id);
     const located: CatalogDaycare & { distanceKm: number } = {
       ...listing,
       lat: point.lat,
       lng: point.lng,
-      distanceKm,
+      distanceKm: haversineKm(input.origin, point),
     };
     merged.push(located);
   }

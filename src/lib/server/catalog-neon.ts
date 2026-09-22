@@ -13,6 +13,11 @@ import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL } from "@/lib/
 import { correctCentreNameTypos, listingSlugLookupKeys, normalizeListingSlug } from "@/lib/listing-slug";
 import { listingCultureFrom } from "@/lib/listing-culture";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
+import {
+  LISTING_DISTANCE_KM_SQL,
+  LISTING_WITHIN_RADIUS_B_SQL,
+  LISTING_WITHIN_RADIUS_SQL,
+} from "./listing-geo-sql";
 
 export type CatalogDbRow = {
   id: string;
@@ -97,37 +102,23 @@ select exists (
 /** lng, lat, radius_meters — ST_MakePoint is (lng, lat). */
 export const NEON_NEAR_SQL = `
 select ${CATALOG_SELECT},
-  st_distance(location, st_setsrid(st_makepoint($1, $2), 4326)::geography) / 1000.0 as distance_km
+  ${LISTING_DISTANCE_KM_SQL} as distance_km
 from daycares
-where location is not null
-  and ${PUBLIC_LISTING_SQL}
-  and st_dwithin(
-    location,
-    st_setsrid(st_makepoint($1, $2), 4326)::geography,
-    $3
-  )
-order by location <-> st_setsrid(st_makepoint($1, $2), 4326)::geography
+where ${PUBLIC_LISTING_SQL}
+  and ${LISTING_WITHIN_RADIUS_SQL}
+order by distance_km
 limit 400
 `;
 
 /** lngA, latA, radius_meters, lngB, latB — intersection of two ST_DWithin circles. */
 export const NEON_DUAL_NEAR_SQL = `
 select ${CATALOG_SELECT},
-  st_distance(location, st_setsrid(st_makepoint($1, $2), 4326)::geography) / 1000.0 as distance_km
+  ${LISTING_DISTANCE_KM_SQL} as distance_km
 from daycares
-where location is not null
-  and ${PUBLIC_LISTING_SQL}
-  and st_dwithin(
-    location,
-    st_setsrid(st_makepoint($1, $2), 4326)::geography,
-    $3
-  )
-  and st_dwithin(
-    location,
-    st_setsrid(st_makepoint($4, $5), 4326)::geography,
-    $3
-  )
-order by location <-> st_setsrid(st_makepoint($1, $2), 4326)::geography
+where ${PUBLIC_LISTING_SQL}
+  and ${LISTING_WITHIN_RADIUS_SQL}
+  and ${LISTING_WITHIN_RADIUS_B_SQL}
+order by distance_km
 limit 400
 `;
 

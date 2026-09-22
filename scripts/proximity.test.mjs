@@ -37,8 +37,10 @@ describe("nearby uses PostGIS ST_DWithin with a catalogue fallback", () => {
   it("SQL is geography + ST_DWithin and never hardcodes a key", () => {
     const nearby = read("src/lib/server/nearby.ts");
     const neon = read("src/lib/server/catalog-neon.ts");
-    assert.match(neon, /st_dwithin/i);
-    assert.match(neon, /st_makepoint\(\$1, \$2\)/);
+    const geo = read("src/lib/server/listing-geo-sql.ts");
+    assert.match(geo, /st_dwithin/i);
+    assert.match(geo, /st_makepoint\(\$1, \$2\)/);
+    assert.match(neon, /LISTING_WITHIN_RADIUS_SQL/);
     assert.match(neon, /postgis/);
     assert.match(nearby, /NEARBY_SQL/);
     const migration = read("migrations/0011_listing_geography.sql");

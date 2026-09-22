@@ -109,9 +109,11 @@ describe("search stack keeps single-anchor and adds dual PostGIS", () => {
     const lib = read("src/lib/dual-anchor.ts");
     assert.match(lib, /export function resolveSearchAnchors/);
     assert.match(lib, /export function parseAnchorMode/);
+    const geo = read("src/lib/server/listing-geo-sql.ts");
     assert.match(neon, /NEON_NEAR_SQL/);
     assert.match(neon, /NEON_DUAL_NEAR_SQL/);
-    assert.match(neon, /st_makepoint\(\$4, \$5\)/);
+    assert.match(neon, /LISTING_WITHIN_RADIUS_B_SQL/);
+    assert.match(geo, /st_makepoint\(\$4, \$5\)/);
     assert.match(nearby, /nearbyListingsDual/);
     assert.match(nearby, /NEARBY_DUAL_SQL/);
     assert.match(search, /nearbyListings\(/);
