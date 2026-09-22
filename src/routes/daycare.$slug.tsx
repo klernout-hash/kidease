@@ -19,7 +19,7 @@ import {
 } from "@/components/listing-parent-pack";
 import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { GoogleRating } from "@/components/google-rating";
-import { BuildingPhoto } from "@/components/building-photo";
+import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
 import { JsonLd } from "@/components/json-ld";
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, primaryListingPhoto } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
@@ -48,7 +48,7 @@ import type { CopyKey } from "@/lib/copy";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
 import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { honestVacancy, liveLookingOnly } from "@/lib/now-loops";
+import { liveLookingOnly } from "@/lib/now-loops";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { rememberViewed } from "@/lib/recent";
 import { trackLocation } from "@/lib/telemetry";
@@ -279,28 +279,36 @@ function Listing() {
 
   if (!data) {
     const earlyPhoto = primaryListingPhoto(seo?.photos);
+    const earlyReal = earlyPhoto && isRealListingPhoto(earlyPhoto) ? earlyPhoto : "";
     const earlyName = seo ? displayCentreName(locale === "fr" ? seo.nameFr : seo.name) : "";
     return (
       <Shell>
         <ListingJsonLd src={seo} locale={seoLocale} />
         <main className="ke-gutter mx-auto max-w-6xl py-6">
-          {earlyPhoto ? (
-            <div className="overflow-hidden rounded-[14px] bg-surface shadow-card ring-1 ring-border">
-              <div className="ke-listing-hero relative">
+          <div className="overflow-hidden rounded-[14px] bg-surface ring-1 ring-border">
+            <div className="ke-listing-hero relative">
+              {earlyReal ? (
                 <BuildingPhoto
                   eager
                   priority
-                  src={earlyPhoto}
+                  src={earlyReal}
                   sizes={DETAIL_SIZES}
                   width={768}
                   height={576}
                   className="size-full object-cover"
                 />
-              </div>
+              ) : (
+                <>
+                  <ListingPhotoFallback className="size-full" />
+                  <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-muted">
+                    {t("photoPending")}
+                  </span>
+                </>
+              )}
             </div>
-          ) : null}
+          </div>
           {earlyName ? <h1 className="mt-2 font-display text-[1.4rem] leading-tight md:text-[1.65rem]">{earlyName}</h1> : null}
-          <PageSkeleton hero={!earlyPhoto} cards={2} />
+          <PageSkeleton hero={false} cards={2} />
         </main>
       </Shell>
     );
@@ -327,11 +335,24 @@ function Listing() {
     list.sort((a, b) => Number(isOfficialBuildingPhoto(b)) - Number(isOfficialBuildingPhoto(a)));
     return list.length ? list : [LISTING_PLACEHOLDER];
   })();
+  const gallery = photos.filter((src) => isRealListingPhoto(src));
+  const roomPhotos = interiors.filter((src) => isRealListingPhoto(src));
+  const heroIndex = gallery.length ? Math.min(photo, gallery.length - 1) : 0;
+  const heroSrc = gallery[heroIndex];
   const prices = [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].filter((n): n is number => n != null && n > 0);
   const from = prices.length ? Math.min(...prices) : 0;
   const live = Boolean(d.live);
   const known = Boolean(d.availabilityKnown);
   const licensed = publicLicenseBadge(d);
+  const approved = publicApprovalEligible(d);
+  const facilityLabel = t(facilityTypeLabelKey(classifyFacilityType(d).type));
+  const updatedAt = d.lastVacancyUpdatedAt || d.lastPhotoUpdatedAt;
+  const updatedLabel = updatedAt
+    ? new Date(updatedAt).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
+        month: "short",
+        day: "numeric",
+      })
+    : "";
   const agesLabel = listingAgeRangeText(d);
   const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
@@ -502,84 +523,68 @@ function Listing() {
           <span className="text-fg">{name}</span>
         </nav>
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
-        <div id="listing-photos" className="scroll-mt-20 overflow-hidden rounded-[14px] bg-surface shadow-card ring-1 ring-border">
+        <div
+          id={roomPhotos.length ? undefined : "listing-photos"}
+          className="scroll-mt-20 overflow-hidden rounded-[14px] bg-surface ring-1 ring-border"
+        >
           <div className="ke-listing-hero relative">
-            {photos[photo]?.includes("-logo") ? (
-              <img
-                src={photos[photo]}
-                alt=""
-                className="size-full object-contain bg-surface p-3"
-              />
-            ) : (
+            {heroSrc?.includes("-logo") ? (
+              <img src={heroSrc} alt="" className="size-full object-contain bg-surface p-3" />
+            ) : heroSrc ? (
               <BuildingPhoto
                 eager
                 priority
-                src={photos[photo] ?? LISTING_PLACEHOLDER}
+                src={heroSrc}
                 sizes={DETAIL_SIZES}
                 width={768}
                 height={576}
                 className="size-full object-cover"
               />
+            ) : (
+              <ListingPhotoFallback className="size-full" />
             )}
-            {photos.length > 1 ? (
+            {gallery.length > 1 ? (
               <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-0.5">
-                {photos.map((_, i) => (
+                {gallery.map((_, i) => (
                   <button
                     key={i}
                     type="button"
                     aria-label={`Photo ${i + 1}`}
+                    aria-current={i === heroIndex}
                     onClick={() => setPhoto(i)}
                     className="grid size-11 place-items-center"
                   >
-                    <span className={i === photo ? "size-2 rounded-full bg-surface" : "size-2 rounded-full bg-surface/50"} />
+                    <span className={i === heroIndex ? "size-2 rounded-full bg-surface" : "size-2 rounded-full bg-surface/50"} />
                   </button>
                 ))}
               </div>
             ) : null}
-            {!photos.some((src) => isRealListingPhoto(src)) || photos[photo]?.includes("placeholder") ? (
-              <span className="pointer-events-none absolute bottom-3 left-3 z-[2] rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white">
+            {!heroSrc ? (
+              <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-muted">
                 {t("photoPending")}
               </span>
             ) : null}
           </div>
-          {photos.length > 1 ? (
-            <div className="grid grid-cols-4 gap-1 p-1">
-              {photos.slice(0, 4).map((src, i) => (
-                <button key={src} type="button" onClick={() => setPhoto(i)} className="aspect-[4/3] overflow-hidden bg-surface-2">
-                  <BuildingPhoto
-                    src={src}
-                    className={src.includes("-logo") ? "size-full object-contain p-2" : "size-full object-cover"}
-                  />
-                </button>
-              ))}
-            </div>
-          ) : null}
         </div>
         <div className="min-w-0 lg:sticky lg:top-20 lg:pt-1">
-            <p className="text-sm text-muted">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <h1 className="font-display text-[1.4rem] leading-tight md:text-[1.65rem]">{name}</h1>
+              {approved ? (
+                <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} variant="inline" />
+              ) : licensed ? (
+                <TrustBadge badge={licensed} compact />
+              ) : null}
+            </div>
+            <p className="mt-1 text-sm text-muted">
               {d.address}, {d.city}, {d.province} {d.postalCode}
             </p>
-            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-              <h1 className="font-display text-[1.4rem] leading-tight md:text-[1.65rem]">{name}</h1>
-              {licensed ? <TrustBadge badge={licensed} /> : null}
-            </div>
-            <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} />
-            <p className="mt-1 text-sm text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
-            <ListingHeaderPills item={d} />
-            <p className="mt-2 text-xs font-medium text-subtle">{t("freeListingNotAd")}</p>
-            <div className="ke-panel mt-2 hidden px-3 py-2.5 shadow-card lg:block">
-              <p className="text-xs text-muted">{t("monthlyFrom")}</p>
-              <p className="font-display text-2xl tabular-nums">
-                {from > 0 ? (
-                  <>
-                    {money(from, locale)}
-                    <span className="text-base text-muted">{t("month")}</span>
-                  </>
-                ) : (
-                  <span className="text-xl">{t("feeUnknown")}</span>
-                )}
-              </p>
-              <p className="mt-1.5 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
+            {(locale === "fr" ? d.taglineFr : d.tagline)?.trim() ? (
+              <p className="mt-1 text-sm text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
+            ) : null}
+            <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={from} />
+            <ListingBadges item={ranked} compact feeOnly />
+            <div className="ke-panel mt-3 hidden px-3 py-2.5 shadow-card lg:block">
+              <p className="text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
               {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
               <div className="mt-2 grid gap-1.5">
                 <ListingActions />
@@ -599,44 +604,13 @@ function Listing() {
             </div>
         </div>
         </div>
-        {interiors.length ? (
-          <section className="mt-3 rounded-xl bg-surface p-4 shadow-card ring-1 ring-border">
-            <h2 className="font-display text-xl">{t("interiors")}</h2>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {interiors.map((src, i) => (
-                <button
-                  key={src}
-                  type="button"
-                  onClick={() => setPhoto(photos.indexOf(src))}
-                  className="aspect-[4/3] overflow-hidden rounded-lg bg-surface-2"
-                  aria-label={`${t("interiors")} ${i + 1}`}
-                >
-                  <BuildingPhoto src={src} className="size-full object-cover" />
-                </button>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <div className="mt-4 min-w-0">
-          <div className="min-w-0">
-            <ListingJumpNav />
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
-                <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
-              ) : null}
-              <ListingBadges item={ranked} compact />
-              <Link
-                to="/verify"
-                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
-              >
-                {t("learnMore")}
-              </Link>
-            </div>
-            {live ? <p className="mt-2 text-sm text-muted">{t("liveListingLine")}</p> : null}
+        <div className="mt-8 min-w-0 space-y-10">
+            {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
+              <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
+            ) : null}
             <CompletenessBanner item={d} />
             {!live ? (
-              <p className="mt-3 text-sm text-muted">
+              <p className="text-sm text-muted">
                 {t("unclaimedNotice")}{" "}
                 <Link
                   to="/verify"
@@ -648,7 +622,7 @@ function Listing() {
               </p>
             ) : null}
             {offerClaim ? (
-              <p className="mt-3 text-sm" data-ke="listing-claim-prompt">
+              <p className="text-sm" data-ke="listing-claim-prompt">
                 {t("isThisYours")}{" "}
                 <Link to="/claim" search={{ q: d.name }} className="text-primary underline-offset-4 hover:underline">
                   {t("claimThisFreePage")}
@@ -656,7 +630,7 @@ function Listing() {
               </p>
             ) : null}
             {d.reviewCount > 0 && d.ratingX10 > 0 ? (
-              <div className="mt-3 space-y-1">
+              <div className="space-y-1">
                 <GoogleRating item={d} ratingX10={d.ratingX10} reviewCount={d.reviewCount} />
                 <a
                   href={googleReviewsHref}
@@ -669,85 +643,21 @@ function Listing() {
               </div>
             ) : null}
 
-            <div className="ke-panel mt-3 grid gap-1.5 px-3 py-2.5 lg:hidden">
-              <p className="text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
-              {!user && live ? <p className="text-xs text-subtle">{t("guestBrowse")}</p> : null}
-              <ListingActions />
-              {live && waitlisted ? (
-                <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
-              ) : null}
-            </div>
+            <ListingJumpNav />
 
-            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm md:grid-cols-4">
-              {hours.trim() ? <Meta label={t("hours")} value={hours} /> : null}
-              {agesLabel ? <Meta label={t("ages")} value={agesLabel} /> : null}
-              <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
-              <Meta
-                label={t("spotsAvailable")}
-                value={
-                  honestVacancy({ ...d, spotsTotal: spots }).kind === "open"
-                    ? `${spots}`
-                    : t(honestVacancy({ ...d, spotsTotal: spots }).labelKey)
-                }
-              />
-            </dl>
-
-            <section className="ke-panel mt-4 px-3 py-2.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-2xl">{t("licenceRecord")}</h2>
-                {licensed ? <TrustBadge badge={licensed} compact /> : null}
-              </div>
-              <p className="mt-2 text-sm text-muted">{t("licenceRecordLead")}</p>
-              <dl className="mt-2 grid gap-x-3 gap-y-1.5 text-sm sm:grid-cols-2">
-                <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
-                {licensed ? (
-                  <Meta label={t("licenseStatus")} value={t(licensed.labelKey as CopyKey)} />
-                ) : null}
-                <Meta label={t("facilityType")} value={t(facilityTypeLabelKey(classifyFacilityType(d).type))} />
-                <Meta label={t("lastInspection")} value={t("seeOfficialRecord")} />
-              </dl>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <a
-                  href={licenseRecordUrl(d.province, d.name, d.licenseNumber)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  {t("viewLicenceRecord")}
-                </a>
-                <a
-                  href={subsidyEstimatorUrl(d.province)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm font-medium text-muted underline-offset-4 hover:underline"
-                >
-                  {t("checkSubsidy")}
-                </a>
-                <Link to="/tour-checklist" className="text-sm font-medium text-muted underline-offset-4 hover:underline">
-                  {t("tourChecklist")}
-                </Link>
-              </div>
-              <p className="mt-3 text-xs text-subtle">
-                {cwelccKind(d.province) === "qc" ? t("cwelccQcNote") : t("cwelccAskNote")}
-              </p>
-              <div className="mt-4">
-                <ListingReport daycareId={d.id} centreName={name} />
-              </div>
-            </section>
-
-            <section className="mt-8">
-              <h2 className="font-display text-2xl">{t("about")}</h2>
-              <p className="mt-2 max-w-prose text-muted">{desc}</p>
-            </section>
+            {(desc || "").trim() ? (
+              <section>
+                <h2 className="font-display text-2xl">{t("about")}</h2>
+                <p className="mt-2 max-w-prose text-muted">{desc}</p>
+              </section>
+            ) : null}
 
             <ListingProgramsTable item={d} />
-            <ListingTourTimes daycare={d} onBook={onTour} />
-            <ListingSnapshotGrid item={d} />
 
-            <section id="listing-fees" className="mt-8 scroll-mt-24">
+            <section id="listing-fees" className="scroll-mt-24">
               <h2 className="font-display text-2xl">{t("pricing")}</h2>
               {live && from > 0 ? (
-                <ul className="mt-3 divide-y divide-border rounded-lg ring-1 ring-border">
+                <ul className="mt-3 divide-y divide-border">
                   {d.infantMonthly != null ? (
                     <PriceRow label={t("infantFee")} value={money(d.infantMonthly, locale)} extra={`${d.spotsInfant} ${t("spots")}`} />
                   ) : null}
@@ -762,7 +672,7 @@ function Listing() {
                   ) : null}
                 </ul>
               ) : (
-                <p className="ke-empty mt-2 text-left">{t("feeUnknownLead")}</p>
+                <p className="mt-2 max-w-prose text-sm text-muted">{t("feeUnknownLead")}</p>
               )}
               <p className="mt-3 text-sm">
                 <Link to="/benefits" className="font-medium text-primary underline-offset-4 hover:underline">
@@ -772,13 +682,13 @@ function Listing() {
               </p>
             </section>
 
-            <section id="listing-location" className="mt-8 scroll-mt-24">
+            <section id="listing-location" className="scroll-mt-24">
               <div className="flex items-end justify-between gap-3">
                 <h2 className="font-display text-2xl">{t("onMap")}</h2>
                 <button
                   type="button"
                   onClick={() => void openDirections(d.lat, d.lng, name)}
-                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                  className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline"
                 >
                   <MapPinned className="size-4" />
                   {t("directions")}
@@ -787,36 +697,88 @@ function Listing() {
               <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
                 <ListingMap lat={d.lat} lng={d.lng} title={`${name} — Google Maps`} />
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button type="button" variant="secondary" className="rounded-[14px]" onClick={() => void openDirections(d.lat, d.lng, name)}>
-                  {t("directions")}
-                </Button>
-                <Button asChild variant="ghost">
-                  <a href={mapsPlace} target="_blank" rel="noreferrer">
-                    {t("openGoogleMaps")}
-                  </a>
-                </Button>
-              </div>
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-3 text-sm text-muted">
                 {d.address}, {d.city}, {d.province} {d.postalCode}
               </p>
+              <a
+                href={mapsPlace}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {t("openGoogleMaps")}
+              </a>
             </section>
 
-            <section className="mt-8">
-              <h2 className="font-display text-2xl">{t("availability")}</h2>
-              {known ? (
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {data.availability.map((row) => (
-                    <div key={row.month} className="rounded-lg bg-surface px-2.5 py-2 text-sm ring-1 ring-border">
-                      <p className="font-medium">{formatMonth(row.month, locale)}</p>
-                      <p className="mt-1 text-muted tabular-nums">
-                        {t("infant")} {row.infant} · {t("toddler")} {row.toddler} · {t("preschool")} {row.preschool}
-                      </p>
-                    </div>
+            <section id="listing-reviews" className="scroll-mt-24">
+              <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
+              {(d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0 ? (
+                <p className="mt-2 inline-flex items-center gap-2 text-sm">
+                  <Star className="size-3.5 fill-fg" />
+                  <span className="font-medium tabular-nums">{((d.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
+                  <span className="text-muted">
+                    ({d.parentReviewCount} {t("reviews")})
+                  </span>
+                </p>
+              ) : null}
+              {data.reviews.length ? (
+                <ul className="mt-3 divide-y divide-border">
+                  {data.reviews.map((r) => (
+                    <li key={r.id} className="py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium">{r.author}</p>
+                        <span className="inline-flex items-center gap-1 text-sm">
+                          <Star className="size-3.5 fill-fg" />
+                          {r.rating}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-muted">{locale === "fr" ? r.bodyFr : r.body}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-muted">{t("reviewsEnrolledEmpty")}</p>
+              )}
+              <ListingReviewForm daycareId={d.id} slug={d.slug} />
+            </section>
+
+            {roomPhotos.length ? (
+              <section id="listing-photos" className="scroll-mt-24">
+                <h2 className="font-display text-2xl">{t("interiors")}</h2>
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {roomPhotos.map((src, i) => (
+                    <button
+                      key={src}
+                      type="button"
+                      onClick={() => setPhoto(gallery.indexOf(src))}
+                      className="aspect-[4/3] overflow-hidden rounded-lg bg-surface-2"
+                      aria-label={`${t("interiors")} ${i + 1}`}
+                    >
+                      <BuildingPhoto src={src} className="size-full object-cover" />
+                    </button>
                   ))}
                 </div>
+              </section>
+            ) : null}
+
+            <ListingTourTimes daycare={d} onBook={onTour} canBook={live} />
+            <ListingSnapshotGrid item={d} />
+
+            <section>
+              <h2 className="font-display text-2xl">{t("availability")}</h2>
+              {known ? (
+                <ul className="mt-3 divide-y divide-border text-sm">
+                  {data.availability.map((row) => (
+                    <li key={row.month} className="py-2.5">
+                      <p className="font-medium">{formatMonth(row.month, locale)}</p>
+                      <p className="mt-0.5 text-muted tabular-nums">
+                        {t("infant")} {row.infant} · {t("toddler")} {row.toddler} · {t("preschool")} {row.preschool}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                <p className="ke-empty mt-2 text-left">{t("availUnknownLead")}</p>
+                <p className="mt-2 max-w-prose text-sm text-muted">{t("availUnknownLead")}</p>
               )}
               <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
               {live ? (
@@ -827,7 +789,7 @@ function Listing() {
             </section>
 
             {d.amenities.split(",").filter(Boolean).length ? (
-              <section className="mt-8">
+              <section>
                 <h2 className="font-display text-2xl">{t("amenities")}</h2>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {d.amenities
@@ -844,38 +806,59 @@ function Listing() {
 
             <ListingCultureCard daycare={d} />
 
-            <section id="listing-reviews" className="mt-8 scroll-mt-24">
-              <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
-              {(d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0 ? (
-                <p className="mt-2 inline-flex items-center gap-2 text-sm">
-                  <Star className="size-3.5 fill-fg" />
-                  <span className="font-medium tabular-nums">{((d.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
-                  <span className="text-muted">
-                    ({d.parentReviewCount} {t("reviews")})
-                  </span>
-                </p>
-              ) : null}
-              {data.reviews.length ? (
-                <ul className="mt-2 space-y-2">
-                  {data.reviews.map((r) => (
-                    <li key={r.id} className="rounded-lg bg-surface px-3 py-2 ring-1 ring-border">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium">{r.author}</p>
-                        <span className="inline-flex items-center gap-1 text-sm">
-                          <Star className="size-3.5 fill-fg" />
-                          {r.rating}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm text-muted">{locale === "fr" ? r.bodyFr : r.body}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-2 text-sm text-muted">{t("reviewsEnrolledEmpty")}</p>
-              )}
-              <ListingReviewForm daycareId={d.id} slug={d.slug} />
+            <section>
+              <h2 className="font-display text-2xl">{t("licenceRecord")}</h2>
+              <p className="mt-2 max-w-prose text-sm text-muted">{t("licenceRecordLead")}</p>
+              <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+                <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
+                {licensed && !approved ? (
+                  <Meta label={t("licenseStatus")} value={t(licensed.labelKey as CopyKey)} />
+                ) : null}
+                <Meta label={t("facilityType")} value={facilityLabel} />
+                <Meta label={t("lastInspection")} value={t("seeOfficialRecord")} />
+              </dl>
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <a
+                  href={licenseRecordUrl(d.province, d.name, d.licenseNumber)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {t("viewLicenceRecord")}
+                </a>
+                <a
+                  href={subsidyEstimatorUrl(d.province)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:underline"
+                >
+                  {t("checkSubsidy")}
+                </a>
+                <Link to="/tour-checklist" className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:underline">
+                  {t("tourChecklist")}
+                </Link>
+                <Link to="/verify" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
+                  {t("learnMore")}
+                </Link>
+              </div>
+              <p className="mt-2 text-xs text-subtle">
+                {cwelccKind(d.province) === "qc" ? t("cwelccQcNote") : t("cwelccAskNote")}
+              </p>
+              <div className="mt-3">
+                <ListingReport daycareId={d.id} centreName={name} />
+              </div>
             </section>
-          </div>
+
+            <p className="max-w-prose text-xs leading-5 text-subtle">
+              {[
+                facilityLabel,
+                updatedLabel ? `${t("updatedLabel")} ${updatedLabel}` : "",
+                live ? t("liveListingLine") : "",
+                t("freeListingNotAd"),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
         </div>
 
         {data.nearby.length ? (

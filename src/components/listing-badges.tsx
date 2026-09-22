@@ -13,9 +13,12 @@ import type { Daycare } from "@/lib/types";
 export function ListingBadges({
   item,
   compact = false,
+  feeOnly = false,
 }: {
   item: Daycare;
   compact?: boolean;
+  /** Parent listing header: the fee program only. Trust is said once beside the name. */
+  feeOnly?: boolean;
 }) {
   const { t, locale } = useCopy();
   const feeBadge = confirmedFeeProgramBadge(item);
@@ -34,6 +37,11 @@ export function ListingBadges({
     nursery_preschool: "facilityTypeNursery",
     school_age: "facilityTypeSchool",
   };
+
+  if (feeOnly) {
+    if (!feeBadge) return null;
+    return <span className={cn(pill, "mt-2 inline-flex bg-primary text-primary-fg")}>{t(feeBadge)}</span>;
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">

@@ -56,6 +56,11 @@ test("photo CSV split keeps data-URL interiors intact", () => {
     yard,
     "/photos/wpg/1-logo.png",
   ]);
+  const jpeg = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ";
+  assert.deepEqual(splitPhotoList(jpeg), [jpeg]);
+  assert.deepEqual(splitPhotoList(`${jpeg},/photos/buildings/mb-1.jpg`), [jpeg, "/photos/buildings/mb-1.jpg"]);
+  assert.deepEqual(classifyListingPhotos(jpeg).interiors, []);
+  assert.equal(classifyListingPhotos(jpeg).storefront, jpeg);
   assert.match(src("src/lib/server/map-row.ts"), /splitPhotoList\(r\.photos\)/);
   assert.match(src("src/lib/server/catalog-neon.ts"), /splitPhotoList\(row\.photos\)/);
 });

@@ -16,7 +16,7 @@ export function ListingCultureCard({ daycare }: { daycare: Daycare }) {
   }
 
   return (
-    <section className="mt-8 rounded-xl bg-surface p-5 ring-1 ring-border" aria-labelledby="languages-culture">
+    <section className="scroll-mt-24" aria-labelledby="languages-culture">
       <h2 id="languages-culture" className="font-display text-2xl">
         {t("languagesCulture")}
       </h2>

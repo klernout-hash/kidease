@@ -1,60 +1,49 @@
 import { amenityLabel } from "@/lib/amenities";
-import type { CopyKey } from "@/lib/copy";
 import {
   curriculumLabel,
   financialLabels,
   honestOpeningWindow,
-  listingFacilityClass,
   listingPrograms,
   parentAgeLabel,
-  parentFacilityLabel,
   parentOpeningLabel,
   parentScheduleLabel,
   programFeeKnown,
   safetyLabel,
 } from "@/lib/parent-listing";
 import { honestVacancy } from "@/lib/now-loops";
-import { publicLicenseBadge } from "@/lib/license-verify";
 import { useCopy } from "@/lib/use-copy";
 import { formatAgeRange, money } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
 
-export function ListingHeaderPills({ item }: { item: Daycare }) {
+/** Openings, ages, hours, and a starting fee. City, type, and trust stay elsewhere. */
+export function ListingHeaderPills({
+  item,
+  agesLabel = "",
+  hours = "",
+  feeFrom = 0,
+}: {
+  item: Daycare;
+  agesLabel?: string;
+  hours?: string;
+  feeFrom?: number;
+}) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const vacancy = honestVacancy(item);
   const opening = honestOpeningWindow(item);
-  const facility = listingFacilityClass(item);
-  const license = publicLicenseBadge(item);
-  const updated = item.lastVacancyUpdatedAt || item.lastPhotoUpdatedAt;
-  const updatedLabel = updated
-    ? new Date(updated).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
-        month: "short",
-        day: "numeric",
-      })
-    : "";
-  const pill = "ke-chip-meta";
-
+  const parts: string[] = [];
+  if (opening) parts.push(parentOpeningLabel(opening, loc));
+  else if (vacancy.kind === "open") parts.push(`${vacancy.spots} ${t("spots")}`);
+  else if (vacancy.kind === "waitlist" || vacancy.kind === "confirm") parts.push(t(vacancy.labelKey));
+  if (agesLabel) parts.push(`${t("ages")} ${agesLabel}`);
+  const hoursText = hours.trim();
+  if (hoursText && hoursText !== "—" && hoursText !== "-") parts.push(hoursText);
+  if (feeFrom > 0) parts.push(`${t("monthlyFrom")} ${money(feeFrom, locale)}${t("month")}`);
+  if (!parts.length) return null;
   return (
-    <div className="mt-1.5 flex flex-wrap items-center gap-1" data-listing-header-pills>
-      <span className={`${pill} ${vacancy.kind === "open" ? "" : "text-muted"}`}>
-        {opening
-          ? parentOpeningLabel(opening, loc)
-          : vacancy.kind === "open"
-            ? `${vacancy.spots} ${t("spots")}`
-            : t(vacancy.labelKey)}
-      </span>
-      {item.city ? <span className={pill}>{item.city}</span> : null}
-      <span className={pill} data-facility-type={facility.type}>
-        {parentFacilityLabel(facility.type, loc)}
-      </span>
-      {license ? <span className={pill}>{t(license.labelKey as CopyKey)}</span> : null}
-      {updatedLabel ? (
-        <span className={`${pill} text-muted`}>
-          {t("updatedLabel")} {updatedLabel}
-        </span>
-      ) : null}
-    </div>
+    <p className="mt-2 text-sm leading-5 text-fg" data-listing-header-pills>
+      {parts.join(" · ")}
+    </p>
   );
 }
 
@@ -62,19 +51,19 @@ export function ListingJumpNav() {
   const { t } = useCopy();
   const links = [
     ["listing-programs", "jumpPrograms"],
-    ["listing-tours", "tourTimesJump"],
+    ["listing-fees", "jumpFees"],
+    ["listing-location", "jumpLocation"],
     ["listing-reviews", "jumpReviews"],
     ["listing-photos", "jumpPhotos"],
-    ["listing-location", "jumpLocation"],
-    ["listing-fees", "jumpFees"],
+    ["listing-tours", "tourTimesJump"],
   ] as const;
   return (
-    <nav className="mt-3 flex flex-wrap gap-1.5 text-xs" aria-label={t("jumpPrograms")}>
+    <nav className="flex flex-wrap gap-x-4 gap-y-0 text-sm" aria-label={t("jumpPrograms")}>
       {links.map(([id, key]) => (
         <a
           key={id}
           href={`#${id}`}
-          className="inline-flex min-h-9 items-center rounded-full bg-surface px-2.5 py-1 ring-1 ring-border hover:bg-surface-2"
+          className="inline-flex min-h-11 items-center text-muted underline-offset-4 hover:text-fg hover:underline"
         >
           {t(key)}
         </a>
@@ -88,10 +77,10 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
   const loc = locale === "fr" ? "fr" : "en";
   const rows = listingPrograms(item);
   return (
-    <section id="listing-programs" className="mt-5 scroll-mt-20">
+    <section id="listing-programs" className="scroll-mt-24">
       <h2 className="font-display text-2xl">{t("programsTitle")}</h2>
       {rows.length ? (
-        <div className="mt-3 overflow-x-auto rounded-lg ring-1 ring-border">
+        <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[28rem] text-sm">
             <thead className="bg-surface-2 text-left text-xs text-muted">
               <tr>
@@ -145,7 +134,7 @@ export function ListingSnapshotGrid({ item }: { item: Daycare }) {
   const values = (item.valuesNote || "").trim();
   if (!chips.length && !promo && !values) return null;
   return (
-    <section className="mt-5" data-listing-snapshot>
+    <section data-listing-snapshot>
       <h2 className="font-display text-2xl">{t("snapshotTitle")}</h2>
       {promo ? <p className="mt-2 max-w-prose text-muted">{promo}</p> : null}
       {values ? (
@@ -154,15 +143,7 @@ export function ListingSnapshotGrid({ item }: { item: Daycare }) {
           {values}
         </p>
       ) : null}
-      {chips.length ? (
-        <ul className="mt-3 flex flex-wrap gap-2">
-          {chips.map((label) => (
-            <li key={label} className="ke-chip-meta">
-              {label}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {chips.length ? <p className="mt-3 max-w-prose text-sm leading-6 text-fg">{chips.join(" · ")}</p> : null}
     </section>
   );
 }
