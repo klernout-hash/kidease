@@ -12,8 +12,11 @@ import {
 } from "../src/lib/desks.ts";
 import { isAdminOnlyListing } from "../src/lib/listing-visibility.ts";
 import {
+  explicitCityQuery,
+  gpsMayMoveSearchOrigin,
   originFromSearchQuery,
   originsMatchSearchQuery,
+  searchMapOrigin,
   searchQueryFromUnknown,
   urlHasGeocodableSearchQuery,
 } from "../src/lib/search-query.ts";
@@ -41,6 +44,46 @@ test("q=Winnipeg geocodes locally and does not match an Edmonton origin", () => 
   assert.match(search, /searchQueryFromUnknown\(location\.search\)/);
   assert.match(src("src/components/native-boot.tsx"), /urlHasGeocodableSearchQuery/);
   assert.match(src("src/lib/search-origin.ts"), /setOrigin\(\{ \.\.\.local, explicit: true \}, "manual"\)/);
+});
+
+test("Edmonton search keeps the map circle off a Manitoba device pin", () => {
+  const edmonton = explicitCityQuery("Edmonton, AB");
+  assert.ok(edmonton);
+  assert.equal(edmonton.label, "Edmonton, AB");
+  assert.equal(explicitCityQuery("Edmonton")?.label, "Edmonton, AB");
+  assert.equal(explicitCityQuery("Near Selkirk, MB"), null);
+
+  const powerview = { lat: 50.5667, lng: -96.198 };
+  const camera = searchMapOrigin({
+    lat: powerview.lat,
+    lng: powerview.lng,
+    radiusKm: 25,
+    q: "Edmonton, AB",
+    label: "Near Selkirk, MB",
+  });
+  assert.equal(camera.label, "Edmonton, AB");
+  assert.ok(Math.abs(camera.lat - edmonton.lat) < 0.01);
+  assert.ok(Math.abs(camera.lng - edmonton.lng) < 0.01);
+
+  const device = searchMapOrigin({
+    lat: powerview.lat,
+    lng: powerview.lng,
+    radiusKm: 25,
+    q: "Near Selkirk, MB",
+    label: "Near Selkirk, MB",
+  });
+  assert.equal(device.lat, powerview.lat);
+  assert.equal(device.lng, powerview.lng);
+
+  assert.equal(gpsMayMoveSearchOrigin({ originSource: "manual", q: "Edmonton, AB" }), false);
+  assert.equal(gpsMayMoveSearchOrigin({ originSource: "gps", q: "Edmonton, AB" }), false);
+  assert.equal(gpsMayMoveSearchOrigin({ originSource: "gps", q: "Near Selkirk, MB" }), true);
+
+  const search = src("src/routes/search.tsx");
+  assert.match(search, /searchMapOrigin/);
+  assert.match(search, /home: cameraHome/);
+  assert.match(src("src/lib/use-presence.ts"), /gpsMayMoveSearchOrigin/);
+  assert.match(src("src/components/native-boot.tsx"), /gpsMayMoveSearchOrigin/);
 });
 
 test("public privacy and parent waitlist copy do not leak FEATURE_SMS", () => {

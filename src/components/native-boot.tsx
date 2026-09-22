@@ -17,7 +17,7 @@ import {
   trustedSavedOrigin,
 } from "@/lib/default-origin";
 import { clearSavedOrigin, readSavedOrigin, reverseGeocode } from "@/lib/geo";
-import { urlHasGeocodableSearchQuery } from "@/lib/search-query";
+import { gpsMayMoveSearchOrigin, searchQueryFromUnknown, urlHasGeocodableSearchQuery } from "@/lib/search-query";
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
 import { LANGUAGES } from "@/lib/languages";
 import { isFrPath } from "@/lib/locale-path";
@@ -123,6 +123,17 @@ export function NativeBoot() {
     }
     void getDeviceLocation({ precise: true }).then((pos) => {
       if (cancelled) return;
+      if (pos) {
+        const state = useAppStore.getState();
+        if (
+          !gpsMayMoveSearchOrigin({
+            originSource: state.originSource,
+            q: searchQueryFromUnknown(window.location.search),
+          })
+        ) {
+          return;
+        }
+      }
       const resolved = resolveDefaultSearchOrigin({
         saved,
         gps: pos,
