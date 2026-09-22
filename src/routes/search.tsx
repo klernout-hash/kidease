@@ -19,6 +19,7 @@ import { bootSearchOrigin } from "@/lib/search-origin";
 import {
   originFromSearchQuery,
   originsMatchSearchQuery,
+  searchMapOrigin,
   searchQueryFromUnknown,
 } from "@/lib/search-query";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
@@ -402,14 +403,25 @@ function SearchPage() {
     anchorMode,
   ]);
 
+  const cameraHome = useMemo(
+    () =>
+      searchMapOrigin({
+        lat: origin.lat,
+        lng: origin.lng,
+        radiusKm,
+        q: incoming.q ?? query,
+        label: origin.label,
+      }),
+    [origin.lat, origin.lng, origin.label, radiusKm, incoming.q, query],
+  );
   const searchData = {
-    lat: origin.lat,
-    lng: origin.lng,
+    lat: cameraHome.lat,
+    lng: cameraHome.lng,
     radiusKm,
     sort,
     ageGroup: "any" as const,
-    fsa: fsaOf(query) || fsaOf(origin.label),
-    label: origin.label,
+    fsa: fsaOf(query) || fsaOf(cameraHome.label),
+    label: cameraHome.label,
     q: incoming.q ?? query,
     startDate: needBy || null,
     lat2: workOrigin?.lat,
@@ -417,12 +429,12 @@ function SearchPage() {
     mode: anchorMode,
   };
   const cacheInput = {
-    lat: origin.lat,
-    lng: origin.lng,
+    lat: cameraHome.lat,
+    lng: cameraHome.lng,
     radiusKm,
     sort,
     ageGroup: "any" as const,
-    label: origin.label,
+    label: cameraHome.label,
     q: incoming.q ?? query,
     startDate: needBy || null,
     lat2: workOrigin?.lat,
@@ -432,12 +444,12 @@ function SearchPage() {
   const locationLock = useMemo(
     () =>
       resolveLocationLock({
-        lat: origin.lat,
-        lng: origin.lng,
-        label: origin.label,
+        lat: cameraHome.lat,
+        lng: cameraHome.lng,
+        label: cameraHome.label,
         q: incoming.q ?? query,
       }),
-    [origin.lat, origin.lng, origin.label, incoming.q, query],
+    [cameraHome.lat, cameraHome.lng, cameraHome.label, incoming.q, query],
   );
 
   useEffect(() => {
@@ -482,7 +494,7 @@ function SearchPage() {
       });
       setRefreshing(false);
     }, 12_000);
-    trackLocation("search", origin.lat, origin.lng, origin.label, { radiusKm });
+    trackLocation("search", cameraHome.lat, cameraHome.lng, cameraHome.label, { radiusKm });
     return () => {
       live = false;
       window.clearTimeout(tmr);
@@ -654,20 +666,26 @@ function SearchPage() {
     writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
   }
 
+  function followDevice(pos: { lat: number; lng: number; accuracyM?: number }) {
+    const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
+    const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
+    setOrigin(
+      { lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" },
+      resolved.source,
+    );
+    setQuery(label);
+    writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
+    void hapticLight();
+  }
+
   async function geo() {
     if (locationConsent !== "granted") {
       setAskLocation(true);
       return;
     }
     const pos = await getDeviceLocation({ precise: true });
-    if (pos) {
-      const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
-      const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
-      setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
-      void hapticLight();
-    } else {
-      setLocationConsent("denied");
-    }
+    if (pos) followDevice(pos);
+    else setLocationConsent("denied");
   }
 
   async function allowLocation() {
@@ -675,10 +693,7 @@ function SearchPage() {
     const pos = await getDeviceLocation({ precise: true });
     if (pos) {
       setLocationConsent("granted");
-      const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
-      const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
-      setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
-      void hapticLight();
+      followDevice(pos);
     } else {
       setLocationConsent("denied");
     }
@@ -985,7 +1000,7 @@ function SearchPage() {
     (favoritesOnly ? 1 : 0) +
     (careType !== "any" ? 1 : 0) +
     (isFacilityExploreCategory(resolvedExploreCategory(incoming)) ? 1 : 0);
-  const anchors = resolveSearchAnchors({ home: origin, work: workOrigin, mode: anchorMode });
+  const anchors = resolveSearchAnchors({ home: cameraHome, work: workOrigin, mode: anchorMode });
   const catalog = items ?? [];
   const fabric = areaPresence(catalog);
   const dualEmpty = anchors.intersect && !searchFailed && (items?.length ?? 0) === 0;
@@ -1497,18 +1512,7 @@ function SearchPage() {
                       radiusKm={radiusKm}
                       activeSlug={active}
                       onSelect={(slug) => setActive(slug)}
-                      onRelocate={(pos) => {
-                        const resolved = originFromDeviceFix(pos, origin, { timeZone: readClientTimeZone() });
-                        const label =
-                          resolved.source === "gps"
-                            ? reverseGeocode(pos.lat, pos.lng)
-                            : resolved.label;
-                        setOrigin(
-                          { lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" },
-                          resolved.source,
-                        );
-                        void hapticLight();
-                      }}
+                      onRelocate={(pos) => followDevice(pos)}
                       onLocate={() => void geo()}
                       onFallback={() => setView("list")}
                     />

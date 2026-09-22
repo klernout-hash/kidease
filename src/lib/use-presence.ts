@@ -3,6 +3,7 @@ import { originFromDeviceFix, readClientTimeZone } from "@/lib/default-origin";
 import { locateHere } from "@/lib/proximity";
 import { movedEnough } from "@/lib/presence";
 import { watchDeviceLocation } from "@/lib/native";
+import { gpsMayMoveSearchOrigin, searchQueryFromUnknown } from "@/lib/search-query";
 import { useAppStore } from "@/lib/store";
 import { publishFix } from "@/lib/location-stream";
 import { trackLocation } from "@/lib/telemetry";
@@ -13,7 +14,9 @@ export function useLivePresence(active: boolean) {
     if (!active) return undefined;
     if (useAppStore.getState().locationConsent !== "granted") return undefined;
     return watchDeviceLocation((pos) => {
-      const { origin, setOrigin, touchGps, radiusKm } = useAppStore.getState();
+      const { origin, originSource, query, setOrigin, touchGps, radiusKm } = useAppStore.getState();
+      const urlQ = searchQueryFromUnknown(window.location.search);
+      if (!gpsMayMoveSearchOrigin({ originSource, q: urlQ || query })) return;
       if (!movedEnough(origin, pos)) {
         touchGps();
         publishFix(origin.lat, origin.lng, origin.label);
