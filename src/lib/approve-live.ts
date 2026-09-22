@@ -257,6 +257,10 @@ export function publicApprovalEligible(centre: ApprovalCentre): boolean {
   });
 }
 
+/**
+ * Admin summary for the licence *number*. A stored PDF is a separate fact
+ * (FILES / license_photo). "Licence number on file" must not read as a file.
+ */
 export function adminLicenceFact(input: {
   licensePhoto?: string | null;
   licenseNumber?: string | null;
@@ -268,15 +272,35 @@ export function adminLicenceFact(input: {
   const number = officialLicenceNumber(input.licenseNumber, input.daycareId || input.id);
   const hasPhoto = Boolean((input.licensePhoto || "").trim());
   if (licenseStatus === "expired") {
-    return { status: number ? `On file · ${number} · expired` : "Submitted · expired", tone: "attention" };
+    if (number && !hasPhoto) return { status: `Licence number on file · ${number} · expired`, tone: "attention" };
+    return { status: number ? `Submitted · ${number} · expired` : "Submitted · expired", tone: "attention" };
   }
   if (licenseStatus === "suspended") {
-    return { status: number ? `On file · ${number} · suspended` : "Submitted · suspended", tone: "attention" };
+    if (number && !hasPhoto) return { status: `Licence number on file · ${number} · suspended`, tone: "attention" };
+    return { status: number ? `Submitted · ${number} · suspended` : "Submitted · suspended", tone: "attention" };
   }
   if (!hasPhoto && !number) return { status: "Missing", tone: "missing" };
-  if (number && !hasPhoto) return { status: `On file · ${number}`, tone: "ready" };
+  if (number && !hasPhoto) return { status: `Licence number on file · ${number}`, tone: "ready" };
   if (licenseStatus === "matched") return { status: "Submitted · matched", tone: "ready" };
   return { status: "Submitted", tone: "ready" };
+}
+
+/** FILES empty state. Names the saved number so it is not mistaken for a PDF. */
+export function licenceFileMissingCopy(input: {
+  licenseNumber?: string | null;
+  daycareId?: string | null;
+  id?: string | null;
+  storefrontPresent?: boolean;
+}): string {
+  const number = officialLicenceNumber(input.licenseNumber, input.daycareId || input.id);
+  if (input.storefrontPresent) {
+    return number
+      ? `Licence number ${number} is saved. No licence file uploaded yet.`
+      : "No licence file uploaded yet.";
+  }
+  return number
+    ? `Licence number ${number} is saved. No licence or storefront file on this claim yet.`
+    : "No licence or storefront file on this claim yet.";
 }
 
 export function selectCanonicalClaim(claims: ApprovalClaim[]): {
@@ -439,7 +463,7 @@ export function planApproval(
     {
       id: "licence",
       ok: licenceOk,
-      detail: licenceOk ? `Licence ${number} is on file` : "Licence is missing",
+      detail: licenceOk ? `Licence number ${number} is on file` : "Licence number is missing",
     },
     {
       id: "screening",

@@ -15,7 +15,7 @@ import {
 import { ADMIN_CENTRE_STAT_COPY, type AdminCentreListStat } from "@/lib/admin-stat-filter";
 import { licenseDocHref, openPrivateDocHref } from "@/lib/private-docs";
 import { signedPdfPath } from "@/lib/docusign-packs";
-import { approvalHealthSummary, canOfferApprove, type ApprovalHealth } from "@/lib/approve-live";
+import { approvalHealthSummary, canOfferApprove, licenceFileMissingCopy, type ApprovalHealth } from "@/lib/approve-live";
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import type { AdminCentreRow, Decision } from "@/lib/server/admin-centres";
 import type { AdminContractRow, AdminPackRow } from "@/lib/server/contracts";
@@ -62,8 +62,20 @@ function DetailTable({ rows }: { rows: { label: string; value: string; extra?: R
 }
 
 function ReviewDocuments({ centre }: { centre: AdminCentreRow }) {
+  const licenceMissing = licenceFileMissingCopy({
+    licenseNumber: centre.licenseNumber,
+    daycareId: centre.daycareId,
+    storefrontPresent: Boolean(centre.storefrontPhoto),
+  });
   if (!centre.licensePhoto && !centre.storefrontPhoto) {
-    return <p className="ke-empty text-left">No licence or storefront file on this claim yet.</p>;
+    return (
+      <p className="ke-empty text-left">
+        {licenceFileMissingCopy({
+          licenseNumber: centre.licenseNumber,
+          daycareId: centre.daycareId,
+        })}
+      </p>
+    );
   }
   return (
     <div className="overflow-hidden rounded-lg bg-bg ring-1 ring-border">
@@ -76,7 +88,7 @@ function ReviewDocuments({ centre }: { centre: AdminCentreRow }) {
           View licence document
         </button>
       ) : (
-        <p className="px-2.5 py-2 text-sm text-muted">No licence file uploaded yet.</p>
+        <p className="px-2.5 py-2 text-sm text-muted">{licenceMissing}</p>
       )}
       {centre.storefrontPhoto ? (
         <figure className="border-t border-border p-2">

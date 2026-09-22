@@ -11,6 +11,7 @@ import {
 } from "@/lib/server/private-docs";
 import { R2_LICENSE_PREFIX } from "@/lib/server/r2";
 import { resolveAdminAccess } from "@/lib/server/roles";
+import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
 import { writeTrustEvent } from "@/lib/server/trust";
 
 function fail(err: unknown, fallback = "Request failed") {
@@ -48,16 +49,19 @@ export const Route = createFileRoute("/api/license-docs/$daycareId")({
           await authorizeLicenseDoc(userId, daycareId, false);
           const sql = await getSql();
           const rows = await sql<{
+            daycare_id: string;
             license_photo: string | null;
           }>`
-            select coalesce(c.license_photo, d.license_photo) as license_photo
+            select d.id as daycare_id,
+              coalesce(nullif(btrim(c.license_photo), ''), nullif(btrim(d.license_photo), '')) as license_photo
             from daycares d
             left join listing_claims c on c.daycare_id = d.id
             where d.id = ${daycareId}
             order by c.created_at desc nulls last
             limit 1
           `.catch(() => []);
-          const ref = rows[0]?.license_photo;
+          const [filled] = await overlayStoredLicensePhotos(sql, rows);
+          const ref = filled?.license_photo;
           if (!ref) throw new Error("File not found");
           return privateDocResponse(await loadPrivateDoc(ref, null, "licence"));
         } catch (err) {
