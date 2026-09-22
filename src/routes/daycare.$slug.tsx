@@ -37,6 +37,8 @@ import {
 import { openConversation } from "@/lib/server/family";
 import { ListingCultureCard } from "@/components/listing-culture-card";
 import { SaveListingButton } from "@/components/save-listing-button";
+import { KidEaseApprovalStrip } from "@/components/kidease-approval";
+import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
 import { publicLicenseBadge } from "@/lib/license-verify";
@@ -394,6 +396,7 @@ function Listing() {
   }
 
   const waitlisted = known && spots <= 0;
+  const offerClaim = showPublicClaimPrompt(d);
   const cityHub = cityHubDefForPlace(d.city, d.province);
 
   function ListingOverflowItems() {
@@ -412,7 +415,7 @@ function Listing() {
         <ListingMoreItem onClick={() => void openDirections(d.lat, d.lng, name)}>
           <MapPinned className="size-4" /> {t("directions")}
         </ListingMoreItem>
-        {!d.claimed ? (
+        {offerClaim ? (
           <Link
             to="/claim"
             search={{ q: d.name }}
@@ -560,6 +563,7 @@ function Listing() {
               <h1 className="font-display text-3xl md:text-4xl">{name}</h1>
               {licensed ? <TrustBadge badge={licensed} /> : null}
             </div>
+            <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} />
             <p className="mt-2 text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
             <ListingHeaderPills item={d} />
             <p className="mt-2 text-xs font-medium text-subtle">{t("freeListingNotAd")}</p>
@@ -643,8 +647,8 @@ function Listing() {
                 </Link>
               </p>
             ) : null}
-            {!d.claimed ? (
-              <p className="mt-3 text-sm">
+            {offerClaim ? (
+              <p className="mt-3 text-sm" data-ke="listing-claim-prompt">
                 {t("isThisYours")}{" "}
                 <Link to="/claim" search={{ q: d.name }} className="text-primary underline-offset-4 hover:underline">
                   {t("claimThisFreePage")}
@@ -883,9 +887,14 @@ function Listing() {
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden [[data-channel=app]_&]:bottom-20">
         <div className="mx-auto flex max-w-lg items-center gap-2">
           {live ? (
-            <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" onClick={onInfo}>
-              {t("requestInfo")}
-            </Button>
+            <>
+              <Button className="h-12 min-h-12 flex-1 rounded-[14px] px-3 text-sm" data-ke="listing-sticky-cta" onClick={onInfo}>
+                {t("requestInfo")}
+              </Button>
+              <Button className="h-12 min-h-12 flex-1 rounded-[14px] px-3 text-sm" variant="secondary" data-ke="listing-sticky-tour" onClick={onTour}>
+                {t("bookTour")}
+              </Button>
+            </>
           ) : (
             <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" asChild>
               <Link to="/search">{t("searchNearbyShort")}</Link>

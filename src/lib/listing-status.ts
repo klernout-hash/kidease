@@ -18,9 +18,15 @@ export function listingStatusFromClaim(
 ): ListingStatus {
   const raw = (claimStatus || "").trim().toLowerCase();
   if (DECLINED.has(raw)) return "declined";
-  if (LIVE.has(raw) || extras?.live) return "live";
+  // An approved token is Live only when the caller says the listing is Live.
+  // Public Live is licence evidence; extras.live === false keeps Admin Waiting.
+  if (LIVE.has(raw)) {
+    if (extras?.live === false) return "waiting";
+    return "live";
+  }
+  if (extras?.live) return "live";
   if (WAITING.has(raw)) return "waiting";
-  if (extras?.claimedAt && raw !== "declined") return "live";
+  if (extras?.claimedAt && extras.live !== false) return "live";
   if (!raw || raw === "unclaimed") return "waiting";
   return "waiting";
 }

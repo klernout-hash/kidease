@@ -39,6 +39,11 @@ export async function rememberSearch<T>(key: string, build: () => Promise<T>): P
   const hit = cache.get(key) as Entry<T> | undefined;
   if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
   const value = await build();
+  // An empty timeout fallback must not stick for 60s and report "0 live".
+  if (Array.isArray(value) && value.length === 0) {
+    cache.delete(key);
+    return value;
+  }
   cache.set(key, { at: Date.now(), value });
   if (cache.size > MAX_ENTRIES) {
     const oldest = cache.keys().next().value;

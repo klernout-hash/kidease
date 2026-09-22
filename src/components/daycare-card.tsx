@@ -15,6 +15,7 @@ import { listingPill } from "@/lib/listing-card";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { isCatalogueMatchedBadge, trustBadgesFor } from "@/lib/trust";
+import { publicApprovalEligible } from "@/lib/approve-live";
 import type { CopyKey } from "@/lib/copy";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
@@ -159,6 +160,11 @@ export const DaycareCard = memo(function DaycareCard({
               </span>
             ) : null}
           </div>
+          {!compact && publicApprovalEligible(item) ? (
+            <p className="text-[11px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
+              {t("kideaseApprovedMarker")}
+            </p>
+          ) : null}
           {!compact && cardTrust.length ? (
             <div
               className="pt-0.5"

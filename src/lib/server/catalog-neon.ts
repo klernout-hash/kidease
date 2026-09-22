@@ -56,6 +56,8 @@ export type CatalogDbRow = {
   photos: string | null;
   claimed_at: string | null;
   claim_status?: string | null;
+  staff_screening_attested?: number | boolean | null;
+  screening_on_file?: number | boolean | null;
   listing_active?: number | boolean | null;
   visibility: string | null;
   is_test: number | boolean | null;
@@ -73,7 +75,7 @@ preschool_monthly, part_time_monthly, spots_infant, spots_toddler,
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
 languages, staff_languages, cultural_programs, cultural_team_note,
-amenities, photos, claimed_at, claim_status, listing_active, visibility, is_test,
+amenities, photos, claimed_at, claim_status, listing_active, staff_screening_attested, screening_on_file, visibility, is_test,
 google_place_id, contact_email, website
 `;
 
@@ -201,6 +203,8 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     claimed: Boolean(row.claimed_at),
     claimedAt: row.claimed_at ? String(row.claimed_at) : null,
     claimStatus: row.claim_status ?? null,
+    staffScreeningAttested: row.staff_screening_attested === 1 || row.staff_screening_attested === true,
+    screeningOnFile: row.screening_on_file === 1 || row.screening_on_file === true,
     listingActive: row.listing_active === 0 || row.listing_active === false ? false : true,
     visibility,
     isTest: row.is_test === 1 || row.is_test === true || visibility === "admin_only",

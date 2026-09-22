@@ -67,6 +67,8 @@ export type CatalogDaycare = {
   claimed?: boolean;
   claimedAt?: string | null;
   claimStatus?: string | null;
+  staffScreeningAttested?: boolean;
+  screeningOnFile?: boolean;
   listingActive?: boolean;
   visibility: ListingVisibility;
   isTest: boolean;

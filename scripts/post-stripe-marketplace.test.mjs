@@ -114,7 +114,7 @@ test("pipeline keeps the highest real stage and drops declined tours", () => {
 test("admin verify, alerts, demotion, and CRM stay code-only and honest", () => {
   const admin = src("src/routes/admin.tsx");
   assert.match(admin, /Licence and photo review/);
-  assert.match(admin, /c\.licensePhoto/);
+  assert.match(src("src/components/admin-review-card.tsx"), /centre\.licensePhoto/);
   assert.match(admin, /needsVerification/);
   assert.match(src("src/lib/admin-verify.ts"), /needsLicenseReview/);
   assert.match(src("src/lib/desk-nav.ts"), /id: "verify"/);

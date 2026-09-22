@@ -15,6 +15,7 @@ import {
 import { ADMIN_CENTRE_STAT_COPY, type AdminCentreListStat } from "@/lib/admin-stat-filter";
 import { licenseDocHref, openPrivateDocHref } from "@/lib/private-docs";
 import { signedPdfPath } from "@/lib/docusign-packs";
+import { approvalHealthSummary, canOfferApprove, type ApprovalHealth } from "@/lib/approve-live";
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import type { AdminCentreRow, Decision } from "@/lib/server/admin-centres";
 import type { AdminContractRow, AdminPackRow } from "@/lib/server/contracts";
@@ -116,6 +117,32 @@ export function AdminReviewNotice({
     >
       <p className="font-display text-2xl tracking-tight">{title}</p>
       <p className={cn("mx-auto mt-2 max-w-sm text-sm leading-6", tone === "danger" ? "text-danger" : "text-muted")}>{body}</p>
+    </div>
+  );
+}
+
+export function ApprovalHealthNotice({ health }: { health: ApprovalHealth }) {
+  const summary = approvalHealthSummary(health);
+  return (
+    <div
+      className={cn(
+        "rounded-2xl px-4 py-4 ring-1 sm:px-5",
+        health.ok ? "bg-soft text-fg ring-primary/20" : "bg-surface text-fg ring-danger/30",
+      )}
+      data-ke="approval-health"
+      data-ke-approval-ok={health.ok ? "yes" : "no"}
+      role={health.ok ? "status" : "alert"}
+    >
+      <p className="font-display text-xl tracking-tight">{summary.title}</p>
+      <p className={cn("mt-1 text-sm leading-6", health.ok ? "text-fg" : "text-danger")}>{summary.body}</p>
+      <ul className="mt-3 space-y-1 text-sm">
+        {health.checks.map((check) => (
+          <li key={check.id} data-ke-approval-check={check.id} data-ke-check-ok={check.ok ? "yes" : "no"}>
+            <span className={check.ok ? "text-ok" : "font-medium text-danger"}>{check.ok ? "Passed" : "Failed"}</span>
+            <span className="text-muted"> · {check.detail}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -259,9 +286,15 @@ export function AdminReviewCard({
       <div className="mt-6" data-ke="admin-review-actions">
         <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-subtle">Decision</p>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center" role="group" aria-label={`Decision for ${centre.name}`}>
-          <Button className="w-full sm:w-auto sm:min-w-36" disabled={locked} onClick={() => onDecide(centre.daycareId, "approve")}>
-            Approve
-          </Button>
+          {canOfferApprove(status) ? (
+            <Button className="w-full sm:w-auto sm:min-w-36" disabled={locked} onClick={() => onDecide(centre.daycareId, "approve")}>
+              Approve
+            </Button>
+          ) : (
+            <p className="text-sm font-medium text-primary" data-ke="approve-closed">
+              Live — approval is closed
+            </p>
+          )}
           <Button
             variant="secondary"
             className="w-full sm:w-auto sm:min-w-36"

@@ -18,6 +18,8 @@ import {
 } from "@/lib/today-urgency";
 import { listingVerifiedCoach } from "@/lib/listing-verified";
 import { DailyCareDesk } from "@/components/daily-care-desk";
+import { KidEaseApprovalStrip } from "@/components/kidease-approval";
+import { publicApprovalEligible } from "@/lib/approve-live";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { Conversation, Daycare, TourRequest } from "@/lib/types";
@@ -189,6 +191,12 @@ export function TodayUrgencyHome({
         <p className="mt-1 text-sm text-muted">{t("todayHomeLead")}</p>
       </div>
       <ActionRequiredBanner listings={coachListings} />
+      {coachListings.filter((listing) => publicApprovalEligible(listing)).map((listing) => (
+        <div key={listing.id}>
+          <p className="font-medium">{listing.name}</p>
+          <KidEaseApprovalStrip eligible audience="daycare" />
+        </div>
+      ))}
       {empty ? (
         <div className="rounded-xl bg-surface px-5 py-8 ring-1 ring-border">
           <p className="font-medium">

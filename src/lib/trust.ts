@@ -313,17 +313,12 @@ export function trustBadgesFor(item: TrustListing, surface: TrustSurface, stripe
   const claim = claimBadge(item);
   const staff = staffBadge(item);
 
-  if (surface === "card") {
+  const evidence = Boolean(officialLicenceNumber(item.licenseNumber, item.id)) && isHonestLicenseMatch(item);
+  if (surface === "card" || surface === "parent") {
+    if (!evidence) return [];
     const badges =
       license.id === "license_unverified" || isCatalogueMatchedBadge(license) ? [] : [license];
     if (claim.id === "claim_verified") badges.push(claim);
-    if (staff.id === "screening_on_file" || staff.id === "staff_attested") badges.push(staff);
-    return badges;
-  }
-
-  if (surface === "parent") {
-    const showLicense = license.id !== "license_unverified" && !isCatalogueMatchedBadge(license);
-    const badges = showLicense ? [license, claim] : [claim];
     if (staff.id === "screening_on_file" || staff.id === "staff_attested") badges.push(staff);
     return badges;
   }

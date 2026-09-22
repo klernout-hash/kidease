@@ -2094,6 +2094,16 @@ export const copy = {
     adminIncompleteOpenScreening: "Screening",
     adminIncompleteKeepWaiting: "Waiting",
     adminIncompleteApprove: "Approve",
+    kideaseApprovedEyebrow: "KidEase",
+    kideaseApprovedTitle: "Approved by KidEase",
+    kideaseApprovedBody:
+      "This centre was approved because it met KidEase licence and screening requirements.",
+    kideaseApprovedLicence: "Licence requirement met",
+    kideaseApprovedScreening: "Screening requirement met",
+    kideaseApprovedLive: "Live on KidEase",
+    kideaseApprovedMarker: "KidEase approved",
+    kideaseApprovedDaycareBody:
+      "KidEase approved this centre because it met the licence and screening requirements. Parents can find it in Live search.",
   },
   fr: {
     app: "KidEase",
@@ -4199,6 +4209,16 @@ export const copy = {
     adminIncompleteOpenScreening: "Filtrage",
     adminIncompleteKeepWaiting: "En attente",
     adminIncompleteApprove: "Approuver",
+    kideaseApprovedEyebrow: "KidEase",
+    kideaseApprovedTitle: "Approuvé par KidEase",
+    kideaseApprovedBody:
+      "Ce centre a été approuvé parce qu’il répond aux exigences de permis et de filtrage de KidEase.",
+    kideaseApprovedLicence: "Exigence de permis satisfaite",
+    kideaseApprovedScreening: "Exigence de filtrage satisfaite",
+    kideaseApprovedLive: "En direct sur KidEase",
+    kideaseApprovedMarker: "Approuvé par KidEase",
+    kideaseApprovedDaycareBody:
+      "KidEase a approuvé ce centre parce qu’il a satisfait aux exigences de permis et de filtrage. Les parents peuvent le trouver dans la recherche En direct.",
   },
 } as const;
 

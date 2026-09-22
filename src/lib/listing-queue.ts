@@ -50,6 +50,7 @@ export function normalizeAdminClaimStatus(input: {
   const claimStatus = (input.claimStatus || "").trim().toLowerCase() || null;
   const claimedAt = input.claimedAt;
   const claimRow = (input.claimRowStatus || "").trim().toLowerCase() || null;
+  if (claimStatus === "superseded") return "superseded";
   if (
     claimStatus === "approved" ||
     (claimedAt && claimStatus !== "declined" && claimStatus !== "waiting" && claimStatus !== "pending")

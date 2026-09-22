@@ -21,6 +21,7 @@ import { sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
 import { compareParentMatch } from "@/lib/parent-match";
 import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
+import { hasLicenceEvidence } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
@@ -28,6 +29,7 @@ import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { rememberSearch, searchMemoKey } from "./search-memo";
+import { mergeApprovedCityListings } from "./approved-search";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
@@ -53,7 +55,7 @@ function optionalCoord(value: unknown) {
 }
 
 function toDaycare(d: CatalogDaycare): Daycare {
-  return applyLocalRegistryTrust(applyListingReadiness({
+  const mapped = applyLocalRegistryTrust(applyListingReadiness({
     id: d.id,
     slug: d.slug,
     name: d.name,
@@ -111,6 +113,8 @@ function toDaycare(d: CatalogDaycare): Daycare {
     spotsUpdatedAt: null,
     lastVacancyUpdatedAt: null,
     ...defaultTrustFields(),
+    staffScreeningAttested: Boolean(d.staffScreeningAttested),
+    screeningOnFile: Boolean(d.screeningOnFile),
     licenseStatus: normalizeLicenseStatus(d.licenseStatus),
     registryMatchState: normalizeMatchState(d.registryMatchState),
     licenseVerificationSource: d.licenseVerificationSource ?? null,
@@ -122,6 +126,10 @@ function toDaycare(d: CatalogDaycare): Daycare {
     isTest: d.isTest,
     timezone: "America/Winnipeg",
   }));
+  return {
+    ...mapped,
+    live: Boolean(mapped.live) && hasLicenceEvidence(mapped),
+  };
 }
 
 function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
@@ -265,11 +273,14 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     label: data.label,
     q: data.q,
   });
-  const listings = filterByLocationLock(
-    anchors.intersect && anchors.secondary
-      ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
-      : await nearbyListings(origin, data.radiusKm),
-    lock,
+  const listings = await mergeApprovedCityListings(
+    filterByLocationLock(
+      anchors.intersect && anchors.secondary
+        ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
+        : await nearbyListings(origin, data.radiusKm),
+      lock,
+    ),
+    { origin, radiusKm: data.radiusKm, lock },
   );
   let cards: DaycareCard[] = [];
   for (const d of listings) {
@@ -331,7 +342,11 @@ export const searchDaycares = createServerFn({ method: "POST" })
 async function loadFeatured(origin: { lat: number; lng: number; label?: string }): Promise<DaycareCard[]> {
   const lock = resolveLocationLock(origin);
   const nearby: DaycareCard[] = [];
-  for (const d of filterByLocationLock(await nearbyListings(origin, 40), lock)) {
+  for (const d of await mergeApprovedCityListings(filterByLocationLock(await nearbyListings(origin, 40), lock), {
+    origin,
+    radiusKm: 40,
+    lock,
+  })) {
     nearby.push(toCard(d, origin));
   }
   nearby.sort(compareProximity);

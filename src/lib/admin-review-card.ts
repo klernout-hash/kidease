@@ -3,7 +3,7 @@
  * Presentation only — claim tokens and permissions stay on the server.
  */
 
-import { normalizeLicenseStatus } from "./license-status.ts";
+import { adminLicenceFact, approvalScreeningFact } from "./approve-live.ts";
 
 export type ReviewFactId = "licence" | "screening" | "photos";
 export type ReviewFactTone = "ready" | "missing" | "attention";
@@ -63,32 +63,29 @@ export function trustDetailRow(id: string, value: string): { label: string; valu
 
 export function reviewDecisionFacts(input: {
   licensePhoto?: string | null;
+  licenseNumber?: string | null;
   licenseStatus?: string | null;
+  id?: string | null;
+  daycareId?: string | null;
   storefrontPhoto?: string | null;
   screeningOnFile?: boolean;
   staffScreeningAttested?: boolean;
 }): ReviewFact[] {
-  const licenseStatus = normalizeLicenseStatus(input.licenseStatus);
-  const hasLicence = Boolean((input.licensePhoto || "").trim());
+  const licenceFact = adminLicenceFact(input);
+  const licence: ReviewFact = {
+    id: "licence",
+    label: "Licence",
+    status: licenceFact.status,
+    tone: licenceFact.tone,
+  };
 
-  let licence: ReviewFact;
-  if (!hasLicence) {
-    licence = { id: "licence", label: "Licence", status: "Missing", tone: "missing" };
-  } else if (licenseStatus === "expired") {
-    licence = { id: "licence", label: "Licence", status: "Submitted · expired", tone: "attention" };
-  } else if (licenseStatus === "suspended") {
-    licence = { id: "licence", label: "Licence", status: "Submitted · suspended", tone: "attention" };
-  } else if (licenseStatus === "matched") {
-    licence = { id: "licence", label: "Licence", status: "Submitted · matched", tone: "ready" };
-  } else {
-    licence = { id: "licence", label: "Licence", status: "Submitted", tone: "ready" };
-  }
-
-  const screening: ReviewFact = input.screeningOnFile
-    ? { id: "screening", label: "Screening", status: "On file", tone: "ready" }
-    : input.staffScreeningAttested
-      ? { id: "screening", label: "Screening", status: "Attested", tone: "ready" }
-      : { id: "screening", label: "Screening", status: "Not attested", tone: "missing" };
+  const screeningFact = approvalScreeningFact(input);
+  const screening: ReviewFact = {
+    id: "screening",
+    label: "Screening",
+    status: screeningFact.status,
+    tone: screeningFact.tone,
+  };
 
   const photos: ReviewFact = (input.storefrontPhoto || "").trim()
     ? { id: "photos", label: "Photos", status: "Storefront on file", tone: "ready" }
