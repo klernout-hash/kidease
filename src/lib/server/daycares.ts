@@ -21,14 +21,15 @@ import { sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
 import { compareParentMatch } from "@/lib/parent-match";
 import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
-import { hasLicenceEvidence } from "@/lib/approve-live";
+import { parentSearchLive } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
-import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
-import { rememberSearch, searchMemoKey } from "./search-memo";
+import { LOADER_SETTLE_MS, withTimeout, withTimeoutFallback } from "@/lib/timeout";
+import { readFreshSearch, searchMemoKey, writeFreshSearch } from "./search-memo";
+import { pickSearchResult } from "@/lib/live-search";
 import { mergeApprovedCityListings } from "./approved-search";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
@@ -128,7 +129,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
   }));
   return {
     ...mapped,
-    live: Boolean(mapped.live) && hasLicenceEvidence(mapped),
+    live: parentSearchLive(mapped),
   };
 }
 
@@ -256,7 +257,7 @@ function slimCard(card: DaycareCard): DaycareCard {
   };
 }
 
-async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
+function searchFrame(data: SearchInput) {
   const work =
     typeof data.lat2 === "number" && typeof data.lng2 === "number"
       ? { lat: data.lat2, lng: data.lng2 }
@@ -273,6 +274,11 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     label: data.label,
     q: data.q,
   });
+  return { anchors, origin, lock };
+}
+
+async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
+  const { anchors, origin, lock } = searchFrame(data);
   const listings = await mergeApprovedCityListings(
     filterByLocationLock(
       anchors.intersect && anchors.secondary
@@ -325,6 +331,18 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   return publicListings(uniqueById(filterByLocationLock(cards, lock))).map(slimCard);
 }
 
+/** Approved Live centres only. No wide radius scan and no rank overlays. */
+async function rescueApprovedCards(data: SearchInput): Promise<DaycareCard[]> {
+  const { origin, lock } = searchFrame(data);
+  const listings = await mergeApprovedCityListings([], {
+    origin,
+    radiusKm: data.radiusKm,
+    lock,
+  });
+  const cards = listings.map((d) => toCard(d, origin, data.fsa));
+  return publicListings(uniqueById(filterByLocationLock(cards, lock))).map(slimCard);
+}
+
 export const searchDaycares = createServerFn({ method: "POST" })
   .validator((input: SearchInput) => ({
     ...input,
@@ -333,11 +351,24 @@ export const searchDaycares = createServerFn({ method: "POST" })
     lng2: optionalCoord(input.lng2),
     mode: parseAnchorMode(input.mode),
   }))
-  .handler(async ({ data }) =>
-    rememberSearch(searchMemoKey(data), () =>
-      withTimeoutFallback(runSearch(data), LOADER_SETTLE_MS, []),
-    ),
-  );
+  .handler(async ({ data }) => {
+    const key = searchMemoKey(data);
+    const cached = readFreshSearch<DaycareCard[]>(key);
+    if (cached) return cached;
+    const rescueP = rescueApprovedCards(data);
+    try {
+      const full = await withTimeout(runSearch(data), LOADER_SETTLE_MS, "search");
+      // Wait for the city rescue before caching. A fast wide pass can omit a
+      // stale pin; caching that miss would keep Edmonton Live at 0 for 60s.
+      const rescue = await withTimeoutFallback(rescueP, 2000, null as DaycareCard[] | null);
+      const rows = pickSearchResult(full, rescue ?? []);
+      if (rescue) writeFreshSearch(key, rows);
+      return rows;
+    } catch {
+      // A timed-out catalogue must not become "0 live" when a licensed Live centre is already in the city.
+      return withTimeoutFallback(rescueP, 2000, [] as DaycareCard[]);
+    }
+  });
 
 async function loadFeatured(origin: { lat: number; lng: number; label?: string }): Promise<DaycareCard[]> {
   const lock = resolveLocationLock(origin);

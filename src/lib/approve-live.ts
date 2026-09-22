@@ -181,25 +181,29 @@ export function verifiedSearchPoint(
   return { lat: 0, lng: 0, source: "listing", eligible: false };
 }
 
+/** Same Live bit Admin's approved+licence rule and the search card share. */
+export function parentSearchLive(centre: ApprovalCentre & { claimed?: boolean | null }): boolean {
+  const id = centreId(centre) || "centre";
+  const platform = isPlatformLive(id, Boolean(centre.claimed || centre.claimedAt), {
+    listingActive: centre.listingActive !== false,
+    ratingX10: centre.ratingX10 ?? 0,
+    reviewCount: centre.reviewCount ?? 0,
+    claimStatus: centre.claimStatus,
+    claimedAt: centre.claimedAt,
+  });
+  return platform && hasLicenceEvidence(centre);
+}
+
 export function liveSearchHit(input: {
   origin: LatLng;
   radiusKm: number;
   label?: string | null;
   centre: ApprovalCentre;
 }): boolean {
-  if (!hasLicenceEvidence(input.centre)) return false;
+  if (!parentSearchLive(input.centre)) return false;
   const point = verifiedSearchPoint(input.centre);
   if (!point.eligible) return false;
   if (haversineKm(input.origin, point) > input.radiusKm) return false;
-  const id = centreId(input.centre) || "centre";
-  const live = isPlatformLive(id, Boolean(input.centre.claimedAt), {
-    listingActive: input.centre.listingActive !== false,
-    ratingX10: input.centre.ratingX10 ?? 0,
-    reviewCount: input.centre.reviewCount ?? 0,
-    claimStatus: input.centre.claimStatus,
-    claimedAt: input.centre.claimedAt,
-  });
-  if (!live) return false;
   const lock = resolveLocationLock({
     lat: input.origin.lat,
     lng: input.origin.lng,

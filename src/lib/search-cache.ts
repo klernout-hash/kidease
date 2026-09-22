@@ -38,7 +38,7 @@ export function readSearchCache(key: string): DaycareCard[] | null {
     const raw = sessionStorage.getItem(KEY);
     if (!raw) return null;
     const env = JSON.parse(raw) as Envelope;
-    if (env.key !== key || !Array.isArray(env.rows)) return null;
+    if (env.key !== key || !Array.isArray(env.rows) || env.rows.length === 0) return null;
     if (Date.now() - env.at > 60_000) return null;
     return env.rows;
   } catch {
