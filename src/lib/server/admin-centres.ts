@@ -13,7 +13,7 @@ import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { licenseReviewMarker } from "@/lib/private-docs";
 import { normalizeAdminClaimStatus } from "@/lib/listing-queue";
-import { collapseDuplicateReviewCards } from "@/lib/approve-live";
+import { collapseDuplicateReviewCards, hasLicenceEvidence } from "@/lib/approve-live";
 import { runApproval } from "@/lib/server/approve-centre";
 import {
   incompleteMissing,
@@ -396,6 +396,16 @@ export const listAdminCentres = createServerFn({ method: "GET" })
     const mapped: AdminCentreRow[] = rows.map((r) => {
       const hasProviderLink = Boolean(r.provider_link_user_id);
       const status = normalizeStatus(r.claim_status, r.claimed_at, r.claim_row_status, hasProviderLink);
+      const live =
+        status === "approved" &&
+        hasLicenceEvidence({
+          id: r.daycare_id,
+          daycareId: r.daycare_id,
+          licenseNumber: r.license_number,
+          licenseStatus: r.license_status,
+          licenseVerificationSource: r.license_verification_source,
+          province: r.province,
+        });
       const photos = firstReviewPhoto(r.photos, r.license_photo);
       const screeningOnFile = r.screening_on_file === 1 || r.screening_on_file === true;
       const submittedAt = asIsoString(r.submitted_at);
@@ -414,7 +424,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         contactEmail: r.contact_email,
         claimStatus: status,
         claimedAt: r.claimed_at,
-        live: status === "approved",
+        live,
         claimId: r.claim_id,
         claimRowStatus: r.claim_row_status,
         providerUserId: r.provider_user_id,
@@ -452,7 +462,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           claimRowStatus: r.claim_row_status,
           hasProviderLink,
           hasListingClaim: Boolean(r.claim_id),
-          live: status === "approved",
+          live,
           licensePhoto: photos.licensePhoto,
           screeningOnFile,
           photos: r.photos,

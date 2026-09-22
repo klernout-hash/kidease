@@ -148,6 +148,8 @@ export function showPublicClaimPrompt(centre: {
 }): boolean {
   if (centre.live) return false;
   if (centre.claimed) return false;
+  const raw = (centre.claimStatus || "").trim().toLowerCase();
+  if (APPROVED_CLAIM.has(raw)) return false;
   const status = listingStatusFromClaim(centre.claimStatus, {
     live: centre.live === true,
     claimedAt: centre.claimedAt,
@@ -185,6 +187,7 @@ export function liveSearchHit(input: {
   label?: string | null;
   centre: ApprovalCentre;
 }): boolean {
+  if (!hasLicenceEvidence(input.centre)) return false;
   const point = verifiedSearchPoint(input.centre);
   if (!point.eligible) return false;
   if (haversineKm(input.origin, point) > input.radiusKm) return false;

@@ -188,6 +188,7 @@ export async function runApproval(
       update daycares
       set claimed_at = coalesce(claimed_at, now()),
           claim_status = 'approved',
+          listing_active = 1,
           verified = 1,
           license_number = ${next.licenseNumber || null},
           license_status = 'matched',

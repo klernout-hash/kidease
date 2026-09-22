@@ -16,6 +16,7 @@ where slug = 'kids-world-daycare-kh2t'
 update daycares
 set claim_status = 'approved',
     claimed_at = coalesce(claimed_at, now()),
+    listing_active = 1,
     verified = 1,
     license_status = 'matched',
     registry_match_state = 'matched',
