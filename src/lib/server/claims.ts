@@ -398,8 +398,15 @@ export const updateListing = createServerFn({ method: "POST" })
       select photos, amenities from daycares where id = ${data.daycareId}
     `;
     const previousPhotos = current[0]?.photos ?? "";
-    let photos = applyStorefrontPhoto(current[0]?.photos ?? "", data.storefront);
-    photos = applyInteriorPhotos(photos, data.interiors);
+    const { prepareListingUploadPhoto } = await import("@/lib/server/polish-listing-photo");
+    const storefront = await prepareListingUploadPhoto(data.storefront);
+    const interiors: string[] = [];
+    for (const src of data.interiors ?? []) {
+      const next = await prepareListingUploadPhoto(src);
+      if (next) interiors.push(next);
+    }
+    let photos = applyStorefrontPhoto(current[0]?.photos ?? "", storefront);
+    photos = applyInteriorPhotos(photos, interiors);
     const photosChanged = listingPhotosChanged(previousPhotos, photos);
     const minAge = Math.min(216, nonNegativeInt(data.ageMinMonths));
     const maxAge = Math.max(minAge, Math.min(216, nonNegativeInt(data.ageMaxMonths)));

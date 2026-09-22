@@ -1412,9 +1412,11 @@ export const createListing = createServerFn({ method: "POST" })
       },
       [actor.email],
     );
-    const photos = applyStorefrontPhoto(STOCK_CREATE_PHOTOS, data.storefront);
+    const { prepareListingUploadPhoto } = await import("@/lib/server/polish-listing-photo");
+    const storefront = await prepareListingUploadPhoto(data.storefront);
+    const photos = applyStorefrontPhoto(STOCK_CREATE_PHOTOS, storefront);
     const photoAt =
-      data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)
+      storefront && isRealListingPhoto(storefront) && !isStockListingPhoto(storefront)
         ? new Date().toISOString()
         : null;
     await sql`

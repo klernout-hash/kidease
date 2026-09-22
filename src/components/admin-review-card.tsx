@@ -124,10 +124,12 @@ function ReviewDocuments({
   centre,
   locked,
   onAttached,
+  onStraighten,
 }: {
   centre: AdminCentreRow;
   locked: boolean;
   onAttached?: () => void;
+  onStraighten?: (daycareId: string) => Promise<{ polished: number; keptOriginal: number; skipped: number }>;
 }) {
   const [attached, setAttached] = useState(false);
   useEffect(() => {
@@ -185,6 +187,58 @@ function ReviewDocuments({
       ) : (
         <p className="border-t border-border px-2.5 py-2 text-sm text-muted">No storefront photo uploaded yet.</p>
       )}
+      <StraightenListingPhoto
+        daycareId={centre.daycareId}
+        storefront={centre.storefrontPhoto}
+        disabled={locked}
+        onStraighten={onStraighten}
+      />
+    </div>
+  );
+}
+
+function StraightenListingPhoto({
+  daycareId,
+  storefront,
+  disabled,
+  onStraighten,
+}: {
+  daycareId: string;
+  storefront: string | null;
+  disabled: boolean;
+  onStraighten?: (daycareId: string) => Promise<{ polished: number; keptOriginal: number; skipped: number }>;
+}) {
+  const [busy, setBusy] = useState(false);
+  if (!onStraighten || !storefront?.startsWith("data:image/")) return null;
+  return (
+    <div className="border-t border-border px-2.5 py-2" data-ke="admin-straighten-photo">
+      <Button
+        type="button"
+        variant="secondary"
+        className="h-11 w-full sm:w-auto"
+        disabled={disabled || busy}
+        onClick={() => {
+          setBusy(true);
+          void onStraighten(daycareId)
+            .then((res) => {
+              if (res.polished > 0) {
+                toast.success(
+                  res.polished === 1 ? "Listing photo straightened." : `Straightened ${res.polished} listing photos.`,
+                );
+              } else if (res.keptOriginal > 0) {
+                toast.message("Photo kept as uploaded. Straighten did not produce a better frame.");
+              } else {
+                toast.message("No centre-uploaded listing photo to straighten.");
+              }
+            })
+            .catch((err) => {
+              toast.error(err instanceof Error ? err.message : "Could not straighten that photo.");
+            })
+            .finally(() => setBusy(false));
+        }}
+      >
+        {busy ? "Straightening…" : "Straighten photo"}
+      </Button>
     </div>
   );
 }
@@ -269,6 +323,7 @@ export function AdminReviewCard({
   onDecide,
   onLicense,
   onLicenceUploaded,
+  onStraighten,
   mode = "decision",
 }: {
   centre: AdminCentreRow;
@@ -277,6 +332,7 @@ export function AdminReviewCard({
   onDecide: (id: string, decision: Decision) => void;
   onLicense: (id: string, action: LicenseReviewAction) => void;
   onLicenceUploaded?: () => void;
+  onStraighten?: (daycareId: string) => Promise<{ polished: number; keptOriginal: number; skipped: number }>;
   mode?: ReviewCardMode;
 }) {
   const { t, locale } = useCopy();
@@ -361,7 +417,7 @@ export function AdminReviewCard({
         <div className="mt-3" data-ke="admin-review-documents">
           <SectionLabel>Files</SectionLabel>
           <div className="mt-2">
-            <ReviewDocuments centre={centre} locked={locked} onAttached={onLicenceUploaded} />
+            <ReviewDocuments centre={centre} locked={locked} onAttached={onLicenceUploaded} onStraighten={onStraighten} />
           </div>
         </div>
       ) : null}
@@ -433,7 +489,7 @@ export function AdminReviewCard({
             <div>
               <SectionLabel>Files</SectionLabel>
               <div className="mt-2">
-                <ReviewDocuments centre={centre} locked={locked} onAttached={onLicenceUploaded} />
+                <ReviewDocuments centre={centre} locked={locked} onAttached={onLicenceUploaded} onStraighten={onStraighten} />
               </div>
             </div>
           )}
@@ -492,6 +548,7 @@ export function AdminCentreStatList({
   onDecide,
   onLicense,
   onLicenceUploaded,
+  onStraighten,
 }: {
   stat: AdminCentreListStat;
   rows: AdminCentreRow[];
@@ -503,6 +560,7 @@ export function AdminCentreStatList({
   onDecide: (id: string, decision: Decision) => void;
   onLicense: (id: string, action: LicenseReviewAction) => void;
   onLicenceUploaded?: () => void;
+  onStraighten?: (daycareId: string) => Promise<{ polished: number; keptOriginal: number; skipped: number }>;
 }) {
   const copy = ADMIN_CENTRE_STAT_COPY[stat];
   const countLabel = loading || unavailable
@@ -545,6 +603,7 @@ export function AdminCentreStatList({
                   onDecide={onDecide}
                   onLicense={onLicense}
                   onLicenceUploaded={onLicenceUploaded}
+                  onStraighten={onStraighten}
                 />
               </li>
             ))}
