@@ -423,6 +423,14 @@ test("kh2t approval, licence, Live, and Edmonton search move together", () => {
   const admin = src("src/lib/server/admin-centres.ts");
   assert.match(admin, /hasLicenceEvidence\(/);
   assert.doesNotMatch(admin, /live: status === "approved"/);
+  assert.doesNotMatch(admin, /'unverified'::text as license_status/);
+  assert.doesNotMatch(admin, /0 as screening_on_file/);
+  assert.match(admin, /d\.license_status/);
+  assert.match(admin, /d\.license_verification_source/);
+  assert.match(admin, /d\.screening_on_file/);
+  const searchMerge = src("src/lib/server/approved-search.ts");
+  assert.match(searchMerge, /ALBERTA/);
+  assert.match(searchMerge, /hasLicenceEvidence/);
   const trust = src("src/lib/trust.ts");
   assert.match(trust, /if \(!evidence\) return \[]/);
   const migration = src("migrations/0053_approve_live_trust.sql");

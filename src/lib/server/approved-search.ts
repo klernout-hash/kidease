@@ -26,7 +26,13 @@ where ${PUBLIC_LISTING_SQL}
       and lower(coalesce(claim_status, '')) not in ('waiting', 'pending', 'unclaimed')
     )
   )
-  and upper(btrim(coalesce(province, ''))) = upper(btrim($1))
+  and (
+    upper(btrim(coalesce(province, ''))) = upper(btrim($1))
+    or (
+      upper(btrim($1)) = 'AB'
+      and upper(btrim(coalesce(province, ''))) in ('AB', 'ALBERTA')
+    )
+  )
 limit 300
 `;
 
