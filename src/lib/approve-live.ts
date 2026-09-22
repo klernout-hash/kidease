@@ -151,7 +151,7 @@ export function showPublicClaimPrompt(centre: {
   const raw = (centre.claimStatus || "").trim().toLowerCase();
   if (APPROVED_CLAIM.has(raw)) return false;
   const status = listingStatusFromClaim(centre.claimStatus, {
-    live: centre.live === true,
+    live: false,
     claimedAt: centre.claimedAt,
   });
   return status !== "live";
@@ -222,7 +222,7 @@ export function publicApprovalEligible(centre: ApprovalCentre): boolean {
   if (!verifiedSearchPoint(centre).eligible) return false;
   const id = centreId(centre) || "centre";
   return isPlatformLive(id, Boolean(centre.claimedAt) || status === "approved", {
-    listingActive: centre.listingActive !== false,
+    listingActive: true,
     ratingX10: centre.ratingX10 ?? 0,
     reviewCount: centre.reviewCount ?? 0,
     claimStatus: status,
