@@ -1239,6 +1239,33 @@ html[data-channel="website"] .ke-web-grid > article {
   height: 44px;
 }
 
+.ke-pin-popup {
+  position: absolute;
+  z-index: 380;
+  visibility: hidden;
+  width: min(16.5rem, calc(100% - 16px));
+}
+.ke-pin-popup.is-placed {
+  visibility: visible;
+}
+.ke-pin-popup .ke-pin-caret {
+  position: absolute;
+  left: var(--ke-caret-x, 50%);
+  width: 12px;
+  height: 12px;
+  background: var(--color-surface);
+  transform: translateX(-50%) rotate(45deg);
+  pointer-events: none;
+}
+.ke-pin-popup[data-placement="above"] .ke-pin-caret {
+  bottom: -6px;
+  box-shadow: 1px 1px 0 var(--color-border);
+}
+.ke-pin-popup[data-placement="below"] .ke-pin-caret {
+  top: -6px;
+  box-shadow: -1px -1px 0 var(--color-border);
+}
+
 .ke-logo-cluster {
   width: 40px;
   height: 40px;
