@@ -59,7 +59,16 @@ test("Listing has one primary CTA, sticky enquire, and a hero that shares the ti
   assert.match(listing, /data-ke="listing-sticky-cta"/);
   assert.match(listing, /ListingMoreActions/);
   assert.match(listing, /ke-listing-hero/);
+  assert.match(listing, /ListingHeroGallery/);
+  assert.match(listing, /data-ke="listing-trust-line"/);
+  assert.match(listing, /data-ke="listing-cta-snippet"/);
+  assert.match(listing, /variant="inline"/);
   assert.match(src("src/styles.css"), /aspect-ratio: 5 \/ 2/);
+  assert.match(src("src/styles.css"), /ke-listing-sections/);
+  assert.match(src("src/components/listing-hero-gallery.tsx"), /data-ke="listing-photo-count"/);
+  assert.match(src("src/components/listing-parent-pack.tsx"), /ke-listing-jump/);
+  assert.match(src("src/components/listing-parent-pack.tsx"), /jumpOverview/);
+  assert.match(src("src/components/shell.tsx"), /publicListing/);
   assert.doesNotMatch(listing, /md:aspect-\[2\/1\]/);
   assert.match(listing, /lg:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(16rem,20rem\)\]/);
   assert.match(listing, /claimCtaShort/);
