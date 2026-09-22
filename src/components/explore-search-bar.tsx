@@ -36,6 +36,10 @@ export function ExploreSearchBar({
   onLocate,
   origin,
   className,
+  startCollapsed = false,
+  childSummary,
+  childAges,
+  onChildAge,
 }: {
   values: ExploreSearchBarValues;
   onWhereChange: (q: string) => void;
@@ -48,6 +52,11 @@ export function ExploreSearchBar({
   onLocate?: () => void;
   origin?: { lat: number; lng: number };
   className?: string;
+  /** Results and home open as one pill; tap expands where → schedule → child. */
+  startCollapsed?: boolean;
+  childSummary?: string;
+  childAges?: { id: string; label: string; on: boolean }[];
+  onChildAge?: (id: string) => void;
 }) {
   const { t, locale } = useCopy();
   const whereId = useId();
@@ -60,6 +69,7 @@ export function ExploreSearchBar({
   const whenPanelId = useId();
   const wrap = useRef<HTMLFormElement>(null);
   const [active, setActive] = useState<Field | null>(null);
+  const [expanded, setExpanded] = useState(!startCollapsed);
   const dateLabel = formatExploreDateRange(values.from, values.to, locale);
   const startLabel = start ? t(START_COPY[start]) : "";
   const whenLabel = onStartChange ? startLabel || t("searchWhenHint") : dateLabel || t("searchWhenHint");
@@ -97,6 +107,29 @@ export function ExploreSearchBar({
     );
   }
 
+  if (!expanded) {
+    const whereLine = values.where.trim() || t("findChildcare");
+    const meta = [whenFilled ? whenLabel : t("searchWhen"), childSummary].filter(Boolean).join(" · ");
+    return (
+      <div className={cn("w-full", className)}>
+        <button
+          type="button"
+          data-ke="search-pill"
+          className="flex min-h-14 w-full items-center gap-3 rounded-full bg-surface px-4 text-left shadow-card ring-1 ring-border"
+          aria-expanded={false}
+          aria-label={t("searchBarAria")}
+          onClick={() => setExpanded(true)}
+        >
+          <Search className="size-5 shrink-0 text-fg" strokeWidth={2.25} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-fg">{whereLine}</span>
+            <span className="block truncate text-xs text-muted">{meta}</span>
+          </span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <form
       ref={wrap}
@@ -107,9 +140,24 @@ export function ExploreSearchBar({
         e.preventDefault();
         setActive(null);
         onSubmit();
+        if (startCollapsed) setExpanded(false);
       }}
     >
-      <div className="relative z-20 flex flex-col min-h-[8.4rem] divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-lift ring-1 ring-border/80 lg:min-h-[2.75rem] lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
+      {startCollapsed ? (
+        <div className="mb-2 flex justify-end">
+          <button
+            type="button"
+            className="min-h-11 px-2 text-sm font-medium text-muted"
+            onClick={() => {
+              setActive(null);
+              setExpanded(false);
+            }}
+          >
+            {t("close")}
+          </button>
+        </div>
+      ) : null}
+      <div className="relative z-20 flex min-h-[8.4rem] flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:min-h-[2.75rem] lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
         <div className={segmentClass("where", 0)} onClick={() => setActive("where")}>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
@@ -176,7 +224,7 @@ export function ExploreSearchBar({
               id={whenPanelId}
               role="group"
               aria-labelledby={whenLabelId}
-              className="absolute left-2 right-2 top-full z-[60] mt-1.5 rounded-xl bg-surface p-3 shadow-lift ring-1 ring-border lg:left-0 lg:right-auto lg:w-[20rem]"
+              className="absolute left-2 right-2 top-full z-[60] mt-1.5 rounded-xl bg-surface p-3 shadow-card ring-1 ring-border lg:left-0 lg:right-auto lg:w-[20rem]"
             >
               {onStartChange ? (
                 <>
@@ -281,11 +329,28 @@ export function ExploreSearchBar({
             <button
               type="submit"
               className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-              aria-label={t("search")}
+              aria-label={t("findChildcare")}
             >
               <Search className="size-5" strokeWidth={2.25} />
             </button>
           </div>
+          {childAges?.length && active === "name" && onChildAge ? (
+            <div className="absolute left-2 right-2 top-full z-[60] mt-1.5 rounded-xl bg-surface p-3 shadow-card ring-1 ring-border lg:left-auto lg:right-0 lg:w-[22rem]">
+              <p className="text-sm font-semibold text-fg">{t("searchChildAge")}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {childAges.map((age) => (
+                  <ChipButton
+                    key={age.id}
+                    on={age.on}
+                    aria-pressed={age.on}
+                    onClick={() => onChildAge(age.id)}
+                  >
+                    {age.label}
+                  </ChipButton>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </form>

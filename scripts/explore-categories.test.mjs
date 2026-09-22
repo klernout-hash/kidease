@@ -393,7 +393,7 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.match(chips, /RAIL_AGES/);
   assert.match(search, /s\.cat/);
   assert.match(search, /isExploreCategory/);
-  assert.match(search, /ke-listings/);
+  assert.match(search, /data-ke="search-result-list"/);
   assert.doesNotMatch(search, /showCentres/);
   assert.doesNotMatch(search, /showNurseries/);
   assert.doesNotMatch(search, /showHomes/);

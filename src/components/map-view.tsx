@@ -22,13 +22,9 @@ import {
   type ListingOverlay,
   type MovableDot,
 } from "@/lib/google-maps";
-import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto } from "@/components/building-photo";
 import { listingThumb } from "@/lib/listing-photo";
-import { PriorityPill } from "@/components/priority-pill";
-import { GuestFavoriteBadge } from "@/components/guest-favorite";
-import { TrustSignals } from "@/components/trust-badge";
-import { feeBadgeKey, licenseRecordUrl } from "@/lib/licensing";
+import { listingAgeRangeText } from "@/lib/listing-ages";
 import { displayDistance } from "@/lib/units";
 
 type Props = {
@@ -495,75 +491,46 @@ export function MapView({
       </div>
 
       {selected ? (
-        <div className="absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border lg:bottom-3">
-          {selected.live ? <span className="block h-1 bg-primary" /> : null}
-          <div className="flex gap-3 p-3">
+        <div
+          data-ke="map-selected-card"
+          className="absolute inset-x-3 bottom-3 z-[400] overflow-hidden rounded-[14px] bg-surface shadow-card ring-1 ring-border"
+        >
+          <Link
+            to="/daycare/$slug"
+            params={{ slug: selected.slug }}
+            className="flex gap-3 p-2 text-inherit no-underline"
+          >
             <BuildingPhoto
               src={listingThumb(selected.photos)}
-              className="size-16 shrink-0 rounded-md object-cover"
-              sizes="64px"
-              width={160}
-              height={160}
+              className="aspect-[4/3] w-28 shrink-0 rounded-[10px] object-cover"
+              sizes="112px"
+              width={224}
+              height={168}
             />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <Link to="/daycare/$slug" params={{ slug: selected.slug }} className="block truncate text-[15px] font-semibold tracking-[-0.015em] hover:underline">
-                  {displayCentreName(locale === "fr" ? selected.nameFr : selected.name)}
-                </Link>
-                {selected.priority ? <PriorityPill /> : null}
-                <span
-                  className={
-                    selected.live
-                      ? "shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-fg"
-                      : "shrink-0 rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-muted"
-                  }
-                >
-                  {selected.live ? t("live") : t("notOnKidEase")}
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-muted">
+            <div className="min-w-0 flex-1 py-1">
+              <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">
+                {displayCentreName(locale === "fr" ? selected.nameFr : selected.name)}
+              </p>
+              <p className="mt-0.5 truncate text-[13px] text-muted">
+                {selected.city}
+                {" · "}
                 {displayDistance(selected.distanceKm, distanceUnit)} {distanceUnit === "mi" ? t("mi") : t("km")}
-                {" \u00b7 "}
-                {selected.live || selected.availabilityKnown
-                  ? selected.spotsTotal > 0
-                    ? `${selected.spotsTotal} ${t("spots")}`
-                    : t("waitlist")
-                  : t("availUnknown")}
               </p>
-              <p className="mt-1">
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                  {t(feeBadgeKey(selected.province))}
-                </span>
-              </p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <GuestFavoriteBadge item={selected} compact />
-                <TrustSignals item={selected} surface="card" compact />
-              </div>
-              <div className="mt-1">
-                <GoogleRating item={selected} ratingX10={selected.ratingX10} reviewCount={selected.reviewCount} compact />
-              </div>
+              {listingAgeRangeText(selected, "months") ? (
+                <p className="mt-0.5 truncate text-[13px] text-muted">{listingAgeRangeText(selected, "months")}</p>
+              ) : null}
               {selected.live && selected.fromPrice > 0 ? (
-                <p className="mt-0.5 text-sm tabular-nums">
-                  {t("monthlyFrom")} {money(selected.fromPrice, locale)}
-                  {t("month")}
+                <p className="mt-1 text-sm tabular-nums">
+                  <span className="font-semibold">{money(selected.fromPrice, locale)}</span>
+                  <span className="text-muted">{t("month")}</span>
                 </p>
-              ) : (
-                <p className="mt-0.5 text-xs text-muted">{t("feeUnknown")}</p>
-              )}
-              <a
-                href={licenseRecordUrl(selected.province, selected.name, selected.licenseNumber)}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 inline-block text-xs font-medium text-primary hover:underline"
-              >
-                {t("viewLicenceShort")}
-              </a>
+              ) : null}
             </div>
-          </div>
+          </Link>
           <div className="grid grid-cols-2 gap-2 border-t border-border p-2">
             <button
               type="button"
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-primary text-sm font-medium text-primary-fg"
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-[14px] bg-surface-2 text-sm font-semibold"
               onClick={() => void openDirections(selected.lat, selected.lng, selected.name)}
             >
               <Navigation className="size-4" />
@@ -572,9 +539,10 @@ export function MapView({
             <Link
               to="/daycare/$slug"
               params={{ slug: selected.slug }}
-              className="inline-flex h-10 items-center justify-center rounded-md bg-surface-2 text-sm font-medium"
+              search={selected.live ? { ask: "info" } : undefined}
+              className="inline-flex h-11 items-center justify-center rounded-[14px] bg-primary text-sm font-semibold text-primary-fg no-underline"
             >
-              {selected.live ? t("book") : t("viewListing")}
+              {selected.live ? t("requestInfo") : t("viewListing")}
             </Link>
           </div>
         </div>

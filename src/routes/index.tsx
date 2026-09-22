@@ -10,7 +10,6 @@ import { BrandMark } from "@/components/brand-mark";
 import { FacilityTypeRails } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
 import { ParentDeskRails } from "@/components/parent-desk-rails";
-import { DaycareCard } from "@/components/daycare-card";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
@@ -46,7 +45,7 @@ import { uniqueById } from "@/lib/utils";
 import { publicListings } from "@/lib/listing-visibility";
 import { readRecent } from "@/lib/recent";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
-import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
+import { resolveLocationQuery } from "@/components/place-search";
 import { CITY_HUB_DEFS, cityHubChipLabel, cityHubSearchQuery } from "@/lib/city-hubs";
 import { compactExploreSearch, guestHeroSearch } from "@/lib/explore-search";
 import { popularHomeCities } from "@/lib/home-popular-cities";
@@ -150,14 +149,11 @@ function Home() {
     ],
   );
   const [role, setRole] = useState<AppRole | null>(null);
-  const [q, setQ] = useState("");
   const [place, setPlace] = useState(origin.label);
   const [homeName, setHomeName] = useState("");
   const [homeFrom, setHomeFrom] = useState("");
   const [homeTo, setHomeTo] = useState("");
   const [homeStart, setHomeStart] = useState<SearchStart | "">("");
-  const [manual, setManual] = useState(true);
-  const [denied, setDenied] = useState(locationConsent === "denied");
   const [askLocation, setAskLocation] = useState(false);
   const [, setBusy] = useState(false);
   const [featured, setFeatured] = useState<Card[]>(publicListings(boot.featured ?? []));
@@ -190,13 +186,6 @@ function Home() {
       })
       .catch(() => undefined);
   }, [user]);
-
-  useEffect(() => {
-    if (locationConsent === "denied") {
-      setDenied(true);
-      setManual(true);
-    }
-  }, [locationConsent]);
 
   useEffect(() => {
     if (trustedSavedOrigin(readSavedOrigin(), { timeZone: readClientTimeZone() })) return;
@@ -299,8 +288,6 @@ function Home() {
       return true;
     }
     setLocationConsent("denied");
-    setDenied(true);
-    setManual(true);
     return false;
   }
 
@@ -358,60 +345,6 @@ function Home() {
     void navigate({ to: dest });
   }, [isPending, user, role, navigate]);
 
-  const locationForm = (
-    <>
-      {manual ? (
-        <>
-          <form
-            className="mt-5 max-w-md"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (q.trim()) void applyCity(q);
-            }}
-          >
-            {denied ? (
-              <p className="mb-2 text-sm text-muted">
-                Location is off. Enter a city, postal code, or daycare name to find licensed centres nearby.
-              </p>
-            ) : null}
-            <PlaceSearch
-              value={q}
-              onChange={setQ}
-              onResolved={(hit) => {
-                setOrigin({ ...hit, explicit: true }, "manual");
-                setQ(hit.label);
-                goSearch(hit.label);
-              }}
-              placeholder={t("locationPh")}
-              origin={origin}
-              inputClassName="ke-input w-full min-h-12"
-            />
-            <Button
-              type="submit"
-              className="mt-2 min-h-12 w-full rounded-[14px]"
-              disabled={!q.trim()}
-            >
-              {t("search")}
-            </Button>
-          </form>
-          <HomePopularCities
-            cities={popularCities}
-            label={t("heroPopular")}
-            onSelect={(query) => void applyCity(query)}
-          />
-        </>
-      ) : (
-        <button
-          type="button"
-          className="mt-5 text-sm text-muted underline-offset-4 hover:text-fg hover:underline"
-          onClick={() => setManual(true)}
-        >
-          {t("orEnterCity")}
-        </button>
-      )}
-    </>
-  );
-
   const featuredSearch = (
     <>
       <ExploreSearchBar
@@ -440,6 +373,7 @@ function Home() {
             setHomeTo("");
           }
         }}
+        startCollapsed
         onLocate={() => void pinLocation()}
         onSubmit={() => {
           void applyPlace(place).then((hit) => {
@@ -471,7 +405,6 @@ function Home() {
             }}
             onLater={() => {
               setAskLocation(false);
-              setManual(true);
             }}
           />
         </div>
@@ -495,8 +428,13 @@ function Home() {
                 {t("tagline")}
               </h1>
               <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
-              {locationForm}
-              {!manual ? <CityHubLinks className="mt-5" /> : null}
+              {featuredSearch}
+              <HomePopularCities
+                cities={popularCities}
+                label={t("heroPopular")}
+                onSelect={(query) => void applyCity(query)}
+              />
+              <CityHubLinks className="mt-5" />
               <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>
             </div>
             <div className="relative">
@@ -510,6 +448,36 @@ function Home() {
         <section className="border-y border-border bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-6">
             <TrustBar />
+          </div>
+        </section>
+
+        <section id="featured" className="ke-gutter mx-auto max-w-6xl py-8 md:py-12">
+          <h2 className="text-xl tracking-[-0.03em] md:text-2xl">{t("featured")}</h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted">{t("featuredBody")}</p>
+          <ResumeVisitCard />
+          {user && role !== "admin" && role !== "provider" ? (
+            <ParentDeskRails
+              items={explore.length ? explore : shown}
+              children={familyKids}
+              bookings={familyBookings}
+            />
+          ) : (
+            <HomeDiscovery
+              ready={featuredReady}
+              shown={shown}
+              availableNow={availableNow}
+              availableNextMonth={availableNextMonth}
+              recent={recentLooking}
+              liveOnly={liveOnly}
+              hasPublic={publicFeatured.length > 0}
+              onShowAll={() => setLiveOnly(false)}
+            />
+          )}
+          <div className="mt-6">
+            <Button size="md" variant="secondary" className="rounded-[14px]" onClick={() => goSearch(origin.label)}>
+              <Search className="size-5" />
+              {t("heroCta")}
+            </Button>
           </div>
         </section>
 
@@ -540,7 +508,7 @@ function Home() {
           </div>
         </section>
 
-        <section id="featured" className="bg-surface">
+        <section className="bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">
             <div id="enroll">
               <RoleEnrollChooser
@@ -549,50 +517,6 @@ function Home() {
               />
             </div>
 
-            <h2 className="mt-12 text-[clamp(1.75rem,4vw,2.25rem)]">{t("featured")}</h2>
-            <p className="mt-3 max-w-2xl text-muted">{t("featuredBody")}</p>
-            {featuredSearch}
-            <ResumeVisitCard />
-            {user && role !== "admin" && role !== "provider" ? (
-              <ParentDeskRails
-                items={explore.length ? explore : shown}
-                children={familyKids}
-                bookings={familyBookings}
-              />
-            ) : (
-              <>
-                {!featuredReady && shown.length === 0 ? (
-                  <HomeCardSkeleton />
-                ) : (
-                  <div className="ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5">
-                    {shown.slice(0, 9).map((item) => (
-                      <DaycareCard key={item.id} item={item} />
-                    ))}
-                  </div>
-                )}
-                {featuredReady && shown.length === 0 ? (
-                  <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
-                    <EmptyState
-                      title={liveOnly && publicFeatured.length > 0 ? t("noLiveResults") : t("noResults")}
-                      body={liveOnly && publicFeatured.length > 0 ? t("noLiveResultsLead") : t("noResultsLead")}
-                      action={liveOnly && publicFeatured.length > 0 ? t("showAll") : t("changeLocation")}
-                      onAction={
-                        liveOnly && publicFeatured.length > 0 ? () => setLiveOnly(false) : undefined
-                      }
-                      actionTo={liveOnly && publicFeatured.length > 0 ? undefined : "/?change=1"}
-                      secondary={liveOnly && publicFeatured.length > 0 ? t("noLiveResultsClaim") : undefined}
-                      secondaryTo={liveOnly && publicFeatured.length > 0 ? "/claim" : undefined}
-                    />
-                  </div>
-                ) : null}
-              </>
-            )}
-            <div className="mt-8">
-              <Button size="md" variant="secondary" className="rounded-[14px]" onClick={() => goSearch(origin.label)}>
-                <Search className="size-5" />
-                {t("heroCta")}
-              </Button>
-            </div>
           </div>
         </section>
 
@@ -680,10 +604,10 @@ function Home() {
             />
           ) : (
             <>
-              <ListingRail title={t("recentlyViewed")} items={recentLooking} eagerThumbs={false} />
-              <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} />
-              <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} />
-              <FacilityTypeRails items={shown} />
+              <ListingRail title={t("recentlyViewed")} items={recentLooking} eagerThumbs={false} visual />
+              <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
+              <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
+              <FacilityTypeRails items={shown} visual />
               {!featuredReady && shown.length === 0 ? (
                 <HomeCardSkeleton />
               ) : shown.length === 0 ? (
@@ -712,6 +636,52 @@ function Home() {
 
       <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />
     </Shell>
+  );
+}
+
+function HomeDiscovery({
+  ready,
+  shown,
+  availableNow,
+  availableNextMonth,
+  recent,
+  liveOnly,
+  hasPublic,
+  onShowAll,
+}: {
+  ready: boolean;
+  shown: Card[];
+  availableNow: Card[];
+  availableNextMonth: Card[];
+  recent: Card[];
+  liveOnly: boolean;
+  hasPublic: boolean;
+  onShowAll: () => void;
+}) {
+  const { t } = useCopy();
+  if (!ready && shown.length === 0) return <HomeCardSkeleton />;
+  if (shown.length === 0) {
+    return (
+      <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
+        <EmptyState
+          title={liveOnly && hasPublic ? t("noLiveResults") : t("noResults")}
+          body={liveOnly && hasPublic ? t("noLiveResultsLead") : t("noResultsLead")}
+          action={liveOnly && hasPublic ? t("showAll") : t("changeLocation")}
+          onAction={liveOnly && hasPublic ? onShowAll : undefined}
+          actionTo={liveOnly && hasPublic ? undefined : "/?change=1"}
+          secondary={liveOnly && hasPublic ? t("noLiveResultsClaim") : undefined}
+          secondaryTo={liveOnly && hasPublic ? "/claim" : undefined}
+        />
+      </div>
+    );
+  }
+  return (
+    <>
+      <ListingRail title={t("recentlyViewed")} items={recent} eagerThumbs={false} visual />
+      <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
+      <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
+      <FacilityTypeRails items={shown} visual />
+    </>
   );
 }
 

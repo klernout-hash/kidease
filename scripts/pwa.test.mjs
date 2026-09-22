@@ -25,7 +25,7 @@ test("390px guest chrome wraps instead of forcing a horizontal page scroll", () 
   assert.match(search, /ExploreSearchBar/);
   assert.match(search, /ExploreFilterBar/);
   const pill = src("src/components/explore-search-bar.tsx");
-  assert.match(pill, /flex flex-col/);
+  assert.match(pill, /flex-col/);
   assert.match(pill, /lg:flex-row/);
   assert.match(pill, /size-11 shrink-0/);
 });

@@ -39,23 +39,22 @@ test("app home uses one location bar; website does not stack rails and the featu
   const home = src("src/routes/index.tsx");
   const appBlock = home.slice(home.indexOf("ke-app-only"));
   const webBlock = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
-  const form = home.slice(home.indexOf("const locationForm"), home.indexOf("const featuredSearch"));
+  assert.match(home, /const featuredSearch/);
+  assert.match(home, /<ExploreSearchBar/);
   assert.match(appBlock, /featuredSearch/);
   assert.match(appBlock, /CITY_CHIPS/);
   assert.match(appBlock, /applyPlace/);
   assert.doesNotMatch(appBlock, /locationForm/);
   assert.doesNotMatch(appBlock, /useLocation\(\)/);
-  assert.doesNotMatch(appBlock, /ExploreSearchBar/);
   assert.match(home, /user && role !== "admin" && role !== "provider"/);
-  assert.match(home, /ke-web-grid/);
-  assert.match(home, /const \[manual, setManual\] = useState\(true\)/);
-  assert.match(form, /PlaceSearch/);
-  assert.match(form, /HomePopularCities/);
-  assert.doesNotMatch(form, /cityChips/);
-  assert.match(form, /min-h-12/);
-  assert.doesNotMatch(form, /ExploreSearchBar/);
-  assert.match(webBlock, /locationForm/);
-  assert.doesNotMatch(webBlock, /<ExploreSearchBar/);
+  assert.match(webBlock, /featuredSearch/);
+  assert.match(webBlock, /HomePopularCities/);
+  assert.match(webBlock, /<HomeDiscovery/);
+  assert.match(home, /FacilityTypeRails items=\{shown\} visual/);
+  assert.doesNotMatch(webBlock, /ke-web-grid/);
+  assert.doesNotMatch(home, /const locationForm/);
+  assert.doesNotMatch(home, /const \[manual, setManual\]/);
+  assert.match(src("src/components/explore-search-bar.tsx"), /PlaceSearch/);
 });
 
 test("listing nearby uses a rail; compare and missing listing use EmptyState copy", () => {

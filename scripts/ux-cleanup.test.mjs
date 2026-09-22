@@ -20,7 +20,8 @@ test("Explore hides empty category rails and keeps #209 single-bar filters", () 
   assert.match(rails, /openingsSelected \|\| \(!filtered && openings\.length > 0\)/);
   assert.match(rails, /persist=\{forced\}/);
   assert.match(search, /preferCompleteCards/);
-  assert.match(search, /h-\[min\(40dvh,22rem\)\]/);
+  assert.match(search, /h-\[min\(72dvh,36rem\)\]/);
+  assert.match(search, /lg:h-\[min\(62vh,34rem\)\]/);
   assert.doesNotMatch(search, /62dvh/);
   assert.doesNotMatch(search, /lg:h-\[70vh\]/);
   assert.match(bar, /data-ke="explore-map-toggle"/);
@@ -81,7 +82,7 @@ test("Listing has one primary CTA, sticky enquire, and a hero that shares the ti
 test("Home is search-first above the fold with one primary", () => {
   const home = src("src/routes/index.tsx");
   const hero = home.slice(home.indexOf("from-soft"), home.indexOf("id=\"how\""));
-  assert.match(hero, /locationForm/);
+  assert.match(hero, /featuredSearch/);
   assert.match(hero, /from-soft/);
   assert.match(home, /HomePopularCities/);
   assert.doesNotMatch(hero, /hero-trust-chips/);

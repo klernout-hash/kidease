@@ -126,13 +126,14 @@ test("generated city-hubs.json keeps Winnipeg and other dense cities", () => {
 
 test("guest home uses a short popular-city line, not the 10-city chip grid", () => {
   const home = src("src/routes/index.tsx");
-  const form = home.slice(home.indexOf("const locationForm"), home.indexOf("const featuredSearch"));
-  assert.match(form, /HomePopularCities/);
-  assert.match(form, /popularCities/);
-  assert.match(form, /applyCity/);
-  assert.doesNotMatch(form, /cityChips/);
-  assert.doesNotMatch(form, /ChipButton/);
-  assert.doesNotMatch(form, /CityHubLinks/);
+  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
+  const hero = web.slice(web.indexOf("from-soft"), web.indexOf('id="how"'));
+  assert.match(hero, /HomePopularCities/);
+  assert.match(hero, /popularCities/);
+  assert.match(hero, /applyCity/);
+  assert.doesNotMatch(hero, /CITY_CHIPS/);
+  assert.doesNotMatch(hero, /ChipButton/);
+  assert.equal((hero.match(/<CityHubLinks/g) ?? []).length, 1);
   assert.match(home, /CITY_HUB_DEFS\.map/);
   assert.match(home, /cityHubChipLabel/);
   assert.match(src("src/lib/city-hubs.ts"), /city: "Montréal"/);
@@ -141,9 +142,7 @@ test("guest home uses a short popular-city line, not the 10-city chip grid", () 
   assert.match(src("src/lib/copy.ts"), /heroPopular: "Popular"/);
   assert.match(src("src/lib/copy.ts"), /heroPopular: "Populaires"/);
 
-  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
   assert.equal((web.match(/<CityHubLinks/g) ?? []).length, 1);
-  assert.match(web, /!manual \? <CityHubLinks/);
   assert.doesNotMatch(web, /hero-trust-chips/);
   assert.doesNotMatch(web, /t\("requestInfo"\)/);
 

@@ -97,7 +97,7 @@ export function ParentShortlist({
                 />
                 <TrustSignals item={item} surface="parent" compact />
               </div>
-              <DaycareCard item={item} showDistance={located} />
+              <DaycareCard item={item} showDistance={located} presentation="visual" />
             </div>
           );
         })}

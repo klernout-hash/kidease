@@ -40,6 +40,6 @@ test("BuildingPhoto falls back to the original R2 URL when a transform 404s", ()
   assert.match(photo, /srcsetWidthsFor/);
   assert.match(detail, /DETAIL_SIZES/);
   assert.match(detail, /width=\{768\}/);
-  assert.match(map, /sizes="64px"/);
-  assert.match(map, /width=\{160\}/);
+  assert.match(map, /sizes="112px"/);
+  assert.match(map, /width=\{224\}/);
 });
