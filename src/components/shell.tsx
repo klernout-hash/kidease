@@ -49,11 +49,12 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   }, []);
 
   const barePath = stripLocalePrefix(pathname);
+  const publicListing = /^\/daycare\/(?!city(?:\/|$))[^/]+/.test(barePath);
   const guestBrowse =
     barePath === "/" ||
     barePath === "/search" ||
     barePath === "/explore" ||
-    barePath.startsWith("/daycare");
+    publicListing;
   const hideTabs = barePath.startsWith("/login");
   const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
   const verifyLite = pathname.startsWith("/verify-2fa");

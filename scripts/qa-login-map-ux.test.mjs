@@ -143,7 +143,7 @@ describe("QA 2026-09-10: map hang + licensed-not-live honesty", () => {
     assert.doesNotMatch(search, /data-ke="licensed-not-live"/);
     assert.doesNotMatch(search, /licensedNotLiveLead/);
     assert.match(search, /fabric\.live/);
-    assert.match(search, /ExploreCategoryRails/);
+    assert.match(search, /data-ke="search-result-list"/);
     assert.doesNotMatch(copy, /searchLiveEmptyCount: "0 live · \{n\} listed"/);
   });
 });

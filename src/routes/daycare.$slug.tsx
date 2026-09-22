@@ -6,6 +6,7 @@ import { FreeListingShareActions } from "@/components/free-listing-share";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
+import { ListingHeroGallery } from "@/components/listing-hero-gallery";
 import { ListingRail } from "@/components/listing-rail";
 import { RequestSpotSheet } from "@/components/request-spot";
 import { RequestTourSheet } from "@/components/request-tour";
@@ -284,9 +285,9 @@ function Listing() {
     return (
       <Shell>
         <ListingJsonLd src={seo} locale={seoLocale} />
-        <main className="ke-gutter mx-auto max-w-6xl py-6">
-          <div className="overflow-hidden rounded-[14px] bg-surface ring-1 ring-border">
-            <div className="ke-listing-hero relative">
+        <main className="mx-auto max-w-5xl overflow-x-hidden">
+          <div className="lg:ke-gutter lg:pt-4">
+            <div className="ke-listing-hero relative lg:overflow-hidden lg:rounded-[14px]" data-empty={earlyReal ? undefined : "true"}>
               {earlyReal ? (
                 <BuildingPhoto
                   eager
@@ -307,8 +308,10 @@ function Listing() {
               )}
             </div>
           </div>
-          {earlyName ? <h1 className="mt-2 font-display text-[1.4rem] leading-tight md:text-[1.65rem]">{earlyName}</h1> : null}
-          <PageSkeleton hero={false} cards={2} />
+          <div className="ke-gutter">
+            {earlyName ? <h1 className="mt-3 font-display text-[1.75rem] leading-tight md:text-[2rem]">{earlyName}</h1> : null}
+            <PageSkeleton hero={false} cards={2} />
+          </div>
         </main>
       </Shell>
     );
@@ -337,8 +340,6 @@ function Listing() {
   })();
   const gallery = photos.filter((src) => isRealListingPhoto(src));
   const roomPhotos = interiors.filter((src) => isRealListingPhoto(src));
-  const heroIndex = gallery.length ? Math.min(photo, gallery.length - 1) : 0;
-  const heroSrc = gallery[heroIndex];
   const prices = [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].filter((n): n is number => n != null && n > 0);
   const from = prices.length ? Math.min(...prices) : 0;
   const live = Boolean(d.live);
@@ -357,6 +358,9 @@ function Listing() {
   const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
+  const licenceNo = officialLicenceNumber(d.licenseNumber, d.id);
+  const parentRated = (d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0;
+  const googleRated = d.reviewCount > 0 && d.ratingX10 > 0;
 
   function goLogin(
     reason?: "needSignInTour" | "needSignInSave" | "needSignInMessage" | "guestSignInReturn",
@@ -419,6 +423,7 @@ function Listing() {
   const waitlisted = known && spots <= 0;
   const offerClaim = showPublicClaimPrompt(d);
   const cityHub = cityHubDefForPlace(d.city, d.province);
+  const heroBack = cityHub ? { to: "/daycare/city/$city" as const, city: cityHub.slug } : { to: "/search" as const };
 
   function ListingOverflowItems() {
     return (
@@ -495,8 +500,22 @@ function Listing() {
     <Shell>
       <ListingJsonLd src={jsonLdSrc} locale={seoLocale} />
       <JsonLd json={jsonLdSrc ? listingBreadcrumbJsonLdScript(jsonLdSrc, seoLocale) : ""} />
-      <article className="ke-dense ke-gutter mx-auto max-w-5xl overflow-x-hidden py-3 pb-28 md:pb-8">
-        <nav className="mb-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0 text-muted">
+      <article className="ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(8.75rem+env(safe-area-inset-bottom))] lg:pb-10">
+        <div className="lg:ke-gutter lg:pt-4">
+          <ListingHeroGallery
+            photos={gallery}
+            index={photo}
+            onIndex={setPhoto}
+            back={heroBack}
+            slug={d.slug}
+            name={name}
+            daycareId={d.id}
+            nextPath={`/daycare/${slug}`}
+            photoId={roomPhotos.length ? undefined : "listing-photos"}
+          />
+        </div>
+        <div className="ke-gutter">
+        <nav className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0 text-muted">
           <Link to="/" className="ke-crumb hover:text-fg hover:underline">
             KidEase
           </Link>
@@ -522,89 +541,52 @@ function Listing() {
           <span aria-hidden>/</span>
           <span className="text-fg">{name}</span>
         </nav>
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
-        <div
-          id={roomPhotos.length ? undefined : "listing-photos"}
-          className="scroll-mt-20 overflow-hidden rounded-[14px] bg-surface ring-1 ring-border"
-        >
-          <div className="ke-listing-hero relative">
-            {heroSrc?.includes("-logo") ? (
-              <img src={heroSrc} alt="" className="size-full object-contain bg-surface p-3" />
-            ) : heroSrc ? (
-              <BuildingPhoto
-                eager
-                priority
-                src={heroSrc}
-                sizes={DETAIL_SIZES}
-                width={768}
-                height={576}
-                className="size-full object-cover"
-              />
-            ) : (
-              <ListingPhotoFallback className="size-full" />
+        <header className="mt-1">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="font-display text-[1.75rem] leading-tight md:text-[2rem]">{name}</h1>
+            {gallery.length ? null : (
+              <ShareListingButton slug={d.slug} name={name} appearance="icon" className="shrink-0" />
             )}
-            {gallery.length > 1 ? (
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-0.5">
-                {gallery.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    aria-label={`Photo ${i + 1}`}
-                    aria-current={i === heroIndex}
-                    onClick={() => setPhoto(i)}
-                    className="grid size-11 place-items-center"
-                  >
-                    <span className={i === heroIndex ? "size-2 rounded-full bg-surface" : "size-2 rounded-full bg-surface/50"} />
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            {!heroSrc ? (
-              <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-muted">
-                {t("photoPending")}
-              </span>
-            ) : null}
           </div>
-        </div>
-        <div className="min-w-0 lg:sticky lg:top-20 lg:pt-1">
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <h1 className="font-display text-[1.4rem] leading-tight md:text-[1.65rem]">{name}</h1>
+          <p className="mt-1 text-sm text-muted">
+            {d.city}, {d.province}
+          </p>
+          {(locale === "fr" ? d.taglineFr : d.tagline)?.trim() ? (
+            <p className="mt-0.5 text-sm text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
+          ) : null}
+          {approved || licensed || licenceNo ? (
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" data-ke="listing-trust-line">
               {approved ? (
                 <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} variant="inline" />
               ) : licensed ? (
                 <TrustBadge badge={licensed} compact />
               ) : null}
-            </div>
-            <p className="mt-1 text-sm text-muted">
-              {d.address}, {d.city}, {d.province} {d.postalCode}
+              {licenceNo ? (
+                <span className="text-muted">
+                  {t("license")} {licenceNo}
+                </span>
+              ) : null}
             </p>
-            {(locale === "fr" ? d.taglineFr : d.tagline)?.trim() ? (
-              <p className="mt-1 text-sm text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
-            ) : null}
-            <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={from} />
-            <ListingBadges item={ranked} compact feeOnly />
-            <div className="ke-panel mt-3 hidden px-3 py-2.5 shadow-card lg:block">
-              <p className="text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
-              {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
-              <div className="mt-2 grid gap-1.5">
-                <ListingActions />
-                {live && waitlisted ? (
-                  <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
-                ) : null}
-                <ListingMoreActions>
-                  <ListingOverflowItems />
-                  <div className="px-1 py-1">
-                    <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
-                    <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
-                  </div>
-                </ListingMoreActions>
-                <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" />
-              </div>
-              <p className="mt-3 text-xs text-subtle">{t("privacyNote")}</p>
+          ) : null}
+          {parentRated ? (
+            <a href="#listing-reviews" className="mt-1 inline-flex min-h-11 items-center gap-1.5 text-sm">
+              <Star className="size-3.5 fill-current" />
+              <span className="font-semibold tabular-nums">{((d.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
+              <span className="text-muted">
+                · {d.parentReviewCount} {t("reviews")}
+              </span>
+            </a>
+          ) : googleRated ? (
+            <div className="mt-1">
+              <GoogleRating item={d} ratingX10={d.ratingX10} reviewCount={d.reviewCount} compact />
             </div>
-        </div>
-        </div>
-        <div className="mt-8 min-w-0 space-y-10">
+          ) : null}
+          <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={from} />
+          <ListingBadges item={ranked} compact feeOnly />
+        </header>
+        <ListingJumpNav />
+        <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
+        <div id="listing-overview" className="ke-listing-sections min-w-0 scroll-mt-24">
             {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
               <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
             ) : null}
@@ -629,21 +611,6 @@ function Listing() {
                 </Link>
               </p>
             ) : null}
-            {d.reviewCount > 0 && d.ratingX10 > 0 ? (
-              <div className="space-y-1">
-                <GoogleRating item={d} ratingX10={d.ratingX10} reviewCount={d.reviewCount} />
-                <a
-                  href={googleReviewsHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block text-xs text-primary underline-offset-4 hover:underline"
-                >
-                  {t("viewOnGoogle")}
-                </a>
-              </div>
-            ) : null}
-
-            <ListingJumpNav />
 
             {(desc || "").trim() ? (
               <section>
@@ -739,6 +706,16 @@ function Listing() {
               ) : (
                 <p className="mt-2 text-sm text-muted">{t("reviewsEnrolledEmpty")}</p>
               )}
+              {googleRated ? (
+                <a
+                  href={googleReviewsHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {t("viewOnGoogle")}
+                </a>
+              ) : null}
               <ListingReviewForm daycareId={d.id} slug={d.slug} />
             </section>
 
@@ -860,21 +837,45 @@ function Listing() {
                 .join(" · ")}
             </p>
         </div>
+        <aside className="ke-panel hidden h-fit px-4 py-4 shadow-card lg:sticky lg:top-20 lg:block">
+          <ListingCtaSnippet live={live} from={from} hours={hours} prominent />
+          <p className="mt-1 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
+          {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
+          <div className="mt-3 grid gap-1.5">
+            <ListingActions />
+            {live && waitlisted ? (
+              <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
+            ) : null}
+            <ListingMoreActions>
+              <ListingOverflowItems />
+              <div className="px-1 py-1">
+                <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
+                <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
+              </div>
+            </ListingMoreActions>
+            <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" />
+          </div>
+          <p className="mt-3 text-xs text-subtle">{t("privacyNote")}</p>
+        </aside>
+        </div>
 
         {data.nearby.length ? (
           <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref="/search" className="mt-12 first:mt-12" />
         ) : null}
+        </div>
       </article>
 
       {!requestOpen ? (
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden [[data-channel=app]_&]:bottom-20">
-        <div className="mx-auto flex max-w-lg items-center gap-2">
+        <div className="mx-auto max-w-lg">
+          <ListingCtaSnippet live={live} from={from} hours={hours} />
+          <div className="flex items-center gap-2">
           {live ? (
             <>
-              <Button className="h-12 min-h-12 flex-1 rounded-[14px] px-3 text-sm" data-ke="listing-sticky-cta" onClick={onInfo}>
+              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight" data-ke="listing-sticky-cta" onClick={onInfo}>
                 {t("requestInfo")}
               </Button>
-              <Button className="h-12 min-h-12 flex-1 rounded-[14px] px-3 text-sm" variant="secondary" data-ke="listing-sticky-tour" onClick={onTour}>
+              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight" variant="secondary" data-ke="listing-sticky-tour" onClick={onTour}>
                 {t("bookTour")}
               </Button>
             </>
@@ -891,6 +892,7 @@ function Listing() {
               <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
             </div>
           </ListingMoreActions>
+          </div>
         </div>
       </div>
       ) : null}
@@ -926,6 +928,31 @@ function Meta({ label, value }: { label: string; value: string }) {
       <dt className="text-[11px] leading-4 text-muted">{label}</dt>
       <dd className="truncate text-sm font-medium leading-5">{value}</dd>
     </div>
+  );
+}
+
+function ListingCtaSnippet({
+  live,
+  from,
+  hours,
+  prominent = false,
+}: {
+  live: boolean;
+  from: number;
+  hours: string;
+  prominent?: boolean;
+}) {
+  const { t, locale } = useCopy();
+  const fee = live && from > 0 ? `${t("monthlyFrom")} ${money(from, locale)}${t("month")}` : "";
+  const hoursText = hours.trim();
+  const showHours = Boolean(hoursText && hoursText !== "—" && hoursText !== "-");
+  if (!fee && !showHours) return null;
+  return (
+    <p className={prominent ? "text-sm leading-5" : "mb-1.5 truncate text-sm leading-5"} data-ke="listing-cta-snippet">
+      {fee ? <span className="font-semibold text-fg">{fee}</span> : null}
+      {fee && showHours ? <span className="text-muted"> · </span> : null}
+      {showHours ? <span className="text-muted">{hoursText}</span> : null}
+    </p>
   );
 }
 

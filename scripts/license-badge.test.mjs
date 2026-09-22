@@ -186,8 +186,8 @@ test("guest listing detail also hides Catalogue-matched", () => {
   const verify = src("src/lib/license-verify.ts");
   assert.match(verify, /isCatalogueMatchedBadge\(badge\)/);
   const trust = src("src/lib/trust.ts");
-  assert.match(trust, /surface === "parent"/);
-  assert.match(trust, /!isCatalogueMatchedBadge\(license\)/);
+  assert.match(trust, /surface === "card" \|\| surface === "parent"/);
+  assert.match(trust, /isCatalogueMatchedBadge\(license\) \? \[\] : \[license\]/);
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /publicLicenseBadge/);
   assert.doesNotMatch(listing, /trustCatalogueMatched/);

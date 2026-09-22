@@ -44,6 +44,8 @@ test("card face is decision facts; contracts, payments, and registry tools sit u
   assert.ok(packsAt > moreAt, "contract rows render inside Details");
   assert.doesNotMatch(card, /TrustSignals|CentrePackChips/);
   assert.match(card, /Files, trust, and contracts/);
+  assert.match(card, /licenceFileMissingCopy/);
+  assert.match(card, /View licence document/);
 
   const decision = reviewCardLayout("decision");
   assert.deepEqual(decision.face, ["identity", "facts", "decision"]);

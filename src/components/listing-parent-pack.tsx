@@ -50,6 +50,7 @@ export function ListingHeaderPills({
 export function ListingJumpNav() {
   const { t } = useCopy();
   const links = [
+    ["listing-overview", "jumpOverview"],
     ["listing-programs", "jumpPrograms"],
     ["listing-fees", "jumpFees"],
     ["listing-location", "jumpLocation"],
@@ -58,13 +59,12 @@ export function ListingJumpNav() {
     ["listing-tours", "tourTimesJump"],
   ] as const;
   return (
-    <nav className="flex flex-wrap gap-x-4 gap-y-0 text-sm" aria-label={t("jumpPrograms")}>
+    <nav
+      className="ke-listing-jump -mx-[clamp(12px,3vw,40px)] px-[clamp(12px,3vw,40px)] lg:mx-0 lg:px-0"
+      aria-label={t("jumpOverview")}
+    >
       {links.map(([id, key]) => (
-        <a
-          key={id}
-          href={`#${id}`}
-          className="inline-flex min-h-11 items-center text-muted underline-offset-4 hover:text-fg hover:underline"
-        >
+        <a key={id} href={`#${id}`}>
           {t(key)}
         </a>
       ))}

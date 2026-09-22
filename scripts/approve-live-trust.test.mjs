@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   adminLicenceFact,
+  licenceFileMissingCopy,
   approvalHealthSummary,
   canOfferApprove,
   approvalScreeningFact,
@@ -146,6 +147,11 @@ test("approval requires licence and screening, then reports Live search and trus
   assert.equal(plan.next.claimStatus, "approved");
   assert.equal(plan.next.licenseNumber, "70051797");
   assert.equal(plan.next.licenseVerificationSource, "admin");
+  assert.equal(plan.next.licensePhoto, null);
+  assert.equal(
+    plan.health.checks.find((check) => check.id === "licence")?.detail,
+    "Licence number 70051797 is on file",
+  );
   assert.equal(publicApprovalEligible(plan.next), true);
   assert.equal(approvalHealthSummary(plan.health).title, "Approval checks passed");
   assert.ok(plan.health.checks.some((check) => check.id === "search_memo" && check.ok));
@@ -160,16 +166,50 @@ test("admin licence follows the public number instead of the private file", () =
     licenseStatus: "unverified",
     daycareId: "ab-kh2t",
   });
-  assert.equal(fact.status, "On file · 70051797");
+  assert.equal(fact.status, "Licence number on file · 70051797");
   assert.equal(fact.tone, "ready");
   assert.notEqual(fact.status, "Missing");
+  assert.doesNotMatch(fact.status, /file on file|pdf|uploaded/i);
+
+  const withFile = adminLicenceFact({
+    licenseNumber: "70051797",
+    licensePhoto: "licenses/ab-kh2t/licence.pdf",
+    licenseStatus: "matched",
+    daycareId: "ab-kh2t",
+  });
+  assert.equal(withFile.status, "Submitted · matched");
+  assert.equal(
+    adminLicenceFact({ licenseNumber: "70051797", licenseStatus: "expired", daycareId: "ab-kh2t" }).status,
+    "Licence number on file · 70051797 · expired",
+  );
+  assert.equal(
+    adminLicenceFact({ licensePhoto: "licenses/ab-kh2t/licence.pdf", licenseStatus: "expired" }).status,
+    "Submitted · expired",
+  );
+  assert.equal(
+    adminLicenceFact({
+      licenseNumber: "70051797",
+      licensePhoto: "licenses/ab-kh2t/licence.pdf",
+      licenseStatus: "expired",
+      daycareId: "ab-kh2t",
+    }).status,
+    "Submitted · 70051797 · expired",
+  );
 
   const card = reviewDecisionFacts({
     licenseNumber: "70051797",
     daycareId: "ab-kh2t",
     staffScreeningAttested: true,
   });
-  assert.equal(card[0].status, "On file · 70051797");
+  assert.equal(card[0].status, "Licence number on file · 70051797");
+  assert.equal(
+    licenceFileMissingCopy({
+      licenseNumber: "70051797",
+      daycareId: "ab-kh2t",
+      storefrontPresent: true,
+    }),
+    "Licence number 70051797 is saved. No licence file uploaded yet.",
+  );
   assert.equal(card[1].status, "Attested");
   assert.doesNotMatch(card.map((row) => row.status).join(" "), /pdf|licenses\/|storage_ref|data:application/i);
 });
@@ -380,7 +420,7 @@ test("kh2t approval, licence, Live, and Edmonton search move together", () => {
     licenseStatus: "unverified",
     daycareId: "ab-kh2t",
   });
-  assert.equal(licence.status, "On file · 70051797");
+  assert.equal(licence.status, "Licence number on file · 70051797");
   assert.notEqual(licence.status, "Missing");
 
   const unverifiedApproved = {

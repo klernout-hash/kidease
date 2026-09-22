@@ -103,7 +103,9 @@ test("badge meaning is shared: cards, listing, compare, provider, admin", () => 
   assert.match(src("src/components/listing-badges.tsx"), /TrustSignals/);
   assert.match(src("src/routes/provider.tsx"), /TrustSignals/);
   assert.match(src("src/components/admin-trust.tsx"), /TrustSignals/);
-  assert.match(src("src/components/map-view.tsx"), /TrustSignals/);
+  assert.match(src("src/components/map-view.tsx"), /data-ke="map-selected-card"/);
+  assert.doesNotMatch(src("src/components/map-view.tsx"), /TrustSignals/);
+  assert.doesNotMatch(src("src/components/map-view.tsx"), /feeBadgeKey/);
 });
 
 test("listing health scores real fields and never invents a vacancy time", () => {

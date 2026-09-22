@@ -110,11 +110,10 @@ test("nearby trusted geo leads the popular list; inferred Toronto does not", () 
 test("guest home hero no longer duplicates Explore filter chips or the city grid", () => {
   const home = src("src/routes/index.tsx");
   const hero = home.slice(home.indexOf("from-soft"), home.indexOf('id="how"'));
-  const form = home.slice(home.indexOf("const locationForm"), home.indexOf("const featuredSearch"));
-  assert.match(form, /HomePopularCities/);
-  assert.match(form, /PlaceSearch/);
-  assert.match(form, /t\("search"\)/);
-  assert.doesNotMatch(form, /ChipButton/);
+  assert.match(hero, /HomePopularCities/);
+  assert.match(hero, /featuredSearch/);
+  assert.match(src("src/components/explore-search-bar.tsx"), /PlaceSearch/);
+  assert.doesNotMatch(hero, /ChipButton/);
   assert.doesNotMatch(hero, /hero-trust-chips/);
   assert.doesNotMatch(hero, /t\("trustLicensedOnly"\)/);
   assert.doesNotMatch(hero, /t\("sortOpen"\)/);

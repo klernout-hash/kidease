@@ -42,12 +42,13 @@ test("listing card copy stays a compact single stack with 44px save target", () 
   assert.match(card, /truncate text-\[12px\] font-normal leading-4/);
   assert.match(card, /text-\[12px\] leading-4 tabular-nums/);
   assert.match(card, /aspect-\[3\/2\]/);
+  assert.match(card, /aspect-\[4\/3\]/);
+  assert.match(card, /data-ke="visual-card"/);
+  assert.match(card, /line-clamp-2 min-w-0 whitespace-normal text-\[15px\]/);
   assert.doesNotMatch(card, /aspect-\[20\/19\]/);
-  assert.doesNotMatch(card, /aspect-\[4\/3\]/);
   assert.match(card, /SaveListingButton/);
   assert.match(save, /grid size-11 place-items-center rounded-full/);
   assert.doesNotMatch(card, /Guest favourite/);
-  assert.doesNotMatch(card, /text-\[15px\] font-semibold leading-\[1\.2\]/);
 });
 
 test("rails, search skeletons, and featured grids share the tighter footprint", () => {
@@ -56,10 +57,12 @@ test("rails, search skeletons, and featured grids share the tighter footprint", 
   const home = src("src/routes/index.tsx");
   const photo = src("src/lib/photo.ts");
   assert.match(rail, /scrollBy\(\{ left: dir \* step/);
-  assert.match(search, /ke-rail-card/);
-  assert.match(search, /aspect-\[3\/2\]/);
+  assert.match(search, /data-ke="search-result-list"/);
+  assert.match(search, /ke-result-stack/);
+  assert.match(search, /aspect-\[4\/3\]/);
   assert.doesNotMatch(search, /lg:grid-cols-5 xl:grid-cols-6/);
-  assert.match(home, /ke-web-grid mt-6 grid gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-5/);
+  assert.match(home, /FacilityTypeRails items=\{shown\} visual/);
+  assert.doesNotMatch(home, /ke-web-grid/);
   assert.match(photo, /200px/);
   assert.match(photo, /CARD_WIDTHS = \[320, 480, 768\]/);
   assert.doesNotMatch(photo, /, 320px"/);

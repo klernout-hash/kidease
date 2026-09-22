@@ -12,6 +12,7 @@ import { asIsoString, compareTimeDesc } from "@/lib/sort-time";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { licenseReviewMarker } from "@/lib/private-docs";
+import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
 import { normalizeAdminClaimStatus } from "@/lib/listing-queue";
 import { collapseDuplicateReviewCards, hasLicenceEvidence } from "@/lib/approve-live";
 import { runApproval } from "@/lib/server/approve-centre";
@@ -237,7 +238,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         d.staff_screening_attested_at,
         d.screening_on_file,
         d.screening_on_file_at,
-        coalesce(c.license_photo, d.license_photo) as license_photo,
+        coalesce(nullif(btrim(c.license_photo), ''), nullif(btrim(d.license_photo), '')) as license_photo,
         d.photos,
         d.hours,
         d.infant_monthly,
@@ -392,8 +393,9 @@ export const listAdminCentres = createServerFn({ method: "GET" })
         c.created_at desc nulls last
       `.catch(() => []),
     );
+    const withFiles = await overlayStoredLicensePhotos(sql, rows);
 
-    const mapped: AdminCentreRow[] = rows.map((r) => {
+    const mapped: AdminCentreRow[] = withFiles.map((r) => {
       const hasProviderLink = Boolean(r.provider_link_user_id);
       const status = normalizeStatus(r.claim_status, r.claimed_at, r.claim_row_status, hasProviderLink);
       const live =

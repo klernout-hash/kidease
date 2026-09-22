@@ -20,7 +20,8 @@ test("Explore hides empty category rails and keeps #209 single-bar filters", () 
   assert.match(rails, /openingsSelected \|\| \(!filtered && openings\.length > 0\)/);
   assert.match(rails, /persist=\{forced\}/);
   assert.match(search, /preferCompleteCards/);
-  assert.match(search, /h-\[min\(40dvh,22rem\)\]/);
+  assert.match(search, /h-\[min\(72dvh,36rem\)\]/);
+  assert.match(search, /lg:h-\[min\(62vh,34rem\)\]/);
   assert.doesNotMatch(search, /62dvh/);
   assert.doesNotMatch(search, /lg:h-\[70vh\]/);
   assert.match(bar, /data-ke="explore-map-toggle"/);
@@ -59,7 +60,16 @@ test("Listing has one primary CTA, sticky enquire, and a hero that shares the ti
   assert.match(listing, /data-ke="listing-sticky-cta"/);
   assert.match(listing, /ListingMoreActions/);
   assert.match(listing, /ke-listing-hero/);
+  assert.match(listing, /ListingHeroGallery/);
+  assert.match(listing, /data-ke="listing-trust-line"/);
+  assert.match(listing, /data-ke="listing-cta-snippet"/);
+  assert.match(listing, /variant="inline"/);
   assert.match(src("src/styles.css"), /aspect-ratio: 5 \/ 2/);
+  assert.match(src("src/styles.css"), /ke-listing-sections/);
+  assert.match(src("src/components/listing-hero-gallery.tsx"), /data-ke="listing-photo-count"/);
+  assert.match(src("src/components/listing-parent-pack.tsx"), /ke-listing-jump/);
+  assert.match(src("src/components/listing-parent-pack.tsx"), /jumpOverview/);
+  assert.match(src("src/components/shell.tsx"), /publicListing/);
   assert.doesNotMatch(listing, /md:aspect-\[2\/1\]/);
   assert.match(listing, /lg:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(16rem,20rem\)\]/);
   assert.match(listing, /claimCtaShort/);
@@ -72,7 +82,7 @@ test("Listing has one primary CTA, sticky enquire, and a hero that shares the ti
 test("Home is search-first above the fold with one primary", () => {
   const home = src("src/routes/index.tsx");
   const hero = home.slice(home.indexOf("from-soft"), home.indexOf("id=\"how\""));
-  assert.match(hero, /locationForm/);
+  assert.match(hero, /featuredSearch/);
   assert.match(hero, /from-soft/);
   assert.match(home, /HomePopularCities/);
   assert.doesNotMatch(hero, /hero-trust-chips/);

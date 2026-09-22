@@ -70,8 +70,10 @@ test("Explore search bar is an Airbnb-style pill wired to /search params", () =>
   assert.match(search, /setFilters/);
 
   assert.match(home, /ExploreSearchBar/);
-  assert.match(copy, /searchWhereHint: "City Province"/);
-  assert.match(copy, /searchWhenHint: "Add dates"/);
+  assert.match(copy, /searchWhereHint: "City or neighbourhood"/);
+  assert.match(copy, /searchWhenHint: "Start date"/);
+  assert.match(copy, /searchWhereHint: "Ville ou quartier"/);
+  assert.match(copy, /searchWhenHint: "Date de début"/);
   assert.match(copy, /searchDaycareHint: "Search by name"/);
 });
 
