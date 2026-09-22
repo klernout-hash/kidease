@@ -32,23 +32,34 @@ export function searchMemoKey(input: {
     input.mode || "home",
     typeof input.lat2 === "number" ? input.lat2.toFixed(3) : "",
     typeof input.lng2 === "number" ? input.lng2.toFixed(3) : "",
+    "l2",
   ].join(":");
 }
 
-export async function rememberSearch<T>(key: string, build: () => Promise<T>): Promise<T> {
+export function readFreshSearch<T>(key: string): T | null {
   const hit = cache.get(key) as Entry<T> | undefined;
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
-  const value = await build();
+  if (!hit || Date.now() - hit.at >= TTL_MS) return null;
+  return hit.value;
+}
+
+export function writeFreshSearch<T>(key: string, value: T) {
   // An empty timeout fallback must not stick for 60s and report "0 live".
   if (Array.isArray(value) && value.length === 0) {
     cache.delete(key);
-    return value;
+    return;
   }
   cache.set(key, { at: Date.now(), value });
   if (cache.size > MAX_ENTRIES) {
     const oldest = cache.keys().next().value;
     if (typeof oldest === "string") cache.delete(oldest);
   }
+}
+
+export async function rememberSearch<T>(key: string, build: () => Promise<T>): Promise<T> {
+  const hit = readFreshSearch<T>(key);
+  if (hit !== null) return hit;
+  const value = await build();
+  writeFreshSearch(key, value);
   return value;
 }
 

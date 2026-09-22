@@ -21,14 +21,15 @@ import { sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
 import { compareParentMatch } from "@/lib/parent-match";
 import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
-import { hasLicenceEvidence } from "@/lib/approve-live";
+import { parentSearchLive } from "@/lib/approve-live";
+import { pickSearchResult } from "@/lib/live-search";
 import { isPlatformLive } from "@/lib/live";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
-import { rememberSearch, searchMemoKey } from "./search-memo";
+import { readFreshSearch, searchMemoKey, writeFreshSearch } from "./search-memo";
 import { mergeApprovedCityListings } from "./approved-search";
 import { alignSearchOrigin } from "@/lib/search-query";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
@@ -129,7 +130,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
   }));
   return {
     ...mapped,
-    live: Boolean(mapped.live) && hasLicenceEvidence(mapped) && !isAdminOnlyListing(mapped),
+    live: parentSearchLive(mapped) && !isAdminOnlyListing(mapped),
   };
 }
 
@@ -291,19 +292,15 @@ async function liveCardsForSearch(data: SearchInput): Promise<DaycareCard[]> {
   return publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa)))).map(slimCard);
 }
 
-function unionLiveCards(primary: DaycareCard[], live: DaycareCard[]): DaycareCard[] {
-  const seen = new Set(primary.map((card) => card.id));
-  const missing = live.filter((card) => card.id && !seen.has(card.id));
-  return missing.length ? [...missing, ...primary] : primary;
-}
-
 async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
   const searched = alignedSearchInput(data);
   const livePromise = liveCardsForSearch(searched);
   const full = await withTimeoutFallback(runSearch(searched), LOADER_SETTLE_MS, null);
-  const live = await withTimeoutFallback(livePromise, full && full.length > 0 ? 800 : 2500, []);
-  if (!full || full.length === 0) return uniqueById(live);
-  return unionLiveCards(full, live);
+  // A fast wide pass can omit a stale pin. Do not cache that miss for 60s.
+  const rescue = await withTimeoutFallback(livePromise, full && full.length > 0 ? 800 : 2500, null as DaycareCard[] | null);
+  const rows = pickSearchResult(full, rescue ?? []);
+  if (rescue) writeFreshSearch(searchMemoKey(data), rows);
+  return rows;
 }
 
 async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
@@ -383,7 +380,11 @@ export const searchDaycares = createServerFn({ method: "POST" })
     lng2: optionalCoord(input.lng2),
     mode: parseAnchorMode(input.mode),
   }))
-  .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => searchIncludingLive(data)));
+  .handler(async ({ data }) => {
+    const cached = readFreshSearch<DaycareCard[]>(searchMemoKey(data));
+    if (cached) return cached;
+    return searchIncludingLive(data);
+  });
 
 async function loadFeatured(origin: { lat: number; lng: number; label?: string }): Promise<DaycareCard[]> {
   const lock = resolveLocationLock(origin);

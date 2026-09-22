@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { publicListings } from "@/lib/listing-visibility";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence } from "@/lib/presence";
 import { readSearchCache, searchCacheKey, writeSearchCache } from "@/lib/search-cache";
+import { keepPaintedSearch, liveNameSearchHits } from "@/lib/live-search";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useLivePresence } from "@/lib/use-presence";
 import { trackLocation } from "@/lib/telemetry";
@@ -42,11 +43,7 @@ import { LocationConsentCard } from "@/components/location-consent";
 import { DualAnchorBar } from "@/components/dual-anchor-bar";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { resolveLocationQuery } from "@/components/place-search";
-import {
-  compactExploreSearch,
-  matchesDaycareName,
-  parseExploreSearchFields,
-} from "@/lib/explore-search";
+import { compactExploreSearch, parseExploreSearchFields } from "@/lib/explore-search";
 import {
   compactParentListingSearch,
   matchesParentListingFilters,
@@ -231,6 +228,17 @@ function SearchPage() {
           boot.items,
           resolveLocationLock({ ...boot.origin, q: incoming.q }),
         )
+      : null,
+  );
+  const paintedQuery = useRef<{ lat: number; lng: number; q: string; radiusKm: number; mode: string } | null>(
+    boot.items.length > 0
+      ? {
+          lat: boot.origin.lat,
+          lng: boot.origin.lng,
+          q: (incoming.q || boot.origin.label || "").trim(),
+          radiusKm: 25,
+          mode: "home",
+        }
       : null,
   );
   const [refreshing, setRefreshing] = useState(false);
@@ -462,8 +470,16 @@ function SearchPage() {
     let live = true;
     const key = searchCacheKey(cacheInput);
     const cached = readSearchCache(key);
-    if (cached) {
-      setItems(filterByLocationLock(cached, locationLock));
+    if (cached && cached.length > 0) {
+      const locked = filterByLocationLock(cached, locationLock);
+      setItems(locked);
+      paintedQuery.current = {
+        lat: origin.lat,
+        lng: origin.lng,
+        q: (incoming.q ?? query).trim(),
+        radiusKm,
+        mode: anchorMode,
+      };
       setSearchFailed(false);
     } else {
       setRefreshing(true);
@@ -476,16 +492,42 @@ function SearchPage() {
         .then((rows) => {
           if (!live) return;
           const locked = filterByLocationLock(rows, locationLock);
-          setItems(locked);
+          const here = {
+            lat: origin.lat,
+            lng: origin.lng,
+            q: (incoming.q ?? query).trim(),
+            radiusKm,
+            mode: anchorMode,
+          };
+          const previousPaint = paintedQuery.current;
+          const sameQuery = Boolean(
+            previousPaint &&
+              Math.abs(previousPaint.lat - here.lat) < 0.02 &&
+              Math.abs(previousPaint.lng - here.lng) < 0.02 &&
+              previousPaint.q === here.q &&
+              previousPaint.radiusKm === here.radiusKm &&
+              previousPaint.mode === here.mode,
+          );
+          setItems((cur) => {
+            const next = keepPaintedSearch(cur, locked, sameQuery);
+            if (next.length > 0) {
+              paintedQuery.current = here;
+              writeSearchCache(key, next);
+            }
+            return next;
+          });
           setSearchFailed(false);
-          writeSearchCache(key, locked);
           captureMarketplaceFunnel({ step: "search", source: "search", dest_path: "/search" });
         })
         .catch(() => {
-          if (live && !cached) {
-            setItems([]);
-            setSearchFailed(true);
-          }
+          if (!live) return;
+          let emptied = false;
+          setItems((cur) => {
+            if (cur && cur.length > 0) return cur;
+            emptied = true;
+            return [];
+          });
+          if (emptied) setSearchFailed(true);
         })
         .finally(() => {
           if (live) setRefreshing(false);
@@ -822,7 +864,7 @@ function SearchPage() {
 
   const list = useMemo(() => {
     let rows = publicListings(filterByLocationLock(items ?? [], locationLock));
-    if (liveOnly) rows = rows.filter((r) => r.live && !r.isTest);
+    rows = liveNameSearchHits(rows, { liveOnly });
     if (avail === "open") rows = rows.filter((r) => honestVacancy(r).kind === "open");
     if (avail === "waitlist") rows = rows.filter((r) => honestVacancy(r).kind === "waitlist");
     if (avail === "unknown") rows = rows.filter((r) => !r.availabilityKnown);
@@ -851,7 +893,7 @@ function SearchPage() {
     if (schoolAgeOnly) rows = rows.filter((r) => matchesRailAge(r, "school-age"));
     const cat = isExploreCategory(incoming.cat) ? incoming.cat : undefined;
     if (cat) rows = rows.filter((r) => listingMatchesExploreFilter(r, cat));
-    if (nameQuery.trim()) rows = rows.filter((r) => matchesDaycareName(r, nameQuery));
+    rows = liveNameSearchHits(rows, { name: nameQuery });
     if (parentSearchActive(parentFilters)) rows = rows.filter((r) => matchesParentListingFilters(r, parentFilters));
     return rows;
   }, [

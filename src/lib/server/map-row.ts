@@ -3,7 +3,7 @@ import { listingCultureFrom } from "@/lib/listing-culture";
 import { parentListingFrom } from "@/lib/parent-listing";
 import { resolveTourTimezone } from "@/lib/tour-calendar";
 import type { Daycare } from "@/lib/types";
-import { hasLicenceEvidence } from "@/lib/approve-live";
+import { parentSearchLive } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
 import { isAdminOnlyListing, listingVisibilityOf } from "@/lib/listing-visibility";
@@ -205,7 +205,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
   }));
   return {
     ...mapped,
-    live: Boolean(mapped.live) && hasLicenceEvidence(mapped) && !isAdminOnlyListing(mapped),
+    live: parentSearchLive(mapped) && !isAdminOnlyListing(mapped),
   };
 }
 
