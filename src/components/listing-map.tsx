@@ -74,11 +74,11 @@ export function ListingMap({ lat, lng, title }: Props) {
   }, [lat, lng, valid]);
 
   if (failed) {
-    return <div className="h-64 bg-map md:h-80" role="img" aria-label={title} />;
+    return <div className="h-40 bg-map md:h-48" role="img" aria-label={title} />;
   }
 
   return (
-    <div className="relative h-64 w-full overflow-hidden bg-map md:h-80" role="img" aria-label={title}>
+    <div className="relative h-40 w-full overflow-hidden bg-map md:h-48" role="img" aria-label={title}>
       <div ref={host} className="ke-map-host absolute inset-0" />
       {basemapReady ? null : (
         <div className="ke-map-skel pointer-events-none absolute inset-0 grid place-items-center px-6 text-center" role="status">

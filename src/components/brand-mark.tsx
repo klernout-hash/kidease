@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-const MARK_PX = { sm: 36, md: 64, lg: 80 } as const;
+const MARK_PX = { sm: 28, md: 52, lg: 68 } as const;
 
 /**
  * Logo is a vector mark. Tailwind size classes vanish if CSS fails to load

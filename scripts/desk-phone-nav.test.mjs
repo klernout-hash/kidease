@@ -81,13 +81,13 @@ test("desk shell uses a phone scroll row and a full-height More sheet, not a flo
   assert.ok(moreIdx > navClose);
   assert.match(shell, /role="dialog"/);
   assert.match(shell, /aria-modal="true"/);
-  assert.match(shell, /top-\[calc\(4\.25rem\+env\(safe-area-inset-top\)\)\]/);
+  assert.match(shell, /top-\[calc\(3\.2rem\+env\(safe-area-inset-top\)\)\]/);
   assert.match(shell, /overflow-x-auto/);
-  assert.match(shell, /hidden text-xs font-medium uppercase[\s\S]*md:block/);
+  assert.match(shell, /hidden text-\[11px\] font-medium uppercase[\s\S]*md:block/);
   assert.doesNotMatch(shell, /DaycareMoreMenu/);
   assert.doesNotMatch(shell, /absolute left-0 top-full z-30/);
   assert.match(shell, /data-ke="desk-desktop-nav"/);
-  assert.match(shell, /hidden flex-col gap-2 md:flex/);
+  assert.match(shell, /hidden flex-col gap-0\.5 md:flex/);
 });
 
 test("Family desk and Daycare desk titles are keyed for EN and FR", () => {

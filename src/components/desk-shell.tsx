@@ -27,7 +27,7 @@ function navClass(on: boolean) {
     // Anchors are display:inline by default — min-height/ring then collapse into
     // a vertical sliver beside the label.
     "inline-flex box-border h-11 min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-sm leading-none no-underline hover:no-underline",
-    "md:h-auto md:min-h-0 md:flex-col md:items-stretch md:justify-start md:whitespace-normal md:rounded-xl md:py-2 md:leading-normal",
+    "md:h-auto md:min-h-0 md:flex-col md:items-stretch md:justify-start md:whitespace-normal md:rounded-lg md:px-2.5 md:py-1.5 md:leading-snug",
     on
       ? "bg-primary text-primary-fg ring-1 ring-primary"
       : "bg-transparent text-muted ring-1 ring-border hover:text-fg md:ring-0 md:hover:bg-surface",
@@ -183,7 +183,7 @@ function DeskMoreSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="fixed inset-x-0 bottom-0 top-[calc(4.25rem+env(safe-area-inset-top))] z-[80] flex flex-col rounded-t-2xl bg-surface shadow-lift ring-1 ring-border"
+        className="fixed inset-x-0 bottom-0 top-[calc(3.2rem+env(safe-area-inset-top))] z-[80] flex flex-col rounded-t-2xl bg-surface shadow-lift ring-1 ring-border"
       >
         <div className="flex shrink-0 flex-col items-center pt-2">
           <span className="h-1 w-10 rounded-full bg-border" aria-hidden />
@@ -351,13 +351,13 @@ export function DeskShell({
 
   return (
     <Shell>
-      <div className={cn("mx-auto flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-8 md:py-10", wide ? "max-w-[90rem]" : "max-w-6xl")}>
-        <aside className="md:sticky md:top-24 md:w-56 md:shrink-0">
-          <p className="hidden text-xs font-medium uppercase tracking-[0.18em] text-subtle md:block">{eyebrow}</p>
-          <h1 className="font-display text-3xl md:mt-2">{title}</h1>
+      <div className={cn("ke-dense mx-auto flex flex-col gap-3 px-3 py-2 md:flex-row md:items-start md:gap-4 md:py-3", wide ? "max-w-[90rem]" : "max-w-6xl")}>
+        <aside className="md:sticky md:top-14 md:w-44 md:shrink-0">
+          <p className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-subtle md:block">{eyebrow}</p>
+          <h1 className="font-display text-[1.2rem] leading-tight md:mt-0.5">{title}</h1>
           <nav
             data-ke="desk-desktop-nav"
-            className="mt-5 hidden flex-col gap-2 md:flex"
+            className="mt-2 hidden flex-col gap-0.5 md:flex"
           >
             {allItems.map((item) => {
               const on = itemIsOn(item, active, pathname);
@@ -367,7 +367,7 @@ export function DeskShell({
           </nav>
         </aside>
         <div className="min-w-0 flex-1">
-          <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-30 -mx-4 mb-5 border-b border-border bg-bg px-4 py-2 md:hidden">
+          <div className="sticky top-[calc(3.2rem+env(safe-area-inset-top))] z-30 -mx-3 mb-2 border-b border-border bg-bg px-3 py-1 md:hidden">
             {phoneMore ? (
               <PhoneDeskNav
                 primary={primary}

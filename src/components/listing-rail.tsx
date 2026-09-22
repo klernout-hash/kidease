@@ -46,12 +46,12 @@ export function ListingRail({
   if (!shown.length && (empty || persist)) {
     return (
       <section
-        className={cn("ke-listing-rail ke-listing-rail--empty mt-6 first:mt-4 md:mt-8", className)}
+        className={cn("ke-listing-rail ke-listing-rail--empty mt-3 first:mt-2 md:mt-4", className)}
         data-ke="explore-rail-empty"
         data-rail={railId}
       >
         <div className="ke-listing-rail-head mb-2 flex items-center justify-between gap-3">
-          <h2 className="ke-listing-rail-title min-h-7 min-w-0 text-[1.1rem] font-semibold tracking-[-0.03em] md:min-h-8 md:text-[1.35rem]">
+          <h2 className="ke-listing-rail-title min-w-0 text-base font-semibold tracking-[-0.03em] md:text-[1.05rem]">
             {empty?.title || title}
           </h2>
         </div>
@@ -61,13 +61,13 @@ export function ListingRail({
   }
 
   return (
-    <section className={cn("ke-listing-rail mt-6 first:mt-4 md:mt-8", className)} data-rail={railId}>
+    <section className={cn("ke-listing-rail mt-3 first:mt-2 md:mt-4", className)} data-rail={railId}>
       {hideTitle && !seeAllHref && !showChevrons ? (
         <h2 className="sr-only">{title}</h2>
       ) : (
         <div className={cn("ke-listing-rail-head mb-2 flex items-center justify-between gap-3", !hideTitle && "md:mb-3")}>
           {hideTitle ? <h2 className="sr-only">{title}</h2> : (
-            <h2 className="ke-listing-rail-title min-h-7 min-w-0 text-[1.1rem] font-semibold tracking-[-0.03em] md:min-h-8 md:text-[1.35rem]">
+            <h2 className="ke-listing-rail-title min-w-0 text-base font-semibold tracking-[-0.03em] md:text-[1.05rem]">
               {title}
             </h2>
           )}

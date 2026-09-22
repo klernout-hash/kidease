@@ -47,9 +47,9 @@ function formatWhen(value: string | null | undefined) {
 function DetailTable({ rows }: { rows: { label: string; value: string; extra?: ReactNode }[] }) {
   if (!rows.length) return null;
   return (
-    <dl className="overflow-hidden rounded-xl bg-bg ring-1 ring-border">
+    <dl className="overflow-hidden rounded-lg bg-bg ring-1 ring-border">
       {rows.map((row) => (
-        <div key={row.label} className="grid grid-cols-1 gap-0.5 border-t border-border px-3 py-2.5 first:border-t-0 sm:grid-cols-[9.5rem_1fr] sm:items-baseline sm:gap-4">
+        <div key={row.label} className="grid grid-cols-1 gap-0.5 border-t border-border px-2.5 py-1.5 first:border-t-0 sm:grid-cols-[8.5rem_1fr] sm:items-baseline sm:gap-3">
           <dt className="text-sm text-muted">{row.label}</dt>
           <dd className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm text-fg">
             <span>{row.value}</span>
@@ -63,10 +63,10 @@ function DetailTable({ rows }: { rows: { label: string; value: string; extra?: R
 
 function ReviewDocuments({ centre }: { centre: AdminCentreRow }) {
   if (!centre.licensePhoto && !centre.storefrontPhoto) {
-    return <p className="rounded-xl bg-bg px-3 py-3 text-sm text-muted ring-1 ring-border">No licence or storefront file on this claim yet.</p>;
+    return <p className="ke-empty text-left">No licence or storefront file on this claim yet.</p>;
   }
   return (
-    <div className="overflow-hidden rounded-xl bg-bg ring-1 ring-border">
+    <div className="overflow-hidden rounded-lg bg-bg ring-1 ring-border">
       {centre.licensePhoto ? (
         <button
           type="button"
@@ -76,19 +76,19 @@ function ReviewDocuments({ centre }: { centre: AdminCentreRow }) {
           View licence document
         </button>
       ) : (
-        <p className="px-3 py-3 text-sm text-muted">No licence file uploaded yet.</p>
+        <p className="px-2.5 py-2 text-sm text-muted">No licence file uploaded yet.</p>
       )}
       {centre.storefrontPhoto ? (
-        <figure className="border-t border-border p-3">
+        <figure className="border-t border-border p-2">
           <img
             src={centre.storefrontPhoto}
             alt={`Storefront for ${centre.name}`}
-            className="h-28 w-full max-w-xs rounded-lg object-cover ring-1 ring-border"
+            className="h-16 w-full max-w-[12rem] rounded-md object-cover ring-1 ring-border"
           />
-          <figcaption className="mt-2 text-xs text-subtle">Storefront</figcaption>
+          <figcaption className="mt-1 text-[11px] text-subtle">Storefront</figcaption>
         </figure>
       ) : (
-        <p className="border-t border-border px-3 py-3 text-sm text-muted">No storefront photo uploaded yet.</p>
+        <p className="border-t border-border px-2.5 py-2 text-sm text-muted">No storefront photo uploaded yet.</p>
       )}
     </div>
   );
@@ -111,12 +111,12 @@ export function AdminReviewNotice({
 }) {
   return (
     <div
-      className="rounded-2xl bg-surface px-6 py-12 text-center ring-1 ring-border"
+      className="ke-panel px-4 py-5 text-center"
       data-ke={marker === "empty" ? "admin-review-empty" : "admin-review-error"}
       role={tone === "danger" ? "alert" : undefined}
     >
-      <p className="font-display text-2xl tracking-tight">{title}</p>
-      <p className={cn("mx-auto mt-2 max-w-sm text-sm leading-6", tone === "danger" ? "text-danger" : "text-muted")}>{body}</p>
+      <p className="font-display text-lg tracking-tight">{title}</p>
+      <p className={cn("mx-auto mt-1 max-w-sm text-sm leading-5", tone === "danger" ? "text-danger" : "text-muted")}>{body}</p>
     </div>
   );
 }
@@ -126,16 +126,16 @@ export function ApprovalHealthNotice({ health }: { health: ApprovalHealth }) {
   return (
     <div
       className={cn(
-        "rounded-2xl px-4 py-4 ring-1 sm:px-5",
+        "rounded-xl px-3 py-2.5 ring-1",
         health.ok ? "bg-soft text-fg ring-primary/20" : "bg-surface text-fg ring-danger/30",
       )}
       data-ke="approval-health"
       data-ke-approval-ok={health.ok ? "yes" : "no"}
       role={health.ok ? "status" : "alert"}
     >
-      <p className="font-display text-xl tracking-tight">{summary.title}</p>
-      <p className={cn("mt-1 text-sm leading-6", health.ok ? "text-fg" : "text-danger")}>{summary.body}</p>
-      <ul className="mt-3 space-y-1 text-sm">
+      <p className="font-display text-base tracking-tight">{summary.title}</p>
+      <p className={cn("mt-0.5 text-sm leading-5", health.ok ? "text-fg" : "text-danger")}>{summary.body}</p>
+      <ul className="mt-1.5 space-y-0.5 text-sm">
         {health.checks.map((check) => (
           <li key={check.id} data-ke-approval-check={check.id} data-ke-check-ok={check.ok ? "yes" : "no"}>
             <span className={check.ok ? "text-ok" : "font-medium text-danger"}>{check.ok ? "Passed" : "Failed"}</span>
@@ -149,12 +149,12 @@ export function ApprovalHealthNotice({ health }: { health: ApprovalHealth }) {
 
 export function AdminReviewLoading() {
   return (
-    <div className="space-y-4" data-ke="admin-review-loading" aria-busy="true">
+    <div className="space-y-2" data-ke="admin-review-loading" aria-busy="true">
       {[0, 1].map((row) => (
-        <div key={row} className="rounded-2xl bg-surface p-5 ring-1 ring-border sm:p-6">
-          <div className="h-7 w-52 animate-pulse rounded-md bg-surface-2" />
-          <div className="mt-3 h-4 w-36 animate-pulse rounded-md bg-surface-2" />
-          <div className="mt-6 grid grid-cols-3 gap-4 border-y border-border py-4">
+        <div key={row} className="ke-panel px-3 py-2.5">
+          <div className="h-5 w-44 animate-pulse rounded-md bg-surface-2" />
+          <div className="mt-2 h-3.5 w-32 animate-pulse rounded-md bg-surface-2" />
+          <div className="mt-3 grid grid-cols-3 gap-3 border-y border-border py-2">
             <div className="h-8 animate-pulse rounded-md bg-surface-2" />
             <div className="h-8 animate-pulse rounded-md bg-surface-2" />
             <div className="h-8 animate-pulse rounded-md bg-surface-2" />
@@ -215,15 +215,15 @@ export function AdminReviewCard({
 
   return (
     <article
-      className="rounded-2xl bg-surface px-5 py-5 shadow-card ring-1 ring-border sm:px-6 sm:py-6"
+      className="ke-panel px-3 py-2.5 shadow-card sm:px-3.5"
       data-ke="admin-review-card"
       data-ke-review-mode={mode}
       data-ke-claim-kind={kind.id}
     >
-      <header className="flex items-start justify-between gap-4">
+      <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-display text-[1.65rem] leading-none tracking-tight">{centre.name}</h3>
-          <p className="mt-2 text-sm text-muted">{place || "Location not on file"}</p>
+          <h3 className="font-display text-lg leading-tight tracking-tight">{centre.name}</h3>
+          <p className="mt-0.5 text-sm text-muted">{place || "Location not on file"}</p>
         </div>
         <div className="shrink-0 pt-1 text-right">
           <p className="text-xs font-medium tracking-wide text-primary">{kind.label}</p>
@@ -236,7 +236,7 @@ export function AdminReviewCard({
         </div>
       </header>
 
-      <p className="mt-4 text-sm leading-6">
+      <p className="mt-2 text-sm leading-5">
         <span className="font-medium">{contactName}</span>
         <span className="text-muted"> · </span>
         {email ? (
@@ -249,11 +249,11 @@ export function AdminReviewCard({
       </p>
       {submitted ? <p className="mt-1 text-xs text-subtle">Submitted {submitted}</p> : null}
 
-      <dl className="mt-6 grid grid-cols-1 divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0" data-ke="admin-review-facts">
+      <dl className="mt-3 grid grid-cols-1 divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0" data-ke="admin-review-facts">
         {facts.map((fact) => (
-          <div key={fact.id} className="py-3 sm:px-4 sm:py-3.5 sm:first:pl-0 sm:last:pr-0">
-            <dt className="text-[11px] font-medium uppercase tracking-[0.16em] text-subtle">{fact.label}</dt>
-            <dd className={cn("mt-1 text-sm", FACT_TONE[fact.tone])} data-ke-fact={fact.id}>
+          <div key={fact.id} className="py-1.5 sm:px-3 sm:first:pl-0 sm:last:pr-0">
+            <dt className="text-[10px] font-medium uppercase tracking-[0.14em] text-subtle">{fact.label}</dt>
+            <dd className={cn("mt-0.5 text-sm", FACT_TONE[fact.tone])} data-ke-fact={fact.id}>
               {fact.status}
             </dd>
           </div>
@@ -261,7 +261,7 @@ export function AdminReviewCard({
       </dl>
 
       {documentsOnFace ? (
-        <div className="mt-6" data-ke="admin-review-documents">
+        <div className="mt-3" data-ke="admin-review-documents">
           <SectionLabel>Files</SectionLabel>
           <div className="mt-2">
             <ReviewDocuments centre={centre} />
@@ -270,7 +270,7 @@ export function AdminReviewCard({
       ) : null}
 
       {licenceToolsOnFace ? (
-        <div className="mt-6">
+        <div className="mt-3">
           <SectionLabel>Registry</SectionLabel>
           <div className="mt-2">
             <AdminLicenseActions
@@ -283,9 +283,9 @@ export function AdminReviewCard({
         </div>
       ) : null}
 
-      <div className="mt-6" data-ke="admin-review-actions">
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-subtle">Decision</p>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center" role="group" aria-label={`Decision for ${centre.name}`}>
+      <div className="mt-3" data-ke="admin-review-actions">
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-subtle">Decision</p>
+        <div className="mt-1.5 flex flex-col gap-1.5 sm:flex-row sm:items-center" role="group" aria-label={`Decision for ${centre.name}`}>
           {canOfferApprove(status) ? (
             <Button className="w-full sm:w-auto sm:min-w-36" disabled={locked} onClick={() => onDecide(centre.daycareId, "approve")}>
               Approve
@@ -314,12 +314,12 @@ export function AdminReviewCard({
         </div>
       </div>
 
-      <details className="mt-5 border-t border-border pt-2" data-ke="admin-review-more">
+      <details className="mt-3 border-t border-border pt-1" data-ke="admin-review-more">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg text-sm marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 [&::-webkit-details-marker]:hidden">
           <span className="font-medium">Details</span>
           <span className="text-subtle">Files, trust, and contracts</span>
         </summary>
-        <div className="space-y-6 pb-1 pt-4">
+        <div className="space-y-3 pb-1 pt-2">
           {centre.address || centre.phone || reviewed ? (
             <div className="space-y-1 text-sm leading-6 text-muted">
               {centre.address ? <p>{centre.address}</p> : null}
@@ -415,20 +415,20 @@ export function AdminCentreStatList({
         : `${rows.length} to review`;
 
   return (
-    <section className="mt-10" data-ke="admin-stat-list" data-ke-stat-list={stat}>
+    <section className="mt-6" data-ke="admin-stat-list" data-ke-stat-list={stat}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="max-w-2xl">
           <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-subtle">{copy.eyebrow}</p>
-          <h2 className="mt-2 font-display text-3xl tracking-tight">{copy.title}</h2>
+          <h2 className="mt-1 font-display text-xl tracking-tight">{copy.title}</h2>
           {stat === "waiting" ? (
-            <p className="mt-3 text-sm leading-6 text-muted">
+            <p className="mt-1.5 text-sm leading-5 text-muted">
               Daycares in this queue are waiting for a decision. Read the licence, screening, and photos, then approve, keep waiting, or decline.
             </p>
           ) : null}
         </div>
         <p className="text-sm tabular-nums text-muted">{countLabel}</p>
       </div>
-      <div className="mt-6">
+      <div className="mt-3">
         {loading ? (
           <AdminReviewLoading />
         ) : unavailable ? (
@@ -436,7 +436,7 @@ export function AdminCentreStatList({
         ) : rows.length === 0 ? (
           <AdminReviewNotice title={copy.caughtUp || "None"} body={copy.empty} marker="empty" />
         ) : (
-          <ul className="space-y-4">
+          <ul className="space-y-2">
             {rows.map((centre) => (
               <li key={centre.daycareId}>
                 <AdminReviewCard

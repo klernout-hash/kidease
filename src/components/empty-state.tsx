@@ -24,12 +24,12 @@ export function EmptyState({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="mx-auto max-w-md px-5 py-10 text-center">
-      <span className="mx-auto grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
-        <Icon className="size-5" strokeWidth={1.8} />
+    <div className="mx-auto max-w-md px-4 py-5 text-center">
+      <span className="mx-auto grid size-9 place-items-center rounded-full bg-primary/10 text-primary">
+        <Icon className="size-4" strokeWidth={1.8} />
       </span>
-      <p className="mt-4 font-display text-xl tracking-tight">{title}</p>
-      {body ? <p className="mt-2 text-sm leading-6 text-muted">{body}</p> : null}
+      <p className="mt-2 font-display text-lg tracking-tight">{title}</p>
+      {body ? <p className="mt-1 text-sm leading-5 text-muted">{body}</p> : null}
       {action && (actionTo || onAction) ? (
         <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row">
           {actionTo ? (

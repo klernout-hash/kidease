@@ -47,7 +47,7 @@ test("Cards quiet overlapping labels and keep a reserved photo aspect", () => {
   assert.match(photo, /data-ke="photo-fallback"/);
   assert.match(photo, /aspectRatio/);
   assert.match(css, /--color-soft: #eef2fb/);
-  assert.match(css, /contain-intrinsic-size: var\(--ke-card-w, 11\.25rem\) 22\.5rem;/);
+  assert.match(css, /contain-intrinsic-size: var\(--ke-card-w, 11\.25rem\) 16rem;/);
 });
 
 test("Listing has one primary CTA, sticky enquire, and a hero that shares the title", () => {
@@ -58,9 +58,10 @@ test("Listing has one primary CTA, sticky enquire, and a hero that shares the ti
   assert.match(listing, /data-ke="listing-primary-cta"/);
   assert.match(listing, /data-ke="listing-sticky-cta"/);
   assert.match(listing, /ListingMoreActions/);
-  assert.match(listing, /aspect-\[16\/10\]/);
+  assert.match(listing, /ke-listing-hero/);
+  assert.match(src("src/styles.css"), /aspect-ratio: 5 \/ 2/);
   assert.doesNotMatch(listing, /md:aspect-\[2\/1\]/);
-  assert.match(listing, /lg:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(17rem,22rem\)\]/);
+  assert.match(listing, /lg:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(16rem,20rem\)\]/);
   assert.match(listing, /claimCtaShort/);
   assert.doesNotMatch(listing, /<CompareChip/);
   assert.match(more, /data-ke="listing-more"/);
