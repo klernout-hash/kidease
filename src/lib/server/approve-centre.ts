@@ -8,6 +8,7 @@
 
 import { planApproval, type ApprovalCentre, type ApprovalClaim, type ApprovalHealth } from "@/lib/approve-live";
 import { normalizeCentreName } from "@/lib/listing-identity";
+import { listingVisibilityForOwners } from "@/lib/listing-visibility";
 import type { Sql } from "@/lib/db";
 import { resetNeonCatalogCache } from "@/lib/server/catalog-neon";
 import { flushSearchMemo } from "@/lib/server/search-memo";
@@ -33,6 +34,8 @@ type CentreRow = {
   review_count: number | null;
   staff_screening_attested: number | boolean | null;
   screening_on_file: number | boolean | null;
+  visibility: string | null;
+  is_test: number | boolean | null;
 };
 
 function flagged(value: number | boolean | null | undefined) {
@@ -55,6 +58,8 @@ function toCentre(row: CentreRow, licensePhoto: string | null): ApprovalCentre {
     licenseVerificationSource: row.license_verification_source,
     screeningOnFile: flagged(row.screening_on_file),
     staffScreeningAttested: flagged(row.staff_screening_attested),
+    visibility: row.visibility,
+    isTest: row.is_test,
     claimStatus: row.claim_status,
     claimedAt: row.claimed_at,
     listingActive: row.listing_active === 0 || row.listing_active === false ? false : true,
@@ -92,7 +97,7 @@ export async function runApproval(
     select id, slug, name, address, city, province, contact_email,
       lat, lng, license_number, license_photo, license_status, license_verification_source,
       claim_status, claimed_at, listing_active, rating_x10, review_count,
-      staff_screening_attested, screening_on_file
+      staff_screening_attested, screening_on_file, visibility, is_test
     from daycares
     where id = ${input.daycareId}
     limit 1
@@ -163,8 +168,27 @@ export async function runApproval(
       }[],
   );
 
+  const owners = await sql<{ email: string | null }>`
+    select u.email as email
+    from provider_daycares pd
+    join "user" u on u.id = pd.user_id
+    where pd.daycare_id = ${row.id}
+  `.catch(() => [] as { email: string | null }[]);
+  const flags = listingVisibilityForOwners(
+    {
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      licenseNumber: row.license_number,
+      address: row.address,
+      visibility: row.visibility,
+      isTest: row.is_test,
+    },
+    owners.map((owner) => owner.email),
+  );
+
   const plan = planApproval(
-    toCentre(row, photo),
+    { ...toCentre(row, photo), visibility: flags.visibility, isTest: flags.isTest },
     approvalClaims,
     others.map((other) => ({
       id: other.id,
@@ -194,7 +218,9 @@ export async function runApproval(
           license_status = 'matched',
           registry_match_state = 'matched',
           license_verification_source = ${next.licenseVerificationSource || "admin"},
-          license_verified_at = coalesce(license_verified_at, now())
+          license_verified_at = coalesce(license_verified_at, now()),
+          visibility = ${flags.visibility},
+          is_test = ${flags.isTest}
       where id = ${row.id}
     `;
     await syncVerifiedLocation(sql, row.id, Number(next.lat), Number(next.lng));

@@ -16,7 +16,7 @@ export function searchCacheKey(input: {
   mode?: string;
 }) {
   return [
-    "live2",
+    "live3",
     input.lat.toFixed(3),
     input.lng.toFixed(3),
     input.radiusKm,

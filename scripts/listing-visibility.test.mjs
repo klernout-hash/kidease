@@ -5,6 +5,7 @@ import { GHOST_LISTING } from "../src/lib/ghost-listing.ts";
 import {
   isAdminOnlyListing,
   isPublicListing,
+  listingVisibilityForOwners,
   listingVisibilityOf,
   listingVisibilityWrite,
   looksLikeTestFixture,
@@ -12,6 +13,7 @@ import {
   publicListings,
   QA_FIXTURE_NAME_RE,
   QA_FIXTURE_SLUG_RE,
+  staffQueueRows,
 } from "../src/lib/listing-visibility.ts";
 import { allowSeedTestListings, catalogRowsForSeed } from "../src/lib/catalog-seed.ts";
 import { turnstileMode } from "../src/lib/turnstile-mode.ts";
@@ -87,6 +89,65 @@ test("production and Vercel Production never seed fixtures", () => {
   });
   assert.equal(rows.length, 1);
   assert.equal(rows[0].slug, "bonnie");
+});
+
+test("Peninsula Oak is the same QA flag as Show QA fixtures, and Kids World stays public", () => {
+  const oak = {
+    id: "bc-3572",
+    slug: "peninsula-montessori-academy-oak-3572",
+    name: "Peninsula Montessori Academy Oak",
+    licenseNumber: "3572",
+    visibility: "public",
+    isTest: 0,
+  };
+  assert.equal(looksLikeTestFixture(oak), true);
+  assert.equal(isAdminOnlyListing(oak), true);
+  assert.equal(isPublicListing(oak), false);
+  assert.deepEqual(listingVisibilityWrite(oak), { visibility: "admin_only", isTest: 1 });
+  assert.deepEqual(listingVisibilityForOwners(oak, ["kyle@kidease.ca"]), {
+    visibility: "admin_only",
+    isTest: 1,
+  });
+  assert.deepEqual(
+    staffQueueRows([oak, { slug: "kids-world-daycare-kh2t", name: "Kids World Daycare" }], false).map((row) => row.slug),
+    ["kids-world-daycare-kh2t"],
+  );
+  assert.equal(staffQueueRows([oak], true).length, 1);
+
+  const kids = {
+    id: "ab-kh2t",
+    slug: "kids-world-daycare-kh2t",
+    name: "Kids World Daycare",
+    licenseNumber: "70051797",
+  };
+  assert.equal(isPublicListing(kids), true);
+  assert.deepEqual(listingVisibilityForOwners(kids, ["kyle@kidease.ca"]), {
+    visibility: "public",
+    isTest: 0,
+  });
+  assert.deepEqual(listingVisibilityForOwners(
+    { slug: "harbour-kids", name: "Harbour Kids", licenseNumber: "NS44821" },
+    ["joan@example.com"],
+  ), { visibility: "public", isTest: 0 });
+  assert.deepEqual(listingVisibilityForOwners(
+    { slug: "harbour-kids", name: "Harbour Kids", licenseNumber: "NS44821" },
+    ["Kyle@KidEase.ca"],
+  ), { visibility: "admin_only", isTest: 1 });
+
+  assert.match(PUBLIC_LISTING_SQL, /peninsula-montessori-academy-oak-3572/);
+  assert.match(PUBLIC_LISTING_SQL, /bc-3572/);
+  const migration = readFileSync(new URL("../migrations/0055_hide_operator_qa_fixtures.sql", import.meta.url), "utf8");
+  assert.match(migration, /kyle@kidease\.ca/);
+  assert.match(migration, /is_test = 1/);
+  assert.match(migration, /visibility = 'admin_only'/);
+  assert.match(migration, /kids-world-daycare-kh2t/);
+  assert.doesNotMatch(migration, /delete from daycares/i);
+  const approve = readFileSync(new URL("../src/lib/server/approve-centre.ts", import.meta.url), "utf8");
+  assert.match(approve, /listingVisibilityForOwners/);
+  assert.match(approve, /is_test = \$\{flags\.isTest\}/);
+  const desk = readFileSync(new URL("../src/lib/server/centre-access.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(desk, /PUBLIC_LISTING_SQL/);
+  assert.doesNotMatch(desk, /is_test/);
 });
 
 test("publicListings drops the QA ghost from homepage / search / map payloads", () => {

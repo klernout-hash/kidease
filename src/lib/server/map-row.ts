@@ -205,7 +205,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
   }));
   return {
     ...mapped,
-    live: Boolean(mapped.live) && hasLicenceEvidence(mapped),
+    live: Boolean(mapped.live) && hasLicenceEvidence(mapped) && !isAdminOnlyListing(mapped),
   };
 }
 

@@ -43,6 +43,7 @@ import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { uniqueById } from "@/lib/utils";
+import { publicListings } from "@/lib/listing-visibility";
 import { readRecent } from "@/lib/recent";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { PlaceSearch, resolveLocationQuery } from "@/components/place-search";
@@ -159,13 +160,13 @@ function Home() {
   const [denied, setDenied] = useState(locationConsent === "denied");
   const [askLocation, setAskLocation] = useState(false);
   const [, setBusy] = useState(false);
-  const [featured, setFeatured] = useState<Card[]>(boot.featured ?? []);
+  const [featured, setFeatured] = useState<Card[]>(publicListings(boot.featured ?? []));
   const [featuredReady, setFeaturedReady] = useState(boot.featuredReady !== false);
   const [recent, setRecent] = useState<Card[]>([]);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [familyKids, setFamilyKids] = useState<Child[]>([]);
   const [familyBookings, setFamilyBookings] = useState<Booking[]>([]);
-  const [explore, setExplore] = useState<Card[]>(boot.featured ?? []);
+  const [explore, setExplore] = useState<Card[]>(publicListings(boot.featured ?? []));
 
   useEffect(() => {
     if (!featured.length) return;
@@ -213,7 +214,7 @@ function Home() {
     setPlace(origin.label);
     void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label } })
       .then((rows) => {
-        const next = uniqueById(rows);
+        const next = publicListings(uniqueById(rows));
         setFeatured(next);
         setFeaturedReady(true);
         setExplore((cur) => (cur.length ? cur : next));
@@ -238,7 +239,7 @@ function Home() {
       [] as Card[],
     )
       .then((rows) => {
-        if (rows.length) setExplore(uniqueById(rows));
+        if (rows.length) setExplore(publicListings(uniqueById(rows)));
       })
       .catch(() => undefined);
   }, [origin.lat, origin.lng, origin.label, radiusKm, boot.origin]);
@@ -319,14 +320,15 @@ function Home() {
     window.addEventListener("kidease-recent", sync);
     return () => window.removeEventListener("kidease-recent", sync);
   }, []);
-  const liveCount = useMemo(() => featured.filter((r) => r.live).length, [featured]);
+  const publicFeatured = useMemo(() => publicListings(featured), [featured]);
+  const liveCount = useMemo(() => publicFeatured.filter((r) => r.live).length, [publicFeatured]);
   const shown = useMemo(
     () =>
-      homeRailItems(liveLookingOnly(uniqueById(liveOnly ? featured.filter((r) => r.live) : featured)), {
+      homeRailItems(liveLookingOnly(uniqueById(liveOnly ? publicFeatured.filter((r) => r.live) : publicFeatured)), {
         city: origin.label,
         label: origin.label,
       }),
-    [featured, liveOnly, origin.label],
+    [publicFeatured, liveOnly, origin.label],
   );
   const availableNow = useMemo(() => {
     return uniqueById(shown.filter((r) => honestVacancy(r).kind === "open")).slice(0, 18);
@@ -456,7 +458,7 @@ function Home() {
           {liveCount > 0 ? t("liveToggleCount").replace("{n}", String(liveCount)) : t("liveOnly")}
         </ChipButton>
         <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
-          {t("allToggleCount").replace("{n}", String(featured.length))}
+          {t("allToggleCount").replace("{n}", String(publicFeatured.length))}
         </ChipButton>
       </div>
 
@@ -571,15 +573,15 @@ function Home() {
                 {featuredReady && shown.length === 0 ? (
                   <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
                     <EmptyState
-                      title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
-                      body={liveOnly && featured.length > 0 ? t("noLiveResultsLead") : t("noResultsLead")}
-                      action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
+                      title={liveOnly && publicFeatured.length > 0 ? t("noLiveResults") : t("noResults")}
+                      body={liveOnly && publicFeatured.length > 0 ? t("noLiveResultsLead") : t("noResultsLead")}
+                      action={liveOnly && publicFeatured.length > 0 ? t("showAll") : t("changeLocation")}
                       onAction={
-                        liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined
+                        liveOnly && publicFeatured.length > 0 ? () => setLiveOnly(false) : undefined
                       }
-                      actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
-                      secondary={liveOnly && featured.length > 0 ? t("noLiveResultsClaim") : undefined}
-                      secondaryTo={liveOnly && featured.length > 0 ? "/claim" : undefined}
+                      actionTo={liveOnly && publicFeatured.length > 0 ? undefined : "/?change=1"}
+                      secondary={liveOnly && publicFeatured.length > 0 ? t("noLiveResultsClaim") : undefined}
+                      secondaryTo={liveOnly && publicFeatured.length > 0 ? "/claim" : undefined}
                     />
                   </div>
                 ) : null}
@@ -687,13 +689,13 @@ function Home() {
               ) : shown.length === 0 ? (
                 <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
                     <EmptyState
-                      title={liveOnly && featured.length > 0 ? t("noLiveResults") : t("noResults")}
-                      body={liveOnly && featured.length > 0 ? t("noLiveResultsLead") : t("noResultsLead")}
-                      action={liveOnly && featured.length > 0 ? t("showAll") : t("changeLocation")}
-                      onAction={liveOnly && featured.length > 0 ? () => setLiveOnly(false) : undefined}
-                      actionTo={liveOnly && featured.length > 0 ? undefined : "/?change=1"}
-                      secondary={liveOnly && featured.length > 0 ? t("noLiveResultsClaim") : undefined}
-                      secondaryTo={liveOnly && featured.length > 0 ? "/claim" : undefined}
+                      title={liveOnly && publicFeatured.length > 0 ? t("noLiveResults") : t("noResults")}
+                      body={liveOnly && publicFeatured.length > 0 ? t("noLiveResultsLead") : t("noResultsLead")}
+                      action={liveOnly && publicFeatured.length > 0 ? t("showAll") : t("changeLocation")}
+                      onAction={liveOnly && publicFeatured.length > 0 ? () => setLiveOnly(false) : undefined}
+                      actionTo={liveOnly && publicFeatured.length > 0 ? undefined : "/?change=1"}
+                      secondary={liveOnly && publicFeatured.length > 0 ? t("noLiveResultsClaim") : undefined}
+                      secondaryTo={liveOnly && publicFeatured.length > 0 ? "/claim" : undefined}
                     />
                 </div>
               ) : null}

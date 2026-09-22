@@ -23,6 +23,7 @@ import {
 } from "@/lib/search-query";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
+import { publicListings } from "@/lib/listing-visibility";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence } from "@/lib/presence";
 import { readSearchCache, searchCacheKey, writeSearchCache } from "@/lib/search-cache";
@@ -799,8 +800,8 @@ function SearchPage() {
   }
 
   const list = useMemo(() => {
-    let rows = filterByLocationLock(items ?? [], locationLock);
-    if (liveOnly) rows = rows.filter((r) => r.live);
+    let rows = publicListings(filterByLocationLock(items ?? [], locationLock));
+    if (liveOnly) rows = rows.filter((r) => r.live && !r.isTest);
     if (avail === "open") rows = rows.filter((r) => honestVacancy(r).kind === "open");
     if (avail === "waitlist") rows = rows.filter((r) => honestVacancy(r).kind === "waitlist");
     if (avail === "unknown") rows = rows.filter((r) => !r.availabilityKnown);
@@ -893,7 +894,7 @@ function SearchPage() {
     Boolean(nameQuery.trim()) ||
     parentSearchActive(parentFilters);
   const railItems = preferCompleteCards(
-    extraListingFilters || (liveOnly && shownList.length > 0) ? shownList : (items ?? []),
+    publicListings(extraListingFilters || (liveOnly && shownList.length > 0) ? shownList : (items ?? [])),
   );
   const showSearchEmpty =
     items !== null &&

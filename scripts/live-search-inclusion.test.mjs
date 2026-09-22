@@ -7,6 +7,7 @@ import {
   adminLicenceFact,
   centresInLiveSearch,
   planApproval,
+  approvalHealthSummary,
   publicApprovalEligible,
 } from "../src/lib/approve-live.ts";
 import { matchesDaycareName } from "../src/lib/explore-search.ts";
@@ -205,6 +206,82 @@ test("province names match codes, and the radius uses the city pin", () => {
   );
 });
 
+test("approved Peninsula Oak stays out of Vancouver Live search; Kids World stays in Edmonton", () => {
+  assert.ok(vancouver);
+  assert.ok(edmonton);
+  const oak = approvedKidsWorld({
+    id: "bc-3572",
+    daycareId: "bc-3572",
+    slug: "peninsula-montessori-academy-oak-3572",
+    name: "Peninsula Montessori Academy Oak",
+    city: "Vancouver",
+    province: "BC",
+    lat: vancouver.lat,
+    lng: vancouver.lng,
+    licenseNumber: "3572",
+    isTest: 1,
+    visibility: "admin_only",
+  });
+  const coast = {
+    id: "bc-coast",
+    slug: "coast-kids",
+    name: "Coast Kids",
+    city: "Vancouver",
+    province: "British Columbia",
+    lat: vancouver.lat,
+    lng: vancouver.lng,
+    licenseNumber: "BC88001",
+    licenseStatus: "matched",
+    licenseVerificationSource: "admin",
+    claimStatus: "live",
+    claimedAt: "2026-09-01",
+    listingActive: true,
+    screeningOnFile: true,
+  };
+  const kids = approvedKidsWorld();
+  assert.equal(publicApprovalEligible(oak), true, "Approve still succeeds for the fixture desk");
+  assert.deepEqual(
+    centresInLiveSearch([oak, coast], { origin: vancouver, radiusKm: 25, label: "Vancouver, BC" }).map((row) => row.slug),
+    ["coast-kids"],
+  );
+  assert.deepEqual(
+    centresInLiveSearch([kids, oak], { origin: edmonton, radiusKm: 25, label: "Edmonton, AB" }).map((row) => row.slug),
+    ["kids-world-daycare-kh2t"],
+  );
+  const flaggedBySlug = approvedKidsWorld({
+    id: "bc-3572",
+    daycareId: "bc-3572",
+    slug: "peninsula-montessori-academy-oak-3572",
+    name: "Peninsula Montessori Academy Oak",
+    city: "Vancouver",
+    province: "BC",
+    lat: vancouver.lat,
+    lng: vancouver.lng,
+    licenseNumber: "3572",
+    isTest: 0,
+    visibility: "public",
+  });
+  assert.equal(
+    centresInLiveSearch([flaggedBySlug], { origin: vancouver, radiusKm: 25, label: "Vancouver, BC" }).length,
+    0,
+  );
+  const planned = planApproval(
+    {
+      ...flaggedBySlug,
+      claimStatus: "waiting",
+      claimedAt: null,
+      licenseStatus: "unverified",
+      licenseVerificationSource: null,
+      staffScreeningAttested: true,
+      screeningOnFile: false,
+    },
+    [{ id: "cl-oak", status: "waiting", createdAt: "2026-09-01T00:00:00.000Z" }],
+  );
+  assert.equal(planned.ok, true, "Approve still marks the fixture Live for the daycare desk");
+  assert.match(approvalHealthSummary(planned.health).body, /stays out of public Live search/);
+  assert.doesNotMatch(approvalHealthSummary(planned.health).body, /Parents can find this centre/);
+});
+
 test("name filter still narrows Live results", () => {
   const kids = approvedKidsWorld();
   const river = approvedKidsWorld({
@@ -292,7 +369,7 @@ test("approve flushes the search memo so the next Live search sees the centre", 
   assert.match(src("src/lib/server/approved-search.ts"), /provinceSearchTokens/);
   assert.match(src("src/lib/server/approved-search.ts"), /listing_active = 1/);
   assert.match(src("src/lib/server/approve-centre.ts"), /flushSearchMemo\(\)/);
-  assert.match(src("src/lib/search-cache.ts"), /live2/);
+  assert.match(src("src/lib/search-cache.ts"), /live3/);
   const migration = src("migrations/0054_live_search_pin.sql");
   assert.match(migration, /st_makepoint\(lng, lat\)/);
   assert.match(migration, /daycares_approved_city_idx/);
