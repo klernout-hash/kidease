@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { overlayStoredLicensePhotos } from "../src/lib/server/license-photo-ref.ts";
+import { overlayStoredLicensePhotos, writeStoredLicensePhoto } from "../src/lib/server/license-photo-ref.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -45,4 +45,72 @@ test("a stored claim or enroll file fills an empty daycare licence photo", async
   assert.match(src("src/lib/server/admin-centres.ts"), /overlayStoredLicensePhotos/);
   assert.match(src("src/routes/api/license-docs.$daycareId.ts"), /overlayStoredLicensePhotos/);
   assert.match(src("src/lib/server/admin-centres.ts"), /nullif\(btrim\(c\.license_photo\), ''\)/);
+});
+
+test("admin attach writes the daycare file and every claim, not the licence number", async () => {
+  const calls = [];
+  const sql = {
+    query: async (text, params) => {
+      calls.push({ text, params });
+      if (text.includes("update daycares")) return [{ id: "ab-kh2t" }];
+      if (text.includes("update listing_claims")) return [];
+      throw new Error(text);
+    },
+  };
+  await writeStoredLicensePhoto(sql, {
+    daycareId: "ab-kh2t",
+    storageRef: "licenses/ab-kh2t/lic.pdf",
+    claimScope: "daycare",
+    actorUserId: "admin-1",
+  });
+  assert.match(calls[0].text, /update daycares set license_photo = \$1 where id = \$2 returning id/);
+  assert.doesNotMatch(calls[0].text, /license_number/);
+  assert.deepEqual(calls[0].params, ["licenses/ab-kh2t/lic.pdf", "ab-kh2t"]);
+  assert.match(calls[1].text, /update listing_claims set license_photo = \$1 where daycare_id = \$2$/);
+  assert.doesNotMatch(calls[1].text, /user_id/);
+  assert.deepEqual(calls[1].params, ["licenses/ab-kh2t/lic.pdf", "ab-kh2t"]);
+
+  const route = src("src/routes/api/license-docs.$daycareId.ts");
+  assert.match(route, /claimScope: actor === "admin" \? "daycare" : "actor"/);
+  assert.match(route, /Admin attached the provincial licence document/);
+  assert.match(route, /resolveAdminAccess/);
+});
+
+test("provider attach still writes only that user's claim", async () => {
+  const calls = [];
+  const sql = {
+    query: async (text, params) => {
+      calls.push({ text, params });
+      if (text.includes("update daycares")) return [{ id: "ab-kh2t" }];
+      if (text.includes("user_id")) throw new Error("claims down");
+      throw new Error(text);
+    },
+  };
+  await writeStoredLicensePhoto(sql, {
+    daycareId: "ab-kh2t",
+    storageRef: "licenses/ab-kh2t/provider.pdf",
+    claimScope: "actor",
+    actorUserId: "joan",
+  });
+  assert.match(calls[1].text, /user_id = \$3/);
+  assert.deepEqual(calls[1].params, ["licenses/ab-kh2t/provider.pdf", "ab-kh2t", "joan"]);
+
+  await assert.rejects(
+    () =>
+      writeStoredLicensePhoto(
+        {
+          query: async (text) => {
+            if (text.includes("update daycares")) return [];
+            throw new Error("should not write a claim");
+          },
+        },
+        {
+          daycareId: "missing",
+          storageRef: "licenses/missing/lic.pdf",
+          claimScope: "daycare",
+          actorUserId: "admin-1",
+        },
+      ),
+    /Daycare not found/,
+  );
 });

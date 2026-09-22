@@ -11,7 +11,7 @@ import {
 } from "@/lib/server/private-docs";
 import { R2_LICENSE_PREFIX } from "@/lib/server/r2";
 import { resolveAdminAccess } from "@/lib/server/roles";
-import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
+import { overlayStoredLicensePhotos, writeStoredLicensePhoto } from "@/lib/server/license-photo-ref";
 import { writeTrustEvent } from "@/lib/server/trust";
 
 function fail(err: unknown, fallback = "Request failed") {
@@ -27,15 +27,16 @@ function fail(err: unknown, fallback = "Request failed") {
   return Response.json({ ok: false, error: message }, { status });
 }
 
-async function authorizeLicenseDoc(userId: string, daycareId: string, write: boolean) {
+async function authorizeLicenseDoc(userId: string, daycareId: string, write: boolean): Promise<"admin" | "centre"> {
   const admin = (await resolveAdminAccess(userId)).ok;
-  if (admin) return;
+  if (admin) return "admin";
   if (write) {
     await assertCentreCanMutateListing(await getSql(), userId, daycareId);
-    return;
+    return "centre";
   }
   const role = await loadCentreRole(await getSql(), userId, daycareId);
   if (!role) throw new Error("Not authorized");
+  return "centre";
 }
 
 export const Route = createFileRoute("/api/license-docs/$daycareId")({
@@ -73,7 +74,7 @@ export const Route = createFileRoute("/api/license-docs/$daycareId")({
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
           const daycareId = params.daycareId;
-          await authorizeLicenseDoc(userId, daycareId, true);
+          const actor = await authorizeLicenseDoc(userId, daycareId, true);
           const form = await request.formData();
           const file = asUploadPart(form.get("file"));
           if (!file) throw new Error(PRIVATE_DOC_BAD_FILE);
@@ -84,18 +85,20 @@ export const Route = createFileRoute("/api/license-docs/$daycareId")({
             mime: inferPrivateDocMime({ mime: file.type, filename: file.name }),
           });
           const sql = await getSql();
-          await sql`
-            update daycares set license_photo = ${stored.storageRef} where id = ${daycareId}
-          `;
-          await sql`
-            update listing_claims set license_photo = ${stored.storageRef}
-            where daycare_id = ${daycareId} and user_id = ${userId}
-          `.catch(() => undefined);
+          await writeStoredLicensePhoto(sql, {
+            daycareId,
+            storageRef: stored.storageRef,
+            claimScope: actor === "admin" ? "daycare" : "actor",
+            actorUserId: userId,
+          });
           await writeTrustEvent(sql, {
             daycareId,
             actorUserId: userId,
             kind: "license_photo",
-            note: "Provincial licence document uploaded for Admin review.",
+            note:
+              actor === "admin"
+                ? "Admin attached the provincial licence document."
+                : "Provincial licence document uploaded for Admin review.",
           }).catch(() => undefined);
           return Response.json({ ok: true, mime: stored.mime });
         } catch (err) {

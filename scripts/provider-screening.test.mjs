@@ -246,7 +246,7 @@ test("private screening and licence docs persist as R2 keys and reopen via auth 
   assert.match(src("src/components/admin-screening.tsx"), /screeningDocHref/);
   assert.doesNotMatch(src("src/components/admin-screening.tsx"), /window\.open\(file\.dataUrl/);
   assert.match(src("src/components/provider-listing-forms.tsx"), /licenseDocHref/);
-  assert.match(src("src/routes/admin.tsx"), /licenseDocHref/);
+  assert.match(src("src/components/admin-review-card.tsx"), /licenseDocHref/);
   assert.match(src("src/routes/api/screening-documents.ts"), /saveScreeningUpload/);
   assert.match(src("src/routes/api/screening-documents.\$id.ts"), /authorizeScreeningDocument/);
   assert.match(src("src/routes/api/license-docs.\$daycareId.ts"), /R2_LICENSE_PREFIX/);

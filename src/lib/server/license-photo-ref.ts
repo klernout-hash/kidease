@@ -60,3 +60,41 @@ export async function overlayStoredLicensePhotos<T extends PhotoRow>(sql: Sql, r
     return photo ? { ...row, license_photo: photo } : row;
   });
 }
+
+/**
+ * Persist a licence file the caller already uploaded.
+ * Writes `daycares.license_photo` and the claim copy from #249.
+ * Admin updates every claim on the daycare so an older claim photo cannot hide the new file.
+ * A provider update stays on that user's claim. Does not write `license_number` or invent a PDF.
+ */
+export async function writeStoredLicensePhoto(
+  sql: Sql,
+  input: {
+    daycareId: string;
+    storageRef: string;
+    claimScope: "daycare" | "actor";
+    actorUserId: string;
+  },
+): Promise<void> {
+  const storageRef = input.storageRef.trim();
+  if (!storageRef) throw new Error("File not found");
+  const updated = await sql.query<{ id: string }>(
+    `update daycares set license_photo = $1 where id = $2 returning id`,
+    [storageRef, input.daycareId],
+  );
+  if (!updated[0]) throw new Error("Daycare not found");
+  const claimSql =
+    input.claimScope === "daycare"
+      ? `update listing_claims set license_photo = $1 where daycare_id = $2`
+      : `update listing_claims set license_photo = $1 where daycare_id = $2 and user_id = $3`;
+  const params =
+    input.claimScope === "daycare"
+      ? [storageRef, input.daycareId]
+      : [storageRef, input.daycareId, input.actorUserId];
+  const claimWrite = sql.query(claimSql, params);
+  if (input.claimScope === "actor") {
+    await claimWrite.catch(() => undefined);
+    return;
+  }
+  await claimWrite;
+}
