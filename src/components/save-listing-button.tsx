@@ -32,11 +32,14 @@ export function SaveListingButton({
   daycareId,
   nextPath,
   appearance = "photo",
+  framed = true,
   className,
 }: {
   daycareId: string;
   nextPath?: string;
   appearance?: SaveListingAppearance;
+  /** White chip on listing photos. Listing hero keeps the plain overlay heart. */
+  framed?: boolean;
   className?: string;
 }) {
   const { t } = useCopy();
@@ -148,16 +151,30 @@ export function SaveListingButton({
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => void onSave(e)}
-      className={cn("pointer-events-auto absolute right-2 top-2 z-20 grid size-11 place-items-center rounded-full", className)}
+      className={cn(
+        "pointer-events-auto absolute right-2 top-2 z-20 grid place-items-center rounded-full",
+        framed
+          ? "size-12 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.32)] ring-1 ring-black/10"
+          : "size-11",
+        className,
+      )}
       aria-label={label}
       aria-pressed={saved}
       disabled={busy}
     >
-      <Heart
-        className={cn("size-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]", saved ? "text-[#FF385C]" : "text-white")}
-        strokeWidth={1.7}
-        fill={saved ? HEART_SAVED : "rgba(0,0,0,0.28)"}
-      />
+      {framed ? (
+        <Heart
+          className={cn("size-7", saved ? "text-[#FF385C]" : "text-[#1a1a1a]")}
+          strokeWidth={saved ? 2 : 2.25}
+          fill={saved ? HEART_SAVED : "none"}
+        />
+      ) : (
+        <Heart
+          className={cn("size-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]", saved ? "text-[#FF385C]" : "text-white")}
+          strokeWidth={1.7}
+          fill={saved ? HEART_SAVED : "rgba(0,0,0,0.28)"}
+        />
+      )}
     </button>
   );
 }
