@@ -97,7 +97,7 @@ test("NEXT ops surfaces, migrations, and transactional notices; LATER stays out 
   assert.match(DAILY_CARE_HONESTY, /timesheets/);
   assert.match(CARE_OPS_LATER_OUT_OF_SCOPE, /timesheets/);
   assert.match(CARE_OPS_LATER_OUT_OF_SCOPE, /tuition billing/);
-  const migration = src("migrations/0051_care_ops_next.sql");
+  const migration = src("migrations/0057_care_ops_next.sql");
   assert.match(migration, /create table if not exists care_medications/);
   assert.match(migration, /create table if not exists care_medication_logs/);
   assert.match(migration, /create table if not exists care_incidents/);
