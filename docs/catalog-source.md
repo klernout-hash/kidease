@@ -57,17 +57,47 @@ Admin → Daycares shows the live SoT (Neon vs JSON fallback) and the public row
 
 ## Optional master CSV (offline only)
 
-The private 23 927-row master (phones / emails / websites) lives in
+The private 23 927-row master lives in
 [kidease-master-data](https://github.com/klernout-hash/kidease-master-data).
-Do not commit it here.
+Do not commit it here. `POST /api/seed-catalog` only upserts `centres.json`
+(+ extras). It cannot see the private file. Close the master gap with the
+ops script.
 
 ```bash
-MASTER_CSV_PATH=/secure/KidEase_Canada_Master_23927_20260902.csv \
+# Prove the lock before writing. No DATABASE_URL. Prints counts only.
+MASTER_CSV_PATH=/secure/KidEase_Canada_Master_23927_20260923_1004.csv \
+npm run ops:seed-catalog -- --dry-run --expect-master=23927
+
+# One Production write after migrations. Idempotent.
+MASTER_CSV_PATH=/secure/KidEase_Canada_Master_23927_20260923_1004.csv \
 DATABASE_URL='postgresql://…' \
 npm run ops:seed-catalog
 ```
 
-Enrichment is blank-only. Existing catalogue or operator contacts win.
+What the merge does:
+
+- Every existing catalogue row stays. The script throws if the row count shrinks.
+- A master row that matches licence, or name + city, or name + postal, does not
+  create a second listing.
+- Blank phone / email / website are filled from the master. A filled value is
+  never replaced with blank.
+- Unmatched Canada rows are appended only when a coordinate already exists for
+  that postal code, FSA, or city (catalogue median, or the built-in city list).
+  Rows with no coordinate are counted as `skippedNoGeo` and are not given an
+  invented pin.
+- Ages, fees, photos, open spots, and Live/claim fields are not copied from
+  the CSV. New rows stay unclaimed (`claim_status` default `unclaimed`), so
+  they are catalogue listings, not Live centres.
+- The upsert still skips any row with `claimed_at`, a provider link, a claim,
+  or a staff membership. Kids World and other approved centres are left as
+  they are.
+- On a real write, a new master row that already exists in Neon under another
+  id (same licence, or same name and city) is not inserted again.
+
+Deploy this change before the Production seed. The listing sitemap keeps the
+bundled slug file and unions public Neon slugs, so the new rows show up on
+www after the seed without committing the CSV. Ghost / TEST fixtures stay off
+the public sitemap.
 
 ## QA / ghost fixtures
 

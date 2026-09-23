@@ -72,7 +72,7 @@ function lookupKeys(id: string, slug?: string, licenseNumber?: string) {
   return keys;
 }
 
-/** RFC4180-ish CSV split. Does not throw on messy rows. */
+/** RFC4180-ish CSV split for one physical line. Does not throw on messy rows. */
 export function splitCsvLine(line: string): string[] {
   const out: string[] = [];
   let cur = "";
@@ -101,16 +101,59 @@ export function splitCsvLine(line: string): string[] {
   return out;
 }
 
+/**
+ * Full CSV records, including quoted newlines (phone notes that wrap).
+ * Does not throw on messy files. Blank records are dropped.
+ */
+export function parseCsvRecords(csvText: string): string[][] {
+  const text = csvText.replace(/^\uFEFF/, "");
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cur = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          cur += '"';
+          i += 1;
+        } else {
+          quoted = false;
+        }
+      } else {
+        cur += ch;
+      }
+    } else if (ch === '"') {
+      quoted = true;
+    } else if (ch === ",") {
+      row.push(cur);
+      cur = "";
+    } else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i += 1;
+      row.push(cur);
+      cur = "";
+      if (row.some((cell) => cell.trim())) rows.push(row);
+      row = [];
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur.length > 0 || row.length > 0) {
+    row.push(cur);
+    if (row.some((cell) => cell.trim())) rows.push(row);
+  }
+  return rows;
+}
+
 export function parseMasterContacts(csvText: string): Map<string, MasterContact> {
   const map = new Map<string, MasterContact>();
-  const text = csvText.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  const lines = text.split("\n").filter((line) => line.trim());
-  if (lines.length < 2) return map;
-  const headers = splitCsvLine(lines[0]).map((h) => HEADER_ALIASES[normHeader(h)] ?? null);
+  const records = parseCsvRecords(csvText);
+  if (records.length < 2) return map;
+  const headers = records[0].map((h) => HEADER_ALIASES[normHeader(h)] ?? null);
   if (!headers.some((h) => h === "phone" || h === "email" || h === "website")) return map;
 
-  for (const line of lines.slice(1)) {
-    const cells = splitCsvLine(line);
+  for (const cells of records.slice(1)) {
     let id = "";
     let slug = "";
     let license = "";

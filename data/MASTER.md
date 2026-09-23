@@ -37,23 +37,27 @@ git push
 
 ## Seed Production (public catalogue → Neon)
 
-The public app ships `centres.json` + extras (~20 846 licensed rows, no master
-emails). Neon is the runtime source of truth after those rows are upserted.
-This CSV is seed / blank-only enrichment only — never commit it here and never
-read it at request time. Do **not** run this on `npm run build`.
+The public app ships `centres.json` (~20 846 licensed rows, no master emails).
+`centres-extra-2.json` … `centres-extra-5.json` were never committed, so the
+3 341 master-only rows from the September merge are not in git. Neon is the
+runtime source of truth after upsert. Do **not** commit this CSV and do **not**
+run the seed on `npm run build`.
+
+Dry-run (no database), then one Production write:
 
 ```bash
-# After migrations. Uses Production DATABASE_URL. Idempotent; skips claimed rows.
-DATABASE_URL='postgresql://…' npm run ops:seed-catalog
-```
+MASTER_CSV_PATH=./KidEase_Canada_Master_23927_20260923_1004.csv \
+npm run ops:seed-catalog -- --dry-run --expect-master=23927
 
-Optional blank-only phones / emails / websites from this private CSV:
-
-```bash
-MASTER_CSV_PATH=./KidEase_Canada_Master_23927_20260908.csv \
+MASTER_CSV_PATH=./KidEase_Canada_Master_23927_20260923_1004.csv \
 DATABASE_URL='postgresql://…' \
 npm run ops:seed-catalog
 ```
 
-Chunked HTTP alternative (Bearer `CRON_SECRET` only): `POST /api/seed-catalog`.
-See `docs/catalog-source.md`.
+Existing rows are kept. Filled phone / email / website are never blanked.
+Unmatched Canada rows are inserted when a postal, FSA, or city coordinate
+already exists. Ages, fees, photos, and Live/claim state are not invented.
+Claimed and provider-owned rows are not overwritten.
+
+`POST /api/seed-catalog` only upserts the JSON catalogue. It does not read
+this CSV. See `docs/catalog-source.md`.
