@@ -74,4 +74,9 @@ test("search map opens one listing popup from a KidEase logo pin", () => {
   assert.match(mapView, /publicApprovalEligible/);
   assert.doesNotMatch(mapView, /TrustSignals/);
   assert.doesNotMatch(mapView, /feeBadgeKey/);
+  assert.match(mapView, /mapPinThumb/);
+  assert.match(mapView, /data-ke="map-pin-photo"/);
+  assert.match(mapView, /sizes="64px"/);
+  assert.doesNotMatch(mapView, /storefront-placeholder/);
+  assert.doesNotMatch(mapView, /sizes="112px"/);
 });

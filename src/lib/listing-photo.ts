@@ -183,6 +183,17 @@ export function listingThumb(photos: string[] | undefined) {
 }
 
 /**
+ * Thumbnail for the Explore map pin card.
+ * Same pick as listingThumb, but empty when the only still would be a
+ * placeholder or stock marketing photo. Never invents a storefront.
+ */
+export function mapPinThumb(photos: string[] | undefined): string {
+  const thumb = listingThumb(photos);
+  if (!thumb || isStockListingPhoto(thumb)) return "";
+  return thumb;
+}
+
+/**
  * Storefront for a catalogue card.
  * Mapped IDs always use real-storefronts (/photos/buildings/{id}.jpg) when
  * that file is unique. Unflagged shared fallbacks (copied street-view, a

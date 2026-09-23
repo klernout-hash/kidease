@@ -15,6 +15,7 @@ import {
   isStockListingPhoto,
   listingPhotosFor,
   listingThumb,
+  mapPinThumb,
   resolveListingStorefront,
   splitPhotoList,
 } from "../src/lib/listing-photo.ts";
@@ -132,13 +133,30 @@ describe("listing photos prefer official buildings over /photos/wpg/", () => {
     );
   });
 
-  it("DaycareCard and catalog both call listingThumb / listingPhotosFor", () => {
+  it("DaycareCard and catalog keep listing photos; the map pin uses a real thumb only", () => {
     const card = readFileSync(join(root, "src/components/daycare-card.tsx"), "utf8");
     const catalog = `${readFileSync(join(root, "src/lib/catalog.ts"), "utf8")}\n${readFileSync(join(root, "src/lib/catalog-hydrate.ts"), "utf8")}`;
     const map = readFileSync(join(root, "src/components/map-view.tsx"), "utf8");
     assert.match(card, /PhotoCarousel/);
     assert.match(catalog, /listingPhotosFor/);
-    assert.match(map, /listingThumb/);
+    assert.match(map, /mapPinThumb/);
+    assert.match(map, /data-ke="map-pin-photo"/);
+    assert.match(map, /BuildingPhoto/);
+    assert.doesNotMatch(map, /storefront-placeholder/);
+    assert.doesNotMatch(map, /LISTING_PLACEHOLDER/);
+  });
+
+  it("mapPinThumb uses the listing hero and skips stock or placeholder stills", () => {
+    assert.equal(
+      mapPinThumb(["/photos/wpg/1052.jpg", "/photos/buildings/mb-1052.jpg", "/photos/wpg/1052-logo.png"]),
+      "/photos/buildings/mb-1052.jpg",
+    );
+    assert.equal(mapPinThumb(["/photos/wpg/1052-logo.png"]), "");
+    assert.equal(mapPinThumb(["/photos/community.jpg", "/photos/playroom.jpg"]), "");
+    assert.equal(mapPinThumb(["/photos/storefront-placeholder-480.webp"]), "");
+    assert.equal(mapPinThumb(["/photos/wpg/2121.jpg"]), "");
+    assert.equal(mapPinThumb(undefined), "");
+    assert.equal(mapPinThumb(["data:image/jpeg;base64,abc"]), "data:image/jpeg;base64,abc");
   });
 });
 
