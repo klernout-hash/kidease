@@ -24,6 +24,14 @@ export function CookieConsentBanner() {
     return scheduleAnalyticsConsentBannerReveal(() => setOpen(true));
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    document.documentElement.dataset.cookieBanner = "open";
+    return () => {
+      delete document.documentElement.dataset.cookieBanner;
+    };
+  }, [open]);
+
   function choose(value: "granted" | "denied") {
     writeAnalyticsConsent(value);
     if (value === "granted") startPostHog();
@@ -39,9 +47,9 @@ export function CookieConsentBanner() {
       role="region"
       aria-labelledby="ke-cookie-consent-title"
       aria-describedby="ke-cookie-consent-body"
-      className="ke-cookie-consent fixed inset-x-0 bottom-0 z-[60] px-[clamp(1rem,4vw,2rem)] py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(5.25rem+env(safe-area-inset-bottom))]"
+      className="ke-cookie-consent pointer-events-none fixed inset-x-0 bottom-0 z-50 px-[clamp(1rem,4vw,2rem)] py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(5.25rem+env(safe-area-inset-bottom))]"
     >
-      <div className="mx-auto max-w-3xl rounded-xl bg-surface/95 px-3 py-2.5 shadow-lift ring-1 ring-border backdrop-blur-md">
+      <div className="ke-cookie-consent-panel pointer-events-auto mx-auto max-w-3xl rounded-xl bg-surface/95 px-3 py-2.5 shadow-lift ring-1 ring-border backdrop-blur-md">
         <div className="flex items-start gap-2">
           <span className="hidden size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary sm:grid">
             <Cookie className="size-3.5" aria-hidden />

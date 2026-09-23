@@ -56,7 +56,6 @@ import {
   type ParentListingSearch,
 } from "@/lib/parent-listing";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
-import { kmToMi, MAX_RADIUS_MI, miToKm, type DistanceUnit } from "@/lib/units";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { DaycareCard as Card } from "@/lib/types";
@@ -200,11 +199,6 @@ export const Route = createFileRoute("/search")({
 });
 
 const PRESETS_KM = [1, 5, 10, 15, 25, 40, 50];
-const PRESETS_MI = [1, 3, 5, 10, 15, 25, 31];
-
-function unitLabel(unit: DistanceUnit, t: (k: "km" | "mi") => string) {
-  return unit === "mi" ? t("mi") : t("km");
-}
 
 function SearchPage() {
   const { t } = useCopy();
@@ -269,8 +263,6 @@ function SearchPage() {
   const [workQuery, setWorkQuery] = useState("");
   const [anchorsHydrated, setAnchorsHydrated] = useState(false);
   const originSource = useAppStore((s) => s.originSource);
-  const distanceUnit = useAppStore((s) => s.distanceUnit);
-  const setDistanceUnit = useAppStore((s) => s.setDistanceUnit);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const [askLocation, setAskLocation] = useState(false);
@@ -782,11 +774,8 @@ function SearchPage() {
   }
 
   function widenSearchRadius() {
-    const current = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
-    const next =
-      (distanceUnit === "mi" ? PRESETS_MI : PRESETS_KM).find((n) => n > current) ??
-      (distanceUnit === "mi" ? MAX_RADIUS_MI : MAX_SEARCH_RADIUS_KM);
-    setRadiusKm(distanceUnit === "mi" ? miToKm(next) : next);
+    const next = PRESETS_KM.find((n) => n > radiusKm) ?? MAX_SEARCH_RADIUS_KM;
+    setRadiusKm(next);
   }
 
   function retrySearch() {
@@ -1099,40 +1088,17 @@ function SearchPage() {
     );
   }
 
-  const shownRadius = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
-  const radiusMax = distanceUnit === "mi" ? MAX_RADIUS_MI : MAX_SEARCH_RADIUS_KM;
-  const presets = distanceUnit === "mi" ? PRESETS_MI : PRESETS_KM;
-  const u = unitLabel(distanceUnit, t);
+  const shownRadius = radiusKm;
+  const radiusMax = MAX_SEARCH_RADIUS_KM;
+  const u = t("km");
 
   const radiusSlider = (
-    <div>
+    <div data-ke="radius-km">
       <div className="mb-2 flex items-center justify-between text-sm">
         <span>{t("radius")}</span>
         <span className="tabular-nums font-semibold">
           {shownRadius} {u}
         </span>
-      </div>
-      <div className="mb-3 flex h-11 overflow-hidden rounded-full bg-bg ring-1 ring-border">
-        <button
-          type="button"
-          onClick={() => setDistanceUnit("km")}
-          className={cn(
-            "flex-1 text-sm font-semibold",
-            distanceUnit === "km" ? "bg-fg text-bg" : "text-muted",
-          )}
-        >
-          {t("unitsKm")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setDistanceUnit("mi")}
-          className={cn(
-            "flex-1 text-sm font-semibold",
-            distanceUnit === "mi" ? "bg-fg text-bg" : "text-muted",
-          )}
-        >
-          {t("unitsMi")}
-        </button>
       </div>
       <input
         type="range"
@@ -1141,8 +1107,7 @@ function SearchPage() {
         step={1}
         value={shownRadius}
         onChange={(e) => {
-          const n = Number(e.target.value);
-          setRadiusKm(distanceUnit === "mi" ? miToKm(n) : n);
+          setRadiusKm(Number(e.target.value));
         }}
         className="w-full accent-primary"
         aria-valuemin={1}
@@ -1157,19 +1122,16 @@ function SearchPage() {
         </span>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
-        {presets.map((n) => {
-          const current = distanceUnit === "mi" ? Math.round(kmToMi(radiusKm)) : radiusKm;
-          return (
-            <ChipButton
-              key={n}
-              on={current === n}
-              onClick={() => setRadiusKm(distanceUnit === "mi" ? miToKm(n) : n)}
-              aria-pressed={current === n}
-            >
-              {n} {u}
-            </ChipButton>
-          );
-        })}
+        {PRESETS_KM.map((n) => (
+          <ChipButton
+            key={n}
+            on={radiusKm === n}
+            onClick={() => setRadiusKm(n)}
+            aria-pressed={radiusKm === n}
+          >
+            {n} {u}
+          </ChipButton>
+        ))}
       </div>
     </div>
   );

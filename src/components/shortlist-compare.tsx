@@ -17,13 +17,11 @@ import type { DaycareCard } from "@/lib/types";
 export function ShortlistCompareTable({
   items,
   distancesKm,
-  distanceUnit,
   located,
   onRemove,
 }: {
   items: DaycareCard[];
   distancesKm: Record<string, number>;
-  distanceUnit: "km" | "mi";
   located: boolean;
   onRemove?: (id: string) => void;
 }) {
@@ -79,8 +77,8 @@ export function ShortlistCompareTable({
               if (!located) return t("noneListed");
               const km = distancesKm[d.id];
               if (typeof km !== "number" || !Number.isFinite(km)) return t("noneListed");
-              const n = displayDistance(km, distanceUnit);
-              return `${n} ${distanceUnit === "mi" ? t("miAway") : t("kmAway")}`;
+              const n = displayDistance(km, "km");
+              return `${n} ${t("kmAway")}`;
             })}
           />
           <CompareRow

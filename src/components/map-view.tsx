@@ -3,7 +3,6 @@ import { LocateFixed, Minus, Navigation, Plus, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { CopyKey } from "@/lib/copy";
 import type { DaycareCard, Locale } from "@/lib/types";
-import type { DistanceUnit } from "@/lib/units";
 import { cn, displayCentreName, money } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
@@ -109,7 +108,6 @@ export function MapView({
   radiusRef.current = radiusKm;
 
   const locale = useAppStore((s) => s.locale);
-  const distanceUnit = useAppStore((s) => s.distanceUnit);
   const { t } = useCopy();
   const [ready, setReady] = useState(false);
   const [basemapReady, setBasemapReady] = useState(false);
@@ -585,8 +583,8 @@ export function MapView({
       <div className="pointer-events-none absolute left-3 top-[4.6rem] z-[400] lg:top-3">
         <span className="inline-flex items-center rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-fg shadow-card ring-1 ring-border">
           {t("mapSearchRadius")
-            .replace("{n}", displayDistance(radiusKm, distanceUnit))
-            .replace("{u}", distanceUnit === "mi" ? t("mi") : t("km"))}
+            .replace("{n}", displayDistance(radiusKm, "km"))
+            .replace("{u}", t("km"))}
         </span>
       </div>
 
@@ -642,7 +640,6 @@ export function MapView({
           popupRef={popupRef}
           item={selected}
           locale={locale}
-          distanceUnit={distanceUnit}
           onClose={() => dismissRef.current()}
           t={t}
         />
@@ -686,21 +683,18 @@ function MapPinPopup({
   item,
   popupRef,
   locale,
-  distanceUnit,
   onClose,
   t,
 }: {
   item: DaycareCard;
   popupRef: RefObject<HTMLDivElement | null>;
   locale: Locale;
-  distanceUnit: DistanceUnit;
   onClose: () => void;
   t: (key: CopyKey) => string;
 }) {
   const name = displayCentreName(locale === "fr" ? item.nameFr || item.name : item.name);
-  const unit = distanceUnit === "mi" ? t("mi") : t("km");
   const away = Number.isFinite(item.distanceKm)
-    ? `${displayDistance(item.distanceKm, distanceUnit)} ${unit}`
+    ? `${displayDistance(item.distanceKm, "km")} ${t("km")}`
     : "";
   const place = [item.city || item.address, away].filter(Boolean).join(" · ");
   const ages = listingAgeRangeText(item, "months");

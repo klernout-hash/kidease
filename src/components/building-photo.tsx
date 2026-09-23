@@ -9,6 +9,7 @@ import {
   publicPhotoUrl,
   srcsetWidthsFor,
 } from "@/lib/photo";
+import { healMediaUrl } from "@/lib/listing-photo";
 import { cn } from "@/lib/utils";
 
 /** Mobile Lighthouse LCP: sized AVIF, not a late-discovered 1200-only file. */
@@ -63,15 +64,19 @@ export function BuildingPhoto({
   width?: number;
   height?: number;
 }) {
+  const healed = healMediaUrl(src);
   const ref = useRef<HTMLImageElement>(null);
-  const [cur, setCur] = useState(src || FALLBACK);
-  const [broken, setBroken] = useState(false);
+  const [cur, setCur] = useState(healed || FALLBACK);
+  const [broken, setBroken] = useState(!healed);
   const [skipTransform, setSkipTransform] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setBroken(false);
-    setCur(src || FALLBACK);
+    const next = healMediaUrl(src);
+    setBroken(!next);
+    setCur(next || FALLBACK);
     setSkipTransform(false);
+    setLoaded(false);
   }, [src]);
 
   const ready = cur || FALLBACK;
@@ -79,6 +84,7 @@ export function BuildingPhoto({
 
   function fail(event?: SyntheticEvent<HTMLImageElement>) {
     const failed = event?.currentTarget?.currentSrc || event?.currentTarget?.src || delivered;
+    setLoaded(false);
     if (!skipTransform && isResizedPhotoUrl(failed || photoUrl(ready, width))) {
       setSkipTransform(true);
       return;
@@ -88,22 +94,27 @@ export function BuildingPhoto({
   }
 
   useEffect(() => {
-    if (!eager && !priority) return;
     const node = ref.current;
     if (!node || broken) return;
-    // Eager heroes can 404 before hydrate; onError does not replay. Lazy cards
-    // stay on native loading=lazy — `complete` is not a reliable "failed" bit there.
-    if (node.complete && node.naturalWidth === 0 && node.getAttribute("src")) {
+    if (node.complete && node.naturalWidth > 0) {
+      setLoaded(true);
+      return;
+    }
+    // Eager heroes can 404 before hydrate; onError does not replay.
+    // Lazy cards often report complete + naturalWidth 0 before fetch starts,
+    // so they wait for onError / onLoad instead of being marked broken.
+    if ((eager || priority) && node.complete && node.naturalWidth === 0 && node.getAttribute("src")) {
       fail();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cur, skipTransform, broken, delivered]);
+
+  const sized =
+    className?.includes("aspect-") ||
+    className?.includes("size-full") ||
+    className?.includes("h-full");
 
   if (broken) {
-    const sized =
-      className?.includes("aspect-") ||
-      className?.includes("size-full") ||
-      className?.includes("h-full");
     return (
       <ListingPhotoFallback
         className={className}
@@ -113,20 +124,28 @@ export function BuildingPhoto({
   }
 
   return (
-    <img
-      ref={ref}
-      src={delivered}
-      srcSet={!skipTransform ? photoSrcSet(ready, srcsetWidthsFor(width)) : undefined}
-      sizes={sizes}
-      width={width}
-      height={height}
-      alt=""
-      className={cn("ke-photo bg-surface-2 text-transparent", className)}
-      loading={priority || eager ? "eager" : "lazy"}
-      decoding={priority ? "auto" : "async"}
-      fetchPriority={priority ? "high" : eager ? "auto" : "low"}
-      onError={fail}
-    />
+    <span className={cn("relative block overflow-hidden", className)}>
+      {loaded ? null : <ListingPhotoFallback className="absolute inset-0 size-full" />}
+      <img
+        ref={ref}
+        src={delivered}
+        srcSet={!skipTransform ? photoSrcSet(ready, srcsetWidthsFor(width)) : undefined}
+        sizes={sizes}
+        width={width}
+        height={height}
+        alt=""
+        data-ke-photo={loaded ? "ok" : "pending"}
+        className={cn(
+          "ke-photo size-full bg-surface-2 object-cover text-transparent",
+          loaded ? "relative" : "invisible absolute inset-0",
+        )}
+        loading={priority || eager ? "eager" : "lazy"}
+        decoding={priority ? "auto" : "async"}
+        fetchPriority={priority ? "high" : eager ? "auto" : "low"}
+        onLoad={() => setLoaded(true)}
+        onError={fail}
+      />
+    </span>
   );
 }
 

@@ -30,7 +30,6 @@ import { getProvider } from "@/lib/server/family";
 import { DirectorProStrip } from "@/components/director-pro-strip";
 import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { useSessionDesks } from "@/components/session-desks";
-import { PLANS_NOT_OFFERED_YET } from "@/lib/features";
 
 const COPY = {
   en: {
@@ -215,11 +214,9 @@ export function ProviderSubscriptionPanel() {
 
   if (!showCheckout) {
     return (
-      <section className="space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border">
+      <section className="space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="plans-not-offered">
         <h2 className="font-display text-2xl">{t.title}</h2>
         <p className="text-sm text-muted">{tx("plansNotOffered")}</p>
-        <p className="text-sm text-muted">{tx("listingStayFree")}</p>
-        <p className="text-xs text-subtle">{PLANS_NOT_OFFERED_YET}</p>
       </section>
     );
   }
