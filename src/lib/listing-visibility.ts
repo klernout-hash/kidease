@@ -10,6 +10,7 @@ export type ListingVisibility = (typeof LISTING_VISIBILITY)[keyof typeof LISTING
 /** Fields used to decide whether a listing may appear on public surfaces. */
 export type ListingVisibilityInput = {
   id?: string | null;
+  daycareId?: string | null;
   slug?: string | null;
   name?: string | null;
   licenseNumber?: string | null;
@@ -63,7 +64,7 @@ function norm(value: string | null | undefined) {
  */
 export function looksLikeTestFixture(d: ListingVisibilityInput | null | undefined): boolean {
   if (!d) return false;
-  const id = norm(d.id);
+  const id = norm(d.id || d.daycareId);
   const slug = norm(d.slug);
   const license = norm(d.licenseNumber);
   const name = (d.name || "").trim();
@@ -101,6 +102,9 @@ export function publicListings<T extends ListingVisibilityInput>(rows: T[]): T[]
 /** Staff queues default to production claims. QA / ghost / Claim Lab stay opt-in. */
 export function staffQueueRows<T extends ListingVisibilityInput>(rows: T[], includeQa: boolean): T[] {
   if (includeQa) return rows;
+  // `daycareId` counts as `id` inside isAdminOnlyListing, so a mapped Admin row
+  // (Joan) is not dropped for a missing `id`, and Peninsula Oak still hides
+  // when Show QA is off even if its stored is_test flag is 0.
   return rows.filter((row) => !isAdminOnlyListing(row));
 }
 

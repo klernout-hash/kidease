@@ -8,27 +8,18 @@ import { writeTrustEvent } from "@/lib/server/trust";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
-import { asIsoString, compareTimeDesc } from "@/lib/sort-time";
-import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { compareTimeDesc } from "@/lib/sort-time";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { licenseReviewMarker } from "@/lib/private-docs";
 import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
-import { normalizeAdminClaimStatus } from "@/lib/listing-queue";
 import { collapseDuplicateReviewCards, hasLicenceEvidence } from "@/lib/approve-live";
 import { runApproval } from "@/lib/server/approve-centre";
+import { mapAdminCentreSqlRow, type AdminCentreSqlRow } from "@/lib/admin-centres-map";
 import {
   incompleteMissing,
   selectIncompleteRows,
   type IncompleteMissingField,
 } from "@/lib/listing-incomplete";
-
-function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
-  const storefront = splitPhotoList(photos).find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
-  return {
-    licensePhoto: licenseReviewMarker(licensePhoto),
-    storefrontPhoto: storefront || null,
-  };
-}
 
 export type AdminCentreRow = {
   daycareId: string;
@@ -70,19 +61,19 @@ export type AdminCentreRow = {
   updatedAt: string | null;
 };
 
+/** Licence + storefront photos for Admin verify — daycare photos, not the raw CSV. */
+function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
+  const storefront = splitPhotoList(photos).find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
+  return {
+    licensePhoto: licenseReviewMarker(licensePhoto),
+    storefrontPhoto: storefront || null,
+  };
+}
+
 export type Decision = "approve" | "decline" | "waiting";
 
 async function requireOperator(userId: string) {
   return requireAdmin(userId);
-}
-
-function normalizeStatus(claimStatus: string | null, claimedAt: string | null, claimRow: string | null, hasProviderLink = false) {
-  return normalizeAdminClaimStatus({
-    claimStatus,
-    claimedAt,
-    claimRowStatus: claimRow,
-    hasProviderLink,
-  });
 }
 
 async function deliverToProvider(to: string, subject: string, text: string) {
@@ -160,170 +151,12 @@ export const listAdminCentres = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await requireOperator(context.userId);
     const sql = await getSql();
-    const rows = await sql<{
-      daycare_id: string;
-      slug: string;
-      name: string;
-      address: string;
-      city: string;
-      province: string;
-      phone: string | null;
-      contact_email: string | null;
-      claim_status: string | null;
-      claimed_at: string | null;
-      claim_id: string | null;
-      claim_row_status: string | null;
-      provider_user_id: string | null;
-      provider_name: string | null;
-      provider_email: string | null;
-      submitted_at: string | null;
-      reviewed_at: string | null;
-      review_note: string | null;
-      license_number: string | null;
-      license_status: string | null;
-      license_expiry: string | null;
-      licensed_capacity: number | null;
-      registry_match_state: string | null;
-      license_verified_at: string | null;
-      license_verification_source: string | null;
-      staff_screening_attested: number | boolean | null;
-      staff_screening_attested_at: string | null;
-      screening_on_file: number | boolean | null;
-      screening_on_file_at: string | null;
-      license_photo: string | null;
-      photos: string | null;
-      hours?: string | null;
-      infant_monthly?: number | null;
-      toddler_monthly?: number | null;
-      preschool_monthly?: number | null;
-      part_time_monthly?: number | null;
-      ages_confirmed?: number | boolean | null;
-      age_min_months?: number | null;
-      age_max_months?: number | null;
-      provider_link_user_id?: string | null;
-      last_photo_updated_at?: string | null;
-      last_vacancy_updated_at?: string | null;
-      created_at?: string | null;
-      visibility?: string | null;
-      is_test?: number | boolean | null;
-    }>`
-      select distinct on (d.id)
-        d.id as daycare_id,
-        d.slug,
-        d.name,
-        d.address,
-        d.city,
-        d.province,
-        d.phone,
-        d.contact_email,
-        d.claim_status,
-        d.claimed_at,
-        c.id as claim_id,
-        c.status as claim_row_status,
-        coalesce(c.user_id, pd.user_id) as provider_user_id,
-        pd.user_id as provider_link_user_id,
-        u.name as provider_name,
-        u.email as provider_email,
-        coalesce(c.created_at, d.claimed_at, d.created_at) as submitted_at,
-        c.reviewed_at,
-        c.review_note,
-        d.license_number,
-        d.license_status,
-        d.license_expiry::text as license_expiry,
-        d.licensed_capacity,
-        d.registry_match_state,
-        d.license_verified_at,
-        d.license_verification_source,
-        d.staff_screening_attested,
-        d.staff_screening_attested_at,
-        d.screening_on_file,
-        d.screening_on_file_at,
-        coalesce(nullif(btrim(c.license_photo), ''), nullif(btrim(d.license_photo), '')) as license_photo,
-        d.photos,
-        d.hours,
-        d.infant_monthly,
-        d.toddler_monthly,
-        d.preschool_monthly,
-        d.part_time_monthly,
-        d.ages_confirmed,
-        d.age_min_months,
-        d.age_max_months,
-        d.last_photo_updated_at,
-        d.last_vacancy_updated_at,
-        d.created_at,
-        d.visibility,
-        d.is_test
-      from daycares d
-      left join listing_claims c on c.daycare_id = d.id
-      left join provider_daycares pd on pd.daycare_id = d.id
-      left join "user" u on u.id = coalesce(c.user_id, pd.user_id)
-      where d.claimed_at is not null
-         or d.claim_status in ('pending', 'waiting', 'verified', 'approved', 'declined')
-         or c.id is not null
-         or pd.user_id is not null
-         or d.is_test = 1
-         or d.visibility = 'admin_only'
-         or d.slug = 'test-ghost-claim-lab'
-         or d.license_number = 'TEST-GHOST-0001'
-         or d.id = 'ke-test-ghost-001'
-         or d.id ilike 'ke-test-%'
-         or d.name like 'TEST %'
-      order by d.id,
-        case
-          when c.status = 'approved' then 0
-          when c.status = 'superseded' then 2
-          else 1
-        end,
-        c.created_at desc nulls last
-    `.catch(() =>
-      sql<{
-        daycare_id: string;
-        slug: string;
-        name: string;
-        address: string;
-        city: string;
-        province: string;
-        phone: string | null;
-        contact_email: string | null;
-        claim_status: string | null;
-        claimed_at: string | null;
-        claim_id: string | null;
-        claim_row_status: string | null;
-        provider_user_id: string | null;
-        provider_name: string | null;
-        provider_email: string | null;
-        submitted_at: string | null;
-        reviewed_at: string | null;
-        review_note: string | null;
-        license_number: string | null;
-        license_status: string | null;
-        license_expiry: string | null;
-        licensed_capacity: number | null;
-        registry_match_state: string | null;
-        license_verified_at: string | null;
-        license_verification_source: string | null;
-        staff_screening_attested: number | boolean | null;
-        staff_screening_attested_at: string | null;
-        screening_on_file: number | boolean | null;
-        screening_on_file_at: string | null;
-        license_photo: string | null;
-        photos: string | null;
-        hours?: string | null;
-        infant_monthly?: number | null;
-        toddler_monthly?: number | null;
-        preschool_monthly?: number | null;
-        part_time_monthly?: number | null;
-        ages_confirmed?: number | boolean | null;
-        age_min_months?: number | null;
-        age_max_months?: number | null;
-        provider_link_user_id?: string | null;
-        last_photo_updated_at?: string | null;
-        last_vacancy_updated_at?: string | null;
-        created_at?: string | null;
-        visibility?: string | null;
-        is_test?: number | boolean | null;
-      }>`
-        select distinct on (d.id)
+    // LATERAL keeps one claim + one provider link per centre (no claim×member
+    // cartesian). Do not swallow errors as [] — that looks like an empty queue.
+    let rows: AdminCentreSqlRow[];
+    try {
+      rows = await sql<AdminCentreSqlRow>`
+        select
           d.id as daycare_id,
           d.slug,
           d.name,
@@ -354,7 +187,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           d.staff_screening_attested_at,
           d.screening_on_file,
           d.screening_on_file_at,
-          d.license_photo,
+          coalesce(nullif(btrim(c.license_photo), ''), nullif(btrim(d.license_photo), '')) as license_photo,
           d.photos,
           d.hours,
           d.infant_monthly,
@@ -364,19 +197,33 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           d.ages_confirmed,
           d.age_min_months,
           d.age_max_months,
-          null::timestamptz as last_photo_updated_at,
-          null::timestamptz as last_vacancy_updated_at,
+          d.last_photo_updated_at,
+          d.last_vacancy_updated_at,
           d.created_at,
           d.visibility,
           d.is_test
         from daycares d
-        left join listing_claims c on c.daycare_id = d.id
-        left join provider_daycares pd on pd.daycare_id = d.id
+        left join lateral (
+          select id, status, user_id, created_at, reviewed_at, review_note, license_photo
+          from listing_claims
+          where daycare_id = d.id
+          order by
+            case
+              when status = 'approved' then 0
+              when status = 'superseded' then 2
+              else 1
+            end,
+            created_at desc nulls last
+          limit 1
+        ) c on true
+        left join lateral (
+          select user_id from provider_daycares where daycare_id = d.id limit 1
+        ) pd on true
         left join "user" u on u.id = coalesce(c.user_id, pd.user_id)
         where d.claimed_at is not null
-           or d.claim_status in ('pending', 'waiting', 'verified', 'approved', 'declined')
-           or c.id is not null
-           or pd.user_id is not null
+           or lower(btrim(coalesce(d.claim_status, ''))) in ('pending', 'waiting', 'verified', 'approved', 'declined')
+           or exists (select 1 from listing_claims lc where lc.daycare_id = d.id)
+           or exists (select 1 from provider_daycares pl where pl.daycare_id = d.id)
            or d.is_test = 1
            or d.visibility = 'admin_only'
            or d.slug = 'test-ghost-claim-lab'
@@ -384,22 +231,16 @@ export const listAdminCentres = createServerFn({ method: "GET" })
            or d.id = 'ke-test-ghost-001'
            or d.id ilike 'ke-test-%'
            or d.name like 'TEST %'
-        order by d.id,
-        case
-          when c.status = 'approved' then 0
-          when c.status = 'superseded' then 2
-          else 1
-        end,
-        c.created_at desc nulls last
-      `.catch(() => []),
-    );
-    const withFiles = await overlayStoredLicensePhotos(sql, rows);
+      `;
+    } catch (first) {
+      throw first instanceof Error ? first : new Error("Could not load the admin queue.");
+    }
 
+    const withFiles = await overlayStoredLicensePhotos(sql, rows);
     const mapped: AdminCentreRow[] = withFiles.map((r) => {
-      const hasProviderLink = Boolean(r.provider_link_user_id);
-      const status = normalizeStatus(r.claim_status, r.claimed_at, r.claim_row_status, hasProviderLink);
+      const row = mapAdminCentreSqlRow(r);
       const live =
-        status === "approved" &&
+        row.claimStatus === "approved" &&
         hasLicenceEvidence({
           id: r.daycare_id,
           daycareId: r.daycare_id,
@@ -409,64 +250,19 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           province: r.province,
         });
       const photos = firstReviewPhoto(r.photos, r.license_photo);
-      const screeningOnFile = r.screening_on_file === 1 || r.screening_on_file === true;
-      const submittedAt = asIsoString(r.submitted_at);
-      const updatedAt = [r.last_photo_updated_at, r.last_vacancy_updated_at, r.reviewed_at, submittedAt, r.created_at]
-        .map((value) => asIsoString(value))
-        .filter((value): value is string => Boolean(value))
-        .sort((a, b) => compareTimeDesc(a, b))[0] || submittedAt;
       return {
-        daycareId: r.daycare_id,
-        slug: r.slug,
-        name: r.name,
-        address: r.address,
-        city: r.city,
-        province: r.province,
-        phone: r.phone,
-        contactEmail: r.contact_email,
-        claimStatus: status,
-        claimedAt: r.claimed_at,
+        ...row,
         live,
-        claimId: r.claim_id,
-        claimRowStatus: r.claim_row_status,
-        providerUserId: r.provider_user_id,
-        providerName: r.provider_name,
-        providerEmail: r.provider_email,
-        submittedAt,
-        reviewedAt: r.reviewed_at,
-        reviewNote: r.review_note,
-        licenseNumber: r.license_number,
-        licenseStatus: r.license_status || "unverified",
-        licenseExpiry: r.license_expiry,
-        licensedCapacity: r.licensed_capacity,
-        registryMatchState: r.registry_match_state || "unmatched",
-        licenseVerifiedAt: r.license_verified_at,
-        licenseVerificationSource: r.license_verification_source,
-        staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
-        staffScreeningAttestedAt: r.staff_screening_attested_at,
-        screeningOnFile,
-        screeningOnFileAt: r.screening_on_file_at,
-        isTest: isAdminOnlyListing({
-          id: r.daycare_id,
-          slug: r.slug,
-          name: r.name,
-          licenseNumber: r.license_number,
-          address: r.address,
-          visibility: r.visibility,
-          isTest: r.is_test,
-        }),
         ...photos,
-        hasProviderLink,
-        hasListingClaim: Boolean(r.claim_id),
         missing: incompleteMissing({
-          claimStatus: status,
-          claimedAt: r.claimed_at,
+          claimStatus: row.claimStatus,
+          claimedAt: row.claimedAt,
           claimRowStatus: r.claim_row_status,
-          hasProviderLink,
-          hasListingClaim: Boolean(r.claim_id),
+          hasProviderLink: row.hasProviderLink,
+          hasListingClaim: row.hasListingClaim,
           live,
           licensePhoto: photos.licensePhoto,
-          screeningOnFile,
+          screeningOnFile: row.screeningOnFile,
           photos: r.photos,
           storefrontPhoto: photos.storefrontPhoto,
           province: r.province,
@@ -479,7 +275,6 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           ageMaxMonths: r.age_max_months ?? 0,
           hours: r.hours,
         }),
-        updatedAt,
       };
     });
 

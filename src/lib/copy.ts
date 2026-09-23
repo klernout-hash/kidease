@@ -2090,6 +2090,7 @@ export const copy = {
     adminIncompleteLead:
       "Provider-linked or claim-started listings still missing facts or uploads. Catalogue unclaimed centres stay off this queue. Use the chips to ping CRM — complete the listing and uploads to go live.",
     adminIncompleteEmpty: "No provider listings need completion.",
+    adminIncompleteLoading: "Loading the admin queue…",
     adminIncompleteCaughtUp: "Caught up",
     adminIncompleteCount: "{n} to complete",
     adminIncompleteNeedLicensePhoto: "Licence photo",
@@ -4399,6 +4400,7 @@ export const copy = {
     adminIncompleteLead:
       "Fiches liées à un fournisseur ou déjà réclamées, encore incomplètes. Les centres du catalogue non réclamés n’apparaissent pas ici. Utilisez les pastilles pour relancer le CRM — il faut terminer la fiche et les téléversements pour passer en direct.",
     adminIncompleteEmpty: "Aucune fiche fournisseur à compléter.",
+    adminIncompleteLoading: "Chargement de la file admin…",
     adminIncompleteCaughtUp: "À jour",
     adminIncompleteCount: "{n} à compléter",
     adminIncompleteNeedLicensePhoto: "Photo du permis",
