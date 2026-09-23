@@ -173,7 +173,8 @@ test("provider guest gate and declined claims stay honest", () => {
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /providerGuestLead/);
   assert.match(provider, /declined/);
-  assert.match(provider, /Promote is off while this listing is declined/);
+  assert.match(provider, /promoteDeclined/);
+  assert.match(src("src/lib/copy.ts"), /Promote is off while this listing is declined/);
   assert.match(provider, /VacancyConfirmLoop/);
   const loop = src("src/components/vacancy-confirm.tsx");
   assert.match(loop, /refreshVacancy/);

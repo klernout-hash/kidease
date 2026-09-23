@@ -8,6 +8,8 @@ import { BrandMark } from "@/components/brand-mark";
 import { PasswordField } from "@/components/password-field";
 import { Shell } from "@/components/shell";
 import { PasswordRules } from "@/components/password-rules";
+import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { useCopy } from "@/lib/use-copy";
 import { localPasswordIssue, PASSWORD_POLICY_HINT, passwordMeetsPolicy } from "@/lib/password-hygiene";
 
 export const Route = createFileRoute("/reset-password")({
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/reset-password")({
 
 function ResetPassword() {
   const { token } = Route.useSearch();
+  const { t, locale } = useCopy();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -76,27 +79,27 @@ function ResetPassword() {
           <div className="flex justify-center">
             <BrandMark size="md" />
           </div>
-          <h1 className="mt-6 font-display text-3xl">Choose a new password</h1>
+          <h1 className="mt-6 font-display text-3xl">{t("resetPasswordTitle")}</h1>
           {done ? (
             <>
-              <p className="mt-3 text-sm text-muted">Your password is updated. Sign in with the new one.</p>
+              <p className="mt-3 text-sm text-muted">{t("resetPasswordDone")}</p>
               <Link to="/login" className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
-                Back to sign in
+                {t("backToSignIn")}
               </Link>
             </>
           ) : !token ? (
             <>
-              <p className="mt-3 text-sm text-danger">This reset link is missing or expired. Request a new one from the sign-in page.</p>
+              <p className="mt-3 text-sm text-danger">{t("resetPasswordMissing")}</p>
               <Link to="/forgot-password" className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
-                Email a new reset link
+                {t("resetPasswordNewLink")}
               </Link>
             </>
           ) : (
             <>
-              <p className="mt-2 text-sm text-muted">This works for Parent, Daycare, and Operator accounts.</p>
+              <p className="mt-2 text-sm text-muted">{t("resetPasswordLead")}</p>
               <form onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
                 <PasswordField
-                  label="New password"
+                  label={t("resetPasswordNew")}
                   required
                   minLength={8}
                   value={password}
@@ -105,7 +108,7 @@ function ResetPassword() {
                 />
                 <PasswordRules password={password} />
                 <PasswordField
-                  label="Confirm password"
+                  label={t("resetPasswordConfirm")}
                   required
                   minLength={8}
                   value={confirm}
@@ -113,17 +116,17 @@ function ResetPassword() {
                   autoComplete="new-password"
                 />
                 {confirm && confirm !== password ? (
-                  <p className="text-[13px] text-danger">Those passwords do not match.</p>
+                  <p className="text-[13px] text-danger">{t("resetPasswordMismatch")}</p>
                 ) : null}
                 <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-                {error ? <p className="text-sm text-danger">{error}</p> : null}
+                {error ? <p className="text-sm text-danger">{presentAuthCopy(locale, error)}</p> : null}
                 <Button type="submit" className="w-full" disabled={busy || !ready || (turnstileRequired && !challenge.trim())}>
-                  Save new password
+                  {t("resetPasswordSave")}
                 </Button>
               </form>
               <p className="mt-6 text-center text-xs text-subtle">
                 <Link to="/login" className="underline-offset-4 hover:underline">
-                  Back to sign in
+                  {t("backToSignIn")}
                 </Link>
               </p>
             </>

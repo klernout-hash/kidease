@@ -36,7 +36,8 @@ describe("forgot-password flow", () => {
     assert.match(routeFile, /redirectTo:\s*"\/reset-password"/);
     assert.match(routeFile, /getResetMailReady/);
     assert.match(routeFile, /mailReady/);
-    assert.match(routeFile, /RESEND_API_KEY or SENDGRID_API_KEY/);
+    assert.match(routeFile, /forgotPasswordMailMissing/);
+    assert.match(read("src/lib/copy.ts"), /RESEND_API_KEY or SENDGRID_API_KEY or TITAN_APP_PASSWORD/);
     assert.match(routeTree, /from '\.\/routes\/forgot-password'/);
     assert.match(routeTree, /id:\s*'\/forgot-password'/);
     assert.match(routeTree, /path:\s*'\/forgot-password'/);
@@ -65,20 +66,28 @@ describe("forgot-password flow", () => {
     assert.match(reset, /createFileRoute\("\/reset-password"\)/);
     assert.match(reset, /authClient\.resetPassword/);
     assert.match(reset, /to="\/login"/);
-    assert.match(reset, /Back to sign in/);
+    assert.match(reset, /t\("backToSignIn"\)/);
+    assert.match(read("src/lib/copy.ts"), /backToSignIn: "Back to sign in"/);
+    assert.match(read("src/lib/copy.ts"), /backToSignIn: "Retour à la connexion"/);
   });
 
   it("shows a password visibility toggle on login and reset forms", () => {
     const field = read("src/components/password-field.tsx");
     const login = read("src/routes/login.tsx");
     const reset = read("src/routes/reset-password.tsx");
-    assert.match(field, /Show password/);
-    assert.match(field, /Hide password/);
+    const copy = read("src/lib/copy.ts");
+    assert.match(field, /t\("showPassword"\)/);
+    assert.match(field, /t\("hidePassword"\)/);
     assert.match(field, /EyeOff/);
+    assert.match(copy, /showPassword: "Show password"/);
+    assert.match(copy, /hidePassword: "Hide password"/);
+    assert.match(copy, /showPassword: "Afficher le mot de passe"/);
     assert.match(login, /PasswordField/);
     assert.match(reset, /PasswordField/);
-    assert.match(reset, /label="New password"/);
-    assert.match(reset, /label="Confirm password"/);
+    assert.match(reset, /t\("resetPasswordNew"\)/);
+    assert.match(reset, /t\("resetPasswordConfirm"\)/);
+    assert.match(copy, /resetPasswordNew: "New password"/);
+    assert.match(copy, /resetPasswordConfirm: "Confirm password"/);
   });
 
   it("refuses to pretend a reset email was sent when Resend/SendGrid are missing", () => {

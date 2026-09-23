@@ -26,11 +26,12 @@ export function deviceLabelFromUserAgent(userAgent?: string | null): string {
   return os ? `${browser} on ${os}` : browser;
 }
 
-export function formatDeviceTime(iso?: string | null): string {
-  if (!iso) return "Unknown";
+export function formatDeviceTime(iso?: string | null, locale: "en" | "fr" | string = "en"): string {
+  const tag = locale === "fr" ? "fr-CA" : "en-CA";
+  if (!iso) return "";
   const at = new Date(iso);
-  if (Number.isNaN(at.getTime())) return "Unknown";
-  return at.toLocaleString("en-CA", {
+  if (Number.isNaN(at.getTime())) return "";
+  return at.toLocaleString(tag, {
     dateStyle: "medium",
     timeStyle: "short",
   });

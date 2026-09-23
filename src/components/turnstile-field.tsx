@@ -1,6 +1,8 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { getTurnstileSiteKey } from "@/lib/server/turnstile";
 import { beginTurnstileReset, coalesceTurnstileToken, readTurnstileResponseValue } from "@/lib/turnstile-widget";
+import { tx } from "@/lib/copy";
+import { useCopy } from "@/lib/use-copy";
 
 type TurnstileApi = {
   render: (
@@ -18,6 +20,7 @@ type TurnstileApi = {
       appearance?: "always" | "execute" | "interaction-only";
       theme?: "auto" | "light" | "dark";
       size?: "normal" | "flexible" | "compact";
+      language?: string;
     },
   ) => string;
   reset: (id: string) => void;
@@ -84,6 +87,8 @@ export const TurnstileField = memo(function TurnstileField({
   const host = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const onTokenRef = useRef(onToken);
+  const { locale } = useCopy();
+  const copyLocale = locale === "fr" ? "fr" : "en";
   const [siteKey, setSiteKey] = useState<string | null | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | null>(null);
   onTokenRef.current = onToken;
@@ -133,6 +138,7 @@ export const TurnstileField = memo(function TurnstileField({
           // Cloudflare branding. interaction-only hid the widget on most logins.
           appearance: "always",
           theme: "auto",
+          language: copyLocale,
           retry: "auto",
           "refresh-expired": "auto",
           "response-field": true,
@@ -143,27 +149,35 @@ export const TurnstileField = memo(function TurnstileField({
           },
           "expired-callback": () => {
             onTokenRef.current("");
-            setLoadError("Security check expired. Complete it again, then try once.");
+            setLoadError(tx(copyLocale, "turnstileExpired"));
           },
           "timeout-callback": () => {
             onTokenRef.current("");
-            setLoadError("Security check expired. Complete it again, then try once.");
+            setLoadError(tx(copyLocale, "turnstileExpired"));
           },
           "error-callback": () => {
             onTokenRef.current("");
-            setLoadError("Security check failed. Refresh and try again.");
+            setLoadError(tx(copyLocale, "turnstileFailed"));
           },
         });
       })
       .then(() => {
         if (!cancelled && siteKey && !window.turnstile && !widgetId.current) {
-          setLoadError("Security check could not load. Refresh the page.");
+          setLoadError(tx(copyLocale, "turnstileLoadFailed"));
         }
       });
     return () => {
       cancelled = true;
+      if (widgetId.current && window.turnstile) {
+        try {
+          window.turnstile.remove(widgetId.current);
+        } catch {
+          /* widget already gone */
+        }
+      }
+      widgetId.current = null;
     };
-  }, [siteKey]);
+  }, [siteKey, copyLocale]);
 
   useEffect(() => {
     if (!resetSignal) return;

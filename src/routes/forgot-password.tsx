@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage } from "@/lib/auth/login-errors";
+import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { friendlyResetMailError } from "@/lib/auth/reset-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { getResetMailReady } from "@/lib/server/reset-mail";
@@ -9,6 +10,7 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
+import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/forgot-password")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/forgot-password")({
 function ForgotPassword() {
   const { mailReady } = Route.useLoaderData();
   const search = Route.useSearch();
+  const { t, locale } = useCopy();
   const [email, setEmail] = useState(search.email ?? "");
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -71,20 +74,14 @@ function ForgotPassword() {
           <div className="flex justify-center">
             <BrandMark size="md" />
           </div>
-          <h1 className="mt-6 font-display text-3xl">Forgot password</h1>
-          <p className="mt-2 text-sm text-muted">
-            Enter the email on the account. If it is registered, we email a reset link that expires in about an hour.
-            Use this if the password hash is stale or none of the passwords you remember work.
-          </p>
+          <h1 className="mt-6 font-display text-3xl">{t("forgotPasswordTitle")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("forgotPasswordPageLead")}</p>
           {mailReady ? null : (
-            <p className="mt-3 text-sm text-danger">
-              This environment cannot send reset emails yet (missing RESEND_API_KEY or SENDGRID_API_KEY or TITAN_APP_PASSWORD).
-              If the account was created with Apple or Google, use that button on the sign-in page.
-            </p>
+            <p className="mt-3 text-sm text-danger">{t("forgotPasswordMailMissing")}</p>
           )}
           <form onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
             <label className="block text-sm">
-              Email
+              {t("email")}
               <input
                 type="email"
                 required
@@ -95,15 +92,15 @@ function ForgotPassword() {
               />
             </label>
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-            {error ? <p className="text-sm text-danger">{error}</p> : null}
-            {note ? <p className="text-sm text-muted">{note}</p> : null}
+            {error ? <p className="text-sm text-danger">{presentAuthCopy(locale, error)}</p> : null}
+            {note ? <p className="text-sm text-muted">{presentAuthCopy(locale, note)}</p> : null}
             <Button type="submit" className="w-full" disabled={busy || (turnstileRequired && !token.trim())}>
-              {busy ? "Sending…" : "Email reset link"}
+              {busy ? t("forgotPasswordSending") : t("forgotPasswordSubmit")}
             </Button>
           </form>
           <p className="mt-6 text-center text-xs text-subtle">
             <Link to="/login" className="underline-offset-4 hover:underline">
-              Back to sign in
+              {t("backToSignIn")}
             </Link>
           </p>
         </div>

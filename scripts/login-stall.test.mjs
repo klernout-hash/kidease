@@ -107,7 +107,8 @@ describe("Opening your desk does not loop", () => {
 
   it("login copy is not stuck on a signed-in user", () => {
     const login = src("src/routes/login.tsx");
-    assert.match(login, /busy && !error \? "Opening your desk…"/);
+    assert.match(login, /busy && !error \? t\("openingDesk"\)/);
+    assert.match(src("src/lib/copy.ts"), /openingDesk: "Opening your desk…"/);
     assert.doesNotMatch(login, /user && !sessionPending \? "Opening your desk…"/);
     assert.match(login, /releaseStuckLogin\("stall"\)/);
     assert.match(login, /releaseStuckLogin\("admin-password"\)/);

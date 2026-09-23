@@ -6,7 +6,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { AdminDeskLink } from "@/components/admin-desk-link";
-import { DESK_LABEL, DESK_PATH, deskQueryValue, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
+import { DESK_PATH, deskQueryValue, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
 import { parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
 import { Button } from "@/components/ui/button";
@@ -267,7 +267,14 @@ function ProfilePane() {
         ) : null}
         {desk ? (
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">
-            {DESK_LABEL[desk]} · {t("account")}
+            {(desk === "parent"
+              ? t("deskParent")
+              : desk === "provider"
+                ? t("deskDirector")
+                : desk === "admin"
+                  ? t("deskAdmin")
+                  : t("deskSupport"))}{" "}
+            · {t("account")}
           </p>
         ) : null}
         <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("profile")}</h1>
@@ -299,20 +306,20 @@ function ProfilePane() {
                   } catch {
                     /* local photo still shows */
                   }
-                  toast.success("Profile photo updated");
+                  toast.success(t("accountPhotoUpdated"));
                 })
-                .catch((err) => toast.error(err instanceof Error ? err.message : "Could not add photo"))
+                .catch((err) => toast.error(err instanceof Error ? err.message : t("accountPhotoFailed")))
                 .finally(() => setBusy(false));
             }}
           />
           {user ? (
             <Button className="mt-6" size="lg" disabled={busy} onClick={() => inputRef.current?.click()}>
-              {busy ? t("loading") : "Add or change photo"}
+              {busy ? t("loading") : t("accountChangePhoto")}
             </Button>
           ) : (
             <Button className="mt-6" size="lg" asChild>
               <Link to="/login" search={parentLoginSearch("/account?tab=profile")}>
-                Sign in to add a photo
+                {t("accountSignInPhoto")}
               </Link>
             </Button>
           )}
@@ -320,29 +327,29 @@ function ProfilePane() {
 
         {user ? (
           <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
-            <h2 className="font-display text-lg tracking-[-0.02em]">Contact details</h2>
-            <p className="text-[13px] text-muted">Shown on Parent, Daycare, and Admin — this is your KidEase account.</p>
+            <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountContactTitle")}</h2>
+            <p className="text-[13px] text-muted">{t("accountContactLead")}</p>
             <label className="block text-sm">
-              Name
+              {t("name")}
               <input className="ke-input mt-1" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={80} />
             </label>
             <label className="block text-sm">
-              Phone number
+              {t("accountPhone")}
               <input className="ke-input mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" inputMode="tel" maxLength={32} placeholder="204-555-0100" />
             </label>
             <label className="block text-sm">
-              Email
+              {t("email")}
               <input className="ke-input mt-1 bg-bg" value={email} readOnly autoComplete="email" />
             </label>
-            <p className="text-[12px] text-subtle">Email is the address you sign in with. Use Forgot password on the sign-in page to recover it.</p>
+            <p className="text-[12px] text-subtle">{t("accountEmailNote")}</p>
             <label className="block text-sm">
-              Bio
+              {t("accountBio")}
               <textarea
                 className="ke-input mt-1 min-h-24 resize-y"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={400}
-                placeholder="A short note about you or your family."
+                placeholder={t("accountBioPh")}
               />
             </label>
             <p className="text-right text-[12px] text-subtle">{bio.length}/400</p>
@@ -376,7 +383,7 @@ function ProfilePane() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={saving}>
-              {saving ? t("loading") : "Save details"}
+              {saving ? t("loading") : t("accountSaveDetails")}
             </Button>
           </form>
         ) : (

@@ -635,7 +635,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                                     selectTab("bookings");
                                     return load();
                                   })
-                                  .catch((err) => toast.error(err instanceof Error ? err.message : "Could not send"))
+                                  .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
                                   .finally(() => setSendingId(null));
                               }}
                             >

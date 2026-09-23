@@ -7,8 +7,10 @@ import {
   startReauthOtp,
 } from "@/lib/server/reauth";
 import { REAUTH_REQUIRED_MESSAGE, isReauthRequiredMessage } from "@/lib/reauth";
+import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { hourlyOtpWaitCopy, twoFactorResendWaitCopy } from "@/lib/two-factor-start";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import { useCopy } from "@/lib/use-copy";
 
 export function isReauthRequired(err: unknown): boolean {
   return err instanceof Error && isReauthRequiredMessage(err.message);
@@ -43,6 +45,7 @@ export function ReauthDialog({
   const [wait, setWait] = useState(0);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
     useTurnstileToken();
+  const { t, locale } = useCopy();
 
   if (!open) return null;
 
@@ -112,30 +115,28 @@ export function ReauthDialog({
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-fg/40 p-4" role="dialog" aria-modal="true" data-ke="reauth-dialog">
       <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
-        <h2 className="font-display text-xl tracking-[-0.02em]">Confirm it's you</h2>
-        <p className="mt-2 text-sm text-muted">
-          This stays valid for 10 minutes so you are not asked on every click.
-        </p>
+        <h2 className="font-display text-xl tracking-[-0.02em]">{t("reauthTitle")}</h2>
+        <p className="mt-2 text-sm text-muted">{t("reauthLead")}</p>
         {mode === "password" ? (
           <form onSubmit={onPassword} className="mt-4 space-y-3 ph-no-capture">
             <PasswordField
-              label="Current password"
+              label={t("resetPasswordCurrent")}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
             />
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-            {error ? <p className="text-sm text-danger">{error}</p> : null}
-            {notice ? <p className="text-sm text-muted">{notice}</p> : null}
+            {error ? <p className="text-sm text-danger">{presentAuthCopy(locale, error)}</p> : null}
+            {notice ? <p className="text-sm text-muted">{presentAuthCopy(locale, notice)}</p> : null}
             <Button type="submit" className="w-full" disabled={busy || !password || (turnstileRequired && !token.trim())}>
-              {busy ? "Checking…" : "Confirm password"}
+              {busy ? t("reauthChecking") : t("reauthConfirmPassword")}
             </Button>
           </form>
         ) : (
           <form onSubmit={onOtp} className="mt-4 space-y-3 ph-no-capture">
             <label className="block text-sm">
-              Email code
+              {t("reauthEmailCode")}
               <input
                 className="ke-input mt-1 tracking-[0.3em]"
                 inputMode="numeric"
@@ -146,10 +147,10 @@ export function ReauthDialog({
               />
             </label>
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-            {error ? <p className="text-sm text-danger">{error}</p> : null}
-            {notice ? <p className="text-sm text-muted">{notice}</p> : null}
+            {error ? <p className="text-sm text-danger">{presentAuthCopy(locale, error)}</p> : null}
+            {notice ? <p className="text-sm text-muted">{presentAuthCopy(locale, notice)}</p> : null}
             <Button type="submit" className="w-full" disabled={busy || code.length !== 6 || (turnstileRequired && !token.trim())}>
-              {busy ? "Checking…" : "Confirm code"}
+              {busy ? t("reauthChecking") : t("reauthConfirmCode")}
             </Button>
           </form>
         )}
@@ -166,7 +167,7 @@ export function ReauthDialog({
               }
             }}
           >
-            {wait > 0 ? twoFactorResendWaitCopy(wait) : mode === "otp" ? "Send a new code" : "Use email code instead"}
+            {wait > 0 ? presentAuthCopy(locale, twoFactorResendWaitCopy(wait)) : mode === "otp" ? t("reauthSendCode") : t("reauthUseEmailCode")}
           </button>
           {mode === "otp" ? (
             <button
@@ -174,11 +175,11 @@ export function ReauthDialog({
               className="min-h-11 font-medium text-muted underline-offset-4 hover:underline"
               onClick={() => setMode("password")}
             >
-              Use password
+              {t("reauthUsePassword")}
             </button>
           ) : null}
           <button type="button" className="min-h-11 text-muted underline-offset-4 hover:underline" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </button>
         </div>
       </div>

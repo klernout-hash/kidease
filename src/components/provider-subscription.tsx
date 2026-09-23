@@ -8,11 +8,8 @@ import {
   planPriceCad,
   planPriceHint,
   PROVIDER_ADDONS,
-  PROVIDER_CHECKOUT_LIVE_MESSAGE,
-  PROVIDER_CHECKOUT_REHEARSAL_MESSAGE,
   PROVIDER_COMPARE,
   PROVIDER_PLANS,
-  PROVIDER_SUBSCRIPTION_GHOST_MESSAGE,
   type ProviderAddonId,
   type ProviderInterval,
   type ProviderPlanId,
@@ -84,6 +81,12 @@ const COPY = {
   },
 };
 
+function subscriptionError(err: unknown, fallback: string, plansOff: string) {
+  const message = err instanceof Error ? err.message : "";
+  if (message === "Plans are not offered on this site yet. Listing and claim stay free.") return plansOff;
+  return message || fallback;
+}
+
 function priceReady(state: ProviderSubscriptionState, plan: ProviderPlanId, interval: ProviderInterval) {
   if (plan === "free") return false;
   if (plan === "pro") return interval === "year" ? Boolean(state.prices.pro_yearly) : Boolean(state.prices.pro_monthly);
@@ -128,12 +131,12 @@ export function ProviderSubscriptionPanel() {
   if (loadError) {
     return (
       <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">
-        Could not load centre plans. Sign in as a director and try again.
+        {tx("plansLoadFailed")}
       </p>
     );
   }
   if (!state) {
-    return <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">Loading plans…</p>;
+    return <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{tx("plansLoading")}</p>;
   }
   const current = state;
 
@@ -144,9 +147,9 @@ export function ProviderSubscriptionPanel() {
       setState(saved);
       setInterval(saved.interval);
       setAddons(saved.addons);
-      toast.success(next.plan === "free" ? t.savedFree : PROVIDER_CHECKOUT_REHEARSAL_MESSAGE);
+      toast.success(next.plan === "free" ? t.savedFree : tx("planCheckoutRehearsal"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save plan");
+      toast.error(subscriptionError(err, tx("planSaveFailed"), tx("plansNotOffered")));
     } finally {
       setBusy(false);
     }
@@ -175,9 +178,9 @@ export function ProviderSubscriptionPanel() {
       }
       const saved = await getProviderSubscription();
       setState(saved);
-      toast.success("Plan saved.");
+      toast.success(tx("planSaved"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not start checkout");
+      toast.error(subscriptionError(err, tx("planCheckoutFailed"), tx("plansNotOffered")));
     } finally {
       setBusy(false);
     }
@@ -192,7 +195,7 @@ export function ProviderSubscriptionPanel() {
         return;
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not start add-on checkout");
+      toast.error(subscriptionError(err, tx("planAddonFailed"), tx("plansNotOffered")));
     } finally {
       setBusy(false);
     }
@@ -204,7 +207,7 @@ export function ProviderSubscriptionPanel() {
       const { url } = await startProviderBillingPortal();
       await openStripeCheckout(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not open billing portal");
+      toast.error(err instanceof Error ? err.message : tx("planPortalFailed"));
     } finally {
       setBusy(false);
     }
@@ -236,10 +239,10 @@ export function ProviderSubscriptionPanel() {
         </div>
         </PayCtas>
         {state.ghost ? (
-          <p className="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{PROVIDER_SUBSCRIPTION_GHOST_MESSAGE}</p>
+          <p className="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{tx("planGhostPreview")}</p>
         ) : null}
         <p className="mt-3 text-sm text-muted">
-          {liveCheckout ? PROVIDER_CHECKOUT_LIVE_MESSAGE : PROVIDER_CHECKOUT_REHEARSAL_MESSAGE}
+          {liveCheckout ? tx("planCheckoutLive") : tx("planCheckoutRehearsal")}
         </p>
         <p className="mt-2 text-sm">
           <span className="font-medium">{t.entitled}: </span>

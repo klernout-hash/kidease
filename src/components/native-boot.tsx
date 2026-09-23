@@ -19,10 +19,9 @@ import {
 import { clearSavedOrigin, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { gpsMayMoveSearchOrigin, searchQueryFromUnknown, urlHasGeocodableSearchQuery } from "@/lib/search-query";
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
-import { LANGUAGES } from "@/lib/languages";
+import { localeFromPreference } from "@/lib/languages";
 import { isFrPath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
-import type { Locale } from "@/lib/types";
 import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
 import { usePushRegistration } from "@/lib/use-push";
@@ -49,8 +48,8 @@ export function NativeBoot() {
       if (isFrPath(window.location.pathname)) {
         setLocale("fr");
       } else {
-        const saved = window.localStorage.getItem("kidease-locale");
-        if (saved && LANGUAGES.some((l) => l.code === saved)) setLocale(saved as Locale);
+        const saved = localeFromPreference(window.localStorage.getItem("kidease-locale"));
+        if (saved === "fr") setLocale("fr");
       }
       const livePref = window.localStorage.getItem("kidease-live-only");
       if (livePref === "1") setLiveOnly(true);
