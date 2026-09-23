@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
-import { REAUTH_REQUIRED_MESSAGE, REAUTH_WINDOW_MS } from "@/lib/reauth";
+import { adminReauthGraceMs, REAUTH_REQUIRED_MESSAGE, REAUTH_WINDOW_MS } from "@/lib/reauth";
 import { startTwoFactor } from "@/lib/server/two-factor";
 
 export { REAUTH_REQUIRED_MESSAGE, REAUTH_WINDOW_MS };
@@ -11,7 +11,11 @@ export const getReauthStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const { isCurrentUserRecentlyReauthed } = await import("./reauth.server");
-    return { ok: isCurrentUserRecentlyReauthed(context.userId), windowMs: REAUTH_WINDOW_MS };
+    return {
+      ok: isCurrentUserRecentlyReauthed(context.userId),
+      windowMs: REAUTH_WINDOW_MS,
+      graceMs: adminReauthGraceMs(process.env.ADMIN_REAUTH_GRACE_MS),
+    };
   });
 
 /**

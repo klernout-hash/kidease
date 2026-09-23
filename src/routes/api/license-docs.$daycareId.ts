@@ -75,6 +75,10 @@ export const Route = createFileRoute("/api/license-docs/$daycareId")({
           const userId = await requireUserId();
           const daycareId = params.daycareId;
           const actor = await authorizeLicenseDoc(userId, daycareId, true);
+          if (actor === "admin") {
+            const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+            assertRecentReauth(userId);
+          }
           const form = await request.formData();
           const file = asUploadPart(form.get("file"));
           if (!file) throw new Error(PRIVATE_DOC_BAD_FILE);

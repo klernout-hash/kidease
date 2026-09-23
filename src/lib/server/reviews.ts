@@ -381,6 +381,8 @@ export const decideListingReview = createServerFn({ method: "POST" })
   .validator((input: { reviewId: string; decision: ReviewDecision; note?: string }) => input)
   .handler(async ({ context, data }) => {
     await requireAdmin(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
     const status = decisionToStatus(data.decision);
     const sql = await getSql();
     const note = (data.note || "").trim().slice(0, 500);
@@ -402,6 +404,8 @@ export const grantListingReviewer = createServerFn({ method: "POST" })
   .validator((input: { userId: string; daycareId: string; note?: string }) => input)
   .handler(async ({ context, data }) => {
     await requireAdmin(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
     const userId = data.userId.trim();
     const daycareId = data.daycareId.trim();
     if (!userId || !daycareId) throw new Error("Parent and listing are required.");

@@ -265,6 +265,8 @@ export const reviewLicense = createServerFn({ method: "POST" })
   .validator((input: { daycareId: string; action: LicenseReviewAction; note?: string }) => input)
   .handler(async ({ context, data }) => {
     const actor = await requireAdmin(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
     if (!["matched", "mismatch", "expired", "suspended", "unverified"].includes(data.action)) {
       throw new Error("Invalid licence review");
     }

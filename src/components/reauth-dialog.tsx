@@ -6,7 +6,12 @@ import {
   confirmReauthPassword,
   startReauthOtp,
 } from "@/lib/server/reauth";
-import { REAUTH_REQUIRED_MESSAGE, isReauthRequiredMessage } from "@/lib/reauth";
+import {
+  ADMIN_REAUTH_GRACE_MINUTES,
+  isReauthRequiredMessage,
+  REAUTH_REQUIRED_MESSAGE,
+  REAUTH_WINDOW_MINUTES,
+} from "@/lib/reauth";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { hourlyOtpWaitCopy, twoFactorResendWaitCopy } from "@/lib/two-factor-start";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
@@ -116,7 +121,11 @@ export function ReauthDialog({
     <div className="fixed inset-0 z-50 grid place-items-center bg-fg/40 p-4" role="dialog" aria-modal="true" data-ke="reauth-dialog">
       <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
         <h2 className="font-display text-xl tracking-[-0.02em]">{t("reauthTitle")}</h2>
-        <p className="mt-2 text-sm text-muted">{t("reauthLead")}</p>
+        <p className="mt-2 text-sm text-muted">
+          {t("reauthLead")
+            .replace("{grace}", String(ADMIN_REAUTH_GRACE_MINUTES))
+            .replace("{window}", String(REAUTH_WINDOW_MINUTES))}
+        </p>
         {mode === "password" ? (
           <form onSubmit={onPassword} className="mt-4 space-y-3 ph-no-capture">
             <PasswordField

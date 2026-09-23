@@ -13,8 +13,8 @@ export const reprocessListingPhotos = createServerFn({ method: "POST" })
   .validator((input: { daycareId?: string; slug?: string }) => input)
   .handler(async ({ context, data }) => {
     await requireAdmin(context.userId);
-    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
-    assertRecentReauth(context.userId);
+    const { assertGraceReauth } = await import("@/lib/server/reauth.server");
+    assertGraceReauth(context.userId);
     const daycareId = (data.daycareId || "").trim();
     const slug = (data.slug || "").trim();
     if (!daycareId && !slug) throw new Error("Pass a centre id or slug.");

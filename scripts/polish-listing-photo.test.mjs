@@ -213,7 +213,8 @@ test("upload and admin reprocess call the polisher and do not touch Live gates",
   assert.doesNotMatch(claims, /prepareListingUploadPhoto\(data\.licensePhoto\)/);
   assert.match(family, /prepareListingUploadPhoto\(data\.storefront\)/);
   assert.match(reprocess, /polishStoredPhotoList/);
-  assert.match(reprocess, /assertRecentReauth/);
+  assert.match(reprocess, /assertGraceReauth/);
+  assert.doesNotMatch(reprocess, /assertRecentReauth/);
   assert.doesNotMatch(reprocess, /claim_status/);
   assert.doesNotMatch(reprocess, /runApproval/);
   assert.doesNotMatch(reprocess, /kids-world-daycare-kh2t/);

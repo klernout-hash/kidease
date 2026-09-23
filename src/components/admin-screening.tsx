@@ -8,6 +8,7 @@ import {
 import { docKindLabel } from "@/lib/provider-screening";
 import { openPrivateDocHref, screeningDocHref } from "@/lib/private-docs";
 import { useCopy } from "@/lib/use-copy";
+import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 
 export function AdminScreeningQueue({
   rows,
@@ -20,13 +21,18 @@ export function AdminScreeningQueue({
   const loc = locale === "fr" ? "fr" : "en";
   const [busy, setBusy] = useState<string | null>(null);
   const [reason, setReason] = useState<Record<string, string>>({});
+  const reauth = useReauthPrompt();
 
   async function decide(id: string, action: "approve" | "reject") {
     setBusy(id);
     try {
-      await reviewScreeningDocument({
-        data: { documentId: id, action, reason: reason[id] },
-      });
+      await withReauth(
+        () =>
+          reviewScreeningDocument({
+            data: { documentId: id, action, reason: reason[id] },
+          }),
+        reauth.prompt,
+      );
       onChanged();
     } catch (err) {
       alert(err instanceof Error ? err.message : t("screeningReviewed"));
@@ -97,6 +103,7 @@ export function AdminScreeningQueue({
           ))
         )}
       </ul>
+      {reauth.dialog}
     </section>
   );
 }
