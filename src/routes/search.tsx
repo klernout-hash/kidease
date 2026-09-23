@@ -43,7 +43,7 @@ import { LocationConsentCard } from "@/components/location-consent";
 import { DualAnchorBar } from "@/components/dual-anchor-bar";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { resolveLocationQuery } from "@/components/place-search";
-import { compactExploreSearch, parseExploreSearchFields } from "@/lib/explore-search";
+import { compactExploreSearch, matchesDaycareName, parseExploreSearchFields } from "@/lib/explore-search";
 import {
   compactParentListingSearch,
   matchesParentListingFilters,
@@ -893,7 +893,7 @@ function SearchPage() {
     if (schoolAgeOnly) rows = rows.filter((r) => matchesRailAge(r, "school-age"));
     const cat = isExploreCategory(incoming.cat) ? incoming.cat : undefined;
     if (cat) rows = rows.filter((r) => listingMatchesExploreFilter(r, cat));
-    rows = liveNameSearchHits(rows, { name: nameQuery });
+    if (nameQuery.trim()) rows = rows.filter((r) => matchesDaycareName(r, nameQuery));
     if (parentSearchActive(parentFilters)) rows = rows.filter((r) => matchesParentListingFilters(r, parentFilters));
     return rows;
   }, [
