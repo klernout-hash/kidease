@@ -70,16 +70,16 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "account", label: "Account", hint: "Sign-in and preferences", labelKey: "account", hintKey: "deskNavAccountHint", href: "/account", search: { tab: "profile", desk: "director" } },
   ],
   parent: [
-    { id: "explore", label: "For you", hint: "Matches near you", labelKey: "exploreForYou" },
+    { id: "explore", label: "For you", hint: "Matches near you", labelKey: "exploreForYou", hintKey: "deskNavForYouHint" },
     { id: "care", label: "Daily care", hint: "Presence, journal, messages", labelKey: "dailyCare", hintKey: "dailyCareHint" },
     { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children" },
-    { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots", labelKey: "myRequests" },
-    { id: "saved", label: "My shortlist", hint: "Compare up to 5", labelKey: "myShortlist" },
-    { id: "alerts", label: "Search alerts", hint: "Saved searches + notify", labelKey: "searchAlerts" },
-    { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments" },
-    { id: "messages", label: "Messages", hint: "Centre threads + tours", labelKey: "messages", href: "/inbox", search: { view: "family" } },
+    { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots", labelKey: "myRequests", hintKey: "deskNavBookingsHint" },
+    { id: "saved", label: "My shortlist", hint: "Compare up to 5", labelKey: "myShortlist", hintKey: "deskNavShortlistHint" },
+    { id: "alerts", label: "Search alerts", hint: "Saved searches + notify", labelKey: "searchAlerts", hintKey: "deskNavAlertsHint" },
+    { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments", hintKey: "deskNavPaymentsHint" },
+    { id: "messages", label: "Messages", hint: "Centre threads + tours", labelKey: "messages", hintKey: "deskNavParentMessagesHint", href: "/inbox", search: { view: "family" } },
     { id: "search", label: "Find care", labelKey: "wayfindFindCare", href: "/search" },
-    { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", href: "/account", search: { tab: "profile", desk: "parent" } },
+    { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", hintKey: "deskNavParentAccountHint", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
 };
 

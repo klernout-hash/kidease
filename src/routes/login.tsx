@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { authClient, authEnabled, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
+import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import type { GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
@@ -97,7 +98,7 @@ export function LoginScreen({
   providers: GrokProvider[];
   search: LoginSearch;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
   const operator = isAdminLoginIntent({
@@ -390,7 +391,7 @@ export function LoginScreen({
               <BrandMark size="md" />
             </div>
             <h1 className="mt-4 font-display text-2xl sm:mt-6 sm:text-3xl">{mode === "up" && role && !operator ? t("createAccount") : title}</h1>
-            <p className="mt-2 text-sm text-muted" data-ke="login-lead">{busy && !error ? "Opening your desk…" : lead}</p>
+            <p className="mt-2 text-sm text-muted" data-ke="login-lead">{busy && !error ? t("openingDesk") : lead}</p>
             {operator && !user ? (
               <p className="mt-1 text-xs text-subtle" data-ke="admin-titan-note">
                 {t("operatorEmailNote")}
@@ -434,7 +435,7 @@ export function LoginScreen({
             />
             {mode === "up" && !operator ? <PasswordRules password={password} /> : null}
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-            {error ? <p className="text-sm text-danger" data-ke="auth-error">{error}</p> : null}
+            {error ? <p className="text-sm text-danger" data-ke="auth-error">{presentAuthCopy(locale, error)}</p> : null}
             {stalled || error ? (
               <div className="flex flex-wrap gap-3 text-sm" data-ke="login-recovery">
                 <button
@@ -450,23 +451,23 @@ export function LoginScreen({
                     resetTurnstile();
                   }}
                 >
-                  Retry
+                  {t("loginRetry")}
                 </button>
                 <button
                   type="button"
                   className="min-h-11 font-medium text-muted underline-offset-4 hover:underline"
                   onClick={() => openDesk()}
                 >
-                  {dest.startsWith("/search") ? "Back to Explore" : dest.startsWith("/daycare/") ? "Back to listing" : "Open your desk"}
+                  {dest.startsWith("/search") ? t("loginBackExplore") : dest.startsWith("/daycare/") ? t("loginBackListing") : t("loginOpenDesk")}
                 </button>
                 <a href="/parent" className="min-h-11 font-medium text-subtle underline-offset-4 hover:underline">
-                  Parent desk
+                  {t("loginParentDesk")}
                 </a>
               </div>
             ) : null}
             {authEnabled && providers.length === 0 && !operator ? (
               <p className="text-xs text-muted">
-                Sign-in methods could not load. If this keeps happening, a security filter may be blocking KidEase.
+                {t("loginMethodsFailed")}
               </p>
             ) : null}
             <Button
@@ -476,7 +477,7 @@ export function LoginScreen({
               data-ke="email-primary"
               disabled={busy || (turnstileRequired && !token.trim())}
             >
-              {busy ? "Opening your desk…" : mode === "up" && !operator ? t("createAccount") : t("signIn")}
+              {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
           </form>
           {mode === "in" ? (
@@ -533,7 +534,7 @@ export function LoginScreen({
                   </Button>
                 ))
               ) : (
-                <p className="text-sm text-muted">Sign-in is disabled.</p>
+                <p className="text-sm text-muted">{t("loginDisabled")}</p>
               )}
             </div>
           </div>

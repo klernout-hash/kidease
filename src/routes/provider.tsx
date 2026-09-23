@@ -32,6 +32,8 @@ import { CentrePipeline } from "@/components/centre-pipeline";
 import type { PipelineCard } from "@/lib/crm-pipeline";
 import { TourCard } from "@/components/tour-card";
 import { useCopy } from "@/lib/use-copy";
+import type { CopyKey } from "@/lib/copy";
+import { storedCentreName } from "@/lib/utils";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
@@ -315,9 +317,7 @@ function ProviderPage() {
           <CentrePipeline cards={pipeline} />
           <div>
             <h2 className="font-display text-2xl">{t("pendingTours")}</h2>
-            <p className="mt-1 text-sm text-muted">
-              Parents who asked to visit. Accept or decline with a note — they see it in the thread.
-            </p>
+            <p className="mt-1 text-sm text-muted">{t("pendingToursLead")}</p>
             {tours.length === 0 ? (
               <p className="mt-4 rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("noTours")}</p>
             ) : (
@@ -331,10 +331,8 @@ function ProviderPage() {
             )}
           </div>
           <div>
-            <h2 className="font-display text-2xl">Waiting on you</h2>
-            <p className="mt-1 text-sm text-muted">
-              Parents who sent a child profile or asked this centre for a spot. Approve, put on waiting, or decline. The parent is notified in their inbox.
-            </p>
+            <h2 className="font-display text-2xl">{t("directorNudgeTitle")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("requestsWaitingLead")}</p>
             <RequestList
               items={waiting}
               empty={t("providerRequestsEmpty")}
@@ -342,10 +340,10 @@ function ProviderPage() {
                 await decideParentRequest({ data: { bookingId: id, decision } });
                 toast.success(
                   decision === "approve"
-                    ? "Approved — parent can pay to confirm."
+                    ? t("requestApprovedToast")
                     : decision === "decline"
-                      ? "Declined — parent was notified."
-                      : "Marked waiting — parent was notified.",
+                      ? t("requestDeclinedToast")
+                      : t("requestWaitingToast"),
                 );
                 await load();
               }}
@@ -353,14 +351,14 @@ function ProviderPage() {
             />
           </div>
           <div>
-            <h2 className="font-display text-2xl">Decided</h2>
-            <p className="mt-1 text-sm text-muted">Approved, waitlisted, declined, or already enrolled.</p>
+            <h2 className="font-display text-2xl">{t("requestsDecidedTitle")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("requestsDecidedLead")}</p>
             <RequestList
               items={later}
-              empty="Nothing decided yet."
+              empty={t("requestsDecidedEmpty")}
               onDecide={async (id, decision) => {
                 await decideParentRequest({ data: { bookingId: id, decision } });
-                toast.success("Updated.");
+                toast.success(t("requestUpdatedToast"));
                 await load();
               }}
               locale={locale}
@@ -397,7 +395,7 @@ function ProviderPage() {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Link to="/daycare/$slug" params={{ slug: d.slug }} className="font-display text-2xl hover:underline">
-                        {locale === "fr" ? d.nameFr : d.name}
+                        {storedCentreName(d.name, d.nameFr)}
                       </Link>
                       <ListingStatusBadge claimStatus={d.claimStatus} live={d.live} />
                     </div>
@@ -601,7 +599,7 @@ function ProviderPage() {
         ) : (
           listings.map((d) => (
             <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
-              <h2 className="font-display text-2xl">{locale === "fr" ? d.nameFr : d.name}</h2>
+              <h2 className="font-display text-2xl">{storedCentreName(d.name, d.nameFr)}</h2>
               <p className="mt-1 text-sm text-muted">{t("trustChecklistTitle")}</p>
               <ListingReadinessCoach item={d} variant="card" />
               <div className="mt-4">
@@ -646,10 +644,10 @@ function ProviderPage() {
             const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
             return (
             <section key={d.id} className="mb-6">
-              <h2 className="font-display text-2xl">{locale === "fr" ? d.nameFr : d.name}</h2>
+              <h2 className="font-display text-2xl">{storedCentreName(d.name, d.nameFr)}</h2>
               {declined ? (
                 <p className="mt-3 rounded-xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
-                  Promote is off while this listing is declined.
+                  {t("promoteDeclined")}
                 </p>
               ) : (
                 <PromotePanel daycare={d} onSaved={() => void load()} />
@@ -713,7 +711,7 @@ function RequestList({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-medium">
-                  {r.parentName ?? "Parent"} · {r.childName ?? "Child"}
+                  {r.parentName ?? t("parentLabel")} · {r.childName ?? t("child")}
                 </p>
                 <StatusBadge status={r.status} />
               </div>
@@ -733,29 +731,29 @@ function RequestList({
           <ChildPacket child={r.child} allergies={r.allergies} epiPen={r.epiPen} note={r.parentNote} />
           <div className="mt-3 flex flex-wrap gap-2">
             {["accepted", "declined", "active", "cancelled"].includes(r.status) ? (
-              <p className="text-xs text-muted">This request is already {r.status}.</p>
+              <p className="text-xs text-muted">{t("requestAlready").replace("{status}", requestStatusLabel(r.status, t))}</p>
             ) : (
               <>
             <Button
               size="sm"
               variant={r.status === "accepted" ? "primary" : "secondary"}
-              onClick={() => void onDecide(r.id, "approve").catch((err) => toast.error(err instanceof Error ? err.message : "Could not update"))}
+              onClick={() => void onDecide(r.id, "approve").catch((err) => toast.error(err instanceof Error ? err.message : t("requestUpdateFailed")))}
             >
-              Approve
+              {t("approveRequest")}
             </Button>
             <Button
               size="sm"
               variant={r.status === "under_review" || r.status === "requested" ? "primary" : "secondary"}
-              onClick={() => void onDecide(r.id, "waiting").catch((err) => toast.error(err instanceof Error ? err.message : "Could not update"))}
+              onClick={() => void onDecide(r.id, "waiting").catch((err) => toast.error(err instanceof Error ? err.message : t("requestUpdateFailed")))}
             >
-              Waiting
+              {t("waitingRequest")}
             </Button>
             <Button
               size="sm"
               variant={r.status === "declined" ? "primary" : "secondary"}
-              onClick={() => void onDecide(r.id, "decline").catch((err) => toast.error(err instanceof Error ? err.message : "Could not update"))}
+              onClick={() => void onDecide(r.id, "decline").catch((err) => toast.error(err instanceof Error ? err.message : t("requestUpdateFailed")))}
             >
-              Decline
+              {t("declineRequest")}
             </Button>
               </>
             )}
@@ -764,6 +762,21 @@ function RequestList({
       ))}
     </ul>
   );
+}
+
+const REQUEST_STATUS_KEY: Record<string, CopyKey> = {
+  requested: "statusRequested",
+  under_review: "statusUnderReview",
+  waitlist: "statusWaitlist",
+  accepted: "statusAccepted",
+  declined: "statusDeclined",
+  active: "statusActive",
+  cancelled: "statusCancelled",
+};
+
+function requestStatusLabel(status: string, t: (key: CopyKey) => string) {
+  const key = REQUEST_STATUS_KEY[status];
+  return key ? t(key) : status;
 }
 
 function ChildPacket({
@@ -777,22 +790,23 @@ function ChildPacket({
   epiPen?: boolean;
   note?: string | null;
 }) {
+  const { t } = useCopy();
   const bits = [
-    (allergies || child?.allergies) && `Allergies: ${allergies || child?.allergies}`,
-    (epiPen || child?.epiPen) && "EpiPen",
-    child?.medicalNotes && `Medical: ${child.medicalNotes}`,
-    child?.medications && `Meds: ${child.medications}`,
-    child?.diet && `Diet: ${child.diet}`,
-    child?.foodsAvoid && `Avoid: ${child.foodsAvoid}`,
-    child?.napRoutine && `Naps: ${child.napRoutine}`,
-    child?.toilet && `Toilet: ${child.toilet}`,
-    child?.homeLanguage && `Language: ${child.homeLanguage}`,
-    child?.emergencyName && `Emergency: ${child.emergencyName} ${child.emergencyPhone || ""}`.trim(),
-    child?.pickupPeople && `Pickup: ${child.pickupPeople}`,
-    note && `Note: ${note}`,
+    (allergies || child?.allergies) && `${t("allergies")}: ${allergies || child?.allergies}`,
+    (epiPen || child?.epiPen) && t("epiPenBadge"),
+    child?.medicalNotes && `${t("packetMedical")}: ${child.medicalNotes}`,
+    child?.medications && `${t("packetMeds")}: ${child.medications}`,
+    child?.diet && `${t("diet")}: ${child.diet}`,
+    child?.foodsAvoid && `${t("packetAvoid")}: ${child.foodsAvoid}`,
+    child?.napRoutine && `${t("packetNaps")}: ${child.napRoutine}`,
+    child?.toilet && `${t("toilet")}: ${child.toilet}`,
+    child?.homeLanguage && `${t("homeLanguage")}: ${child.homeLanguage}`,
+    child?.emergencyName && `${t("packetEmergency")}: ${child.emergencyName} ${child.emergencyPhone || ""}`.trim(),
+    child?.pickupPeople && `${t("packetPickup")}: ${child.pickupPeople}`,
+    note && `${t("packetNote")}: ${note}`,
   ].filter(Boolean) as string[];
   if (!bits.length) {
-    return <p className="mt-3 text-sm text-subtle">Child profile attached — limited details so far.</p>;
+    return <p className="mt-3 text-sm text-subtle">{t("packetLimited")}</p>;
   }
   return (
     <ul className="ph-no-capture mt-3 flex flex-wrap gap-1.5">

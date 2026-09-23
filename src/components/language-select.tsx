@@ -1,5 +1,5 @@
 import { useRouterState } from "@tanstack/react-router";
-import { applyDocumentLocale, LANGUAGES } from "@/lib/languages";
+import { applyDocumentLocale, shippedLanguages } from "@/lib/languages";
 import { localeSwitchPath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
@@ -43,7 +43,7 @@ export function LanguageSelect({
         )}
         aria-label={t("language")}
       >
-        {LANGUAGES.map((lang) => (
+        {shippedLanguages().map((lang) => (
           <option key={lang.code} value={lang.code}>
             {lang.native}
           </option>

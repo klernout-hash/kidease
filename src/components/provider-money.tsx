@@ -212,27 +212,27 @@ export function ProviderMoneyPanel() {
           setBusy(id);
           void sendBill({ data: id })
             .then(() => {
-              toast.success("Bill sent. The parent can Pay in KidEase.");
+              toast.success(t("billSentToast"));
               return load();
             })
-            .catch((err) => toast.error(err instanceof Error ? err.message : "Could not send"))
+            .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
             .finally(() => setBusy(null));
         }}
         onVoid={(id) => {
           setBusy(id);
           void voidBill({ data: id })
             .then(() => {
-              toast.success("Bill voided.");
+              toast.success(t("billVoided"));
               return load();
             })
-            .catch((err) => toast.error(err instanceof Error ? err.message : "Could not void"))
+            .catch((err) => toast.error(err instanceof Error ? err.message : t("billVoidFailed")))
             .finally(() => setBusy(null));
         }}
       />
 
       <BillList
         title={t("paidBills")}
-        empty="Paid bills will land here after the parent Pays."
+        empty={t("paidBillsEmpty")}
         items={done}
         stripeLive={stripeLive}
         locale={locale}

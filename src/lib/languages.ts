@@ -20,6 +20,26 @@ export const LANGUAGES: readonly {
   { code: "de", native: "Deutsch", nameEn: "German", bcp47: "de-CA" },
 ];
 
+/** Official languages with full chrome. Other packs in extra-copy are not offered as complete. */
+export const SHIPPED_LOCALES = ["en", "fr"] as const;
+export type ShippedLocale = (typeof SHIPPED_LOCALES)[number];
+
+export function isShippedLocale(code: string | null | undefined): code is ShippedLocale {
+  return code === "en" || code === "fr";
+}
+
+/**
+ * English unless the user explicitly chose French.
+ * Geo, IP, Quebec, and partial language packs do not stick.
+ */
+export function localeFromPreference(saved: string | null | undefined): ShippedLocale {
+  return isShippedLocale(saved) ? saved : "en";
+}
+
+export function shippedLanguages() {
+  return LANGUAGES.filter((lang) => isShippedLocale(lang.code));
+}
+
 export function languageMeta(code: Locale) {
   return LANGUAGES.find((l) => l.code === code) ?? LANGUAGES[0];
 }

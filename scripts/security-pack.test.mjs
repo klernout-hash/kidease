@@ -60,9 +60,14 @@ describe("1) trusted devices + session list", () => {
     const account = src("src/routes/account.tsx");
     assert.match(account, /SignedInDevices/);
     assert.match(account, /AccountSecurity/);
-    assert.match(src("src/components/signed-in-devices.tsx"), /Devices signed in/);
-    assert.match(src("src/components/signed-in-devices.tsx"), /Revoke this device/);
-    assert.match(src("src/components/signed-in-devices.tsx"), /Revoke all other devices/);
+    const devices = src("src/components/signed-in-devices.tsx");
+    assert.match(devices, /devicesTitle/);
+    assert.match(devices, /devicesRevokeThis/);
+    assert.match(devices, /devicesRevokeOthers/);
+    const copy = src("src/lib/copy.ts");
+    assert.match(copy, /Devices signed in/);
+    assert.match(copy, /Revoke this device/);
+    assert.match(copy, /Revoke all other devices/);
     assert.match(src("src/lib/server/trusted-devices.ts"), /fail closed|Could not revoke/);
     assert.match(src("src/lib/server/trusted-devices.ts"), /delete from "session"/);
     assert.match(src("src/lib/server/trusted-devices.ts"), /trusted_devices/);

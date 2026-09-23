@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button";
 import { PasswordField } from "@/components/password-field";
 import { PasswordRules } from "@/components/password-rules";
 import { changeAccountEmail, changeAccountPassword } from "@/lib/server/account-security";
-import { localPasswordIssue, PASSWORD_POLICY_HINT } from "@/lib/password-hygiene";
+import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { localPasswordIssue } from "@/lib/password-hygiene";
 import { isReauthRequiredMessage } from "@/lib/reauth";
 import { ReauthDialog } from "@/components/reauth-dialog";
+import { useCopy } from "@/lib/use-copy";
 
 export function AccountSecurity({ email }: { email: string }) {
+  const { t, locale } = useCopy();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -37,9 +40,9 @@ export function AccountSecurity({ email }: { email: string }) {
       setCurrentPassword("");
       setNewPassword("");
       setConfirm("");
-      toast.success("Password updated. Other devices were signed out.");
+      toast.success(t("accountPasswordUpdated"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not change the password.";
+      const message = err instanceof Error ? err.message : t("accountPasswordFailed");
       if (isReauthRequiredMessage(message)) {
         setReauth(() => () => void onChangePassword(e));
         return;
@@ -58,9 +61,9 @@ export function AccountSecurity({ email }: { email: string }) {
       const res = await changeAccountEmail({ data: { newEmail, currentPassword: emailPassword } });
       setNewEmail(res.email);
       setEmailPassword("");
-      toast.success("Email updated. Use the new address next time you sign in.");
+      toast.success(t("accountEmailUpdated"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not change the email.";
+      const message = err instanceof Error ? err.message : t("accountEmailFailed");
       if (isReauthRequiredMessage(message)) {
         setReauth(() => () => void onChangeEmail(e));
         return;
@@ -74,18 +77,18 @@ export function AccountSecurity({ email }: { email: string }) {
   return (
     <>
       <section className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-password">
-        <h2 className="font-display text-lg tracking-[-0.02em]">Change password</h2>
-        <p className="text-[13px] text-muted">{PASSWORD_POLICY_HINT}</p>
+        <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountChangePassword")}</h2>
+        <p className="text-[13px] text-muted">{t("passwordPolicyHint")}</p>
         <form onSubmit={onChangePassword} className="space-y-3 ph-no-capture">
           <PasswordField
-            label="Current password"
+            label={t("resetPasswordCurrent")}
             required
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             autoComplete="current-password"
           />
           <PasswordField
-            label="New password"
+            label={t("resetPasswordNew")}
             required
             minLength={8}
             value={newPassword}
@@ -94,28 +97,26 @@ export function AccountSecurity({ email }: { email: string }) {
           />
           <PasswordRules password={newPassword} />
           <PasswordField
-            label="Confirm new password"
+            label={t("resetPasswordConfirmNew")}
             required
             minLength={8}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
           />
-          {passwordError ? <p className="text-sm text-danger">{passwordError}</p> : null}
+          {passwordError ? <p className="text-sm text-danger">{presentAuthCopy(locale, passwordError)}</p> : null}
           <Button type="submit" className="w-full" disabled={busy !== null}>
-            {busy === "password" ? "Saving…" : "Update password"}
+            {busy === "password" ? t("accountSaving") : t("accountUpdatePassword")}
           </Button>
         </form>
       </section>
 
       <section className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-email">
-        <h2 className="font-display text-lg tracking-[-0.02em]">Change email</h2>
-        <p className="text-[13px] text-muted">
-          Confirm your password or a recent email code first. The operator mailbox cannot be changed.
-        </p>
+        <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountChangeEmail")}</h2>
+        <p className="text-[13px] text-muted">{t("accountChangeEmailLead")}</p>
         <form onSubmit={onChangeEmail} className="space-y-3 ph-no-capture">
           <label className="block text-sm">
-            New email
+            {t("accountNewEmail")}
             <input
               className="ke-input mt-1"
               type="email"
@@ -126,14 +127,14 @@ export function AccountSecurity({ email }: { email: string }) {
             />
           </label>
           <PasswordField
-            label="Current password"
+            label={t("resetPasswordCurrent")}
             value={emailPassword}
             onChange={(e) => setEmailPassword(e.target.value)}
             autoComplete="current-password"
           />
-          {emailError ? <p className="text-sm text-danger">{emailError}</p> : null}
+          {emailError ? <p className="text-sm text-danger">{presentAuthCopy(locale, emailError)}</p> : null}
           <Button type="submit" className="w-full" disabled={busy !== null}>
-            {busy === "email" ? "Saving…" : "Update email"}
+            {busy === "email" ? t("accountSaving") : t("accountUpdateEmail")}
           </Button>
         </form>
       </section>

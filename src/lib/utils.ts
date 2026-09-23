@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { AgeGroup, Locale } from "./types";
-import { localeTag } from "./languages";
+import { localeTag } from "./languages.ts";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -27,6 +27,16 @@ export function decodeHtml(value: string | null | undefined) {
     .replace(/&quot;/gi, '"')
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">");
+}
+
+/**
+ * Proper names stay as stored. Do not swap `name` / `nameFr` because the UI
+ * language changed — a Quebec registry name stays French in English chrome.
+ */
+export function storedCentreName(name?: string | null, nameFr?: string | null) {
+  const primary = (name || "").trim();
+  const french = (nameFr || "").trim();
+  return displayCentreName(primary || french);
 }
 
 /** Registry typos we refuse to show on parent-facing cards. */

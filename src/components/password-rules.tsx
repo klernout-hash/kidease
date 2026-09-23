@@ -1,6 +1,17 @@
-import { passwordChecks } from "@/lib/password-policy";
+import { passwordChecks, type PasswordCheckId } from "@/lib/password-policy";
+import { useCopy } from "@/lib/use-copy";
+import type { CopyKey } from "@/lib/copy";
+
+const RULE_KEY: Record<PasswordCheckId, CopyKey> = {
+  length: "passwordRuleLength",
+  upper: "passwordRuleUpper",
+  lower: "passwordRuleLower",
+  number: "passwordRuleNumber",
+  special: "passwordRuleSpecial",
+};
 
 export function PasswordRules({ password }: { password: string }) {
+  const { t } = useCopy();
   const checks = passwordChecks(password);
   return (
     <ul className="mt-2 space-y-1.5 rounded-md bg-bg px-3 py-2.5 ring-1 ring-border" aria-live="polite">
@@ -14,7 +25,7 @@ export function PasswordRules({ password }: { password: string }) {
           >
             <CheckMark />
           </span>
-          <span className={item.ok ? "text-fg" : "text-muted"}>{item.label}</span>
+          <span className={item.ok ? "text-fg" : "text-muted"}>{t(RULE_KEY[item.id])}</span>
         </li>
       ))}
     </ul>
