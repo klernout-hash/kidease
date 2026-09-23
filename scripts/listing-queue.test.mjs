@@ -174,9 +174,9 @@ test("Joan Kids World stays on Waiting when Show QA is unchecked", () => {
   );
   const peninsula = mapAdminCentreSqlRow(
     neonSqlCentre({
-      daycare_id: "bc-3572",
-      slug: "peninsula-montessori",
-      name: "Peninsula Montessori",
+      daycare_id: "bc-9001",
+      slug: "harbour-montessori",
+      name: "Harbour Montessori",
       claim_status: "pending",
       claim_id: "cl_pen",
       claim_row_status: "pending",
@@ -213,7 +213,7 @@ test("Joan Kids World stays on Waiting when Show QA is unchecked", () => {
   const waiting = adminQueueWaitingRows([joan, peninsula, qa], false);
   assert.deepEqual(
     waiting.map((r) => r.daycareId),
-    ["d_d85jtifbkh2t", "bc-3572"],
+    ["d_d85jtifbkh2t", "bc-9001"],
   );
   assert.equal(
     waiting.some((r) => r.name === "Kids World Daycare"),
