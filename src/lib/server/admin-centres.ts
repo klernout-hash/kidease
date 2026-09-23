@@ -233,74 +233,7 @@ export const listAdminCentres = createServerFn({ method: "GET" })
            or d.name like 'TEST %'
       `;
     } catch (first) {
-      try {
-        rows = await sql<AdminCentreSqlRow>`
-          select
-            d.id as daycare_id,
-            d.slug,
-            d.name,
-            d.address,
-            d.city,
-            d.province,
-            d.phone,
-            d.contact_email,
-            d.claim_status,
-            d.claimed_at,
-            c.id as claim_id,
-            c.status as claim_row_status,
-            coalesce(c.user_id, pd.user_id) as provider_user_id,
-            pd.user_id as provider_link_user_id,
-            u.name as provider_name,
-            u.email as provider_email,
-            coalesce(c.created_at, d.claimed_at, d.created_at) as submitted_at,
-            c.reviewed_at,
-            c.review_note,
-            d.license_number,
-            'unverified'::text as license_status,
-            null::text as license_expiry,
-            null::int as licensed_capacity,
-            'unmatched'::text as registry_match_state,
-            null::timestamptz as license_verified_at,
-            null::text as license_verification_source,
-            0 as staff_screening_attested,
-            null::timestamptz as staff_screening_attested_at,
-            0 as screening_on_file,
-            null::timestamptz as screening_on_file_at,
-            coalesce(nullif(btrim(c.license_photo), ''), nullif(btrim(d.license_photo), '')) as license_photo,
-            d.photos,
-            d.hours,
-            d.infant_monthly,
-            d.toddler_monthly,
-            d.preschool_monthly,
-            d.part_time_monthly,
-            d.ages_confirmed,
-            d.age_min_months,
-            d.age_max_months,
-            null::timestamptz as last_photo_updated_at,
-            null::timestamptz as last_vacancy_updated_at,
-            d.created_at,
-            d.visibility,
-            d.is_test
-          from daycares d
-          left join lateral (
-            select id, status, user_id, created_at, reviewed_at, review_note, license_photo
-            from listing_claims
-            where daycare_id = d.id
-            order by created_at desc nulls last
-            limit 1
-          ) c on true
-          left join lateral (
-            select user_id from provider_daycares where daycare_id = d.id limit 1
-          ) pd on true
-          left join "user" u on u.id = coalesce(c.user_id, pd.user_id)
-          where d.claimed_at is not null
-             or lower(btrim(coalesce(d.claim_status, ''))) in ('pending', 'waiting', 'verified', 'approved', 'declined')
-             or exists (select 1 from listing_claims lc where lc.daycare_id = d.id)
-             or exists (select 1 from provider_daycares pl where pl.daycare_id = d.id)
-        `;
-      } catch {
-        throw first instanceof Error ? first : new Error("Could not load the admin queue.");
-      }
+      throw first instanceof Error ? first : new Error("Could not load the admin queue.");
     }
 
     const withFiles = await overlayStoredLicensePhotos(sql, rows);

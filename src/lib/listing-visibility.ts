@@ -102,13 +102,10 @@ export function publicListings<T extends ListingVisibilityInput>(rows: T[]): T[]
 /** Staff queues default to production claims. QA / ghost / Claim Lab stay opt-in. */
 export function staffQueueRows<T extends ListingVisibilityInput>(rows: T[], includeQa: boolean): T[] {
   if (includeQa) return rows;
-  return rows.filter((row) => {
-    // Server-mapped Admin rows already set isTest. Trust that so a public
-    // waiting claim (Joan / Kids World) cannot be dropped by a missing `id`.
-    if (row.isTest === true || row.isTest === 1) return false;
-    if (row.isTest === false || row.isTest === 0) return true;
-    return !isAdminOnlyListing(row);
-  });
+  // `daycareId` counts as `id` inside isAdminOnlyListing, so a mapped Admin row
+  // (Joan) is not dropped for a missing `id`, and Peninsula Oak still hides
+  // when Show QA is off even if its stored is_test flag is 0.
+  return rows.filter((row) => !isAdminOnlyListing(row));
 }
 
 export function listingVisibilityOf(d: ListingVisibilityInput): ListingVisibility {
