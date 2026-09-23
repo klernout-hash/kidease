@@ -124,7 +124,7 @@ describe("assertAdminIdleFresh bootstrap", () => {
     assert.match(src("src/lib/auth/server.ts"), /unsignedSessionToken/);
     assert.match(src("src/lib/auth/cookies.ts"), /sig\.length === 43/);
     assert.match(src("src/lib/reauth.ts"), /ADMIN_IDLE_TTL_MS = 30 \* 60 \* 1000/);
-    assert.match(src("migrations/0051_admin_idle_seen.sql"), /admin_idle_seen/);
+    assert.match(src("migrations/0056_admin_idle_seen.sql"), /admin_idle_seen/);
   });
 
   it("mints idle cookie on 2FA / reauth step-up, not only requireAdmin", () => {

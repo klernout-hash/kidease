@@ -14,20 +14,12 @@ import { licenseReviewMarker } from "@/lib/private-docs";
 import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
 import { collapseDuplicateReviewCards, hasLicenceEvidence } from "@/lib/approve-live";
 import { runApproval } from "@/lib/server/approve-centre";
-import { mapAdminCentreSqlRow, type AdminCentreSqlRow } from "@/lib/admin-centres-map";
+import { mapAdminCentreSqlRow } from "@/lib/admin-centres-map";
 import {
   incompleteMissing,
   selectIncompleteRows,
   type IncompleteMissingField,
 } from "@/lib/listing-incomplete";
-
-function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
-  const storefront = splitPhotoList(photos).find((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
-  return {
-    licensePhoto: licenseReviewMarker(licensePhoto),
-    storefrontPhoto: storefront || null,
-  };
-}
 
 export type AdminCentreRow = {
   daycareId: string;
@@ -76,11 +68,6 @@ function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) 
     licensePhoto: licenseReviewMarker(licensePhoto),
     storefrontPhoto: storefront || null,
   };
-}
-
-function withReviewPhotos(row: AdminCentreRow, sql: AdminCentreSqlRow): AdminCentreRow {
-  const { licensePhoto, storefrontPhoto } = firstReviewPhoto(sql.photos, sql.license_photo);
-  return { ...row, licensePhoto, storefrontPhoto };
 }
 
 export type Decision = "approve" | "decline" | "waiting";
