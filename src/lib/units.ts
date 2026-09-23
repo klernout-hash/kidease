@@ -17,16 +17,23 @@ export function displayDistance(km: number, unit: DistanceUnit) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 
-/** Canada and the rest of North America default to km; en-US defaults to miles. */
-export function defaultDistanceUnit(language = typeof navigator === "undefined" ? "en-CA" : navigator.language): DistanceUnit {
-  return language.toLowerCase() === "en-us" ? "mi" : "km";
+/**
+ * KidEase.ca shows kilometres on EN and FR, including en-US browsers.
+ * `language` stays in the signature so callers can pass navigator.language.
+ */
+export function defaultDistanceUnit(_language = typeof navigator === "undefined" ? "en-CA" : navigator.language): DistanceUnit {
+  return "km";
 }
 
 export function readDistanceUnit(): DistanceUnit {
   if (typeof window === "undefined") return "km";
   try {
     const saved = window.localStorage.getItem(DISTANCE_UNIT_KEY);
-    if (saved === "km" || saved === "mi") return saved;
+    if (saved === "mi") {
+      writeDistanceUnit("km");
+      return "km";
+    }
+    if (saved === "km") return "km";
   } catch {
     /* ignore */
   }

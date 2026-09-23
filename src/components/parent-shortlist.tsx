@@ -7,7 +7,6 @@ import { ShortlistCompareTable } from "@/components/shortlist-compare";
 import { TrustSignals } from "@/components/trust-badge";
 import { Button } from "@/components/ui/button";
 import { MAX_SHORTLIST_COMPARE, toggleCompareSelection } from "@/lib/shortlist";
-import { useAppStore } from "@/lib/store";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
 
@@ -27,7 +26,6 @@ export function ParentShortlist({
   bookings: Booking[];
 }) {
   const { t } = useCopy();
-  const distanceUnit = useAppStore((s) => s.distanceUnit);
   const [picked, setPicked] = useState<string[]>([]);
   const visible = ready ? items : items.slice(0, SAVED_EAGER_CARDS);
   const compared = useMemo(() => items.filter((item) => picked.includes(item.id)).slice(0, MAX_SHORTLIST_COMPARE), [items, picked]);
@@ -66,7 +64,6 @@ export function ParentShortlist({
       <ShortlistCompareTable
         items={compared}
         distancesKm={distances}
-        distanceUnit={distanceUnit}
         located={located}
         onRemove={(id) => setPicked((cur) => cur.filter((x) => x !== id))}
       />

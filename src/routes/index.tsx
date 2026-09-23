@@ -54,6 +54,7 @@ import { LocationConsentCard } from "@/components/location-consent";
 import { RateKidEasePrompt } from "@/components/rate-kidease";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
+import { homeLiveStrip } from "@/lib/home-live-strip";
 import { displayDistance } from "@/lib/units";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import {
@@ -121,7 +122,6 @@ function Home() {
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const setQuery = useAppStore((s) => s.setQuery);
-  const distanceUnit = useAppStore((s) => s.distanceUnit);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const popularCities = useMemo(
@@ -309,6 +309,7 @@ function Home() {
   }, []);
   const publicFeatured = useMemo(() => publicListings(featured), [featured]);
   const liveCount = useMemo(() => publicFeatured.filter((r) => r.live).length, [publicFeatured]);
+  const strip = homeLiveStrip(liveCount, publicFeatured.length);
   const shown = useMemo(
     () =>
       homeRailItems(liveLookingOnly(uniqueById(liveOnly ? publicFeatured.filter((r) => r.live) : publicFeatured)), {
@@ -387,14 +388,19 @@ function Home() {
         }}
       />
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2" data-ke="home-live-strip">
         <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
-          {liveCount > 0 ? t("liveToggleCount").replace("{n}", String(liveCount)) : t("liveOnly")}
+          {t(strip.liveLabelKey).replace("{n}", String(strip.liveCount))}
         </ChipButton>
         <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
-          {t("allToggleCount").replace("{n}", String(publicFeatured.length))}
+          {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
         </ChipButton>
       </div>
+      {strip.zeroLiveHint ? (
+        <p className="mt-2 text-sm text-muted" data-ke="home-zero-live">
+          {t("exploreBrowseHint").replace("{n}", "0")}
+        </p>
+      ) : null}
 
       {askLocation ? (
         <div className="mt-3">
@@ -410,8 +416,7 @@ function Home() {
         </div>
       ) : null}
       <p className="mt-3 text-sm text-muted">
-        {origin.label.split(",")[0]} · {displayDistance(radiusKm, distanceUnit)}{" "}
-        {distanceUnit === "mi" ? t("mi") : t("km")}
+        {origin.label.split(",")[0]} · {displayDistance(radiusKm, "km")} {t("km")}
       </p>
     </>
   );
@@ -452,7 +457,7 @@ function Home() {
         </section>
 
         <section id="featured" className="ke-gutter mx-auto max-w-6xl py-8 md:py-12">
-          <h2 className="text-xl tracking-[-0.03em] md:text-2xl">{t("featured")}</h2>
+          <h2 className="text-xl tracking-[-0.03em] md:text-2xl">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t("featuredBody")}</p>
           <ResumeVisitCard />
           {user && role !== "admin" && role !== "provider" ? (

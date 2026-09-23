@@ -486,11 +486,10 @@ export function LoginScreen({
                 search={{ email: (operator ? OPERATOR_EMAIL : email).trim() }}
                 className="text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
               >
-                Forgot password?
+                {t("forgotPassword")}
               </Link>
-              <p className="mt-2 text-[13px] text-muted">
-                If none of the passwords you remember work, reset from that page. The link is emailed to the
-                inbox on the account and expires in about an hour.
+              <p className="mt-2 text-[13px] text-muted" data-ke="forgot-password-lead">
+                {t("forgotPasswordLead")}
               </p>
             </div>
           ) : null}

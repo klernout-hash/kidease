@@ -4,6 +4,16 @@ import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
 
 export const LISTING_PLACEHOLDER = "/photos/storefront-placeholder-480.webp";
 
+const EMPTY_MEDIA = /^(?:null|undefined|none|n\/a|about:blank|https?:\/{0,2})$/i;
+
+/** Drop blank, null-like, and scheme-only media URLs before an <img> can paint a broken icon. */
+export function healMediaUrl(src?: string | null): string {
+  const p = String(src ?? "").trim();
+  if (!p || EMPTY_MEDIA.test(p)) return "";
+  if (p.includes("..")) return "";
+  return p;
+}
+
 /** Default photos for a newly listed centre before a real storefront is uploaded. */
 export const STOCK_CREATE_PHOTOS = "/photos/community.jpg,/photos/playroom.jpg";
 
@@ -177,7 +187,9 @@ export function isOfficialBuildingPhoto(src: string | undefined): boolean {
 
 /** First unique non-logo photo; prefer official /photos/buildings/ over /photos/wpg/. */
 export function listingThumb(photos: string[] | undefined) {
-  const list = (photos ?? []).filter((p) => p && !p.includes("-logo") && !isUnflaggedSharedFallbackSrc(p));
+  const list = (photos ?? [])
+    .map((p) => healMediaUrl(p))
+    .filter((p) => p && !p.includes("-logo") && !isUnflaggedSharedFallbackSrc(p));
   const official = list.find((p) => isOfficialBuildingPhoto(p));
   return official || list[0] || LISTING_PLACEHOLDER;
 }

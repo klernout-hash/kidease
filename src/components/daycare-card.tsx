@@ -53,7 +53,6 @@ export const DaycareCard = memo(function DaycareCard({
   const live = Boolean(item.live);
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
-  const distanceUnit = useAppStore((s) => s.distanceUnit);
   const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
   const feeBadge = confirmedFeeProgramBadge(item);
   const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(feeBadge));
@@ -67,7 +66,7 @@ export const DaycareCard = memo(function DaycareCard({
     fees: "cardGapFees",
     photo: "cardGapPhoto",
   } as const;
-  const away = located ? `${displayDistance(distanceKm, distanceUnit)} ${distanceUnit === "mi" ? t("miAway") : t("kmAway")}` : "";
+  const away = located ? `${displayDistance(distanceKm, "km")} ${t("kmAway")}` : "";
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
 

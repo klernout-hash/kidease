@@ -46,9 +46,15 @@ describe("forgot-password flow", () => {
 
   it("login Forgot password is a real link to /forgot-password", () => {
     const login = read("src/routes/login.tsx");
+    const copy = read("src/lib/copy.ts");
     assert.match(login, /to="\/forgot-password"/);
-    assert.match(login, /Forgot password\?/);
-    assert.match(login, /If none of the passwords you remember work/);
+    assert.match(login, /t\("forgotPassword"\)/);
+    assert.match(login, /t\("forgotPasswordLead"\)/);
+    assert.match(copy, /forgotPassword: "Forgot password\?"/);
+    assert.match(copy, /forgotPassword: "Mot de passe oublié \?"/);
+    assert.match(copy, /If none of the passwords you remember work/);
+    assert.match(copy, /Si aucun des mots de passe dont vous vous souvenez ne fonctionne/);
+    assert.doesNotMatch(login, /Forgot password\?/);
     assert.doesNotMatch(login, /setForgotOpen/);
     assert.doesNotMatch(login, /authClient\.requestPasswordReset/);
     assert.doesNotMatch(login, /authClient\.forgetPassword/);

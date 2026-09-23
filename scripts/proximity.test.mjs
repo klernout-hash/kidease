@@ -25,11 +25,11 @@ describe("distance units default to km for Canada", () => {
     assert.equal(displayDistance(16.09344, "mi"), "10");
   });
 
-  it("defaults to km except en-US", () => {
+  it("defaults to km on .ca including en-US browsers", () => {
     assert.equal(defaultDistanceUnit("en-CA"), "km");
     assert.equal(defaultDistanceUnit("fr-CA"), "km");
     assert.equal(defaultDistanceUnit("en"), "km");
-    assert.equal(defaultDistanceUnit("en-US"), "mi");
+    assert.equal(defaultDistanceUnit("en-US"), "km");
   });
 });
 

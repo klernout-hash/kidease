@@ -51,7 +51,6 @@ function ComparePage() {
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const ageGroup = useAppStore((s) => s.ageGroup);
-  const distanceUnit = useAppStore((s) => s.distanceUnit);
   const incoming = Route.useSearch();
   const [items, setItems] = useState<DaycareCard[]>([]);
 
@@ -156,7 +155,7 @@ function ComparePage() {
                     if (!located) return t("noneListed");
                     const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
                     if (!Number.isFinite(km)) return t("noneListed");
-                    return `${displayDistance(km, distanceUnit)} ${distanceUnit === "mi" ? t("miAway") : t("kmAway")}`;
+                    return `${displayDistance(km, "km")} ${t("kmAway")}`;
                   })}
                 />
                 <Row

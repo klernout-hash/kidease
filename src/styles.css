@@ -1479,3 +1479,8 @@ textarea {
 select.ke-lang-select.ke-header-chrome {
   font-size: 11px;
 }
+
+/* Cookie bar must not eat Request info clicks outside the consent card. */
+html[data-cookie-banner="open"] body {
+  padding-bottom: 7.5rem;
+}
