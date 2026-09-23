@@ -11,6 +11,7 @@ import {
 } from "@/lib/server/reviews";
 import { normalizeReviewStatus } from "@/lib/review-gate";
 import { useCopy } from "@/lib/use-copy";
+import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 
 export function AdminReviewsPanel() {
   const { t, locale } = useCopy();
@@ -19,6 +20,7 @@ export function AdminReviewsPanel() {
   const [note, setNote] = useState("");
   const [grantUserId, setGrantUserId] = useState("");
   const [grantDaycareId, setGrantDaycareId] = useState("");
+  const reauth = useReauthPrompt();
 
   async function load() {
     setRows(await listAdminReviews().catch(() => []));
@@ -34,7 +36,10 @@ export function AdminReviewsPanel() {
   async function decide(reviewId: string, decision: ReviewDecision) {
     setBusy(`${reviewId}:${decision}`);
     try {
-      await decideListingReview({ data: { reviewId, decision, note } });
+      await withReauth(
+        () => decideListingReview({ data: { reviewId, decision, note } }),
+        reauth.prompt,
+      );
       setNote("");
       await load();
     } catch (err) {
@@ -47,7 +52,10 @@ export function AdminReviewsPanel() {
   async function grant() {
     setBusy("grant");
     try {
-      await grantListingReviewer({ data: { userId: grantUserId, daycareId: grantDaycareId, note } });
+      await withReauth(
+        () => grantListingReviewer({ data: { userId: grantUserId, daycareId: grantDaycareId, note } }),
+        reauth.prompt,
+      );
       toast.success(t("reviewerGranted"));
       setGrantUserId("");
       setGrantDaycareId("");
@@ -116,6 +124,7 @@ export function AdminReviewsPanel() {
           ))}
         </ul>
       ) : null}
+      {reauth.dialog}
     </section>
   );
 }

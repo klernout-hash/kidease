@@ -2264,7 +2264,8 @@ export const copy = {
     accountUpdatePassword: "Update password",
     accountUpdateEmail: "Update email",
     reauthTitle: "Confirm it's you",
-    reauthLead: "This stays valid for 10 minutes so you are not asked on every click.",
+    reauthLead:
+      "Routine desk edits stay unlocked for {grace} minutes. Approve, decline, licence, and screening ask again after {window} minutes.",
     reauthChecking: "Checking…",
     reauthConfirmPassword: "Confirm password",
     reauthEmailCode: "Email code",
@@ -4572,7 +4573,8 @@ export const copy = {
     accountUpdatePassword: "Mettre à jour le mot de passe",
     accountUpdateEmail: "Mettre à jour le courriel",
     reauthTitle: "Confirmez que c’est vous",
-    reauthLead: "Cela reste valide 10 minutes pour ne pas vous le redemander à chaque clic.",
+    reauthLead:
+      "Les modifications courantes du bureau restent déverrouillées {grace} minutes. Approuver, refuser, la licence et le filtrage redemandent après {window} minutes.",
     reauthChecking: "Vérification…",
     reauthConfirmPassword: "Confirmer le mot de passe",
     reauthEmailCode: "Code courriel",

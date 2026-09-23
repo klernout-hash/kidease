@@ -44,7 +44,7 @@ Response fields that are used:
 
 ## Again, for a centre that already uploaded
 
-Admin → the centre’s review card → **Straighten photo** (shown when the storefront on file is a centre upload). That does not approve the listing or change Live.
+Admin → the centre’s review card → **Straighten photo** (shown when the storefront on file is a centre upload). That does not approve the listing or change Live. It is a routine desk edit: after one password confirm it stays unlocked for 20 minutes (`ADMIN_REAUTH_GRACE_DEFAULT_MS` in `src/lib/reauth.ts`, overridable with `ADMIN_REAUTH_GRACE_MS`). Approve → Live keeps the 10-minute step-up and is not covered by that grace.
 
 Or, for any slug:
 

@@ -9,13 +9,16 @@ import {
 import {
   ADMIN_IDLE_COOKIE,
   ADMIN_IDLE_TTL_MS,
-  isRecentReauth,
+  adminReauthGraceMs,
+  parseReauthProof,
   REAUTH_COOKIE,
   REAUTH_REQUIRED_MESSAGE,
   REAUTH_WINDOW_MS,
+  reauthProofAllows,
   SHARED_ADMIN_IDLE_COOKIE,
   SHARED_REAUTH_COOKIE,
-  signReauthCookie,
+  signReauthStamp,
+  type StepUpClass,
 } from "@/lib/reauth";
 
 function secret() {
@@ -37,21 +40,48 @@ function writePair(hostName: string, sharedName: string, value: string, expires:
   }
 }
 
-export function writeReauthCookie(userId: string, ttlMs = REAUTH_WINDOW_MS) {
-  const exp = Date.now() + ttlMs;
-  writePair(REAUTH_COOKIE, SHARED_REAUTH_COOKIE, signReauthCookie(userId, exp, secret()), new Date(exp));
+function graceMs() {
+  return adminReauthGraceMs(process.env.ADMIN_REAUTH_GRACE_MS);
 }
 
-export function isCurrentUserRecentlyReauthed(userId: string): boolean {
-  return isRecentReauth(
-    userId,
-    getCookie(REAUTH_COOKIE) || getCookie(SHARED_REAUTH_COOKIE),
-    secret(),
+function currentProof() {
+  return parseReauthProof(getCookie(REAUTH_COOKIE) || getCookie(SHARED_REAUTH_COOKIE), secret());
+}
+
+/**
+ * Records confirm time. The browser keeps the cookie for the longer of the
+ * high-stakes window and the desk grace. Each action class checks its own window.
+ */
+export function writeReauthCookie(userId: string) {
+  const confirmedAt = Date.now();
+  const grace = graceMs();
+  const browserExp = confirmedAt + Math.max(REAUTH_WINDOW_MS, grace);
+  writePair(
+    REAUTH_COOKIE,
+    SHARED_REAUTH_COOKIE,
+    signReauthStamp(userId, confirmedAt, secret()),
+    new Date(browserExp),
   );
+}
+
+export function isStepUpFresh(userId: string, klass: StepUpClass): boolean {
+  return reauthProofAllows(currentProof(), userId, klass, Date.now(), graceMs());
+}
+
+/** High-stakes step-up (Approve/Live and the other trust actions). */
+export function isCurrentUserRecentlyReauthed(userId: string): boolean {
+  return isStepUpFresh(userId, "high");
 }
 
 export function assertRecentReauth(userId: string) {
   if (!isCurrentUserRecentlyReauthed(userId)) {
+    throw new Error(REAUTH_REQUIRED_MESSAGE);
+  }
+}
+
+/** Low-risk desk edits: skip the dialog inside the grace window. */
+export function assertGraceReauth(userId: string) {
+  if (!isStepUpFresh(userId, "grace")) {
     throw new Error(REAUTH_REQUIRED_MESSAGE);
   }
 }

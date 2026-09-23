@@ -745,6 +745,8 @@ export const reviewScreeningDocument = createServerFn({ method: "POST" })
   .validator((input: { documentId: string; action: "approve" | "reject"; reason?: string }) => input)
   .handler(async ({ context, data }) => {
     await requireAdmin(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
     const sql = await getSql();
     const rows = await sql<{
       id: string;

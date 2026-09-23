@@ -17,6 +17,7 @@ import { ADMIN_CENTRE_STAT_COPY, type AdminCentreListStat } from "@/lib/admin-st
 import { licenseDocHref, openPrivateDocHref, postPrivateDocForm } from "@/lib/private-docs";
 import { isPrivateDocTooBig } from "@/lib/upload-limits";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
+import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 import { signedPdfPath } from "@/lib/docusign-packs";
 import { approvalHealthSummary, canOfferApprove, licenceFileMissingCopy, type ApprovalHealth } from "@/lib/approve-live";
 import { listingStatusFromClaim } from "@/lib/listing-status";
@@ -80,43 +81,47 @@ function LicenceAttachControl({
   const { t } = useCopy();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const reauth = useReauthPrompt();
 
   return (
-    <label className={cn("block px-2.5 py-2 text-sm", boxed && "border-t border-border")}>
-      <span className="font-medium text-fg">{hasFile ? "Replace licence document" : "Attach licence document"}</span>
-      <input
-        type="file"
-        accept="application/pdf,image/jpeg,image/png,image/webp"
-        className="mt-1.5 block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-surface file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary"
-        disabled={disabled || saving}
-        data-ke="admin-licence-upload"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          e.target.value = "";
-          if (!file || saving) return;
-          if (isPrivateDocTooBig(file.size)) {
-            const message = t("uploadDocTooBig");
-            setError(message);
-            toast.error(message);
-            return;
-          }
-          setError(null);
-          setSaving(true);
-          void postPrivateDocForm(licenseDocHref(daycareId), {}, file)
-            .then(() => {
-              toast.success("Licence document saved.");
-              onAttached();
-            })
-            .catch((err) => {
-              const message = err instanceof Error ? err.message : t("uploadDocTooBig");
+    <>
+      <label className={cn("block px-2.5 py-2 text-sm", boxed && "border-t border-border")}>
+        <span className="font-medium text-fg">{hasFile ? "Replace licence document" : "Attach licence document"}</span>
+        <input
+          type="file"
+          accept="application/pdf,image/jpeg,image/png,image/webp"
+          className="mt-1.5 block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-surface file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary"
+          disabled={disabled || saving}
+          data-ke="admin-licence-upload"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file || saving) return;
+            if (isPrivateDocTooBig(file.size)) {
+              const message = t("uploadDocTooBig");
               setError(message);
               toast.error(message);
-            })
-            .finally(() => setSaving(false));
-        }}
-      />
-      <UploadLimitHint hint={saving ? "Saving licence document…" : t("uploadDocHint")} error={error} />
-    </label>
+              return;
+            }
+            setError(null);
+            setSaving(true);
+            void withReauth(() => postPrivateDocForm(licenseDocHref(daycareId), {}, file), reauth.prompt)
+              .then(() => {
+                toast.success("Licence document saved.");
+                onAttached();
+              })
+              .catch((err) => {
+                const message = err instanceof Error ? err.message : t("uploadDocTooBig");
+                setError(message);
+                toast.error(message);
+              })
+              .finally(() => setSaving(false));
+          }}
+        />
+        <UploadLimitHint hint={saving ? "Saving licence document…" : t("uploadDocHint")} error={error} />
+      </label>
+      {reauth.dialog}
+    </>
   );
 }
 

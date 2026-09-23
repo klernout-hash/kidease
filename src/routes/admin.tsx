@@ -410,7 +410,10 @@ function AdminPage() {
   async function onLicense(daycareId: string, action: LicenseReviewAction) {
     setBusy(`${daycareId}:${action}`);
     try {
-      await reviewLicense({ data: { daycareId, action, note } });
+      await withReauth(
+        () => reviewLicense({ data: { daycareId, action, note } }),
+        reauth.prompt,
+      );
       setNote("");
       await refresh();
     } catch (err) {

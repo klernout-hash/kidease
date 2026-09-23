@@ -45,7 +45,7 @@ Admin / operator login (`/login?intent=admin`, `/login?next=/admin`, `role=admin
 
 Account settings (`/account` on Parent, Daycare, and Admin) list **Devices signed in** (this browser, Better Auth sessions, and `#187` remembered `__Host-kidease.2fa.device` rows). Revoke this device / revoke all others fail closed. Remember-30d still works: new cookies are `{userId}.{deviceId}.{exp}.{sig}`; legacy 3-part cookies still verify.
 
-Sensitive actions (password change, email change, Admin claim Approve/Decline, DocuSign send/void) require a **10-minute step-up** (password or email OTP). A 30-day trusted-device cookie does not satisfy step-up.
+Sensitive actions (password change, email change, Admin claim Approve/Decline/Un-Live, licence document or review, screening review, public review moderation, DocuSign send/void) require a **10-minute step-up** (password or email OTP). Routine Admin desk edits that already ask for step-up (Straighten photo / listing photo reprocess, and the same class as optional notes and non-trust field edits) stay unlocked for **20 minutes** after that confirm (`ADMIN_REAUTH_GRACE_DEFAULT_MS` in `src/lib/reauth.ts`; override with `ADMIN_REAUTH_GRACE_MS`). When the grace ends, the next protected edit asks once and renews it. The longer grace does not cover Approve → Live or the other high-stakes actions. A 30-day trusted-device cookie does not satisfy step-up.
 
 Signup, password change, and reset block common / HIBP-breached passwords (k-anonymity range API, offline common list if HIBP is unreachable). Soft caps on password login, forgot-password, and OTP send return **Try again in X s/min** — never a silent fail. OTP resend stays on the `#187` 15s cooldown.
 
