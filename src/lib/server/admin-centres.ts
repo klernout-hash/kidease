@@ -14,7 +14,7 @@ import { licenseReviewMarker } from "@/lib/private-docs";
 import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
 import { collapseDuplicateReviewCards, hasLicenceEvidence } from "@/lib/approve-live";
 import { runApproval } from "@/lib/server/approve-centre";
-import { mapAdminCentreSqlRow } from "@/lib/admin-centres-map";
+import { mapAdminCentreSqlRow, type AdminCentreSqlRow } from "@/lib/admin-centres-map";
 import {
   incompleteMissing,
   selectIncompleteRows,
