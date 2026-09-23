@@ -7,6 +7,7 @@ import { readListingImage } from "@/components/provider-listing-forms";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import {
   attendanceFromAction,
+  CARE_OPS_LATER_OUT_OF_SCOPE,
   DAILY_CARE_HONESTY,
   journalPhotoDecision,
   JOURNAL_MAX_PHOTOS,
@@ -19,7 +20,10 @@ import {
 } from "@/lib/daily-care";
 import { sendConnectedMessage } from "@/lib/server/inbox";
 import { listDailyJournals, postDailyJournal, type DailyJournalRow } from "@/lib/server/daily-care";
+import { listCareOps, type CareOpsPayload } from "@/lib/server/care-ops";
 import { getWeekSchedule, saveAttendance, type AttendanceRow } from "@/lib/server/ops";
+import { CareChildOps } from "@/components/care-child-ops";
+import { CareChildRoomSelect, CareOpsPanel } from "@/components/care-ops-panel";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 
@@ -45,22 +49,25 @@ export function DailyCareDesk({
   const day = todayYmd();
   const [items, setItems] = useState<AttendanceRow[]>([]);
   const [journals, setJournals] = useState<DailyJournalRow[]>([]);
+  const [ops, setOps] = useState<CareOpsPayload | null>(null);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, { body: string; photos: JournalPhoto[] }>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
-    const [week, feed] = await Promise.all([
+    const [week, feed, careOps] = await Promise.all([
       getWeekSchedule({ data: { daycareId, weekStart: day } }).catch(() => ({
         days: [day],
         items: [] as AttendanceRow[],
         role,
       })),
       listDailyJournals({ data: { daycareId, day } }).catch(() => ({ day, items: [] as DailyJournalRow[] })),
+      listCareOps({ data: { daycareId, day } }).catch(() => null),
     ]);
     setItems(week.items.filter((row) => row.day === day));
     setJournals(feed.items);
+    setOps(careOps);
     setReady(true);
   }, [daycareId, day, role]);
 
@@ -192,7 +199,20 @@ export function DailyCareDesk({
         <h2 className="font-display text-2xl">{t("dailyCare")}</h2>
         <p className="mt-1 text-sm text-muted">{role === "provider" ? t("dailyCareStaffLead") : t("dailyCareParentLead")}</p>
         <p className="mt-2 text-xs text-subtle">{t("careOpsLite")}</p>
+        <p className="mt-1 text-xs text-subtle">{t("careLaterOut")}</p>
       </div>
+
+      {ready && ops ? (
+        <CareOpsPanel
+          role={role}
+          day={day}
+          ops={ops}
+          attendance={items}
+          busy={busy}
+          setBusy={setBusy}
+          onReload={load}
+        />
+      ) : null}
 
       {!ready ? (
         <div className="space-y-3" aria-busy="true">
@@ -223,6 +243,18 @@ export function DailyCareDesk({
                         {t(PRESENCE_COPY[presence])}
                       </span>
                     </p>
+                    {ops ? (
+                      <div className="mt-2">
+                        <CareChildRoomSelect
+                          role={role}
+                          row={row}
+                          ops={ops}
+                          busy={busy}
+                          setBusy={setBusy}
+                          onReload={load}
+                        />
+                      </div>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
@@ -322,6 +354,17 @@ export function DailyCareDesk({
                   </div>
                 ) : null}
 
+                {ops ? (
+                  <CareChildOps
+                    role={role}
+                    row={row}
+                    ops={ops}
+                    busy={busy}
+                    setBusy={setBusy}
+                    onReload={load}
+                  />
+                ) : null}
+
                 <div className="mt-4 space-y-3">
                   {childJournals.length === 0 && role === "parent" ? (
                     <p className="text-sm text-muted">{t("careJournalEmpty")}</p>
@@ -348,6 +391,7 @@ export function DailyCareDesk({
         </ul>
       )}
       <p className="sr-only">{DAILY_CARE_HONESTY}</p>
+      <p className="sr-only">{CARE_OPS_LATER_OUT_OF_SCOPE}</p>
     </section>
   );
 }

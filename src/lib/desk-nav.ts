@@ -71,7 +71,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   ],
   parent: [
     { id: "explore", label: "For you", hint: "Matches near you", labelKey: "exploreForYou", hintKey: "deskNavForYouHint" },
-    { id: "care", label: "Daily care", hint: "Presence, journal, messages", labelKey: "dailyCare", hintKey: "dailyCareHint" },
+    { id: "care", label: "Daily care", hint: "Presence, journal, meds, rooms", labelKey: "dailyCare", hintKey: "dailyCareHint" },
     { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children" },
     { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots", labelKey: "myRequests", hintKey: "deskNavBookingsHint" },
     { id: "saved", label: "My shortlist", hint: "Compare up to 5", labelKey: "myShortlist", hintKey: "deskNavShortlistHint" },
