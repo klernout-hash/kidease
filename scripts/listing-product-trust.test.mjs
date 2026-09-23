@@ -205,9 +205,11 @@ test("create listing form can attach a storefront before publish", () => {
   assert.match(provider, /storefront:/);
   const family = src("src/lib/server/family.ts");
   assert.match(family, /storefront\?: string/);
-  assert.match(family, /applyStorefrontPhoto\(STOCK_CREATE_PHOTOS, data\.storefront\)/);
+  assert.match(family, /prepareListingUploadPhoto\(data\.storefront\)/);
+  assert.match(family, /applyStorefrontPhoto\(STOCK_CREATE_PHOTOS, storefront\)/);
   const claims = src("src/lib/server/claims.ts");
-  assert.match(claims, /applyStorefrontPhoto\((?:current\[0\]\?\.photos \?\? ""|prevPhotos), data\.storefront\)/);
+  assert.match(claims, /prepareListingUploadPhoto\(data\.storefront\)/);
+  assert.match(claims, /applyStorefrontPhoto\(current\[0\]\?\.photos \?\? "", storefront\)/);
   assert.match(claims, /last_photo_updated_at/);
   const forms = src("src/components/provider-listing-forms.tsx");
   assert.match(forms, /LISTING_PHOTO_MAX_BYTES/);
@@ -218,7 +220,7 @@ test("create listing form can attach a storefront before publish", () => {
   assert.match(forms, /interiorCta/);
   assert.match(forms, /interiorPhotoNote/);
   assert.match(forms, /MAX_INTERIOR_PHOTOS/);
-  assert.match(claims, /applyInteriorPhotos\(photos, data\.interiors\)/);
+  assert.match(claims, /applyInteriorPhotos\(photos, interiors\)/);
 });
 
 test("admin reviews tab is first-class and migration is 0024", () => {
