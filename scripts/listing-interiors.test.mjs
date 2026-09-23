@@ -19,7 +19,8 @@ function src(rel) {
 
 test("updateListing persists interiors through applyInteriorPhotos, not a raw append", () => {
   const claims = src("src/lib/server/claims.ts");
-  assert.match(claims, /applyInteriorPhotos\(photos, data\.interiors\)/);
+  assert.match(claims, /prepareListingUploadPhoto\(src\)/);
+  assert.match(claims, /applyInteriorPhotos\(photos, interiors\)/);
   assert.doesNotMatch(claims, /photos = \[\.\.\.cur, \.\.\.extras\]\.join/);
 });
 

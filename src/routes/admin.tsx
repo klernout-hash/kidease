@@ -39,6 +39,7 @@ import {
 } from "@/lib/admin-centres-load";
 import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
 import { decideCentre, listAdminCentres, listIncompleteAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
+import { reprocessListingPhotos } from "@/lib/server/reprocess-listing-photos";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
 import { AdminTrustPanel } from "@/components/admin-trust";
@@ -372,6 +373,20 @@ function AdminPage() {
     });
   }, [ledger.rows, moneyQ, moneyDir]);
 
+  async function onStraighten(daycareId: string) {
+    setBusy(`${daycareId}:straighten`);
+    try {
+      const result = await withReauth(
+        () => reprocessListingPhotos({ data: { daycareId } }),
+        reauth.prompt,
+      );
+      await refresh();
+      return result;
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function onDecide(daycareId: string, decision: Decision) {
     setBusy(`${daycareId}:${decision}`);
     try {
@@ -523,6 +538,7 @@ function AdminPage() {
                         onLicenceUploaded={() => {
                           void refresh();
                         }}
+                        onStraighten={onStraighten}
                         mode="verify"
                       />
                     </li>
@@ -587,6 +603,7 @@ function AdminPage() {
               onLicenceUploaded={() => {
                 void refresh();
               }}
+              onStraighten={onStraighten}
             />
           )}
         </>
@@ -689,6 +706,7 @@ function AdminPage() {
                                     onLicenceUploaded={() => {
                                       void refresh();
                                     }}
+                                    onStraighten={onStraighten}
                                   />
                                 </li>
                               ))
