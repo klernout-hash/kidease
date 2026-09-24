@@ -9,6 +9,10 @@
  *
  * Reads live Node env (not a Vite `process.env` snapshot) so Vercel secrets
  * are visible after deploy. One retry on network / 5xx. 4xx is final.
+ *
+ * CRM stage (workflow authors, not this payload): Signed up only. Never Approved.
+ * Auto-Approved is forbidden. Approved happens only after licence/screening.
+ * This POST is the signup event. It does not send a stage field.
  */
 
 import { runtimeProcessEnv, type EnvMap } from "./runtime-env.ts";
@@ -23,6 +27,7 @@ const GHL_ATTEMPTS = 2;
 export type GhlIntakeAudience = "daycare" | "parent";
 export type GhlIntakeTrigger = "parent_signup" | "provider_signup" | "claim_verify" | "enroll";
 
+/** Signup event only. No stage field — CRM maps this POST to Signed up, never Approved. */
 export type GhlSignupPayload = {
   email: string;
   name: string;

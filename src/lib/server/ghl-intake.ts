@@ -26,6 +26,7 @@ function logError(err: unknown) {
 /**
  * Best-effort CRM intake after parent/provider signup or claim verify.
  * Independent of Resend / SMS. Failures are logged and never thrown to the caller.
+ * Workflow authors: stage Signed up only. Never Approved. No stage field is sent.
  */
 export async function captureSignupIntakeFromUser(input: {
   userId: string;
@@ -66,6 +67,7 @@ export async function captureSignupIntakeFromUser(input: {
 /**
  * Unauthenticated Enroll Now (`/claim#enroll`). Same daycare webhook as provider
  * signup. Does not require a user id. Never throws.
+ * Workflow authors: stage Signed up only. Never Approved. No stage field is sent.
  */
 export async function captureEnrollIntake(input: {
   email?: string | null;

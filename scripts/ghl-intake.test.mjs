@@ -245,4 +245,15 @@ test("signup and claim verify fire GHL after notify, even when mail fails", () =
   assert.match(src(".env.example"), /GHL_WEBHOOK_DAYCARE_SIGNUP_URL=/);
   assert.match(src(".env.example"), /GHL_WEBHOOK_PARENT_ONBOARD_URL=/);
   assert.match(src(".env.example"), /claim:claimed/);
+  assert.match(src(".env.example"), /Signed up only/);
+  assert.match(src(".env.example"), /Never Approved/);
+  assert.match(src("src/lib/ghl-intake.ts"), /Signed up only/);
+  assert.match(src("src/lib/ghl-intake.ts"), /Never Approved/);
+  const sample = buildGhlSignupPayload({
+    trigger: "provider_signup",
+    email: "joan@kids.ca",
+    eventId: "ev_stage",
+  });
+  assert.equal("stage" in sample, false);
+  assert.equal("approved" in sample, false);
 });
