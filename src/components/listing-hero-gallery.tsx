@@ -120,6 +120,7 @@ export function ListingHeroGallery({
                 daycareId={daycareId}
                 nextPath={nextPath}
                 appearance="photo"
+                framed={false}
                 className="static right-auto top-auto bg-black/40"
               />
             </div>

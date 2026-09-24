@@ -6,17 +6,20 @@ import { PhotoCarousel } from "@/components/photo-carousel";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
-import { displayCentreName, money } from "@/lib/utils";
+import { cn, displayCentreName, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
 import { listingAgeRangeText } from "@/lib/listing-ages";
-import { listingPill } from "@/lib/listing-card";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
-import { isCatalogueMatchedBadge, trustBadgesFor } from "@/lib/trust";
+import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
 import { publicApprovalEligible } from "@/lib/approve-live";
-import type { CopyKey } from "@/lib/copy";
+import {
+  cardFeePillLabelKey,
+  cardPhotoLicenseWarning,
+  showCardLivePill,
+} from "@/lib/card-photo-pills";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { TrustBadge, TrustSignals } from "@/components/trust-badge";
@@ -32,6 +35,79 @@ import {
 import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
+
+const LIVE_PILL =
+  "inline-flex items-center rounded-full bg-[#22C55E] font-bold leading-none text-[#052e16] shadow-[0_1px_3px_rgba(0,0,0,0.28)]";
+const FEE_PILL =
+  "inline-flex items-center rounded-full bg-[#1D4ED8] font-bold leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.28)]";
+
+function CardPhotoBadges({
+  item,
+  compact,
+  hollowPhoto,
+  live,
+  showLivePill,
+  feeLabel,
+  licenseWarning,
+  clearShare = false,
+}: {
+  item: Card;
+  compact: boolean;
+  hollowPhoto: boolean;
+  live: boolean;
+  showLivePill: boolean;
+  feeLabel: string;
+  licenseWarning: TrustBadgeModel | null;
+  /** Rail cards also place a share control beside the heart. */
+  clearShare?: boolean;
+}) {
+  const { t } = useCopy();
+  const pill = compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[12px]";
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute z-[2] flex flex-col items-start",
+        clearShare ? "max-w-[calc(100%-7.5rem)]" : "max-w-[calc(100%-4.25rem)]",
+        compact ? "left-2 top-2 gap-1" : "left-3 top-3 gap-1.5",
+      )}
+    >
+      {showLivePill || feeLabel ? (
+        <div className="flex flex-wrap items-center gap-1" data-ke="card-photo-pills">
+          {showLivePill ? (
+            <span data-ke="card-live-pill" className={cn(LIVE_PILL, pill)}>
+              {t("live")}
+            </span>
+          ) : null}
+          {feeLabel ? (
+            <span data-ke="card-fee-pill" className={cn(FEE_PILL, pill)}>
+              {feeLabel}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {hollowPhoto ? (
+        <span
+          className={cn(
+            "inline-flex rounded-full bg-black/55 font-medium text-white",
+            compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]",
+          )}
+        >
+          {live ? t("photoPending") : t("notOnKidEase")}
+        </span>
+      ) : null}
+      {!compact && !hollowPhoto && licenseWarning ? (
+        <span className="pointer-events-auto">
+          <TrustBadge badge={licenseWarning} compact />
+        </span>
+      ) : null}
+      {!compact && !hollowPhoto ? (
+        <span className="pointer-events-auto">
+          <GuestFavoriteBadge item={item} compact surface="photo" />
+        </span>
+      ) : null}
+    </div>
+  );
+}
 
 export const DaycareCard = memo(function DaycareCard({
   item,
@@ -72,9 +148,11 @@ export const DaycareCard = memo(function DaycareCard({
 
   const license = publicLicenseBadge(item);
   const cardTrust = trustBadgesFor(item, "card");
-  const pillKey = listingPill(item)?.labelKey;
-  const pill = pillKey ? t(pillKey as CopyKey) : "";
-  const showLicensedChip = Boolean(license && pillKey !== license.labelKey);
+  const showLivePill = showCardLivePill(live, publicApprovalEligible(item));
+  const feePillKey = cardFeePillLabelKey(feeBadge);
+  const feePillLabel = feePillKey ? t(feePillKey) : "";
+  const licenseWarning =
+    license && !isCatalogueMatchedBadge(license) && cardPhotoLicenseWarning(license.id) ? license : null;
   const ages = listingAgeRangeText(item, "months");
   const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
   const facility = classifyFacilityType(item);
@@ -108,23 +186,15 @@ export const DaycareCard = memo(function DaycareCard({
               rounded="rounded-[14px]"
               className="aspect-[4/3] bg-[#EBEBEB]"
             />
-            <div className="pointer-events-none absolute left-3 top-3 z-[2] flex max-w-[70%] flex-col items-start gap-1.5">
-              {hollowPhoto ? (
-                <span className="inline-flex rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white">
-                  {live ? t("photoPending") : t("notOnKidEase")}
-                </span>
-              ) : null}
-              {!hollowPhoto && license && !isCatalogueMatchedBadge(license) ? (
-                <span className="pointer-events-auto">
-                  <TrustBadge badge={license} compact />
-                </span>
-              ) : null}
-              {!hollowPhoto ? (
-                <span className="pointer-events-auto">
-                  <GuestFavoriteBadge item={item} compact surface="photo" />
-                </span>
-              ) : null}
-            </div>
+            <CardPhotoBadges
+              item={item}
+              compact={false}
+              hollowPhoto={hollowPhoto}
+              live={live}
+              showLivePill={showLivePill}
+              feeLabel={feePillLabel}
+              licenseWarning={licenseWarning}
+            />
           </Link>
           <SaveListingButton daycareId={item.id} />
         </div>
@@ -179,30 +249,16 @@ export const DaycareCard = memo(function DaycareCard({
             rounded="rounded-[14px]"
             className="aspect-[3/2] bg-[#EBEBEB]"
           />
-          <div className="pointer-events-none absolute left-2 top-2 z-[2] flex flex-col items-start gap-1">
-            {hollowPhoto ? (
-              <span className="inline-flex rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white">
-                {live ? t("photoPending") : t("notOnKidEase")}
-              </span>
-            ) : pill ? (
-              <span
-                className="inline-flex rounded-full bg-white/92 px-2 py-0.5 text-[10px] font-semibold leading-none text-[#222] shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/5 backdrop-blur-[8px]"
-                title={license && pillKey === license.labelKey ? t(license.tipKey as CopyKey) : undefined}
-              >
-                {item.priority ? `✦ ${pill}` : pill}
-              </span>
-            ) : null}
-            {!compact && !hollowPhoto && showLicensedChip && license && !isCatalogueMatchedBadge(license) ? (
-              <span className="pointer-events-auto">
-                <TrustBadge badge={license} compact />
-              </span>
-            ) : null}
-            {!compact && !hollowPhoto ? (
-              <span className="pointer-events-auto">
-                <GuestFavoriteBadge item={item} compact surface="photo" />
-              </span>
-            ) : null}
-          </div>
+          <CardPhotoBadges
+            item={item}
+            compact={compact}
+            hollowPhoto={hollowPhoto}
+            live={live}
+            showLivePill={showLivePill}
+            feeLabel={feePillLabel}
+            licenseWarning={licenseWarning}
+            clearShare={!compact}
+          />
         </Link>
         {!compact ? (
           <CompareChip
@@ -216,7 +272,7 @@ export const DaycareCard = memo(function DaycareCard({
             slug={item.slug}
             name={name}
             appearance="photo"
-            className="pointer-events-auto absolute right-12 top-2 z-20"
+            className="pointer-events-auto absolute right-16 top-2 z-20"
           />
         ) : null}
         <SaveListingButton daycareId={item.id} />

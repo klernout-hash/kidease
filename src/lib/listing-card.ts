@@ -3,7 +3,11 @@ import { listingThumb } from "@/lib/listing-photo";
 import { confirmedFeeProgramBadge } from "@/lib/now-loops";
 import { isCatalogueMatchedBadge, licenseBadge, type TrustCopyKey } from "@/lib/trust";
 
-/** One pill max, Airbnb-style top-left. Licensed only when we actually know. */
+/**
+ * Legacy single-pill choice. Search and directory photos no longer call this —
+ * they paint Live and the confirmed fee pill side by side and omit registry-checked.
+ * Licensed only when we actually know. Unverified and catalogue-matched stay off.
+ */
 export function listingPill(item: Pick<DaycareCard, "province" | "live" | "priority" | "licenseStatus" | "registryMatchState" | "amenities" | "feeConfirmed">): {
   labelKey: "badgeTen" | "badgeFifteen" | "badgeReducedQc" | "live" | TrustCopyKey;
 } | null {
