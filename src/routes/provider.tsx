@@ -38,9 +38,14 @@ import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
-import { CapacityForm, Field, PromotePanel, readListingImage } from "@/components/provider-listing-forms";
+import { CapacityForm, Field, PromotePanel } from "@/components/provider-listing-forms";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
-import { isListingPhotoTooBig } from "@/lib/upload-limits";
+import {
+  downgradeListingPhotoFile,
+  LISTING_PHOTO_ACCEPT,
+  listingPhotoByteBudget,
+  ListingPhotoPrepareError,
+} from "@/lib/listing-photo-downgrade";
 import { TourAvailabilityDesk } from "@/components/tour-availability-desk";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
@@ -152,6 +157,7 @@ function ProviderPage() {
     culturalTeamNote: "",
   });
   const [storefrontError, setStorefrontError] = useState<string | null>(null);
+  const [storefrontProgress, setStorefrontProgress] = useState<number | null>(null);
   const listingFormDirty =
     Boolean(form.name.trim() || form.address.trim() || form.postalCode.trim() || form.licenseNumber.trim() || form.storefront) ||
     form.city !== "Winnipeg" ||
@@ -438,7 +444,7 @@ function ProviderPage() {
                     KidEase declined this listing. Parent requests and Promote stay off. Add another centre below, or wait for a re-review after Kyle asks for more.
                   </p>
                 ) : null}
-                <CapacityForm daycare={d} onSaved={() => void load()} mode="listing" />
+                <CapacityForm daycare={d} onSaved={() => load()} mode="listing" />
               </section>
             );
           })}
@@ -537,29 +543,41 @@ function ProviderPage() {
                     <span className="font-medium text-primary">{t("storefrontCta")}</span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept={LISTING_PHOTO_ACCEPT}
                       className="sr-only"
+                      data-ke="create-listing-photo"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
+                        e.target.value = "";
                         if (!file) return;
-                        if (isListingPhotoTooBig(file.size)) {
-                          const message = t("photoTooBig");
-                          setStorefrontError(message);
-                          toast.error(message);
-                          return;
-                        }
                         setStorefrontError(null);
-                        readListingImage(
-                          file,
-                          (value) => setForm((s) => ({ ...s, storefront: value })),
-                          () => {
-                            const message = t("photoTooBig");
+                        setStorefrontProgress(8);
+                        void downgradeListingPhotoFile(file, {
+                          targetBytes: listingPhotoByteBudget(1),
+                          onProgress: setStorefrontProgress,
+                        })
+                          .then((value) => setForm((s) => ({ ...s, storefront: value })))
+                          .catch((err) => {
+                            const unreadable = err instanceof ListingPhotoPrepareError && err.code === "unreadable";
+                            const message = t(unreadable ? "photoUnreadable" : "photoTooBig");
                             setStorefrontError(message);
                             toast.error(message);
-                          },
-                        );
+                          })
+                          .finally(() => setStorefrontProgress(null));
                       }}
                     />
+                    {storefrontProgress !== null ? (
+                      <div
+                        data-ke="listing-photo-progress"
+                        className="h-1.5 w-full overflow-hidden rounded-full bg-border"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={storefrontProgress}
+                      >
+                        <div className="h-full bg-primary" style={{ width: `${storefrontProgress}%` }} />
+                      </div>
+                    ) : null}
                     <UploadLimitHint hint={t("uploadPhotoHint")} error={storefrontError} />
                   </label>
                 </div>
@@ -607,7 +625,7 @@ function ProviderPage() {
               </div>
               <div className="mt-6 border-t border-border pt-5">
                 <h3 className="font-display text-xl">{t("licenceRecord")}</h3>
-                <CapacityForm daycare={d} onSaved={() => void load()} mode="licence" />
+                <CapacityForm daycare={d} onSaved={() => load()} mode="licence" />
               </div>
             </section>
           ))

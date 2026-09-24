@@ -9,7 +9,7 @@ import { callerIsAdmin } from "./public-listing";
 import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
-import { applyInteriorPhotos, applyStorefrontPhoto, listingPhotosChanged } from "@/lib/listing-photo";
+import { applyInteriorPhotos, applyManagedListingPhotos, applyStorefrontPhoto, listingPhotosChanged, MAX_LISTING_PHOTOS } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
 import {
   mergeListingAmenities,
@@ -374,6 +374,8 @@ export const updateListing = createServerFn({ method: "POST" })
       email: string;
       storefront?: string;
       interiors?: string[];
+      /** Full cover + interior list. Omit on fee/hours saves so photos stay put. */
+      managedPhotos?: string[];
       licensePhoto?: string;
       spotsInfant: number;
       spotsToddler: number;
@@ -420,14 +422,24 @@ export const updateListing = createServerFn({ method: "POST" })
     `;
     const previousPhotos = current[0]?.photos ?? "";
     const { prepareListingUploadPhoto } = await import("@/lib/server/polish-listing-photo");
-    const storefront = await prepareListingUploadPhoto(data.storefront);
-    const interiors: string[] = [];
-    for (const src of data.interiors ?? []) {
-      const next = await prepareListingUploadPhoto(src);
-      if (next) interiors.push(next);
+    let photos = current[0]?.photos ?? "";
+    if (Array.isArray(data.managedPhotos)) {
+      const polished: string[] = [];
+      for (const src of data.managedPhotos.slice(0, MAX_LISTING_PHOTOS)) {
+        const next = await prepareListingUploadPhoto(src);
+        if (next) polished.push(next);
+      }
+      photos = applyManagedListingPhotos(photos, polished);
+    } else {
+      const storefront = await prepareListingUploadPhoto(data.storefront);
+      const interiors: string[] = [];
+      for (const src of data.interiors ?? []) {
+        const next = await prepareListingUploadPhoto(src);
+        if (next) interiors.push(next);
+      }
+      photos = applyStorefrontPhoto(current[0]?.photos ?? "", storefront);
+      photos = applyInteriorPhotos(photos, interiors);
     }
-    let photos = applyStorefrontPhoto(current[0]?.photos ?? "", storefront);
-    photos = applyInteriorPhotos(photos, interiors);
     const photosChanged = listingPhotosChanged(previousPhotos, photos);
     const minAge = Math.min(216, nonNegativeInt(data.ageMinMonths));
     const maxAge = Math.max(minAge, Math.min(216, nonNegativeInt(data.ageMaxMonths)));
