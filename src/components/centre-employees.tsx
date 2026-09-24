@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import {
   acceptCentreInvite,
@@ -60,7 +61,7 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
           role: form.role,
         },
       });
-      if (res?.mailed) toast.success(t("employeeInviteSent"));
+      if (res?.mailed) confirmSuccess({ variant: "toast", title: t("employeeInviteSent") });
       else toast.message(t("employeeInviteSaved"));
       setForm((prev) => ({ ...prev, email: "", name: "" }));
       await load();
@@ -205,7 +206,7 @@ export function AcceptEmployeeInvite({ token }: { token: string }) {
       onClick={() => {
         void acceptCentreInvite({ data: token })
           .then(() => {
-            toast.success(t("employeeAccepted"));
+            confirmSuccess({ variant: "toast", title: t("employeeAccepted") });
             window.location.assign("/provider?desk=requests");
           })
           .catch((err) => {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
@@ -155,7 +156,7 @@ export function SavedSearchesPanel() {
               })
                 .then((next) => {
                   setPrefs(next);
-                  toast.success(t("alertPrefsSaved"));
+                  confirmAction(t, "alertsSaved");
                 })
                 .catch((err) => toast.error(err instanceof Error ? err.message : t("alertPrefs")))
                 .finally(() => setSavingPrefs(false));
@@ -191,7 +192,7 @@ export function SavedSearchesPanel() {
                       onSaved={(next) => {
                         setSearches((cur) => (cur ?? []).map((s) => (s.id === next.id ? next : s)));
                         setEditing(null);
-                        toast.success(t("savedSearchUpdated"));
+                        confirmAction(t, "editsSaved", { title: t("savedSearchUpdated") });
                       }}
                     />
                   ) : (

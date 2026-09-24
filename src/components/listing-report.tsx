@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reportListing } from "@/lib/server/trust";
@@ -53,7 +54,7 @@ export function ListingReport({ daycareId, centreName }: { daycareId: string; ce
           },
         })
           .then(() => {
-            toast.success(t("trustReportSent"));
+            confirmAction(t, "contactSent", { body: t("trustReportSent") });
             setOpen(false);
             setDetail("");
           })

@@ -130,7 +130,9 @@ test("migration and wiring: tour table, ungated send, listing + desks", () => {
 
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /RequestTourSheet/);
-  assert.match(listing, /openConversation/);
+  assert.match(listing, /RequestMessageSheet/);
+  assert.match(src("src/components/request-message.tsx"), /openConversation/);
+  assert.match(src("src/components/request-message.tsx"), /sendConnectedMessage/);
   assert.doesNotMatch(listing, /intent="tour"/);
 
   const thread = src("src/routes/inbox.$id.tsx");

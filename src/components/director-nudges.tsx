@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { collectDirectorNudges, type DirectorNudge } from "@/lib/director-nudges";
 import { refreshVacancy } from "@/lib/server/claims";
@@ -69,7 +70,7 @@ export function DirectorNudgeQueue({
                   setBusyId(nudge.daycareId);
                   void refreshVacancy({ data: { daycareId: nudge.daycareId } })
                     .then(() => {
-                      toast.success(t("vacancyRefreshed"));
+                      confirmAction(t, "openingsUpdated");
                       return onConfirmed();
                     })
                     .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))

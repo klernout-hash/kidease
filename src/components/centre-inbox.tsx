@@ -23,6 +23,7 @@ import { getThread } from "@/lib/server/family";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
+import { confirmAction } from "@/lib/success-confirm";
 import { cn } from "@/lib/utils";
 import type { LeadRequest } from "@/lib/lead-requests";
 import type { Message, TourRequest } from "@/lib/types";
@@ -120,6 +121,7 @@ export function CentreInboxDesk({
     try {
       await sendConnectedMessage({ data: { conversationId: selectedId, body } });
       setBody("");
+      confirmAction(t, "replySent");
       refresh();
     } catch (err) {
       setSendError(err instanceof Error ? err.message : "Could not send");

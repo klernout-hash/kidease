@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { BillStatusBadge } from "@/components/bill-status";
@@ -97,7 +98,7 @@ export function ProviderMoneyPanel() {
             },
           })
             .then(() => {
-              toast.success("Draft bill saved. Send when the parent should see it.");
+              confirmSuccess({ variant: "toast", title: "Draft bill saved", body: "Send when the parent should see it." });
               setForm((cur) => ({ ...cur, memo: "" }));
               return load();
             })
@@ -212,7 +213,7 @@ export function ProviderMoneyPanel() {
           setBusy(id);
           void sendBill({ data: id })
             .then(() => {
-              toast.success(t("billSentToast"));
+              confirmSuccess({ variant: "toast", title: t("billSentToast") });
               return load();
             })
             .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))

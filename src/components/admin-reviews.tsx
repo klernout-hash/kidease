@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import {
   decideListingReview,
@@ -56,7 +57,7 @@ export function AdminReviewsPanel() {
         () => grantListingReviewer({ data: { userId: grantUserId, daycareId: grantDaycareId, note } }),
         reauth.prompt,
       );
-      toast.success(t("reviewerGranted"));
+      confirmSuccess({ variant: "toast", title: t("reviewerGranted") });
       setGrantUserId("");
       setGrantDaycareId("");
     } catch (err) {

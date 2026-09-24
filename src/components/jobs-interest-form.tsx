@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { useCopy } from "@/lib/use-copy";
@@ -56,6 +57,7 @@ export function JobsInterestForm({ variant }: { variant: JobsInterestVariant }) 
         },
       });
       setSent(true);
+      confirmAction(t, "applicationSubmitted");
       setNote("");
     } catch (err) {
       console.error("[kidease-jobs]", err);

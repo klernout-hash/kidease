@@ -14,6 +14,7 @@ import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
+import { SuccessConfirmHost } from "@/components/success-confirm";
 import { reportError } from "@/lib/observe";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import appCss from "../styles.css?url";
@@ -166,6 +167,7 @@ function RootDocument() {
           <Outlet />
           <CookieConsentBanner />
           <KidEaseToaster />
+          <SuccessConfirmHost />
         </AuthProvider>
         <Scripts />
       </body>

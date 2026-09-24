@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import {
   deleteTourWindow,
@@ -96,7 +97,7 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
           setBusy(true);
           void setDaycareTimezone({ data: { daycareId: daycare.id, timezone } })
             .then(() => {
-              toast.success(t("tourTimesTimezoneSaved"));
+              confirmAction(t, "editsSaved", { title: t("tourTimesTimezoneSaved") });
               onSaved?.();
               return load();
             })
@@ -116,7 +117,7 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
             data: { daycareId: daycare.id, date, startTime, endTime, capacity, repeatWeekly },
           })
             .then(() => {
-              toast.success(t("tourTimesAdded"));
+              confirmAction(t, "editsSaved", { title: t("tourTimesAdded") });
               setRepeatWeekly(false);
               onSaved?.();
               return load();

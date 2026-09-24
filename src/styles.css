@@ -1165,6 +1165,66 @@ html[data-channel="website"] .ke-web-grid > article {
   }
 }
 
+.ke-check-badge {
+  fill: color-mix(in oklab, var(--color-ok) 16%, var(--color-surface));
+}
+.ke-check-ring,
+.ke-check-mark {
+  fill: none;
+  stroke: var(--color-ok);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes ke-check-pop {
+  0% {
+    transform: scale(0.72);
+  }
+  70% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes ke-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ke-confetti {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ke-check-pop {
+    animation: ke-check-pop 0.48s cubic-bezier(0.2, 0.85, 0.25, 1.15) both;
+  }
+  .ke-check-ring,
+  .ke-check-mark {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: ke-check-draw 0.45s ease-out forwards;
+  }
+  .ke-check-mark {
+    animation-delay: 0.18s;
+  }
+  .ke-confetti-bit {
+    animation: ke-confetti 0.72s ease-out both;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

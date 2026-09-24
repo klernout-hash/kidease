@@ -30,7 +30,7 @@ test("H-01 request info keeps success and error on the sheet", () => {
 
 test("H-02 compare bar hides while listing request sheets are open", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
-  assert.match(listing, /<CompareBar hidden=\{infoOpen \|\| requestOpen \|\| tourOpen\} \/>/);
+  assert.match(listing, /<CompareBar hidden=\{infoOpen \|\| requestOpen \|\| tourOpen \|\| messageOpen\} \/>/);
   assert.match(src("src/components/compare-bar.tsx"), /if \(hidden \|\| !ids\.length\) return null/);
 });
 

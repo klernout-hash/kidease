@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { vacancyConfirmPriority } from "@/lib/director-nudges";
@@ -71,7 +72,7 @@ export function VacancyConfirmLoop({
                     setBusyId(d.id);
                     void refreshVacancy({ data: { daycareId: d.id } })
                       .then(() => {
-                        toast.success(t("vacancyRefreshed"));
+                        confirmAction(t, "openingsUpdated");
                         return onConfirmed();
                       })
                       .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))

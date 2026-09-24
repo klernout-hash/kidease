@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Link } from "@tanstack/react-router";
 import { AdminLicenseActions } from "@/components/admin-trust";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
@@ -107,7 +108,7 @@ function LicenceAttachControl({
             setSaving(true);
             void withReauth(() => postPrivateDocForm(licenseDocHref(daycareId), {}, file), reauth.prompt)
               .then(() => {
-                toast.success("Licence document saved.");
+                confirmAction(t, "licenceAttached");
                 onAttached();
               })
               .catch((err) => {
@@ -213,6 +214,7 @@ function StraightenListingPhoto({
   disabled: boolean;
   onStraighten?: (daycareId: string) => Promise<{ polished: number; keptOriginal: number; skipped: number }>;
 }) {
+  const { t } = useCopy();
   const [busy, setBusy] = useState(false);
   if (!onStraighten || !storefront?.startsWith("data:image/")) return null;
   return (
@@ -227,9 +229,12 @@ function StraightenListingPhoto({
           void onStraighten(daycareId)
             .then((res) => {
               if (res.polished > 0) {
-                toast.success(
-                  res.polished === 1 ? "Listing photo straightened." : `Straightened ${res.polished} listing photos.`,
-                );
+                confirmAction(t, "photoStraightened", {
+                  title:
+                    res.polished === 1
+                      ? t("successPhotoStraightened")
+                      : `Straightened ${res.polished} listing photos.`,
+                });
               } else if (res.keptOriginal > 0) {
                 toast.message("Photo kept as uploaded. Straighten did not produce a better frame.");
               } else {

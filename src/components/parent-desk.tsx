@@ -1,6 +1,7 @@
 import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { DeskShell } from "@/components/desk-shell";
 import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
@@ -627,11 +628,12 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
                                 setSendingId(c.id);
                                 void shareChildWithCentres({ data: { childId: c.id, daycareIds: selected } })
                                   .then((res) => {
-                                    toast.success(
-                                      t("sentChildTo")
+                                    confirmSuccess({
+                                      variant: "toast",
+                                      title: t("sentChildTo")
                                         .replace("{name}", res.childName)
                                         .replace("{n}", String(res.sent.length)),
-                                    );
+                                    });
                                     selectTab("bookings");
                                     return load();
                                   })

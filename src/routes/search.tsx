@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { ExploreCategoryChips } from "@/components/explore-category-chips";
@@ -765,7 +766,7 @@ function SearchPage() {
       },
     })
       .then(() => {
-        toast.success(t("saveSearchSaved"));
+        confirmAction(t, "searchSaved");
         setSaveOpen(false);
         noteHappyMoment("saved_search");
       })

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Mail } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
@@ -75,6 +76,7 @@ export function Contact() {
       }
       resetTurnstile();
       setSent(true);
+      confirmAction(t, "contactSent");
       setBody("");
     } catch (err) {
       console.error("[kidease-contact]", err);

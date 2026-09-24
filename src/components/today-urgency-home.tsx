@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { respondTourRequest } from "@/lib/server/tours";
 import { listInbox } from "@/lib/server/inbox";
@@ -173,7 +174,7 @@ export function TodayUrgencyHome({
       await respondTourRequest({
         data: { tourId, status, note: status === "declined" ? declineReason.trim() : undefined },
       });
-      toast.success(status === "accepted" ? t("tourAccepted") : t("tourDeclined"));
+      confirmAction(t, status === "accepted" ? "tourAccepted" : "tourDeclined");
       setDeclineFor(null);
       setDeclineReason("");
       onChanged();
