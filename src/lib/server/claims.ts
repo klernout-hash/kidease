@@ -326,16 +326,37 @@ export const submitEnrollLicense = createServerFn({ method: "POST" })
       `;
     });
     if (data.daycareId) await storeLicensePhoto(sql, data.daycareId, photo);
-    await notifyPlatform({
-      kind: "enroll",
-      title: `Enroll Now: ${centre}`,
-      actorName: name,
-      actorEmail: email,
-      daycareName: centre,
-      city,
-      slug: undefined,
-      detail: [`Licence photo attached`, data.phone && `Phone: ${data.phone}`, body].filter(Boolean).join("\n"),
-    });
+    let eventId: string | null = null;
+    let notifyError: unknown = null;
+    try {
+      const result = await notifyPlatform({
+        kind: "enroll",
+        title: `Enroll Now: ${centre}`,
+        actorName: name,
+        actorEmail: email,
+        daycareName: centre,
+        city,
+        slug: undefined,
+        detail: [`Licence photo attached`, data.phone && `Phone: ${data.phone}`, body].filter(Boolean).join("\n"),
+      });
+      eventId = result?.id ?? null;
+    } catch (err) {
+      console.error("[kidease-mail] enroll notify failed", err);
+      notifyError = err;
+    }
+    try {
+      const { captureEnrollIntake } = await import("@/lib/server/ghl-intake");
+      await captureEnrollIntake({
+        email,
+        name,
+        phone: data.phone,
+        company: centre,
+        eventId,
+      });
+    } catch (err) {
+      console.error("[kidease-ghl] enroll intake failed", err);
+    }
+    if (notifyError) throw notifyError;
     return { ok: true as const };
   });
 

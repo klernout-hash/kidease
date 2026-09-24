@@ -566,7 +566,7 @@ export const GROUPS = [
         concealed: true,
         vercel: "both",
         required: false,
-        notes: "GHL Daycare Sign Up webhook. Provider signup + claim verify. Router fallback if only one URL is set.",
+        notes: "GHL Daycare Sign Up webhook. Provider signup, claim verify, Enroll Now. Router fallback if only one URL is set.",
       },
       {
         name: "GHL_WEBHOOK_PARENT_ONBOARD_URL",
