@@ -411,6 +411,8 @@ export const copy = {
     claimCodeHint: "Enter the code to finish verification. In this preview the code is shown here.",
     claimCode: "Claim code",
     licensePhoto: "Photo or PDF of your daycare licence",
+    licenceUploadLead:
+      "Upload a clear photo or PDF scan of the current provincial licence. Required for compliance review.",
     licenceOnFile: "Licence on file",
     licenceViewFile: "View uploaded licence",
     finishClaim: "Verify and take over",
@@ -2392,6 +2394,8 @@ export const copy = {
     accountUpdatePassword: "Update password",
     accountUpdateEmail: "Update email",
     reauthTitle: "Confirm it's you",
+    reauthRequired: "Confirm it's you to continue.",
+    reauthKeptFile: "Your file {name} stays on this page. Confirm, then KidEase uploads it.",
     reauthLead:
       "Routine desk edits stay unlocked for {grace} minutes. Approve, decline, licence, and screening ask again after {window} minutes.",
     reauthChecking: "Checking…",
@@ -2837,6 +2841,8 @@ export const copy = {
     claimCodeHint: "Entrez le code pour terminer. Dans cet aperçu, le code s’affiche ici.",
     claimCode: "Code de réclamation",
     licensePhoto: "Photo ou PDF du permis de garde",
+    licenceUploadLead:
+      "Téléversez une photo nette ou un PDF du permis provincial en vigueur. Requis pour la vérification de conformité.",
     licenceOnFile: "Permis au dossier",
     licenceViewFile: "Voir le permis téléversé",
     finishClaim: "Vérifier et prendre en charge",
@@ -4829,6 +4835,8 @@ export const copy = {
     accountUpdatePassword: "Mettre à jour le mot de passe",
     accountUpdateEmail: "Mettre à jour le courriel",
     reauthTitle: "Confirmez que c’est vous",
+    reauthRequired: "Confirmez que c’est vous pour continuer.",
+    reauthKeptFile: "Votre fichier {name} reste sur cette page. Confirmez, puis KidEase le téléverse.",
     reauthLead:
       "Les modifications courantes du bureau restent déverrouillées {grace} minutes. Approuver, refuser, la licence et le filtrage redemandent après {window} minutes.",
     reauthChecking: "Vérification…",

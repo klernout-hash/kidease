@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { confirmAction, confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,19 @@ import {
   screeningDocHref,
 } from "@/lib/private-docs";
 import { useCopy } from "@/lib/use-copy";
+import { isReauthRequiredMessage } from "@/lib/reauth";
+import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { useReauthPrompt } from "@/components/reauth-dialog";
 import type { CopyKey } from "@/lib/copy";
+
+type PendingScreeningUpload = {
+  file: File;
+  daycareId: string;
+  personId: string;
+  kind: string;
+  issuedOn: string;
+  expiresOn: string;
+};
 
 const STATUS_COPY: Record<ScreeningDocStatus, CopyKey> = {
   missing: "screeningStatusMissing",
@@ -171,6 +183,9 @@ export function ProviderScreeningPanel() {
   const [centres, setCentres] = useState<ScreeningCentreView[]>([]);
   const [canManage, setCanManage] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState<PendingScreeningUpload | null>(null);
+  const screeningPrompting = useRef(false);
+  const reauth = useReauthPrompt();
   const [form, setForm] = useState({ daycareId: "", name: "", role: "volunteer" });
 
   async function load() {
@@ -205,6 +220,49 @@ export function ProviderScreeningPanel() {
     }
   }
 
+  async function uploadScreening(pending: PendingScreeningUpload): Promise<"saved" | "confirm" | "error"> {
+    setBusy(true);
+    try {
+      await postPrivateDocForm(
+        SCREENING_DOC_API,
+        {
+          daycareId: pending.daycareId,
+          personId: pending.personId,
+          kind: pending.kind,
+          issuedOn: pending.issuedOn,
+          expiresOn: pending.expiresOn,
+        },
+        pending.file,
+      );
+      setPendingUpload(null);
+      confirmAction(t, "screeningUploaded");
+      await load();
+      return "saved";
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : "";
+      if (isReauthRequiredMessage(raw)) {
+        setPendingUpload(pending);
+        return "confirm";
+      }
+      toast.error(presentAuthCopy(locale, raw) || t("uploadDocTooBig"));
+      return "error";
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function promptScreening(pending: PendingScreeningUpload) {
+    if (screeningPrompting.current) return;
+    screeningPrompting.current = true;
+    try {
+      const ok = await reauth.prompt();
+      if (!ok) return;
+      await uploadScreening(pending);
+    } finally {
+      screeningPrompting.current = false;
+    }
+  }
+
   function onUpload(
     centre: ScreeningCentreView,
     person: ScreeningPersonView,
@@ -216,24 +274,19 @@ export function ProviderScreeningPanel() {
     readScreeningFile(
       file,
       (next) => {
-        setBusy(true);
-        void postPrivateDocForm(
-          SCREENING_DOC_API,
-          {
-            daycareId: centre.daycareId,
-            personId: person.id,
-            kind: doc.kind,
-            issuedOn,
-            expiresOn,
-          },
-          next,
-        )
-          .then(() => {
-            confirmAction(t, "screeningUploaded");
-            return load();
-          })
-          .catch((err) => toast.error(err instanceof Error ? err.message : t("uploadDocTooBig")))
-          .finally(() => setBusy(false));
+        const pending: PendingScreeningUpload = {
+          file: next,
+          daycareId: centre.daycareId,
+          personId: person.id,
+          kind: doc.kind,
+          issuedOn,
+          expiresOn,
+        };
+        void (async () => {
+          const result = await uploadScreening(pending);
+          if (result !== "confirm") return;
+          await promptScreening(pending);
+        })();
       },
       () => toast.error(t("uploadDocTooBig")),
     );
@@ -270,6 +323,15 @@ export function ProviderScreeningPanel() {
       <div>
         <h2 className="font-display text-2xl">{t("screeningDesk")}</h2>
         <p className="mt-2 text-sm leading-6 text-muted">{t("screeningLead")}</p>
+        {pendingUpload ? (
+          <div className="mt-3 space-y-2" data-ke="screening-reauth">
+            <p className="text-sm text-danger" role="alert">{t("reauthRequired")}</p>
+            <p className="text-sm text-fg">{t("reauthKeptFile").replace("{name}", pendingUpload.file.name)}</p>
+            <Button type="button" disabled={busy} onClick={() => void promptScreening(pendingUpload)}>
+              {busy ? t("reauthChecking") : t("reauthTitle")}
+            </Button>
+          </div>
+        ) : null}
       </div>
       {centres.map((centre) => (
         <section key={centre.daycareId} className="rounded-xl bg-surface p-4 ring-1 ring-border sm:p-5">
@@ -362,6 +424,7 @@ export function ProviderScreeningPanel() {
           </Button>
         </form>
       ) : null}
+      {reauth.dialog}
     </div>
   );
 }

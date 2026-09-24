@@ -55,6 +55,7 @@ const EXACT: Array<[string, CopyKey]> = [
     "forgotPasswordSent",
   ],
   ["Security check could not load. Refresh the page.", "turnstileLoadFailed"],
+  ["Confirm it's you to continue.", "reauthRequired"],
   ["Could not confirm.", "reauthConfirmFailed"],
   ["A code is on its way. Use the latest email.", "reauthCodeSent"],
   ["Please wait a moment, then try again.", "reauthWaitMoment"],
