@@ -1206,11 +1206,17 @@ export const getProvider = createServerFn({ method: "GET" })
     const entitlements = await loadProfileEntitlements(sql, context.userId);
     const since = analyticsSinceDate(entitlements.analyticsDays);
     const weekSince = analyticsSinceDate(7);
+    const viewer = await lookupUser(context.userId);
     const listings = (
       await overlayDemandSnapshots(
         await overlayFeaturedCity(await overlayQuality(owned.map(mapDaycare))),
       )
-    ).filter((d) => providerDeskListingVisible(d));
+    ).filter((d) =>
+      providerDeskListingVisible(d, {
+        ownedByViewer: true,
+        viewerEmail: viewer.email,
+      }),
+    );
     const stats = [];
     for (const d of listings) {
       const views = await sql<{ n: number }>`

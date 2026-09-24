@@ -2,7 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql, getSqlWithin } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getCatalog, catalogByIdGet } from "@/lib/catalog";
-import { isAdminOnlyListing, listingVisibilityForOwners } from "@/lib/listing-visibility";
+import {
+  DESK_LISTING_NOT_VISIBLE,
+  isAdminOnlyListing,
+  listingVisibilityForOwners,
+  providerDeskListingVisible,
+} from "@/lib/listing-visibility";
 import { nid } from "@/lib/utils";
 import { upsertDaycare } from "./seed";
 import { callerIsAdmin } from "./public-listing";
@@ -417,10 +422,57 @@ export const updateListing = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await assertCentreCanMutateListing(sql, context.userId, data.daycareId);
-    const current = await sql<{ photos: string; amenities: string }>`
-      select photos, amenities from daycares where id = ${data.daycareId}
-    `;
-    const previousPhotos = current[0]?.photos ?? "";
+    const current = await sql<{
+      photos: string;
+      amenities: string;
+      id?: string;
+      slug?: string | null;
+      name?: string | null;
+      license_number?: string | null;
+      address?: string | null;
+      visibility?: string | null;
+      is_test?: number | boolean | null;
+      claim_status?: string | null;
+    }>`
+      select photos, amenities, id, slug, name, license_number, address, visibility, is_test, claim_status
+      from daycares where id = ${data.daycareId}
+    `.catch(
+      () =>
+        sql<{
+          photos: string;
+          amenities: string;
+          id?: string;
+          slug?: string | null;
+          name?: string | null;
+          license_number?: string | null;
+          address?: string | null;
+          visibility?: string | null;
+          is_test?: number | boolean | null;
+          claim_status?: string | null;
+        }>`
+          select photos, amenities from daycares where id = ${data.daycareId}
+        `,
+    );
+    const row = current[0];
+    if (!row) throw new Error(LISTING_NOT_FOUND);
+    if (row.name !== undefined || row.visibility !== undefined || row.is_test !== undefined || row.claim_status !== undefined) {
+      const actor = await lookupUser(context.userId);
+      const onDesk = providerDeskListingVisible(
+        {
+          id: row.id || data.daycareId,
+          slug: row.slug,
+          name: row.name,
+          licenseNumber: row.license_number,
+          address: row.address,
+          visibility: row.visibility,
+          isTest: row.is_test,
+          claimStatus: row.claim_status,
+        },
+        { ownedByViewer: true, viewerEmail: actor.email },
+      );
+      if (!onDesk) throw new Error(DESK_LISTING_NOT_VISIBLE);
+    }
+    const previousPhotos = row.photos ?? "";
     const { prepareListingUploadPhoto } = await import("@/lib/server/polish-listing-photo");
     let photos = current[0]?.photos ?? "";
     if (Array.isArray(data.managedPhotos)) {

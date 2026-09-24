@@ -96,20 +96,59 @@ export function isPublicListing(d: ListingVisibilityInput | null | undefined): b
 }
 
 const PROVIDER_DESK_REVIEW_STATUSES = new Set(["pending", "waiting", "verified"]);
+/** Owned QA fixtures stay editable after approval so photos can be added during review. */
+const PROVIDER_DESK_QA_STATUSES = new Set(["pending", "waiting", "verified", "approved"]);
+
+export const DESK_LISTING_NOT_VISIBLE = "This listing is not visible on your desk.";
+
+/** Who is looking at the director desk. Rows are already limited to that person's centres. */
+export type ProviderDeskViewer = {
+  /** True when this row is one the signed-in desk already loaded for this person. */
+  ownedByViewer?: boolean;
+  viewerEmail?: string | null;
+};
+
+/**
+ * Ghost and Claim Lab rows stay off the director desk even for the operator.
+ * QA / TEST named fixtures are a separate case and can stay when the viewer owns them.
+ */
+function isDeskGhostFixture(d: ListingVisibilityInput): boolean {
+  const id = norm(d.id || d.daycareId);
+  const slug = norm(d.slug);
+  const license = norm(d.licenseNumber);
+  const nameLc = (d.name || "").trim().toLowerCase();
+  if (KNOWN_ADMIN_ONLY_IDS.has(id) || KNOWN_ADMIN_ONLY_SLUGS.has(slug)) return true;
+  if (slug.startsWith("test-ghost-") || slug.includes("ghost-listing")) return true;
+  if (KNOWN_ADMIN_ONLY_LICENCES.has(license)) return true;
+  if (nameLc.includes("ghost claim") || nameLc.includes("ghost listing") || nameLc === "ghost listing") return true;
+  return false;
+}
+
+function viewerOwnsDeskFixture(viewer?: ProviderDeskViewer | null): boolean {
+  if (!viewer) return false;
+  return Boolean(viewer.ownedByViewer) || isKidEaseOperatorEmail(viewer.viewerEmail);
+}
 
 /**
  * Director desk. Public listings always show, including ones still waiting
  * on review, so the owner can add the storefront the admin queue marks Missing.
- * Known QA / ghost fixtures stay hidden. An operator-flagged row (admin_only
- * only because of the owner mailbox) stays editable while review is open.
+ * An owned QA-named fixture stays on My listings through pending, waiting,
+ * verified, and approved. Ghost and Claim Lab fixtures stay hidden.
+ * An operator-flagged row that is not a named fixture stays editable while review is open.
+ * Public search still uses isAdminOnlyListing.
  */
 export function providerDeskListingVisible(
   d: (ListingVisibilityInput & { claimStatus?: string | null }) | null | undefined,
+  viewer?: ProviderDeskViewer | null,
 ): boolean {
   if (!d) return false;
   if (!isAdminOnlyListing(d)) return true;
-  if (looksLikeTestFixture(d)) return false;
+  if (isDeskGhostFixture(d)) return false;
   const status = (d.claimStatus || "").trim().toLowerCase();
+  if (looksLikeTestFixture(d)) {
+    if (!viewerOwnsDeskFixture(viewer)) return false;
+    return PROVIDER_DESK_QA_STATUSES.has(status);
+  }
   return PROVIDER_DESK_REVIEW_STATUSES.has(status);
 }
 
