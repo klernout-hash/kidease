@@ -11,6 +11,7 @@ import { ListingRail } from "@/components/listing-rail";
 import { RequestSpotSheet } from "@/components/request-spot";
 import { RequestTourSheet } from "@/components/request-tour";
 import { RequestInfoSheet } from "@/components/request-info";
+import { RequestMessageSheet } from "@/components/request-message";
 import { ListingTourTimes } from "@/components/listing-tour-times";
 import {
   ListingHeaderPills,
@@ -35,7 +36,6 @@ import {
   listingPageTitle as listingSeoPageTitle,
   listingSeoHeadTags,
 } from "@/lib/listing-seo";
-import { openConversation } from "@/lib/server/family";
 import { ListingCultureCard } from "@/components/listing-culture-card";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
@@ -163,6 +163,7 @@ function Listing() {
   const [requestOpen, setRequestOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [missing, setMissing] = useState(false);
   const [reload, setReload] = useState(0);
@@ -405,19 +406,14 @@ function Listing() {
     setTourOpen(true);
   }
 
-  async function onMessage() {
+  function onMessage() {
     if (!user) {
       goLogin("needSignInMessage");
       return;
     }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "message" });
-    try {
-      const res = await openConversation({ data: d.id });
-      void navigate({ to: "/inbox/$id", params: { id: res.id } });
-    } catch {
-      toast.error(t("needSignIn"));
-      goLogin("needSignInMessage");
-    }
+    capturePostHogEvent("listing_request_started", { intent: "message" });
+    setMessageOpen(true);
   }
 
   const waitlisted = known && spots <= 0;
@@ -431,7 +427,7 @@ function Listing() {
         {live ? <ListingMoreItem onClick={onTour}>{t("bookTour")}</ListingMoreItem> : null}
         {live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
         {live ? (
-          <ListingMoreItem onClick={() => void onMessage()}>
+          <ListingMoreItem onClick={onMessage}>
             <MessageCircle className="size-4" /> {t("message")}
           </ListingMoreItem>
         ) : null}
@@ -905,7 +901,8 @@ function Listing() {
         onRequestInfo={() => setInfoOpen(true)}
       />
       <RequestInfoSheet daycare={d} open={infoOpen} onClose={() => setInfoOpen(false)} />
-      <CompareBar hidden={infoOpen || requestOpen || tourOpen} />
+      <RequestMessageSheet daycare={d} open={messageOpen} onClose={() => setMessageOpen(false)} />
+      <CompareBar hidden={infoOpen || requestOpen || tourOpen || messageOpen} />
     </Shell>
   );
 }

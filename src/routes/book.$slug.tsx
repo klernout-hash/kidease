@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
+import { RequestSentDialog } from "@/components/request-sent-dialog";
+import { useLiveSubmit } from "@/components/use-live-submit";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getDaycare } from "@/lib/server/daycares";
 import { createSpotRequest } from "@/lib/server/family";
-import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
+import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { useCopy } from "@/lib/use-copy";
 import { noteHappyMoment } from "@/lib/store-review";
 import type { Daycare, Schedule } from "@/lib/types";
@@ -40,6 +42,8 @@ function BookPage() {
   const [days, setDays] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState<{ conversationId: string } | null>(null);
+  const send = useLiveSubmit(true);
 
   useEffect(() => {
     void getDaycare({ data: slug }).then((res) => {
@@ -70,6 +74,7 @@ function BookPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!childName.trim() || !birth) return;
+    const token = send.start();
     setBusy(true);
     try {
       const res = await createSpotRequest({
@@ -85,14 +90,20 @@ function BookPage() {
           locale,
         },
       });
-      toast.success(t("requestSentTitle"));
       noteHappyMoment("booking");
-      void navigate({ to: "/parent", search: PARENT_REQUESTS_SEARCH });
+      await holdSendBeat();
+      if (!send.live(token)) return;
+      setSent({ conversationId: res.conversationId });
     } catch (err) {
+      if (!send.live(token)) return;
       toast.error(err instanceof Error ? err.message : t("needSignIn"));
     } finally {
-      setBusy(false);
+      if (send.live(token)) setBusy(false);
     }
+  }
+
+  function backToListing() {
+    void navigate({ to: "/daycare/$slug", params: { slug } });
   }
 
   return (
@@ -103,7 +114,10 @@ function BookPage() {
         </Link>
         <h1 className="mt-3 font-display text-3xl">{t("requestSpotTitle")}</h1>
         <p className="mt-1 text-muted">{name}</p>
-        <form onSubmit={submit} className="mt-6 space-y-5 rounded-xl bg-surface p-5 ring-1 ring-border">
+        <form
+          onSubmit={submit}
+          className="mt-6 space-y-5 rounded-xl bg-surface p-5 ring-1 ring-border"
+        >
           <label className="block text-sm">
             {t("childFullName")}
             <input
@@ -160,7 +174,9 @@ function BookPage() {
                   <button
                     key={key}
                     type="button"
-                    onClick={() => setDays((cur) => (on ? cur.filter((d) => d !== key) : [...cur, key]))}
+                    onClick={() =>
+                      setDays((cur) => (on ? cur.filter((d) => d !== key) : [...cur, key]))
+                    }
                     className={
                       on
                         ? "h-10 rounded-full bg-fg px-3 text-sm text-bg"
@@ -183,10 +199,27 @@ function BookPage() {
               onChange={(e) => setMessage(e.target.value)}
             />
           </label>
-          <Button type="submit" className="w-full" disabled={busy}>
-            {t("sendRequest")}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={busy}
+            aria-busy={busy || undefined}
+            aria-label={busy ? t("requestSentSending") : undefined}
+          >
+            {busy ? "…" : t("sendRequest")}
           </Button>
         </form>
+        {sent ? (
+          <RequestSentDialog
+            kind="spot"
+            listingName={name}
+            city={centre.city}
+            photo={requestSentThumb(centre.photos)}
+            conversationId={sent.conversationId}
+            canOpenMessages
+            onClose={backToListing}
+          />
+        ) : null}
       </main>
     </Shell>
   );

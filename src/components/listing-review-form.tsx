@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -82,7 +83,7 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
           data: { daycareId, rating, body, locale, turnstileToken: token },
         })
           .then(() => {
-            toast.success(t("reviewSent"));
+            confirmAction(t, "reviewSubmitted");
             setAccess({
               canWrite: true,
               reason: access?.reason ?? "enrolment",

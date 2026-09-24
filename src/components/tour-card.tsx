@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction, confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { cancelTourRequest, proposeTourTime, respondTourRequest, advanceTourRequest } from "@/lib/server/tours";
 import { listCentreTourWindows } from "@/lib/server/tour-calendar";
@@ -56,7 +57,7 @@ export function TourCard({
     setBusy(status);
     try {
       await respondTourRequest({ data: { tourId: tour.id, status, note: note.trim() || undefined } });
-      toast.success(status === "accepted" ? t("pipelineConfirmed") : t("pipelineLost"));
+      confirmAction(t, status === "accepted" ? "tourAccepted" : "tourDeclined");
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -69,9 +70,10 @@ export function TourCard({
     setBusy(status);
     try {
       await advanceTourRequest({ data: { tourId: tour.id, status, note: note.trim() || undefined } });
-      toast.success(
-        status === "completed" ? t("pipelineCompleted") : status === "enrolled" ? t("pipelineEnrolled") : t("pipelineLost"),
-      );
+      confirmSuccess({
+        variant: "toast",
+        title: status === "completed" ? t("pipelineCompleted") : status === "enrolled" ? t("pipelineEnrolled") : t("pipelineLost"),
+      });
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -88,7 +90,7 @@ export function TourCard({
     setBusy("propose");
     try {
       await proposeTourTime({ data: { tourId: tour.id, windowId, note: note.trim() || undefined } });
-      toast.success(t("tourProposed"));
+      confirmSuccess({ variant: "toast", title: t("tourProposed") });
       setProposeOpen(false);
       setWindowId("");
       onChanged?.();
@@ -103,7 +105,7 @@ export function TourCard({
     setBusy("cancel");
     try {
       await cancelTourRequest({ data: { tourId: tour.id, note: note.trim() || undefined } });
-      toast.success(t("tourCancelled"));
+      confirmSuccess({ variant: "toast", title: t("tourCancelled") });
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));

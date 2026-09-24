@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import {
   canLogMedicationDose,
@@ -87,7 +88,7 @@ export function CareChildOps({
           times: medDraft.times,
         },
       });
-      toast.success(t("careMedAdded"));
+      confirmSuccess({ variant: "toast", title: t("careMedAdded") });
       setMedDraft({ name: "", dosage: "", instructions: "", times: "08:00, 12:00" });
       await onReload();
     } catch (err) {
@@ -104,7 +105,7 @@ export function CareChildOps({
       await logCareMedicationDose({
         data: { medicationId, scheduledTime, status, day: row.day },
       });
-      toast.success(t("careMedLogged"));
+      confirmSuccess({ variant: "toast", title: t("careMedLogged") });
       await onReload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -132,7 +133,7 @@ export function CareChildOps({
           day: row.day,
         },
       });
-      toast.success(t("careIncidentSubmitted"));
+      confirmSuccess({ variant: "modal", title: t("careIncidentSubmitted") });
       setIncidentDraft({ kind: "fall", location: "", description: "", actionTaken: "", firstAid: false });
       await onReload();
     } catch (err) {

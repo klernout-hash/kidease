@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Inbox } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { EmptyState } from "@/components/empty-state";
 import { LeadKindChip, LeadStatusChip } from "@/components/lead-status-chip";
 import { Button } from "@/components/ui/button";
@@ -132,7 +133,7 @@ function LeadActions({ lead, onChanged }: { lead: LeadRequest; onChanged: () => 
     setBusy(action);
     try {
       await updateLeadRequest({ data: { leadId: lead.id, action, note: note.trim() || undefined } });
-      toast.success(t("leadUpdated"));
+      confirmSuccess({ variant: "toast", title: t("leadUpdated") });
       setNote("");
       onChanged();
     } catch (err) {

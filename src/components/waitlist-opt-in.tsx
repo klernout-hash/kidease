@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { getWaitlistInterest, setWaitlistInterest } from "@/lib/server/waitlist-api";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
@@ -42,7 +43,7 @@ export function WaitlistOptIn({ daycareId, next }: { daycareId: string; next?: s
     void setWaitlistInterest({ data: { daycareId, optedIn: !optedIn } })
       .then((row) => {
         setOptedIn(Boolean(row));
-        toast.success(row ? t("waitlistRequestSaved") : t("waitlistOptInOff"));
+        confirmAction(t, row ? "waitlistJoined" : "waitlistLeft");
       })
       .catch((err) => {
         toast.error(err instanceof Error ? err.message : t("needSignIn"));

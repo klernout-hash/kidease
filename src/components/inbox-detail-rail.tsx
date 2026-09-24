@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction, confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { INBOX_STAGE_COPY, inboxInitials, type CentreInboxThread } from "@/lib/inbox-stages";
 import { saveInboxStaffNote } from "@/lib/server/inbox";
@@ -71,7 +72,7 @@ export function InboxDetailRail({
     setBusy("accept");
     try {
       await respondTourRequest({ data: { tourId: tour.id, status: "accepted", note: note.trim() || undefined } });
-      toast.success(t("inboxTourConfirmedBanner"));
+      confirmAction(t, "tourAccepted");
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -89,7 +90,7 @@ export function InboxDetailRail({
     setBusy("decline");
     try {
       await respondTourRequest({ data: { tourId: tour.id, status: "declined", note: note.trim() } });
-      toast.success(t("pipelineLost"));
+      confirmAction(t, "tourDeclined");
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -107,7 +108,7 @@ export function InboxDetailRail({
     setBusy("propose");
     try {
       await proposeTourTime({ data: { tourId: tour.id, windowId, note: note.trim() || undefined } });
-      toast.success(t("todayProposeTime"));
+      confirmSuccess({ variant: "toast", title: t("todayProposeTime") });
       setProposeOpen(false);
       setWindowId("");
       onChanged();
@@ -122,7 +123,7 @@ export function InboxDetailRail({
     setBusy("note");
     try {
       await saveInboxStaffNote({ data: { conversationId: thread.id, note: staffNote } });
-      toast.success(t("inboxStaffNoteSaved"));
+      confirmAction(t, "editsSaved", { title: t("inboxStaffNoteSaved") });
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));

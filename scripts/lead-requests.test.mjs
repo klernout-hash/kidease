@@ -190,7 +190,7 @@ test("parent My requests and daycare lead inbox are wired", () => {
   assert.match(src("src/lib/desk-nav.ts"), /My requests/);
 });
 
-test("listing CTAs deep-link ask= tour|spot|waitlist and land on My requests", () => {
+test("listing CTAs deep-link ask= tour|spot|waitlist and confirm in Messages", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /parseListingAsk/);
   assert.match(listing, /ask === "tour"/);
@@ -199,9 +199,12 @@ test("listing CTAs deep-link ask= tour|spot|waitlist and land on My requests", (
   assert.match(listing, /ask === "info"/);
   assert.match(listing, /ask=tour/);
   assert.match(listing, /ask=waitlist/);
-  assert.match(src("src/components/request-tour.tsx"), /PARENT_REQUESTS_SEARCH/);
-  assert.match(src("src/components/request-spot.tsx"), /PARENT_REQUESTS_SEARCH/);
-  assert.match(src("src/routes/book.\$slug.tsx"), /PARENT_REQUESTS_SEARCH/);
+  assert.match(src("src/components/request-tour.tsx"), /RequestSentDialog/);
+  assert.match(src("src/components/request-spot.tsx"), /RequestSentDialog/);
+  assert.match(src("src/routes/book.$slug.tsx"), /RequestSentDialog/);
+  assert.match(src("src/components/request-sent-dialog.tsx"), /requestSentViewMessages/);
+  assert.doesNotMatch(src("src/components/request-tour.tsx"), /setTimeout\(/);
+  assert.doesNotMatch(src("src/components/request-spot.tsx"), /setTimeout\(/);
   assert.match(src("src/components/waitlist-opt-in.tsx"), /goToMyRequests/);
 });
 

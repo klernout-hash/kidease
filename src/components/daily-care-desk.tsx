@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { readListingImage } from "@/components/provider-listing-forms";
@@ -112,7 +113,10 @@ export function DailyCareDesk({
           notes: notes[childKey(row)] ?? row.notes,
         },
       });
-      toast.success(action === "check_in" ? t("careCheckedIn") : action === "check_out" ? t("careCheckedOut") : t("careAbsent"));
+      confirmSuccess({
+        variant: "toast",
+        title: action === "check_in" ? t("careCheckedIn") : action === "check_out" ? t("careCheckedOut") : t("careAbsent"),
+      });
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -129,7 +133,7 @@ export function DailyCareDesk({
     try {
       const res = await sendConnectedMessage({ data: { conversationId: row.conversationId, body: text } });
       if (!res.ok) throw new Error(t("tourRespondFailed"));
-      toast.success(t("careMessageSent"));
+      confirmSuccess({ variant: "toast", title: t("careMessageSent") });
       setNotes((prev) => ({ ...prev, [childKey(row)]: "" }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -154,7 +158,7 @@ export function DailyCareDesk({
           photos: draft.photos,
         },
       });
-      toast.success(t("careJournalPosted"));
+      confirmSuccess({ variant: "toast", title: t("careJournalPosted") });
       setDrafts((prev) => ({ ...prev, [childKey(row)]: { body: "", photos: [] } }));
       await load();
     } catch (err) {

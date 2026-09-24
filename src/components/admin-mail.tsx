@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import {
   getAdminMailboxMessage,
@@ -110,6 +111,7 @@ export function AdminMailPanel() {
       });
       const via = sent.via === "titan" ? "Titan" : sent.via === "resend" ? "Resend" : sent.via === "sendgrid" ? "SendGrid" : "mail";
       setNote(`Sent from ${mailbox} via ${via}.`);
+      confirmSuccess({ variant: "toast", title: "Notification sent" });
       setBody("");
       setInReplyTo("");
       setReferences("");

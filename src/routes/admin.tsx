@@ -60,6 +60,8 @@ import { AdminStripeCatalog } from "@/components/admin-stripe-catalog";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
+import { approvalHealthSummary } from "@/lib/approve-live";
+import { approvalSuccessReady, confirmAction } from "@/lib/success-confirm";
 import { isQueueableClaimStatus } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
 import {
@@ -130,6 +132,7 @@ function provCode(raw: string | null | undefined) {
 }
 
 function AdminPage() {
+  const { t } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
   const reauth = useReauthPrompt();
@@ -398,6 +401,15 @@ function AdminPage() {
       setNote("");
       if (decision === "approve") {
         setApprovalHealth(result.health ?? null);
+        if (approvalSuccessReady(result) && result.health) {
+          confirmAction(t, "daycareApproved", {
+            body: approvalHealthSummary(result.health).body,
+          });
+        }
+      } else if (decision === "decline") {
+        confirmAction(t, "unlive");
+      } else {
+        confirmAction(t, "waiting");
       }
       await refresh();
     } catch (err) {

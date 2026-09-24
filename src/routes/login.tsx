@@ -45,6 +45,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canContinueAdminSession } from "@/lib/server/reauth";
 import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
+import { confirmAction } from "@/lib/success-confirm";
 import {
   ADMIN_IDLE_CHECK_MS,
   LOGIN_CONTINUE_MS,
@@ -289,6 +290,7 @@ export function LoginScreen({
         );
         if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
         rememberToken(res.data);
+        confirmAction(t, "accountCreated");
       } else {
         const res = await withTimeout(
           authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(challenge) }),

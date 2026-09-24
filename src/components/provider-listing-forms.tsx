@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Camera, ChevronLeft, ChevronRight, Megaphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { PriorityPill } from "@/components/priority-pill";
 import { ListingHealthPanel } from "@/components/listing-health";
@@ -92,7 +93,7 @@ export function PromotePanel({ daycare, onSaved }: { daycare: Daycare; onSaved: 
           setBusy(true);
           void promoteListing({ data: { daycareId: daycare.id, plan } })
             .then(() => {
-              toast.success(t("promotePay"));
+              confirmAction(t, "editsSaved", { title: t("promotePay") });
               onSaved();
             })
             .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
@@ -384,8 +385,25 @@ export function CapacityForm({
         })
           .then(() => onSaved())
           .then(() => {
+            const photo = galleryDirty;
+            const spots =
+              state.spotsInfant !== daycare.spotsInfant ||
+              state.spotsToddler !== daycare.spotsToddler ||
+              state.spotsPreschool !== daycare.spotsPreschool;
+            const fees =
+              state.infantMonthly !== (daycare.infantMonthly ?? 0) ||
+              state.toddlerMonthly !== (daycare.toddlerMonthly ?? 0) ||
+              state.preschoolMonthly !== (daycare.preschoolMonthly ?? 0);
+            const id =
+              photo && !spots && !fees
+                ? "photoUploaded"
+                : spots && !fees && !photo
+                  ? "openingsUpdated"
+                  : fees && !spots && !photo
+                    ? "feesUpdated"
+                    : "listingEdits";
+            confirmAction(t, id);
             setGallery(null);
-            toast.success(t("saveChanges"));
           })
           .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
           .finally(() => setSaving(false));
@@ -414,7 +432,7 @@ export function CapacityForm({
                 setLicenseError(null);
                 void postPrivateDocForm(licenseDocHref(daycare.id), {}, file)
                   .then(() => {
-                    toast.success(t("licenceOnFile"));
+                    confirmAction(t, "licenceUploaded");
                     onSaved();
                   })
                   .catch((err) => {
@@ -625,7 +643,7 @@ export function CapacityForm({
                 setRefreshing(true);
                 void refreshVacancy({ data: { daycareId: daycare.id } })
                   .then(() => {
-                    toast.success(t("vacancyRefreshed"));
+                    confirmAction(t, "openingsUpdated");
                     onSaved();
                   })
                   .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))

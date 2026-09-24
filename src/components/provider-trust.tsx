@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { TrustSignals } from "@/components/trust-badge";
 import { Field } from "@/components/provider-listing-forms";
@@ -81,7 +82,7 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
                 },
               })
                 .then(() => {
-                  toast.success(t("saveChanges"));
+                  confirmAction(t, "editsSaved");
                   onSaved();
                 })
                 .catch((err) => toast.error(err instanceof Error ? err.message : t("saveChanges")))
@@ -144,7 +145,7 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
                 setBusy("attest");
                 void attestStaffScreening({ data: { daycareId: daycare.id } })
                   .then(() => {
-                    toast.success(t("trustAttestDone"));
+                    confirmAction(t, "stepCompleted");
                     onSaved();
                   })
                   .catch((err) => toast.error(err instanceof Error ? err.message : t("trustAttestCta")))

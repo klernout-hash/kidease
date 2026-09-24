@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { cn, money } from "@/lib/utils";
@@ -147,7 +148,7 @@ export function ProviderSubscriptionPanel() {
       setState(saved);
       setInterval(saved.interval);
       setAddons(saved.addons);
-      toast.success(next.plan === "free" ? t.savedFree : tx("planCheckoutRehearsal"));
+      confirmSuccess({ variant: "toast", title: next.plan === "free" ? t.savedFree : tx("planCheckoutRehearsal") });
     } catch (err) {
       toast.error(subscriptionError(err, tx("planSaveFailed"), tx("plansNotOffered")));
     } finally {
@@ -178,7 +179,7 @@ export function ProviderSubscriptionPanel() {
       }
       const saved = await getProviderSubscription();
       setState(saved);
-      toast.success(tx("planSaved"));
+      confirmSuccess({ variant: "toast", title: tx("planSaved") });
     } catch (err) {
       toast.error(subscriptionError(err, tx("planCheckoutFailed"), tx("plansNotOffered")));
     } finally {

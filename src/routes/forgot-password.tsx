@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
 import { useCopy } from "@/lib/use-copy";
+import { confirmAction } from "@/lib/success-confirm";
 
 export const Route = createFileRoute("/forgot-password")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -59,6 +60,7 @@ function ForgotPassword() {
       });
       if (res.error) throw new Error(friendlyResetMailError(authClientErrorMessage(res.error)));
       setNote("If that email is registered with KidEase, we sent a reset link. Check the inbox and junk folder.");
+      confirmAction(t, "resetRequested");
     } catch (err) {
       setError(friendlyResetMailError(authClientErrorMessage(err)) || "Could not send a reset email.");
       resetTurnstile();

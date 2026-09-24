@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
@@ -234,7 +235,7 @@ function ProfilePane() {
           /* profiles row is the source of truth */
         }
       }
-      toast.success("Contact details saved");
+      confirmAction(t, "profileSaved");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save details");
     } finally {
@@ -301,12 +302,8 @@ function ProfilePane() {
               void compressProfileFile(file)
                 .then(async (dataUrl) => {
                   writeProfilePhoto(user.id, dataUrl);
-                  try {
-                    await authClient.updateUser({ image: dataUrl });
-                  } catch {
-                    /* local photo still shows */
-                  }
-                  toast.success(t("accountPhotoUpdated"));
+                  await authClient.updateUser({ image: dataUrl });
+                  confirmAction(t, "photoUploaded", { title: t("accountPhotoUpdated") });
                 })
                 .catch((err) => toast.error(err instanceof Error ? err.message : t("accountPhotoFailed")))
                 .finally(() => setBusy(false));
