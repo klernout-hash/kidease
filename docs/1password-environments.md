@@ -124,7 +124,7 @@ See `docs/docusign.md`.
 
 See `scripts/r2-photo-migrate.md`.
 
-Also store (same Environments): `CRON_SECRET`, `SENTRY_DSN`, `TITAN_APP_PASSWORD`, `RESEND_API_KEY` / `SENDGRID_API_KEY`, `TURNSTILE_SECRET_KEY`. Full name list: `npm run ops:1password-checklist`.
+Also store (same Environments): `CRON_SECRET`, `SENTRY_DSN`, `TITAN_APP_PASSWORD`, `RESEND_API_KEY` / `SENDGRID_API_KEY`, `RESEND_WEBHOOK_SECRET` (Resend bounce webhook, see docs/email-suppressions.md), `TURNSTILE_SECRET_KEY`. Full name list: `npm run ops:1password-checklist`.
 
 **Do not** put `OPERATOR_RESET_PASSWORD` in a long-lived Environment. One-shot on Vercel Production, sign in, delete the var. A 1Password Login item is fine; a mounted `.env` is not.
 

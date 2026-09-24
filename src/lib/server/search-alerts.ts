@@ -12,6 +12,8 @@
  *   - sendSms when FEATURE_SMS + CASL. www never prompts for push.
  */
 import { getSql, dbSource, type Sql } from "@/lib/db";
+import { SEARCH_ALERTS_CAMPAIGN_TAG } from "@/lib/email-suppressions";
+import { isSuppressed } from "@/lib/server/email-suppressions";
 import { lookupUser } from "@/lib/server/notify";
 import { resetMailConfigured } from "@/lib/server/reset-mail-config";
 import { nearbyListings } from "@/lib/server/nearby";
@@ -405,6 +407,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
   let skippedInvalidOrigin = 0;
   let emailSent = 0;
   let emailStubbed = 0;
+  let emailSuppressed = 0;
   let emailHeldQuiet = 0;
   let pushSkipped = 0;
   let smsSkipped = 0;
@@ -736,6 +739,10 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
         searchName: buckets.map((b) => b.searchName).filter(Boolean).join(" · ") || "Saved search",
         events,
       });
+      if (mail.via === "suppressed") {
+        emailSuppressed += 1;
+        continue;
+      }
       if (mail.via === "stub") emailStubbed += 1;
       else emailSent += 1;
       await sql`
@@ -778,6 +785,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
     kinds,
     emailSent,
     emailStubbed,
+    emailSuppressed,
     emailHeldQuiet,
     emailConfigured: resetMailConfigured(),
     pushSkipped,
@@ -875,6 +883,11 @@ export async function sendSearchAlertEmail(payload: {
     return { ok: true as const, via: "stub" as const };
   }
 
+  if (await isSuppressed(to)) {
+    console.info("[kidease-search-alerts] email skipped — suppressed");
+    return { ok: true as const, via: "suppressed" as const };
+  }
+
   const listUnsub = oneClick ? `<${oneClick}>` : unsubUrl ? `<${unsubUrl}>` : undefined;
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
@@ -887,6 +900,7 @@ export async function sendSearchAlertEmail(payload: {
         subject,
         text,
         html,
+        tags: [{ name: "campaign", value: SEARCH_ALERTS_CAMPAIGN_TAG }],
         headers: listUnsub
           ? { "List-Unsubscribe": listUnsub, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
           : undefined,

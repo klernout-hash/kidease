@@ -216,7 +216,7 @@ function duplicateOpportunity(status: number, json: unknown): boolean {
 async function ghlRequest(input: {
   token: string;
   url: string;
-  method: "GET" | "POST" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "DELETE";
   body?: Record<string, unknown>;
   fetchImpl: FetchImpl;
 }): Promise<{ ok: true; status: number; json: unknown } | { ok: false; status: number; error: string; json: unknown }> {
@@ -376,6 +376,118 @@ export async function postGhlCrmSignup(input: {
     }
     input.onError?.(new Error(created.error));
     return { ok: false, error: created.error };
+  } catch (err) {
+    input.onError?.(err);
+    return { ok: false, error: errorMessage(err) };
+  }
+}
+
+export const GHL_EMAIL_BOUNCED_TAG = "email:bounced";
+export const GHL_EMAIL_COMPLAINED_TAG = "email:complained";
+
+export type GhlEmailSuppressionReason = "bounce" | "complaint" | "manual" | "unsubscribe";
+
+export type GhlEmailSuppressionResult =
+  | { ok: true; skipped: true; reason: "flag-off" | "no-api-token" | "no-email" | "no-contact" }
+  | { ok: true; skipped: false; contactId: string }
+  | { ok: false; error: string };
+
+/** Tag for a bounce or complaint. Manual and unsubscribe still get email DND. */
+export function ghlEmailSuppressionTag(reason: GhlEmailSuppressionReason): string | null {
+  if (reason === "bounce") return GHL_EMAIL_BOUNCED_TAG;
+  if (reason === "complaint") return GHL_EMAIL_COMPLAINED_TAG;
+  return null;
+}
+
+/**
+ * Email-channel DND only. Global `dnd` stays unset so calls and SMS keep working.
+ * `permanent` means HighLevel will not email this contact.
+ */
+export function buildGhlEmailDndBody(reason: GhlEmailSuppressionReason): Record<string, unknown> {
+  return {
+    dndSettings: {
+      Email: {
+        status: "permanent",
+        message: `KidEase will not email this address (${reason}).`,
+        code: reason,
+      },
+    },
+  };
+}
+
+/**
+ * Find an existing contact by email and stop HighLevel from mailing them.
+ * Does not create a contact. Missing token, flag-off, and HTTP errors never throw.
+ */
+export async function suppressGhlEmail(input: {
+  email?: string | null;
+  reason: GhlEmailSuppressionReason;
+  fetchImpl?: FetchImpl;
+  env?: EnvMap;
+  onSkip?: (reason: "flag-off" | "no-api-token" | "no-email" | "no-contact") => void;
+  onError?: (err: unknown) => void;
+}): Promise<GhlEmailSuppressionResult> {
+  try {
+    const env = readEnv(input.env);
+    if (!ghlIntakeEnabled(env)) {
+      input.onSkip?.("flag-off");
+      return { ok: true, skipped: true, reason: "flag-off" };
+    }
+    const token = ghlApiToken(env);
+    if (!token) {
+      input.onSkip?.("no-api-token");
+      return { ok: true, skipped: true, reason: "no-api-token" };
+    }
+    const email = trim(input.email).toLowerCase();
+    if (!email || !email.includes("@")) {
+      input.onSkip?.("no-email");
+      return { ok: true, skipped: true, reason: "no-email" };
+    }
+    const fetchImpl = input.fetchImpl ?? fetch;
+    const locationId = resolveGhlApiTarget("daycare", env).locationId;
+    const lookupUrl =
+      `${GHL_API_BASE}/contacts/search/duplicate` +
+      `?locationId=${encodeURIComponent(locationId)}` +
+      `&email=${encodeURIComponent(email)}`;
+    const lookup = await ghlRequest({ token, url: lookupUrl, method: "GET", fetchImpl });
+    if (!lookup.ok) {
+      if (lookup.status === 404) {
+        input.onSkip?.("no-contact");
+        return { ok: true, skipped: true, reason: "no-contact" };
+      }
+      input.onError?.(new Error(lookup.error));
+      return { ok: false, error: lookup.error };
+    }
+    const contactId = contactIdFrom(lookup.json);
+    if (!contactId) {
+      input.onSkip?.("no-contact");
+      return { ok: true, skipped: true, reason: "no-contact" };
+    }
+
+    const tag = ghlEmailSuppressionTag(input.reason);
+    if (tag) {
+      const tagged = await ghlRequest({
+        token,
+        url: `${GHL_API_BASE}/contacts/${encodeURIComponent(contactId)}/tags`,
+        method: "POST",
+        body: { tags: [tag] },
+        fetchImpl,
+      });
+      if (!tagged.ok) input.onError?.(new Error(tagged.error));
+    }
+
+    const dnd = await ghlRequest({
+      token,
+      url: `${GHL_API_BASE}/contacts/${encodeURIComponent(contactId)}`,
+      method: "PUT",
+      body: buildGhlEmailDndBody(input.reason),
+      fetchImpl,
+    });
+    if (!dnd.ok) {
+      input.onError?.(new Error(dnd.error));
+      return { ok: false, error: dnd.error };
+    }
+    return { ok: true, skipped: false, contactId };
   } catch (err) {
     input.onError?.(err);
     return { ok: false, error: errorMessage(err) };

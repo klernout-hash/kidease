@@ -534,6 +534,13 @@ export const GROUPS = [
         notes: "Transactional email (preferred).",
       },
       {
+        name: "RESEND_WEBHOOK_SECRET",
+        concealed: true,
+        vercel: "both",
+        required: false,
+        notes: "Svix signing secret for POST /api/webhooks/resend. Unset no-ops. See docs/email-suppressions.md.",
+      },
+      {
         name: "SENDGRID_API_KEY",
         concealed: true,
         vercel: "both",

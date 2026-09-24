@@ -15,6 +15,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
+import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
 import { Route as ChildcareBenefitsProgramRouteImport } from './routes/childcare-benefits-program'
@@ -93,6 +94,7 @@ import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
 import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
+import { Route as ApiAdminEmailSuppressionsRouteImport } from './routes/api/admin.email-suppressions'
 import { Route as ApiAdminMediaRouteImport } from './routes/api/admin.media'
 import { Route as ApiAdminPushDryRunRouteImport } from './routes/api/admin.push-dry-run'
 import { Route as ApiAdminSentryTestRouteImport } from './routes/api/admin.sentry-test'
@@ -104,6 +106,7 @@ import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.resend'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
@@ -140,6 +143,11 @@ const AdminChatRoute = AdminChatRouteImport.update({
 const AdminContractsRoute = AdminContractsRouteImport.update({
   id: '/admin-contracts',
   path: '/admin-contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
+  id: '/admin-email-health',
+  path: '/admin-email-health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIconRoute = AppIconRouteImport.update({
@@ -533,6 +541,11 @@ const ApiAdminContractsRoute = ApiAdminContractsRouteImport.update({
   path: '/api/admin/contracts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminEmailSuppressionsRoute = ApiAdminEmailSuppressionsRouteImport.update({
+  id: '/api/admin/email-suppressions',
+  path: '/api/admin/email-suppressions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminMediaRoute = ApiAdminMediaRouteImport.update({
   id: '/api/admin/media',
   path: '/api/admin/media',
@@ -588,6 +601,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksResendRoute = ApiWebhooksResendRouteImport.update({
+  id: '/api/webhooks/resend',
+  path: '/api/webhooks/resend',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
   id: '/daycare/city/$city',
   path: '/daycare/city/$city',
@@ -631,6 +649,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
+  '/admin-email-health': typeof AdminEmailHealthRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -709,6 +728,7 @@ export interface FileRoutesByFullPath {
   '/fr/': typeof FrIndexRoute
   '/pay/': typeof PayIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
+  '/api/admin/email-suppressions': typeof ApiAdminEmailSuppressionsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
@@ -720,6 +740,7 @@ export interface FileRoutesByFullPath {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
@@ -735,6 +756,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
+  '/admin-email-health': typeof AdminEmailHealthRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -811,6 +833,7 @@ export interface FileRoutesByTo {
   '/fr': typeof FrIndexRoute
   '/pay': typeof PayIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
+  '/api/admin/email-suppressions': typeof ApiAdminEmailSuppressionsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
@@ -822,6 +845,7 @@ export interface FileRoutesByTo {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
@@ -838,6 +862,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
+  '/admin-email-health': typeof AdminEmailHealthRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -916,6 +941,7 @@ export interface FileRoutesById {
   '/fr/': typeof FrIndexRoute
   '/pay/': typeof PayIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
+  '/api/admin/email-suppressions': typeof ApiAdminEmailSuppressionsRoute
   '/api/admin/media': typeof ApiAdminMediaRoute
   '/api/admin/push-dry-run': typeof ApiAdminPushDryRunRoute
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
@@ -927,6 +953,7 @@ export interface FileRoutesById {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
@@ -944,6 +971,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-chat'
     | '/admin-contracts'
+    | '/admin-email-health'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -1022,6 +1050,7 @@ export interface FileRouteTypes {
     | '/fr/'
     | '/pay/'
     | '/api/admin/contracts'
+    | '/api/admin/email-suppressions'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
     | '/api/admin/sentry-test'
@@ -1033,6 +1062,7 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/webhooks/resend'
     | '/daycare/city/$city'
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
@@ -1048,6 +1078,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-chat'
     | '/admin-contracts'
+    | '/admin-email-health'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -1124,6 +1155,7 @@ export interface FileRouteTypes {
     | '/fr'
     | '/pay'
     | '/api/admin/contracts'
+    | '/api/admin/email-suppressions'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
     | '/api/admin/sentry-test'
@@ -1135,6 +1167,7 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/webhooks/resend'
     | '/daycare/city/$city'
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
@@ -1150,6 +1183,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-chat'
     | '/admin-contracts'
+    | '/admin-email-health'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -1228,6 +1262,7 @@ export interface FileRouteTypes {
     | '/fr/'
     | '/pay/'
     | '/api/admin/contracts'
+    | '/api/admin/email-suppressions'
     | '/api/admin/media'
     | '/api/admin/push-dry-run'
     | '/api/admin/sentry-test'
@@ -1239,6 +1274,7 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/webhooks/resend'
     | '/daycare/city/$city'
     | '/fr/jobs_/post'
     | '/pay/bill/$billId'
@@ -1255,6 +1291,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
+  AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
   ChildcareBenefitsProgramRoute: typeof ChildcareBenefitsProgramRoute
@@ -1311,6 +1348,7 @@ export interface RootRouteChildren {
   SignIdRoute: typeof SignIdRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
+  ApiAdminEmailSuppressionsRoute: typeof ApiAdminEmailSuppressionsRoute
   ApiAdminMediaRoute: typeof ApiAdminMediaRoute
   ApiAdminPushDryRunRoute: typeof ApiAdminPushDryRunRoute
   ApiAdminSentryTestRoute: typeof ApiAdminSentryTestRoute
@@ -1322,6 +1360,7 @@ export interface RootRouteChildren {
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiWebhooksResendRoute: typeof ApiWebhooksResendRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
   ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
   ApiLicenseDocsDaycareIdRoute: typeof ApiLicenseDocsDaycareIdRoute
@@ -1371,6 +1410,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-contracts'
       fullPath: '/admin-contracts'
       preLoaderRoute: typeof AdminContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-email-health': {
+      id: '/admin-email-health'
+      path: '/admin-email-health'
+      fullPath: '/admin-email-health'
+      preLoaderRoute: typeof AdminEmailHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app-icon': {
@@ -1919,6 +1965,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminContractsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/email-suppressions': {
+      id: '/api/admin/email-suppressions'
+      path: '/api/admin/email-suppressions'
+      fullPath: '/api/admin/email-suppressions'
+      preLoaderRoute: typeof ApiAdminEmailSuppressionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/media': {
       id: '/api/admin/media'
       path: '/api/admin/media'
@@ -1994,6 +2047,13 @@ declare module '@tanstack/react-router' {
       path: '/api/stripe/webhook'
       fullPath: '/api/stripe/webhook'
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/resend': {
+      id: '/api/webhooks/resend'
+      path: '/api/webhooks/resend'
+      fullPath: '/api/webhooks/resend'
+      preLoaderRoute: typeof ApiWebhooksResendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daycare/city/$city': {
@@ -2146,6 +2206,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
+  AdminEmailHealthRoute: AdminEmailHealthRoute,
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,
   ChildcareBenefitsProgramRoute: ChildcareBenefitsProgramRoute,
@@ -2202,6 +2263,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignIdRoute: SignIdRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
+  ApiAdminEmailSuppressionsRoute: ApiAdminEmailSuppressionsRoute,
   ApiAdminMediaRoute: ApiAdminMediaRoute,
   ApiAdminPushDryRunRoute: ApiAdminPushDryRunRoute,
   ApiAdminSentryTestRoute: ApiAdminSentryTestRoute,
@@ -2213,6 +2275,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiWebhooksResendRoute: ApiWebhooksResendRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,
   ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
   ApiLicenseDocsDaycareIdRoute: ApiLicenseDocsDaycareIdRoute,
