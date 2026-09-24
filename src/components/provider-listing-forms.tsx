@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Camera, ChevronLeft, ChevronRight, Megaphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
@@ -29,6 +29,9 @@ import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { promoteListing } from "@/lib/server/promos";
 import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
 import { useCopy } from "@/lib/use-copy";
+import { isReauthRequiredMessage } from "@/lib/reauth";
+import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { useReauthPrompt } from "@/components/reauth-dialog";
 import { cn, money, formatAgeRange } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
@@ -208,22 +211,30 @@ export function CapacityForm({
   onSaved: () => void;
   mode: "listing" | "licence";
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const reauth = useReauthPrompt();
   const serverRev = listingDeskRevision(daycare);
   const [appliedRev, setAppliedRev] = useState(serverRev);
   const [state, setState] = useState(() => listingFormState(daycare));
   const [gallery, setGallery] = useState<string[] | null>(null);
   const [photoJobs, setPhotoJobs] = useState<{ id: string; name: string; progress: number }[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [licenseError, setLicenseError] = useState<string | null>(null);
+  const [pendingLicense, setPendingLicense] = useState<File | null>(null);
+  const [licenseNeedsConfirm, setLicenseNeedsConfirm] = useState(false);
+  const [licenseBusy, setLicenseBusy] = useState(false);
+  const licencePrompting = useRef(false);
   if (appliedRev !== serverRev) {
     setAppliedRev(serverRev);
     setState(listingFormState(daycare));
     setGallery(null);
     setPhotoJobs([]);
+    setPendingLicense(null);
+    setLicenseNeedsConfirm(false);
+    setLicenseError(null);
   }
-  const [refreshing, setRefreshing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const [licenseError, setLicenseError] = useState<string | null>(null);
   const savedParent = parentDeskFromDaycare(daycare);
   const serverPhotos = managedListingPhotos(daycare.photos);
   const galleryDirty =
@@ -289,6 +300,53 @@ export function CapacityForm({
   const interiorCount = Math.max(0, reserved - (reserved > 0 ? 1 : 0));
   const canAddPhoto = reserved === 0 || (reserved < MAX_LISTING_PHOTOS && interiorCount < MAX_INTERIOR_PHOTOS);
 
+  async function sendLicence(file: File): Promise<"saved" | "confirm" | "error"> {
+    setLicenseBusy(true);
+    setLicenseError(null);
+    try {
+      await postPrivateDocForm(licenseDocHref(daycare.id), {}, file);
+      setPendingLicense(null);
+      setLicenseNeedsConfirm(false);
+      confirmAction(t, "licenceUploaded");
+      onSaved();
+      return "saved";
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : "";
+      if (isReauthRequiredMessage(raw)) {
+        setPendingLicense(file);
+        setLicenseNeedsConfirm(true);
+        setLicenseError(t("reauthRequired"));
+        return "confirm";
+      }
+      setPendingLicense(null);
+      setLicenseNeedsConfirm(false);
+      const message = presentAuthCopy(locale, raw) || t("uploadDocTooBig");
+      setLicenseError(message);
+      toast.error(message);
+      return "error";
+    } finally {
+      setLicenseBusy(false);
+    }
+  }
+
+  async function promptForLicence(): Promise<boolean> {
+    if (licencePrompting.current) return false;
+    licencePrompting.current = true;
+    try {
+      return await reauth.prompt();
+    } finally {
+      licencePrompting.current = false;
+    }
+  }
+
+  async function confirmLicence() {
+    const file = pendingLicense;
+    if (!file || licenseBusy) return;
+    const ok = await promptForLicence();
+    if (!ok) return;
+    await sendLicence(file);
+  }
+
   async function addListingPhotos(files: File[]) {
     if (!files.length) return;
     const room = MAX_LISTING_PHOTOS - (shown.length + photoJobs.length);
@@ -334,6 +392,7 @@ export function CapacityForm({
   }
 
   return (
+    <>
     <form
       className="mt-4 space-y-4"
       onSubmit={(e) => {
@@ -411,7 +470,7 @@ export function CapacityForm({
     >
       {mode === "licence" ? (
         <>
-          <p className="text-sm text-muted">Upload a clear photo or PDF scan of the current provincial licence. Required for compliance review.</p>
+          <p className="text-sm text-muted">{t("licenceUploadLead")}</p>
           <Field label={t("licenceNo")} value={state.licenseNumber} onChange={(v) => setState({ ...state, licenseNumber: v })} />
           <label className="block text-sm font-medium">
             {t("licensePhoto")}
@@ -419,31 +478,39 @@ export function CapacityForm({
               type="file"
               accept="application/pdf,image/jpeg,image/png,image/webp"
               className="mt-2 block w-full text-sm"
+              data-ke="licence-file"
+              disabled={licenseBusy}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = "";
-                if (!file) return;
+                if (!file || licenseBusy) return;
                 if (isPrivateDocTooBig(file.size)) {
                   const message = t("uploadDocTooBig");
+                  setLicenseNeedsConfirm(false);
+                  setPendingLicense(null);
                   setLicenseError(message);
                   toast.error(message);
                   return;
                 }
-                setLicenseError(null);
-                void postPrivateDocForm(licenseDocHref(daycare.id), {}, file)
-                  .then(() => {
-                    confirmAction(t, "licenceUploaded");
-                    onSaved();
-                  })
-                  .catch((err) => {
-                    const message = err instanceof Error ? err.message : t("uploadDocTooBig");
-                    setLicenseError(message);
-                    toast.error(message);
-                  });
+                void (async () => {
+                  const result = await sendLicence(file);
+                  if (result !== "confirm") return;
+                  const ok = await promptForLicence();
+                  if (!ok) return;
+                  await sendLicence(file);
+                })();
               }}
             />
             <UploadLimitHint hint={t("uploadDocHint")} error={licenseError} />
           </label>
+          {licenseNeedsConfirm && pendingLicense ? (
+            <div className="space-y-2" data-ke="licence-reauth">
+              <p className="text-sm text-fg">{t("reauthKeptFile").replace("{name}", pendingLicense.name)}</p>
+              <Button type="button" disabled={licenseBusy} onClick={() => void confirmLicence()}>
+                {licenseBusy ? t("reauthChecking") : t("reauthTitle")}
+              </Button>
+            </div>
+          ) : null}
           {daycare.licensePhotoOnFile ? (
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm text-ok">{t("licenceOnFile")}</p>
@@ -660,6 +727,8 @@ export function CapacityForm({
         {t("saveChanges")}
       </Button>
     </form>
+    {reauth.dialog}
+    </>
   );
 }
 
