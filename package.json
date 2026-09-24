@@ -87,7 +87,6 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.0.0",
     "heic-decode": "^2.1.0",
-    "heic2any": "^0.0.4",
     "inngest": "^4.20.0",
     "kysely": "^0.29.5",
     "lucide-react": "^0.510.0",

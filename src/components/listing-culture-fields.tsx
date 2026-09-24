@@ -177,6 +177,7 @@ export function ListingCultureFields({
       <label className="block text-sm">
         {t("culturalTeamNote")}
         <textarea
+          name="culturalTeamNote"
           className="mt-1 min-h-24 w-full rounded-md border border-border bg-bg px-3 py-2"
           value={value.culturalTeamNote}
           maxLength={CULTURAL_TEAM_NOTE_MAX}

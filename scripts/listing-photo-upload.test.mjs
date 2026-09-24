@@ -146,10 +146,16 @@ test("file input accept lists every popular photo type and is not image/* alone"
   const provider = src("src/routes/provider.tsx");
   const downgrade = src("src/lib/listing-photo-downgrade.ts");
   assert.match(forms, /accept=\{LISTING_PHOTO_ACCEPT\}/);
+  assert.match(forms, /Array\.from\(e\.target\.files\)/);
+  const photoChange = forms.slice(forms.indexOf('data-ke="listing-photo-input"'));
+  assert.ok(photoChange.indexOf("Array.from(e.target.files)") < photoChange.indexOf('e.target.value = ""'));
   assert.match(provider, /accept=\{LISTING_PHOTO_ACCEPT\}/);
   assert.match(forms, /role="progressbar"/);
   assert.match(forms, /photoCount/);
-  assert.match(downgrade, /heic2any/);
+  assert.match(downgrade, /from "heic-decode"|import\("heic-decode"\)/);
+  assert.match(downgrade, /ImageData/);
+  assert.doesNotMatch(downgrade, /heic2any/);
+  assert.doesNotMatch(downgrade, /new Function/);
   assert.doesNotMatch(downgrade, /isListingPhotoTooBig/);
   assert.doesNotMatch(provider, /isListingPhotoTooBig/);
 });

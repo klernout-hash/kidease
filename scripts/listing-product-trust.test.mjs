@@ -202,7 +202,7 @@ test("create listing form can attach a storefront before publish", () => {
   assert.match(provider, /id="list-new"/);
   assert.match(provider, /storefrontCta/);
   assert.match(provider, /downgradeListingPhotoFile/);
-  assert.match(provider, /createListing\(\{ data: form \}\)/);
+  assert.match(provider, /createListing\(\{ data: next \}\)/);
   assert.match(provider, /storefront:/);
   const family = src("src/lib/server/family.ts");
   assert.match(family, /storefront\?: string/);
