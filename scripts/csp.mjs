@@ -14,6 +14,10 @@
  * after render. Radix / Sonner / Maps inject <style> at runtime — a nonce'd
  * boot script copies document.currentScript.nonce onto createElement("style").
  *
+ * script-src includes 'wasm-unsafe-eval' so the listing-photo HEIC decoder
+ * (libheif) can compile WebAssembly. That token does not allow eval or
+ * new Function, and script-src still has no 'unsafe-inline'.
+ *
  * style-src-attr keeps 'unsafe-inline' for React style={{}} (BrandMark pin,
  * Sonner, Floating UI / Radix position, dynamic meters, marketing mocks).
  * Attribute XSS is not a script gadget in current browsers; dropping this
@@ -61,7 +65,7 @@ export const CSP_IMG_HOSTS = [
 
 /** Classic script: copies its own nonce onto runtime-created <style> tags. */
 export const STYLE_NONCE_BOOT =
-  '(function(){var n=document.currentScript&&document.currentScript.nonce;if(!n)return;var c=Document.prototype.createElement;Document.prototype.createElement=function(t,o){var e=c.call(this,t,o);if(String(t).toLowerCase()==="style")e.setAttribute("nonce",n);return e;}})();';
+  '(function(){var n=document.currentScript&&document.currentScript.nonce;if(!n)return;var c=Document.prototype.createElement;Document.prototype.createElement=function(t,o){var e=c.call(this,t,o);if(String(t).toLowerCase()==="style"){try{e.nonce=n}catch(err){}e.setAttribute("nonce",n)}return e;}})();';
 
 export function generateNonce() {
   const bytes = new Uint8Array(16);
@@ -76,7 +80,7 @@ export function buildContentSecurityPolicy(nonce) {
   if (!token) throw new Error("CSP nonce is required");
   if (/['\s;]/.test(token)) throw new Error("CSP nonce contains unsafe characters");
 
-  const scriptSrc = ["'self'", `'nonce-${token}'`, "'strict-dynamic'", ...CSP_SCRIPT_HOSTS].join(" ");
+  const scriptSrc = ["'self'", `'nonce-${token}'`, "'strict-dynamic'", "'wasm-unsafe-eval'", ...CSP_SCRIPT_HOSTS].join(" ");
   const styleSrc = ["'self'", `'nonce-${token}'`].join(" ");
   return [
     "default-src 'self'",
@@ -95,12 +99,21 @@ export function buildContentSecurityPolicy(nonce) {
   ].join("; ");
 }
 
+/**
+ * A real nonce attribute. `\bnonce` is wrong here: the word boundary matches
+ * the hyphen in `data-ke-style-nonce=""`, so the style boot script was left
+ * without a nonce and the browser blocked it.
+ */
+function hasNonceAttribute(attrs) {
+  return /(?:^|\s)nonce\s*=/i.test(String(attrs ?? ""));
+}
+
 /** Stamp nonce onto every <script> that does not already have one. */
 export function applyScriptNonces(html, nonce) {
   const token = String(nonce ?? "").trim();
   if (!token) return String(html ?? "");
   return String(html ?? "").replace(/<script\b([^>]*)>/gi, (full, attrs) => {
-    if (/\bnonce\s*=/i.test(attrs)) return full;
+    if (hasNonceAttribute(attrs)) return full;
     return `<script nonce="${token}"${attrs}>`;
   });
 }
@@ -110,7 +123,7 @@ export function applyStyleNonces(html, nonce) {
   const token = String(nonce ?? "").trim();
   if (!token) return String(html ?? "");
   return String(html ?? "").replace(/<style\b([^>]*)>/gi, (full, attrs) => {
-    if (/\bnonce\s*=/i.test(attrs)) return full;
+    if (hasNonceAttribute(attrs)) return full;
     return `<style nonce="${token}"${attrs}>`;
   });
 }

@@ -105,11 +105,26 @@ export function PromotePanel({ daycare, onSaved }: { daycare: Daycare; onSaved: 
   );
 }
 
-export function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+export function Field({
+  label,
+  value,
+  onChange,
+  name,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  name?: string;
+}) {
   return (
     <label className="text-sm">
       {label}
-      <input className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3" value={value} onChange={(e) => onChange(e.target.value)} />
+      <input
+        name={name}
+        className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </label>
   );
 }
@@ -273,8 +288,7 @@ export function CapacityForm({
   const interiorCount = Math.max(0, reserved - (reserved > 0 ? 1 : 0));
   const canAddPhoto = reserved === 0 || (reserved < MAX_LISTING_PHOTOS && interiorCount < MAX_INTERIOR_PHOTOS);
 
-  async function addListingPhotos(list: FileList | null) {
-    const files = list ? Array.from(list) : [];
+  async function addListingPhotos(files: File[]) {
     if (!files.length) return;
     const room = MAX_LISTING_PHOTOS - (shown.length + photoJobs.length);
     if (room <= 0) {
@@ -543,7 +557,7 @@ export function CapacityForm({
                   className="sr-only"
                   data-ke="listing-photo-input"
                   onChange={(e) => {
-                    const files = e.target.files;
+                    const files = e.target.files ? Array.from(e.target.files) : [];
                     e.target.value = "";
                     void addListingPhotos(files);
                   }}

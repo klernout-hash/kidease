@@ -46,6 +46,7 @@ import {
   listingPhotoByteBudget,
   ListingPhotoPrepareError,
 } from "@/lib/listing-photo-downgrade";
+import { listingPublishMissing, mergeListingDraft } from "@/lib/listing-publish";
 import { TourAvailabilityDesk } from "@/components/tour-availability-desk";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
@@ -158,15 +159,8 @@ function ProviderPage() {
   });
   const [storefrontError, setStorefrontError] = useState<string | null>(null);
   const [storefrontProgress, setStorefrontProgress] = useState<number | null>(null);
-  const listingFormDirty =
-    Boolean(form.name.trim() || form.address.trim() || form.postalCode.trim() || form.licenseNumber.trim() || form.storefront) ||
-    form.city !== "Winnipeg" ||
-    form.infantMonthly !== 1200 ||
-    form.toddlerMonthly !== 1100 ||
-    form.preschoolMonthly !== 1000 ||
-    form.staffLanguages.length > 0 ||
-    form.culturalPrograms.length > 0 ||
-    Boolean(form.culturalTeamNote.trim());
+  const [publishing, setPublishing] = useState(false);
+  const [publishMessage, setPublishMessage] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
 
   async function load() {
     const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
@@ -266,10 +260,6 @@ function ProviderPage() {
         if (id === "add") {
           if (!centreOwner) return;
           setDesk("listings");
-          if (listings.length === 0) {
-            setShowNewForm(false);
-            return;
-          }
           setShowNewForm(true);
           queueMicrotask(() => document.getElementById("list-new")?.scrollIntoView({ behavior: "smooth", block: "start" }));
           return;
@@ -497,38 +487,55 @@ function ProviderPage() {
             )}
             <form
               className="mt-4 grid gap-3 sm:grid-cols-2"
+              data-ke="publish-listing-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                void createListing({ data: form })
+                if (publishing) return;
+                const next = mergeListingDraft(form, new FormData(e.currentTarget));
+                setForm(next);
+                const missing = listingPublishMissing(next);
+                if (missing.length) {
+                  const message = t("publishListingMissing");
+                  setPublishMessage({ tone: "err", text: message });
+                  toast.error(message);
+                  return;
+                }
+                setPublishing(true);
+                setPublishMessage(null);
+                void createListing({ data: next })
                   .then((res) => {
                     if (res && res.ok === false) {
-                      toast.error(
-                        locale === "fr" ? t("daycareAlreadyListed") : res.message || DUPLICATE_LISTING_MESSAGE,
-                      );
+                      const message =
+                        locale === "fr" ? t("daycareAlreadyListed") : res.message || DUPLICATE_LISTING_MESSAGE;
+                      setPublishMessage({ tone: "err", text: message });
+                      toast.error(message);
                       return;
                     }
-                    toast.success(t("createListing"));
+                    const message = t("publishListingDone");
+                    setPublishMessage({ tone: "ok", text: message });
+                    toast.success(message);
                     setForm((s) => ({ ...s, storefront: "" }));
                     return load();
                   })
                   .catch((err) => {
                     const message = listingCreateErrorMessage(err);
-                    toast.error(
-                      isDaycareAlreadyListedMessage(message)
-                        ? duplicateListingUserMessage(locale)
-                        : message || "Error",
-                    );
-                  });
+                    const text = isDaycareAlreadyListedMessage(message)
+                      ? duplicateListingUserMessage(locale)
+                      : message || "Error";
+                    setPublishMessage({ tone: "err", text });
+                    toast.error(text);
+                  })
+                  .finally(() => setPublishing(false));
               }}
             >
-              <Field label={t("centreName")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
-              <Field label={t("licenceNo")} value={form.licenseNumber} onChange={(v) => setForm({ ...form, licenseNumber: v })} />
-              <Field label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
-              <Field label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
-              <Field label="Postal code" value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
-              <Field label={`${t("infantFee")} CAD`} value={String(form.infantMonthly)} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
-              <Field label={`${t("toddlerFee")} CAD`} value={String(form.toddlerMonthly)} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
-              <Field label={`${t("preschoolFee")} CAD`} value={String(form.preschoolMonthly)} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />
+              <Field name="name" label={t("centreName")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
+              <Field name="licenseNumber" label={t("licenceNo")} value={form.licenseNumber} onChange={(v) => setForm({ ...form, licenseNumber: v })} />
+              <Field name="address" label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
+              <Field name="city" label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
+              <Field name="postalCode" label="Postal code" value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
+              <Field name="infantMonthly" label={`${t("infantFee")} CAD`} value={String(form.infantMonthly)} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
+              <Field name="toddlerMonthly" label={`${t("toddlerFee")} CAD`} value={String(form.toddlerMonthly)} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
+              <Field name="preschoolMonthly" label={`${t("preschoolFee")} CAD`} value={String(form.preschoolMonthly)} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />
               <div className="sm:col-span-2">
                 <p className="text-sm font-medium">{t("storefrontPhoto")}</p>
                 <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
@@ -592,8 +599,19 @@ function ProviderPage() {
                   onChange={(culture) => setForm({ ...form, ...culture })}
                 />
               </div>
-              <div className="sm:col-span-2">
-                <Button type="submit" disabled={!listingFormDirty}>{t("createListing")}</Button>
+              <div className="sm:col-span-2 flex flex-col items-start gap-2">
+                <Button type="submit" data-ke="publish-listing" disabled={publishing} aria-busy={publishing}>
+                  {publishing ? t("publishListingWorking") : t("createListing")}
+                </Button>
+                {publishMessage ? (
+                  <p
+                    data-ke="publish-listing-status"
+                    role={publishMessage.tone === "err" ? "alert" : "status"}
+                    className={publishMessage.tone === "err" ? "text-sm text-danger" : "text-sm text-ok"}
+                  >
+                    {publishMessage.text}
+                  </p>
+                ) : null}
               </div>
             </form>
           </section>

@@ -363,10 +363,25 @@ function canvasSupportsWebp(): boolean {
   }
 }
 
+/** libheif WASM (heic-decode). CSP allows this via 'wasm-unsafe-eval', not eval. */
 async function decodeHeicBlob(file: Blob): Promise<Blob> {
-  const heic2any = (await import("heic2any")).default;
-  const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
-  const blob = Array.isArray(converted) ? converted[0] : converted;
+  const buffer = new Uint8Array(await file.arrayBuffer());
+  const mod = await import("heic-decode");
+  const decode = mod.default ?? mod;
+  const decoded = await decode({ buffer });
+  if (!decoded?.width || !decoded?.height) throw new ListingPhotoPrepareError("unreadable");
+  const canvas = document.createElement("canvas");
+  canvas.width = decoded.width;
+  canvas.height = decoded.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new ListingPhotoPrepareError("unreadable");
+  const pixels = decoded.width * decoded.height * 4;
+  const raw = decoded.data;
+  if (!raw || raw.length < pixels) throw new ListingPhotoPrepareError("unreadable");
+  const rgba = new Uint8ClampedArray(pixels);
+  rgba.set(raw.subarray(0, pixels));
+  ctx.putImageData(new ImageData(rgba, decoded.width, decoded.height), 0, 0);
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
   if (!blob) throw new ListingPhotoPrepareError("unreadable");
   return blob;
 }

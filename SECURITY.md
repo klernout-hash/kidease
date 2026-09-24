@@ -74,7 +74,7 @@ Session cookies stay `Secure`, `HttpOnly`, `SameSite=Lax`. Admin idle is 30 minu
 
 Document HTML is stamped in Nitro (`server/middleware/csp.ts`) with a per-request nonce. `vercel.json` does **not** send `Content-Security-Policy` — a second static header cannot carry the nonce, and browsers enforce every CSP they receive.
 
-`script-src` is `'self' 'nonce-…' 'strict-dynamic'` plus Maps / Stripe / Turnstile / PostHog hosts (fallback for browsers that ignore `strict-dynamic`). First-party `<script>` tags (including TanStack `<Scripts />` hydration) get the nonce after render. Maps, Stripe.js, Turnstile, and PostHog load further scripts with `createElement`, which `strict-dynamic` allows.
+`script-src` is `'self' 'nonce-…' 'strict-dynamic' 'wasm-unsafe-eval'` plus Maps / Stripe / Turnstile / PostHog hosts (fallback for browsers that ignore `strict-dynamic`). First-party `<script>` tags (including TanStack `<Scripts />` hydration) get the nonce after render. Maps, Stripe.js, Turnstile, and PostHog load further scripts with `createElement`, which `strict-dynamic` allows. `'wasm-unsafe-eval'` is only so the listing-photo HEIC decoder can compile libheif. It is not `'unsafe-eval'`.
 
 `style-src` is `'self' 'nonce-…'` (no `'unsafe-inline'`). Document `<style>` tags are stamped after render. A nonce'd boot script (`data-ke-style-nonce` in the root `<head>`, also injected if a document lacks it) copies that nonce onto `document.createElement("style")` so Radix, Sonner, and Maps can inject styles at runtime.
 
@@ -88,4 +88,4 @@ Document HTML is stamped in Nitro (`server/middleware/csp.ts`) with a per-reques
 
 `img-src` keeps `'self' data: blob: https:` and also lists the production listing-photo host `https://media.kidease.ca` plus optional `https://*.r2.dev`. Optional Image Transformations stay on that same host (`/cdn-cgi/image/…/photos/…`). Do **not** add the private S3 API host `*.r2.cloudflarestorage.com`.
 
-Do **not** add `grok.com` to the allowlist. Do **not** put `'unsafe-inline'` back on `script-src` or `style-src`.
+Do **not** add `grok.com` to the allowlist. Do **not** put `'unsafe-inline'` back on `script-src` or `style-src`. Do **not** add `'unsafe-eval'`.

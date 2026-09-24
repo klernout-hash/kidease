@@ -410,7 +410,8 @@ describe("PostHog client wiring", () => {
     assert.match(csp, /connect-src[^;]*https:\/\/us\.i\.posthog\.com/);
     assert.match(csp, /connect-src[^;]*https:\/\/us-assets\.i\.posthog\.com/);
     assert.match(csp, /worker-src 'self' blob: data:/);
-    assert.doesNotMatch(csp, /unsafe-eval/);
+    assert.doesNotMatch(csp, /'unsafe-eval'/);
+    assert.match(csp, /'wasm-unsafe-eval'/);
     assert.doesNotMatch(csp, /\*\.posthog\.com/);
     const vite = read("vite.config.ts");
     assert.match(vite, /envPrefix: \["VITE_", "POSTHOG_HOST"\]/);

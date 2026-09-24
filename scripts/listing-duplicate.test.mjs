@@ -223,5 +223,5 @@ test("provider desk shows Daycare already Listed from the API message and locale
   assert.match(provider, /isDaycareAlreadyListedMessage/);
   assert.match(provider, /t\("daycareAlreadyListed"\)/);
   assert.match(provider, /res\.message/);
-  assert.match(provider, /createListing\(\{ data: form \}\)/);
+  assert.match(provider, /createListing\(\{ data: next \}\)/);
 });
