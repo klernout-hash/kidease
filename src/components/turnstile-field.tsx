@@ -51,6 +51,18 @@ function loadTurnstile(): Promise<TurnstileApi | null> {
     script.async = true;
     script.defer = true;
     script.dataset.kideaseTurnstile = "1";
+    // Turnstile copies this nonce onto the inline scripts it injects.
+    // strict-dynamic does not allow those when they are inserted as HTML.
+    const boot = document.querySelector<HTMLScriptElement>("script[data-ke-style-nonce]");
+    const nonce = boot?.nonce || "";
+    if (nonce) {
+      try {
+        script.nonce = nonce;
+      } catch {
+        /* nonce is not settable in this document */
+      }
+      script.setAttribute("nonce", nonce);
+    }
     script.onload = () => resolve(window.turnstile ?? null);
     script.onerror = () => resolve(null);
     document.head.appendChild(script);
@@ -226,7 +238,7 @@ export const TurnstileField = memo(function TurnstileField({
     <div className="min-h-[65px] max-w-full overflow-x-hidden" data-ke="turnstile">
       {/* No cf-turnstile class: implicit api.js auto-renders that class
           without our callback, so Success never enables the button. */}
-      <div ref={host} className="max-w-full" data-ke-turnstile-host="" />
+      <div ref={host} className="w-full max-w-full" data-ke-turnstile-host="" />
       {loadError ? <p className="mt-2 text-sm text-danger">{loadError}</p> : null}
     </div>
   );

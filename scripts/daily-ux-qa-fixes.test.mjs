@@ -10,7 +10,7 @@ import {
   isCloudflareAccessPath,
   resolvePostLoginPath,
 } from "../src/lib/desks.ts";
-import { isAdminOnlyListing } from "../src/lib/listing-visibility.ts";
+import { isAdminOnlyListing, providerDeskListingVisible } from "../src/lib/listing-visibility.ts";
 import {
   alignSearchOrigin,
   anchorsForSearchMap,
@@ -165,12 +165,13 @@ test("public privacy and parent waitlist copy do not leak FEATURE_SMS", () => {
 
 test("director My listings drops TEST Ghost Claim Lab", () => {
   assert.equal(isAdminOnlyListing(GHOST_LISTING), true);
+  assert.equal(providerDeskListingVisible({ ...GHOST_LISTING, claimStatus: "waiting" }), false);
   const family = src("src/lib/server/family.ts");
   const start = family.indexOf("export const getProvider");
   const end = family.indexOf("export const createListing", start);
   const getProvider = family.slice(start, end === -1 ? undefined : end);
-  assert.match(getProvider, /isAdminOnlyListing/);
-  assert.match(getProvider, /\.filter\(\(d\) => !isAdminOnlyListing\(d\)\)/);
+  assert.match(getProvider, /providerDeskListingVisible/);
+  assert.doesNotMatch(getProvider, /\.filter\(\(d\) => !isAdminOnlyListing\(d\)\)/);
 });
 
 test("listing health percent is separate from Listing Verified", () => {

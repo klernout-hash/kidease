@@ -16,6 +16,7 @@ import { RoleBoot } from "@/components/role-boot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
 import { SuccessConfirmHost } from "@/components/success-confirm";
 import { reportError } from "@/lib/observe";
+import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import appCss from "../styles.css?url";
 
@@ -129,10 +130,7 @@ function RootDocument() {
       <head>
         <script
           data-ke-style-nonce=""
-          dangerouslySetInnerHTML={{
-            __html:
-              '(function(){var n=document.currentScript&&document.currentScript.nonce;if(!n)return;var c=Document.prototype.createElement;Document.prototype.createElement=function(t,o){var e=c.call(this,t,o);if(String(t).toLowerCase()==="style"){try{e.nonce=n}catch(err){}e.setAttribute("nonce",n)}return e;}})();',
-          }}
+          dangerouslySetInnerHTML={{ __html: STYLE_NONCE_BOOT }}
         />
         <style
           dangerouslySetInnerHTML={{
