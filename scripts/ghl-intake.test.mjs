@@ -239,6 +239,7 @@ test("signup and claim verify fire GHL after notify, even when mail fails", () =
   assert.ok(enrollNotify >= 0 && enrollGhl > enrollNotify, "Enroll GHL runs beside Admin notify");
   assert.match(enroll, /if \(notifyError\) throw notifyError/);
   assert.match(src("src/lib/server/ghl-intake.ts"), /postGhlSignupIntake/);
+  assert.match(src("src/lib/server/ghl-intake.ts"), /postGhlCrmSignup/);
   assert.match(src("src/lib/server/ghl-intake.ts"), /captureEnrollIntake/);
   assert.match(src("src/lib/ghl-intake.ts"), /runtimeProcessEnv/);
   assert.match(src("src/lib/ghl-intake.ts"), /claim:claimed/);

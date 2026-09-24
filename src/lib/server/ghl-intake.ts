@@ -1,4 +1,5 @@
-import { postGhlSignupIntake, type GhlIntakeTrigger } from "@/lib/ghl-intake";
+import { postGhlCrmSignup } from "@/lib/ghl-api";
+import { postGhlSignupIntake, type GhlIntakeResult, type GhlIntakeTrigger } from "@/lib/ghl-intake";
 import { lookupUser } from "@/lib/server/notify";
 import { getSql } from "@/lib/db";
 
@@ -15,7 +16,7 @@ async function lookupProviderCompany(userId: string): Promise<string> {
   return (rows[0]?.name || "").trim();
 }
 
-function logSkip(reason: "flag-off" | "no-webhook-url") {
+function logSkip(reason: string) {
   console.info("[kidease-ghl]", reason);
 }
 
@@ -24,9 +25,44 @@ function logError(err: unknown) {
 }
 
 /**
+ * Webhook URL (optional) and LeadConnector API (when GHL_API_TOKEN is set).
+ * Either path can no-op. Neither failure is thrown. Stage on the API path is
+ * Signed up only. Never Approved.
+ */
+async function deliverSignup(input: {
+  trigger: GhlIntakeTrigger;
+  email?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  eventId?: string | null;
+}): Promise<GhlIntakeResult> {
+  let webhook: GhlIntakeResult = { ok: false, error: "ghl-failed" };
+  try {
+    webhook = await postGhlSignupIntake({
+      ...input,
+      onSkip: logSkip,
+      onError: logError,
+    });
+  } catch (err) {
+    logError(err);
+  }
+  try {
+    await postGhlCrmSignup({
+      ...input,
+      onSkip: logSkip,
+      onError: logError,
+    });
+  } catch (err) {
+    logError(err);
+  }
+  return webhook;
+}
+
+/**
  * Best-effort CRM intake after parent/provider signup or claim verify.
  * Independent of Resend / SMS. Failures are logged and never thrown to the caller.
- * Workflow authors: stage Signed up only. Never Approved. No stage field is sent.
+ * API opportunity stage is Signed up only. Never Approved. Auto-Approved is forbidden.
  */
 export async function captureSignupIntakeFromUser(input: {
   userId: string;
@@ -48,15 +84,13 @@ export async function captureSignupIntakeFromUser(input: {
     if (!company && input.role === "provider") {
       company = await lookupProviderCompany(input.userId).catch(() => "");
     }
-    return await postGhlSignupIntake({
+    return await deliverSignup({
       trigger: input.trigger,
       email: input.email ?? actor.email,
       name: input.name ?? actor.name,
       phone: input.phone ?? actor.phone,
       company,
       eventId: (input.eventId || "").trim() || `${input.trigger}:${input.userId}`,
-      onSkip: logSkip,
-      onError: logError,
     });
   } catch (err) {
     logError(err);
@@ -65,9 +99,9 @@ export async function captureSignupIntakeFromUser(input: {
 }
 
 /**
- * Unauthenticated Enroll Now (`/claim#enroll`). Same daycare webhook as provider
- * signup. Does not require a user id. Never throws.
- * Workflow authors: stage Signed up only. Never Approved. No stage field is sent.
+ * Unauthenticated Enroll Now (`/claim#enroll`). Same daycare signup path as a
+ * provider. Does not require a user id. Never throws.
+ * API opportunity stage is Signed up only. Never Approved. Auto-Approved is forbidden.
  */
 export async function captureEnrollIntake(input: {
   email?: string | null;
@@ -78,15 +112,13 @@ export async function captureEnrollIntake(input: {
 }) {
   try {
     const email = (input.email || "").trim().toLowerCase();
-    return await postGhlSignupIntake({
+    return await deliverSignup({
       trigger: "enroll",
       email: input.email,
       name: input.name,
       phone: input.phone,
       company: input.company,
       eventId: (input.eventId || "").trim() || (email ? `enroll:${email}` : ""),
-      onSkip: logSkip,
-      onError: logError,
     });
   } catch (err) {
     logError(err);
