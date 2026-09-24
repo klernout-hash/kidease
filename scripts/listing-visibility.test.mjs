@@ -10,6 +10,7 @@ import {
   listingVisibilityWrite,
   looksLikeTestFixture,
   PUBLIC_LISTING_SQL,
+  providerDeskListingVisible,
   publicListings,
   QA_FIXTURE_NAME_RE,
   QA_FIXTURE_SLUG_RE,
@@ -26,6 +27,24 @@ test("ghost claim lab is admin-only by slug, licence, id, and title", () => {
   assert.equal(isAdminOnlyListing({ name: "TEST Ghost Claim Lab" }), true);
   assert.equal(isPublicListing(GHOST_LISTING), false);
   assert.equal(listingVisibilityOf(GHOST_LISTING), "admin_only");
+});
+
+test("a pending centre stays on the director desk so the owner can add photos", () => {
+  const pending = {
+    slug: "river-park-child-care",
+    name: "River Park Child Care",
+    visibility: "admin_only",
+    isTest: 1,
+    claimStatus: "waiting",
+  };
+  assert.equal(isAdminOnlyListing(pending), true);
+  assert.equal(looksLikeTestFixture(pending), false);
+  assert.equal(providerDeskListingVisible(pending), true);
+  assert.equal(providerDeskListingVisible({ ...pending, claimStatus: "pending" }), true);
+  assert.equal(providerDeskListingVisible({ slug: "river-park-child-care", name: "River Park Child Care", claimStatus: "waiting" }), true);
+  assert.equal(providerDeskListingVisible({ ...GHOST_LISTING, claimStatus: "waiting" }), false);
+  assert.equal(providerDeskListingVisible({ ...pending, claimStatus: "approved" }), false);
+  assert.equal(providerDeskListingVisible(null), false);
 });
 
 test("durable visibility / is_test flags hide listings without hardcoding slug", () => {

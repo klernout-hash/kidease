@@ -8,7 +8,7 @@ import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
-import { isAdminOnlyListing, listingVisibilityForOwners } from "@/lib/listing-visibility";
+import { isAdminOnlyListing, listingVisibilityForOwners, providerDeskListingVisible } from "@/lib/listing-visibility";
 import { callerIsAdmin } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
@@ -1210,7 +1210,7 @@ export const getProvider = createServerFn({ method: "GET" })
       await overlayDemandSnapshots(
         await overlayFeaturedCity(await overlayQuality(owned.map(mapDaycare))),
       )
-    ).filter((d) => !isAdminOnlyListing(d));
+    ).filter((d) => providerDeskListingVisible(d));
     const stats = [];
     for (const d of listings) {
       const views = await sql<{ n: number }>`

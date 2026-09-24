@@ -35,6 +35,8 @@ describe("QA 2026-09-10: Turnstile token pass-through", () => {
     assert.match(field, /size: narrow \? "compact" : "flexible"/);
     assert.match(field, /appearance: "always"/);
     assert.match(field, /data-ke="turnstile"/);
+    assert.match(field, /script\[data-ke-style-nonce\]/);
+    assert.match(field, /script\.nonce = nonce/);
     assert.equal(turnstileRemoteIp(new Headers({ "x-real-ip": "10.0.0.2" })), undefined);
     assert.equal(readTurnstileTokenFromBody({ turnstileToken: "abc" }), "abc");
     assert.match(turnstileFailureMessage(["timeout-or-duplicate"]), /expired/);

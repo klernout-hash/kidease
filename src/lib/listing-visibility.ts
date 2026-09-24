@@ -95,6 +95,24 @@ export function isPublicListing(d: ListingVisibilityInput | null | undefined): b
   return !isAdminOnlyListing(d);
 }
 
+const PROVIDER_DESK_REVIEW_STATUSES = new Set(["pending", "waiting", "verified"]);
+
+/**
+ * Director desk. Public listings always show, including ones still waiting
+ * on review, so the owner can add the storefront the admin queue marks Missing.
+ * Known QA / ghost fixtures stay hidden. An operator-flagged row (admin_only
+ * only because of the owner mailbox) stays editable while review is open.
+ */
+export function providerDeskListingVisible(
+  d: (ListingVisibilityInput & { claimStatus?: string | null }) | null | undefined,
+): boolean {
+  if (!d) return false;
+  if (!isAdminOnlyListing(d)) return true;
+  if (looksLikeTestFixture(d)) return false;
+  const status = (d.claimStatus || "").trim().toLowerCase();
+  return PROVIDER_DESK_REVIEW_STATUSES.has(status);
+}
+
 export function publicListings<T extends ListingVisibilityInput>(rows: T[]): T[] {
   return rows.filter((row) => isPublicListing(row));
 }

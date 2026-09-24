@@ -63,9 +63,13 @@ export const CSP_IMG_HOSTS = [
   "https://*.r2.dev",
 ];
 
-/** Classic script: copies its own nonce onto runtime-created <style> tags. */
+/**
+ * Classic script: copies its own nonce onto runtime <style> tags.
+ * createElement covers Sonner. innerHTML / insertAdjacentHTML cover SDKs
+ * that inject a style tag as HTML (Turnstile, maps). script-src stays strict.
+ */
 export const STYLE_NONCE_BOOT =
-  '(function(){var n=document.currentScript&&document.currentScript.nonce;if(!n)return;var c=Document.prototype.createElement;Document.prototype.createElement=function(t,o){var e=c.call(this,t,o);if(String(t).toLowerCase()==="style"){try{e.nonce=n}catch(err){}e.setAttribute("nonce",n)}return e;}})();';
+  '(function(){var n=document.currentScript&&document.currentScript.nonce;if(!n)return;var c=Document.prototype.createElement;var open="<"+"style";Document.prototype.createElement=function(t,o){var e=c.call(this,t,o);if(String(t).toLowerCase()==="style"){try{e.nonce=n}catch(err){}e.setAttribute("nonce",n)}return e;};function stamp(html){var s=String(html==null?"":html);if(s.toLowerCase().indexOf(open)<0)return s;return s.replace(new RegExp(open+"\\\\b([^>]*)>","gi"),function(full,attrs){if(/(?:^|\\s)nonce\\s*=/i.test(attrs))return full;return open+" nonce=\\""+n+"\\""+attrs+">";});}function patch(proto,key){var d;try{d=Object.getOwnPropertyDescriptor(proto,key);}catch(err){return;}if(!d||typeof d.set!="function"||typeof d.get!="function")return;Object.defineProperty(proto,key,{configurable:!0,enumerable:d.enumerable,get:d.get,set:function(v){d.set.call(this,stamp(v));}});}patch(Element.prototype,"innerHTML");patch(Element.prototype,"outerHTML");var ins=Element.prototype.insertAdjacentHTML;Element.prototype.insertAdjacentHTML=function(p,h){return ins.call(this,p,stamp(h));};})();';
 
 export function generateNonce() {
   const bytes = new Uint8Array(16);
@@ -141,8 +145,32 @@ export function applyStyleNonceBoot(html, nonce) {
   return tag + source;
 }
 
+/**
+ * Cloudflare Email Obfuscation injects /cdn-cgi/scripts/.../email-decode.min.js
+ * without a nonce. strict-dynamic blocks that script, hydration breaks, and
+ * the address stays scrambled. These comments are Cloudflare's per-page off switch.
+ */
+export function applyEmailObfuscationOff(html) {
+  const source = String(html ?? "");
+  if (source.includes("<!--email_off-->")) return source;
+  let out = source;
+  if (/<head\b/i.test(out)) {
+    out = out.replace(/<head\b[^>]*>/i, (open) => `${open}<!--email_off-->`);
+  } else {
+    out = `<!--email_off-->${out}`;
+  }
+  if (/<\/body>/i.test(out)) {
+    out = out.replace(/<\/body>/i, "<!--/email_off--></body>");
+  } else {
+    out += "<!--/email_off-->";
+  }
+  return out;
+}
+
 export function applyDocumentNonces(html, nonce) {
-  return applyStyleNonces(applyScriptNonces(applyStyleNonceBoot(html, nonce), nonce), nonce);
+  return applyEmailObfuscationOff(
+    applyStyleNonces(applyScriptNonces(applyStyleNonceBoot(html, nonce), nonce), nonce),
+  );
 }
 
 export function isHtmlResponse(contentType) {

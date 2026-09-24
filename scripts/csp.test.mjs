@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   applyDocumentNonces,
+  applyEmailObfuscationOff,
   applyHtmlDocumentCacheHeaders,
   applyScriptNonces,
   applyStyleNonceBoot,
@@ -87,7 +88,7 @@ test("applyDocumentNonces injects style-nonce boot and stamps script plus style"
   const html =
     "<html><head><style>.x{}</style><script src=\"/channel-boot.js\"></script></head><body></body></html>";
   const out = applyDocumentNonces(html, "n1");
-  assert.match(out, /<head><script data-ke-style-nonce nonce="n1">/);
+  assert.match(out, /<head><!--email_off--><script data-ke-style-nonce nonce="n1">/);
   assert.match(out, /<style nonce="n1">\.x\{\}<\/style>/);
   assert.match(out, /<script nonce="n1" src="\/channel-boot\.js">/);
   assert.match(out, /Document\.prototype\.createElement/);
@@ -97,7 +98,11 @@ test("applyDocumentNonces injects style-nonce boot and stamps script plus style"
   assert.match(STYLE_NONCE_BOOT, /document\.currentScript/);
   assert.match(STYLE_NONCE_BOOT, /\.nonce=n/);
   assert.match(STYLE_NONCE_BOOT, /setAttribute\("nonce",n\)/);
+  assert.match(STYLE_NONCE_BOOT, /innerHTML/);
+  assert.match(STYLE_NONCE_BOOT, /insertAdjacentHTML/);
   assert.doesNotMatch(STYLE_NONCE_BOOT, /<\/script>/);
+  assert.match(out, /<!--email_off-->/);
+  assert.match(out, /<!--\/email_off--><\/body>/);
 });
 
 test("data-ke-style-nonce is not treated as a nonce, so every script gets one", () => {
@@ -125,6 +130,17 @@ test("data-ke-style-nonce is not treated as a nonce, so every script gets one", 
   }
 });
 
+test("Cloudflare email obfuscation is turned off so it cannot inject an un-nonced script", () => {
+  const html = "<html><head></head><body><a href=\"mailto:support@kidease.ca\">support@kidease.ca</a></body></html>";
+  const out = applyEmailObfuscationOff(html);
+  assert.match(out, /<head><!--email_off-->/);
+  assert.match(out, /<!--\/email_off--><\/body>/);
+  assert.equal(applyEmailObfuscationOff(out), out);
+  const stamped = applyDocumentNonces(html, "n1");
+  assert.match(stamped, /<!--email_off-->/);
+  assert.match(stamped, /nonce="n1"/);
+});
+
 test("HTML documents are not cached so they cannot point at deleted asset hashes", () => {
   const headers = new Headers({ "content-type": "text/html" });
   applyHtmlDocumentCacheHeaders(headers);
@@ -150,6 +166,7 @@ test("Nitro owns CSP; vercel.json no longer ships a static policy", () => {
   assert.match(src("src/styles.css"), /ke-sheet\[data-snap="peek"\]/);
   const rootHtml = src("src/routes/__root.tsx");
   assert.match(rootHtml, /data-ke-style-nonce/);
-  assert.equal(rootHtml.includes(STYLE_NONCE_BOOT), true);
+  assert.match(rootHtml, /__html: STYLE_NONCE_BOOT/);
+  assert.match(src("src/lib/style-nonce-boot.ts"), /export \{ STYLE_NONCE_BOOT \}/);
   assert.doesNotMatch(rootHtml, /channel-boot\.js[\s\S]*data-ke-style-nonce/);
 });
