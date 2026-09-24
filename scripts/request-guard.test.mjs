@@ -11,8 +11,10 @@ import {
   HIDDEN_LISTING_SLUGS,
   isApexKideaseHost,
   isHiddenListingPath,
+  isOffScopeCityHubPath,
   isSensitiveDeskPath,
   isVercelAppHost,
+  PUBLISHED_CITY_HUB_SLUGS,
   shouldCanonicalizeApexPath,
 } from "./request-guard.mjs";
 
@@ -245,6 +247,33 @@ test("QA ghost listing document URLs 404 on every host", () => {
       assert.deepEqual(decideRequest({ host, pathname }), { action: "not_found", status: 404 });
     }
   }
+});
+
+test("off-scope city hubs 404 instead of falling through to search", () => {
+  assert.equal(isOffScopeCityHubPath("/daycare/city/new-york"), true);
+  assert.equal(isOffScopeCityHubPath("/daycare/city/New-York"), true);
+  assert.equal(isOffScopeCityHubPath("/daycare/city/brandon"), true);
+  assert.equal(isOffScopeCityHubPath("/daycare/city/winnipeg"), false);
+  assert.equal(isOffScopeCityHubPath("/daycare/city/quebec-city"), false);
+  assert.equal(isOffScopeCityHubPath("/daycare/winnipeg"), false);
+  assert.equal(isOffScopeCityHubPath("/search"), false);
+  for (const host of ["www.kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {
+    assert.deepEqual(decideRequest({ host, pathname: "/daycare/city/new-york" }), {
+      action: "not_found",
+      status: 404,
+    });
+    assert.deepEqual(decideRequest({ host, pathname: "/daycare/city/winnipeg" }), {
+      action: "next",
+    });
+    assert.deepEqual(decideRequest({ host, pathname: "/daycare/city/Quebec-City" }), {
+      action: "next",
+    });
+  }
+  const hubs = JSON.parse(readFileSync(join(root, "src/lib/data/city-hubs.json"), "utf8"));
+  assert.deepEqual(
+    hubs.map((hub) => hub.slug),
+    [...PUBLISHED_CITY_HUB_SLUGS],
+  );
 });
 
 test("real listing document URLs are not 404'd by the guard", () => {

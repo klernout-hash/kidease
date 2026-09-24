@@ -150,10 +150,11 @@ function RootDocument() {
         />
         <link rel="preload" href={appCss} as="style" />
         <link rel="preconnect" href="https://media.kidease.ca" />
+        {/* Route preloads (home hero) start before the blocking boot scripts. */}
+        <HeadContent />
         <script src="/channel-boot.js" />
         <script src="/theme-boot.js" />
         <script src="/asset-recover.js" />
-        <HeadContent />
       </head>
       <body>
         <PreviewHostBridge />

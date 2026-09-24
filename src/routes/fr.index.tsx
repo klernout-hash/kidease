@@ -6,6 +6,8 @@ import {
   FeelPhoto,
   HeroYard,
   HERO_LCP_AVIF_SRCSET,
+  HERO_LCP_MOBILE_AVIF_SRCSET,
+  HERO_LCP_MOBILE_SIZES,
   HERO_LCP_SIZES,
 } from "@/components/building-photo";
 import { CityHubLinks } from "@/components/city-hub-links";
@@ -39,10 +41,21 @@ export const Route = createFileRoute("/fr/")({
           rel: "preload",
           as: "image",
           type: "image/avif",
+          href: "/photos/hero-480-k2.avif?v=1",
+          imageSrcSet: HERO_LCP_MOBILE_AVIF_SRCSET,
+          imageSizes: HERO_LCP_MOBILE_SIZES,
+          fetchPriority: "high",
+          media: "(max-width: 1023px)",
+        },
+        {
+          rel: "preload",
+          as: "image",
+          type: "image/avif",
           href: "/photos/hero-768-k2.avif?v=1",
           imageSrcSet: HERO_LCP_AVIF_SRCSET,
           imageSizes: HERO_LCP_SIZES,
           fetchPriority: "high",
+          media: "(min-width: 1024px)",
         },
       ],
     };

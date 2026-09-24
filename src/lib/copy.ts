@@ -2288,6 +2288,9 @@ export const copy = {
     packetNote: "Note",
     pageNotFoundTitle: "Page not found",
     pageNotFoundBody: "This page is not on KidEase, or the link is out of date.",
+    cityHubNotFoundTitle: "No city directory",
+    cityHubNotFoundBody:
+      "KidEase lists licensed daycare in Canada only. There is no directory for this city.",
     listingNotFoundTitle: "Listing not found",
     listingNotFoundBody: "This centre is not on KidEase, or the link is out of date.",
     notFoundExplore: "Explore",
@@ -4655,6 +4658,9 @@ export const copy = {
     packetNote: "Note",
     pageNotFoundTitle: "Page introuvable",
     pageNotFoundBody: "Cette page n’est pas sur KidEase, ou le lien est périmé.",
+    cityHubNotFoundTitle: "Aucun répertoire pour cette ville",
+    cityHubNotFoundBody:
+      "KidEase répertorie seulement les garderies permises au Canada. Il n’y a pas de répertoire pour cette ville.",
     listingNotFoundTitle: "Fiche introuvable",
     listingNotFoundBody: "Ce centre n’est pas sur KidEase, ou le lien est périmé.",
     notFoundExplore: "Explorer",

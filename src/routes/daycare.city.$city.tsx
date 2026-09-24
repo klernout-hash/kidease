@@ -1,6 +1,7 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { JsonLd } from "@/components/json-ld";
+import { CityHubNotFoundPage } from "@/components/page-not-found";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { cityHubBySlug, cityHubs } from "@/lib/city-hub-data";
@@ -18,17 +19,22 @@ import {
   faqPageJsonLdScript,
   pageSeoHead,
 } from "@/lib/page-seo";
+import { cityHubNotFoundHead } from "@/lib/city-hub-not-found";
 import { SITEMAP_ORIGIN } from "@/lib/sitemap";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/daycare/city/$city")({
   loader: ({ params }): CityHubSnapshot => {
+    // Published Canadian hubs only. US and unknown slugs 404 — they must not
+    // fall through to the Winnipeg search page. The document edge does the
+    // same in scripts/request-guard.mjs so the SPA shell cannot return 200.
     const hub = cityHubBySlug(params.city);
-    if (!hub) throw redirect({ to: "/search" });
+    if (!hub) throw notFound();
     return hub;
   },
+  notFoundComponent: CityHubNotFoundPage,
   head: ({ loaderData }) => {
-    if (!loaderData) return {};
+    if (!loaderData) return cityHubNotFoundHead();
     const title = `Licensed daycare in ${loaderData.city}, ${loaderData.province} · KidEase`;
     const description = `Browse ${loaderData.count} licensed centres, nurseries, and homes in ${loaderData.city}, ${loaderData.province}. Free to search on KidEase — no nannies or sitters.`;
     return pageSeoHead({

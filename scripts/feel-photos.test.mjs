@@ -67,8 +67,9 @@ test("marketing feel photos stay on existing /photos paths", () => {
 
   const home = readFileSync(join(root, "src/routes/index.tsx"), "utf8");
   assert.match(home, /HeroYard/);
+  assert.match(home, /HeroBanner/);
   assert.match(home, /\[\[data-channel=app\]/);
-  assert.match(home, /\/photos\/hero\.jpg/);
+  assert.match(source, /\/photos\/hero\.jpg/);
   assert.match(home, /STEP_SIZES/);
   assert.match(home, /rel: "preload"/);
   assert.match(home, /as: "image"/);

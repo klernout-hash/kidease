@@ -154,6 +154,10 @@ test("guest home uses a short popular-city line, not the 10-city chip grid", () 
 test("hub route, listing breadcrumbs, and internal links are wired", () => {
   const hubRoute = src("src/routes/daycare.city.$city.tsx");
   assert.match(hubRoute, /createFileRoute\("\/daycare\/city\/\$city"\)/);
+  assert.match(hubRoute, /throw notFound\(\)/);
+  assert.match(hubRoute, /CityHubNotFoundPage/);
+  assert.match(hubRoute, /cityHubNotFoundHead/);
+  assert.doesNotMatch(hubRoute, /redirect\(\{\s*to:\s*"\/search"/);
   assert.match(hubRoute, /pageSeoHead/);
   assert.match(hubRoute, /faqPageJsonLdScript/);
   assert.match(hubRoute, /breadcrumbJsonLdScript/);

@@ -9,6 +9,11 @@ export const LOADER_SETTLE_MS = 6000;
  * lands in the document; a slow one does not hold the white screen.
  */
 export const PAINT_BUDGET_MS = 450;
+/**
+ * Home `/` only. A warm catalogue still lands in the first HTML. A slow query
+ * must not hold the hero — the live chips stay blank until the real count arrives.
+ */
+export const HOME_PAINT_BUDGET_MS = 200;
 /** Header geo is sync in practice. Cap it so a stuck server fn cannot blank the document. */
 export const ORIGIN_BUDGET_MS = 300;
 

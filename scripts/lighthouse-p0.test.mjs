@@ -17,7 +17,9 @@ test("home LCP hero is preloaded and sized instead of a late 1200-only AVIF", ()
   assert.match(photo, /\/photos\/hero-768-k2\.avif\?v=1 768w/);
   assert.match(photo, /\/photos\/hero-1200-k2\.avif\?v=1 1200w/);
   assert.match(photo, /fetchPriority=\{priority \? "high" : eager \? "auto" : "low"\}/);
-  assert.match(photo, /fetchPriority=\{eager \? "high" : "auto"\}/);
+  assert.match(photo, /decoding=\{priority \? "sync" : "async"\}/);
+  assert.match(photo, /HERO_LCP_MOBILE_AVIF_SRCSET/);
+  assert.match(photo, /export function HeroBanner/);
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /priority/);
 
@@ -26,7 +28,10 @@ test("home LCP hero is preloaded and sized instead of a late 1200-only AVIF", ()
   assert.match(home, /as: "image"/);
   assert.match(home, /type: "image\/avif"/);
   assert.match(home, /imageSrcSet: HERO_LCP_AVIF_SRCSET/);
+  assert.match(home, /imageSrcSet: HERO_LCP_MOBILE_AVIF_SRCSET/);
   assert.match(home, /imageSizes: HERO_LCP_SIZES/);
+  assert.match(home, /media: "\(max-width: 1023px\)"/);
+  assert.match(home, /HeroBanner/);
   assert.match(home, /fetchPriority: "high"/);
   assert.doesNotMatch(home, /eager=\{i < 3\}/);
   assert.match(home, /eagerThumbs=\{false\}/);
