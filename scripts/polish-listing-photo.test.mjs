@@ -78,7 +78,11 @@ test("centre uploads are the only images the polisher accepts", () => {
   assert.equal(isCentreUploadedImageDataUrl("data:image/png;base64,aaaa"), true);
   assert.equal(isCentreUploadedImageDataUrl("/photos/buildings/mb-1.jpg"), false);
   assert.equal(isCentreUploadedImageDataUrl("data:application/pdf;base64,JVBERi0"), false);
-  assert.equal(isCentreUploadedImageDataUrl("data:image/gif;base64,aaaa"), false);
+  assert.equal(isCentreUploadedImageDataUrl("data:image/gif;base64,aaaa"), true);
+  assert.equal(isCentreUploadedImageDataUrl("data:image/heic;base64,aaaa"), true);
+  assert.equal(isCentreUploadedImageDataUrl("data:image/bmp;base64,aaaa"), true);
+  assert.equal(isCentreUploadedImageDataUrl("data:image/tiff;base64,aaaa"), true);
+  assert.equal(isCentreUploadedImageDataUrl("data:image/avif;base64,aaaa"), true);
 });
 
 test("a crooked off-centre building is straighter, sharper to decode, and more centred", async () => {

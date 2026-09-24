@@ -49,6 +49,14 @@ export const R2_ALLOWED_TYPES = [
   "image/gif",
 ] as const;
 
+/**
+ * Provider listing uploads are stored as JPEG after polish, or WebP when the
+ * browser already downgraded and enhance keeps the original. HEIC, HEIF, BMP,
+ * and TIFF are converted first and are not R2 object types. Catalogue PNG,
+ * AVIF, and GIF originals stay on R2_ALLOWED_TYPES.
+ */
+export const R2_LISTING_STORED_TYPES = ["image/jpeg", "image/webp"] as const;
+
 const KEY_RE = /^[a-zA-Z0-9][a-zA-Z0-9/_.-]*$/;
 const ACCOUNT_RE = /^[a-z0-9][a-z0-9_-]{4,63}$/i;
 

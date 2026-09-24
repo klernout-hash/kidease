@@ -17,8 +17,11 @@ export function healMediaUrl(src?: string | null): string {
 /** Default photos for a newly listed centre before a real storefront is uploaded. */
 export const STOCK_CREATE_PHOTOS = "/photos/community.jpg,/photos/playroom.jpg";
 
-/** Provider-uploaded interiors (playroom, yard, cubbies). Never invent these. */
-export const MAX_INTERIOR_PHOTOS = 5;
+/** Cover (storefront) plus interiors. Logos do not count toward this cap. */
+export const MAX_LISTING_PHOTOS = 10;
+
+/** Interiors that sit after the cover. Together they stay within MAX_LISTING_PHOTOS. */
+export const MAX_INTERIOR_PHOTOS = MAX_LISTING_PHOTOS - 1;
 
 const STOCK_CREATE_SET = new Set(STOCK_CREATE_PHOTOS.split(","));
 
@@ -125,7 +128,8 @@ export function classifyListingPhotos(raw: string | string[] | null | undefined)
   const logos = list.filter(isLogoPhoto);
   const rest = list.filter((p) => !isLogoPhoto(p));
   const storefront = rest[0] || "";
-  const interiors = rest.slice(1).filter(isInteriorEligiblePhoto).slice(0, MAX_INTERIOR_PHOTOS);
+  const interiorCap = storefront ? MAX_INTERIOR_PHOTOS : MAX_LISTING_PHOTOS;
+  const interiors = rest.slice(1).filter(isInteriorEligiblePhoto).slice(0, interiorCap);
   return { storefront, interiors, logos };
 }
 
@@ -158,7 +162,8 @@ function acceptInteriorUpload(src: string) {
 }
 
 /**
- * Append provider interiors after the storefront. Caps at 5. Dedupes.
+ * Append provider interiors after the storefront.
+ * Cover + interiors stay at MAX_LISTING_PHOTOS. Dedupes.
  * Empty extras leave the current list unchanged (fee/hours saves must not wipe photos).
  */
 export function applyInteriorPhotos(current: string, extras?: string[]) {
@@ -166,14 +171,78 @@ export function applyInteriorPhotos(current: string, extras?: string[]) {
   if (!incoming.length) return current;
   const { storefront, interiors, logos } = classifyListingPhotos(current);
   const next = [...interiors];
+  const cap = storefront ? MAX_INTERIOR_PHOTOS : MAX_LISTING_PHOTOS;
   for (const extra of incoming) {
     if (!extra || extra === storefront || next.includes(extra)) continue;
-    if (next.length >= MAX_INTERIOR_PHOTOS) break;
+    if (next.length >= cap) break;
     next.push(extra);
   }
   const head = storefront || next[0] || "";
   const body = next.filter((p) => p !== head);
   return [head, ...body, ...logos].filter(Boolean).join(",");
+}
+
+/** A photo the daycare desk can show, reorder, delete, or set as the cover. */
+export function acceptManagedPhoto(src: string): boolean {
+  const p = (src || "").trim();
+  if (!p || p.includes("..") || isLogoPhoto(p)) return false;
+  if (/^data:image\/[a-z0-9.+-]+;base64,/i.test(p)) return true;
+  if (/^https?:\/\//i.test(p)) return true;
+  if (p.startsWith("/") && !p.startsWith("//")) return true;
+  return false;
+}
+
+/** Cover first, then interiors. At most MAX_LISTING_PHOTOS. */
+export function managedListingPhotos(raw: string | string[] | null | undefined): string[] {
+  const { storefront, interiors } = classifyListingPhotos(raw);
+  return [storefront, ...interiors].filter(Boolean).slice(0, MAX_LISTING_PHOTOS);
+}
+
+export function listingPhotoRoom(count: number): number {
+  const n = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
+  return Math.max(0, MAX_LISTING_PHOTOS - n);
+}
+
+/**
+ * Replace the cover and interiors. Logos on the current listing stay at the end.
+ * Pass an empty list to clear managed photos. Fee saves must not call this.
+ */
+export function applyManagedListingPhotos(current: string, ordered: string[]): string {
+  const { logos } = classifyListingPhotos(current);
+  const next: string[] = [];
+  for (const raw of ordered) {
+    const p = (raw || "").trim();
+    if (!acceptManagedPhoto(p) || next.includes(p)) continue;
+    next.push(p);
+    if (next.length >= MAX_LISTING_PHOTOS) break;
+  }
+  const tail = logos.filter((logo) => !next.includes(logo));
+  return [...next, ...tail].filter(Boolean).join(",");
+}
+
+export function moveListingPhoto<T>(list: readonly T[], index: number, dir: -1 | 1): T[] {
+  const next = list.slice();
+  const target = index + dir;
+  if (index < 0 || target < 0 || index >= next.length || target >= next.length) return next;
+  const current = next[index] as T;
+  const swap = next[target] as T;
+  next[index] = swap;
+  next[target] = current;
+  return next;
+}
+
+export function makeListingCover<T>(list: readonly T[], index: number): T[] {
+  if (index <= 0 || index >= list.length) return list.slice();
+  const next = list.slice();
+  const [item] = next.splice(index, 1);
+  if (item === undefined) return next;
+  next.unshift(item);
+  return next;
+}
+
+export function removeListingPhoto<T>(list: readonly T[], index: number): T[] {
+  if (index < 0 || index >= list.length) return list.slice();
+  return list.filter((_, i) => i !== index);
 }
 
 /** True only when the persisted photo list actually changed. Never invents a date. */
