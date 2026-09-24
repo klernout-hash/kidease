@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { PasswordField } from "@/components/password-field";
 import { PasswordRules } from "@/components/password-rules";
@@ -40,7 +41,7 @@ export function AccountSecurity({ email }: { email: string }) {
       setCurrentPassword("");
       setNewPassword("");
       setConfirm("");
-      toast.success(t("accountPasswordUpdated"));
+      confirmAction(t, "editsSaved", { title: t("accountPasswordUpdated") });
     } catch (err) {
       const message = err instanceof Error ? err.message : t("accountPasswordFailed");
       if (isReauthRequiredMessage(message)) {
@@ -61,7 +62,7 @@ export function AccountSecurity({ email }: { email: string }) {
       const res = await changeAccountEmail({ data: { newEmail, currentPassword: emailPassword } });
       setNewEmail(res.email);
       setEmailPassword("");
-      toast.success(t("accountEmailUpdated"));
+      confirmAction(t, "editsSaved", { title: t("accountEmailUpdated") });
     } catch (err) {
       const message = err instanceof Error ? err.message : t("accountEmailFailed");
       if (isReauthRequiredMessage(message)) {

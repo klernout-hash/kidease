@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listSavedIds, saveDaycare } from "@/lib/server/family";
 import { clearShortlistCache, markShortlistCache, takePendingSave, writeShortlistCache } from "@/lib/shortlist";
@@ -28,7 +28,7 @@ export function ApplyPendingShortlist() {
       .then(() => listSavedIds())
       .then((ids) => {
         writeShortlistCache(ids, user.id);
-        toast.success(t("savedToShortlist"));
+        confirmAction(t, "listingSaved");
       })
       .catch(() => {
         markShortlistCache(id, false, user.id);

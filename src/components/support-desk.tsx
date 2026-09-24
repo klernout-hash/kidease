@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { DeskShell } from "@/components/desk-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -237,7 +238,7 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
           centreId: centreId || null,
         },
       });
-      toast.success("Case opened");
+      confirmSuccess({ variant: "modal", title: "Case opened", body: "The case is open on this desk." });
       onCreated();
       window.location.assign(`/support/${created.id}`);
     } catch (err) {

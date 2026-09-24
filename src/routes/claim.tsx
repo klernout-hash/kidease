@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { CalendarCheck, Globe, MapPin, Megaphone, MessageCircle, Smartphone, TrendingUp, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAction, confirmSuccess } from "@/lib/success-confirm";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
@@ -139,7 +140,7 @@ function ClaimPage() {
       const res = await startClaim({ data: daycareId });
       captureMarketplaceFunnel({ step: "claim", source: "claim", dest_path: "/claim" });
       if (res.alreadyOwned) {
-        toast.success(t("claimOwned"));
+        confirmSuccess({ variant: "toast", title: t("claimOwned") });
         void navigate({ to: "/provider" });
         return;
       }
@@ -167,8 +168,12 @@ function ClaimPage() {
     setBusy(true);
     try {
       await verifyClaim({ data: { daycareId: pending.daycareId, code, licensePhoto: license, turnstileToken: claimChallenge.token } });
-      toast.success(t("claimVerified"));
-      void navigate({ to: "/provider", search: { claimed: true } });
+      confirmAction(t, "claimSubmitted", {
+        primaryLabel: t("successOpenDesk"),
+        onClose: () => {
+          void navigate({ to: "/provider", search: { claimed: true } });
+        },
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("claimFailed"));
     } finally {
@@ -232,7 +237,7 @@ function ClaimPage() {
           turnstileToken: enrollChallenge.token,
         },
       });
-      toast.success(t("enrollSent"));
+      confirmAction(t, "applicationSubmitted");
       setEnroll({ name: "", email: "", centre: "", city: "", phone: "", body: "", daycareId: "" });
       setEnrollLicense("");
     } catch {

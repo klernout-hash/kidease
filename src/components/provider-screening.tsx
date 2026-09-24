@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { confirmAction, confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import {
   addScreeningPerson,
@@ -195,7 +196,7 @@ export function ProviderScreeningPanel() {
       const blob = new Blob([result.html], { type: "text/html" });
       const url = URL.createObjectURL(blob);
       window.open(url, "_blank", "noopener");
-      toast.success(t("screeningStatusLetter"));
+      confirmSuccess({ variant: "toast", title: t("screeningStatusLetter") });
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("screeningGenerateLetter"));
@@ -228,7 +229,7 @@ export function ProviderScreeningPanel() {
           next,
         )
           .then(() => {
-            toast.success(t("screeningStatusReview"));
+            confirmAction(t, "screeningUploaded");
             return load();
           })
           .catch((err) => toast.error(err instanceof Error ? err.message : t("uploadDocTooBig")))
@@ -246,7 +247,7 @@ export function ProviderScreeningPanel() {
       await addScreeningPerson({
         data: { daycareId: form.daycareId, name: form.name, role: form.role },
       });
-      toast.success(t("screeningAddPerson"));
+      confirmAction(t, "editsSaved", { title: t("screeningAddPerson") });
       setForm((prev) => ({ ...prev, name: "" }));
       await load();
     } catch (err) {

@@ -47,14 +47,18 @@ test("confirmation thumb uses a real listing photo only", () => {
 
 test("listing request forms share one success dialog and keep errors off it", () => {
   const dialog = src("src/components/request-sent-dialog.tsx");
+  const confirm = src("src/components/success-confirm.tsx");
   const css = src("src/styles.css");
-  assert.match(dialog, /role="dialog"/);
-  assert.match(dialog, /aria-modal="true"/);
-  assert.match(dialog, /role="status"/);
-  assert.match(dialog, /Escape/);
-  assert.match(dialog, /prefers-reduced-motion: reduce/);
+  assert.match(dialog, /SuccessConfirm/);
+  assert.match(dialog, /successKicker/);
   assert.match(dialog, /requestSentViewMessages/);
   assert.match(dialog, /requestSentBackToListing/);
+  assert.match(confirm, /role="dialog"/);
+  assert.match(confirm, /aria-modal="true"/);
+  assert.match(confirm, /role="status"/);
+  assert.match(confirm, /aria-live="polite"/);
+  assert.match(confirm, /Escape/);
+  assert.match(confirm, /prefers-reduced-motion: reduce/);
   assert.match(css, /prefers-reduced-motion: no-preference/);
   assert.match(css, /ke-check-pop/);
   assert.equal(REQUEST_SENT_BEAT_MS >= 300 && REQUEST_SENT_BEAT_MS <= 800, true);
@@ -86,5 +90,5 @@ test("listing request forms share one success dialog and keep errors off it", ()
   );
   assert.match(src("src/components/request-message.tsx"), /sendConnectedMessage/);
   assert.doesNotMatch(src("src/components/request-message.tsx"), /sendMessage\(/);
-  assert.doesNotMatch(dialog, /approve-live|casl-consent|admin-trust/);
+  assert.doesNotMatch(confirm, /approve-live|casl-consent|admin-trust/);
 });

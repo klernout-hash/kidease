@@ -2,6 +2,7 @@ import { Heart } from "lucide-react";
 import { useEffect, useState, type MouseEvent } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listSavedIds, saveDaycare, unsaveDaycare } from "@/lib/server/family";
@@ -101,7 +102,7 @@ export function SaveListingButton({
       const nowSaved = res.saved;
       setSaved(nowSaved);
       markShortlistCache(daycareId, nowSaved, user.id);
-      toast.success(nowSaved ? t("savedToShortlist") : t("removedFromShortlist"));
+      confirmAction(t, nowSaved ? "listingSaved" : "listingRemoved");
     } catch {
       setSaved(!next);
       markShortlistCache(daycareId, !next);

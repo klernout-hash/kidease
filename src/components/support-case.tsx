@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { DeskShell } from "@/components/desk-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -192,7 +193,7 @@ function ActionsRail({
     try {
       await addSupportNote({ data: { caseId, body: text, macroId } });
       setNote("");
-      toast.success("Note saved");
+      confirmSuccess({ variant: "toast", title: "Note saved" });
       await onDone();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save note");
@@ -255,7 +256,7 @@ function ActionsRail({
           setBusy("status");
           try {
             await changeSupportStatus({ data: { caseId, status: nextStatus } });
-            toast.success("Status updated");
+            confirmSuccess({ variant: "toast", title: "Status updated" });
             await onDone();
           } catch (err) {
             toast.error(err instanceof Error ? err.message : "Could not change status");
@@ -290,7 +291,7 @@ function ActionsRail({
           setBusy("assign");
           try {
             await assignSupportCase({ data: { caseId, assigneeUserId: assignee || null } });
-            toast.success("Assignment saved");
+            confirmSuccess({ variant: "toast", title: "Assignment saved" });
             await onDone();
           } catch (err) {
             toast.error(err instanceof Error ? err.message : "Could not assign");
@@ -418,7 +419,7 @@ function MoneyDrawer({
                         const res = await refundSupportBill({
                           data: { caseId, billId: row.id, amountCents: cents },
                         });
-                        toast.success(res.message);
+                        confirmSuccess({ variant: "toast", title: "Refund recorded", body: res.message });
                         await onDone();
                       } catch (err) {
                         toast.error(err instanceof Error ? err.message : "Refund failed");

@@ -9,6 +9,7 @@ import { fillNotificationCopy, isCriticalNotification, notificationCopyKey, type
 import { listMyNotifications, markNotificationRead } from "@/lib/server/notifications";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
+import { confirmAction } from "@/lib/success-confirm";
 
 function timeLabel(iso: string, locale: string) {
   const date = new Date(iso);
@@ -53,7 +54,10 @@ export function NotificationsInbox() {
               variant="secondary"
               onClick={() => {
                 void markNotificationRead({ data: { all: true } })
-                  .then(() => listMyNotifications().then(setItems))
+                  .then(() => {
+                    confirmAction(t, "markedRead");
+                    return listMyNotifications().then(setItems);
+                  })
                   .catch(() => undefined);
               }}
             >

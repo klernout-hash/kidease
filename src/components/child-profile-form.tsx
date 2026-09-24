@@ -1,5 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { emptyChild } from "@/lib/child-profile";
 import { addChild, updateChild } from "@/lib/server/family";
@@ -33,9 +34,10 @@ export function ChildProfileForm({
     if (!draft.name.trim() || !draft.birthdate) return;
     setBusy(true);
     try {
+      const added = !draft.id;
       if (draft.id) await updateChild({ data: { ...(draft as Child), id: draft.id } });
       else await addChild({ data: draft });
-      toast.success(t("profileSaved"));
+      confirmAction(t, added ? "childAdded" : "childSaved");
       setSaved(true);
       onSaved();
     } catch (err) {

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { DeskShell } from "@/components/desk-shell";
@@ -338,13 +339,15 @@ function ProviderPage() {
               empty={t("providerRequestsEmpty")}
               onDecide={async (id, decision) => {
                 await decideParentRequest({ data: { bookingId: id, decision } });
-                toast.success(
-                  decision === "approve"
-                    ? t("requestApprovedToast")
-                    : decision === "decline"
-                      ? t("requestDeclinedToast")
-                      : t("requestWaitingToast"),
-                );
+                confirmSuccess({
+                  variant: "toast",
+                  title:
+                    decision === "approve"
+                      ? t("requestApprovedToast")
+                      : decision === "decline"
+                        ? t("requestDeclinedToast")
+                        : t("requestWaitingToast"),
+                });
                 await load();
               }}
               locale={locale}
@@ -358,7 +361,7 @@ function ProviderPage() {
               empty={t("requestsDecidedEmpty")}
               onDecide={async (id, decision) => {
                 await decideParentRequest({ data: { bookingId: id, decision } });
-                toast.success(t("requestUpdatedToast"));
+                confirmSuccess({ variant: "toast", title: t("requestUpdatedToast") });
                 await load();
               }}
               locale={locale}
@@ -501,7 +504,7 @@ function ProviderPage() {
                       );
                       return;
                     }
-                    toast.success(t("createListing"));
+                    confirmSuccess({ variant: "modal", title: t("createListing"), body: t("successListingSavedBody") });
                     setForm((s) => ({ ...s, storefront: "" }));
                     return load();
                   })

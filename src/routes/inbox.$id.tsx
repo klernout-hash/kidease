@@ -14,6 +14,7 @@ import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
 import { sendConnectedMessage } from "@/lib/server/inbox";
 import { formatAgeLabel, formatStart, pushNewRequest, scheduleLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
+import { confirmAction } from "@/lib/success-confirm";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { TourCard } from "@/components/tour-card";
 import { cn, money } from "@/lib/utils";
@@ -144,6 +145,7 @@ function ThreadPage() {
     try {
       await sendConnectedMessage({ data: { conversationId: id, body } });
       setBody("");
+      confirmAction(t, "replySent");
       await load();
     } catch (err) {
       setSendError(err instanceof Error ? err.message : "Could not send");

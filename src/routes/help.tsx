@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Mail } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
@@ -46,6 +47,7 @@ export function Help() {
         data: { kind: "support", name, email, body, turnstileToken: challenge },
       });
       setSent(true);
+      confirmAction(t, "contactSent");
       setBody("");
     } catch (err) {
       console.error("[kidease-contact]", err);

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
@@ -40,7 +41,7 @@ export function ListingContact({
           turnstileToken: token,
         },
       });
-      toast.success(t("listingContactSent"));
+      confirmAction(t, "contactSent", { body: t("listingContactSent") });
       setForm({ name: "", email: "", body: "" });
       setOpen(false);
     } catch {

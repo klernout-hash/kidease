@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { getWaitlistPulseStatus, pulseWaitlistSpot } from "@/lib/server/waitlist-api";
 import { useCopy } from "@/lib/use-copy";
@@ -36,7 +37,7 @@ export function WaitlistPulseButton({
     setBusy(true);
     void pulseWaitlistSpot({ data: { daycareId } })
       .then(() => {
-        toast.success(t("waitlistPulseSent"));
+        confirmSuccess({ variant: "toast", title: t("waitlistPulseSent") });
         setStatus((cur) => ({
           lastPulsedAt: new Date().toISOString(),
           cooldownUntil: null,

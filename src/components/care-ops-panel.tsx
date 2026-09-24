@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import {
   assignCareRoster,
@@ -62,7 +63,7 @@ export function CareOpsPanel({
       await saveCareRoom({
         data: { daycareId: selectedDaycareId, name: roomName, capacity: Number(capacity) || 8 },
       });
-      toast.success(t("careRoomAdded"));
+      confirmSuccess({ variant: "toast", title: t("careRoomAdded") });
       setRoomName("");
       await onReload();
     } catch (err) {
@@ -81,7 +82,7 @@ export function CareOpsPanel({
       await assignCareRoster({
         data: { daycareId: room.daycareId, roomId, staffUserId, day },
       });
-      toast.success(t("careRosterAdded"));
+      confirmSuccess({ variant: "toast", title: t("careRosterAdded") });
       await onReload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
