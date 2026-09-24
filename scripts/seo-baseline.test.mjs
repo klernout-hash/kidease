@@ -180,13 +180,13 @@ test("listings sitemap middleware returns HTTP 200 XML without reading centres.j
   const { default: sitemapListingsMiddleware, listingSitemapXml } = await import(
     "../server/middleware/sitemap.ts"
   );
-  const xml = listingSitemapXml();
+  const xml = await listingSitemapXml();
   assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
   assert.doesNotMatch(xml, /test-ghost-claim-lab/);
   if (slugs.length > LISTING_SITEMAP_CAP) {
     assert.match(xml, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
     assert.match(xml, /https:\/\/www\.kidease\.ca\/sitemap-listings-1\.xml/);
-    const page1 = listingSitemapXml("/sitemap-listings-1.xml");
+    const page1 = await listingSitemapXml("/sitemap-listings-1.xml");
     assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\//);
     assert.match(page1, /<urlset /);
   } else {

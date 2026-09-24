@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
  * Idempotent bulk seed of centres.json (+ extras) into Neon daycares.
+ * With MASTER_CSV_PATH, also appends Canada master rows that are not already
+ * in the catalogue. Never deletes a row and never blanks a filled contact.
  *
  *   DATABASE_URL=… npm run ops:seed-catalog
  *   DATABASE_URL=… npm run ops:seed-catalog -- --offset=400 --limit=200
@@ -12,7 +14,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { mergeBlankContacts, parseMasterContacts } from "../src/lib/catalog-master.ts";
+import { dropStoredDuplicateAdditions, syncMasterCatalogue } from "../src/lib/catalog-master-sync.ts";
 import { catalogRowsForSeed, clampSeedLimit, clampSeedOffset, seedCatalogChunk } from "../src/lib/catalog-seed.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -28,6 +30,7 @@ export function parseSeedArgs(argv = process.argv.slice(2), env = process.env) {
     dryRun: false,
     help: false,
     masterCsvPath: (env.MASTER_CSV_PATH || "").trim(),
+    expectMaster: env.SEED_EXPECT_MASTER ? Number(env.SEED_EXPECT_MASTER) : null,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -55,6 +58,12 @@ export function parseSeedArgs(argv = process.argv.slice(2), env = process.env) {
       opts.masterCsvPath = next;
       i += 1;
     } else if (arg.startsWith("--master-csv=")) opts.masterCsvPath = arg.slice("--master-csv=".length);
+    else if (arg === "--expect-master" && next) {
+      opts.expectMaster = Number(next);
+      i += 1;
+    } else if (arg.startsWith("--expect-master=")) {
+      opts.expectMaster = Number(arg.slice("--expect-master=".length));
+    }
   }
   return opts;
 }
@@ -75,11 +84,19 @@ Flags:
   --resume          Continue from the checkpoint file
   --checkpoint PATH Offset file (default tmp/seed-catalog-offset.txt)
   --dry-run         Load + count only. No DATABASE_URL writes
-  --master-csv PATH Optional private CSV. Fills blank phone/email/website only
+  --master-csv PATH Private master CSV. Blank-only contacts, plus new Canada rows
+  --expect-master N Fail unless the CSV has N rows and the catalogue stays >= N
   --help
 
-Never put the master CSV in this repo. Never pass secrets on the query string
-of /api/seed-catalog — use Authorization: Bearer $CRON_SECRET.
+The master CSV is not in this repo. Pass MASTER_CSV_PATH or --master-csv.
+New rows are appended. Existing rows are never deleted. Filled phone, email,
+and website are never replaced with blank. Ages, fees, photos, open spots,
+and Live/claim fields are not taken from the CSV.
+
+Claimed, provider-owned, and staffed listings are left unchanged by the upsert.
+/api/seed-catalog does not read the private CSV — use this script for the
+master close. Never pass secrets on the query string; Authorization: Bearer
+$CRON_SECRET is the HTTP seed.
 `;
 }
 
@@ -103,11 +120,27 @@ async function writeCheckpoint(path, offset) {
   await writeFile(path, `${offset}\n`, "utf8");
 }
 
-async function loadOptionalMaster(path) {
-  if (!path) return null;
+async function loadMasterText(path) {
+  if (!path) return "";
   const abs = isAbsolute(path) ? path : resolve(process.cwd(), path);
-  const text = await readFile(abs, "utf8");
-  return parseMasterContacts(text);
+  return readFile(abs, "utf8");
+}
+
+export function assertMasterLock(summary, expectMaster) {
+  if (expectMaster == null || !Number.isFinite(expectMaster)) return;
+  const expected = Math.floor(expectMaster);
+  if (!summary) throw new Error(`--expect-master=${expected} requires MASTER_CSV_PATH`);
+  const accounted =
+    summary.matched + summary.added + summary.skippedNoGeo + summary.skippedNonCanada + summary.skippedInvalid;
+  if (summary.masterRows !== expected) {
+    throw new Error(`master rows ${summary.masterRows} !== lock ${expected}`);
+  }
+  if (accounted !== summary.masterRows) {
+    throw new Error(`master accounting ${accounted} !== ${summary.masterRows} (rows would be dropped)`);
+  }
+  if (summary.catalogueRows < expected) {
+    throw new Error(`catalogue ${summary.catalogueRows} is below master lock ${expected}`);
+  }
 }
 
 async function defaultLoadCatalog() {
@@ -115,25 +148,23 @@ async function defaultLoadCatalog() {
   return loadJsonCatalogFromDisk();
 }
 
-export async function prepareCatalogRows(opts, loadCatalog = defaultLoadCatalog, loadMaster = loadOptionalMaster) {
+export async function prepareCatalogRows(opts, loadCatalog = defaultLoadCatalog, loadMaster = loadMasterText) {
   const catalog = catalogRowsForSeed(await loadCatalog());
-  const master = await loadMaster(opts.masterCsvPath);
-  if (!master || master.size === 0) {
-    return { rows: catalog, masterKeys: 0, enriched: 0 };
+  const masterText = await loadMaster(opts.masterCsvPath);
+  if (!masterText) {
+    return { rows: catalog, masterKeys: 0, enriched: 0, summary: null };
   }
-  let enriched = 0;
-  const rows = catalog.map((row) => {
-    const next = mergeBlankContacts(row, master);
-    if (
-      next.phone !== row.phone ||
-      next.contactEmail !== row.contactEmail ||
-      next.website !== row.website
-    ) {
-      enriched += 1;
-    }
-    return next;
-  });
-  return { rows, masterKeys: master.size, enriched };
+  const plan = syncMasterCatalogue(catalog, masterText);
+  const rows = catalogRowsForSeed(plan.rows);
+  if (rows.length < catalog.length) {
+    throw new Error("seed catalogue shrank while applying the master");
+  }
+  return {
+    rows,
+    masterKeys: plan.summary.masterRows,
+    enriched: plan.summary.contactsFilled,
+    summary: plan.summary,
+  };
 }
 
 async function main() {
@@ -149,31 +180,52 @@ async function main() {
   }
 
   const prepared = await prepareCatalogRows(opts);
-  const total = prepared.rows.length;
+  let seedRows = prepared.rows;
   const file = checkpointPath(opts.checkpoint);
-  let offset = clampSeedOffset(opts.resume ? await readCheckpoint(file) : opts.offset, total);
-  const stopAt =
-    opts.limit == null ? total : Math.min(total, offset + clampSeedLimit(opts.limit, opts.limit, 1_000_000));
-  const chunk = clampSeedLimit(opts.chunk);
-
-  console.log(
-    `[seed-catalog] rows=${total} offset=${offset} stop=${stopAt} chunk=${chunk} dryRun=${opts.dryRun} masterKeys=${prepared.masterKeys} enriched=${prepared.enriched}`,
-  );
-
-  if (opts.dryRun) return;
-
-  const { default: pg } = await import("pg");
-  const pool = new pg.Pool({ connectionString: databaseUrl, max: 4 });
-  const sql = {
-    query: async (text, params = []) => {
-      const res = await pool.query(text, params);
-      return res.rows;
-    },
-  };
-
+  const databaseUrlReady = !opts.dryRun;
+  let pool = null;
+  let sql = null;
   try {
+    if (databaseUrlReady) {
+      const { default: pg } = await import("pg");
+      pool = new pg.Pool({ connectionString: databaseUrl, max: 4 });
+      sql = {
+        query: async (text, params = []) => {
+          const res = await pool.query(text, params);
+          return res.rows;
+        },
+      };
+      const stored = await sql.query(
+        `select id, slug, name, city, province, postal_code as "postalCode", license_number as "licenseNumber" from daycares`,
+      );
+      const filtered = dropStoredDuplicateAdditions(seedRows, stored);
+      if (filtered.rows.length + filtered.dropped !== seedRows.length) {
+        throw new Error("seed catalogue shrank while skipping rows already in Neon");
+      }
+      seedRows = filtered.rows;
+      console.log(`[seed-catalog] alreadyInNeon=${filtered.dropped} (kept; not inserted again)`);
+    }
+    const total = seedRows.length;
+    let offset = clampSeedOffset(opts.resume ? await readCheckpoint(file) : opts.offset, total);
+    const stopAt =
+      opts.limit == null ? total : Math.min(total, offset + clampSeedLimit(opts.limit, opts.limit, 1_000_000));
+    const chunk = clampSeedLimit(opts.chunk);
+
+    const summary = prepared.summary;
+    console.log(
+      `[seed-catalog] rows=${total} offset=${offset} stop=${stopAt} chunk=${chunk} dryRun=${opts.dryRun} masterKeys=${prepared.masterKeys} enriched=${prepared.enriched}`,
+    );
+    if (summary) {
+      console.log(
+        `[seed-catalog] masterRows=${summary.masterRows} matched=${summary.matched} added=${summary.added} skippedNoGeo=${summary.skippedNoGeo} skippedNonCanada=${summary.skippedNonCanada} skippedInvalid=${summary.skippedInvalid} catalogueRows=${summary.catalogueRows} publicSlugs=${summary.publicSlugs}`,
+      );
+    }
+    assertMasterLock(summary, opts.expectMaster);
+
+    if (opts.dryRun) return;
+
     while (offset < stopAt) {
-      const result = await seedCatalogChunk(sql, prepared.rows, {
+      const result = await seedCatalogChunk(sql, seedRows, {
         offset,
         limit: Math.min(chunk, stopAt - offset),
       });
@@ -187,7 +239,7 @@ async function main() {
       }
     }
   } finally {
-    await pool.end();
+    if (pool) await pool.end();
   }
 }
 

@@ -67,7 +67,12 @@ export function sitemapPublicPaths(extraPaths: readonly string[] = []) {
   return out;
 }
 
-const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;
+/**
+ * Catalogue slugs are alphanumeric plus hyphens. Repeated and trailing hyphens
+ * are real (truncated registry names such as "la-bulle-de-lait-"). They are
+ * still one path segment — no slash, space, or dot.
+ */
+const SLUG_RE = /^[a-z0-9]+(?:-*[a-z0-9]+)*-*$/i;
 
 export function isSafeSitemapSlug(slug: string | null | undefined): boolean {
   const value = (slug || "").trim();
@@ -189,6 +194,26 @@ function listingRowsFromUnknown(slugs: unknown): Array<{
     }
   }
   return rows;
+}
+
+/**
+ * Bundled slugs plus any newer public Neon slugs. Order keeps the bundled
+ * list first. Admin-only and unsafe slugs are dropped. The result is never
+ * shorter than the bundled public set, so a partial Neon read cannot shrink
+ * the sitemap.
+ */
+export function mergeListingSitemapSlugs(
+  bundled: readonly string[],
+  extra: readonly string[],
+  cap = LISTING_SITEMAP_TOTAL_CAP,
+): string[] {
+  const bundledRows = bundled.map((slug) => ({ slug }));
+  const bundledPublic = publicSitemapSlugs(bundledRows, cap);
+  const merged = publicSitemapSlugs(
+    [...bundledRows, ...extra.map((slug) => ({ slug }))],
+    cap,
+  );
+  return merged.length >= bundledPublic.length ? merged : bundledPublic;
 }
 
 export function normalizeListingSitemapSlugs(
