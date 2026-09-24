@@ -1,11 +1,12 @@
-import { useEffect, useId, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Check, X } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { RequestSentDialog } from "@/components/request-sent-dialog";
+import { useLiveSubmit } from "@/components/use-live-submit";
 import { getFamily } from "@/lib/server/family";
 import { bookTourSlot, listPublicTourSlots } from "@/lib/server/tour-calendar";
-import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
+import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
@@ -28,7 +29,6 @@ type Props = {
 export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Props) {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
-  const navigate = useNavigate();
   const titleId = useId();
   const loc = locale === "fr" ? "fr" : "en";
   const [childId, setChildId] = useState("");
@@ -46,12 +46,25 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
   const [windowId, setWindowId] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState<{ conversationId: string; guest: boolean } | null>(null);
+  const [done, setDone] = useState<{
+    conversationId: string;
+    guest: boolean;
+    detail: string;
+  } | null>(null);
+  const opened = useRef(false);
+  const send = useLiveSubmit(open);
 
   useEffect(() => {
-    if (!open) return;
-    setDone(null);
-    setWindowId("");
+    if (!open) {
+      opened.current = false;
+      return;
+    }
+    const justOpened = !opened.current;
+    opened.current = true;
+    if (justOpened) {
+      setDone(null);
+      setWindowId("");
+    }
     setDate("");
     setLoading(true);
     if (user?.primaryEmail) setEmail(user.primaryEmail);
@@ -96,16 +109,38 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
   const selected = slots.find((slot) => slot.id === windowId) ?? null;
   const guest = !user;
 
+  if (done) {
+    return (
+      <RequestSentDialog
+        kind="tour"
+        listingName={name}
+        city={daycare.city}
+        photo={requestSentThumb(daycare.photos)}
+        detail={done.detail}
+        conversationId={done.conversationId}
+        canOpenMessages={!done.guest}
+        onClose={() => {
+          setDone(null);
+          onClose();
+        }}
+      />
+    );
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!windowId) {
       toast.error(t("tourTimesNeedSlot"));
       return;
     }
-    if (guest && (!firstName.trim() || !lastName.trim() || phone.trim().length < 7 || !email.trim())) {
+    if (
+      guest &&
+      (!firstName.trim() || !lastName.trim() || phone.trim().length < 7 || !email.trim())
+    ) {
       toast.error(t("tourTimesNeedContact"));
       return;
     }
+    const token = send.start();
     setBusy(true);
     try {
       const res = await bookTourSlot({
@@ -124,254 +159,244 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
         },
       });
       capturePostHogEvent("listing_request_submitted", { intent: "tour" });
-      toast.success(t("requestSentTitleTour"));
-      setDone({ conversationId: res.conversationId, guest: res.guest });
-      if (!res.guest) {
-        window.setTimeout(() => {
-          void navigate({ to: "/parent", search: PARENT_REQUESTS_SEARCH });
-        }, 1400);
-      }
+      await holdSendBeat();
+      if (!send.live(token)) return;
+      setDone({
+        conversationId: res.conversationId,
+        guest: res.guest,
+        detail: selected ? formatTourSlotRange(selected, loc) : "",
+      });
     } catch (err) {
+      if (!send.live(token)) return;
       toast.error(err instanceof Error ? err.message : t("tourTimesFailed"));
     } finally {
-      setBusy(false);
+      if (send.live(token)) setBusy(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="presentation">
-      <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("cancel")} onClick={onClose} />
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center md:items-center"
+      role="presentation"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-fg/40"
+        aria-label={t("cancel")}
+        onClick={onClose}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         className="relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-xl bg-surface shadow-card ring-1 ring-border md:rounded-xl"
       >
-        {done ? (
-          <div className="flex flex-col items-center px-6 py-10 text-center">
-            <span className="grid size-14 place-items-center rounded-full bg-ok text-primary-fg">
-              <Check className="size-7" strokeWidth={2.5} />
-            </span>
-            <h2 id={titleId} className="mt-5 font-display text-2xl">
-              {t("requestSentTitleTour")}
-            </h2>
-            <p className="mt-2 max-w-sm text-sm text-muted">{t("requestSentTrack")}</p>
-            <p className="mt-1 text-xs text-subtle">{t("notifyCentre")}</p>
-            {done.guest ? (
-              <Button className="mt-6 w-full" onClick={onClose}>
-                {t("close")}
-              </Button>
-            ) : (
-              <>
-                <Button className="mt-6 w-full" asChild>
-                  <Link to="/parent" search={PARENT_REQUESTS_SEARCH}>
-                    {t("goToMyRequests")}
-                  </Link>
-                </Button>
-                <Button className="mt-2 w-full" variant="secondary" asChild>
-                  <Link to="/inbox/$id" params={{ id: done.conversationId }}>
-                    {t("goToConversation")}
-                  </Link>
-                </Button>
-                <button type="button" className="mt-3 text-sm text-muted hover:text-fg" onClick={onClose}>
-                  {t("cancel")}
-                </button>
-              </>
-            )}
-          </div>
-        ) : (
-          <form onSubmit={(e) => void submit(e)} className="flex min-h-0 flex-1 flex-col">
-            <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
-              <div>
-                <h2 id={titleId} className="font-display text-xl">
-                  {t("bookTour")}
-                </h2>
-                <p className="mt-0.5 text-sm text-muted">{name}</p>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="grid size-10 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-fg"
-                aria-label={t("cancel")}
-              >
-                <X className="size-5" />
-              </button>
+        <form onSubmit={(e) => void submit(e)} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+            <div>
+              <h2 id={titleId} className="font-display text-xl">
+                {t("bookTour")}
+              </h2>
+              <p className="mt-0.5 text-sm text-muted">{name}</p>
             </div>
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
-              <p className="text-sm text-muted">{t("tourTimesListingLead")}</p>
-              <p className="text-sm text-muted">{t("tourHoldSlaLead")}</p>
-              {loading ? (
-                <p className="text-sm text-muted">{t("loading")}</p>
-              ) : empty ? (
-                <div className="rounded-lg bg-bg p-4 ring-1 ring-border" data-tour-empty={empty}>
-                  <p className="font-medium">{empty === "none_open" ? t("tourTimesNoneOpen") : t("tourTimesEmpty")}</p>
-                  <p className="mt-1 text-sm text-muted">
-                    {empty === "none_open" ? t("tourTimesNoneOpenLead") : t("tourTimesEmptyLead")}
-                  </p>
-                  {onRequestInfo ? (
-                    <Button
-                      type="button"
-                      className="mt-3 w-full"
-                      onClick={() => {
-                        onClose();
-                        onRequestInfo();
-                      }}
-                    >
-                      {t("requestInfo")}
-                    </Button>
-                  ) : null}
-                </div>
-              ) : (
-                <>
-                  <fieldset>
-                    <legend className="text-sm font-medium">{t("tourTimesPickDate")}</legend>
-                    <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto pb-1">
-                      {dates.map((day) => (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => {
-                            setDate(day);
-                            setWindowId("");
-                          }}
-                          className={`min-h-11 shrink-0 rounded-full px-3 text-sm ring-1 ${
-                            date === day ? "bg-primary text-primary-fg ring-primary" : "bg-bg ring-border"
-                          }`}
-                        >
-                          {formatTourDateChip(day, loc)}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <fieldset>
-                    <legend className="text-sm font-medium">{t("tourTimesPickSlot")}</legend>
-                    <p className="mt-1 text-xs text-muted">{timezoneLabel(timezone, loc)}</p>
-                    <div className="mt-2 grid gap-2">
-                      {daySlots.map((slot) => (
-                        <button
-                          key={slot.id}
-                          type="button"
-                          onClick={() => setWindowId(slot.id)}
-                          className={`min-h-11 rounded-lg px-3 py-2 text-left text-sm ring-1 ${
-                            windowId === slot.id ? "bg-primary/10 ring-2 ring-primary" : "bg-bg ring-border"
-                          }`}
-                        >
-                          <span className="font-medium">{formatTourSlotRange(slot, loc)}</span>
-                          <span className="mt-0.5 block text-xs text-muted">
-                            {slot.remaining === 1
-                              ? `1 ${t("tourTimesSpotLeft")}`
-                              : `${slot.remaining} ${t("tourTimesSpotsLeft")}`}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                </>
-              )}
-              {user && savedKids.length ? (
-                <label className="block text-sm">
-                  {t("pickChild")}
-                  <select
-                    className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                    value={childId}
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      setChildId(id);
-                      const kid = savedKids.find((c) => c.id === id);
-                      setChildName(kid?.name ?? "");
+            <button
+              type="button"
+              onClick={onClose}
+              className="grid size-10 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-fg"
+              aria-label={t("cancel")}
+            >
+              <X className="size-5" />
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+            <p className="text-sm text-muted">{t("tourTimesListingLead")}</p>
+            <p className="text-sm text-muted">{t("tourHoldSlaLead")}</p>
+            {loading ? (
+              <p className="text-sm text-muted">{t("loading")}</p>
+            ) : empty ? (
+              <div className="rounded-lg bg-bg p-4 ring-1 ring-border" data-tour-empty={empty}>
+                <p className="font-medium">
+                  {empty === "none_open" ? t("tourTimesNoneOpen") : t("tourTimesEmpty")}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {empty === "none_open" ? t("tourTimesNoneOpenLead") : t("tourTimesEmptyLead")}
+                </p>
+                {onRequestInfo ? (
+                  <Button
+                    type="button"
+                    className="mt-3 w-full"
+                    onClick={() => {
+                      onClose();
+                      onRequestInfo();
                     }}
                   >
-                    <option value="">{t("newChildOption")}</option>
-                    {savedKids.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
+                    {t("requestInfo")}
+                  </Button>
+                ) : null}
+              </div>
+            ) : (
+              <>
+                <fieldset>
+                  <legend className="text-sm font-medium">{t("tourTimesPickDate")}</legend>
+                  <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto pb-1">
+                    {dates.map((day) => (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => {
+                          setDate(day);
+                          setWindowId("");
+                        }}
+                        className={`min-h-11 shrink-0 rounded-full px-3 text-sm ring-1 ${
+                          date === day
+                            ? "bg-primary text-primary-fg ring-primary"
+                            : "bg-bg ring-border"
+                        }`}
+                      >
+                        {formatTourDateChip(day, loc)}
+                      </button>
                     ))}
-                  </select>
-                </label>
-              ) : null}
-              {user ? (
-                <label className="block text-sm">
-                  {t("childFullName")}
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend className="text-sm font-medium">{t("tourTimesPickSlot")}</legend>
+                  <p className="mt-1 text-xs text-muted">{timezoneLabel(timezone, loc)}</p>
+                  <div className="mt-2 grid gap-2">
+                    {daySlots.map((slot) => (
+                      <button
+                        key={slot.id}
+                        type="button"
+                        onClick={() => setWindowId(slot.id)}
+                        className={`min-h-11 rounded-lg px-3 py-2 text-left text-sm ring-1 ${
+                          windowId === slot.id
+                            ? "bg-primary/10 ring-2 ring-primary"
+                            : "bg-bg ring-border"
+                        }`}
+                      >
+                        <span className="font-medium">{formatTourSlotRange(slot, loc)}</span>
+                        <span className="mt-0.5 block text-xs text-muted">
+                          {slot.remaining === 1
+                            ? `1 ${t("tourTimesSpotLeft")}`
+                            : `${slot.remaining} ${t("tourTimesSpotsLeft")}`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              </>
+            )}
+            {user && savedKids.length ? (
+              <label className="block text-sm">
+                {t("pickChild")}
+                <select
+                  className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                  value={childId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setChildId(id);
+                    const kid = savedKids.find((c) => c.id === id);
+                    setChildName(kid?.name ?? "");
+                  }}
+                >
+                  <option value="">{t("newChildOption")}</option>
+                  {savedKids.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {user ? (
+              <label className="block text-sm">
+                {t("childFullName")}
+                <input
+                  autoComplete="off"
+                  className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                  value={childName}
+                  onChange={(e) => setChildName(e.target.value)}
+                  placeholder={t("optional")}
+                />
+              </label>
+            ) : null}
+            {guest && !empty ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <p className="text-sm text-muted sm:col-span-2">{t("tourTimesGuestLead")}</p>
+                <label className="text-sm">
+                  {t("requestInfoFirst")}
                   <input
-                    autoComplete="off"
+                    required
                     className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                    value={childName}
-                    onChange={(e) => setChildName(e.target.value)}
-                    placeholder={t("optional")}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    autoComplete="given-name"
                   />
                 </label>
-              ) : null}
-              {guest && !empty ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <p className="text-sm text-muted sm:col-span-2">{t("tourTimesGuestLead")}</p>
-                  <label className="text-sm">
-                    {t("requestInfoFirst")}
-                    <input
-                      required
-                      className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      autoComplete="given-name"
-                    />
-                  </label>
-                  <label className="text-sm">
-                    {t("requestInfoLast")}
-                    <input
-                      required
-                      className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      autoComplete="family-name"
-                    />
-                  </label>
-                  <label className="text-sm">
-                    {t("requestInfoPhone")}
-                    <input
-                      required
-                      type="tel"
-                      className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      autoComplete="tel"
-                    />
-                  </label>
-                  <label className="text-sm">
-                    {t("requestInfoEmail")}
-                    <input
-                      required
-                      type="email"
-                      className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      autoComplete="email"
-                    />
-                  </label>
-                </div>
-              ) : null}
-              {!empty ? (
-                <label className="block text-sm">
-                  {t("optionalMessage")}
-                  <textarea
-                    rows={3}
-                    placeholder={t("tourDefaultNote")}
-                    className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                <label className="text-sm">
+                  {t("requestInfoLast")}
+                  <input
+                    required
+                    className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    autoComplete="family-name"
                   />
                 </label>
-              ) : null}
-              {selected ? <p className="text-xs text-subtle">{formatTourSlotRange(selected, loc)}</p> : null}
-            </div>
-            {!empty ? (
-              <div className="border-t border-border px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-                <Button type="submit" className="w-full" disabled={busy || !windowId} size="lg">
-                  {busy ? t("loading") : t("tourTimesBook")}
-                </Button>
+                <label className="text-sm">
+                  {t("requestInfoPhone")}
+                  <input
+                    required
+                    type="tel"
+                    className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    autoComplete="tel"
+                  />
+                </label>
+                <label className="text-sm">
+                  {t("requestInfoEmail")}
+                  <input
+                    required
+                    type="email"
+                    className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                  />
+                </label>
               </div>
             ) : null}
-          </form>
-        )}
+            {!empty ? (
+              <label className="block text-sm">
+                {t("optionalMessage")}
+                <textarea
+                  rows={3}
+                  placeholder={t("tourDefaultNote")}
+                  className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+              </label>
+            ) : null}
+            {selected ? (
+              <p className="text-xs text-subtle">{formatTourSlotRange(selected, loc)}</p>
+            ) : null}
+          </div>
+          {!empty ? (
+            <div className="border-t border-border px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={busy || !windowId}
+                size="lg"
+                aria-busy={busy || undefined}
+                aria-label={busy ? t("requestSentSending") : undefined}
+              >
+                {busy ? "…" : t("tourTimesBook")}
+              </Button>
+            </div>
+          ) : null}
+        </form>
       </div>
     </div>
   );

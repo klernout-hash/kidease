@@ -1062,6 +1062,21 @@ export const copy = {
     cancel: "Cancel",
     requestSentTitle: "Request sent successfully",
     requestSentBody: "The daycare has been notified. You can now chat with them.",
+    requestSentHeadline: "Request sent!",
+    requestSentHeadlineTour: "Tour request sent!",
+    requestSentBodyInfo:
+      "Your request was sent to {name}. They’ll get back to you soon. Check your email for a reply.",
+    requestSentBodyTour:
+      "Your tour request for {name} is on its way. We’ll let you know in Messages when the centre confirms the date and time.",
+    requestSentBodySpot:
+      "Your request was sent to {name}. They’ll get back to you soon — the conversation is in Messages.",
+    requestSentBodyMessage:
+      "Your message was sent to {name}. They’ll get back to you soon — the conversation is in Messages.",
+    requestSentViewMessages: "View messages",
+    requestSentBackToListing: "Back to listing",
+    requestSentSending: "Sending",
+    requestSentFailed: "Could not send. Try again.",
+    messageSheetLead: "Write to {name}. Replies stay in Messages.",
     goToConversation: "Go to conversation",
     statusUnderReview: "Under review",
     statusOffered: "Spot offered",
@@ -1589,7 +1604,6 @@ export const copy = {
     tourLead: "Pick a posted visit time. This is not an enrolment request.",
     tourDefaultNote: "I’d like to tour the centre.",
     requestSentTitleTour: "Tour requested",
-    requestSentBodyTour: "The centre will see your visit request in their inbox. You can add details in the chat.",
     preferredTimes: "Preferred times",
     preferredTimesLead: "Offer one to three times. The centre will confirm one.",
     addTime: "Add another time",
@@ -3424,6 +3438,21 @@ export const copy = {
     cancel: "Annuler",
     requestSentTitle: "Demande envoyée",
     requestSentBody: "Le service de garde a été avisé. Vous pouvez maintenant discuter avec eux.",
+    requestSentHeadline: "Demande envoyée !",
+    requestSentHeadlineTour: "Demande de visite envoyée !",
+    requestSentBodyInfo:
+      "Votre demande a été envoyée à {name}. Le centre vous répondra bientôt. Surveillez votre courriel.",
+    requestSentBodyTour:
+      "Votre demande de visite pour {name} est en route. Nous vous aviserons dans Messages quand le centre confirmera la date et l’heure.",
+    requestSentBodySpot:
+      "Votre demande a été envoyée à {name}. Le centre vous répondra bientôt — la conversation est dans Messages.",
+    requestSentBodyMessage:
+      "Votre message a été envoyé à {name}. Le centre vous répondra bientôt — la conversation est dans Messages.",
+    requestSentViewMessages: "Voir les messages",
+    requestSentBackToListing: "Retour à la fiche",
+    requestSentSending: "Envoi",
+    requestSentFailed: "Impossible d’envoyer. Réessayez.",
+    messageSheetLead: "Écrivez à {name}. Les réponses restent dans Messages.",
     goToConversation: "Aller à la conversation",
     statusUnderReview: "En révision",
     statusOffered: "Place offerte",
@@ -3953,7 +3982,6 @@ export const copy = {
     tourLead: "Choisissez un moment affiché. Ce n’est pas une demande d’inscription.",
     tourDefaultNote: "Je souhaite visiter le centre.",
     requestSentTitleTour: "Visite demandée",
-    requestSentBodyTour: "Le centre verra votre demande de visite. Vous pouvez ajouter des détails dans le clavardage.",
     preferredTimes: "Moments préférés",
     preferredTimesLead: "Proposez un à trois moments. Le centre en confirmera un.",
     addTime: "Ajouter un moment",
