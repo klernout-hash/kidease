@@ -156,6 +156,12 @@ export function AdminMailPanel() {
           >
             Titan webmail (external)
           </a>
+          <a
+            href="/admin-email-health"
+            className="inline-flex h-11 items-center rounded-full bg-surface px-4 text-sm font-medium ring-1 ring-border"
+          >
+            Email health
+          </a>
         </div>
       </div>
 
