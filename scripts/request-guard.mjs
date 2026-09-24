@@ -98,6 +98,44 @@ export function isHiddenListingSlug(slug) {
   return false;
 }
 
+/**
+ * Published `/daycare/city/:slug` hubs. Canada catalogue only.
+ * Anything else (US cities such as new-york, unknown slugs, non-hub
+ * Canadian cities) is a document 404. The SPA must not answer 200 and
+ * then paint Winnipeg search.
+ */
+export const PUBLISHED_CITY_HUB_SLUGS = [
+  "toronto",
+  "montreal",
+  "vancouver",
+  "calgary",
+  "edmonton",
+  "ottawa",
+  "winnipeg",
+  "quebec-city",
+  "hamilton",
+  "halifax",
+];
+
+const PUBLISHED_CITY_HUB_SLUG_SET = new Set(PUBLISHED_CITY_HUB_SLUGS);
+
+/** Single-segment slug under `/daycare/city/`, or null when the path is not a hub URL. */
+export function cityHubSlugFromPath(pathname) {
+  const path = normalizePath(pathname).toLowerCase();
+  const prefix = "/daycare/city/";
+  if (!path.startsWith(prefix)) return null;
+  const slug = path.slice(prefix.length);
+  if (!slug || slug.includes("/")) return null;
+  return slug;
+}
+
+/** True for hub URLs that are not a published Canadian directory. */
+export function isOffScopeCityHubPath(pathname) {
+  const slug = cityHubSlugFromPath(pathname);
+  if (!slug) return false;
+  return !PUBLISHED_CITY_HUB_SLUG_SET.has(slug);
+}
+
 export function isHiddenListingPath(pathname) {
   const path = normalizePath(pathname).toLowerCase();
   for (const prefix of LISTING_DOCUMENT_PREFIXES) {
@@ -144,6 +182,10 @@ export function decideRequest(input = {}) {
   }
 
   if (isHiddenListingPath(path)) {
+    return { action: "not_found", status: 404 };
+  }
+
+  if (isOffScopeCityHubPath(path)) {
     return { action: "not_found", status: 404 };
   }
 

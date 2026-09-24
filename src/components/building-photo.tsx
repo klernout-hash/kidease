@@ -17,7 +17,13 @@ export const HERO_LCP_AVIF_SRCSET =
   "/photos/hero-480-k2.avif?v=1 480w, /photos/hero-768-k2.avif?v=1 768w, /photos/hero-1200-k2.avif?v=1 1200w";
 export const HERO_LCP_WEBP_SRCSET =
   "/photos/hero-480-k2.webp 480w, /photos/hero-768-k2.webp 768w, /photos/hero-1200-k2.webp 1200w";
+/** Phone LCP. Caps at 768w so a 3× screen does not pull the 1200 file. */
+export const HERO_LCP_MOBILE_AVIF_SRCSET =
+  "/photos/hero-480-k2.avif?v=1 480w, /photos/hero-768-k2.avif?v=1 768w";
+export const HERO_LCP_MOBILE_WEBP_SRCSET =
+  "/photos/hero-480-k2.webp 480w, /photos/hero-768-k2.webp 768w";
 export const HERO_LCP_SIZES = HERO_SIZES;
+export const HERO_LCP_MOBILE_SIZES = "100vw";
 
 const FALLBACK = "/photos/storefront-placeholder-480.webp";
 
@@ -218,6 +224,8 @@ export function FeelPhoto({
   src,
   className,
   eager = false,
+  priority = false,
+  compact = false,
   sizes,
   width,
   height,
@@ -225,31 +233,42 @@ export function FeelPhoto({
   src: string;
   className?: string;
   eager?: boolean;
+  /** LCP only. High priority, sync decode, and (with compact) no 1200 candidate. */
+  priority?: boolean;
+  /** Drop the 1200 still. Phone hero stays on 480/768. */
+  compact?: boolean;
   sizes?: string;
   width?: number;
   height?: number;
 }) {
   const feel = FEEL_SOURCES[src];
   if (feel) {
-    const fallback = feel.variants[feel.variants.length - 1];
-    const avif = feel.avifSrcSet ?? feelSrcSet(feel.variants, "avif");
-    const webp = feel.webpSrcSet ?? feelSrcSet(feel.variants, "webp");
-    const jpg = feelSrcSet(feel.variants, "jpg");
-    const mediaSizes = sizes ?? feel.sizes;
+    const variants = compact ? feel.variants.filter((variant) => variant.width <= 768) : feel.variants;
+    const use = variants.length ? variants : feel.variants;
+    const fallback = use[use.length - 1];
+    const avif = compact
+      ? HERO_LCP_MOBILE_AVIF_SRCSET
+      : (feel.avifSrcSet ?? feelSrcSet(use, "avif"));
+    const webp = compact
+      ? HERO_LCP_MOBILE_WEBP_SRCSET
+      : (feel.webpSrcSet ?? feelSrcSet(use, "webp"));
+    const jpg = feelSrcSet(use, "jpg");
+    const mediaSizes = sizes ?? (compact ? HERO_LCP_MOBILE_SIZES : feel.sizes);
+    const high = priority || eager;
     return (
       <picture>
         {avif ? <source type="image/avif" srcSet={avif} sizes={mediaSizes} /> : null}
         {webp ? <source type="image/webp" srcSet={webp} sizes={mediaSizes} /> : null}
         <img
           src={fallback.jpg}
-          srcSet={jpg && feel.variants.length > 1 && !feel.avifSrcSet ? jpg : undefined}
+          srcSet={jpg && use.length > 1 && !feel.avifSrcSet && !compact ? jpg : undefined}
           sizes={mediaSizes}
           alt=""
-          width={width ?? feel.width}
-          height={height ?? feel.height}
-          fetchPriority={eager ? "high" : "auto"}
-          loading={eager ? "eager" : "lazy"}
-          decoding={eager ? "auto" : "async"}
+          width={width ?? (compact ? 768 : feel.width)}
+          height={height ?? (compact ? 576 : feel.height)}
+          fetchPriority={priority ? "high" : eager ? "auto" : "low"}
+          loading={high ? "eager" : "lazy"}
+          decoding={priority ? "sync" : "async"}
           className={cn("w-full object-cover", className)}
         />
       </picture>
@@ -301,9 +320,21 @@ export function HeroYard({ className }: { className?: string }) {
   return (
     <FeelPhoto
       src="/photos/hero.jpg"
-      eager
       sizes={HERO_SIZES}
       className={cn("aspect-[4/3] w-full object-cover", className)}
+    />
+  );
+}
+
+/** Phone / app-channel LCP. Eager and capped so it does not pull hero-1200. */
+export function HeroBanner({ className }: { className?: string }) {
+  return (
+    <FeelPhoto
+      src="/photos/hero.jpg"
+      priority
+      compact
+      sizes={HERO_LCP_MOBILE_SIZES}
+      className={cn("aspect-[16/9] w-full object-cover", className)}
     />
   );
 }

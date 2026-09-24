@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CityHubLinks } from "@/components/city-hub-links";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
@@ -12,16 +12,18 @@ import { ListingRail } from "@/components/listing-rail";
 import { ParentDeskRails } from "@/components/parent-desk-rails";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
-import { RoleEnrollChooser, RoleEnrollDialog } from "@/components/role-enroll";
 import {
   FeelPhoto,
+  HeroBanner,
   HeroYard,
   HERO_LCP_AVIF_SRCSET,
+  HERO_LCP_MOBILE_AVIF_SRCSET,
+  HERO_LCP_MOBILE_SIZES,
   HERO_LCP_SIZES,
 } from "@/components/building-photo";
 import { ChipButton } from "@/components/chip";
 import { HomePopularCities } from "@/components/home-popular-cities";
-import { HERO_SIZES, STEP_SIZES } from "@/lib/photo";
+import { STEP_SIZES } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily, getMyRole } from "@/lib/server/family";
 import {
@@ -34,7 +36,7 @@ import {
 } from "@/lib/desks";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { BootPending } from "@/components/boot-pending";
-import { LOADER_SETTLE_MS, ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
+import { HOME_PAINT_BUDGET_MS, LOADER_SETTLE_MS, ORIGIN_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, trustedSavedOrigin } from "@/lib/default-origin";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
@@ -51,7 +53,6 @@ import { compactExploreSearch, guestHeroSearch } from "@/lib/explore-search";
 import { popularHomeCities } from "@/lib/home-popular-cities";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
-import { RateKidEasePrompt } from "@/components/rate-kidease";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { homeLiveStrip } from "@/lib/home-live-strip";
@@ -67,6 +68,16 @@ import {
   type SearchStart,
 } from "@/lib/now-loops";
 
+const RoleEnrollChooser = lazy(() =>
+  import("@/components/role-enroll").then((m) => ({ default: m.RoleEnrollChooser })),
+);
+const RoleEnrollDialog = lazy(() =>
+  import("@/components/role-enroll").then((m) => ({ default: m.RoleEnrollDialog })),
+);
+const RateKidEasePrompt = lazy(() =>
+  import("@/components/rate-kidease").then((m) => ({ default: m.RateKidEasePrompt })),
+);
+
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>) => {
     const change = s.change === "1" || s.change === true;
@@ -76,7 +87,7 @@ export const Route = createFileRoute("/")({
     const origin = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
     const painted = await withPaintBudget(
       featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label } }),
-      PAINT_BUDGET_MS,
+      HOME_PAINT_BUDGET_MS,
     );
     return { featured: painted.value ?? [], featuredReady: painted.ready, origin };
   },
@@ -94,10 +105,21 @@ export const Route = createFileRoute("/")({
           rel: "preload",
           as: "image",
           type: "image/avif",
+          href: "/photos/hero-480-k2.avif?v=1",
+          imageSrcSet: HERO_LCP_MOBILE_AVIF_SRCSET,
+          imageSizes: HERO_LCP_MOBILE_SIZES,
+          fetchPriority: "high",
+          media: "(max-width: 1023px)",
+        },
+        {
+          rel: "preload",
+          as: "image",
+          type: "image/avif",
           href: "/photos/hero-768-k2.avif?v=1",
           imageSrcSet: HERO_LCP_AVIF_SRCSET,
           imageSizes: HERO_LCP_SIZES,
           fetchPriority: "high",
+          media: "(min-width: 1024px)",
         },
       ],
     };
@@ -149,7 +171,7 @@ function Home() {
     ],
   );
   const [role, setRole] = useState<AppRole | null>(null);
-  const [place, setPlace] = useState(origin.label);
+  const [place, setPlace] = useState(boot.origin.label);
   const [homeName, setHomeName] = useState("");
   const [homeFrom, setHomeFrom] = useState("");
   const [homeTo, setHomeTo] = useState("");
@@ -199,39 +221,66 @@ function Home() {
   }, [boot.origin.lat, boot.origin.lng, boot.origin.label, boot.origin.source, setOrigin]);
 
   useEffect(() => {
-    const loc = origin.lat ? origin : boot.origin;
-    setPlace(origin.label);
-    void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label } })
-      .then((rows) => {
-        const next = publicListings(uniqueById(rows));
-        setFeatured(next);
-        setFeaturedReady(true);
-        setExplore((cur) => (cur.length ? cur : next));
-      })
-      .catch(() => {
-        setFeatured([]);
-        setFeaturedReady(true);
-      });
-    void withTimeoutFallback(
-      searchDaycares({
-        data: {
-          lat: loc.lat,
-          lng: loc.lng,
-          radiusKm,
-          sort: "match",
-          ageGroup: "any",
-          label: loc.label,
-          q: loc.label,
-        },
-      }),
-      LOADER_SETTLE_MS,
-      [] as Card[],
-    )
-      .then((rows) => {
-        if (rows.length) setExplore(publicListings(uniqueById(rows)));
-      })
-      .catch(() => undefined);
-  }, [origin.lat, origin.lng, origin.label, radiusKm, boot.origin]);
+    const loc = originSource ? origin : boot.origin;
+    setPlace(loc.label);
+    let cancelled = false;
+    const loadFeatured = () => {
+      void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label } })
+        .then((rows) => {
+          if (cancelled) return;
+          const next = publicListings(uniqueById(rows));
+          setFeatured(next);
+          setFeaturedReady(true);
+          setExplore((cur) => (cur.length ? cur : next));
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setFeatured([]);
+          setFeaturedReady(true);
+        });
+    };
+    const loadExplore = () => {
+      void withTimeoutFallback(
+        searchDaycares({
+          data: {
+            lat: loc.lat,
+            lng: loc.lng,
+            radiusKm,
+            sort: "match",
+            ageGroup: "any",
+            label: loc.label,
+            q: loc.label,
+          },
+        }),
+        LOADER_SETTLE_MS,
+        [] as Card[],
+      )
+        .then((rows) => {
+          if (cancelled || !rows.length) return;
+          setExplore(publicListings(uniqueById(rows)));
+        })
+        .catch(() => undefined);
+    };
+    // Catalogue XHR waits until the hero request is already in flight.
+    const featuredWait = boot.featuredReady;
+    const ric = typeof requestIdleCallback === "function" ? requestIdleCallback : null;
+    const featuredId = featuredWait
+      ? ric
+        ? ric(loadFeatured, { timeout: 1500 })
+        : window.setTimeout(loadFeatured, 400)
+      : null;
+    if (!featuredWait) loadFeatured();
+    const exploreId = ric ? ric(loadExplore, { timeout: 2000 }) : window.setTimeout(loadExplore, 600);
+    return () => {
+      cancelled = true;
+      if (featuredId != null) {
+        if (ric) cancelIdleCallback(featuredId);
+        else window.clearTimeout(featuredId);
+      }
+      if (ric) cancelIdleCallback(exploreId);
+      else window.clearTimeout(exploreId);
+    };
+  }, [origin, originSource, radiusKm, boot.origin, boot.featuredReady]);
 
   function goSearch(label?: string, extra?: { name?: string; from?: string; to?: string; age?: SearchAge; start?: SearchStart }) {
     const fields = compactExploreSearch({
@@ -388,19 +437,28 @@ function Home() {
         }}
       />
 
-      <div className="mt-4 flex flex-wrap gap-2" data-ke="home-live-strip">
-        <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
-          {t(strip.liveLabelKey).replace("{n}", String(strip.liveCount))}
-        </ChipButton>
-        <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
-          {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
-        </ChipButton>
-      </div>
-      {strip.zeroLiveHint ? (
-        <p className="mt-2 text-sm text-muted" data-ke="home-zero-live">
-          {t("exploreBrowseHint").replace("{n}", "0")}
-        </p>
-      ) : null}
+      {featuredReady ? (
+        <>
+          <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip">
+            <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
+              {t(strip.liveLabelKey).replace("{n}", String(strip.liveCount))}
+            </ChipButton>
+            <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
+              {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
+            </ChipButton>
+          </div>
+          {strip.zeroLiveHint ? (
+            <p className="mt-2 text-sm text-muted" data-ke="home-zero-live">
+              {t("exploreBrowseHint").replace("{n}", "0")}
+            </p>
+          ) : null}
+        </>
+      ) : (
+        <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip" aria-busy="true">
+          <span className="ke-skel inline-block h-11 w-28 rounded-full" />
+          <span className="ke-skel inline-block h-11 w-36 rounded-full" />
+        </div>
+      )}
 
       {askLocation ? (
         <div className="mt-3">
@@ -416,7 +474,8 @@ function Home() {
         </div>
       ) : null}
       <p className="mt-3 text-sm text-muted">
-        {origin.label.split(",")[0]} · {displayDistance(radiusKm, "km")} {t("km")}
+        {(originSource ? origin.label : boot.origin.label).split(",")[0]} · {displayDistance(radiusKm, "km")}{" "}
+        {t("km")}
       </p>
     </>
   );
@@ -486,7 +545,7 @@ function Home() {
           </div>
         </section>
 
-        <section id="how" className="ke-gutter mx-auto max-w-6xl py-16">
+        <section id="how" className="ke-defer-paint ke-gutter mx-auto max-w-6xl py-16">
           <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Step
@@ -513,13 +572,15 @@ function Home() {
           </div>
         </section>
 
-        <section className="bg-surface">
+        <section className="ke-defer-paint bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">
             <div id="enroll">
-              <RoleEnrollChooser
-                heading="h2"
-                className="rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8"
-              />
+              <Suspense fallback={<div className="min-h-64" aria-hidden="true" />}>
+                <RoleEnrollChooser
+                  heading="h2"
+                  className="rounded-xl bg-bg p-5 ring-1 ring-border sm:p-8"
+                />
+              </Suspense>
             </div>
 
           </div>
@@ -548,7 +609,7 @@ function Home() {
           </div>
         </section>
 
-        <section className="bg-primary text-primary-fg">
+        <section className="ke-defer-paint bg-primary text-primary-fg">
           <div className="ke-gutter mx-auto max-w-3xl py-16 text-center">
             <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
             <p className="mx-auto mt-4 max-w-xl text-primary-fg/90">{t("finalCtaBody")}</p>
@@ -569,14 +630,16 @@ function Home() {
         </section>
 
         {!user ? (
-          <section className="border-t border-border bg-bg" aria-label={t("rateKidEase")}>
+          <section className="ke-defer-paint border-t border-border bg-bg" aria-label={t("rateKidEase")}>
             {/*
               Guest www homepage (logged-out): Rate KidEase is intentionally public,
               not Account-only. Same prompt as /account. Web → rateKidEaseFromMenu → /get-app.
               No live App Store / Play calls. Cookie consent banner stays on the root layout.
             */}
             <div className="ke-gutter mx-auto max-w-lg py-12">
-              <RateKidEasePrompt />
+              <Suspense fallback={<div className="min-h-24" aria-hidden="true" />}>
+                <RateKidEasePrompt />
+              </Suspense>
             </div>
           </section>
         ) : null}
@@ -587,7 +650,7 @@ function Home() {
       <div className="ke-app-only hidden [[data-channel=app]_&]:block">
         <section className="ke-gutter mx-auto max-w-6xl pb-6 pt-5">
           <div className="overflow-hidden rounded-xl shadow-card ring-1 ring-border">
-            <FeelPhoto src="/photos/hero.jpg" eager sizes={HERO_SIZES} className="aspect-[16/9] w-full object-cover" />
+            <HeroBanner />
           </div>
           <h1 className="mt-4 font-display text-[1.65rem] leading-tight tracking-[-0.03em]">
             {t("tagline")}
@@ -639,7 +702,9 @@ function Home() {
         </section>
       </div>
 
-      <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />
+      <Suspense fallback={null}>
+        <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />
+      </Suspense>
     </Shell>
   );
 }
