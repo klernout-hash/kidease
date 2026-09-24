@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { GHOST_LISTING } from "../src/lib/ghost-listing.ts";
+import { centresInLiveSearch } from "../src/lib/approve-live.ts";
 import {
   isAdminOnlyListing,
   isPublicListing,
@@ -44,7 +45,89 @@ test("a pending centre stays on the director desk so the owner can add photos", 
   assert.equal(providerDeskListingVisible({ slug: "river-park-child-care", name: "River Park Child Care", claimStatus: "waiting" }), true);
   assert.equal(providerDeskListingVisible({ ...GHOST_LISTING, claimStatus: "waiting" }), false);
   assert.equal(providerDeskListingVisible({ ...pending, claimStatus: "approved" }), false);
+  assert.equal(providerDeskListingVisible({ ...pending, claimStatus: "approved" }, { ownedByViewer: true, viewerEmail: "kyle@kidease.ca" }), false);
   assert.equal(providerDeskListingVisible(null), false);
+});
+
+test("an owned QA fixture stays on the director desk, including after approval", () => {
+  const qa = {
+    id: "d_2wyxdfs4o0r0",
+    slug: "qa-test-photo-upload",
+    name: "QA TEST Photo Upload - Do Not Book",
+    licenseNumber: "QA-TEST-0000",
+    visibility: "admin_only",
+    isTest: 1,
+    claimStatus: "pending",
+  };
+  const owner = { ownedByViewer: true, viewerEmail: "director@centre.example" };
+  const operator = { viewerEmail: "kyle@kidease.ca" };
+  assert.equal(looksLikeTestFixture(qa), true);
+  assert.equal(isAdminOnlyListing(qa), true);
+  assert.equal(isPublicListing(qa), false);
+  for (const claimStatus of ["pending", "waiting", "verified", "approved"]) {
+    assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, owner), true);
+    assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, operator), true);
+    assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, { viewerEmail: "Kyle@KidEase.ca" }), true);
+  }
+  assert.equal(providerDeskListingVisible(qa), false);
+  assert.equal(providerDeskListingVisible(qa, { ownedByViewer: false, viewerEmail: "other@centre.example" }), false);
+  assert.equal(providerDeskListingVisible({ ...qa, claimStatus: "declined" }, owner), false);
+  assert.equal(providerDeskListingVisible({ ...qa, claimStatus: "" }, owner), false);
+
+  const testNamed = { name: "TEST Extra Claim Lab", claimStatus: "waiting", visibility: "admin_only", isTest: 1 };
+  assert.equal(providerDeskListingVisible(testNamed, owner), true);
+  assert.equal(providerDeskListingVisible(testNamed, { ownedByViewer: false, viewerEmail: "other@centre.example" }), false);
+
+  assert.equal(publicListings([qa, { slug: "bonnie-bairns", name: "Bonnie Bairns" }]).map((row) => row.slug).join(","), "bonnie-bairns");
+  assert.equal(
+    centresInLiveSearch([qa], { origin: { lat: 49.9, lng: -97.14 }, radiusKm: 25 }).length,
+    0,
+  );
+});
+
+test("ghost and Claim Lab fixtures stay off the director desk even for the owner", () => {
+  const owner = { ownedByViewer: true, viewerEmail: "kyle@kidease.ca" };
+  assert.equal(providerDeskListingVisible({ ...GHOST_LISTING, claimStatus: "pending" }, owner), false);
+  assert.equal(providerDeskListingVisible({ ...GHOST_LISTING, claimStatus: "approved" }, owner), false);
+  for (const slug of ["test-ghost", "test-ghost-claim-lab", "test-test-p23f", "test-test-nozo", "test-test-p2tk", "test-ghost-extra", "winnipeg-ghost-listing"]) {
+    assert.equal(
+      providerDeskListingVisible({ slug, name: "Owned fixture", claimStatus: "pending", visibility: "admin_only", isTest: 1 }, owner),
+      false,
+    );
+  }
+  assert.equal(
+    providerDeskListingVisible({ id: "ke-test-ghost-001", name: "Sunny Room", claimStatus: "approved" }, owner),
+    false,
+  );
+  assert.equal(
+    providerDeskListingVisible({ name: "Winnipeg Ghost Claim", claimStatus: "waiting" }, owner),
+    false,
+  );
+  assert.equal(
+    providerDeskListingVisible({ name: "Winnipeg Ghost Listing", claimStatus: "verified" }, owner),
+    false,
+  );
+  assert.equal(
+    providerDeskListingVisible({ licenseNumber: "TEST-GHOST-0001", name: "Sunny Room", claimStatus: "pending" }, owner),
+    false,
+  );
+});
+
+test("photo save uses the same director-desk gate", () => {
+  const claims = readFileSync(new URL("../src/lib/server/claims.ts", import.meta.url), "utf8");
+  const updateStart = claims.indexOf("export const updateListing");
+  const updateEnd = claims.indexOf("export const getMyClaims", updateStart);
+  const updateListing = claims.slice(updateStart, updateEnd === -1 ? undefined : updateEnd);
+  assert.match(updateListing, /providerDeskListingVisible\(/);
+  assert.match(updateListing, /ownedByViewer: true/);
+  assert.match(updateListing, /DESK_LISTING_NOT_VISIBLE/);
+  assert.match(updateListing, /prepareListingUploadPhoto/);
+  const family = readFileSync(new URL("../src/lib/server/family.ts", import.meta.url), "utf8");
+  const providerStart = family.indexOf("export const getProvider");
+  const providerEnd = family.indexOf("export const createListing", providerStart);
+  const getProvider = family.slice(providerStart, providerEnd === -1 ? undefined : providerEnd);
+  assert.match(getProvider, /ownedByViewer: true/);
+  assert.match(getProvider, /viewerEmail: viewer\.email/);
 });
 
 test("durable visibility / is_test flags hide listings without hardcoding slug", () => {
