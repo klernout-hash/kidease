@@ -13,10 +13,13 @@
  * 3. Deterministic deskew (dominant edges), content crop around the subject,
  *    then a mild unsharp mask. Output is JPEG, max edge 1600, under the
  *    listing upload cap.
- * 4. If that enhance step throws after a successful decode, the original
- *    data URL is kept. The upload still succeeds with a readable image.
+ * 4. If that enhance step throws after a successful decode of JPEG, PNG, or
+ *    WebP, the original data URL is kept. HEIC, HEIF, BMP, TIFF, GIF, and
+ *    AVIF are still re-encoded to JPEG so a container the browser could not
+ *    shrink is never stored as-is.
  */
 import sharp, { type Sharp } from "sharp";
+import { decodeWindowsBmp } from "../bmp-decode.ts";
 import { splitPhotoList } from "../listing-photo.ts";
 import { LISTING_PHOTO_MAX_BYTES } from "../upload-limits.ts";
 
@@ -30,11 +33,13 @@ const SEARCH_STEP_DEG = 0.5;
 const MIN_USEFUL_ANGLE = 0.35;
 
 const DATA_IMAGE =
-  /^data:(image\/(?:jpeg|jpg|png|webp));base64,([a-z0-9+/=\s]+)$/i;
+  /^data:(image\/(?:jpeg|jpg|png|webp|avif|gif|bmp|x-ms-bmp|tiff|tif|heic|heif|heic-sequence|heif-sequence));base64,([a-z0-9+/=\s]+)$/i;
+
+const STORED_LISTING_MIME = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 
 export class ListingPhotoPolishError extends Error {
   readonly status = 400;
-  constructor(message = "Could not read that photo. Upload a JPEG, PNG, or WebP of the building.") {
+  constructor(message = "Could not read that photo. Use a JPG, PNG, HEIC, WebP, AVIF, GIF, BMP, or TIFF.") {
     super(message);
     this.name = "ListingPhotoPolishError";
   }
@@ -159,21 +164,101 @@ type BufferOutcome = {
   vision: PolishVision;
 };
 
+function isDirectlyStoredListingMime(mime: string): boolean {
+  return STORED_LISTING_MIME.has(mime.toLowerCase());
+}
+
+function ftypBrand(input: Buffer): string {
+  if (input.byteLength < 12) return "";
+  if (input.toString("ascii", 4, 8) !== "ftyp") return "";
+  return input.toString("ascii", 8, 12).toLowerCase();
+}
+
+function isHeicFamily(mime: string, input: Buffer): boolean {
+  const normalized = mime.toLowerCase();
+  if (
+    normalized === "image/heic" ||
+    normalized === "image/heif" ||
+    normalized === "image/heic-sequence" ||
+    normalized === "image/heif-sequence"
+  ) {
+    return true;
+  }
+  const brand = ftypBrand(input);
+  return (
+    brand === "heic" ||
+    brand === "heix" ||
+    brand === "hevc" ||
+    brand === "hevx" ||
+    brand === "heim" ||
+    brand === "heis" ||
+    brand === "heif" ||
+    brand === "mif1" ||
+    brand === "msf1"
+  );
+}
+
+function isBmpUpload(mime: string, input: Buffer): boolean {
+  const normalized = mime.toLowerCase();
+  if (normalized === "image/bmp" || normalized === "image/x-ms-bmp") return true;
+  return input.byteLength > 2 && input[0] === 0x42 && input[1] === 0x4d;
+}
+
+/** BMP and HEVC HEIC/HEIF become PNG so the deskew pass can use sharp. */
+async function normalizeSpecialContainers(input: Buffer, mime: string): Promise<{ buffer: Buffer; mime: string; transcoded: boolean }> {
+  if (isBmpUpload(mime, input)) {
+    const decoded = decodeWindowsBmp(input);
+    if (!decoded) throw new ListingPhotoPolishError();
+    const png = await sharp(Buffer.from(decoded.rgb), {
+      raw: { width: decoded.width, height: decoded.height, channels: 3 },
+    })
+      .png()
+      .toBuffer();
+    return { buffer: png, mime: "image/png", transcoded: true };
+  }
+  if (isHeicFamily(mime, input)) {
+    try {
+      const decodeHeic = (await import("heic-decode")).default;
+      const decoded = await decodeHeic({ buffer: input });
+      if (!decoded.width || !decoded.height || decoded.width < 8 || decoded.height < 8) {
+        throw new ListingPhotoPolishError();
+      }
+      const png = await sharp(Buffer.from(decoded.data), {
+        raw: { width: decoded.width, height: decoded.height, channels: 4 },
+      })
+        .flatten({ background: "#ffffff" })
+        .png()
+        .toBuffer();
+      return { buffer: png, mime: "image/png", transcoded: true };
+    } catch (err) {
+      if (err instanceof ListingPhotoPolishError) throw err;
+      throw new ListingPhotoPolishError();
+    }
+  }
+  return { buffer: input, mime, transcoded: false };
+}
+
 async function polishListingPhotoBuffer(input: Buffer, mime: string, opts?: PolishOptions): Promise<BufferOutcome> {
   if (!input.byteLength) throw new ListingPhotoPolishError("That photo was empty.");
   if (input.byteLength > MAX_INPUT_BYTES) {
     throw new ListingPhotoPolishError("That photo is too large to process.");
   }
+  const normalized = await normalizeSpecialContainers(input, mime);
+  const source = normalized.buffer;
+  const sourceMime = normalized.mime;
   let oriented: Buffer;
   let width = 0;
   let height = 0;
   try {
-    const decoded = sharp(input, { failOn: "none" }).rotate();
+    const decoded = sharp(source, { failOn: "none", pages: 1, animated: false }).rotate();
     const meta = await decoded.metadata();
     if (!meta.width || !meta.height || meta.width < 8 || meta.height < 8) {
       throw new ListingPhotoPolishError();
     }
-    oriented = await sharp(input, { failOn: "none" }).rotate().flatten({ background: "#ffffff" }).toBuffer();
+    oriented = await sharp(source, { failOn: "none", pages: 1, animated: false })
+      .rotate()
+      .flatten({ background: "#ffffff" })
+      .toBuffer();
     const sized = await sharp(oriented).metadata();
     width = sized.width ?? 0;
     height = sized.height ?? 0;
@@ -185,12 +270,24 @@ async function polishListingPhotoBuffer(input: Buffer, mime: string, opts?: Poli
 
   try {
     if (opts?.forceEnhanceError) throw new Error("enhance failed");
-    const enhanced = await enhanceOriented(oriented, width, height, mime, opts);
+    const enhanced = await enhanceOriented(oriented, width, height, sourceMime, opts);
     const check = await sharp(enhanced.buffer).metadata();
     if (!check.width || !check.height || !enhanced.buffer.byteLength) {
       throw new ListingPhotoPolishError("The straightened photo could not be read.");
     }
     if (enhanced.buffer.byteLength > LISTING_PHOTO_MAX_BYTES) {
+      if (normalized.transcoded || !isDirectlyStoredListingMime(mime)) {
+        return {
+          dataUrl: toDataUrl("image/jpeg", enhanced.buffer),
+          polished: true,
+          keptOriginal: false,
+          reason: "output-over-cap",
+          angleDeg: enhanced.angleDeg,
+          cropped: enhanced.cropped,
+          sharpened: true,
+          vision: enhanced.vision,
+        };
+      }
       return kept(input, mime, "output-over-cap");
     }
     return {
@@ -205,7 +302,24 @@ async function polishListingPhotoBuffer(input: Buffer, mime: string, opts?: Poli
     };
   } catch (err) {
     if (err instanceof ListingPhotoPolishError && /could not be read/i.test(err.message)) throw err;
-    return kept(input, mime, "enhance-failed");
+    if (!normalized.transcoded && isDirectlyStoredListingMime(mime)) {
+      return kept(input, mime, "enhance-failed");
+    }
+    try {
+      const buffer = await encodeJpeg(sharp(oriented));
+      return {
+        dataUrl: toDataUrl("image/jpeg", buffer),
+        polished: true,
+        keptOriginal: false,
+        reason: "transcoded",
+        angleDeg: 0,
+        cropped: false,
+        sharpened: false,
+        vision: "off",
+      };
+    } catch {
+      throw new ListingPhotoPolishError();
+    }
   }
 }
 

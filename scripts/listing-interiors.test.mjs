@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   MAX_INTERIOR_PHOTOS,
+  MAX_LISTING_PHOTOS,
   applyInteriorPhotos,
   classifyListingPhotos,
   listingPhotosFor,
@@ -30,7 +31,11 @@ test("provider listing form and public listing expose interiors", () => {
   const copy = src("src/lib/copy.ts");
   assert.match(forms, /t\("interiors"\)/);
   assert.match(forms, /t\("interiorCta"\)/);
-  assert.match(forms, /into: "storefront" \| "interiors" \| "license"/);
+  assert.match(forms, /data-ke="listing-photo-count"/);
+  assert.match(forms, /data-ke="listing-photo-delete"/);
+  assert.match(forms, /data-ke="listing-photo-cover"/);
+  assert.match(forms, /LISTING_PHOTO_ACCEPT/);
+  assert.doesNotMatch(forms, /accept="image\/\*"/);
   assert.match(detail, /classifyListingPhotos/);
   assert.match(detail, /t\("interiors"\)/);
   assert.match(copy, /interiorCta: "Add interior photo"/);
@@ -74,5 +79,6 @@ test("catalogue hydrate keeps storefront honesty when no interiors exist", () =>
     "/photos/wpg/1052-logo.png",
   ]);
   assert.equal(classifyListingPhotos(["/photos/community.jpg", "/photos/playroom.jpg"]).interiors.length, 0);
-  assert.equal(MAX_INTERIOR_PHOTOS, 5);
+  assert.equal(MAX_LISTING_PHOTOS, 10);
+  assert.equal(MAX_INTERIOR_PHOTOS, MAX_LISTING_PHOTOS - 1);
 });

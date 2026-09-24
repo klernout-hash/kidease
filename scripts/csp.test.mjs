@@ -40,9 +40,10 @@ test("nonce CSP drops script-src unsafe-inline and keeps product hosts", () => {
   assert.match(csp, /connect-src[^;]*https:\/\/us\.i\.posthog\.com/);
   assert.match(csp, /worker-src 'self' blob: data:/);
   assert.match(csp, /img-src 'self' data: blob: https: https:\/\/media\.kidease\.ca https:\/\/pub-9e5f137809844fcdb6d6671cd909f312\.r2\.dev https:\/\/\*\.r2\.dev/);
+  assert.match(csp, /script-src[^;]*'wasm-unsafe-eval'/);
   assert.doesNotMatch(csp, /script-src[^;]*'unsafe-inline'/);
   assert.doesNotMatch(csp, /(?:^|; )style-src [^;]*'unsafe-inline'/);
-  assert.doesNotMatch(csp, /unsafe-eval/);
+  assert.doesNotMatch(csp, /'unsafe-eval'/);
   assert.doesNotMatch(csp, /grok\.com/);
   assert.doesNotMatch(csp, /r2\.cloudflarestorage\.com/);
   assert.throws(() => buildContentSecurityPolicy("bad nonce"), /unsafe characters/);
@@ -94,7 +95,34 @@ test("applyDocumentNonces injects style-nonce boot and stamps script plus style"
   const again = applyStyleNonceBoot(out, "n1");
   assert.equal((again.match(/data-ke-style-nonce/g) ?? []).length, 1);
   assert.match(STYLE_NONCE_BOOT, /document\.currentScript/);
+  assert.match(STYLE_NONCE_BOOT, /\.nonce=n/);
+  assert.match(STYLE_NONCE_BOOT, /setAttribute\("nonce",n\)/);
   assert.doesNotMatch(STYLE_NONCE_BOOT, /<\/script>/);
+});
+
+test("data-ke-style-nonce is not treated as a nonce, so every script gets one", () => {
+  const html = [
+    "<head>",
+    `<script data-ke-style-nonce="">${STYLE_NONCE_BOOT}</script>`,
+    "<style>.x{}</style>",
+    '<style data-ke-style-nonce="">.y{}</style>',
+    '<script src="/channel-boot.js"></script>',
+    '<script nonce="keep-me" src="/already.js"></script>',
+    "</head>",
+  ].join("");
+  const out = applyDocumentNonces(html, "n1");
+  assert.match(out, /<script nonce="n1" data-ke-style-nonce="">/);
+  assert.match(out, /<style nonce="n1">\.x\{\}<\/style>/);
+  assert.match(out, /<style nonce="n1" data-ke-style-nonce="">\.y\{\}<\/style>/);
+  assert.match(out, /<script nonce="n1" src="\/channel-boot\.js">/);
+  assert.match(out, /<script nonce="keep-me" src="\/already\.js">/);
+  assert.equal((out.match(/nonce="n1"/g) ?? []).length, 4);
+  const opens = out.match(/<script\b[^>]*>/gi) ?? [];
+  assert.equal(opens.length, 3);
+  for (const open of opens) {
+    assert.match(open, /(?:^|\s)nonce="[^"]+"/);
+    assert.doesNotMatch(open, /(?:^|\s)nonce=""/);
+  }
 });
 
 test("HTML documents are not cached so they cannot point at deleted asset hashes", () => {

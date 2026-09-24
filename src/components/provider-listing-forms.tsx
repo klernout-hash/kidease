@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Megaphone } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Megaphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,20 @@ import { PriorityPill } from "@/components/priority-pill";
 import { ListingHealthPanel } from "@/components/listing-health";
 import { ListingReadinessCoach } from "@/components/listing-readiness-coach";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
-import { classifyListingPhotos, MAX_INTERIOR_PHOTOS } from "@/lib/listing-photo";
+import {
+  makeListingCover,
+  managedListingPhotos,
+  MAX_INTERIOR_PHOTOS,
+  MAX_LISTING_PHOTOS,
+  moveListingPhoto,
+  removeListingPhoto,
+} from "@/lib/listing-photo";
+import {
+  downgradeListingPhotoFile,
+  LISTING_PHOTO_ACCEPT,
+  listingPhotoByteBudget,
+  ListingPhotoPrepareError,
+} from "@/lib/listing-photo-downgrade";
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
@@ -93,18 +106,33 @@ export function PromotePanel({ daycare, onSaved }: { daycare: Daycare; onSaved: 
   );
 }
 
-export function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+export function Field({
+  label,
+  value,
+  onChange,
+  name,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  name?: string;
+}) {
   return (
     <label className="text-sm">
       {label}
-      <input className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3" value={value} onChange={(e) => onChange(e.target.value)} />
+      <input
+        name={name}
+        className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </label>
   );
 }
 
 export { LISTING_PHOTO_MAX_BYTES };
 
-/** Shared FileReader + size cap for storefront / licence uploads. */
+/** Journal photos still reject over the byte cap. Listing photos are downgraded before upload. */
 export function readListingImage(file: File | undefined, onReady: (dataUrl: string) => void, onTooBig: () => void) {
   if (!file) return;
   if (isListingPhotoTooBig(file.size)) {
@@ -135,8 +163,6 @@ function listingFormState(daycare: Daycare) {
     ageMaxMonths: daycare.agesKnown ? daycare.ageMaxMonths : 60,
     hours: daycare.hours,
     licenseNumber: daycare.licenseNumber ?? "",
-    storefront: "",
-    interiors: [] as string[],
     licensePhoto: "",
     staffLanguages: daycare.staffLanguages ?? [],
     culturalPrograms: daycare.culturalPrograms ?? [],
@@ -186,15 +212,22 @@ export function CapacityForm({
   const serverRev = listingDeskRevision(daycare);
   const [appliedRev, setAppliedRev] = useState(serverRev);
   const [state, setState] = useState(() => listingFormState(daycare));
+  const [gallery, setGallery] = useState<string[] | null>(null);
+  const [photoJobs, setPhotoJobs] = useState<{ id: string; name: string; progress: number }[]>([]);
   if (appliedRev !== serverRev) {
     setAppliedRev(serverRev);
     setState(listingFormState(daycare));
+    setGallery(null);
+    setPhotoJobs([]);
   }
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [licenseError, setLicenseError] = useState<string | null>(null);
   const savedParent = parentDeskFromDaycare(daycare);
+  const serverPhotos = managedListingPhotos(daycare.photos);
+  const galleryDirty =
+    gallery !== null && (gallery.length !== serverPhotos.length || gallery.some((src, index) => src !== serverPhotos[index]));
   const dirty =
     state.name !== daycare.name ||
     state.address !== daycare.address ||
@@ -213,8 +246,7 @@ export function CapacityForm({
     state.ageMaxMonths !== (daycare.agesKnown ? daycare.ageMaxMonths : 60) ||
     state.hours !== daycare.hours ||
     state.licenseNumber !== (daycare.licenseNumber ?? "") ||
-    Boolean(state.storefront) ||
-    state.interiors.length > 0 ||
+    galleryDirty ||
     Boolean(state.licensePhoto) ||
     JSON.stringify(state.staffLanguages) !== JSON.stringify(daycare.staffLanguages ?? []) ||
     JSON.stringify(state.culturalPrograms) !== JSON.stringify(daycare.culturalPrograms ?? []) ||
@@ -247,36 +279,58 @@ export function CapacityForm({
     preschoolMonthly: state.preschoolMonthly,
     ageMinMonths: state.ageMinMonths,
     ageMaxMonths: state.ageMaxMonths,
-    photos: state.storefront ? [state.storefront, ...daycare.photos] : daycare.photos,
+    photos: gallery ?? daycare.photos,
     agesKnown: true,
   };
   const complete = listingCompleteness(draft);
   const vacancy = vacancyFreshness(vacancyTimestamp(daycare));
-  const preview = state.storefront || daycare.photos[0];
-  const existingInteriors = classifyListingPhotos(daycare.photos).interiors;
+  const shown = gallery ?? serverPhotos;
+  const reserved = shown.length + photoJobs.length;
+  const interiorCount = Math.max(0, reserved - (reserved > 0 ? 1 : 0));
+  const canAddPhoto = reserved === 0 || (reserved < MAX_LISTING_PHOTOS && interiorCount < MAX_INTERIOR_PHOTOS);
 
-  function readImage(file: File | undefined, into: "storefront" | "interiors" | "license") {
-    if (!file) return;
-    if (isListingPhotoTooBig(file.size)) {
-      const message = t("photoTooBig");
+  async function addListingPhotos(files: File[]) {
+    if (!files.length) return;
+    const room = MAX_LISTING_PHOTOS - (shown.length + photoJobs.length);
+    if (room <= 0) {
+      const message = t("photoAtCap");
       setPhotoError(message);
       toast.error(message);
       return;
     }
-    setPhotoError(null);
-    readListingImage(
-      file,
-      (value) => {
-        if (into === "storefront") setState((s) => ({ ...s, storefront: value }));
-        else if (into === "license") setState((s) => ({ ...s, licensePhoto: value }));
-        else setState((s) => ({ ...s, interiors: [...s.interiors, value].slice(0, 5) }));
-      },
-      () => {
-        const message = t("photoTooBig");
+    const take = files.slice(0, room);
+    if (files.length > room) {
+      const message = t("photoOverflow");
+      setPhotoError(message);
+      toast.error(message);
+    } else {
+      setPhotoError(null);
+    }
+    const targetBytes = listingPhotoByteBudget(MAX_LISTING_PHOTOS);
+    for (const file of take) {
+      const id = `${Date.now()}-${file.name}-${Math.random().toString(36).slice(2, 8)}`;
+      setPhotoJobs((jobs) => [...jobs, { id, name: file.name || t("storefrontPhoto"), progress: 8 }]);
+      try {
+        const dataUrl = await downgradeListingPhotoFile(file, {
+          targetBytes,
+          onProgress: (n) => {
+            setPhotoJobs((jobs) => jobs.map((job) => (job.id === id ? { ...job, progress: n } : job)));
+          },
+        });
+        setGallery((current) => {
+          const start = current ?? managedListingPhotos(daycare.photos);
+          if (start.length >= MAX_LISTING_PHOTOS) return start;
+          return [...start, dataUrl];
+        });
+      } catch (err) {
+        const unreadable = err instanceof ListingPhotoPrepareError && err.code === "unreadable";
+        const message = t(unreadable ? "photoUnreadable" : "photoTooBig");
         setPhotoError(message);
         toast.error(message);
-      },
-    );
+      } finally {
+        setPhotoJobs((jobs) => jobs.filter((job) => job.id !== id));
+      }
+    }
   }
 
   return (
@@ -296,8 +350,9 @@ export function CapacityForm({
             postalCode: state.postalCode,
             phone: state.phone,
             email: state.email,
-            storefront: state.storefront || undefined,
-            interiors: state.interiors,
+            storefront: undefined,
+            interiors: [],
+            managedPhotos: galleryDirty ? (gallery ?? []) : undefined,
             licensePhoto: undefined,
             spotsInfant: state.spotsInfant,
             spotsToddler: state.spotsToddler,
@@ -328,9 +383,9 @@ export function CapacityForm({
             promoText: state.promoText,
           },
         })
-          .then(onSaved)
+          .then(() => onSaved())
           .then(() => {
-            const photo = Boolean(state.storefront) || state.interiors.length > 0;
+            const photo = galleryDirty;
             const spots =
               state.spotsInfant !== daycare.spotsInfant ||
               state.spotsToddler !== daycare.spotsToddler ||
@@ -348,6 +403,7 @@ export function CapacityForm({
                     ? "feesUpdated"
                     : "listingEdits";
             confirmAction(t, id);
+            setGallery(null);
           })
           .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
           .finally(() => setSaving(false));
@@ -401,45 +457,128 @@ export function CapacityForm({
         <>
           <ListingReadinessCoach item={draft} variant="editor" />
           <ListingHealthPanel item={{ ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
-          <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            {preview ? (
-              <img src={preview} alt="" className="h-36 w-full max-w-xs rounded-xl object-cover ring-1 ring-border sm:h-28 sm:w-40" />
-            ) : (
-              <div className="grid h-36 w-full max-w-xs place-items-center rounded-xl bg-bg text-sm text-muted ring-1 ring-dashed ring-border sm:h-28 sm:w-40">
-                {t("storefrontPhoto")}
-              </div>
-            )}
-            <label className="flex min-h-28 flex-1 cursor-pointer flex-col items-start justify-center gap-2 rounded-xl border border-dashed border-border bg-bg px-4 py-3 text-sm">
-              <span className="inline-flex items-center gap-2 font-medium text-primary">
-                <Camera className="size-4" />
-                {t("storefrontCta")}
-              </span>
-              <input type="file" accept="image/*" className="sr-only" onChange={(e) => readImage(e.target.files?.[0], "storefront")} />
-              <UploadLimitHint hint={t("uploadPhotoHint")} error={photoError} />
-            </label>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
+            <p data-ke="listing-photo-count" className="text-sm tabular-nums text-muted">
+              {t("photoCount").replace("{n}", String(shown.length)).replace("{max}", String(MAX_LISTING_PHOTOS))}
+            </p>
           </div>
           <h3 className="font-display text-xl">{t("interiors")}</h3>
           <p className="text-sm text-muted">{t("interiorPhotoNote")}</p>
           <UploadLimitHint hint={t("uploadPhotoHint")} error={photoError} />
+          {shown.length >= MAX_LISTING_PHOTOS ? <p className="text-sm text-muted">{t("photoAtCap")}</p> : null}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {existingInteriors.map((src) => (
-              <img key={src} src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover ring-1 ring-border" />
+            {shown.map((src, i) => (
+              <div key={`${i}-${src.slice(-24)}`} data-ke="listing-photo-card" className="rounded-lg bg-bg p-2 ring-1 ring-border">
+                <div className="relative">
+                  <img src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" />
+                  {i === 0 ? (
+                    <span className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-fg">{t("photoCover")}</span>
+                  ) : null}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    data-ke="listing-photo-earlier"
+                    aria-label={t("photoMoveEarlier")}
+                    disabled={i === 0}
+                    onClick={() =>
+                      setGallery((current) => {
+                        const list = current ?? serverPhotos;
+                        const index = list.indexOf(src);
+                        return index < 0 ? list : moveListingPhoto(list, index, -1);
+                      })
+                    }
+                  >
+                    <ChevronLeft className="size-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    data-ke="listing-photo-later"
+                    aria-label={t("photoMoveLater")}
+                    disabled={i === shown.length - 1}
+                    onClick={() =>
+                      setGallery((current) => {
+                        const list = current ?? serverPhotos;
+                        const index = list.indexOf(src);
+                        return index < 0 ? list : moveListingPhoto(list, index, 1);
+                      })
+                    }
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                  {i > 0 ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      data-ke="listing-photo-cover"
+                      onClick={() =>
+                        setGallery((current) => {
+                          const list = current ?? serverPhotos;
+                          const index = list.indexOf(src);
+                          return index < 0 ? list : makeListingCover(list, index);
+                        })
+                      }
+                    >
+                      {t("photoMakeCover")}
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    data-ke="listing-photo-delete"
+                    aria-label={t("photoDelete")}
+                    onClick={() =>
+                      setGallery((current) => {
+                        const list = current ?? serverPhotos;
+                        const index = list.indexOf(src);
+                        return index < 0 ? list : removeListingPhoto(list, index);
+                      })
+                    }
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
             ))}
-            {state.interiors.map((src, i) => (
-              <img key={`new-${i}`} src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover ring-1 ring-primary/40" />
+            {photoJobs.map((job) => (
+              <div key={job.id} data-ke="listing-photo-progress" className="flex aspect-[4/3] flex-col justify-end rounded-lg bg-bg p-3 ring-1 ring-border">
+                <p className="text-sm text-muted">{t("photoPreparing").replace("{name}", job.name).replace("{n}", String(job.progress))}</p>
+                <div
+                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-border"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={job.progress}
+                  aria-label={job.name}
+                >
+                  <div className="h-full bg-primary" style={{ width: `${job.progress}%` }} />
+                </div>
+              </div>
             ))}
-            {existingInteriors.length + state.interiors.length < MAX_INTERIOR_PHOTOS ? (
-              <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-bg px-3 text-center text-sm">
+            {canAddPhoto ? (
+              <label data-ke="listing-photo-add" className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-bg px-3 text-center text-sm">
                 <span className="inline-flex items-center gap-2 font-medium text-primary">
                   <Camera className="size-4" />
-                  {t("interiorCta")}
+                  {shown.length === 0 ? t("storefrontCta") : t("interiorCta")}
                 </span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept={LISTING_PHOTO_ACCEPT}
+                  multiple
                   className="sr-only"
-                  onChange={(e) => readImage(e.target.files?.[0], "interiors")}
+                  data-ke="listing-photo-input"
+                  onChange={(e) => {
+                    const files = e.target.files ? Array.from(e.target.files) : [];
+                    e.target.value = "";
+                    void addListingPhotos(files);
+                  }}
                 />
               </label>
             ) : null}

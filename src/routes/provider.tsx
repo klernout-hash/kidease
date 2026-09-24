@@ -39,9 +39,15 @@ import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
-import { CapacityForm, Field, PromotePanel, readListingImage } from "@/components/provider-listing-forms";
+import { CapacityForm, Field, PromotePanel } from "@/components/provider-listing-forms";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
-import { isListingPhotoTooBig } from "@/lib/upload-limits";
+import {
+  downgradeListingPhotoFile,
+  LISTING_PHOTO_ACCEPT,
+  listingPhotoByteBudget,
+  ListingPhotoPrepareError,
+} from "@/lib/listing-photo-downgrade";
+import { listingPublishMissing, mergeListingDraft } from "@/lib/listing-publish";
 import { TourAvailabilityDesk } from "@/components/tour-availability-desk";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
@@ -153,15 +159,9 @@ function ProviderPage() {
     culturalTeamNote: "",
   });
   const [storefrontError, setStorefrontError] = useState<string | null>(null);
-  const listingFormDirty =
-    Boolean(form.name.trim() || form.address.trim() || form.postalCode.trim() || form.licenseNumber.trim() || form.storefront) ||
-    form.city !== "Winnipeg" ||
-    form.infantMonthly !== 1200 ||
-    form.toddlerMonthly !== 1100 ||
-    form.preschoolMonthly !== 1000 ||
-    form.staffLanguages.length > 0 ||
-    form.culturalPrograms.length > 0 ||
-    Boolean(form.culturalTeamNote.trim());
+  const [storefrontProgress, setStorefrontProgress] = useState<number | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [publishMessage, setPublishMessage] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
 
   async function load() {
     const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
@@ -261,10 +261,6 @@ function ProviderPage() {
         if (id === "add") {
           if (!centreOwner) return;
           setDesk("listings");
-          if (listings.length === 0) {
-            setShowNewForm(false);
-            return;
-          }
           setShowNewForm(true);
           queueMicrotask(() => document.getElementById("list-new")?.scrollIntoView({ behavior: "smooth", block: "start" }));
           return;
@@ -441,7 +437,7 @@ function ProviderPage() {
                     KidEase declined this listing. Parent requests and Promote stay off. Add another centre below, or wait for a re-review after Kyle asks for more.
                   </p>
                 ) : null}
-                <CapacityForm daycare={d} onSaved={() => void load()} mode="listing" />
+                <CapacityForm daycare={d} onSaved={() => load()} mode="listing" />
               </section>
             );
           })}
@@ -494,38 +490,59 @@ function ProviderPage() {
             )}
             <form
               className="mt-4 grid gap-3 sm:grid-cols-2"
+              data-ke="publish-listing-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                void createListing({ data: form })
+                if (publishing) return;
+                const next = mergeListingDraft(form, new FormData(e.currentTarget));
+                setForm(next);
+                const missing = listingPublishMissing(next);
+                if (missing.length) {
+                  const message = t("publishListingMissing");
+                  setPublishMessage({ tone: "err", text: message });
+                  toast.error(message);
+                  return;
+                }
+                setPublishing(true);
+                setPublishMessage(null);
+                void createListing({ data: next })
                   .then((res) => {
                     if (res && res.ok === false) {
-                      toast.error(
-                        locale === "fr" ? t("daycareAlreadyListed") : res.message || DUPLICATE_LISTING_MESSAGE,
-                      );
+                      const message =
+                        locale === "fr" ? t("daycareAlreadyListed") : res.message || DUPLICATE_LISTING_MESSAGE;
+                      setPublishMessage({ tone: "err", text: message });
+                      toast.error(message);
                       return;
                     }
-                    confirmSuccess({ variant: "modal", title: t("createListing"), body: t("successListingSavedBody") });
+                    const message = t("publishListingDone");
+                    setPublishMessage({ tone: "ok", text: message });
+                    confirmSuccess({
+                      variant: "modal",
+                      title: t("createListing"),
+                      body: message,
+                    });
                     setForm((s) => ({ ...s, storefront: "" }));
                     return load();
                   })
                   .catch((err) => {
                     const message = listingCreateErrorMessage(err);
-                    toast.error(
-                      isDaycareAlreadyListedMessage(message)
-                        ? duplicateListingUserMessage(locale)
-                        : message || "Error",
-                    );
-                  });
+                    const text = isDaycareAlreadyListedMessage(message)
+                      ? duplicateListingUserMessage(locale)
+                      : message || "Error";
+                    setPublishMessage({ tone: "err", text });
+                    toast.error(text);
+                  })
+                  .finally(() => setPublishing(false));
               }}
             >
-              <Field label={t("centreName")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
-              <Field label={t("licenceNo")} value={form.licenseNumber} onChange={(v) => setForm({ ...form, licenseNumber: v })} />
-              <Field label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
-              <Field label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
-              <Field label="Postal code" value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
-              <Field label={`${t("infantFee")} CAD`} value={String(form.infantMonthly)} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
-              <Field label={`${t("toddlerFee")} CAD`} value={String(form.toddlerMonthly)} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
-              <Field label={`${t("preschoolFee")} CAD`} value={String(form.preschoolMonthly)} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />
+              <Field name="name" label={t("centreName")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
+              <Field name="licenseNumber" label={t("licenceNo")} value={form.licenseNumber} onChange={(v) => setForm({ ...form, licenseNumber: v })} />
+              <Field name="address" label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
+              <Field name="city" label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
+              <Field name="postalCode" label="Postal code" value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
+              <Field name="infantMonthly" label={`${t("infantFee")} CAD`} value={String(form.infantMonthly)} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
+              <Field name="toddlerMonthly" label={`${t("toddlerFee")} CAD`} value={String(form.toddlerMonthly)} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
+              <Field name="preschoolMonthly" label={`${t("preschoolFee")} CAD`} value={String(form.preschoolMonthly)} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />
               <div className="sm:col-span-2">
                 <p className="text-sm font-medium">{t("storefrontPhoto")}</p>
                 <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
@@ -540,29 +557,41 @@ function ProviderPage() {
                     <span className="font-medium text-primary">{t("storefrontCta")}</span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept={LISTING_PHOTO_ACCEPT}
                       className="sr-only"
+                      data-ke="create-listing-photo"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
+                        e.target.value = "";
                         if (!file) return;
-                        if (isListingPhotoTooBig(file.size)) {
-                          const message = t("photoTooBig");
-                          setStorefrontError(message);
-                          toast.error(message);
-                          return;
-                        }
                         setStorefrontError(null);
-                        readListingImage(
-                          file,
-                          (value) => setForm((s) => ({ ...s, storefront: value })),
-                          () => {
-                            const message = t("photoTooBig");
+                        setStorefrontProgress(8);
+                        void downgradeListingPhotoFile(file, {
+                          targetBytes: listingPhotoByteBudget(1),
+                          onProgress: setStorefrontProgress,
+                        })
+                          .then((value) => setForm((s) => ({ ...s, storefront: value })))
+                          .catch((err) => {
+                            const unreadable = err instanceof ListingPhotoPrepareError && err.code === "unreadable";
+                            const message = t(unreadable ? "photoUnreadable" : "photoTooBig");
                             setStorefrontError(message);
                             toast.error(message);
-                          },
-                        );
+                          })
+                          .finally(() => setStorefrontProgress(null));
                       }}
                     />
+                    {storefrontProgress !== null ? (
+                      <div
+                        data-ke="listing-photo-progress"
+                        className="h-1.5 w-full overflow-hidden rounded-full bg-border"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={storefrontProgress}
+                      >
+                        <div className="h-full bg-primary" style={{ width: `${storefrontProgress}%` }} />
+                      </div>
+                    ) : null}
                     <UploadLimitHint hint={t("uploadPhotoHint")} error={storefrontError} />
                   </label>
                 </div>
@@ -577,8 +606,19 @@ function ProviderPage() {
                   onChange={(culture) => setForm({ ...form, ...culture })}
                 />
               </div>
-              <div className="sm:col-span-2">
-                <Button type="submit" disabled={!listingFormDirty}>{t("createListing")}</Button>
+              <div className="sm:col-span-2 flex flex-col items-start gap-2">
+                <Button type="submit" data-ke="publish-listing" disabled={publishing} aria-busy={publishing}>
+                  {publishing ? t("publishListingWorking") : t("createListing")}
+                </Button>
+                {publishMessage ? (
+                  <p
+                    data-ke="publish-listing-status"
+                    role={publishMessage.tone === "err" ? "alert" : "status"}
+                    className={publishMessage.tone === "err" ? "text-sm text-danger" : "text-sm text-ok"}
+                  >
+                    {publishMessage.text}
+                  </p>
+                ) : null}
               </div>
             </form>
           </section>
@@ -610,7 +650,7 @@ function ProviderPage() {
               </div>
               <div className="mt-6 border-t border-border pt-5">
                 <h3 className="font-display text-xl">{t("licenceRecord")}</h3>
-                <CapacityForm daycare={d} onSaved={() => void load()} mode="licence" />
+                <CapacityForm daycare={d} onSaved={() => load()} mode="licence" />
               </div>
             </section>
           ))
