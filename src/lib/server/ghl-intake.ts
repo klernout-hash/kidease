@@ -3,17 +3,24 @@ import { postGhlSignupIntake, type GhlIntakeResult, type GhlIntakeTrigger } from
 import { lookupUser } from "@/lib/server/notify";
 import { getSql } from "@/lib/db";
 
-async function lookupProviderCompany(userId: string): Promise<string> {
+function listingIsTest(value: unknown): boolean {
+  return value === true || value === 1 || value === "1";
+}
+
+async function lookupProviderListing(userId: string): Promise<{ name: string; testListing: boolean }> {
   const sql = await getSql();
-  const rows = await sql<{ name: string | null }>`
-    select d.name
+  const rows = await sql<{ name: string | null; is_test: number | boolean | null }>`
+    select d.name, d.is_test
     from provider_daycares p
     join daycares d on d.id = p.daycare_id
     where p.user_id = ${userId}
     order by d.created_at desc
     limit 1
   `.catch(() => []);
-  return (rows[0]?.name || "").trim();
+  return {
+    name: (rows[0]?.name || "").trim(),
+    testListing: listingIsTest(rows[0]?.is_test),
+  };
 }
 
 function logSkip(reason: string) {
@@ -36,6 +43,7 @@ async function deliverSignup(input: {
   phone?: string | null;
   company?: string | null;
   eventId?: string | null;
+  testListing?: boolean;
 }): Promise<GhlIntakeResult> {
   let webhook: GhlIntakeResult = { ok: false, error: "ghl-failed" };
   try {
@@ -48,11 +56,16 @@ async function deliverSignup(input: {
     logError(err);
   }
   try {
-    await postGhlCrmSignup({
+    const api = await postGhlCrmSignup({
       ...input,
       onSkip: logSkip,
       onError: logError,
     });
+    if (api.ok && !api.skipped) {
+      console.info(
+        `[kidease-ghl] ok trigger=${input.trigger} contact=${api.contactId} opportunity=${api.opportunity}`,
+      );
+    }
   } catch (err) {
     logError(err);
   }
@@ -73,6 +86,7 @@ export async function captureSignupIntakeFromUser(input: {
   phone?: string | null;
   name?: string | null;
   email?: string | null;
+  testListing?: boolean;
 }) {
   try {
     const actor = await lookupUser(input.userId).catch(() => ({
@@ -81,8 +95,14 @@ export async function captureSignupIntakeFromUser(input: {
       phone: null as string | null,
     }));
     let company = (input.company || "").trim();
-    if (!company && input.role === "provider") {
-      company = await lookupProviderCompany(input.userId).catch(() => "");
+    let testListing = Boolean(input.testListing);
+    if (input.role === "provider") {
+      const listing = await lookupProviderListing(input.userId).catch(() => ({
+        name: "",
+        testListing: false,
+      }));
+      if (!company) company = listing.name;
+      if (listing.testListing) testListing = true;
     }
     return await deliverSignup({
       trigger: input.trigger,
@@ -90,6 +110,7 @@ export async function captureSignupIntakeFromUser(input: {
       name: input.name ?? actor.name,
       phone: input.phone ?? actor.phone,
       company,
+      testListing,
       eventId: (input.eventId || "").trim() || `${input.trigger}:${input.userId}`,
     });
   } catch (err) {
@@ -109,6 +130,7 @@ export async function captureEnrollIntake(input: {
   phone?: string | null;
   company?: string | null;
   eventId?: string | null;
+  testListing?: boolean;
 }) {
   try {
     const email = (input.email || "").trim().toLowerCase();
@@ -118,6 +140,7 @@ export async function captureEnrollIntake(input: {
       name: input.name,
       phone: input.phone,
       company: input.company,
+      testListing: input.testListing,
       eventId: (input.eventId || "").trim() || (email ? `enroll:${email}` : ""),
     });
   } catch (err) {

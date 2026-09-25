@@ -29,6 +29,8 @@ export const getMyContact = createServerFn({ method: "GET" })
       insert into profiles (user_id, role) values (${context.userId}, 'parent')
       on conflict (user_id) do nothing
     `;
+    const { ensureCrmIntake } = await import("@/lib/server/family");
+    await ensureCrmIntake(context.userId, "parent");
     const rows = await sql<{ display_name: string | null; phone: string | null; bio: string | null }>`
       select display_name, phone, bio from profiles where user_id = ${context.userId} limit 1
     `;
@@ -62,6 +64,8 @@ export const saveMyContact = createServerFn({ method: "POST" })
         phone = excluded.phone,
         bio = excluded.bio
     `;
+    const { ensureCrmIntake } = await import("@/lib/server/family");
+    await ensureCrmIntake(context.userId, "parent");
     if (data.name) {
       await sql`update "user" set name = ${data.name} where id = ${context.userId}`;
     }

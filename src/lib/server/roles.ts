@@ -38,6 +38,24 @@ function bootstrapEmail() {
 
 export type { SessionDesks };
 
+async function claimParentCrmIntake(userId: string) {
+  try {
+    const { ensureCrmIntake } = await import("@/lib/server/family");
+    await ensureCrmIntake(userId, "parent");
+  } catch (err) {
+    console.error("[kidease-ghl] ensure intake failed", err);
+  }
+}
+
+async function claimProviderCrmIntake(userId: string) {
+  try {
+    const { ensureCrmIntake } = await import("@/lib/server/family");
+    await ensureCrmIntake(userId, "provider");
+  } catch (err) {
+    console.error("[kidease-ghl] ensure intake failed", err);
+  }
+}
+
 async function profileRole(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const rows = await sql<{ role: string }>`
     select role from profiles where user_id = ${userId} limit 1
@@ -100,6 +118,7 @@ export async function resolveAdminAccess(userId: string) {
     insert into profiles (user_id, role) values (${userId}, 'parent')
     on conflict (user_id) do nothing
   `.catch(() => undefined);
+  await claimParentCrmIntake(userId);
 
   const stored = parseAppRole(await profileRole(sql, userId));
   const actor = await lookupUser(userId);
@@ -167,10 +186,12 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     insert into profiles (user_id, role) values (${userId}, 'parent')
     on conflict (user_id) do nothing
   `.catch(() => undefined);
+  await claimParentCrmIntake(userId);
 
   const access = await resolveAdminAccess(userId);
   const stored = access.ok ? "admin" : access.role;
   const owned = await ownsCentre(sql, userId);
+  if (stored === "provider" || owned) await claimProviderCrmIntake(userId);
   const member = owned ? false : await isActiveCentreMember(sql, userId);
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
   const [unread, unreadFamily, unreadCentre] = await Promise.all([

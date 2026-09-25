@@ -86,8 +86,17 @@ export const listInbox = createServerFn({ method: "GET" })
                order by b.created_at desc limit 1
              ) as child_birthdate,
              (
-               select coalesce(t.child_name, b.child_name) from tour_requests t
-               left join bookings b on b.conversation_id = c.id
+               select coalesce(
+                 t.child_name,
+                 (
+                   select ch.name from bookings b
+                   left join children ch on ch.id = b.child_id
+                   where b.conversation_id = c.id
+                   order by b.created_at desc
+                   limit 1
+                 )
+               )
+               from tour_requests t
                where t.conversation_id = c.id
                order by t.created_at desc limit 1
              ) as child_name,

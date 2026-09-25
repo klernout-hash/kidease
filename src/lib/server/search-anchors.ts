@@ -46,6 +46,8 @@ export const getMySearchAnchors = createServerFn({ method: "GET" })
       insert into profiles (user_id, role) values (${context.userId}, 'parent')
       on conflict (user_id) do nothing
     `;
+    const { ensureCrmIntake } = await import("@/lib/server/family");
+    await ensureCrmIntake(context.userId, "parent");
     const rows = await sql<{
       home_lat: number | null;
       home_lng: number | null;
@@ -91,5 +93,7 @@ export const saveMySearchAnchors = createServerFn({ method: "POST" })
         work_label = excluded.work_label,
         search_anchor_mode = excluded.search_anchor_mode
     `;
+    const { ensureCrmIntake } = await import("@/lib/server/family");
+    await ensureCrmIntake(context.userId, "parent");
     return data;
   });

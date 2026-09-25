@@ -67,7 +67,16 @@ async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: st
   return Boolean(inserted[0]);
 }
 
-async function pingNewAccount(userId: string, role: "parent" | "provider") {
+type CrmIntakeExtra = {
+  company?: string | null;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  trigger?: "parent_signup" | "provider_signup" | "claim_verify" | "enroll";
+  testListing?: boolean;
+};
+
+async function pingNewAccount(userId: string, role: "parent" | "provider", extra?: CrmIntakeExtra) {
   let eventId: string | null = null;
   try {
     const result = await notifyNewAccountFromUser(userId, role);
@@ -80,8 +89,13 @@ async function pingNewAccount(userId: string, role: "parent" | "provider") {
     await captureSignupIntakeFromUser({
       userId,
       role,
-      trigger: role === "provider" ? "provider_signup" : "parent_signup",
+      trigger: extra?.trigger ?? (role === "provider" ? "provider_signup" : "parent_signup"),
       eventId,
+      company: extra?.company,
+      name: extra?.name,
+      email: extra?.email,
+      phone: extra?.phone,
+      testListing: extra?.testListing,
     });
   } catch (err) {
     console.error("[kidease-ghl] signup intake failed", err);
@@ -94,13 +108,66 @@ async function pingNewAccount(userId: string, role: "parent" | "provider") {
   }
 }
 
+/**
+ * Claim the CRM slot once, then ping. A second caller sees the timestamp and
+ * does not send another admin notice or signup. Never throws into the user flow.
+ * Returns true only when this call won the claim and ran the ping.
+ */
+export async function ensureCrmIntake(
+  userId: string,
+  role: "parent" | "provider",
+  extra?: CrmIntakeExtra,
+): Promise<boolean> {
+  try {
+    const sql = await getSql();
+    // Users created before the migration cutoff stay unsent even if their
+    // profile row appears later. The migration already stamped existing rows.
+    const claimed =
+      role === "provider"
+        ? await sql<{ claimed: number }>`
+            update profiles
+            set crm_provider_at = now()
+            where user_id = ${userId}
+              and crm_provider_at is null
+              and not exists (
+                select 1 from "user" u
+                where u.id = ${userId}
+                  and u."createdAt" < timestamptz '2026-09-24 17:34:00+00'
+              )
+            returning 1 as claimed
+          `
+        : await sql<{ claimed: number }>`
+            update profiles
+            set crm_signup_at = now()
+            where user_id = ${userId}
+              and crm_signup_at is null
+              and not exists (
+                select 1 from "user" u
+                where u.id = ${userId}
+                  and u."createdAt" < timestamptz '2026-09-24 17:34:00+00'
+              )
+            returning 1 as claimed
+          `;
+    if (!claimed.length) return false;
+  } catch (err) {
+    console.error("[kidease-ghl] ensure intake failed", err);
+    return false;
+  }
+  try {
+    await pingNewAccount(userId, role, extra);
+  } catch (err) {
+    console.error("[kidease-ghl] ensure intake failed", err);
+  }
+  return true;
+}
+
 export const getFamily = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureSeed(sql);
-    const isNew = await ensureProfile(sql, context.userId);
-    if (isNew) await pingNewAccount(context.userId, "parent");
+    await ensureProfile(sql, context.userId);
+    await ensureCrmIntake(context.userId, "parent");
     const children = await sql<ChildRow>`
       select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
              doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
@@ -1159,10 +1226,10 @@ export const setRole = createServerFn({ method: "POST" })
   .validator((role: "parent" | "provider") => role)
   .handler(async ({ context, data: role }) => {
     const written = await writeProfileRole(context.userId, role);
-    if (!written.previous) {
-      await pingNewAccount(context.userId, written.role === "provider" ? "provider" : "parent");
-    } else if (role === "provider" && written.previous !== "provider" && written.role === "provider") {
-      await pingNewAccount(context.userId, "provider");
+    if (written.role === "provider") {
+      await ensureCrmIntake(context.userId, "provider");
+    } else if (written.role === "parent") {
+      await ensureCrmIntake(context.userId, "parent");
     }
     return { role: written.role };
   });
@@ -1502,6 +1569,30 @@ export const createListing = createServerFn({ method: "POST" })
       await sql`update daycares set last_photo_updated_at = now() where id = ${id}`.catch(() => undefined);
     }
     await writeProfileRole(context.userId, "provider");
+    const providerIntake = await ensureCrmIntake(context.userId, "provider", {
+      company: data.name,
+      testListing: visibilityWrite.isTest === 1,
+      name: actor.name,
+      email: actor.email,
+      phone: actor.phone,
+    });
+    if (!providerIntake) {
+      try {
+        const { captureSignupIntakeFromUser } = await import("@/lib/server/ghl-intake");
+        await captureSignupIntakeFromUser({
+          userId: context.userId,
+          role: "provider",
+          trigger: "provider_signup",
+          company: data.name,
+          name: actor.name,
+          email: actor.email,
+          phone: actor.phone,
+          testListing: visibilityWrite.isTest === 1,
+        });
+      } catch (err) {
+        console.error("[kidease-ghl] listing intake failed", err);
+      }
+    }
     try {
       await notifyProviderJoined({
         kind: "listing",
