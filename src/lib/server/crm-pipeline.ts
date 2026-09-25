@@ -87,9 +87,10 @@ export const listCentrePipeline = createServerFn({ method: "GET" })
       created_at: string;
     }>`
       select b.id, b.conversation_id, b.daycare_id, d.name as daycare_name, d.slug,
-             b.user_id as parent_user_id, b.parent_name, b.child_name, b.status, b.created_at
+             b.user_id as parent_user_id, b.parent_name, ch.name as child_name, b.status, b.created_at
       from bookings b
       join daycares d on d.id = b.daycare_id
+      left join children ch on ch.id = b.child_id
       where exists (
           select 1 from provider_daycares p
           where p.daycare_id = b.daycare_id and p.user_id = ${context.userId}

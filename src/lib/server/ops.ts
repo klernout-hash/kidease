@@ -68,7 +68,7 @@ export const getWeekSchedule = createServerFn({ method: "POST" })
           conversation_id: string | null;
         }>`
           select b.id as booking_id, b.daycare_id, d.name as daycare_name,
-                 coalesce(ch.name, b.child_name, b.parent_name, 'Child') as child_name,
+                 coalesce(ch.name, b.parent_name, 'Child') as child_name,
                  b.user_id as parent_user_id, b.conversation_id
           from bookings b
           join daycares d on d.id = b.daycare_id
@@ -92,7 +92,7 @@ export const getWeekSchedule = createServerFn({ method: "POST" })
           conversation_id: string | null;
         }>`
           select b.id as booking_id, b.daycare_id, d.name as daycare_name,
-                 coalesce(ch.name, b.child_name, 'Your child') as child_name,
+                 coalesce(ch.name, 'Your child') as child_name,
                  b.user_id as parent_user_id, b.conversation_id
           from bookings b
           join daycares d on d.id = b.daycare_id

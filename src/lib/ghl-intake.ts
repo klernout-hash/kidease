@@ -56,16 +56,28 @@ export function ghlAudienceForTrigger(trigger: GhlIntakeTrigger): GhlIntakeAudie
   return trigger === "parent_signup" ? "parent" : "daycare";
 }
 
+/** QA listings still sync. HighLevel can filter this tag out of live follow-up. */
+export const GHL_QA_TEST_TAG = "qa:test";
+
+export function withQaTestTag(tags: string[], testListing?: boolean): string[] {
+  if (!testListing || tags.includes(GHL_QA_TEST_TAG)) return tags;
+  return [...tags, GHL_QA_TEST_TAG];
+}
+
 /**
  * Canonical tags for every intake. Claim verify adds `claim:claimed` so the
  * CRM workflow can flip `claim:unclaimed` → `claim:claimed`. Enroll Now adds
- * `form:enroll` and still keeps `form:signup`.
+ * `form:enroll` and still keeps `form:signup`. Test listings add `qa:test`.
  */
-export function ghlIntakeTags(audience: GhlIntakeAudience, trigger?: GhlIntakeTrigger): string[] {
+export function ghlIntakeTags(
+  audience: GhlIntakeAudience,
+  trigger?: GhlIntakeTrigger,
+  options?: { testListing?: boolean },
+): string[] {
   const tags = ["source:website", `type:${audience}`, "form:signup"];
   if (trigger === "claim_verify") tags.push("claim:claimed");
   if (trigger === "enroll") tags.push("form:enroll");
-  return tags;
+  return withQaTestTag(tags, options?.testListing);
 }
 
 function trimUrl(raw?: string | null): string {
@@ -92,13 +104,16 @@ export function buildGhlSignupPayload(input: {
   phone?: string | null;
   company?: string | null;
   eventId?: string | null;
+  testListing?: boolean;
 }): GhlSignupPayload {
   return {
     email: (input.email || "").trim(),
     name: (input.name || "").trim(),
     phone: (input.phone || "").trim(),
     company: (input.company || "").trim(),
-    tags: ghlIntakeTags(ghlAudienceForTrigger(input.trigger), input.trigger),
+    tags: ghlIntakeTags(ghlAudienceForTrigger(input.trigger), input.trigger, {
+      testListing: input.testListing,
+    }),
     kidease_event_id: (input.eventId || "").trim(),
   };
 }
@@ -118,6 +133,7 @@ export async function postGhlSignupIntake(input: {
   phone?: string | null;
   company?: string | null;
   eventId?: string | null;
+  testListing?: boolean;
   fetchImpl?: typeof fetch;
   env?: EnvMap;
   onSkip?: (reason: "flag-off" | "no-webhook-url") => void;

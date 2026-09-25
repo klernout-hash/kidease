@@ -241,6 +241,50 @@ test("signup and claim verify fire GHL after notify, even when mail fails", () =
   assert.match(src("src/lib/server/ghl-intake.ts"), /postGhlSignupIntake/);
   assert.match(src("src/lib/server/ghl-intake.ts"), /postGhlCrmSignup/);
   assert.match(src("src/lib/server/ghl-intake.ts"), /captureEnrollIntake/);
+  assert.match(src("src/lib/server/ghl-intake.ts"), /\[kidease-ghl\] ok trigger=/);
+  assert.match(src("src/lib/ghl-api.ts"), /location_id=/);
+  assert.match(src("src/lib/ghl-api.ts"), /pipeline_id=/);
+  assert.match(src("src/lib/ghl-api.ts"), /contact_id=/);
+  assert.match(src("src/lib/ghl-intake.ts"), /qa:test/);
+  assert.match(family, /export async function ensureCrmIntake/);
+  assert.match(family, /crm_signup_at is null/);
+  assert.match(family, /crm_provider_at is null/);
+  assert.match(family, /returning 1 as claimed/);
+  assert.doesNotMatch(family, /if \(isNew\)/);
+  const setRole = family.slice(family.indexOf("export const setRole"));
+  const setRoleFn = setRole.slice(0, setRole.indexOf("\nexport const "));
+  assert.match(setRoleFn, /ensureCrmIntake/);
+  assert.doesNotMatch(setRoleFn, /pingNewAccount/);
+  assert.doesNotMatch(setRoleFn, /written\.previous/);
+  const createListing = family.slice(family.indexOf("export const createListing"));
+  assert.match(createListing, /ensureCrmIntake\(context\.userId, "provider"/);
+  assert.match(createListing, /company: data\.name/);
+  const roles = src("src/lib/server/roles.ts");
+  const desks = roles.slice(roles.indexOf("export async function resolveSessionDesks"));
+  assert.match(desks, /claimParentCrmIntake/);
+  assert.match(desks, /claimProviderCrmIntake/);
+  assert.match(roles, /ensureCrmIntake/);
+  assert.match(src("src/lib/server/claims.ts"), /ensureCrmIntake/);
+  assert.match(src("src/lib/server/profile-contact.ts"), /ensureCrmIntake/);
+  assert.match(src("src/lib/server/search-anchors.ts"), /ensureCrmIntake/);
+  const migration = src("migrations/0059_crm_intake_at.sql");
+  assert.match(migration, /crm_signup_at timestamptz/);
+  assert.match(migration, /crm_provider_at timestamptz/);
+  assert.match(migration, /2026-09-24 17:34:00\+00/);
+  assert.equal(
+    ghlIntakeTags("daycare", "provider_signup", { testListing: true }).at(-1),
+    "qa:test",
+  );
+  assert.equal(
+    buildGhlSignupPayload({
+      trigger: "provider_signup",
+      email: "qa@kidease.ca",
+      company: "TEST Ghost Claim Lab",
+      eventId: "ev_qa",
+      testListing: true,
+    }).tags.includes("qa:test"),
+    true,
+  );
   assert.match(src("src/lib/ghl-intake.ts"), /runtimeProcessEnv/);
   assert.match(src("src/lib/ghl-intake.ts"), /claim:claimed/);
   assert.match(src(".env.example"), /GHL_WEBHOOK_DAYCARE_SIGNUP_URL=/);

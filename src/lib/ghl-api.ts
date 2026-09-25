@@ -16,6 +16,7 @@ import {
   ghlAudienceForTrigger,
   ghlIntakeEnabled,
   ghlIntakeTags,
+  withQaTestTag,
   type GhlIntakeAudience,
   type GhlIntakeTrigger,
 } from "./ghl-intake.ts";
@@ -115,11 +116,14 @@ export function resolveGhlApiTarget(audience: GhlIntakeAudience, env?: EnvMap): 
  * Contact tags for the API path. Daycare events include claim:claimed.
  * Enroll Now also keeps form:enroll. Claim verify is the same daycare set.
  */
-export function ghlApiContactTags(trigger: GhlIntakeTrigger): string[] {
+export function ghlApiContactTags(
+  trigger: GhlIntakeTrigger,
+  options?: { testListing?: boolean },
+): string[] {
   const audience = ghlAudienceForTrigger(trigger);
   const tags = ghlIntakeTags(audience, trigger);
   if (audience === "daycare" && !tags.includes("claim:claimed")) tags.push("claim:claimed");
-  return tags;
+  return withQaTestTag(tags, options?.testListing);
 }
 
 function splitName(name: string): { name?: string; firstName?: string; lastName?: string } {
@@ -136,6 +140,7 @@ export function buildGhlContactUpsertBody(input: {
   name?: string | null;
   phone?: string | null;
   company?: string | null;
+  testListing?: boolean;
   env?: EnvMap;
 }): Record<string, unknown> {
   const audience = ghlAudienceForTrigger(input.trigger);
@@ -146,7 +151,7 @@ export function buildGhlContactUpsertBody(input: {
     locationId: target.locationId,
     email: input.email.trim(),
     ...splitName(input.name || ""),
-    tags: ghlApiContactTags(input.trigger),
+    tags: ghlApiContactTags(input.trigger, { testListing: input.testListing }),
   };
   if (phone) body.phone = phone;
   if (company) body.companyName = company;
@@ -263,6 +268,7 @@ export async function postGhlCrmSignup(input: {
   phone?: string | null;
   company?: string | null;
   eventId?: string | null;
+  testListing?: boolean;
   fetchImpl?: FetchImpl;
   env?: EnvMap;
   onSkip?: (reason: GhlApiSkipReason) => void;
@@ -300,6 +306,7 @@ export async function postGhlCrmSignup(input: {
       name: input.name,
       phone: input.phone,
       company: input.company,
+      testListing: input.testListing,
       env,
     });
     // Upsert's tags array replaces every tag. Send identity here, then add tags.
@@ -342,11 +349,13 @@ export async function postGhlCrmSignup(input: {
       if (!removed.ok && removed.status !== 404) input.onError?.(new Error(removed.error));
     }
 
+    // Query keys are snake_case. Camel case returns 422
+    // "property locationId should not exist".
     const searchUrl =
       `${GHL_API_BASE}/opportunities/search` +
-      `?locationId=${encodeURIComponent(target.locationId)}` +
-      `&pipelineId=${encodeURIComponent(target.pipelineId)}` +
-      `&contactId=${encodeURIComponent(contactId)}`;
+      `?location_id=${encodeURIComponent(target.locationId)}` +
+      `&pipeline_id=${encodeURIComponent(target.pipelineId)}` +
+      `&contact_id=${encodeURIComponent(contactId)}`;
     const search = await ghlRequest({ token, url: searchUrl, method: "GET", fetchImpl });
     if (search.ok) {
       const existing = opportunitiesFrom(search.json).some((row) => {

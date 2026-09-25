@@ -266,20 +266,38 @@ export const verifyClaim = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-mail] claim notify failed", err);
     }
+    const testListing = flags.isTest === 1;
+    let providerIntake = false;
     try {
-      const { captureSignupIntakeFromUser } = await import("@/lib/server/ghl-intake");
-      await captureSignupIntakeFromUser({
-        userId: context.userId,
-        role: "provider",
-        trigger: "claim_verify",
-        eventId,
+      const { ensureCrmIntake } = await import("@/lib/server/family");
+      providerIntake = await ensureCrmIntake(context.userId, "provider", {
         company: listedAfter?.name,
         name: actor.name,
         email: actor.email,
         phone: actor.phone,
+        trigger: "claim_verify",
+        testListing,
       });
     } catch (err) {
       console.error("[kidease-ghl] claim intake failed", err);
+    }
+    if (!providerIntake) {
+      try {
+        const { captureSignupIntakeFromUser } = await import("@/lib/server/ghl-intake");
+        await captureSignupIntakeFromUser({
+          userId: context.userId,
+          role: "provider",
+          trigger: "claim_verify",
+          eventId,
+          company: listedAfter?.name,
+          name: actor.name,
+          email: actor.email,
+          phone: actor.phone,
+          testListing,
+        });
+      } catch (err) {
+        console.error("[kidease-ghl] claim intake failed", err);
+      }
     }
     return { ok: true as const, status: "waiting" as const };
   });

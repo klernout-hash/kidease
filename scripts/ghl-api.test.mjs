@@ -107,9 +107,12 @@ test("token alone creates a Daycare Sign Up opportunity at Signed up", async () 
   const unclaim = calls.find((call) => call.method === "DELETE" && call.url.endsWith("/tags"));
   assert.deepEqual(unclaim.body.tags, ["claim:unclaimed"]);
   const search = calls.find((call) => call.url.includes("/opportunities/search"));
-  assert.match(search.url, /locationId=hkAJnVH8EJpMcgq9bNjG/);
-  assert.match(search.url, /pipelineId=y95txOBNvB7hOMMcXggS/);
-  assert.match(search.url, /contactId=contact_1/);
+  assert.match(search.url, /location_id=hkAJnVH8EJpMcgq9bNjG/);
+  assert.match(search.url, /pipeline_id=y95txOBNvB7hOMMcXggS/);
+  assert.match(search.url, /contact_id=contact_1/);
+  assert.doesNotMatch(search.url, /[?&]locationId=/);
+  assert.doesNotMatch(search.url, /[?&]pipelineId=/);
+  assert.doesNotMatch(search.url, /[?&]contactId=/);
   const opportunity = calls.find((call) => call.method === "POST" && call.url.endsWith("/opportunities/"));
   assert.equal(opportunity.body.locationId, GHL_DEFAULT_LOCATION_ID);
   assert.equal(opportunity.body.pipelineId, GHL_DEFAULT_DAYCARE_PIPELINE_ID);
@@ -251,6 +254,25 @@ test("pipeline overrides apply and HTTP failures never throw", async () => {
   });
   assert.equal(failed.ok, false);
   if (!failed.ok) assert.match(failed.error, /network down/);
+});
+
+test("test listings still sync and are tagged qa:test", async () => {
+  const calls = [];
+  const result = await postGhlCrmSignup({
+    trigger: "provider_signup",
+    email: "qa@kidease.ca",
+    company: "TEST Ghost Claim Lab",
+    testListing: true,
+    env: { GHL_API_TOKEN: "pit-test" },
+    fetchImpl: async (url, init) => route(url, init, calls),
+  });
+  assert.equal(result.opportunity, "created");
+  const tagCall = calls.find((call) => call.method === "POST" && call.url.endsWith("/tags"));
+  assert.ok(tagCall.body.tags.includes("qa:test"));
+  assert.ok(tagCall.body.tags.includes("claim:claimed"));
+  assert.equal(tagCall.body.tags.at(-1), "qa:test");
+  const opportunity = calls.find((call) => call.method === "POST" && call.url.endsWith("/opportunities/"));
+  assert.equal(opportunity.body.pipelineStageId, GHL_DEFAULT_DAYCARE_SIGNED_UP_STAGE_ID);
 });
 
 test("docs keep Signed up as the only automatic stage", () => {
