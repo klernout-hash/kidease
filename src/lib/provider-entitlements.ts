@@ -40,6 +40,8 @@ export type ProviderEntitlementInput = {
   status?: string | null;
   addons?: readonly string[] | string | null;
   stripeLive: boolean;
+  /** Live Featured city add-on. Omitted status does not grant the add-on. */
+  featuredCityStatus?: string | null;
 };
 
 export type ProviderEntitlements = {
@@ -48,6 +50,8 @@ export type ProviderEntitlements = {
   stripeLive: boolean;
   paid: boolean;
   unlimitedInquiries: boolean;
+  /** Featured-city add-on is active. Placement still depends on the purchased centre. */
+  featuredFromAddon: boolean;
   featuredCity: boolean;
   analyticsDays: number;
   orgDashboard: boolean;
@@ -94,13 +98,15 @@ export function resolveProviderEntitlements(input: ProviderEntitlementInput): Pr
   const entitledPlan = entitledProviderPlan(input);
   const addons = normalizeProviderAddons(input.addons);
   const paid = entitledPlan === "pro" || entitledPlan === "network";
-  const featuredFromAddon = addons.includes("featured_city") && input.stripeLive;
+  const featuredFromAddon =
+    addons.includes("featured_city") && input.stripeLive && isPaidSubscriptionStatus(input.featuredCityStatus);
   return {
     selectedPlan,
     entitledPlan,
     stripeLive: Boolean(input.stripeLive),
     paid,
     unlimitedInquiries: paid,
+    featuredFromAddon,
     featuredCity: entitledPlan === "pro" || featuredFromAddon,
     analyticsDays: paid ? PRO_ANALYTICS_DAYS : FREE_ANALYTICS_DAYS,
     orgDashboard: entitledPlan === "network",
@@ -143,6 +149,17 @@ export function inquiryRemaining(used: number, cap: number | null): number | nul
 export function inquiryAtCap(used: number, cap: number | null): boolean {
   if (cap == null) return false;
   return Math.max(0, Math.floor(used)) >= cap;
+}
+
+/** Priority (Claim boost), then Featured city, then the caller's sort. Not a quality score. */
+export function compareWithPaidPins<T extends { priority?: boolean; featuredCity?: boolean }>(
+  a: T,
+  b: T,
+  next: (a: T, b: T) => number,
+): number {
+  if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
+  if (Boolean(a.featuredCity) !== Boolean(b.featuredCity)) return a.featuredCity ? -1 : 1;
+  return next(a, b);
 }
 
 /** Placement pin only. Never feed this into qualityBreakdown or Guest Favorites. */

@@ -1,0 +1,309 @@
+/**
+ * Decide which profile lane a Stripe catalog event may write.
+ * An add-on never updates the centre plan or Parent Plus, even when the
+ * subscription id was previously stored on the plan column.
+ */
+
+import { paidPlanPrice, yearlySavingSuccess, yearlySavingsPercent } from "./upgrade-plans.ts";
+import { catalogMetadataAllows } from "./upgrade-role.ts";
+
+export type CatalogLane =
+  | "provider_plan"
+  | "parent_plus"
+  | "featured_city"
+  | "claim_boost"
+  | "job_post";
+
+export type MatchedLane = CatalogLane | null;
+
+export type CatalogWrite =
+  | {
+      lane: "provider_plan";
+      userId: string;
+      customerId: string | null;
+      subscriptionId: string | null;
+      checkoutSessionId: string | null;
+      status: string;
+      plan: string | null;
+      interval: string | null;
+      clearPlan: boolean;
+    }
+  | {
+      lane: "parent_plus";
+      userId: string;
+      customerId: string | null;
+      subscriptionId: string | null;
+      checkoutSessionId: string | null;
+      status: string;
+      interval: string | null;
+      plan: "plus" | "alerts" | "free";
+      clearPlan: boolean;
+    }
+  | {
+      lane: "featured_city";
+      userId: string;
+      customerId: string | null;
+      subscriptionId: string | null;
+      checkoutSessionId: string | null;
+      status: string;
+      active: boolean;
+      clearSubscription: boolean;
+      centreId: string | null;
+    }
+  | {
+      lane: "claim_boost";
+      userId: string;
+      customerId: string | null;
+      checkoutSessionId: string;
+      paymentId: string;
+      centreId: string | null;
+    }
+  | {
+      lane: "job_post";
+      userId: string;
+      customerId: string | null;
+      checkoutSessionId: string;
+      paymentId: string;
+      centreId: string | null;
+    }
+  | { lane: "ignore"; reason: string };
+
+export type CatalogEventInput = {
+  type: string;
+  metadata?: Record<string, string | undefined> | null;
+  status?: string | null;
+  paymentStatus?: string | null;
+  subscriptionId?: string | null;
+  customerId?: string | null;
+  userId?: string | null;
+  checkoutSessionId?: string | null;
+  paymentId?: string | null;
+  matchedLane?: MatchedLane;
+  /** Profile found by subscription or customer id. Must match metadata user_id. */
+  profileUserId?: string | null;
+};
+
+const PAID_CHECKOUT = new Set(["paid", "no_payment_required"]);
+const CLEAR_STATUSES = new Set(["canceled", "unpaid", "incomplete_expired"]);
+const ACTIVE_STATUSES = new Set(["active", "trialing"]);
+
+export function resolveCatalogLane(input: {
+  kind?: string | null;
+  addon?: string | null;
+  plan?: string | null;
+  matchedLane?: MatchedLane;
+}): CatalogLane | "none" {
+  const kind = String(input.kind || "").trim();
+  const addon = String(input.addon || "").trim();
+  const plan = String(input.plan || "").trim();
+
+  if (kind === "addon") {
+    if (addon === "featured_city" || addon === "claim_boost" || addon === "job_post") return addon;
+    return "none";
+  }
+  if (kind === "parent_plus") return "parent_plus";
+  if (kind === "provider_sub") return "provider_plan";
+  if (kind === "catalog" && (plan === "pro" || plan === "network")) return "provider_plan";
+  if (input.matchedLane) return input.matchedLane;
+  if (plan === "pro" || plan === "network") return "provider_plan";
+  return "none";
+}
+
+function paidCheckout(paymentStatus: string | null | undefined): boolean {
+  return PAID_CHECKOUT.has(String(paymentStatus || "").trim());
+}
+
+function statusFor(input: CatalogEventInput): string {
+  const type = input.type || "";
+  if (type === "invoice.payment_failed") return "past_due";
+  if (type === "invoice.paid") return "active";
+  if (type === "customer.subscription.deleted") return "canceled";
+  if (type === "checkout.session.completed") {
+    return paidCheckout(input.paymentStatus) ? "active" : "incomplete";
+  }
+  const status = String(input.status || "").trim();
+  return status || "incomplete";
+}
+
+function meta(input: CatalogEventInput): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(input.metadata || {})) {
+    if (value != null && String(value).trim()) out[key] = String(value).trim();
+  }
+  return out;
+}
+
+export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
+  const type = input.type || "";
+  const m = meta(input);
+  const userId = String(input.userId || m.user_id || "").trim();
+  const lane = resolveCatalogLane({
+    kind: m.kidease,
+    addon: m.addon,
+    plan: m.plan,
+    matchedLane: input.matchedLane ?? null,
+  });
+  const customerId = input.customerId || null;
+  const subscriptionId = input.subscriptionId || null;
+  const checkoutSessionId = String(input.checkoutSessionId || "").trim() || null;
+
+  if (!userId) return { lane: "ignore", reason: "missing user" };
+  if (lane === "none") return { lane: "ignore", reason: "unscoped" };
+  if (m.kidease === "bill") return { lane: "ignore", reason: "bill" };
+  const profileUserId = String(input.profileUserId || "").trim();
+  if (profileUserId && profileUserId !== userId) return { lane: "ignore", reason: "profile user mismatch" };
+  const roleGate = catalogMetadataAllows({
+    lane,
+    role: m.role,
+    centreId: m.centre_id,
+    buyer: m.buyer,
+  });
+  if (!roleGate.ok) return { lane: "ignore", reason: roleGate.reason };
+
+  if (type === "checkout.session.completed" && (lane === "claim_boost" || lane === "job_post")) {
+    if (!paidCheckout(input.paymentStatus)) return { lane: "ignore", reason: "unpaid" };
+    const paymentId = String(input.paymentId || checkoutSessionId || "").trim();
+    if (!paymentId) return { lane: "ignore", reason: "missing payment" };
+    const oneTime = {
+      userId,
+      customerId,
+      checkoutSessionId: checkoutSessionId || paymentId,
+      paymentId,
+      centreId: m.centre_id || null,
+    };
+    if (lane === "claim_boost") return { lane, ...oneTime };
+    return { lane: "job_post", ...oneTime };
+  }
+
+  if (lane === "claim_boost" || lane === "job_post") {
+    return { lane: "ignore", reason: "one-time add-on ignores subscription events" };
+  }
+
+  const status = statusFor(input);
+  const clear = type === "customer.subscription.deleted" || CLEAR_STATUSES.has(status);
+
+  const paidSession =
+    type === "checkout.session.completed" && ACTIVE_STATUSES.has(status) ? checkoutSessionId : null;
+
+  if (lane === "featured_city") {
+    const active = !clear && ACTIVE_STATUSES.has(status);
+    return {
+      lane,
+      userId,
+      customerId,
+      subscriptionId: clear ? null : subscriptionId,
+      checkoutSessionId: paidSession,
+      status: clear ? "canceled" : status,
+      active,
+      clearSubscription: clear,
+      centreId: m.centre_id || null,
+    };
+  }
+
+  if (lane === "parent_plus") {
+    const rawPlan = m.plan || "plus";
+    if (rawPlan !== "plus" && rawPlan !== "alerts") return { lane: "ignore", reason: "parent plan" };
+    return {
+      lane,
+      userId,
+      customerId,
+      subscriptionId: clear ? null : subscriptionId,
+      checkoutSessionId: paidSession,
+      status: clear ? "canceled" : status,
+      interval: m.interval || null,
+      plan: clear ? "free" : rawPlan,
+      clearPlan: clear,
+    };
+  }
+
+  return {
+    lane: "provider_plan",
+    userId,
+    customerId,
+    subscriptionId: clear ? null : subscriptionId,
+    checkoutSessionId: paidSession,
+    status: clear ? "canceled" : status,
+    plan: clear ? "free" : m.plan || null,
+    interval: m.interval || null,
+    clearPlan: clear,
+  };
+}
+
+export function upgradeConfirmed(input: {
+  kind: "plan" | "addon" | "plus";
+  item?: string | null;
+  sessionId?: string | null;
+  confirmedSessionId?: string | null;
+  entitledPlan?: string | null;
+  subscriptionStatus?: string | null;
+  featuredCityStatus?: string | null;
+  claimBoostPaymentId?: string | null;
+  jobPostPaymentIds?: string | null;
+  plusPlan?: string | null;
+  plusStatus?: string | null;
+}): boolean {
+  const sessionId = String(input.sessionId || "").trim();
+  const confirmed = String(input.confirmedSessionId || "").trim();
+  if (sessionId) return Boolean(confirmed) && confirmed === sessionId;
+
+  const item = String(input.item || "").trim();
+  if (input.kind === "plus") {
+    const paid = input.plusStatus === "active" || input.plusStatus === "trialing";
+    if (item === "alerts") return input.plusPlan === "alerts" && paid;
+    return input.plusPlan === "plus" && paid;
+  }
+  if (input.kind === "addon") {
+    if (item === "featured_city") {
+      return input.featuredCityStatus === "active" || input.featuredCityStatus === "trialing";
+    }
+    if (item === "claim_boost") return Boolean(input.claimBoostPaymentId);
+    if (item === "job_post") return Boolean(String(input.jobPostPaymentIds || "").trim());
+    return false;
+  }
+  const plan = input.entitledPlan;
+  const paid = input.subscriptionStatus === "active" || input.subscriptionStatus === "trialing";
+  if (!paid) return false;
+  if (item === "pro" || item === "network") return plan === item;
+  return plan === "pro" || plan === "network";
+}
+
+const SUCCESS_NAME: Record<string, { en: string; fr: string }> = {
+  plus: { en: "Parent Plus", fr: "Plus parents" },
+  alerts: { en: "Parent Alerts", fr: "Alertes parents" },
+  network: { en: "Network", fr: "Réseau" },
+  pro: { en: "Pro", fr: "Pro" },
+};
+
+export function upgradeSuccessHeadline(locale?: "en" | "fr"): string {
+  return locale === "fr" ? "Félicitations, profitez de vos nouveaux avantages !" : "Congrats, enjoy your new benefits!";
+}
+
+/** Second line under the shared success badge. Yearly names the floored saving. */
+export function upgradeSuccessTitle(input: {
+  kind: "plan" | "addon" | "plus";
+  item?: string | null;
+  interval?: string | null;
+  locale?: "en" | "fr";
+  place?: string | null;
+}): string {
+  const fr = input.locale === "fr";
+  const locale = fr ? "fr" : "en";
+  const item = String(input.item || "").trim();
+  const place = String(input.place || "").trim();
+  if (input.kind === "addon") {
+    if (item === "featured_city") {
+      if (place) return fr ? `La ville en vedette est en ligne à ${place}` : `Featured city is live in ${place}`;
+      return fr ? "La ville en vedette est en ligne" : "Featured city is live";
+    }
+    if (item === "claim_boost") return fr ? "Le boost de réclamation est actif" : "Claim boost is on";
+    if (item === "job_post") return fr ? "L’offre d’emploi est prête" : "Job post is ready";
+  }
+  const id = input.kind === "plus" ? (item === "alerts" ? "alerts" : "plus") : item === "network" ? "network" : "pro";
+  const name = SUCCESS_NAME[id]?.[locale] ?? (fr ? "Pro" : "Pro");
+  if (input.interval === "year") {
+    const price = paidPlanPrice(id);
+    const percent = price ? yearlySavingsPercent(price.monthlyCad, price.yearlyCad) : null;
+    if (percent != null) return yearlySavingSuccess(name, percent, locale);
+  }
+  return fr ? `${name} est actif` : `${name} is active`;
+}

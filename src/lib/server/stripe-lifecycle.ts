@@ -1,9 +1,19 @@
 import { getSql } from "@/lib/db";
 import { extractStripeBillRef, type StripeBillObject } from "@/lib/stripe-bill-event";
-import { isProviderInterval, isProviderPlanId, type ProviderInterval, type ProviderPlanId } from "@/lib/provider-plans";
+import { isProviderInterval, isProviderPlanId, withProviderAddon, type ProviderInterval, type ProviderPlanId } from "@/lib/provider-plans";
 import { isPlusInterval, type PlusInterval } from "@/lib/parent-plus";
+import {
+  planCatalogWrite,
+  type CatalogLane,
+  type CatalogWrite,
+  type MatchedLane,
+} from "@/lib/stripe-subscription-route";
+import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
+import { profileMayReceiveUpgrade, type CatalogUpgradeLane } from "@/lib/upgrade-role";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
+
+type MetaBag = Record<string, string | undefined> | null | undefined;
 
 export type StripeLifecycleObject = StripeBillObject & {
   customer?: string | { id?: string } | null;
@@ -16,7 +26,22 @@ export type StripeLifecycleObject = StripeBillObject & {
   charge?: string | { id?: string } | null;
   payment_intent?: string | { id?: string } | null;
   invoice?: string | { id?: string } | null;
-  lines?: { data?: Array<{ metadata?: Record<string, string | undefined> | null }> } | null;
+  lines?: {
+    data?: Array<{
+      metadata?: MetaBag;
+      price?: { metadata?: MetaBag } | null;
+    }> | null;
+  } | null;
+  subscription_details?: {
+    metadata?: MetaBag;
+    subscription?: string | { id?: string } | null;
+  } | null;
+  parent?: {
+    subscription_details?: {
+      metadata?: MetaBag;
+      subscription?: string | { id?: string } | null;
+    } | null;
+  } | null;
 };
 
 function asId(value: string | { id?: string } | null | undefined): string | null {
@@ -25,43 +50,76 @@ function asId(value: string | { id?: string } | null | undefined): string | null
   return value.id || null;
 }
 
-function meta(obj: StripeLifecycleObject | null | undefined): Record<string, string> {
-  const raw = obj?.metadata || {};
+function absorb(out: Record<string, string>, raw: MetaBag) {
+  if (!raw) return;
+  for (const [key, value] of Object.entries(raw)) {
+    if (value != null && String(value).trim() && !out[key]) out[key] = String(value).trim();
+  }
+}
+
+export function collectStripeMeta(obj: StripeLifecycleObject | null | undefined): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(raw)) {
-    if (v != null && String(v).trim()) out[k] = String(v);
+  absorb(out, obj?.metadata);
+  absorb(out, obj?.subscription_details?.metadata);
+  absorb(out, obj?.parent?.subscription_details?.metadata);
+  for (const line of obj?.lines?.data || []) {
+    absorb(out, line?.metadata);
+    absorb(out, line?.price?.metadata);
   }
   return out;
 }
 
-function kindOf(obj: StripeLifecycleObject | null | undefined): string {
-  return (meta(obj).kidease || "").trim();
+function subscriptionIdOf(obj: StripeLifecycleObject): string | null {
+  if (obj.object === "subscription") return obj.id || null;
+  return (
+    asId(obj.subscription) ||
+    asId(obj.subscription_details?.subscription) ||
+    asId(obj.parent?.subscription_details?.subscription)
+  );
 }
 
 async function findProfile(
   sql: Sql,
   refs: { userId?: string | null; customerId?: string | null; subscriptionId?: string | null },
-): Promise<{ user_id: string } | null> {
+): Promise<{ user_id: string; matched: MatchedLane } | null> {
+  const subscriptionId = refs.subscriptionId || null;
   if (refs.userId) {
-    const rows = await sql<{ user_id: string }>`
-      select user_id from profiles where user_id = ${refs.userId} limit 1
-    `.catch(() => []);
+    const rows = await sql<{ user_id: string; matched: MatchedLane }>`
+      select user_id,
+        case
+          when ${subscriptionId}::text is not null and featured_city_subscription_id = ${subscriptionId} then 'featured_city'
+          when ${subscriptionId}::text is not null and plus_subscription_id = ${subscriptionId} then 'parent_plus'
+          when ${subscriptionId}::text is not null and stripe_subscription_id = ${subscriptionId} then 'provider_plan'
+          else null
+        end as matched
+      from profiles
+      where user_id = ${refs.userId}
+      limit 1
+    `;
     if (rows[0]) return rows[0];
   }
-  if (refs.subscriptionId) {
-    const rows = await sql<{ user_id: string }>`
-      select user_id from profiles
-      where stripe_subscription_id = ${refs.subscriptionId}
-         or plus_subscription_id = ${refs.subscriptionId}
+  if (subscriptionId) {
+    const rows = await sql<{ user_id: string; matched: MatchedLane }>`
+      select user_id,
+        case
+          when featured_city_subscription_id = ${subscriptionId} then 'featured_city'
+          when plus_subscription_id = ${subscriptionId} then 'parent_plus'
+          when stripe_subscription_id = ${subscriptionId} then 'provider_plan'
+          else null
+        end as matched
+      from profiles
+      where featured_city_subscription_id = ${subscriptionId}
+         or plus_subscription_id = ${subscriptionId}
+         or stripe_subscription_id = ${subscriptionId}
       limit 1
-    `.catch(() => []);
+    `;
     if (rows[0]) return rows[0];
   }
   if (refs.customerId) {
     const rows = await sql<{ user_id: string }>`
       select user_id from profiles where stripe_customer_id = ${refs.customerId} limit 1
-    `.catch(() => []);
-    if (rows[0]) return rows[0];
+    `;
+    if (rows[0]) return { user_id: rows[0].user_id, matched: null };
   }
   return null;
 }
@@ -72,7 +130,16 @@ async function rememberCustomer(sql: Sql, userId: string, customerId: string | n
     update profiles
     set stripe_customer_id = coalesce(stripe_customer_id, ${customerId})
     where user_id = ${userId}
-  `.catch(() => undefined);
+  `;
+}
+
+async function rememberSession(sql: Sql, userId: string, sessionId: string | null) {
+  if (!sessionId) return;
+  await sql`
+    update profiles
+    set catalog_checkout_session_id = ${sessionId}
+    where user_id = ${userId}
+  `;
 }
 
 export async function applyProviderSubscription(
@@ -84,6 +151,7 @@ export async function applyProviderSubscription(
     status?: string | null;
     plan?: string | null;
     interval?: string | null;
+    checkoutSessionId?: string | null;
   },
 ) {
   await rememberCustomer(sql, input.userId, input.customerId ?? null);
@@ -97,9 +165,10 @@ export async function applyProviderSubscription(
       stripe_subscription_status = coalesce(${status}, stripe_subscription_status),
       selected_plan = coalesce(${canceled ? "free" : plan}, selected_plan),
       selected_interval = coalesce(${interval}, selected_interval),
-      selected_plan_at = now()
+      selected_plan_at = now(),
+      catalog_checkout_session_id = coalesce(${input.checkoutSessionId ?? null}, catalog_checkout_session_id)
     where user_id = ${input.userId}
-  `.catch(() => undefined);
+  `;
   if (canceled) {
     await sql`
       update profiles set
@@ -107,7 +176,7 @@ export async function applyProviderSubscription(
         stripe_subscription_status = ${status},
         selected_plan = ${"free"}
       where user_id = ${input.userId}
-    `.catch(() => undefined);
+    `;
   }
 }
 
@@ -119,22 +188,26 @@ export async function applyParentPlus(
     subscriptionId?: string | null;
     status?: string | null;
     interval?: string | null;
+    plan?: string | null;
+    checkoutSessionId?: string | null;
   },
 ) {
   await rememberCustomer(sql, input.userId, input.customerId ?? null);
   const interval: PlusInterval | null = isPlusInterval(input.interval) ? input.interval : null;
   const status = (input.status || "").trim() || null;
   const canceled = status === "canceled" || status === "unpaid" || status === "incomplete_expired";
-  const plusPlan = canceled ? "free" : "plus";
+  const requested = input.plan === "alerts" ? "alerts" : "plus";
+  const plusPlan = canceled ? "free" : requested;
   await sql`
     update profiles set
       plus_subscription_id = coalesce(${canceled ? null : input.subscriptionId ?? null}, plus_subscription_id),
       plus_status = coalesce(${status}, plus_status),
       plus_plan = ${plusPlan},
       plus_interval = coalesce(${interval}, plus_interval),
-      plus_selected_at = now()
+      plus_selected_at = now(),
+      catalog_checkout_session_id = coalesce(${input.checkoutSessionId ?? null}, catalog_checkout_session_id)
     where user_id = ${input.userId}
-  `.catch(() => undefined);
+  `;
   if (canceled) {
     await sql`
       update profiles set
@@ -142,8 +215,216 @@ export async function applyParentPlus(
         plus_status = ${status},
         plus_plan = ${"free"}
       where user_id = ${input.userId}
-    `.catch(() => undefined);
+    `;
   }
+}
+
+async function bumpClaimPriority(sql: Sql, userId: string, centreId: string | null): Promise<boolean> {
+  const target = String(centreId || "").trim() || null;
+  const rows = await sql<{ id: string }>`
+    update daycares d
+    set priority_until = greatest(coalesce(d.priority_until, now()), now()) + interval '30 days'
+    from provider_daycares p
+    where p.daycare_id = d.id
+      and p.user_id = ${userId}
+      and (${target}::text is null or d.id = ${target})
+    returning d.id
+  `;
+  return rows.length > 0;
+}
+
+/** Apply a paid Claim boost that arrived before the centre was linked. */
+export async function applyPendingClaimBoost(sql: Sql, userId: string): Promise<boolean> {
+  const rows = await sql<{
+    claim_boost_paid_at: string | null;
+    claim_boost_applied_at: string | null;
+    claim_boost_centre_id: string | null;
+  }>`
+    select claim_boost_paid_at, claim_boost_applied_at, claim_boost_centre_id
+    from profiles
+    where user_id = ${userId}
+    limit 1
+  `;
+  const row = rows[0];
+  if (!row?.claim_boost_paid_at || row.claim_boost_applied_at) return false;
+  const bumped = await bumpClaimPriority(sql, userId, row.claim_boost_centre_id);
+  if (!bumped) return false;
+  await sql`
+    update profiles set claim_boost_applied_at = now() where user_id = ${userId}
+  `;
+  return true;
+}
+
+async function applyFeaturedCity(
+  sql: Sql,
+  input: Extract<CatalogWrite, { lane: "featured_city" }>,
+) {
+  await rememberCustomer(sql, input.userId, input.customerId);
+  const rows = await sql<{ selected_addons: string | null }>`
+    select selected_addons from profiles where user_id = ${input.userId} limit 1
+  `;
+  const addons = withProviderAddon(rows[0]?.selected_addons, "featured_city", input.active);
+  const centreId = input.centreId || null;
+  if (input.clearSubscription) {
+    await sql`
+      update profiles set
+        featured_city_subscription_id = null,
+        featured_city_status = ${input.status},
+        featured_city_centre_id = coalesce(${centreId}, featured_city_centre_id),
+        selected_addons = ${addons},
+        catalog_checkout_session_id = coalesce(${input.checkoutSessionId}, catalog_checkout_session_id)
+      where user_id = ${input.userId}
+    `;
+    return;
+  }
+  await sql`
+    update profiles set
+      featured_city_subscription_id = coalesce(${input.subscriptionId}, featured_city_subscription_id),
+      featured_city_status = ${input.status},
+      featured_city_centre_id = coalesce(${centreId}, featured_city_centre_id),
+      selected_addons = ${addons},
+      catalog_checkout_session_id = coalesce(${input.checkoutSessionId}, catalog_checkout_session_id)
+    where user_id = ${input.userId}
+  `;
+}
+
+function paymentIds(raw: string | null | undefined): string[] {
+  return String(raw || "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
+
+async function applyClaimBoost(sql: Sql, input: Extract<CatalogWrite, { lane: "claim_boost" }>) {
+  await rememberCustomer(sql, input.userId, input.customerId);
+  const rows = await sql<{
+    claim_boost_payment_id: string | null;
+    claim_boost_applied_at: string | null;
+    claim_boost_centre_id: string | null;
+    selected_addons: string | null;
+  }>`
+    select claim_boost_payment_id, claim_boost_applied_at, claim_boost_centre_id, selected_addons
+    from profiles
+    where user_id = ${input.userId}
+    limit 1
+  `;
+  const row = rows[0];
+  const centreId = input.centreId || row?.claim_boost_centre_id || null;
+  const ids = paymentIds(row?.claim_boost_payment_id);
+  if (ids.includes(input.paymentId)) {
+    if (!row?.claim_boost_applied_at) {
+      const bumped = await bumpClaimPriority(sql, input.userId, centreId);
+      if (bumped) {
+        await sql`
+          update profiles set claim_boost_applied_at = now() where user_id = ${input.userId}
+        `;
+      }
+    }
+    await rememberSession(sql, input.userId, input.checkoutSessionId);
+    return;
+  }
+  const nextIds = [...ids, input.paymentId].slice(-20).join(",");
+  const addons = withProviderAddon(row?.selected_addons, "claim_boost", true);
+  await sql`
+    update profiles set
+      claim_boost_payment_id = ${nextIds},
+      claim_boost_paid_at = now(),
+      claim_boost_applied_at = null,
+      claim_boost_centre_id = coalesce(${centreId}, claim_boost_centre_id),
+      selected_addons = ${addons},
+      catalog_checkout_session_id = ${input.checkoutSessionId}
+    where user_id = ${input.userId}
+  `;
+  const bumped = await bumpClaimPriority(sql, input.userId, centreId);
+  if (bumped) {
+    await sql`
+      update profiles set claim_boost_applied_at = now() where user_id = ${input.userId}
+    `;
+  }
+}
+
+async function applyJobPost(sql: Sql, input: Extract<CatalogWrite, { lane: "job_post" }>) {
+  await rememberCustomer(sql, input.userId, input.customerId);
+  const rows = await sql<{
+    job_post_credits: number | null;
+    job_post_payment_ids: string | null;
+    job_post_centre_id: string | null;
+    selected_addons: string | null;
+  }>`
+    select job_post_credits, job_post_payment_ids, job_post_centre_id, selected_addons
+    from profiles
+    where user_id = ${input.userId}
+    limit 1
+  `;
+  const row = rows[0];
+  const ids = paymentIds(row?.job_post_payment_ids);
+  if (ids.includes(input.paymentId)) {
+    await rememberSession(sql, input.userId, input.checkoutSessionId);
+    return;
+  }
+  const nextIds = [...ids, input.paymentId].slice(-20).join(",");
+  const credits = Math.max(0, Number(row?.job_post_credits) || 0) + 1;
+  const addons = withProviderAddon(row?.selected_addons, "job_post", true);
+  const centreId = input.centreId || null;
+  const inserted = await sql<{ payment_id: string }>`
+    insert into centre_job_credits (payment_id, user_id, daycare_id)
+    values (${input.paymentId}, ${input.userId}, ${centreId})
+    on conflict (payment_id) do nothing
+    returning payment_id
+  `;
+  if (!inserted[0]) {
+    await rememberSession(sql, input.userId, input.checkoutSessionId);
+    return;
+  }
+  await sql`
+    update profiles set
+      job_post_credits = ${credits},
+      job_post_payment_ids = ${nextIds},
+      job_post_centre_id = coalesce(${centreId}, job_post_centre_id),
+      selected_addons = ${addons},
+      catalog_checkout_session_id = ${input.checkoutSessionId}
+    where user_id = ${input.userId}
+  `;
+}
+
+async function profileMayReceiveCatalogWrite(
+  sql: Sql,
+  write: Extract<CatalogWrite, { lane: CatalogUpgradeLane }>,
+  metadata: Record<string, string>,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const rows = await sql<{ role: string | null }>`
+    select role from profiles where user_id = ${write.userId} limit 1
+  `;
+  const centres = await listAccessibleDaycareIds(sql, write.userId);
+  return profileMayReceiveUpgrade({
+    lane: write.lane,
+    profileRole: rows[0]?.role ?? null,
+    linkedCentreIds: centres,
+    centreId: metadata.centre_id,
+    metadataRole: metadata.role,
+    buyer: metadata.buyer,
+  });
+}
+
+async function applyCatalogWrite(sql: Sql, write: CatalogWrite) {
+  if (write.lane === "ignore") return;
+  if (write.lane === "provider_plan") {
+    await applyProviderSubscription(sql, write);
+    return;
+  }
+  if (write.lane === "parent_plus") {
+    await applyParentPlus(sql, write);
+    return;
+  }
+  if (write.lane === "featured_city") {
+    await applyFeaturedCity(sql, write);
+    return;
+  }
+  if (write.lane === "claim_boost") {
+    await applyClaimBoost(sql, write);
+    return;
+  }
+  await applyJobPost(sql, write);
 }
 
 export async function applyStripeDisputeEvent(input: {
@@ -189,106 +470,49 @@ export async function applyStripeDisputeEvent(input: {
   return { ok: true, billId, handled: input.type };
 }
 
-function subscriptionRefs(obj: StripeLifecycleObject) {
-  const m = meta(obj);
-  return {
-    userId: m.user_id || obj.client_reference_id || null,
-    customerId: asId(obj.customer),
-    subscriptionId: obj.object === "subscription" ? obj.id || null : asId(obj.subscription),
-    status: obj.status || null,
-    plan: m.plan || null,
-    interval: m.interval || null,
-    kind: m.kidease || kindOf(obj),
-    addon: m.addon || null,
-  };
-}
-
 export async function applyStripeSubscriptionEvent(input: {
   type: string;
   object?: StripeLifecycleObject | null;
-}): Promise<{ ok: true; userId: string | null; handled: string }> {
+}): Promise<{ ok: true; userId: string | null; handled: string; lane: CatalogLane | "ignore" }> {
   const type = input.type || "";
   const obj = input.object || {};
   const sql = await getSql();
-
-  if (type === "checkout.session.completed") {
-    const m = meta(obj);
-    const kind = m.kidease || "";
-    if (kind === "bill") return { ok: true, userId: null, handled: type };
-    const userId = m.user_id || obj.client_reference_id || null;
-    const customerId = asId(obj.customer);
-    const subscriptionId = asId(obj.subscription);
-    if (!userId) return { ok: true, userId: null, handled: type };
-    await rememberCustomer(sql, userId, customerId);
-    if (kind === "provider_sub" || (kind === "catalog" && m.plan)) {
-      await applyProviderSubscription(sql, {
-        userId,
-        customerId,
-        subscriptionId,
-        status: obj.status || (obj.payment_status === "paid" ? "active" : "incomplete"),
-        plan: m.plan,
-        interval: m.interval,
-      });
-    }
-    if (kind === "parent_plus") {
-      await applyParentPlus(sql, {
-        userId,
-        customerId,
-        subscriptionId,
-        status: obj.status || (obj.payment_status === "paid" ? "active" : "incomplete"),
-        interval: m.interval,
-      });
-    }
-    if (kind === "addon" && m.addon) {
-      await rememberCustomer(sql, userId, customerId);
-    }
-    return { ok: true, userId, handled: type };
+  const metadata = collectStripeMeta(obj);
+  if (type === "checkout.session.completed" && metadata.kidease === "bill") {
+    return { ok: true, userId: null, handled: type, lane: "ignore" };
   }
 
-  const refs = subscriptionRefs(obj);
-  const profile = await findProfile(sql, refs);
-  if (!profile) return { ok: true, userId: null, handled: type };
-
-  const kind = refs.kind;
-  const looksPlus =
-    kind === "parent_plus" ||
-    (await sql<{ n: number }>`
-      select count(*)::int as n from profiles
-      where user_id = ${profile.user_id} and plus_subscription_id = ${refs.subscriptionId}
-    `.catch(() => [{ n: 0 }]))[0]?.n;
-
-  if (type === "customer.subscription.deleted" || refs.status === "canceled") {
-    if (looksPlus) {
-      await applyParentPlus(sql, { ...refs, userId: profile.user_id, status: "canceled" });
-    } else {
-      await applyProviderSubscription(sql, { ...refs, userId: profile.user_id, status: "canceled" });
-    }
-    return { ok: true, userId: profile.user_id, handled: type };
+  const subscriptionId = subscriptionIdOf(obj);
+  const customerId = asId(obj.customer);
+  const hintedUser = metadata.user_id || obj.client_reference_id || null;
+  const profile = await findProfile(sql, {
+    userId: hintedUser,
+    customerId,
+    subscriptionId,
+  });
+  const write = planCatalogWrite({
+    type,
+    metadata,
+    status: obj.status,
+    paymentStatus: obj.payment_status,
+    subscriptionId,
+    customerId,
+    userId: hintedUser || profile?.user_id || null,
+    checkoutSessionId: type === "checkout.session.completed" ? obj.id || null : null,
+    paymentId: asId(obj.payment_intent) || (type === "checkout.session.completed" ? obj.id || null : null),
+    matchedLane: metadata.kidease ? null : profile?.matched ?? null,
+    profileUserId: profile?.user_id ?? null,
+  });
+  if (write.lane === "ignore") {
+    return { ok: true, userId: profile?.user_id ?? null, handled: type, lane: "ignore" };
   }
-
-  if (
-    type === "customer.subscription.created" ||
-    type === "customer.subscription.updated" ||
-    type === "invoice.paid" ||
-    type === "invoice.payment_failed"
-  ) {
-    const status =
-      type === "invoice.payment_failed"
-        ? "past_due"
-        : type === "invoice.paid"
-          ? "active"
-          : refs.status;
-    if (kind === "parent_plus" || looksPlus) {
-      await applyParentPlus(sql, { ...refs, userId: profile.user_id, status });
-    } else if (kind === "provider_sub" || kind === "addon" || refs.plan || refs.subscriptionId) {
-      await applyProviderSubscription(sql, { ...refs, userId: profile.user_id, status });
-    } else {
-      await rememberCustomer(sql, profile.user_id, refs.customerId);
-    }
-    return { ok: true, userId: profile.user_id, handled: type };
+  const allowed = await profileMayReceiveCatalogWrite(sql, write, metadata);
+  if (!allowed.ok) {
+    console.error("[kidease-sub] refused cross-role upgrade", allowed.reason, write.lane, write.userId);
+    return { ok: true, userId: write.userId, handled: type, lane: "ignore" };
   }
-
-  return { ok: true, userId: profile.user_id, handled: type };
+  await applyCatalogWrite(sql, write);
+  return { ok: true, userId: write.userId, handled: type, lane: write.lane };
 }
 
 export const STRIPE_LIFECYCLE_TYPES = [

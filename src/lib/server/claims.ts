@@ -218,6 +218,12 @@ export const verifyClaim = createServerFn({ method: "POST" })
       values (${context.userId}, ${data.daycareId})
       on conflict (user_id, daycare_id) do nothing
     `;
+    try {
+      const { applyPendingClaimBoost } = await import("@/lib/server/stripe-lifecycle");
+      await applyPendingClaimBoost(sql, context.userId);
+    } catch (err) {
+      console.error("[kidease-stripe] claim boost apply failed", err);
+    }
     await ensureOwnerMembership(sql, context.userId, data.daycareId);
     await sql`
       update daycares

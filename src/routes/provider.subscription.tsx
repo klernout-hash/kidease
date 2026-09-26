@@ -1,12 +1,30 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { ProviderSubscriptionPanel } from "@/components/provider-subscription";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { canBuyDaycareUpgrade } from "@/lib/upgrade-role";
 
 export const Route = createFileRoute("/provider/subscription")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const out: {
+      checkout?: "success" | "cancel";
+      addon?: "success" | "cancel";
+      plan?: string;
+      item?: string;
+      session?: string;
+      interval?: "month" | "year";
+    } = {};
+    if (s.checkout === "success" || s.checkout === "cancel") out.checkout = s.checkout;
+    if (s.addon === "success" || s.addon === "cancel") out.addon = s.addon;
+    if (s.plan === "pro" || s.plan === "network") out.plan = s.plan;
+    if (s.item === "featured_city" || s.item === "claim_boost" || s.item === "job_post") out.item = s.item;
+    if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
+    if (s.interval === "month" || s.interval === "year") out.interval = s.interval;
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Subscription · KidEase" },
@@ -17,13 +35,20 @@ export const Route = createFileRoute("/provider/subscription")({
 });
 
 function ProviderSubscriptionPage() {
+  const upgradeSearch = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
-  const allowed = Boolean(
-    ready && session?.providerSubscriptions && (session.centreOwner !== false || session.role === "admin"),
+  const daycareBuyer = Boolean(
+    session &&
+      canBuyDaycareUpgrade({
+        role: session.role,
+        ownsCentre: session.ownsCentre,
+        linkedToCentre: session.centreLinked,
+      }),
   );
+  const allowed = Boolean(daycareBuyer && session?.providerSubscriptions);
 
-  if (isPending) {
+  if (isPending || (user && !ready)) {
     return (
       <Shell>
         <p className="p-8 text-muted">Loading…</p>
@@ -31,13 +56,17 @@ function ProviderSubscriptionPage() {
     );
   }
   if (!user) return <RedirectToSignIn />;
-  if (!ready) {
+  if (!session) {
     return (
       <Shell>
-        <p className="p-8 text-muted">Loading…</p>
+        <main className="mx-auto max-w-lg px-4 py-16 text-center">
+          <h1 className="font-display text-3xl">Couldn’t confirm this account</h1>
+          <p className="mt-3 text-muted">Refresh and try again. Nothing was charged.</p>
+        </main>
       </Shell>
     );
   }
+  if (!daycareBuyer) return <Navigate to="/parent" />;
   if (!allowed) {
     return (
       <Shell>
@@ -61,7 +90,7 @@ function ProviderSubscriptionPage() {
           if (id !== "subscription" && typeof window !== "undefined") window.location.assign("/provider");
         }}
       >
-        <ProviderSubscriptionPanel />
+        <ProviderSubscriptionPanel upgradeSearch={upgradeSearch} />
       </DeskShell>
     </TwoFactorGate>
   );

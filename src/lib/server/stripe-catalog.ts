@@ -11,6 +11,11 @@
  *   STRIPE_PRICE_PLUS_MONTHLY
  *   STRIPE_PRICE_PLUS_YEARLY
  *
+ * Proposals (hidden until the env price ID is set; Check prices will not create them):
+ *   STRIPE_PRICE_NETWORK_YEARLY          year, $390 CAD per site
+ *   STRIPE_PRICE_PARENT_ALERTS_MONTHLY   month, $14.99 CAD
+ *   STRIPE_PRICE_PARENT_ALERTS_YEARLY    year, $149 CAD
+ *
  * Optional add-ons:
  *   STRIPE_PRICE_FEATURED_CITY   ($29 / month)
  *   STRIPE_PRICE_CLAIM_BOOST     ($99 once)
@@ -22,12 +27,17 @@
  *   STRIPE_PAYMENT_LINK_JOB_POST
  */
 
+import { daycareAddon } from "../upgrade-plans.ts";
+
 export const STRIPE_PRICE_ENV = {
   pro_monthly: "STRIPE_PRICE_PRO_MONTHLY",
   pro_yearly: "STRIPE_PRICE_PRO_YEARLY",
   network_monthly: "STRIPE_PRICE_NETWORK_MONTHLY",
+  network_yearly: "STRIPE_PRICE_NETWORK_YEARLY",
   plus_monthly: "STRIPE_PRICE_PLUS_MONTHLY",
   plus_yearly: "STRIPE_PRICE_PLUS_YEARLY",
+  parent_alerts_monthly: "STRIPE_PRICE_PARENT_ALERTS_MONTHLY",
+  parent_alerts_yearly: "STRIPE_PRICE_PARENT_ALERTS_YEARLY",
   featured_city: "STRIPE_PRICE_FEATURED_CITY",
   claim_boost: "STRIPE_PRICE_CLAIM_BOOST",
   job_post: "STRIPE_PRICE_JOB_POST",
@@ -53,6 +63,8 @@ export type StripeCatalogItem = {
   kind: StripeCatalogKind;
   interval?: "month" | "year";
   required: boolean;
+  /** Kyle has not approved this price. Catalog bootstrap must not create it. */
+  proposal?: boolean;
 };
 
 /** CAD one-pager — amounts only, never secret keys. */
@@ -61,7 +73,7 @@ export const STRIPE_CATALOG: StripeCatalogItem[] = [
     key: "pro_monthly",
     lookupKey: "kidease_pro_monthly",
     productName: "KidEase Daycare Pro",
-    description: "Unlimited inquiries, one featured city, 90-day analytics.",
+    description: "Unlimited messages and tours, one featured city in search, 90 days of views and requests.",
     amountCad: 49,
     kind: "recurring",
     interval: "month",
@@ -88,10 +100,21 @@ export const STRIPE_CATALOG: StripeCatalogItem[] = [
     required: true,
   },
   {
+    key: "network_yearly",
+    lookupKey: "kidease_network_yearly",
+    productName: "KidEase Network",
+    description: "Proposal: $390 per licensed site / year. Same 3-site minimum as monthly. Not created until Kyle approves.",
+    amountCad: 390,
+    kind: "recurring",
+    interval: "year",
+    required: false,
+    proposal: true,
+  },
+  {
     key: "plus_monthly",
     lookupKey: "kidease_plus_monthly",
     productName: "KidEase Parent Plus",
-    description: "Parent Plus extras — saved-search alerts and priority support.",
+    description: "Parent ↔ centre video tour, when video is on. Search, messages, and alerts stay free.",
     amountCad: 7.99,
     kind: "recurring",
     interval: "month",
@@ -108,11 +131,34 @@ export const STRIPE_CATALOG: StripeCatalogItem[] = [
     required: true,
   },
   {
+    key: "parent_alerts_monthly",
+    lookupKey: "kidease_parent_alerts_monthly",
+    productName: "KidEase Parent Alerts",
+    description:
+      "Proposal: SMS and push on top of the Parent Plus video tour, when those channels are on. Email stays free.",
+    amountCad: 14.99,
+    kind: "recurring",
+    interval: "month",
+    required: false,
+    proposal: true,
+  },
+  {
+    key: "parent_alerts_yearly",
+    lookupKey: "kidease_parent_alerts_yearly",
+    productName: "KidEase Parent Alerts",
+    description: "Proposal: Parent Alerts billed yearly. Hidden until Kyle sets the price ID.",
+    amountCad: 149,
+    kind: "recurring",
+    interval: "year",
+    required: false,
+    proposal: true,
+  },
+  {
     key: "featured_city",
     lookupKey: "kidease_featured_city",
     productName: "KidEase Featured city",
-    description: "Extra city highlight on search.",
-    amountCad: 29,
+    description: daycareAddon("featured_city").benefit.en,
+    amountCad: daycareAddon("featured_city").amountCad,
     kind: "recurring",
     interval: "month",
     required: false,
@@ -121,8 +167,8 @@ export const STRIPE_CATALOG: StripeCatalogItem[] = [
     key: "claim_boost",
     lookupKey: "kidease_claim_boost",
     productName: "KidEase Claim boost",
-    description: "One-time bump when you claim a listing.",
-    amountCad: 99,
+    description: daycareAddon("claim_boost").benefit.en,
+    amountCad: daycareAddon("claim_boost").amountCad,
     kind: "one_time",
     required: false,
   },
@@ -130,8 +176,8 @@ export const STRIPE_CATALOG: StripeCatalogItem[] = [
     key: "job_post",
     lookupKey: "kidease_job_post",
     productName: "KidEase Job post",
-    description: "Post one staff opening.",
-    amountCad: 49,
+    description: daycareAddon("job_post").benefit.en,
+    amountCad: daycareAddon("job_post").amountCad,
     kind: "one_time",
     required: false,
   },
@@ -165,12 +211,17 @@ export function catalogStatus(env: NodeJS.ProcessEnv = process.env): Record<Stri
 
 export function providerPriceKey(plan: "pro" | "network", interval: "month" | "year"): StripePriceKey | null {
   if (plan === "pro") return interval === "year" ? "pro_yearly" : "pro_monthly";
-  if (plan === "network") return interval === "month" ? "network_monthly" : null;
+  if (plan === "network") return interval === "year" ? "network_yearly" : "network_monthly";
   return null;
 }
 
 export function plusPriceKey(interval: "month" | "year"): StripePriceKey {
   return interval === "year" ? "plus_yearly" : "plus_monthly";
+}
+
+export function parentPriceKey(plan: "plus" | "alerts", interval: "month" | "year"): StripePriceKey {
+  if (plan === "alerts") return interval === "year" ? "parent_alerts_yearly" : "parent_alerts_monthly";
+  return plusPriceKey(interval);
 }
 
 export function addonPriceKey(addon: "featured_city" | "claim_boost" | "job_post"): StripePriceKey {

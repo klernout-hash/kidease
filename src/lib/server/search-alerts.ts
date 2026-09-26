@@ -10,6 +10,8 @@
  * Delivery later (wired no-op until flags + keys):
  *   - sendPushNotification when FEATURE_PUSH is armed + a native token exists
  *   - sendSms when FEATURE_SMS + CASL. www never prompts for push.
+ * SMS and push require Parent Alerts (plus_plan=alerts, active or trialing).
+ * Email and in-app alerts stay on Free. Both channels still no-op while their flags are off.
  */
 import { getSql, dbSource, type Sql } from "@/lib/db";
 import { SEARCH_ALERTS_CAMPAIGN_TAG } from "@/lib/email-suppressions";
@@ -31,6 +33,7 @@ import {
   type SearchAlertCandidate,
   type SearchAlertKind,
 } from "@/lib/saved-search";
+import { parentAlertsEntitled } from "@/lib/parent-plus";
 import { nid } from "@/lib/utils";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import {
@@ -567,9 +570,11 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
 
       const { evaluateCaslSend } = await import("@/lib/server/casl-consent");
       const actor = await lookupUser(search.user_id);
-      const phoneRows = await sql<{ phone: string | null }>`
-        select phone from profiles where user_id = ${search.user_id} limit 1
-      `.catch(() => [] as { phone: string | null }[]);
+      const phoneRows = await sql<{ phone: string | null; plus_plan: string | null; plus_status: string | null }>`
+        select phone, plus_plan, plus_status from profiles where user_id = ${search.user_id} limit 1
+      `.catch(() => [] as { phone: string | null; plus_plan: string | null; plus_status: string | null }[]);
+      const alertsChannels = parentAlertsEntitled(phoneRows[0]?.plus_plan, phoneRows[0]?.plus_status);
+      if (alertsChannels) {
       const smsCasl = await evaluateCaslSend({
         userId: search.user_id,
         channel: "sms",
@@ -630,6 +635,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
         } else {
           smsSkipped += 1;
         }
+      }
       }
       notified += events.length;
     }

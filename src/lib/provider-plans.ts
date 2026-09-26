@@ -3,6 +3,8 @@
  * Checkout runs only when stripeChargesLive() and the matching STRIPE_PRICE_* env is set.
  */
 
+import { DAYCARE_ADDONS, daycareUpgradePlan, paidPlanPrice, type PlanLine } from "./upgrade-plans.ts";
+
 export const PROVIDER_PLAN_IDS = ["free", "pro", "network"] as const;
 export type ProviderPlanId = (typeof PROVIDER_PLAN_IDS)[number];
 
@@ -27,7 +29,7 @@ export const PROVIDER_CHECKOUT_REHEARSAL_MESSAGE =
 export const PROVIDER_CHECKOUT_LIVE_MESSAGE =
   "Live Stripe checkout. Subscribe opens Stripe. Manage billing in the customer portal after the first successful checkout.";
 
-type LocaleText = { en: string; fr: string };
+type LocaleText = PlanLine;
 
 export type ProviderPlan = {
   id: ProviderPlanId;
@@ -52,70 +54,42 @@ export const PROVIDER_PLANS: ProviderPlan[] = [
   {
     id: "free",
     name: { en: "Free", fr: "Gratuit" },
-    tagline: { en: "Get listed and take a few inquiries.", fr: "Soyez listé et recevez quelques demandes." },
+    tagline: daycareUpgradePlan("free").pitch,
     monthly: 0,
     yearly: 0,
     perSite: false,
     minSites: 1,
-    features: [
-      { en: "Centre listing on KidEase", fr: "Fiche du centre sur KidEase" },
-      { en: "Basic vacancy updates", fr: "Mise à jour simple des places" },
-      { en: "10 messages and tours / month", fr: "10 messages et visites / mois" },
-    ],
+    features: daycareUpgradePlan("free").benefits,
   },
   {
     id: "pro",
     name: { en: "Pro", fr: "Pro" },
-    tagline: { en: "Unlimited inquiries and a featured city.", fr: "Demandes illimitées et une ville en vedette." },
-    monthly: 49,
-    yearly: 490,
+    tagline: daycareUpgradePlan("pro").pitch,
+    monthly: paidPlanPrice("pro")?.monthlyCad ?? 49,
+    yearly: paidPlanPrice("pro")?.yearlyCad ?? 490,
     perSite: false,
     minSites: 1,
-    features: [
-      { en: "Unlimited inquiries", fr: "Demandes illimitées" },
-      { en: "1 featured city included", fr: "1 ville en vedette incluse" },
-      { en: "90-day analytics", fr: "Analytique sur 90 jours" },
-    ],
+    features: daycareUpgradePlan("pro").benefits,
   },
   {
     id: "network",
     name: { en: "Network", fr: "Réseau" },
-    tagline: { en: "Org dashboard for 3 or more sites.", fr: "Tableau de bord pour 3 sites ou plus." },
-    monthly: 39,
-    yearly: null,
+    tagline: daycareUpgradePlan("network").pitch,
+    monthly: paidPlanPrice("network")?.monthlyCad ?? 39,
+    yearly: paidPlanPrice("network")?.yearlyCad ?? 390,
     perSite: true,
     minSites: 3,
-    features: [
-      { en: "$39 per site / month", fr: "39 $ par site / mois" },
-      { en: "Organization dashboard", fr: "Tableau de bord de l’organisme" },
-      { en: "Built for 3+ licensed sites", fr: "Pour 3 sites permis ou plus" },
-    ],
+    features: daycareUpgradePlan("network").benefits,
   },
 ];
 
-export const PROVIDER_ADDONS: ProviderAddon[] = [
-  {
-    id: "featured_city",
-    name: { en: "Featured city", fr: "Ville en vedette" },
-    amount: 29,
-    cadence: "month",
-    blurb: { en: "Extra city highlight on search.", fr: "Mise en avant dans une ville de plus." },
-  },
-  {
-    id: "claim_boost",
-    name: { en: "Claim boost", fr: "Boost de réclamation" },
-    amount: 99,
-    cadence: "once",
-    blurb: { en: "One-time bump when you claim a listing.", fr: "Coup de pouce unique à la réclamation." },
-  },
-  {
-    id: "job_post",
-    name: { en: "Job post", fr: "Offre d’emploi" },
-    amount: 49,
-    cadence: "once",
-    blurb: { en: "Post one staff opening.", fr: "Publier une offre de personnel." },
-  },
-];
+export const PROVIDER_ADDONS: ProviderAddon[] = DAYCARE_ADDONS.map((addon) => ({
+  id: addon.id,
+  name: addon.name,
+  amount: addon.amountCad,
+  cadence: addon.cadence,
+  blurb: addon.benefit,
+}));
 
 export const PROVIDER_COMPARE: Array<{
   id: string;
@@ -148,7 +122,7 @@ export const PROVIDER_COMPARE: Array<{
   {
     id: "inquiries",
     label: { en: "Inquiries", fr: "Demandes" },
-    free: { en: "Limited", fr: "Limité" },
+    free: { en: "10 / month", fr: "10 / mois" },
     pro: { en: "Unlimited", fr: "Illimité" },
     network: { en: "Unlimited", fr: "Illimité" },
   },
@@ -156,15 +130,15 @@ export const PROVIDER_COMPARE: Array<{
     id: "featured",
     label: { en: "Featured city", fr: "Ville en vedette" },
     free: { en: "—", fr: "—" },
-    pro: { en: "1 included", fr: "1 incluse" },
+    pro: { en: "Included", fr: "Incluse" },
     network: { en: "Add-on", fr: "Option" },
   },
   {
     id: "analytics",
     label: { en: "Analytics", fr: "Analytique" },
-    free: { en: "—", fr: "—" },
+    free: { en: "7 days", fr: "7 jours" },
     pro: { en: "90 days", fr: "90 jours" },
-    network: { en: "Org dashboard", fr: "Tableau org." },
+    network: { en: "90 days + site totals", fr: "90 jours + totaux" },
   },
   {
     id: "sites",
@@ -195,6 +169,16 @@ export function parseProviderAddons(raw: string | null | undefined): ProviderAdd
 
 export function serializeProviderAddons(ids: readonly string[]): string {
   return PROVIDER_ADDON_IDS.filter((id) => ids.includes(id)).join(",");
+}
+
+export function withProviderAddon(
+  raw: string | null | undefined,
+  id: ProviderAddonId,
+  on: boolean,
+): string {
+  const ids = parseProviderAddons(raw);
+  const next = on ? (ids.includes(id) ? ids : [...ids, id]) : ids.filter((item) => item !== id);
+  return serializeProviderAddons(next);
 }
 
 export function providerPlan(id: string | null | undefined): ProviderPlan {

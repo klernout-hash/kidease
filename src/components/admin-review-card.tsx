@@ -387,6 +387,11 @@ export function AdminReviewCard({
         <div className="min-w-0">
           <h3 className="font-display text-lg leading-tight tracking-tight">{centre.name}</h3>
           <p className="mt-0.5 text-sm text-muted">{place || "Location not on file"}</p>
+          {centre.addonLine ? (
+            <p className="mt-1 text-sm text-fg" data-ke="admin-centre-addons">
+              {centre.addonLine}
+            </p>
+          ) : null}
         </div>
         <div className="shrink-0 pt-1 text-right">
           <p className="text-xs font-medium tracking-wide text-primary">{kind.label}</p>
