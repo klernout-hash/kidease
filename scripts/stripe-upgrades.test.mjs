@@ -9,8 +9,18 @@ import {
   planCatalogWrite,
   resolveCatalogLane,
   upgradeConfirmed,
+  upgradeSuccessHeadline,
   upgradeSuccessTitle,
 } from "../src/lib/stripe-subscription-route.ts";
+import { upgradeUnlockedBenefits, DAYCARE_UPGRADE_PLANS, PARENT_UPGRADE_PLANS } from "../src/lib/upgrade-plans.ts";
+import {
+  UPGRADE_CONFIRMING,
+  UPGRADE_CONFIRM_SLOW,
+  UPGRADE_CONFIRM_WAIT_MS,
+  stripUpgradeReturnQuery,
+  upgradeCelebrationKey,
+  upgradeReturnFromSearch,
+} from "../src/lib/upgrade-return.ts";
 import { mapCheckoutError, publicPayMessage, StripeApiError } from "../src/lib/stripe-public-error.ts";
 import {
   canBuyDaycareUpgrade,
@@ -394,7 +404,9 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
     }),
     false,
   );
-  assert.equal(upgradeSuccessTitle({ kind: "plan", item: "pro" }), "You're on Pro");
+  assert.equal(upgradeSuccessHeadline("en"), "Congrats, enjoy your new benefits!");
+  assert.notEqual(upgradeSuccessHeadline("fr"), upgradeSuccessHeadline("en"));
+  assert.equal(upgradeSuccessTitle({ kind: "plan", item: "pro" }), "Pro is active");
   assert.equal(
     upgradeSuccessTitle({ kind: "plan", item: "pro", interval: "year" }),
     "You're on Pro yearly and saving 16%",
@@ -404,7 +416,13 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
     "You're on Network yearly and saving 16%",
   );
   assert.equal(upgradeSuccessTitle({ kind: "addon", item: "featured_city" }), "Featured city is live");
-  assert.equal(upgradeSuccessTitle({ kind: "plus" }), "You're on Parent Plus");
+  assert.equal(
+    upgradeSuccessTitle({ kind: "addon", item: "featured_city", place: "Winnipeg" }),
+    "Featured city is live in Winnipeg",
+  );
+  assert.equal(upgradeSuccessTitle({ kind: "addon", item: "claim_boost" }), "Claim boost is on");
+  assert.equal(upgradeSuccessTitle({ kind: "addon", item: "job_post" }), "Job post is ready");
+  assert.equal(upgradeSuccessTitle({ kind: "plus" }), "Parent Plus is active");
   assert.equal(
     upgradeSuccessTitle({ kind: "plus", item: "plus", interval: "year" }),
     "You're on Parent Plus yearly and saving 38%",
@@ -413,6 +431,45 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
     upgradeSuccessTitle({ kind: "plus", item: "alerts", interval: "year" }),
     "You're on Parent Alerts yearly and saving 17%",
   );
+  const proBenefits = DAYCARE_UPGRADE_PLANS.find((plan) => plan.id === "pro").benefits.slice(0, 3).map((line) => line.en);
+  assert.deepEqual(upgradeUnlockedBenefits({ kind: "plan", item: "pro", locale: "en" }), proBenefits);
+  assert.equal(proBenefits.length, 3);
+  const plusBenefits = PARENT_UPGRADE_PLANS.find((plan) => plan.id === "plus").benefits.map((line) => line.en);
+  assert.deepEqual(upgradeUnlockedBenefits({ kind: "plus", item: "plus", locale: "en" }), plusBenefits);
+  assert.equal(UPGRADE_CONFIRMING.en, "Confirming your upgrade…");
+  assert.match(UPGRADE_CONFIRM_SLOW.en, /Nothing is marked paid before that/);
+  assert.doesNotMatch(UPGRADE_CONFIRM_SLOW.en, /Congrats/);
+  assert.equal(UPGRADE_CONFIRM_WAIT_MS, 20000);
+  assert.equal(
+    upgradeCelebrationKey({ phase: "success", kind: "plan", item: "pro", sessionId: "cs_1", interval: "year" }),
+    "kidease-pay-success:plan:cs_1",
+  );
+  assert.equal(
+    stripUpgradeReturnQuery("?tab=payments&plus=success&plan=plus&interval=year&session=cs_1"),
+    "?tab=payments",
+  );
+  assert.equal(stripUpgradeReturnQuery("?addon=success&item=featured_city&session=cs_1"), "");
+  assert.deepEqual(
+    upgradeReturnFromSearch({
+      checkout: "success",
+      plan: "pro",
+      interval: "year",
+      session: "cs_pro",
+    }),
+    { phase: "success", kind: "plan", item: "pro", sessionId: "cs_pro", interval: "year" },
+  );
+  assert.equal(
+    upgradeReturnFromSearch({ plus: "success", plan: "plus", interval: "month", session: "cs_plus" })?.kind,
+    "plus",
+  );
+  const celebrate = src("src/components/checkout-return.tsx");
+  const cheer = celebrate.slice(celebrate.indexOf("confirmSuccess({"));
+  assert.match(cheer, /upgradeSuccessHeadline/);
+  assert.doesNotMatch(cheer.slice(0, cheer.indexOf("points:")), /kicker:/);
+  assert.match(src("src/components/success-confirm.tsx"), /upgrade-success-benefits/);
+  assert.match(src("src/lib/wallets.ts"), /Browser\.open/);
+  assert.match(src("src/lib/wallets.ts"), /window\.location\.assign\(href\)/);
+  assert.match(src("src/routes/__root.tsx"), /SuccessConfirmHost/);
 
   const raw = new StripeApiError(
     "You must provide at least one recurring price in `subscription` mode when using prices.",

@@ -123,6 +123,8 @@ export type SuccessRequest = {
   onPrimary?: () => void;
   secondaryLabel?: string;
   onClose?: () => void;
+  /** Short list under the body. Other success screens leave this empty. */
+  points?: string[];
 };
 
 type Deliver = (request: SuccessRequest) => void;

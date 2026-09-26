@@ -1,56 +1,58 @@
 import { useEffect, useState } from "react";
 import { confirmSuccess } from "@/lib/success-confirm";
-import { upgradeConfirmed, upgradeSuccessTitle } from "@/lib/stripe-subscription-route";
+import { upgradeConfirmed, upgradeSuccessHeadline, upgradeSuccessTitle } from "@/lib/stripe-subscription-route";
+import { upgradeUnlockedBenefits } from "@/lib/upgrade-plans";
+import {
+  UPGRADE_CONFIRM_POLL_MS,
+  UPGRADE_CONFIRM_SLOW,
+  UPGRADE_CONFIRM_WAIT_MS,
+  UPGRADE_CONFIRMING,
+  stripUpgradeReturnQuery,
+  upgradeCelebrationKey,
+  type UpgradeReturn,
+} from "@/lib/upgrade-return";
 
-export type UpgradeReturn =
-  | { phase: "cancel" }
-  | {
-      phase: "success";
-      kind: "plan" | "addon" | "plus";
-      item: string | null;
-      sessionId: string | null;
-      interval: string | null;
-    };
-
-export function readUpgradeReturn(search: string): UpgradeReturn | null {
-  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
-  if (params.get("checkout") === "cancel" || params.get("addon") === "cancel" || params.get("plus") === "cancel") {
-    return { phase: "cancel" };
-  }
-  const sessionId = params.get("session");
-  const interval = params.get("interval") === "year" || params.get("interval") === "month" ? params.get("interval") : null;
-  if (params.get("checkout") === "success") {
-    return { phase: "success", kind: "plan", item: params.get("plan"), sessionId, interval };
-  }
-  if (params.get("addon") === "success") {
-    return { phase: "success", kind: "addon", item: params.get("item"), sessionId, interval: null };
-  }
-  if (params.get("plus") === "success") {
-    const plan = params.get("plan") === "alerts" ? "alerts" : "plus";
-    return { phase: "success", kind: "plus", item: plan, sessionId, interval };
-  }
-  return null;
-}
-
-const PENDING = {
-  en: "Stripe has your payment. KidEase is confirming it on this page. This upgrade stays off until that confirmation lands.",
-  fr: "Stripe a reçu le paiement. KidEase le confirme sur cette page. Cette option reste fermée tant que la confirmation n’est pas arrivée.",
-} as const;
-
-const PENDING_SLOW = {
-  en: "Still waiting on Stripe. Refresh in a minute, or open Manage billing. If the card was charged, the upgrade appears here when Stripe notifies KidEase. Nothing is marked paid before that.",
-  fr: "Toujours en attente de Stripe. Actualisez dans une minute, ou ouvrez Gérer la facturation. Si la carte a été débitée, l’option apparaît ici quand Stripe prévient KidEase. Rien n’est marqué payé avant.",
-} as const;
+export {
+  readUpgradeReturn,
+  stripUpgradeReturnQuery,
+  upgradeCelebrationKey,
+  upgradeReturnFromSearch,
+  UPGRADE_CONFIRM_POLL_MS,
+  UPGRADE_CONFIRM_SLOW,
+  UPGRADE_CONFIRM_WAIT_MS,
+  UPGRADE_CONFIRMING,
+} from "@/lib/upgrade-return";
+export type { UpgradeReturn, UpgradeSearch } from "@/lib/upgrade-return";
 
 const CANCELED = {
   en: "Checkout canceled. Nothing was charged.",
   fr: "Paiement annulé. Rien n’a été débité.",
 } as const;
 
-const SUCCESS_BODY = {
-  en: "KidEase stays free. This upgrade is optional.",
-  fr: "KidEase reste gratuit. Cette option est facultative.",
-} as const;
+function celebrationSeen(key: string): boolean {
+  try {
+    return window.sessionStorage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markCelebration(key: string) {
+  try {
+    window.sessionStorage.setItem(key, "1");
+  } catch {
+    /* Private mode still strips the return URL after the badge is shown. */
+  }
+}
+
+function replaceUpgradeReturn() {
+  if (typeof window === "undefined") return;
+  const next = stripUpgradeReturnQuery(window.location.search);
+  const url = `${window.location.pathname}${next}${window.location.hash}`;
+  if (url !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+    window.history.replaceState(window.history.state, "", url);
+  }
+}
 
 export function CheckoutReturnNote({
   phase,
@@ -60,7 +62,7 @@ export function CheckoutReturnNote({
   locale: "en" | "fr";
 }) {
   if (!phase) return null;
-  const copy = phase === "cancel" ? CANCELED : phase === "slow" ? PENDING_SLOW : PENDING;
+  const copy = phase === "cancel" ? CANCELED : phase === "slow" ? UPGRADE_CONFIRM_SLOW : UPGRADE_CONFIRMING;
   return (
     <p
       role="status"
@@ -87,9 +89,11 @@ export function useUpgradeCelebration(input: {
   jobPostPaymentIds?: string | null;
   plusPlan?: string | null;
   plusStatus?: string | null;
+  place?: string | null;
   reload?: () => void;
 }) {
   const [slow, setSlow] = useState(false);
+  const [seen, setSeen] = useState(false);
   const ready =
     input.ret?.phase === "success" &&
     upgradeConfirmed({
@@ -107,38 +111,54 @@ export function useUpgradeCelebration(input: {
     });
 
   useEffect(() => {
-    if (input.ret?.phase !== "success" || ready) return;
+    if (input.ret?.phase !== "success") return;
+    if (celebrationSeen(upgradeCelebrationKey(input.ret))) {
+      setSeen(true);
+      replaceUpgradeReturn();
+    }
+  }, [input.ret]);
+
+  useEffect(() => {
+    if (seen || input.ret?.phase !== "success" || ready) return;
     const reload = input.reload;
     if (!reload) return;
-    const timer = window.setInterval(reload, 2000);
-    const slowTimer = window.setTimeout(() => setSlow(true), 20000);
+    const timer = window.setInterval(reload, UPGRADE_CONFIRM_POLL_MS);
+    const slowTimer = window.setTimeout(() => setSlow(true), UPGRADE_CONFIRM_WAIT_MS);
     return () => {
       window.clearInterval(timer);
       window.clearTimeout(slowTimer);
     };
-  }, [input.ret, input.reload, ready]);
+  }, [seen, input.ret, input.reload, ready]);
 
   useEffect(() => {
-    if (!ready || input.ret?.phase !== "success") return;
-    const key = `kidease-pay-success:${input.ret.kind}:${input.ret.sessionId || input.ret.item || "paid"}`;
-    try {
-      if (window.sessionStorage.getItem(key)) return;
-      window.sessionStorage.setItem(key, "1");
-    } catch {
-      /* private mode still shows the screen once in this effect */
+    if (seen || !ready || input.ret?.phase !== "success") return;
+    const key = upgradeCelebrationKey(input.ret);
+    if (celebrationSeen(key)) {
+      setSeen(true);
+      replaceUpgradeReturn();
+      return;
     }
+    markCelebration(key);
     confirmSuccess({
       variant: "modal",
-      title: upgradeSuccessTitle({
+      title: upgradeSuccessHeadline(input.locale),
+      body: upgradeSuccessTitle({
         kind: input.ret.kind,
         item: input.ret.item,
         interval: input.ret.interval,
         locale: input.locale,
+        place: input.place,
       }),
-      body: SUCCESS_BODY[input.locale],
+      points: upgradeUnlockedBenefits({
+        kind: input.ret.kind,
+        item: input.ret.item,
+        locale: input.locale,
+      }),
     });
-  }, [ready, input.ret, input.locale]);
+    replaceUpgradeReturn();
+  }, [seen, ready, input.ret, input.locale, input.place]);
 
+  if (seen) return null;
   if (input.ret?.phase === "cancel") return "cancel" as const;
   if (input.ret?.phase === "success" && !ready) return slow ? ("slow" as const) : ("pending" as const);
   return null;

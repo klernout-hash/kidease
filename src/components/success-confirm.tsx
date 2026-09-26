@@ -65,6 +65,7 @@ export type SuccessConfirmProps = MarkerProps & {
   contextTitle?: string;
   contextMeta?: string;
   contextDetail?: string;
+  points?: string[];
   primary?: ReactNode;
   secondary?: ReactNode;
   onClose: () => void;
@@ -79,6 +80,7 @@ export function SuccessConfirm({
   contextTitle,
   contextMeta,
   contextDetail,
+  points,
   primary,
   secondary,
   onClose,
@@ -97,6 +99,7 @@ export function SuccessConfirm({
   const meta = (contextMeta || "").trim();
   const detail = (contextDetail || "").trim();
   const copy = (body || "").trim();
+  const unlocked = (points || []).map((line) => line.trim()).filter(Boolean).slice(0, 3);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -226,6 +229,13 @@ export function SuccessConfirm({
               {copy}
             </p>
           ) : null}
+          {unlocked.length ? (
+            <ul className="mt-3 w-full max-w-sm list-disc space-y-1 pl-5 text-left text-sm text-muted" data-ke="upgrade-success-benefits">
+              {unlocked.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          ) : null}
         </div>
         {cardTitle ? (
           <div className="mt-4 flex items-center gap-3 rounded-[14px] bg-bg p-2.5 text-left ring-1 ring-border">
@@ -327,6 +337,7 @@ export function SuccessConfirmHost() {
           kicker={modal.kicker || kicker}
           title={modal.title}
           body={modal.body}
+          points={modal.points}
           photo={modal.photo}
           contextTitle={modal.contextTitle}
           contextMeta={modal.contextMeta}

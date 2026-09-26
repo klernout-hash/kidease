@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { publicPayMessage } from "@/lib/stripe-public-error";
-import { CheckoutReturnNote, readUpgradeReturn, useUpgradeCelebration } from "@/components/checkout-return";
+import { CheckoutReturnNote, upgradeReturnFromSearch, useUpgradeCelebration, type UpgradeSearch } from "@/components/checkout-return";
 import { useCopy } from "@/lib/use-copy";
 import { ALERTS_MONTHLY_CAD, ALERTS_YEARLY_CAD, PLUS_MONTHLY_CAD, PLUS_YEARLY_CAD, type PlusInterval, type PlusPlanId } from "@/lib/parent-plus";
 import { PARENT_UPGRADE_PLANS, checkoutCtaLabel, paidPlanVisible, visibleYearlySavings } from "@/lib/upgrade-plans";
@@ -18,9 +18,11 @@ import { useShowPayCtas } from "@/components/pay-chrome";
 export function ParentPlusPanel({
   offerCheckout = true,
   plusReturn,
+  upgradeSearch = null,
 }: {
   offerCheckout?: boolean;
   plusReturn?: "success" | "cancel" | null;
+  upgradeSearch?: UpgradeSearch | null;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -34,18 +36,10 @@ export function ParentPlusPanel({
     emailCommercial: false,
   });
 
-  const payReturn = useMemo(() => {
-    if (plusReturn === "success" || plusReturn === "cancel") {
-      const params = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
-      const session = params?.get("session") ?? null;
-      const plan = params?.get("plan") === "alerts" ? "alerts" : "plus";
-      const picked = params?.get("interval") === "month" || params?.get("interval") === "year" ? params.get("interval") : null;
-      return plusReturn === "cancel"
-        ? ({ phase: "cancel" } as const)
-        : ({ phase: "success", kind: "plus", item: plan, sessionId: session, interval: picked } as const);
-    }
-    return typeof window === "undefined" ? null : readUpgradeReturn(window.location.search);
-  }, [plusReturn]);
+  const payReturn = useMemo(
+    () => upgradeReturnFromSearch(upgradeSearch ?? (plusReturn ? { plus: plusReturn } : null)),
+    [upgradeSearch, plusReturn],
+  );
 
   const reloadPlus = useCallback(() => {
     void getParentPlus()

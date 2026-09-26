@@ -56,7 +56,7 @@ export type ProviderSubscriptionState = {
   jobPostCentreId: string | null;
   featuredCityCentreId: string | null;
   claimBoostCentreId: string | null;
-  centres: { id: string; name: string }[];
+  centres: { id: string; name: string; city: string | null }[];
   catalogCheckoutSessionId: string | null;
   prices: Record<string, boolean>;
   paymentLinks: Partial<Record<ProviderAddonId, string>>;
@@ -79,17 +79,17 @@ async function requireSubscriptionAccess(userId: string) {
   return session;
 }
 
-async function centresFor(userId: string): Promise<{ id: string; name: string }[]> {
+async function centresFor(userId: string): Promise<{ id: string; name: string; city: string | null }[]> {
   const sql = await getSql();
   const ids = await listAccessibleDaycareIds(sql, userId);
   if (!ids.length) return [];
   const rows = await sql
-    .query<{ id: string; name: string }>(
-      `select id, name from daycares where id = any($1::text[]) order by name`,
+    .query<{ id: string; name: string; city: string | null }>(
+      `select id, name, city from daycares where id = any($1::text[]) order by name`,
       [ids],
     )
-    .catch(() => [] as { id: string; name: string }[]);
-  return rows.map((row) => ({ id: row.id, name: row.name || row.id }));
+    .catch(() => [] as { id: string; name: string; city: string | null }[]);
+  return rows.map((row) => ({ id: row.id, name: row.name || row.id, city: row.city || null }));
 }
 
 async function daycareCheckoutMeta(userId: string, role: string, centreId?: string | null) {

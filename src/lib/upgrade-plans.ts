@@ -333,6 +333,25 @@ export function yearlySavingSuccess(name: string, percent: number, locale: PlanL
     : `You're on ${name} yearly and saving ${percent}%`;
 }
 
+/** Up to three benefit lines from the shared plan or add-on definition. */
+export function upgradeUnlockedBenefits(input: {
+  kind: "plan" | "addon" | "plus";
+  item?: string | null;
+  locale: PlanLocale;
+}): string[] {
+  const locale = input.locale === "fr" ? "fr" : "en";
+  const item = String(input.item || "").trim();
+  if (input.kind === "addon") {
+    if (item !== "featured_city" && item !== "claim_boost" && item !== "job_post") return [];
+    return [daycareAddon(item).benefit[locale]];
+  }
+  const lines =
+    input.kind === "plus"
+      ? parentUpgradePlan(item === "alerts" ? "alerts" : "plus").benefits
+      : daycareUpgradePlan(item === "network" ? "network" : "pro").benefits;
+  return lines.slice(0, 3).map((line) => line[locale]);
+}
+
 export function formatPlanCad(amount: number, locale: PlanLocale): string {
   return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
     style: "currency",

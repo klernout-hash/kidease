@@ -274,17 +274,27 @@ const SUCCESS_NAME: Record<string, { en: string; fr: string }> = {
   pro: { en: "Pro", fr: "Pro" },
 };
 
+export function upgradeSuccessHeadline(locale?: "en" | "fr"): string {
+  return locale === "fr" ? "Félicitations, profitez de vos nouveaux avantages !" : "Congrats, enjoy your new benefits!";
+}
+
+/** Second line under the shared success badge. Yearly names the floored saving. */
 export function upgradeSuccessTitle(input: {
   kind: "plan" | "addon" | "plus";
   item?: string | null;
   interval?: string | null;
   locale?: "en" | "fr";
+  place?: string | null;
 }): string {
   const fr = input.locale === "fr";
   const locale = fr ? "fr" : "en";
   const item = String(input.item || "").trim();
+  const place = String(input.place || "").trim();
   if (input.kind === "addon") {
-    if (item === "featured_city") return fr ? "La ville en vedette est en ligne" : "Featured city is live";
+    if (item === "featured_city") {
+      if (place) return fr ? `La ville en vedette est en ligne à ${place}` : `Featured city is live in ${place}`;
+      return fr ? "La ville en vedette est en ligne" : "Featured city is live";
+    }
     if (item === "claim_boost") return fr ? "Le boost de réclamation est actif" : "Claim boost is on";
     if (item === "job_post") return fr ? "L’offre d’emploi est prête" : "Job post is ready";
   }
@@ -295,5 +305,5 @@ export function upgradeSuccessTitle(input: {
     const percent = price ? yearlySavingsPercent(price.monthlyCad, price.yearlyCad) : null;
     if (percent != null) return yearlySavingSuccess(name, percent, locale);
   }
-  return fr ? `Vous êtes sur ${name}` : `You're on ${name}`;
+  return fr ? `${name} est actif` : `${name} is active`;
 }

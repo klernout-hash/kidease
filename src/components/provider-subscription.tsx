@@ -3,7 +3,7 @@ import { CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import { publicPayMessage } from "@/lib/stripe-public-error";
-import { CheckoutReturnNote, readUpgradeReturn, useUpgradeCelebration } from "@/components/checkout-return";
+import { CheckoutReturnNote, upgradeReturnFromSearch, useUpgradeCelebration, type UpgradeSearch } from "@/components/checkout-return";
 import { Button } from "@/components/ui/button";
 import { DaycareAddons } from "@/components/daycare-addons";
 import { useCopy } from "@/lib/use-copy";
@@ -98,7 +98,7 @@ function priceReady(state: ProviderSubscriptionState, plan: ProviderPlanId, inte
   return paidPlanVisible(plan, interval, state.prices);
 }
 
-export function ProviderSubscriptionPanel() {
+export function ProviderSubscriptionPanel({ upgradeSearch = null }: { upgradeSearch?: UpgradeSearch | null }) {
   const { locale, t: tx } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const t = COPY[loc];
@@ -115,10 +115,7 @@ export function ProviderSubscriptionPanel() {
   const [centreId, setCentreId] = useState("");
   const [jobRole, setJobRole] = useState("");
   const [jobNote, setJobNote] = useState("");
-  const payReturn = useMemo(
-    () => (typeof window === "undefined" ? null : readUpgradeReturn(window.location.search)),
-    [],
-  );
+  const payReturn = useMemo(() => upgradeReturnFromSearch(upgradeSearch), [upgradeSearch]);
 
   const applyState = useCallback((s: ProviderSubscriptionState) => {
     setState(s);
@@ -134,6 +131,10 @@ export function ProviderSubscriptionPanel() {
       .catch(() => setLoadError(true));
   }, [applyState]);
 
+  const featuredPlace =
+    state?.centres.find((centre) => centre.id === state.featuredCityCentreId)?.city ||
+    state?.centres.find((centre) => centre.id === centreId)?.city ||
+    null;
   const returnPhase = useUpgradeCelebration({
     ret: payReturn,
     locale: loc,
@@ -143,6 +144,7 @@ export function ProviderSubscriptionPanel() {
     featuredCityStatus: state?.featuredCityStatus,
     claimBoostPaymentId: state?.claimBoostPaymentId,
     jobPostPaymentIds: state?.jobPostPaymentIds,
+    place: payReturn?.phase === "success" && payReturn.kind === "addon" && payReturn.item === "featured_city" ? featuredPlace : null,
     reload: reloadSubscription,
   });
 

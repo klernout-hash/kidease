@@ -19,12 +19,16 @@ export const Route = createFileRoute("/parent")({
       tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care";
       preview?: "support";
       plus?: "success" | "cancel";
+      plan?: "plus" | "alerts";
+      interval?: "month" | "year";
       session?: string;
     } = {};
     const tab = s.tab;
     if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "alerts" || tab === "children" || tab === "care") out.tab = tab;
     if (s.preview === "support") out.preview = "support";
     if (s.plus === "success" || s.plus === "cancel") out.plus = s.plus;
+    if (s.plan === "plus" || s.plan === "alerts") out.plan = s.plan;
+    if (s.interval === "month" || s.interval === "year") out.interval = s.interval;
     if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
     return out;
   },
@@ -41,7 +45,7 @@ function ParentPage() {
       ? "saved"
       : search.tab === "enrolled" || search.tab === "requests"
         ? "bookings"
-        : search.tab === "payments"
+          : search.tab === "payments" || search.plus === "success" || search.plus === "cancel"
           ? "payments"
           : search.tab === "alerts"
             ? "alerts"
@@ -103,7 +107,16 @@ function ParentPage() {
       <LoginFunnelDeskLand desk="parent" />
       {search.preview === "support" ? <SupportPreviewBanner /> : null}
       <Suspense fallback={<DeskSkeleton />}>
-        <ParentDesk initialTab={initialTab} plusReturn={search.plus ?? null} />
+        <ParentDesk
+          initialTab={initialTab}
+          plusReturn={search.plus ?? null}
+          upgradeSearch={{
+            plus: search.plus,
+            plan: search.plan,
+            interval: search.interval,
+            session: search.session,
+          }}
+        />
       </Suspense>
     </TwoFactorGate>
   );

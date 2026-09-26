@@ -2,6 +2,7 @@ import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffe
 import { Link, Navigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
+import type { UpgradeSearch } from "@/components/checkout-return";
 import { DeskShell } from "@/components/desk-shell";
 import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
@@ -74,9 +75,11 @@ type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "a
 export function ParentDesk({
   initialTab,
   plusReturn = null,
+  upgradeSearch = null,
 }: {
   initialTab?: ParentTab;
   plusReturn?: "success" | "cancel" | null;
+  upgradeSearch?: UpgradeSearch | null;
 }) {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
@@ -430,7 +433,7 @@ export function ParentDesk({
             <PayCtas>
             <div className="mt-4">
               <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
-                <ParentPlusPanel offerCheckout plusReturn={plusReturn} />
+                <ParentPlusPanel offerCheckout plusReturn={plusReturn} upgradeSearch={upgradeSearch} />
               </Suspense>
             </div>
             </PayCtas>

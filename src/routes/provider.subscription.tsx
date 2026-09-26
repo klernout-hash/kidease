@@ -15,12 +15,14 @@ export const Route = createFileRoute("/provider/subscription")({
       plan?: string;
       item?: string;
       session?: string;
+      interval?: "month" | "year";
     } = {};
     if (s.checkout === "success" || s.checkout === "cancel") out.checkout = s.checkout;
     if (s.addon === "success" || s.addon === "cancel") out.addon = s.addon;
     if (s.plan === "pro" || s.plan === "network") out.plan = s.plan;
     if (s.item === "featured_city" || s.item === "claim_boost" || s.item === "job_post") out.item = s.item;
     if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
+    if (s.interval === "month" || s.interval === "year") out.interval = s.interval;
     return out;
   },
   head: () => ({
@@ -33,6 +35,7 @@ export const Route = createFileRoute("/provider/subscription")({
 });
 
 function ProviderSubscriptionPage() {
+  const upgradeSearch = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
   const daycareBuyer = Boolean(
@@ -87,7 +90,7 @@ function ProviderSubscriptionPage() {
           if (id !== "subscription" && typeof window !== "undefined") window.location.assign("/provider");
         }}
       >
-        <ProviderSubscriptionPanel />
+        <ProviderSubscriptionPanel upgradeSearch={upgradeSearch} />
       </DeskShell>
     </TwoFactorGate>
   );
