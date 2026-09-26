@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { STRIPE_CATALOG } from "../src/lib/server/stripe-catalog.ts";
+import { STRIPE_CATALOG, addonCheckoutMode } from "../src/lib/server/stripe-catalog.ts";
 import { checkCatalogPrice, checkoutModeForKind } from "../src/lib/stripe-price-mode.ts";
 import {
   planCatalogWrite,
@@ -39,6 +39,11 @@ test("checkout mode follows the catalog and refuses a one-time Featured city pri
   assert.equal(job.kind, "one_time");
   assert.equal(checkoutModeForKind("recurring"), "subscription");
   assert.equal(checkoutModeForKind("one_time"), "payment");
+  assert.equal(addonCheckoutMode("featured_city"), "subscription");
+  assert.equal(addonCheckoutMode("claim_boost"), "payment");
+  assert.equal(addonCheckoutMode("job_post"), "payment");
+  assert.match(src("src/lib/server/provider-subscriptions.ts"), /mode: checked\.mode/);
+  assert.doesNotMatch(src("src/lib/server/provider-subscriptions.ts"), /price_1[A-Za-z0-9]+/);
 
   const mismatch = checkCatalogPrice(featured, {
     id: "price_once",
