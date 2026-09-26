@@ -23,6 +23,7 @@ import { signedPdfPath } from "@/lib/docusign-packs";
 import { approvalHealthSummary, canOfferApprove, licenceFileMissingCopy, type ApprovalHealth } from "@/lib/approve-live";
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import type { AdminCentreRow, Decision } from "@/lib/server/admin-centres";
+import { HIDDEN_REVIEW_ADMIN_LABEL, isHiddenReviewFault } from "@/lib/listing-visibility";
 import type { AdminContractRow, AdminPackRow } from "@/lib/server/contracts";
 import type { LicenseReviewAction } from "@/lib/server/trust";
 import { trustBadgesFor, type TrustListing } from "@/lib/trust";
@@ -334,6 +335,9 @@ export function AdminReviewCard({
   onLicense,
   onLicenceUploaded,
   onStraighten,
+  onUnmerge,
+  onRestoreHiddenReview,
+  onMergeHiddenReview,
   mode = "decision",
 }: {
   centre: AdminCentreRow;
@@ -343,6 +347,9 @@ export function AdminReviewCard({
   onLicense: (id: string, action: LicenseReviewAction) => void;
   onLicenceUploaded?: () => void;
   onStraighten?: (daycareId: string) => Promise<{ polished: number; keptOriginal: number; skipped: number }>;
+  onUnmerge?: (daycareId: string) => void;
+  onRestoreHiddenReview?: (daycareId: string) => void;
+  onMergeHiddenReview?: (daycareId: string) => void;
   mode?: ReviewCardMode;
 }) {
   const { t, locale } = useCopy();
@@ -400,7 +407,21 @@ export function AdminReviewCard({
               <ListingStatusBadge claimStatus={centre.claimStatus} live={centre.live} claimedAt={centre.claimedAt} />
             </div>
           ) : null}
-          {centre.isTest ? <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-warn">QA test</p> : null}
+          {centre.mergedInto ? (
+            <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-warn" data-ke="merged-into">
+              Merged into {centre.mergedIntoName || "another listing"}
+            </p>
+          ) : isHiddenReviewFault(centre.importFault) ? (
+            <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-warn" data-ke="hidden-review">
+              {HIDDEN_REVIEW_ADMIN_LABEL}
+            </p>
+          ) : centre.importFault ? (
+            <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-warn" data-ke="import-fault">
+              Name not recoverable
+            </p>
+          ) : centre.isTest ? (
+            <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-warn">QA test</p>
+          ) : null}
         </div>
       </header>
 
@@ -453,6 +474,39 @@ export function AdminReviewCard({
 
       <div className="mt-3" data-ke="admin-review-actions">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-subtle">Decision</p>
+        {centre.mergedInto ? (
+          <div className="mt-1.5">
+            <Button
+              variant="secondary"
+              className="w-full sm:w-auto sm:min-w-36"
+              disabled={locked || !onUnmerge}
+              onClick={() => onUnmerge?.(centre.daycareId)}
+            >
+              Un-merge
+            </Button>
+          </div>
+        ) : isHiddenReviewFault(centre.importFault) ? (
+          <div className="mt-1.5 flex flex-col gap-1.5 sm:flex-row sm:items-center">
+            <Button
+              variant="secondary"
+              className="w-full sm:w-auto sm:min-w-36"
+              disabled={locked || !onRestoreHiddenReview}
+              onClick={() => onRestoreHiddenReview?.(centre.daycareId)}
+            >
+              Restore
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full sm:w-auto sm:min-w-36"
+              disabled={locked || !onMergeHiddenReview || !centre.reviewOf}
+              onClick={() => onMergeHiddenReview?.(centre.daycareId)}
+            >
+              Merge
+            </Button>
+          </div>
+        ) : centre.importFault ? (
+          <p className="mt-1.5 text-sm text-muted">Hidden from search until a real centre name is on file.</p>
+        ) : (
         <div className="mt-1.5 flex flex-col gap-1.5 sm:flex-row sm:items-center" role="group" aria-label={`Decision for ${centre.name}`}>
           {canOfferApprove(status) ? (
             <Button className="w-full sm:w-auto sm:min-w-36" disabled={locked} onClick={() => onDecide(centre.daycareId, "approve")}>
@@ -480,6 +534,7 @@ export function AdminReviewCard({
             Decline
           </Button>
         </div>
+        )}
       </div>
 
       <details className="mt-3 border-t border-border pt-1" data-ke="admin-review-more">
@@ -564,6 +619,9 @@ export function AdminCentreStatList({
   onLicense,
   onLicenceUploaded,
   onStraighten,
+  onUnmerge,
+  onRestoreHiddenReview,
+  onMergeHiddenReview,
 }: {
   stat: AdminCentreListStat;
   rows: AdminCentreRow[];
@@ -576,6 +634,9 @@ export function AdminCentreStatList({
   onLicense: (id: string, action: LicenseReviewAction) => void;
   onLicenceUploaded?: () => void;
   onStraighten?: (daycareId: string) => Promise<{ polished: number; keptOriginal: number; skipped: number }>;
+  onUnmerge?: (daycareId: string) => void;
+  onRestoreHiddenReview?: (daycareId: string) => void;
+  onMergeHiddenReview?: (daycareId: string) => void;
 }) {
   const copy = ADMIN_CENTRE_STAT_COPY[stat];
   const countLabel = loading || unavailable
@@ -619,6 +680,9 @@ export function AdminCentreStatList({
                   onLicense={onLicense}
                   onLicenceUploaded={onLicenceUploaded}
                   onStraighten={onStraighten}
+                  onUnmerge={onUnmerge}
+                  onRestoreHiddenReview={onRestoreHiddenReview}
+                  onMergeHiddenReview={onMergeHiddenReview}
                 />
               </li>
             ))}

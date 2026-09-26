@@ -1,3 +1,4 @@
+-- Renumbered from 0064_centre_addon_effects.sql so it runs after 0062_listing_merge.sql.
 -- Each daycare add-on names one centre. Featured city, Claim boost, and
 -- Job post stay off the centre plan subscription and off Parent Plus.
 

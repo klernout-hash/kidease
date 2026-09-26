@@ -245,6 +245,10 @@ function withQualityCards<T extends { id: string; qualityScore?: number; guestFa
   });
 }
 
+/**
+ * Search and featured cards drop long copy and contact fields.
+ * The street stays so a map pin can open the same directions as the listing page.
+ */
 function slimCard(card: DaycareCard): DaycareCard {
   return {
     ...card,
@@ -252,7 +256,6 @@ function slimCard(card: DaycareCard): DaycareCard {
     taglineFr: "",
     description: "",
     descriptionFr: "",
-    address: "",
     phone: null,
     hoursFr: "",
     contactEmail: null,
@@ -396,7 +399,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   return publicListings(uniqueById(filterByLocationLock(cards, lock))).map(slimCard);
 }
 
-export const searchDaycares = createServerFn({ method: "POST" })
+export const searchDaycares = createServerFn({ method: "GET" })
   .validator((input: SearchInput) => ({
     ...input,
     radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
@@ -427,7 +430,7 @@ async function loadFeatured(origin: { lat: number; lng: number; label?: string }
   return publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, 12).map(slimCard);
 }
 
-export const featuredDaycares = createServerFn({ method: "POST" })
+export const featuredDaycares = createServerFn({ method: "GET" })
   .validator((input: { lat: number; lng: number; label?: string }) => input)
   .handler(async ({ data }) => {
     const aligned = alignSearchOrigin({
@@ -456,6 +459,7 @@ export const getDaycare = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
+    if ((found.mergedInto || "").trim() || (found.importFault || "").trim()) return null;
     if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
     const origin = { lat: found.lat, lng: found.lng };
     const nearby = uniqueById(
@@ -549,12 +553,27 @@ export const getDaycare = createServerFn({ method: "GET" })
     }
   });
 
+/**
+ * Old URL of a hidden possible-second-site row.
+ * 301s to that city's hub or search page. Never to the live sibling.
+ */
+export const getHiddenReviewRedirect = createServerFn({ method: "GET" })
+  .validator((slug: string) => slug)
+  .handler(async ({ data: slug }) => {
+    const { neonHiddenReviewPlace } = await import("@/lib/server/catalog-neon");
+    const { hiddenReviewRedirectTarget } = await import("@/lib/hidden-review");
+    const place = await neonHiddenReviewPlace(slug);
+    if (!place) return null;
+    return hiddenReviewRedirectTarget(place.city, place.province);
+  });
+
 /** Slim catalogue snapshot for listing <head> / JSON-LD. No view increment. */
 export const getListingSeo = createServerFn({ method: "GET" })
   .validator((slug: string) => slug)
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
+    if ((found.mergedInto || "").trim() || (found.importFault || "").trim()) return null;
     if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
     return {
       slug: found.slug,
@@ -574,7 +593,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
     };
   });
 
-export const getDaycaresByIds = createServerFn({ method: "POST" })
+export const getDaycaresByIds = createServerFn({ method: "GET" })
   .validator((ids: string[]) => ids)
   .handler(async ({ data: keys }) => {
     const origin = { lat: 49.8951, lng: -97.1384 };

@@ -346,11 +346,11 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   assert.doesNotMatch(featuredBody, /stripe_subscription_id/);
   assert.doesNotMatch(featuredBody, /selected_plan/);
   assert.doesNotMatch(featuredBody, /plus_plan/);
-  assert.match(src("migrations/0062_provider_addon_billing.sql"), /featured_city_subscription_id/);
-  assert.match(src("migrations/0062_provider_addon_billing.sql"), /job_post_credits/);
-  assert.match(src("migrations/0064_centre_addon_effects.sql"), /featured_city_centre_id/);
-  assert.match(src("migrations/0064_centre_addon_effects.sql"), /centre_job_posts/);
-  assert.match(src("migrations/0064_centre_addon_effects.sql"), /centre_job_credits/);
+  assert.match(src("migrations/0063_provider_addon_billing.sql"), /featured_city_subscription_id/);
+  assert.match(src("migrations/0063_provider_addon_billing.sql"), /job_post_credits/);
+  assert.match(src("migrations/0065_centre_addon_effects.sql"), /featured_city_centre_id/);
+  assert.match(src("migrations/0065_centre_addon_effects.sql"), /centre_job_posts/);
+  assert.match(src("migrations/0065_centre_addon_effects.sql"), /centre_job_credits/);
   assert.match(lifecycle, /centre_job_credits/);
   assert.match(lifecycle, /featured_city_centre_id/);
   assert.match(lifecycle, /claim_boost_centre_id/);
@@ -365,13 +365,13 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   assert.match(src("src/components/success-confirm.tsx"), /modal\.kicker \|\| kicker/);
   assert.match(src("src/lib/copy.ts"), /successKicker: "Good job!"/);
   assert.match(src("src/components/admin-review-card.tsx"), /admin-centre-addons/);
-  assert.match(src("migrations/0063_parent_alerts_plan.sql"), /plus_plan in \('free', 'plus', 'alerts'\)/);
+  assert.match(src("migrations/0064_parent_alerts_plan.sql"), /plus_plan in \('free', 'plus', 'alerts'\)/);
   const plusFn = lifecycle.slice(lifecycle.indexOf("export async function applyParentPlus"));
   const plusBody = plusFn.slice(0, plusFn.indexOf("async function bumpClaimPriority"));
   assert.match(plusBody, /alerts/);
   assert.doesNotMatch(plusBody, /selected_plan/);
   assert.match(src("src/lib/server/stripe-bootstrap.ts"), /createMissing && !item\.proposal/);
-  assert.match(src("migrations/0062_provider_addon_billing.sql"), /stripe_checkout_errors/);
+  assert.match(src("migrations/0063_provider_addon_billing.sql"), /stripe_checkout_errors/);
 });
 
 test("success copy waits for a confirmed checkout and hides raw Stripe errors", () => {

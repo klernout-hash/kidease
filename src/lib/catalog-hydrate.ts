@@ -76,6 +76,10 @@ export type CatalogDaycare = {
   isTest: boolean;
   contactEmail?: string;
   website?: string;
+  /** Keeper id when this row was retired. Empty on a live listing. */
+  mergedInto?: string | null;
+  /** Import fault code. `pei_name_unrecoverable` hides a Prince Edward Island row. */
+  importFault?: string | null;
 };
 
 export type RawCentre = {

@@ -125,6 +125,59 @@ test("same-address orphan matches without postal or matching name", () => {
   assert.equal(hit?.message, "Daycare already Listed");
 });
 
+test("sign-up does not attach to a hidden row on name or licence alone", () => {
+  const hidden = {
+    id: "mx-prairie",
+    name: "Prairie Nature Children's Centre",
+    address: "115 Sanford Fleming Road",
+    city: "Winnipeg",
+    province: "MB",
+    postalCode: "R2C 2V1",
+    licenseNumber: "7858",
+    importFault: "hidden_review_possible_second_site",
+    userId: null,
+  };
+  const incoming = {
+    name: "Prairie Nature Children's Centre",
+    address: "600 Hoka Street",
+    city: "Winnipeg",
+    province: "MB",
+    postalCode: "R2C 2V1",
+    licenseNumber: "7858",
+  };
+  assert.equal(findDuplicateListing(incoming, [hidden], "u-new"), null);
+  assert.equal(
+    findDuplicateListing(
+      { ...incoming, licenseNumber: "", address: "9 Other Road", postalCode: "R3T 1A1" },
+      [hidden],
+      "u-new",
+    ),
+    null,
+  );
+  const visible = { ...hidden, id: "mb-7858", importFault: null, address: "600 Hoka Street" };
+  const claimed = findDuplicateListing(incoming, [hidden, visible], "u-new");
+  assert.equal(claimed?.id, "mb-7858");
+  assert.equal(claimed?.message, "Daycare already Listed");
+  const byLicence = findDuplicateListing(
+    { ...incoming, name: "A Different Centre", address: "9 Other Road", postalCode: "R3T 1A1" },
+    [{ ...visible, userId: null }],
+    "u-new",
+  );
+  assert.equal(byLicence?.id, "mb-7858");
+  const byAddress = findDuplicateListing(
+    { ...incoming, name: "Renamed", licenseNumber: "" },
+    [{ ...visible, licenseNumber: "", userId: null }],
+    "u-new",
+  );
+  assert.equal(byAddress?.id, "mb-7858");
+  const guard = src("src/lib/server/listing-guard.ts");
+  assert.match(guard, /d\.merged_into/);
+  assert.match(guard, /d\.import_fault/);
+  const claims = src("src/lib/server/claims.ts");
+  assert.match(claims, /importFault/);
+  assert.match(claims, /Listing not found/);
+});
+
 test("distinct centres are not treated as duplicates", () => {
   const littleFox = {
     name: "Little Fox Child Care Centre",

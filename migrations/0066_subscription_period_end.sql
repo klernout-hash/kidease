@@ -1,3 +1,4 @@
+-- Renumbered from 0065_subscription_period_end.sql so it runs after 0062_listing_merge.sql.
 -- End-of-period cancel and renewal date per subscription lane.
 -- One-time add-ons are not listed here. Cancelling does not delete credits,
 -- claim boost, or centre rows.

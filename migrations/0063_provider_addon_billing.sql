@@ -1,3 +1,5 @@
+-- Renumbered from 0062_provider_addon_billing.sql. Production already applied
+-- 0062_listing_merge.sql, so this file must stay a new _migrations name.
 -- Add-ons stay off the centre plan (stripe_subscription_id / selected_plan)
 -- and off Parent Plus (plus_subscription_id). One-time add-ons record a payment.
 -- catalog_checkout_session_id is the Checkout Session that KidEase has confirmed.

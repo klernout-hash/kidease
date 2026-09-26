@@ -95,6 +95,7 @@ export const searchClaimable = createServerFn({ method: "POST" })
     const scored: Array<ClaimHit & { score: number }> = [];
     const admin = await callerIsAdmin();
     for (const d of await getCatalog()) {
+      if ((d.mergedInto || "").trim() || (d.importFault || "").trim()) continue;
       if (isAdminOnlyListing(d) && !admin) continue;
       const name = d.name.toLowerCase();
       const city = d.city.toLowerCase();
@@ -133,6 +134,9 @@ export const startClaim = createServerFn({ method: "POST" })
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
     const listed = await catalogByIdGet(daycareId);
+    if (listed && ((listed.mergedInto || "").trim() || (listed.importFault || "").trim())) {
+      throw new Error("Listing not found");
+    }
     const adminOnly = Boolean(listed && isAdminOnlyListing(listed));
     const isAdmin = adminOnly ? await callerIsAdmin() : false;
     let existingOwner: string | null = null;

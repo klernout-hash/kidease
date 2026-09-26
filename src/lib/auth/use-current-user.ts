@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SESSION_SETTLE_MS } from "@/lib/timeout";
 import { authClient, authEnabled } from "./client";
 
@@ -107,7 +107,14 @@ export function useSettledUser(timeoutMs = SESSION_SETTLE_MS): CurrentUserState 
     const t = window.setTimeout(() => setExpired(true), timeoutMs);
     return () => window.clearTimeout(t);
   }, [isPending, timeoutMs]);
-  const mapped = mapAuthUser(data?.user);
+  // A new object every render made `[user]` effects refetch forever.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const mapped = useMemo(
+    () => mapAuthUser(data?.user),
+    // Session fields, not the session object. A new object every render was the loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data?.user?.id, data?.user?.name, data?.user?.email, data?.user?.image],
+  );
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (mapped) setLastUser(mapped);
