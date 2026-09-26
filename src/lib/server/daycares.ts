@@ -243,6 +243,10 @@ function withQualityCards<T extends { id: string; qualityScore?: number; guestFa
   });
 }
 
+/**
+ * Search and featured cards drop long copy and contact fields.
+ * The street stays so a map pin can open the same directions as the listing page.
+ */
 function slimCard(card: DaycareCard): DaycareCard {
   return {
     ...card,
@@ -250,7 +254,6 @@ function slimCard(card: DaycareCard): DaycareCard {
     taglineFr: "",
     description: "",
     descriptionFr: "",
-    address: "",
     phone: null,
     hoursFr: "",
     contactEmail: null,

@@ -1,3 +1,4 @@
+import { CITIES, PROVINCES } from "./geo.ts";
 import { isNative, nativePlatform } from "./native.ts";
 
 export type MapBase = "roadmap" | "satellite";
@@ -46,6 +47,16 @@ const PROVINCE_RE = /^(?:AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)$/i;
 const POSTAL_RE = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z]\d[ABCEGHJ-NPRSTV-Z]\d$/i;
 const NOT_A_STREET_RE = /\b(?:p\.?\s*o\.?\s*box|bo[iî]te\s+postale|general\s+delivery|poste\s+restante)\b/i;
 const UNIT_ONLY_RE = /^(?:suite|unit|apt|apartment|bureau|local|#)\s*#?\s*\d+[a-z]?$/i;
+/** "Room 104" is a room label. "Room 7-312 Sandy Street" still has a civic street. */
+const ROOM_ONLY_RE =
+  /^(?:rooms?|rm|classrooms?|salles?|pi[eè]ces?)\.?\s*(?:no\.?|num(?:ber|éro)?|#)?\s*[a-z]?\d{1,5}[a-z]?$/i;
+/**
+ * Stand-in postal on some Manitoba `mx-` rows. Not a delivery address.
+ * Canadian format can still match, so it is listed here on purpose.
+ */
+const PLACEHOLDER_POSTALS = new Set(["R3K0Z8"]);
+/** City-list coordinates are a catalogue default, not a centre door. */
+const CITY_CENTROID_EPS = 1e-4;
 
 function clean(value?: string | null) {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -76,7 +87,7 @@ function isProvincePostal(part: string) {
 
 /**
  * A civic street line already stored on the listing.
- * City, province, postal, PO box, or general delivery is not a street.
+ * City, province, postal, PO box, general delivery, or a room label is not a street.
  */
 export function usableStreetAddress(address?: string | null, city?: string | null) {
   const raw = clean(address);
@@ -97,39 +108,81 @@ export function usableStreetAddress(address?: string | null, city?: string | nul
     })
     .join(", ")
     .trim();
-  if (!street || UNIT_ONLY_RE.test(street)) return "";
+  if (!street || UNIT_ONLY_RE.test(street) || ROOM_ONLY_RE.test(street)) return "";
   if (!/\d/.test(street) || !/[A-Za-zÀ-ÿ]/.test(street)) return "";
   return street;
 }
 
+function provinceCode(value?: string | null) {
+  const raw = clean(value);
+  if (!raw) return "";
+  if (PROVINCE_RE.test(raw)) return raw.toUpperCase();
+  const folded = raw.toLowerCase();
+  const hit = PROVINCES.find(
+    (p) => p.name.toLowerCase() === folded || p.nameFr.toLowerCase() === folded,
+  );
+  return hit?.code ?? "";
+}
+
+function usablePostal(value?: string | null) {
+  const compact = clean(value).replace(/[^a-z0-9]/gi, "").toUpperCase();
+  if (!POSTAL_RE.test(compact) || PLACEHOLDER_POSTALS.has(compact)) return "";
+  return `${compact.slice(0, 3)} ${compact.slice(3)}`;
+}
+
+function nearPoint(lat: number, lng: number, point: { lat: number; lng: number }) {
+  return (
+    Math.abs(point.lat - lat) <= CITY_CENTROID_EPS && Math.abs(point.lng - lng) <= CITY_CENTROID_EPS
+  );
+}
+
+function isCityCentroidDefault(lat: number, lng: number) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  return (
+    CITIES.some((point) => nearPoint(lat, lng, point)) ||
+    PROVINCES.some((point) => nearPoint(lat, lng, point))
+  );
+}
+
+function regionTail(province: string, postal: string, blob: string) {
+  const region: string[] = [];
+  if (province && !containsToken(blob, province)) region.push(province);
+  if (postal && !containsPostal(blob, postal)) region.push(postal);
+  return region.join(" ");
+}
+
 function directionsDestination(lat: number, lng: number, name?: string, place?: DirectionsPlace) {
+  const city = clean(place?.city);
+  const province = provinceCode(place?.province);
+  const postal = usablePostal(place?.postalCode);
   const street = usableStreetAddress(place?.address, place?.city);
   if (street) {
     const parts = [street];
-    const city = clean(place?.city);
     const segments = street.split(",").map((part) => part.trim().toLowerCase());
     if (city && !segments.some((part) => part === city.toLowerCase() || part.startsWith(`${city.toLowerCase()} `))) {
       parts.push(city);
     }
     const blob = parts.join(", ");
-    const region: string[] = [];
-    const province = clean(place?.province);
-    const postal = clean(place?.postalCode);
-    if (province && !containsToken(blob, province)) region.push(province);
-    if (postal && !containsPostal(blob, postal)) region.push(postal);
-    if (region.length) parts.push(region.join(" "));
+    const region = regionTail(province, postal, blob);
+    if (region) parts.push(region);
     return parts.join(", ");
   }
-  if (Number.isFinite(lat) && Number.isFinite(lng)) return `${lat},${lng}`;
-  return [clean(name), clean(place?.city), clean(place?.province)].filter(Boolean).join(", ");
+  const region = [province, postal].filter(Boolean).join(" ");
+  const query = [clean(name), city, region].filter(Boolean).join(", ");
+  if (query && (city || province || postal)) return query;
+  if (Number.isFinite(lat) && Number.isFinite(lng) && !isCityCentroidDefault(lat, lng)) {
+    return `${lat},${lng}`;
+  }
+  return query;
 }
 
 /**
- * Directions to a centre. A stored street address (with city, province, and
- * postal when we have them) is the destination. Pin coordinates are often a
- * city or postal centroid, so they are used only when no street is on file.
- * Without either, the centre name and city are the fallback. Nothing here
- * invents a street.
+ * Directions to a centre. A stored civic street (with city, province code,
+ * and postal when we have them) is the destination. A blank street, a room
+ * label, or a known placeholder postal is not an address. Those listings use
+ * the centre name, city, province code, and postal we actually have. Raw
+ * coordinates are the last resort, and a city-centroid default is never the
+ * destination. Nothing here invents a street.
  */
 export function directionsUrl(lat: number, lng: number, name?: string, opts?: DirectionsPlace) {
   const dest = directionsDestination(lat, lng, name, opts);
