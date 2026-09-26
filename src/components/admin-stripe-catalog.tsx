@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DAYCARE_UPGRADE_PLANS, PARENT_UPGRADE_PLANS, RECOMMENDED_LABEL } from "@/lib/upgrade-plans";
 
 type CatalogRow = {
   key: string;
@@ -67,6 +68,22 @@ export function AdminStripeCatalog() {
         Admin-only. Creates KidEase Products/Prices on the LIVE account when missing, then prints
         price IDs to set on Vercel. Never logs the secret key.
       </p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2" data-ke="admin-plan-benefits">
+        {[...PARENT_UPGRADE_PLANS, ...DAYCARE_UPGRADE_PLANS].map((plan) => (
+          <div key={`${plan.role}-${plan.id}`} className="rounded-lg bg-bg px-3 py-2 text-sm ring-1 ring-border">
+            <p className="font-medium">
+              {plan.role === "parent" ? "Families" : "Daycares"} · {plan.name.en}
+              {plan.recommended ? ` · ${RECOMMENDED_LABEL.en}` : ""}
+            </p>
+            <p className="mt-1 text-muted">{plan.pitch.en}</p>
+            <ul className="mt-1 list-disc pl-4 text-muted">
+              {plan.benefits.map((benefit) => (
+                <li key={benefit.en}>{benefit.en}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="button" variant="secondary" disabled={busy} onClick={() => void run("GET")}>
           Check prices

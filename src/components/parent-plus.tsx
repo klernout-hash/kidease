@@ -5,22 +5,15 @@ import { publicPayMessage } from "@/lib/stripe-public-error";
 import { CheckoutReturnNote, readUpgradeReturn, useUpgradeCelebration } from "@/components/checkout-return";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
-import { PLUS_FEATURES, plusPriceHint, type PlusInterval } from "@/lib/parent-plus";
+import { PLUS_MONTHLY_CAD, PLUS_YEARLY_CAD, plusPriceHint, type PlusInterval } from "@/lib/parent-plus";
+import { parentUpgradePlan } from "@/lib/upgrade-plans";
+import { UpgradePlanCard } from "@/components/upgrade-plan-card";
 import { getParentPlus, startParentPlusCheckout, startParentPlusPortal, type ParentPlusState } from "@/lib/server/parent-plus";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
 import { openStripeCheckout } from "@/lib/wallets";
 import { useShowPayCtas } from "@/components/pay-chrome";
-
-function plusMoney(amount: number, locale: "en" | "fr") {
-  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
-    style: "currency",
-    currency: "CAD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
 
 export function ParentPlusPanel({
   offerCheckout = true,
@@ -126,47 +119,52 @@ export function ParentPlusPanel({
           <CheckoutReturnNote phase={returnPhase} locale={loc} />
         </div>
       ) : null}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {(["month", "year"] as const).map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setInterval(id)}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm",
-              interval === id ? "bg-primary text-primary-fg" : "bg-bg text-muted ring-1 ring-border hover:text-fg",
-            )}
-          >
-            {plusPriceHint(id, loc)}
-          </button>
-        ))}
-      </div>
-      <p className="mt-4 font-display text-3xl tabular-nums">
-        {plusMoney(interval === "year" ? 59 : 7.99, loc)}
-      </p>
-      <ul className="mt-3 space-y-1.5 text-sm text-muted">
-        {PLUS_FEATURES.map((f) => (
-          <li key={f.en}>{f[loc]}</li>
-        ))}
-      </ul>
-      <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
-        <CaslConsentFields value={consents} onChange={setConsents} showEmailService={false} />
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {live && offerCheckout ? (
-          <Button className="min-h-11 w-full sm:w-auto" disabled={busy || current} onClick={() => void start()}>
-            {current ? t("parentPlusCurrent") : t("parentPlusSubscribe")}
-          </Button>
-        ) : (
-          <Button className="min-h-11 w-full sm:w-auto" disabled>
-            {t("parentPlusSubscribe")}
-          </Button>
-        )}
-        {state.customerId && state.stripeLive ? (
-          <Button className="min-h-11 w-full sm:w-auto" variant="secondary" disabled={busy} onClick={() => void portal()}>
-            {t("parentPlusManage")}
-          </Button>
-        ) : null}
+      <div className="mt-4 grid gap-3 sm:grid-cols-2" data-ke="parent-upgrade-plans">
+        <UpgradePlanCard plan={parentUpgradePlan("free")} locale={loc} monthly={0} />
+        <UpgradePlanCard
+          plan={parentUpgradePlan("plus")}
+          locale={loc}
+          monthly={PLUS_MONTHLY_CAD}
+          yearly={PLUS_YEARLY_CAD}
+          cta={
+            <>
+              <div className="flex flex-wrap gap-2">
+                {(["month", "year"] as const).map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setInterval(id)}
+                    className={cn(
+                      "rounded-full px-3.5 py-1.5 text-sm",
+                      interval === id ? "bg-primary text-primary-fg" : "bg-bg text-muted ring-1 ring-border hover:text-fg",
+                    )}
+                  >
+                    {plusPriceHint(id, loc)}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 rounded-lg bg-bg p-3 ring-1 ring-border">
+                <CaslConsentFields value={consents} onChange={setConsents} showEmailService={false} />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {live && offerCheckout ? (
+                  <Button className="min-h-11 w-full" disabled={busy || current} onClick={() => void start()}>
+                    {current ? t("parentPlusCurrent") : t("parentPlusSubscribe")}
+                  </Button>
+                ) : (
+                  <Button className="min-h-11 w-full" disabled>
+                    {t("parentPlusSubscribe")}
+                  </Button>
+                )}
+                {state.customerId && state.stripeLive ? (
+                  <Button className="min-h-11 w-full" variant="secondary" disabled={busy} onClick={() => void portal()}>
+                    {t("parentPlusManage")}
+                  </Button>
+                ) : null}
+              </div>
+            </>
+          }
+        />
       </div>
       {!offerCheckout && !current ? <p className="mt-3 text-sm text-muted">{t("parentPlusNoBill")}</p> : null}
       {!state.stripeLive ? <p className="mt-3 text-sm text-muted">{t("parentPlusRehearsal")}</p> : null}

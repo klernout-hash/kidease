@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, CreditCard } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import { publicPayMessage } from "@/lib/stripe-public-error";
@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { cn, money } from "@/lib/utils";
 import {
-  planPriceCad,
-  planPriceHint,
   PROVIDER_ADDONS,
   PROVIDER_COMPARE,
   PROVIDER_PLANS,
@@ -30,6 +28,8 @@ import { getProvider } from "@/lib/server/family";
 import { DirectorProStrip } from "@/components/director-pro-strip";
 import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { useSessionDesks } from "@/components/session-desks";
+import { daycareUpgradePlan } from "@/lib/upgrade-plans";
+import { UpgradePlanCard } from "@/components/upgrade-plan-card";
 
 const COPY = {
   en: {
@@ -328,42 +328,33 @@ export function ProviderSubscriptionPanel() {
           const entitled = state.entitlements.entitledPlan === plan.id;
           const selected = state.plan === plan.id;
           const current = entitled || (selected && !state.stripeLive);
-          const price = planPriceCad(plan, interval, state.siteCount);
-          const hint = planPriceHint(plan, interval, loc);
           const canCharge = plan.id !== "free" && state.stripeLive && priceReady(state, plan.id, interval);
           const blockedPaid = plan.id !== "free" && state.stripeLive && !priceReady(state, plan.id, interval);
+          const copy = daycareUpgradePlan(plan.id);
           return (
-            <article
+            <UpgradePlanCard
               key={plan.id}
-              className={cn(
-                "flex flex-col rounded-xl bg-surface p-5 ring-1",
-                current ? "ring-2 ring-primary" : "ring-border",
-              )}
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{plan.name[loc]}</p>
-              <p className="mt-2 font-display text-3xl tabular-nums">{money(price, loc)}</p>
-              <p className="mt-1 text-xs text-subtle">{hint}</p>
-              <p className="mt-3 text-sm text-muted">{plan.tagline[loc]}</p>
-              <ul className="mt-4 flex-1 space-y-2 text-sm">
-                {plan.features.map((f) => (
-                  <li key={f.en} className="flex items-start gap-2">
-                    <Check className="mt-0.5 size-4 shrink-0 text-ok" strokeWidth={2} />
-                    <span>{f[loc]}</span>
-                  </li>
-                ))}
-              </ul>
-              {plan.id === "network" && state.siteCount < plan.minSites ? (
-                <p className="mt-3 text-xs text-subtle">{t.networkNeed}</p>
-              ) : null}
-              <Button
-                className="mt-5 min-h-11 w-full"
-                variant={current || !state.entitlements.paid ? "secondary" : "primary"}
-                disabled={busy || (current && !canCharge) || (plan.id === "network" && state.siteCount < plan.minSites)}
-                onClick={() => void subscribe(plan.id)}
-              >
-                {blockedPaid ? t.blocked : current && !canCharge ? t.current : canCharge ? t.checkout : t.subscribe}
-              </Button>
-            </article>
+              plan={copy}
+              locale={loc}
+              monthly={plan.monthly}
+              yearly={plan.yearly}
+              perSite={plan.perSite}
+              cta={
+                <>
+                  {plan.id === "network" && state.siteCount < plan.minSites ? (
+                    <p className="mb-3 text-xs text-subtle">{t.networkNeed}</p>
+                  ) : null}
+                  <Button
+                    className="min-h-11 w-full"
+                    variant={plan.id === "pro" && !(current || !state.entitlements.paid) ? "primary" : current || !state.entitlements.paid ? "secondary" : "secondary"}
+                    disabled={busy || (current && !canCharge) || (plan.id === "network" && state.siteCount < plan.minSites)}
+                    onClick={() => void subscribe(plan.id)}
+                  >
+                    {blockedPaid ? t.blocked : current && !canCharge ? t.current : canCharge ? t.checkout : t.subscribe}
+                  </Button>
+                </>
+              }
+            />
           );
         })}
       </div>
