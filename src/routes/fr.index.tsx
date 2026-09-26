@@ -70,14 +70,14 @@ function FrHome() {
   const [role, setRole] = useState<AppRole | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!user?.id) {
       setRole(null);
       return;
     }
     void getMyRole()
       .then((r) => setRole(r.role))
       .catch(() => setRole("parent"));
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (isPending) return;

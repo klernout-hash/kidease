@@ -10,6 +10,7 @@ import {
   catalogStatus,
   envPriceId,
   maskStripeSecret,
+  parentPriceKey,
   plusPriceKey,
   providerPriceKey,
   requiredCatalogMissing,
@@ -29,6 +30,12 @@ test("CAD catalog matches the one-pager and never embeds secret keys", () => {
   assert.equal(byKey.pro_monthly.amountCad, 49);
   assert.equal(byKey.pro_yearly.amountCad, 490);
   assert.equal(byKey.network_monthly.amountCad, 39);
+  assert.equal(byKey.network_yearly.amountCad, 390);
+  assert.equal(byKey.network_yearly.proposal, true);
+  assert.equal(byKey.network_yearly.required, false);
+  assert.equal(byKey.parent_alerts_monthly.amountCad, 14.99);
+  assert.equal(byKey.parent_alerts_yearly.amountCad, 149);
+  assert.equal(byKey.parent_alerts_monthly.proposal, true);
   assert.equal(byKey.plus_monthly.amountCad, 7.99);
   assert.equal(byKey.plus_yearly.amountCad, 59);
   assert.equal(byKey.featured_city.amountCad, 29);
@@ -38,7 +45,8 @@ test("CAD catalog matches the one-pager and never embeds secret keys", () => {
   assert.equal(plusPriceCad("month"), PLUS_MONTHLY_CAD);
   assert.equal(plusPriceCad("year"), PLUS_YEARLY_CAD);
   assert.equal(providerPriceKey("pro", "year"), "pro_yearly");
-  assert.equal(providerPriceKey("network", "year"), null);
+  assert.equal(providerPriceKey("network", "year"), "network_yearly");
+  assert.equal(parentPriceKey("alerts", "year"), "parent_alerts_yearly");
   assert.equal(plusPriceKey("month"), "plus_monthly");
   assert.equal(STRIPE_PRICE_ENV.pro_monthly, "STRIPE_PRICE_PRO_MONTHLY");
   assert.equal(PROVIDER_CHECKOUT_LIVE, true);
@@ -131,7 +139,8 @@ test("Plus and portal live on parent Pay; catalog is admin-only", () => {
   assert.match(src("src/components/parent-desk.tsx"), /ParentPlusPanel/);
   assert.match(src("src/components/parent-plus.tsx"), /startParentPlusCheckout/);
   assert.match(src("src/components/parent-plus.tsx"), /startParentPlusPortal/);
-  assert.match(src("src/lib/server/parent-plus.ts"), /mode: "subscription"/);
+  assert.match(src("src/lib/server/parent-plus.ts"), /requireCatalogCheckout/);
+  assert.match(src("src/lib/server/parent-plus.ts"), /checked\.mode/);
   assert.match(src("src/lib/server/parent-plus.ts"), /stripeChargesLive\(\)/);
   assert.match(src("src/routes/api/admin.stripe-catalog.ts"), /requireAdmin/);
   assert.match(src("src/routeTree.gen.ts"), /api\/admin\/stripe-catalog/);

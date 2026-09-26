@@ -1,0 +1,28 @@
+[
+  {
+    "daycareId": "fixture-keeper",
+    "enquiryIds": ["fixture-keeper-enquiry"],
+    "tourIds": [],
+    "leadIds": [],
+    "savedUserIds": [],
+    "reviewIds": [],
+    "availabilityMonths": [],
+    "viewDays": [],
+    "conversations": [],
+    "photos": "",
+    "photoCount": 0
+  },
+  {
+    "daycareId": "fixture-retired",
+    "enquiryIds": [],
+    "tourIds": ["fixture-tour"],
+    "leadIds": ["fixture-lead"],
+    "savedUserIds": ["fixture-user"],
+    "reviewIds": ["fixture-review"],
+    "availabilityMonths": ["2026-10"],
+    "viewDays": ["2026-09-01"],
+    "conversations": [{ "id": "fixture-conversation", "userId": "fixture-user" }],
+    "photos": "https://fixture.example/photo.jpg",
+    "photoCount": 1
+  }
+]

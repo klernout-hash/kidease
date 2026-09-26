@@ -28,11 +28,11 @@ export function NotificationsInbox() {
   const [items, setItems] = useState<NotificationItem[] | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     void listMyNotifications()
       .then(setItems)
       .catch(() => setItems([]));
-  }, [user]);
+  }, [user?.id]);
 
   if (isPending) {
     return (

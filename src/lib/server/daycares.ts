@@ -16,8 +16,8 @@ import { overlayParentReviews } from "./reviews";
 import { overlayQuality } from "./quality";
 import { overlayParentRank } from "./rank";
 import { overlayPriority } from "./promos";
-import { overlayFeaturedCity } from "@/lib/server/provider-entitlements";
-import { sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
+import { featuredCentreIdsInLock, overlayFeaturedCity } from "@/lib/server/provider-entitlements";
+import { compareWithPaidPins, sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
 import { compareParentMatch } from "@/lib/parent-match";
 import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
@@ -34,6 +34,8 @@ import { alignSearchOrigin } from "@/lib/search-query";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
+
+export type CentreJobPost = { id: string; role: string; note: string; createdAt: string };
 
 type SearchInput = {
   lat: number;
@@ -244,6 +246,10 @@ function withQualityCards<T extends { id: string; qualityScore?: number; guestFa
   });
 }
 
+/**
+ * Search and featured cards drop long copy and contact fields.
+ * The street stays so a map pin can open the same directions as the listing page.
+ */
 function slimCard(card: DaycareCard): DaycareCard {
   return {
     ...card,
@@ -251,7 +257,6 @@ function slimCard(card: DaycareCard): DaycareCard {
     taglineFr: "",
     description: "",
     descriptionFr: "",
-    address: "",
     phone: null,
     hoursFr: "",
     contactEmail: null,
@@ -308,6 +313,23 @@ async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
   return unionLiveCards(full, live);
 }
 
+async function mergePinnedCentres(
+  cards: DaycareCard[],
+  lock: ReturnType<typeof resolveLocationLock>,
+  origin: { lat: number; lng: number },
+  fsa?: string,
+): Promise<DaycareCard[]> {
+  const ids = await featuredCentreIdsInLock(lock);
+  const have = new Set(cards.map((card) => card.id));
+  const missing = ids.filter((id) => !have.has(id));
+  if (!missing.length) return cards;
+  const found = await catalogByIdsGet(missing);
+  const extra = found
+    .map((row) => toCard(row, origin, fsa))
+    .filter((card) => filterByLocationLock([card], lock).length > 0);
+  return extra.length ? [...cards, ...extra] : cards;
+}
+
 async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   const work =
     typeof data.lat2 === "number" && typeof data.lng2 === "number"
@@ -339,6 +361,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     cards.push(toCard(d, origin, data.fsa));
   }
   cards = filterByLocationLock(cards, lock);
+  cards = await mergePinnedCentres(cards, lock, origin, data.fsa);
   cards = await overlayClaimed(cards, mergeClaimedCard);
   cards = await overlayParentReviews(cards);
   cards = await overlayQuality(cards);
@@ -359,25 +382,25 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
       return c.ageMaxMonths >= 30 && c.ageMinMonths < 72;
     });
   }
-  cards.sort((a, b) => {
-    if (data.sort === "match") return compareParentMatch(a, b, rankPrefs);
-    if (data.sort === "urgency") return compareParentUrgency(a, b, rankPrefs);
-    if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
-    if (Boolean(a.featuredCity) !== Boolean(b.featuredCity)) return a.featuredCity ? -1 : 1;
-    if (data.sort === "recommended") {
-      const delta = recommendedRank(b) - recommendedRank(a);
-      if (Math.abs(delta) > 1e-6) return delta;
-      return a.distanceKm - b.distanceKm;
-    }
-    if (data.sort === "price") return (a.fromPrice || 9e6) - (b.fromPrice || 9e6);
-    if (data.sort === "rating") return b.ratingX10 - a.ratingX10;
-    if (data.sort === "availability") return b.spotsTotal - a.spotsTotal || a.distanceKm - b.distanceKm;
-    return compareProximity(a, b);
-  });
+  cards.sort((a, b) =>
+    compareWithPaidPins(a, b, (left, right) => {
+      if (data.sort === "match") return compareParentMatch(left, right, rankPrefs);
+      if (data.sort === "urgency") return compareParentUrgency(left, right, rankPrefs);
+      if (data.sort === "recommended") {
+        const delta = recommendedRank(right) - recommendedRank(left);
+        if (Math.abs(delta) > 1e-6) return delta;
+        return left.distanceKm - right.distanceKm;
+      }
+      if (data.sort === "price") return (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
+      if (data.sort === "rating") return right.ratingX10 - left.ratingX10;
+      if (data.sort === "availability") return right.spotsTotal - left.spotsTotal || left.distanceKm - right.distanceKm;
+      return compareProximity(left, right);
+    }),
+  );
   return publicListings(uniqueById(filterByLocationLock(cards, lock))).map(slimCard);
 }
 
-export const searchDaycares = createServerFn({ method: "POST" })
+export const searchDaycares = createServerFn({ method: "GET" })
   .validator((input: SearchInput) => ({
     ...input,
     radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
@@ -398,8 +421,9 @@ async function loadFeatured(origin: { lat: number; lng: number; label?: string }
   })) {
     nearby.push(toCard(d, origin));
   }
-  nearby.sort(compareProximity);
-  const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(nearby, mergeClaimedCard)));
+  const pinned = await mergePinnedCentres(nearby, lock, origin);
+  pinned.sort(compareProximity);
+  const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(pinned, mergeClaimedCard)));
   const scored = await overlayParentRank(merged, { distanceKnown: true, radiusKm: 40, ageGroup: "any" });
   const ranked = sortFeaturedCityAfterPriority(
     await overlayFeaturedCity(await overlayPriority(scored)),
@@ -407,7 +431,7 @@ async function loadFeatured(origin: { lat: number; lng: number; label?: string }
   return publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, 12).map(slimCard);
 }
 
-export const featuredDaycares = createServerFn({ method: "POST" })
+export const featuredDaycares = createServerFn({ method: "GET" })
   .validator((input: { lat: number; lng: number; label?: string }) => input)
   .handler(async ({ data }) => {
     const aligned = alignSearchOrigin({
@@ -436,6 +460,7 @@ export const getDaycare = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
+    if ((found.mergedInto || "").trim() || (found.importFault || "").trim()) return null;
     if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
     const origin = { lat: found.lat, lng: found.lng };
     const nearby = uniqueById(
@@ -455,6 +480,7 @@ export const getDaycare = createServerFn({ method: "GET" })
       reviews: [] as Review[],
       availability: catalogAvailability(found),
       nearby: withQualityCards(nearby, catalogScored),
+      jobs: [] as CentreJobPost[],
     };
     try {
       const sql = await Promise.race([getSql(), rejectAfter(6000, "listing-sql-timeout")]);
@@ -503,15 +529,43 @@ export const getDaycare = createServerFn({ method: "GET" })
         persist: true,
         persistIds: [daycare.id],
       });
+      const jobRows = await sql<{ id: string; role: string; note: string; created_at: string }>`
+        select id, role, note, created_at
+        from centre_job_posts
+        where daycare_id = ${daycare.id}
+        order by created_at desc
+        limit 8
+      `.catch(() => [] as { id: string; role: string; note: string; created_at: string }[]);
+      const jobs: CentreJobPost[] = jobRows.map((row) => ({
+        id: row.id,
+        role: row.role,
+        note: row.note,
+        createdAt: String(row.created_at),
+      }));
       return {
         daycare: withInboxReady(overlayed[0] ?? daycare),
         reviews: mapReviews(reviews),
         availability,
         nearby: withQualityCards(nearby, overlayed),
+        jobs,
       };
     } catch {
       return catalogPayload;
     }
+  });
+
+/**
+ * Old URL of a hidden possible-second-site row.
+ * 301s to that city's hub or search page. Never to the live sibling.
+ */
+export const getHiddenReviewRedirect = createServerFn({ method: "GET" })
+  .validator((slug: string) => slug)
+  .handler(async ({ data: slug }) => {
+    const { neonHiddenReviewPlace } = await import("@/lib/server/catalog-neon");
+    const { hiddenReviewRedirectTarget } = await import("@/lib/hidden-review");
+    const place = await neonHiddenReviewPlace(slug);
+    if (!place) return null;
+    return hiddenReviewRedirectTarget(place.city, place.province);
   });
 
 /** Slim catalogue snapshot for listing <head> / JSON-LD. No view increment. */
@@ -520,6 +574,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
+    if ((found.mergedInto || "").trim() || (found.importFault || "").trim()) return null;
     if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
     return {
       slug: found.slug,
@@ -539,7 +594,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
     };
   });
 
-export const getDaycaresByIds = createServerFn({ method: "POST" })
+export const getDaycaresByIds = createServerFn({ method: "GET" })
   .validator((ids: string[]) => ids)
   .handler(async ({ data: keys }) => {
     const origin = { lat: 49.8951, lng: -97.1384 };

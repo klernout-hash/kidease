@@ -10,6 +10,8 @@ import {
 import { splitPhotoList } from "@/lib/listing-photo";
 import { clampRadiusKm } from "@/lib/proximity";
 import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
+import { followMergedListing } from "@/lib/listing-merge";
+import { hiddenReviewPlaceFromRow } from "@/lib/hidden-review";
 import { correctCentreNameTypos, listingSlugLookupKeys, normalizeListingSlug } from "@/lib/listing-slug";
 import { listingCultureFrom } from "@/lib/listing-culture";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
@@ -71,6 +73,8 @@ export type CatalogDbRow = {
   google_place_id?: string | null;
   contact_email?: string | null;
   website?: string | null;
+  merged_into?: string | null;
+  import_fault?: string | null;
   distance_km?: number | null;
 };
 
@@ -83,7 +87,7 @@ spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
 languages, staff_languages, cultural_programs, cultural_team_note,
 amenities, photos, claimed_at, claim_status, listing_active, staff_screening_attested, screening_on_file, visibility, is_test,
-google_place_id, contact_email, website
+google_place_id, contact_email, website, merged_into, import_fault
 `;
 
 export const PUBLIC_CATALOG_COUNT_SQL = `
@@ -205,6 +209,8 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     isTest: row.is_test === 1 || row.is_test === true || visibility === "admin_only",
     contactEmail: row.contact_email || "",
     website: row.website || "",
+    mergedInto: row.merged_into || null,
+    importFault: row.import_fault || null,
   };
 }
 
@@ -257,7 +263,7 @@ export async function loadNeonCatalogIfPreferred(): Promise<CatalogDaycare[] | n
     // Full table, including admin-only QA fixtures. Public surfaces must use
     // getPublicCatalog / nearby SQL — never this list unfiltered.
     const rows = await sql.query<CatalogDbRow>(`select ${CATALOG_SELECT} from daycares`);
-    neonAllCache = rows.filter(catalogRowRenderable).map(catalogRowToListing);
+    neonAllCache = rows.filter(catalogRowRenderable).filter((row) => !(row.merged_into || "").trim() && !(row.import_fault || "").trim()).map(catalogRowToListing);
     return neonAllCache;
   } catch {
     return null;
@@ -272,11 +278,69 @@ export async function neonCatalogBySlug(slug: string): Promise<CatalogDaycare | 
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
     if (!(await isNeonCatalogPreferred(sql))) return null;
     const rows = await sql.query<CatalogDbRow>(
-      `select ${CATALOG_SELECT} from daycares where slug = any($1::text[]) limit 2`,
+      `select ${CATALOG_SELECT} from daycares where slug = any($1::text[]) limit 5`,
       [keys],
     );
     const exact = rows.find((row) => row.slug === slug) ?? rows[0];
-    return exact && catalogRowRenderable(exact) ? catalogRowToListing(exact) : null;
+    if (!exact || !catalogRowRenderable(exact)) return null;
+    const byId = new Map<string, CatalogDbRow>([[exact.id, exact]]);
+    let cursor = exact;
+    for (let hop = 0; hop < 4 && (cursor.merged_into || "").trim(); hop += 1) {
+      const nextId = String(cursor.merged_into).trim();
+      if (byId.has(nextId)) break;
+      const nextRows = await sql.query<CatalogDbRow>(
+        `select ${CATALOG_SELECT} from daycares where id = $1 limit 1`,
+        [nextId],
+      );
+      if (!nextRows[0]) break;
+      byId.set(nextRows[0].id, nextRows[0]);
+      cursor = nextRows[0];
+    }
+    const resolved = followMergedListing(
+      { id: exact.id, mergedInto: exact.merged_into, importFault: exact.import_fault },
+      (id) => {
+        const hit = byId.get(id);
+        return hit ? { id: hit.id, mergedInto: hit.merged_into, importFault: hit.import_fault } : undefined;
+      },
+    );
+    const keeper = resolved ? byId.get(resolved.id) : undefined;
+    return keeper && catalogRowRenderable(keeper) ? catalogRowToListing(keeper) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Slug of a hidden possible-second-site row. Does not follow merged_into.
+ * A PEI name fault and a merged duplicate return null here.
+ */
+export async function neonHiddenReviewPlace(slug: string): Promise<{ city: string; province: string } | null> {
+  if (dbSource !== "neon") return null;
+  const keys = listingSlugLookupKeys(slug);
+  if (keys.length === 0) return null;
+  try {
+    const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
+    const rows = await sql.query<{
+      slug: string;
+      city: string | null;
+      province: string | null;
+      merged_into: string | null;
+      import_fault: string | null;
+    }>(
+      `select slug, city, province, merged_into, import_fault
+         from daycares
+        where slug = any($1::text[])
+        limit 5`,
+      [keys],
+    );
+    const exact = rows.find((row) => row.slug === slug) ?? rows[0];
+    if (!exact) return null;
+    return hiddenReviewPlaceFromRow({
+      city: exact.city,
+      province: exact.province,
+      mergedInto: exact.merged_into,
+      importFault: exact.import_fault,
+    });
   } catch {
     return null;
   }
@@ -291,7 +355,10 @@ export async function neonCatalogById(id: string): Promise<CatalogDaycare | null
       `select ${CATALOG_SELECT} from daycares where id = $1 limit 1`,
       [id],
     );
-    return rows[0] && catalogRowRenderable(rows[0]) ? catalogRowToListing(rows[0]) : null;
+    const row = rows[0];
+    if (!row || !catalogRowRenderable(row)) return null;
+    if ((row.merged_into || "").trim() || (row.import_fault || "").trim()) return null;
+    return catalogRowToListing(row);
   } catch {
     return null;
   }
@@ -309,7 +376,10 @@ export async function neonCatalogByIds(ids: string[]): Promise<CatalogDaycare[] 
       [wanted],
     );
     const byId = new Map(
-      rows.filter(catalogRowRenderable).map((row) => [String(row.id).trim(), catalogRowToListing(row)]),
+      rows
+        .filter(catalogRowRenderable)
+        .filter((row) => !(row.merged_into || "").trim() && !(row.import_fault || "").trim())
+        .map((row) => [String(row.id).trim(), catalogRowToListing(row)]),
     );
     return wanted.map((id) => byId.get(id)).filter((d): d is CatalogDaycare => Boolean(d));
   } catch {

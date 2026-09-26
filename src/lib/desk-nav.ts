@@ -135,6 +135,14 @@ export const DESK_META: Record<DeskId, { eyebrow: string; title: string; eyebrow
   parent: { eyebrow: "Parent", title: "Family desk", eyebrowKey: "deskParent", titleKey: "familyDeskTitle" },
 };
 
+type DeskNavOpts = {
+  providerSubscriptions?: boolean;
+  showPayCtas?: boolean;
+  centreOwner?: boolean;
+  /** Active centre member. Subscription stays hidden for staff unless this is true. */
+  centreLinked?: boolean;
+};
+
 /** Hide Subscription only when the live director flag is off. Hide Promote pay chrome when SHOW_PAY_CTAS is off. */
 const OWNER_ONLY_NAV = new Set([
   "money",
@@ -147,14 +155,11 @@ const OWNER_ONLY_NAV = new Set([
   "employees",
 ]);
 
-export function visibleDeskNav(
-  desk: DeskId,
-  opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean; centreOwner?: boolean },
-): DeskItem[] {
+export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.id === "subscription") {
       if (!opts?.providerSubscriptions) return false;
-      if (opts.centreOwner === false) return false;
+      if (opts.centreOwner === false && opts.centreLinked !== true) return false;
       return true;
     }
     if (item.id === "promote") {
@@ -168,10 +173,7 @@ export function visibleDeskNav(
 }
 
 /** Phone primaries for Parent / Daycare. Admin and Support stay a full list. */
-export function visiblePrimaryDeskNav(
-  desk: DeskId,
-  opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean; centreOwner?: boolean },
-): DeskItem[] {
+export function visiblePrimaryDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   const items = visibleDeskNav(desk, opts);
   const ids = PHONE_PRIMARY_NAV[desk];
   if (!ids) return items;
@@ -182,10 +184,7 @@ export function visiblePrimaryDeskNav(
 }
 
 /** Phone More sheet: every remaining Parent / Daycare destination. Account last. */
-export function visibleSecondaryDeskNav(
-  desk: DeskId,
-  opts?: { providerSubscriptions?: boolean; showPayCtas?: boolean; centreOwner?: boolean },
-): DeskItem[] {
+export function visibleSecondaryDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   const items = visibleDeskNav(desk, opts);
   const ids = PHONE_PRIMARY_NAV[desk];
   if (!ids) return [];

@@ -11,6 +11,7 @@
  */
 
 import { evaluateFeatureFlag, type EnvMap } from "./flags.ts";
+import { parentVideoEntitled } from "./parent-plus.ts";
 
 export const VIDEO_ENV_NAMES = [
   "FEATURE_VIDEO",
@@ -177,7 +178,7 @@ export function parseVideoRoomParam(raw: string | null | undefined): { kind: Vid
 /**
  * Parent Plus entitlement for video.
  * Providers join without paying. Admins may test.
- * When Stripe is live: parent needs plus_plan=plus and plus_status active/trialing.
+ * When Stripe is live: parent needs plus_plan plus or alerts, and plus_status active/trialing.
  * When Stripe is not live: fail closed for parents (honest billing-not-live).
  */
 export function parentPlusEntitlesVideo(actor: VideoActor, stripeLive: boolean): VideoPlusGate {
@@ -187,13 +188,7 @@ export function parentPlusEntitlesVideo(actor: VideoActor, stripeLive: boolean):
   if (role === "admin") return { ok: true };
   if (role === "provider") return { ok: true };
   if (stripeLive) {
-    const plan = String(actor.plusPlan || "")
-      .trim()
-      .toLowerCase();
-    const status = String(actor.plusStatus || "")
-      .trim()
-      .toLowerCase();
-    if (plan === "plus" && (status === "active" || status === "trialing")) return { ok: true };
+    if (parentVideoEntitled(actor.plusPlan, actor.plusStatus)) return { ok: true };
     return { ok: false, reason: "plus_required" };
   }
   return { ok: false, reason: "plus_required_billing_not_live" };

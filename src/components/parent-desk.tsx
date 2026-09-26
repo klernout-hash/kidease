@@ -1,7 +1,8 @@
 import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, Navigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
+import type { UpgradeSearch } from "@/components/checkout-return";
 import { DeskShell } from "@/components/desk-shell";
 import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
@@ -30,10 +31,11 @@ import { parentUrgencyScore, soonestStartDate } from "@/lib/parent-urgency";
 import { distanceKm } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
+import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
-import { PayCtas } from "@/components/pay-chrome";
+import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { DeleteChildControl } from "@/components/delete-child-control";
 
 const ParentPlusPanel = lazy(() =>
@@ -70,7 +72,17 @@ function scheduleIdle(work: () => void): () => void {
 
 type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "alerts" | "care";
 
-export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
+export function ParentDesk({
+  initialTab,
+  plusReturn = null,
+  upgradeSearch = null,
+  billingReturn = false,
+}: {
+  initialTab?: ParentTab;
+  plusReturn?: "success" | "cancel" | null;
+  upgradeSearch?: UpgradeSearch | null;
+  billingReturn?: boolean;
+}) {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
   const { session: desks, ready: desksReady } = useSessionDesks();
@@ -102,28 +114,39 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   }, []);
 
   const loadExplore = useCallback(
-    async (startBookings: Booking[]) => {
+    async (startBookings: Booking[], fresh = false) => {
       try {
         const loc = origin.lat ? origin : WINNIPEG;
+        const data = {
+          lat: loc.lat,
+          lng: loc.lng,
+          radiusKm,
+          sort: "match" as const,
+          ageGroup: "any" as const,
+          label: loc.label,
+          q: loc.label,
+          startDate: soonestStartDate(startBookings),
+        };
         const rows = await withTimeoutFallback(
-          searchDaycares({
-            data: {
-              lat: loc.lat,
-              lng: loc.lng,
-              radiusKm,
-              sort: "match",
-              ageGroup: "any",
-              label: loc.label,
-              q: loc.label,
-              startDate: soonestStartDate(startBookings),
-            },
+          dedupedQuery(`parent-search:${JSON.stringify(data)}`, QUERY_STALE_MS, () => searchDaycares({ data }), {
+            cacheIf: (value) => value.length > 0,
+            fresh,
           }),
           LOADER_SETTLE_MS,
           [] as Card[],
         );
         const next = rows.length
           ? rows
-          : await withTimeoutFallback(featuredDaycares({ data: loc }), LOADER_SETTLE_MS, [] as Card[]);
+          : await withTimeoutFallback(
+              dedupedQuery(
+                `parent-featured:${loc.lat},${loc.lng},${loc.label ?? ""}`,
+                QUERY_STALE_MS,
+                () => featuredDaycares({ data: loc }),
+                { cacheIf: (value) => value.length > 0, fresh },
+              ),
+              LOADER_SETTLE_MS,
+              [] as Card[],
+            );
         startTransition(() => setExplore(next));
       } finally {
         startTransition(() => setExploreReady(true));
@@ -132,8 +155,8 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
     [origin, radiusKm],
   );
 
-  const loadFamily = useCallback(async () => {
-    const f = await getFamily();
+  const loadFamily = useCallback(async (fresh = false) => {
+    const f = await dedupedQuery(`parent-family:${user?.id ?? ""}`, QUERY_STALE_MS, () => getFamily(), { fresh });
     await yieldToMain();
     startTransition(() => {
       setSaved(f.saved);
@@ -142,24 +165,40 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       setChildren(f.children);
     });
     return f;
-  }, []);
+  }, [user?.id]);
 
-  const loadDeskExtras = useCallback(async () => {
+  const loadDeskExtras = useCallback(async (fresh = false) => {
+    const uid = user?.id ?? "";
     const [billed, tourRows, leadRows] = await Promise.all([
-      listParentBills().catch(() => ({ bills: [] as Bill[] })),
-      listTourRequests({ data: { desk: "parent" } }).catch(() => [] as TourRequest[]),
-      listLeadRequests({ data: { desk: "parent" } }).catch(() => [] as LeadRequest[]),
+      dedupedQuery(
+        `parent-bills:${uid}`,
+        QUERY_STALE_MS,
+        () => listParentBills().catch(() => ({ bills: [] as Bill[] })),
+        { fresh },
+      ),
+      dedupedQuery(
+        `parent-tours:${uid}`,
+        QUERY_STALE_MS,
+        () => listTourRequests({ data: { desk: "parent" } }).catch(() => [] as TourRequest[]),
+        { fresh },
+      ),
+      dedupedQuery(
+        `parent-leads:${uid}`,
+        QUERY_STALE_MS,
+        () => listLeadRequests({ data: { desk: "parent" } }).catch(() => [] as LeadRequest[]),
+        { fresh },
+      ),
     ]);
     startTransition(() => {
       setBills(billed.bills);
       setTours(tourRows);
       setLeads(leadRows);
     });
-  }, []);
+  }, [user?.id]);
 
   async function load() {
-    const f = await loadFamily();
-    await Promise.all([loadExplore(f.bookings), loadDeskExtras()]);
+    const f = await loadFamily(true);
+    await Promise.all([loadExplore(f.bookings, true), loadDeskExtras(true)]);
   }
 
   useEffect(() => {
@@ -177,7 +216,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   }, [user?.id]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     let cancelled = false;
     let cancelIdle: (() => void) | undefined;
     void yieldToMain()
@@ -200,7 +239,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
       cancelled = true;
       cancelIdle?.();
     };
-  }, [user, loadFamily, loadExplore, loadDeskExtras]);
+  }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
 
   useEffect(() => {
     if (contentTab !== "saved") {
@@ -253,6 +292,19 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
   }, [bookings, children, contentTab, deferredSaved, located, origin, radiusKm]);
 
   if (!user) return null;
+  const upgradeBuyer = {
+    role: desks?.role,
+    ownsCentre: desks?.ownsCentre,
+    linkedToCentre: desks?.centreLinked,
+  };
+  const onPlusSurface = contentTab === "payments" || plusReturn != null;
+  if (onPlusSurface && desksReady && desks && !canBuyParentUpgrade(upgradeBuyer)) {
+    if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider/subscription" />;
+    if (desks.home === "/admin") return <Navigate to="/admin" />;
+    if (desks.home === "/support") return <Navigate to="/support" />;
+    return <Navigate to="/provider" />;
+  }
+  const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer));
 
   return (
     <DeskShell desk="parent" active={tab} onSelect={selectTab}>
@@ -406,13 +458,13 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
               ready={desksReady}
             />
             <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
-            <PayCtas>
+            {showParentPlus ? (
             <div className="mt-4">
               <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
-                <ParentPlusPanel offerCheckout={bills.filter((b) => billIsOpen(b.status)).length > 0} />
+                <ParentPlusPanel offerCheckout plusReturn={plusReturn} upgradeSearch={upgradeSearch} billingReturn={billingReturn} />
               </Suspense>
             </div>
-            </PayCtas>
+            ) : null}
           </div>
           {bills.filter((b) => billIsOpen(b.status)).length ? (
             <div>

@@ -13,6 +13,7 @@ import { transactionalMailFrom } from "@/lib/mail-from";
 import { licenseReviewMarker } from "@/lib/private-docs";
 import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
 import { collapseDuplicateReviewCards, hasLicenceEvidence } from "@/lib/approve-live";
+import { adminAddonLine } from "@/lib/centre-addons";
 import { runApproval } from "@/lib/server/approve-centre";
 import { mapAdminCentreSqlRow, type AdminCentreSqlRow } from "@/lib/admin-centres-map";
 import {
@@ -20,6 +21,7 @@ import {
   selectIncompleteRows,
   type IncompleteMissingField,
 } from "@/lib/listing-incomplete";
+import { HIDDEN_REVIEW_POSSIBLE_SECOND_SITE } from "@/lib/listing-visibility";
 
 export type AdminCentreRow = {
   daycareId: string;
@@ -59,6 +61,11 @@ export type AdminCentreRow = {
   hasListingClaim: boolean;
   missing: IncompleteMissingField[];
   updatedAt: string | null;
+  addonLine?: string | null;
+  mergedInto: string | null;
+  mergedIntoName: string | null;
+  importFault: string | null;
+  reviewOf: string | null;
 };
 
 /** Licence + storefront photos for Admin verify — daycare photos, not the raw CSV. */
@@ -146,6 +153,63 @@ function decisionCopy(decision: Decision, name: string) {
   };
 }
 
+async function loadAdminAddonLines(sql: Awaited<ReturnType<typeof getSql>>, daycareIds: string[]) {
+  const out = new Map<string, string>();
+  const ids = [...new Set(daycareIds.filter(Boolean))];
+  if (!ids.length) return out;
+  const rows = await sql.query<{
+    daycare_id: string;
+    featured: boolean;
+    claim_until: string | null;
+    claim_pending: boolean;
+    job_credits: number | null;
+    job_posts: number | null;
+  }>(
+    `select d.id as daycare_id,
+        bool_or(
+          pr.featured_city_status in ('active', 'trialing', 'past_due')
+          and position('featured_city' in coalesce(pr.selected_addons, '')) > 0
+          and (pr.featured_city_centre_id is null or pr.featured_city_centre_id = d.id)
+        ) as featured,
+        max(d.priority_until)::text as claim_until,
+        bool_or(
+          pr.claim_boost_paid_at is not null
+          and pr.claim_boost_applied_at is null
+          and (pr.claim_boost_centre_id is null or pr.claim_boost_centre_id = d.id)
+        ) as claim_pending,
+        max(
+          case
+            when exists (select 1 from centre_job_credits c where c.user_id = pr.user_id) then (
+              select count(*)::int from centre_job_credits c
+              where c.user_id = pr.user_id
+                and c.spent_at is null
+                and (c.daycare_id is null or c.daycare_id = d.id)
+            )
+            when pr.job_post_centre_id is null or pr.job_post_centre_id = d.id then pr.job_post_credits
+            else 0
+          end
+        ) as job_credits,
+        (select count(*)::int from centre_job_posts j where j.daycare_id = d.id) as job_posts
+      from daycares d
+      join provider_daycares pd on pd.daycare_id = d.id
+      join profiles pr on pr.user_id = pd.user_id
+      where d.id = any($1::text[])
+      group by d.id`,
+    [ids],
+  );
+  for (const row of rows) {
+    const line = adminAddonLine({
+      featured: Boolean(row.featured),
+      claimUntil: row.claim_until,
+      claimPending: Boolean(row.claim_pending),
+      jobCredits: Number(row.job_credits) || 0,
+      jobPosts: Number(row.job_posts) || 0,
+    });
+    if (line) out.set(row.daycare_id, line);
+  }
+  return out;
+}
+
 export const listAdminCentres = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
@@ -201,8 +265,13 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           d.last_vacancy_updated_at,
           d.created_at,
           d.visibility,
-          d.is_test
+          d.is_test,
+          d.merged_into,
+          keeper.name as merged_into_name,
+          d.import_fault,
+          d.review_of
         from daycares d
+        left join daycares keeper on keeper.id = d.merged_into
         left join lateral (
           select id, status, user_id, created_at, reviewed_at, review_note, license_photo
           from listing_claims
@@ -231,6 +300,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
            or d.id = 'ke-test-ghost-001'
            or d.id ilike 'ke-test-%'
            or d.name like 'TEST %'
+           or d.merged_into is not null
+           or nullif(btrim(coalesce(d.import_fault, '')), '') is not null
       `;
     } catch (first) {
       throw first instanceof Error ? first : new Error("Could not load the admin queue.");
@@ -278,15 +349,25 @@ export const listAdminCentres = createServerFn({ method: "GET" })
       };
     });
 
+    const addonByCentre = await loadAdminAddonLines(
+      sql,
+      mapped.map((row) => row.daycareId),
+    );
+    const withAddons = mapped.map((row) => ({ ...row, addonLine: addonByCentre.get(row.daycareId) ?? null }));
     const rank = (s: string) => (s === "waiting" || s === "pending" ? 0 : s === "approved" ? 1 : 2);
-    const visible = collapseDuplicateReviewCards(mapped.filter((row) => row.claimStatus !== "superseded"));
+    const merged = withAddons.filter((row) => row.mergedInto);
+    const faults = withAddons.filter((row) => row.importFault && !row.mergedInto);
+    const visible = collapseDuplicateReviewCards(
+      withAddons.filter((row) => !row.mergedInto && !row.importFault && row.claimStatus !== "superseded"),
+    );
     visible.sort((a, b) => rank(a.claimStatus) - rank(b.claimStatus) || compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name));
-    return visible;
+    const hidden = [...merged, ...faults].sort((a, b) => a.name.localeCompare(b.name));
+    return [...visible, ...hidden];
   });
 
 /** Incomplete / Needs-complete slice — same rows as listAdminCentres, filtered in-process. */
 export function listIncompleteAdminCentres(rows: AdminCentreRow[]): AdminCentreRow[] {
-  return selectIncompleteRows(rows).sort(
+  return selectIncompleteRows(rows.filter((row) => !row.mergedInto && !row.importFault)).sort(
     (a, b) => compareTimeDesc(a.updatedAt || a.submittedAt, b.updatedAt || b.submittedAt) || a.name.localeCompare(b.name),
   );
 }
@@ -446,4 +527,117 @@ export const decideCentre = createServerFn({ method: "POST" })
       to: to || null,
       health: approvalHealth,
     };
+  });
+
+/** Put a retired duplicate back on its own slug. Does not delete either row. */
+export const unmergeCentre = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId: string }) => input)
+  .handler(async ({ context, data }) => {
+    const actor = await requireOperator(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
+    const daycareId = data.daycareId.trim();
+    if (!daycareId) throw new Error("Listing not found");
+    const sql = await getSql();
+    const updated = await sql<{ id: string; name: string }>`
+      update daycares
+      set merged_into = null,
+          listing_active = 1,
+          claim_status = case
+            when claim_status = 'superseded' and claimed_at is null then 'unclaimed'
+            else claim_status
+          end
+      where id = ${daycareId}
+        and merged_into is not null
+      returning id, name
+    `;
+    const row = updated[0];
+    if (!row) throw new Error("This listing is not merged");
+    const { resetNeonCatalogCache } = await import("@/lib/server/catalog-neon");
+    resetNeonCatalogCache();
+    await writeTrustEvent(sql, {
+      daycareId,
+      actorUserId: context.userId,
+      kind: "unmerge",
+      note: `${actor.name || "Operator"} un-merged ${row.name}`,
+    });
+    return { ok: true as const, daycareId };
+  });
+
+/** Put a possible-second-site row back on the public catalogue. Does not delete it. */
+export const restoreHiddenReview = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId: string }) => input)
+  .handler(async ({ context, data }) => {
+    const actor = await requireOperator(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
+    const daycareId = data.daycareId.trim();
+    if (!daycareId) throw new Error("Listing not found");
+    const sql = await getSql();
+    const updated = await sql<{ id: string; name: string }>`
+      update daycares
+      set import_fault = null,
+          review_of = null,
+          listing_active = 1,
+          visibility = 'public'
+      where id = ${daycareId}
+        and import_fault = ${HIDDEN_REVIEW_POSSIBLE_SECOND_SITE}
+        and merged_into is null
+      returning id, name
+    `;
+    const row = updated[0];
+    if (!row) throw new Error("This listing is not a hidden second site");
+    const { resetNeonCatalogCache } = await import("@/lib/server/catalog-neon");
+    resetNeonCatalogCache();
+    await writeTrustEvent(sql, {
+      daycareId,
+      actorUserId: context.userId,
+      kind: "restore_hidden_review",
+      note: `${actor.name || "Operator"} restored ${row.name}`,
+    });
+    return { ok: true as const, daycareId };
+  });
+
+/** Merge a hidden possible-second-site row into the live sibling. The row stays. */
+export const mergeHiddenReview = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId: string }) => input)
+  .handler(async ({ context, data }) => {
+    const actor = await requireOperator(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
+    const daycareId = data.daycareId.trim();
+    if (!daycareId) throw new Error("Listing not found");
+    const sql = await getSql();
+    const updated = await sql<{ id: string; name: string; merged_into: string }>`
+      update daycares
+      set merged_into = review_of,
+          import_fault = null,
+          listing_active = 0,
+          claim_status = 'superseded',
+          visibility = 'admin_only'
+      where id = ${daycareId}
+        and import_fault = ${HIDDEN_REVIEW_POSSIBLE_SECOND_SITE}
+        and review_of is not null
+        and merged_into is null
+        and exists (
+          select 1 from daycares live
+          where live.id = daycares.review_of
+            and live.id <> daycares.id
+        )
+      returning id, name, merged_into
+    `;
+    const row = updated[0];
+    if (!row) throw new Error("This listing is not a hidden second site");
+    const { resetNeonCatalogCache } = await import("@/lib/server/catalog-neon");
+    resetNeonCatalogCache();
+    await writeTrustEvent(sql, {
+      daycareId,
+      actorUserId: context.userId,
+      kind: "merge_hidden_review",
+      note: `${actor.name || "Operator"} merged ${row.name} into ${row.merged_into}`,
+    });
+    return { ok: true as const, daycareId, mergedInto: row.merged_into };
   });

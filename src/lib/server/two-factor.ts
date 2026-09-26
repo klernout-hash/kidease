@@ -1,4 +1,3 @@
-import { createHash, randomInt } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
@@ -22,7 +21,8 @@ function secret() {
   return (process.env.BETTER_AUTH_SECRET || process.env.ADMIN_EMAIL || "kidease-preview").trim();
 }
 
-function hashCode(code: string) {
+async function hashCode(code: string) {
+  const { createHash } = await import("node:crypto");
   return createHash("sha256").update(`${secret()}:${code}`).digest("hex");
 }
 
@@ -155,6 +155,7 @@ export const startTwoFactor = createServerFn({ method: "POST" })
         hourly: true as const,
       };
     }
+    const { randomInt } = await import("node:crypto");
     const code = String(randomInt(100000, 999999));
     const id = nid("2fa");
     let status: "sent" | "logged";
@@ -167,7 +168,7 @@ export const startTwoFactor = createServerFn({ method: "POST" })
     await sql`delete from login_challenges where user_id = ${context.userId}`;
     await sql.query(
       `insert into login_challenges (id, user_id, email, code_hash, expires_at) values ($1,$2,$3,$4,$5)`,
-      [id, context.userId, email, hashCode(code), new Date(Date.now() + TTL_MS).toISOString()],
+      [id, context.userId, email, await hashCode(code), new Date(Date.now() + TTL_MS).toISOString()],
     );
     await sql.query(`insert into two_factor_sends (id, user_id) values ($1,$2)`, [nid("2fas"), context.userId]).catch(
       () => undefined,
@@ -199,7 +200,7 @@ export async function consumeTwoFactorCode(userId: string, code: string) {
   if (!row) throw new Error("Request a new code first.");
   if (new Date(row.expires_at).getTime() < Date.now()) throw new Error("That code expired. Request a new one.");
   if (row.attempts >= MAX_ATTEMPTS) throw new Error("Too many tries. Request a new code.");
-  if (row.code_hash !== hashCode(code)) {
+  if (row.code_hash !== (await hashCode(code))) {
     await sql`update login_challenges set attempts = attempts + 1 where id = ${row.id}`;
     throw new Error("That code is not correct.");
   }

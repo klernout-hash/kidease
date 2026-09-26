@@ -1,31 +1,38 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { publicPayMessage } from "@/lib/stripe-public-error";
+import { CheckoutReturnNote, upgradeReturnFromSearch, useUpgradeCelebration, type UpgradeSearch } from "@/components/checkout-return";
 import { useCopy } from "@/lib/use-copy";
-import { cn } from "@/lib/utils";
-import { PLUS_FEATURES, plusPriceHint, type PlusInterval } from "@/lib/parent-plus";
-import { getParentPlus, startParentPlusCheckout, startParentPlusPortal, type ParentPlusState } from "@/lib/server/parent-plus";
+import { ALERTS_MONTHLY_CAD, ALERTS_YEARLY_CAD, PLUS_MONTHLY_CAD, PLUS_YEARLY_CAD, type PlusInterval, type PlusPlanId } from "@/lib/parent-plus";
+import { PARENT_UPGRADE_PLANS, checkoutCtaLabel, paidPlanVisible, visibleYearlySavings } from "@/lib/upgrade-plans";
+import { BillingIntervalToggle } from "@/components/billing-interval-toggle";
+import { UpgradePlanCard } from "@/components/upgrade-plan-card";
+import { getParentPlus, setParentPlusCancel, startParentPlusCheckout, startParentPlusPortal, type ParentPlusState } from "@/lib/server/parent-plus";
+import { ManageBillingCard, announceCancel } from "@/components/manage-billing";
+import { subscriptionAccessOpen } from "@/lib/subscription-lifecycle";
+import { openStripeCheckout } from "@/lib/wallets";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
-import { openStripeCheckout } from "@/lib/wallets";
 import { useShowPayCtas } from "@/components/pay-chrome";
 
-function plusMoney(amount: number, locale: "en" | "fr") {
-  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
-    style: "currency",
-    currency: "CAD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: boolean }) {
+export function ParentPlusPanel({
+  offerCheckout = true,
+  plusReturn,
+  upgradeSearch = null,
+  billingReturn = false,
+}: {
+  offerCheckout?: boolean;
+  plusReturn?: "success" | "cancel" | null;
+  upgradeSearch?: UpgradeSearch | null;
+  billingReturn?: boolean;
+}) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const showPay = useShowPayCtas();
   const [state, setState] = useState<ParentPlusState | null>(null);
-  const [interval, setInterval] = useState<PlusInterval>("month");
+  const [interval, setInterval] = useState<PlusInterval>("year");
   const [busy, setBusy] = useState(false);
   const [consents, setConsents] = useState<CaslPrefs>({
     smsService: false,
@@ -33,14 +40,51 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
     emailCommercial: false,
   });
 
-  useEffect(() => {
-    if (!showPay) return;
+  const payReturn = useMemo(
+    () => upgradeReturnFromSearch(upgradeSearch ?? (plusReturn ? { plus: plusReturn } : null)),
+    [upgradeSearch, plusReturn],
+  );
+
+  const reloadPlus = useCallback(() => {
     void getParentPlus()
       .then((s) => {
         setState(s);
-        setInterval(s.interval);
+        if (s.plan !== "free" && subscriptionAccessOpen(s.status)) setInterval(s.interval);
       })
       .catch(() => undefined);
+  }, []);
+
+  const returnPhase = useUpgradeCelebration({
+    ret: showPay ? payReturn : null,
+    locale: loc,
+    confirmedSessionId: state?.catalogCheckoutSessionId,
+    plusPlan: state?.plan,
+    plusStatus: state?.status,
+    reload: reloadPlus,
+  });
+
+  useEffect(() => {
+    if (!billingReturn) return;
+    const timer = window.setInterval(() => reloadPlus(), 2000);
+    const stop = window.setTimeout(() => window.clearInterval(timer), 20000);
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(stop);
+    };
+  }, [billingReturn, reloadPlus]);
+
+  useEffect(() => {
+    if (!billingReturn || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("billing");
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+      window.history.replaceState(window.history.state, "", next);
+    }
+  }, [billingReturn]);
+
+  useEffect(() => {
+    reloadPlus();
     void getMyCaslConsents()
       .then((row) => {
         setConsents({
@@ -50,23 +94,26 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
         });
       })
       .catch(() => undefined);
-  }, [showPay]);
+  }, [reloadPlus]);
 
-  if (!showPay || !state) return null;
+  if (!state) return null;
+  const current = state;
+  const manageable = Boolean(current.stripeLive && current.subscriptionId && subscriptionAccessOpen(current.status) && current.plan !== "free");
+  if (!showPay && !manageable) return null;
 
-  const live = state.stripeLive && Boolean(state.prices[interval === "year" ? "plus_yearly" : "plus_monthly"]);
-  const current = state.plan === "plus" && (state.status === "active" || !state.stripeLive);
+  const plusOn = subscriptionAccessOpen(state.status);
+  const familyPlans = PARENT_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, interval, state.prices));
 
-  async function start() {
+  async function start(plan: PlusPlanId) {
     setBusy(true);
     try {
       await saveMyCaslConsents({
         data: { ...consents, locale: loc, method: "checkout_checkbox" },
       }).catch(() => undefined);
-      const { url } = await startParentPlusCheckout({ data: { interval } });
+      const { url } = await startParentPlusCheckout({ data: { interval, plan: plan === "alerts" ? "alerts" : "plus" } });
       await openStripeCheckout(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not start Plus checkout");
+      toast.error(publicPayMessage(err, "Could not start Plus checkout"));
     } finally {
       setBusy(false);
     }
@@ -76,9 +123,24 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
     setBusy(true);
     try {
       const { url } = await startParentPlusPortal();
-      window.location.assign(url);
+      await openStripeCheckout(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not open billing portal");
+      toast.error(publicPayMessage(err, "Could not open billing portal"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function setCancel(cancel: boolean) {
+    setBusy(true);
+    try {
+      const saved = await setParentPlusCancel({ data: { cancel } });
+      reloadPlus();
+      if (cancel && (current.plan === "plus" || current.plan === "alerts")) {
+        announceCancel({ product: current.plan, periodEnd: saved.periodEnd, locale: loc });
+      }
+    } catch (err) {
+      toast.error(publicPayMessage(err, loc === "fr" ? "L’abonnement n’a pas changé." : "The subscription was not changed."));
     } finally {
       setBusy(false);
     }
@@ -88,48 +150,88 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
     <div className="rounded-xl bg-surface p-5 ring-1 ring-border">
       <h3 className="font-display text-xl">{t("parentPlusTitle")}</h3>
       <p className="mt-1 text-sm text-muted">{t("parentPlusLead")}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {(["month", "year"] as const).map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setInterval(id)}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm",
-              interval === id ? "bg-primary text-primary-fg" : "bg-bg text-muted ring-1 ring-border hover:text-fg",
-            )}
-          >
-            {plusPriceHint(id, loc)}
-          </button>
-        ))}
+      {returnPhase ? (
+        <div className="mt-3">
+          <CheckoutReturnNote phase={returnPhase} locale={loc} />
+        </div>
+      ) : null}
+      {manageable && (state.plan === "plus" || state.plan === "alerts") ? (
+        <div className="mt-4">
+          <ManageBillingCard
+            locale={loc}
+            product={state.plan}
+            interval={state.interval}
+            status={state.status}
+            periodEnd={state.periodEnd}
+            cancelAtPeriodEnd={state.cancelAtPeriodEnd}
+            billingReturn={billingReturn}
+            busy={busy}
+            onPortal={() => void portal()}
+            onCancel={() => void setCancel(true)}
+            onResume={() => void setCancel(false)}
+          />
+        </div>
+      ) : null}
+      {showPay ? (
+      <>
+      <div className="mt-4">
+        <BillingIntervalToggle
+          interval={interval}
+          onChange={setInterval}
+          savePercents={visibleYearlySavings(
+            PARENT_UPGRADE_PLANS.map((plan) => plan.id),
+            state.prices,
+          )}
+          locale={loc}
+        />
       </div>
-      <p className="mt-4 font-display text-3xl tabular-nums">
-        {plusMoney(interval === "year" ? 59 : 7.99, loc)}
-      </p>
-      <ul className="mt-3 space-y-1.5 text-sm text-muted">
-        {PLUS_FEATURES.map((f) => (
-          <li key={f.en}>{f[loc]}</li>
-        ))}
-      </ul>
       <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
         <CaslConsentFields value={consents} onChange={setConsents} showEmailService={false} />
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {live ? (
-          <Button disabled={busy || current || !offerCheckout} onClick={() => void start()}>
-            {current ? t("parentPlusCurrent") : t("parentPlusSubscribe")}
-          </Button>
-        ) : (
-          <Button disabled>{t("parentPlusSubscribe")}</Button>
-        )}
-        {state.customerId && state.stripeLive ? (
-          <Button variant="secondary" disabled={busy} onClick={() => void portal()}>
-            {t("parentPlusManage")}
-          </Button>
-        ) : null}
+      <div className={familyPlans.length > 2 ? "mt-4 grid gap-3 lg:grid-cols-3" : "mt-4 grid gap-3 sm:grid-cols-2"} data-ke="parent-upgrade-plans">
+        {familyPlans.map((plan) => {
+          const amount =
+            plan.id === "alerts"
+              ? { monthly: ALERTS_MONTHLY_CAD, yearly: ALERTS_YEARLY_CAD }
+              : plan.id === "plus"
+                ? { monthly: PLUS_MONTHLY_CAD, yearly: PLUS_YEARLY_CAD }
+                : { monthly: 0, yearly: null };
+          const priceKey = plan.id === "alerts" ? (interval === "year" ? "parent_alerts_yearly" : "parent_alerts_monthly") : interval === "year" ? "plus_yearly" : "plus_monthly";
+          const live = plan.id !== "free" && state.stripeLive && Boolean(state.prices[priceKey]);
+          const current = state.plan === plan.id && state.interval === interval && (plusOn || !state.stripeLive);
+          return (
+            <UpgradePlanCard
+              key={plan.id}
+              plan={plan}
+              locale={loc}
+              interval={interval}
+              monthly={amount.monthly}
+              yearly={amount.yearly}
+              cta={
+                plan.id === "free" ? null : (
+                  <Button className="min-h-11 w-full" disabled={busy || current || !live || !offerCheckout} onClick={() => void start(plan.id as PlusPlanId)}>
+                    {current
+                      ? t("parentPlusCurrent")
+                      : interval === "year"
+                        ? checkoutCtaLabel({
+                            planName: plan.name[loc],
+                            interval,
+                            monthly: amount.monthly,
+                            yearly: amount.yearly,
+                            locale: loc,
+                          })
+                        : t("parentPlusSubscribe")}
+                  </Button>
+                )
+              }
+            />
+          );
+        })}
       </div>
-      {!offerCheckout && !current ? <p className="mt-3 text-sm text-muted">{t("parentPlusNoBill")}</p> : null}
-      {!state.stripeLive ? <p className="mt-3 text-sm text-muted">{t("parentPlusRehearsal")}</p> : null}
+      {!offerCheckout && !(state.plan !== "free" && plusOn) ? <p className="mt-3 text-sm text-muted">{t("parentPlusNoBill")}</p> : null}
+      {showPay && !state.stripeLive ? <p className="mt-3 text-sm text-muted">{t("parentPlusRehearsal")}</p> : null}
+      </>
+      ) : null}
       {state.status ? <p className="mt-2 text-xs text-subtle">{state.status}</p> : null}
     </div>
   );

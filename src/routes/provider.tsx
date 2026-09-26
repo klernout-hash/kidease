@@ -181,9 +181,9 @@ function ProviderPage() {
   }
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     void setRole({ data: "provider" }).then(() => load()).catch(() => undefined);
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (search.desk) setDesk(search.desk);

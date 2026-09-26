@@ -6,6 +6,7 @@ import {
   SUCCESS_TOAST_MS,
   type SuccessRequest,
 } from "@/lib/success-confirm";
+import { burstUpgradeConfetti } from "@/lib/upgrade-confetti";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,10 @@ export type SuccessConfirmProps = MarkerProps & {
   contextTitle?: string;
   contextMeta?: string;
   contextDetail?: string;
+  points?: string[];
+  confetti?: boolean;
+  /** Static check, no confetti bits. Used when a subscription is set to end. */
+  quiet?: boolean;
   primary?: ReactNode;
   secondary?: ReactNode;
   onClose: () => void;
@@ -79,6 +84,9 @@ export function SuccessConfirm({
   contextTitle,
   contextMeta,
   contextDetail,
+  points,
+  confetti,
+  quiet,
   primary,
   secondary,
   onClose,
@@ -91,12 +99,19 @@ export function SuccessConfirm({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const reducedMotion = usePrefersReducedMotion();
-  const flourish = !reducedMotion;
+  const flourish = !reducedMotion && !quiet;
+
+  useEffect(() => {
+    if (!confetti || reducedMotion || quiet) return;
+    return burstUpgradeConfetti();
+  }, [confetti, reducedMotion, quiet]);
+
   const thumb = displayPhoto(photo);
   const cardTitle = (contextTitle || "").trim();
   const meta = (contextMeta || "").trim();
   const detail = (contextDetail || "").trim();
   const copy = (body || "").trim();
+  const unlocked = (points || []).map((line) => line.trim()).filter(Boolean).slice(0, 3);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -226,6 +241,13 @@ export function SuccessConfirm({
               {copy}
             </p>
           ) : null}
+          {unlocked.length ? (
+            <ul className="mt-3 w-full max-w-sm list-disc space-y-1 pl-5 text-left text-sm text-muted" data-ke="upgrade-success-benefits">
+              {unlocked.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          ) : null}
         </div>
         {cardTitle ? (
           <div className="mt-4 flex items-center gap-3 rounded-[14px] bg-bg p-2.5 text-left ring-1 ring-border">
@@ -327,6 +349,9 @@ export function SuccessConfirmHost() {
           kicker={modal.kicker || kicker}
           title={modal.title}
           body={modal.body}
+          points={modal.points}
+          confetti={modal.confetti}
+          quiet={modal.quiet}
           photo={modal.photo}
           contextTitle={modal.contextTitle}
           contextMeta={modal.contextMeta}

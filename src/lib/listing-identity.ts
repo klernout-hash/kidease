@@ -20,6 +20,10 @@ export type ListingIdentityInput = {
 export type ExistingListingIdentity = ListingIdentityInput & {
   id?: string;
   userId?: string | null;
+  /** Set when this row was retired into another daycare. */
+  mergedInto?: string | null;
+  /** Set when the row is hidden (possible second site, PEI name, or another import fault). */
+  importFault?: string | null;
 };
 
 export type DuplicateListingKind = "same_owner" | "other_account" | "catalogue";
@@ -127,6 +131,19 @@ export function sameDaycareListing(
   return false;
 }
 
+function addressesAgree(incoming: ListingIdentityInput, existing: ListingIdentityInput): boolean {
+  const sameAddress = sameNormalized(incoming.address, existing.address, normalizePlace);
+  if (!sameAddress) return false;
+  const samePostal = sameNormalized(incoming.postalCode, existing.postalCode, normalizePostal);
+  if (samePostal) return true;
+  const sameCity = sameNormalized(incoming.city, existing.city, normalizePlace);
+  return sameCity && sameProvince(incoming.province, existing.province);
+}
+
+function concealedListing(row: ExistingListingIdentity): boolean {
+  return Boolean((row.mergedInto || "").trim() || (row.importFault || "").trim());
+}
+
 export function findDuplicateListing(
   incoming: ListingIdentityInput,
   existing: ExistingListingIdentity[],
@@ -134,8 +151,11 @@ export function findDuplicateListing(
 ): DuplicateListingHit | null {
   const actor = actorUserId.trim();
   let fallback: DuplicateListingHit | null = null;
+  let concealedFallback: DuplicateListingHit | null = null;
 
   for (const row of existing) {
+    const concealed = concealedListing(row);
+    if (concealed && !addressesAgree(incoming, row)) continue;
     const sameOwner = Boolean(actor && row.userId && row.userId === actor);
     if (!sameDaycareListing(incoming, row, { sameOwner })) continue;
     const hit: DuplicateListingHit = {
@@ -143,11 +163,15 @@ export function findDuplicateListing(
       id: row.id,
       message: DUPLICATE_LISTING_MESSAGE,
     };
+    if (concealed) {
+      concealedFallback ??= hit;
+      continue;
+    }
     if (hit.kind === "same_owner") return hit;
     fallback ??= hit;
   }
 
-  return fallback;
+  return fallback ?? concealedFallback;
 }
 
 /** JSON body createListing (and twin create paths) return on a duplicate. */

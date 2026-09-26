@@ -6,6 +6,9 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
+import { OptionalUpgrades } from "@/components/optional-upgrades";
+import { useSessionDesks } from "@/components/session-desks";
+import { visibleUpgradeSide } from "@/lib/upgrade-role";
 import { BrandMark } from "@/components/brand-mark";
 import { FacilityTypeRails } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
@@ -35,6 +38,7 @@ import {
   type AppRole,
 } from "@/lib/desks";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
+import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { BootPending } from "@/components/boot-pending";
 import { HOME_PAINT_BUDGET_MS, LOADER_SETTLE_MS, ORIGIN_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
@@ -57,6 +61,8 @@ import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { homeLiveStrip } from "@/lib/home-live-strip";
 import { displayDistance } from "@/lib/units";
+import { showPayCtas } from "@/lib/features";
+import { catalogStatus } from "@/lib/server/stripe-catalog";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import {
   honestVacancy,
@@ -89,7 +95,13 @@ export const Route = createFileRoute("/")({
       featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label } }),
       HOME_PAINT_BUDGET_MS,
     );
-    return { featured: painted.value ?? [], featuredReady: painted.ready, origin };
+    return {
+      featured: painted.value ?? [],
+      featuredReady: painted.ready,
+      origin,
+      showPay: showPayCtas(),
+      priceFlags: catalogStatus(),
+    };
   },
   staleTime: 60_000,
   pendingMs: 0,
@@ -126,6 +138,21 @@ export const Route = createFileRoute("/")({
   },
   component: Home,
 });
+
+function HomeUpgrades({ priceFlags }: { priceFlags: Record<string, boolean> }) {
+  const { user } = useCurrentUserState();
+  const { session, ready, sticky } = useSessionDesks();
+  if (!user) return <OptionalUpgrades initialFlags={priceFlags} />;
+  if (!ready || !session) return null;
+  const side = visibleUpgradeSide({
+    role: session.role,
+    ownsCentre: session.ownsCentre,
+    linkedToCentre: session.centreLinked,
+    activeDesk: sticky,
+  });
+  if (side === "none") return null;
+  return <OptionalUpgrades side={side} signedIn initialFlags={priceFlags} />;
+}
 
 function Home() {
   const { t, locale } = useCopy();
@@ -192,22 +219,23 @@ function Home() {
   }, [featured.length]);
 
   useEffect(() => {
-    if (!user) {
+    const uid = user?.id;
+    if (!uid) {
       setRole(null);
       setFamilyKids([]);
       setFamilyBookings([]);
       return;
     }
-    void getMyRole()
+    void dedupedQuery(`home-role:${uid}`, QUERY_STALE_MS, () => getMyRole())
       .then((r) => setRole(r.role))
       .catch(() => setRole("parent"));
-    void getFamily()
+    void dedupedQuery(`home-family:${uid}`, QUERY_STALE_MS, () => getFamily())
       .then((f) => {
         setFamilyKids(f.children);
         setFamilyBookings(f.bookings);
       })
       .catch(() => undefined);
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (trustedSavedOrigin(readSavedOrigin(), { timeZone: readClientTimeZone() })) return;
@@ -225,7 +253,12 @@ function Home() {
     setPlace(loc.label);
     let cancelled = false;
     const loadFeatured = () => {
-      void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label } })
+      void dedupedQuery(
+        `home-featured:${loc.lat},${loc.lng},${loc.label ?? ""}`,
+        QUERY_STALE_MS,
+        () => featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label } }),
+        { cacheIf: (rows) => rows.length > 0 },
+      )
         .then((rows) => {
           if (cancelled) return;
           const next = publicListings(uniqueById(rows));
@@ -241,17 +274,23 @@ function Home() {
     };
     const loadExplore = () => {
       void withTimeoutFallback(
-        searchDaycares({
-          data: {
-            lat: loc.lat,
-            lng: loc.lng,
-            radiusKm,
-            sort: "match",
-            ageGroup: "any",
-            label: loc.label,
-            q: loc.label,
-          },
-        }),
+        dedupedQuery(
+          `home-search:${loc.lat},${loc.lng},${radiusKm},${loc.label ?? ""}`,
+          QUERY_STALE_MS,
+          () =>
+            searchDaycares({
+              data: {
+                lat: loc.lat,
+                lng: loc.lng,
+                radiusKm,
+                sort: "match",
+                ageGroup: "any",
+                label: loc.label,
+                q: loc.label,
+              },
+            }),
+          { cacheIf: (rows) => rows.length > 0 },
+        ),
         LOADER_SETTLE_MS,
         [] as Card[],
       )
@@ -571,6 +610,8 @@ function Home() {
             />
           </div>
         </section>
+
+        {boot.showPay ? <HomeUpgrades priceFlags={boot.priceFlags} /> : null}
 
         <section className="ke-defer-paint bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">

@@ -27,7 +27,7 @@ import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, pr
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { DETAIL_SIZES, HERO_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
-import { getDaycare, getListingSeo } from "@/lib/server/daycares";
+import { getDaycare, getHiddenReviewRedirect, getListingSeo, type CentreJobPost } from "@/lib/server/daycares";
 import { cityHubCityName, cityHubDefForPlace } from "@/lib/city-hubs";
 import {
   listingBreadcrumbJsonLdScript,
@@ -69,6 +69,7 @@ import { PageSkeleton } from "@/components/page-skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { listingPageTitle } from "@/lib/listing-meta";
+import { rethrowRouterControl } from "@/lib/listing-loader-errors";
 import { listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-found";
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
@@ -93,15 +94,30 @@ export const Route = createFileRoute("/daycare/$slug")({
         throw redirect({
           to: "/daycare/$slug",
           params: { slug: seo.slug },
+          statusCode: 301,
         });
       }
-      if (shouldNotFoundListing(seo)) throw notFound();
+      if (shouldNotFoundListing(seo)) {
+        const hidden = await getHiddenReviewRedirect({ data: params.slug });
+        if (hidden?.kind === "city") {
+          throw redirect({
+            to: "/daycare/city/$city",
+            params: { city: hidden.city },
+            statusCode: 301,
+          });
+        }
+        if (hidden?.kind === "search") {
+          throw redirect({
+            to: "/search",
+            search: { q: hidden.q },
+            statusCode: 301,
+          });
+        }
+        throw notFound();
+      }
       return seo;
     } catch (error) {
-      if (error && typeof error === "object" && ("isRedirect" in error || "isNotFound" in error)) {
-        throw error;
-      }
-      throw notFound();
+      rethrowRouterControl(error, params.slug);
     }
   },
   notFoundComponent: ListingNotFoundPage,
@@ -159,6 +175,7 @@ function Listing() {
     reviews: Review[];
     availability: AvailabilityRow[];
     nearby: Card[];
+    jobs?: CentreJobPost[];
   } | null>(null);
   const [photo, setPhoto] = useState(0);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -754,6 +771,19 @@ function Listing() {
             ) : null}
 
             <ListingTourTimes daycare={d} onBook={onTour} canBook={live} />
+            {data.jobs?.length ? (
+              <section data-ke="centre-jobs">
+                <h2 className="font-display text-2xl">{locale === "fr" ? "Offres de personnel" : "Staff openings"}</h2>
+                <ul className="mt-3 divide-y divide-border">
+                  {data.jobs.map((job) => (
+                    <li key={job.id} className="py-3">
+                      <p className="font-medium">{job.role}</p>
+                      {job.note ? <p className="mt-1 text-sm text-muted">{job.note}</p> : null}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
             <ListingSnapshotGrid item={d} />
 
             <section>

@@ -58,6 +58,7 @@ import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
+import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
@@ -102,7 +103,9 @@ import { Route as ApiAdminStripeCatalogRouteImport } from './routes/api/admin.st
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDocusignPollRouteImport } from './routes/api/docusign.poll'
 import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
+import { Route as ApiLicenseDocsDaycareIdRouteImport } from './routes/api/license-docs.$daycareId'
 import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
+import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screening-documents.$id'
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
@@ -111,9 +114,6 @@ import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
-import { Route as ApiLicenseDocsDaycareIdRouteImport } from './routes/api/license-docs.$daycareId'
-import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
-import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screening-documents.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -361,6 +361,11 @@ const ApiInngestRoute = ApiInngestRouteImport.update({
   path: '/api/inngest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiScreeningDocumentsRoute = ApiScreeningDocumentsRouteImport.update({
+  id: '/api/screening-documents',
+  path: '/api/screening-documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSearchAlertsRoute = ApiSearchAlertsRouteImport.update({
   id: '/api/search-alerts',
   path: '/api/search-alerts',
@@ -541,11 +546,12 @@ const ApiAdminContractsRoute = ApiAdminContractsRouteImport.update({
   path: '/api/admin/contracts',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAdminEmailSuppressionsRoute = ApiAdminEmailSuppressionsRouteImport.update({
-  id: '/api/admin/email-suppressions',
-  path: '/api/admin/email-suppressions',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiAdminEmailSuppressionsRoute =
+  ApiAdminEmailSuppressionsRouteImport.update({
+    id: '/api/admin/email-suppressions',
+    path: '/api/admin/email-suppressions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAdminMediaRoute = ApiAdminMediaRouteImport.update({
   id: '/api/admin/media',
   path: '/api/admin/media',
@@ -581,10 +587,20 @@ const ApiDocusignWebhookRoute = ApiDocusignWebhookRouteImport.update({
   path: '/api/docusign/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLicenseDocsDaycareIdRoute = ApiLicenseDocsDaycareIdRouteImport.update({
+  id: '/api/license-docs/$daycareId',
+  path: '/api/license-docs/$daycareId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPushRegisterRoute = ApiPushRegisterRouteImport.update({
   id: '/api/push/register',
   path: '/api/push/register',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiScreeningDocumentsIdRoute = ApiScreeningDocumentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiScreeningDocumentsRoute,
 } as any)
 const ApiSmsInboundRoute = ApiSmsInboundRouteImport.update({
   id: '/api/sms/inbound',
@@ -624,21 +640,6 @@ const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
 const ApiContractsIdPdfRoute = ApiContractsIdPdfRouteImport.update({
   id: '/api/contracts/$id/pdf',
   path: '/api/contracts/$id/pdf',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiLicenseDocsDaycareIdRoute = ApiLicenseDocsDaycareIdRouteImport.update({
-  id: '/api/license-docs/$daycareId',
-  path: '/api/license-docs/$daycareId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiScreeningDocumentsRoute = ApiScreeningDocumentsRouteImport.update({
-  id: '/api/screening-documents',
-  path: '/api/screening-documents',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiScreeningDocumentsIdRoute = ApiScreeningDocumentsIdRouteImport.update({
-  id: '/api/screening-documents/$id',
-  path: '/api/screening-documents/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -692,6 +693,7 @@ export interface FileRoutesByFullPath {
   '/api/digest': typeof ApiDigestRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
@@ -736,7 +738,9 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/poll': typeof ApiDocusignPollRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
+  '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -745,9 +749,6 @@ export interface FileRoutesByFullPath {
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
-  '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
-  '/api/screening-documents': typeof ApiScreeningDocumentsRoute
-  '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -797,6 +798,7 @@ export interface FileRoutesByTo {
   '/api/digest': typeof ApiDigestRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
@@ -841,7 +843,9 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/poll': typeof ApiDocusignPollRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
+  '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -850,9 +854,6 @@ export interface FileRoutesByTo {
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
-  '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
-  '/api/screening-documents': typeof ApiScreeningDocumentsRoute
-  '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -905,6 +906,7 @@ export interface FileRoutesById {
   '/api/digest': typeof ApiDigestRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
@@ -949,7 +951,9 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/poll': typeof ApiDocusignPollRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
+  '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -958,9 +962,6 @@ export interface FileRoutesById {
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
-  '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
-  '/api/screening-documents': typeof ApiScreeningDocumentsRoute
-  '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1014,6 +1015,7 @@ export interface FileRouteTypes {
     | '/api/digest'
     | '/api/health'
     | '/api/inngest'
+    | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/tour-holds'
@@ -1058,7 +1060,9 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/docusign/poll'
     | '/api/docusign/webhook'
+    | '/api/license-docs/$daycareId'
     | '/api/push/register'
+    | '/api/screening-documents/$id'
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
@@ -1067,9 +1071,6 @@ export interface FileRouteTypes {
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
-    | '/api/license-docs/$daycareId'
-    | '/api/screening-documents'
-    | '/api/screening-documents/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1119,6 +1120,7 @@ export interface FileRouteTypes {
     | '/api/digest'
     | '/api/health'
     | '/api/inngest'
+    | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/tour-holds'
@@ -1163,7 +1165,9 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/docusign/poll'
     | '/api/docusign/webhook'
+    | '/api/license-docs/$daycareId'
     | '/api/push/register'
+    | '/api/screening-documents/$id'
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
@@ -1172,9 +1176,6 @@ export interface FileRouteTypes {
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
-    | '/api/license-docs/$daycareId'
-    | '/api/screening-documents'
-    | '/api/screening-documents/$id'
   id:
     | '__root__'
     | '/'
@@ -1226,6 +1227,7 @@ export interface FileRouteTypes {
     | '/api/digest'
     | '/api/health'
     | '/api/inngest'
+    | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/tour-holds'
@@ -1270,7 +1272,9 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/docusign/poll'
     | '/api/docusign/webhook'
+    | '/api/license-docs/$daycareId'
     | '/api/push/register'
+    | '/api/screening-documents/$id'
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
@@ -1279,9 +1283,6 @@ export interface FileRouteTypes {
     | '/fr/jobs_/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
-    | '/api/license-docs/$daycareId'
-    | '/api/screening-documents'
-    | '/api/screening-documents/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1334,6 +1335,7 @@ export interface RootRouteChildren {
   ApiDigestRoute: typeof ApiDigestRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
+  ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRouteWithChildren
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
@@ -1356,6 +1358,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiDocusignPollRoute: typeof ApiDocusignPollRoute
   ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
+  ApiLicenseDocsDaycareIdRoute: typeof ApiLicenseDocsDaycareIdRoute
   ApiPushRegisterRoute: typeof ApiPushRegisterRoute
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
@@ -1363,9 +1366,6 @@ export interface RootRouteChildren {
   ApiWebhooksResendRoute: typeof ApiWebhooksResendRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
   ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
-  ApiLicenseDocsDaycareIdRoute: typeof ApiLicenseDocsDaycareIdRoute
-  ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRoute
-  ApiScreeningDocumentsIdRoute: typeof ApiScreeningDocumentsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1713,6 +1713,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInngestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/screening-documents': {
+      id: '/api/screening-documents'
+      path: '/api/screening-documents'
+      fullPath: '/api/screening-documents'
+      preLoaderRoute: typeof ApiScreeningDocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/search-alerts': {
       id: '/api/search-alerts'
       path: '/api/search-alerts'
@@ -2021,12 +2028,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDocusignWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/license-docs/$daycareId': {
+      id: '/api/license-docs/$daycareId'
+      path: '/api/license-docs/$daycareId'
+      fullPath: '/api/license-docs/$daycareId'
+      preLoaderRoute: typeof ApiLicenseDocsDaycareIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/push/register': {
       id: '/api/push/register'
       path: '/api/push/register'
       fullPath: '/api/push/register'
       preLoaderRoute: typeof ApiPushRegisterRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/screening-documents/$id': {
+      id: '/api/screening-documents/$id'
+      path: '/$id'
+      fullPath: '/api/screening-documents/$id'
+      preLoaderRoute: typeof ApiScreeningDocumentsIdRouteImport
+      parentRoute: typeof ApiScreeningDocumentsRoute
     }
     '/api/sms/inbound': {
       id: '/api/sms/inbound'
@@ -2082,27 +2103,6 @@ declare module '@tanstack/react-router' {
       path: '/api/contracts/$id/pdf'
       fullPath: '/api/contracts/$id/pdf'
       preLoaderRoute: typeof ApiContractsIdPdfRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/license-docs/$daycareId': {
-      id: '/api/license-docs/$daycareId'
-      path: '/api/license-docs/$daycareId'
-      fullPath: '/api/license-docs/$daycareId'
-      preLoaderRoute: typeof ApiLicenseDocsDaycareIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/screening-documents': {
-      id: '/api/screening-documents'
-      path: '/api/screening-documents'
-      fullPath: '/api/screening-documents'
-      preLoaderRoute: typeof ApiScreeningDocumentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/screening-documents/$id': {
-      id: '/api/screening-documents/$id'
-      path: '/api/screening-documents/$id'
-      fullPath: '/api/screening-documents/$id'
-      preLoaderRoute: typeof ApiScreeningDocumentsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -2199,6 +2199,19 @@ const SupportRouteChildren: SupportRouteChildren = {
 const SupportRouteWithChildren =
   SupportRoute._addFileChildren(SupportRouteChildren)
 
+interface ApiScreeningDocumentsRouteChildren {
+  ApiScreeningDocumentsIdRoute: typeof ApiScreeningDocumentsIdRoute
+}
+
+const ApiScreeningDocumentsRouteChildren: ApiScreeningDocumentsRouteChildren = {
+  ApiScreeningDocumentsIdRoute: ApiScreeningDocumentsIdRoute,
+}
+
+const ApiScreeningDocumentsRouteWithChildren =
+  ApiScreeningDocumentsRoute._addFileChildren(
+    ApiScreeningDocumentsRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -2249,6 +2262,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDigestRoute: ApiDigestRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
+  ApiScreeningDocumentsRoute: ApiScreeningDocumentsRouteWithChildren,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
@@ -2271,6 +2285,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiDocusignPollRoute: ApiDocusignPollRoute,
   ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
+  ApiLicenseDocsDaycareIdRoute: ApiLicenseDocsDaycareIdRoute,
   ApiPushRegisterRoute: ApiPushRegisterRoute,
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
@@ -2278,9 +2293,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiWebhooksResendRoute: ApiWebhooksResendRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,
   ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
-  ApiLicenseDocsDaycareIdRoute: ApiLicenseDocsDaycareIdRoute,
-  ApiScreeningDocumentsRoute: ApiScreeningDocumentsRoute,
-  ApiScreeningDocumentsIdRoute: ApiScreeningDocumentsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

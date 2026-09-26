@@ -20,6 +20,8 @@ type ListingIdentityRow = {
   postal_code: string | null;
   license_number: string | null;
   user_id: string | null;
+  merged_into?: string | null;
+  import_fault?: string | null;
 };
 
 function mapIdentityRows(rows: ListingIdentityRow[]): ExistingListingIdentity[] {
@@ -32,6 +34,8 @@ function mapIdentityRows(rows: ListingIdentityRow[]): ExistingListingIdentity[] 
     postalCode: row.postal_code,
     licenseNumber: row.license_number,
     userId: row.user_id,
+    mergedInto: row.merged_into,
+    importFault: row.import_fault,
   }));
 }
 
@@ -39,7 +43,8 @@ async function loadExistingListingIdentities(
   sql: Awaited<ReturnType<typeof getSql>>,
 ): Promise<ExistingListingIdentity[]> {
   const full = await sql<ListingIdentityRow>`
-    select d.id, d.name, d.address, d.city, d.province, d.postal_code, d.license_number, p.user_id
+    select d.id, d.name, d.address, d.city, d.province, d.postal_code, d.license_number, p.user_id,
+           d.merged_into, d.import_fault
     from daycares d
     left join provider_daycares p on p.daycare_id = d.id
   `.catch(() => null);

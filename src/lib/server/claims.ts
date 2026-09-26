@@ -95,6 +95,7 @@ export const searchClaimable = createServerFn({ method: "POST" })
     const scored: Array<ClaimHit & { score: number }> = [];
     const admin = await callerIsAdmin();
     for (const d of await getCatalog()) {
+      if ((d.mergedInto || "").trim() || (d.importFault || "").trim()) continue;
       if (isAdminOnlyListing(d) && !admin) continue;
       const name = d.name.toLowerCase();
       const city = d.city.toLowerCase();
@@ -133,6 +134,9 @@ export const startClaim = createServerFn({ method: "POST" })
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
     const listed = await catalogByIdGet(daycareId);
+    if (listed && ((listed.mergedInto || "").trim() || (listed.importFault || "").trim())) {
+      throw new Error("Listing not found");
+    }
     const adminOnly = Boolean(listed && isAdminOnlyListing(listed));
     const isAdmin = adminOnly ? await callerIsAdmin() : false;
     let existingOwner: string | null = null;
@@ -218,6 +222,12 @@ export const verifyClaim = createServerFn({ method: "POST" })
       values (${context.userId}, ${data.daycareId})
       on conflict (user_id, daycare_id) do nothing
     `;
+    try {
+      const { applyPendingClaimBoost } = await import("@/lib/server/stripe-lifecycle");
+      await applyPendingClaimBoost(sql, context.userId);
+    } catch (err) {
+      console.error("[kidease-stripe] claim boost apply failed", err);
+    }
     await ensureOwnerMembership(sql, context.userId, data.daycareId);
     await sql`
       update daycares

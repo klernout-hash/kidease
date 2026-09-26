@@ -117,6 +117,10 @@ test("Plus gate allows admin, provider, and live Plus parent", () => {
     parentPlusEntitlesVideo({ role: "parent", plusPlan: "plus", plusStatus: "canceled" }, true),
     { ok: false, reason: "plus_required" },
   );
+  assert.deepEqual(
+    parentPlusEntitlesVideo({ role: "parent", plusPlan: "alerts", plusStatus: "active" }, true),
+    { ok: true },
+  );
 });
 
 test("videoJoinGate hides parent joins when the Twilio Video SDK is not wired", () => {
