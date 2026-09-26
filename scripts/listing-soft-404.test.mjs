@@ -29,7 +29,8 @@ test("missing listing SEO is a hard 404, not a Licensed daycare title", () => {
 test("daycare loader throws notFound and never falls back to slug titles", () => {
   const route = src("src/routes/daycare.$slug.tsx");
   assert.match(route, /throw notFound\(\)/);
-  assert.match(route, /isNotFound/);
+  assert.match(route, /rethrowRouterControl\(error, params\.slug\)/);
+  assert.match(src("src/lib/listing-loader-errors.ts"), /isNotFound\(error\)/);
   assert.match(route, /notFoundComponent:\s*ListingNotFoundPage/);
   assert.match(route, /listingNotFoundHead/);
   assert.doesNotMatch(route, /listingPageMeta\(\{\s*slug:/);

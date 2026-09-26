@@ -69,6 +69,7 @@ import { PageSkeleton } from "@/components/page-skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { listingPageTitle } from "@/lib/listing-meta";
+import { rethrowRouterControl } from "@/lib/listing-loader-errors";
 import { listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-found";
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
@@ -116,10 +117,7 @@ export const Route = createFileRoute("/daycare/$slug")({
       }
       return seo;
     } catch (error) {
-      if (error && typeof error === "object" && ("isRedirect" in error || "isNotFound" in error)) {
-        throw error;
-      }
-      throw notFound();
+      rethrowRouterControl(error, params.slug);
     }
   },
   notFoundComponent: ListingNotFoundPage,
