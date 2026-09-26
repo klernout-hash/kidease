@@ -707,7 +707,6 @@ function MapPinPopup({
     .filter(Boolean)
     .join(" · ");
   const approved = publicApprovalEligible(item);
-  const destination = [item.name, item.address, item.city, item.province].filter(Boolean).join(", ");
   const thumb = mapPinThumb(item.photos);
 
   return (
@@ -766,7 +765,12 @@ function MapPinPopup({
           className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-surface-2 text-sm font-semibold ring-1 ring-border"
           onClick={(event) => {
             event.stopPropagation();
-            void openDirections(item.lat, item.lng, destination);
+            void openDirections(item.lat, item.lng, name, {
+              address: item.address,
+              city: item.city,
+              province: item.province,
+              postalCode: item.postalCode,
+            });
           }}
         >
           <Navigation className="size-4" />

@@ -381,6 +381,10 @@ function ProviderPage() {
                 nameFr: d.nameFr,
                 lat: d.lat,
                 lng: d.lng,
+                address: d.address,
+                city: d.city,
+                province: d.province,
+                postalCode: d.postalCode,
               }))}
             />
           ) : null}

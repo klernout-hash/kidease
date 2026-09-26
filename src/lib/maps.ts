@@ -33,14 +33,106 @@ export function preferAppleMaps() {
   return /Macintosh|Mac OS X/i.test(ua);
 }
 
+export type DirectionsPlace = {
+  apple?: boolean;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postalCode?: string | null;
+};
+
+const EMPTY_ADDRESS_RE = /^(?:unknown|n\/a|na|—|-|tbd|none|null)$/i;
+const PROVINCE_RE = /^(?:AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)$/i;
+const POSTAL_RE = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z]\d[ABCEGHJ-NPRSTV-Z]\d$/i;
+const NOT_A_STREET_RE = /\b(?:p\.?\s*o\.?\s*box|bo[iî]te\s+postale|general\s+delivery|poste\s+restante)\b/i;
+const UNIT_ONLY_RE = /^(?:suite|unit|apt|apartment|bureau|local|#)\s*#?\s*\d+[a-z]?$/i;
+
+function clean(value?: string | null) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function containsToken(haystack: string, token: string) {
+  const needle = clean(token);
+  if (!needle) return false;
+  return new RegExp(`(?:^|[^A-Za-z0-9])${escapeRegExp(needle)}(?:$|[^A-Za-z0-9])`, "i").test(haystack);
+}
+
+function containsPostal(haystack: string, postal: string) {
+  const compact = postal.replace(/[^a-z0-9]/gi, "").toLowerCase();
+  if (compact.length < 6) return false;
+  return haystack.replace(/[^a-z0-9]/gi, "").toLowerCase().includes(compact);
+}
+
+function isProvincePostal(part: string) {
+  const bits = part.split(/\s+/);
+  if (!PROVINCE_RE.test(bits[0] || "")) return false;
+  const rest = bits.slice(1).join("").toUpperCase();
+  return POSTAL_RE.test(rest);
+}
+
 /**
- * Directions to a centre. Coordinates win when they exist; otherwise the name
- * or address string already on the listing is the destination.
+ * A civic street line already stored on the listing.
+ * City, province, postal, PO box, or general delivery is not a street.
  */
-export function directionsUrl(lat: number, lng: number, name?: string, opts?: { apple?: boolean }) {
-  const point = Number.isFinite(lat) && Number.isFinite(lng) ? `${lat},${lng}` : "";
-  const label = (name || "").trim();
-  const dest = point || label;
+export function usableStreetAddress(address?: string | null, city?: string | null) {
+  const raw = clean(address);
+  if (!raw || EMPTY_ADDRESS_RE.test(raw)) return "";
+  const cityName = clean(city).toLowerCase();
+  const street = raw
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => {
+      if (!part) return false;
+      const lower = part.toLowerCase();
+      if (cityName && lower === cityName) return false;
+      if (PROVINCE_RE.test(part)) return false;
+      if (POSTAL_RE.test(part.replace(/\s+/g, "").toUpperCase())) return false;
+      if (isProvincePostal(part)) return false;
+      if (NOT_A_STREET_RE.test(part)) return false;
+      return true;
+    })
+    .join(", ")
+    .trim();
+  if (!street || UNIT_ONLY_RE.test(street)) return "";
+  if (!/\d/.test(street) || !/[A-Za-zÀ-ÿ]/.test(street)) return "";
+  return street;
+}
+
+function directionsDestination(lat: number, lng: number, name?: string, place?: DirectionsPlace) {
+  const street = usableStreetAddress(place?.address, place?.city);
+  if (street) {
+    const parts = [street];
+    const city = clean(place?.city);
+    const segments = street.split(",").map((part) => part.trim().toLowerCase());
+    if (city && !segments.some((part) => part === city.toLowerCase() || part.startsWith(`${city.toLowerCase()} `))) {
+      parts.push(city);
+    }
+    const blob = parts.join(", ");
+    const region: string[] = [];
+    const province = clean(place?.province);
+    const postal = clean(place?.postalCode);
+    if (province && !containsToken(blob, province)) region.push(province);
+    if (postal && !containsPostal(blob, postal)) region.push(postal);
+    if (region.length) parts.push(region.join(" "));
+    return parts.join(", ");
+  }
+  if (Number.isFinite(lat) && Number.isFinite(lng)) return `${lat},${lng}`;
+  return [clean(name), clean(place?.city), clean(place?.province)].filter(Boolean).join(", ");
+}
+
+/**
+ * Directions to a centre. A stored street address (with city, province, and
+ * postal when we have them) is the destination. Pin coordinates are often a
+ * city or postal centroid, so they are used only when no street is on file.
+ * Without either, the centre name and city are the fallback. Nothing here
+ * invents a street.
+ */
+export function directionsUrl(lat: number, lng: number, name?: string, opts?: DirectionsPlace) {
+  const dest = directionsDestination(lat, lng, name, opts);
   if (!dest) return "https://www.google.com/maps";
   const apple = opts?.apple ?? preferAppleMaps();
   if (apple) {
@@ -109,8 +201,8 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-export async function openDirections(lat: number, lng: number, name?: string) {
-  const url = directionsUrl(lat, lng, name);
+export async function openDirections(lat: number, lng: number, name?: string, place?: DirectionsPlace) {
+  const url = directionsUrl(lat, lng, name, place);
   if (isNative()) {
     try {
       const { Browser } = await import("@capacitor/browser");

@@ -356,6 +356,12 @@ function Listing() {
       })
     : "";
   const agesLabel = listingAgeRangeText(d);
+  const directionsPlace = {
+    address: d.address,
+    city: d.city,
+    province: d.province,
+    postalCode: d.postalCode,
+  };
   const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
@@ -434,7 +440,7 @@ function Listing() {
         <ListingMoreItem onClick={() => toggleCompareItem({ id: d.id, slug: d.slug })}>
           {comparing ? t("comparing") : t("compareAdd")}
         </ListingMoreItem>
-        <ListingMoreItem onClick={() => void openDirections(d.lat, d.lng, name)}>
+        <ListingMoreItem onClick={() => void openDirections(d.lat, d.lng, name, directionsPlace)}>
           <MapPinned className="size-4" /> {t("directions")}
         </ListingMoreItem>
         {offerClaim ? (
@@ -650,7 +656,7 @@ function Listing() {
                 <h2 className="font-display text-2xl">{t("onMap")}</h2>
                 <button
                   type="button"
-                  onClick={() => void openDirections(d.lat, d.lng, name)}
+                  onClick={() => void openDirections(d.lat, d.lng, name, directionsPlace)}
                   className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline"
                 >
                   <MapPinned className="size-4" />
@@ -846,7 +852,7 @@ function Listing() {
               <ListingOverflowItems />
               <div className="px-1 py-1">
                 <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
-                <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
+                <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} {...directionsPlace} />
               </div>
             </ListingMoreActions>
             <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" />
@@ -885,7 +891,7 @@ function Listing() {
             <ListingOverflowItems />
             <div className="px-1 py-1">
               <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
-              <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} />
+              <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} {...directionsPlace} />
             </div>
           </ListingMoreActions>
           </div>
