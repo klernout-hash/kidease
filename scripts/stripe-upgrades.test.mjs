@@ -466,6 +466,7 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
   const cheer = celebrate.slice(celebrate.indexOf("confirmSuccess({"));
   assert.match(cheer, /upgradeSuccessHeadline/);
   assert.doesNotMatch(cheer.slice(0, cheer.indexOf("points:")), /kicker:/);
+  assert.match(cheer, /confetti:\s*true/);
   assert.match(src("src/components/success-confirm.tsx"), /upgrade-success-benefits/);
   assert.match(src("src/lib/wallets.ts"), /Browser\.open/);
   assert.match(src("src/lib/wallets.ts"), /window\.location\.assign\(href\)/);

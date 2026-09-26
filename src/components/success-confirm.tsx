@@ -6,6 +6,7 @@ import {
   SUCCESS_TOAST_MS,
   type SuccessRequest,
 } from "@/lib/success-confirm";
+import { burstUpgradeConfetti } from "@/lib/upgrade-confetti";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -66,6 +67,7 @@ export type SuccessConfirmProps = MarkerProps & {
   contextMeta?: string;
   contextDetail?: string;
   points?: string[];
+  confetti?: boolean;
   primary?: ReactNode;
   secondary?: ReactNode;
   onClose: () => void;
@@ -81,6 +83,7 @@ export function SuccessConfirm({
   contextMeta,
   contextDetail,
   points,
+  confetti,
   primary,
   secondary,
   onClose,
@@ -94,6 +97,12 @@ export function SuccessConfirm({
   onCloseRef.current = onClose;
   const reducedMotion = usePrefersReducedMotion();
   const flourish = !reducedMotion;
+
+  useEffect(() => {
+    if (!confetti || reducedMotion) return;
+    return burstUpgradeConfetti();
+  }, [confetti, reducedMotion]);
+
   const thumb = displayPhoto(photo);
   const cardTitle = (contextTitle || "").trim();
   const meta = (contextMeta || "").trim();
@@ -338,6 +347,7 @@ export function SuccessConfirmHost() {
           title={modal.title}
           body={modal.body}
           points={modal.points}
+          confetti={modal.confetti}
           photo={modal.photo}
           contextTitle={modal.contextTitle}
           contextMeta={modal.contextMeta}

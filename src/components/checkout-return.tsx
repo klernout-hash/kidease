@@ -154,6 +154,7 @@ export function useUpgradeCelebration(input: {
         item: input.ret.item,
         locale: input.locale,
       }),
+      confetti: true,
     });
     replaceUpgradeReturn();
   }, [seen, ready, input.ret, input.locale, input.place]);

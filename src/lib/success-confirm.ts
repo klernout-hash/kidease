@@ -125,6 +125,8 @@ export type SuccessRequest = {
   onClose?: () => void;
   /** Short list under the body. Other success screens leave this empty. */
   points?: string[];
+  /** Full-screen burst. Paid upgrade and add-on confirmation only. */
+  confetti?: boolean;
 };
 
 type Deliver = (request: SuccessRequest) => void;
