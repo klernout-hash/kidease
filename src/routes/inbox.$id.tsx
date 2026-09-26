@@ -18,6 +18,7 @@ import { confirmAction } from "@/lib/success-confirm";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { TourCard } from "@/components/tour-card";
 import { cn, money } from "@/lib/utils";
+import { MIN_POLL_MS, pollBackoffMs } from "@/lib/fn-query";
 import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib/types";
 
 export const Route = createFileRoute("/inbox/$id")({
@@ -115,12 +116,48 @@ function ThreadPage() {
 
   useEffect(() => {
     if (!user) return;
-    void load();
-    const tick = window.setInterval(() => {
-      void load();
-    }, 12_000);
-    return () => window.clearInterval(tick);
-  }, [user, id]);
+    let cancelled = false;
+    let timer = 0;
+    let failures = 0;
+
+    const arm = (delay: number) => {
+      timer = window.setTimeout(() => {
+        void run();
+      }, delay);
+    };
+
+    const run = async () => {
+      if (cancelled) return;
+      if (document.hidden) {
+        arm(MIN_POLL_MS);
+        return;
+      }
+      try {
+        await load();
+        failures = 0;
+      } catch {
+        failures += 1;
+      }
+      if (cancelled) return;
+      arm(failures > 0 ? pollBackoffMs(failures) : MIN_POLL_MS);
+    };
+
+    void run();
+    const onVis = () => {
+      if (document.hidden || cancelled) return;
+      window.clearTimeout(timer);
+      failures = 0;
+      void run();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+    // `load` reads the open thread. The session key is the user id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, id]);
 
   useEffect(() => {
     const tourId = search.tour;

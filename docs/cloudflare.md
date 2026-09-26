@@ -151,7 +151,7 @@ The app no longer waits on catalogue SQL before it sends HTML, and listing cards
 2. Name: `Cache KidEase sized photos`.
 3. If: `http.request.uri.path eq "/img"`.
 4. Then: **Eligible for cache**. Cache key: **include query string**. Edge TTL: **Respect origin**. Browser TTL: **Respect origin**.
-5. Do **not** cache `/`, `/search`, `/api/*`, or `/_serverFn/*`. Those stay `max-age=0` so HTML never points at a deleted JS hash.
+5. Do **not** cache `/`, `/search`, `/api/*`, or `/_serverFn/*` as a blanket rule. HTML documents stay `max-age=0` so a page never points at a deleted JS hash. Public catalogue and anonymous listing GET `/_serverFn/*` responses send `s-maxage` and `stale-while-revalidate` from the origin; a cache rule may respect that origin header for those GET JSON URLs only. Leave POST server functions, signed-in listing bodies, and every HTML document uncached.
 
 After the rule, a second request for the same `/img?src=&w=` URL should be `cf-cache-status: HIT`.
 

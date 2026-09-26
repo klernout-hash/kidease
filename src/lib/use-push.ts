@@ -12,7 +12,7 @@ export function usePushRegistration(): void {
   const { user, isPending } = useCurrentUserState();
 
   useEffect(() => {
-    if (isPending || !user) return;
+    if (isPending || !user?.id) return;
     if (typeof window === "undefined" || !isNative()) return;
 
     let cancelled = false;
@@ -27,5 +27,5 @@ export function usePushRegistration(): void {
     return () => {
       cancelled = true;
     };
-  }, [user, isPending]);
+  }, [user?.id, isPending]);
 }

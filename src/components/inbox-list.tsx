@@ -24,11 +24,11 @@ export function InboxList() {
   const [items, setItems] = useState<Conversation[] | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     void listInbox({ data: { view } })
       .then(setItems)
       .catch(() => setItems([]));
-  }, [user, view]);
+  }, [user?.id, view]);
 
   if (isPending) {
     return (
