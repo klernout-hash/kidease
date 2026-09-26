@@ -435,6 +435,7 @@ export const getDaycare = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
+    if ((found.mergedInto || "").trim() || (found.importFault || "").trim()) return null;
     if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
     const origin = { lat: found.lat, lng: found.lng };
     const nearby = uniqueById(
@@ -519,6 +520,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
+    if ((found.mergedInto || "").trim() || (found.importFault || "").trim()) return null;
     if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
     return {
       slug: found.slug,

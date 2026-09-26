@@ -5,11 +5,15 @@ from __future__ import annotations
 import csv
 import json
 import re
+import sys
 from collections import Counter
 from html.parser import HTMLParser
 from pathlib import Path
 
 import pgeocode
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from catalogue_match import decode_import_text, dedupe_rows  # noqa: E402
 
 ROOT = Path("/workspace")
 OUT = ROOT / "src/lib/data/centres.json"
@@ -179,7 +183,8 @@ def compact(
     languages: str = "",
     infant: bool = True,
 ) -> dict:
-    name = re.sub(r"\s+", " ", (name or "").strip())
+    name = decode_import_text(name)
+    address = decode_import_text(address)
     city = title_city(city)
     postal = re.sub(r"\s+", " ", (postal or "").upper().strip())
     if len(postal) == 6:
@@ -556,17 +561,7 @@ def from_list(rows: list[tuple[str, str, str, str]], province: str, prefix: str)
 
 
 def dedupe(rows: list[dict]) -> list[dict]:
-    seen: set[str] = set()
-    out = []
-    for r in rows:
-        key = re.sub(r"[^a-z0-9]", "", (r["name"] + r["city"] + r["province"]).lower())
-        if key in seen:
-            continue
-        seen.add(key)
-        if not (-90 < r["lat"] < 90 and -180 < r["lng"] < 180):
-            continue
-        out.append(r)
-    return out
+    return dedupe_rows(rows)
 
 
 def unique_slugs(rows: list[dict]) -> None:

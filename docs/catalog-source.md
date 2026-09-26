@@ -77,8 +77,10 @@ npm run ops:seed-catalog
 What the merge does:
 
 - Every existing catalogue row stays. The script throws if the row count shrinks.
-- A master row that matches licence, or name + city, or name + postal, does not
-  create a second listing.
+- A master row does not create a second listing when the normalized licence
+  matches in that province, or when the normalized name, street number, and
+  street name match and the city or postal area also matches. A shared name
+  is not enough.
 - Blank phone / email / website are filled from the master. A filled value is
   never replaced with blank.
 - Unmatched Canada rows are appended only when a coordinate already exists for
@@ -92,7 +94,9 @@ What the merge does:
   or a staff membership. Kids World and other approved centres are left as
   they are.
 - On a real write, a new master row that already exists in Neon under another
-  id (same licence, or same name and city) is not inserted again.
+  id is not inserted again. That match is the same normalized licence in the
+  province, or the same normalized name with the same street number and street
+  name and the same city or postal area. A shared name is not enough.
 
 Deploy this change before the Production seed. The listing sitemap keeps the
 bundled slug file and unions public Neon slugs, so the new rows show up on
@@ -138,4 +142,65 @@ Optional delete (only if Admin should not see them either; watch FKs on
 delete from daycares
 where id ilike 'ke-test-%'
    or slug ilike 'test-ghost-%';
+```
+
+## Duplicate listings
+
+Migration `0062_listing_merge.sql` adds `merged_into` and `import_fault`.
+A Vercel deploy runs it from `npm run build` when `DATABASE_URL` is set.
+Do not run the merge against Production before that migration is applied.
+Do not delete a daycare row. Child tables cascade on delete.
+
+The groups file is the audit export (`duplicate-groups-20260926.json`).
+Keep it off git. Dry-run first. `--apply` writes a backup and a guarded
+rollback SQL under `tmp/merge-duplicates/` before it opens the transaction.
+
+```bash
+# Counts only. No DATABASE_URL, no writes.
+npm run ops:merge-duplicates -- --groups /secure/duplicate-groups-20260926.json
+
+# Read Production facts. Still no writes.
+DATABASE_URL='postgresql://…' \
+npm run ops:merge-duplicates -- --groups /secure/duplicate-groups-20260926.json
+
+# Write after the counts look right. Prints the backup path, not contact values.
+DATABASE_URL='postgresql://…' \
+npm run ops:merge-duplicates -- --groups /secure/duplicate-groups-20260926.json --apply
+```
+
+A shared name is not a match. Kids & Company at two addresses stays two
+listings, and 230 Jane St does not merge into 232 Jane St. A row matches
+only when the normalized licence is the same in that province, or when the
+normalized name, street number, and street name match and the city or the
+postal area (the first three characters of the postal code) also matches.
+`240 Avenue Rd` and `240 Avenue Road` are the same street. A civic number
+and a highway address match when the licence number is the same.
+
+The keeper is the claimed listing, then the one with enquiries, leads, or
+messages, then photos, then the most complete ages, fees, and description,
+then the oldest row. Blank website, contact email, phone, and postal code
+are filled from the retired row. A filled value is left as it is.
+`license_status` is not copied. The keeper's licence number is normalized
+(`MB-1276` to `1276`) and the existing Manitoba local licence check runs again.
+
+Admin shows a retired row as **Merged into** the keeper, with Un-merge.
+That action clears `merged_into` and does not delete either row.
+
+## Prince Edward Island names
+
+Some `mx-` rows store `City, PE A1A 1A1` in the name column. The master CSV
+is not in this repo. When `facility_name` (or the same aliases the sync uses)
+is a real centre name, the repair copies it. Otherwise the row is hidden
+with `import_fault = pei_name_unrecoverable` and `listing_active = 0`.
+The script lists those ids. It does not invent a name from the city.
+
+```bash
+# Repo has no master file, so this lists rows and recovers nothing.
+DATABASE_URL='postgresql://…' \
+npm run ops:repair-pei-names
+
+# Recover only the names present in the private master. Then hide the rest.
+DATABASE_URL='postgresql://…' \
+MASTER_CSV_PATH=/secure/KidEase_Canada_Master_23927_20260923_1004.csv \
+npm run ops:repair-pei-names -- --apply
 ```

@@ -59,6 +59,9 @@ export type AdminCentreRow = {
   hasListingClaim: boolean;
   missing: IncompleteMissingField[];
   updatedAt: string | null;
+  mergedInto: string | null;
+  mergedIntoName: string | null;
+  importFault: string | null;
 };
 
 /** Licence + storefront photos for Admin verify — daycare photos, not the raw CSV. */
@@ -201,8 +204,12 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           d.last_vacancy_updated_at,
           d.created_at,
           d.visibility,
-          d.is_test
+          d.is_test,
+          d.merged_into,
+          keeper.name as merged_into_name,
+          d.import_fault
         from daycares d
+        left join daycares keeper on keeper.id = d.merged_into
         left join lateral (
           select id, status, user_id, created_at, reviewed_at, review_note, license_photo
           from listing_claims
@@ -231,6 +238,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
            or d.id = 'ke-test-ghost-001'
            or d.id ilike 'ke-test-%'
            or d.name like 'TEST %'
+           or d.merged_into is not null
+           or nullif(btrim(coalesce(d.import_fault, '')), '') is not null
       `;
     } catch (first) {
       throw first instanceof Error ? first : new Error("Could not load the admin queue.");
@@ -279,14 +288,19 @@ export const listAdminCentres = createServerFn({ method: "GET" })
     });
 
     const rank = (s: string) => (s === "waiting" || s === "pending" ? 0 : s === "approved" ? 1 : 2);
-    const visible = collapseDuplicateReviewCards(mapped.filter((row) => row.claimStatus !== "superseded"));
+    const merged = mapped.filter((row) => row.mergedInto);
+    const faults = mapped.filter((row) => row.importFault && !row.mergedInto);
+    const visible = collapseDuplicateReviewCards(
+      mapped.filter((row) => !row.mergedInto && !row.importFault && row.claimStatus !== "superseded"),
+    );
     visible.sort((a, b) => rank(a.claimStatus) - rank(b.claimStatus) || compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name));
-    return visible;
+    const hidden = [...merged, ...faults].sort((a, b) => a.name.localeCompare(b.name));
+    return [...visible, ...hidden];
   });
 
 /** Incomplete / Needs-complete slice — same rows as listAdminCentres, filtered in-process. */
 export function listIncompleteAdminCentres(rows: AdminCentreRow[]): AdminCentreRow[] {
-  return selectIncompleteRows(rows).sort(
+  return selectIncompleteRows(rows.filter((row) => !row.mergedInto && !row.importFault)).sort(
     (a, b) => compareTimeDesc(a.updatedAt || a.submittedAt, b.updatedAt || b.submittedAt) || a.name.localeCompare(b.name),
   );
 }
@@ -446,4 +460,40 @@ export const decideCentre = createServerFn({ method: "POST" })
       to: to || null,
       health: approvalHealth,
     };
+  });
+
+/** Put a retired duplicate back on its own slug. Does not delete either row. */
+export const unmergeCentre = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId: string }) => input)
+  .handler(async ({ context, data }) => {
+    const actor = await requireOperator(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
+    const daycareId = data.daycareId.trim();
+    if (!daycareId) throw new Error("Listing not found");
+    const sql = await getSql();
+    const updated = await sql<{ id: string; name: string }>`
+      update daycares
+      set merged_into = null,
+          listing_active = 1,
+          claim_status = case
+            when claim_status = 'superseded' and claimed_at is null then 'unclaimed'
+            else claim_status
+          end
+      where id = ${daycareId}
+        and merged_into is not null
+      returning id, name
+    `;
+    const row = updated[0];
+    if (!row) throw new Error("This listing is not merged");
+    const { resetNeonCatalogCache } = await import("@/lib/server/catalog-neon");
+    resetNeonCatalogCache();
+    await writeTrustEvent(sql, {
+      daycareId,
+      actorUserId: context.userId,
+      kind: "unmerge",
+      note: `${actor.name || "Operator"} un-merged ${row.name}`,
+    });
+    return { ok: true as const, daycareId };
   });

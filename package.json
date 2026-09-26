@@ -15,6 +15,8 @@
     "ops:export-suppressions": "node --experimental-strip-types scripts/export-suppressions.mjs",
     "ops:operator-password": "node --experimental-strip-types scripts/set-operator-password.mjs",
     "ops:seed-catalog": "node --experimental-strip-types scripts/seed-catalog-to-neon.mjs",
+    "ops:merge-duplicates": "node --experimental-strip-types scripts/merge-duplicate-listings.mjs",
+    "ops:repair-pei-names": "node --experimental-strip-types scripts/repair-pei-names.mjs",
     "ops:winnipeg-gaps": "node --experimental-strip-types scripts/winnipeg-live-looking.mjs",
     "stripe:catalog": "node --experimental-strip-types scripts/stripe-catalog.mjs",
     "build:dev": "vite build --mode development",

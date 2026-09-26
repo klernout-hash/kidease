@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import json
 import re
+import sys
 import time
 import urllib.parse
 import urllib.request
@@ -12,6 +13,9 @@ from pathlib import Path
 
 import openpyxl
 import pgeocode
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from catalogue_match import decode_import_text, dedupe_rows, row_match_keys  # noqa: E402
 
 ROOT = Path("/workspace")
 OUT = ROOT / "src/lib/data/centres.json"
@@ -109,8 +113,10 @@ def make(
     idx: int = 0,
     name_fr: str | None = None,
 ) -> dict:
-    name = re.sub(r"\s+", " ", (name or "").strip())
-    city = (city or "").title() if city and city.isupper() else (city or "").strip()
+    name = decode_import_text(name)
+    address = decode_import_text(address)
+    city = decode_import_text(city)
+    city = city.title() if city and city.isupper() else city.strip()
     postal = re.sub(r"\s+", " ", (postal or "").upper().strip())
     if len(postal) == 6:
         postal = postal[:3] + " " + postal[3:]
@@ -304,7 +310,7 @@ def load_toronto() -> list[dict]:
     return out
 
 
-def load_on(skip_toronto_names: set[str]) -> list[dict]:
+def load_on(skip_keys: set[str]) -> list[dict]:
     wb = openpyxl.load_workbook(DATA / "on.xlsx", read_only=True, data_only=True)
     ws = wb[wb.sheetnames[0]]
     rows = ws.iter_rows(min_row=2, values_only=True)
@@ -323,8 +329,6 @@ def load_on(skip_toronto_names: set[str]) -> list[dict]:
         name = str(row[5] or row[1] or "").strip()
         if not name:
             continue
-        if city.lower() == "toronto" and name.lower() in skip_toronto_names:
-            continue
         postal = str(row[17] or "")
         street_no = str(row[12] or "").strip()
         street = " ".join(x for x in [str(row[13] or ""), str(row[14] or "")] if x and x != "None")
@@ -337,22 +341,23 @@ def load_on(skip_toronto_names: set[str]) -> list[dict]:
         languages = "fr" if "french" in lang.lower() and "english" not in lang.lower() else (
             "en,fr" if "french" in lang.lower() else "en"
         )
-        out.append(
-            make(
-                pid=f"on-{row[6] or i}",
-                name=name,
-                address=address,
-                city=city,
-                province="ON",
-                postal=postal,
-                lat=lat,
-                lng=lng,
-                license_no=str(row[6] or ""),
-                languages=languages,
-                amenities="licensed,funded",
-                idx=i,
-            )
+        centre = make(
+            pid=f"on-{row[6] or i}",
+            name=name,
+            address=address,
+            city=city,
+            province="ON",
+            postal=postal,
+            lat=lat,
+            lng=lng,
+            license_no=str(row[6] or ""),
+            languages=languages,
+            amenities="licensed,funded",
+            idx=i,
         )
+        if any(key in skip_keys for key in row_match_keys(centre)):
+            continue
+        out.append(centre)
     print("ON rest", len(out))
     return out
 
@@ -457,17 +462,7 @@ def extras() -> list[dict]:
 
 
 def dedupe(rows: list[dict]) -> list[dict]:
-    seen: set[str] = set()
-    out = []
-    for r in rows:
-        key = re.sub(r"[^a-z0-9]", "", (r["name"] + r["city"] + r["province"]).lower())
-        if key in seen:
-            continue
-        seen.add(key)
-        if not (-90 < r["lat"] < 90 and -180 < r["lng"] < 180):
-            continue
-        out.append(r)
-    return out
+    return dedupe_rows(rows)
 
 
 def main():
@@ -475,7 +470,9 @@ def main():
     bc = load_bc()
     nb = load_nb()
     to = load_toronto()
-    skip = {r["name"].lower() for r in to}
+    skip: set[str] = set()
+    for centre in to:
+        skip.update(row_match_keys(centre))
     on = load_on(skip)
     qc = load_qc()
     extra = extras()
