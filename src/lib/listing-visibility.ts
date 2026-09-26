@@ -17,6 +17,10 @@ export type ListingVisibilityInput = {
   address?: string | null;
   visibility?: string | null;
   isTest?: boolean | number | null;
+  /** Set when this row was retired into another daycare. Public surfaces hide it. */
+  mergedInto?: string | null;
+  /** Set when an import could not recover a real centre name. */
+  importFault?: string | null;
 };
 
 /** Known QA fixture — keep in sync with GHOST_LISTING / centres-extra-1.json / request-guard HIDDEN_LISTING_SLUGS. */
@@ -91,7 +95,15 @@ export function isAdminOnlyListing(d: ListingVisibilityInput | null | undefined)
   return looksLikeTestFixture(d);
 }
 
+export function isSupersededCatalogueRow(
+  d: Pick<ListingVisibilityInput, "mergedInto" | "importFault"> | null | undefined,
+): boolean {
+  if (!d) return false;
+  return Boolean((d.mergedInto || "").trim() || (d.importFault || "").trim());
+}
+
 export function isPublicListing(d: ListingVisibilityInput | null | undefined): boolean {
+  if (isSupersededCatalogueRow(d)) return false;
   return !isAdminOnlyListing(d);
 }
 
@@ -229,7 +241,9 @@ export function listingVisibilityInputFromDb(row: {
  * Name/slug prefixes are case-insensitive; "Teston" does not match ^test([ _-]|$).
  */
 export const PUBLIC_LISTING_SQL = `(
-  coalesce(is_test, 0) = 0
+  merged_into is null
+  and import_fault is null
+  and coalesce(is_test, 0) = 0
   and coalesce(visibility, 'public') = 'public'
   and id not ilike 'ke-test-%'
   and slug not ilike 'test-ghost%'

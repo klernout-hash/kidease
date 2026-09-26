@@ -96,6 +96,8 @@ export function publicSitemapSlugs(
     address?: string | null;
     visibility?: string | null;
     isTest?: boolean | number | null;
+    mergedInto?: string | null;
+    importFault?: string | null;
   }>,
   cap = SITEMAP_LISTING_CAP,
 ): string[] {
@@ -104,6 +106,7 @@ export function publicSitemapSlugs(
   for (const row of rows) {
     const slug = normalizeListingSlug((row.slug || "").trim());
     if (!isSafeSitemapSlug(slug)) continue;
+    if ((row.mergedInto || "").trim() || (row.importFault || "").trim()) continue;
     if (isAdminOnlyListing(row)) continue;
     const key = slug.toLowerCase();
     if (seen.has(key)) continue;

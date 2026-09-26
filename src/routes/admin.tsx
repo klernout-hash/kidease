@@ -38,7 +38,7 @@ import {
   settleAdminCentresLoad,
 } from "@/lib/admin-centres-load";
 import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
-import { decideCentre, listAdminCentres, listIncompleteAdminCentres, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
+import { decideCentre, listAdminCentres, listIncompleteAdminCentres, unmergeCentre, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { reprocessListingPhotos } from "@/lib/server/reprocess-listing-photos";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
@@ -421,6 +421,19 @@ function AdminPage() {
     }
   }
 
+  async function onUnmerge(daycareId: string) {
+    setBusy(`${daycareId}:unmerge`);
+    try {
+      await withReauth(() => unmergeCentre({ data: { daycareId } }), reauth.prompt);
+      alert("Un-merged. This listing is separate again.");
+      await refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not un-merge that listing");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function onLicense(daycareId: string, action: LicenseReviewAction) {
     setBusy(`${daycareId}:${action}`);
     try {
@@ -562,6 +575,7 @@ function AdminPage() {
                           void refresh();
                         }}
                         onStraighten={onStraighten}
+                        onUnmerge={onUnmerge}
                         mode="verify"
                       />
                     </li>
@@ -627,6 +641,7 @@ function AdminPage() {
                 void refresh();
               }}
               onStraighten={onStraighten}
+              onUnmerge={onUnmerge}
             />
           )}
         </>
@@ -730,6 +745,7 @@ function AdminPage() {
                                       void refresh();
                                     }}
                                     onStraighten={onStraighten}
+                                    onUnmerge={onUnmerge}
                                   />
                                 </li>
                               ))

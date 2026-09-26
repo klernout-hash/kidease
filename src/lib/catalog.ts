@@ -6,7 +6,7 @@ import {
   type CatalogDaycare,
   type RawCentre,
 } from "./catalog-hydrate.ts";
-import { isAdminOnlyListing, isPublicListing } from "./listing-visibility";
+import { isPublicListing } from "./listing-visibility";
 import { listingSlugLookupKeys, rememberSlugAliases } from "./listing-slug";
 import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
 
@@ -88,9 +88,9 @@ export async function getCatalog(): Promise<CatalogDaycare[]> {
   return rememberCatalog(await loadJsonCatalog(), "json");
 }
 
-/** Catalogue minus admin-only / QA fixtures. */
+/** Catalogue minus merged rows, import faults, and admin-only / QA fixtures. */
 export async function getPublicCatalog(): Promise<CatalogDaycare[]> {
-  return (await getCatalog()).filter((d) => !isAdminOnlyListing(d));
+  return (await getCatalog()).filter((d) => isPublicListing(d));
 }
 
 /** JSON-grid nearby. Nearby PostGIS uses this only when Neon is not the SoT. */
@@ -113,7 +113,7 @@ export async function catalogNearFromJson(origin: { lat: number; lng: number }, 
         if (!inBbox(point, box)) continue;
         if (distanceKm(origin, point) > radius) continue;
         const listed = await hydrateRaw(d);
-        if (isAdminOnlyListing(listed)) continue;
+        if (!isPublicListing(listed)) continue;
         out.push(listed);
       }
     }

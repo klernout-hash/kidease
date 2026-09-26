@@ -55,6 +55,9 @@ export type AdminCentreSqlRow = {
   created_at?: string | Date | null;
   visibility?: string | null;
   is_test?: number | boolean | null;
+  merged_into?: string | null;
+  merged_into_name?: string | null;
+  import_fault?: string | null;
 };
 
 export type AdminCentreRow = {
@@ -95,6 +98,9 @@ export type AdminCentreRow = {
   hasListingClaim: boolean;
   missing: IncompleteMissingField[];
   updatedAt: string | null;
+  mergedInto: string | null;
+  mergedIntoName: string | null;
+  importFault: string | null;
 };
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
@@ -171,6 +177,9 @@ export function mapAdminCentreSqlRow(r: AdminCentreSqlRow): AdminCentreRow {
     ...photos,
     hasProviderLink,
     hasListingClaim: Boolean(r.claim_id),
+    mergedInto: (r.merged_into || "").trim() || null,
+    mergedIntoName: (r.merged_into_name || "").trim() || null,
+    importFault: (r.import_fault || "").trim() || null,
     missing: incompleteMissing({
       claimStatus: status,
       claimedAt: r.claimed_at,

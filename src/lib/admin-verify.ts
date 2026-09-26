@@ -15,7 +15,13 @@ export type VerifyCentre = {
   registryMatchState?: string | null;
   licensePhoto?: string | null;
   storefrontPhoto?: string | null;
+  mergedInto?: string | null;
+  importFault?: string | null;
 };
+
+function hiddenCatalogueRow(item: VerifyCentre) {
+  return Boolean((item.mergedInto || "").trim() || (item.importFault || "").trim());
+}
 
 export function hasReviewablePhoto(src?: string | null) {
   const p = (src || "").trim();
@@ -31,6 +37,7 @@ export function needsClaimReview(item: VerifyCentre) {
 }
 
 export function needsLicenseReview(item: VerifyCentre) {
+  if (hiddenCatalogueRow(item)) return false;
   const license = normalizeLicenseStatus(item.licenseStatus);
   const match = normalizeMatchState(item.registryMatchState);
   if (license === "expired" || license === "suspended") return true;
@@ -39,6 +46,7 @@ export function needsLicenseReview(item: VerifyCentre) {
 }
 
 export function needsPhotoReview(item: VerifyCentre) {
+  if (hiddenCatalogueRow(item)) return false;
   if (hasReviewablePhoto(item.licensePhoto) && normalizeLicenseStatus(item.licenseStatus) !== "matched") {
     return true;
   }
@@ -46,5 +54,6 @@ export function needsPhotoReview(item: VerifyCentre) {
 }
 
 export function needsVerification(item: VerifyCentre) {
+  if (hiddenCatalogueRow(item)) return false;
   return needsClaimReview(item) || needsLicenseReview(item) || needsPhotoReview(item);
 }

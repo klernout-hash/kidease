@@ -93,6 +93,7 @@ export const Route = createFileRoute("/daycare/$slug")({
         throw redirect({
           to: "/daycare/$slug",
           params: { slug: seo.slug },
+          statusCode: 301,
         });
       }
       if (shouldNotFoundListing(seo)) throw notFound();
