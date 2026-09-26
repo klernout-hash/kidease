@@ -27,6 +27,9 @@ export type CatalogWrite =
       plan: string | null;
       interval: string | null;
       clearPlan: boolean;
+      /** Null leaves the stored flag alone. False clears a scheduled cancel. */
+      cancelAtPeriodEnd: boolean | null;
+      periodEnd: string | null;
     }
   | {
       lane: "parent_plus";
@@ -38,6 +41,8 @@ export type CatalogWrite =
       interval: string | null;
       plan: "plus" | "alerts" | "free";
       clearPlan: boolean;
+      cancelAtPeriodEnd: boolean | null;
+      periodEnd: string | null;
     }
   | {
       lane: "featured_city";
@@ -49,6 +54,8 @@ export type CatalogWrite =
       active: boolean;
       clearSubscription: boolean;
       centreId: string | null;
+      cancelAtPeriodEnd: boolean | null;
+      periodEnd: string | null;
     }
   | {
       lane: "claim_boost";
@@ -78,6 +85,9 @@ export type CatalogEventInput = {
   userId?: string | null;
   checkoutSessionId?: string | null;
   paymentId?: string | null;
+  /** Set from a subscription object. Omit on invoices so a scheduled cancel is kept. */
+  cancelAtPeriodEnd?: boolean | null;
+  periodEnd?: string | null;
   matchedLane?: MatchedLane;
   /** Profile found by subscription or customer id. Must match metadata user_id. */
   profileUserId?: string | null;
@@ -181,12 +191,18 @@ export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
 
   const status = statusFor(input);
   const clear = type === "customer.subscription.deleted" || CLEAR_STATUSES.has(status);
+  const schedule = clear
+    ? { cancelAtPeriodEnd: false as boolean | null, periodEnd: null as string | null }
+    : {
+        cancelAtPeriodEnd: input.cancelAtPeriodEnd === undefined ? null : input.cancelAtPeriodEnd,
+        periodEnd: input.periodEnd ?? null,
+      };
 
   const paidSession =
     type === "checkout.session.completed" && ACTIVE_STATUSES.has(status) ? checkoutSessionId : null;
 
   if (lane === "featured_city") {
-    const active = !clear && ACTIVE_STATUSES.has(status);
+    const active = !clear && (ACTIVE_STATUSES.has(status) || status === "past_due");
     return {
       lane,
       userId,
@@ -197,6 +213,7 @@ export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
       active,
       clearSubscription: clear,
       centreId: m.centre_id || null,
+      ...schedule,
     };
   }
 
@@ -213,6 +230,7 @@ export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
       interval: m.interval || null,
       plan: clear ? "free" : rawPlan,
       clearPlan: clear,
+      ...schedule,
     };
   }
 
@@ -226,6 +244,7 @@ export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
     plan: clear ? "free" : m.plan || null,
     interval: m.interval || null,
     clearPlan: clear,
+    ...schedule,
   };
 }
 

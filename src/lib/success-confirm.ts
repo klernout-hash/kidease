@@ -127,6 +127,8 @@ export type SuccessRequest = {
   points?: string[];
   /** Full-screen burst. Paid upgrade and add-on confirmation only. */
   confetti?: boolean;
+  /** Static check. Cancel confirmations set this and leave confetti off. */
+  quiet?: boolean;
 };
 
 type Deliver = (request: SuccessRequest) => void;

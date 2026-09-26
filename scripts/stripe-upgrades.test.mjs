@@ -152,7 +152,8 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   });
   assert.equal(failed.lane, "featured_city");
   assert.equal(failed.status, "past_due");
-  assert.equal(failed.active, false);
+  assert.equal(failed.active, true);
+  assert.equal(failed.clearSubscription, false);
 
   const plan = planCatalogWrite({
     type: "customer.subscription.updated",
@@ -277,7 +278,7 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   });
   assert.equal(featuredFailed.lane, "featured_city");
   assert.equal(featuredFailed.status, "past_due");
-  assert.equal(featuredFailed.active, false);
+  assert.equal(featuredFailed.active, true);
   assert.equal(featuredFailed.clearSubscription, false);
 
   const featuredDeleted = planCatalogWrite({

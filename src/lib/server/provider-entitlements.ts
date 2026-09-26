@@ -182,9 +182,9 @@ export async function featuredCentreIdsInLock(lock: LocationLock | null): Promis
       join provider_daycares pd on pd.daycare_id = d.id
       join profiles pr on pr.user_id = pd.user_id
       where (
-        (pr.selected_plan = 'pro' and pr.stripe_subscription_status in ('active', 'trialing'))
+        (pr.selected_plan = 'pro' and pr.stripe_subscription_status in ('active', 'trialing', 'past_due'))
         or (
-          pr.featured_city_status in ('active', 'trialing')
+          pr.featured_city_status in ('active', 'trialing', 'past_due')
           and position('featured_city' in coalesce(pr.selected_addons, '')) > 0
           and (pr.featured_city_centre_id is null or pr.featured_city_centre_id = d.id)
         )

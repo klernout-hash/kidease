@@ -25,6 +25,7 @@ import {
   appOrigin,
   createBillingPortalSession,
   createCatalogCheckoutSession,
+  updateSubscriptionCancelAtPeriodEnd,
 } from "@/lib/server/stripe-checkout";
 import { requireCatalogCheckout } from "@/lib/server/stripe-price-guard";
 import { runUserCheckout } from "@/lib/server/stripe-checkout-log";
@@ -33,7 +34,9 @@ import { decideProviderCheckout, PROVIDER_PRICE_MISSING } from "@/lib/access-con
 import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { canBuyDaycareUpgrade, DAYCARE_UPGRADE_DENIED } from "@/lib/upgrade-role";
 import { jobPostSpend, pickUnspentJobCredit, resolveAddonCentre } from "@/lib/centre-addons";
+import { ALREADY_BILLED, checkoutBlockedByLiveSubscription } from "@/lib/subscription-lifecycle";
 import { nid } from "@/lib/utils";
+import { applyStripeSubscriptionEvent, type StripeLifecycleObject } from "@/lib/server/stripe-lifecycle";
 
 export type ProviderSubscriptionState = {
   plan: ProviderPlanId;
@@ -58,9 +61,26 @@ export type ProviderSubscriptionState = {
   claimBoostCentreId: string | null;
   centres: { id: string; name: string; city: string | null }[];
   catalogCheckoutSessionId: string | null;
+  cancelAtPeriodEnd: boolean;
+  periodEnd: string | null;
+  featuredCitySubscriptionId: string | null;
+  featuredCityCancelAtPeriodEnd: boolean;
+  featuredCityPeriodEnd: string | null;
   prices: Record<string, boolean>;
   paymentLinks: Partial<Record<ProviderAddonId, string>>;
 };
+
+function periodIso(value: string | Date | null | undefined): string | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
+function daycarePortalConfiguration(): string | null {
+  const id = String(process.env.STRIPE_BILLING_PORTAL_DAYCARE || "").trim();
+  return id.startsWith("bpc_") ? id : null;
+}
 
 async function requireSubscriptionAccess(userId: string) {
   const session = await resolveSessionDesks(userId);
@@ -140,10 +160,18 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     featured_city_centre_id: string | null;
     claim_boost_centre_id: string | null;
     catalog_checkout_session_id: string | null;
+    stripe_cancel_at_period_end: boolean | null;
+    stripe_current_period_end: string | Date | null;
+    featured_city_subscription_id: string | null;
+    featured_city_cancel_at_period_end: boolean | null;
+    featured_city_current_period_end: string | Date | null;
   }>`
     select selected_plan, selected_interval, selected_addons, selected_plan_at,
            stripe_customer_id, stripe_subscription_id, stripe_subscription_status,
-           featured_city_status, featured_city_centre_id, claim_boost_paid_at, claim_boost_payment_id,
+           stripe_cancel_at_period_end, stripe_current_period_end,
+           featured_city_status, featured_city_centre_id, featured_city_subscription_id,
+           featured_city_cancel_at_period_end, featured_city_current_period_end,
+           claim_boost_paid_at, claim_boost_payment_id,
            claim_boost_centre_id, job_post_credits, job_post_payment_ids, job_post_centre_id,
            catalog_checkout_session_id
     from profiles
@@ -190,6 +218,11 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     claimBoostCentreId: row?.claim_boost_centre_id ?? null,
     centres: await centresFor(userId),
     catalogCheckoutSessionId: row?.catalog_checkout_session_id ?? null,
+    cancelAtPeriodEnd: Boolean(row?.stripe_cancel_at_period_end),
+    periodEnd: periodIso(row?.stripe_current_period_end),
+    featuredCitySubscriptionId: row?.featured_city_subscription_id ?? null,
+    featuredCityCancelAtPeriodEnd: Boolean(row?.featured_city_cancel_at_period_end),
+    featuredCityPeriodEnd: periodIso(row?.featured_city_current_period_end),
     prices,
     paymentLinks,
   };
@@ -264,6 +297,9 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
       return { url: null as string | null, saved: true as const };
     }
     if (!priceKey || !priceId) throw new Error(PROVIDER_PRICE_MISSING);
+    if (state.subscriptionId && checkoutBlockedByLiveSubscription(state.subscriptionStatus)) {
+      throw new Error(ALREADY_BILLED);
+    }
     const origin = appOrigin();
     return runUserCheckout({
       surface: "provider_plan",
@@ -317,6 +353,13 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
       data.centreId,
     );
     if (!centreId) throw new Error("Choose the centre this add-on is for. Nothing was charged.");
+    if (
+      data.addon === "featured_city" &&
+      state.featuredCitySubscriptionId &&
+      checkoutBlockedByLiveSubscription(state.featuredCityStatus)
+    ) {
+      throw new Error(ALREADY_BILLED);
+    }
     const origin = appOrigin();
     return runUserCheckout({
       surface: `provider_addon_${data.addon}`,
@@ -439,11 +482,16 @@ export const postCentreJob = createServerFn({ method: "POST" })
 
 export const startProviderBillingPortal = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
+  .validator((input: { lane?: "plan" | "featured_city" } | undefined) => ({
+    lane: input?.lane === "featured_city" ? ("featured_city" as const) : ("plan" as const),
+  }))
+  .handler(async ({ context, data }) => {
     await requireSubscriptionAccess(context.userId);
     const state = await readSelection(context.userId);
     if (!state.customerId) throw new Error("No Stripe customer on this profile yet. Start checkout first.");
     if (!stripeChargesLive()) throw new Error("Billing portal stays off until Stripe live keys are on.");
+    const subscriptionId = data.lane === "featured_city" ? state.featuredCitySubscriptionId : state.subscriptionId;
+    if (!subscriptionId) throw new Error("No Stripe subscription on this profile yet. Nothing was changed.");
     const origin = appOrigin();
     return runUserCheckout({
       surface: "provider_portal",
@@ -452,7 +500,38 @@ export const startProviderBillingPortal = createServerFn({ method: "POST" })
       fn: () =>
         createBillingPortalSession({
           customerId: state.customerId!,
-          returnUrl: `${origin}/provider/subscription`,
+          subscriptionId,
+          configurationId: daycarePortalConfiguration(),
+          returnUrl: `${origin}/provider/subscription?billing=return`,
         }),
+    });
+  });
+
+export const setProviderSubscriptionCancel = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { lane?: "plan" | "featured_city"; cancel?: boolean }) => ({
+    lane: input.lane === "featured_city" ? ("featured_city" as const) : ("plan" as const),
+    cancel: input.cancel !== false,
+  }))
+  .handler(async ({ context, data }) => {
+    await requireSubscriptionAccess(context.userId);
+    const state = await readSelection(context.userId);
+    if (!stripeChargesLive()) throw new Error("Billing stays off until Stripe live keys are on. Nothing was changed.");
+    const subscriptionId = data.lane === "featured_city" ? state.featuredCitySubscriptionId : state.subscriptionId;
+    if (!subscriptionId) throw new Error("No Stripe subscription on this profile yet. Nothing was changed.");
+    return runUserCheckout({
+      surface: data.cancel ? "provider_cancel" : "provider_resume",
+      userId: context.userId,
+      fallback: "Could not update this subscription. Nothing else was changed.",
+      fn: async () => {
+        const updated = await updateSubscriptionCancelAtPeriodEnd(subscriptionId, data.cancel);
+        await applyStripeSubscriptionEvent({
+          type: "customer.subscription.updated",
+          object: updated as StripeLifecycleObject,
+        });
+        const next = await readSelection(context.userId);
+        const periodEnd = data.lane === "featured_city" ? next.featuredCityPeriodEnd : next.periodEnd;
+        return { periodEnd, lane: data.lane, cancel: data.cancel };
+      },
     });
   });

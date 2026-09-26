@@ -59,7 +59,32 @@ export type CatalogCheckoutInput = {
 export type BillingPortalInput = {
   customerId: string;
   returnUrl: string;
+  /** Scopes the portal to this subscription so the other role's plan is not listed. */
+  subscriptionId?: string | null;
+  /** Dashboard portal configuration (parent vs daycare). Omit to use Stripe's default. */
+  configurationId?: string | null;
 };
+
+export function billingPortalBody(input: BillingPortalInput): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    customer: input.customerId,
+    return_url: input.returnUrl,
+  };
+  const configuration = String(input.configurationId || "").trim();
+  if (configuration) body.configuration = configuration;
+  const subscriptionId = String(input.subscriptionId || "").trim();
+  if (subscriptionId) {
+    body.flow_data = {
+      type: "subscription_update",
+      subscription_update: { subscription: subscriptionId },
+      after_completion: {
+        type: "redirect",
+        redirect: { return_url: input.returnUrl },
+      },
+    };
+  }
+  return body;
+}
 
 export function flattenStripeBody(obj: unknown, prefix = ""): Array<[string, string]> {
   const out: Array<[string, string]> = [];
@@ -220,13 +245,38 @@ export async function createCatalogCheckoutSession(input: CatalogCheckoutInput):
 }
 
 export async function createBillingPortalSession(input: BillingPortalInput): Promise<{ url: string }> {
-  const json = await stripeRequest<{ url?: string | null }>("/billing_portal/sessions", {
-    customer: input.customerId,
-    return_url: input.returnUrl,
-  });
+  const json = await stripeRequest<{ url?: string | null }>("/billing_portal/sessions", billingPortalBody(input));
   if (!json.url) throw new Error("Stripe did not return a billing portal link");
   return { url: json.url };
 }
+
+export async function updateSubscriptionCancelAtPeriodEnd(
+  subscriptionId: string,
+  cancel: boolean,
+): Promise<StripeLifecycleShape> {
+  const id = String(subscriptionId || "").trim();
+  if (!id) throw new Error("No Stripe subscription on this profile yet. Nothing was changed.");
+  return stripeRequest<StripeLifecycleShape>(`/subscriptions/${encodeURIComponent(id)}`, {
+    cancel_at_period_end: cancel,
+  });
+}
+
+type StripeLifecycleShape = {
+  id?: string | null;
+  object?: string | null;
+  customer?: string | { id?: string } | null;
+  status?: string | null;
+  metadata?: Record<string, string | undefined> | null;
+  cancel_at_period_end?: boolean | null;
+  cancel_at?: number | null;
+  current_period_end?: number | null;
+  items?: {
+    data?: Array<{
+      current_period_end?: number | null;
+      price?: { id?: string | null } | null;
+    }> | null;
+  } | null;
+};
 
 export type StripeRefundInput = {
   paymentIntentId?: string | null;

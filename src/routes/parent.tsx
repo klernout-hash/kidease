@@ -22,6 +22,7 @@ export const Route = createFileRoute("/parent")({
       plan?: "plus" | "alerts";
       interval?: "month" | "year";
       session?: string;
+      billing?: "return";
     } = {};
     const tab = s.tab;
     if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "alerts" || tab === "children" || tab === "care") out.tab = tab;
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/parent")({
     if (s.plan === "plus" || s.plan === "alerts") out.plan = s.plan;
     if (s.interval === "month" || s.interval === "year") out.interval = s.interval;
     if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
+    if (s.billing === "return") out.billing = "return";
     return out;
   },
   component: ParentPage,
@@ -39,13 +41,13 @@ function ParentPage() {
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
   const search = Route.useSearch();
-  const upgradeSurface = search.tab === "payments" || search.plus === "success" || search.plus === "cancel";
+  const upgradeSurface = search.tab === "payments" || search.plus === "success" || search.plus === "cancel" || search.billing === "return";
   const initialTab =
     search.tab === "saved"
       ? "saved"
       : search.tab === "enrolled" || search.tab === "requests"
         ? "bookings"
-          : search.tab === "payments" || search.plus === "success" || search.plus === "cancel"
+          : search.tab === "payments" || search.plus === "success" || search.plus === "cancel" || search.billing === "return"
           ? "payments"
           : search.tab === "alerts"
             ? "alerts"
@@ -116,6 +118,7 @@ function ParentPage() {
             interval: search.interval,
             session: search.session,
           }}
+          billingReturn={search.billing === "return"}
         />
       </Suspense>
     </TwoFactorGate>

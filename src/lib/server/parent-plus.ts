@@ -7,7 +7,10 @@ import {
   appOrigin,
   createBillingPortalSession,
   createCatalogCheckoutSession,
+  updateSubscriptionCancelAtPeriodEnd,
 } from "@/lib/server/stripe-checkout";
+import { applyStripeSubscriptionEvent, type StripeLifecycleObject } from "@/lib/server/stripe-lifecycle";
+import { ALREADY_BILLED, checkoutBlockedByLiveSubscription } from "@/lib/subscription-lifecycle";
 import { requireCatalogCheckout } from "@/lib/server/stripe-price-guard";
 import { runUserCheckout } from "@/lib/server/stripe-checkout-log";
 import { CHECKOUT_COULD_NOT_START, PORTAL_COULD_NOT_OPEN } from "@/lib/stripe-public-error";
@@ -27,6 +30,8 @@ export type ParentPlusState = {
   subscriptionId: string | null;
   selectedAt: string | null;
   catalogCheckoutSessionId: string | null;
+  cancelAtPeriodEnd: boolean;
+  periodEnd: string | null;
   prices: Record<string, boolean>;
 };
 
@@ -48,8 +53,11 @@ async function readPlus(userId: string): Promise<ParentPlusState> {
     plus_selected_at: string | null;
     stripe_customer_id: string | null;
     catalog_checkout_session_id: string | null;
+    plus_cancel_at_period_end: boolean | null;
+    plus_current_period_end: string | Date | null;
   }>`
     select plus_plan, plus_interval, plus_status, plus_subscription_id, plus_selected_at,
+           plus_cancel_at_period_end, plus_current_period_end,
            stripe_customer_id, catalog_checkout_session_id
     from profiles
     where user_id = ${userId}
@@ -69,8 +77,22 @@ async function readPlus(userId: string): Promise<ParentPlusState> {
     subscriptionId: row?.plus_subscription_id ?? null,
     selectedAt: row?.plus_selected_at ? String(row.plus_selected_at) : null,
     catalogCheckoutSessionId: row?.catalog_checkout_session_id ?? null,
+    cancelAtPeriodEnd: Boolean(row?.plus_cancel_at_period_end),
+    periodEnd: periodIso(row?.plus_current_period_end),
     prices,
   };
+}
+
+function periodIso(value: string | Date | null | undefined): string | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
+function parentPortalConfiguration(): string | null {
+  const id = String(process.env.STRIPE_BILLING_PORTAL_PARENT || "").trim();
+  return id.startsWith("bpc_") ? id : null;
 }
 
 async function assertParentBuyer(userId: string) {
@@ -108,6 +130,9 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
     if (!gate.ok) throw new Error(gate.error);
     if (!priceId) throw new Error(PLUS_PRICE_MISSING);
     const state = await readPlus(context.userId);
+    if (state.subscriptionId && checkoutBlockedByLiveSubscription(state.status)) {
+      throw new Error(ALREADY_BILLED);
+    }
     const origin = appOrigin();
     return runUserCheckout({
       surface: "parent_plus",
@@ -144,6 +169,7 @@ export const startParentPlusPortal = createServerFn({ method: "POST" })
     await assertParentBuyer(context.userId);
     const state = await readPlus(context.userId);
     if (!state.customerId) throw new Error("No Stripe customer on this profile yet. Start Plus checkout first.");
+    if (!state.subscriptionId) throw new Error("No Stripe subscription on this profile yet. Nothing was changed.");
     if (!stripeChargesLive()) throw new Error("Billing portal stays off until Stripe live keys are on.");
     return runUserCheckout({
       surface: "parent_plus_portal",
@@ -152,7 +178,33 @@ export const startParentPlusPortal = createServerFn({ method: "POST" })
       fn: () =>
         createBillingPortalSession({
           customerId: state.customerId!,
-          returnUrl: `${appOrigin()}/parent?tab=payments`,
+          subscriptionId: state.subscriptionId,
+          configurationId: parentPortalConfiguration(),
+          returnUrl: `${appOrigin()}/parent?tab=payments&billing=return`,
         }),
+    });
+  });
+
+export const setParentPlusCancel = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { cancel?: boolean }) => ({ cancel: input.cancel !== false }))
+  .handler(async ({ context, data }) => {
+    await assertParentBuyer(context.userId);
+    const state = await readPlus(context.userId);
+    if (!stripeChargesLive()) throw new Error("Billing stays off until Stripe live keys are on. Nothing was changed.");
+    if (!state.subscriptionId) throw new Error("No Stripe subscription on this profile yet. Nothing was changed.");
+    return runUserCheckout({
+      surface: data.cancel ? "parent_plus_cancel" : "parent_plus_resume",
+      userId: context.userId,
+      fallback: "Could not update this subscription. Nothing else was changed.",
+      fn: async () => {
+        const updated = await updateSubscriptionCancelAtPeriodEnd(state.subscriptionId!, data.cancel);
+        await applyStripeSubscriptionEvent({
+          type: "customer.subscription.updated",
+          object: updated as StripeLifecycleObject,
+        });
+        const next = await readPlus(context.userId);
+        return { periodEnd: next.periodEnd, cancel: data.cancel };
+      },
     });
   });

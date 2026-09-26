@@ -2,6 +2,7 @@
  * KidEase Parent Plus (CAD). Not centre SaaS and not family tuition bills.
  */
 
+import { subscriptionAccessOpen } from "./subscription-lifecycle.ts";
 import { paidPlanPrice, parentUpgradePlan } from "./upgrade-plans.ts";
 
 export const PLUS_INTERVALS = ["month", "year"] as const;
@@ -34,14 +35,14 @@ export function plusPriceCad(interval: PlusInterval): number {
 }
 
 export function parentVideoEntitled(plan: string | null | undefined, status: string | null | undefined): boolean {
-  const paid = status === "active" || status === "trialing";
+  const paid = subscriptionAccessOpen(status);
   const id = String(plan || "").trim().toLowerCase();
   return paid && (id === "plus" || id === "alerts");
 }
 
 /** SMS and push saved-search alerts. Email alerts stay on Free. */
 export function parentAlertsEntitled(plan: string | null | undefined, status: string | null | undefined): boolean {
-  const paid = status === "active" || status === "trialing";
+  const paid = subscriptionAccessOpen(status);
   return paid && String(plan || "").trim().toLowerCase() === "alerts";
 }
 

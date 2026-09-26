@@ -8,21 +8,25 @@ import { ALERTS_MONTHLY_CAD, ALERTS_YEARLY_CAD, PLUS_MONTHLY_CAD, PLUS_YEARLY_CA
 import { PARENT_UPGRADE_PLANS, checkoutCtaLabel, paidPlanVisible, visibleYearlySavings } from "@/lib/upgrade-plans";
 import { BillingIntervalToggle } from "@/components/billing-interval-toggle";
 import { UpgradePlanCard } from "@/components/upgrade-plan-card";
-import { getParentPlus, startParentPlusCheckout, startParentPlusPortal, type ParentPlusState } from "@/lib/server/parent-plus";
+import { getParentPlus, setParentPlusCancel, startParentPlusCheckout, startParentPlusPortal, type ParentPlusState } from "@/lib/server/parent-plus";
+import { ManageBillingCard, announceCancel } from "@/components/manage-billing";
+import { subscriptionAccessOpen } from "@/lib/subscription-lifecycle";
+import { openStripeCheckout } from "@/lib/wallets";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
-import { openStripeCheckout } from "@/lib/wallets";
 import { useShowPayCtas } from "@/components/pay-chrome";
 
 export function ParentPlusPanel({
   offerCheckout = true,
   plusReturn,
   upgradeSearch = null,
+  billingReturn = false,
 }: {
   offerCheckout?: boolean;
   plusReturn?: "success" | "cancel" | null;
   upgradeSearch?: UpgradeSearch | null;
+  billingReturn?: boolean;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -45,8 +49,7 @@ export function ParentPlusPanel({
     void getParentPlus()
       .then((s) => {
         setState(s);
-        const paid = s.status === "active" || s.status === "trialing";
-        if (s.plan !== "free" && paid) setInterval(s.interval);
+        if (s.plan !== "free" && subscriptionAccessOpen(s.status)) setInterval(s.interval);
       })
       .catch(() => undefined);
   }, []);
@@ -61,7 +64,26 @@ export function ParentPlusPanel({
   });
 
   useEffect(() => {
-    if (!showPay) return;
+    if (!billingReturn) return;
+    const timer = window.setInterval(() => reloadPlus(), 2000);
+    const stop = window.setTimeout(() => window.clearInterval(timer), 20000);
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(stop);
+    };
+  }, [billingReturn, reloadPlus]);
+
+  useEffect(() => {
+    if (!billingReturn || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("billing");
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+      window.history.replaceState(window.history.state, "", next);
+    }
+  }, [billingReturn]);
+
+  useEffect(() => {
     reloadPlus();
     void getMyCaslConsents()
       .then((row) => {
@@ -72,11 +94,14 @@ export function ParentPlusPanel({
         });
       })
       .catch(() => undefined);
-  }, [showPay, reloadPlus]);
+  }, [reloadPlus]);
 
-  if (!showPay || !state) return null;
+  if (!state) return null;
+  const current = state;
+  const manageable = Boolean(current.stripeLive && current.subscriptionId && subscriptionAccessOpen(current.status) && current.plan !== "free");
+  if (!showPay && !manageable) return null;
 
-  const plusOn = state.status === "active" || state.status === "trialing";
+  const plusOn = subscriptionAccessOpen(state.status);
   const familyPlans = PARENT_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, interval, state.prices));
 
   async function start(plan: PlusPlanId) {
@@ -98,9 +123,24 @@ export function ParentPlusPanel({
     setBusy(true);
     try {
       const { url } = await startParentPlusPortal();
-      window.location.assign(url);
+      await openStripeCheckout(url);
     } catch (err) {
       toast.error(publicPayMessage(err, "Could not open billing portal"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function setCancel(cancel: boolean) {
+    setBusy(true);
+    try {
+      const saved = await setParentPlusCancel({ data: { cancel } });
+      reloadPlus();
+      if (cancel && (current.plan === "plus" || current.plan === "alerts")) {
+        announceCancel({ product: current.plan, periodEnd: saved.periodEnd, locale: loc });
+      }
+    } catch (err) {
+      toast.error(publicPayMessage(err, loc === "fr" ? "L’abonnement n’a pas changé." : "The subscription was not changed."));
     } finally {
       setBusy(false);
     }
@@ -115,6 +155,25 @@ export function ParentPlusPanel({
           <CheckoutReturnNote phase={returnPhase} locale={loc} />
         </div>
       ) : null}
+      {manageable && (state.plan === "plus" || state.plan === "alerts") ? (
+        <div className="mt-4">
+          <ManageBillingCard
+            locale={loc}
+            product={state.plan}
+            interval={state.interval}
+            status={state.status}
+            periodEnd={state.periodEnd}
+            cancelAtPeriodEnd={state.cancelAtPeriodEnd}
+            billingReturn={billingReturn}
+            busy={busy}
+            onPortal={() => void portal()}
+            onCancel={() => void setCancel(true)}
+            onResume={() => void setCancel(false)}
+          />
+        </div>
+      ) : null}
+      {showPay ? (
+      <>
       <div className="mt-4">
         <BillingIntervalToggle
           interval={interval}
@@ -169,13 +228,10 @@ export function ParentPlusPanel({
           );
         })}
       </div>
-      {state.customerId && state.stripeLive ? (
-        <Button className="mt-3 min-h-11" variant="secondary" disabled={busy} onClick={() => void portal()}>
-          {t("parentPlusManage")}
-        </Button>
-      ) : null}
       {!offerCheckout && !(state.plan !== "free" && plusOn) ? <p className="mt-3 text-sm text-muted">{t("parentPlusNoBill")}</p> : null}
-      {!state.stripeLive ? <p className="mt-3 text-sm text-muted">{t("parentPlusRehearsal")}</p> : null}
+      {showPay && !state.stripeLive ? <p className="mt-3 text-sm text-muted">{t("parentPlusRehearsal")}</p> : null}
+      </>
+      ) : null}
       {state.status ? <p className="mt-2 text-xs text-subtle">{state.status}</p> : null}
     </div>
   );

@@ -10,6 +10,8 @@ import {
 } from "@/lib/stripe-subscription-route";
 import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { profileMayReceiveUpgrade, type CatalogUpgradeLane } from "@/lib/upgrade-role";
+import { mergePriceLane, priceLaneForId, unixToIso } from "@/lib/subscription-lifecycle";
+import { STRIPE_PRICE_ENV, envPriceId, type StripePriceKey } from "@/lib/server/stripe-catalog";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
@@ -26,10 +28,20 @@ export type StripeLifecycleObject = StripeBillObject & {
   charge?: string | { id?: string } | null;
   payment_intent?: string | { id?: string } | null;
   invoice?: string | { id?: string } | null;
+  cancel_at_period_end?: boolean | null;
+  cancel_at?: number | null;
+  current_period_end?: number | null;
+  items?: {
+    data?: Array<{
+      current_period_end?: number | null;
+      price?: { id?: string | null } | null;
+    }> | null;
+  } | null;
   lines?: {
     data?: Array<{
       metadata?: MetaBag;
-      price?: { metadata?: MetaBag } | null;
+      period?: { end?: number | null } | null;
+      price?: { id?: string | null; metadata?: MetaBag } | null;
     }> | null;
   } | null;
   subscription_details?: {
@@ -67,6 +79,23 @@ export function collectStripeMeta(obj: StripeLifecycleObject | null | undefined)
     absorb(out, line?.price?.metadata);
   }
   return out;
+}
+
+function priceIdOf(obj: StripeLifecycleObject): string | null {
+  const itemPrice = obj.items?.data?.[0]?.price?.id;
+  if (itemPrice) return itemPrice;
+  const linePrice = obj.lines?.data?.[0]?.price?.id;
+  return linePrice || null;
+}
+
+function periodEndUnix(obj: StripeLifecycleObject): number | null {
+  if (typeof obj.current_period_end === "number") return obj.current_period_end;
+  const itemEnd = obj.items?.data?.[0]?.current_period_end;
+  if (typeof itemEnd === "number") return itemEnd;
+  if (typeof obj.cancel_at === "number" && obj.cancel_at_period_end) return obj.cancel_at;
+  const lineEnd = obj.lines?.data?.[0]?.period?.end;
+  if (typeof lineEnd === "number") return lineEnd;
+  return null;
 }
 
 function subscriptionIdOf(obj: StripeLifecycleObject): string | null {
@@ -152,6 +181,8 @@ export async function applyProviderSubscription(
     plan?: string | null;
     interval?: string | null;
     checkoutSessionId?: string | null;
+    cancelAtPeriodEnd?: boolean | null;
+    periodEnd?: string | null;
   },
 ) {
   await rememberCustomer(sql, input.userId, input.customerId ?? null);
@@ -166,7 +197,12 @@ export async function applyProviderSubscription(
       selected_plan = coalesce(${canceled ? "free" : plan}, selected_plan),
       selected_interval = coalesce(${interval}, selected_interval),
       selected_plan_at = now(),
-      catalog_checkout_session_id = coalesce(${input.checkoutSessionId ?? null}, catalog_checkout_session_id)
+      catalog_checkout_session_id = coalesce(${input.checkoutSessionId ?? null}, catalog_checkout_session_id),
+      stripe_cancel_at_period_end = case
+        when ${input.cancelAtPeriodEnd ?? null}::boolean is null then stripe_cancel_at_period_end
+        else ${input.cancelAtPeriodEnd ?? null}::boolean
+      end,
+      stripe_current_period_end = coalesce(${input.periodEnd ?? null}::timestamptz, stripe_current_period_end)
     where user_id = ${input.userId}
   `;
   if (canceled) {
@@ -174,7 +210,9 @@ export async function applyProviderSubscription(
       update profiles set
         stripe_subscription_id = null,
         stripe_subscription_status = ${status},
-        selected_plan = ${"free"}
+        selected_plan = ${"free"},
+        stripe_cancel_at_period_end = false,
+        stripe_current_period_end = null
       where user_id = ${input.userId}
     `;
   }
@@ -190,6 +228,8 @@ export async function applyParentPlus(
     interval?: string | null;
     plan?: string | null;
     checkoutSessionId?: string | null;
+    cancelAtPeriodEnd?: boolean | null;
+    periodEnd?: string | null;
   },
 ) {
   await rememberCustomer(sql, input.userId, input.customerId ?? null);
@@ -205,7 +245,12 @@ export async function applyParentPlus(
       plus_plan = ${plusPlan},
       plus_interval = coalesce(${interval}, plus_interval),
       plus_selected_at = now(),
-      catalog_checkout_session_id = coalesce(${input.checkoutSessionId ?? null}, catalog_checkout_session_id)
+      catalog_checkout_session_id = coalesce(${input.checkoutSessionId ?? null}, catalog_checkout_session_id),
+      plus_cancel_at_period_end = case
+        when ${input.cancelAtPeriodEnd ?? null}::boolean is null then plus_cancel_at_period_end
+        else ${input.cancelAtPeriodEnd ?? null}::boolean
+      end,
+      plus_current_period_end = coalesce(${input.periodEnd ?? null}::timestamptz, plus_current_period_end)
     where user_id = ${input.userId}
   `;
   if (canceled) {
@@ -213,7 +258,9 @@ export async function applyParentPlus(
       update profiles set
         plus_subscription_id = null,
         plus_status = ${status},
-        plus_plan = ${"free"}
+        plus_plan = ${"free"},
+        plus_cancel_at_period_end = false,
+        plus_current_period_end = null
       where user_id = ${input.userId}
     `;
   }
@@ -272,7 +319,9 @@ async function applyFeaturedCity(
         featured_city_status = ${input.status},
         featured_city_centre_id = coalesce(${centreId}, featured_city_centre_id),
         selected_addons = ${addons},
-        catalog_checkout_session_id = coalesce(${input.checkoutSessionId}, catalog_checkout_session_id)
+        catalog_checkout_session_id = coalesce(${input.checkoutSessionId}, catalog_checkout_session_id),
+        featured_city_cancel_at_period_end = false,
+        featured_city_current_period_end = null
       where user_id = ${input.userId}
     `;
     return;
@@ -283,7 +332,12 @@ async function applyFeaturedCity(
       featured_city_status = ${input.status},
       featured_city_centre_id = coalesce(${centreId}, featured_city_centre_id),
       selected_addons = ${addons},
-      catalog_checkout_session_id = coalesce(${input.checkoutSessionId}, catalog_checkout_session_id)
+      catalog_checkout_session_id = coalesce(${input.checkoutSessionId}, catalog_checkout_session_id),
+      featured_city_cancel_at_period_end = case
+        when ${input.cancelAtPeriodEnd ?? null}::boolean is null then featured_city_cancel_at_period_end
+        else ${input.cancelAtPeriodEnd ?? null}::boolean
+      end,
+      featured_city_current_period_end = coalesce(${input.periodEnd ?? null}::timestamptz, featured_city_current_period_end)
     where user_id = ${input.userId}
   `;
 }
@@ -490,9 +544,21 @@ export async function applyStripeSubscriptionEvent(input: {
     customerId,
     subscriptionId,
   });
+  const priceIds: Partial<Record<StripePriceKey, string | null>> = {};
+  for (const key of Object.keys(STRIPE_PRICE_ENV) as StripePriceKey[]) {
+    priceIds[key] = envPriceId(key);
+  }
+  const mergedMeta = mergePriceLane({
+    metadata,
+    matchedLane: profile?.matched ?? null,
+    priceLane: priceLaneForId(priceIdOf(obj), priceIds),
+  });
+  const subscriptionEvent = type.startsWith("customer.subscription.");
   const write = planCatalogWrite({
     type,
-    metadata,
+    metadata: mergedMeta,
+    cancelAtPeriodEnd: subscriptionEvent ? Boolean(obj.cancel_at_period_end) : undefined,
+    periodEnd: unixToIso(periodEndUnix(obj)),
     status: obj.status,
     paymentStatus: obj.payment_status,
     subscriptionId,

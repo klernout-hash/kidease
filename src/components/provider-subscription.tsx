@@ -18,11 +18,14 @@ import {
   getProviderSubscription,
   saveProviderSubscription,
   postCentreJob,
+  setProviderSubscriptionCancel,
   startProviderAddonCheckout,
   startProviderBillingPortal,
   startProviderCheckout,
   type ProviderSubscriptionState,
 } from "@/lib/server/provider-subscriptions";
+import { ManageBillingCard, announceCancel } from "@/components/manage-billing";
+import { subscriptionAccessOpen, type BillingProduct } from "@/lib/subscription-lifecycle";
 import { openStripeCheckout } from "@/lib/wallets";
 import { getProvider } from "@/lib/server/family";
 import { DirectorProStrip } from "@/components/director-pro-strip";
@@ -98,7 +101,13 @@ function priceReady(state: ProviderSubscriptionState, plan: ProviderPlanId, inte
   return paidPlanVisible(plan, interval, state.prices);
 }
 
-export function ProviderSubscriptionPanel({ upgradeSearch = null }: { upgradeSearch?: UpgradeSearch | null }) {
+export function ProviderSubscriptionPanel({
+  upgradeSearch = null,
+  billingReturn = false,
+}: {
+  upgradeSearch?: UpgradeSearch | null;
+  billingReturn?: boolean;
+}) {
   const { locale, t: tx } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const t = COPY[loc];
@@ -147,6 +156,26 @@ export function ProviderSubscriptionPanel({ upgradeSearch = null }: { upgradeSea
     place: payReturn?.phase === "success" && payReturn.kind === "addon" && payReturn.item === "featured_city" ? featuredPlace : null,
     reload: reloadSubscription,
   });
+
+  useEffect(() => {
+    if (!billingReturn) return;
+    const timer = window.setInterval(() => reloadSubscription(), 2000);
+    const stop = window.setTimeout(() => window.clearInterval(timer), 20000);
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(stop);
+    };
+  }, [billingReturn, reloadSubscription]);
+
+  useEffect(() => {
+    if (!billingReturn || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("billing");
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+      window.history.replaceState(window.history.state, "", next);
+    }
+  }, [billingReturn]);
 
   useEffect(() => {
     reloadSubscription();
@@ -265,10 +294,10 @@ export function ProviderSubscriptionPanel({ upgradeSearch = null }: { upgradeSea
     }
   }
 
-  async function openPortal() {
+  async function openPortal(lane: "plan" | "featured_city") {
     setBusy(true);
     try {
-      const { url } = await startProviderBillingPortal();
+      const { url } = await startProviderBillingPortal({ data: { lane } });
       await openStripeCheckout(url);
     } catch (err) {
       toast.error(publicPayMessage(err, tx("planPortalFailed")));
@@ -277,14 +306,84 @@ export function ProviderSubscriptionPanel({ upgradeSearch = null }: { upgradeSea
     }
   }
 
+  async function setCancel(lane: "plan" | "featured_city", cancel: boolean) {
+    setBusy(true);
+    try {
+      const saved = await setProviderSubscriptionCancel({ data: { lane, cancel } });
+      const next = await getProviderSubscription();
+      applyState(next);
+      if (cancel) {
+        const product: BillingProduct = lane === "featured_city" ? "featured_city" : next.plan === "network" ? "network" : "pro";
+        announceCancel({ product, periodEnd: saved.periodEnd, locale: loc });
+      }
+    } catch (err) {
+      toast.error(publicPayMessage(err, loc === "fr" ? "L’abonnement n’a pas changé." : "The subscription was not changed."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const liveCheckout = state.stripeLive && state.checkoutLive;
   const visiblePlans = PROVIDER_PLANS.filter((plan) => paidPlanVisible(plan.id, interval, state.prices));
+  const planOpen = Boolean(
+    current.stripeLive &&
+      current.subscriptionId &&
+      current.plan !== "free" &&
+      subscriptionAccessOpen(current.subscriptionStatus),
+  );
+  const pinOpen = Boolean(
+    current.stripeLive && current.featuredCitySubscriptionId && subscriptionAccessOpen(current.featuredCityStatus),
+  );
+
+  const billingCards = (
+      <>
+        {planOpen ? (
+          <ManageBillingCard
+            locale={loc}
+            product={current.plan === "network" ? "network" : "pro"}
+            interval={current.interval}
+            status={current.subscriptionStatus}
+            periodEnd={current.periodEnd}
+            cancelAtPeriodEnd={current.cancelAtPeriodEnd}
+            billingReturn={billingReturn}
+            busy={busy}
+            onPortal={() => void openPortal("plan")}
+            onCancel={() => void setCancel("plan", true)}
+            onResume={() => void setCancel("plan", false)}
+          />
+        ) : null}
+        {pinOpen ? (
+          <ManageBillingCard
+            locale={loc}
+            product="featured_city"
+            interval="month"
+            status={current.featuredCityStatus}
+            periodEnd={current.featuredCityPeriodEnd}
+            cancelAtPeriodEnd={current.featuredCityCancelAtPeriodEnd}
+            billingReturn={billingReturn}
+            busy={busy}
+            onPortal={() => void openPortal("featured_city")}
+            onCancel={() => void setCancel("featured_city", true)}
+            onResume={() => void setCancel("featured_city", false)}
+          />
+        ) : null}
+      </>
+  );
 
   if (!showCheckout) {
+    if (!planOpen && !pinOpen) {
+      return (
+        <section className="space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="plans-not-offered">
+          <h2 className="font-display text-2xl">{t.title}</h2>
+          <p className="text-sm text-muted">{tx("plansNotOffered")}</p>
+        </section>
+      );
+    }
     return (
-      <section className="space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="plans-not-offered">
+      <section className="space-y-4" data-ke="plans-not-offered">
         <h2 className="font-display text-2xl">{t.title}</h2>
         <p className="text-sm text-muted">{tx("plansNotOffered")}</p>
+        {billingCards}
       </section>
     );
   }
@@ -443,8 +542,7 @@ export function ProviderSubscriptionPanel({ upgradeSearch = null }: { upgradeSea
         action={(addon) => {
           const on = addons.includes(addon.id);
           const featuredLive =
-            addon.id === "featured_city" &&
-            (state.featuredCityStatus === "active" || state.featuredCityStatus === "trialing");
+            addon.id === "featured_city" && subscriptionAccessOpen(state.featuredCityStatus);
           const owned =
             addon.id === "featured_city"
               ? featuredLive
@@ -527,20 +625,17 @@ export function ProviderSubscriptionPanel({ upgradeSearch = null }: { upgradeSea
         </form>
       ) : null}
 
-      <div className="rounded-xl bg-surface px-5 py-5 ring-1 ring-border">
-        {state.customerId && state.stripeLive ? (
-          <Button disabled={busy} className="min-h-11 w-full sm:w-auto" onClick={() => void openPortal()}>
-            {t.portal}
-          </Button>
-        ) : (
+      {billingCards}
+      {!state.stripeLive || (!state.subscriptionId && !state.featuredCitySubscriptionId) ? (
+        <div className="rounded-xl bg-surface px-5 py-5 ring-1 ring-border">
           <Button disabled className="min-h-11 w-full sm:w-auto">
             {liveCheckout ? t.portal : t.checkout}
           </Button>
-        )}
-        <p className="mt-3 text-sm text-muted">
-          {state.stripeLive ? (state.customerId ? t.portalCard : t.portalWait) : t.portalOff}
-        </p>
-      </div>
+          <p className="mt-3 text-sm text-muted">
+            {state.stripeLive ? t.portalWait : t.portalOff}
+          </p>
+        </div>
+      ) : null}
     </section>
   );
 }

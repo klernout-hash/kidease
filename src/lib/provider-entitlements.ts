@@ -4,7 +4,8 @@
  * Paid status never changes quality score or Guest Favorites.
  * Listing, vacancy, claim, and licence stay on Free — never paywalled.
  *
- * When Stripe is live: Pro/Network need selected_plan plus active/trialing.
+ * When Stripe is live: Pro/Network need selected_plan plus active, trialing, or past_due.
+ * past_due is payment-failed grace: benefits stay, and the desk shows a notice.
  * When Stripe is not live: paid extras fail closed (honest billing-not-live).
  * A rehearsal pick on the profile is not a paid subscription.
  */
@@ -15,12 +16,13 @@ import {
   type ProviderAddonId,
   type ProviderPlanId,
 } from "./provider-plans.ts";
+import { subscriptionAccessOpen } from "./subscription-lifecycle.ts";
 
 export const FREE_INQUIRY_CAP = 10;
 export const FREE_ANALYTICS_DAYS = 7;
 export const PRO_ANALYTICS_DAYS = 90;
 
-export const PAID_SUBSCRIPTION_STATUSES = ["active", "trialing"] as const;
+export const PAID_SUBSCRIPTION_STATUSES = ["active", "trialing", "past_due"] as const;
 
 export type ProviderPaidFeature =
   | "unlimited_inquiries"
@@ -71,10 +73,7 @@ export const PROVIDER_INQUIRY_CAP_BILLING_NOT_LIVE_MESSAGE =
   "This centre is on Free (10 new messages and tours / month). Unlimited inquiries need Pro when live checkout is on.";
 
 export function isPaidSubscriptionStatus(raw: string | null | undefined): boolean {
-  const status = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return (PAID_SUBSCRIPTION_STATUSES as readonly string[]).includes(status);
+  return subscriptionAccessOpen(raw);
 }
 
 export function normalizeProviderAddons(raw: readonly string[] | string | null | undefined): ProviderAddonId[] {

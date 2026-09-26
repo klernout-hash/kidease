@@ -16,6 +16,7 @@ export const Route = createFileRoute("/provider/subscription")({
       item?: string;
       session?: string;
       interval?: "month" | "year";
+      billing?: "return";
     } = {};
     if (s.checkout === "success" || s.checkout === "cancel") out.checkout = s.checkout;
     if (s.addon === "success" || s.addon === "cancel") out.addon = s.addon;
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/provider/subscription")({
     if (s.item === "featured_city" || s.item === "claim_boost" || s.item === "job_post") out.item = s.item;
     if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
     if (s.interval === "month" || s.interval === "year") out.interval = s.interval;
+    if (s.billing === "return") out.billing = "return";
     return out;
   },
   head: () => ({
@@ -90,7 +92,7 @@ function ProviderSubscriptionPage() {
           if (id !== "subscription" && typeof window !== "undefined") window.location.assign("/provider");
         }}
       >
-        <ProviderSubscriptionPanel upgradeSearch={upgradeSearch} />
+        <ProviderSubscriptionPanel upgradeSearch={upgradeSearch} billingReturn={upgradeSearch.billing === "return"} />
       </DeskShell>
     </TwoFactorGate>
   );

@@ -65,7 +65,7 @@ test("confetti fires only for a confirmed paid upgrade", () => {
   );
 
   const confirm = src("src/components/success-confirm.tsx");
-  assert.match(confirm, /if \(!confetti \|\| reducedMotion\) return;\s*return burstUpgradeConfetti\(\)/);
+  assert.match(confirm, /if \(!confetti \|\| reducedMotion \|\| quiet\) return;\s*return burstUpgradeConfetti\(\)/);
   assert.doesNotMatch(confirm, /from ["']canvas-confetti["']/);
   assert.doesNotMatch(src("src/lib/success-confirm.ts"), /confetti:\s*true/);
   assert.doesNotMatch(src("src/components/checkout-return.tsx"), /canvas-confetti/);

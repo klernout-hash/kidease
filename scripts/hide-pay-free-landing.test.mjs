@@ -78,8 +78,10 @@ test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
   assert.match(provider, /FreePageExplainer/);
   assert.match(provider, /plansNotOffered/);
   const parent = src("src/components/parent-desk.tsx");
-  assert.match(parent, /PayCtas/);
   assert.match(parent, /ParentPlusPanel/);
+  const plusPanel = src("src/components/parent-plus.tsx");
+  assert.match(plusPanel, /!showPay && !manageable/);
+  assert.match(plusPanel, /ManageBillingCard/);
   const video = src("src/routes/video.$roomId.tsx");
   assert.match(video, /PayCtas/);
   assert.match(video, /parentPlusSubscribe/);

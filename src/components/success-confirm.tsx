@@ -68,6 +68,8 @@ export type SuccessConfirmProps = MarkerProps & {
   contextDetail?: string;
   points?: string[];
   confetti?: boolean;
+  /** Static check, no confetti bits. Used when a subscription is set to end. */
+  quiet?: boolean;
   primary?: ReactNode;
   secondary?: ReactNode;
   onClose: () => void;
@@ -84,6 +86,7 @@ export function SuccessConfirm({
   contextDetail,
   points,
   confetti,
+  quiet,
   primary,
   secondary,
   onClose,
@@ -96,12 +99,12 @@ export function SuccessConfirm({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const reducedMotion = usePrefersReducedMotion();
-  const flourish = !reducedMotion;
+  const flourish = !reducedMotion && !quiet;
 
   useEffect(() => {
-    if (!confetti || reducedMotion) return;
+    if (!confetti || reducedMotion || quiet) return;
     return burstUpgradeConfetti();
-  }, [confetti, reducedMotion]);
+  }, [confetti, reducedMotion, quiet]);
 
   const thumb = displayPhoto(photo);
   const cardTitle = (contextTitle || "").trim();
@@ -348,6 +351,7 @@ export function SuccessConfirmHost() {
           body={modal.body}
           points={modal.points}
           confetti={modal.confetti}
+          quiet={modal.quiet}
           photo={modal.photo}
           contextTitle={modal.contextTitle}
           contextMeta={modal.contextMeta}

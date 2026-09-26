@@ -28,6 +28,8 @@ test("rehearsal Pro pick is not a paid entitlement", () => {
   assert.equal(entitledProviderPlan({ plan: "pro", status: "active", stripeLive: true }), "pro");
   assert.equal(entitledProviderPlan({ plan: "network", status: "trialing", stripeLive: true }), "network");
   assert.equal(entitledProviderPlan({ plan: "network", status: "canceled", stripeLive: true }), "free");
+  assert.equal(entitledProviderPlan({ plan: "pro", status: "past_due", stripeLive: true }), "pro");
+  assert.equal(entitledProviderPlan({ plan: "pro", status: "unpaid", stripeLive: true }), "free");
 });
 
 test("Free keeps listing basics; Pro/Network extras fail closed until live+active", () => {
@@ -96,8 +98,8 @@ test("Free keeps listing basics; Pro/Network extras fail closed until live+activ
     featuredCityStatus: "past_due",
     stripeLive: true,
   });
-  assert.equal(pastDue.featuredFromAddon, false);
-  assert.equal(pastDue.featuredCity, false);
+  assert.equal(pastDue.featuredFromAddon, true);
+  assert.equal(pastDue.featuredCity, true);
   const canceledPin = resolveProviderEntitlements({
     plan: "free",
     status: null,

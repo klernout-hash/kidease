@@ -162,7 +162,7 @@ async function loadAdminAddonLines(sql: Awaited<ReturnType<typeof getSql>>, dayc
   }>(
     `select d.id as daycare_id,
         bool_or(
-          pr.featured_city_status in ('active', 'trialing')
+          pr.featured_city_status in ('active', 'trialing', 'past_due')
           and position('featured_city' in coalesce(pr.selected_addons, '')) > 0
           and (pr.featured_city_centre_id is null or pr.featured_city_centre_id = d.id)
         ) as featured,

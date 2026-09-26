@@ -34,7 +34,6 @@ import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
-import { PayCtas } from "@/components/pay-chrome";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { DeleteChildControl } from "@/components/delete-child-control";
 
@@ -76,10 +75,12 @@ export function ParentDesk({
   initialTab,
   plusReturn = null,
   upgradeSearch = null,
+  billingReturn = false,
 }: {
   initialTab?: ParentTab;
   plusReturn?: "success" | "cancel" | null;
   upgradeSearch?: UpgradeSearch | null;
+  billingReturn?: boolean;
 }) {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
@@ -430,13 +431,11 @@ export function ParentDesk({
             />
             <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
             {showParentPlus ? (
-            <PayCtas>
             <div className="mt-4">
               <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
-                <ParentPlusPanel offerCheckout plusReturn={plusReturn} upgradeSearch={upgradeSearch} />
+                <ParentPlusPanel offerCheckout plusReturn={plusReturn} upgradeSearch={upgradeSearch} billingReturn={billingReturn} />
               </Suspense>
             </div>
-            </PayCtas>
             ) : null}
           </div>
           {bills.filter((b) => billIsOpen(b.status)).length ? (
