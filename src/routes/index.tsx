@@ -38,6 +38,7 @@ import {
   type AppRole,
 } from "@/lib/desks";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
+import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { BootPending } from "@/components/boot-pending";
 import { HOME_PAINT_BUDGET_MS, LOADER_SETTLE_MS, ORIGIN_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
@@ -218,22 +219,23 @@ function Home() {
   }, [featured.length]);
 
   useEffect(() => {
-    if (!user) {
+    const uid = user?.id;
+    if (!uid) {
       setRole(null);
       setFamilyKids([]);
       setFamilyBookings([]);
       return;
     }
-    void getMyRole()
+    void dedupedQuery(`home-role:${uid}`, QUERY_STALE_MS, () => getMyRole())
       .then((r) => setRole(r.role))
       .catch(() => setRole("parent"));
-    void getFamily()
+    void dedupedQuery(`home-family:${uid}`, QUERY_STALE_MS, () => getFamily())
       .then((f) => {
         setFamilyKids(f.children);
         setFamilyBookings(f.bookings);
       })
       .catch(() => undefined);
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (trustedSavedOrigin(readSavedOrigin(), { timeZone: readClientTimeZone() })) return;
@@ -251,7 +253,12 @@ function Home() {
     setPlace(loc.label);
     let cancelled = false;
     const loadFeatured = () => {
-      void featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label } })
+      void dedupedQuery(
+        `home-featured:${loc.lat},${loc.lng},${loc.label ?? ""}`,
+        QUERY_STALE_MS,
+        () => featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label } }),
+        { cacheIf: (rows) => rows.length > 0 },
+      )
         .then((rows) => {
           if (cancelled) return;
           const next = publicListings(uniqueById(rows));
@@ -267,17 +274,23 @@ function Home() {
     };
     const loadExplore = () => {
       void withTimeoutFallback(
-        searchDaycares({
-          data: {
-            lat: loc.lat,
-            lng: loc.lng,
-            radiusKm,
-            sort: "match",
-            ageGroup: "any",
-            label: loc.label,
-            q: loc.label,
-          },
-        }),
+        dedupedQuery(
+          `home-search:${loc.lat},${loc.lng},${radiusKm},${loc.label ?? ""}`,
+          QUERY_STALE_MS,
+          () =>
+            searchDaycares({
+              data: {
+                lat: loc.lat,
+                lng: loc.lng,
+                radiusKm,
+                sort: "match",
+                ageGroup: "any",
+                label: loc.label,
+                q: loc.label,
+              },
+            }),
+          { cacheIf: (rows) => rows.length > 0 },
+        ),
         LOADER_SETTLE_MS,
         [] as Card[],
       )
