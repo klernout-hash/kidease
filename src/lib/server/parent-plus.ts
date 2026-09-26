@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { stripeChargesLive } from "@/lib/stripe-live";
-import { catalogStatus, envPriceId, plusPriceKey } from "@/lib/server/stripe-catalog";
+import { catalogStatus, envPriceId, parentPriceKey } from "@/lib/server/stripe-catalog";
 import {
   appOrigin,
   createBillingPortalSession,
@@ -64,7 +64,7 @@ async function readPlus(userId: string): Promise<ParentPlusState> {
     interval,
     status: row?.plus_status ?? null,
     stripeLive,
-    checkoutLive: stripeLive && Boolean(envPriceId(plusPriceKey(interval))),
+    checkoutLive: stripeLive && Boolean(envPriceId(parentPriceKey("plus", interval))),
     customerId: row?.stripe_customer_id ?? null,
     subscriptionId: row?.plus_subscription_id ?? null,
     selectedAt: row?.plus_selected_at ? String(row.plus_selected_at) : null,
@@ -90,14 +90,19 @@ export const getParentPlus = createServerFn({ method: "GET" })
 
 export const startParentPlusCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { interval: PlusInterval }) => {
+  .validator((input: { interval: PlusInterval; plan?: "plus" | "alerts" }) => {
     if (!isPlusInterval(input.interval)) throw new Error("Choose monthly or yearly");
-    return { interval: input.interval };
+    const plan = input.plan === "alerts" ? "alerts" : "plus";
+    return { interval: input.interval, plan };
   })
   .handler(async ({ context, data }) => {
     const desks = await assertParentBuyer(context.userId);
     assertPayCheckoutAllowed(desks.role);
-    const priceKey = plusPriceKey(data.interval);
+    const plan = data.plan === "alerts" ? "alerts" : "plus";
+    if (plan === "alerts" && (!envPriceId("parent_alerts_monthly") || !envPriceId("parent_alerts_yearly"))) {
+      throw new Error(PLUS_PRICE_MISSING);
+    }
+    const priceKey = parentPriceKey(plan, data.interval);
     const priceId = envPriceId(priceKey);
     const gate = decideParentPlusCheckout({ stripeLive: stripeChargesLive(), priceId });
     if (!gate.ok) throw new Error(gate.error);
@@ -113,7 +118,7 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
         const session = await createCatalogCheckoutSession({
           mode: checked.mode,
           priceId: checked.priceId,
-          successUrl: `${origin}/parent?tab=payments&plus=success&session={CHECKOUT_SESSION_ID}`,
+          successUrl: `${origin}/parent?tab=payments&plus=success&plan=${plan}&interval=${data.interval}&session={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${origin}/parent?tab=payments&plus=cancel`,
           customerId: state.customerId,
           customerEmail: state.customerId ? null : await userEmail(context.userId),
@@ -123,7 +128,7 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
             role: "parent",
             buyer: desks.role === "admin" ? "admin" : "parent",
             user_id: context.userId,
-            plan: "plus",
+            plan,
             interval: data.interval,
           },
         });

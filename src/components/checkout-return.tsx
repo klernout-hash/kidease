@@ -4,7 +4,13 @@ import { upgradeConfirmed, upgradeSuccessTitle } from "@/lib/stripe-subscription
 
 export type UpgradeReturn =
   | { phase: "cancel" }
-  | { phase: "success"; kind: "plan" | "addon" | "plus"; item: string | null; sessionId: string | null };
+  | {
+      phase: "success";
+      kind: "plan" | "addon" | "plus";
+      item: string | null;
+      sessionId: string | null;
+      interval: string | null;
+    };
 
 export function readUpgradeReturn(search: string): UpgradeReturn | null {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -12,14 +18,16 @@ export function readUpgradeReturn(search: string): UpgradeReturn | null {
     return { phase: "cancel" };
   }
   const sessionId = params.get("session");
+  const interval = params.get("interval") === "year" || params.get("interval") === "month" ? params.get("interval") : null;
   if (params.get("checkout") === "success") {
-    return { phase: "success", kind: "plan", item: params.get("plan"), sessionId };
+    return { phase: "success", kind: "plan", item: params.get("plan"), sessionId, interval };
   }
   if (params.get("addon") === "success") {
-    return { phase: "success", kind: "addon", item: params.get("item"), sessionId };
+    return { phase: "success", kind: "addon", item: params.get("item"), sessionId, interval: null };
   }
   if (params.get("plus") === "success") {
-    return { phase: "success", kind: "plus", item: "plus", sessionId };
+    const plan = params.get("plan") === "alerts" ? "alerts" : "plus";
+    return { phase: "success", kind: "plus", item: plan, sessionId, interval };
   }
   return null;
 }
@@ -121,7 +129,12 @@ export function useUpgradeCelebration(input: {
     }
     confirmSuccess({
       variant: "modal",
-      title: upgradeSuccessTitle({ kind: input.ret.kind, item: input.ret.item, locale: input.locale }),
+      title: upgradeSuccessTitle({
+        kind: input.ret.kind,
+        item: input.ret.item,
+        interval: input.ret.interval,
+        locale: input.locale,
+      }),
       body: SUCCESS_BODY[input.locale],
     });
   }, [ready, input.ret, input.locale]);

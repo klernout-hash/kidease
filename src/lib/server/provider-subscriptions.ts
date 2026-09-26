@@ -248,7 +248,7 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
           mode: checked.mode,
           priceId: checked.priceId,
           quantity: data.plan === "network" ? Math.max(3, state.siteCount) : 1,
-          successUrl: `${origin}/provider/subscription?checkout=success&plan=${data.plan}&session={CHECKOUT_SESSION_ID}`,
+          successUrl: `${origin}/provider/subscription?checkout=success&plan=${data.plan}&interval=${data.interval}&session={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${origin}/provider/subscription?checkout=cancel`,
           customerId: state.customerId,
           customerEmail: state.customerId ? null : await userEmail(context.userId),

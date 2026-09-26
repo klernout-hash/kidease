@@ -37,6 +37,8 @@ export type CatalogBootstrapRow = {
   expectedInterval: "month" | "year" | null;
   priceOk: boolean | null;
   priceNote: string;
+  proposal: boolean;
+  liveUnitAmountCents: number | null;
 };
 
 export type CatalogBootstrapResult = {
@@ -99,7 +101,7 @@ export async function bootstrapStripeCatalog(opts?: { createMissing?: boolean })
       const found = await findPriceByLookup(item.lookupKey);
       existingPriceId = found?.id ?? null;
       if (existingPriceId) action = "reused";
-      else if (createMissing) {
+      else if (createMissing && !item.proposal) {
         createdPriceId = await createCatalogPrice(item);
         action = "created";
       }
@@ -110,10 +112,15 @@ export async function bootstrapStripeCatalog(opts?: { createMissing?: boolean })
 
     let priceOk: boolean | null = null;
     let priceNote = "";
+    let liveUnitAmountCents: number | null = null;
     if (!live) {
-      priceNote = "Not checked — Stripe live key is off.";
+      priceNote = item.proposal
+        ? "Proposal. Not checked — Stripe live key is off. This price is not created until Kyle approves it."
+        : "Not checked — Stripe live key is off.";
     } else if (!existingEnv) {
-      priceNote = "No price ID in the environment.";
+      priceNote = item.proposal
+        ? "Proposal. Missing price ID. This tier stays hidden until Kyle sets the env var. Check prices does not create proposal prices."
+        : "Missing price ID. Checkout for this price stays off.";
     } else {
       try {
         const snapshot = await stripeRequest<StripePriceSnapshot>(
@@ -121,6 +128,7 @@ export async function bootstrapStripeCatalog(opts?: { createMissing?: boolean })
           {},
           "GET",
         );
+        if (typeof snapshot.unit_amount === "number") liveUnitAmountCents = snapshot.unit_amount;
         const check = checkCatalogPrice(item, snapshot);
         priceOk = check.ok;
         priceNote = check.note;
@@ -145,6 +153,8 @@ export async function bootstrapStripeCatalog(opts?: { createMissing?: boolean })
       expectedInterval: item.interval ?? null,
       priceOk,
       priceNote,
+      proposal: Boolean(item.proposal),
+      liveUnitAmountCents,
     });
   }
 

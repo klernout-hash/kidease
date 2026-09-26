@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   RECOMMENDED_LABEL,
   formatPlanCad,
-  yearlySavingsLine,
+  yearlySavingsPercent,
   type PlanLocale,
   type UpgradePlanCopy,
 } from "@/lib/upgrade-plans";
@@ -14,6 +14,7 @@ export function UpgradePlanCard({
   locale,
   monthly,
   yearly,
+  interval = "month",
   perSite = false,
   cta,
 }: {
@@ -21,16 +22,25 @@ export function UpgradePlanCard({
   locale: PlanLocale;
   monthly: number;
   yearly?: number | null;
+  interval?: "month" | "year";
   perSite?: boolean;
   cta?: ReactNode;
 }) {
-  const savings = perSite ? null : yearlySavingsLine(monthly, yearly, locale);
-  const price = formatPlanCad(monthly, locale);
-  const unit =
-    perSite
+  const yearlyMode = plan.id !== "free" && interval === "year" && yearly != null && yearly > 0;
+  const percent = yearlyMode ? yearlySavingsPercent(monthly, yearly) : null;
+  const price = formatPlanCad(yearlyMode ? yearly! : monthly, locale);
+  const unit = perSite
+    ? yearlyMode
       ? locale === "fr"
+        ? "/ site / an"
+        : "/ site / year"
+      : locale === "fr"
         ? "/ site / mois"
         : "/ site / month"
+    : yearlyMode
+      ? locale === "fr"
+        ? "/ an"
+        : "/ year"
       : locale === "fr"
         ? "/ mois"
         : "/ month";
@@ -38,6 +48,7 @@ export function UpgradePlanCard({
     <article
       data-ke={plan.recommended ? "plan-recommended" : "plan-card"}
       data-plan={plan.id}
+      data-interval={yearlyMode ? "year" : "month"}
       className={cn(
         "flex h-full flex-col rounded-2xl bg-surface p-4 ring-1",
         plan.recommended ? "ring-primary/40" : "ring-border",
@@ -55,7 +66,11 @@ export function UpgradePlanCard({
         {price}
         <span className="ml-1 text-sm font-normal text-muted">{unit}</span>
       </p>
-      {savings ? <p className="mt-2 text-xs text-muted">{savings}</p> : null}
+      {percent != null ? (
+        <p className="mt-2 text-xs font-semibold text-primary" data-ke="plan-save">
+          {locale === "fr" ? `Économisez ${percent} %` : `Save ${percent}%`}
+        </p>
+      ) : null}
       <p className="mt-3 text-sm text-muted">{plan.pitch[locale]}</p>
       <ul className="mt-3 flex-1 space-y-1.5 text-sm">
         {plan.benefits.map((benefit) => (

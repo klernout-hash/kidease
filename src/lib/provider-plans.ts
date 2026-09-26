@@ -3,7 +3,7 @@
  * Checkout runs only when stripeChargesLive() and the matching STRIPE_PRICE_* env is set.
  */
 
-import { daycareUpgradePlan, type PlanLine } from "./upgrade-plans.ts";
+import { daycareUpgradePlan, paidPlanPrice, type PlanLine } from "./upgrade-plans.ts";
 
 export const PROVIDER_PLAN_IDS = ["free", "pro", "network"] as const;
 export type ProviderPlanId = (typeof PROVIDER_PLAN_IDS)[number];
@@ -65,8 +65,8 @@ export const PROVIDER_PLANS: ProviderPlan[] = [
     id: "pro",
     name: { en: "Pro", fr: "Pro" },
     tagline: daycareUpgradePlan("pro").pitch,
-    monthly: 49,
-    yearly: 490,
+    monthly: paidPlanPrice("pro")?.monthlyCad ?? 49,
+    yearly: paidPlanPrice("pro")?.yearlyCad ?? 490,
     perSite: false,
     minSites: 1,
     features: daycareUpgradePlan("pro").benefits,
@@ -75,8 +75,8 @@ export const PROVIDER_PLANS: ProviderPlan[] = [
     id: "network",
     name: { en: "Network", fr: "Réseau" },
     tagline: daycareUpgradePlan("network").pitch,
-    monthly: 39,
-    yearly: null,
+    monthly: paidPlanPrice("network")?.monthlyCad ?? 39,
+    yearly: paidPlanPrice("network")?.yearlyCad ?? 390,
     perSite: true,
     minSites: 3,
     features: daycareUpgradePlan("network").benefits,

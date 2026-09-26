@@ -4,6 +4,7 @@
  * subscription id was previously stored on the plan column.
  */
 
+import { paidPlanPrice, yearlySavingSuccess, yearlySavingsPercent } from "./upgrade-plans.ts";
 import { catalogMetadataAllows } from "./upgrade-role.ts";
 
 export type CatalogLane =
@@ -35,6 +36,7 @@ export type CatalogWrite =
       checkoutSessionId: string | null;
       status: string;
       interval: string | null;
+      plan: "plus" | "alerts" | "free";
       clearPlan: boolean;
     }
   | {
@@ -194,6 +196,8 @@ export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
   }
 
   if (lane === "parent_plus") {
+    const rawPlan = m.plan || "plus";
+    if (rawPlan !== "plus" && rawPlan !== "alerts") return { lane: "ignore", reason: "parent plan" };
     return {
       lane,
       userId,
@@ -202,6 +206,7 @@ export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
       checkoutSessionId: paidSession,
       status: clear ? "canceled" : status,
       interval: m.interval || null,
+      plan: clear ? "free" : rawPlan,
       clearPlan: clear,
     };
   }
@@ -238,7 +243,9 @@ export function upgradeConfirmed(input: {
 
   const item = String(input.item || "").trim();
   if (input.kind === "plus") {
-    return input.plusPlan === "plus" && (input.plusStatus === "active" || input.plusStatus === "trialing");
+    const paid = input.plusStatus === "active" || input.plusStatus === "trialing";
+    if (item === "alerts") return input.plusPlan === "alerts" && paid;
+    return input.plusPlan === "plus" && paid;
   }
   if (input.kind === "addon") {
     if (item === "featured_city") {
@@ -255,19 +262,33 @@ export function upgradeConfirmed(input: {
   return plan === "pro" || plan === "network";
 }
 
+const SUCCESS_NAME: Record<string, { en: string; fr: string }> = {
+  plus: { en: "Parent Plus", fr: "Plus parents" },
+  alerts: { en: "Parent Alerts", fr: "Alertes parents" },
+  network: { en: "Network", fr: "Réseau" },
+  pro: { en: "Pro", fr: "Pro" },
+};
+
 export function upgradeSuccessTitle(input: {
   kind: "plan" | "addon" | "plus";
   item?: string | null;
+  interval?: string | null;
   locale?: "en" | "fr";
 }): string {
   const fr = input.locale === "fr";
+  const locale = fr ? "fr" : "en";
   const item = String(input.item || "").trim();
-  if (input.kind === "plus") return fr ? "Vous êtes sur Plus parents" : "You're on Parent Plus";
   if (input.kind === "addon") {
     if (item === "featured_city") return fr ? "La ville en vedette est en ligne" : "Featured city is live";
     if (item === "claim_boost") return fr ? "Le boost de réclamation est actif" : "Claim boost is on";
     if (item === "job_post") return fr ? "L’offre d’emploi est prête" : "Job post is ready";
   }
-  if (item === "network") return fr ? "Vous êtes sur Réseau" : "You're on Network";
-  return fr ? "Vous êtes sur Pro" : "You're on Pro";
+  const id = input.kind === "plus" ? (item === "alerts" ? "alerts" : "plus") : item === "network" ? "network" : "pro";
+  const name = SUCCESS_NAME[id]?.[locale] ?? (fr ? "Pro" : "Pro");
+  if (input.interval === "year") {
+    const price = paidPlanPrice(id);
+    const percent = price ? yearlySavingsPercent(price.monthlyCad, price.yearlyCad) : null;
+    if (percent != null) return yearlySavingSuccess(name, percent, locale);
+  }
+  return fr ? `Vous êtes sur ${name}` : `You're on ${name}`;
 }

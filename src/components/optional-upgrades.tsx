@@ -1,9 +1,18 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useCopy } from "@/lib/use-copy";
-import { PLUS_MONTHLY_CAD, PLUS_YEARLY_CAD } from "@/lib/parent-plus";
-import { PROVIDER_ADDONS, PROVIDER_PLANS } from "@/lib/provider-plans";
-import { DAYCARE_UPGRADE_PLANS, PARENT_UPGRADE_PLANS, formatPlanCad } from "@/lib/upgrade-plans";
+import { BillingIntervalToggle } from "@/components/billing-interval-toggle";
 import { UpgradePlanCard } from "@/components/upgrade-plan-card";
+import { useCopy } from "@/lib/use-copy";
+import { ALERTS_MONTHLY_CAD, ALERTS_YEARLY_CAD, PLUS_MONTHLY_CAD, PLUS_YEARLY_CAD } from "@/lib/parent-plus";
+import { PROVIDER_ADDONS, PROVIDER_PLANS } from "@/lib/provider-plans";
+import { getUpgradePriceFlags } from "@/lib/server/upgrade-prices";
+import {
+  DAYCARE_UPGRADE_PLANS,
+  PARENT_UPGRADE_PLANS,
+  formatPlanCad,
+  paidPlanVisible,
+  visibleYearlySavings,
+} from "@/lib/upgrade-plans";
 
 const COPY = {
   en: {
@@ -18,6 +27,8 @@ const COPY = {
     openDaycare: "Open centre plans",
     openNetwork: "Open Network",
     signNetwork: "Sign in for Network",
+    openAlerts: "Open Parent Alerts",
+    signAlerts: "Sign in for Parent Alerts",
   },
   fr: {
     kicker: "Facultatif",
@@ -31,6 +42,8 @@ const COPY = {
     openDaycare: "Ouvrir les forfaits centre",
     openNetwork: "Ouvrir Réseau",
     signNetwork: "Connexion pour Réseau",
+    openAlerts: "Ouvrir Alertes parents",
+    signAlerts: "Connexion pour Alertes parents",
   },
 } as const;
 
@@ -43,16 +56,28 @@ function planCtaClass(primary: boolean) {
 export function OptionalUpgrades({
   side = "both",
   signedIn = false,
+  initialFlags = null,
 }: {
   side?: "parent" | "daycare" | "both";
   signedIn?: boolean;
+  initialFlags?: Record<string, boolean> | null;
 }) {
   const { locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const t = COPY[loc];
   const showFamilies = side === "both" || side === "parent";
   const showDaycares = side === "both" || side === "daycare";
+  const [flags, setFlags] = useState<Record<string, boolean> | null>(initialFlags);
+  const [parentInterval, setParentInterval] = useState<"month" | "year">("year");
+  const [daycareInterval, setDaycareInterval] = useState<"month" | "year">("year");
+  useEffect(() => {
+    void getUpgradePriceFlags()
+      .then((next) => setFlags(next))
+      .catch(() => setFlags({}));
+  }, []);
   const prices = Object.fromEntries(PROVIDER_PLANS.map((plan) => [plan.id, plan]));
+  const familyPlans = PARENT_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, parentInterval, flags));
+  const daycarePlans = DAYCARE_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, daycareInterval, flags));
   return (
     <section className="ke-gutter mx-auto max-w-6xl py-12" data-ke="optional-upgrades">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{t.kicker}</p>
@@ -62,41 +87,71 @@ export function OptionalUpgrades({
         {showFamilies ? (
           <div data-ke="upgrades-families">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{t.families}</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {PARENT_UPGRADE_PLANS.map((plan) => (
-                <UpgradePlanCard
-                  key={plan.id}
-                  plan={plan}
-                  locale={loc}
-                  monthly={plan.id === "plus" ? PLUS_MONTHLY_CAD : 0}
-                  yearly={plan.id === "plus" ? PLUS_YEARLY_CAD : null}
-                  cta={
-                    plan.recommended ? (
-                      signedIn ? (
-                        <Link to="/parent" search={{ tab: "payments" }} className={planCtaClass(true)}>
-                          {t.openParent}
+            <div className="mt-3">
+              <BillingIntervalToggle
+                interval={parentInterval}
+                onChange={setParentInterval}
+                savePercents={visibleYearlySavings(
+                  PARENT_UPGRADE_PLANS.map((plan) => plan.id),
+                  flags,
+                )}
+                locale={loc}
+              />
+            </div>
+            <div className={familyPlans.length > 2 ? "mt-3 grid gap-3 lg:grid-cols-3" : "mt-3 grid gap-3 sm:grid-cols-2"}>
+              {familyPlans.map((plan) => {
+                const amount =
+                  plan.id === "alerts"
+                    ? { monthly: ALERTS_MONTHLY_CAD, yearly: ALERTS_YEARLY_CAD }
+                    : plan.id === "plus"
+                      ? { monthly: PLUS_MONTHLY_CAD, yearly: PLUS_YEARLY_CAD }
+                      : { monthly: 0, yearly: null };
+                const label = plan.id === "alerts" ? (signedIn ? t.openAlerts : t.signAlerts) : signedIn ? t.openParent : t.signParent;
+                return (
+                  <UpgradePlanCard
+                    key={plan.id}
+                    plan={plan}
+                    locale={loc}
+                    interval={parentInterval}
+                    monthly={amount.monthly}
+                    yearly={amount.yearly}
+                    cta={
+                      plan.id === "free" ? null : signedIn ? (
+                        <Link to="/parent" search={{ tab: "payments" }} className={planCtaClass(plan.recommended)}>
+                          {label}
                         </Link>
                       ) : (
                         <Link
                           to="/login"
                           search={{ role: "parent", desk: "parent", intent: "in", next: "/parent?tab=payments" }}
-                          className={planCtaClass(true)}
+                          className={planCtaClass(plan.recommended)}
                         >
-                          {t.signParent}
+                          {label}
                         </Link>
                       )
-                    ) : null
-                  }
-                />
-              ))}
+                    }
+                  />
+                );
+              })}
             </div>
           </div>
         ) : null}
         {showDaycares ? (
           <div data-ke="upgrades-daycares">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{t.daycares}</p>
-            <div className="mt-3 grid gap-3 lg:grid-cols-3">
-              {DAYCARE_UPGRADE_PLANS.map((plan) => {
+            <div className="mt-3">
+              <BillingIntervalToggle
+                interval={daycareInterval}
+                onChange={setDaycareInterval}
+                savePercents={visibleYearlySavings(
+                  DAYCARE_UPGRADE_PLANS.map((plan) => plan.id),
+                  flags,
+                )}
+                locale={loc}
+              />
+            </div>
+            <div className={daycarePlans.length > 2 ? "mt-3 grid gap-3 lg:grid-cols-3" : "mt-3 grid gap-3 sm:grid-cols-2"}>
+              {daycarePlans.map((plan) => {
                 const price = prices[plan.id];
                 const primary = plan.recommended;
                 const label = plan.id === "network" ? (signedIn ? t.openNetwork : t.signNetwork) : signedIn ? t.openDaycare : t.signDaycare;
@@ -105,6 +160,7 @@ export function OptionalUpgrades({
                     key={plan.id}
                     plan={plan}
                     locale={loc}
+                    interval={daycareInterval}
                     monthly={price?.monthly ?? 0}
                     yearly={price?.yearly}
                     perSite={price?.perSite}

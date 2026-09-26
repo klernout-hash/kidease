@@ -1,7 +1,8 @@
 /**
- * One copy source for Free / Plus and Free / Pro / Network.
- * Every benefit here is a gate or window that the code actually applies.
- * Do not add a line that is only a hope (enrolments, peace of mind, priority support).
+ * One copy source for each role: Free plus two paid upgrades.
+ * Every benefit is a gate the code actually applies.
+ * Parent Alerts stays hidden until both of its Stripe price env vars are set.
+ * Network yearly ($390/site) is a proposal until STRIPE_PRICE_NETWORK_YEARLY is set.
  */
 
 export type PlanLocale = "en" | "fr";
@@ -17,6 +18,41 @@ export type UpgradePlanCopy = {
   pitch: PlanLine;
   benefits: PlanLine[];
 };
+
+export type PaidPlanId = "plus" | "alerts" | "pro" | "network";
+
+export type PaidPlanPrice = {
+  id: PaidPlanId;
+  monthlyCad: number;
+  yearlyCad: number;
+  /** Hide the whole tier until both monthly and yearly Stripe price env vars are set. */
+  hideUntilBothPrices: boolean;
+  /** Yearly amount is a proposal. Checkout stays off until that env var is set. */
+  yearlyProposal: boolean;
+};
+
+/**
+ * Amounts kept in sync with STRIPE_CATALOG. Percentages are computed, never typed in by hand.
+ * Parent Alerts ($14.99 / $149) and Network yearly ($390/site) are proposals for Kyle.
+ */
+export const PAID_PLAN_PRICES: PaidPlanPrice[] = [
+  { id: "plus", monthlyCad: 7.99, yearlyCad: 59, hideUntilBothPrices: false, yearlyProposal: false },
+  { id: "alerts", monthlyCad: 14.99, yearlyCad: 149, hideUntilBothPrices: true, yearlyProposal: true },
+  { id: "pro", monthlyCad: 49, yearlyCad: 490, hideUntilBothPrices: false, yearlyProposal: false },
+  { id: "network", monthlyCad: 39, yearlyCad: 390, hideUntilBothPrices: false, yearlyProposal: true },
+];
+
+/** Catalog keys. Client-safe strings; the server maps them to STRIPE_PRICE_* env names. */
+export const PAID_PLAN_PRICE_KEYS: Record<PaidPlanId, { month: string; year: string }> = {
+  plus: { month: "plus_monthly", year: "plus_yearly" },
+  alerts: { month: "parent_alerts_monthly", year: "parent_alerts_yearly" },
+  pro: { month: "pro_monthly", year: "pro_yearly" },
+  network: { month: "network_monthly", year: "network_yearly" },
+};
+
+export function paidPlanPrice(id: string): PaidPlanPrice | null {
+  return PAID_PLAN_PRICES.find((plan) => plan.id === id) ?? null;
+}
 
 export const RECOMMENDED_LABEL: PlanLine = { en: "Recommended", fr: "Recommandé" };
 
@@ -45,6 +81,11 @@ const NETWORK_PITCH: PlanLine = {
   fr: "Réseau est le forfait multi-sites : les mêmes outils Pro, plus les totaux pour 3 sites ou plus. La ville en vedette reste une option.",
 };
 
+const PARENT_ALERTS_PITCH: PlanLine = {
+  en: "Adds SMS and push on top of Parent Plus. Email alerts stay free. SMS and push send only when those channels are on.",
+  fr: "Ajoute les SMS et le push en plus de Plus parents. Les alertes courriel restent gratuites. SMS et push partent seulement quand ces canaux sont activés.",
+};
+
 export const PARENT_UPGRADE_PLANS: UpgradePlanCopy[] = [
   {
     id: "free",
@@ -68,6 +109,27 @@ export const PARENT_UPGRADE_PLANS: UpgradePlanCopy[] = [
       {
         en: "Parent ↔ centre video tour, when video is on",
         fr: "Visite vidéo parent ↔ centre, quand la vidéo est activée",
+      },
+    ],
+  },
+  {
+    id: "alerts",
+    role: "parent",
+    recommended: false,
+    name: { en: "Parent Alerts", fr: "Alertes parents" },
+    pitch: PARENT_ALERTS_PITCH,
+    benefits: [
+      {
+        en: "Parent ↔ centre video tour, when video is on",
+        fr: "Visite vidéo parent ↔ centre, quand la vidéo est activée",
+      },
+      {
+        en: "SMS for saved-search alerts, when SMS is on",
+        fr: "SMS pour les alertes de recherche, quand les SMS sont activés",
+      },
+      {
+        en: "Push for saved-search alerts, when push is on",
+        fr: "Notifications push pour les alertes de recherche, quand le push est activé",
       },
     ],
   },
@@ -126,6 +188,92 @@ export function yearlySavingsCad(monthly: number, yearly: number | null | undefi
   if (yearly == null) return null;
   const save = Math.round((monthly * 12 - yearly) * 100) / 100;
   return save > 0 ? save : null;
+}
+
+function cents(amountCad: number): number {
+  return Math.round(amountCad * 100);
+}
+
+/**
+ * Floor of (monthly × 12 − yearly) / (monthly × 12), as a percent.
+ * Rounded down so the saving is never overstated. Null when yearly is not cheaper.
+ */
+export function yearlySavingsPercentFromCents(monthlyCents: number, yearlyCents: number): number | null {
+  if (!Number.isFinite(monthlyCents) || !Number.isFinite(yearlyCents)) return null;
+  const full = monthlyCents * 12;
+  if (full <= 0 || yearlyCents >= full) return null;
+  return Math.floor(((full - yearlyCents) * 100) / full);
+}
+
+export function yearlySavingsPercent(monthlyCad: number, yearlyCad: number | null | undefined): number | null {
+  if (yearlyCad == null) return null;
+  return yearlySavingsPercentFromCents(cents(monthlyCad), cents(yearlyCad));
+}
+
+/** One pill for the yearly side of a toggle. A range uses each plan's floored percent. */
+export function yearlySavingsToggleLabel(percents: Array<number | null | undefined>, locale: PlanLocale): string | null {
+  const unique = [...new Set(percents.filter((n): n is number => typeof n === "number" && n > 0))].sort((a, b) => a - b);
+  if (!unique.length) return null;
+  if (locale === "fr") {
+    const span = unique.length === 1 ? `${unique[0]} %` : `${unique[0]}–${unique[unique.length - 1]} %`;
+    return `Économisez ${span}`;
+  }
+  const span = unique.length === 1 ? `${unique[0]}%` : `${unique[0]}–${unique[unique.length - 1]}%`;
+  return `Save ${span}`;
+}
+
+export function paidPlanVisible(
+  id: string,
+  interval: "month" | "year",
+  flags: Partial<Record<string, boolean>> | null | undefined,
+): boolean {
+  if (id === "free") return true;
+  const price = paidPlanPrice(id);
+  const keys = PAID_PLAN_PRICE_KEYS[id as PaidPlanId];
+  if (!price || !keys) return false;
+  const ready = flags ?? {};
+  if (price.hideUntilBothPrices) return Boolean(ready[keys.month] && ready[keys.year]);
+  return Boolean(ready[keys[interval]]);
+}
+
+export function visibleYearlySavings(
+  ids: string[],
+  flags: Partial<Record<string, boolean>> | null | undefined,
+): number[] {
+  const out: number[] = [];
+  for (const id of ids) {
+    if (!paidPlanVisible(id, "year", flags)) continue;
+    const price = paidPlanPrice(id);
+    if (!price) continue;
+    const percent = yearlySavingsPercent(price.monthlyCad, price.yearlyCad);
+    if (percent != null) out.push(percent);
+  }
+  return out;
+}
+
+export function checkoutCtaLabel(input: {
+  planName: string;
+  interval: "month" | "year";
+  monthly: number;
+  yearly: number | null | undefined;
+  locale: PlanLocale;
+}): string {
+  if (input.interval !== "year") {
+    return input.locale === "fr" ? `Choisir ${input.planName}` : `Choose ${input.planName}`;
+  }
+  const percent = yearlySavingsPercent(input.monthly, input.yearly);
+  if (percent == null) {
+    return input.locale === "fr" ? `Choisir ${input.planName} à l’année` : `Choose ${input.planName} yearly`;
+  }
+  return input.locale === "fr"
+    ? `Choisir ${input.planName} à l’année · économisez ${percent} %`
+    : `Choose ${input.planName} yearly · save ${percent}%`;
+}
+
+export function yearlySavingSuccess(name: string, percent: number, locale: PlanLocale): string {
+  return locale === "fr"
+    ? `Vous êtes sur ${name} à l’année et vous économisez ${percent} %`
+    : `You're on ${name} yearly and saving ${percent}%`;
 }
 
 export function formatPlanCad(amount: number, locale: PlanLocale): string {

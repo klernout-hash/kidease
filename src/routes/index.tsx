@@ -61,6 +61,7 @@ import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { homeLiveStrip } from "@/lib/home-live-strip";
 import { displayDistance } from "@/lib/units";
 import { showPayCtas } from "@/lib/features";
+import { catalogStatus } from "@/lib/server/stripe-catalog";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import {
   honestVacancy,
@@ -98,6 +99,7 @@ export const Route = createFileRoute("/")({
       featuredReady: painted.ready,
       origin,
       showPay: showPayCtas(),
+      priceFlags: catalogStatus(),
     };
   },
   staleTime: 60_000,
@@ -136,10 +138,10 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-function HomeUpgrades() {
+function HomeUpgrades({ priceFlags }: { priceFlags: Record<string, boolean> }) {
   const { user } = useCurrentUserState();
   const { session, ready, sticky } = useSessionDesks();
-  if (!user) return <OptionalUpgrades />;
+  if (!user) return <OptionalUpgrades initialFlags={priceFlags} />;
   if (!ready || !session) return null;
   const side = visibleUpgradeSide({
     role: session.role,
@@ -148,7 +150,7 @@ function HomeUpgrades() {
     activeDesk: sticky,
   });
   if (side === "none") return null;
-  return <OptionalUpgrades side={side} signedIn />;
+  return <OptionalUpgrades side={side} signedIn initialFlags={priceFlags} />;
 }
 
 function Home() {
@@ -596,7 +598,7 @@ function Home() {
           </div>
         </section>
 
-        {boot.showPay ? <HomeUpgrades /> : null}
+        {boot.showPay ? <HomeUpgrades priceFlags={boot.priceFlags} /> : null}
 
         <section className="ke-defer-paint bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">

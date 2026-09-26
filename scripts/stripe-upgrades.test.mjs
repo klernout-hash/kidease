@@ -163,6 +163,24 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   });
   assert.equal(plus.lane, "parent_plus");
   assert.equal(plus.status, "active");
+  assert.equal(plus.plan, "plus");
+
+  const alerts = planCatalogWrite({
+    type: "invoice.paid",
+    metadata: { kidease: "parent_plus", role: "parent", buyer: "parent", user_id: "user_1", plan: "alerts", interval: "year" },
+    subscriptionId: "sub_alerts",
+    userId: "user_1",
+  });
+  assert.equal(alerts.lane, "parent_plus");
+  assert.equal(alerts.plan, "alerts");
+  assert.equal(alerts.interval, "year");
+
+  const wrongParentPlan = planCatalogWrite({
+    type: "invoice.paid",
+    metadata: { kidease: "parent_plus", role: "parent", buyer: "parent", user_id: "user_1", plan: "pro" },
+    userId: "user_1",
+  });
+  assert.equal(wrongParentPlan.lane, "ignore");
 
   const boostPaid = planCatalogWrite({
     type: "checkout.session.completed",
@@ -236,6 +254,12 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   assert.doesNotMatch(featuredBody, /plus_plan/);
   assert.match(src("migrations/0062_provider_addon_billing.sql"), /featured_city_subscription_id/);
   assert.match(src("migrations/0062_provider_addon_billing.sql"), /job_post_credits/);
+  assert.match(src("migrations/0063_parent_alerts_plan.sql"), /plus_plan in \('free', 'plus', 'alerts'\)/);
+  const plusFn = lifecycle.slice(lifecycle.indexOf("export async function applyParentPlus"));
+  const plusBody = plusFn.slice(0, plusFn.indexOf("async function bumpClaimPriority"));
+  assert.match(plusBody, /alerts/);
+  assert.doesNotMatch(plusBody, /selected_plan/);
+  assert.match(src("src/lib/server/stripe-bootstrap.ts"), /createMissing && !item\.proposal/);
   assert.match(src("migrations/0062_provider_addon_billing.sql"), /stripe_checkout_errors/);
 });
 
@@ -271,8 +295,24 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
     false,
   );
   assert.equal(upgradeSuccessTitle({ kind: "plan", item: "pro" }), "You're on Pro");
+  assert.equal(
+    upgradeSuccessTitle({ kind: "plan", item: "pro", interval: "year" }),
+    "You're on Pro yearly and saving 16%",
+  );
+  assert.equal(
+    upgradeSuccessTitle({ kind: "plan", item: "network", interval: "year" }),
+    "You're on Network yearly and saving 16%",
+  );
   assert.equal(upgradeSuccessTitle({ kind: "addon", item: "featured_city" }), "Featured city is live");
   assert.equal(upgradeSuccessTitle({ kind: "plus" }), "You're on Parent Plus");
+  assert.equal(
+    upgradeSuccessTitle({ kind: "plus", item: "plus", interval: "year" }),
+    "You're on Parent Plus yearly and saving 38%",
+  );
+  assert.equal(
+    upgradeSuccessTitle({ kind: "plus", item: "alerts", interval: "year" }),
+    "You're on Parent Alerts yearly and saving 17%",
+  );
 
   const raw = new StripeApiError(
     "You must provide at least one recurring price in `subscription` mode when using prices.",

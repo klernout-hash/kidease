@@ -188,6 +188,7 @@ export async function applyParentPlus(
     subscriptionId?: string | null;
     status?: string | null;
     interval?: string | null;
+    plan?: string | null;
     checkoutSessionId?: string | null;
   },
 ) {
@@ -195,7 +196,8 @@ export async function applyParentPlus(
   const interval: PlusInterval | null = isPlusInterval(input.interval) ? input.interval : null;
   const status = (input.status || "").trim() || null;
   const canceled = status === "canceled" || status === "unpaid" || status === "incomplete_expired";
-  const plusPlan = canceled ? "free" : "plus";
+  const requested = input.plan === "alerts" ? "alerts" : "plus";
+  const plusPlan = canceled ? "free" : requested;
   await sql`
     update profiles set
       plus_subscription_id = coalesce(${canceled ? null : input.subscriptionId ?? null}, plus_subscription_id),

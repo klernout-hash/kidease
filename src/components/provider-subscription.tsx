@@ -28,7 +28,8 @@ import { getProvider } from "@/lib/server/family";
 import { DirectorProStrip } from "@/components/director-pro-strip";
 import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { useSessionDesks } from "@/components/session-desks";
-import { daycareUpgradePlan } from "@/lib/upgrade-plans";
+import { checkoutCtaLabel, daycareUpgradePlan, paidPlanVisible, visibleYearlySavings } from "@/lib/upgrade-plans";
+import { BillingIntervalToggle } from "@/components/billing-interval-toggle";
 import { UpgradePlanCard } from "@/components/upgrade-plan-card";
 
 const COPY = {
@@ -100,9 +101,7 @@ function subscriptionError(err: unknown, fallback: string, plansOff: string) {
 
 function priceReady(state: ProviderSubscriptionState, plan: ProviderPlanId, interval: ProviderInterval) {
   if (plan === "free") return false;
-  if (plan === "pro") return interval === "year" ? Boolean(state.prices.pro_yearly) : Boolean(state.prices.pro_monthly);
-  if (plan === "network") return Boolean(state.prices.network_monthly);
-  return false;
+  return paidPlanVisible(plan, interval, state.prices);
 }
 
 export function ProviderSubscriptionPanel() {
@@ -114,7 +113,7 @@ export function ProviderSubscriptionPanel() {
   const adminPreview = session?.role === "admin";
   const showCheckout = showPay || adminPreview;
   const [state, setState] = useState<ProviderSubscriptionState | null>(null);
-  const [interval, setInterval] = useState<ProviderInterval>("month");
+  const [interval, setInterval] = useState<ProviderInterval>("year");
   const [addons, setAddons] = useState<ProviderAddonId[]>([]);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -126,7 +125,7 @@ export function ProviderSubscriptionPanel() {
 
   const applyState = useCallback((s: ProviderSubscriptionState) => {
     setState(s);
-    setInterval(s.interval);
+    if (s.entitlements.paid) setInterval(s.interval);
     setAddons(s.addons);
     setLoadError(false);
   }, []);
@@ -255,6 +254,7 @@ export function ProviderSubscriptionPanel() {
   }
 
   const liveCheckout = state.stripeLive && state.checkoutLive;
+  const visiblePlans = PROVIDER_PLANS.filter((plan) => paidPlanVisible(plan.id, interval, state.prices));
 
   if (!showCheckout) {
     return (
@@ -306,25 +306,18 @@ export function ProviderSubscriptionPanel() {
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {(["month", "year"] as const).map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setInterval(id)}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm",
-              interval === id ? "bg-primary text-primary-fg" : "bg-surface text-muted ring-1 ring-border hover:text-fg",
-            )}
-          >
-            {id === "month" ? t.monthly : t.yearly}
-          </button>
-        ))}
-        {interval === "year" ? <span className="text-xs text-subtle">{t.yearlySave}</span> : null}
-      </div>
+      <BillingIntervalToggle
+        interval={interval}
+        onChange={setInterval}
+        savePercents={visibleYearlySavings(
+          PROVIDER_PLANS.map((plan) => plan.id),
+          state.prices,
+        )}
+        locale={loc}
+      />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {PROVIDER_PLANS.map((plan) => {
+      <div className={visiblePlans.length > 2 ? "grid gap-4 lg:grid-cols-3" : "grid gap-4 sm:grid-cols-2"}>
+        {visiblePlans.map((plan) => {
           const entitled = state.entitlements.entitledPlan === plan.id;
           const selected = state.plan === plan.id;
           const current = entitled || (selected && !state.stripeLive);
@@ -336,6 +329,7 @@ export function ProviderSubscriptionPanel() {
               key={plan.id}
               plan={copy}
               locale={loc}
+              interval={interval}
               monthly={plan.monthly}
               yearly={plan.yearly}
               perSite={plan.perSite}
@@ -350,7 +344,21 @@ export function ProviderSubscriptionPanel() {
                     disabled={busy || (current && !canCharge) || (plan.id === "network" && state.siteCount < plan.minSites)}
                     onClick={() => void subscribe(plan.id)}
                   >
-                    {blockedPaid ? t.blocked : current && !canCharge ? t.current : canCharge ? t.checkout : t.subscribe}
+                    {blockedPaid
+                      ? t.blocked
+                      : current && !canCharge
+                        ? t.current
+                        : interval === "year" && canCharge
+                          ? checkoutCtaLabel({
+                              planName: plan.name[loc],
+                              interval,
+                              monthly: plan.monthly,
+                              yearly: plan.yearly,
+                              locale: loc,
+                            })
+                          : canCharge
+                            ? t.checkout
+                            : t.subscribe}
                   </Button>
                 </>
               }
@@ -365,7 +373,7 @@ export function ProviderSubscriptionPanel() {
           <thead>
             <tr className="border-b border-border text-xs uppercase tracking-[0.12em] text-subtle">
               <th className="px-4 py-3 font-medium">{t.compare}</th>
-              {PROVIDER_PLANS.map((p) => (
+              {visiblePlans.map((p) => (
                 <th key={p.id} className="px-4 py-3 font-medium">
                   {p.name[loc]}
                 </th>
@@ -376,9 +384,11 @@ export function ProviderSubscriptionPanel() {
             {PROVIDER_COMPARE.map((row) => (
               <tr key={row.id} className="border-b border-border last:border-0">
                 <th className="px-4 py-3 font-medium text-fg">{row.label[loc]}</th>
-                <td className="px-4 py-3 text-muted">{row.free[loc]}</td>
-                <td className="px-4 py-3 text-muted">{row.pro[loc]}</td>
-                <td className="px-4 py-3 text-muted">{row.network[loc]}</td>
+                {visiblePlans.map((p) => (
+                  <td key={p.id} className="px-4 py-3 text-muted">
+                    {row[p.id][loc]}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
