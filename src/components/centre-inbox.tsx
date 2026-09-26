@@ -88,22 +88,22 @@ export function CentreInboxDesk({
   }
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     void loadList().catch(() => setItems([]));
     void listLeadRequests({ data: { desk: "centre" } })
       .then(setLeads)
       .catch(() => setLeads([]));
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
-    if (!user || !selectedId) {
+    if (!user?.id || !selectedId) {
       setMessages([]);
       setTours([]);
       setThreadReady(false);
       return;
     }
     void loadThread(selectedId);
-  }, [user, selectedId]);
+  }, [user?.id, selectedId]);
 
   useEffect(() => {
     setDetailOpen(openDetail);

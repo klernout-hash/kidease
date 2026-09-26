@@ -11,13 +11,13 @@ export function RoleBoot() {
   const { user, isPending } = useCurrentUserState();
 
   useEffect(() => {
-    if (isPending || !user) return;
+    if (isPending || !user?.id) return;
     const role = readRememberedRole();
     if (!role) return;
     void setRole({ data: role }).finally(() => {
       forgetRememberedRole();
     });
-  }, [user, isPending]);
+  }, [user?.id, isPending]);
 
   return null;
 }

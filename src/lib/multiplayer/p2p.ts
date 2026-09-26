@@ -76,6 +76,8 @@ interface PeerSlot {
 
 const FAST_POLL_MS = 400;
 const IDLE_POLL_MS = 2000;
+/** Hidden tabs are not in a call. `/api/rtc` is signaling, not a server function. */
+const HIDDEN_POLL_MS = 30_000;
 const PING_INTERVAL_MS = 2000;
 const STALL_MS = 10_000;
 const MAX_RECOVERY_ATTEMPTS = 3;
@@ -106,6 +108,12 @@ export class P2PRoom {
   private closed = false;
   private everPolled = false;
   private lastPeersFingerprint = "";
+  private pollFailures = 0;
+  private readonly onVisibility = () => {
+    if (this.closed || typeof document === "undefined" || document.hidden) return;
+    this.pollFailures = 0;
+    this.schedulePoll(this.anyPairConnecting() ? FAST_POLL_MS : IDLE_POLL_MS);
+  };
 
   constructor(opts: P2PRoomOptions) {
     this.opts = opts;
@@ -123,7 +131,10 @@ export class P2PRoom {
       // First poll can fail transiently; the scheduled loop below retries.
     }
     if (this.closed) return;
-    this.schedulePoll(this.anyPairConnecting() ? FAST_POLL_MS : IDLE_POLL_MS);
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", this.onVisibility);
+    }
+    this.schedulePoll(this.nextPollDelay());
     this.pingTimer = setInterval(() => {
       this.pingAll();
       this.watchdog();
@@ -132,6 +143,9 @@ export class P2PRoom {
 
   close(): void {
     this.closed = true;
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", this.onVisibility);
+    }
     if (this.pollTimer) clearTimeout(this.pollTimer);
     if (this.pingTimer) clearInterval(this.pingTimer);
     for (const slot of this.peers.values()) slot.pc.close();
@@ -210,14 +224,27 @@ export class P2PRoom {
     }
   }
 
+  private nextPollDelay(): number {
+    if (typeof document !== "undefined" && document.hidden) return HIDDEN_POLL_MS;
+    const base = this.anyPairConnecting() ? FAST_POLL_MS : IDLE_POLL_MS;
+    if (this.pollFailures <= 0) return base;
+    return Math.min(HIDDEN_POLL_MS, base * 2 ** Math.min(this.pollFailures, 6));
+  }
+
   private async poll(): Promise<void> {
     if (this.closed) return;
+    if (typeof document !== "undefined" && document.hidden) {
+      this.schedulePoll(HIDDEN_POLL_MS);
+      return;
+    }
     try {
       await this.pollOnce();
+      this.pollFailures = 0;
     } catch {
       // Transient poll failures are expected (tab sleep, deploy roll); retry.
+      this.pollFailures += 1;
     }
-    this.schedulePoll(this.anyPairConnecting() ? FAST_POLL_MS : IDLE_POLL_MS);
+    this.schedulePoll(this.nextPollDelay());
   }
 
   private reconcileRoster(peers: { id: string; name: string }[]): void {

@@ -249,9 +249,9 @@ function AdminPage() {
   const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role, session.email));
 
   useEffect(() => {
-    if (!user || !admin) return;
+    if (!user?.id || !admin) return;
     void refresh();
-  }, [user, admin]);
+  }, [user?.id, admin]);
 
   useEffect(() => {
     setPeopleQ(search.q || "");
