@@ -227,8 +227,10 @@ describe("null catalog rows stay renderable", () => {
   it("coerces a missing name and skips rows without id or slug", () => {
     const neon = src("src/lib/server/catalog-neon.ts");
     const utils = src("src/lib/utils.ts");
-    assert.match(utils, /value: string \| null \| undefined/);
-    assert.match(utils, /String\(value \?\? ""\)/);
+    const html = src("src/lib/html-text.ts");
+    assert.match(html, /value: string \| null \| undefined/);
+    assert.match(html, /String\(value \?\? ""\)/);
+    assert.match(utils, /decodeHtml\(value\)/);
     assert.match(neon, /export function catalogRowRenderable/);
     assert.match(neon, /rows\.filter\(catalogRowRenderable\)/);
     assert.match(neon, /correctCentreNameTypos\(String\(row\.name \|\| ""\)\.trim\(\)\) \|\| slug/);

@@ -6,7 +6,7 @@ import { PhotoCarousel } from "@/components/photo-carousel";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
-import { cn, displayCentreName, money } from "@/lib/utils";
+import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import { displayDistance } from "@/lib/units";
@@ -153,12 +153,12 @@ export const DaycareCard = memo(function DaycareCard({
   const feePillLabel = feePillKey ? t(feePillKey) : "";
   const licenseWarning =
     license && !isCatalogueMatchedBadge(license) && cardPhotoLicenseWarning(license.id) ? license : null;
-  const ages = listingAgeRangeText(item, "months");
-  const hours = (item.hours || "").replace(/Monday to Friday/i, "Mon–Fri").trim();
-  const facility = classifyFacilityType(item);
-  const typeLabel = facilityTypeSeoKind(facility.type, locale === "fr" ? "fr" : "en");
-  const ageChips = listingAgeChips(item);
   const loc = locale === "fr" ? "fr" : "en";
+  const ages = listingAgeRangeText(item, "months", loc);
+  const hours = displayListingText(item.hours).replace(/Monday to Friday/i, "Mon–Fri").trim();
+  const facility = classifyFacilityType(item);
+  const typeLabel = facilityTypeSeoKind(facility.type, loc);
+  const ageChips = listingAgeChips(item);
   const line3 = [typeLabel, ages, hours].filter(Boolean).join(" · ");
   const photosAge = photoLine(item, t, locale);
   const photoText = photosAge.kind === "unknown" ? "" : photosAge.text;
