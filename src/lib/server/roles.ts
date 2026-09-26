@@ -38,15 +38,6 @@ function bootstrapEmail() {
 
 export type { SessionDesks };
 
-async function claimParentCrmIntake(userId: string) {
-  try {
-    const { ensureCrmIntake } = await import("@/lib/server/family");
-    await ensureCrmIntake(userId, "parent");
-  } catch (err) {
-    console.error("[kidease-ghl] ensure intake failed", err);
-  }
-}
-
 async function claimProviderCrmIntake(userId: string) {
   try {
     const { ensureCrmIntake } = await import("@/lib/server/family");
@@ -118,7 +109,6 @@ export async function resolveAdminAccess(userId: string) {
     insert into profiles (user_id, role) values (${userId}, 'parent')
     on conflict (user_id) do nothing
   `.catch(() => undefined);
-  await claimParentCrmIntake(userId);
 
   const stored = parseAppRole(await profileRole(sql, userId));
   const actor = await lookupUser(userId);
@@ -186,11 +176,15 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     insert into profiles (user_id, role) values (${userId}, 'parent')
     on conflict (user_id) do nothing
   `.catch(() => undefined);
-  await claimParentCrmIntake(userId);
 
   const access = await resolveAdminAccess(userId);
   const stored = access.ok ? "admin" : access.role;
   const owned = await ownsCentre(sql, userId);
+  // Do not claim Parent Onboard here. A new profile defaults to parent, and
+  // this loader runs for every signed-in page — including a daycare signup
+  // before setRole("provider") lands. That filed providers on Parent Onboard.
+  // Parent intake stays on an explicit parent choice. Provider intake still
+  // runs once the stored role or an owned centre says this is a daycare.
   if (stored === "provider" || owned) await claimProviderCrmIntake(userId);
   const member = owned ? false : await isActiveCentreMember(sql, userId);
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
