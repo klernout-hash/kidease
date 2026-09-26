@@ -131,7 +131,8 @@ test("listing route redirects typo slugs; generators and Neon lookup stay remapp
   assert.match(listing, /seo\?\.slug && seo\.slug !== params\.slug/);
   assert.match(listing, /throw redirect\(/);
   assert.match(listing, /to:\s*"\/daycare\/\$slug"/);
-  assert.match(listing, /isRedirect/);
+  assert.match(listing, /rethrowRouterControl\(error, params\.slug\)/);
+  assert.match(src("src/lib/listing-loader-errors.ts"), /isRedirect\(error\)/);
 
   const vercel = src("vercel.json");
   assert.match(vercel, /little-fox-child-care-cetnre-103205/);
