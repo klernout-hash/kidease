@@ -11,6 +11,7 @@ import { splitPhotoList } from "@/lib/listing-photo";
 import { clampRadiusKm } from "@/lib/proximity";
 import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { followMergedListing } from "@/lib/listing-merge";
+import { hiddenReviewPlaceFromRow } from "@/lib/hidden-review";
 import { correctCentreNameTypos, listingSlugLookupKeys, normalizeListingSlug } from "@/lib/listing-slug";
 import { listingCultureFrom } from "@/lib/listing-culture";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
@@ -302,6 +303,42 @@ export async function neonCatalogBySlug(slug: string): Promise<CatalogDaycare | 
     );
     const keeper = resolved ? byId.get(resolved.id) : undefined;
     return keeper && catalogRowRenderable(keeper) ? catalogRowToListing(keeper) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Slug of a hidden possible-second-site row. Does not follow merged_into.
+ * A PEI name fault and a merged duplicate return null here.
+ */
+export async function neonHiddenReviewPlace(slug: string): Promise<{ city: string; province: string } | null> {
+  if (dbSource !== "neon") return null;
+  const keys = listingSlugLookupKeys(slug);
+  if (keys.length === 0) return null;
+  try {
+    const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
+    const rows = await sql.query<{
+      slug: string;
+      city: string | null;
+      province: string | null;
+      merged_into: string | null;
+      import_fault: string | null;
+    }>(
+      `select slug, city, province, merged_into, import_fault
+         from daycares
+        where slug = any($1::text[])
+        limit 5`,
+      [keys],
+    );
+    const exact = rows.find((row) => row.slug === slug) ?? rows[0];
+    if (!exact) return null;
+    return hiddenReviewPlaceFromRow({
+      city: exact.city,
+      province: exact.province,
+      mergedInto: exact.merged_into,
+      importFault: exact.import_fault,
+    });
   } catch {
     return null;
   }

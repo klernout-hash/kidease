@@ -5,6 +5,7 @@
  */
 
 import { catalogueHoldReason, catalogueLicenceKey, cataloguePostalKey, hasRealStreetAddress, sameCatalogueCentre } from "./catalog-match.ts";
+import { HIDDEN_REVIEW_POSSIBLE_SECOND_SITE, LISTING_VISIBILITY } from "./listing-visibility.ts";
 
 export type DuplicateGroupInput = {
   basis?: string[];
@@ -55,7 +56,9 @@ export type MergeListingFacts = {
   leadCount?: number | null;
   messageCount?: number | null;
   listingActive?: number | boolean | null;
+  visibility?: string | null;
   mergedInto?: string | null;
+  importFault?: string | null;
 };
 
 export type MergeConversation = { id: string; userId: string };
@@ -111,8 +114,23 @@ export type MergeGroupPlan = {
   retiredMoves: MergeRetiredMove[];
   /** Same group, but not the same centre. Left live. */
   unrelatedIds: string[];
-  /** Same licence or same name, but the addresses disagree. Left live. */
+  /** Same licence or same name, but the addresses disagree. Hidden, not merged. */
   needsReview: MergeReviewItem[];
+  /** Newer or non-street copy hidden. merged_into stays null. */
+  hiddenReviews: HiddenReviewAction[];
+};
+
+export type HiddenReviewAction = {
+  liveId: string;
+  hiddenId: string;
+  names: string[];
+  addresses: string[];
+  city: string;
+  province: string;
+  reason: string;
+  flag: typeof HIDDEN_REVIEW_POSSIBLE_SECOND_SITE;
+  listingActive: 0;
+  visibility: typeof LISTING_VISIBILITY.adminOnly;
 };
 
 export type MergeReviewItem = {
@@ -126,10 +144,12 @@ export type MergePlan = {
   groups: MergeGroupPlan[];
   skipped: Array<{ ids: string[]; reason: string }>;
   needsReview: MergeReviewItem[];
+  hiddenReviews: HiddenReviewAction[];
   keepers: number;
   retired: number;
   fieldsFilled: number;
   childRecordsMoved: number;
+  hiddenReview: number;
 };
 
 const CLAIMED = new Set(["approved", "live", "active", "published", "pending", "waiting", "verified"]);
@@ -164,6 +184,8 @@ export function factsFromGroupRow(row: DuplicateGroupInput["rows"][number]): Mer
     leadCount: 0,
     messageCount: 0,
     mergedInto: null,
+    importFault: null,
+    visibility: LISTING_VISIBILITY.public,
   };
 }
 
@@ -212,6 +234,18 @@ export function compareKeeper(a: MergeListingFacts, b: MergeListingFacts): numbe
   if (photoDelta) return photoDelta;
   const completeDelta = completeness(b) - completeness(a);
   if (completeDelta) return completeDelta;
+  const ageDelta = createdMs(a) - createdMs(b);
+  if (ageDelta) return ageDelta;
+  return a.id.localeCompare(b.id);
+}
+
+/**
+ * Which row stays public when two addresses must not merge.
+ * A real street address wins, then the older row. A claim on the newer copy does not.
+ */
+export function compareLiveReview(a: MergeListingFacts, b: MergeListingFacts): number {
+  const streetDelta = Number(hasRealStreetAddress(b.address)) - Number(hasRealStreetAddress(a.address));
+  if (streetDelta) return streetDelta;
   const ageDelta = createdMs(a) - createdMs(b);
   if (ageDelta) return ageDelta;
   return a.id.localeCompare(b.id);
@@ -354,6 +388,53 @@ function uniqueLabels(values: Array<string | null | undefined>): string[] {
   return out;
 }
 
+function planHiddenReviews(
+  rows: MergeListingFacts[],
+  reviews: MergeReviewItem[],
+  protectedIds: Set<string>,
+): HiddenReviewAction[] {
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const hidden = new Set<string>();
+  const actions: HiddenReviewAction[] = [];
+  for (const item of reviews) {
+    const pair = item.ids.map((id) => byId.get(id)).filter((row): row is MergeListingFacts => Boolean(row));
+    if (pair.length !== 2) continue;
+    const [a, b] = pair;
+    if (hidden.has(a.id) || hidden.has(b.id)) continue;
+    const aProtected = protectedIds.has(a.id);
+    const bProtected = protectedIds.has(b.id);
+    if (aProtected && bProtected) continue;
+    let live: MergeListingFacts;
+    let hide: MergeListingFacts;
+    if (aProtected && !bProtected) {
+      live = a;
+      hide = b;
+    } else if (bProtected && !aProtected) {
+      live = b;
+      hide = a;
+    } else {
+      const ordered = [a, b].sort(compareLiveReview);
+      live = ordered[0];
+      hide = ordered[1];
+    }
+    if (protectedIds.has(hide.id)) continue;
+    hidden.add(hide.id);
+    actions.push({
+      liveId: live.id,
+      hiddenId: hide.id,
+      names: uniqueLabels([live.name, hide.name]),
+      addresses: uniqueLabels([live.address, hide.address]),
+      city: text(hide.city) || text(live.city),
+      province: text(hide.province) || text(live.province),
+      reason: item.reason,
+      flag: HIDDEN_REVIEW_POSSIBLE_SECOND_SITE,
+      listingActive: 0,
+      visibility: LISTING_VISIBILITY.adminOnly,
+    });
+  }
+  return actions;
+}
+
 function reviewItems(rows: MergeListingFacts[]): MergeReviewItem[] {
   const items: MergeReviewItem[] = [];
   for (let i = 0; i < rows.length; i += 1) {
@@ -374,34 +455,42 @@ function reviewItems(rows: MergeListingFacts[]): MergeReviewItem[] {
 /**
  * One group. Already-retired rows that point at the keeper are left alone.
  * A row that already points somewhere else is a conflict and is not moved.
- * A shared licence with two real streets is held, not merged.
+ * Two real streets, or a named venue with a different postal, hide the newer copy.
+ * That hide does not set merged_into.
  */
 export function planMergeGroup(
   facts: MergeListingFacts[],
   children: Map<string, MergeChildInventory> = new Map(),
-): MergeGroupPlan | { skip: string; reviews?: MergeReviewItem[] } {
+): MergeGroupPlan | { skip: string; hiddenReviews?: HiddenReviewAction[] } {
   const unique = new Map<string, MergeListingFacts>();
   for (const row of facts) {
     if (row.id) unique.set(row.id, row);
   }
   const rows = [...unique.values()];
   if (rows.length < 2) return { skip: "fewer than two rows" };
-  const open = rows.filter((row) => !text(row.mergedInto));
-  if (open.length === 0) return { skip: "already merged" };
+  const open = rows.filter((row) => !text(row.mergedInto) && !text(row.importFault));
+  if (open.length < 2) {
+    if (rows.some((row) => text(row.importFault))) return { skip: "already hidden" };
+    if (rows.some((row) => text(row.mergedInto)) || open.length === 0) return { skip: "already merged" };
+    return { skip: "fewer than two rows" };
+  }
   const reviews = reviewItems(open);
   const anchors = open.filter((row) => open.some((other) => other.id !== row.id && sameCatalogueCentre(row, other)));
   if (anchors.length === 0) {
-    if (reviews.length > 0) return { skip: "needs review", reviews };
-    if (open.length < 2) return { skip: "already merged" };
+    if (reviews.length > 0) return { skip: "hidden review", hiddenReviews: planHiddenReviews(open, reviews, new Set()) };
     return { skip: "not the same centre" };
   }
   const keeper = [...anchors].sort(compareKeeper)[0];
   const others = open.filter((row) => row.id !== keeper.id);
   const retired = others.filter((row) => sameCatalogueCentre(keeper, row));
-  const unrelatedIds = others.filter((row) => !sameCatalogueCentre(keeper, row)).map((row) => row.id);
+  const unrelated = others.filter((row) => !sameCatalogueCentre(keeper, row));
+  const unrelatedIds = unrelated.map((row) => row.id);
   const mergedIds = new Set([keeper.id, ...retired.map((row) => row.id)]);
-  const needsReview = reviews.filter((item) => item.ids.some((id) => !mergedIds.has(id)));
-  if (retired.length === 0 && needsReview.length > 0) return { skip: "needs review", reviews: needsReview };
+  const held = reviews.filter((item) => item.ids.some((id) => !mergedIds.has(id)));
+  const hiddenReviews = planHiddenReviews(open, held, mergedIds);
+  if (retired.length === 0 && hiddenReviews.length > 0) {
+    return { skip: "hidden review", hiddenReviews };
+  }
   if (retired.length === 0 && unrelatedIds.length === 0) return { skip: "already merged" };
   if (retired.length === 0) return { skip: "not the same centre" };
   const alreadyRetiredIds = rows.filter((row) => text(row.mergedInto) === keeper.id).map((row) => row.id);
@@ -433,7 +522,8 @@ export function planMergeGroup(
     moved,
     retiredMoves,
     unrelatedIds,
-    needsReview,
+    needsReview: [],
+    hiddenReviews,
   };
 }
 
@@ -445,6 +535,7 @@ export function planDuplicateMerges(
   const planned: MergeGroupPlan[] = [];
   const skipped: Array<{ ids: string[]; reason: string }> = [];
   const needsReview: MergeReviewItem[] = [];
+  const hiddenReviews: HiddenReviewAction[] = [];
   for (const group of groups) {
     const facts = group.rows.map((row) => {
       const base = factsFromGroupRow(row);
@@ -453,14 +544,22 @@ export function planDuplicateMerges(
     });
     const result = planMergeGroup(facts, children);
     if ("skip" in result) {
-      if (result.reviews) needsReview.push(...result.reviews);
+      if (result.hiddenReviews && result.hiddenReviews.length > 0) {
+        hiddenReviews.push(...result.hiddenReviews);
+        continue;
+      }
       skipped.push({ ids: group.rows.map((row) => row.id), reason: result.skip });
+      continue;
+    }
+    if (result.retiredIds.length === 0 && result.hiddenReviews.length > 0) {
+      hiddenReviews.push(...result.hiddenReviews);
       continue;
     }
     if (result.retiredIds.length === 0) {
       skipped.push({ ids: group.rows.map((row) => row.id), reason: "already merged" });
       continue;
     }
+    hiddenReviews.push(...result.hiddenReviews);
     needsReview.push(...result.needsReview);
     planned.push(result);
   }
@@ -468,10 +567,12 @@ export function planDuplicateMerges(
     groups: planned,
     skipped,
     needsReview,
+    hiddenReviews,
     keepers: planned.length,
     retired: planned.reduce((sum, group) => sum + group.retiredIds.length, 0),
     fieldsFilled: planned.reduce((sum, group) => sum + countFills(group.fieldFills), 0),
     childRecordsMoved: planned.reduce((sum, group) => sum + countMoved(group.moved), 0),
+    hiddenReview: hiddenReviews.length,
   };
 }
 
@@ -496,7 +597,30 @@ export type MergeRollbackInput = {
  * Guarded undo. Each statement checks the value this merge wrote.
  * It never deletes a daycare row.
  */
-export function buildRollbackSql(rows: MergeRollbackInput[]): string {
+export type HideRollbackInput = {
+  hiddenId: string;
+  liveId: string;
+  listingActive: number;
+  visibility: string;
+};
+
+export function hideRollbackInputs(
+  plan: MergePlan,
+  factsById: Map<string, MergeListingFacts>,
+): HideRollbackInput[] {
+  return plan.hiddenReviews.map((action) => {
+    const retired = factsById.get(action.hiddenId);
+    const active = retired?.listingActive;
+    return {
+      hiddenId: action.hiddenId,
+      liveId: action.liveId,
+      listingActive: active == null ? 1 : Number(active) ? 1 : 0,
+      visibility: text(retired?.visibility) || LISTING_VISIBILITY.public,
+    };
+  });
+}
+
+export function buildRollbackSql(rows: MergeRollbackInput[], hides: HideRollbackInput[] = []): string {
   const lines = [
     "-- Guarded rollback for a KidEase duplicate merge.",
     "-- Each update matches the keeper or retired id AND the value this merge wrote.",
@@ -555,6 +679,11 @@ export function buildRollbackSql(rows: MergeRollbackInput[]): string {
         `update daycare_views set daycare_id = ${sqlLiteral(row.retiredId)} where daycare_id = ${sqlLiteral(row.keeperId)} and viewed_on = ${sqlLiteral(day)} and not exists (select 1 from daycare_views existing where existing.daycare_id = ${sqlLiteral(row.retiredId)} and existing.viewed_on = ${sqlLiteral(day)});`,
       );
     }
+  }
+  for (const row of hides) {
+    lines.push(
+      `update daycares set listing_active = ${row.listingActive ? 1 : 0}, visibility = ${sqlLiteral(row.visibility || LISTING_VISIBILITY.public)}, import_fault = null, review_of = null where id = ${sqlLiteral(row.hiddenId)} and import_fault = ${sqlLiteral(HIDDEN_REVIEW_POSSIBLE_SECOND_SITE)} and review_of = ${sqlLiteral(row.liveId)} and merged_into is null;`,
+    );
   }
   lines.push("commit;");
   return `${lines.join("\n")}\n`;

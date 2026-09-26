@@ -514,6 +514,20 @@ export const getDaycare = createServerFn({ method: "GET" })
     }
   });
 
+/**
+ * Old URL of a hidden possible-second-site row.
+ * 301s to that city's hub or search page. Never to the live sibling.
+ */
+export const getHiddenReviewRedirect = createServerFn({ method: "GET" })
+  .validator((slug: string) => slug)
+  .handler(async ({ data: slug }) => {
+    const { neonHiddenReviewPlace } = await import("@/lib/server/catalog-neon");
+    const { hiddenReviewRedirectTarget } = await import("@/lib/hidden-review");
+    const place = await neonHiddenReviewPlace(slug);
+    if (!place) return null;
+    return hiddenReviewRedirectTarget(place.city, place.province);
+  });
+
 /** Slim catalogue snapshot for listing <head> / JSON-LD. No view increment. */
 export const getListingSeo = createServerFn({ method: "GET" })
   .validator((slug: string) => slug)

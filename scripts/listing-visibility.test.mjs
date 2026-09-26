@@ -286,6 +286,25 @@ test("nearby SQL excludes admin-only and test rows so map pins stay clean", () =
     isPublicListing({ name: "Stratford, PE C1B 2W8", slug: "stratford-pe", importFault: "pei_name_unrecoverable" }),
     false,
   );
+  assert.equal(
+    isPublicListing({
+      name: "Prairie Nature Children's Centre",
+      slug: "prairie-sanford",
+      importFault: "hidden_review_possible_second_site",
+      visibility: "admin_only",
+    }),
+    false,
+  );
+  const hiddenReview = {
+    id: "mx-prairie",
+    slug: "prairie-sanford",
+    name: "Prairie Nature Children's Centre",
+    importFault: "hidden_review_possible_second_site",
+    visibility: "admin_only",
+    isTest: false,
+  };
+  assert.equal(staffQueueRows([hiddenReview, { slug: "test-ghost", name: "Ghost" }], false).length, 1);
+  assert.equal(staffQueueRows([hiddenReview], false)[0].id, "mx-prairie");
 });
 
 test("catalogue extra file marks the ghost admin_only", () => {

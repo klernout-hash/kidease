@@ -38,7 +38,7 @@ import {
   settleAdminCentresLoad,
 } from "@/lib/admin-centres-load";
 import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
-import { decideCentre, listAdminCentres, listIncompleteAdminCentres, unmergeCentre, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
+import { decideCentre, listAdminCentres, listIncompleteAdminCentres, mergeHiddenReview, restoreHiddenReview, unmergeCentre, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { reprocessListingPhotos } from "@/lib/server/reprocess-listing-photos";
 import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
@@ -434,6 +434,32 @@ function AdminPage() {
     }
   }
 
+  async function onRestoreHiddenReview(daycareId: string) {
+    setBusy(`${daycareId}:restore-hidden`);
+    try {
+      await withReauth(() => restoreHiddenReview({ data: { daycareId } }), reauth.prompt);
+      alert("Restored. This listing is public again.");
+      await refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not restore that listing");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onMergeHiddenReview(daycareId: string) {
+    setBusy(`${daycareId}:merge-hidden`);
+    try {
+      await withReauth(() => mergeHiddenReview({ data: { daycareId } }), reauth.prompt);
+      alert("Merged. The old address now redirects to the listing that stayed live.");
+      await refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not merge that listing");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function onLicense(daycareId: string, action: LicenseReviewAction) {
     setBusy(`${daycareId}:${action}`);
     try {
@@ -576,6 +602,8 @@ function AdminPage() {
                         }}
                         onStraighten={onStraighten}
                         onUnmerge={onUnmerge}
+                        onRestoreHiddenReview={onRestoreHiddenReview}
+                        onMergeHiddenReview={onMergeHiddenReview}
                         mode="verify"
                       />
                     </li>
@@ -642,6 +670,8 @@ function AdminPage() {
               }}
               onStraighten={onStraighten}
               onUnmerge={onUnmerge}
+              onRestoreHiddenReview={onRestoreHiddenReview}
+              onMergeHiddenReview={onMergeHiddenReview}
             />
           )}
         </>
@@ -746,6 +776,8 @@ function AdminPage() {
                                     }}
                                     onStraighten={onStraighten}
                                     onUnmerge={onUnmerge}
+                                    onRestoreHiddenReview={onRestoreHiddenReview}
+                                    onMergeHiddenReview={onMergeHiddenReview}
                                   />
                                 </li>
                               ))

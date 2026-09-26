@@ -22,6 +22,7 @@ import {
   planDuplicateMerges,
   rollbackInputsForPlan,
   buildRollbackSql,
+  hideRollbackInputs,
 } from "../src/lib/listing-merge.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -119,7 +120,9 @@ function factsFromDbRow(row) {
     leadCount: Number(row.lead_count) || 0,
     messageCount: Number(row.message_count) || 0,
     listingActive: row.listing_active,
+    visibility: asText(row.visibility) || "public",
     mergedInto: asText(row.merged_into),
+    importFault: asText(row.import_fault),
   };
 }
 
@@ -134,7 +137,7 @@ async function loadLive(databaseUrl, ids) {
               d.license_number, d.license_status, d.description,
               d.age_min_months, d.age_max_months,
               d.infant_monthly, d.toddler_monthly, d.preschool_monthly, d.part_time_monthly,
-              d.photos, d.listing_active, d.merged_into,
+              d.photos, d.listing_active, d.visibility, d.merged_into, d.import_fault,
               (select count(*)::int from bookings b where b.daycare_id = d.id) as enquiry_count,
               (select count(*)::int from lead_requests l where l.daycare_id = d.id) as lead_count,
               (select count(*)::int from messages m
@@ -205,13 +208,15 @@ function printPlan(plan, groups) {
   console.log(`[merge-duplicates] skipped ${plan.skipped.length}`);
   console.log(`[merge-duplicates] skippedNotSameCentre ${notSame}`);
   console.log(`[merge-duplicates] leftSeparate ${leftSeparate}`);
-  const reviews = plan.needsReview || [];
-  console.log(`[merge-duplicates] needsReview ${reviews.length}`);
-  for (const item of reviews) {
-    const names = (item.names || []).join(" / ") || item.ids.join(" / ");
+  const hidden = plan.hiddenReviews || [];
+  console.log(`[merge-duplicates] hiddenReview ${hidden.length}`);
+  for (const item of hidden) {
+    const names = (item.names || []).join(" / ") || `${item.liveId} / ${item.hiddenId}`;
     const addresses = (item.addresses || []).join(" | ");
-    console.log(`[merge-duplicates] needsReview ${names}${addresses ? ` | ${addresses}` : ""}`);
+    console.log(`[merge-duplicates] hiddenReview ${names}${addresses ? ` | ${addresses}` : ""}`);
   }
+  // PEI city/postal names are hidden by repair-pei-names, not by this merge.
+  console.log(`[merge-duplicates] peiHidden 0`);
   for (const [province, tally] of [...provinces.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
     console.log(`[merge-duplicates] province ${province} keepers ${tally.keepers} retired ${tally.retired}`);
   }
@@ -322,6 +327,19 @@ async function applyPlan(client, plan, factsById) {
       );
     }
   }
+  for (const action of plan.hiddenReviews || []) {
+    await client.query(
+      `update daycares
+          set listing_active = 0,
+              visibility = 'admin_only',
+              import_fault = $1,
+              review_of = $2
+        where id = $3
+          and merged_into is null
+          and (import_fault is null or import_fault = $1)`,
+      [action.flag, action.liveId, action.hiddenId],
+    );
+  }
   const { localCatalogMatchIds, persistLocalLicenseMatches } = await import("../src/lib/server/license-match.ts");
   const matchIds = localCatalogMatchIds(
     plan.groups.map((group) => {
@@ -391,7 +409,7 @@ async function main() {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const backupPath = join(backupDir, `${stamp}-backup.json`);
   const rollbackPath = join(backupDir, `${stamp}-rollback.sql`);
-  const rollback = buildRollbackSql(rollbackInputsForPlan(plan, factsById));
+  const rollback = buildRollbackSql(rollbackInputsForPlan(plan, factsById), hideRollbackInputs(plan, factsById));
   const before = plan.groups.map((group) => {
     const fact = factsById.get(group.keeperId) || {};
     return {

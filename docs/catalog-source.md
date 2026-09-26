@@ -148,10 +148,11 @@ where id ilike 'ke-test-%'
 
 ## Duplicate listings
 
-Migration `0062_listing_merge.sql` adds `merged_into` and `import_fault`.
+Migration `0062_listing_merge.sql` adds `merged_into`, `import_fault`, and `review_of`.
 A Vercel deploy runs it from `npm run build` when `DATABASE_URL` is set.
 Do not run the merge against Production before that migration is applied.
 Do not delete a daycare row. Child tables cascade on delete.
+Merged duplicates, possible second sites, and Prince Edward Island name faults are hidden. No script deletes them.
 
 The groups file is the audit export (`duplicate-groups-20260926.json`).
 Keep it off git. Dry-run first. `--apply` writes a backup and a guarded
@@ -175,8 +176,13 @@ rows have real streets. Kids & Company at two addresses stays two listings.
 230 Jane St does not merge into 232 Jane St. Prairie Nature Children's Centre
 (600 Hoka Street and 115 Sanford Fleming Road, licence 7858), St. Adolphe
 Child Care Centre (444 La Seine Street and 372 Main Street, licence 100758),
-and KidFit 60 (1295 Salter Street and Vince Leah Community Centre) are held
-on a `needsReview` list. They are not retired.
+and KidFit 60 (1295 Salter Street and Vince Leah Community Centre) are not
+merged. The older row with the real street stays public. The newer copy is
+hidden: `listing_active = 0`, `visibility = admin_only`, and
+`import_fault = hidden_review_possible_second_site`. `merged_into` stays null.
+`review_of` stores the live sibling for Admin. The old URL 301s to that city's
+hub, or to `/search?q=` when the city has no hub. It does not 301 to the other
+listing, and the public site cannot claim it.
 
 A row merges when the province, a similar name, and the street number plus
 street name match. `St` and `Street`, `Rd` and `Road`, `Ave` and `Avenue`,
@@ -197,6 +203,11 @@ are filled from the retired row. A filled value is left as it is.
 
 Admin shows a retired row as **Merged into** the keeper, with Un-merge.
 That action clears `merged_into` and does not delete either row.
+A hidden possible second site is labelled **Hidden: possible second site, needs review**,
+with Restore and Merge. Restore makes it public again. Merge sets `merged_into`
+to `review_of` and then the old URL 301s to the live listing.
+Sign-up does not attach a new centre to a hidden row that matched on name or
+licence alone. Claiming the visible listing is unchanged.
 
 ## Prince Edward Island names
 

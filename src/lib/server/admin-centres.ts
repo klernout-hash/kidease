@@ -20,6 +20,7 @@ import {
   selectIncompleteRows,
   type IncompleteMissingField,
 } from "@/lib/listing-incomplete";
+import { HIDDEN_REVIEW_POSSIBLE_SECOND_SITE } from "@/lib/listing-visibility";
 
 export type AdminCentreRow = {
   daycareId: string;
@@ -62,6 +63,7 @@ export type AdminCentreRow = {
   mergedInto: string | null;
   mergedIntoName: string | null;
   importFault: string | null;
+  reviewOf: string | null;
 };
 
 /** Licence + storefront photos for Admin verify — daycare photos, not the raw CSV. */
@@ -207,7 +209,8 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           d.is_test,
           d.merged_into,
           keeper.name as merged_into_name,
-          d.import_fault
+          d.import_fault,
+          d.review_of
         from daycares d
         left join daycares keeper on keeper.id = d.merged_into
         left join lateral (
@@ -496,4 +499,81 @@ export const unmergeCentre = createServerFn({ method: "POST" })
       note: `${actor.name || "Operator"} un-merged ${row.name}`,
     });
     return { ok: true as const, daycareId };
+  });
+
+/** Put a possible-second-site row back on the public catalogue. Does not delete it. */
+export const restoreHiddenReview = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId: string }) => input)
+  .handler(async ({ context, data }) => {
+    const actor = await requireOperator(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
+    const daycareId = data.daycareId.trim();
+    if (!daycareId) throw new Error("Listing not found");
+    const sql = await getSql();
+    const updated = await sql<{ id: string; name: string }>`
+      update daycares
+      set import_fault = null,
+          review_of = null,
+          listing_active = 1,
+          visibility = 'public'
+      where id = ${daycareId}
+        and import_fault = ${HIDDEN_REVIEW_POSSIBLE_SECOND_SITE}
+        and merged_into is null
+      returning id, name
+    `;
+    const row = updated[0];
+    if (!row) throw new Error("This listing is not a hidden second site");
+    const { resetNeonCatalogCache } = await import("@/lib/server/catalog-neon");
+    resetNeonCatalogCache();
+    await writeTrustEvent(sql, {
+      daycareId,
+      actorUserId: context.userId,
+      kind: "restore_hidden_review",
+      note: `${actor.name || "Operator"} restored ${row.name}`,
+    });
+    return { ok: true as const, daycareId };
+  });
+
+/** Merge a hidden possible-second-site row into the live sibling. The row stays. */
+export const mergeHiddenReview = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId: string }) => input)
+  .handler(async ({ context, data }) => {
+    const actor = await requireOperator(context.userId);
+    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+    assertRecentReauth(context.userId);
+    const daycareId = data.daycareId.trim();
+    if (!daycareId) throw new Error("Listing not found");
+    const sql = await getSql();
+    const updated = await sql<{ id: string; name: string; merged_into: string }>`
+      update daycares
+      set merged_into = review_of,
+          import_fault = null,
+          listing_active = 0,
+          claim_status = 'superseded',
+          visibility = 'admin_only'
+      where id = ${daycareId}
+        and import_fault = ${HIDDEN_REVIEW_POSSIBLE_SECOND_SITE}
+        and review_of is not null
+        and merged_into is null
+        and exists (
+          select 1 from daycares live
+          where live.id = daycares.review_of
+            and live.id <> daycares.id
+        )
+      returning id, name, merged_into
+    `;
+    const row = updated[0];
+    if (!row) throw new Error("This listing is not a hidden second site");
+    const { resetNeonCatalogCache } = await import("@/lib/server/catalog-neon");
+    resetNeonCatalogCache();
+    await writeTrustEvent(sql, {
+      daycareId,
+      actorUserId: context.userId,
+      kind: "merge_hidden_review",
+      note: `${actor.name || "Operator"} merged ${row.name} into ${row.merged_into}`,
+    });
+    return { ok: true as const, daycareId, mergedInto: row.merged_into };
   });

@@ -5,6 +5,18 @@ export const LISTING_VISIBILITY = {
   adminOnly: "admin_only",
 } as const;
 
+/**
+ * A possible second site. Hidden from the public catalogue.
+ * Not a merge: merged_into stays null, and the old URL does not 301 to the sibling.
+ */
+export const HIDDEN_REVIEW_POSSIBLE_SECOND_SITE = "hidden_review_possible_second_site";
+
+export const HIDDEN_REVIEW_ADMIN_LABEL = "Hidden: possible second site, needs review";
+
+export function isHiddenReviewFault(value: string | null | undefined): boolean {
+  return (value || "").trim() === HIDDEN_REVIEW_POSSIBLE_SECOND_SITE;
+}
+
 export type ListingVisibility = (typeof LISTING_VISIBILITY)[keyof typeof LISTING_VISIBILITY];
 
 /** Fields used to decide whether a listing may appear on public surfaces. */
@@ -174,7 +186,12 @@ export function staffQueueRows<T extends ListingVisibilityInput>(rows: T[], incl
   // `daycareId` counts as `id` inside isAdminOnlyListing, so a mapped Admin row
   // (Joan) is not dropped for a missing `id`, and Peninsula Oak still hides
   // when Show QA is off even if its stored is_test flag is 0.
-  return rows.filter((row) => !isAdminOnlyListing(row));
+  // Merged rows and import faults (possible second site, PEI name) stay in the
+  // queue so Admin can restore or merge them. They are not QA fixtures.
+  return rows.filter((row) => {
+    if ((row.mergedInto || "").trim() || (row.importFault || "").trim()) return true;
+    return !isAdminOnlyListing(row);
+  });
 }
 
 export function listingVisibilityOf(d: ListingVisibilityInput): ListingVisibility {

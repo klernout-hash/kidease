@@ -6,10 +6,13 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+import { hiddenReviewPlaceFromRow, hiddenReviewRedirectTarget } from "../src/lib/hidden-review.ts";
+import { HIDDEN_REVIEW_ADMIN_LABEL, HIDDEN_REVIEW_POSSIBLE_SECOND_SITE } from "../src/lib/listing-visibility.ts";
 import {
   buildRollbackSql,
   compareKeeper,
   followMergedListing,
+  hideRollbackInputs,
   planDuplicateMerges,
   planMergeGroup,
   rollbackInputsForPlan,
@@ -148,6 +151,99 @@ describe("duplicate merge plan", () => {
     assert.equal(second.skipped[0].reason, "already merged");
   });
 
+  it("hides a possible second site without merging it, and the rollback does not delete it", () => {
+    const groups = [
+      {
+        rows: [
+          {
+            id: "mb-7858",
+            name: "Prairie Nature Children's Centre",
+            address: "600 Hoka Street",
+            city: "Winnipeg",
+            province: "MB",
+            postal_code: "R2C 2V1",
+            license_number: "7858",
+            created_at: "2026-09-02T00:00:00.000Z",
+          },
+          {
+            id: "mx-prairie",
+            name: "Prairie Nature Children's Centre Inc.",
+            address: "115 Sanford Fleming Road",
+            city: "Winnipeg",
+            province: "MB",
+            postal_code: "R2C 2V1",
+            license_number: "7858",
+            created_at: "2026-09-24T00:00:00.000Z",
+            claim_status: "approved",
+          },
+        ],
+      },
+    ];
+    const facts = new Map(groups[0].rows.map((item) => [item.id, row({
+      id: item.id,
+      name: item.name,
+      address: item.address,
+      city: item.city,
+      province: item.province,
+      postalCode: item.postal_code,
+      licenseNumber: item.license_number,
+      createdAt: item.created_at,
+      claimStatus: item.claim_status || "unclaimed",
+    })]));
+    const plan = planDuplicateMerges(groups, facts);
+    assert.equal(plan.hiddenReviews.length, 1);
+    assert.equal(plan.hiddenReviews[0].liveId, "mb-7858");
+    assert.equal(plan.hiddenReviews[0].hiddenId, "mx-prairie");
+    assert.equal(plan.retired, 0);
+    const sql = buildRollbackSql([], hideRollbackInputs(plan, facts));
+    assert.match(sql, /import_fault = null/);
+    assert.match(sql, /review_of = null/);
+    assert.match(sql, /hidden_review_possible_second_site/);
+    assert.match(sql, /merged_into is null/);
+    assert.doesNotMatch(sql, /delete\s+from\s+daycares/i);
+    facts.get("mx-prairie").importFault = HIDDEN_REVIEW_POSSIBLE_SECOND_SITE;
+    const again = planDuplicateMerges(groups, facts);
+    assert.equal(again.hiddenReview, 0);
+    assert.equal(again.skipped[0].reason, "already hidden");
+  });
+
+  it("sends a hidden review URL to the city hub or that city's search, not the sibling", () => {
+    assert.equal(hiddenReviewPlaceFromRow({
+      importFault: "pei_name_unrecoverable",
+      city: "Stratford",
+      province: "PE",
+    }), null);
+    assert.equal(hiddenReviewPlaceFromRow({
+      importFault: HIDDEN_REVIEW_POSSIBLE_SECOND_SITE,
+      mergedInto: "mb-7858",
+      city: "Winnipeg",
+      province: "MB",
+    }), null);
+    const winnipeg = hiddenReviewPlaceFromRow({
+      importFault: HIDDEN_REVIEW_POSSIBLE_SECOND_SITE,
+      city: "Winnipeg",
+      province: "MB",
+    });
+    assert.deepEqual(hiddenReviewRedirectTarget(winnipeg.city, winnipeg.province), { kind: "city", city: "winnipeg" });
+    const town = hiddenReviewRedirectTarget("St. Adolphe", "MB");
+    assert.deepEqual(town, { kind: "search", q: "St. Adolphe" });
+    const slug = readFileSync(new URL("../src/routes/daycare.$slug.tsx", import.meta.url), "utf8");
+    assert.match(slug, /getHiddenReviewRedirect/);
+    assert.match(slug, /statusCode: 301/);
+    assert.match(slug, /\/daycare\/city\/\$city/);
+    assert.match(slug, /to: "\/search"/);
+    const card = readFileSync(new URL("../src/components/admin-review-card.tsx", import.meta.url), "utf8");
+    assert.match(card, /HIDDEN_REVIEW_ADMIN_LABEL/);
+    assert.equal(HIDDEN_REVIEW_ADMIN_LABEL, "Hidden: possible second site, needs review");
+    assert.match(card, />\s*Restore\s*</);
+    assert.match(card, />\s*Merge\s*</);
+    assert.match(card, /Name not recoverable/);
+    const admin = readFileSync(new URL("../src/lib/server/admin-centres.ts", import.meta.url), "utf8");
+    assert.match(admin, /restore_hidden_review/);
+    assert.match(admin, /merge_hidden_review/);
+    assert.doesNotMatch(admin, /delete\s+from\s+daycares/i);
+  });
+
   it("follows merged_into and stops on a cycle, a fault, or a missing keeper", () => {
     const rows = new Map([
       ["retired", { id: "retired", mergedInto: "keeper" }],
@@ -218,6 +314,28 @@ describe("duplicate merge plan", () => {
 });
 
 describe("audit file shape", () => {
+  it("merge, hide, and PEI repair never delete a daycare row", () => {
+    const files = [
+      "scripts/merge-duplicate-listings.mjs",
+      "scripts/repair-pei-names.mjs",
+      "src/lib/listing-merge.ts",
+      "src/lib/pei-name-repair.ts",
+      "src/lib/server/admin-centres.ts",
+      "migrations/0062_listing_merge.sql",
+    ];
+    for (const file of files) {
+      const source = readFileSync(join(root, file), "utf8");
+      assert.doesNotMatch(source, /delete\s+from\s+daycares/i, file);
+    }
+    const repair = readFileSync(join(root, "scripts/repair-pei-names.mjs"), "utf8");
+    assert.match(repair, /pei_name_unrecoverable/);
+    assert.match(repair, /listing_active = 0/);
+    const merge = readFileSync(join(root, "scripts/merge-duplicate-listings.mjs"), "utf8");
+    assert.match(merge, /merged_into = \$1/);
+    assert.match(merge, /hidden_review_possible_second_site|action\.flag/);
+    assert.match(merge, /review_of = \$2/);
+  });
+
   it("the committed fixture is not the production audit", () => {
     const fixture = readFileSync(new URL("./fixtures/merge-groups.json", import.meta.url), "utf8");
     assert.match(fixture, /fixture-keeper/);

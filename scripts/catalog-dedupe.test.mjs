@@ -203,8 +203,14 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
     ]);
     assert.equal(plan.keepers, 0);
     assert.equal(plan.retired, 0);
-    assert.equal(plan.skipped[0].reason, "needs review");
-    assert.equal(plan.needsReview[0].reason, "different street addresses");
+    assert.equal(plan.skipped.length, 0);
+    assert.equal(plan.hiddenReviews.length, 1);
+    assert.equal(plan.hiddenReviews[0].reason, "different street addresses");
+    assert.equal(plan.hiddenReviews[0].liveId, "on-tor-13180");
+    assert.equal(plan.hiddenReviews[0].hiddenId, "on-tor-13181");
+    assert.equal(plan.hiddenReviews[0].flag, "hidden_review_possible_second_site");
+    assert.equal(plan.hiddenReviews[0].listingActive, 0);
+    assert.equal(plan.hiddenReviews[0].visibility, "admin_only");
   });
 
   it("matches 240 Avenue Rd with 240 Avenue Road when the name is the same", () => {
@@ -277,6 +283,7 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
             province: "MB",
             postalCode: "R2C 2V1",
             licenseNumber: "MB-7858",
+            created_at: "2026-09-02T00:00:00.000Z",
           },
           {
             id: "mx-prairie",
@@ -286,6 +293,8 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
             province: "MB",
             postalCode: "R2C 2V1",
             licenseNumber: "7858",
+            created_at: "2026-09-24T00:00:00.000Z",
+            claim_status: "approved",
           },
         ],
         reason: "different street addresses",
@@ -301,6 +310,7 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
             province: "MB",
             postalCode: "R5A 1C2",
             licenseNumber: "MB-100758",
+            created_at: "2026-09-02T00:00:00.000Z",
           },
           {
             id: "mx-adolphe",
@@ -310,6 +320,8 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
             province: "MB",
             postalCode: "R5A 1A9",
             licenseNumber: "100758",
+            created_at: "2026-09-24T00:00:00.000Z",
+            claim_status: "approved",
           },
         ],
         reason: "different street addresses",
@@ -325,6 +337,7 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
             province: "MB",
             postalCode: "R2V 3T2",
             licenseNumber: "MB-102743",
+            created_at: "2026-09-24T00:00:00.000Z",
           },
           {
             id: "mx-kidfit",
@@ -334,6 +347,8 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
             province: "MB",
             postalCode: "R2V 0R4",
             licenseNumber: "102743",
+            created_at: "2026-09-02T00:00:00.000Z",
+            claim_status: "approved",
           },
         ],
         reason: "named venue with a different postal code",
@@ -344,9 +359,15 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
       const plan = planDuplicateMerges([{ rows: sample.rows }]);
       assert.equal(plan.keepers, 0, sample.name);
       assert.equal(plan.retired, 0, sample.name);
-      assert.equal(plan.needsReview.length, 1, sample.name);
-      assert.equal(plan.needsReview[0].reason, sample.reason, sample.name);
-      assert.ok(plan.needsReview[0].names.some((name) => name.includes(sample.name.split(" ")[0])), sample.name);
+      assert.equal(plan.hiddenReviews.length, 1, sample.name);
+      assert.equal(plan.hiddenReviews[0].reason, sample.reason, sample.name);
+      assert.equal(plan.hiddenReviews[0].liveId, sample.rows[0].id, sample.name);
+      assert.equal(plan.hiddenReviews[0].hiddenId, sample.rows[1].id, sample.name);
+      assert.equal(plan.hiddenReviews[0].flag, "hidden_review_possible_second_site", sample.name);
+      assert.equal(plan.hiddenReviews[0].listingActive, 0, sample.name);
+      assert.equal(plan.hiddenReviews[0].visibility, "admin_only", sample.name);
+      assert.equal(plan.hiddenReviews[0].mergedInto, undefined, sample.name);
+      assert.ok(plan.hiddenReviews[0].names.some((name) => name.includes(sample.name.split(" ")[0])), sample.name);
     }
   });
 
