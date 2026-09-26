@@ -27,7 +27,7 @@ import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, pr
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { DETAIL_SIZES, HERO_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
-import { getDaycare, getListingSeo } from "@/lib/server/daycares";
+import { getDaycare, getListingSeo, type CentreJobPost } from "@/lib/server/daycares";
 import { cityHubCityName, cityHubDefForPlace } from "@/lib/city-hubs";
 import {
   listingBreadcrumbJsonLdScript,
@@ -159,6 +159,7 @@ function Listing() {
     reviews: Review[];
     availability: AvailabilityRow[];
     nearby: Card[];
+    jobs?: CentreJobPost[];
   } | null>(null);
   const [photo, setPhoto] = useState(0);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -744,6 +745,19 @@ function Listing() {
             ) : null}
 
             <ListingTourTimes daycare={d} onBook={onTour} canBook={live} />
+            {data.jobs?.length ? (
+              <section data-ke="centre-jobs">
+                <h2 className="font-display text-2xl">{locale === "fr" ? "Offres de personnel" : "Staff openings"}</h2>
+                <ul className="mt-3 divide-y divide-border">
+                  {data.jobs.map((job) => (
+                    <li key={job.id} className="py-3">
+                      <p className="font-medium">{job.role}</p>
+                      {job.note ? <p className="mt-1 text-sm text-muted">{job.note}</p> : null}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
             <ListingSnapshotGrid item={d} />
 
             <section>

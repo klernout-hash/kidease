@@ -97,8 +97,8 @@ export const DAYCARE_ADDONS: DaycareAddon[] = [
     amountCad: 49,
     cadence: "once",
     benefit: {
-      en: "Adds one staff-post credit on this centre profile.",
-      fr: "Ajoute un crédit d’offre de personnel sur le profil du centre.",
+      en: "Adds one credit to post a staff opening on this centre page.",
+      fr: "Ajoute un crédit pour afficher une offre de personnel sur la page de ce centre.",
     },
   },
 ];

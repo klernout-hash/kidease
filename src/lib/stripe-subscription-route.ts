@@ -48,6 +48,7 @@ export type CatalogWrite =
       status: string;
       active: boolean;
       clearSubscription: boolean;
+      centreId: string | null;
     }
   | {
       lane: "claim_boost";
@@ -55,6 +56,7 @@ export type CatalogWrite =
       customerId: string | null;
       checkoutSessionId: string;
       paymentId: string;
+      centreId: string | null;
     }
   | {
       lane: "job_post";
@@ -62,6 +64,7 @@ export type CatalogWrite =
       customerId: string | null;
       checkoutSessionId: string;
       paymentId: string;
+      centreId: string | null;
     }
   | { lane: "ignore"; reason: string };
 
@@ -166,6 +169,7 @@ export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
       customerId,
       checkoutSessionId: checkoutSessionId || paymentId,
       paymentId,
+      centreId: m.centre_id || null,
     };
     if (lane === "claim_boost") return { lane, ...oneTime };
     return { lane: "job_post", ...oneTime };
@@ -192,6 +196,7 @@ export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
       status: clear ? "canceled" : status,
       active,
       clearSubscription: clear,
+      centreId: m.centre_id || null,
     };
   }
 

@@ -13,6 +13,7 @@ import { transactionalMailFrom } from "@/lib/mail-from";
 import { licenseReviewMarker } from "@/lib/private-docs";
 import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
 import { collapseDuplicateReviewCards, hasLicenceEvidence } from "@/lib/approve-live";
+import { adminAddonLine } from "@/lib/centre-addons";
 import { runApproval } from "@/lib/server/approve-centre";
 import { mapAdminCentreSqlRow, type AdminCentreSqlRow } from "@/lib/admin-centres-map";
 import {
@@ -59,6 +60,7 @@ export type AdminCentreRow = {
   hasListingClaim: boolean;
   missing: IncompleteMissingField[];
   updatedAt: string | null;
+  addonLine?: string | null;
 };
 
 /** Licence + storefront photos for Admin verify — daycare photos, not the raw CSV. */
@@ -144,6 +146,63 @@ function decisionCopy(decision: Decision, name: string) {
     subject: `${name} is in review at KidEase`,
     text: `Hi,\n\nYour listing for ${name} is on the KidEase review list.\nIt is not live for parent requests yet. We will email you as soon as it is approved or if we need anything else.\n\nYou can still open the provider dashboard: https://kidease.ca/provider`,
   };
+}
+
+async function loadAdminAddonLines(sql: Awaited<ReturnType<typeof getSql>>, daycareIds: string[]) {
+  const out = new Map<string, string>();
+  const ids = [...new Set(daycareIds.filter(Boolean))];
+  if (!ids.length) return out;
+  const rows = await sql.query<{
+    daycare_id: string;
+    featured: boolean;
+    claim_until: string | null;
+    claim_pending: boolean;
+    job_credits: number | null;
+    job_posts: number | null;
+  }>(
+    `select d.id as daycare_id,
+        bool_or(
+          pr.featured_city_status in ('active', 'trialing')
+          and position('featured_city' in coalesce(pr.selected_addons, '')) > 0
+          and (pr.featured_city_centre_id is null or pr.featured_city_centre_id = d.id)
+        ) as featured,
+        max(d.priority_until)::text as claim_until,
+        bool_or(
+          pr.claim_boost_paid_at is not null
+          and pr.claim_boost_applied_at is null
+          and (pr.claim_boost_centre_id is null or pr.claim_boost_centre_id = d.id)
+        ) as claim_pending,
+        max(
+          case
+            when exists (select 1 from centre_job_credits c where c.user_id = pr.user_id) then (
+              select count(*)::int from centre_job_credits c
+              where c.user_id = pr.user_id
+                and c.spent_at is null
+                and (c.daycare_id is null or c.daycare_id = d.id)
+            )
+            when pr.job_post_centre_id is null or pr.job_post_centre_id = d.id then pr.job_post_credits
+            else 0
+          end
+        ) as job_credits,
+        (select count(*)::int from centre_job_posts j where j.daycare_id = d.id) as job_posts
+      from daycares d
+      join provider_daycares pd on pd.daycare_id = d.id
+      join profiles pr on pr.user_id = pd.user_id
+      where d.id = any($1::text[])
+      group by d.id`,
+    [ids],
+  );
+  for (const row of rows) {
+    const line = adminAddonLine({
+      featured: Boolean(row.featured),
+      claimUntil: row.claim_until,
+      claimPending: Boolean(row.claim_pending),
+      jobCredits: Number(row.job_credits) || 0,
+      jobPosts: Number(row.job_posts) || 0,
+    });
+    if (line) out.set(row.daycare_id, line);
+  }
+  return out;
 }
 
 export const listAdminCentres = createServerFn({ method: "GET" })
@@ -278,8 +337,13 @@ export const listAdminCentres = createServerFn({ method: "GET" })
       };
     });
 
+    const addonByCentre = await loadAdminAddonLines(
+      sql,
+      mapped.map((row) => row.daycareId),
+    );
+    const withAddons = mapped.map((row) => ({ ...row, addonLine: addonByCentre.get(row.daycareId) ?? null }));
     const rank = (s: string) => (s === "waiting" || s === "pending" ? 0 : s === "approved" ? 1 : 2);
-    const visible = collapseDuplicateReviewCards(mapped.filter((row) => row.claimStatus !== "superseded"));
+    const visible = collapseDuplicateReviewCards(withAddons.filter((row) => row.claimStatus !== "superseded"));
     visible.sort((a, b) => rank(a.claimStatus) - rank(b.claimStatus) || compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name));
     return visible;
   });

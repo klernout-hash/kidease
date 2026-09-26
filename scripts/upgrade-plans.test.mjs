@@ -107,7 +107,7 @@ test("daycare add-ons stay beside the two paid plans and share one price source"
   );
   assert.equal(
     DAYCARE_ADDONS.find((addon) => addon.id === "job_post")?.benefit.en,
-    "Adds one staff-post credit on this centre profile.",
+    "Adds one credit to post a staff opening on this centre page.",
   );
   const benefits = DAYCARE_ADDONS.map((addon) => addon.benefit.en).join(" ");
   assert.doesNotMatch(benefits, /extra city|Post one staff opening/i);

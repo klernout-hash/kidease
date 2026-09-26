@@ -219,12 +219,15 @@ export async function applyParentPlus(
   }
 }
 
-async function bumpClaimPriority(sql: Sql, userId: string): Promise<boolean> {
+async function bumpClaimPriority(sql: Sql, userId: string, centreId: string | null): Promise<boolean> {
+  const target = String(centreId || "").trim() || null;
   const rows = await sql<{ id: string }>`
     update daycares d
     set priority_until = greatest(coalesce(d.priority_until, now()), now()) + interval '30 days'
     from provider_daycares p
-    where p.daycare_id = d.id and p.user_id = ${userId}
+    where p.daycare_id = d.id
+      and p.user_id = ${userId}
+      and (${target}::text is null or d.id = ${target})
     returning d.id
   `;
   return rows.length > 0;
@@ -235,15 +238,16 @@ export async function applyPendingClaimBoost(sql: Sql, userId: string): Promise<
   const rows = await sql<{
     claim_boost_paid_at: string | null;
     claim_boost_applied_at: string | null;
+    claim_boost_centre_id: string | null;
   }>`
-    select claim_boost_paid_at, claim_boost_applied_at
+    select claim_boost_paid_at, claim_boost_applied_at, claim_boost_centre_id
     from profiles
     where user_id = ${userId}
     limit 1
   `;
   const row = rows[0];
   if (!row?.claim_boost_paid_at || row.claim_boost_applied_at) return false;
-  const bumped = await bumpClaimPriority(sql, userId);
+  const bumped = await bumpClaimPriority(sql, userId, row.claim_boost_centre_id);
   if (!bumped) return false;
   await sql`
     update profiles set claim_boost_applied_at = now() where user_id = ${userId}
@@ -260,11 +264,13 @@ async function applyFeaturedCity(
     select selected_addons from profiles where user_id = ${input.userId} limit 1
   `;
   const addons = withProviderAddon(rows[0]?.selected_addons, "featured_city", input.active);
+  const centreId = input.centreId || null;
   if (input.clearSubscription) {
     await sql`
       update profiles set
         featured_city_subscription_id = null,
         featured_city_status = ${input.status},
+        featured_city_centre_id = coalesce(${centreId}, featured_city_centre_id),
         selected_addons = ${addons},
         catalog_checkout_session_id = coalesce(${input.checkoutSessionId}, catalog_checkout_session_id)
       where user_id = ${input.userId}
@@ -275,6 +281,7 @@ async function applyFeaturedCity(
     update profiles set
       featured_city_subscription_id = coalesce(${input.subscriptionId}, featured_city_subscription_id),
       featured_city_status = ${input.status},
+      featured_city_centre_id = coalesce(${centreId}, featured_city_centre_id),
       selected_addons = ${addons},
       catalog_checkout_session_id = coalesce(${input.checkoutSessionId}, catalog_checkout_session_id)
     where user_id = ${input.userId}
@@ -293,18 +300,20 @@ async function applyClaimBoost(sql: Sql, input: Extract<CatalogWrite, { lane: "c
   const rows = await sql<{
     claim_boost_payment_id: string | null;
     claim_boost_applied_at: string | null;
+    claim_boost_centre_id: string | null;
     selected_addons: string | null;
   }>`
-    select claim_boost_payment_id, claim_boost_applied_at, selected_addons
+    select claim_boost_payment_id, claim_boost_applied_at, claim_boost_centre_id, selected_addons
     from profiles
     where user_id = ${input.userId}
     limit 1
   `;
   const row = rows[0];
+  const centreId = input.centreId || row?.claim_boost_centre_id || null;
   const ids = paymentIds(row?.claim_boost_payment_id);
   if (ids.includes(input.paymentId)) {
     if (!row?.claim_boost_applied_at) {
-      const bumped = await bumpClaimPriority(sql, input.userId);
+      const bumped = await bumpClaimPriority(sql, input.userId, centreId);
       if (bumped) {
         await sql`
           update profiles set claim_boost_applied_at = now() where user_id = ${input.userId}
@@ -321,11 +330,12 @@ async function applyClaimBoost(sql: Sql, input: Extract<CatalogWrite, { lane: "c
       claim_boost_payment_id = ${nextIds},
       claim_boost_paid_at = now(),
       claim_boost_applied_at = null,
+      claim_boost_centre_id = coalesce(${centreId}, claim_boost_centre_id),
       selected_addons = ${addons},
       catalog_checkout_session_id = ${input.checkoutSessionId}
     where user_id = ${input.userId}
   `;
-  const bumped = await bumpClaimPriority(sql, input.userId);
+  const bumped = await bumpClaimPriority(sql, input.userId, centreId);
   if (bumped) {
     await sql`
       update profiles set claim_boost_applied_at = now() where user_id = ${input.userId}
@@ -338,9 +348,10 @@ async function applyJobPost(sql: Sql, input: Extract<CatalogWrite, { lane: "job_
   const rows = await sql<{
     job_post_credits: number | null;
     job_post_payment_ids: string | null;
+    job_post_centre_id: string | null;
     selected_addons: string | null;
   }>`
-    select job_post_credits, job_post_payment_ids, selected_addons
+    select job_post_credits, job_post_payment_ids, job_post_centre_id, selected_addons
     from profiles
     where user_id = ${input.userId}
     limit 1
@@ -354,10 +365,22 @@ async function applyJobPost(sql: Sql, input: Extract<CatalogWrite, { lane: "job_
   const nextIds = [...ids, input.paymentId].slice(-20).join(",");
   const credits = Math.max(0, Number(row?.job_post_credits) || 0) + 1;
   const addons = withProviderAddon(row?.selected_addons, "job_post", true);
+  const centreId = input.centreId || null;
+  const inserted = await sql<{ payment_id: string }>`
+    insert into centre_job_credits (payment_id, user_id, daycare_id)
+    values (${input.paymentId}, ${input.userId}, ${centreId})
+    on conflict (payment_id) do nothing
+    returning payment_id
+  `;
+  if (!inserted[0]) {
+    await rememberSession(sql, input.userId, input.checkoutSessionId);
+    return;
+  }
   await sql`
     update profiles set
       job_post_credits = ${credits},
       job_post_payment_ids = ${nextIds},
+      job_post_centre_id = coalesce(${centreId}, job_post_centre_id),
       selected_addons = ${addons},
       catalog_checkout_session_id = ${input.checkoutSessionId}
     where user_id = ${input.userId}

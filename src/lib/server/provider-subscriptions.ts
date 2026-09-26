@@ -32,6 +32,8 @@ import { CHECKOUT_COULD_NOT_START, PORTAL_COULD_NOT_OPEN } from "@/lib/stripe-pu
 import { decideProviderCheckout, PROVIDER_PRICE_MISSING } from "@/lib/access-control";
 import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { canBuyDaycareUpgrade, DAYCARE_UPGRADE_DENIED } from "@/lib/upgrade-role";
+import { jobPostSpend, pickUnspentJobCredit, resolveAddonCentre } from "@/lib/centre-addons";
+import { nid } from "@/lib/utils";
 
 export type ProviderSubscriptionState = {
   plan: ProviderPlanId;
@@ -51,6 +53,10 @@ export type ProviderSubscriptionState = {
   claimBoostPaymentId: string | null;
   jobPostCredits: number;
   jobPostPaymentIds: string;
+  jobPostCentreId: string | null;
+  featuredCityCentreId: string | null;
+  claimBoostCentreId: string | null;
+  centres: { id: string; name: string }[];
   catalogCheckoutSessionId: string | null;
   prices: Record<string, boolean>;
   paymentLinks: Partial<Record<ProviderAddonId, string>>;
@@ -73,15 +79,29 @@ async function requireSubscriptionAccess(userId: string) {
   return session;
 }
 
-async function daycareCheckoutMeta(userId: string, role: string) {
+async function centresFor(userId: string): Promise<{ id: string; name: string }[]> {
+  const sql = await getSql();
+  const ids = await listAccessibleDaycareIds(sql, userId);
+  if (!ids.length) return [];
+  const rows = await sql
+    .query<{ id: string; name: string }>(
+      `select id, name from daycares where id = any($1::text[]) order by name`,
+      [ids],
+    )
+    .catch(() => [] as { id: string; name: string }[]);
+  return rows.map((row) => ({ id: row.id, name: row.name || row.id }));
+}
+
+async function daycareCheckoutMeta(userId: string, role: string, centreId?: string | null) {
   const sql = await getSql();
   const centres = await listAccessibleDaycareIds(sql, userId);
-  if (!centres[0] && role !== "admin") throw new Error(DAYCARE_UPGRADE_DENIED);
+  const picked = resolveAddonCentre(centres, centreId) || centres[0] || null;
+  if (!picked && role !== "admin") throw new Error(DAYCARE_UPGRADE_DENIED);
   return {
     role: "daycare" as const,
     buyer: role === "admin" ? "admin" : "daycare",
     user_id: userId,
-    ...(centres[0] ? { centre_id: centres[0] } : {}),
+    ...(picked ? { centre_id: picked } : {}),
   };
 }
 
@@ -116,12 +136,16 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     claim_boost_payment_id: string | null;
     job_post_credits: number | null;
     job_post_payment_ids: string | null;
+    job_post_centre_id: string | null;
+    featured_city_centre_id: string | null;
+    claim_boost_centre_id: string | null;
     catalog_checkout_session_id: string | null;
   }>`
     select selected_plan, selected_interval, selected_addons, selected_plan_at,
            stripe_customer_id, stripe_subscription_id, stripe_subscription_status,
-           featured_city_status, claim_boost_paid_at, claim_boost_payment_id,
-           job_post_credits, job_post_payment_ids, catalog_checkout_session_id
+           featured_city_status, featured_city_centre_id, claim_boost_paid_at, claim_boost_payment_id,
+           claim_boost_centre_id, job_post_credits, job_post_payment_ids, job_post_centre_id,
+           catalog_checkout_session_id
     from profiles
     where user_id = ${userId}
     limit 1
@@ -161,6 +185,10 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     claimBoostPaymentId: row?.claim_boost_payment_id ?? null,
     jobPostCredits: Number(row?.job_post_credits) || 0,
     jobPostPaymentIds: row?.job_post_payment_ids ?? "",
+    jobPostCentreId: row?.job_post_centre_id ?? null,
+    featuredCityCentreId: row?.featured_city_centre_id ?? null,
+    claimBoostCentreId: row?.claim_boost_centre_id ?? null,
+    centres: await centresFor(userId),
     catalogCheckoutSessionId: row?.catalog_checkout_session_id ?? null,
     prices,
     paymentLinks,
@@ -268,12 +296,12 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
 
 export const startProviderAddonCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { addon: ProviderAddonId }) => {
+  .validator((input: { addon: ProviderAddonId; centreId?: string | null }) => {
     const addon = input.addon;
     if (addon !== "featured_city" && addon !== "claim_boost" && addon !== "job_post") {
       throw new Error("Choose an add-on");
     }
-    return { addon };
+    return { addon, centreId: String(input.centreId || "").trim() || null };
   })
   .handler(async ({ context, data }) => {
     const desks = await requireSubscriptionAccess(context.userId);
@@ -284,6 +312,11 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
     }
     const priceId = envPriceId(data.addon);
     if (!priceId) throw new Error("This add-on’s Stripe price ID is not set. Add it on Vercel, then try again.");
+    const centreId = resolveAddonCentre(
+      state.centres.map((centre) => centre.id),
+      data.centreId,
+    );
+    if (!centreId) throw new Error("Choose the centre this add-on is for. Nothing was charged.");
     const origin = appOrigin();
     return runUserCheckout({
       surface: `provider_addon_${data.addon}`,
@@ -291,7 +324,7 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
       fallback: CHECKOUT_COULD_NOT_START,
       fn: async () => {
         const checked = await requireCatalogCheckout(data.addon);
-        const lane = await daycareCheckoutMeta(context.userId, desks.role);
+        const lane = await daycareCheckoutMeta(context.userId, desks.role, centreId);
         const session = await createCatalogCheckoutSession({
           mode: checked.mode,
           priceId: checked.priceId,
@@ -310,6 +343,98 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
         return { url: session.url };
       },
     });
+  });
+
+export const postCentreJob = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { centreId: string; role: string; note?: string | null }) => ({
+    centreId: String(input.centreId || "").trim(),
+    role: String(input.role || "").trim().slice(0, 80),
+    note: String(input.note || "").trim().slice(0, 280),
+  }))
+  .handler(async ({ context, data }) => {
+    await requireSubscriptionAccess(context.userId);
+    const sql = await getSql();
+    const centres = await listAccessibleDaycareIds(sql, context.userId);
+    if (!centres.includes(data.centreId)) {
+      throw new Error("That centre is not on this account. Nothing was posted.");
+    }
+    const rows = await sql<{ job_post_credits: number | null; job_post_centre_id: string | null }>`
+      select job_post_credits, job_post_centre_id from profiles where user_id = ${context.userId} limit 1
+    `;
+    const open = await sql<{ payment_id: string; daycare_id: string | null }>`
+      select payment_id, daycare_id
+      from centre_job_credits
+      where user_id = ${context.userId} and spent_at is null
+      order by created_at asc
+    `;
+    const picked = pickUnspentJobCredit(
+      open.map((row) => ({ paymentId: row.payment_id, centreId: row.daycare_id })),
+      data.centreId,
+    );
+    const legacy = jobPostSpend({
+      credits: Number(rows[0]?.job_post_credits) || 0,
+      purchasedCentreId: rows[0]?.job_post_centre_id,
+      centreId: data.centreId,
+      role: data.role,
+    });
+    if (!legacy.ok && legacy.reason === "role") {
+      throw new Error("Add the role title. Nothing was posted.");
+    }
+    if (open.length > 0 && !picked) {
+      throw new Error("This credit is for a different centre. Nothing was posted.");
+    }
+    if (!picked && !legacy.ok && legacy.reason === "centre") {
+      throw new Error("This credit is for a different centre. Nothing was posted.");
+    }
+    if (!picked && !legacy.ok) throw new Error("No job-post credit on this centre. Nothing was posted.");
+    const id = nid();
+    if (picked) {
+      const marked = await sql<{ payment_id: string }>`
+        update centre_job_credits
+        set spent_at = now()
+        where payment_id = ${picked.paymentId}
+          and user_id = ${context.userId}
+          and spent_at is null
+        returning payment_id
+      `;
+      if (!marked[0]) throw new Error("No job-post credit on this centre. Nothing was posted.");
+      try {
+        await sql`
+          insert into centre_job_posts (id, daycare_id, user_id, role, note)
+          values (${id}, ${data.centreId}, ${context.userId}, ${data.role}, ${data.note})
+        `;
+      } catch (err) {
+        await sql`
+          update centre_job_credits set spent_at = null
+          where payment_id = ${picked.paymentId} and user_id = ${context.userId}
+        `;
+        throw err;
+      }
+      const left = await sql<{ n: number }>`
+        select count(*)::int as n from centre_job_credits
+        where user_id = ${context.userId} and spent_at is null
+      `;
+      await sql`
+        update profiles set job_post_credits = ${left[0]?.n ?? 0}
+        where user_id = ${context.userId}
+      `;
+      return { id, credits: left[0]?.n ?? 0 };
+    }
+    const spent = await sql<{ job_post_credits: number }>`
+      update profiles
+      set job_post_credits = job_post_credits - 1
+      where user_id = ${context.userId}
+        and job_post_credits > 0
+        and (job_post_centre_id is null or job_post_centre_id = ${data.centreId})
+      returning job_post_credits
+    `;
+    if (!spent[0]) throw new Error("No job-post credit on this centre. Nothing was posted.");
+    await sql`
+      insert into centre_job_posts (id, daycare_id, user_id, role, note)
+      values (${id}, ${data.centreId}, ${context.userId}, ${data.role}, ${data.note})
+    `;
+    return { id, credits: spent[0].job_post_credits };
   });
 
 export const startProviderBillingPortal = createServerFn({ method: "POST" })

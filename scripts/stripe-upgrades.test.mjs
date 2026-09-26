@@ -194,6 +194,24 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   assert.equal(boostPaid.paymentId, "pi_boost");
   assert.equal(boostPaid.checkoutSessionId, "cs_boost");
 
+  const boostForCentre = planCatalogWrite({
+    type: "checkout.session.completed",
+    metadata: {
+      kidease: "addon",
+      addon: "claim_boost",
+      role: "daycare",
+      buyer: "daycare",
+      user_id: "user_1",
+      centre_id: "centre_a",
+    },
+    paymentStatus: "paid",
+    checkoutSessionId: "cs_boost_centre",
+    paymentId: "pi_boost_centre",
+    userId: "user_1",
+  });
+  assert.equal(boostForCentre.lane, "claim_boost");
+  assert.equal(boostForCentre.centreId, "centre_a");
+
   const unpaidPlan = planCatalogWrite({
     type: "checkout.session.completed",
     metadata: { kidease: "provider_sub", user_id: "user_1", plan: "pro", interval: "month" },
@@ -218,6 +236,52 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   assert.equal(paidFeatured.lane, "featured_city");
   assert.equal(paidFeatured.checkoutSessionId, "cs_feat");
   assert.equal(paidFeatured.active, true);
+  assert.equal(paidFeatured.centreId, null);
+
+  const featuredForCentre = planCatalogWrite({
+    type: "checkout.session.completed",
+    metadata: {
+      kidease: "addon",
+      addon: "featured_city",
+      role: "daycare",
+      buyer: "daycare",
+      user_id: "user_1",
+      centre_id: "centre_a",
+    },
+    paymentStatus: "paid",
+    checkoutSessionId: "cs_feat_centre",
+    subscriptionId: "sub_featured",
+    userId: "user_1",
+  });
+  assert.equal(featuredForCentre.lane, "featured_city");
+  assert.equal(featuredForCentre.centreId, "centre_a");
+  assert.equal(featuredForCentre.active, true);
+
+  const featuredFailed = planCatalogWrite({
+    type: "invoice.payment_failed",
+    metadata: {},
+    subscriptionId: "sub_featured",
+    matchedLane: "featured_city",
+    userId: "user_1",
+    profileUserId: "user_1",
+  });
+  assert.equal(featuredFailed.lane, "featured_city");
+  assert.equal(featuredFailed.status, "past_due");
+  assert.equal(featuredFailed.active, false);
+  assert.equal(featuredFailed.clearSubscription, false);
+
+  const featuredDeleted = planCatalogWrite({
+    type: "customer.subscription.deleted",
+    metadata: {},
+    subscriptionId: "sub_featured",
+    matchedLane: "featured_city",
+    userId: "user_1",
+    profileUserId: "user_1",
+  });
+  assert.equal(featuredDeleted.lane, "featured_city");
+  assert.equal(featuredDeleted.status, "canceled");
+  assert.equal(featuredDeleted.active, false);
+  assert.equal(featuredDeleted.clearSubscription, true);
 
   const boostUnpaid = planCatalogWrite({
     type: "checkout.session.completed",
@@ -237,6 +301,25 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
     userId: "user_1",
   });
   assert.equal(jobPaid.lane, "job_post");
+  assert.equal(jobPaid.centreId, null);
+
+  const jobForCentre = planCatalogWrite({
+    type: "checkout.session.completed",
+    metadata: {
+      kidease: "addon",
+      addon: "job_post",
+      role: "daycare",
+      buyer: "daycare",
+      user_id: "user_1",
+      centre_id: "centre_a",
+    },
+    paymentStatus: "paid",
+    checkoutSessionId: "cs_job_centre",
+    paymentId: "pi_job_centre",
+    userId: "user_1",
+  });
+  assert.equal(jobForCentre.lane, "job_post");
+  assert.equal(jobForCentre.centreId, "centre_a");
 
   const subEventForJob = planCatalogWrite({
     type: "customer.subscription.deleted",
@@ -254,6 +337,23 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   assert.doesNotMatch(featuredBody, /plus_plan/);
   assert.match(src("migrations/0062_provider_addon_billing.sql"), /featured_city_subscription_id/);
   assert.match(src("migrations/0062_provider_addon_billing.sql"), /job_post_credits/);
+  assert.match(src("migrations/0064_centre_addon_effects.sql"), /featured_city_centre_id/);
+  assert.match(src("migrations/0064_centre_addon_effects.sql"), /centre_job_posts/);
+  assert.match(src("migrations/0064_centre_addon_effects.sql"), /centre_job_credits/);
+  assert.match(lifecycle, /centre_job_credits/);
+  assert.match(lifecycle, /featured_city_centre_id/);
+  assert.match(lifecycle, /claim_boost_centre_id/);
+  assert.match(lifecycle, /job_post_centre_id/);
+  assert.match(lifecycle, /d\.id = \$\{target\}/);
+  assert.doesNotMatch(featuredBody, /selected_plan/);
+  assert.match(src("src/lib/server/provider-subscriptions.ts"), /addon=success&item=/);
+  assert.match(src("src/lib/server/provider-subscriptions.ts"), /mode: checked\.mode/);
+  assert.match(src("src/lib/server/provider-subscriptions.ts"), /postCentreJob/);
+  assert.match(src("src/lib/server/provider-subscriptions.ts"), /centre_job_posts/);
+  assert.match(src("src/components/checkout-return.tsx"), /confirmSuccess/);
+  assert.match(src("src/components/success-confirm.tsx"), /modal\.kicker \|\| kicker/);
+  assert.match(src("src/lib/copy.ts"), /successKicker: "Good job!"/);
+  assert.match(src("src/components/admin-review-card.tsx"), /admin-centre-addons/);
   assert.match(src("migrations/0063_parent_alerts_plan.sql"), /plus_plan in \('free', 'plus', 'alerts'\)/);
   const plusFn = lifecycle.slice(lifecycle.indexOf("export async function applyParentPlus"));
   const plusBody = plusFn.slice(0, plusFn.indexOf("async function bumpClaimPriority"));
@@ -511,7 +611,8 @@ test("parents and daycares cannot buy or receive each other's upgrades", () => {
   const daycareCheckout = src("src/lib/server/provider-subscriptions.ts");
   assert.match(daycareCheckout, /canBuyDaycareUpgrade/);
   assert.match(daycareCheckout, /role: "daycare"/);
-  assert.match(daycareCheckout, /centre_id: centres\[0\]/);
+  assert.match(daycareCheckout, /centre_id: picked/);
+  assert.match(daycareCheckout, /resolveAddonCentre\(centres, centreId\) \|\| centres\[0\]/);
   assert.match(daycareCheckout, /daycareCheckoutMeta/);
   const lifecycle = src("src/lib/server/stripe-lifecycle.ts");
   assert.match(lifecycle, /profileMayReceiveUpgrade/);

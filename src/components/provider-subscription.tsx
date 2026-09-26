@@ -17,6 +17,7 @@ import {
 import {
   getProviderSubscription,
   saveProviderSubscription,
+  postCentreJob,
   startProviderAddonCheckout,
   startProviderBillingPortal,
   startProviderCheckout,
@@ -111,6 +112,9 @@ export function ProviderSubscriptionPanel() {
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [week, setWeek] = useState({ views: 0, requests: 0 });
+  const [centreId, setCentreId] = useState("");
+  const [jobRole, setJobRole] = useState("");
+  const [jobNote, setJobNote] = useState("");
   const payReturn = useMemo(
     () => (typeof window === "undefined" ? null : readUpgradeReturn(window.location.search)),
     [],
@@ -120,6 +124,7 @@ export function ProviderSubscriptionPanel() {
     setState(s);
     if (s.entitlements.paid) setInterval(s.interval);
     setAddons(s.addons);
+    setCentreId((current) => current || s.centres[0]?.id || s.jobPostCentreId || "");
     setLoadError(false);
   }, []);
 
@@ -222,13 +227,37 @@ export function ProviderSubscriptionPanel() {
   async function payAddon(addon: ProviderAddonId) {
     setBusy(true);
     try {
-      const result = await startProviderAddonCheckout({ data: { addon } });
+      const result = await startProviderAddonCheckout({ data: { addon, centreId: centreId || null } });
       if (result.url) {
         await openStripeCheckout(result.url);
         return;
       }
     } catch (err) {
       toast.error(subscriptionError(err, tx("planAddonFailed"), tx("plansNotOffered")));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function postJob() {
+    const target = centreId || state?.jobPostCentreId || state?.centres[0]?.id || "";
+    if (!target) {
+      toast.error(loc === "fr" ? "Choisissez un centre. Rien n’a été publié." : "Choose a centre. Nothing was posted.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await postCentreJob({ data: { centreId: target, role: jobRole, note: jobNote } });
+      setJobRole("");
+      setJobNote("");
+      const saved = await getProviderSubscription();
+      applyState(saved);
+      confirmSuccess({
+        variant: "modal",
+        title: loc === "fr" ? "L’offre est sur la page du centre" : "The opening is on the centre page",
+      });
+    } catch (err) {
+      toast.error(subscriptionError(err, loc === "fr" ? "L’offre n’a pas été publiée." : "The opening was not posted.", tx("plansNotOffered")));
     } finally {
       setBusy(false);
     }
@@ -388,6 +417,24 @@ export function ProviderSubscriptionPanel() {
         </table>
       </div>
 
+      {state.centres.length > 1 ? (
+        <label className="block text-sm">
+          <span className="text-muted">{loc === "fr" ? "Centre pour les options" : "Centre for add-ons"}</span>
+          <select
+            className="mt-1 min-h-11 w-full rounded-xl bg-surface px-3 ring-1 ring-border"
+            data-ke="addon-centre"
+            value={centreId}
+            onChange={(event) => setCentreId(event.target.value)}
+          >
+            {state.centres.map((centre) => (
+              <option key={centre.id} value={centre.id}>
+                {centre.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
       <DaycareAddons
         locale={loc}
         flags={state.prices}
@@ -435,6 +482,48 @@ export function ProviderSubscriptionPanel() {
           );
         }}
       />
+
+      {state.jobPostCredits > 0 ? (
+        <form
+          className="rounded-xl bg-surface px-4 py-4 ring-1 ring-border"
+          data-ke="centre-job-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void postJob();
+          }}
+        >
+          <p className="text-sm font-medium">
+            {loc === "fr" ? "Utiliser un crédit d’offre" : "Use a job-post credit"}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            {loc === "fr"
+              ? "Cela publie une offre sur la page de ce centre et retire un crédit."
+              : "This posts one opening on this centre page and uses one credit."}
+          </p>
+          <label className="mt-3 block text-sm">
+            <span className="text-muted">{loc === "fr" ? "Poste" : "Role"}</span>
+            <input
+              className="mt-1 min-h-11 w-full rounded-xl bg-bg px-3 ring-1 ring-border"
+              value={jobRole}
+              maxLength={80}
+              required
+              onChange={(event) => setJobRole(event.target.value)}
+            />
+          </label>
+          <label className="mt-3 block text-sm">
+            <span className="text-muted">{loc === "fr" ? "Note" : "Note"}</span>
+            <textarea
+              className="mt-1 min-h-20 w-full rounded-xl bg-bg px-3 py-2 ring-1 ring-border"
+              value={jobNote}
+              maxLength={280}
+              onChange={(event) => setJobNote(event.target.value)}
+            />
+          </label>
+          <Button type="submit" className="mt-3" disabled={busy}>
+            {loc === "fr" ? "Publier l’offre" : "Post opening"}
+          </Button>
+        </form>
+      ) : null}
 
       <div className="rounded-xl bg-surface px-5 py-5 ring-1 ring-border">
         {state.customerId && state.stripeLive ? (
