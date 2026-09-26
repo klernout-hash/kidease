@@ -34,6 +34,7 @@ export type DaycareRow = {
   toddler_monthly: number | null;
   preschool_monthly: number | null;
   part_time_monthly: number | null;
+  fee_program?: string | null;
   spots_infant: number;
   spots_toddler: number;
   spots_preschool: number;
@@ -118,6 +119,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     toddlerMonthly: r.toddler_monthly,
     preschoolMonthly: r.preschool_monthly,
     partTimeMonthly: r.part_time_monthly,
+    feeProgram: r.fee_program || null,
     spotsInfant: r.spots_infant,
     spotsToddler: r.spots_toddler,
     spotsPreschool: r.spots_preschool,

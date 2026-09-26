@@ -43,6 +43,7 @@ export type CatalogDbRow = {
   toddler_monthly: number | null;
   preschool_monthly: number | null;
   part_time_monthly: number | null;
+  fee_program?: string | null;
   spots_infant: number | null;
   spots_toddler: number | null;
   spots_preschool: number | null;
@@ -76,7 +77,7 @@ export const CATALOG_SELECT = `
 id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
 address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
 age_min_months, age_max_months, infant_monthly, toddler_monthly,
-preschool_monthly, part_time_monthly, spots_infant, spots_toddler,
+preschool_monthly, part_time_monthly, fee_program, spots_infant, spots_toddler,
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
 languages, staff_languages, cultural_programs, cultural_team_note,
@@ -174,6 +175,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     toddlerMonthly: row.toddler_monthly,
     preschoolMonthly: row.preschool_monthly,
     partTimeMonthly: row.part_time_monthly,
+    feeProgram: row.fee_program || null,
     spotsInfant: Number(row.spots_infant) || 0,
     spotsToddler: Number(row.spots_toddler) || 0,
     spotsPreschool: Number(row.spots_preschool) || 0,

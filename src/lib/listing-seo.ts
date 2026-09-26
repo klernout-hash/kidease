@@ -4,6 +4,7 @@
  * Relative .ts imports so Node tests can load this file.
  */
 
+import { confirmedStoredFeeProgram } from "./fee-program.ts";
 import { listingAgesConfirmed } from "./listing-ages.ts";
 import { classifyFacilityType, facilityTypeSeoKind } from "./facility-type.ts";
 import { cityHubCityName, cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
@@ -44,6 +45,7 @@ export type ListingSeoSource = {
   ageMaxMonths?: number | null;
   photos?: string[] | null;
   amenities?: string | null;
+  feeProgram?: string | null;
 };
 
 export type ListingSeoMeta = {
@@ -72,6 +74,13 @@ function clean(value: string | null | undefined) {
 
 function agesKnown(src: ListingSeoSource) {
   return listingAgesConfirmed(src);
+}
+
+function feeProgramPhrase(src: ListingSeoSource, locale: ListingSeoLocale) {
+  if (confirmedStoredFeeProgram(src) !== "mb-10-day") return "";
+  return locale === "fr"
+    ? " Programme financé du Manitoba, tarif parental maximal réglementé de 10 $ par jour."
+    : " Manitoba funded fee program, maximum regulated parent fee $10 a day.";
 }
 
 function agePhrase(src: ListingSeoSource, locale: ListingSeoLocale) {
@@ -128,14 +137,15 @@ export function listingMetaDescription(src: ListingSeoSource, locale: ListingSeo
   const ages = agePhrase(src, locale);
   const type = classifyFacilityType({ amenities: src.amenities, name: src.name }).type;
   const kind = facilityTypeSeoKind(type, locale);
+  const program = feeProgramPhrase(src, locale);
   if (locale === "fr") {
     const where = area ? ` à ${area}` : "";
     const ageBit = ages ? ` Âges ${ages}.` : "";
-    return `${kind} chez ${name}${where}.${ageBit} Consultez les heures et les places sur KidEase.`;
+    return `${kind} chez ${name}${where}.${ageBit}${program} Consultez les heures et les places sur KidEase.`;
   }
   const where = area ? ` in ${area}` : "";
   const ageBit = ages ? ` Ages ${ages}.` : "";
-  return `${kind} at ${name}${where}.${ageBit} See hours and spots on KidEase.`;
+  return `${kind} at ${name}${where}.${ageBit}${program} See hours and spots on KidEase.`;
 }
 
 export function listingSeoMeta(src: ListingSeoSource, locale: ListingSeoLocale = "en"): ListingSeoMeta | null {

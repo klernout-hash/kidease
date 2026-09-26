@@ -58,6 +58,12 @@ test("listing SEO title and description use name, city, province, ages", () => {
   assert.match(desc, /Winnipeg/);
   assert.doesNotMatch(desc, /\$10/);
   assert.doesNotMatch(desc, /4\.8/);
+  const funded = listingMetaDescription({ ...centre, feeProgram: "mb-10-day" }, "en");
+  assert.match(funded, /\$10 a day/);
+  assert.doesNotMatch(funded, /218/);
+  assert.doesNotMatch(funded, /per month|\/month|\$\d{3,}/i);
+  const fundedJson = JSON.stringify(listingJsonLd({ ...centre, feeProgram: "mb-10-day" }));
+  assert.doesNotMatch(fundedJson, /218|price|offers/i);
   const fr = listingPageTitle(centre, "fr");
   assert.match(fr, /Garderie Sunny Side/);
   assert.match(fr, /12 à 60 mois/);

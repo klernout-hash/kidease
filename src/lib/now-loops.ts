@@ -4,15 +4,16 @@
  */
 
 import { RAIL_AGES, matchesRailAge, type RailAge } from "@/lib/care-type";
-import { hasAmenity } from "@/lib/licensing";
+import { confirmedFeeProgramBadge, hasConfirmedFeeLine } from "@/lib/fee-program";
 import {
   hasConfirmedAges,
-  hasListedFees,
   hasRealPhoto,
   vacancyFreshness,
   vacancyTimestamp,
 } from "@/lib/listing-readiness";
 import type { Daycare } from "@/lib/types";
+
+export { confirmedFeeProgramBadge, hasConfirmedFeeLine };
 
 export const SEARCH_AGES = RAIL_AGES;
 export type SearchAge = RailAge;
@@ -38,6 +39,7 @@ export type LiveLookingInput = Pick<
   | "photos"
   | "province"
   | "feeConfirmed"
+  | "feeProgram"
 >;
 
 export type VacancyHonestyInput = Pick<
@@ -87,47 +89,6 @@ export function searchFiltersReady(
 export function hasPlaceForSearch(q?: string | null, label?: string | null, located?: boolean): boolean {
   if (located) return true;
   return Boolean((q || label || "").trim());
-}
-
-/**
- * Listed monthly fee or a per-centre program amenity.
- * Province-typical $10-a-day is not enough — that would guess.
- */
-export function hasConfirmedFeeLine(
-  d: Pick<
-    Daycare,
-    | "infantMonthly"
-    | "toddlerMonthly"
-    | "preschoolMonthly"
-    | "partTimeMonthly"
-    | "amenities"
-    | "feeConfirmed"
-  >,
-): boolean {
-  if (hasListedFees(d)) return true;
-  if (!d.feeConfirmed) return false;
-  const amenities = d.amenities || "";
-  return hasAmenity(amenities, "ten-a-day") || hasAmenity(amenities, "funded");
-}
-
-/**
- * $10-a-day / $15-a-day / Québec reduced badge only when this centre
- * confirmed the program. Harvest amenities and province defaults are not enough.
- * Québec is never stamped $10-a-day.
- */
-export function confirmedFeeProgramBadge(
-  d: Pick<Daycare, "province" | "amenities" | "feeConfirmed">,
-): "badgeTen" | "badgeFifteen" | "badgeReducedQc" | null {
-  if (!d.feeConfirmed) return null;
-  const amenities = d.amenities || "";
-  const ten = hasAmenity(amenities, "ten-a-day");
-  const funded = hasAmenity(amenities, "funded");
-  if (!ten && !funded) return null;
-  const province = (d.province || "").toUpperCase();
-  if (province === "QC") return "badgeReducedQc";
-  if (province === "AB") return "badgeFifteen";
-  if (ten) return "badgeTen";
-  return null;
 }
 
 export function liveLookingGaps(d: LiveLookingInput): LiveLookingGap[] {

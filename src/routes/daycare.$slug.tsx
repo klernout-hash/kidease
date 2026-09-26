@@ -49,6 +49,7 @@ import type { CopyKey } from "@/lib/copy";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
 import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { confirmedStoredFeeProgram } from "@/lib/fee-program";
 import { liveLookingOnly } from "@/lib/now-loops";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { rememberViewed } from "@/lib/recent";
@@ -640,6 +641,8 @@ function Listing() {
                     <PriceRow label={t("partTime")} value={money(d.partTimeMonthly, locale)} extra="" />
                   ) : null}
                 </ul>
+              ) : confirmedStoredFeeProgram(d) === "mb-10-day" ? (
+                <p className="mt-2 max-w-prose text-sm text-muted">{t("feeProgramMb10Day")}</p>
               ) : (
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeUnknownLead")}</p>
               )}

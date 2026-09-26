@@ -2238,7 +2238,13 @@ export const copy = {
     adminWinnipegNavHint: "Ages, fees, real photos",
     adminWinnipegTitle: "Winnipeg listing completeness",
     adminWinnipegLead:
-      "A Winnipeg search card looks complete only with confirmed ages, a listed parent fee, and a real centre photo. KidEase does not invent those. Download the gap CSV for outreach, then paste sourced rows back here.",
+      "A Winnipeg search card looks complete with confirmed ages, a listed monthly fee or a sourced fee program (Manitoba funded, maximum regulated $10 a day), and a real centre photo. KidEase does not turn a daily cap into a monthly fee. Download the gap CSV, fill fee_program and ages from a source, then paste the rows back here.",
+    feeProgramMb10Day:
+      "This centre is in the Manitoba funded fee program. The maximum regulated parent fee is $10 a day. KidEase does not turn that daily cap into a monthly fee.",
+    adminWinnipegFeeProgram: "Fee program",
+    adminWinnipegFeeProgramNone: "No fee program",
+    adminWinnipegFeeProgramOption: "Manitoba funded — $10 a day maximum",
+    adminWinnipegFeeProgramHint: "mb-10-day when a source shows this centre is funded at the regulated daily cap. Leave monthly fees blank.",
     adminWinnipegDownload: "Download gap CSV",
     adminWinnipegEmpty: "No public Winnipeg listings in this database.",
     adminWinnipegLoading: "Measuring Winnipeg listings…",
@@ -4711,7 +4717,13 @@ export const copy = {
     adminWinnipegNavHint: "Âges, tarifs, vraies photos",
     adminWinnipegTitle: "Complétude des fiches de Winnipeg",
     adminWinnipegLead:
-      "Une fiche de recherche à Winnipeg est complète seulement avec des âges confirmés, un tarif parental affiché et une vraie photo du centre. KidEase n’invente pas ces faits. Téléchargez le CSV des lacunes, puis collez ici les lignes avec une source.",
+      "Une fiche de recherche à Winnipeg est complète avec des âges confirmés, un tarif mensuel affiché ou un programme de tarifs sourcé (Manitoba financé, maximum réglementé de 10 $ par jour), et une vraie photo du centre. KidEase ne convertit pas un plafond quotidien en tarif mensuel. Téléchargez le CSV, remplissez fee_program et les âges avec une source, puis collez les lignes ici.",
+    feeProgramMb10Day:
+      "Ce centre participe au programme de tarifs financé du Manitoba. Le tarif parental maximal réglementé est de 10 $ par jour. KidEase ne convertit pas ce plafond en tarif mensuel.",
+    adminWinnipegFeeProgram: "Programme de tarifs",
+    adminWinnipegFeeProgramNone: "Aucun programme de tarifs",
+    adminWinnipegFeeProgramOption: "Manitoba financé — maximum de 10 $ par jour",
+    adminWinnipegFeeProgramHint: "mb-10-day quand une source montre que ce centre est financé au plafond quotidien réglementé. Laissez les tarifs mensuels vides.",
     adminWinnipegDownload: "Télécharger le CSV des lacunes",
     adminWinnipegEmpty: "Aucune fiche publique de Winnipeg dans cette base.",
     adminWinnipegLoading: "Mesure des fiches de Winnipeg…",

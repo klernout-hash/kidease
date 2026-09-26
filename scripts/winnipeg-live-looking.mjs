@@ -8,6 +8,8 @@
  *   DATABASE_URL=… node --experimental-strip-types scripts/winnipeg-live-looking.mjs --apply filled.csv --write
  *
  * Prints counts only. Does not invent ages, fees, or photos.
+ * fee_program mb-10-day is Manitoba funded / max regulated daily $10.
+ * That column never writes a monthly CAD amount. 218 stays rejected.
  * --apply is a dry run until --write. Blank CSV cells are not written.
  */
 import { readFile, writeFile } from "node:fs/promises";
@@ -119,6 +121,7 @@ function rowFromDb(row) {
     toddlerMonthly: row.toddler_monthly,
     preschoolMonthly: row.preschool_monthly,
     partTimeMonthly: row.part_time_monthly,
+    feeProgram: row.fee_program,
     amenities: row.amenities,
     photos: row.photos,
     feeConfirmed: Boolean(row.claimed_at),
@@ -136,7 +139,7 @@ function rowFromDb(row) {
 const SELECT_ONE = `
 select id, slug, name, address, city, province, phone, website, license_number,
   age_min_months, age_max_months, ages_confirmed,
-  infant_monthly, toddler_monthly, preschool_monthly, part_time_monthly,
+  infant_monthly, toddler_monthly, preschool_monthly, part_time_monthly, fee_program,
   amenities, photos, claimed_at, claim_status, listing_active,
   rating_x10, review_count, visibility, is_test
 from daycares
@@ -177,7 +180,7 @@ async function applyCsv(path, write) {
         console.error(`[winnipeg-gaps] reject ${plan.id}: ${plan.reason}`);
         continue;
       }
-      if (plan.action === "skip" || (!plan.setAges && !plan.setFees && !plan.setPhoto)) {
+      if (plan.action === "skip" || (!plan.setAges && !plan.setFees && !plan.setPhoto && !plan.setFeeProgram)) {
         skipped += 1;
         continue;
       }
@@ -210,6 +213,15 @@ async function applyCsv(path, write) {
             plan.setFees.preschoolMonthly ?? null,
             plan.setFees.partTimeMonthly ?? null,
           ],
+        );
+      }
+      if (plan.setFeeProgram) {
+        await client.query(
+          `update daycares
+           set fee_program = $2
+           where id = $1
+             and coalesce(btrim(fee_program), '') = ''`,
+          [plan.id, plan.setFeeProgram],
         );
       }
       if (plan.setPhoto && !hasRealPhoto(current)) {

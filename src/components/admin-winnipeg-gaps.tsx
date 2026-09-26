@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 import { applyWinnipegGaps, listWinnipegGaps, type WinnipegGapReport } from "@/lib/server/winnipeg-gaps";
+import { MB_FUNDED_10_DAY } from "@/lib/fee-program";
 import { parseGapCsv, type FillPatch } from "@/lib/winnipeg-completeness";
 import { useCopy } from "@/lib/use-copy";
 
@@ -26,6 +27,7 @@ export function AdminWinnipegGaps() {
   const [preschool, setPreschool] = useState("");
   const [partTime, setPartTime] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [feeProgram, setFeeProgram] = useState("");
   const [source, setSource] = useState("");
 
   async function load() {
@@ -157,6 +159,7 @@ export function AdminWinnipegGaps() {
             preschoolMonthly: fee(preschool),
             partTimeMonthly: fee(partTime),
             photoUrl: photoUrl.trim() || undefined,
+            feeProgram: feeProgram.trim() || undefined,
           };
           void applyPatches([patch]);
         }}
@@ -197,6 +200,18 @@ export function AdminWinnipegGaps() {
         <label className="text-sm sm:col-span-2">
           {t("adminWinnipegPhoto")}
           <input value={photoUrl} onChange={(event) => setPhotoUrl(event.target.value)} placeholder="https://" className="mt-1 h-11 w-full rounded-xl bg-surface-2 px-3 ring-1 ring-border" />
+        </label>
+        <label className="text-sm sm:col-span-2">
+          {t("adminWinnipegFeeProgram")}
+          <select
+            value={feeProgram}
+            onChange={(event) => setFeeProgram(event.target.value)}
+            className="mt-1 h-11 w-full rounded-xl bg-surface-2 px-3 ring-1 ring-border"
+          >
+            <option value="">{t("adminWinnipegFeeProgramNone")}</option>
+            <option value={MB_FUNDED_10_DAY}>{t("adminWinnipegFeeProgramOption")}</option>
+          </select>
+          <span className="mt-1 block text-xs text-subtle">{t("adminWinnipegFeeProgramHint")}</span>
         </label>
         <div className="sm:col-span-2">
           <Button type="submit" disabled={busy || !activeId.trim()}>

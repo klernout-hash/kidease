@@ -40,6 +40,7 @@ type GapDbRow = {
   toddler_monthly: number | null;
   preschool_monthly: number | null;
   part_time_monthly: number | null;
+  fee_program: string | null;
   amenities: string | null;
   photos: string | null;
   claimed_at: string | null;
@@ -72,6 +73,7 @@ function fromDb(row: GapDbRow): CompletenessInput {
     toddlerMonthly: row.toddler_monthly,
     preschoolMonthly: row.preschool_monthly,
     partTimeMonthly: row.part_time_monthly,
+    feeProgram: row.fee_program,
     amenities: row.amenities,
     photos: row.photos,
     feeConfirmed: Boolean(row.claimed_at),
@@ -89,7 +91,7 @@ function fromDb(row: GapDbRow): CompletenessInput {
 const LIST_SQL = `
 select id, slug, name, address, city, province, phone, website, license_number,
   age_min_months, age_max_months, ages_confirmed,
-  infant_monthly, toddler_monthly, preschool_monthly, part_time_monthly,
+  infant_monthly, toddler_monthly, preschool_monthly, part_time_monthly, fee_program,
   amenities, photos, claimed_at, claim_status, listing_active,
   rating_x10, review_count, visibility, is_test
 from daycares
@@ -176,6 +178,7 @@ function cleanPatch(input: FillPatch): FillPatch {
     preschoolMonthly: input.preschoolMonthly,
     partTimeMonthly: input.partTimeMonthly,
     photoUrl: input.photoUrl,
+    feeProgram: typeof input.feeProgram === "string" ? input.feeProgram.trim() : undefined,
     source: input.source,
   };
 }
@@ -202,7 +205,7 @@ export const applyWinnipegGaps = createServerFn({ method: "POST" })
       const found = await sql.query<GapDbRow>(
         `select id, slug, name, address, city, province, phone, website, license_number,
            age_min_months, age_max_months, ages_confirmed,
-           infant_monthly, toddler_monthly, preschool_monthly, part_time_monthly,
+           infant_monthly, toddler_monthly, preschool_monthly, part_time_monthly, fee_program,
            amenities, photos, claimed_at, claim_status, listing_active,
            rating_x10, review_count, visibility, is_test
          from daycares where id = $1 limit 1`,
@@ -219,7 +222,7 @@ export const applyWinnipegGaps = createServerFn({ method: "POST" })
         rejected.push({ id: patch.id, reason: plan.reason });
         continue;
       }
-      if (plan.action !== "apply" || (!plan.setAges && !plan.setFees && !plan.setPhoto)) {
+      if (plan.action !== "apply" || (!plan.setAges && !plan.setFees && !plan.setPhoto && !plan.setFeeProgram)) {
         skipped.push(patch.id);
         continue;
       }
@@ -248,6 +251,15 @@ export const applyWinnipegGaps = createServerFn({ method: "POST" })
             plan.setFees.preschoolMonthly ?? null,
             plan.setFees.partTimeMonthly ?? null,
           ],
+        );
+      }
+      if (plan.setFeeProgram) {
+        await sql.query(
+          `update daycares
+           set fee_program = $2
+           where id = $1
+             and coalesce(btrim(fee_program), '') = ''`,
+          [plan.id, plan.setFeeProgram],
         );
       }
       if (plan.setPhoto && !hasRealPhoto(current)) {

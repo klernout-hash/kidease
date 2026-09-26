@@ -44,6 +44,8 @@ export type CatalogDaycare = {
   toddlerMonthly: number | null;
   preschoolMonthly: number | null;
   partTimeMonthly: number | null;
+  /** Sourced provincial fee program. JSON catalogue rows leave this empty. */
+  feeProgram?: string | null;
   spotsInfant: number;
   spotsToddler: number;
   spotsPreschool: number;
