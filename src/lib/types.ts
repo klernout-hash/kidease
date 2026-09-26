@@ -104,6 +104,8 @@ export type Daycare = {
   feeConfirmed?: boolean;
   /** Sourced provincial fee program code, e.g. mb-10-day. Not a monthly amount. */
   feeProgram?: string | null;
+  /** Operator citation for a sourced age, fee, or photo. Not shown raw. */
+  factSource?: string | null;
   availabilityKnown?: boolean;
   spotsUpdatedAt?: string | null;
   lastVacancyUpdatedAt?: string | null;

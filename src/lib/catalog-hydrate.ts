@@ -46,6 +46,8 @@ export type CatalogDaycare = {
   partTimeMonthly: number | null;
   /** Sourced provincial fee program. JSON catalogue rows leave this empty. */
   feeProgram?: string | null;
+  /** Citation for a sourced fill. JSON catalogue rows leave this empty. */
+  factSource?: string | null;
   spotsInfant: number;
   spotsToddler: number;
   spotsPreschool: number;
@@ -135,6 +137,8 @@ type OperatorFact = {
   hours?: string;
   phone?: string;
   feeConfirmed?: boolean;
+  /** Sourced provincial program, when the fact file has one. Never guessed. */
+  feeProgram?: string | null;
 };
 
 export const EXTRA_FILES = [
@@ -289,6 +293,7 @@ export function hydrateCentre(
     toddlerMonthly: feeOk ? fact?.toddlerMonthly ?? null : null,
     preschoolMonthly: feeOk ? fact?.preschoolMonthly ?? null : null,
     partTimeMonthly: feeOk ? fact?.partTimeMonthly ?? null : null,
+    feeProgram: fact?.feeProgram || null,
     spotsInfant: 0,
     spotsToddler: 0,
     spotsPreschool: 0,

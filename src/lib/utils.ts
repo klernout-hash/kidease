@@ -1,7 +1,10 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { decodeHtml } from "./html-text.ts";
 import type { AgeGroup, Locale } from "./types";
 import { localeTag } from "./languages.ts";
+
+export { decodeHtml };
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -16,17 +19,9 @@ export function uniqueById<T extends { id: string }>(rows: T[]) {
   });
 }
 
-/** Decode leftover HTML entities in listing names. */
-export function decodeHtml(value: string | null | undefined) {
-  const text = String(value ?? "");
-  if (!text.includes("&")) return text;
-  return text
-    .replace(/&amp;/gi, "&")
-    .replace(/&apos;/gi, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/gi, '"')
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">");
+/** Public listing prose. Decodes entities so the UI never shows a literal `&amp;`. */
+export function displayListingText(value: string | null | undefined) {
+  return decodeHtml(value);
 }
 
 /**

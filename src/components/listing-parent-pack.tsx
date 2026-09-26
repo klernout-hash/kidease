@@ -4,17 +4,23 @@ import {
   financialLabels,
   honestOpeningWindow,
   listingPrograms,
-  parentAgeLabel,
   parentOpeningLabel,
   parentScheduleLabel,
-  programFeeKnown,
   safetyLabel,
 } from "@/lib/parent-listing";
+import { formatPublicAgeRange } from "@/lib/listing-ages";
 import { confirmedStoredFeeProgram } from "@/lib/fee-program";
 import { honestVacancy } from "@/lib/now-loops";
+import {
+  formatMonthlyFee,
+  monthlyFeeVisible,
+  partTimeMonthlyFee,
+} from "@/lib/public-programs";
 import { useCopy } from "@/lib/use-copy";
-import { formatAgeRange, money } from "@/lib/utils";
+import { displayListingText, money } from "@/lib/utils";
+import type { CopyKey } from "@/lib/copy";
 import type { Daycare } from "@/lib/types";
+import type { ParentAgeBand } from "@/lib/parent-listing";
 
 /** Openings, ages, hours, and a starting fee. City, type, and trust stay elsewhere. */
 export function ListingHeaderPills({
@@ -74,14 +80,23 @@ export function ListingJumpNav() {
   );
 }
 
+const BAND_NAME: Record<ParentAgeBand, CopyKey> = {
+  infant: "infant",
+  toddler: "toddler",
+  preschool: "preschool",
+  "school-age": "schoolAge",
+};
+
 export function ListingProgramsTable({ item }: { item: Daycare }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const rows = listingPrograms(item);
+  const partTime = partTimeMonthlyFee(item.partTimeMonthly);
+  const showPart = partTime != null;
   return (
     <section id="listing-programs" className="scroll-mt-24">
       <h2 className="font-display text-2xl">{t("programsTitle")}</h2>
-      {rows.length ? (
+      {rows.length || showPart ? (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[28rem] text-sm">
             <thead className="bg-surface-2 text-left text-xs text-muted">
@@ -95,8 +110,10 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
               {rows.map((row) => (
                 <tr key={row.band}>
                   <td className="px-3 py-2">
-                    <p className="font-medium">{parentAgeLabel(row.band, loc)}</p>
-                    <p className="text-xs text-muted">{formatAgeRange(row.ageMinMonths, row.ageMaxMonths)}</p>
+                    <p className="font-medium">{t(BAND_NAME[row.band])}</p>
+                    <p className="text-xs text-muted">
+                      {formatPublicAgeRange(row.ageMinMonths, row.ageMaxMonths, loc)}
+                    </p>
                   </td>
                   <td className="px-3 py-2 text-muted">
                     {row.schedules.length
@@ -104,12 +121,23 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
                       : t("programsAsk")}
                   </td>
                   <td className="px-3 py-2 tabular-nums">
-                    {programFeeKnown(row, item) && row.monthlyFee
-                      ? money(row.monthlyFee, locale)
+                    {monthlyFeeVisible(row.monthlyFee, item) && row.monthlyFee
+                      ? formatMonthlyFee(row.monthlyFee, locale)
                       : t("programsAsk")}
                   </td>
                 </tr>
               ))}
+              {showPart && partTime ? (
+                <tr key="part-time" data-program-line="part-time">
+                  <td className="px-3 py-2">
+                    <p className="font-medium">{t("partTimeHalfDay")}</p>
+                  </td>
+                  <td className="px-3 py-2 text-muted">—</td>
+                  <td className="px-3 py-2 tabular-nums">
+                    {monthlyFeeVisible(partTime, item) ? formatMonthlyFee(partTime, locale) : t("programsAsk")}
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
@@ -132,8 +160,8 @@ export function ListingSnapshotGrid({ item }: { item: Daycare }) {
     .filter(Boolean)
     .map((key) => amenityLabel(key, loc));
   const chips = [...new Set([...financial, ...curriculum, ...safety, ...amenities])];
-  const promo = (item.promoText || "").trim();
-  const values = (item.valuesNote || "").trim();
+  const promo = displayListingText(item.promoText).trim();
+  const values = displayListingText(item.valuesNote).trim();
   if (!chips.length && !promo && !values) return null;
   return (
     <section data-listing-snapshot>
