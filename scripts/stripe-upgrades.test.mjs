@@ -12,6 +12,14 @@ import {
   upgradeSuccessTitle,
 } from "../src/lib/stripe-subscription-route.ts";
 import { mapCheckoutError, publicPayMessage, StripeApiError } from "../src/lib/stripe-public-error.ts";
+import {
+  canBuyDaycareUpgrade,
+  canBuyParentUpgrade,
+  catalogMetadataAllows,
+  profileMayReceiveUpgrade,
+  visibleUpgradeSide,
+} from "../src/lib/upgrade-role.ts";
+import { visibleDeskNav } from "../src/lib/desk-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -284,4 +292,208 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
   assert.match(src("src/routes/index.tsx"), /showPayCtas\(\)/);
   assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /\/pricing|\/for-daycares/);
   assert.doesNotMatch(src("src/routes/index.tsx"), /\/pricing|\/for-daycares/);
+});
+
+test("parents and daycares cannot buy or receive each other's upgrades", () => {
+  assert.equal(canBuyParentUpgrade({ role: "parent" }), true);
+  assert.equal(canBuyParentUpgrade({ role: "provider", ownsCentre: true }), false);
+  assert.equal(canBuyParentUpgrade({ role: "admin" }), true);
+  assert.equal(canBuyDaycareUpgrade({ role: "parent" }), false);
+  assert.equal(canBuyDaycareUpgrade({ role: "provider" }), false);
+  assert.equal(canBuyDaycareUpgrade({ role: "provider", ownsCentre: true }), true);
+  assert.equal(canBuyDaycareUpgrade({ role: "parent", linkedToCentre: true }), true);
+  assert.equal(canBuyDaycareUpgrade({ role: "admin" }), true);
+
+  assert.equal(visibleUpgradeSide({ role: "parent" }), "parent");
+  assert.equal(visibleUpgradeSide({ role: "provider", ownsCentre: true }), "daycare");
+  assert.equal(
+    visibleUpgradeSide({ role: "parent", ownsCentre: true, activeDesk: "provider" }),
+    "daycare",
+  );
+  assert.equal(
+    visibleUpgradeSide({ role: "parent", ownsCentre: true, activeDesk: "parent" }),
+    "parent",
+  );
+  assert.equal(visibleUpgradeSide({ role: "admin" }), "both");
+  assert.equal(visibleUpgradeSide({ role: "support" }), "none");
+
+  const parentBuyingPro = planCatalogWrite({
+    type: "checkout.session.completed",
+    metadata: { kidease: "provider_sub", role: "parent", plan: "pro", user_id: "u1", buyer: "parent" },
+    paymentStatus: "paid",
+    userId: "u1",
+    checkoutSessionId: "cs_role",
+  });
+  assert.equal(parentBuyingPro.lane, "ignore");
+  assert.equal(parentBuyingPro.reason, "daycare upgrade on a parent checkout");
+
+  const daycareBuyingPlus = planCatalogWrite({
+    type: "customer.subscription.updated",
+    metadata: { kidease: "parent_plus", role: "daycare", plan: "plus", user_id: "u1", centre_id: "c1", buyer: "daycare" },
+    status: "active",
+    userId: "u1",
+    subscriptionId: "sub_plus",
+  });
+  assert.equal(daycareBuyingPlus.lane, "ignore");
+  assert.equal(daycareBuyingPlus.reason, "parent upgrade on a daycare checkout");
+
+  const missingCentre = planCatalogWrite({
+    type: "checkout.session.completed",
+    metadata: { kidease: "provider_sub", role: "daycare", plan: "pro", user_id: "u1", buyer: "daycare" },
+    paymentStatus: "paid",
+    userId: "u1",
+    checkoutSessionId: "cs_role",
+  });
+  assert.equal(missingCentre.lane, "ignore");
+  assert.equal(missingCentre.reason, "daycare upgrade missing centre");
+
+  const plus = planCatalogWrite({
+    type: "customer.subscription.updated",
+    metadata: { kidease: "parent_plus", role: "parent", plan: "plus", user_id: "u1", buyer: "parent" },
+    status: "active",
+    userId: "u1",
+    subscriptionId: "sub_plus",
+  });
+  assert.equal(plus.lane, "parent_plus");
+
+  const pro = planCatalogWrite({
+    type: "customer.subscription.updated",
+    metadata: {
+      kidease: "provider_sub",
+      role: "daycare",
+      plan: "pro",
+      user_id: "u1",
+      buyer: "daycare",
+      centre_id: "c1",
+    },
+    status: "active",
+    userId: "u1",
+    subscriptionId: "sub_plan",
+  });
+  assert.equal(pro.lane, "provider_plan");
+
+  const featuredOnParent = planCatalogWrite({
+    type: "customer.subscription.updated",
+    metadata: { kidease: "addon", addon: "featured_city", role: "parent", user_id: "u1", buyer: "parent" },
+    status: "active",
+    userId: "u1",
+    subscriptionId: "sub_featured",
+  });
+  assert.equal(featuredOnParent.lane, "ignore");
+
+  const wrongProfile = planCatalogWrite({
+    type: "customer.subscription.updated",
+    metadata: { kidease: "parent_plus", role: "parent", plan: "plus", user_id: "u1", buyer: "parent" },
+    status: "active",
+    userId: "u1",
+    profileUserId: "someone-else",
+    subscriptionId: "sub_plus",
+  });
+  assert.equal(wrongProfile.lane, "ignore");
+  assert.equal(wrongProfile.reason, "profile user mismatch");
+
+  assert.equal(catalogMetadataAllows({ lane: "parent_plus" }).ok, true);
+  assert.equal(
+    profileMayReceiveUpgrade({
+      lane: "parent_plus",
+      profileRole: "provider",
+      metadataRole: "parent",
+      buyer: "parent",
+    }).ok,
+    false,
+  );
+  assert.equal(
+    profileMayReceiveUpgrade({
+      lane: "provider_plan",
+      profileRole: "parent",
+      metadataRole: "daycare",
+      buyer: "daycare",
+      centreId: "c1",
+      linkedCentreIds: [],
+    }).ok,
+    false,
+  );
+  assert.equal(
+    profileMayReceiveUpgrade({
+      lane: "provider_plan",
+      profileRole: "parent",
+      metadataRole: "daycare",
+      buyer: "daycare",
+      centreId: "c1",
+      linkedCentreIds: ["c1"],
+    }).ok,
+    true,
+  );
+  assert.equal(
+    profileMayReceiveUpgrade({
+      lane: "parent_plus",
+      profileRole: "parent",
+      metadataRole: "parent",
+      buyer: "parent",
+    }).ok,
+    true,
+  );
+  assert.equal(
+    profileMayReceiveUpgrade({
+      lane: "featured_city",
+      profileRole: "admin",
+      metadataRole: "daycare",
+      buyer: "admin",
+    }).ok,
+    true,
+  );
+  assert.equal(
+    profileMayReceiveUpgrade({
+      lane: "provider_plan",
+      profileRole: "parent",
+      linkedCentreIds: ["c1"],
+    }).ok,
+    true,
+  );
+  assert.equal(
+    profileMayReceiveUpgrade({
+      lane: "provider_plan",
+      profileRole: "parent",
+      linkedCentreIds: [],
+    }).ok,
+    false,
+  );
+
+  const parentCheckout = src("src/lib/server/parent-plus.ts");
+  assert.match(parentCheckout, /canBuyParentUpgrade/);
+  assert.match(parentCheckout, /role: "parent"/);
+  assert.match(parentCheckout, /buyer: desks\.role === "admin" \? "admin" : "parent"/);
+  const daycareCheckout = src("src/lib/server/provider-subscriptions.ts");
+  assert.match(daycareCheckout, /canBuyDaycareUpgrade/);
+  assert.match(daycareCheckout, /role: "daycare"/);
+  assert.match(daycareCheckout, /centre_id: centres\[0\]/);
+  assert.match(daycareCheckout, /daycareCheckoutMeta/);
+  const lifecycle = src("src/lib/server/stripe-lifecycle.ts");
+  assert.match(lifecycle, /profileMayReceiveUpgrade/);
+  assert.match(lifecycle, /refused cross-role upgrade/);
+  assert.match(src("src/routes/provider.subscription.tsx"), /canBuyDaycareUpgrade/);
+  assert.match(src("src/routes/provider.subscription.tsx"), /Navigate to="\/parent"/);
+  assert.match(src("src/routes/parent.tsx"), /canBuyParentUpgrade/);
+  assert.match(src("src/routes/parent.tsx"), /Navigate to="\/provider\/subscription"/);
+  const upgrades = src("src/components/optional-upgrades.tsx");
+  assert.match(upgrades, /For families/);
+  assert.match(upgrades, /For daycares/);
+  assert.match(upgrades, /upgrades-families/);
+  assert.match(upgrades, /upgrades-daycares/);
+  assert.match(src("src/routes/index.tsx"), /visibleUpgradeSide/);
+  const staffHidden = visibleDeskNav("daycare", {
+    providerSubscriptions: true,
+    centreOwner: false,
+  }).some((item) => item.id === "subscription");
+  const staffLinked = visibleDeskNav("daycare", {
+    providerSubscriptions: true,
+    centreOwner: false,
+    centreLinked: true,
+  }).some((item) => item.id === "subscription");
+  assert.equal(staffHidden, false);
+  assert.equal(staffLinked, true);
+  assert.equal(
+    visibleDeskNav("parent", { providerSubscriptions: true, centreLinked: true }).some((item) => item.id === "subscription"),
+    false,
+  );
 });

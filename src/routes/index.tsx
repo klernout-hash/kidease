@@ -7,6 +7,8 @@ import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } f
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import { OptionalUpgrades } from "@/components/optional-upgrades";
+import { useSessionDesks } from "@/components/session-desks";
+import { visibleUpgradeSide } from "@/lib/upgrade-role";
 import { BrandMark } from "@/components/brand-mark";
 import { FacilityTypeRails } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
@@ -133,6 +135,21 @@ export const Route = createFileRoute("/")({
   },
   component: Home,
 });
+
+function HomeUpgrades() {
+  const { user } = useCurrentUserState();
+  const { session, ready, sticky } = useSessionDesks();
+  if (!user) return <OptionalUpgrades />;
+  if (!ready || !session) return null;
+  const side = visibleUpgradeSide({
+    role: session.role,
+    ownsCentre: session.ownsCentre,
+    linkedToCentre: session.centreLinked,
+    activeDesk: sticky,
+  });
+  if (side === "none") return null;
+  return <OptionalUpgrades side={side} signedIn />;
+}
 
 function Home() {
   const { t, locale } = useCopy();
@@ -579,7 +596,7 @@ function Home() {
           </div>
         </section>
 
-        {!user && boot.showPay ? <OptionalUpgrades /> : null}
+        {boot.showPay ? <HomeUpgrades /> : null}
 
         <section className="ke-defer-paint bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">

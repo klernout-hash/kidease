@@ -1,5 +1,5 @@
 import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, Navigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import { DeskShell } from "@/components/desk-shell";
@@ -34,6 +34,7 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
 import { PayCtas } from "@/components/pay-chrome";
+import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { DeleteChildControl } from "@/components/delete-child-control";
 
 const ParentPlusPanel = lazy(() =>
@@ -259,6 +260,19 @@ export function ParentDesk({
   }, [bookings, children, contentTab, deferredSaved, located, origin, radiusKm]);
 
   if (!user) return null;
+  const upgradeBuyer = {
+    role: desks?.role,
+    ownsCentre: desks?.ownsCentre,
+    linkedToCentre: desks?.centreLinked,
+  };
+  const onPlusSurface = contentTab === "payments" || plusReturn != null;
+  if (onPlusSurface && desksReady && desks && !canBuyParentUpgrade(upgradeBuyer)) {
+    if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider/subscription" />;
+    if (desks.home === "/admin") return <Navigate to="/admin" />;
+    if (desks.home === "/support") return <Navigate to="/support" />;
+    return <Navigate to="/provider" />;
+  }
+  const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer));
 
   return (
     <DeskShell desk="parent" active={tab} onSelect={selectTab}>
@@ -412,6 +426,7 @@ export function ParentDesk({
               ready={desksReady}
             />
             <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
+            {showParentPlus ? (
             <PayCtas>
             <div className="mt-4">
               <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
@@ -419,6 +434,7 @@ export function ParentDesk({
               </Suspense>
             </div>
             </PayCtas>
+            ) : null}
           </div>
           {bills.filter((b) => billIsOpen(b.status)).length ? (
             <div>

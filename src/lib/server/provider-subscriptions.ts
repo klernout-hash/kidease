@@ -30,6 +30,8 @@ import { requireCatalogCheckout } from "@/lib/server/stripe-price-guard";
 import { runUserCheckout } from "@/lib/server/stripe-checkout-log";
 import { CHECKOUT_COULD_NOT_START, PORTAL_COULD_NOT_OPEN } from "@/lib/stripe-public-error";
 import { decideProviderCheckout, PROVIDER_PRICE_MISSING } from "@/lib/access-control";
+import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
+import { canBuyDaycareUpgrade, DAYCARE_UPGRADE_DENIED } from "@/lib/upgrade-role";
 
 export type ProviderSubscriptionState = {
   plan: ProviderPlanId;
@@ -56,10 +58,31 @@ export type ProviderSubscriptionState = {
 
 async function requireSubscriptionAccess(userId: string) {
   const session = await resolveSessionDesks(userId);
-  if (!session.providerSubscriptions) {
-    throw new Error("Not authorized");
+  if (
+    !canBuyDaycareUpgrade({
+      role: session.role,
+      ownsCentre: session.ownsCentre,
+      linkedToCentre: session.centreLinked,
+    })
+  ) {
+    throw new Error(DAYCARE_UPGRADE_DENIED);
+  }
+  if (!session.providerSubscriptions && session.role !== "admin") {
+    throw new Error(DAYCARE_UPGRADE_DENIED);
   }
   return session;
+}
+
+async function daycareCheckoutMeta(userId: string, role: string) {
+  const sql = await getSql();
+  const centres = await listAccessibleDaycareIds(sql, userId);
+  if (!centres[0] && role !== "admin") throw new Error(DAYCARE_UPGRADE_DENIED);
+  return {
+    role: "daycare" as const,
+    buyer: role === "admin" ? "admin" : "daycare",
+    user_id: userId,
+    ...(centres[0] ? { centre_id: centres[0] } : {}),
+  };
 }
 
 async function siteCountFor(userId: string) {
@@ -220,6 +243,7 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
       fallback: CHECKOUT_COULD_NOT_START,
       fn: async () => {
         const checked = await requireCatalogCheckout(priceKey);
+        const lane = await daycareCheckoutMeta(context.userId, desks.role);
         const session = await createCatalogCheckoutSession({
           mode: checked.mode,
           priceId: checked.priceId,
@@ -231,7 +255,7 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
           clientReferenceId: context.userId,
           metadata: {
             kidease: "provider_sub",
-            user_id: context.userId,
+            ...lane,
             plan: data.plan,
             interval: data.interval,
           },
@@ -267,6 +291,7 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
       fallback: CHECKOUT_COULD_NOT_START,
       fn: async () => {
         const checked = await requireCatalogCheckout(data.addon);
+        const lane = await daycareCheckoutMeta(context.userId, desks.role);
         const session = await createCatalogCheckoutSession({
           mode: checked.mode,
           priceId: checked.priceId,
@@ -277,7 +302,7 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
           clientReferenceId: context.userId,
           metadata: {
             kidease: "addon",
-            user_id: context.userId,
+            ...lane,
             addon: data.addon,
           },
         });

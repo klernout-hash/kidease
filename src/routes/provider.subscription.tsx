@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { ProviderSubscriptionPanel } from "@/components/provider-subscription";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { canBuyDaycareUpgrade } from "@/lib/upgrade-role";
 
 export const Route = createFileRoute("/provider/subscription")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -34,11 +35,17 @@ export const Route = createFileRoute("/provider/subscription")({
 function ProviderSubscriptionPage() {
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
-  const allowed = Boolean(
-    ready && session?.providerSubscriptions && (session.centreOwner !== false || session.role === "admin"),
+  const daycareBuyer = Boolean(
+    session &&
+      canBuyDaycareUpgrade({
+        role: session.role,
+        ownsCentre: session.ownsCentre,
+        linkedToCentre: session.centreLinked,
+      }),
   );
+  const allowed = Boolean(daycareBuyer && session?.providerSubscriptions);
 
-  if (isPending) {
+  if (isPending || (user && !ready)) {
     return (
       <Shell>
         <p className="p-8 text-muted">Loading…</p>
@@ -46,13 +53,17 @@ function ProviderSubscriptionPage() {
     );
   }
   if (!user) return <RedirectToSignIn />;
-  if (!ready) {
+  if (!session) {
     return (
       <Shell>
-        <p className="p-8 text-muted">Loading…</p>
+        <main className="mx-auto max-w-lg px-4 py-16 text-center">
+          <h1 className="font-display text-3xl">Couldn’t confirm this account</h1>
+          <p className="mt-3 text-muted">Refresh and try again. Nothing was charged.</p>
+        </main>
       </Shell>
     );
   }
+  if (!daycareBuyer) return <Navigate to="/parent" />;
   if (!allowed) {
     return (
       <Shell>

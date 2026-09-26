@@ -15,6 +15,7 @@ import { isPlusInterval, isPlusPlanId, type PlusInterval, type PlusPlanId } from
 import { decideParentPlusCheckout, PLUS_PRICE_MISSING } from "@/lib/access-control";
 import { assertPayCheckoutAllowed } from "@/lib/features";
 import { resolveSessionDesks } from "@/lib/server/roles";
+import { canBuyParentUpgrade, PARENT_UPGRADE_DENIED } from "@/lib/upgrade-role";
 
 export type ParentPlusState = {
   plan: PlusPlanId;
@@ -72,9 +73,20 @@ async function readPlus(userId: string): Promise<ParentPlusState> {
   };
 }
 
+async function assertParentBuyer(userId: string) {
+  const desks = await resolveSessionDesks(userId);
+  if (!canBuyParentUpgrade({ role: desks.role, ownsCentre: desks.ownsCentre, linkedToCentre: desks.centreLinked })) {
+    throw new Error(PARENT_UPGRADE_DENIED);
+  }
+  return desks;
+}
+
 export const getParentPlus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => readPlus(context.userId));
+  .handler(async ({ context }) => {
+    await assertParentBuyer(context.userId);
+    return readPlus(context.userId);
+  });
 
 export const startParentPlusCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -83,7 +95,7 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
     return { interval: input.interval };
   })
   .handler(async ({ context, data }) => {
-    const desks = await resolveSessionDesks(context.userId);
+    const desks = await assertParentBuyer(context.userId);
     assertPayCheckoutAllowed(desks.role);
     const priceKey = plusPriceKey(data.interval);
     const priceId = envPriceId(priceKey);
@@ -108,6 +120,8 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
           clientReferenceId: context.userId,
           metadata: {
             kidease: "parent_plus",
+            role: "parent",
+            buyer: desks.role === "admin" ? "admin" : "parent",
             user_id: context.userId,
             plan: "plus",
             interval: data.interval,
@@ -122,6 +136,7 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
 export const startParentPlusPortal = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    await assertParentBuyer(context.userId);
     const state = await readPlus(context.userId);
     if (!state.customerId) throw new Error("No Stripe customer on this profile yet. Start Plus checkout first.");
     if (!stripeChargesLive()) throw new Error("Billing portal stays off until Stripe live keys are on.");

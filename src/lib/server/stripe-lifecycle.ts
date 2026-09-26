@@ -8,6 +8,8 @@ import {
   type CatalogWrite,
   type MatchedLane,
 } from "@/lib/stripe-subscription-route";
+import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
+import { profileMayReceiveUpgrade, type CatalogUpgradeLane } from "@/lib/upgrade-role";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
@@ -360,6 +362,25 @@ async function applyJobPost(sql: Sql, input: Extract<CatalogWrite, { lane: "job_
   `;
 }
 
+async function profileMayReceiveCatalogWrite(
+  sql: Sql,
+  write: Extract<CatalogWrite, { lane: CatalogUpgradeLane }>,
+  metadata: Record<string, string>,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const rows = await sql<{ role: string | null }>`
+    select role from profiles where user_id = ${write.userId} limit 1
+  `;
+  const centres = await listAccessibleDaycareIds(sql, write.userId);
+  return profileMayReceiveUpgrade({
+    lane: write.lane,
+    profileRole: rows[0]?.role ?? null,
+    linkedCentreIds: centres,
+    centreId: metadata.centre_id,
+    metadataRole: metadata.role,
+    buyer: metadata.buyer,
+  });
+}
+
 async function applyCatalogWrite(sql: Sql, write: CatalogWrite) {
   if (write.lane === "ignore") return;
   if (write.lane === "provider_plan") {
@@ -455,9 +476,15 @@ export async function applyStripeSubscriptionEvent(input: {
     checkoutSessionId: type === "checkout.session.completed" ? obj.id || null : null,
     paymentId: asId(obj.payment_intent) || (type === "checkout.session.completed" ? obj.id || null : null),
     matchedLane: metadata.kidease ? null : profile?.matched ?? null,
+    profileUserId: profile?.user_id ?? null,
   });
   if (write.lane === "ignore") {
     return { ok: true, userId: profile?.user_id ?? null, handled: type, lane: "ignore" };
+  }
+  const allowed = await profileMayReceiveCatalogWrite(sql, write, metadata);
+  if (!allowed.ok) {
+    console.error("[kidease-sub] refused cross-role upgrade", allowed.reason, write.lane, write.userId);
+    return { ok: true, userId: write.userId, handled: type, lane: "ignore" };
   }
   await applyCatalogWrite(sql, write);
   return { ok: true, userId: write.userId, handled: type, lane: write.lane };

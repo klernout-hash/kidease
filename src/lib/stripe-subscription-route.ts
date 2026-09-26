@@ -4,6 +4,8 @@
  * subscription id was previously stored on the plan column.
  */
 
+import { catalogMetadataAllows } from "./upgrade-role.ts";
+
 export type CatalogLane =
   | "provider_plan"
   | "parent_plus"
@@ -72,6 +74,8 @@ export type CatalogEventInput = {
   checkoutSessionId?: string | null;
   paymentId?: string | null;
   matchedLane?: MatchedLane;
+  /** Profile found by subscription or customer id. Must match metadata user_id. */
+  profileUserId?: string | null;
 };
 
 const PAID_CHECKOUT = new Set(["paid", "no_payment_required"]);
@@ -141,6 +145,15 @@ export function planCatalogWrite(input: CatalogEventInput): CatalogWrite {
   if (!userId) return { lane: "ignore", reason: "missing user" };
   if (lane === "none") return { lane: "ignore", reason: "unscoped" };
   if (m.kidease === "bill") return { lane: "ignore", reason: "bill" };
+  const profileUserId = String(input.profileUserId || "").trim();
+  if (profileUserId && profileUserId !== userId) return { lane: "ignore", reason: "profile user mismatch" };
+  const roleGate = catalogMetadataAllows({
+    lane,
+    role: m.role,
+    centreId: m.centre_id,
+    buyer: m.buyer,
+  });
+  if (!roleGate.ok) return { lane: "ignore", reason: roleGate.reason };
 
   if (type === "checkout.session.completed" && (lane === "claim_boost" || lane === "job_post")) {
     if (!paidCheckout(input.paymentStatus)) return { lane: "ignore", reason: "unpaid" };
