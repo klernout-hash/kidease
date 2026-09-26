@@ -5,10 +5,9 @@ import { confirmSuccess } from "@/lib/success-confirm";
 import { publicPayMessage } from "@/lib/stripe-public-error";
 import { CheckoutReturnNote, readUpgradeReturn, useUpgradeCelebration } from "@/components/checkout-return";
 import { Button } from "@/components/ui/button";
+import { DaycareAddons } from "@/components/daycare-addons";
 import { useCopy } from "@/lib/use-copy";
-import { cn, money } from "@/lib/utils";
 import {
-  PROVIDER_ADDONS,
   PROVIDER_COMPARE,
   PROVIDER_PLANS,
   type ProviderAddonId,
@@ -44,12 +43,9 @@ const COPY = {
     subscribe: "Subscribe",
     current: "Current plan",
     compare: "Compare",
-    addons: "Add-ons",
-    addonsLead: "Pay with Stripe Checkout when live keys and price IDs are set.",
-    addonsRehearsal: "Shown now — pay later when live checkout is on.",
-    once: "one-time",
-    perMonth: "/ month",
     checkout: "Open Stripe checkout",
+    addonSelect: "Select",
+    addonRemove: "Remove",
     portal: "Manage billing",
     networkNeed: "Network is priced for 3 or more sites.",
     sites: (n: number) => (n === 1 ? "1 listed site" : `${n} listed sites`),
@@ -73,12 +69,9 @@ const COPY = {
     subscribe: "S’abonner",
     current: "Forfait actuel",
     compare: "Comparer",
-    addons: "Options",
-    addonsLead: "Paiement Stripe Checkout lorsque les clés et les prix sont en place.",
-    addonsRehearsal: "Affichées maintenant — paiement plus tard, quand le checkout en direct sera prêt.",
-    once: "unique",
-    perMonth: "/ mois",
     checkout: "Ouvrir le checkout Stripe",
+    addonSelect: "Choisir",
+    addonRemove: "Retirer",
     portal: "Gérer la facturation",
     networkNeed: "Réseau est tarifé pour 3 sites ou plus.",
     sites: (n: number) => (n === 1 ? "1 site listé" : `${n} sites listés`),
@@ -395,68 +388,53 @@ export function ProviderSubscriptionPanel() {
         </table>
       </div>
 
-      <div>
-        <h3 className="font-display text-xl">{t.addons}</h3>
-        <p className="mt-1 text-sm text-muted">{state.stripeLive ? t.addonsLead : t.addonsRehearsal}</p>
-        <ul className="mt-4 grid gap-3 md:grid-cols-3">
-          {PROVIDER_ADDONS.map((addon) => {
-            const on = addons.includes(addon.id);
-            const featuredLive = addon.id === "featured_city" && (state.featuredCityStatus === "active" || state.featuredCityStatus === "trialing");
-            const ready = Boolean(state.prices[addon.id]);
-            const owned =
-              addon.id === "featured_city"
-                ? featuredLive
-                : addon.id === "claim_boost"
-                  ? Boolean(state.claimBoostPaidAt)
-                  : state.jobPostCredits > 0;
-            return (
-              <li key={addon.id}>
-                <button
-                  type="button"
-                  disabled={busy || featuredLive}
-                  onClick={() => {
-                    if (state.stripeLive) {
-                      if (!ready) {
-                        toast.error(t.blocked);
-                        return;
-                      }
-                      void payAddon(addon.id);
-                      return;
-                    }
-                    const next = on ? addons.filter((id) => id !== addon.id) : [...addons, addon.id];
-                    setAddons(next);
-                    void persist({ plan: current.plan, interval, addons: next });
-                  }}
-                  className={cn(
-                    "h-full w-full rounded-xl px-4 py-4 text-left ring-1",
-                    on ? "bg-primary/5 ring-2 ring-primary" : "bg-surface ring-border hover:ring-primary/40",
-                  )}
-                >
-                  <p className="font-medium">{addon.name[loc]}</p>
-                  <p className="mt-1 font-display text-2xl tabular-nums">
-                    {money(addon.amount, loc)}
-                    <span className="ml-1 text-xs font-sans font-normal text-subtle">
-                      {addon.cadence === "once" ? t.once : t.perMonth}
-                    </span>
-                  </p>
-                  <p className="mt-2 text-sm text-muted">{addon.blurb[loc]}</p>
-                  {owned ? (
-                    <p className="mt-2 text-xs font-medium text-ok">
-                      {addon.id === "job_post"
-                        ? loc === "fr"
-                          ? `${state.jobPostCredits} crédit${state.jobPostCredits === 1 ? "" : "s"}`
-                          : `${state.jobPostCredits} credit${state.jobPostCredits === 1 ? "" : "s"}`
-                        : loc === "fr"
-                          ? "Actif"
-                          : "On"}
-                    </p>
-                  ) : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+      <DaycareAddons
+        locale={loc}
+        flags={state.prices}
+        action={(addon) => {
+          const on = addons.includes(addon.id);
+          const featuredLive =
+            addon.id === "featured_city" &&
+            (state.featuredCityStatus === "active" || state.featuredCityStatus === "trialing");
+          const owned =
+            addon.id === "featured_city"
+              ? featuredLive
+              : addon.id === "claim_boost"
+                ? Boolean(state.claimBoostPaidAt)
+                : state.jobPostCredits > 0;
+          const status = !owned
+            ? null
+            : addon.id === "job_post"
+              ? loc === "fr"
+                ? `${state.jobPostCredits} crédit${state.jobPostCredits === 1 ? "" : "s"}`
+                : `${state.jobPostCredits} credit${state.jobPostCredits === 1 ? "" : "s"}`
+              : loc === "fr"
+                ? "Actif"
+                : "On";
+          return (
+            <div className="flex items-center gap-2">
+              {status ? <span className="text-xs font-medium text-ok">{status}</span> : null}
+              <Button
+                type="button"
+                size="sm"
+                disabled={busy || featuredLive}
+                variant={on || owned ? "secondary" : "primary"}
+                onClick={() => {
+                  if (state.stripeLive) {
+                    void payAddon(addon.id);
+                    return;
+                  }
+                  const next = on ? addons.filter((id) => id !== addon.id) : [...addons, addon.id];
+                  setAddons(next);
+                  void persist({ plan: current.plan, interval, addons: next });
+                }}
+              >
+                {state.stripeLive ? t.checkout : on ? t.addonRemove : t.addonSelect}
+              </Button>
+            </div>
+          );
+        }}
+      />
 
       <div className="rounded-xl bg-surface px-5 py-5 ring-1 ring-border">
         {state.customerId && state.stripeLive ? (

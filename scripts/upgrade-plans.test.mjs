@@ -4,9 +4,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { PLUS_FEATURES } from "../src/lib/parent-plus.ts";
+import { PROVIDER_ADDONS } from "../src/lib/provider-plans.ts";
+import { STRIPE_CATALOG } from "../src/lib/server/stripe-catalog.ts";
 import {
+  DAYCARE_ADDONS,
   DAYCARE_UPGRADE_PLANS,
   PARENT_UPGRADE_PLANS,
+  daycareAddonVisible,
   daycareUpgradePlan,
   parentUpgradePlan,
   paidPlanVisible,
@@ -82,4 +86,53 @@ test("each role has one recommended plan and only real benefits", () => {
   assert.match(home, /DAYCARE_UPGRADE_PLANS/);
   assert.match(src("src/components/admin-stripe-catalog.tsx"), /admin-plan-benefits/);
   assert.doesNotMatch(src("src/lib/server/stripe-catalog.ts"), /priority support|saved-search alerts/);
+});
+
+test("daycare add-ons stay beside the two paid plans and share one price source", () => {
+  assert.deepEqual(
+    DAYCARE_ADDONS.map((addon) => [addon.id, addon.amountCad, addon.cadence]),
+    [
+      ["featured_city", 29, "month"],
+      ["claim_boost", 99, "once"],
+      ["job_post", 49, "once"],
+    ],
+  );
+  assert.equal(
+    DAYCARE_ADDONS.find((addon) => addon.id === "featured_city")?.benefit.en,
+    "Pins this centre in search while this add-on is active. Pro already includes that pin.",
+  );
+  assert.equal(
+    DAYCARE_ADDONS.find((addon) => addon.id === "claim_boost")?.benefit.en,
+    "Moves this centre ahead in search for 30 days after you claim it.",
+  );
+  assert.equal(
+    DAYCARE_ADDONS.find((addon) => addon.id === "job_post")?.benefit.en,
+    "Adds one staff-post credit on this centre profile.",
+  );
+  const benefits = DAYCARE_ADDONS.map((addon) => addon.benefit.en).join(" ");
+  assert.doesNotMatch(benefits, /extra city|Post one staff opening/i);
+
+  for (const addon of DAYCARE_ADDONS) {
+    const provider = PROVIDER_ADDONS.find((row) => row.id === addon.id);
+    const catalog = STRIPE_CATALOG.find((row) => row.key === addon.id);
+    assert.equal(provider?.amount, addon.amountCad);
+    assert.equal(provider?.blurb.en, addon.benefit.en);
+    assert.equal(catalog?.amountCad, addon.amountCad);
+    assert.equal(catalog?.description, addon.benefit.en);
+  }
+  assert.equal(daycareAddonVisible("featured_city", {}), false);
+  assert.equal(daycareAddonVisible("claim_boost", { claim_boost: true }), true);
+  assert.equal(daycareAddonVisible("job_post", { featured_city: true }), false);
+
+  const home = src("src/components/optional-upgrades.tsx");
+  const families = home.slice(home.indexOf('data-ke="upgrades-families"'), home.indexOf('data-ke="upgrades-daycares"'));
+  const daycares = home.slice(home.indexOf('data-ke="upgrades-daycares"'));
+  assert.doesNotMatch(families, /DaycareAddons/);
+  assert.match(daycares, /<DaycareAddons/);
+  assert.doesNotMatch(src("src/components/parent-plus.tsx"), /DaycareAddons|DAYCARE_ADDONS|featured_city/);
+  const desk = src("src/components/provider-subscription.tsx");
+  assert.match(desk, /<DaycareAddons/);
+  assert.match(desk, /flags=\{state\.prices\}/);
+  assert.match(desk, /startProviderAddonCheckout/);
+  assert.doesNotMatch(src("src/components/daycare-addons.tsx"), /\$29|\$99|\$49/);
 });

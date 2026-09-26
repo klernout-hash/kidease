@@ -3,7 +3,7 @@
  * Checkout runs only when stripeChargesLive() and the matching STRIPE_PRICE_* env is set.
  */
 
-import { daycareUpgradePlan, paidPlanPrice, type PlanLine } from "./upgrade-plans.ts";
+import { DAYCARE_ADDONS, daycareUpgradePlan, paidPlanPrice, type PlanLine } from "./upgrade-plans.ts";
 
 export const PROVIDER_PLAN_IDS = ["free", "pro", "network"] as const;
 export type ProviderPlanId = (typeof PROVIDER_PLAN_IDS)[number];
@@ -83,29 +83,13 @@ export const PROVIDER_PLANS: ProviderPlan[] = [
   },
 ];
 
-export const PROVIDER_ADDONS: ProviderAddon[] = [
-  {
-    id: "featured_city",
-    name: { en: "Featured city", fr: "Ville en vedette" },
-    amount: 29,
-    cadence: "month",
-    blurb: { en: "Extra city highlight on search.", fr: "Mise en avant dans une ville de plus." },
-  },
-  {
-    id: "claim_boost",
-    name: { en: "Claim boost", fr: "Boost de réclamation" },
-    amount: 99,
-    cadence: "once",
-    blurb: { en: "One-time bump when you claim a listing.", fr: "Coup de pouce unique à la réclamation." },
-  },
-  {
-    id: "job_post",
-    name: { en: "Job post", fr: "Offre d’emploi" },
-    amount: 49,
-    cadence: "once",
-    blurb: { en: "Post one staff opening.", fr: "Publier une offre de personnel." },
-  },
-];
+export const PROVIDER_ADDONS: ProviderAddon[] = DAYCARE_ADDONS.map((addon) => ({
+  id: addon.id,
+  name: addon.name,
+  amount: addon.amountCad,
+  cadence: addon.cadence,
+  blurb: addon.benefit,
+}));
 
 export const PROVIDER_COMPARE: Array<{
   id: string;

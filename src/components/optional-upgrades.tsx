@@ -4,12 +4,12 @@ import { BillingIntervalToggle } from "@/components/billing-interval-toggle";
 import { UpgradePlanCard } from "@/components/upgrade-plan-card";
 import { useCopy } from "@/lib/use-copy";
 import { ALERTS_MONTHLY_CAD, ALERTS_YEARLY_CAD, PLUS_MONTHLY_CAD, PLUS_YEARLY_CAD } from "@/lib/parent-plus";
-import { PROVIDER_ADDONS, PROVIDER_PLANS } from "@/lib/provider-plans";
+import { PROVIDER_PLANS } from "@/lib/provider-plans";
+import { DaycareAddons } from "@/components/daycare-addons";
 import { getUpgradePriceFlags } from "@/lib/server/upgrade-prices";
 import {
   DAYCARE_UPGRADE_PLANS,
   PARENT_UPGRADE_PLANS,
-  formatPlanCad,
   paidPlanVisible,
   visibleYearlySavings,
 } from "@/lib/upgrade-plans";
@@ -183,14 +183,7 @@ export function OptionalUpgrades({
                 );
               })}
             </div>
-            <ul className="mt-3 space-y-1 text-sm text-muted">
-              {PROVIDER_ADDONS.map((addon) => (
-                <li key={addon.id}>
-                  {addon.name[loc]} · {formatPlanCad(addon.amount, loc)}
-                  {addon.cadence === "once" ? (loc === "fr" ? " une fois" : " once") : loc === "fr" ? " / mois" : " / month"}
-                </li>
-              ))}
-            </ul>
+            <DaycareAddons locale={loc} flags={flags} />
           </div>
         ) : null}
       </div>

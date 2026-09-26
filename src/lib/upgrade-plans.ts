@@ -54,6 +54,63 @@ export function paidPlanPrice(id: string): PaidPlanPrice | null {
   return PAID_PLAN_PRICES.find((plan) => plan.id === id) ?? null;
 }
 
+export type DaycareAddonId = "featured_city" | "claim_boost" | "job_post";
+
+export type DaycareAddon = {
+  id: DaycareAddonId;
+  name: PlanLine;
+  /** Catalog amount in CAD. Checkout refuses a Stripe price that does not match. */
+  amountCad: number;
+  cadence: "month" | "once";
+  benefit: PlanLine;
+};
+
+/**
+ * Daycare-only add-ons, in addition to Free / Pro / Network.
+ * Amounts live here and in the Stripe catalog together. Kyle can change the
+ * Stripe price later; checkout stays off until the catalog amount matches.
+ */
+export const DAYCARE_ADDONS: DaycareAddon[] = [
+  {
+    id: "featured_city",
+    name: { en: "Featured city", fr: "Ville en vedette" },
+    amountCad: 29,
+    cadence: "month",
+    benefit: {
+      en: "Pins this centre in search while this add-on is active. Pro already includes that pin.",
+      fr: "Met ce centre en avant dans la recherche tant que l’option est active. Pro inclut déjà cette mise en avant.",
+    },
+  },
+  {
+    id: "claim_boost",
+    name: { en: "Claim boost", fr: "Boost de réclamation" },
+    amountCad: 99,
+    cadence: "once",
+    benefit: {
+      en: "Moves this centre ahead in search for 30 days after you claim it.",
+      fr: "Place ce centre devant dans la recherche pendant 30 jours après la réclamation.",
+    },
+  },
+  {
+    id: "job_post",
+    name: { en: "Job post", fr: "Offre d’emploi" },
+    amountCad: 49,
+    cadence: "once",
+    benefit: {
+      en: "Adds one staff-post credit on this centre profile.",
+      fr: "Ajoute un crédit d’offre de personnel sur le profil du centre.",
+    },
+  },
+];
+
+export function daycareAddon(id: string): DaycareAddon {
+  return DAYCARE_ADDONS.find((addon) => addon.id === id) ?? DAYCARE_ADDONS[0]!;
+}
+
+export function daycareAddonVisible(id: string, flags: Partial<Record<string, boolean>> | null | undefined): boolean {
+  return Boolean(flags?.[id]);
+}
+
 export const RECOMMENDED_LABEL: PlanLine = { en: "Recommended", fr: "Recommandé" };
 
 const PARENT_FREE_PITCH: PlanLine = {

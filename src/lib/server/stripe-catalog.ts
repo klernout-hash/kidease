@@ -27,6 +27,8 @@
  *   STRIPE_PAYMENT_LINK_JOB_POST
  */
 
+import { daycareAddon } from "../upgrade-plans.ts";
+
 export const STRIPE_PRICE_ENV = {
   pro_monthly: "STRIPE_PRICE_PRO_MONTHLY",
   pro_yearly: "STRIPE_PRICE_PRO_YEARLY",
@@ -155,8 +157,8 @@ export const STRIPE_CATALOG: StripeCatalogItem[] = [
     key: "featured_city",
     lookupKey: "kidease_featured_city",
     productName: "KidEase Featured city",
-    description: "Extra city highlight on search.",
-    amountCad: 29,
+    description: daycareAddon("featured_city").benefit.en,
+    amountCad: daycareAddon("featured_city").amountCad,
     kind: "recurring",
     interval: "month",
     required: false,
@@ -165,8 +167,8 @@ export const STRIPE_CATALOG: StripeCatalogItem[] = [
     key: "claim_boost",
     lookupKey: "kidease_claim_boost",
     productName: "KidEase Claim boost",
-    description: "One-time bump when you claim a listing.",
-    amountCad: 99,
+    description: daycareAddon("claim_boost").benefit.en,
+    amountCad: daycareAddon("claim_boost").amountCad,
     kind: "one_time",
     required: false,
   },
@@ -174,8 +176,8 @@ export const STRIPE_CATALOG: StripeCatalogItem[] = [
     key: "job_post",
     lookupKey: "kidease_job_post",
     productName: "KidEase Job post",
-    description: "Post one staff opening.",
-    amountCad: 49,
+    description: daycareAddon("job_post").benefit.en,
+    amountCad: daycareAddon("job_post").amountCad,
     kind: "one_time",
     required: false,
   },
