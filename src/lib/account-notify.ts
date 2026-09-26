@@ -320,6 +320,7 @@ export function activitySignupMeta(row: {
 export const ADMIN_DESK_TABS = [
   "queue",
   "incomplete",
+  "winnipeg",
   "verify",
   "daycares",
   "trust",

@@ -33,6 +33,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   admin: [
     { id: "queue", label: "Waiting on you", hint: "Claims to review" },
     { id: "incomplete", label: "Needs complete", hint: "Partial provider listings", labelKey: "adminIncompleteNav", hintKey: "adminIncompleteNavHint" },
+    { id: "winnipeg", label: "Winnipeg gaps", hint: "Ages, fees, real photos", labelKey: "adminWinnipegNav", hintKey: "adminWinnipegNavHint" },
     { id: "verify", label: "Licence & photos", hint: "Review uploads" },
     { id: "daycares", label: "Daycares", hint: "By province" },
     { id: "trust", label: "Trust", hint: "Registries + reports" },

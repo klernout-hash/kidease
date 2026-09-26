@@ -1,0 +1,31 @@
+{
+  "measuredAt": "2026-09-26",
+  "rule": "Live-looking means confirmed ages, a listed fee or a per-centre confirmed fee program, and at least one real photo. /photos/wpg/ aerials, placeholders, and the harvested $218 catalogue fee do not count.",
+  "productionSearch": {
+    "query": "https://www.kidease.ca/search?q=Winnipeg",
+    "note": "SSR payload for that search. Nearby SQL caps at 400. Includes a few metro rows whose pins fall in the Winnipeg radius.",
+    "searchVisible": 397,
+    "platformLive": 0,
+    "withAges": 0,
+    "withFees": 0,
+    "withRealPhoto": 46,
+    "liveLooking": 0,
+    "liveLookingShare": 0
+  },
+  "repoCatalogue": {
+    "source": "centres.json + operator-facts.json + real-storefronts.json + storefronts.json, hydrated",
+    "note": "Public rows whose city matches Winnipeg, Wpg, or the Winnpeg typo. Claims are not in the JSON catalogue, so platform Live is 0 here even if Neon has a claim.",
+    "searchVisible": 433,
+    "platformLive": 0,
+    "withAges": 0,
+    "withFees": 0,
+    "withRealPhoto": 60,
+    "liveLooking": 0,
+    "liveLookingShare": 0,
+    "photoFirstGaps": 60
+  },
+  "afterTooling": {
+    "note": "This change does not write ages, fees, or photos. Live-looking stays 0% until a sourced fill is applied.",
+    "liveLookingShare": 0
+  }
+}
