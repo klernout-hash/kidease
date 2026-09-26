@@ -638,6 +638,10 @@ export type SessionDesks = {
   showPayCtas: boolean;
   /** Owner chrome (Money / claim / invite). False only for staff-only employees. */
   centreOwner?: boolean;
+  /** This user owns a centre (provider_daycares). Not the same as centreOwner. */
+  ownsCentre?: boolean;
+  /** Owns a centre or is an active centre member. */
+  centreLinked?: boolean;
 };
 
 /**

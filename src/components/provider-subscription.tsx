@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
-import { Check, CreditCard } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
+import { publicPayMessage } from "@/lib/stripe-public-error";
+import { CheckoutReturnNote, upgradeReturnFromSearch, useUpgradeCelebration, type UpgradeSearch } from "@/components/checkout-return";
 import { Button } from "@/components/ui/button";
+import { DaycareAddons } from "@/components/daycare-addons";
 import { useCopy } from "@/lib/use-copy";
-import { cn, money } from "@/lib/utils";
 import {
-  planPriceCad,
-  planPriceHint,
-  PROVIDER_ADDONS,
   PROVIDER_COMPARE,
   PROVIDER_PLANS,
   type ProviderAddonId,
@@ -18,34 +17,39 @@ import {
 import {
   getProviderSubscription,
   saveProviderSubscription,
+  postCentreJob,
+  setProviderSubscriptionCancel,
   startProviderAddonCheckout,
   startProviderBillingPortal,
   startProviderCheckout,
   type ProviderSubscriptionState,
 } from "@/lib/server/provider-subscriptions";
+import { ManageBillingCard, announceCancel } from "@/components/manage-billing";
+import { subscriptionAccessOpen, type BillingProduct } from "@/lib/subscription-lifecycle";
 import { openStripeCheckout } from "@/lib/wallets";
 import { getProvider } from "@/lib/server/family";
 import { DirectorProStrip } from "@/components/director-pro-strip";
 import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { useSessionDesks } from "@/components/session-desks";
+import { checkoutCtaLabel, daycareUpgradePlan, paidPlanVisible, visibleYearlySavings } from "@/lib/upgrade-plans";
+import { BillingIntervalToggle } from "@/components/billing-interval-toggle";
+import { UpgradePlanCard } from "@/components/upgrade-plan-card";
 
 const COPY = {
   en: {
     eyebrow: "Daycare SaaS",
     title: "Subscription",
-    lead: "Centre plans for listing, inquiries, and multi-site tools. This is not parent Plus or family payments.",
+    lead: "Centre plans for listing, inquiries, and multi-site tools are optional. KidEase is free for every centre — vacancy, claim, and licence stay open. This is not parent Plus or a family bill.",
+    pendingPortal: "Manage billing",
     monthly: "Monthly",
     yearly: "Yearly",
     yearlySave: "Pro saves two months",
     subscribe: "Subscribe",
     current: "Current plan",
     compare: "Compare",
-    addons: "Add-ons",
-    addonsLead: "Pay with Stripe Checkout when live keys and price IDs are set.",
-    addonsRehearsal: "Shown now — pay later when live checkout is on.",
-    once: "one-time",
-    perMonth: "/ month",
     checkout: "Open Stripe checkout",
+    addonSelect: "Select",
+    addonRemove: "Remove",
     portal: "Manage billing",
     networkNeed: "Network is priced for 3 or more sites.",
     sites: (n: number) => (n === 1 ? "1 listed site" : `${n} listed sites`),
@@ -54,23 +58,24 @@ const COPY = {
     entitledFree: "Free basics — listing, vacancy, claim, licence.",
     blocked: "Checkout is blocked until this plan’s Stripe price ID is set on Vercel.",
     savedFree: "You are on Free. Listing tools stay on.",
+    portalCard: "Open the Stripe customer portal to update the card or cancel.",
+    portalWait: "The portal appears after the first live checkout creates a Stripe customer on this profile.",
+    portalOff: "Card payments are not live yet. Centre plan checkout is not charged.",
   },
   fr: {
     eyebrow: "SaaS garderie",
     title: "Abonnement",
-    lead: "Forfaits centre pour la fiche, les demandes et plusieurs sites. Ce n’est pas Plus parents ni les paiements famille.",
+    lead: "Les forfaits centre pour la fiche, les demandes et plusieurs sites sont facultatifs. KidEase est gratuit pour chaque centre — places, réclamation et permis restent ouverts. Ce n’est pas Plus parents ni une facture famille.",
+    pendingPortal: "Gérer la facturation",
     monthly: "Mensuel",
     yearly: "Annuel",
     yearlySave: "Pro : deux mois offerts",
     subscribe: "S’abonner",
     current: "Forfait actuel",
     compare: "Comparer",
-    addons: "Options",
-    addonsLead: "Paiement Stripe Checkout lorsque les clés et les prix sont en place.",
-    addonsRehearsal: "Affichées maintenant — paiement plus tard, quand le checkout en direct sera prêt.",
-    once: "unique",
-    perMonth: "/ mois",
     checkout: "Ouvrir le checkout Stripe",
+    addonSelect: "Choisir",
+    addonRemove: "Retirer",
     portal: "Gérer la facturation",
     networkNeed: "Réseau est tarifé pour 3 sites ou plus.",
     sites: (n: number) => (n === 1 ? "1 site listé" : `${n} sites listés`),
@@ -79,23 +84,30 @@ const COPY = {
     entitledFree: "Base gratuite — fiche, places, réclamation, permis.",
     blocked: "Le checkout reste fermé tant que l’identifiant de prix Stripe n’est pas sur Vercel.",
     savedFree: "Vous êtes sur Gratuit. Les outils de fiche restent ouverts.",
+    portalCard: "Ouvrez le portail Stripe pour changer la carte ou annuler.",
+    portalWait: "Le portail apparaît après le premier paiement en direct, quand Stripe crée un client sur ce profil.",
+    portalOff: "Les paiements par carte ne sont pas encore en direct. Le forfait centre n’est pas facturé.",
   },
 };
 
 function subscriptionError(err: unknown, fallback: string, plansOff: string) {
-  const message = err instanceof Error ? err.message : "";
+  const message = publicPayMessage(err, fallback);
   if (message === "Plans are not offered on this site yet. Listing and claim stay free.") return plansOff;
-  return message || fallback;
+  return message;
 }
 
 function priceReady(state: ProviderSubscriptionState, plan: ProviderPlanId, interval: ProviderInterval) {
   if (plan === "free") return false;
-  if (plan === "pro") return interval === "year" ? Boolean(state.prices.pro_yearly) : Boolean(state.prices.pro_monthly);
-  if (plan === "network") return Boolean(state.prices.network_monthly);
-  return false;
+  return paidPlanVisible(plan, interval, state.prices);
 }
 
-export function ProviderSubscriptionPanel() {
+export function ProviderSubscriptionPanel({
+  upgradeSearch = null,
+  billingReturn = false,
+}: {
+  upgradeSearch?: UpgradeSearch | null;
+  billingReturn?: boolean;
+}) {
   const { locale, t: tx } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const t = COPY[loc];
@@ -104,21 +116,69 @@ export function ProviderSubscriptionPanel() {
   const adminPreview = session?.role === "admin";
   const showCheckout = showPay || adminPreview;
   const [state, setState] = useState<ProviderSubscriptionState | null>(null);
-  const [interval, setInterval] = useState<ProviderInterval>("month");
+  const [interval, setInterval] = useState<ProviderInterval>("year");
   const [addons, setAddons] = useState<ProviderAddonId[]>([]);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [week, setWeek] = useState({ views: 0, requests: 0 });
+  const [centreId, setCentreId] = useState("");
+  const [jobRole, setJobRole] = useState("");
+  const [jobNote, setJobNote] = useState("");
+  const payReturn = useMemo(() => upgradeReturnFromSearch(upgradeSearch), [upgradeSearch]);
+
+  const applyState = useCallback((s: ProviderSubscriptionState) => {
+    setState(s);
+    if (s.entitlements.paid) setInterval(s.interval);
+    setAddons(s.addons);
+    setCentreId((current) => current || s.centres[0]?.id || s.jobPostCentreId || "");
+    setLoadError(false);
+  }, []);
+
+  const reloadSubscription = useCallback(() => {
+    void getProviderSubscription()
+      .then(applyState)
+      .catch(() => setLoadError(true));
+  }, [applyState]);
+
+  const featuredPlace =
+    state?.centres.find((centre) => centre.id === state.featuredCityCentreId)?.city ||
+    state?.centres.find((centre) => centre.id === centreId)?.city ||
+    null;
+  const returnPhase = useUpgradeCelebration({
+    ret: payReturn,
+    locale: loc,
+    confirmedSessionId: state?.catalogCheckoutSessionId,
+    entitledPlan: state?.entitlements.entitledPlan,
+    subscriptionStatus: state?.subscriptionStatus,
+    featuredCityStatus: state?.featuredCityStatus,
+    claimBoostPaymentId: state?.claimBoostPaymentId,
+    jobPostPaymentIds: state?.jobPostPaymentIds,
+    place: payReturn?.phase === "success" && payReturn.kind === "addon" && payReturn.item === "featured_city" ? featuredPlace : null,
+    reload: reloadSubscription,
+  });
 
   useEffect(() => {
-    void getProviderSubscription()
-      .then((s) => {
-        setState(s);
-        setInterval(s.interval);
-        setAddons(s.addons);
-        setLoadError(false);
-      })
-      .catch(() => setLoadError(true));
+    if (!billingReturn) return;
+    const timer = window.setInterval(() => reloadSubscription(), 2000);
+    const stop = window.setTimeout(() => window.clearInterval(timer), 20000);
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(stop);
+    };
+  }, [billingReturn, reloadSubscription]);
+
+  useEffect(() => {
+    if (!billingReturn || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("billing");
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+      window.history.replaceState(window.history.state, "", next);
+    }
+  }, [billingReturn]);
+
+  useEffect(() => {
+    reloadSubscription();
     void getProvider()
       .then((res) => {
         setWeek({
@@ -127,7 +187,7 @@ export function ProviderSubscriptionPanel() {
         });
       })
       .catch(() => undefined);
-  }, []);
+  }, [reloadSubscription]);
 
   if (loadError) {
     return (
@@ -159,6 +219,14 @@ export function ProviderSubscriptionPanel() {
   async function subscribe(plan: ProviderPlanId) {
     const next = { plan, interval, addons };
     if (plan === "free") {
+      if (current.stripeLive && current.customerId && current.subscriptionStatus) {
+        toast.error(
+          loc === "fr"
+            ? "Pour quitter Pro ou Réseau, ouvrez Gérer la facturation. KidEase ne marque pas le centre gratuit tant que Stripe facture encore."
+            : "To leave Pro or Network, open Manage billing. KidEase will not mark this centre free while Stripe is still charging.",
+        );
+        return;
+      }
       await persist(next);
       return;
     }
@@ -190,7 +258,7 @@ export function ProviderSubscriptionPanel() {
   async function payAddon(addon: ProviderAddonId) {
     setBusy(true);
     try {
-      const result = await startProviderAddonCheckout({ data: { addon } });
+      const result = await startProviderAddonCheckout({ data: { addon, centreId: centreId || null } });
       if (result.url) {
         await openStripeCheckout(result.url);
         return;
@@ -202,25 +270,120 @@ export function ProviderSubscriptionPanel() {
     }
   }
 
-  async function openPortal() {
+  async function postJob() {
+    const target = centreId || state?.jobPostCentreId || state?.centres[0]?.id || "";
+    if (!target) {
+      toast.error(loc === "fr" ? "Choisissez un centre. Rien n’a été publié." : "Choose a centre. Nothing was posted.");
+      return;
+    }
     setBusy(true);
     try {
-      const { url } = await startProviderBillingPortal();
+      await postCentreJob({ data: { centreId: target, role: jobRole, note: jobNote } });
+      setJobRole("");
+      setJobNote("");
+      const saved = await getProviderSubscription();
+      applyState(saved);
+      confirmSuccess({
+        variant: "modal",
+        title: loc === "fr" ? "L’offre est sur la page du centre" : "The opening is on the centre page",
+      });
+    } catch (err) {
+      toast.error(subscriptionError(err, loc === "fr" ? "L’offre n’a pas été publiée." : "The opening was not posted.", tx("plansNotOffered")));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openPortal(lane: "plan" | "featured_city") {
+    setBusy(true);
+    try {
+      const { url } = await startProviderBillingPortal({ data: { lane } });
       await openStripeCheckout(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : tx("planPortalFailed"));
+      toast.error(publicPayMessage(err, tx("planPortalFailed")));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function setCancel(lane: "plan" | "featured_city", cancel: boolean) {
+    setBusy(true);
+    try {
+      const saved = await setProviderSubscriptionCancel({ data: { lane, cancel } });
+      const next = await getProviderSubscription();
+      applyState(next);
+      if (cancel) {
+        const product: BillingProduct = lane === "featured_city" ? "featured_city" : next.plan === "network" ? "network" : "pro";
+        announceCancel({ product, periodEnd: saved.periodEnd, locale: loc });
+      }
+    } catch (err) {
+      toast.error(publicPayMessage(err, loc === "fr" ? "L’abonnement n’a pas changé." : "The subscription was not changed."));
     } finally {
       setBusy(false);
     }
   }
 
   const liveCheckout = state.stripeLive && state.checkoutLive;
+  const visiblePlans = PROVIDER_PLANS.filter((plan) => paidPlanVisible(plan.id, interval, state.prices));
+  const planOpen = Boolean(
+    current.stripeLive &&
+      current.subscriptionId &&
+      current.plan !== "free" &&
+      subscriptionAccessOpen(current.subscriptionStatus),
+  );
+  const pinOpen = Boolean(
+    current.stripeLive && current.featuredCitySubscriptionId && subscriptionAccessOpen(current.featuredCityStatus),
+  );
+
+  const billingCards = (
+      <>
+        {planOpen ? (
+          <ManageBillingCard
+            locale={loc}
+            product={current.plan === "network" ? "network" : "pro"}
+            interval={current.interval}
+            status={current.subscriptionStatus}
+            periodEnd={current.periodEnd}
+            cancelAtPeriodEnd={current.cancelAtPeriodEnd}
+            billingReturn={billingReturn}
+            busy={busy}
+            onPortal={() => void openPortal("plan")}
+            onCancel={() => void setCancel("plan", true)}
+            onResume={() => void setCancel("plan", false)}
+          />
+        ) : null}
+        {pinOpen ? (
+          <ManageBillingCard
+            locale={loc}
+            product="featured_city"
+            interval="month"
+            status={current.featuredCityStatus}
+            periodEnd={current.featuredCityPeriodEnd}
+            cancelAtPeriodEnd={current.featuredCityCancelAtPeriodEnd}
+            billingReturn={billingReturn}
+            busy={busy}
+            onPortal={() => void openPortal("featured_city")}
+            onCancel={() => void setCancel("featured_city", true)}
+            onResume={() => void setCancel("featured_city", false)}
+          />
+        ) : null}
+      </>
+  );
 
   if (!showCheckout) {
+    if (!planOpen && !pinOpen) {
+      return (
+        <section className="space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="plans-not-offered">
+          <h2 className="font-display text-2xl">{t.title}</h2>
+          <p className="text-sm text-muted">{tx("plansNotOffered")}</p>
+        </section>
+      );
+    }
     return (
-      <section className="space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="plans-not-offered">
+      <section className="space-y-4" data-ke="plans-not-offered">
         <h2 className="font-display text-2xl">{t.title}</h2>
         <p className="text-sm text-muted">{tx("plansNotOffered")}</p>
+        {billingCards}
       </section>
     );
   }
@@ -234,6 +397,11 @@ export function ProviderSubscriptionPanel() {
           {t.title}
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">{t.lead}</p>
+        {returnPhase ? (
+          <div className="mt-3">
+            <CheckoutReturnNote phase={returnPhase} locale={loc} />
+          </div>
+        ) : null}
         <PayCtas>
         <div className="mt-4">
           <DirectorProStrip views={week.views} requests={week.requests} />
@@ -261,64 +429,63 @@ export function ProviderSubscriptionPanel() {
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {(["month", "year"] as const).map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setInterval(id)}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm",
-              interval === id ? "bg-primary text-primary-fg" : "bg-surface text-muted ring-1 ring-border hover:text-fg",
-            )}
-          >
-            {id === "month" ? t.monthly : t.yearly}
-          </button>
-        ))}
-        {interval === "year" ? <span className="text-xs text-subtle">{t.yearlySave}</span> : null}
-      </div>
+      <BillingIntervalToggle
+        interval={interval}
+        onChange={setInterval}
+        savePercents={visibleYearlySavings(
+          PROVIDER_PLANS.map((plan) => plan.id),
+          state.prices,
+        )}
+        locale={loc}
+      />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {PROVIDER_PLANS.map((plan) => {
+      <div className={visiblePlans.length > 2 ? "grid gap-4 lg:grid-cols-3" : "grid gap-4 sm:grid-cols-2"}>
+        {visiblePlans.map((plan) => {
           const entitled = state.entitlements.entitledPlan === plan.id;
           const selected = state.plan === plan.id;
           const current = entitled || (selected && !state.stripeLive);
-          const price = planPriceCad(plan, interval, state.siteCount);
-          const hint = planPriceHint(plan, interval, loc);
           const canCharge = plan.id !== "free" && state.stripeLive && priceReady(state, plan.id, interval);
           const blockedPaid = plan.id !== "free" && state.stripeLive && !priceReady(state, plan.id, interval);
+          const copy = daycareUpgradePlan(plan.id);
           return (
-            <article
+            <UpgradePlanCard
               key={plan.id}
-              className={cn(
-                "flex flex-col rounded-xl bg-surface p-5 ring-1",
-                current ? "ring-2 ring-primary" : "ring-border",
-              )}
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{plan.name[loc]}</p>
-              <p className="mt-2 font-display text-3xl tabular-nums">{money(price, loc)}</p>
-              <p className="mt-1 text-xs text-subtle">{hint}</p>
-              <p className="mt-3 text-sm text-muted">{plan.tagline[loc]}</p>
-              <ul className="mt-4 flex-1 space-y-2 text-sm">
-                {plan.features.map((f) => (
-                  <li key={f.en} className="flex items-start gap-2">
-                    <Check className="mt-0.5 size-4 shrink-0 text-ok" strokeWidth={2} />
-                    <span>{f[loc]}</span>
-                  </li>
-                ))}
-              </ul>
-              {plan.id === "network" && state.siteCount < plan.minSites ? (
-                <p className="mt-3 text-xs text-subtle">{t.networkNeed}</p>
-              ) : null}
-              <Button
-                className="mt-5 w-full"
-                variant={current || !state.entitlements.paid ? "secondary" : "primary"}
-                disabled={busy || (current && !canCharge)}
-                onClick={() => void subscribe(plan.id)}
-              >
-                {blockedPaid ? t.blocked : current && !canCharge ? t.current : canCharge ? t.checkout : t.subscribe}
-              </Button>
-            </article>
+              plan={copy}
+              locale={loc}
+              interval={interval}
+              monthly={plan.monthly}
+              yearly={plan.yearly}
+              perSite={plan.perSite}
+              cta={
+                <>
+                  {plan.id === "network" && state.siteCount < plan.minSites ? (
+                    <p className="mb-3 text-xs text-subtle">{t.networkNeed}</p>
+                  ) : null}
+                  <Button
+                    className="min-h-11 w-full"
+                    variant={plan.id === "pro" && !(current || !state.entitlements.paid) ? "primary" : current || !state.entitlements.paid ? "secondary" : "secondary"}
+                    disabled={busy || (current && !canCharge) || (plan.id === "network" && state.siteCount < plan.minSites)}
+                    onClick={() => void subscribe(plan.id)}
+                  >
+                    {blockedPaid
+                      ? t.blocked
+                      : current && !canCharge
+                        ? t.current
+                        : interval === "year" && canCharge
+                          ? checkoutCtaLabel({
+                              planName: plan.name[loc],
+                              interval,
+                              monthly: plan.monthly,
+                              yearly: plan.yearly,
+                              locale: loc,
+                            })
+                          : canCharge
+                            ? t.checkout
+                            : t.subscribe}
+                  </Button>
+                </>
+              }
+            />
           );
         })}
       </div>
@@ -329,7 +496,7 @@ export function ProviderSubscriptionPanel() {
           <thead>
             <tr className="border-b border-border text-xs uppercase tracking-[0.12em] text-subtle">
               <th className="px-4 py-3 font-medium">{t.compare}</th>
-              {PROVIDER_PLANS.map((p) => (
+              {visiblePlans.map((p) => (
                 <th key={p.id} className="px-4 py-3 font-medium">
                   {p.name[loc]}
                 </th>
@@ -340,74 +507,135 @@ export function ProviderSubscriptionPanel() {
             {PROVIDER_COMPARE.map((row) => (
               <tr key={row.id} className="border-b border-border last:border-0">
                 <th className="px-4 py-3 font-medium text-fg">{row.label[loc]}</th>
-                <td className="px-4 py-3 text-muted">{row.free[loc]}</td>
-                <td className="px-4 py-3 text-muted">{row.pro[loc]}</td>
-                <td className="px-4 py-3 text-muted">{row.network[loc]}</td>
+                {visiblePlans.map((p) => (
+                  <td key={p.id} className="px-4 py-3 text-muted">
+                    {row[p.id][loc]}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div>
-        <h3 className="font-display text-xl">{t.addons}</h3>
-        <p className="mt-1 text-sm text-muted">{state.stripeLive ? t.addonsLead : t.addonsRehearsal}</p>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-3">
-          {PROVIDER_ADDONS.map((addon) => {
-            const on = addons.includes(addon.id);
-            const ready = Boolean(state.prices[addon.id] || state.paymentLinks[addon.id]);
-            return (
-              <li key={addon.id}>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    if (state.stripeLive && ready) {
-                      void payAddon(addon.id);
-                      return;
-                    }
-                    const next = on ? addons.filter((id) => id !== addon.id) : [...addons, addon.id];
-                    setAddons(next);
-                    void persist({ plan: current.plan, interval, addons: next });
-                  }}
-                  className={cn(
-                    "h-full w-full rounded-xl px-4 py-4 text-left ring-1",
-                    on ? "bg-primary/5 ring-2 ring-primary" : "bg-surface ring-border hover:ring-primary/40",
-                  )}
-                >
-                  <p className="font-medium">{addon.name[loc]}</p>
-                  <p className="mt-1 font-display text-2xl tabular-nums">
-                    {money(addon.amount, loc)}
-                    <span className="ml-1 text-xs font-sans font-normal text-subtle">
-                      {addon.cadence === "once" ? t.once : t.perMonth}
-                    </span>
-                  </p>
-                  <p className="mt-2 text-sm text-muted">{addon.blurb[loc]}</p>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+      {state.centres.length > 1 ? (
+        <label className="block text-sm">
+          <span className="text-muted">{loc === "fr" ? "Centre pour les options" : "Centre for add-ons"}</span>
+          <select
+            className="mt-1 min-h-11 w-full rounded-xl bg-surface px-3 ring-1 ring-border"
+            data-ke="addon-centre"
+            value={centreId}
+            onChange={(event) => setCentreId(event.target.value)}
+          >
+            {state.centres.map((centre) => (
+              <option key={centre.id} value={centre.id}>
+                {centre.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
 
-      <div className="rounded-xl bg-surface px-5 py-5 ring-1 ring-border">
-        {state.customerId && state.stripeLive ? (
-          <Button disabled={busy} className="w-full sm:w-auto" onClick={() => void openPortal()}>
-            {t.portal}
+      <DaycareAddons
+        locale={loc}
+        flags={state.prices}
+        action={(addon) => {
+          const on = addons.includes(addon.id);
+          const featuredLive =
+            addon.id === "featured_city" && subscriptionAccessOpen(state.featuredCityStatus);
+          const owned =
+            addon.id === "featured_city"
+              ? featuredLive
+              : addon.id === "claim_boost"
+                ? Boolean(state.claimBoostPaidAt)
+                : state.jobPostCredits > 0;
+          const status = !owned
+            ? null
+            : addon.id === "job_post"
+              ? loc === "fr"
+                ? `${state.jobPostCredits} crédit${state.jobPostCredits === 1 ? "" : "s"}`
+                : `${state.jobPostCredits} credit${state.jobPostCredits === 1 ? "" : "s"}`
+              : loc === "fr"
+                ? "Actif"
+                : "On";
+          return (
+            <div className="flex items-center gap-2">
+              {status ? <span className="text-xs font-medium text-ok">{status}</span> : null}
+              <Button
+                type="button"
+                size="sm"
+                disabled={busy || featuredLive}
+                variant={on || owned ? "secondary" : "primary"}
+                onClick={() => {
+                  if (state.stripeLive) {
+                    void payAddon(addon.id);
+                    return;
+                  }
+                  const next = on ? addons.filter((id) => id !== addon.id) : [...addons, addon.id];
+                  setAddons(next);
+                  void persist({ plan: current.plan, interval, addons: next });
+                }}
+              >
+                {state.stripeLive ? t.checkout : on ? t.addonRemove : t.addonSelect}
+              </Button>
+            </div>
+          );
+        }}
+      />
+
+      {state.jobPostCredits > 0 ? (
+        <form
+          className="rounded-xl bg-surface px-4 py-4 ring-1 ring-border"
+          data-ke="centre-job-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void postJob();
+          }}
+        >
+          <p className="text-sm font-medium">
+            {loc === "fr" ? "Utiliser un crédit d’offre" : "Use a job-post credit"}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            {loc === "fr"
+              ? "Cela publie une offre sur la page de ce centre et retire un crédit."
+              : "This posts one opening on this centre page and uses one credit."}
+          </p>
+          <label className="mt-3 block text-sm">
+            <span className="text-muted">{loc === "fr" ? "Poste" : "Role"}</span>
+            <input
+              className="mt-1 min-h-11 w-full rounded-xl bg-bg px-3 ring-1 ring-border"
+              value={jobRole}
+              maxLength={80}
+              required
+              onChange={(event) => setJobRole(event.target.value)}
+            />
+          </label>
+          <label className="mt-3 block text-sm">
+            <span className="text-muted">{loc === "fr" ? "Note" : "Note"}</span>
+            <textarea
+              className="mt-1 min-h-20 w-full rounded-xl bg-bg px-3 py-2 ring-1 ring-border"
+              value={jobNote}
+              maxLength={280}
+              onChange={(event) => setJobNote(event.target.value)}
+            />
+          </label>
+          <Button type="submit" className="mt-3" disabled={busy}>
+            {loc === "fr" ? "Publier l’offre" : "Post opening"}
           </Button>
-        ) : (
-          <Button disabled className="w-full sm:w-auto">
+        </form>
+      ) : null}
+
+      {billingCards}
+      {!state.stripeLive || (!state.subscriptionId && !state.featuredCitySubscriptionId) ? (
+        <div className="rounded-xl bg-surface px-5 py-5 ring-1 ring-border">
+          <Button disabled className="min-h-11 w-full sm:w-auto">
             {liveCheckout ? t.portal : t.checkout}
           </Button>
-        )}
-        <p className="mt-3 text-sm text-muted">
-          {state.stripeLive
-            ? state.customerId
-              ? "Open the Stripe customer portal to update the card or cancel."
-              : "The portal appears after the first live checkout creates a Stripe customer on this profile."
-                : "Card payments are not live yet. Centre plan checkout is not charged."}
-        </p>
-      </div>
+          <p className="mt-3 text-sm text-muted">
+            {state.stripeLive ? t.portalWait : t.portalOff}
+          </p>
+        </div>
+      ) : null}
     </section>
   );
 }

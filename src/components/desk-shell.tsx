@@ -341,6 +341,7 @@ export function DeskShell({
     providerSubscriptions: session?.providerSubscriptions,
     showPayCtas: session?.showPayCtas,
     centreOwner: session?.centreOwner,
+    centreLinked: session?.centreLinked,
   };
   const phoneMore = desk === "parent" || desk === "daycare";
   const allItems = visibleDeskNav(desk, opts);

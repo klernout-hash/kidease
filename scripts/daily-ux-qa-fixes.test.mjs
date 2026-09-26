@@ -188,15 +188,17 @@ test("listing health percent is separate from Listing Verified", () => {
 
 test("Stripe Checkout CTAs stay honest when there are no bills", () => {
   const parent = src("src/components/parent-desk.tsx");
-  assert.match(parent, /offerCheckout=\{bills\.filter/);
+  assert.match(parent, /ParentPlusPanel offerCheckout/);
+  assert.doesNotMatch(parent, /offerCheckout=\{bills\.filter/);
   assert.match(src("src/components/parent-plus.tsx"), /offerCheckout/);
-  assert.match(src("src/components/parent-plus.tsx"), /parentPlusNoBill/);
+  assert.match(src("src/components/parent-plus.tsx"), /KidEase is free|parentPlusLead/);
   assert.match(src("src/components/provider-plan-banner.tsx"), /planViewPlans/);
   assert.match(src("src/components/provider-subscription.tsx"), /savedFree/);
   assert.match(src("src/components/provider-subscription.tsx"), /current \|\| !state\.entitlements\.paid \? "secondary"/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /No centre bills yet/);
   assert.match(copy, /Aucune facture de centre/);
+  assert.match(copy, /it is not a centre bill/);
 });
 
 test("search-alert SMS checkbox uses CASL statement, not a pre-checked email default", () => {

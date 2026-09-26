@@ -4,7 +4,8 @@
  * Paid status never changes quality score or Guest Favorites.
  * Listing, vacancy, claim, and licence stay on Free — never paywalled.
  *
- * When Stripe is live: Pro/Network need selected_plan plus active/trialing.
+ * When Stripe is live: Pro/Network need selected_plan plus active, trialing, or past_due.
+ * past_due is payment-failed grace: benefits stay, and the desk shows a notice.
  * When Stripe is not live: paid extras fail closed (honest billing-not-live).
  * A rehearsal pick on the profile is not a paid subscription.
  */
@@ -15,12 +16,13 @@ import {
   type ProviderAddonId,
   type ProviderPlanId,
 } from "./provider-plans.ts";
+import { subscriptionAccessOpen } from "./subscription-lifecycle.ts";
 
 export const FREE_INQUIRY_CAP = 10;
 export const FREE_ANALYTICS_DAYS = 7;
 export const PRO_ANALYTICS_DAYS = 90;
 
-export const PAID_SUBSCRIPTION_STATUSES = ["active", "trialing"] as const;
+export const PAID_SUBSCRIPTION_STATUSES = ["active", "trialing", "past_due"] as const;
 
 export type ProviderPaidFeature =
   | "unlimited_inquiries"
@@ -40,6 +42,8 @@ export type ProviderEntitlementInput = {
   status?: string | null;
   addons?: readonly string[] | string | null;
   stripeLive: boolean;
+  /** Live Featured city add-on. Omitted status does not grant the add-on. */
+  featuredCityStatus?: string | null;
 };
 
 export type ProviderEntitlements = {
@@ -48,6 +52,8 @@ export type ProviderEntitlements = {
   stripeLive: boolean;
   paid: boolean;
   unlimitedInquiries: boolean;
+  /** Featured-city add-on is active. Placement still depends on the purchased centre. */
+  featuredFromAddon: boolean;
   featuredCity: boolean;
   analyticsDays: number;
   orgDashboard: boolean;
@@ -67,10 +73,7 @@ export const PROVIDER_INQUIRY_CAP_BILLING_NOT_LIVE_MESSAGE =
   "This centre is on Free (10 new messages and tours / month). Unlimited inquiries need Pro when live checkout is on.";
 
 export function isPaidSubscriptionStatus(raw: string | null | undefined): boolean {
-  const status = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return (PAID_SUBSCRIPTION_STATUSES as readonly string[]).includes(status);
+  return subscriptionAccessOpen(raw);
 }
 
 export function normalizeProviderAddons(raw: readonly string[] | string | null | undefined): ProviderAddonId[] {
@@ -94,13 +97,15 @@ export function resolveProviderEntitlements(input: ProviderEntitlementInput): Pr
   const entitledPlan = entitledProviderPlan(input);
   const addons = normalizeProviderAddons(input.addons);
   const paid = entitledPlan === "pro" || entitledPlan === "network";
-  const featuredFromAddon = addons.includes("featured_city") && input.stripeLive;
+  const featuredFromAddon =
+    addons.includes("featured_city") && input.stripeLive && isPaidSubscriptionStatus(input.featuredCityStatus);
   return {
     selectedPlan,
     entitledPlan,
     stripeLive: Boolean(input.stripeLive),
     paid,
     unlimitedInquiries: paid,
+    featuredFromAddon,
     featuredCity: entitledPlan === "pro" || featuredFromAddon,
     analyticsDays: paid ? PRO_ANALYTICS_DAYS : FREE_ANALYTICS_DAYS,
     orgDashboard: entitledPlan === "network",
@@ -143,6 +148,17 @@ export function inquiryRemaining(used: number, cap: number | null): number | nul
 export function inquiryAtCap(used: number, cap: number | null): boolean {
   if (cap == null) return false;
   return Math.max(0, Math.floor(used)) >= cap;
+}
+
+/** Priority (Claim boost), then Featured city, then the caller's sort. Not a quality score. */
+export function compareWithPaidPins<T extends { priority?: boolean; featuredCity?: boolean }>(
+  a: T,
+  b: T,
+  next: (a: T, b: T) => number,
+): number {
+  if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
+  if (Boolean(a.featuredCity) !== Boolean(b.featuredCity)) return a.featuredCity ? -1 : 1;
+  return next(a, b);
 }
 
 /** Placement pin only. Never feed this into qualityBreakdown or Guest Favorites. */
