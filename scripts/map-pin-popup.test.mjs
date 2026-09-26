@@ -9,6 +9,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const mapView = readFileSync(join(root, "src/components/map-view.tsx"), "utf8");
 const listingPage = readFileSync(join(root, "src/routes/daycare.$slug.tsx"), "utf8");
 const share = readFileSync(join(root, "src/components/free-listing-share.tsx"), "utf8");
+const daycares = readFileSync(join(root, "src/lib/server/daycares.ts"), "utf8");
 
 /** Winnipeg city centroid from geo.ts. QA street is the ghost claim-lab lane, not a live centre. */
 const WINNIPEG_CENTROID = { lat: 49.8951, lng: -97.1384 };
@@ -111,7 +112,8 @@ test("directions fall back without inventing a street when the address is only a
     province: "MB",
     postalCode: "R3C 0A1",
   });
-  assert.match(centroid, /destination=49\.8951%2C-97\.1384/);
+  assert.match(centroid, /destination=TEST\+Ghost\+Claim\+Lab%2C\+Winnipeg%2C\+MB\+R3C\+0A1/);
+  assert.doesNotMatch(centroid, /49\.8951%2C-97\.1384/);
   assert.doesNotMatch(centroid, /KidEase\+Test\+Lane/);
 
   const named = directionsUrl(Number.NaN, Number.NaN, "TEST Ghost Claim Lab", {
@@ -124,6 +126,89 @@ test("directions fall back without inventing a street when the address is only a
   assert.doesNotMatch(named, /General\+Delivery/);
 });
 
+test("blank street uses the centre name, city, province code, and postal", () => {
+  const google = directionsUrl(WINNIPEG_CENTROID.lat, WINNIPEG_CENTROID.lng, "Little Oaks Daycare", {
+    apple: false,
+    address: "",
+    city: "Winnipeg",
+    province: "Manitoba",
+    postalCode: "R3T 2N2",
+  });
+  assert.match(google, /destination=Little\+Oaks\+Daycare%2C\+Winnipeg%2C\+MB\+R3T\+2N2/);
+  assert.doesNotMatch(google, /49\.8951%2C-97\.1384/);
+  assert.doesNotMatch(google, /Manitoba/);
+
+  const precise = directionsUrl(49.807, -97.153, "Little Oaks Daycare", {
+    apple: false,
+    address: "   ",
+    city: "Winnipeg",
+    province: "MB",
+    postalCode: "r3t2n2",
+  });
+  assert.match(precise, /destination=Little\+Oaks\+Daycare%2C\+Winnipeg%2C\+MB\+R3T\+2N2/);
+  assert.doesNotMatch(precise, /49\.807%2C-97\.153/);
+});
+
+test("placeholder postal is left out of the directions query", () => {
+  const blank = directionsUrl(WINNIPEG_CENTROID.lat, WINNIPEG_CENTROID.lng, "Little Oaks Daycare", {
+    apple: false,
+    address: "",
+    city: "Winnipeg",
+    province: "MB",
+    postalCode: "R3K 0Z8",
+  });
+  assert.match(blank, /destination=Little\+Oaks\+Daycare%2C\+Winnipeg%2C\+MB&/);
+  assert.doesNotMatch(blank, /R3K/);
+  assert.doesNotMatch(blank, /49\.8951%2C-97\.1384/);
+
+  const withStreet = directionsUrl(49.8819, -97.3077, "St. James Y Family Child Care", {
+    apple: false,
+    address: "3550 Portage Avenue",
+    city: "Winnipeg",
+    province: "MB",
+    postalCode: "R3K 0Z8",
+  });
+  assert.match(withStreet, /destination=3550\+Portage\+Avenue%2C\+Winnipeg%2C\+MB&/);
+  assert.doesNotMatch(withStreet, /R3K/);
+});
+
+test("a room description is not a street address", () => {
+  const room = directionsUrl(WINNIPEG_CENTROID.lat, WINNIPEG_CENTROID.lng, "Little Oaks Daycare", {
+    apple: false,
+    address: "Room 104",
+    city: "Winnipeg",
+    province: "MB",
+    postalCode: "R3T 2N2",
+  });
+  assert.match(room, /destination=Little\+Oaks\+Daycare%2C\+Winnipeg%2C\+MB\+R3T\+2N2/);
+  assert.doesNotMatch(room, /Room/);
+  assert.doesNotMatch(room, /49\.8951%2C-97\.1384/);
+
+  const school = directionsUrl(51.15, -100.05, "Dauphin Magical Horizons School age - MacNeill", {
+    apple: false,
+    address: "Room 7-312 Sandy Street",
+    city: "Dauphin",
+    province: "MB",
+    postalCode: "R7N 0K9",
+  });
+  assert.match(school, /destination=Room\+7-312\+Sandy\+Street%2C\+Dauphin%2C\+MB\+R7N\+0K9/);
+});
+
+test("coordinates are the last resort and a city centroid is never the destination", () => {
+  const coordsOnly = directionsUrl(53.54, -113.49, "Kids World", { apple: false });
+  assert.match(coordsOnly, /destination=53\.54%2C-113\.49/);
+  assert.doesNotMatch(coordsOnly, /Kids\+World/);
+
+  const centroidOnly = directionsUrl(WINNIPEG_CENTROID.lat, WINNIPEG_CENTROID.lng, "Little Oaks Daycare", {
+    apple: false,
+  });
+  assert.match(centroidOnly, /destination=Little\+Oaks\+Daycare&/);
+  assert.doesNotMatch(centroidOnly, /49\.8951%2C-97\.1384/);
+
+  const nothing = directionsUrl(WINNIPEG_CENTROID.lat, WINNIPEG_CENTROID.lng, "", { apple: false });
+  assert.equal(nothing, "https://www.google.com/maps");
+});
+
 test("search map opens one listing popup from a KidEase logo pin", () => {
   assert.match(mapView, /ke-logo-pin/);
   assert.match(mapView, /data-ke="map-selected-card"/);
@@ -133,6 +218,10 @@ test("search map opens one listing popup from a KidEase logo pin", () => {
   assert.match(mapView, /openDirections\(/);
   assert.match(mapView, /address:\s*item\.address/);
   assert.match(mapView, /postalCode:\s*item\.postalCode/);
+  const slim = daycares.slice(daycares.indexOf("function slimCard"), daycares.indexOf("function alignedSearchInput"));
+  assert.match(slim, /description:\s*""/);
+  assert.match(slim, /phone:\s*null/);
+  assert.doesNotMatch(slim, /address:\s*""/);
   assert.match(listingPage, /address:\s*d\.address/);
   assert.match(listingPage, /openDirections\(d\.lat,\s*d\.lng,\s*name,\s*directionsPlace\)/);
   assert.match(share, /address,\s*city,\s*province,\s*postalCode/);
