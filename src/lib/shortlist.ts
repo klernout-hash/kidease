@@ -161,8 +161,11 @@ export function formatListingCulture(raw: string | null | undefined, locale: "en
   return keys.map((k) => amenityLabel(k, locale)).join(" · ");
 }
 
-export function formatListingAges(item: Pick<ShortlistListing, "agesKnown" | "ageMinMonths" | "ageMaxMonths">) {
-  return listingAgeRangeText(item);
+export function formatListingAges(
+  item: Pick<ShortlistListing, "agesKnown" | "ageMinMonths" | "ageMaxMonths">,
+  locale: "en" | "fr" = "en",
+) {
+  return listingAgeRangeText(item, "short", locale);
 }
 
 export function listingSpotsTotal(item: Pick<ShortlistListing, "spotsTotal" | "spotsInfant" | "spotsToddler" | "spotsPreschool">) {

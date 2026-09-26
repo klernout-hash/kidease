@@ -14,6 +14,7 @@ import {
 } from "@/lib/facility-type";
 import { hasAmenity } from "@/lib/licensing";
 import { hasConfirmedAges } from "@/lib/listing-readiness";
+import { clipAgeBand, generatedAgeBands } from "@/lib/public-programs";
 import { matchesRailAge } from "@/lib/care-type";
 import { honestVacancy, isLiveOrClaimed, type VacancyHonestyInput } from "@/lib/now-loops";
 import type { Daycare } from "@/lib/types";
@@ -465,34 +466,26 @@ export function listingPrograms(d: Pick<
   | "infantMonthly"
   | "toddlerMonthly"
   | "preschoolMonthly"
-  | "partTimeMonthly"
   | "scheduleOptions"
-  | "amenities"
 >): AgeProgram[] {
   const stored = normalizePrograms(d.programs);
-  if (stored.length) return stored;
+  if (stored.length) {
+    if (!hasConfirmedAges(d)) return stored;
+    return stored.flatMap((row) => {
+      const clip = clipAgeBand(d.ageMinMonths, d.ageMaxMonths, row.band);
+      if (!clip) return [];
+      return [{ ...row, ageMinMonths: clip.min, ageMaxMonths: clip.max }];
+    });
+  }
   if (!hasConfirmedAges(d)) return [];
   const schedules = listingSchedules(d);
-  const rows: AgeProgram[] = [];
-  const push = (band: ParentAgeBand, fee: number | null) => {
-    const range = BAND_RANGE[band];
-    if (d.ageMaxMonths < range.min || d.ageMinMonths > range.max) return;
-    if (band === "school-age" && !hasAmenity(d.amenities || "", "school-age") && d.ageMaxMonths < 60) return;
-    rows.push({
-      band,
-      ageMinMonths: Math.max(d.ageMinMonths, range.min),
-      ageMaxMonths: Math.min(d.ageMaxMonths, range.max),
-      schedules,
-      monthlyFee: fee && fee > 0 ? fee : null,
-    });
-  };
-  push("infant", d.infantMonthly);
-  push("toddler", d.toddlerMonthly);
-  push("preschool", d.preschoolMonthly);
-  if (hasAmenity(d.amenities || "", "school-age") || d.ageMaxMonths >= 60) {
-    push("school-age", d.partTimeMonthly);
-  }
-  return rows;
+  return generatedAgeBands(d).map((row) => ({
+    band: row.band,
+    ageMinMonths: row.ageMinMonths,
+    ageMaxMonths: row.ageMaxMonths,
+    schedules,
+    monthlyFee: row.monthlyFee,
+  }));
 }
 
 export function programFeeKnown(

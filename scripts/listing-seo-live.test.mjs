@@ -51,7 +51,7 @@ test("listing SEO title and description use name, city, province, ages", () => {
   assert.match(title, /Sunny Side Child Care/);
   assert.match(title, /Winnipeg/);
   assert.match(title, /MB/);
-  assert.match(title, /12–60 months/);
+  assert.match(title, /12 months – 5 years/);
   assert.match(title, /KidEase/);
   const desc = listingMetaDescription(centre, "en");
   assert.match(desc, /Licensed child care centre at Sunny Side Child Care/);
@@ -66,7 +66,7 @@ test("listing SEO title and description use name, city, province, ages", () => {
   assert.doesNotMatch(fundedJson, /218|price|offers/i);
   const fr = listingPageTitle(centre, "fr");
   assert.match(fr, /Garderie Sunny Side/);
-  assert.match(fr, /12 à 60 mois/);
+  assert.match(fr, /12 mois – 5 ans/);
 });
 
 test("listing SEO and JSON-LD fail closed when name, url, or area is missing", () => {

@@ -3,7 +3,7 @@ import { LocateFixed, Minus, Navigation, Plus, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { CopyKey } from "@/lib/copy";
 import type { DaycareCard, Locale } from "@/lib/types";
-import { cn, displayCentreName, money } from "@/lib/utils";
+import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
@@ -696,8 +696,8 @@ function MapPinPopup({
   const away = Number.isFinite(item.distanceKm)
     ? `${displayDistance(item.distanceKm, "km")} ${t("km")}`
     : "";
-  const place = [item.city || item.address, away].filter(Boolean).join(" · ");
-  const ages = listingAgeRangeText(item, "months");
+  const place = [item.city || displayListingText(item.address), away].filter(Boolean).join(" · ");
+  const ages = listingAgeRangeText(item, "months", locale === "fr" ? "fr" : "en");
   const vacancy = honestVacancy(item);
   const facts = [
     ages,
@@ -766,7 +766,7 @@ function MapPinPopup({
           onClick={(event) => {
             event.stopPropagation();
             void openDirections(item.lat, item.lng, name, {
-              address: item.address,
+              address: displayListingText(item.address),
               city: item.city,
               province: item.province,
               postalCode: item.postalCode,

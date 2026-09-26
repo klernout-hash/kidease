@@ -49,7 +49,7 @@ import type { CopyKey } from "@/lib/copy";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
 import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { confirmedStoredFeeProgram } from "@/lib/fee-program";
+import { formatMonthlyFee, listingFeeNotes } from "@/lib/public-programs";
 import { liveLookingOnly } from "@/lib/now-loops";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { rememberViewed } from "@/lib/recent";
@@ -74,7 +74,7 @@ import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { listingAgeRangeText } from "@/lib/listing-ages";
-import { formatMonth, money, displayCentreName } from "@/lib/utils";
+import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
 import { ListingMap } from "@/components/listing-map";
@@ -330,8 +330,11 @@ function Listing() {
     urgencyScore: parentUrgencyScore(d, { ageGroup }),
   };
   const name = displayCentreName(locale === "fr" ? d.nameFr : d.name);
-  const desc = locale === "fr" ? d.descriptionFr : d.description;
-  const hours = locale === "fr" ? d.hoursFr : d.hours;
+  const loc = locale === "fr" ? "fr" : "en";
+  const desc = displayListingText(locale === "fr" ? d.descriptionFr : d.description);
+  const hours = displayListingText(locale === "fr" ? d.hoursFr : d.hours);
+  const tagline = displayListingText(locale === "fr" ? d.taglineFr : d.tagline);
+  const address = displayListingText(d.address);
   const spots = d.spotsInfant + d.spotsToddler + d.spotsPreschool;
   const classified = classifyListingPhotos(d.photos);
   const interiors = classified.interiors;
@@ -356,14 +359,15 @@ function Listing() {
         day: "numeric",
       })
     : "";
-  const agesLabel = listingAgeRangeText(d);
+  const agesLabel = listingAgeRangeText(d, "short", loc);
+  const feeNotes = listingFeeNotes(d);
   const directionsPlace = {
-    address: d.address,
+    address,
     city: d.city,
     province: d.province,
     postalCode: d.postalCode,
   };
-  const mapsQuery = encodeURIComponent(`${d.address}, ${d.city}, ${d.province} ${d.postalCode}`);
+  const mapsQuery = encodeURIComponent(`${address}, ${d.city}, ${d.province} ${d.postalCode}`);
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
   const licenceNo = officialLicenceNumber(d.licenseNumber, d.id);
@@ -447,7 +451,7 @@ function Listing() {
         {offerClaim ? (
           <Link
             to="/claim"
-            search={{ q: d.name }}
+            search={{ q: name }}
             role="menuitem"
             className="flex min-h-11 items-center px-3 text-sm font-medium text-fg hover:bg-surface-2"
           >
@@ -455,7 +459,7 @@ function Listing() {
           </Link>
         ) : null}
         <a
-          href={licenseRecordUrl(d.province, d.name, d.licenseNumber)}
+          href={licenseRecordUrl(d.province, name, d.licenseNumber)}
           target="_blank"
           rel="noreferrer"
           role="menuitem"
@@ -554,9 +558,7 @@ function Listing() {
           <p className="mt-1 text-sm text-muted">
             {d.city}, {d.province}
           </p>
-          {(locale === "fr" ? d.taglineFr : d.tagline)?.trim() ? (
-            <p className="mt-0.5 text-sm text-muted">{locale === "fr" ? d.taglineFr : d.tagline}</p>
-          ) : null}
+          {tagline.trim() ? <p className="mt-0.5 text-sm text-muted">{tagline}</p> : null}
           {approved || licensed || licenceNo ? (
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" data-ke="listing-trust-line">
               {approved ? (
@@ -609,7 +611,7 @@ function Listing() {
             {offerClaim ? (
               <p className="text-sm" data-ke="listing-claim-prompt">
                 {t("isThisYours")}{" "}
-                <Link to="/claim" search={{ q: d.name }} className="text-primary underline-offset-4 hover:underline">
+                <Link to="/claim" search={{ q: name }} className="text-primary underline-offset-4 hover:underline">
                   {t("claimThisFreePage")}
                 </Link>
               </p>
@@ -626,26 +628,34 @@ function Listing() {
 
             <section id="listing-fees" className="scroll-mt-24">
               <h2 className="font-display text-2xl">{t("pricing")}</h2>
-              {live && from > 0 ? (
+              {feeNotes.priceList ? (
                 <ul className="mt-3 divide-y divide-border">
                   {d.infantMonthly != null ? (
-                    <PriceRow label={t("infantFee")} value={money(d.infantMonthly, locale)} extra={`${d.spotsInfant} ${t("spots")}`} />
+                    <PriceRow label={t("infantFee")} value={formatMonthlyFee(d.infantMonthly, locale)} extra={`${d.spotsInfant} ${t("spots")}`} />
                   ) : null}
                   {d.toddlerMonthly != null ? (
-                    <PriceRow label={t("toddlerFee")} value={money(d.toddlerMonthly, locale)} extra={`${d.spotsToddler} ${t("spots")}`} />
+                    <PriceRow label={t("toddlerFee")} value={formatMonthlyFee(d.toddlerMonthly, locale)} extra={`${d.spotsToddler} ${t("spots")}`} />
                   ) : null}
                   {d.preschoolMonthly != null ? (
-                    <PriceRow label={t("preschoolFee")} value={money(d.preschoolMonthly, locale)} extra={`${d.spotsPreschool} ${t("spots")}`} />
+                    <PriceRow label={t("preschoolFee")} value={formatMonthlyFee(d.preschoolMonthly, locale)} extra={`${d.spotsPreschool} ${t("spots")}`} />
                   ) : null}
                   {d.partTimeMonthly != null ? (
-                    <PriceRow label={t("partTime")} value={money(d.partTimeMonthly, locale)} extra="" />
+                    <PriceRow label={t("partTimeHalfDay")} value={formatMonthlyFee(d.partTimeMonthly, locale)} extra="" />
                   ) : null}
                 </ul>
-              ) : confirmedStoredFeeProgram(d) === "mb-10-day" ? (
+              ) : null}
+              {feeNotes.mb10 ? (
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeProgramMb10Day")}</p>
-              ) : (
+              ) : null}
+              {feeNotes.source === "website" ? (
+                <p className="mt-2 text-xs text-muted">{t("feeSourceWebsite")}</p>
+              ) : null}
+              {feeNotes.source === "public" ? (
+                <p className="mt-2 text-xs text-muted">{t("feeSourcePublic")}</p>
+              ) : null}
+              {feeNotes.unconfirmed ? (
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeUnknownLead")}</p>
-              )}
+              ) : null}
               <p className="mt-3 text-sm">
                 <Link to="/benefits" className="font-medium text-primary underline-offset-4 hover:underline">
                   {t("benefitsTab")}
@@ -670,7 +680,7 @@ function Listing() {
                 <ListingMap lat={d.lat} lng={d.lng} title={`${name} — Google Maps`} />
               </div>
               <p className="mt-3 text-sm text-muted">
-                {d.address}, {d.city}, {d.province} {d.postalCode}
+                {address}, {d.city}, {d.province} {d.postalCode}
               </p>
               <a
                 href={mapsPlace}
@@ -801,7 +811,7 @@ function Listing() {
               </dl>
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
                 <a
-                  href={licenseRecordUrl(d.province, d.name, d.licenseNumber)}
+                  href={licenseRecordUrl(d.province, name, d.licenseNumber)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"

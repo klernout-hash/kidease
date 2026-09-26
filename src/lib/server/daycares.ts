@@ -80,6 +80,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
     toddlerMonthly: d.toddlerMonthly,
     preschoolMonthly: d.preschoolMonthly,
     partTimeMonthly: d.partTimeMonthly,
+    factSource: d.factSource || null,
     spotsInfant: d.spotsInfant,
     spotsToddler: d.spotsToddler,
     spotsPreschool: d.spotsPreschool,

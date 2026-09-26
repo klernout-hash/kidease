@@ -6,6 +6,7 @@
  */
 
 import { classifyFacilityType, facilityTypeSeoKind, facilityTypeTitleNoun, type FacilityType } from "./facility-type.ts";
+import { decodeHtml } from "./html-text.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 
 export const LISTING_META_BRAND = "KidEase";
@@ -38,13 +39,7 @@ export function listingLabelFromSlug(slug: string | null | undefined): string {
 }
 
 function listingDisplayName(value: string | null | undefined): string {
-  return String(value ?? "")
-    .replace(/&amp;/gi, "&")
-    .replace(/&apos;/gi, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/gi, '"')
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
+  return decodeHtml(value)
     .replace(/\bCetnre\b/g, "Centre")
     .replace(/\s{2,}/g, " ")
     .trim();
