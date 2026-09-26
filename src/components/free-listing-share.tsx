@@ -45,23 +45,37 @@ export function FreeListingShareActions({
   name,
   lat,
   lng,
+  address,
+  city,
+  province,
+  postalCode,
   className,
 }: {
   slug: string;
   name: string;
   lat?: number;
   lng?: number;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postalCode?: string | null;
   className?: string;
 }) {
   const { t } = useCopy();
   const mailto = listingMailtoHref({ name, slug, note: t("freeListingNotAd") });
-  const hasMaps = Number.isFinite(lat) && Number.isFinite(lng);
+  const hasMaps = (Number.isFinite(lat) && Number.isFinite(lng)) || Boolean(address || city);
 
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>
       <CopyListingLinkButton slug={slug} name={name} />
       {hasMaps ? (
-        <Button type="button" variant="secondary" onClick={() => void openDirections(lat as number, lng as number, name)}>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() =>
+            void openDirections(lat as number, lng as number, name, { address, city, province, postalCode })
+          }
+        >
           <MapPinned className="size-4" />
           {t("directions")}
         </Button>
@@ -80,7 +94,17 @@ export function FreeListingShareActions({
 export function FreePageExplainer({
   listings,
 }: {
-  listings: Array<{ slug: string; name: string; nameFr?: string; lat?: number; lng?: number }>;
+  listings: Array<{
+    slug: string;
+    name: string;
+    nameFr?: string;
+    lat?: number;
+    lng?: number;
+    address?: string | null;
+    city?: string | null;
+    province?: string | null;
+    postalCode?: string | null;
+  }>;
 }) {
   const { t, locale } = useCopy();
   if (!listings.length) return null;
@@ -103,6 +127,10 @@ export function FreePageExplainer({
                 name={name}
                 lat={row.lat}
                 lng={row.lng}
+                address={row.address}
+                city={row.city}
+                province={row.province}
+                postalCode={row.postalCode}
               />
             </li>
           );
