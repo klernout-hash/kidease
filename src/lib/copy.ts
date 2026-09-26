@@ -707,9 +707,9 @@ export const copy = {
     markAlertsRead: "Mark all read",
     noChildrenLead: "Add a child profile first. Centres only see the details you send.",
     noPaymentsLead:
-      "No centre bills yet. Free search and messages stay on. Parent Plus checkout stays off until a centre sends a bill, or you already subscribe. When a bill arrives, you pay the centre amount with Stripe Checkout. KidEase’s platform fee comes from the daycare payout. Booking card deposits are not charged on the deposit page.",
+      "No centre bills yet. Search and messages stay free. Parent Plus, above, is an optional upgrade in CAD — it is not a centre bill. When a bill arrives, you pay the centre amount with Stripe Checkout. KidEase’s platform fee comes from the daycare payout.",
     parentPlusNoBill:
-      "Parent Plus is optional. Live Checkout stays off here until a centre sends a bill, or you already subscribe.",
+      "Parent Plus is optional. KidEase search and centre bills stay free without it.",
     emptyFindCare: "Find licensed care",
     emptyAddChild: "Add a child",
     pendingHonesty: "Pending totals are not settled.",
@@ -768,7 +768,7 @@ export const copy = {
     billDisputed: "Disputed",
     parentPlusTitle: "Parent Plus",
     parentPlusLead:
-      "Optional extras for families — not centre tuition. Start Plus uses Stripe Checkout ($7.99/mo or $59/yr).",
+      "KidEase is free for families. Parent Plus is an optional upgrade in Canadian dollars. Start Plus uses Stripe Checkout. Search, messages, and centre bills stay open without it.",
     parentPlusSubscribe: "Start Plus",
     parentPlusCurrent: "Plus is on",
     parentPlusManage: "Manage billing",
@@ -3178,9 +3178,9 @@ export const copy = {
     markAlertsRead: "Tout marquer comme lu",
     noChildrenLead: "Ajoutez d’abord un profil d’enfant. Les centres ne voient que ce que vous envoyez.",
     noPaymentsLead:
-      "Aucune facture de centre pour l’instant. La recherche et les messages restent gratuits. Le checkout Plus parents reste fermé tant qu’un centre n’envoie pas de facture, ou que vous n’êtes pas déjà abonné. Quand une facture arrive, vous payez le montant du centre avec Stripe Checkout. Les frais de plateforme KidEase viennent du versement à la garderie. Les dépôts par carte de réservation ne sont pas débités sur la page de dépôt.",
+      "Aucune facture de centre pour l’instant. La recherche et les messages restent gratuits. Plus parents, ci-dessus, est une option en dollars canadiens — ce n’est pas une facture de centre. Quand une facture arrive, vous payez le montant du centre avec Stripe Checkout. Les frais de plateforme KidEase viennent du versement à la garderie.",
     parentPlusNoBill:
-      "Plus parents est facultatif. Le checkout en direct reste fermé ici tant qu’un centre n’envoie pas de facture, ou que vous n’êtes pas déjà abonné.",
+      "Plus parents est facultatif. La recherche KidEase et les factures de centre restent gratuites sans lui.",
     emptyFindCare: "Trouver une place",
     emptyAddChild: "Ajouter un enfant",
     pendingHonesty: "Les totaux en attente ne sont pas réglés.",
@@ -3239,7 +3239,7 @@ export const copy = {
     billDisputed: "Contestée",
     parentPlusTitle: "Plus parents",
     parentPlusLead:
-      "Options facultatives pour les familles — pas les frais de garde. Activer Plus utilise Stripe Checkout (7,99 $/mois ou 59 $/an).",
+      "KidEase est gratuit pour les familles. Plus parents est une option en dollars canadiens. Activer Plus utilise Stripe Checkout. La recherche, les messages et les factures de centre restent ouverts sans lui.",
     parentPlusSubscribe: "Activer Plus",
     parentPlusCurrent: "Plus est actif",
     parentPlusManage: "Gérer la facturation",

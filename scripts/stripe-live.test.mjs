@@ -131,7 +131,8 @@ test("Plus and portal live on parent Pay; catalog is admin-only", () => {
   assert.match(src("src/components/parent-desk.tsx"), /ParentPlusPanel/);
   assert.match(src("src/components/parent-plus.tsx"), /startParentPlusCheckout/);
   assert.match(src("src/components/parent-plus.tsx"), /startParentPlusPortal/);
-  assert.match(src("src/lib/server/parent-plus.ts"), /mode: "subscription"/);
+  assert.match(src("src/lib/server/parent-plus.ts"), /requireCatalogCheckout/);
+  assert.match(src("src/lib/server/parent-plus.ts"), /checked\.mode/);
   assert.match(src("src/lib/server/parent-plus.ts"), /stripeChargesLive\(\)/);
   assert.match(src("src/routes/api/admin.stripe-catalog.ts"), /requireAdmin/);
   assert.match(src("src/routeTree.gen.ts"), /api\/admin\/stripe-catalog/);

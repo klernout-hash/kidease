@@ -13,6 +13,7 @@ export type CentreOwnerPlanRow = {
   selected_plan: string | null;
   selected_addons: string | null;
   stripe_subscription_status: string | null;
+  featured_city_status: string | null;
 };
 
 export async function loadProfileEntitlements(
@@ -23,8 +24,9 @@ export async function loadProfileEntitlements(
     selected_plan: string | null;
     selected_addons: string | null;
     stripe_subscription_status: string | null;
+    featured_city_status: string | null;
   }>`
-    select selected_plan, selected_addons, stripe_subscription_status
+    select selected_plan, selected_addons, stripe_subscription_status, featured_city_status
     from profiles
     where user_id = ${userId}
     limit 1
@@ -35,12 +37,14 @@ export async function loadProfileEntitlements(
     status: row?.stripe_subscription_status,
     addons: row?.selected_addons,
     stripeLive: stripeChargesLive(),
+    featuredCityStatus: row?.featured_city_status,
   });
 }
 
 export async function loadCentreOwnerRows(sql: Sql, daycareId: string): Promise<CentreOwnerPlanRow[]> {
   return sql<CentreOwnerPlanRow>`
-    select p.user_id, pr.selected_plan, pr.selected_addons, pr.stripe_subscription_status
+    select p.user_id, pr.selected_plan, pr.selected_addons, pr.stripe_subscription_status,
+           pr.featured_city_status
     from provider_daycares p
     left join profiles pr on pr.user_id = p.user_id
     where p.daycare_id = ${daycareId}
@@ -59,6 +63,7 @@ export function entitlementsFromOwners(rows: CentreOwnerPlanRow[]): ProviderEnti
       status: row.stripe_subscription_status,
       addons: row.selected_addons,
       stripeLive,
+      featuredCityStatus: row.featured_city_status,
     }),
   );
   const rank = (plan: ProviderPlanId) => (plan === "network" ? 2 : plan === "pro" ? 1 : 0);
@@ -126,7 +131,8 @@ export async function overlayFeaturedCity<T extends { id: string; featuredCity?:
     const ids = [...new Set(items.map((item) => item.id).filter(Boolean))];
     if (!ids.length) return items;
     const rows = await sql.query<CentreOwnerPlanRow & { daycare_id: string }>(
-      `select p.daycare_id, p.user_id, pr.selected_plan, pr.selected_addons, pr.stripe_subscription_status
+      `select p.daycare_id, p.user_id, pr.selected_plan, pr.selected_addons, pr.stripe_subscription_status,
+              pr.featured_city_status
        from provider_daycares p
        left join profiles pr on pr.user_id = p.user_id
        where p.daycare_id = any($1::text[])`,

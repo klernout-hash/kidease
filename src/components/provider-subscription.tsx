@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
+import { publicPayMessage } from "@/lib/stripe-public-error";
+import { CheckoutReturnNote, readUpgradeReturn, useUpgradeCelebration } from "@/components/checkout-return";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { cn, money } from "@/lib/utils";
@@ -33,7 +35,8 @@ const COPY = {
   en: {
     eyebrow: "Daycare SaaS",
     title: "Subscription",
-    lead: "Centre plans for listing, inquiries, and multi-site tools. This is not parent Plus or family payments.",
+    lead: "Centre plans for listing, inquiries, and multi-site tools are optional. KidEase is free for every centre — vacancy, claim, and licence stay open. This is not parent Plus or a family bill.",
+    pendingPortal: "Manage billing",
     monthly: "Monthly",
     yearly: "Yearly",
     yearlySave: "Pro saves two months",
@@ -54,11 +57,15 @@ const COPY = {
     entitledFree: "Free basics — listing, vacancy, claim, licence.",
     blocked: "Checkout is blocked until this plan’s Stripe price ID is set on Vercel.",
     savedFree: "You are on Free. Listing tools stay on.",
+    portalCard: "Open the Stripe customer portal to update the card or cancel.",
+    portalWait: "The portal appears after the first live checkout creates a Stripe customer on this profile.",
+    portalOff: "Card payments are not live yet. Centre plan checkout is not charged.",
   },
   fr: {
     eyebrow: "SaaS garderie",
     title: "Abonnement",
-    lead: "Forfaits centre pour la fiche, les demandes et plusieurs sites. Ce n’est pas Plus parents ni les paiements famille.",
+    lead: "Les forfaits centre pour la fiche, les demandes et plusieurs sites sont facultatifs. KidEase est gratuit pour chaque centre — places, réclamation et permis restent ouverts. Ce n’est pas Plus parents ni une facture famille.",
+    pendingPortal: "Gérer la facturation",
     monthly: "Mensuel",
     yearly: "Annuel",
     yearlySave: "Pro : deux mois offerts",
@@ -79,13 +86,16 @@ const COPY = {
     entitledFree: "Base gratuite — fiche, places, réclamation, permis.",
     blocked: "Le checkout reste fermé tant que l’identifiant de prix Stripe n’est pas sur Vercel.",
     savedFree: "Vous êtes sur Gratuit. Les outils de fiche restent ouverts.",
+    portalCard: "Ouvrez le portail Stripe pour changer la carte ou annuler.",
+    portalWait: "Le portail apparaît après le premier paiement en direct, quand Stripe crée un client sur ce profil.",
+    portalOff: "Les paiements par carte ne sont pas encore en direct. Le forfait centre n’est pas facturé.",
   },
 };
 
 function subscriptionError(err: unknown, fallback: string, plansOff: string) {
-  const message = err instanceof Error ? err.message : "";
+  const message = publicPayMessage(err, fallback);
   if (message === "Plans are not offered on this site yet. Listing and claim stay free.") return plansOff;
-  return message || fallback;
+  return message;
 }
 
 function priceReady(state: ProviderSubscriptionState, plan: ProviderPlanId, interval: ProviderInterval) {
@@ -109,16 +119,38 @@ export function ProviderSubscriptionPanel() {
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [week, setWeek] = useState({ views: 0, requests: 0 });
+  const payReturn = useMemo(
+    () => (typeof window === "undefined" ? null : readUpgradeReturn(window.location.search)),
+    [],
+  );
+
+  const applyState = useCallback((s: ProviderSubscriptionState) => {
+    setState(s);
+    setInterval(s.interval);
+    setAddons(s.addons);
+    setLoadError(false);
+  }, []);
+
+  const reloadSubscription = useCallback(() => {
+    void getProviderSubscription()
+      .then(applyState)
+      .catch(() => setLoadError(true));
+  }, [applyState]);
+
+  const returnPhase = useUpgradeCelebration({
+    ret: payReturn,
+    locale: loc,
+    confirmedSessionId: state?.catalogCheckoutSessionId,
+    entitledPlan: state?.entitlements.entitledPlan,
+    subscriptionStatus: state?.subscriptionStatus,
+    featuredCityStatus: state?.featuredCityStatus,
+    claimBoostPaymentId: state?.claimBoostPaymentId,
+    jobPostPaymentIds: state?.jobPostPaymentIds,
+    reload: reloadSubscription,
+  });
 
   useEffect(() => {
-    void getProviderSubscription()
-      .then((s) => {
-        setState(s);
-        setInterval(s.interval);
-        setAddons(s.addons);
-        setLoadError(false);
-      })
-      .catch(() => setLoadError(true));
+    reloadSubscription();
     void getProvider()
       .then((res) => {
         setWeek({
@@ -127,7 +159,7 @@ export function ProviderSubscriptionPanel() {
         });
       })
       .catch(() => undefined);
-  }, []);
+  }, [reloadSubscription]);
 
   if (loadError) {
     return (
@@ -159,6 +191,14 @@ export function ProviderSubscriptionPanel() {
   async function subscribe(plan: ProviderPlanId) {
     const next = { plan, interval, addons };
     if (plan === "free") {
+      if (current.stripeLive && current.customerId && current.subscriptionStatus) {
+        toast.error(
+          loc === "fr"
+            ? "Pour quitter Pro ou Réseau, ouvrez Gérer la facturation. KidEase ne marque pas le centre gratuit tant que Stripe facture encore."
+            : "To leave Pro or Network, open Manage billing. KidEase will not mark this centre free while Stripe is still charging.",
+        );
+        return;
+      }
       await persist(next);
       return;
     }
@@ -208,7 +248,7 @@ export function ProviderSubscriptionPanel() {
       const { url } = await startProviderBillingPortal();
       await openStripeCheckout(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : tx("planPortalFailed"));
+      toast.error(publicPayMessage(err, tx("planPortalFailed")));
     } finally {
       setBusy(false);
     }
@@ -234,6 +274,11 @@ export function ProviderSubscriptionPanel() {
           {t.title}
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">{t.lead}</p>
+        {returnPhase ? (
+          <div className="mt-3">
+            <CheckoutReturnNote phase={returnPhase} locale={loc} />
+          </div>
+        ) : null}
         <PayCtas>
         <div className="mt-4">
           <DirectorProStrip views={week.views} requests={week.requests} />
@@ -311,9 +356,9 @@ export function ProviderSubscriptionPanel() {
                 <p className="mt-3 text-xs text-subtle">{t.networkNeed}</p>
               ) : null}
               <Button
-                className="mt-5 w-full"
+                className="mt-5 min-h-11 w-full"
                 variant={current || !state.entitlements.paid ? "secondary" : "primary"}
-                disabled={busy || (current && !canCharge)}
+                disabled={busy || (current && !canCharge) || (plan.id === "network" && state.siteCount < plan.minSites)}
                 onClick={() => void subscribe(plan.id)}
               >
                 {blockedPaid ? t.blocked : current && !canCharge ? t.current : canCharge ? t.checkout : t.subscribe}
@@ -352,17 +397,28 @@ export function ProviderSubscriptionPanel() {
       <div>
         <h3 className="font-display text-xl">{t.addons}</h3>
         <p className="mt-1 text-sm text-muted">{state.stripeLive ? t.addonsLead : t.addonsRehearsal}</p>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-3">
+        <ul className="mt-4 grid gap-3 md:grid-cols-3">
           {PROVIDER_ADDONS.map((addon) => {
             const on = addons.includes(addon.id);
-            const ready = Boolean(state.prices[addon.id] || state.paymentLinks[addon.id]);
+            const featuredLive = addon.id === "featured_city" && (state.featuredCityStatus === "active" || state.featuredCityStatus === "trialing");
+            const ready = Boolean(state.prices[addon.id]);
+            const owned =
+              addon.id === "featured_city"
+                ? featuredLive
+                : addon.id === "claim_boost"
+                  ? Boolean(state.claimBoostPaidAt)
+                  : state.jobPostCredits > 0;
             return (
               <li key={addon.id}>
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || featuredLive}
                   onClick={() => {
-                    if (state.stripeLive && ready) {
+                    if (state.stripeLive) {
+                      if (!ready) {
+                        toast.error(t.blocked);
+                        return;
+                      }
                       void payAddon(addon.id);
                       return;
                     }
@@ -383,6 +439,17 @@ export function ProviderSubscriptionPanel() {
                     </span>
                   </p>
                   <p className="mt-2 text-sm text-muted">{addon.blurb[loc]}</p>
+                  {owned ? (
+                    <p className="mt-2 text-xs font-medium text-ok">
+                      {addon.id === "job_post"
+                        ? loc === "fr"
+                          ? `${state.jobPostCredits} crédit${state.jobPostCredits === 1 ? "" : "s"}`
+                          : `${state.jobPostCredits} credit${state.jobPostCredits === 1 ? "" : "s"}`
+                        : loc === "fr"
+                          ? "Actif"
+                          : "On"}
+                    </p>
+                  ) : null}
                 </button>
               </li>
             );
@@ -392,20 +459,16 @@ export function ProviderSubscriptionPanel() {
 
       <div className="rounded-xl bg-surface px-5 py-5 ring-1 ring-border">
         {state.customerId && state.stripeLive ? (
-          <Button disabled={busy} className="w-full sm:w-auto" onClick={() => void openPortal()}>
+          <Button disabled={busy} className="min-h-11 w-full sm:w-auto" onClick={() => void openPortal()}>
             {t.portal}
           </Button>
         ) : (
-          <Button disabled className="w-full sm:w-auto">
+          <Button disabled className="min-h-11 w-full sm:w-auto">
             {liveCheckout ? t.portal : t.checkout}
           </Button>
         )}
         <p className="mt-3 text-sm text-muted">
-          {state.stripeLive
-            ? state.customerId
-              ? "Open the Stripe customer portal to update the card or cancel."
-              : "The portal appears after the first live checkout creates a Stripe customer on this profile."
-                : "Card payments are not live yet. Centre plan checkout is not charged."}
+          {state.stripeLive ? (state.customerId ? t.portalCard : t.portalWait) : t.portalOff}
         </p>
       </div>
     </section>

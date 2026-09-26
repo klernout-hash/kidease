@@ -197,6 +197,16 @@ export function serializeProviderAddons(ids: readonly string[]): string {
   return PROVIDER_ADDON_IDS.filter((id) => ids.includes(id)).join(",");
 }
 
+export function withProviderAddon(
+  raw: string | null | undefined,
+  id: ProviderAddonId,
+  on: boolean,
+): string {
+  const ids = parseProviderAddons(raw);
+  const next = on ? (ids.includes(id) ? ids : [...ids, id]) : ids.filter((item) => item !== id);
+  return serializeProviderAddons(next);
+}
+
 export function providerPlan(id: string | null | undefined): ProviderPlan {
   return PROVIDER_PLANS.find((p) => p.id === id) ?? PROVIDER_PLANS[0]!;
 }

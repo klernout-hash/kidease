@@ -70,7 +70,13 @@ function scheduleIdle(work: () => void): () => void {
 
 type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "alerts" | "care";
 
-export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
+export function ParentDesk({
+  initialTab,
+  plusReturn = null,
+}: {
+  initialTab?: ParentTab;
+  plusReturn?: "success" | "cancel" | null;
+}) {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
   const { session: desks, ready: desksReady } = useSessionDesks();
@@ -409,7 +415,7 @@ export function ParentDesk({ initialTab }: { initialTab?: ParentTab }) {
             <PayCtas>
             <div className="mt-4">
               <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
-                <ParentPlusPanel offerCheckout={bills.filter((b) => billIsOpen(b.status)).length > 0} />
+                <ParentPlusPanel offerCheckout plusReturn={plusReturn} />
               </Suspense>
             </div>
             </PayCtas>

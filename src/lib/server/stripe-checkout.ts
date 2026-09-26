@@ -8,6 +8,7 @@
  * read clearly in CAD.
  */
 
+import { StripeApiError } from "../stripe-public-error.ts";
 import { checkoutCurrency, checkoutLocale, checkoutPaymentMethodTypes } from "../stripe-wallets.ts";
 
 export const STRIPE_STATEMENT_SUFFIX = "KIDEASE";
@@ -183,7 +184,9 @@ export async function stripeRequest<T>(
     const getUrl = joined ? `${url}${url.includes("?") ? "&" : "?"}${joined}` : url;
     const res = await stripeFetchImpl(getUrl, { method: "GET", headers });
     const json = (await res.json()) as T & { error?: { message?: string } };
-    if (!res.ok) throw new Error(json.error?.message || `Stripe ${path} failed (${res.status})`);
+    if (!res.ok) {
+      throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status);
+    }
     return json;
   }
   headers["Content-Type"] = "application/x-www-form-urlencoded";
@@ -192,7 +195,9 @@ export async function stripeRequest<T>(
   const payload = params.toString();
   const res = await stripeFetchImpl(url, { method: "POST", headers, body: payload });
   const json = (await res.json()) as T & { error?: { message?: string } };
-  if (!res.ok) throw new Error(json.error?.message || `Stripe ${path} failed (${res.status})`);
+  if (!res.ok) {
+    throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status);
+  }
   return json;
 }
 

@@ -13,10 +13,17 @@ const ParentDesk = lazy(() =>
 
 export const Route = createFileRoute("/parent")({
   validateSearch: (s: Record<string, unknown>) => {
-    const out: { tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care"; preview?: "support" } = {};
+    const out: {
+      tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care";
+      preview?: "support";
+      plus?: "success" | "cancel";
+      session?: string;
+    } = {};
     const tab = s.tab;
     if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "alerts" || tab === "children" || tab === "care") out.tab = tab;
     if (s.preview === "support") out.preview = "support";
+    if (s.plus === "success" || s.plus === "cancel") out.plus = s.plus;
+    if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
     return out;
   },
   component: ParentPage,
@@ -63,7 +70,7 @@ function ParentPage() {
       <LoginFunnelDeskLand desk="parent" />
       {search.preview === "support" ? <SupportPreviewBanner /> : null}
       <Suspense fallback={<DeskSkeleton />}>
-        <ParentDesk initialTab={initialTab} />
+        <ParentDesk initialTab={initialTab} plusReturn={search.plus ?? null} />
       </Suspense>
     </TwoFactorGate>
   );

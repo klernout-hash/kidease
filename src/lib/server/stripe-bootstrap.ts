@@ -9,6 +9,9 @@ import {
   type StripePriceKey,
 } from "@/lib/server/stripe-catalog";
 import { stripeRequest } from "@/lib/server/stripe-checkout";
+import { checkCatalogPrice, type StripePriceSnapshot } from "@/lib/stripe-price-mode";
+import { redactStripeDetail } from "@/lib/stripe-public-error";
+import { recentStripeCheckoutErrors, type StripeCheckoutErrorRow } from "@/lib/server/stripe-checkout-log";
 
 type StripePrice = {
   id?: string;
@@ -30,6 +33,10 @@ export type CatalogBootstrapRow = {
   createdPriceId: string | null;
   existingPriceId: string | null;
   action: "env" | "reused" | "created" | "missing";
+  expectedKind: "recurring" | "one_time";
+  expectedInterval: "month" | "year" | null;
+  priceOk: boolean | null;
+  priceNote: string;
 };
 
 export type CatalogBootstrapResult = {
@@ -38,6 +45,7 @@ export type CatalogBootstrapResult = {
   secret: string;
   rows: CatalogBootstrapRow[];
   vercel: Record<string, string>;
+  recentErrors: StripeCheckoutErrorRow[];
 };
 
 async function findPriceByLookup(lookupKey: string): Promise<StripePrice | null> {
@@ -100,6 +108,29 @@ export async function bootstrapStripeCatalog(opts?: { createMissing?: boolean })
     const resolved = existingEnv || createdPriceId || existingPriceId;
     if (resolved) vercel[STRIPE_PRICE_ENV[item.key]] = resolved;
 
+    let priceOk: boolean | null = null;
+    let priceNote = "";
+    if (!live) {
+      priceNote = "Not checked — Stripe live key is off.";
+    } else if (!existingEnv) {
+      priceNote = "No price ID in the environment.";
+    } else {
+      try {
+        const snapshot = await stripeRequest<StripePriceSnapshot>(
+          `/prices/${encodeURIComponent(existingEnv)}`,
+          {},
+          "GET",
+        );
+        const check = checkCatalogPrice(item, snapshot);
+        priceOk = check.ok;
+        priceNote = check.note;
+      } catch (err) {
+        priceOk = false;
+        const detail = redactStripeDetail(err instanceof Error ? err.message : "Could not read this price");
+        priceNote = `Could not read this price from Stripe. ${detail}`.slice(0, 240);
+      }
+    }
+
     rows.push({
       key: item.key,
       envName: STRIPE_PRICE_ENV[item.key],
@@ -110,6 +141,10 @@ export async function bootstrapStripeCatalog(opts?: { createMissing?: boolean })
       createdPriceId,
       existingPriceId,
       action,
+      expectedKind: item.kind,
+      expectedInterval: item.interval ?? null,
+      priceOk,
+      priceNote,
     });
   }
 
@@ -119,5 +154,6 @@ export async function bootstrapStripeCatalog(opts?: { createMissing?: boolean })
     secret: maskStripeSecret(process.env.STRIPE_SECRET_KEY),
     rows,
     vercel,
+    recentErrors: await recentStripeCheckoutErrors(),
   };
 }

@@ -8,6 +8,18 @@ type CatalogRow = {
   required: boolean;
   envPriceId: string | null;
   action: string;
+  expectedKind?: "recurring" | "one_time";
+  expectedInterval?: "month" | "year" | null;
+  priceOk?: boolean | null;
+  priceNote?: string;
+};
+
+type CheckoutErrorRow = {
+  id: string;
+  at: string;
+  surface: string | null;
+  publicMessage: string;
+  detail: string;
 };
 
 type CatalogPayload = {
@@ -16,6 +28,7 @@ type CatalogPayload = {
   secret?: string;
   rows?: CatalogRow[];
   vercel?: Record<string, string>;
+  recentErrors?: CheckoutErrorRow[];
   error?: string;
 };
 
@@ -68,19 +81,45 @@ export function AdminStripeCatalog() {
         </p>
       ) : null}
       {data?.rows?.length ? (
-        <ul className="mt-3 space-y-1 text-sm">
+        <ul className="mt-3 space-y-2 text-sm">
           {data.rows.map((row) => (
-            <li key={row.key} className="flex flex-wrap justify-between gap-2">
-              <span>
-                {row.envName}
-                {row.required ? "" : " (optional)"} · ${row.amountCad} CAD
-              </span>
-              <span className="text-muted">
-                {row.envPriceId || data.vercel?.[row.envName] || row.action}
-              </span>
+            <li key={row.key} className="rounded-lg bg-bg px-3 py-2 ring-1 ring-border">
+              <div className="flex flex-wrap justify-between gap-2">
+                <span>
+                  {row.envName}
+                  {row.required ? "" : " (optional)"} · ${row.amountCad} CAD
+                  {row.expectedKind === "recurring"
+                    ? ` · recurring${row.expectedInterval ? ` ${row.expectedInterval}` : ""}`
+                    : " · one-time"}
+                </span>
+                <span className="text-muted">
+                  {row.envPriceId || data.vercel?.[row.envName] || row.action}
+                </span>
+              </div>
+              {row.priceNote ? (
+                <p className={row.priceOk === false ? "mt-1 text-danger" : "mt-1 text-xs text-subtle"}>
+                  {row.priceNote}
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>
+      ) : null}
+      {data?.recentErrors?.length ? (
+        <div className="mt-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">Recent checkout errors</p>
+          <ul className="mt-2 space-y-2 text-sm">
+            {data.recentErrors.map((row) => (
+              <li key={row.id} className="rounded-lg bg-bg px-3 py-2 ring-1 ring-border">
+                <p>{row.publicMessage}</p>
+                <p className="mt-1 text-xs text-subtle">
+                  {row.surface || "checkout"} · {row.at}
+                </p>
+                <p className="mt-1 text-xs text-danger">{row.detail}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
       {note ? <p className="mt-2 text-sm text-muted">{note}</p> : null}
     </div>

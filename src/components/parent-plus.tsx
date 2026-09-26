@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { publicPayMessage } from "@/lib/stripe-public-error";
+import { CheckoutReturnNote, readUpgradeReturn, useUpgradeCelebration } from "@/components/checkout-return";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { PLUS_FEATURES, plusPriceHint, type PlusInterval } from "@/lib/parent-plus";
@@ -20,7 +22,13 @@ function plusMoney(amount: number, locale: "en" | "fr") {
   }).format(amount);
 }
 
-export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: boolean }) {
+export function ParentPlusPanel({
+  offerCheckout = true,
+  plusReturn,
+}: {
+  offerCheckout?: boolean;
+  plusReturn?: "success" | "cancel" | null;
+}) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const showPay = useShowPayCtas();
@@ -33,14 +41,38 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
     emailCommercial: false,
   });
 
-  useEffect(() => {
-    if (!showPay) return;
+  const payReturn = useMemo(() => {
+    if (plusReturn === "success" || plusReturn === "cancel") {
+      const session =
+        typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("session");
+      return plusReturn === "cancel"
+        ? ({ phase: "cancel" } as const)
+        : ({ phase: "success", kind: "plus", item: "plus", sessionId: session } as const);
+    }
+    return typeof window === "undefined" ? null : readUpgradeReturn(window.location.search);
+  }, [plusReturn]);
+
+  const reloadPlus = useCallback(() => {
     void getParentPlus()
       .then((s) => {
         setState(s);
         setInterval(s.interval);
       })
       .catch(() => undefined);
+  }, []);
+
+  const returnPhase = useUpgradeCelebration({
+    ret: showPay ? payReturn : null,
+    locale: loc,
+    confirmedSessionId: state?.catalogCheckoutSessionId,
+    plusPlan: state?.plan,
+    plusStatus: state?.status,
+    reload: reloadPlus,
+  });
+
+  useEffect(() => {
+    if (!showPay) return;
+    reloadPlus();
     void getMyCaslConsents()
       .then((row) => {
         setConsents({
@@ -50,12 +82,13 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
         });
       })
       .catch(() => undefined);
-  }, [showPay]);
+  }, [showPay, reloadPlus]);
 
   if (!showPay || !state) return null;
 
   const live = state.stripeLive && Boolean(state.prices[interval === "year" ? "plus_yearly" : "plus_monthly"]);
-  const current = state.plan === "plus" && (state.status === "active" || !state.stripeLive);
+  const plusOn = state.status === "active" || state.status === "trialing";
+  const current = state.plan === "plus" && (plusOn || !state.stripeLive);
 
   async function start() {
     setBusy(true);
@@ -66,7 +99,7 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
       const { url } = await startParentPlusCheckout({ data: { interval } });
       await openStripeCheckout(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not start Plus checkout");
+      toast.error(publicPayMessage(err, "Could not start Plus checkout"));
     } finally {
       setBusy(false);
     }
@@ -78,7 +111,7 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
       const { url } = await startParentPlusPortal();
       window.location.assign(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not open billing portal");
+      toast.error(publicPayMessage(err, "Could not open billing portal"));
     } finally {
       setBusy(false);
     }
@@ -88,6 +121,11 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
     <div className="rounded-xl bg-surface p-5 ring-1 ring-border">
       <h3 className="font-display text-xl">{t("parentPlusTitle")}</h3>
       <p className="mt-1 text-sm text-muted">{t("parentPlusLead")}</p>
+      {returnPhase ? (
+        <div className="mt-3">
+          <CheckoutReturnNote phase={returnPhase} locale={loc} />
+        </div>
+      ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         {(["month", "year"] as const).map((id) => (
           <button
@@ -115,15 +153,17 @@ export function ParentPlusPanel({ offerCheckout = true }: { offerCheckout?: bool
         <CaslConsentFields value={consents} onChange={setConsents} showEmailService={false} />
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {live ? (
-          <Button disabled={busy || current || !offerCheckout} onClick={() => void start()}>
+        {live && offerCheckout ? (
+          <Button className="min-h-11 w-full sm:w-auto" disabled={busy || current} onClick={() => void start()}>
             {current ? t("parentPlusCurrent") : t("parentPlusSubscribe")}
           </Button>
         ) : (
-          <Button disabled>{t("parentPlusSubscribe")}</Button>
+          <Button className="min-h-11 w-full sm:w-auto" disabled>
+            {t("parentPlusSubscribe")}
+          </Button>
         )}
         {state.customerId && state.stripeLive ? (
-          <Button variant="secondary" disabled={busy} onClick={() => void portal()}>
+          <Button className="min-h-11 w-full sm:w-auto" variant="secondary" disabled={busy} onClick={() => void portal()}>
             {t("parentPlusManage")}
           </Button>
         ) : null}

@@ -16,8 +16,6 @@ import {
   type ProviderPlanId,
 } from "@/lib/provider-plans";
 import {
-  addonCheckoutMode,
-  addonPriceKey,
   catalogStatus,
   envPaymentLink,
   envPriceId,
@@ -28,6 +26,9 @@ import {
   createBillingPortalSession,
   createCatalogCheckoutSession,
 } from "@/lib/server/stripe-checkout";
+import { requireCatalogCheckout } from "@/lib/server/stripe-price-guard";
+import { runUserCheckout } from "@/lib/server/stripe-checkout-log";
+import { CHECKOUT_COULD_NOT_START, PORTAL_COULD_NOT_OPEN } from "@/lib/stripe-public-error";
 import { decideProviderCheckout, PROVIDER_PRICE_MISSING } from "@/lib/access-control";
 
 export type ProviderSubscriptionState = {
@@ -43,6 +44,12 @@ export type ProviderSubscriptionState = {
   customerId: string | null;
   subscriptionId: string | null;
   subscriptionStatus: string | null;
+  featuredCityStatus: string | null;
+  claimBoostPaidAt: string | null;
+  claimBoostPaymentId: string | null;
+  jobPostCredits: number;
+  jobPostPaymentIds: string;
+  catalogCheckoutSessionId: string | null;
   prices: Record<string, boolean>;
   paymentLinks: Partial<Record<ProviderAddonId, string>>;
 };
@@ -81,9 +88,17 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     stripe_customer_id: string | null;
     stripe_subscription_id: string | null;
     stripe_subscription_status: string | null;
+    featured_city_status: string | null;
+    claim_boost_paid_at: string | null;
+    claim_boost_payment_id: string | null;
+    job_post_credits: number | null;
+    job_post_payment_ids: string | null;
+    catalog_checkout_session_id: string | null;
   }>`
     select selected_plan, selected_interval, selected_addons, selected_plan_at,
-           stripe_customer_id, stripe_subscription_id, stripe_subscription_status
+           stripe_customer_id, stripe_subscription_id, stripe_subscription_status,
+           featured_city_status, claim_boost_paid_at, claim_boost_payment_id,
+           job_post_credits, job_post_payment_ids, catalog_checkout_session_id
     from profiles
     where user_id = ${userId}
     limit 1
@@ -109,6 +124,7 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
       status: row?.stripe_subscription_status,
       addons,
       stripeLive,
+      featuredCityStatus: row?.featured_city_status,
     }),
     checkoutLive:
       stripeLive && PROVIDER_CHECKOUT_LIVE && (prices.pro_monthly || prices.pro_yearly || prices.network_monthly),
@@ -117,6 +133,12 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     customerId: row?.stripe_customer_id ?? null,
     subscriptionId: row?.stripe_subscription_id ?? null,
     subscriptionStatus: row?.stripe_subscription_status ?? null,
+    featuredCityStatus: row?.featured_city_status ?? null,
+    claimBoostPaidAt: row?.claim_boost_paid_at ? String(row.claim_boost_paid_at) : null,
+    claimBoostPaymentId: row?.claim_boost_payment_id ?? null,
+    jobPostCredits: Number(row?.job_post_credits) || 0,
+    jobPostPaymentIds: row?.job_post_payment_ids ?? "",
+    catalogCheckoutSessionId: row?.catalog_checkout_session_id ?? null,
     prices,
     paymentLinks,
   };
@@ -176,7 +198,6 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const desks = await requireSubscriptionAccess(context.userId);
     assertPayCheckoutAllowed(desks.role);
-    await persistSelection(context.userId, data);
     const state = await readSelection(context.userId);
     const priceKey = data.plan === "free" ? null : providerPriceKey(data.plan, data.interval);
     const priceId = priceKey ? envPriceId(priceKey) : null;
@@ -188,28 +209,37 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
     });
     if (!gate.ok) throw new Error(gate.error);
     if (gate.savedOnly) {
+      await persistSelection(context.userId, data);
       return { url: null as string | null, saved: true as const };
     }
-    if (!priceId) throw new Error(PROVIDER_PRICE_MISSING);
+    if (!priceKey || !priceId) throw new Error(PROVIDER_PRICE_MISSING);
     const origin = appOrigin();
-    const session = await createCatalogCheckoutSession({
-      mode: "subscription",
-      priceId,
-      quantity: data.plan === "network" ? Math.max(3, state.siteCount) : 1,
-      successUrl: `${origin}/provider/subscription?checkout=success`,
-      cancelUrl: `${origin}/provider/subscription?checkout=cancel`,
-      customerId: state.customerId,
-      customerEmail: state.customerId ? null : await userEmail(context.userId),
-      clientReferenceId: context.userId,
-      metadata: {
-        kidease: "provider_sub",
-        user_id: context.userId,
-        plan: data.plan,
-        interval: data.interval,
+    return runUserCheckout({
+      surface: "provider_plan",
+      userId: context.userId,
+      fallback: CHECKOUT_COULD_NOT_START,
+      fn: async () => {
+        const checked = await requireCatalogCheckout(priceKey);
+        const session = await createCatalogCheckoutSession({
+          mode: checked.mode,
+          priceId: checked.priceId,
+          quantity: data.plan === "network" ? Math.max(3, state.siteCount) : 1,
+          successUrl: `${origin}/provider/subscription?checkout=success&plan=${data.plan}&session={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${origin}/provider/subscription?checkout=cancel`,
+          customerId: state.customerId,
+          customerEmail: state.customerId ? null : await userEmail(context.userId),
+          clientReferenceId: context.userId,
+          metadata: {
+            kidease: "provider_sub",
+            user_id: context.userId,
+            plan: data.plan,
+            interval: data.interval,
+          },
+        });
+        if (!session.url) throw new Error("Stripe did not return a checkout link");
+        return { url: session.url, saved: true as const };
       },
     });
-    if (!session.url) throw new Error("Stripe did not return a checkout link");
-    return { url: session.url, saved: true as const };
   });
 
 export const startProviderAddonCheckout = createServerFn({ method: "POST" })
@@ -225,32 +255,36 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
     const desks = await requireSubscriptionAccess(context.userId);
     assertPayCheckoutAllowed(desks.role);
     const state = await readSelection(context.userId);
-    const nextAddons = state.addons.includes(data.addon) ? state.addons : [...state.addons, data.addon];
-    await persistSelection(context.userId, { plan: state.plan, interval: state.interval, addons: nextAddons });
     if (!stripeChargesLive()) {
-      throw new Error("Add-on checkout stays off until Stripe live keys are on. This pick is saved (not charged).");
+      throw new Error("Add-on checkout stays off until Stripe live keys are on. Nothing was charged.");
     }
-    const priceId = envPriceId(addonPriceKey(data.addon));
-    const paymentLink = envPaymentLink(data.addon);
-    if (!priceId && paymentLink) return { url: paymentLink };
+    const priceId = envPriceId(data.addon);
     if (!priceId) throw new Error("This add-on’s Stripe price ID is not set. Add it on Vercel, then try again.");
     const origin = appOrigin();
-    const session = await createCatalogCheckoutSession({
-      mode: addonCheckoutMode(data.addon),
-      priceId,
-      successUrl: `${origin}/provider/subscription?addon=success`,
-      cancelUrl: `${origin}/provider/subscription?addon=cancel`,
-      customerId: state.customerId,
-      customerEmail: state.customerId ? null : await userEmail(context.userId),
-      clientReferenceId: context.userId,
-      metadata: {
-        kidease: "addon",
-        user_id: context.userId,
-        addon: data.addon,
+    return runUserCheckout({
+      surface: `provider_addon_${data.addon}`,
+      userId: context.userId,
+      fallback: CHECKOUT_COULD_NOT_START,
+      fn: async () => {
+        const checked = await requireCatalogCheckout(data.addon);
+        const session = await createCatalogCheckoutSession({
+          mode: checked.mode,
+          priceId: checked.priceId,
+          successUrl: `${origin}/provider/subscription?addon=success&item=${data.addon}&session={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${origin}/provider/subscription?addon=cancel`,
+          customerId: state.customerId,
+          customerEmail: state.customerId ? null : await userEmail(context.userId),
+          clientReferenceId: context.userId,
+          metadata: {
+            kidease: "addon",
+            user_id: context.userId,
+            addon: data.addon,
+          },
+        });
+        if (!session.url) throw new Error("Stripe did not return a checkout link");
+        return { url: session.url };
       },
     });
-    if (!session.url) throw new Error("Stripe did not return a checkout link");
-    return { url: session.url };
   });
 
 export const startProviderBillingPortal = createServerFn({ method: "POST" })
@@ -261,8 +295,14 @@ export const startProviderBillingPortal = createServerFn({ method: "POST" })
     if (!state.customerId) throw new Error("No Stripe customer on this profile yet. Start checkout first.");
     if (!stripeChargesLive()) throw new Error("Billing portal stays off until Stripe live keys are on.");
     const origin = appOrigin();
-    return createBillingPortalSession({
-      customerId: state.customerId,
-      returnUrl: `${origin}/provider/subscription`,
+    return runUserCheckout({
+      surface: "provider_portal",
+      userId: context.userId,
+      fallback: PORTAL_COULD_NOT_OPEN,
+      fn: () =>
+        createBillingPortalSession({
+          customerId: state.customerId!,
+          returnUrl: `${origin}/provider/subscription`,
+        }),
     });
   });

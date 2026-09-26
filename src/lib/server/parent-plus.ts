@@ -8,6 +8,9 @@ import {
   createBillingPortalSession,
   createCatalogCheckoutSession,
 } from "@/lib/server/stripe-checkout";
+import { requireCatalogCheckout } from "@/lib/server/stripe-price-guard";
+import { runUserCheckout } from "@/lib/server/stripe-checkout-log";
+import { CHECKOUT_COULD_NOT_START, PORTAL_COULD_NOT_OPEN } from "@/lib/stripe-public-error";
 import { isPlusInterval, isPlusPlanId, type PlusInterval, type PlusPlanId } from "@/lib/parent-plus";
 import { decideParentPlusCheckout, PLUS_PRICE_MISSING } from "@/lib/access-control";
 import { assertPayCheckoutAllowed } from "@/lib/features";
@@ -22,6 +25,7 @@ export type ParentPlusState = {
   customerId: string | null;
   subscriptionId: string | null;
   selectedAt: string | null;
+  catalogCheckoutSessionId: string | null;
   prices: Record<string, boolean>;
 };
 
@@ -42,8 +46,10 @@ async function readPlus(userId: string): Promise<ParentPlusState> {
     plus_subscription_id: string | null;
     plus_selected_at: string | null;
     stripe_customer_id: string | null;
+    catalog_checkout_session_id: string | null;
   }>`
-    select plus_plan, plus_interval, plus_status, plus_subscription_id, plus_selected_at, stripe_customer_id
+    select plus_plan, plus_interval, plus_status, plus_subscription_id, plus_selected_at,
+           stripe_customer_id, catalog_checkout_session_id
     from profiles
     where user_id = ${userId}
     limit 1
@@ -61,6 +67,7 @@ async function readPlus(userId: string): Promise<ParentPlusState> {
     customerId: row?.stripe_customer_id ?? null,
     subscriptionId: row?.plus_subscription_id ?? null,
     selectedAt: row?.plus_selected_at ? String(row.plus_selected_at) : null,
+    catalogCheckoutSessionId: row?.catalog_checkout_session_id ?? null,
     prices,
   };
 }
@@ -78,37 +85,38 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const desks = await resolveSessionDesks(context.userId);
     assertPayCheckoutAllowed(desks.role);
-    const sql = await getSql();
-    await sql`
-      insert into profiles (user_id, plus_plan, plus_interval, plus_selected_at)
-      values (${context.userId}, ${"plus"}, ${data.interval}, now())
-      on conflict (user_id) do update set
-        plus_interval = excluded.plus_interval,
-        plus_selected_at = now()
-    `.catch(() => undefined);
-    const priceId = envPriceId(plusPriceKey(data.interval));
+    const priceKey = plusPriceKey(data.interval);
+    const priceId = envPriceId(priceKey);
     const gate = decideParentPlusCheckout({ stripeLive: stripeChargesLive(), priceId });
     if (!gate.ok) throw new Error(gate.error);
     if (!priceId) throw new Error(PLUS_PRICE_MISSING);
     const state = await readPlus(context.userId);
     const origin = appOrigin();
-    const session = await createCatalogCheckoutSession({
-      mode: "subscription",
-      priceId,
-      successUrl: `${origin}/parent?tab=payments&plus=success`,
-      cancelUrl: `${origin}/parent?tab=payments&plus=cancel`,
-      customerId: state.customerId,
-      customerEmail: state.customerId ? null : await userEmail(context.userId),
-      clientReferenceId: context.userId,
-      metadata: {
-        kidease: "parent_plus",
-        user_id: context.userId,
-        plan: "plus",
-        interval: data.interval,
+    return runUserCheckout({
+      surface: "parent_plus",
+      userId: context.userId,
+      fallback: CHECKOUT_COULD_NOT_START,
+      fn: async () => {
+        const checked = await requireCatalogCheckout(priceKey);
+        const session = await createCatalogCheckoutSession({
+          mode: checked.mode,
+          priceId: checked.priceId,
+          successUrl: `${origin}/parent?tab=payments&plus=success&session={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${origin}/parent?tab=payments&plus=cancel`,
+          customerId: state.customerId,
+          customerEmail: state.customerId ? null : await userEmail(context.userId),
+          clientReferenceId: context.userId,
+          metadata: {
+            kidease: "parent_plus",
+            user_id: context.userId,
+            plan: "plus",
+            interval: data.interval,
+          },
+        });
+        if (!session.url) throw new Error("Stripe did not return a checkout link");
+        return { url: session.url };
       },
     });
-    if (!session.url) throw new Error("Stripe did not return a checkout link");
-    return { url: session.url };
   });
 
 export const startParentPlusPortal = createServerFn({ method: "POST" })
@@ -117,8 +125,14 @@ export const startParentPlusPortal = createServerFn({ method: "POST" })
     const state = await readPlus(context.userId);
     if (!state.customerId) throw new Error("No Stripe customer on this profile yet. Start Plus checkout first.");
     if (!stripeChargesLive()) throw new Error("Billing portal stays off until Stripe live keys are on.");
-    return createBillingPortalSession({
-      customerId: state.customerId,
-      returnUrl: `${appOrigin()}/parent?tab=payments`,
+    return runUserCheckout({
+      surface: "parent_plus_portal",
+      userId: context.userId,
+      fallback: PORTAL_COULD_NOT_OPEN,
+      fn: () =>
+        createBillingPortalSession({
+          customerId: state.customerId!,
+          returnUrl: `${appOrigin()}/parent?tab=payments`,
+        }),
     });
   });

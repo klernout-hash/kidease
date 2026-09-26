@@ -40,6 +40,8 @@ export type ProviderEntitlementInput = {
   status?: string | null;
   addons?: readonly string[] | string | null;
   stripeLive: boolean;
+  /** Live Featured city add-on. Omitted status does not grant the add-on. */
+  featuredCityStatus?: string | null;
 };
 
 export type ProviderEntitlements = {
@@ -94,7 +96,8 @@ export function resolveProviderEntitlements(input: ProviderEntitlementInput): Pr
   const entitledPlan = entitledProviderPlan(input);
   const addons = normalizeProviderAddons(input.addons);
   const paid = entitledPlan === "pro" || entitledPlan === "network";
-  const featuredFromAddon = addons.includes("featured_city") && input.stripeLive;
+  const featuredFromAddon =
+    addons.includes("featured_city") && input.stripeLive && isPaidSubscriptionStatus(input.featuredCityStatus);
   return {
     selectedPlan,
     entitledPlan,

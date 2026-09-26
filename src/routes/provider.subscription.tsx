@@ -7,6 +7,21 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 
 export const Route = createFileRoute("/provider/subscription")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const out: {
+      checkout?: "success" | "cancel";
+      addon?: "success" | "cancel";
+      plan?: string;
+      item?: string;
+      session?: string;
+    } = {};
+    if (s.checkout === "success" || s.checkout === "cancel") out.checkout = s.checkout;
+    if (s.addon === "success" || s.addon === "cancel") out.addon = s.addon;
+    if (s.plan === "pro" || s.plan === "network") out.plan = s.plan;
+    if (s.item === "featured_city" || s.item === "claim_boost" || s.item === "job_post") out.item = s.item;
+    if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Subscription · KidEase" },

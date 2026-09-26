@@ -6,6 +6,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
+import { OptionalUpgrades } from "@/components/optional-upgrades";
 import { BrandMark } from "@/components/brand-mark";
 import { FacilityTypeRails } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
@@ -57,6 +58,7 @@ import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { homeLiveStrip } from "@/lib/home-live-strip";
 import { displayDistance } from "@/lib/units";
+import { showPayCtas } from "@/lib/features";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import {
   honestVacancy,
@@ -89,7 +91,12 @@ export const Route = createFileRoute("/")({
       featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label } }),
       HOME_PAINT_BUDGET_MS,
     );
-    return { featured: painted.value ?? [], featuredReady: painted.ready, origin };
+    return {
+      featured: painted.value ?? [],
+      featuredReady: painted.ready,
+      origin,
+      showPay: showPayCtas(),
+    };
   },
   staleTime: 60_000,
   pendingMs: 0,
@@ -571,6 +578,8 @@ function Home() {
             />
           </div>
         </section>
+
+        {!user && boot.showPay ? <OptionalUpgrades /> : null}
 
         <section className="ke-defer-paint bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">

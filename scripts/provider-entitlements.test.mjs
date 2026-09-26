@@ -75,9 +75,19 @@ test("Free keeps listing basics; Pro/Network extras fail closed until live+activ
     plan: "network",
     status: "active",
     addons: "featured_city",
+    featuredCityStatus: "active",
     stripeLive: true,
   });
   assert.equal(networkAddon.featuredCity, true);
+  const unpaidAddon = resolveProviderEntitlements({
+    plan: "free",
+    status: null,
+    addons: "featured_city",
+    featuredCityStatus: null,
+    stripeLive: true,
+  });
+  assert.equal(unpaidAddon.featuredCity, false);
+  assert.equal(unpaidAddon.paid, false);
 });
 
 test("Free inquiry cap is 10 and paid is unlimited", () => {
