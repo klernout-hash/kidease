@@ -27,7 +27,7 @@ import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, pr
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { DETAIL_SIZES, HERO_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
-import { getDaycare, getListingSeo } from "@/lib/server/daycares";
+import { getDaycare, getHiddenReviewRedirect, getListingSeo } from "@/lib/server/daycares";
 import { cityHubCityName, cityHubDefForPlace } from "@/lib/city-hubs";
 import {
   listingBreadcrumbJsonLdScript,
@@ -93,9 +93,27 @@ export const Route = createFileRoute("/daycare/$slug")({
         throw redirect({
           to: "/daycare/$slug",
           params: { slug: seo.slug },
+          statusCode: 301,
         });
       }
-      if (shouldNotFoundListing(seo)) throw notFound();
+      if (shouldNotFoundListing(seo)) {
+        const hidden = await getHiddenReviewRedirect({ data: params.slug });
+        if (hidden?.kind === "city") {
+          throw redirect({
+            to: "/daycare/city/$city",
+            params: { city: hidden.city },
+            statusCode: 301,
+          });
+        }
+        if (hidden?.kind === "search") {
+          throw redirect({
+            to: "/search",
+            search: { q: hidden.q },
+            statusCode: 301,
+          });
+        }
+        throw notFound();
+      }
       return seo;
     } catch (error) {
       if (error && typeof error === "object" && ("isRedirect" in error || "isNotFound" in error)) {

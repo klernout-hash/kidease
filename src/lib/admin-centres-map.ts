@@ -7,7 +7,7 @@ import { splitPhotoList } from "./listing-photo.ts";
 import { normalizeAdminClaimStatus } from "./listing-queue.ts";
 import { licenseReviewMarker } from "./private-docs.ts";
 import { asIsoString, compareTimeDesc } from "./sort-time.ts";
-import { isAdminOnlyListing, staffQueueRows } from "./listing-visibility.ts";
+import { isAdminOnlyListing, isHiddenReviewFault, staffQueueRows } from "./listing-visibility.ts";
 
 export type AdminCentreSqlRow = {
   daycare_id: string;
@@ -55,6 +55,10 @@ export type AdminCentreSqlRow = {
   created_at?: string | Date | null;
   visibility?: string | null;
   is_test?: number | boolean | null;
+  merged_into?: string | null;
+  merged_into_name?: string | null;
+  import_fault?: string | null;
+  review_of?: string | null;
 };
 
 export type AdminCentreRow = {
@@ -95,6 +99,10 @@ export type AdminCentreRow = {
   hasListingClaim: boolean;
   missing: IncompleteMissingField[];
   updatedAt: string | null;
+  mergedInto: string | null;
+  mergedIntoName: string | null;
+  importFault: string | null;
+  reviewOf: string | null;
 };
 
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
@@ -159,18 +167,24 @@ export function mapAdminCentreSqlRow(r: AdminCentreSqlRow): AdminCentreRow {
     staffScreeningAttestedAt: r.staff_screening_attested_at ? asIsoString(r.staff_screening_attested_at) : null,
     screeningOnFile,
     screeningOnFileAt: r.screening_on_file_at ? asIsoString(r.screening_on_file_at) : null,
-    isTest: isAdminOnlyListing({
-      id: r.daycare_id,
-      slug: r.slug,
-      name: r.name,
-      licenseNumber: r.license_number,
-      address: r.address,
-      visibility: r.visibility,
-      isTest: r.is_test,
-    }),
+    isTest: isHiddenReviewFault(r.import_fault)
+      ? false
+      : isAdminOnlyListing({
+          id: r.daycare_id,
+          slug: r.slug,
+          name: r.name,
+          licenseNumber: r.license_number,
+          address: r.address,
+          visibility: r.visibility,
+          isTest: r.is_test,
+        }),
     ...photos,
     hasProviderLink,
     hasListingClaim: Boolean(r.claim_id),
+    mergedInto: (r.merged_into || "").trim() || null,
+    mergedIntoName: (r.merged_into_name || "").trim() || null,
+    importFault: (r.import_fault || "").trim() || null,
+    reviewOf: (r.review_of || "").trim() || null,
     missing: incompleteMissing({
       claimStatus: status,
       claimedAt: r.claimed_at,

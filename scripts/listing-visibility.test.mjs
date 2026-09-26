@@ -279,6 +279,32 @@ test("nearby SQL excludes admin-only and test rows so map pins stay clean", () =
   assert.match(PUBLIC_LISTING_SQL, /name not ilike '%qa test%'/);
   assert.match(PUBLIC_LISTING_SQL, /id not ilike 'ke-test-%'/);
   assert.match(PUBLIC_LISTING_SQL, /slug not ilike 'test-ghost%'/);
+  assert.match(PUBLIC_LISTING_SQL, /merged_into is null/);
+  assert.match(PUBLIC_LISTING_SQL, /import_fault is null/);
+  assert.equal(isPublicListing({ name: "Casa Montessori", slug: "casa-montessori", mergedInto: "mb-1276" }), false);
+  assert.equal(
+    isPublicListing({ name: "Stratford, PE C1B 2W8", slug: "stratford-pe", importFault: "pei_name_unrecoverable" }),
+    false,
+  );
+  assert.equal(
+    isPublicListing({
+      name: "Prairie Nature Children's Centre",
+      slug: "prairie-sanford",
+      importFault: "hidden_review_possible_second_site",
+      visibility: "admin_only",
+    }),
+    false,
+  );
+  const hiddenReview = {
+    id: "mx-prairie",
+    slug: "prairie-sanford",
+    name: "Prairie Nature Children's Centre",
+    importFault: "hidden_review_possible_second_site",
+    visibility: "admin_only",
+    isTest: false,
+  };
+  assert.equal(staffQueueRows([hiddenReview, { slug: "test-ghost", name: "Ghost" }], false).length, 1);
+  assert.equal(staffQueueRows([hiddenReview], false)[0].id, "mx-prairie");
 });
 
 test("catalogue extra file marks the ghost admin_only", () => {

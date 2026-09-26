@@ -1,0 +1,24 @@
+{
+  "rows": [
+    {
+      "id": "mx-fixture-recover",
+      "slug": "stratford-pe-fixture",
+      "name": "Stratford, PE C1B 2W8",
+      "city": "Stratford",
+      "province": "PE",
+      "postalCode": "",
+      "licenseNumber": "L4487",
+      "mergedInto": null
+    },
+    {
+      "id": "mx-fixture-hide",
+      "slug": "stratford-pe-hidden",
+      "name": "Stratford PE C1B 2W8",
+      "city": "",
+      "province": "PE",
+      "postalCode": "",
+      "licenseNumber": "FIXTURE",
+      "mergedInto": null
+    }
+  ]
+}
