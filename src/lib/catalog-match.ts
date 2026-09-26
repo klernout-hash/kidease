@@ -86,7 +86,7 @@ export function catalogueNameKey(value: string | null | undefined): string {
   let text = foldLetters(decodeImportText(value));
   text = text.replace(/\b(?:saint|sainte|ste|st)\b/g, "st");
   text = text.replace(/&/g, " and ");
-  text = text.replace(/\b(?:inc|ltd|limited|corp|corporation|incorporated)\b/g, " ");
+  text = text.replace(/\b(?:inc|ltd|limited|corp|corporation|incorporated|the)\b/g, " ");
   text = text.replace(/\bday\s*care\b/g, "daycare");
   text = text.replace(/\bchild\s*care\b/g, "childcare");
   return text.replace(/[^a-z0-9]+/g, "");
@@ -100,6 +100,92 @@ export function catalogueAddressKey(value: string | null | undefined): string {
   return text.replace(/[^a-z0-9]+/g, "");
 }
 
+const STREET_TYPE: Record<string, string> = {
+  street: "st",
+  str: "st",
+  st: "st",
+  avenue: "ave",
+  ave: "ave",
+  road: "rd",
+  rd: "rd",
+  boulevard: "blvd",
+  blvd: "blvd",
+  drive: "dr",
+  dr: "dr",
+  crescent: "cres",
+  cres: "cres",
+  court: "crt",
+  crt: "crt",
+  place: "pl",
+  pl: "pl",
+  lane: "ln",
+  ln: "ln",
+  terrace: "ter",
+  terr: "ter",
+  highway: "hwy",
+  hwy: "hwy",
+  pth: "hwy",
+  rue: "rue",
+};
+
+const DIRECTION: Record<string, string> = {
+  north: "n",
+  south: "s",
+  east: "e",
+  west: "w",
+  northeast: "ne",
+  northwest: "nw",
+  southeast: "se",
+  southwest: "sw",
+  ne: "ne",
+  nw: "nw",
+  se: "se",
+  sw: "sw",
+  n: "n",
+  s: "s",
+  e: "e",
+  w: "w",
+};
+
+/**
+ * Street number plus street name. `240 Avenue Rd` and `240 Avenue Road` share
+ * a key. `230 Jane St` and `232 Jane St` do not. A bare civic number stays on
+ * its own key so it cannot swallow a different highway address.
+ */
+export function catalogueStreetKey(value: string | null | undefined): string {
+  let text = foldLetters(decodeImportText(value)).replace(/\./g, " ").replace(/#/g, " ").replace(/&/g, " and ");
+  text = text.replace(/\b(?:saint|sainte|ste)\b/g, "st");
+  text = text.replace(/^(?:mailing address|civic address|civic)\b/, " ");
+  const tokens = text.replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return "";
+  let numIndex = tokens.findIndex((token, index) => /^\d+[a-z]?$/.test(token) && /^[a-z]/.test(tokens[index + 1] || ""));
+  if (numIndex < 0) numIndex = tokens.findIndex((token, index) => /^\d+[a-z]?$/.test(token) && Boolean(tokens[index + 1]));
+  if (numIndex < 0) {
+    if (tokens.length === 1 && /^\d+[a-z]?$/.test(tokens[0])) {
+      const only = tokens[0].replace(/^0+/, "") || tokens[0];
+      return `civic|${only}`;
+    }
+    return "";
+  }
+  const number = tokens[numIndex].replace(/^0+/, "") || tokens[numIndex];
+  const after = tokens.slice(numIndex + 1);
+  let direction = "";
+  const last = after[after.length - 1];
+  if (last && DIRECTION[last]) direction = DIRECTION[after.pop() || ""] || "";
+  let type = "";
+  const typed = after[after.length - 1];
+  if (typed && STREET_TYPE[typed]) type = STREET_TYPE[after.pop() || ""] || "";
+  const name = `${after.join("")}${direction}`;
+  if (!name) return `civic|${number}`;
+  return type ? `${number}|${name}|${type}` : `${number}|${name}`;
+}
+
+/** First three characters of a postal code. That is the postal area, not the full code. */
+export function cataloguePostalArea(value: string | null | undefined): string {
+  const postal = cataloguePostalKey(value);
+  return postal.length >= 3 ? postal.slice(0, 3) : "";
+}
+
 export type CatalogueIdentity = {
   name?: string | null;
   address?: string | null;
@@ -110,26 +196,35 @@ export type CatalogueIdentity = {
 };
 
 /**
- * Same centre for import dedupe.
- * Normalized licence in the same province, or the same decoded name with the
- * same street or the same postal code.
+ * Keys that may merge two rows.
+ * A licence key is the normalized number in one province.
+ * A street key is the normalized name, street number, and street name,
+ * plus the city or the postal area. Name alone is not a key.
+ */
+export function catalogueMatchKeys(row: CatalogueIdentity): string[] {
+  const province = (row.province || "").trim().toUpperCase();
+  const licence = catalogueLicenceKey(row.licenseNumber);
+  const name = catalogueNameKey(row.name);
+  const street = catalogueStreetKey(row.address);
+  const city = cataloguePlaceKey(row.city);
+  const area = cataloguePostalArea(row.postalCode);
+  const keys: string[] = [];
+  if (licence) keys.push(`lic|${province}|${licence}`);
+  if (name && street && city) keys.push(`street|${province}|${name}|${street}|${city}`);
+  if (name && street && area) keys.push(`area|${province}|${name}|${street}|${area}`);
+  return keys;
+}
+
+/**
+ * Same centre for import dedupe and for the merge script.
+ * Same normalized licence in the same province, or the same normalized name
+ * with the same street number and street name and the same city or postal area.
+ * A shared name is not enough. 230 Jane St and 232 Jane St stay apart.
  */
 export function sameCatalogueCentre(a: CatalogueIdentity, b: CatalogueIdentity): boolean {
-  const provinceA = (a.province || "").trim().toUpperCase();
-  const provinceB = (b.province || "").trim().toUpperCase();
-  if (provinceA && provinceB && provinceA !== provinceB) return false;
-  const licenceA = catalogueLicenceKey(a.licenseNumber);
-  const licenceB = catalogueLicenceKey(b.licenseNumber);
-  if (licenceA && licenceB && licenceA === licenceB) return true;
-  const nameA = catalogueNameKey(a.name);
-  const nameB = catalogueNameKey(b.name);
-  if (!nameA || nameA !== nameB) return false;
-  const addressA = catalogueAddressKey(a.address);
-  const addressB = catalogueAddressKey(b.address);
-  if (addressA && addressB && addressA === addressB) return true;
-  const postalA = cataloguePostalKey(a.postalCode);
-  const postalB = cataloguePostalKey(b.postalCode);
-  return Boolean(postalA && postalB && postalA === postalB);
+  const keys = new Set(catalogueMatchKeys(a));
+  if (keys.size === 0) return false;
+  return catalogueMatchKeys(b).some((key) => keys.has(key));
 }
 
 export type CityPostalLabel = {

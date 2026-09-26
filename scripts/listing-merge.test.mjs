@@ -19,6 +19,9 @@ import { publicSitemapSlugs } from "../src/lib/sitemap.ts";
 function row(partial) {
   return {
     id: partial.id,
+    name: "Fixture Centre",
+    address: "80 Fennel Street",
+    city: "Winnipeg",
     claimStatus: "unclaimed",
     claimedAt: null,
     createdAt: "2026-09-24T00:00:00.000Z",

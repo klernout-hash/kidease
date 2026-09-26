@@ -4,7 +4,7 @@
  * Licence status is not copied. A keeper licence is only normalized.
  */
 
-import { catalogueLicenceKey } from "./catalog-match.ts";
+import { catalogueLicenceKey, sameCatalogueCentre } from "./catalog-match.ts";
 
 export type DuplicateGroupInput = {
   basis?: string[];
@@ -30,6 +30,8 @@ export type MergeListingFacts = {
   id: string;
   slug?: string | null;
   name?: string | null;
+  address?: string | null;
+  city?: string | null;
   province?: string | null;
   claimedAt?: string | null;
   claimStatus?: string | null;
@@ -107,6 +109,8 @@ export type MergeGroupPlan = {
   keeperLicence: string | null;
   moved: MergeMovedChildren;
   retiredMoves: MergeRetiredMove[];
+  /** Same group, but not the same centre. Left live. */
+  unrelatedIds: string[];
 };
 
 export type MergePlan = {
@@ -134,6 +138,8 @@ export function factsFromGroupRow(row: DuplicateGroupInput["rows"][number]): Mer
     id: row.id,
     slug: row.slug || "",
     name: row.name || "",
+    address: row.address || "",
+    city: row.city || "",
     province: row.province || "",
     claimStatus,
     claimedAt: null,
@@ -336,7 +342,11 @@ export function planMergeGroup(
   const open = rows.filter((row) => !text(row.mergedInto));
   if (open.length === 0) return { skip: "already merged" };
   const keeper = [...open].sort(compareKeeper)[0];
-  const retired = open.filter((row) => row.id !== keeper.id);
+  const others = open.filter((row) => row.id !== keeper.id);
+  const retired = others.filter((row) => sameCatalogueCentre(keeper, row));
+  const unrelatedIds = others.filter((row) => !sameCatalogueCentre(keeper, row)).map((row) => row.id);
+  if (retired.length === 0 && unrelatedIds.length === 0) return { skip: "already merged" };
+  if (retired.length === 0) return { skip: "not the same centre" };
   const alreadyRetiredIds = rows.filter((row) => text(row.mergedInto) === keeper.id).map((row) => row.id);
   const conflictIds = rows
     .filter((row) => text(row.mergedInto) && text(row.mergedInto) !== keeper.id)
@@ -365,6 +375,7 @@ export function planMergeGroup(
     keeperLicence,
     moved,
     retiredMoves,
+    unrelatedIds,
   };
 }
 

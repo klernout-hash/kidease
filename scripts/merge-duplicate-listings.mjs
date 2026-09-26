@@ -94,6 +94,8 @@ function factsFromDbRow(row) {
     id: row.id,
     slug: asText(row.slug),
     name: asText(row.name),
+    address: asText(row.address),
+    city: asText(row.city),
     province: asText(row.province),
     claimedAt: asText(row.claimed_at),
     claimStatus: asText(row.claim_status) || "unclaimed",
@@ -127,7 +129,7 @@ async function loadLive(databaseUrl, ids) {
   const client = await pool.connect();
   try {
     const facts = await client.query(
-      `select d.id, d.slug, d.name, d.province, d.claimed_at, d.claim_status, d.created_at,
+      `select d.id, d.slug, d.name, d.address, d.city, d.province, d.claimed_at, d.claim_status, d.created_at,
               d.website, d.contact_email, d.phone, d.postal_code,
               d.license_number, d.license_status, d.description,
               d.age_min_months, d.age_max_months,
@@ -198,7 +200,11 @@ function printPlan(plan, groups) {
   console.log(`[merge-duplicates] fieldsFilled ${plan.fieldsFilled}`);
   console.log(`[merge-duplicates] childRecordsMoved ${plan.childRecordsMoved}`);
   console.log(`[merge-duplicates] licenceNormalized ${licenceNormalized}`);
+  const notSame = plan.skipped.filter((row) => row.reason === "not the same centre").length;
+  const leftSeparate = plan.groups.reduce((sum, group) => sum + (group.unrelatedIds || []).length, 0);
   console.log(`[merge-duplicates] skipped ${plan.skipped.length}`);
+  console.log(`[merge-duplicates] skippedNotSameCentre ${notSame}`);
+  console.log(`[merge-duplicates] leftSeparate ${leftSeparate}`);
   for (const [province, tally] of [...provinces.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
     console.log(`[merge-duplicates] province ${province} keepers ${tally.keepers} retired ${tally.retired}`);
   }

@@ -5,7 +5,8 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-import { catalogueLicenceKey, catalogueNameKey, sameCatalogueCentre } from "../src/lib/catalog-match.ts";
+import { catalogueLicenceKey, catalogueNameKey, catalogueStreetKey, sameCatalogueCentre } from "../src/lib/catalog-match.ts";
+import { planDuplicateMerges } from "../src/lib/listing-merge.ts";
 import { dropStoredDuplicateAdditions, parseMasterFacilities, syncMasterCatalogue } from "../src/lib/catalog-master-sync.ts";
 
 const casaStored = {
@@ -143,6 +144,119 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
     assert.equal(parsed.rows[0].province, "PE");
     assert.equal(parsed.rows[0].postal, "C1B 2W8");
     assert.equal(parsed.rows[0].address, "41 Glen Stewart Drive");
+  });
+
+  it("does not match two Kids & Company branches on the name", () => {
+    const bloor = {
+      name: "Kids & Company",
+      address: "160 Bloor St E",
+      city: "Toronto",
+      province: "ON",
+      postalCode: "M4W 1B9",
+      licenseNumber: "9815",
+    };
+    const front = {
+      name: "Kids & Company",
+      address: "320 Front St W",
+      city: "Toronto",
+      province: "ON",
+      postalCode: "M5V 3B6",
+      licenseNumber: "9847",
+    };
+    assert.equal(sameCatalogueCentre(bloor, front), false);
+    assert.equal(sameCatalogueCentre({ ...bloor, address: "", licenseNumber: "" }, { ...front, address: "", licenseNumber: "" }), false);
+    const dropped = dropStoredDuplicateAdditions(
+      [{ id: "on-tor-9847", slug: "kids-front", ...front }],
+      [{ id: "on-tor-9815", slug: "kids-bloor", ...bloor }],
+    );
+    assert.equal(dropped.dropped, 0);
+    assert.deepEqual(dropped.rows.map((row) => row.id), ["on-tor-9847"]);
+  });
+
+  it("does not match Angelgate at 230 Jane St with Angelgate at 232 Jane St", () => {
+    const jane230 = {
+      name: "Angelgate Daycare Ltd.",
+      address: "230 Jane St",
+      city: "Toronto",
+      province: "ON",
+      postalCode: "M6S 3Z1",
+      licenseNumber: "13180",
+    };
+    const jane232 = {
+      name: "Angelgate Daycare Ltd.",
+      address: "232 Jane St",
+      city: "Toronto",
+      province: "ON",
+      postalCode: "M6S 3Z1",
+      licenseNumber: "13181",
+    };
+    assert.notEqual(catalogueStreetKey("230 Jane St"), catalogueStreetKey("232 Jane St"));
+    assert.equal(catalogueStreetKey("232 Jane St"), catalogueStreetKey("232 Jane Street"));
+    assert.equal(sameCatalogueCentre(jane230, jane232), false);
+    const plan = planDuplicateMerges([
+      {
+        rows: [
+          { id: "on-tor-13180", ...jane230, created_at: "2026-09-02T00:00:00.000Z" },
+          { id: "on-tor-13181", ...jane232, created_at: "2026-09-03T00:00:00.000Z" },
+        ],
+      },
+    ]);
+    assert.equal(plan.keepers, 0);
+    assert.equal(plan.retired, 0);
+    assert.equal(plan.skipped[0].reason, "not the same centre");
+  });
+
+  it("matches 240 Avenue Rd with 240 Avenue Road when the name is the same", () => {
+    const avenueRd = {
+      name: "Unicorn Day Care Centre",
+      address: "240 Avenue Rd",
+      city: "Toronto",
+      province: "ON",
+      postalCode: "M5R 2J4",
+      licenseNumber: "13257",
+    };
+    const avenueRoad = {
+      name: "Unicorn Day Care Centre Inc.",
+      address: "240 Avenue Road",
+      city: "Toronto",
+      province: "ON",
+      postalCode: "M5R 2J6",
+      licenseNumber: "56174",
+    };
+    assert.equal(catalogueStreetKey("240 Avenue Rd"), catalogueStreetKey("240 Avenue Road"));
+    assert.equal(sameCatalogueCentre(avenueRd, avenueRoad), true);
+    const dropped = dropStoredDuplicateAdditions(
+      [{ id: "on-56174", slug: "unicorn-avenue-road", ...avenueRoad }],
+      [{ id: "on-tor-13257", slug: "unicorn-avenue-rd", ...avenueRd }],
+    );
+    assert.equal(dropped.dropped, 1);
+  });
+
+  it("matches Civic #35117 with 35117 PTH 15 Rd 60N when the licence is the same", () => {
+    const civic = {
+      name: "Springfield Learning Centres Incorporated",
+      address: "Civic #35117",
+      city: "Anola",
+      province: "MB",
+      postalCode: "R0E 0K0",
+      licenseNumber: "102535",
+    };
+    const highway = {
+      name: "Springfield Learning Centres",
+      address: "35117 PTH 15 Rd 60N",
+      city: "Anola",
+      province: "MB",
+      postalCode: "R0E 0A0",
+      licenseNumber: "MB-102535",
+    };
+    assert.notEqual(catalogueStreetKey(civic.address), catalogueStreetKey(highway.address));
+    assert.equal(sameCatalogueCentre(civic, highway), true);
+    assert.equal(sameCatalogueCentre(civic, { ...highway, licenseNumber: "9999" }), false);
+    const dropped = dropStoredDuplicateAdditions(
+      [{ id: "mx-springfield", slug: "springfield-civic", ...civic }],
+      [{ id: "mb-102535", slug: "springfield-pth", ...highway }],
+    );
+    assert.equal(dropped.dropped, 1);
   });
 
   it("python importer self-test matches the MB-1276 and on-tor cases", () => {

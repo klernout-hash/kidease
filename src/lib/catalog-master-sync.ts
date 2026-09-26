@@ -11,9 +11,7 @@
 import { createHash } from "node:crypto";
 import { parseCsvRecords } from "./catalog-master.ts";
 import {
-  catalogueAddressKey,
-  catalogueLicenceKey,
-  catalogueNameKey,
+  catalogueMatchKeys,
   cataloguePlaceKey,
   cataloguePostalKey,
   decodeImportText,
@@ -118,10 +116,6 @@ function fold(value: string | null | undefined) {
 
 function postalKey(value: string | null | undefined) {
   return cataloguePostalKey(value);
-}
-
-function licenceKey(value: string | null | undefined) {
-  return catalogueLicenceKey(value);
 }
 
 function formatPostal(compact: string) {
@@ -360,11 +354,7 @@ export function syncMasterCatalogue<T extends CatalogueMatchRow>(
   csvText: string,
 ): MasterSyncResult<T | CatalogUpsertInput> {
   const parsed = parseMasterFacilities(csvText);
-  const byLic = new Map<string, T[]>();
-  const byNameCityPostal = new Map<string, T[]>();
-  const byNamePostal = new Map<string, T[]>();
-  const byNameCity = new Map<string, T[]>();
-  const byNameAddress = new Map<string, T[]>();
+  const byMatch = new Map<string, T[]>();
   const geo: GeoIndex = { postal: new Map(), fsa: new Map(), city: new Map() };
   const usedSlugs = new Set<string>();
   const usedIds = new Set<string>();
@@ -373,16 +363,9 @@ export function syncMasterCatalogue<T extends CatalogueMatchRow>(
     usedIds.add(row.id);
     if (row.slug) usedSlugs.add(row.slug.toLowerCase());
     const province = (row.province || "").toUpperCase();
-    const name = catalogueNameKey(row.name);
     const city = fold(row.city);
     const postal = postalKey(row.postalCode);
-    const address = catalogueAddressKey(row.address);
-    const licence = licenceKey(row.licenseNumber);
-    pushIndex(byLic, licence ? `${province}|${licence}` : "", row);
-    pushIndex(byNameCityPostal, `${province}|${city}|${name}|${postal}`, row);
-    if (postal) pushIndex(byNamePostal, `${postal}|${name}`, row);
-    if (address) pushIndex(byNameAddress, `${province}|${name}|${address}`, row);
-    pushIndex(byNameCity, `${province}|${city}|${name}`, row);
+    for (const key of catalogueMatchKeys(row)) pushIndex(byMatch, key, row);
     if (isInCanada(Number(row.lat), Number(row.lng))) {
       pushGeo(geo.postal, postal, Number(row.lat), Number(row.lng));
       if (postal.length >= 3) pushGeo(geo.fsa, postal.slice(0, 3), Number(row.lat), Number(row.lng));
@@ -403,17 +386,16 @@ export function syncMasterCatalogue<T extends CatalogueMatchRow>(
       continue;
     }
     const province = master.province;
-    const name = catalogueNameKey(master.name);
     const city = fold(master.city);
     const postal = postalKey(master.postal);
-    const address = catalogueAddressKey(master.address);
-    const licence = licenceKey(master.licence);
-    const candidates =
-      byNameCityPostal.get(`${province}|${city}|${name}|${postal}`) ||
-      (postal ? byNamePostal.get(`${postal}|${name}`) : undefined) ||
-      (licence ? byLic.get(`${province}|${licence}`) : undefined) ||
-      (address ? byNameAddress.get(`${province}|${name}|${address}`) : undefined) ||
-      byNameCity.get(`${province}|${city}|${name}`);
+    const candidates = catalogueMatchKeys({
+      name: master.name,
+      address: master.address,
+      city: master.city,
+      province: master.province,
+      postalCode: master.postal,
+      licenseNumber: master.licence,
+    }).reduce<T[] | undefined>((hit, key) => hit || byMatch.get(key), undefined);
     if (candidates && candidates.length > 0) {
       matched += 1;
       if (candidates.length === 1) {
@@ -489,23 +471,9 @@ export function dropStoredDuplicateAdditions<T extends CatalogueMatchRow>(
   stored: readonly CatalogueMatchRow[],
 ): { rows: T[]; dropped: number } {
   const storedIds = new Set(stored.map((row) => row.id).filter(Boolean));
-  const byLic = new Map<string, CatalogueMatchRow[]>();
-  const byNameCityPostal = new Map<string, CatalogueMatchRow[]>();
-  const byNamePostal = new Map<string, CatalogueMatchRow[]>();
-  const byNameCity = new Map<string, CatalogueMatchRow[]>();
-  const byNameAddress = new Map<string, CatalogueMatchRow[]>();
+  const byMatch = new Map<string, CatalogueMatchRow[]>();
   for (const row of stored) {
-    const province = (row.province || "").toUpperCase();
-    const name = catalogueNameKey(row.name);
-    const city = fold(row.city);
-    const postal = postalKey(row.postalCode);
-    const address = catalogueAddressKey(row.address);
-    const licence = licenceKey(row.licenseNumber);
-    pushIndex(byLic, licence ? `${province}|${licence}` : "", row);
-    pushIndex(byNameCityPostal, `${province}|${city}|${name}|${postal}`, row);
-    if (postal) pushIndex(byNamePostal, `${postal}|${name}`, row);
-    if (address) pushIndex(byNameAddress, `${province}|${name}|${address}`, row);
-    pushIndex(byNameCity, `${province}|${city}|${name}`, row);
+    for (const key of catalogueMatchKeys(row)) pushIndex(byMatch, key, row);
   }
   const rows: T[] = [];
   let dropped = 0;
@@ -514,18 +482,10 @@ export function dropStoredDuplicateAdditions<T extends CatalogueMatchRow>(
       rows.push(row);
       continue;
     }
-    const province = (row.province || "").toUpperCase();
-    const name = catalogueNameKey(row.name);
-    const city = fold(row.city);
-    const postal = postalKey(row.postalCode);
-    const address = catalogueAddressKey(row.address);
-    const licence = licenceKey(row.licenseNumber);
-    const hit =
-      byNameCityPostal.get(`${province}|${city}|${name}|${postal}`) ||
-      (postal ? byNamePostal.get(`${postal}|${name}`) : undefined) ||
-      (licence ? byLic.get(`${province}|${licence}`) : undefined) ||
-      (address ? byNameAddress.get(`${province}|${name}|${address}`) : undefined) ||
-      byNameCity.get(`${province}|${city}|${name}`);
+    const hit = catalogueMatchKeys(row).reduce<CatalogueMatchRow[] | undefined>(
+      (found, key) => found || byMatch.get(key),
+      undefined,
+    );
     if (hit && hit.length > 0) {
       dropped += 1;
       continue;
