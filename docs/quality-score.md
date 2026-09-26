@@ -8,6 +8,8 @@ This is not a safety grade or inspection score. Never claim KidEase police-check
 
 Computed server-side in `src/lib/quality.ts`. Missing signals add **zero**. Incomplete listings stay searchable (soft demotion only). Home rails and “best match / need soon / guest favorites” only show **live-looking** cards via `isLiveLookingCard()` / `homeRailItems()` in `src/lib/now-loops.ts`: confirmed ages, a listed fee or a per-centre CWELCC amenity (never a province-wide $10-a-day guess), and a real storefront photo. Hollow cards name the exact gap and stay off those rails. Winnipeg never invents ages, fees, or photos to hit an 80% live-looking floor — if the share is below 80% without inventing, hollow stay hidden.
 
+Measure the committed catalogue with `npm run ops:winnipeg-gaps` (writes `data/winnipeg-search-gaps.csv`). Admin → **Winnipeg gaps** reads the same rule from the live database, downloads that CSV, and applies only rows that name a source. Blank cells are not written. The harvested catalogue fee and `/photos/wpg/` aerials do not count. Apply a filled CSV from an ops box with `DATABASE_URL=… npm run ops:winnipeg-gaps -- --apply filled.csv` (dry run) and add `--write` after `npm run db:migrate`.
+
 | Component | Max | What counts |
 | --- | ---: | --- |
 | Claim / licence trust | 25 | +15 claim verified, +10 licence matched to a registry record. Expired or suspended licence scores 0 for the licence slice. |

@@ -47,6 +47,7 @@ import { AdminCentreStatList, AdminReviewCard, AdminReviewLoading, AdminReviewNo
 import type { ApprovalHealth } from "@/lib/approve-live";
 import { AdminScreeningQueue } from "@/components/admin-screening";
 import { AdminIncompleteQueue } from "@/components/admin-incomplete";
+import { AdminWinnipegGaps } from "@/components/admin-winnipeg-gaps";
 import { JURISDICTIONS } from "@/lib/province-registry";
 import { listAdminMoney, type AdminMoneyLedger, type AdminMoneyRow } from "@/lib/server/admin-money";
 import { listAdminContracts, type AdminContractRow } from "@/lib/server/contracts";
@@ -472,7 +473,9 @@ function AdminPage() {
           onRetry={() => void refresh()}
         />
       ) : null}
-      {tab === "incomplete" ? (
+      {tab === "winnipeg" ? (
+        <AdminWinnipegGaps />
+      ) : tab === "incomplete" ? (
         <>
           <div role="group" aria-label="Filter this list" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
