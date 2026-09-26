@@ -208,9 +208,11 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     notificationUnread,
     stripeLive,
     ledgerLabel: paymentSourceLabel(stripeLive),
-    providerSubscriptions: canSeeProviderSubscriptions(stored, process.env, owned),
+    providerSubscriptions: canSeeProviderSubscriptions(stored, process.env, owned || member),
     showPayCtas: showPayCtas(),
     centreOwner: owned || stored === "admin" || !member,
+    ownsCentre: owned,
+    centreLinked: owned || member,
   };
 }
 

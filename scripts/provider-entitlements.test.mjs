@@ -28,6 +28,8 @@ test("rehearsal Pro pick is not a paid entitlement", () => {
   assert.equal(entitledProviderPlan({ plan: "pro", status: "active", stripeLive: true }), "pro");
   assert.equal(entitledProviderPlan({ plan: "network", status: "trialing", stripeLive: true }), "network");
   assert.equal(entitledProviderPlan({ plan: "network", status: "canceled", stripeLive: true }), "free");
+  assert.equal(entitledProviderPlan({ plan: "pro", status: "past_due", stripeLive: true }), "pro");
+  assert.equal(entitledProviderPlan({ plan: "pro", status: "unpaid", stripeLive: true }), "free");
 });
 
 test("Free keeps listing basics; Pro/Network extras fail closed until live+active", () => {
@@ -75,9 +77,37 @@ test("Free keeps listing basics; Pro/Network extras fail closed until live+activ
     plan: "network",
     status: "active",
     addons: "featured_city",
+    featuredCityStatus: "active",
     stripeLive: true,
   });
   assert.equal(networkAddon.featuredCity, true);
+  const unpaidAddon = resolveProviderEntitlements({
+    plan: "free",
+    status: null,
+    addons: "featured_city",
+    featuredCityStatus: null,
+    stripeLive: true,
+  });
+  assert.equal(unpaidAddon.featuredCity, false);
+  assert.equal(unpaidAddon.featuredFromAddon, false);
+  assert.equal(unpaidAddon.paid, false);
+  const pastDue = resolveProviderEntitlements({
+    plan: "free",
+    status: null,
+    addons: "featured_city",
+    featuredCityStatus: "past_due",
+    stripeLive: true,
+  });
+  assert.equal(pastDue.featuredFromAddon, true);
+  assert.equal(pastDue.featuredCity, true);
+  const canceledPin = resolveProviderEntitlements({
+    plan: "free",
+    status: null,
+    addons: "featured_city",
+    featuredCityStatus: "canceled",
+    stripeLive: true,
+  });
+  assert.equal(canceledPin.featuredCity, false);
 });
 
 test("Free inquiry cap is 10 and paid is unlimited", () => {

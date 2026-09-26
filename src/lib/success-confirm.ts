@@ -123,6 +123,12 @@ export type SuccessRequest = {
   onPrimary?: () => void;
   secondaryLabel?: string;
   onClose?: () => void;
+  /** Short list under the body. Other success screens leave this empty. */
+  points?: string[];
+  /** Full-screen burst. Paid upgrade and add-on confirmation only. */
+  confetti?: boolean;
+  /** Static check. Cancel confirmations set this and leave confetti off. */
+  quiet?: boolean;
 };
 
 type Deliver = (request: SuccessRequest) => void;
