@@ -261,8 +261,19 @@ test("signup and claim verify fire GHL after notify, even when mail fails", () =
   assert.match(createListing, /company: data\.name/);
   const roles = src("src/lib/server/roles.ts");
   const desks = roles.slice(roles.indexOf("export async function resolveSessionDesks"));
-  assert.match(desks, /claimParentCrmIntake/);
+  const adminAccess = roles.slice(
+    roles.indexOf("export async function resolveAdminAccess"),
+    roles.indexOf("export async function requireAdmin"),
+  );
+  assert.doesNotMatch(roles, /claimParentCrmIntake/);
+  assert.doesNotMatch(desks, /claimParentCrmIntake/);
+  assert.doesNotMatch(adminAccess, /ensureCrmIntake/);
   assert.match(desks, /claimProviderCrmIntake/);
+  assert.match(desks, /Do not claim Parent Onboard here/);
+  assert.match(family, /role is distinct from 'provider'/);
+  assert.match(family, /explicitParent/);
+  assert.match(family, /provider_daycares p/);
+  assert.match(setRoleFn, /explicitParent: true/);
   assert.match(roles, /ensureCrmIntake/);
   assert.match(src("src/lib/server/claims.ts"), /ensureCrmIntake/);
   assert.match(src("src/lib/server/profile-contact.ts"), /ensureCrmIntake/);

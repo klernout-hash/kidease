@@ -74,6 +74,12 @@ type CrmIntakeExtra = {
   phone?: string | null;
   trigger?: "parent_signup" | "provider_signup" | "claim_verify" | "enroll";
   testListing?: boolean;
+  /**
+   * Caller just wrote profiles.role to parent. Still opens Parent Onboard
+   * when this account also owns a centre. Automatic readers (family, contact,
+   * search) leave this unset so a daycare is not filed as a parent.
+   */
+  explicitParent?: boolean;
 };
 
 async function pingNewAccount(userId: string, role: "parent" | "provider", extra?: CrmIntakeExtra) {
@@ -112,6 +118,11 @@ async function pingNewAccount(userId: string, role: "parent" | "provider", extra
  * Claim the CRM slot once, then ping. A second caller sees the timestamp and
  * does not send another admin notice or signup. Never throws into the user flow.
  * Returns true only when this call won the claim and ran the ping.
+ *
+ * Parent Onboard is skipped when profiles.role is provider. It is also skipped
+ * when the account already owns a centre, unless this call is an explicit
+ * parent choice (setRole parent). Daycare signup, claim, and enroll stay on
+ * Daycare Sign Up.
  */
 export async function ensureCrmIntake(
   userId: string,
@@ -122,6 +133,7 @@ export async function ensureCrmIntake(
     const sql = await getSql();
     // Users created before the migration cutoff stay unsent even if their
     // profile row appears later. The migration already stamped existing rows.
+    const explicitParent = extra?.explicitParent === true;
     const claimed =
       role === "provider"
         ? await sql<{ claimed: number }>`
@@ -141,6 +153,13 @@ export async function ensureCrmIntake(
             set crm_signup_at = now()
             where user_id = ${userId}
               and crm_signup_at is null
+              and role is distinct from 'provider'
+              and (
+                ${explicitParent}::boolean = true
+                or not exists (
+                  select 1 from provider_daycares p where p.user_id = ${userId}
+                )
+              )
               and not exists (
                 select 1 from "user" u
                 where u.id = ${userId}
@@ -1229,7 +1248,7 @@ export const setRole = createServerFn({ method: "POST" })
     if (written.role === "provider") {
       await ensureCrmIntake(context.userId, "provider");
     } else if (written.role === "parent") {
-      await ensureCrmIntake(context.userId, "parent");
+      await ensureCrmIntake(context.userId, "parent", { explicitParent: true });
     }
     return { role: written.role };
   });
