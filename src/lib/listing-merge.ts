@@ -4,7 +4,7 @@
  * Licence status is not copied. A keeper licence is only normalized.
  */
 
-import { catalogueLicenceKey, sameCatalogueCentre } from "./catalog-match.ts";
+import { catalogueHoldReason, catalogueLicenceKey, cataloguePostalKey, hasRealStreetAddress, sameCatalogueCentre } from "./catalog-match.ts";
 
 export type DuplicateGroupInput = {
   basis?: string[];
@@ -111,11 +111,21 @@ export type MergeGroupPlan = {
   retiredMoves: MergeRetiredMove[];
   /** Same group, but not the same centre. Left live. */
   unrelatedIds: string[];
+  /** Same licence or same name, but the addresses disagree. Left live. */
+  needsReview: MergeReviewItem[];
+};
+
+export type MergeReviewItem = {
+  ids: string[];
+  names: string[];
+  addresses: string[];
+  reason: string;
 };
 
 export type MergePlan = {
   groups: MergeGroupPlan[];
   skipped: Array<{ ids: string[]; reason: string }>;
+  needsReview: MergeReviewItem[];
   keepers: number;
   retired: number;
   fieldsFilled: number;
@@ -186,8 +196,14 @@ function createdMs(row: MergeListingFacts): number {
   return Number.isFinite(ms) ? ms : Number.POSITIVE_INFINITY;
 }
 
-/** Keeper order: claimed, then enquiries/leads/messages, then photos, then completeness, then oldest. */
+/**
+ * Keeper order: a real street address, then claimed, then enquiries/leads/messages,
+ * then photos, then completeness, then oldest.
+ * A room or civic row is retired into the street row.
+ */
 export function compareKeeper(a: MergeListingFacts, b: MergeListingFacts): number {
+  const streetDelta = Number(hasRealStreetAddress(b.address)) - Number(hasRealStreetAddress(a.address));
+  if (streetDelta) return streetDelta;
   const claimDelta = Number(claimed(b)) - Number(claimed(a));
   if (claimDelta) return claimDelta;
   const activityDelta = activity(b) - activity(a);
@@ -325,14 +341,45 @@ function countFills(fills: MergeFieldFill): number {
   return [fills.website, fills.contactEmail, fills.phone, fills.postalCode].filter(Boolean).length;
 }
 
+function uniqueLabels(values: Array<string | null | undefined>): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    const label = text(value);
+    const key = label.toLowerCase();
+    if (!label || seen.has(key)) continue;
+    seen.add(key);
+    out.push(label);
+  }
+  return out;
+}
+
+function reviewItems(rows: MergeListingFacts[]): MergeReviewItem[] {
+  const items: MergeReviewItem[] = [];
+  for (let i = 0; i < rows.length; i += 1) {
+    for (let j = i + 1; j < rows.length; j += 1) {
+      const reason = catalogueHoldReason(rows[i], rows[j]);
+      if (!reason) continue;
+      items.push({
+        ids: [rows[i].id, rows[j].id].sort((a, b) => a.localeCompare(b)),
+        names: uniqueLabels([rows[i].name, rows[j].name]),
+        addresses: uniqueLabels([rows[i].address, rows[j].address]),
+        reason,
+      });
+    }
+  }
+  return items;
+}
+
 /**
  * One group. Already-retired rows that point at the keeper are left alone.
  * A row that already points somewhere else is a conflict and is not moved.
+ * A shared licence with two real streets is held, not merged.
  */
 export function planMergeGroup(
   facts: MergeListingFacts[],
   children: Map<string, MergeChildInventory> = new Map(),
-): MergeGroupPlan | { skip: string } {
+): MergeGroupPlan | { skip: string; reviews?: MergeReviewItem[] } {
   const unique = new Map<string, MergeListingFacts>();
   for (const row of facts) {
     if (row.id) unique.set(row.id, row);
@@ -341,10 +388,20 @@ export function planMergeGroup(
   if (rows.length < 2) return { skip: "fewer than two rows" };
   const open = rows.filter((row) => !text(row.mergedInto));
   if (open.length === 0) return { skip: "already merged" };
-  const keeper = [...open].sort(compareKeeper)[0];
+  const reviews = reviewItems(open);
+  const anchors = open.filter((row) => open.some((other) => other.id !== row.id && sameCatalogueCentre(row, other)));
+  if (anchors.length === 0) {
+    if (reviews.length > 0) return { skip: "needs review", reviews };
+    if (open.length < 2) return { skip: "already merged" };
+    return { skip: "not the same centre" };
+  }
+  const keeper = [...anchors].sort(compareKeeper)[0];
   const others = open.filter((row) => row.id !== keeper.id);
   const retired = others.filter((row) => sameCatalogueCentre(keeper, row));
   const unrelatedIds = others.filter((row) => !sameCatalogueCentre(keeper, row)).map((row) => row.id);
+  const mergedIds = new Set([keeper.id, ...retired.map((row) => row.id)]);
+  const needsReview = reviews.filter((item) => item.ids.some((id) => !mergedIds.has(id)));
+  if (retired.length === 0 && needsReview.length > 0) return { skip: "needs review", reviews: needsReview };
   if (retired.length === 0 && unrelatedIds.length === 0) return { skip: "already merged" };
   if (retired.length === 0) return { skip: "not the same centre" };
   const alreadyRetiredIds = rows.filter((row) => text(row.mergedInto) === keeper.id).map((row) => row.id);
@@ -359,7 +416,7 @@ export function planMergeGroup(
   if (website) fieldFills.website = website;
   if (contactEmail) fieldFills.contactEmail = contactEmail;
   if (phone) fieldFills.phone = phone;
-  if (postalCode) fieldFills.postalCode = postalCode;
+  if (postalCode && cataloguePostalKey(postalCode) !== "R3K0Z8") fieldFills.postalCode = postalCode;
   const normalized = catalogueLicenceKey(keeper.licenseNumber);
   const keeperLicence = normalized && normalized !== text(keeper.licenseNumber) ? normalized : null;
   const { moved, retiredMoves } = moveChildren(
@@ -376,6 +433,7 @@ export function planMergeGroup(
     moved,
     retiredMoves,
     unrelatedIds,
+    needsReview,
   };
 }
 
@@ -386,6 +444,7 @@ export function planDuplicateMerges(
 ): MergePlan {
   const planned: MergeGroupPlan[] = [];
   const skipped: Array<{ ids: string[]; reason: string }> = [];
+  const needsReview: MergeReviewItem[] = [];
   for (const group of groups) {
     const facts = group.rows.map((row) => {
       const base = factsFromGroupRow(row);
@@ -394,6 +453,7 @@ export function planDuplicateMerges(
     });
     const result = planMergeGroup(facts, children);
     if ("skip" in result) {
+      if (result.reviews) needsReview.push(...result.reviews);
       skipped.push({ ids: group.rows.map((row) => row.id), reason: result.skip });
       continue;
     }
@@ -401,11 +461,13 @@ export function planDuplicateMerges(
       skipped.push({ ids: group.rows.map((row) => row.id), reason: "already merged" });
       continue;
     }
+    needsReview.push(...result.needsReview);
     planned.push(result);
   }
   return {
     groups: planned,
     skipped,
+    needsReview,
     keepers: planned.length,
     retired: planned.reduce((sum, group) => sum + group.retiredIds.length, 0),
     fieldsFilled: planned.reduce((sum, group) => sum + countFills(group.fieldFills), 0),

@@ -77,10 +77,11 @@ npm run ops:seed-catalog
 What the merge does:
 
 - Every existing catalogue row stays. The script throws if the row count shrinks.
-- A master row does not create a second listing when the normalized licence
-  matches in that province, or when the normalized name, street number, and
-  street name match and the city or postal area also matches. A shared name
-  is not enough.
+- A master row does not create a second listing when the province, the
+  normalized name, and the street number plus street name all match. A shared
+  licence is not enough when both rows have real streets. A same-licence row
+  with no real street (a room, a matching civic number, postal R3K 0Z8, or a
+  city written as Wpg) folds into the street row. A shared name is not enough.
 - Blank phone / email / website are filled from the master. A filled value is
   never replaced with blank.
 - Unmatched Canada rows are appended only when a coordinate already exists for
@@ -94,9 +95,10 @@ What the merge does:
   or a staff membership. Kids World and other approved centres are left as
   they are.
 - On a real write, a new master row that already exists in Neon under another
-  id is not inserted again. That match is the same normalized licence in the
-  province, or the same normalized name with the same street number and street
-  name and the same city or postal area. A shared name is not enough.
+  id is not inserted again. That match is the same province, a similar name,
+  and the same street number plus street name. A same-licence row with no real
+  street folds into that street row. Two real streets that share a licence stay
+  separate. A shared name is not enough.
 
 Deploy this change before the Production seed. The listing sitemap keeps the
 bundled slug file and unions public Neon slugs, so the new rows show up on
@@ -168,13 +170,23 @@ DATABASE_URL='postgresql://…' \
 npm run ops:merge-duplicates -- --groups /secure/duplicate-groups-20260926.json --apply
 ```
 
-A shared name is not a match. Kids & Company at two addresses stays two
-listings, and 230 Jane St does not merge into 232 Jane St. A row matches
-only when the normalized licence is the same in that province, or when the
-normalized name, street number, and street name match and the city or the
-postal area (the first three characters of the postal code) also matches.
-`240 Avenue Rd` and `240 Avenue Road` are the same street. A civic number
-and a highway address match when the licence number is the same.
+A shared name is not a match, and a shared licence is not a match when both
+rows have real streets. Kids & Company at two addresses stays two listings.
+230 Jane St does not merge into 232 Jane St. Prairie Nature Children's Centre
+(600 Hoka Street and 115 Sanford Fleming Road, licence 7858), St. Adolphe
+Child Care Centre (444 La Seine Street and 372 Main Street, licence 100758),
+and KidFit 60 (1295 Salter Street and Vince Leah Community Centre) are held
+on a `needsReview` list. They are not retired.
+
+A row merges when the province, a similar name, and the street number plus
+street name match. `St` and `Street`, `Rd` and `Road`, `Ave` and `Avenue`,
+and extra spaces are the same street. `10/11/12 20 Island Shore Blvd.` matches
+`20 Island Shore Blvd.`. A same-licence row with no real street merges into
+the row that has one: a room or floor (`Room 1 and gym`, `Rooms 2`, `2nd floor`,
+`lower level: gym`, `Preschool and Infant centre`, `Kindergarten/Nursery Room`),
+`Civic #N` when N is that street number, the placeholder postal R3K 0Z8, or a
+city written as `Wpg`. `Civic #35117` merges into `35117 PTH 15 Rd 60N` because
+the licence matches. A named venue with a different postal code does not.
 
 The keeper is the claimed listing, then the one with enquiries, leads, or
 messages, then photos, then the most complete ages, fees, and description,

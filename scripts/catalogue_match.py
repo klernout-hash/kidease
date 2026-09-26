@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import html
 import re
+from collections import defaultdict
 
 PROVINCE_PREFIX = re.compile(r"^(?:AB|BC|MB|NB|NL|NS|NT|NU|ON|PEI|PE|QC|SK|YT)[-\s]*")
 STREET_WORDS = (
@@ -140,9 +141,6 @@ def catalogue_street_key(value: str | None) -> str:
     if num_index < 0:
         num_index = fallback
     if num_index < 0:
-        if len(tokens) == 1 and re.fullmatch(r"\d+[a-z]?", tokens[0]):
-            only = tokens[0].lstrip("0") or tokens[0]
-            return f"civic|{only}"
         return ""
     number = tokens[num_index].lstrip("0") or tokens[num_index]
     after = tokens[num_index + 1 :]
@@ -154,7 +152,10 @@ def catalogue_street_key(value: str | None) -> str:
         street_type = STREET_TYPE[after.pop()]
     name = "".join(after) + direction
     if not name:
-        return f"civic|{number}"
+        return ""
+    # "Room 1 and gym" has a number, but it is a room, not a street.
+    if not street_type and ROOM_ADDRESS.search(_fold_letters(value or "")):
+        return ""
     if street_type:
         return f"{number}|{name}|{street_type}"
     return f"{number}|{name}"
@@ -175,29 +176,166 @@ def catalogue_place_key(value: str | None) -> str:
     return re.sub(r"[^a-z0-9]+", "", text)
 
 
+PLACEHOLDER_POSTAL = "R3K0Z8"
+ROOM_ADDRESS = re.compile(
+    r"\b(?:rooms?|rm|gymnasium|gym|floors?|lower\s+level|kindergarten|nursery|preschool|infant\s+cent(?:re|er))\b"
+)
+VENUE_ADDRESS = re.compile(
+    r"\b(?:school|elementary|elementry|church|community\s+cent(?:re|er)|rec(?:reation)?\s+cent(?:re|er))\b"
+)
+
+
+def _province(row: dict) -> str:
+    return str(row.get("province") or "").strip().upper()
+
+
+def _postal(row: dict) -> str:
+    return catalogue_postal_key(row.get("postalCode") or row.get("postal_code") or "")
+
+
+def _licence(row: dict) -> str:
+    return catalogue_licence_key(row.get("licenseNumber") or row.get("license_no") or "")
+
+
+def catalogue_civic_number(value: str | None) -> str:
+    text = _fold_letters(value or "").replace(".", " ").replace("#", " ")
+    labeled = re.search(r"\bcivic(?:\s+address)?\s+(\d+[a-z]?)\b", text)
+    if not labeled:
+        return ""
+    return labeled.group(1).lstrip("0") or labeled.group(1)
+
+
+def catalogue_street_number(value: str | None) -> str:
+    key = catalogue_street_key(value)
+    return key.split("|", 1)[0] if key else ""
+
+
+def is_room_description(value: str | None) -> bool:
+    text = _fold_letters(value or "")
+    return bool(text) and bool(ROOM_ADDRESS.search(text))
+
+
+def is_named_venue(value: str | None) -> bool:
+    text = _fold_letters(value or "")
+    if not text or catalogue_street_key(value):
+        return False
+    if VENUE_ADDRESS.search(text):
+        return True
+    return bool(re.search(r"\bcent(?:re|er)\b", text)) and not ROOM_ADDRESS.search(text)
+
+
+def is_placeholder_postal(value: str | None) -> bool:
+    return catalogue_postal_key(value) == PLACEHOLDER_POSTAL
+
+
+def is_city_abbreviation(value: str | None) -> bool:
+    return catalogue_place_key(value) == "wpg"
+
+
+def similar_catalogue_name(left: str | None, right: str | None) -> bool:
+    a = catalogue_name_key(left or "")
+    b = catalogue_name_key(right or "")
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    shorter, longer = (a, b) if len(a) <= len(b) else (b, a)
+    return len(shorter) >= 15 and shorter in longer
+
+
+def _postal_differs(left: dict, right: dict) -> bool:
+    a = _postal(left)
+    b = _postal(right)
+    return bool(a and b and a != b)
+
+
+def _absorbable(other: dict, street_row: dict) -> bool:
+    if catalogue_street_key(other.get("address") or ""):
+        return False
+    if not similar_catalogue_name(other.get("name"), street_row.get("name")):
+        return False
+    if (
+        is_named_venue(other.get("address"))
+        and _postal_differs(other, street_row)
+        and not is_placeholder_postal(other.get("postalCode") or other.get("postal_code"))
+        and not is_city_abbreviation(other.get("city"))
+    ):
+        return False
+    address = decode_import_text(other.get("address") or "").strip()
+    if not address:
+        return True
+    if is_room_description(address):
+        return True
+    civic = catalogue_civic_number(address)
+    if civic and civic == catalogue_street_number(street_row.get("address") or ""):
+        return True
+    if is_placeholder_postal(other.get("postalCode") or other.get("postal_code")) or is_city_abbreviation(other.get("city")):
+        return True
+    if is_named_venue(address) and not _postal_differs(other, street_row):
+        return True
+    return False
+
+
+def same_catalogue_centre(left: dict, right: dict) -> bool:
+    if not _province(left) or _province(left) != _province(right):
+        return False
+    street_a = catalogue_street_key(left.get("address") or "")
+    street_b = catalogue_street_key(right.get("address") or "")
+    if street_a and street_b and street_a == street_b and (
+        similar_catalogue_name(left.get("name"), right.get("name")) or (_licence(left) and _licence(left) == _licence(right))
+    ):
+        return True
+    licence_a = _licence(left)
+    licence_b = _licence(right)
+    if not licence_a or licence_a != licence_b:
+        return False
+    if not street_a and not street_b and similar_catalogue_name(left.get("name"), right.get("name")):
+        return True
+    if bool(street_a) == bool(street_b):
+        return False
+    street_row, other = (left, right) if street_a else (right, left)
+    return _absorbable(other, street_row)
+
+
 def row_match_keys(row: dict) -> list[str]:
-    province = str(row.get("province") or "").strip().upper()
+    """Street identity only. A licence is not a key."""
     name = catalogue_name_key(row.get("name") or "")
     street = catalogue_street_key(row.get("address") or "")
-    city = catalogue_place_key(row.get("city") or "")
-    area = catalogue_postal_area(row.get("postalCode") or row.get("postal_code") or "")
-    licence = catalogue_licence_key(row.get("licenseNumber") or row.get("license_no") or "")
+    if name and street:
+        return [f"street|{_province(row)}|{name}|{street}"]
+    return []
+
+
+def catalogue_candidate_keys(row: dict) -> list[str]:
+    province = _province(row)
     keys: list[str] = []
+    street = catalogue_street_key(row.get("address") or "")
+    if street:
+        keys.append(f"street|{province}|{street}")
+    licence = _licence(row)
     if licence:
-        keys.append(f"lic|{province}|{licence}")
-    if name and street and city:
-        keys.append(f"street|{province}|{name}|{street}|{city}")
-    if name and street and area:
-        keys.append(f"area|{province}|{name}|{street}|{area}")
+        keys.append(f"pool|{province}|{licence}")
     return keys
 
 
 def dedupe_rows(rows: list[dict]) -> list[dict]:
-    seen: set[str] = set()
+    buckets: dict[str, list[dict]] = defaultdict(list)
     out: list[dict] = []
     for row in rows:
-        keys = row_match_keys(row)
-        if keys and any(key in seen for key in keys):
+        seen: set[int] = set()
+        matched = False
+        for key in catalogue_candidate_keys(row):
+            for prev in buckets[key]:
+                marker = id(prev)
+                if marker in seen:
+                    continue
+                seen.add(marker)
+                if same_catalogue_centre(row, prev):
+                    matched = True
+                    break
+            if matched:
+                break
+        if matched:
             continue
         try:
             lat = float(row.get("lat"))
@@ -206,9 +344,9 @@ def dedupe_rows(rows: list[dict]) -> list[dict]:
             continue
         if not (-90 < lat < 90 and -180 < lng < 180):
             continue
-        for key in keys:
-            seen.add(key)
         out.append(row)
+        for key in catalogue_candidate_keys(row):
+            buckets[key].append(row)
     return out
 
 
@@ -266,7 +404,7 @@ def self_test() -> None:
         raise SystemExit("licence key failed")
 
     def shares(left: dict, right: dict) -> bool:
-        return bool(set(row_match_keys(left)) & set(row_match_keys(right)))
+        return same_catalogue_centre(left, right)
 
     kids_bloor = {
         "name": "Kids & Company",
@@ -339,7 +477,101 @@ def self_test() -> None:
         "licenseNumber": "MB-102535",
     }
     if not shares(civic, highway):
-        raise SystemExit("same licence did not match civic and highway addresses")
+        raise SystemExit("civic number did not match the highway address")
+    if shares(civic, {**highway, "licenseNumber": "9999"}):
+        raise SystemExit("civic number matched a different licence")
+    prairie_hoka = {
+        "name": "Prairie Nature Children's Centre",
+        "address": "600 Hoka Street",
+        "city": "Winnipeg",
+        "province": "MB",
+        "postalCode": "R2C 2V1",
+        "licenseNumber": "MB-7858",
+    }
+    prairie_sanford = {
+        "name": "Prairie Nature Children's Centre Inc.",
+        "address": "115 Sanford Fleming Road",
+        "city": "Winnipeg",
+        "province": "MB",
+        "postalCode": "R2C 2V1",
+        "licenseNumber": "7858",
+    }
+    if shares(prairie_hoka, prairie_sanford):
+        raise SystemExit("two real streets matched on licence")
+    adolphe_seine = {
+        "name": "St. Adolphe Child Care Centre Inc.",
+        "address": "444 La Seine Street",
+        "city": "St. Adolphe",
+        "province": "MB",
+        "postalCode": "R5A 1C2",
+        "licenseNumber": "MB-100758",
+    }
+    adolphe_main = {
+        "name": "St. Adolphe Child Care Centre",
+        "address": "372 Main Street",
+        "city": "St. Adolphe",
+        "province": "MB",
+        "postalCode": "R5A 1A9",
+        "licenseNumber": "100758",
+    }
+    if shares(adolphe_seine, adolphe_main):
+        raise SystemExit("St. Adolphe streets matched")
+    kidfit_street = {
+        "name": "KidFit 60",
+        "address": "1295 Salter Street",
+        "city": "Winnipeg",
+        "province": "MB",
+        "postalCode": "R2V 3T2",
+        "licenseNumber": "MB-102743",
+    }
+    kidfit_venue = {
+        "name": "KidFit 60 Inc.",
+        "address": "Vince Leah Community Centre",
+        "city": "Winnipeg",
+        "province": "MB",
+        "postalCode": "R2V 0R4",
+        "licenseNumber": "102743",
+    }
+    if shares(kidfit_street, kidfit_venue):
+        raise SystemExit("KidFit venue matched")
+    frontenac_street = {
+        "name": "Frontenac Before and After School Program",
+        "address": "866 Autumnwood Drive",
+        "city": "Winnipeg",
+        "province": "MB",
+        "postalCode": "R2J 1C1",
+        "licenseNumber": "MB-100238",
+    }
+    frontenac_room = {
+        "name": "Frontenac Before and After School Program",
+        "address": "Room 1 and gym",
+        "city": "Wpg.",
+        "province": "MB",
+        "postalCode": "R3K 0Z8",
+        "licenseNumber": "100238",
+    }
+    if not shares(frontenac_street, frontenac_room):
+        raise SystemExit("Frontenac room did not match the street")
+    rainbow_units = {
+        "name": "Rainbow Day Nursery Inc. (Phase 1)",
+        "address": "10/11/12 20 Island Shore Blvd.",
+        "city": "Wpg",
+        "province": "MB",
+        "postalCode": "R2J 3Z7",
+        "licenseNumber": "1140",
+    }
+    rainbow_street = {
+        "name": "Rainbow Day Nursery Inc. (Phase 1)",
+        "address": "20 Island Shore Blvd.",
+        "city": "Winnipeg",
+        "province": "MB",
+        "postalCode": "R3X 1N6",
+        "licenseNumber": "MB-1140",
+    }
+    if catalogue_street_key(rainbow_units["address"]) != catalogue_street_key(rainbow_street["address"]):
+        raise SystemExit("unit prefix was not stripped")
+    if not shares(rainbow_units, rainbow_street):
+        raise SystemExit("Rainbow Day Nursery did not match")
     print("ok")
 
 

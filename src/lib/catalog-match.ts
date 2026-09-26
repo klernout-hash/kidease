@@ -148,9 +148,11 @@ const DIRECTION: Record<string, string> = {
 };
 
 /**
- * Street number plus street name. `240 Avenue Rd` and `240 Avenue Road` share
- * a key. `230 Jane St` and `232 Jane St` do not. A bare civic number stays on
- * its own key so it cannot swallow a different highway address.
+ * Street number plus street name.
+ * `240 Avenue Rd` and `240 Avenue Road` share a key. Extra spaces do not matter.
+ * A unit prefix is skipped, so `10/11/12 20 Island Shore Blvd.` matches
+ * `20 Island Shore Blvd.`. `230 Jane St` and `232 Jane St` do not match.
+ * A bare civic number is not a street.
  */
 export function catalogueStreetKey(value: string | null | undefined): string {
   let text = foldLetters(decodeImportText(value)).replace(/\./g, " ").replace(/#/g, " ").replace(/&/g, " and ");
@@ -160,13 +162,7 @@ export function catalogueStreetKey(value: string | null | undefined): string {
   if (tokens.length === 0) return "";
   let numIndex = tokens.findIndex((token, index) => /^\d+[a-z]?$/.test(token) && /^[a-z]/.test(tokens[index + 1] || ""));
   if (numIndex < 0) numIndex = tokens.findIndex((token, index) => /^\d+[a-z]?$/.test(token) && Boolean(tokens[index + 1]));
-  if (numIndex < 0) {
-    if (tokens.length === 1 && /^\d+[a-z]?$/.test(tokens[0])) {
-      const only = tokens[0].replace(/^0+/, "") || tokens[0];
-      return `civic|${only}`;
-    }
-    return "";
-  }
+  if (numIndex < 0) return "";
   const number = tokens[numIndex].replace(/^0+/, "") || tokens[numIndex];
   const after = tokens.slice(numIndex + 1);
   let direction = "";
@@ -176,8 +172,75 @@ export function catalogueStreetKey(value: string | null | undefined): string {
   const typed = after[after.length - 1];
   if (typed && STREET_TYPE[typed]) type = STREET_TYPE[after.pop() || ""] || "";
   const name = `${after.join("")}${direction}`;
-  if (!name) return `civic|${number}`;
+  if (!name) return "";
+  // "Room 1 and gym" has a number, but it is a room, not a street.
+  if (!type && ROOM_ADDRESS.test(addressFold(value))) return "";
   return type ? `${number}|${name}|${type}` : `${number}|${name}`;
+}
+
+/** `Civic #35117` is a civic number, not a street. */
+export function catalogueCivicNumber(value: string | null | undefined): string {
+  const text = foldLetters(decodeImportText(value)).replace(/[.#]/g, " ");
+  const labeled = text.match(/\bcivic(?:\s+address)?\s+(\d+[a-z]?)\b/);
+  if (!labeled) return "";
+  return labeled[1].replace(/^0+/, "") || labeled[1];
+}
+
+export function catalogueStreetNumber(value: string | null | undefined): string {
+  const key = catalogueStreetKey(value);
+  return key ? key.split("|")[0] || "" : "";
+}
+
+const PLACEHOLDER_POSTAL = "R3K0Z8";
+const ROOM_ADDRESS =
+  /\b(?:rooms?|rm|gymnasium|gym|floors?|lower\s+level|kindergarten|nursery|preschool|infant\s+cent(?:re|er))\b/;
+const VENUE_ADDRESS =
+  /\b(?:school|elementary|elementry|church|community\s+cent(?:re|er)|rec(?:reation)?\s+cent(?:re|er))\b/;
+
+function addressFold(value: string | null | undefined): string {
+  return foldLetters(decodeImportText(value)).replace(/\s+/g, " ").trim();
+}
+
+/** Room, floor, gym, or program-space text. Not a located street. */
+export function isRoomDescription(value: string | null | undefined): boolean {
+  const text = addressFold(value);
+  return Boolean(text) && ROOM_ADDRESS.test(text);
+}
+
+/** A school, church, community centre, or other named place. Not a street. */
+export function isNamedVenue(value: string | null | undefined): boolean {
+  const text = addressFold(value);
+  if (!text || catalogueStreetKey(value)) return false;
+  if (VENUE_ADDRESS.test(text)) return true;
+  return /\bcent(?:re|er)\b/.test(text) && !ROOM_ADDRESS.test(text);
+}
+
+export function isPlaceholderPostal(value: string | null | undefined): boolean {
+  return cataloguePostalKey(value) === PLACEHOLDER_POSTAL;
+}
+
+/** `Wpg` and `Wpg.` are Winnipeg written short. They are not a second city. */
+export function isCityAbbreviation(value: string | null | undefined): boolean {
+  return cataloguePlaceKey(value) === "wpg";
+}
+
+export function hasRealStreetAddress(value: string | null | undefined): boolean {
+  return Boolean(catalogueStreetKey(value));
+}
+
+/**
+ * Names match when the folded keys are equal, or when a long key contains the other.
+ * `Kids & Company` does not contain-match a longer site name: the shorter key
+ * has to be at least 15 characters, so a chain name stays distinct.
+ */
+export function similarCatalogueName(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = catalogueNameKey(a);
+  const right = catalogueNameKey(b);
+  if (!left || !right) return false;
+  if (left === right) return true;
+  const shorter = left.length <= right.length ? left : right;
+  const longer = left.length <= right.length ? right : left;
+  return shorter.length >= 15 && longer.includes(shorter);
 }
 
 /** First three characters of a postal code. That is the postal area, not the full code. */
@@ -195,36 +258,126 @@ export type CatalogueIdentity = {
   licenseNumber?: string | null;
 };
 
+function provinceCode(row: CatalogueIdentity): string {
+  return (row.province || "").trim().toUpperCase();
+}
+
+function sameProvince(a: CatalogueIdentity, b: CatalogueIdentity): boolean {
+  const left = provinceCode(a);
+  const right = provinceCode(b);
+  return Boolean(left && right && left === right);
+}
+
+function sameLicence(a: CatalogueIdentity, b: CatalogueIdentity): boolean {
+  const left = catalogueLicenceKey(a.licenseNumber);
+  const right = catalogueLicenceKey(b.licenseNumber);
+  return Boolean(left && right && left === right);
+}
+
+function postalDiffers(a: CatalogueIdentity, b: CatalogueIdentity): boolean {
+  const left = cataloguePostalKey(a.postalCode);
+  const right = cataloguePostalKey(b.postalCode);
+  return Boolean(left && right && left !== right);
+}
+
 /**
- * Keys that may merge two rows.
- * A licence key is the normalized number in one province.
- * A street key is the normalized name, street number, and street name,
- * plus the city or the postal area. Name alone is not a key.
+ * A same-licence row with no street can fold into the street row.
+ * A room, a matching civic number, the placeholder postal R3K 0Z8, or a city
+ * written as Wpg. A named venue with a different real postal code cannot.
+ */
+function absorbableNonStreet(other: CatalogueIdentity, streetRow: CatalogueIdentity): boolean {
+  if (hasRealStreetAddress(other.address)) return false;
+  if (!similarCatalogueName(other.name, streetRow.name)) return false;
+  if (isNamedVenue(other.address) && postalDiffers(other, streetRow) && !isPlaceholderPostal(other.postalCode) && !isCityAbbreviation(other.city)) {
+    return false;
+  }
+  if (!addressFold(other.address)) return true;
+  if (isRoomDescription(other.address)) return true;
+  const civic = catalogueCivicNumber(other.address);
+  if (civic && civic === catalogueStreetNumber(streetRow.address)) return true;
+  if (isPlaceholderPostal(other.postalCode) || isCityAbbreviation(other.city)) return true;
+  if (isNamedVenue(other.address) && !postalDiffers(other, streetRow)) return true;
+  return false;
+}
+
+/**
+ * Keys that may merge two rows on their own.
+ * Same province, similar name, and the same street number plus street name.
+ * A licence number is not a key. A shared name is not a key.
  */
 export function catalogueMatchKeys(row: CatalogueIdentity): string[] {
-  const province = (row.province || "").trim().toUpperCase();
-  const licence = catalogueLicenceKey(row.licenseNumber);
   const name = catalogueNameKey(row.name);
   const street = catalogueStreetKey(row.address);
-  const city = cataloguePlaceKey(row.city);
-  const area = cataloguePostalArea(row.postalCode);
-  const keys: string[] = [];
-  if (licence) keys.push(`lic|${province}|${licence}`);
-  if (name && street && city) keys.push(`street|${province}|${name}|${street}|${city}`);
-  if (name && street && area) keys.push(`area|${province}|${name}|${street}|${area}`);
+  if (!name || !street) return [];
+  return [`street|${provinceCode(row)}|${name}|${street}`];
+}
+
+/**
+ * Lookup buckets. A licence bucket only proposes candidates.
+ * `sameCatalogueCentre` still has to accept the pair, so two real streets
+ * that share a licence do not match.
+ */
+export function catalogueCandidateKeys(row: CatalogueIdentity): string[] {
+  const province = provinceCode(row);
+  const keys = [];
+  const street = catalogueStreetKey(row.address);
+  if (street) keys.push(`street|${province}|${street}`);
+  const licence = catalogueLicenceKey(row.licenseNumber);
+  if (licence) keys.push(`pool|${province}|${licence}`);
   return keys;
+}
+
+export function matchingCatalogueRows<T extends CatalogueIdentity>(row: CatalogueIdentity, indexed: Map<string, T[]>): T[] {
+  const seen = new Set<T>();
+  const found: T[] = [];
+  for (const key of catalogueCandidateKeys(row)) {
+    for (const hit of indexed.get(key) || []) {
+      if (seen.has(hit)) continue;
+      seen.add(hit);
+      if (sameCatalogueCentre(row, hit)) found.push(hit);
+    }
+  }
+  return found;
 }
 
 /**
  * Same centre for import dedupe and for the merge script.
- * Same normalized licence in the same province, or the same normalized name
- * with the same street number and street name and the same city or postal area.
- * A shared name is not enough. 230 Jane St and 232 Jane St stay apart.
+ * Same province, a similar name, and the same street number plus street name.
+ * Or the same licence when one row has a real street and the other does not
+ * (a room, a matching civic number, postal R3K 0Z8, or a city written as Wpg).
+ * A shared licence with two real streets is not a match.
  */
 export function sameCatalogueCentre(a: CatalogueIdentity, b: CatalogueIdentity): boolean {
-  const keys = new Set(catalogueMatchKeys(a));
-  if (keys.size === 0) return false;
-  return catalogueMatchKeys(b).some((key) => keys.has(key));
+  if (!sameProvince(a, b)) return false;
+  const streetA = catalogueStreetKey(a.address);
+  const streetB = catalogueStreetKey(b.address);
+  if (streetA && streetB && streetA === streetB && (similarCatalogueName(a.name, b.name) || sameLicence(a, b))) return true;
+  if (!sameLicence(a, b)) return false;
+  if (!streetA && !streetB && similarCatalogueName(a.name, b.name)) return true;
+  if (Boolean(streetA) === Boolean(streetB)) return false;
+  const streetRow = streetA ? a : b;
+  const other = streetA ? b : a;
+  return absorbableNonStreet(other, streetRow);
+}
+
+/**
+ * Held for a person. Same licence or same name, but two different real streets,
+ * or a named venue whose postal code is not the street row's postal code.
+ */
+export function catalogueHoldReason(a: CatalogueIdentity, b: CatalogueIdentity): string | null {
+  if (!sameProvince(a, b) || sameCatalogueCentre(a, b)) return null;
+  const sameLic = sameLicence(a, b);
+  const sameName = similarCatalogueName(a.name, b.name);
+  if (!sameLic && !sameName) return null;
+  const streetA = catalogueStreetKey(a.address);
+  const streetB = catalogueStreetKey(b.address);
+  if (streetA && streetB && streetA !== streetB) return "different street addresses";
+  const venue = isNamedVenue(a.address) ? a : isNamedVenue(b.address) ? b : null;
+  const street = streetA ? a : streetB ? b : null;
+  if (venue && street && venue !== street && postalDiffers(venue, street) && !isPlaceholderPostal(venue.postalCode) && !isCityAbbreviation(venue.city)) {
+    return "named venue with a different postal code";
+  }
+  return null;
 }
 
 export type CityPostalLabel = {

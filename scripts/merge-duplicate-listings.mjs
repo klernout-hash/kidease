@@ -205,6 +205,13 @@ function printPlan(plan, groups) {
   console.log(`[merge-duplicates] skipped ${plan.skipped.length}`);
   console.log(`[merge-duplicates] skippedNotSameCentre ${notSame}`);
   console.log(`[merge-duplicates] leftSeparate ${leftSeparate}`);
+  const reviews = plan.needsReview || [];
+  console.log(`[merge-duplicates] needsReview ${reviews.length}`);
+  for (const item of reviews) {
+    const names = (item.names || []).join(" / ") || item.ids.join(" / ");
+    const addresses = (item.addresses || []).join(" | ");
+    console.log(`[merge-duplicates] needsReview ${names}${addresses ? ` | ${addresses}` : ""}`);
+  }
   for (const [province, tally] of [...provinces.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
     console.log(`[merge-duplicates] province ${province} keepers ${tally.keepers} retired ${tally.retired}`);
   }

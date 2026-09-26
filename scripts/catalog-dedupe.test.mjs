@@ -203,7 +203,8 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
     ]);
     assert.equal(plan.keepers, 0);
     assert.equal(plan.retired, 0);
-    assert.equal(plan.skipped[0].reason, "not the same centre");
+    assert.equal(plan.skipped[0].reason, "needs review");
+    assert.equal(plan.needsReview[0].reason, "different street addresses");
   });
 
   it("matches 240 Avenue Rd with 240 Avenue Road when the name is the same", () => {
@@ -252,11 +253,204 @@ PE|stratford|L4487,"Stratford, PE C1B 2W8",L4487,Centre,Mailing Address: 41 Glen
     assert.notEqual(catalogueStreetKey(civic.address), catalogueStreetKey(highway.address));
     assert.equal(sameCatalogueCentre(civic, highway), true);
     assert.equal(sameCatalogueCentre(civic, { ...highway, licenseNumber: "9999" }), false);
+    assert.equal(
+      sameCatalogueCentre(civic, { ...highway, licenseNumber: "MB|SpringfieldLearningCentresInc.|Anola" }),
+      false,
+    );
     const dropped = dropStoredDuplicateAdditions(
       [{ id: "mx-springfield", slug: "springfield-civic", ...civic }],
       [{ id: "mb-102535", slug: "springfield-pth", ...highway }],
     );
     assert.equal(dropped.dropped, 1);
+  });
+
+  it("holds Prairie Nature, St. Adolphe, and KidFit instead of merging them", () => {
+    const cases = [
+      {
+        name: "Prairie Nature Children's Centre",
+        rows: [
+          {
+            id: "mb-7858",
+            name: "Prairie Nature Children's Centre",
+            address: "600  Hoka Street",
+            city: "Winnipeg",
+            province: "MB",
+            postalCode: "R2C 2V1",
+            licenseNumber: "MB-7858",
+          },
+          {
+            id: "mx-prairie",
+            name: "Prairie Nature Children's Centre Inc.",
+            address: "115 Sanford Fleming Road",
+            city: "Winnipeg",
+            province: "MB",
+            postalCode: "R2C 2V1",
+            licenseNumber: "7858",
+          },
+        ],
+        reason: "different street addresses",
+      },
+      {
+        name: "St. Adolphe Child Care Centre",
+        rows: [
+          {
+            id: "mb-100758",
+            name: "St. Adolphe Child Care Centre Inc.",
+            address: "444 La Seine Street",
+            city: "St. Adolphe",
+            province: "MB",
+            postalCode: "R5A 1C2",
+            licenseNumber: "MB-100758",
+          },
+          {
+            id: "mx-adolphe",
+            name: "St. Adolphe Child Care Centre",
+            address: "372 Main Street",
+            city: "St. Adolphe",
+            province: "MB",
+            postalCode: "R5A 1A9",
+            licenseNumber: "100758",
+          },
+        ],
+        reason: "different street addresses",
+      },
+      {
+        name: "KidFit 60",
+        rows: [
+          {
+            id: "mb-102743",
+            name: "KidFit 60",
+            address: "1295 Salter Street",
+            city: "Winnipeg",
+            province: "MB",
+            postalCode: "R2V 3T2",
+            licenseNumber: "MB-102743",
+          },
+          {
+            id: "mx-kidfit",
+            name: "KidFit 60 Inc.",
+            address: "Vince Leah Community Centre",
+            city: "Winnipeg",
+            province: "MB",
+            postalCode: "R2V 0R4",
+            licenseNumber: "102743",
+          },
+        ],
+        reason: "named venue with a different postal code",
+      },
+    ];
+    for (const sample of cases) {
+      assert.equal(sameCatalogueCentre(sample.rows[0], sample.rows[1]), false, sample.name);
+      const plan = planDuplicateMerges([{ rows: sample.rows }]);
+      assert.equal(plan.keepers, 0, sample.name);
+      assert.equal(plan.retired, 0, sample.name);
+      assert.equal(plan.needsReview.length, 1, sample.name);
+      assert.equal(plan.needsReview[0].reason, sample.reason, sample.name);
+      assert.ok(plan.needsReview[0].names.some((name) => name.includes(sample.name.split(" ")[0])), sample.name);
+    }
+  });
+
+  it("merges a room, a unit prefix, and a matching civic number into the street row", () => {
+    assert.equal(catalogueStreetKey("10/11/12 20 Island Shore Blvd."), catalogueStreetKey("20 Island Shore Blvd."));
+    assert.equal(catalogueStreetKey("866  Autumnwood Drive"), catalogueStreetKey("866 Autumnwood Drive"));
+    const rainbow = planDuplicateMerges([
+      {
+        rows: [
+          {
+            id: "mx-rainbow",
+            name: "Rainbow Day Nursery Inc. (Phase 1)",
+            address: "10/11/12 20 Island Shore Blvd.",
+            city: "Wpg",
+            province: "MB",
+            postalCode: "R2J 3Z7",
+            licenseNumber: "1140",
+            created_at: "2026-09-24T00:00:00.000Z",
+          },
+          {
+            id: "mb-1140",
+            name: "Rainbow Day Nursery Inc. (Phase 1)",
+            address: "20 Island Shore Blvd.",
+            city: "Winnipeg",
+            province: "MB",
+            postalCode: "R3X 1N6",
+            licenseNumber: "MB-1140",
+            created_at: "2026-09-02T00:00:00.000Z",
+          },
+        ],
+      },
+    ]);
+    assert.equal(rainbow.keepers, 1);
+    assert.equal(rainbow.retired, 1);
+    assert.equal(rainbow.needsReview.length, 0);
+    const frontenac = planDuplicateMerges([
+      {
+        rows: [
+          {
+            id: "mx-frontenac",
+            name: "Frontenac Before and After School Program",
+            address: "Room 1 and gym",
+            city: "Wpg.",
+            province: "MB",
+            postalCode: "R3K 0Z8",
+            licenseNumber: "100238",
+            created_at: "2026-09-01T00:00:00.000Z",
+          },
+          {
+            id: "mb-100238",
+            name: "Frontenac Before and After School Program",
+            address: "866  Autumnwood Drive",
+            city: "Winnipeg",
+            province: "MB",
+            postalCode: "R2J 1C1",
+            licenseNumber: "MB-100238",
+            created_at: "2026-09-24T00:00:00.000Z",
+          },
+        ],
+      },
+    ]);
+    assert.equal(frontenac.groups[0].keeperId, "mb-100238");
+    assert.deepEqual(frontenac.groups[0].retiredIds, ["mx-frontenac"]);
+    assert.equal(frontenac.needsReview.length, 0);
+    const springfield = planDuplicateMerges([
+      {
+        rows: [
+          {
+            id: "mx-springfield",
+            name: "Springfield Learning Centres Incorporated",
+            address: "Civic #35117",
+            city: "Anola",
+            province: "MB",
+            postalCode: "R0E 0K0",
+            licenseNumber: "102535",
+            created_at: "2026-09-24T00:00:00.000Z",
+          },
+          {
+            id: "mb-102535",
+            name: "Springfield Learning Centres",
+            address: "35117 PTH 15 Rd 60N",
+            city: "Anola",
+            province: "MB",
+            postalCode: "R0E 0A0",
+            licenseNumber: "MB-102535",
+            created_at: "2026-09-02T00:00:00.000Z",
+          },
+          {
+            id: "mx-e220a7741d23",
+            name: "Springfield Learning Centres Inc.",
+            address: "Civic #35117",
+            city: "Anola",
+            province: "MB",
+            postalCode: "R0E 0K0",
+            licenseNumber: "MB|SpringfieldLearningCentresInc.|Anola",
+            created_at: "2026-09-24T00:00:00.000Z",
+          },
+        ],
+      },
+    ]);
+    assert.equal(springfield.groups[0].keeperId, "mb-102535");
+    assert.deepEqual(springfield.groups[0].retiredIds, ["mx-springfield"]);
+    assert.deepEqual(springfield.groups[0].unrelatedIds, ["mx-e220a7741d23"]);
+    assert.equal(springfield.needsReview.length, 0);
   });
 
   it("python importer self-test matches the MB-1276 and on-tor cases", () => {

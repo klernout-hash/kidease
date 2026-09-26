@@ -11,7 +11,8 @@
 import { createHash } from "node:crypto";
 import { parseCsvRecords } from "./catalog-master.ts";
 import {
-  catalogueMatchKeys,
+  catalogueCandidateKeys,
+  matchingCatalogueRows,
   cataloguePlaceKey,
   cataloguePostalKey,
   decodeImportText,
@@ -365,7 +366,7 @@ export function syncMasterCatalogue<T extends CatalogueMatchRow>(
     const province = (row.province || "").toUpperCase();
     const city = fold(row.city);
     const postal = postalKey(row.postalCode);
-    for (const key of catalogueMatchKeys(row)) pushIndex(byMatch, key, row);
+    for (const key of catalogueCandidateKeys(row)) pushIndex(byMatch, key, row);
     if (isInCanada(Number(row.lat), Number(row.lng))) {
       pushGeo(geo.postal, postal, Number(row.lat), Number(row.lng));
       if (postal.length >= 3) pushGeo(geo.fsa, postal.slice(0, 3), Number(row.lat), Number(row.lng));
@@ -388,14 +389,17 @@ export function syncMasterCatalogue<T extends CatalogueMatchRow>(
     const province = master.province;
     const city = fold(master.city);
     const postal = postalKey(master.postal);
-    const candidates = catalogueMatchKeys({
-      name: master.name,
-      address: master.address,
-      city: master.city,
-      province: master.province,
-      postalCode: master.postal,
-      licenseNumber: master.licence,
-    }).reduce<T[] | undefined>((hit, key) => hit || byMatch.get(key), undefined);
+    const candidates = matchingCatalogueRows(
+      {
+        name: master.name,
+        address: master.address,
+        city: master.city,
+        province: master.province,
+        postalCode: master.postal,
+        licenseNumber: master.licence,
+      },
+      byMatch,
+    );
     if (candidates && candidates.length > 0) {
       matched += 1;
       if (candidates.length === 1) {
@@ -473,7 +477,7 @@ export function dropStoredDuplicateAdditions<T extends CatalogueMatchRow>(
   const storedIds = new Set(stored.map((row) => row.id).filter(Boolean));
   const byMatch = new Map<string, CatalogueMatchRow[]>();
   for (const row of stored) {
-    for (const key of catalogueMatchKeys(row)) pushIndex(byMatch, key, row);
+    for (const key of catalogueCandidateKeys(row)) pushIndex(byMatch, key, row);
   }
   const rows: T[] = [];
   let dropped = 0;
@@ -482,10 +486,7 @@ export function dropStoredDuplicateAdditions<T extends CatalogueMatchRow>(
       rows.push(row);
       continue;
     }
-    const hit = catalogueMatchKeys(row).reduce<CatalogueMatchRow[] | undefined>(
-      (found, key) => found || byMatch.get(key),
-      undefined,
-    );
+    const hit = matchingCatalogueRows(row, byMatch);
     if (hit && hit.length > 0) {
       dropped += 1;
       continue;
