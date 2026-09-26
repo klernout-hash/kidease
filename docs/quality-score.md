@@ -6,9 +6,19 @@ This is not a safety grade or inspection score. Never claim KidEase police-check
 
 ## Score (0–100)
 
-Computed server-side in `src/lib/quality.ts`. Missing signals add **zero**. Incomplete listings stay searchable (soft demotion only). Home rails and “best match / need soon / guest favorites” only show **live-looking** cards via `isLiveLookingCard()` / `homeRailItems()` in `src/lib/now-loops.ts`: confirmed ages, a listed fee or a per-centre CWELCC amenity (never a province-wide $10-a-day guess), and a real storefront photo. Hollow cards name the exact gap and stay off those rails. Winnipeg never invents ages, fees, or photos to hit an 80% live-looking floor — if the share is below 80% without inventing, hollow stay hidden.
+Computed server-side in `src/lib/quality.ts`. Missing signals add **zero**. Incomplete listings stay searchable (soft demotion only). Home rails and “best match / need soon / guest favorites” only show **live-looking** cards via `isLiveLookingCard()` / `homeRailItems()` in `src/lib/now-loops.ts`: confirmed ages, a listed monthly fee or a sourced fee program (never a province-wide $10-a-day guess, and never a day-to-month conversion), and a real storefront photo. Hollow cards name the exact gap and stay off those rails. Winnipeg never invents ages, fees, or photos to hit an 80% live-looking floor — if the share is below 80% without inventing, hollow stay hidden.
+
+A sourced `fee_program` of `mb-10-day` means this Manitoba centre is funded at the maximum regulated parent fee of $10 a day. That satisfies the fee line without writing `infant_monthly` or any other monthly integer. The harvested catalogue value 218 is that conversion and stays rejected.
 
 Measure the committed catalogue with `npm run ops:winnipeg-gaps` (writes `data/winnipeg-search-gaps.csv`). Admin → **Winnipeg gaps** reads the same rule from the live database, downloads that CSV, and applies only rows that name a source. Blank cells are not written. The harvested catalogue fee and `/photos/wpg/` aerials do not count. Apply a filled CSV from an ops box with `DATABASE_URL=… npm run ops:winnipeg-gaps -- --apply filled.csv` (dry run) and add `--write` after `npm run db:migrate`.
+
+### How ops apply ages and fee_program
+
+1. Run `npm run db:migrate` so `daycares.fee_program` exists.
+2. Download the gap CSV from Admin → Winnipeg gaps, or generate it with `npm run ops:winnipeg-gaps -- --csv data/winnipeg-search-gaps.csv`. The file includes a blank `fee_program` column. Do not commit a filled Winnipeg extract.
+3. For a centre whose source shows Manitoba funded care at the $10 daily cap, set `fee_program` to `mb-10-day` (aliases such as `Manitoba funded / max regulated daily $10/day` normalize to that code). Fill `age_min_months` and `age_max_months` from the same source. Leave the monthly fee columns blank. Put the citation in `source` (a URL or operator note, at least 12 characters).
+4. Rejected values: `218`, `catalogue`, `catalog`, `guess`, and any other program token. `/photos/wpg/` is not a real photo.
+5. Dry-run `DATABASE_URL=… npm run ops:winnipeg-gaps -- --apply filled.csv`, then repeat with `--write`. Admin can paste the same CSV into Winnipeg gaps and choose Apply sourced rows. A blank cell is not a write, and an existing fee program is left as it is.
 
 | Component | Max | What counts |
 | --- | ---: | --- |

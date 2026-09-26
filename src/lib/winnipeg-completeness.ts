@@ -2,12 +2,16 @@
  * Winnipeg live-looking measurement and sourced fills.
  * Ages, fees, and photos are never invented. A blank cell is not a write.
  * Harvested catalogue fee 218 and a province-wide $10-a-day amenity do not count.
+ * A sourced fee_program (mb-10-day) counts without inventing a monthly amount.
  */
 
+import { CATALOGUE_MONTHLY_FEE_GUESS, hasConfirmedFeeLine, normalizeFeeProgram } from "./fee-program.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
 import { splitPhotoList } from "./listing-photo.ts";
 import { isPlatformLive, type PlatformLiveExtra } from "./live.ts";
 import { isPublicListing, type ListingVisibilityInput } from "./listing-visibility.ts";
+
+export { hasConfirmedFeeLine };
 
 export const WINNIPEG_LIVE_LOOKING_MIN = 0.8;
 
@@ -40,13 +44,6 @@ export function isRealListingPhoto(src?: string | null): boolean {
   return false;
 }
 
-function hasAmenity(amenities: string, key: string) {
-  return amenities
-    .split(",")
-    .map((part) => part.trim())
-    .includes(key);
-}
-
 export type CompletenessInput = {
   id?: string | null;
   slug?: string | null;
@@ -67,6 +64,7 @@ export type CompletenessInput = {
   amenities?: string | null;
   photos?: string | string[] | null;
   feeConfirmed?: boolean | null;
+  feeProgram?: string | null;
   claimed?: boolean | null;
   claimedAt?: string | null;
   claimStatus?: string | null;
@@ -86,30 +84,6 @@ export function hasConfirmedAges(
   const min = d.ageMinMonths ?? 0;
   const max = d.ageMaxMonths ?? 0;
   return max > min && max > 0;
-}
-
-export function hasListedFees(
-  d: Pick<CompletenessInput, "infantMonthly" | "toddlerMonthly" | "preschoolMonthly" | "partTimeMonthly">,
-): boolean {
-  return [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly, d.partTimeMonthly].some(
-    (n) => n != null && n > 0,
-  );
-}
-
-/**
- * Same rule as now-loops hasConfirmedFeeLine.
- * A funded / ten-a-day amenity counts only when this centre confirmed fees.
- */
-export function hasConfirmedFeeLine(
-  d: Pick<
-    CompletenessInput,
-    "infantMonthly" | "toddlerMonthly" | "preschoolMonthly" | "partTimeMonthly" | "amenities" | "feeConfirmed"
-  >,
-): boolean {
-  if (hasListedFees(d)) return true;
-  if (!d.feeConfirmed) return false;
-  const amenities = d.amenities || "";
-  return hasAmenity(amenities, "ten-a-day") || hasAmenity(amenities, "funded");
 }
 
 export function hasRealPhoto(d: Pick<CompletenessInput, "photos">): boolean {
@@ -217,6 +191,7 @@ export const GAP_CSV_HEADERS = [
   "toddler_monthly",
   "preschool_monthly",
   "part_time_monthly",
+  "fee_program",
   "photo_url",
   "source",
 ] as const;
@@ -262,6 +237,7 @@ export function winnipegGapsCsv(rows: readonly CompletenessInput[]): string {
         "",
         "",
         "",
+        "",
       ]
         .map(csvCell)
         .join(","),
@@ -279,6 +255,7 @@ export type FillPatch = {
   preschoolMonthly?: number;
   partTimeMonthly?: number;
   photoUrl?: string;
+  feeProgram?: string;
   source?: string;
 };
 
@@ -289,6 +266,7 @@ export type FillPlan = {
   setAges?: { min: number; max: number };
   setFees?: Partial<Record<"infantMonthly" | "toddlerMonthly" | "preschoolMonthly" | "partTimeMonthly", number>>;
   setPhoto?: string;
+  setFeeProgram?: string;
 };
 
 const BLOCKED_SOURCE = /^(catalogue|catalog|guess|estimated|estimate|invented|default|placeholder|ten-a-day|funded|harvest|fee\s*218|218)$/i;
@@ -384,6 +362,18 @@ export function parseGapCsv(text: string): { patches: FillPatch[]; errors: strin
       errors.push(`Row ${i + 1} (${id}) has a non-numeric age or fee`);
       continue;
     }
+    if (Object.values(fees).some((value) => value === CATALOGUE_MONTHLY_FEE_GUESS)) {
+      errors.push(`Row ${i + 1} (${id}) uses the harvested catalogue fee 218`);
+      continue;
+    }
+    const feeProgramRaw = take(cells, "fee_program");
+    const feeProgram = feeProgramRaw ? normalizeFeeProgram(feeProgramRaw) : null;
+    if (feeProgramRaw && !feeProgram) {
+      errors.push(
+        `Row ${i + 1} (${id}) fee_program must be mb-10-day (Manitoba funded, maximum regulated daily fee $10), not a monthly amount or a catalogue guess`,
+      );
+      continue;
+    }
     const patch: FillPatch = { id, source: take(cells, "source") };
     if (ages[0] || ages[1]) {
       patch.ageMinMonths = ages[0] ? Number(ages[0]) : undefined;
@@ -395,6 +385,7 @@ export function parseGapCsv(text: string): { patches: FillPatch[]; errors: strin
     }
     const photo = take(cells, "photo_url");
     if (photo) patch.photoUrl = photo;
+    if (feeProgram) patch.feeProgram = feeProgram;
     patches.push(patch);
   }
   return { patches, errors };
@@ -412,6 +403,25 @@ function feeKeyFilled(
  * Plan one sourced fill. Existing confirmed ages, positive fees, and real photos stay.
  * Empty cells and unsourced rows do not write.
  */
+function feeProgramPlan(current: CompletenessInput, raw?: string | null): { ok: true; code?: string } | { ok: false; reason: string } {
+  const text = (raw || "").trim();
+  if (!text) return { ok: true };
+  const code = normalizeFeeProgram(text);
+  if (!code) {
+    return {
+      ok: false,
+      reason:
+        "Fee program must be mb-10-day (Manitoba funded, maximum regulated daily fee $10). A daily cap is not written as a monthly fee.",
+    };
+  }
+  const province = (current.province || "").trim().toUpperCase();
+  if (province !== "MB") {
+    return { ok: false, reason: "mb-10-day applies only to Manitoba listings" };
+  }
+  if (normalizeFeeProgram(current.feeProgram) === code) return { ok: true };
+  return { ok: true, code };
+}
+
 export function planCompletenessFill(current: CompletenessInput, patch: FillPatch): FillPlan {
   const id = (patch.id || current.id || "").trim();
   const wantsAges = patch.ageMinMonths != null || patch.ageMaxMonths != null;
@@ -419,8 +429,10 @@ export function planCompletenessFill(current: CompletenessInput, patch: FillPatc
     ["infantMonthly", "toddlerMonthly", "preschoolMonthly", "partTimeMonthly"] as const
   ).filter((key) => patch[key] != null);
   const wantsPhoto = Boolean((patch.photoUrl || "").trim());
-  if (!wantsAges && !feeEntries.length && !wantsPhoto) {
-    return { id, action: "skip", reason: "No ages, fees, or photo to write" };
+  const program = feeProgramPlan(current, patch.feeProgram);
+  if (!program.ok) return { id, action: "reject", reason: program.reason };
+  if (!wantsAges && !feeEntries.length && !wantsPhoto && !program.code) {
+    return { id, action: "skip", reason: "No ages, fees, fee program, or photo to write" };
   }
   const source = cleanSource(patch.source);
   if (!sourceOk(source)) {
@@ -449,6 +461,9 @@ export function planCompletenessFill(current: CompletenessInput, patch: FillPatc
       if (next == null || !Number.isInteger(next) || next < 1 || next > 8000) {
         return { id, action: "reject", reason: "Fees must be whole dollars from 1 to 8000" };
       }
+      if (next === CATALOGUE_MONTHLY_FEE_GUESS) {
+        return { id, action: "reject", reason: "218 is the harvested catalogue fee, not a sourced parent fee" };
+      }
       if (!feeKeyFilled(current, key)) setFees[key] = next;
     }
     if (Object.keys(setFees).length) plan.setFees = setFees;
@@ -459,14 +474,15 @@ export function planCompletenessFill(current: CompletenessInput, patch: FillPatc
       return { id, action: "reject", reason: "Photo must be a real centre image, not a placeholder or aerial fallback" };
     }
     if (hasRealPhoto(current)) {
-      if (!plan.setAges && !plan.setFees) {
+      if (!plan.setAges && !plan.setFees && !program.code) {
         return { id, action: "skip", reason: "Real photo already on file" };
       }
     } else {
       plan.setPhoto = photo;
     }
   }
-  if (!plan.setAges && !plan.setFees && !plan.setPhoto) {
+  if (program.code) plan.setFeeProgram = program.code;
+  if (!plan.setAges && !plan.setFees && !plan.setPhoto && !plan.setFeeProgram) {
     return { id, action: "skip", reason: plan.reason || "Nothing empty to fill" };
   }
   return plan;

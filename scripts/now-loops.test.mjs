@@ -51,10 +51,12 @@ function isRealListingPhoto(p) {
 }
 function hasConfirmedFeeLine(d) {
   if (hasListedFees(d)) return true;
+  if (d.feeProgram === "mb-10-day" && d.province === "MB") return true;
   if (!d.feeConfirmed) return false;
   return hasAmenity(d.amenities, "ten-a-day") || hasAmenity(d.amenities, "funded");
 }
 function confirmedFeeProgramBadge(d) {
+  if (d.feeProgram === "mb-10-day" && d.province === "MB") return "badgeTen";
   if (!d.feeConfirmed) return null;
   const ten = hasAmenity(d.amenities, "ten-a-day");
   const funded = hasAmenity(d.amenities, "funded");
@@ -302,6 +304,33 @@ test("province-typical $10-a-day is not a confirmed fee line", () => {
   assert.equal(confirmedFeeProgramBadge(confirmed), "badgeTen");
   assert.equal(canShowMatchScore(mbGuess), false);
   assert.equal(canShowMatchScore(listing()), true);
+  const sourcedProgram = listing({
+    infantMonthly: null,
+    toddlerMonthly: null,
+    preschoolMonthly: null,
+    amenities: "licensed",
+    feeConfirmed: false,
+    feeProgram: "mb-10-day",
+    province: "MB",
+    photos: ["/photos/buildings/mb-1.jpg"],
+  });
+  assert.equal(hasConfirmedFeeLine(sourcedProgram), true);
+  assert.equal(confirmedFeeProgramBadge(sourcedProgram), "badgeTen");
+  assert.equal(isLiveLookingCard(sourcedProgram), true);
+  assert.equal(sourcedProgram.infantMonthly, null);
+  assert.equal(
+    isLiveLookingCard(
+      listing({
+        infantMonthly: null,
+        toddlerMonthly: null,
+        preschoolMonthly: null,
+        feeProgram: null,
+        feeConfirmed: false,
+        photos: ["/photos/buildings/mb-1.jpg"],
+      }),
+    ),
+    false,
+  );
 });
 
 test("compare deep-link keeps two slugs", () => {
@@ -362,6 +391,7 @@ test("search, cards, rails, and vacancy wire the shared helper", () => {
   const inbox = src("src/components/daycare-lead-inbox.tsx");
   const quality = src("src/components/quality-issues.tsx");
   const helpers = src("src/lib/now-loops.ts");
+  assert.match(helpers, /from "@\/lib\/fee-program"/);
   assert.match(helpers, /export function isLiveLookingCard/);
   assert.match(helpers, /export function honestVacancy/);
   assert.match(helpers, /export function searchFiltersReady/);

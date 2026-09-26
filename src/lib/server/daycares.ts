@@ -110,6 +110,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
     }) && !isAdminOnlyListing(d),
     contactEmail: null,
     feeConfirmed: Boolean(d.feeConfirmed),
+    feeProgram: d.feeProgram || null,
     availabilityKnown: false,
     spotsUpdatedAt: null,
     lastVacancyUpdatedAt: null,
@@ -533,6 +534,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
       ageMaxMonths: found.ageMaxMonths,
       photos: found.photos,
       amenities: found.amenities,
+      feeProgram: found.feeProgram || null,
     };
   });
 

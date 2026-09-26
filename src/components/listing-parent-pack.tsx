@@ -10,6 +10,7 @@ import {
   programFeeKnown,
   safetyLabel,
 } from "@/lib/parent-listing";
+import { confirmedStoredFeeProgram } from "@/lib/fee-program";
 import { honestVacancy } from "@/lib/now-loops";
 import { useCopy } from "@/lib/use-copy";
 import { formatAgeRange, money } from "@/lib/utils";
@@ -39,6 +40,7 @@ export function ListingHeaderPills({
   const hoursText = hours.trim();
   if (hoursText && hoursText !== "—" && hoursText !== "-") parts.push(hoursText);
   if (feeFrom > 0) parts.push(`${t("monthlyFrom")} ${money(feeFrom, locale)}${t("month")}`);
+  else if (confirmedStoredFeeProgram(item) === "mb-10-day") parts.push(t("cardTenPerDay"));
   if (!parts.length) return null;
   return (
     <p className="mt-2 text-sm leading-5 text-fg" data-listing-header-pills>
