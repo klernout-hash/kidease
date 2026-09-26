@@ -243,6 +243,10 @@ function withQualityCards<T extends { id: string; qualityScore?: number; guestFa
   });
 }
 
+/**
+ * Search and featured cards drop long copy and contact fields.
+ * The street stays so a map pin can open the same directions as the listing page.
+ */
 function slimCard(card: DaycareCard): DaycareCard {
   return {
     ...card,
@@ -250,7 +254,6 @@ function slimCard(card: DaycareCard): DaycareCard {
     taglineFr: "",
     description: "",
     descriptionFr: "",
-    address: "",
     phone: null,
     hoursFr: "",
     contactEmail: null,
@@ -376,7 +379,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   return publicListings(uniqueById(filterByLocationLock(cards, lock))).map(slimCard);
 }
 
-export const searchDaycares = createServerFn({ method: "POST" })
+export const searchDaycares = createServerFn({ method: "GET" })
   .validator((input: SearchInput) => ({
     ...input,
     radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
@@ -406,7 +409,7 @@ async function loadFeatured(origin: { lat: number; lng: number; label?: string }
   return publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, 12).map(slimCard);
 }
 
-export const featuredDaycares = createServerFn({ method: "POST" })
+export const featuredDaycares = createServerFn({ method: "GET" })
   .validator((input: { lat: number; lng: number; label?: string }) => input)
   .handler(async ({ data }) => {
     const aligned = alignSearchOrigin({
@@ -554,7 +557,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
     };
   });
 
-export const getDaycaresByIds = createServerFn({ method: "POST" })
+export const getDaycaresByIds = createServerFn({ method: "GET" })
   .validator((ids: string[]) => ids)
   .handler(async ({ data: keys }) => {
     const origin = { lat: 49.8951, lng: -97.1384 };
