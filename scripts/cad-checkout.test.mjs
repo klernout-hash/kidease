@@ -15,6 +15,7 @@ import {
   createStripeCheckoutSession,
   flattenStripeBody,
   setStripeFetchForTests,
+  stripeCustomerAddressIsSet,
 } from "../src/lib/server/stripe-checkout.ts";
 
 function json(body) {
@@ -106,6 +107,71 @@ test("lookup reuse rejects a non-CAD price", () => {
   assert.throws(() => cadLookupPrice({ id: "price_blank", currency: "" }), /Canadian dollars \(CAD\) only/);
 });
 
+test("an existing Stripe address is left unchanged", async () => {
+  assert.equal(stripeCustomerAddressIsSet(null), false);
+  assert.equal(stripeCustomerAddressIsSet({}), false);
+  assert.equal(
+    stripeCustomerAddressIsSet({ line1: "1 King St", city: "Toronto", postal_code: "M5V 1A1" }),
+    true,
+  );
+
+  const previous = process.env.STRIPE_SECRET_KEY;
+  process.env.STRIPE_SECRET_KEY = "sk_test_cad_only";
+  /** @type {Array<{ url: string, method: string, body: string }>} */
+  const calls = [];
+  setStripeFetchForTests(async (input, init) => {
+    const url = String(input);
+    const method = String(init?.method || "GET");
+    calls.push({ url, method, body: String(init?.body || "") });
+    if (method === "GET" && url.includes("/customers/cus_full")) {
+      return json({
+        id: "cus_full",
+        address: { country: "US", line1: "1 King St", city: "Toronto", state: "ON", postal_code: "M5V 1A1" },
+      });
+    }
+    if (method === "GET" && url.includes("/customers/cus_street")) {
+      return json({
+        id: "cus_street",
+        address: { country: "", line1: "9 Rue Peel", city: "Montreal", postal_code: "H3A 1T1" },
+      });
+    }
+    if (method === "GET" && url.includes("/customers/cus_empty")) {
+      return json({ id: "cus_empty", address: null });
+    }
+    if (method === "POST" && url.includes("/customers/")) return json({ id: "cus_empty" });
+    return json({ id: "cs_1", url: "https://checkout.stripe.test/cs_1" });
+  });
+  try {
+    const sessionInput = {
+      mode: "subscription",
+      priceId: "price_pro",
+      successUrl: "https://kidease.ca/provider/subscription",
+      cancelUrl: "https://kidease.ca/provider/subscription",
+      locale: "en",
+      metadata: { kidease: "provider_sub" },
+    };
+    await createCatalogCheckoutSession({ ...sessionInput, customerId: "cus_full" });
+    await createCatalogCheckoutSession({ ...sessionInput, customerId: "cus_street" });
+    const kept = calls.filter((call) => call.method === "POST" && call.url.includes("/customers/cus_"));
+    assert.deepEqual(kept, []);
+
+    const before = calls.length;
+    await createCatalogCheckoutSession({ ...sessionInput, customerId: "cus_empty" });
+    const countryOnly = calls.slice(before).find((call) => call.method === "POST" && call.url.includes("/customers/cus_empty"));
+    assert.ok(countryOnly);
+    const posted = new URLSearchParams(countryOnly.body);
+    assert.equal(posted.get("address[country]"), "CA");
+    assert.equal(posted.get("address[line1]"), null);
+    assert.equal(posted.get("address[city]"), null);
+    assert.equal(posted.get("address[postal_code]"), null);
+    assert.equal(posted.get("address[state]"), null);
+  } finally {
+    setStripeFetchForTests(null);
+    if (previous == null) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = previous;
+  }
+});
+
 test("creating a checkout session sets Canada on the customer and cad on the session", async () => {
   const previous = process.env.STRIPE_SECRET_KEY;
   process.env.STRIPE_SECRET_KEY = "sk_test_cad_only";
@@ -139,12 +205,10 @@ test("creating a checkout session sets Canada on the customer and cad on the ses
       locale: "fr",
       metadata: { kidease: "provider_sub", plan: "pro" },
     });
-    const update = calls.find((call) => call.method === "POST" && call.url.includes("/customers/cus_us"));
-    assert.ok(update);
-    const updated = new URLSearchParams(update.body);
-    assert.equal(updated.get("address[country]"), "CA");
-    assert.equal(updated.get("address[state]"), "ON");
-    assert.equal(updated.get("address[city]"), "Toronto");
+    assert.equal(
+      calls.some((call) => call.method === "POST" && call.url.includes("/customers/cus_us")),
+      false,
+    );
     const session = calls.find((call) => call.url.endsWith("/checkout/sessions"));
     assert.ok(session);
     const posted = new URLSearchParams(session.body);

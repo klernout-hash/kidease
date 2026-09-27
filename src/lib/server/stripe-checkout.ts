@@ -31,7 +31,7 @@ type StripeCustomer = {
   address?: StripeAddress | null;
 };
 
-/** Customer create params. Checkout has no session field for billing country, so the customer address supplies Canada. */
+/** Customer create params. Checkout has no session field for billing country, so a new customer address supplies Canada. */
 export function canadaCustomerParams(input?: { email?: string | null }): Record<string, unknown> {
   const body: Record<string, unknown> = {
     address: { country: CHECKOUT_BILLING_COUNTRY },
@@ -41,24 +41,29 @@ export function canadaCustomerParams(input?: { email?: string | null }): Record<
   return body;
 }
 
-function canadaAddressUpdate(address: StripeAddress | null | undefined): Record<string, string> {
-  const next: Record<string, string> = { country: CHECKOUT_BILLING_COUNTRY };
-  const line1 = String(address?.line1 || "").trim();
-  const line2 = String(address?.line2 || "").trim();
-  const city = String(address?.city || "").trim();
-  const province = String(address?.state || "").trim();
-  const postal = String(address?.postal_code || "").trim();
-  if (line1) next.line1 = line1;
-  if (line2) next.line2 = line2;
-  if (city) next.city = city;
-  if (province) next.state = province;
-  if (postal) next.postal_code = postal;
-  return next;
+function addressText(value: string | null | undefined): string {
+  return String(value || "").trim();
+}
+
+/**
+ * Stripe replaces the whole address object on update. Any stored street, city,
+ * province, postal code, or country means we leave that customer alone.
+ */
+export function stripeCustomerAddressIsSet(address: StripeAddress | null | undefined): boolean {
+  if (!address) return false;
+  return Boolean(
+    addressText(address.line1) ||
+      addressText(address.line2) ||
+      addressText(address.city) ||
+      addressText(address.state) ||
+      addressText(address.postal_code) ||
+      addressText(address.country),
+  );
 }
 
 /**
  * Checkout geolocates an empty billing country from the visitor IP.
- * A customer with address.country CA is what Stripe prefills instead.
+ * Set Canada only for a new customer, or an existing one with no address yet.
  */
 export async function ensureCanadaStripeCustomer(input: {
   customerId?: string | null;
@@ -68,10 +73,9 @@ export async function ensureCanadaStripeCustomer(input: {
   if (existing) {
     try {
       const customer = await stripeRequest<StripeCustomer>(`/customers/${encodeURIComponent(existing)}`, {}, "GET");
-      const country = String(customer.address?.country || "").trim().toUpperCase();
-      if (country !== CHECKOUT_BILLING_COUNTRY) {
+      if (!stripeCustomerAddressIsSet(customer.address)) {
         await stripeRequest(`/customers/${encodeURIComponent(existing)}`, {
-          address: canadaAddressUpdate(customer.address),
+          address: { country: CHECKOUT_BILLING_COUNTRY },
         });
       }
       return existing;
