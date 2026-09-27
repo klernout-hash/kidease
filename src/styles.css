@@ -1275,6 +1275,35 @@ html[data-channel="website"] .ke-web-grid > article {
   box-shadow: 0 0 0 2px #0b0c0f, 0 0 0 2.5px rgba(255, 255, 255, 0.12);
 }
 
+.ke-map-dots {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.ke-map-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle at center, #1a3790 0 5px, #fff 5px 7px, transparent 7.5px);
+  box-shadow: none;
+  pointer-events: auto;
+  cursor: pointer;
+  appearance: none;
+}
+.ke-map-dot:focus-visible {
+  outline: 2px solid #1a3790;
+  outline-offset: 1px;
+}
 .ke-logo-pin {
   width: 36px;
   height: 36px;

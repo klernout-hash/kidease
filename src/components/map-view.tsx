@@ -85,6 +85,8 @@ type AnyPin = {
   setMap(map: google.maps.Map | null): void;
 };
 
+type DotItem = DaycareCard | MapPin;
+
 type SlugPin = AnyPin & {
   setActive(on: boolean, maps: typeof google.maps): void;
 };
@@ -484,6 +486,7 @@ export function MapView({
         atLat: originRef.current.lat,
       });
       const nextPins: AnyPin[] = [];
+      const dotPins: DotItem[] = [];
       for (const node of drawn.markers) {
         if (node.kind === "group") {
           const content = clusterEl(node.count, locale === "fr" ? "fr" : "en");
@@ -510,31 +513,47 @@ export function MapView({
           nextPins.push(overlay);
           continue;
         }
-        const item = node.item;
-        if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-        const content = logoPinEl("ke-logo-pin");
-        content.setAttribute("aria-label", displayCentreName(item.name));
+        dotPins.push(node.item);
+      }
+      const selectedItem = dotPins.find((item) => item.slug === picked);
+      const field = mountDotField({
+        maps,
+        map,
+        pins: dotPins.filter((item) => item !== selectedItem),
+        locale: locale === "fr" ? "fr" : "en",
+        onPick: (item) => {
+          pinClickAt.current = Date.now();
+          if (!("fromPrice" in item)) setPickedPin(item);
+          setPicked(item.slug);
+          onSelectRef.current(item.slug);
+        },
+      });
+      nextPins.push(field);
+      if (selectedItem && Number.isFinite(selectedItem.lat) && Number.isFinite(selectedItem.lng)) {
+        const content = logoPinEl("ke-logo-pin is-active");
+        content.setAttribute("aria-label", pinLabel(selectedItem, locale === "fr" ? "fr" : "en"));
+        content.setAttribute("aria-expanded", "true");
         const overlay = createOverlay({
           map,
-          position: { lat: item.lat, lng: item.lng },
+          position: { lat: selectedItem.lat, lng: selectedItem.lng },
           content,
-          zIndex: "live" in item && item.live ? 20 : 10,
-          collision: "OPTIONAL_AND_HIDES_LOWER_PRIORITY",
+          zIndex: 500,
+          collision: "REQUIRED",
           onClick: () => {
             pinClickAt.current = Date.now();
-            if (!("fromPrice" in item)) setPickedPin(item);
-            setPicked(item.slug);
-            onSelectRef.current(item.slug);
+            if (!("fromPrice" in selectedItem)) setPickedPin(selectedItem);
+            setPicked(selectedItem.slug);
+            onSelectRef.current(selectedItem.slug);
           },
         });
         nextPins.push(overlay);
-        markersBySlug.current.set(item.slug, wrapOverlayPin(overlay));
+        markersBySlug.current.set(selectedItem.slug, wrapOverlayPin(overlay));
       }
       pinsRef.current = nextPins;
     }, 50);
 
     return () => window.clearTimeout(timer);
-  }, [items, locale, ready, zoom, viewData]);
+  }, [items, locale, picked, ready, zoom, viewData]);
 
   useEffect(() => {
     const maps = mapsApiRef.current;
@@ -883,6 +902,62 @@ function MapPinPopup({
       <span className="ke-pin-caret" aria-hidden />
     </div>
   );
+}
+
+function pinLabel(item: { name: string; nameFr?: string }, locale: "en" | "fr") {
+  return displayCentreName(locale === "fr" ? item.nameFr || item.name : item.name);
+}
+
+function mountDotField(input: {
+  maps: typeof google.maps;
+  map: google.maps.Map;
+  pins: DotItem[];
+  locale: "en" | "fr";
+  onPick: (item: DotItem) => void;
+}): AnyPin {
+  const { maps, map, pins, locale, onPick } = input;
+  const buttons: HTMLButtonElement[] = [];
+  let wrap: HTMLDivElement | null = null;
+  const field = new maps.OverlayView();
+  field.onAdd = () => {
+    const layer = document.createElement("div");
+    layer.className = "ke-map-dots";
+    for (const item of pins) {
+      if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ke-map-dot";
+      button.setAttribute("aria-label", pinLabel(item, locale));
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        onPick(item);
+      });
+      layer.appendChild(button);
+      buttons.push(button);
+    }
+    wrap = layer;
+    field.getPanes()?.overlayMouseTarget.appendChild(layer);
+  };
+  field.draw = () => {
+    const projection = field.getProjection();
+    if (!projection) return;
+    let index = 0;
+    for (const item of pins) {
+      if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
+      const button = buttons[index];
+      index += 1;
+      if (!button) continue;
+      const point = projection.fromLatLngToDivPixel(new maps.LatLng(item.lat, item.lng));
+      if (!point) continue;
+      button.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -50%)`;
+    }
+  };
+  field.onRemove = () => {
+    wrap?.remove();
+    wrap = null;
+  };
+  field.setMap(map);
+  return field;
 }
 
 function logoPinEl(className: string) {

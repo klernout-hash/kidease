@@ -15,6 +15,7 @@ import {
   clusterCountTotal,
   clusterMapPoints,
   collectPublicMapPins,
+  groupingKm,
   mapLoadMode,
   mapViewCacheKey,
   markerCount,
@@ -95,14 +96,17 @@ test("cluster bubble copy and size stay readable", () => {
   assert.equal(MAP_FETCH_DEBOUNCE_MS >= 400, true);
 });
 
-test("city zoom uses a smaller cell than the old 0.16 degree grid", () => {
-  const cell = clusterCellSize(10, WINNIPEG.lat);
-  assert.ok(cell.latDeg < 0.12, `cell ${cell.latDeg} is still city-sized`);
-  assert.ok(cell.km > 3 && cell.km < 12);
-  const far = clusterCellSize(6, WINNIPEG.lat);
-  const near = clusterCellSize(14, WINNIPEG.lat);
-  assert.ok(far.km > cell.km);
-  assert.ok(near.km < cell.km);
+test("city zoom draws pins; overlap bubbles wait until 40px is a short distance", () => {
+  const city = clusterCellSize(10, WINNIPEG.lat);
+  assert.ok(city.km > 2 && city.km < 6, `40px at zoom 10 is ${city.km.toFixed(2)} km`);
+  assert.equal(groupingKm(10, WINNIPEG.lat), null);
+  assert.equal(groupingKm(8, WINNIPEG.lat), null);
+  const street = groupingKm(15, WINNIPEG.lat);
+  assert.ok(street != null && street <= 0.45, `street overlap ${street}`);
+  const province = groupingKm(6, WINNIPEG.lat);
+  assert.ok(province > 40, `province cell ${province}`);
+  assert.ok(clusterCellSize(6, WINNIPEG.lat).km > city.km);
+  assert.ok(clusterCellSize(15, WINNIPEG.lat).km < city.km);
 });
 
 test("map queries do not apply the search list cap of 400", () => {
@@ -132,11 +136,11 @@ test("map queries do not apply the search list cap of 400", () => {
     postalCode: "",
   }));
   const box = boxAround(pins);
-  const clustered = projectMapRows(pins, 10, box);
-  assert.equal(clustered.truncated, false);
-  assert.equal(clustered.total, 500);
-  assert.equal(clustered.mode, "clusters");
-  if (clustered.mode === "clusters") assert.equal(clusterCountTotal(clustered.clusters), 500);
+  const spread = projectMapRows(pins, 10, box);
+  assert.equal(spread.truncated, false);
+  assert.equal(spread.total, 500);
+  assert.equal(spread.mode, "pins");
+  if (spread.mode === "pins") assert.equal(spread.pins.length, 500);
 
   const streetBox = {
     minLat: pins[0].lat - 0.01,
@@ -155,7 +159,10 @@ test("map queries do not apply the search list cap of 400", () => {
   assert.equal(street.mode, "pins");
   assert.equal(street.truncated, false);
   if (street.mode === "pins") assert.equal(street.pins.length, streetPins.length);
-  assert.equal(mapLoadMode(16, box), "clusters");
+  const province = { minLat: 49, maxLat: 52, minLng: -102, maxLng: -95 };
+  assert.equal(mapLoadMode(16, province), "clusters");
+  assert.equal(mapLoadMode(10, box), "pins");
+  assert.equal(mapLoadMode(6, box), "clusters");
 });
 
 test("viewport payload replaces a capped search list without dropping rows", () => {
@@ -183,6 +190,7 @@ test("viewport payload replaces a capped search list without dropping rows", () 
   });
   assert.equal(shown.source, "viewport");
   assert.equal(markerCount(shown.markers), 460);
+  assert.equal(shown.markers.filter((marker) => marker.kind === "pin").length, 460);
   const fallback = markersForMapView({
     items: capped,
     view: null,
@@ -192,9 +200,7 @@ test("viewport payload replaces a capped search list without dropping rows", () 
   });
   assert.equal(fallback.source, "search");
   assert.equal(markerCount(fallback.markers), SEARCH_LIST_CAP);
-  const groups = fallback.markers.filter((marker) => marker.kind === "group");
-  assert.ok(groups.length + (fallback.markers.length - groups.length) > 1);
-  assert.ok(groups.length >= 4, "capped rows still spread across areas at city zoom");
+  assert.equal(fallback.markers.filter((marker) => marker.kind === "pin").length, SEARCH_LIST_CAP);
 });
 
 test("a small pan reuses the viewport cache", () => {
@@ -209,7 +215,8 @@ test("a small pan reuses the viewport cache", () => {
     maxLng: box.maxLng - 0.01,
   };
   assert.equal(viewportNeedsFetch({ visible: nudged, zoom: 10, loaded: { bbox: snapped, zoom: 10 } }), false);
-  assert.equal(viewportNeedsFetch({ visible: nudged, zoom: 11, loaded: { bbox: snapped, zoom: 10 } }), true);
+  assert.equal(viewportNeedsFetch({ visible: nudged, zoom: 11, loaded: { bbox: snapped, zoom: 10 } }), false);
+  assert.equal(viewportNeedsFetch({ visible: nudged, zoom: 6, loaded: { bbox: snapped, zoom: 10 } }), true);
   assert.equal(
     viewportNeedsFetch({
       visible: { minLat: snapped.maxLat + 0.2, maxLat: snapped.maxLat + 0.5, minLng: snapped.minLng, maxLng: snapped.minLng + 0.3 },
@@ -273,71 +280,48 @@ test("Winnipeg city zoom spreads real catalogue pins and does not stop at 400", 
   const box = boxAround(within);
   const view = projectMapRows(within, 10, box);
   assert.equal(view.truncated, false);
-  assert.equal(view.mode, "clusters");
+  assert.equal(view.mode, "pins");
   assert.equal(view.total, within.length);
-  if (view.mode !== "clusters") return;
-  assert.equal(clusterCountTotal(view.clusters), within.length);
-  assert.ok(view.clusters.length >= 8, `city zoom clusters: ${view.clusters.length}`);
-  const biggest = Math.max(...view.clusters.map((cluster) => cluster.count));
-  assert.ok(biggest < within.length / 2, `largest bubble ${biggest} of ${within.length}`);
+  if (view.mode !== "pins") return;
+  assert.equal(view.pins.length, within.length);
 
   const areas = [
     "Winnipeg, MB",
+    "St. Boniface, Winnipeg",
     "Fort Garry, Winnipeg",
     "Transcona, Winnipeg",
     "Seven Oaks, Winnipeg",
     "St. Vital, Winnipeg",
   ].map(city);
   const nearest = areas.map((area) => {
-    let best = view.clusters[0];
+    let best = view.pins[0];
     let bestKm = Infinity;
-    for (const cluster of view.clusters) {
-      const km = haversineKm(area, cluster);
+    for (const pin of view.pins) {
+      const km = haversineKm(area, pin);
       if (km < bestKm) {
-        best = cluster;
+        best = pin;
         bestKm = km;
       }
     }
-    return { label: area.label, cluster: best, km: bestKm };
+    return { label: area.label, pin: best, km: bestKm };
   });
   for (const hit of nearest) {
-    assert.ok(hit.km < 6, `${hit.label} cluster is ${hit.km.toFixed(1)} km away`);
+    assert.ok(hit.km < 6, `${hit.label} pin is ${hit.km.toFixed(1)} km away`);
   }
-  const ids = new Set(nearest.map((hit) => `${hit.cluster.lat.toFixed(4)},${hit.cluster.lng.toFixed(4)}`));
-  assert.equal(ids.size, areas.length, "city zoom keeps a bubble per Winnipeg area");
-  // St. Boniface sits about 2 km from downtown, so city zoom shares that bubble
-  // instead of stacking two counts. One zoom step splits them.
-  const boniface = city("St. Boniface, Winnipeg");
-  const downtown = city("Winnipeg, MB");
-  const closer = clusterMapPoints(within, 11, WINNIPEG.lat);
-  const near = (area) => {
-    let best = closer[0];
-    let bestKm = Infinity;
-    for (const cluster of closer) {
-      const km = haversineKm(area, cluster);
-      if (km < bestKm) {
-        best = cluster;
-        bestKm = km;
-      }
-    }
-    return best;
-  };
-  const downtownCluster = near(downtown);
-  const bonifaceCluster = near(boniface);
-  assert.ok(haversineKm(downtownCluster, bonifaceCluster) > 1);
+  const ids = new Set(nearest.map((hit) => hit.pin.slug));
+  assert.equal(ids.size, areas.length, "city zoom keeps a pin in each Winnipeg area");
 
   const zoom10 = clusterMapPoints(within, 10, WINNIPEG.lat);
-  const zoom12 = clusterMapPoints(within, 12, WINNIPEG.lat);
   const zoom15 = clusterMapPoints(within, 15, WINNIPEG.lat);
-  assert.ok(zoom12.length > zoom10.length);
-  assert.ok(zoom15.length > zoom12.length);
+  assert.equal(zoom10.length, within.length);
   assert.equal(clusterCountTotal(zoom10), within.length);
   assert.equal(clusterCountTotal(zoom15), within.length);
+  assert.ok(zoom15.length < zoom10.length, "street zoom groups only the pins that overlap");
   const singles = zoom15.filter((cluster) => cluster.count === 1).length;
   assert.ok(singles > zoom15.length / 2);
 });
 
-test("Toronto, Edmonton, Vancouver, and Moncton keep area bubbles and full counts", async () => {
+test("Toronto, Edmonton, Vancouver, and Moncton draw every pin at city zoom", async () => {
   for (const label of ["Toronto, ON", "Edmonton, AB", "Vancouver, BC", "Moncton, NB"]) {
     const origin = city(label);
     const loaded = await pins();
@@ -346,12 +330,11 @@ test("Toronto, Edmonton, Vancouver, and Moncton keep area bubbles and full count
     const view = projectMapRows(within, 10, boxAround(within));
     assert.equal(view.truncated, false);
     assert.equal(view.total, within.length);
-    assert.equal(view.mode, "clusters");
-    if (view.mode !== "clusters") continue;
-    assert.equal(clusterCountTotal(view.clusters), within.length);
-    assert.ok(view.clusters.length >= 4, `${label} city zoom clusters: ${view.clusters.length}`);
-    const biggest = Math.max(...view.clusters.map((cluster) => cluster.count));
-    assert.ok(biggest < within.length, `${label} is still one bubble`);
+    assert.equal(view.mode, "pins");
+    if (view.mode !== "pins") continue;
+    assert.equal(view.pins.length, within.length);
+    const drawn = clusterMapPoints(within, 10, origin.lat);
+    assert.equal(drawn.length, within.length, `${label} collapsed into bubbles at city zoom`);
   }
 });
 
@@ -379,6 +362,8 @@ test("the map still waits on the Google Maps loader", () => {
   assert.match(view, /mapPinsInView/);
   assert.match(view, /MAP_FETCH_DEBOUNCE_MS/);
   assert.match(view, /ke-cluster-bubble/);
+  assert.match(view, /ke-map-dot/);
+  assert.match(view, /ke-logo-pin/);
   assert.match(loader, /importLibrary\("marker"\)/);
   assert.match(loader, /MAP_VIEW_WAIT_MS/);
 });

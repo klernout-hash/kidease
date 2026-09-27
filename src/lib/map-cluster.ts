@@ -1,27 +1,49 @@
 import { isPublicListing } from "./listing-visibility.ts";
 
 /**
- * Viewport clustering for the search map.
+ * Viewport drawing for the search map.
  *
- * The list query (NEON_NEAR_SQL) stops at SEARCH_LIST_CAP. That cap, plus a
- * coarse grid, is what drew one "400" bubble on the Winnipeg map. Map reads
- * keep every public listing in the viewport and group them with a
- * zoom-dependent cell about MAP_CLUSTER_PX screen pixels across.
+ * The list query (NEON_NEAR_SQL) stops at SEARCH_LIST_CAP. That cap, drawn
+ * with a coarse grid, is what put one "400" bubble on the Winnipeg map.
+ * Map reads keep every public listing in the viewport.
+ *
+ * At city and search-radius zoom each listing is its own dot. A count bubble
+ * is only for pins that sit within MAP_OVERLAP_PX of each other on screen,
+ * and only once that distance is a short walk (see MAP_OVERLAP_MAX_KM).
+ * Zoomed out to a province, the grid switches to area bubbles.
  */
 
 export const SEARCH_LIST_CAP = 400;
 
-/** Screen pixels per cluster cell. Neighbourhood-scale at city zoom (~10). */
-export const MAP_CLUSTER_PX = 72;
+/** Cluster radius in screen pixels. Pins farther apart stay separate. */
+export const MAP_OVERLAP_PX = 40;
 
 /**
- * Merge cells whose centroids are closer than this fraction of a cell.
- * Stops overlapping bubbles without pulling separate areas into one.
+ * Area-bubble cell when the camera is zoomed out past a city search.
+ * About one bubble per place, not one bubble for the whole province.
+ */
+export const MAP_AREA_PX = 72;
+
+/**
+ * Merge area cells whose centroids are closer than this fraction of a cell.
+ * Stops overlapping bubbles without pulling the next city in.
  */
 export const MAP_MERGE_FRAC = 0.62;
 
-/** At this zoom and above, a normal viewport returns pins instead of counts. */
-export const MAP_PIN_ZOOM = 14;
+/**
+ * Search-radius zoom and closer (25 km is zoom 10). Listings are dots.
+ * Below this, the map is a province view and uses area bubbles.
+ */
+export const MAP_CITY_ZOOM = 8;
+
+/**
+ * A 40px radius at zoom 10 is several kilometres and would hide the city.
+ * Overlap bubbles start only once 40px is this short on the ground.
+ */
+export const MAP_OVERLAP_MAX_KM = 0.45;
+
+/** A camera wider than a max search radius is a province view, even if zoom is high. */
+export const MAP_PROVINCE_SPAN_KM = 160;
 
 /** Above this, return clusters rather than a large pin payload. Not a count cap. */
 export const MAP_PIN_PAYLOAD_MAX = 2500;
@@ -102,18 +124,34 @@ export function clampMapZoom(zoom: number): number {
   return Math.min(18, Math.max(3, zoom));
 }
 
+export function clusterPixelSpan(zoom: number): number {
+  return clampMapZoom(zoom) < MAP_CITY_ZOOM ? MAP_AREA_PX : MAP_OVERLAP_PX;
+}
+
 export function clusterCellSize(zoom: number, lat: number) {
   const z = clampMapZoom(zoom);
   const clampedLat = Math.max(-80, Math.min(80, Number.isFinite(lat) ? lat : 50));
   const cos = Math.cos((clampedLat * Math.PI) / 180);
   const safeCos = Math.abs(cos) < 0.2 ? 0.2 : Math.abs(cos);
   const metersPerPx = (METERS_PER_PX_ZOOM0 * safeCos) / 2 ** z;
-  const km = (MAP_CLUSTER_PX * metersPerPx) / 1000;
+  const km = (clusterPixelSpan(z) * metersPerPx) / 1000;
   return {
     km,
     latDeg: km / 110.574,
     lngDeg: km / (111.32 * safeCos),
   };
+}
+
+/**
+ * Ground distance at which markers share a bubble.
+ * Null means draw every listing: a 40px group would cover a neighbourhood.
+ */
+export function groupingKm(zoom: number, lat: number): number | null {
+  const z = clampMapZoom(zoom);
+  const cell = clusterCellSize(z, lat);
+  if (z < MAP_CITY_ZOOM) return cell.km;
+  if (cell.km <= MAP_OVERLAP_MAX_KM) return cell.km;
+  return null;
 }
 
 export function mapSpanKm(box: MapBbox): number {
@@ -124,10 +162,10 @@ export function mapSpanKm(box: MapBbox): number {
   return Math.max(latKm, lngKm);
 }
 
-/** Pins only for a street-level viewport. A wide box stays aggregated. */
+/** Pins for a city or search-radius camera. A province-sized view stays aggregated. */
 export function mapLoadMode(zoom: number, box: MapBbox): "clusters" | "pins" {
-  if (clampMapZoom(zoom) < MAP_PIN_ZOOM) return "clusters";
-  if (mapSpanKm(box) > 14) return "clusters";
+  if (clampMapZoom(zoom) < MAP_CITY_ZOOM) return "clusters";
+  if (mapSpanKm(box) > MAP_PROVINCE_SPAN_KM) return "clusters";
   return "pins";
 }
 
@@ -256,6 +294,19 @@ function mergeWeighted<T>(cells: Weighted<T>[], minSepKm: number): Weighted<T>[]
   return out;
 }
 
+function singleCells<T extends { lat: number; lng: number }>(points: T[]): Weighted<T>[] {
+  return points.map((point) => ({
+    lat: point.lat,
+    lng: point.lng,
+    count: 1,
+    minLat: point.lat,
+    maxLat: point.lat,
+    minLng: point.lng,
+    maxLng: point.lng,
+    items: [point],
+  }));
+}
+
 /** Grid, then a short merge so neighbouring cells do not stack on each other. */
 export function clusterMapPoints<T extends { lat: number; lng: number }>(
   points: T[],
@@ -265,7 +316,15 @@ export function clusterMapPoints<T extends { lat: number; lng: number }>(
   const usable = points.filter(usableMapPoint);
   if (usable.length === 0) return [];
   const lat = atLat ?? usable.reduce((sum, point) => sum + point.lat, 0) / usable.length;
-  const cell = clusterCellSize(zoom, lat);
+  const radiusKm = groupingKm(zoom, lat);
+  if (radiusKm == null) return singleCells(usable);
+  const cos = Math.cos((Math.max(-80, Math.min(80, lat)) * Math.PI) / 180);
+  const safeCos = Math.abs(cos) < 0.2 ? 0.2 : Math.abs(cos);
+  const cell = {
+    km: radiusKm,
+    latDeg: radiusKm / 110.574,
+    lngDeg: radiusKm / (111.32 * safeCos),
+  };
   const buckets = new Map<string, T[]>();
   for (const point of usable) {
     const key = `${Math.floor(point.lat / cell.latDeg)}_${Math.floor(point.lng / cell.lngDeg)}`;
@@ -346,9 +405,9 @@ export function markerCount(markers: Array<{ kind: string; count?: number }>): n
 }
 
 /**
- * Prefer a viewport payload that covers the camera. Otherwise cluster the
+ * Prefer a viewport payload that covers the camera. Otherwise draw the
  * search rows already on the page (may be the list cap) so the first paint
- * is still spread across areas.
+ * is still a set of pins, not one bubble.
  */
 export function markersForMapView<T extends { lat: number; lng: number }>(input: {
   items: T[];
@@ -384,7 +443,11 @@ export function projectMapRows(rows: MapPin[], zoom: number, box: MapBbox): MapV
     return { mode: "pins", pins: inBox, total, truncated: false, bbox: box, zoom: zoomed };
   }
   const mid = (box.minLat + box.maxLat) / 2;
-  const clusters = clusterMapPoints(inBox, zoomed, mid).map((cell) => {
+  const grouped =
+    inBox.length > MAP_PIN_PAYLOAD_MAX && groupingKm(zoomed, mid) == null
+      ? clusterMapPoints(inBox, Math.min(zoomed, MAP_CITY_ZOOM - 1), mid)
+      : clusterMapPoints(inBox, zoomed, mid);
+  const clusters = grouped.map((cell) => {
     const cluster: MapCluster = {
       lat: cell.lat,
       lng: cell.lng,
@@ -499,7 +562,11 @@ export function mapViewCacheKey(box: MapBbox, zoom: number): string {
   ].join(":");
 }
 
-/** Skip a request when the last payload still covers this camera at the same zoom. */
+/**
+ * Skip a request when the last payload still covers this camera.
+ * A closer city zoom can reuse a pin payload already in hand. Area counts
+ * cannot: they were grouped for a different zoom.
+ */
 export function viewportNeedsFetch(input: {
   visible: MapBbox;
   zoom: number;
@@ -507,8 +574,10 @@ export function viewportNeedsFetch(input: {
 }): boolean {
   const loaded = input.loaded;
   if (!loaded) return true;
-  if (Math.round(loaded.zoom) !== Math.round(clampMapZoom(input.zoom))) return true;
-  return !bboxCovers(loaded.bbox, input.visible);
+  if (!bboxCovers(loaded.bbox, input.visible)) return true;
+  const zoom = clampMapZoom(input.zoom);
+  if (Math.round(loaded.zoom) === Math.round(zoom)) return false;
+  return mapLoadMode(loaded.zoom, loaded.bbox) !== "pins" || mapLoadMode(zoom, input.visible) !== "pins";
 }
 
 export function bboxCovers(outer: MapBbox, inner: MapBbox): boolean {

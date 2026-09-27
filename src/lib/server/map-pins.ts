@@ -3,9 +3,10 @@
  *
  * Search lists stop at 400 rows (NEON_NEAR_SQL / NEON_DUAL_NEAR_SQL /
  * APPROVED_CITY_SQL). That is a list cap, not the number of public centres
- * in a city. This read has no row cap: low zoom returns grid counts, street
- * zoom returns a short pin (name, address, coordinates). Results are memoized
- * by the snapped viewport so a small pan does not hit Neon again.
+ * in a city. This read has no row cap: a province view returns grid counts,
+ * and a city or search-radius view returns a short pin (name, address,
+ * coordinates) for every listing in the box. Results are memoized by the
+ * snapped viewport so a small pan does not hit Neon again.
  */
 
 import { createServerFn } from "@tanstack/react-start";
