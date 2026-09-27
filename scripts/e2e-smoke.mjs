@@ -106,10 +106,14 @@ async function upgradePlaces(page) {
   return { header, panel, drawer };
 }
 
-async function shot(page, name, width) {
+async function shot(page, name, width, content) {
   await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
   // Channel is chosen once at document load. Reload so 390px shots use the app bar.
   await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
+  const ready =
+    width < 1024 ? page.locator('[data-ke="app-tab-bar"]') : page.locator('[data-ke="role-nav"]:visible');
+  await ready.first().waitFor({ timeout: timeoutMs }).catch(() => {});
+  if (content) await page.locator(content).first().waitFor({ timeout: timeoutMs }).catch(() => {});
   const dir = join(dirname(outDir), "shots");
   mkdirSync(dir, { recursive: true });
   await page.screenshot({ path: join(dir, `${name}.png`), fullPage: false }).catch(() => {});
@@ -122,7 +126,7 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="role-nav"][data-role="guest"]:visible').first().waitFor({ timeout: timeoutMs });
     let guestNav = await roleNavText(page);
-    await shot(page, "guest-desktop", 1280);
+    await shot(page, "guest-desktop", 1280, "h1");
     const menu = page.locator('header button[aria-label="Menu"]');
     if (await menu.isVisible().catch(() => false)) {
       await menu.click({ timeout: 8000 });
@@ -131,7 +135,7 @@ async function runRoleFixture(page, base) {
       guestNav = `${guestNav}\n${await drawerNav.innerText().catch(() => "")}`;
       await page.keyboard.press("Escape");
     }
-    await shot(page, "guest-390", 390);
+    await shot(page, "guest-390", 390, "h1");
     const guestOk =
       /i'm a parent/i.test(guestNav) &&
       /i'm a daycare/i.test(guestNav) &&
@@ -152,8 +156,9 @@ async function runRoleFixture(page, base) {
       status: parentWrong?.status() ?? 0,
     });
     await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
-    await shot(page, "parent-390", 390);
-    await shot(page, "parent-desktop", 1280);
+    await shot(page, "parent-390", 390, '[data-ke="parent-home"]');
+    await shot(page, "parent-desktop", 1280, '[data-ke="parent-home"]');
+    await page.locator('[data-ke="role-nav"][data-role="parent"]:visible').first().waitFor({ timeout: timeoutMs });
     const parentNav = await roleNavText(page);
     const parentCross = mentions(parentNav, ["My listing", "Enquiries", "I'm a daycare", "Get more with Pro"]);
     const parentPlaces = await upgradePlaces(page);
@@ -213,8 +218,9 @@ async function runRoleFixture(page, base) {
       status: daycareWrong?.status() ?? 0,
     });
     await page.locator('[data-ke="daycare-desk"]').waitFor({ timeout: timeoutMs });
-    await shot(page, "daycare-390", 390);
-    await shot(page, "daycare-desktop", 1280);
+    await shot(page, "daycare-390", 390, '[data-ke="daycare-desk"]');
+    await shot(page, "daycare-desktop", 1280, '[data-ke="daycare-desk"]');
+    await page.locator('[data-ke="role-nav"][data-role="provider"]:visible').first().waitFor({ timeout: timeoutMs });
     const daycareNav = await roleNavText(page);
     const daycareCross = mentions(daycareNav, ["Saved", "Requests & tours", "I'm a parent", "Try Parent Plus"]);
     const daycarePlaces = await upgradePlaces(page);
@@ -369,13 +375,23 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/login?role=admin", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     const adminLoginTitle = ((await page.locator("h1").first().innerText().catch(() => "")) || "").trim();
     record("login-role-admin-plain", !/operator|admin/i.test(adminLoginTitle), { note: adminLoginTitle });
-    await page.locator('input[type="email"]').fill("kyle@kidease.ca");
-    await page.locator('[data-ke="admin-email-first"]').waitFor({ timeout: timeoutMs }).catch(() => {});
+    const emailInput = page.locator('input[type="email"]');
+    await emailInput.waitFor({ state: "visible", timeout: timeoutMs });
+    const ownerEmail = "kyle@kidease.ca";
+    let ownerForm = false;
+    for (let attempt = 0; attempt < 4 && !ownerForm; attempt += 1) {
+      await emailInput.fill(ownerEmail);
+      ownerForm = await page
+        .locator('[data-ke="admin-email-first"]')
+        .waitFor({ state: "visible", timeout: 4000 })
+        .then(() => true)
+        .catch(() => false);
+    }
     const ownerTitle = ((await page.locator("h1").first().innerText().catch(() => "")) || "").trim();
-    const ownerPassword = (await page.locator('[data-ke="admin-email-first"]').count()) > 0;
+    const ownerValue = await emailInput.inputValue().catch(() => "");
     const ownerSocial = await page.locator('[data-ke="social-sign-in"]').count();
-    record("owner-email-password", ownerPassword && ownerSocial === 0 && !/operator|admin/i.test(ownerTitle), {
-      note: ownerTitle,
+    record("owner-email-password", ownerForm && ownerSocial === 0 && !/operator|admin/i.test(ownerTitle), {
+      note: `${ownerTitle} value=${ownerValue} social=${ownerSocial}`,
     });
     const twoFactorPath = `/${"verify"}-${"2fa"}`;
     await page.goto(`${new URL(twoFactorPath, base).href}?next=/admin`, {
