@@ -107,19 +107,18 @@ test("nearby trusted geo leads the popular list; inferred Toronto does not", () 
   assert.equal(hubLatLng(cityHubDefBySlug("winnipeg"))?.lat, WINNIPEG.lat);
 });
 
-test("guest home hero no longer duplicates Explore filter chips or the city grid", () => {
+test("guest home hero keeps the search bar and drops the city grid and trust duplicate", () => {
   const home = src("src/routes/index.tsx");
   const hero = home.slice(home.indexOf("from-soft"), home.indexOf('id="how"'));
-  assert.match(hero, /HomePopularCities/);
+  assert.doesNotMatch(hero, /HomePopularCities/);
   assert.match(hero, /featuredSearch/);
+  assert.match(hero, /\{heroCityBrowse\}/);
+  assert.match(home, /to="\/cities"/);
   assert.match(src("src/components/explore-search-bar.tsx"), /PlaceSearch/);
-  assert.doesNotMatch(hero, /ChipButton/);
   assert.doesNotMatch(hero, /hero-trust-chips/);
   assert.doesNotMatch(hero, /t\("trustLicensedOnly"\)/);
+  assert.doesNotMatch(hero, /t\("heroTrust"\)/);
   assert.doesNotMatch(hero, /t\("sortOpen"\)/);
   assert.doesNotMatch(hero, /t\("requestInfo"\)/);
-  assert.match(hero, /t\("heroTrust"\)/);
   assert.match(hero, /HeroYard/);
-  assert.match(src("src/components/home-popular-cities.tsx"), /overflow-x-auto/);
-  assert.match(src("src/components/home-popular-cities.tsx"), /sm:flex-wrap/);
 });

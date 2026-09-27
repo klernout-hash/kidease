@@ -22,6 +22,7 @@ function literalLink(to: string, labelEn: string, labelFr: string, extra: Partia
 /** Parents column — product links. Destinations unchanged from the four-column footer. */
 export const FOOTER_PARENTS: FooterLinkDef[] = [
   copyLink("/search", "search"),
+  copyLink("/cities", "browseCities"),
   copyLink("/login", "parentSignIn", {
     search: { role: "parent", desk: "parent", intent: "in", next: "/parent" },
   }),

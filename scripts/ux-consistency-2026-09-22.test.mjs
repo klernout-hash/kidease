@@ -36,8 +36,10 @@ describe("home live strip matches search honesty", () => {
     const home = src("src/routes/index.tsx");
     const copy = src("src/lib/copy.ts");
     assert.match(home, /homeLiveStrip\(liveCount/);
-    assert.match(home, /data-ke="home-zero-live"/);
-    assert.match(home, /exploreBrowseHint/);
+    assert.match(home, /strip\.liveCount > 0/);
+    assert.doesNotMatch(home, /data-ke="home-zero-live"/);
+    assert.doesNotMatch(home, /exploreBrowseHint/);
+    assert.match(src("src/routes/search.tsx"), /exploreBrowseHint/);
     assert.doesNotMatch(home, /liveCount > 0 \? t\("liveToggleCount"\)/);
     assert.match(copy, /featuredStripCount: "Featured · \{n\}"/);
     assert.match(copy, /featuredStripCount: "En vedette · \{n\}"/);
@@ -85,7 +87,9 @@ describe("Canada distances stay in kilometres", () => {
     const units = src("src/lib/units.ts");
     assert.match(card, /displayDistance\(distanceKm, "km"\)/);
     assert.doesNotMatch(card, /t\("miAway"\)/);
-    assert.match(home, /displayDistance\(radiusKm, "km"\)/);
+    assert.match(src("src/components/explore-search-bar.tsx"), /\{km\} km/);
+    assert.match(home, /onRadiusChange=\{setRadiusKm\}/);
+    assert.doesNotMatch(home, /unitsMi/);
     assert.match(search, /data-ke="radius-km"/);
     assert.doesNotMatch(search, /setDistanceUnit\("mi"\)/);
     assert.doesNotMatch(search, /unitsMi/);

@@ -19,6 +19,7 @@ import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-healt
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
 import { Route as ChildcareBenefitsProgramRouteImport } from './routes/childcare-benefits-program'
+import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -168,6 +169,11 @@ const ChildcareBenefitsProgramRoute =
     path: '/childcare-benefits-program',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CitiesRoute = CitiesRouteImport.update({
+  id: '/cities',
+  path: '/cities',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClaimRoute = ClaimRouteImport.update({
   id: '/claim',
   path: '/claim',
@@ -666,6 +672,7 @@ export interface FileRoutesByFullPath {
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
+  '/cities': typeof CitiesRoute
   '/claim': typeof ClaimRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
@@ -775,6 +782,7 @@ export interface FileRoutesByTo {
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
+  '/cities': typeof CitiesRoute
   '/claim': typeof ClaimRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
@@ -883,6 +891,7 @@ export interface FileRoutesById {
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
+  '/cities': typeof CitiesRoute
   '/claim': typeof ClaimRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
@@ -994,6 +1003,7 @@ export interface FileRouteTypes {
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
+    | '/cities'
     | '/claim'
     | '/compare'
     | '/contact'
@@ -1103,6 +1113,7 @@ export interface FileRouteTypes {
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
+    | '/cities'
     | '/claim'
     | '/compare'
     | '/contact'
@@ -1210,6 +1221,7 @@ export interface FileRouteTypes {
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
+    | '/cities'
     | '/claim'
     | '/compare'
     | '/contact'
@@ -1320,6 +1332,7 @@ export interface RootRouteChildren {
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
   ChildcareBenefitsProgramRoute: typeof ChildcareBenefitsProgramRoute
+  CitiesRoute: typeof CitiesRoute
   ClaimRoute: typeof ClaimRoute
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
@@ -1464,6 +1477,13 @@ declare module '@tanstack/react-router' {
       path: '/childcare-benefits-program'
       fullPath: '/childcare-benefits-program'
       preLoaderRoute: typeof ChildcareBenefitsProgramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cities': {
+      id: '/cities'
+      path: '/cities'
+      fullPath: '/cities'
+      preLoaderRoute: typeof CitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/claim': {
@@ -2263,6 +2283,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,
   ChildcareBenefitsProgramRoute: ChildcareBenefitsProgramRoute,
+  CitiesRoute: CitiesRoute,
   ClaimRoute: ClaimRoute,
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,

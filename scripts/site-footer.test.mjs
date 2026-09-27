@@ -160,6 +160,7 @@ test("Daycares column keeps verify listings and drops About, Team, and Manitoba 
 test("Parents column keeps product links and omits city hubs", () => {
   const parentTo = FOOTER_PARENTS.map((link) => link.to);
   assert.ok(parentTo.includes("/search"));
+  assert.ok(parentTo.includes("/cities"));
   assert.ok(parentTo.includes("/login"));
   assert.ok(parentTo.includes("/parent"));
   assert.ok(parentTo.includes("/benefits"));
@@ -172,8 +173,10 @@ test("Parents column keeps product links and omits city hubs", () => {
   assert.doesNotMatch(nav, /cityHubs/);
   assert.doesNotMatch(nav, /cityHubPath/);
   assert.doesNotMatch(nav, /daycare\/city/);
-  assert.match(src("src/routes/index.tsx"), /CITY_HUB_DEFS\.map/);
+  assert.match(src("src/routes/index.tsx"), /to="\/cities"/);
+  assert.match(src("src/routes/cities.tsx"), /\/daycare\/city\/\$city/);
   assert.match(src("public/sitemap.xml"), /\/daycare\/city\/winnipeg/);
+  assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/cities</);
 });
 
 test("Find daycare jobs lives on Daycares only; KidEase Careers stays on /jobs/post", () => {
@@ -196,6 +199,7 @@ test("footer CSS clusters columns instead of stretching full width", () => {
 
 test("EN footer labels sort alphabetically in every column", () => {
   assert.deepEqual(labels(FOOTER_PARENTS, "en"), [
+    "Browse by city",
     "Childcare Benefits Program",
     "Compare",
     "Get the app",
@@ -240,6 +244,7 @@ test("FR-CA footer labels sort by the French string in every column", () => {
     "Espace parent",
     "Favoris",
     "Liste pour la visite",
+    "Parcourir par ville",
     "Programme d’aide à la garde d’enfants",
     "Rechercher",
     "Télécharger l’appli",
