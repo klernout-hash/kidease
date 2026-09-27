@@ -8,7 +8,7 @@
  *
  * Does not charge Stripe or submit OTPs. See docs/e2e.md.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import http from "node:http";
 import https from "node:https";
 import { spawn } from "node:child_process";
@@ -453,6 +453,17 @@ async function waitForOrigin(url, ms) {
   throw new Error(`preview not ready at ${url}: ${last}`);
 }
 
+function stagePgliteArtifacts() {
+  // Nitro inlines PGLite into the server function, so the relative
+  // pglite.data / wasm URLs point at that directory. Copy the package files
+  // there or the preview process exits before the first request.
+  const dest = join(root, ".vercel/output/functions/__server.func");
+  const srcDir = join(root, "node_modules/@electric-sql/pglite/dist");
+  for (const name of ["pglite.data", "pglite.wasm", "initdb.wasm"]) {
+    copyFileSync(join(srcDir, name), join(dest, name));
+  }
+}
+
 function startPreview() {
   // Role smoke signs in real accounts and opens the real plan panels, so the
   // preview needs PGLite when DATABASE_URL is unset. Do not set VERCEL here:
@@ -461,6 +472,7 @@ function startPreview() {
   const env = { ...process.env };
   if (!String(env.DATABASE_URL || "").trim()) {
     delete env.VERCEL;
+    stagePgliteArtifacts();
   }
   // Loopback seed + mocked checkout only. Production builds ignore the role cookie.
   env.E2E_ROLE_FIXTURE = "1";
