@@ -43,7 +43,9 @@ test("home keeps a single trust disclaimer and the police-check wording", () => 
   assert.doesNotMatch(home, /t\("heroTrust"\)/);
   assert.doesNotMatch(src("src/routes/fr.index.tsx"), /t\("heroTrust"\)/);
   assert.match(home, /<TrustBar/);
-  assert.equal((home.match(/<TrustBar/g) ?? []).length, 1);
+  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
+  assert.equal((web.match(/<TrustBar/g) ?? []).length, 1);
+  assert.doesNotMatch(home.slice(home.indexOf("ke-app-only")), /<TrustBar/);
   assert.match(copy, /trustBarLead: "KidEase verifies licences and listing ownership\. Screening on file means required documents were reviewed\. KidEase does not run police checks\."/);
   assert.match(copy, /trustBarLead: "KidEase vérifie les permis et qui possède une fiche\. Dossier de filtrage signifie que les documents requis ont été examinés\. KidEase ne fait pas de contrôle policier\."/);
   assert.doesNotMatch(home, /OptionalUpgrades/);
