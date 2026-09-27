@@ -25,13 +25,22 @@ import {
   decodeMapPinsWire,
   encodeMapPinWire,
   expandBboxByPx,
+  mapBatchRetryDelayMs,
   mapCameraMoved,
+  mapCameraSettleRequests,
+  mapCanvasFrame,
+  mapCanvasScreenOrigin,
   mapLoadMode,
   mapLogoPinPx,
+  mapPinCanvasPoint,
+  mapPinPlaceLine,
   mapPinTapPx,
   mapPointerIsTap,
+  mapTileKey,
   mapTilesForCamera,
   mapSpanKm,
+  runMapTileBatch,
+  splitMapPinsByTile,
   mapViewCacheKey,
   markerCount,
   pickNearestMapDot,
@@ -686,6 +695,118 @@ test("viewport tiles stay individual pins and the wire payload is much smaller",
   }
 });
 
+test("the pin canvas is anchored on the map top-left so every quadrant paints and hits", () => {
+  const width = 1040;
+  const height = 476;
+  const mapLeft = 200;
+  const mapTop = 225;
+  const uncorrected = mapCanvasFrame({ width, height, northWest: { x: 0, y: 0 } });
+  const shifted = mapCanvasScreenOrigin({
+    mapLeft,
+    mapTop,
+    width,
+    height,
+    frame: uncorrected,
+  });
+  assert.equal(shifted.left, 720);
+  assert.equal(shifted.top, 463);
+
+  const frame = mapCanvasFrame({
+    width,
+    height,
+    northWest: { x: -width / 2, y: -height / 2 },
+  });
+  const screen = mapCanvasScreenOrigin({ mapLeft, mapTop, width, height, frame });
+  assert.equal(frame.originX, -width / 2);
+  assert.equal(frame.originY, -height / 2);
+  assert.equal(screen.left, mapLeft);
+  assert.equal(screen.top, mapTop);
+
+  const fallback = mapCanvasFrame({ width, height, northWest: null });
+  assert.deepEqual(fallback, frame);
+
+  const quadrants = [
+    { id: "nw", x: -300, y: -120 },
+    { id: "ne", x: 280, y: -140 },
+    { id: "sw", x: -260, y: 150 },
+    { id: "se", x: 240, y: 160 },
+  ];
+  const centers = quadrants.map((pin) => mapPinCanvasPoint(pin, frame));
+  for (const center of centers) {
+    assert.ok(center.x >= 0 && center.x <= width, `x ${center.x}`);
+    assert.ok(center.y >= 0 && center.y <= height, `y ${center.y}`);
+  }
+  const pins = quadrants.map((pin) => ({ id: pin.id, name: pin.id }));
+  const topLeft = pickNearestMapDot(pins, centers, centers[0], 16);
+  assert.equal(topLeft?.id, "nw");
+  assert.equal(pickNearestMapDot(pins, centers, { x: quadrants[0].x, y: quadrants[0].y }, 16), null);
+  for (const center of centers) {
+    const hit = pickNearestMapDot(pins, centers, center, 16);
+    assert.equal(hit?.id, pins[centers.indexOf(center)].id);
+  }
+});
+
+test("a camera settle batches every missing tile into one request and retries a 429", async () => {
+  const visible = { minLat: 49.7, maxLat: 49.95, minLng: -97.35, maxLng: -96.95 };
+  const tiles = mapTilesForCamera(visible, 9, 1040, 476);
+  assert.ok(tiles.length > 1 && tiles.length <= 24);
+  assert.equal(mapCameraSettleRequests(tiles.length), 1);
+  assert.equal(mapCameraSettleRequests(0), 0);
+
+  const pin = { id: "nw-pin", lat: (tiles[0].minLat + tiles[0].maxLat) / 2, lng: (tiles[0].minLng + tiles[0].maxLng) / 2 };
+  const split = splitMapPinsByTile([pin], tiles, 9);
+  assert.equal(split.length, tiles.length);
+  assert.equal(split.filter((tile) => tile.pins.some((row) => row.id === pin.id)).length, 1);
+  assert.equal(split[0].key, mapTileKey(tiles[0], 9));
+
+  let calls = 0;
+  const waits = [];
+  const loaded = await runMapTileBatch({
+    load: async () => {
+      calls += 1;
+      if (calls === 1) {
+        const error = new Error("Too many requests");
+        error.status = 429;
+        error.retryAfterSec = 1;
+        throw error;
+      }
+      return { tiles: split };
+    },
+    sleep: async (ms) => {
+      waits.push(ms);
+    },
+  });
+  assert.equal(calls, 2);
+  assert.deepEqual(waits, [1000]);
+  assert.equal(loaded.tiles.length, tiles.length);
+  assert.equal(mapBatchRetryDelayMs({ status: 500 }, 0), null);
+  assert.equal(mapBatchRetryDelayMs({ status: 429 }, 3), null);
+  assert.equal(mapBatchRetryDelayMs(new Error("Too many requests"), 1), 1000);
+
+  const view = read("src/components/map-view.tsx");
+  const server = read("src/lib/server/map-pins.ts");
+  assert.match(view, /mapPinTiles\(\{ data: \{ zoom: zoomNow, tiles: missing \} \}\)/);
+  assert.match(view, /MAP_FETCH_DEBOUNCE_MS/);
+  assert.match(server, /loadMapPinTileBatch/);
+  assert.match(server, /unionMapTiles/);
+  assert.doesNotMatch(view, /exact: true/);
+});
+
+test("the tap popup shows a street address when the centre has one", () => {
+  assert.equal(
+    mapPinPlaceLine({ address: "123 Main St", city: "Winnipeg", away: "2 km" }),
+    "123 Main St · Winnipeg · 2 km",
+  );
+  assert.equal(mapPinPlaceLine({ address: "", city: "Winnipeg", away: "2 km" }), "Winnipeg · 2 km");
+  assert.equal(
+    mapPinPlaceLine({ address: "123 Main St, Winnipeg", city: "Winnipeg", away: "2 km" }),
+    "123 Main St, Winnipeg · 2 km",
+  );
+  const view = read("src/components/map-view.tsx");
+  assert.match(view, /mapPinPlaceLine/);
+  assert.doesNotMatch(view, /item\.city \|\| displayListingText\(item\.address\)/);
+});
+
 function pointInside(pin, box) {
   return pin.lat >= box.minLat && pin.lat <= box.maxLat && pin.lng >= box.minLng && pin.lng <= box.maxLng;
 }
@@ -727,7 +848,10 @@ test("the map still waits on the Google Maps loader", () => {
   assert.match(view, /mapPointerIsTap/);
   assert.match(view, /event\.detail === 0/);
   assert.match(view, /mapTilesForCamera/);
-  assert.match(view, /exact: true/);
+  assert.match(view, /mapPinTiles/);
+  assert.match(view, /mapCanvasFrame/);
+  assert.match(view, /runMapTileBatch/);
+  assert.doesNotMatch(view, /worker\(\), worker\(\), worker\(\)/);
   assert.match(view, /ke-logo-pin is-active/);
   assert.doesNotMatch(view, /className = "ke-map-dot"/);
   assert.match(view, /ke-logo-pin/);
