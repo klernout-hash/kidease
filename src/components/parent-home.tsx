@@ -27,6 +27,7 @@ export function ParentHome({
   renewsOn = null,
   messages = 0,
   dismissed = false,
+  settled = false,
   onDismiss,
 }: {
   saved: DaycareCard[];
@@ -38,6 +39,7 @@ export function ParentHome({
   renewsOn?: string | null;
   messages?: number;
   dismissed?: boolean;
+  settled?: boolean;
   onDismiss?: () => void;
 }) {
   const { t } = useCopy();
@@ -55,7 +57,7 @@ export function ParentHome({
   });
 
   return (
-    <div className="mt-4 space-y-6" data-ke="parent-home">
+    <div className="mt-4 space-y-6" data-ke="parent-home" data-settled={settled ? "1" : "0"}>
       {card ? (
         <RoleUpgradeCard
           role="parent"

@@ -139,6 +139,7 @@ function ProviderPage() {
   const [leads, setLeads] = useState<LeadRequest[]>([]);
   const [pipeline, setPipeline] = useState<PipelineCard[]>([]);
   const [upgradeDismissed, setUpgradeDismissed] = useState(false);
+  const [deskSettled, setDeskSettled] = useState(false);
   const [subscription, setSubscription] = useState<{
     selectedPlan: ProviderEntitlements["selectedPlan"];
     entitledPlan: ProviderEntitlements["entitledPlan"];
@@ -183,6 +184,7 @@ function ProviderPage() {
     setStats(res.stats);
     setSubscription(res.subscription);
     setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
+    setDeskSettled(true);
     setRequests(incoming);
     setTours(tourRows);
     setPipeline(pipelineRows);
@@ -321,6 +323,7 @@ function ProviderPage() {
           inquiryUsed={subscription?.inquiryUsed ?? 0}
           inquiryCap={subscription?.inquiryCap ?? null}
           dismissed={upgradeDismissed}
+          settled={deskSettled}
           onDismiss={() => {
             setUpgradeDismissed(true);
             void dismissUpgradeCard().catch(() => setUpgradeDismissed(false));

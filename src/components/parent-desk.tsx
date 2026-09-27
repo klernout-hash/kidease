@@ -106,6 +106,7 @@ export function ParentDesk({
   const [leads, setLeads] = useState<LeadRequest[]>([]);
   const [centreMessages, setCentreMessages] = useState(0);
   const [upgradeDismissed, setUpgradeDismissed] = useState(false);
+  const [homeSettled, setHomeSettled] = useState(false);
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
@@ -219,6 +220,7 @@ export function ParentDesk({
     setLeads([]);
     setCentreMessages(0);
     setUpgradeDismissed(false);
+    setHomeSettled(false);
     setExplore([]);
     setExploreReady(false);
     setPicked({});
@@ -236,6 +238,7 @@ export function ParentDesk({
       })
       .then((f) => {
         if (cancelled || !f) return;
+        startTransition(() => setHomeSettled(true));
         cancelIdle = scheduleIdle(() => {
           if (cancelled) return;
           void loadExplore(f.bookings).catch(() => undefined);
@@ -336,6 +339,7 @@ export function ParentDesk({
           renewsOn={chrome.renewsOn}
           messages={centreMessages}
           dismissed={upgradeDismissed}
+          settled={homeSettled}
           onDismiss={() => {
             setUpgradeDismissed(true);
             void dismissUpgradeCard().catch(() => setUpgradeDismissed(false));

@@ -26,6 +26,7 @@ export function DaycareDeskHome({
   inquiryUsed = 0,
   inquiryCap = null,
   dismissed = false,
+  settled = false,
   onDismiss,
 }: {
   listings: Daycare[];
@@ -37,6 +38,7 @@ export function DaycareDeskHome({
   inquiryUsed?: number;
   inquiryCap?: number | null;
   dismissed?: boolean;
+  settled?: boolean;
   onDismiss?: () => void;
 }) {
   const { t } = useCopy();
@@ -63,7 +65,7 @@ export function DaycareDeskHome({
         : null;
 
   return (
-    <div className="mb-6 space-y-3" data-ke="daycare-desk">
+    <div className="mb-6 space-y-3" data-ke="daycare-desk" data-settled={settled ? "1" : "0"}>
       {card ? (
         <RoleUpgradeCard
           role="provider"

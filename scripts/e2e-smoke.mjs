@@ -176,7 +176,7 @@ async function runRoleFixture(page, base) {
       note: page.url(),
       status: parentWrong?.status() ?? 0,
     });
-    await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
+    await page.locator('[data-ke="parent-home"][data-settled="1"]').waitFor({ timeout: timeoutMs });
     const parentCardNew = await page.locator('[data-ke="upgrade-card"]').count();
     record("parent-card-new", parentCardNew === 0, { note: `cards ${parentCardNew}` });
     await shot(page, "parent-new", 1280, '[data-ke="parent-home"]');
@@ -240,7 +240,7 @@ async function runRoleFixture(page, base) {
       note: page.url(),
       status: daycareWrong?.status() ?? 0,
     });
-    await page.locator('[data-ke="daycare-desk"]').waitFor({ timeout: timeoutMs });
+    await page.locator('[data-ke="daycare-desk"][data-settled="1"]').waitFor({ timeout: timeoutMs });
     const daycareCardNew = await page.locator('[data-ke="upgrade-card"]').count();
     record("daycare-card-new", daycareCardNew === 0, { note: `cards ${daycareCardNew}` });
     await shot(page, "daycare-390", 390, '[data-ke="daycare-desk"]');
