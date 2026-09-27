@@ -4,7 +4,7 @@
  * Benefits stay on through past_due. They end when Stripe deletes the subscription.
  */
 
-import { DAYCARE_ADDONS, paidPlanPrice } from "./upgrade-plans.ts";
+import { DAYCARE_ADDONS, formatPlanCad, paidPlanPrice } from "./upgrade-plans.ts";
 
 export type BillingLocale = "en" | "fr";
 
@@ -81,14 +81,7 @@ export function billingStatusLine(input: {
 }
 
 function money(amount: number, locale: BillingLocale): string {
-  const digits = Number.isInteger(amount) ? 0 : 2;
-  const formatted = new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
-    style: "currency",
-    currency: "CAD",
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(amount);
-  return formatted;
+  return formatPlanCad(amount, locale);
 }
 
 export function billingPriceLabel(input: {
@@ -99,7 +92,7 @@ export function billingPriceLabel(input: {
   if (input.product === "featured_city") {
     const amount = DAYCARE_ADDONS.find((addon) => addon.id === "featured_city")?.amountCad ?? 29;
     const value = money(amount, input.locale);
-    return input.locale === "fr" ? `${value} / mois` : `${value}/month`;
+    return input.locale === "fr" ? `${value}/mois` : `${value}/month`;
   }
   const price = paidPlanPrice(input.product);
   const monthly = price?.monthlyCad ?? 0;
@@ -107,11 +100,11 @@ export function billingPriceLabel(input: {
   const amount = input.interval === "year" ? yearly : monthly;
   const value = money(amount, input.locale);
   if (input.product === "network") {
-    if (input.interval === "year") return input.locale === "fr" ? `${value} / site / an` : `${value}/site/year`;
-    return input.locale === "fr" ? `${value} / site / mois` : `${value}/site/month`;
+    if (input.interval === "year") return input.locale === "fr" ? `${value}/site/an` : `${value}/site/year`;
+    return input.locale === "fr" ? `${value}/site/mois` : `${value}/site/month`;
   }
-  if (input.interval === "year") return input.locale === "fr" ? `${value} / an` : `${value}/year`;
-  return input.locale === "fr" ? `${value} / mois` : `${value}/month`;
+  if (input.interval === "year") return input.locale === "fr" ? `${value}/an` : `${value}/year`;
+  return input.locale === "fr" ? `${value}/mois` : `${value}/month`;
 }
 
 const PRODUCT_NAME: Record<BillingProduct, { en: string; fr: string }> = {

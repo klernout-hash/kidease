@@ -9,13 +9,14 @@ import {
   type StripePriceKey,
 } from "@/lib/server/stripe-catalog";
 import { stripeRequest } from "@/lib/server/stripe-checkout";
-import { checkCatalogPrice, type StripePriceSnapshot } from "@/lib/stripe-price-mode";
+import { cadLookupPrice, checkCatalogPrice, type StripePriceSnapshot } from "@/lib/stripe-price-mode";
 import { redactStripeDetail } from "@/lib/stripe-public-error";
 import { recentStripeCheckoutErrors, type StripeCheckoutErrorRow } from "@/lib/server/stripe-checkout-log";
 
 type StripePrice = {
   id?: string;
   lookup_key?: string | null;
+  currency?: string | null;
   unit_amount?: number | null;
   recurring?: { interval?: string } | null;
   product?: string | { id?: string } | null;
@@ -97,13 +98,20 @@ export async function bootstrapStripeCatalog(opts?: { createMissing?: boolean })
     let createdPriceId: string | null = null;
     let action: CatalogBootstrapRow["action"] = existingEnv ? "env" : "missing";
 
+    let rejectedCurrency: string | null = null;
     if (!existingEnv && live) {
       const found = await findPriceByLookup(item.lookupKey);
-      existingPriceId = found?.id ?? null;
-      if (existingPriceId) action = "reused";
-      else if (createMissing && !item.proposal) {
-        createdPriceId = await createCatalogPrice(item);
-        action = "created";
+      try {
+        const reusable = cadLookupPrice(found);
+        if (reusable) {
+          existingPriceId = reusable;
+          action = "reused";
+        } else if (createMissing && !item.proposal) {
+          createdPriceId = await createCatalogPrice(item);
+          action = "created";
+        }
+      } catch {
+        rejectedCurrency = String(found?.currency || "missing");
       }
     }
 
@@ -113,7 +121,10 @@ export async function bootstrapStripeCatalog(opts?: { createMissing?: boolean })
     let priceOk: boolean | null = null;
     let priceNote = "";
     let liveUnitAmountCents: number | null = null;
-    if (!live) {
+    if (rejectedCurrency) {
+      priceOk = false;
+      priceNote = `Lookup price is not CAD (${rejectedCurrency.toUpperCase()}). KidEase checkout is Canadian dollars (CAD) only.`;
+    } else if (!live) {
       priceNote = item.proposal
         ? "Proposal. Not checked — Stripe live key is off. This price is not created until Kyle approves it."
         : "Not checked — Stripe live key is off.";

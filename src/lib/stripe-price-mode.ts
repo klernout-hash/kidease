@@ -5,6 +5,7 @@
  */
 
 import { amountToCents, type StripeCatalogItem, type StripeCatalogKind } from "./server/stripe-catalog.ts";
+import { formatPlanCad } from "./upgrade-plans.ts";
 
 export type StripePriceSnapshot = {
   id?: string | null;
@@ -37,6 +38,17 @@ export type PriceModeBad = {
 
 export type PriceModeResult = PriceModeOk | PriceModeBad;
 
+/** Reuse a lookup-key price only when Stripe reports CAD. Anything else is refused. */
+export function cadLookupPrice(
+  price: { id?: string | null; currency?: string | null } | null | undefined,
+): string | null {
+  const id = String(price?.id || "").trim();
+  if (!id) return null;
+  const currency = String(price?.currency || "").trim().toLowerCase();
+  if (currency !== "cad") throw new Error("KidEase checkout is Canadian dollars (CAD) only");
+  return id;
+}
+
 export function checkoutModeForKind(kind: StripeCatalogKind): CheckoutMode {
   return kind === "recurring" ? "subscription" : "payment";
 }
@@ -51,9 +63,7 @@ export function observedPriceKind(price: StripePriceSnapshot | null | undefined)
 
 function moneyCad(cents: number | null | undefined): string {
   if (cents == null || !Number.isFinite(cents)) return "an unknown amount";
-  const dollars = cents / 100;
-  const text = Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2);
-  return `$${text} CAD`;
+  return formatPlanCad(cents / 100, "en");
 }
 
 function expectedPhrase(item: Pick<StripeCatalogItem, "kind" | "interval">): string {

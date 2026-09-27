@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   RECOMMENDED_LABEL,
   formatPlanCad,
+  yearlySavingsCad,
   yearlySavingsPercent,
   type PlanLocale,
   type UpgradePlanCopy,
@@ -28,7 +29,15 @@ export function UpgradePlanCard({
 }) {
   const yearlyMode = plan.id !== "free" && interval === "year" && yearly != null && yearly > 0;
   const percent = yearlyMode ? yearlySavingsPercent(monthly, yearly) : null;
+  const saved = percent != null ? yearlySavingsCad(monthly, yearly) : null;
   const price = formatPlanCad(yearlyMode ? yearly! : monthly, locale);
+  const saveUnit = perSite
+    ? locale === "fr"
+      ? "/site/an"
+      : "/site/year"
+    : locale === "fr"
+      ? "/an"
+      : "/year";
   const unit = perSite
     ? yearlyMode
       ? locale === "fr"
@@ -68,7 +77,13 @@ export function UpgradePlanCard({
       </p>
       {percent != null ? (
         <p className="mt-2 text-xs font-semibold text-primary" data-ke="plan-save">
-          {locale === "fr" ? `Économisez ${percent} %` : `Save ${percent}%`}
+          {saved == null
+            ? locale === "fr"
+              ? `Économisez ${percent} %`
+              : `Save ${percent}%`
+            : locale === "fr"
+              ? `Économisez ${percent} % · ${formatPlanCad(saved, locale)}${saveUnit}`
+              : `Save ${percent}% · ${formatPlanCad(saved, locale)}${saveUnit}`}
         </p>
       ) : null}
       <p className="mt-3 text-sm text-muted">{plan.pitch[locale]}</p>

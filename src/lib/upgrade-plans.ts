@@ -352,13 +352,24 @@ export function upgradeUnlockedBenefits(input: {
   return lines.slice(0, 3).map((line) => line[locale]);
 }
 
+/**
+ * Plan prices. `en-CA` currency symbol is `$`, which reads as US dollars.
+ * Format with that symbol, then force a `CA$` prefix (`CA$49`, `CA$7.99`).
+ */
 export function formatPlanCad(amount: number, locale: PlanLocale): string {
-  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
+  const fr = locale === "fr";
+  const safe = Number.isFinite(amount) ? amount : 0;
+  const digits = Number.isInteger(safe) ? 0 : 2;
+  const formatted = new Intl.NumberFormat(fr ? "fr-CA" : "en-CA", {
     style: "currency",
     currency: "CAD",
-    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+    currencyDisplay: "symbol",
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(safe);
+  const negative = formatted.includes("-");
+  const numeric = formatted.replace(/[^\d,.]/g, "");
+  return `${negative ? "-" : ""}CA$${numeric}`;
 }
 
 export function yearlySavingsLine(monthly: number, yearly: number | null | undefined, locale: PlanLocale): string | null {
@@ -366,5 +377,5 @@ export function yearlySavingsLine(monthly: number, yearly: number | null | undef
   if (save == null || yearly == null) return null;
   const year = formatPlanCad(yearly, locale);
   const saved = formatPlanCad(save, locale);
-  return locale === "fr" ? `ou ${year} / an · économisez ${saved}` : `or ${year} / year · save ${saved}`;
+  return locale === "fr" ? `ou ${year}/an · économisez ${saved}` : `or ${year}/year · save ${saved}`;
 }

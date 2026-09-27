@@ -6,6 +6,7 @@ import {
   PAID_PLAN_PRICES,
   PARENT_UPGRADE_PLANS,
   RECOMMENDED_LABEL,
+  formatPlanCad,
   paidPlanPrice,
   yearlySavingsPercent,
   yearlySavingsPercentFromCents,
@@ -102,7 +103,7 @@ export function AdminStripeCatalog() {
                     price.hideUntilBothPrices || price.yearlyProposal
                       ? " Proposal — hidden until the Stripe price env is set. Needs Kyle’s OK."
                       : "";
-                  return `Yearly saves ${percent}% (rounded down from $${price.monthlyCad} × 12 vs $${price.yearlyCad}).${proposal}`;
+                  return `Yearly saves ${percent}% (rounded down from ${formatPlanCad(price.monthlyCad, "en")} × 12 vs ${formatPlanCad(price.yearlyCad, "en")}).${proposal}`;
                 })()}
               </p>
             ) : null}
@@ -129,7 +130,7 @@ export function AdminStripeCatalog() {
               <div className="flex flex-wrap justify-between gap-2">
                 <span>
                   {row.envName}
-                  {row.required ? "" : " (optional)"} · ${row.amountCad} CAD
+                  {row.required ? "" : " (optional)"} · {formatPlanCad(row.amountCad, "en")}
                   {row.expectedKind === "recurring"
                     ? ` · recurring${row.expectedInterval ? ` ${row.expectedInterval}` : ""}`
                     : " · one-time"}

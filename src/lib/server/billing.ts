@@ -15,7 +15,10 @@ import {
 import { canCreateBillForCentre, canReadBill, decideBillCheckout, resolveConnectDestination } from "@/lib/access-control";
 import { extractStripeBillRef, type StripeBillObject } from "@/lib/stripe-bill-event";
 import { createStripeCheckoutSession } from "@/lib/server/stripe-checkout";
+import { rememberStripeCustomer } from "@/lib/server/stripe-lifecycle";
 import { notifyParentBill, notifyPlatform } from "@/lib/server/notify";
+import { formatPlanCad } from "@/lib/upgrade-plans";
+import { normalizeCheckoutLocale } from "@/lib/stripe-wallets";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
@@ -157,8 +160,8 @@ async function postBillMessage(
   const payUrl = `${appOrigin()}/pay/bill/${bill.id}`;
   const body =
     kind === "sent"
-      ? `New bill from ${bill.daycareName}: $${dollars} CAD for ${bill.period}.${due} Pay in KidEase: ${payUrl}`
-      : `Bill paid: $${dollars} CAD for ${bill.period} at ${bill.daycareName}.`;
+      ? `New bill from ${bill.daycareName}: ${formatPlanCad(dollars, "en")} for ${bill.period}.${due} Pay in KidEase: ${payUrl}`
+      : `Bill paid: ${formatPlanCad(dollars, "en")} for ${bill.period} at ${bill.daycareName}.`;
   await sql`
     insert into messages (id, conversation_id, sender, body, kind)
     values (${nid("msg")}, ${cid}, ${"system"}, ${body}, ${"notify"})
@@ -262,7 +265,7 @@ export async function applyStripeBillEvent(input: {
       daycareName: fresh.daycareName,
       actorName: fresh.parentName,
       actorEmail: fresh.parentEmail,
-      detail: `Bill ${fresh.number} · $${Math.round(fresh.amountCents / 100)} CAD · ${fresh.period}`,
+      detail: `Bill ${fresh.number} · ${formatPlanCad(Math.round(fresh.amountCents / 100), "en")} · ${fresh.period}`,
     });
   } catch (err) {
     console.error("[kidease-bill] paid notify failed", err);
@@ -509,7 +512,7 @@ export const sendBill = createServerFn({ method: "POST" })
         to: fresh.parentEmail,
         parentName: fresh.parentName,
         daycareName: fresh.daycareName,
-        amountLabel: `$${Math.round(fresh.amountCents / 100)} CAD`,
+        amountLabel: formatPlanCad(Math.round(fresh.amountCents / 100), "en"),
         period: fresh.period,
         dueAt: fresh.dueAt,
         payUrl: `${appOrigin()}/pay/bill/${fresh.id}`,
@@ -558,8 +561,15 @@ export const getBill = createServerFn({ method: "GET" })
 
 export const createBillCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((billId: string) => billId)
-  .handler(async ({ context, data: billId }) => {
+  .validator((input: string | { billId?: string; locale?: string | null }) => {
+    if (typeof input === "string") return { billId: input, locale: null as "en" | "fr" | null };
+    return {
+      billId: String(input?.billId || "").trim(),
+      locale: normalizeCheckoutLocale(input?.locale),
+    };
+  })
+  .handler(async ({ context, data }) => {
+    const billId = data.billId;
     const sql = await getSql();
     const row = stripeChargesLive() ? await loadInvoice(sql, billId) : null;
     const bill = row ? mapBill(row) : null;
@@ -579,6 +589,10 @@ export const createBillCheckout = createServerFn({ method: "POST" })
       chargesEnabled: connect[0]?.charges_enabled,
     });
     const origin = appOrigin();
+    const profile = await sql<{ stripe_customer_id: string | null; locale: string | null }>`
+      select stripe_customer_id, locale from profiles where user_id = ${context.userId} limit 1
+    `.catch(() => []);
+    const locale = data.locale ?? (normalizeCheckoutLocale(profile[0]?.locale) ?? "en");
     const session = await createStripeCheckoutSession({
       billId: bill.id,
       number: bill.number,
@@ -588,10 +602,13 @@ export const createBillCheckout = createServerFn({ method: "POST" })
       daycareName: bill.daycareName,
       successUrl: `${origin}/pay/bill/${bill.id}?paid=1`,
       cancelUrl: `${origin}/pay/bill/${bill.id}`,
+      customerId: profile[0]?.stripe_customer_id ?? null,
       customerEmail: bill.parentEmail,
+      locale,
       destinationAccount: destination,
       applicationFeeCents: destination ? bill.platformFeeCents : undefined,
     });
+    await rememberStripeCustomer(context.userId, session.customer ?? null);
     const pi = typeof session.payment_intent === "string" ? session.payment_intent : null;
     await sql`
       update invoices set

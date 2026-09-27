@@ -9,7 +9,13 @@ import {
   createCatalogCheckoutSession,
   updateSubscriptionCancelAtPeriodEnd,
 } from "@/lib/server/stripe-checkout";
-import { applyStripeSubscriptionEvent, type StripeLifecycleObject } from "@/lib/server/stripe-lifecycle";
+import {
+  applyStripeSubscriptionEvent,
+  profileCheckoutLocale,
+  rememberStripeCustomer,
+  type StripeLifecycleObject,
+} from "@/lib/server/stripe-lifecycle";
+import { normalizeCheckoutLocale } from "@/lib/stripe-wallets";
 import { ALREADY_BILLED, checkoutBlockedByLiveSubscription } from "@/lib/subscription-lifecycle";
 import { requireCatalogCheckout } from "@/lib/server/stripe-price-guard";
 import { runUserCheckout } from "@/lib/server/stripe-checkout-log";
@@ -112,10 +118,10 @@ export const getParentPlus = createServerFn({ method: "GET" })
 
 export const startParentPlusCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { interval: PlusInterval; plan?: "plus" | "alerts" }) => {
+  .validator((input: { interval: PlusInterval; plan?: "plus" | "alerts"; locale?: string | null }) => {
     if (!isPlusInterval(input.interval)) throw new Error("Choose monthly or yearly");
     const plan = input.plan === "alerts" ? "alerts" : "plus";
-    return { interval: input.interval, plan };
+    return { interval: input.interval, plan, locale: normalizeCheckoutLocale(input.locale) };
   })
   .handler(async ({ context, data }) => {
     const desks = await assertParentBuyer(context.userId);
@@ -140,6 +146,7 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
       fallback: CHECKOUT_COULD_NOT_START,
       fn: async () => {
         const checked = await requireCatalogCheckout(priceKey);
+        const locale = data.locale ?? (await profileCheckoutLocale(context.userId));
         const session = await createCatalogCheckoutSession({
           mode: checked.mode,
           priceId: checked.priceId,
@@ -148,6 +155,7 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
           customerId: state.customerId,
           customerEmail: state.customerId ? null : await userEmail(context.userId),
           clientReferenceId: context.userId,
+          locale,
           metadata: {
             kidease: "parent_plus",
             role: "parent",
@@ -157,6 +165,7 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
             interval: data.interval,
           },
         });
+        await rememberStripeCustomer(context.userId, session.customer ?? null);
         if (!session.url) throw new Error("Stripe did not return a checkout link");
         return { url: session.url };
       },

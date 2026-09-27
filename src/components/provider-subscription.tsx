@@ -240,7 +240,7 @@ export function ProviderSubscriptionPanel({
     }
     setBusy(true);
     try {
-      const result = await startProviderCheckout({ data: next });
+      const result = await startProviderCheckout({ data: { ...next, locale: loc } });
       if (result.url) {
         await openStripeCheckout(result.url);
         return;
@@ -258,7 +258,7 @@ export function ProviderSubscriptionPanel({
   async function payAddon(addon: ProviderAddonId) {
     setBusy(true);
     try {
-      const result = await startProviderAddonCheckout({ data: { addon, centreId: centreId || null } });
+      const result = await startProviderAddonCheckout({ data: { addon, centreId: centreId || null, locale: loc } });
       if (result.url) {
         await openStripeCheckout(result.url);
         return;

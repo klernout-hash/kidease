@@ -13,6 +13,78 @@ import { checkoutCurrency, checkoutLocale, checkoutPaymentMethodTypes } from "..
 
 export const STRIPE_STATEMENT_SUFFIX = "KIDEASE";
 
+/** Billing country on every KidEase Checkout customer. ISO code, not a label. */
+export const CHECKOUT_BILLING_COUNTRY = "CA";
+
+type StripeAddress = {
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  /** Stripe's address field for a Canadian province. */
+  state?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+};
+
+type StripeCustomer = {
+  id?: string | null;
+  address?: StripeAddress | null;
+};
+
+/** Customer create params. Checkout has no session field for billing country, so the customer address supplies Canada. */
+export function canadaCustomerParams(input?: { email?: string | null }): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    address: { country: CHECKOUT_BILLING_COUNTRY },
+  };
+  const email = String(input?.email || "").trim();
+  if (email) body.email = email;
+  return body;
+}
+
+function canadaAddressUpdate(address: StripeAddress | null | undefined): Record<string, string> {
+  const next: Record<string, string> = { country: CHECKOUT_BILLING_COUNTRY };
+  const line1 = String(address?.line1 || "").trim();
+  const line2 = String(address?.line2 || "").trim();
+  const city = String(address?.city || "").trim();
+  const province = String(address?.state || "").trim();
+  const postal = String(address?.postal_code || "").trim();
+  if (line1) next.line1 = line1;
+  if (line2) next.line2 = line2;
+  if (city) next.city = city;
+  if (province) next.state = province;
+  if (postal) next.postal_code = postal;
+  return next;
+}
+
+/**
+ * Checkout geolocates an empty billing country from the visitor IP.
+ * A customer with address.country CA is what Stripe prefills instead.
+ */
+export async function ensureCanadaStripeCustomer(input: {
+  customerId?: string | null;
+  email?: string | null;
+}): Promise<string> {
+  const existing = String(input.customerId || "").trim();
+  if (existing) {
+    try {
+      const customer = await stripeRequest<StripeCustomer>(`/customers/${encodeURIComponent(existing)}`, {}, "GET");
+      const country = String(customer.address?.country || "").trim().toUpperCase();
+      if (country !== CHECKOUT_BILLING_COUNTRY) {
+        await stripeRequest(`/customers/${encodeURIComponent(existing)}`, {
+          address: canadaAddressUpdate(customer.address),
+        });
+      }
+      return existing;
+    } catch {
+      // Stale id: create a Canada customer rather than failing the charge.
+    }
+  }
+  const created = await stripeRequest<StripeCustomer>("/customers", canadaCustomerParams({ email: input.email }));
+  const id = String(created.id || "").trim();
+  if (!id) throw new Error("Stripe did not return a customer");
+  return id;
+}
+
 export function appOrigin(): string {
   return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca").replace(/\/$/, "");
 }
@@ -144,12 +216,15 @@ export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, 
         },
       },
     ],
+    currency,
     metadata: { bill_id: input.billId, kidease: "bill" },
     payment_intent_data: paymentIntent,
     allow_promotion_codes: allowPromotionCodes() ? "true" : undefined,
   };
-  if (input.customerId) body.customer = input.customerId;
-  else if (input.customerEmail) body.customer_email = input.customerEmail;
+  if (input.customerId) {
+    body.customer = input.customerId;
+    body.customer_update = { address: "auto" };
+  } else if (input.customerEmail) body.customer_email = input.customerEmail;
   return body;
 }
 
@@ -163,12 +238,15 @@ export function catalogCheckoutBody(input: CatalogCheckoutInput): Record<string,
     cancel_url: input.cancelUrl,
     client_reference_id: input.clientReferenceId || undefined,
     line_items: [{ price: input.priceId, quantity: Math.max(1, input.quantity ?? 1) }],
+    currency: "cad",
     metadata,
     allow_promotion_codes: (input.allowPromotionCodes ?? allowPromotionCodes()) ? "true" : undefined,
     billing_address_collection: "auto",
   };
-  if (input.customerId) body.customer = input.customerId;
-  else if (input.customerEmail) body.customer_email = input.customerEmail;
+  if (input.customerId) {
+    body.customer = input.customerId;
+    body.customer_update = { address: "auto" };
+  } else if (input.customerEmail) body.customer_email = input.customerEmail;
   if (input.mode === "subscription") {
     body.subscription_data = { metadata };
   } else {
@@ -227,19 +305,38 @@ export async function stripeRequest<T>(
 }
 
 export async function createStripeCheckoutSession(input: StripeCheckoutInput): Promise<StripeCheckoutSession> {
-  const json = await stripeRequest<StripeCheckoutSession>("/checkout/sessions", checkoutSessionBody(input));
-  if (!json.id) throw new Error("Stripe checkout failed");
-  return { id: json.id, url: json.url ?? null, payment_intent: json.payment_intent ?? null };
-}
-
-export async function createCatalogCheckoutSession(input: CatalogCheckoutInput): Promise<StripeCheckoutSession> {
-  const json = await stripeRequest<StripeCheckoutSession>("/checkout/sessions", catalogCheckoutBody(input));
+  const customerId = await ensureCanadaStripeCustomer({
+    customerId: input.customerId,
+    email: input.customerEmail,
+  });
+  const json = await stripeRequest<StripeCheckoutSession>(
+    "/checkout/sessions",
+    checkoutSessionBody({ ...input, customerId, customerEmail: null }),
+  );
   if (!json.id) throw new Error("Stripe checkout failed");
   return {
     id: json.id,
     url: json.url ?? null,
     payment_intent: json.payment_intent ?? null,
-    customer: typeof json.customer === "string" ? json.customer : null,
+    customer: customerId,
+  };
+}
+
+export async function createCatalogCheckoutSession(input: CatalogCheckoutInput): Promise<StripeCheckoutSession> {
+  const customerId = await ensureCanadaStripeCustomer({
+    customerId: input.customerId,
+    email: input.customerEmail,
+  });
+  const json = await stripeRequest<StripeCheckoutSession>(
+    "/checkout/sessions",
+    catalogCheckoutBody({ ...input, customerId, customerEmail: null }),
+  );
+  if (!json.id) throw new Error("Stripe checkout failed");
+  return {
+    id: json.id,
+    url: json.url ?? null,
+    payment_intent: json.payment_intent ?? null,
+    customer: typeof json.customer === "string" ? json.customer : customerId,
     subscription: typeof json.subscription === "string" ? json.subscription : null,
   };
 }

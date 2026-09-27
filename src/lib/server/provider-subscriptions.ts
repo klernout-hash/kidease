@@ -35,8 +35,14 @@ import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { canBuyDaycareUpgrade, DAYCARE_UPGRADE_DENIED } from "@/lib/upgrade-role";
 import { jobPostSpend, pickUnspentJobCredit, resolveAddonCentre } from "@/lib/centre-addons";
 import { ALREADY_BILLED, checkoutBlockedByLiveSubscription } from "@/lib/subscription-lifecycle";
+import { normalizeCheckoutLocale } from "@/lib/stripe-wallets";
 import { nid } from "@/lib/utils";
-import { applyStripeSubscriptionEvent, type StripeLifecycleObject } from "@/lib/server/stripe-lifecycle";
+import {
+  applyStripeSubscriptionEvent,
+  profileCheckoutLocale,
+  rememberStripeCustomer,
+  type StripeLifecycleObject,
+} from "@/lib/server/stripe-lifecycle";
 
 export type ProviderSubscriptionState = {
   plan: ProviderPlanId;
@@ -270,13 +276,14 @@ export const saveProviderSubscription = createServerFn({ method: "POST" })
 
 export const startProviderCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { plan: ProviderPlanId; interval: ProviderInterval; addons: ProviderAddonId[] }) => {
+  .validator((input: { plan: ProviderPlanId; interval: ProviderInterval; addons: ProviderAddonId[]; locale?: string | null }) => {
     if (!isProviderPlanId(input.plan)) throw new Error("Choose a centre plan");
     if (!isProviderInterval(input.interval)) throw new Error("Choose monthly or yearly");
     return {
       plan: input.plan,
       interval: input.interval,
       addons: parseProviderAddons(serializeProviderAddons(input.addons)),
+      locale: normalizeCheckoutLocale(input.locale),
     };
   })
   .handler(async ({ context, data }) => {
@@ -308,6 +315,7 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
       fn: async () => {
         const checked = await requireCatalogCheckout(priceKey);
         const lane = await daycareCheckoutMeta(context.userId, desks.role);
+        const locale = data.locale ?? (await profileCheckoutLocale(context.userId));
         const session = await createCatalogCheckoutSession({
           mode: checked.mode,
           priceId: checked.priceId,
@@ -317,6 +325,7 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
           customerId: state.customerId,
           customerEmail: state.customerId ? null : await userEmail(context.userId),
           clientReferenceId: context.userId,
+          locale,
           metadata: {
             kidease: "provider_sub",
             ...lane,
@@ -324,6 +333,7 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
             interval: data.interval,
           },
         });
+        await rememberStripeCustomer(context.userId, session.customer ?? null);
         if (!session.url) throw new Error("Stripe did not return a checkout link");
         return { url: session.url, saved: true as const };
       },
@@ -332,12 +342,16 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
 
 export const startProviderAddonCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { addon: ProviderAddonId; centreId?: string | null }) => {
+  .validator((input: { addon: ProviderAddonId; centreId?: string | null; locale?: string | null }) => {
     const addon = input.addon;
     if (addon !== "featured_city" && addon !== "claim_boost" && addon !== "job_post") {
       throw new Error("Choose an add-on");
     }
-    return { addon, centreId: String(input.centreId || "").trim() || null };
+    return {
+      addon,
+      centreId: String(input.centreId || "").trim() || null,
+      locale: normalizeCheckoutLocale(input.locale),
+    };
   })
   .handler(async ({ context, data }) => {
     const desks = await requireSubscriptionAccess(context.userId);
@@ -368,6 +382,7 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
       fn: async () => {
         const checked = await requireCatalogCheckout(data.addon);
         const lane = await daycareCheckoutMeta(context.userId, desks.role, centreId);
+        const locale = data.locale ?? (await profileCheckoutLocale(context.userId));
         const session = await createCatalogCheckoutSession({
           mode: checked.mode,
           priceId: checked.priceId,
@@ -376,12 +391,14 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
           customerId: state.customerId,
           customerEmail: state.customerId ? null : await userEmail(context.userId),
           clientReferenceId: context.userId,
+          locale,
           metadata: {
             kidease: "addon",
             ...lane,
             addon: data.addon,
           },
         });
+        await rememberStripeCustomer(context.userId, session.customer ?? null);
         if (!session.url) throw new Error("Stripe did not return a checkout link");
         return { url: session.url };
       },
