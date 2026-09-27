@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
-import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, recommendedRank } from "@/lib/proximity";
+import { UNMEASURED_DISTANCE_KM, doorDistanceKm, includeCardInRadius } from "@/lib/card-distance";
+import { catchmentMatch, clampRadiusKm, compareProximity, recommendedRank } from "@/lib/proximity";
 import { resolveListingTourTimezone } from "@/lib/tour-calendar";
 import { catalogByIdsGet, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
 import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
@@ -140,7 +141,8 @@ function toDaycare(d: CatalogDaycare): Daycare {
 
 function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
   const daycare = toDaycare(d);
-  const km = typeof d.distanceKm === "number" ? d.distanceKm : distanceKm(origin, { lat: d.lat, lng: d.lng });
+  const door = doorDistanceKm(origin, { lat: d.lat, lng: d.lng });
+  const km = door == null ? UNMEASURED_DISTANCE_KM : door;
   const catchm = catchmentMatch(origin, { lat: d.lat, lng: d.lng, postalCode: d.postalCode }, km, originFsa);
   return {
     ...daycare,
@@ -296,7 +298,9 @@ async function liveCardsForSearch(data: SearchInput): Promise<DaycareCard[]> {
     lock,
     label: data.label || data.q,
   });
-  return publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa)))).map(slimCard);
+  return publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa))))
+    .filter((card) => includeCardInRadius(card, origin, data.radiusKm))
+    .map(slimCard);
 }
 
 function unionLiveCards(primary: DaycareCard[], live: DaycareCard[]): DaycareCard[] {
@@ -398,7 +402,9 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
       return compareProximity(left, right);
     }),
   );
-  return publicListings(uniqueById(filterByLocationLock(cards, lock))).map(slimCard);
+  return publicListings(uniqueById(filterByLocationLock(cards, lock)))
+    .filter((card) => includeCardInRadius(card, origin, data.radiusKm))
+    .map(slimCard);
 }
 
 export const searchDaycares = createServerFn({ method: "GET" })
@@ -433,7 +439,10 @@ async function loadFeatured(
   const ranked = sortFeaturedCityAfterPriority(
     await overlayFeaturedCity(await overlayPriority(scored)),
   );
-  return publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, 12).map(slimCard);
+  return publicListings(uniqueById(filterByLocationLock(ranked, lock)))
+    .filter((card) => includeCardInRadius(card, origin, radius))
+    .slice(0, 12)
+    .map(slimCard);
 }
 
 export const featuredDaycares = createServerFn({ method: "GET" })

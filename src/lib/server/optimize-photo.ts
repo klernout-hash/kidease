@@ -70,7 +70,15 @@ export async function optimizePhoto(request: Request): Promise<Response> {
   }
 
   const buf = await readListingOriginal(src, request);
-  if (!buf) return new Response("not found", { status: 404 });
+  if (!buf) {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "x-kidease-photo": "missing",
+        "cache-control": "public, max-age=300",
+      },
+    });
+  }
   if (buf.byteLength > MAX_BYTES) return new Response("too large", { status: 413 });
 
   const placeholder = shouldReplaceWithPerListingPlaceholder(src, sha256Hex(buf));

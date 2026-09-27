@@ -10,9 +10,12 @@
  * scripts (channel-boot, TanStack <Scripts />) can load Maps / Stripe /
  * Turnstile / PostHog. Those SDKs append scripts with createElement.
  *
- * style-src is nonce-only (no 'unsafe-inline'). SSR <style> tags are stamped
- * after render. Radix / Sonner / Maps inject <style> at runtime — a nonce'd
- * boot script copies document.currentScript.nonce onto createElement("style").
+ * style-src is nonce-only (no 'unsafe-inline'), plus the Maps font stylesheet
+ * host fonts.googleapis.com. font-src allows fonts.gstatic.com for those files.
+ * Nothing broader (no wildcard Google hosts on style-src or font-src).
+ * SSR <style> tags are stamped after render. Radix / Sonner / Maps inject
+ * <style> at runtime — a nonce'd boot script copies document.currentScript.nonce
+ * onto createElement("style").
  *
  * script-src includes 'wasm-unsafe-eval' so the listing-photo HEIC decoder
  * (libheif) can compile WebAssembly. That token does not allow eval or
@@ -85,14 +88,14 @@ export function buildContentSecurityPolicy(nonce) {
   if (/['\s;]/.test(token)) throw new Error("CSP nonce contains unsafe characters");
 
   const scriptSrc = ["'self'", `'nonce-${token}'`, "'strict-dynamic'", "'wasm-unsafe-eval'", ...CSP_SCRIPT_HOSTS].join(" ");
-  const styleSrc = ["'self'", `'nonce-${token}'`].join(" ");
+  const styleSrc = ["'self'", `'nonce-${token}'`, "https://fonts.googleapis.com"].join(" ");
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
     `style-src ${styleSrc}`,
     "style-src-attr 'unsafe-inline'",
     `img-src 'self' data: blob: https: ${CSP_IMG_HOSTS.join(" ")}`,
-    "font-src 'self' data:",
+    "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src 'self' ${CSP_CONNECT_HOSTS.join(" ")}`,
     "worker-src 'self' blob: data:",
     `frame-src ${CSP_FRAME_HOSTS.join(" ")}`,

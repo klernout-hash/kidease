@@ -1,6 +1,9 @@
 /** Listing-honesty photo pick. Official operator JPEGs beat /photos/wpg/; never Street View. */
 
+import { VERIFIED_BUILDING_PHOTOS as verifiedBuildingPhotoList } from "./data/verified-building-photos.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
+
+const VERIFIED_BUILDING_PHOTOS = new Set(verifiedBuildingPhotoList);
 
 export const LISTING_PLACEHOLDER = "/photos/storefront-placeholder-480.webp";
 
@@ -269,6 +272,23 @@ export function listingPhotosChanged(before: string, after: string): boolean {
 
 export function isOfficialBuildingPhoto(src: string | undefined): boolean {
   return Boolean(src && src.startsWith("/photos/buildings/") && !src.includes("..") && !src.includes("-logo"));
+}
+
+/** Building JPEGs that exist in the published photo set. Missing catalogue paths are not requested. */
+export function isVerifiedBuildingPhoto(src?: string | null): boolean {
+  const p = healMediaUrl(src);
+  return Boolean(p && VERIFIED_BUILDING_PHOTOS.has(p));
+}
+
+/**
+ * Safe to put on an <img>. Official building paths must be in the on-file
+ * manifest. Stock placeholders are not photos.
+ */
+export function isRequestableListingPhoto(src?: string | null): boolean {
+  const p = healMediaUrl(src);
+  if (!p || isStockListingPhoto(p)) return false;
+  if (p.startsWith("/photos/buildings/")) return isVerifiedBuildingPhoto(p);
+  return true;
 }
 
 /** First unique non-logo photo; prefer official /photos/buildings/ over /photos/wpg/. */

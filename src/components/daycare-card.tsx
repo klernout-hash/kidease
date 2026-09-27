@@ -7,9 +7,9 @@ import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
 import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
-import { distanceKm as kmBetween } from "@/lib/proximity";
-import { useAppStore } from "@/lib/store";
+import { cardDistanceKm } from "@/lib/card-distance";
 import { displayDistance } from "@/lib/units";
+import { useAppStore } from "@/lib/store";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
@@ -129,7 +129,6 @@ export const DaycareCard = memo(function DaycareCard({
   const live = Boolean(item.live);
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
-  const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
   const feeBadge = confirmedFeeProgramBadge(item);
   const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(feeBadge));
   const gaps = liveLookingGaps(item);
@@ -142,7 +141,8 @@ export const DaycareCard = memo(function DaycareCard({
     fees: "cardGapFees",
     photo: "cardGapPhoto",
   } as const;
-  const away = located ? `${displayDistance(distanceKm, "km")} ${t("kmAway")}` : "";
+  const distanceKm = cardDistanceKm(origin, { lat: item.lat, lng: item.lng }, located);
+  const away = distanceKm == null ? "" : `${displayDistance(distanceKm, "km")} ${t("kmAway")}`;
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
 

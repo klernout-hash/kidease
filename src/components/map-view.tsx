@@ -35,6 +35,7 @@ import {
 import { BuildingPhoto } from "@/components/building-photo";
 import { mapPinThumb } from "@/lib/listing-photo";
 import { listingAgeRangeText } from "@/lib/listing-ages";
+import { UNMEASURED_DISTANCE_KM, isDoorPin } from "@/lib/card-distance";
 import { displayDistance } from "@/lib/units";
 import { honestVacancy } from "@/lib/now-loops";
 import { publicApprovalEligible } from "@/lib/approve-live";
@@ -693,9 +694,10 @@ function MapPinPopup({
   t: (key: CopyKey) => string;
 }) {
   const name = displayCentreName(locale === "fr" ? item.nameFr || item.name : item.name);
-  const away = Number.isFinite(item.distanceKm)
-    ? `${displayDistance(item.distanceKm, "km")} ${t("km")}`
-    : "";
+  const away =
+    isDoorPin(item.lat, item.lng) && Number.isFinite(item.distanceKm) && item.distanceKm < UNMEASURED_DISTANCE_KM
+      ? `${displayDistance(item.distanceKm, "km")} ${t("km")}`
+      : "";
   const place = [item.city || displayListingText(item.address), away].filter(Boolean).join(" · ");
   const ages = listingAgeRangeText(item, "months", locale === "fr" ? "fr" : "en");
   const vacancy = honestVacancy(item);

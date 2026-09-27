@@ -1,14 +1,13 @@
 /**
  * Approved centres whose stored geography is missing or outside their city
- * still belong in that city's Live search. Distance uses the verified city
- * point; the normal PostGIS path keeps street pins that are already nearby.
+ * still belong in that city's Live search. Inclusion may use the verified
+ * city point; the card keeps the stored door pin for distance.
  * Province names and codes match (AB / Alberta, BC / British Columbia, …).
  */
 
 import { getSql } from "@/lib/db";
-import type { CatalogDaycare } from "@/lib/catalog";
-import { centresInLiveSearch, verifiedSearchPoint } from "@/lib/approve-live";
-import { haversineKm, type LatLng } from "@/lib/geo";
+import { centresInLiveSearch } from "@/lib/approve-live";
+import type { LatLng } from "@/lib/geo";
 import { provinceSearchTokens, type LocationLock } from "@/lib/location-lock";
 import { isPublicListing, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { CATALOG_SELECT, catalogRowToListing, type CatalogDbRow } from "./catalog-neon";
@@ -89,16 +88,8 @@ export async function mergeApprovedCityListings(
     label,
   })) {
     if (seen.has(listing.id)) continue;
-    const point = verifiedSearchPoint(listing);
-    if (!point.eligible) continue;
     seen.add(listing.id);
-    const located: CatalogDaycare & { distanceKm: number } = {
-      ...listing,
-      lat: point.lat,
-      lng: point.lng,
-      distanceKm: haversineKm(input.origin, point),
-    };
-    merged.push(located);
+    merged.push(listing);
   }
   return merged;
 }

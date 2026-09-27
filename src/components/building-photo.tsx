@@ -9,7 +9,13 @@ import {
   publicPhotoUrl,
   srcsetWidthsFor,
 } from "@/lib/photo";
-import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto, rememberFailedPhoto } from "@/lib/listing-photo";
+import {
+  healMediaUrl,
+  isFailedPhotoUrl,
+  isRequestableListingPhoto,
+  isStockListingPhoto,
+  rememberFailedPhoto,
+} from "@/lib/listing-photo";
 import { cn } from "@/lib/utils";
 
 /** Mobile Lighthouse LCP: sized AVIF, not a late-discovered 1200-only file. */
@@ -26,7 +32,7 @@ export const HERO_LCP_SIZES = HERO_SIZES;
 export const HERO_LCP_MOBILE_SIZES = "100vw";
 
 function photoNeedsFallback(src: string): boolean {
-  return !src || isStockListingPhoto(src) || isFailedPhotoUrl(src);
+  return !src || isStockListingPhoto(src) || isFailedPhotoUrl(src) || !isRequestableListingPhoto(src);
 }
 
 /** Honest empty still — labelled elsewhere. Never dressed as a centre photo. */

@@ -31,7 +31,12 @@ test("nonce CSP drops script-src unsafe-inline and keeps product hosts", () => {
   assert.match(csp, /script-src[^;]*https:\/\/challenges\.cloudflare\.com/);
   assert.match(csp, /script-src[^;]*https:\/\/us\.i\.posthog\.com/);
   assert.match(csp, /script-src[^;]*https:\/\/us-assets\.i\.posthog\.com/);
-  assert.match(csp, /style-src 'self' 'nonce-abc\+123\/XYZ='/);
+  assert.match(csp, /style-src 'self' 'nonce-abc\+123\/XYZ=' https:\/\/fonts\.googleapis\.com/);
+  assert.match(csp, /font-src 'self' data: https:\/\/fonts\.gstatic\.com/);
+  assert.doesNotMatch(csp, /style-src[^;]*fonts\.gstatic\.com/);
+  assert.doesNotMatch(csp, /font-src[^;]*fonts\.googleapis\.com/);
+  assert.doesNotMatch(csp, /(?:^|; )style-src [^;]*\*/);
+  assert.doesNotMatch(csp, /(?:^|; )font-src [^;]*\*/);
   assert.match(csp, /style-src-attr 'unsafe-inline'/);
   assert.match(csp, /connect-src[^;]*https:\/\/maps\.googleapis\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/\*\.googleapis\.com/);
