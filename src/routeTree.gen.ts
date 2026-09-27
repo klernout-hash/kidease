@@ -42,8 +42,8 @@ import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParentRouteImport } from './routes/parent'
-import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PayRouteImport } from './routes/pay'
+import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -283,14 +283,14 @@ const ParentRoute = ParentRouteImport.update({
   path: '/parent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlansRoute = PlansRouteImport.update({
-  id: '/plans',
-  path: '/plans',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PayRoute = PayRouteImport.update({
   id: '/pay',
   path: '/pay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlansRoute = PlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -689,8 +689,8 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
-  '/plans': typeof PlansRoute
   '/pay': typeof PayRouteWithChildren
+  '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -906,8 +906,8 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
-  '/plans': typeof PlansRoute
   '/pay': typeof PayRouteWithChildren
+  '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -1017,8 +1017,8 @@ export interface FileRouteTypes {
     | '/menu'
     | '/notifications'
     | '/parent'
-    | '/plans'
     | '/pay'
+    | '/plans'
     | '/privacy'
     | '/provider'
     | '/reset-password'
@@ -1233,8 +1233,8 @@ export interface FileRouteTypes {
     | '/menu'
     | '/notifications'
     | '/parent'
-    | '/plans'
     | '/pay'
+    | '/plans'
     | '/privacy'
     | '/provider'
     | '/reset-password'
@@ -1343,8 +1343,8 @@ export interface RootRouteChildren {
   MenuRoute: typeof MenuRoute
   NotificationsRoute: typeof NotificationsRoute
   ParentRoute: typeof ParentRoute
-  PlansRoute: typeof PlansRoute
   PayRoute: typeof PayRouteWithChildren
+  PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
   ProviderRoute: typeof ProviderRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1627,18 +1627,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plans': {
-      id: '/plans'
-      path: '/plans'
-      fullPath: '/plans'
-      preLoaderRoute: typeof PlansRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/pay': {
       id: '/pay'
       path: '/pay'
       fullPath: '/pay'
       preLoaderRoute: typeof PayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plans': {
+      id: '/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof PlansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -2286,8 +2286,8 @@ const rootRouteChildren: RootRouteChildren = {
   MenuRoute: MenuRoute,
   NotificationsRoute: NotificationsRoute,
   ParentRoute: ParentRoute,
-  PlansRoute: PlansRoute,
   PayRoute: PayRouteWithChildren,
+  PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
   ProviderRoute: ProviderRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
