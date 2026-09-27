@@ -37,12 +37,67 @@ export function normalizeCheckoutLocale(raw?: string | null): "en" | "fr" | null
   return null;
 }
 
-/** Stripe Checkout locale. `auto` follows the browser; CAD stays on the session. */
+/**
+ * Stripe Checkout `locale` enum. `en-CA` is not in this list and Stripe
+ * rejects the session. Source: Checkout Session create, locale.
+ */
+export const STRIPE_CHECKOUT_LOCALES = [
+  "auto",
+  "bg",
+  "cs",
+  "da",
+  "de",
+  "el",
+  "en",
+  "en-GB",
+  "es",
+  "es-419",
+  "et",
+  "fi",
+  "fil",
+  "fr",
+  "fr-CA",
+  "hr",
+  "hu",
+  "id",
+  "it",
+  "ja",
+  "ko",
+  "lt",
+  "lv",
+  "ms",
+  "mt",
+  "nb",
+  "nl",
+  "pl",
+  "pt",
+  "pt-BR",
+  "ro",
+  "ru",
+  "sk",
+  "sl",
+  "sv",
+  "th",
+  "tr",
+  "vi",
+  "zh",
+  "zh-HK",
+  "zh-TW",
+] as const;
+
+const STRIPE_CHECKOUT_LOCALE_SET = new Set<string>(STRIPE_CHECKOUT_LOCALES);
+
+/** Keep a mapped locale only when Stripe Checkout accepts it. */
+export function supportedCheckoutLocale(value: string): string {
+  return STRIPE_CHECKOUT_LOCALE_SET.has(value) ? value : "auto";
+}
+
+/** Stripe Checkout locale. English is `en` (not `en-CA`). French stays `fr-CA`. */
 export function checkoutLocale(locale?: string | null): string {
   const raw = String(locale || "").trim().toLowerCase();
-  if (raw.startsWith("fr")) return "fr-CA";
-  if (raw.startsWith("en")) return "en-CA";
-  return "auto";
+  if (raw.startsWith("fr")) return supportedCheckoutLocale("fr-CA");
+  if (raw.startsWith("en")) return supportedCheckoutLocale("en");
+  return supportedCheckoutLocale("auto");
 }
 
 /** KidEase charges CAD only. Blank defaults to cad; anything else is refused. */
