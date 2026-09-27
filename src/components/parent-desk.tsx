@@ -319,22 +319,15 @@ export function ParentDesk({
       </p>
 
       {contentTab === "explore" ? (
-        savedReady ? (
-          <ParentHome
-            saved={saved}
-            bookings={bookings}
-            tours={tours}
-            leads={leads}
-            paid={chrome.paid}
-            planLabel={chrome.planLabel}
-            renewsOn={chrome.renewsOn}
-          />
-        ) : (
-          <div className="mt-6 space-y-3" aria-busy="true" aria-live="polite">
-            <div className="ke-skel h-12 rounded-xl" />
-            <div className="ke-skel h-40 rounded-xl" />
-          </div>
-        )
+        <ParentHome
+          saved={saved}
+          bookings={bookings}
+          tours={tours}
+          leads={leads}
+          paid={chrome.paid}
+          planLabel={chrome.planLabel}
+          renewsOn={chrome.renewsOn}
+        />
       ) : null}
 
       {contentTab === "saved" ? (
