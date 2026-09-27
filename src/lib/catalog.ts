@@ -9,6 +9,7 @@ import {
 import { chooseCatalogListing, filterSuppressedCatalogRows } from "./catalog-fallback";
 import { isPublicListing } from "./listing-visibility";
 import { listingSlugLookupKeys, rememberSlugAliases } from "./listing-slug";
+import { collectPublicMapPins } from "./map-cluster";
 import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
 
 export type { CatalogDaycare, RawCentre };
@@ -134,6 +135,34 @@ export async function catalogNearFromJson(origin: { lat: number; lng: number }, 
     }
   }
   return omitSuppressedBundleCopies(out);
+}
+
+export type RawMapPin = {
+  id: string;
+  slug: string;
+  name: string;
+  nameFr: string;
+  lat: number;
+  lng: number;
+  address: string;
+  city: string;
+  province: string;
+  postalCode: string;
+};
+
+/**
+ * Public catalogue pins inside a map viewport. Every matching row is returned —
+ * the search list cap does not apply. Fields stay limited to what a pin needs.
+ */
+export async function listRawMapPinsInBbox(box: {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+}): Promise<RawMapPin[]> {
+  await ensureRaw();
+  if (!rawCentres) return [];
+  return collectPublicMapPins(rawCentres, box);
 }
 
 /** Nearby: Neon PostGIS when the national table is ready, else JSON grid. */
