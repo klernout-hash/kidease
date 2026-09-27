@@ -47,6 +47,7 @@ export const FOOTER_DAYCARES: FooterLinkDef[] = [
 
 /** KidEase column — company / product. Careers stays /jobs/post (no careers route). */
 export const FOOTER_KIDEASE: FooterLinkDef[] = [
+  copyLink("/plans", "navPlans"),
   copyLink("/about", "about", { localePaired: true }),
   copyLink("/donate", "donateToKids", { localePaired: true }),
   copyLink("/team", "team"),

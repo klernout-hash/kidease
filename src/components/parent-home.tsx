@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/empty-state";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
 import { StatusBadge } from "@/components/status-badge";
+import { parentHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
 import { useCopy } from "@/lib/use-copy";
 import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
 
@@ -24,6 +25,9 @@ export function ParentHome({
   paid = false,
   planLabel = null,
   renewsOn = null,
+  messages = 0,
+  dismissed = false,
+  onDismiss,
 }: {
   saved: DaycareCard[];
   bookings: Booking[];
@@ -32,16 +36,35 @@ export function ParentHome({
   paid?: boolean;
   planLabel?: string | null;
   renewsOn?: string | null;
+  messages?: number;
+  dismissed?: boolean;
+  onDismiss?: () => void;
 }) {
   const { t } = useCopy();
   const nextTour = [...tours]
     .filter((tour) => tour.status === "pending" || tour.status === "accepted")
     .sort((a, b) => tourWhen(a).localeCompare(tourWhen(b)))[0];
   const empty = saved.length === 0 && bookings.length === 0 && tours.length === 0 && leads.length === 0;
+  const card = showHomeUpgradeCard({
+    paid,
+    eligible: parentHomeCardEligible({
+      requests: bookings.length + tours.length + leads.length,
+      messages,
+    }),
+    dismissed,
+  });
 
   return (
     <div className="mt-4 space-y-6" data-ke="parent-home">
-      <RoleUpgradeCard role="parent" paid={paid} planLabel={planLabel} renewsOn={renewsOn} />
+      {card ? (
+        <RoleUpgradeCard
+          role="parent"
+          paid={card === "plan"}
+          planLabel={planLabel}
+          renewsOn={renewsOn}
+          onDismiss={card === "upgrade" ? onDismiss : undefined}
+        />
+      ) : null}
       <form action="/search" method="get" className="flex gap-2" data-ke="parent-home-search">
         <label className="min-w-0 flex-1">
           <span className="sr-only">{t("parentHomeSearchLabel")}</span>

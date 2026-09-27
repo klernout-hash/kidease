@@ -241,6 +241,7 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleN
       search: { role: "provider", desk: "director", intent: "up", next: "/provider" },
       icon: "daycare",
     },
+    { id: "plans", label: "Plans", to: "/plans", icon: "benefits" },
     { id: "signin", label: "Sign in", to: "/login", icon: "login" },
   ];
 }

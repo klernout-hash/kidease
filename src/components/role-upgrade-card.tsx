@@ -8,11 +8,13 @@ export function RoleUpgradeCard({
   paid,
   planLabel,
   renewsOn,
+  onDismiss,
 }: {
   role: ChromeRole;
   paid: boolean;
   planLabel?: string | null;
   renewsOn?: string | null;
+  onDismiss?: () => void;
 }) {
   const { locale, t } = useCopy();
   if (role !== "parent" && role !== "provider") return null;
@@ -55,6 +57,16 @@ export function RoleUpgradeCard({
       >
         {parent ? t("upgradeSeePlus") : t("upgradeSeePro")}
       </Link>
+      {onDismiss ? (
+        <button
+          type="button"
+          data-ke="upgrade-card-dismiss"
+          onClick={onDismiss}
+          className="mt-2 inline-flex min-h-11 w-full items-center justify-center text-sm font-medium text-muted"
+        >
+          {t("upgradeNotNow")}
+        </button>
+      ) : null}
     </aside>
   );
 }

@@ -22,6 +22,7 @@ const NAV_KEY: Record<string, CopyKey> = {
   map: "navMap",
   "parent-signup": "navImParent",
   "daycare-signup": "navImDaycare",
+  plans: "navPlans",
   signin: "signIn",
 };
 

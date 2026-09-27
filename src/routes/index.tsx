@@ -6,9 +6,6 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
-import { OptionalUpgrades } from "@/components/optional-upgrades";
-import { useSessionDesks } from "@/components/session-desks";
-import { visibleUpgradeSide } from "@/lib/upgrade-role";
 import { BrandMark } from "@/components/brand-mark";
 import { FacilityTypeRails } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
@@ -61,8 +58,6 @@ import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
 import { displayDistance } from "@/lib/units";
-import { showPayCtas } from "@/lib/features";
-import { catalogStatus } from "@/lib/server/stripe-catalog";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import {
   honestVacancy,
@@ -99,8 +94,6 @@ export const Route = createFileRoute("/")({
       featured: painted.value ?? [],
       featuredReady: painted.ready,
       origin,
-      showPay: showPayCtas(),
-      priceFlags: catalogStatus(),
     };
   },
   staleTime: 60_000,
@@ -138,21 +131,6 @@ export const Route = createFileRoute("/")({
   },
   component: Home,
 });
-
-function HomeUpgrades({ priceFlags }: { priceFlags: Record<string, boolean> }) {
-  const { user } = useCurrentUserState();
-  const { session, ready, sticky } = useSessionDesks();
-  if (!user) return <OptionalUpgrades initialFlags={priceFlags} />;
-  if (!ready || !session) return null;
-  const side = visibleUpgradeSide({
-    role: session.role,
-    ownsCentre: session.ownsCentre,
-    linkedToCentre: session.centreLinked,
-    activeDesk: sticky,
-  });
-  if (side === "none") return null;
-  return <OptionalUpgrades side={side} signedIn initialFlags={priceFlags} />;
-}
 
 function Home() {
   const { t, locale } = useCopy();
@@ -615,8 +593,6 @@ function Home() {
             />
           </div>
         </section>
-
-        {boot.showPay ? <HomeUpgrades priceFlags={boot.priceFlags} /> : null}
 
         <section className="ke-defer-paint bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">

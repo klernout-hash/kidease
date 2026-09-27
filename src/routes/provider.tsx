@@ -14,6 +14,7 @@ import { TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider } from "@/lib/server/family";
+import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
 import {
   DUPLICATE_LISTING_MESSAGE,
   duplicateListingUserMessage,
@@ -76,7 +77,6 @@ import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
-import { UpgradeToProLink } from "@/components/role-upgrade-card";
 
 const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
@@ -138,6 +138,7 @@ function ProviderPage() {
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [leads, setLeads] = useState<LeadRequest[]>([]);
   const [pipeline, setPipeline] = useState<PipelineCard[]>([]);
+  const [upgradeDismissed, setUpgradeDismissed] = useState(false);
   const [subscription, setSubscription] = useState<{
     selectedPlan: ProviderEntitlements["selectedPlan"];
     entitledPlan: ProviderEntitlements["entitledPlan"];
@@ -181,6 +182,7 @@ function ProviderPage() {
     setListings(res.listings);
     setStats(res.stats);
     setSubscription(res.subscription);
+    setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
     setRequests(incoming);
     setTours(tourRows);
     setPipeline(pipelineRows);
@@ -316,6 +318,13 @@ function ProviderPage() {
           }
           paid={Boolean(subscription?.paid)}
           renewsOn={chrome.renewsOn}
+          inquiryUsed={subscription?.inquiryUsed ?? 0}
+          inquiryCap={subscription?.inquiryCap ?? null}
+          dismissed={upgradeDismissed}
+          onDismiss={() => {
+            setUpgradeDismissed(true);
+            void dismissUpgradeCard().catch(() => setUpgradeDismissed(false));
+          }}
         />
         <TodayUrgencyHome
           listings={listings}
@@ -446,7 +455,6 @@ function ProviderPage() {
                     </span>
                   ) : null}
                   </PayCtas>
-                  {!d.featuredCity && !subscription?.paid ? <UpgradeToProLink className="mt-2" /> : null}
                 </div>
                 <p className="mt-3 text-xs text-subtle">
                   {subscription?.analyticsDays === 90 ? t("analytics90") : t("analytics")}

@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { RoleUpgradeCard, UpgradeToProLink } from "@/components/role-upgrade-card";
+import { RoleUpgradeCard } from "@/components/role-upgrade-card";
 import { listingCompleteness, type CompletenessField } from "@/lib/listing-readiness";
 import { isOpenLeadStatus, type LeadRequest } from "@/lib/lead-requests";
+import { daycareCapPrompt, daycareHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare, TourRequest } from "@/lib/types";
@@ -22,6 +23,10 @@ export function DaycareDeskHome({
   planName,
   paid,
   renewsOn,
+  inquiryUsed = 0,
+  inquiryCap = null,
+  dismissed = false,
+  onDismiss,
 }: {
   listings: Daycare[];
   leads: LeadRequest[];
@@ -29,17 +34,53 @@ export function DaycareDeskHome({
   planName: string;
   paid: boolean;
   renewsOn?: string | null;
+  inquiryUsed?: number;
+  inquiryCap?: number | null;
+  dismissed?: boolean;
+  onDismiss?: () => void;
 }) {
   const { t } = useCopy();
   const waitingLeads = leads.filter((lead) => isOpenLeadStatus(lead.status));
   const waitingTours = tours.filter((tour) => tour.status === "pending");
   const waiting = waitingLeads.length + waitingTours.length;
   const primary = listings[0];
-  const missing = primary ? listingCompleteness(primary).missing : [];
+  const completeness = primary ? listingCompleteness(primary) : null;
+  const missing = completeness?.missing ?? [];
+  const card = showHomeUpgradeCard({
+    paid,
+    eligible: daycareHomeCardEligible({
+      claimed: Boolean(primary?.claimed || primary?.claimedAt),
+      listingReady: Boolean(completeness?.ready),
+    }),
+    dismissed,
+  });
+  const cap = daycareCapPrompt(inquiryUsed, inquiryCap);
+  const capCopy =
+    cap === "at"
+      ? t("daycareCapHit")
+      : cap === "near"
+        ? t("daycareCapNear").replace("{used}", String(inquiryUsed)).replace("{cap}", String(inquiryCap ?? ""))
+        : null;
 
   return (
     <div className="mb-6 space-y-3" data-ke="daycare-desk">
-      <RoleUpgradeCard role="provider" paid={paid} planLabel={paid ? planName : null} renewsOn={renewsOn} />
+      {card ? (
+        <RoleUpgradeCard
+          role="provider"
+          paid={card === "plan"}
+          planLabel={card === "plan" ? planName : null}
+          renewsOn={renewsOn}
+          onDismiss={card === "upgrade" ? onDismiss : undefined}
+        />
+      ) : null}
+      {capCopy ? (
+        <p className="rounded-xl bg-surface px-4 py-3 text-sm text-fg ring-1 ring-border" data-ke="daycare-cap-prompt">
+          {capCopy}{" "}
+          <Link to="/provider/subscription" className="font-semibold text-primary">
+            {t("planViewPlans")}
+          </Link>
+        </p>
+      ) : null}
 
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
         <h2 className="font-display text-xl">{t("deskHomeEnquiries")}</h2>
@@ -72,11 +113,6 @@ export function DaycareDeskHome({
         <Link to="/provider" search={{ desk: "listings" }} className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">
           {primary ? t("deskHomeEdit") : t("deskHomeMyListing")}
         </Link>
-        {paid ? null : (
-          <p className="mt-2 text-sm text-muted">
-            {t("deskHomeProNote")} <UpgradeToProLink />
-          </p>
-        )}
       </section>
 
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="daycare-plan">

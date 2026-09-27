@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily } from "@/lib/server/family";
+import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import type { LeadRequest } from "@/lib/lead-requests";
@@ -103,6 +104,8 @@ export function ParentDesk({
   const [children, setChildren] = useState<Child[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [leads, setLeads] = useState<LeadRequest[]>([]);
+  const [centreMessages, setCentreMessages] = useState(0);
+  const [upgradeDismissed, setUpgradeDismissed] = useState(false);
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
@@ -166,6 +169,8 @@ export function ParentDesk({
       setBookings(f.bookings);
       setPayments(f.payments);
       setChildren(f.children);
+      setCentreMessages(f.centreMessages ?? 0);
+      setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
     });
     return f;
   }, [user?.id]);
@@ -212,6 +217,8 @@ export function ParentDesk({
     setChildren([]);
     setTours([]);
     setLeads([]);
+    setCentreMessages(0);
+    setUpgradeDismissed(false);
     setExplore([]);
     setExploreReady(false);
     setPicked({});
@@ -327,6 +334,12 @@ export function ParentDesk({
           paid={chrome.paid}
           planLabel={chrome.planLabel}
           renewsOn={chrome.renewsOn}
+          messages={centreMessages}
+          dismissed={upgradeDismissed}
+          onDismiss={() => {
+            setUpgradeDismissed(true);
+            void dismissUpgradeCard().catch(() => setUpgradeDismissed(false));
+          }}
         />
       ) : null}
 

@@ -16,7 +16,7 @@ function emailFor(role: "parent" | "provider", paid: boolean) {
 
 async function seed(request: Request) {
   if (!e2eLoopbackFixtureRequest(request)) return new Response("Not found", { status: 404 });
-  let body: { role?: string; paid?: boolean; ownSlug?: string } = {};
+  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -24,6 +24,7 @@ async function seed(request: Request) {
   }
   const role = body.role === "provider" ? "provider" : "parent";
   const paid = Boolean(body.paid);
+  const activity = Boolean(body.activity);
   const ownSlug = String(body.ownSlug || "")
     .trim()
     .toLowerCase()
@@ -118,8 +119,50 @@ async function seed(request: Request) {
     if (id) {
       await sql`delete from provider_daycares where user_id = ${userId}`;
       await sql`insert into provider_daycares (user_id, daycare_id) values (${userId}, ${id}) on conflict do nothing`;
+      if (activity) {
+        await sql`
+          update daycares
+          set claimed_at = coalesce(claimed_at, now()), claim_status = 'approved'
+          where id = ${id}
+        `;
+      }
     }
   }
+  if (role === "parent" && activity) {
+    const slug = "e2e-centre";
+    const daycareId = "e2e-e2e-centre".slice(0, 40);
+    await sql`
+      insert into daycares (
+        id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
+        address, city, province, postal_code, lat, lng, hours, hours_fr,
+        age_min_months, age_max_months, photos
+      ) values (
+        ${daycareId}, ${slug}, ${"E2E Centre"}, ${"Centre E2E"},
+        ${"Licensed centre"}, ${"Centre permis"},
+        ${"Seeded for the preview smoke."}, ${"Créé pour l’essai."},
+        ${"1 Main St"}, ${"Winnipeg"}, ${"MB"}, ${"R3C 0A1"},
+        ${49.8951}, ${-97.1384},
+        ${"7:30 a.m. – 5:30 p.m."}, ${"7 h 30 – 17 h 30"},
+        ${6}, ${72}, ${""}
+      )
+      on conflict (slug) do nothing
+    `.catch(() => undefined);
+    const rows = await sql<{ id: string }>`select id from daycares where slug = ${slug} limit 1`;
+    const id = rows[0]?.id;
+    if (id) {
+      await sql`
+        insert into bookings (
+          id, user_id, daycare_id, start_month, schedule, age_group, status, monthly_amount
+        ) values (
+          ${"e2e-parent-request"}, ${userId}, ${id}, ${"2026-10"}, ${"full"}, ${"toddler"}, ${"pending"}, ${0}
+        )
+        on conflict (id) do update set user_id = excluded.user_id, daycare_id = excluded.daycare_id
+      `;
+    }
+  }
+  await sql`
+    update profiles set upgrade_card_dismissed_at = null where user_id = ${userId}
+  `;
   return response;
 }
 

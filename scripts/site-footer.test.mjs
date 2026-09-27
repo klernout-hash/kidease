@@ -219,6 +219,7 @@ test("EN footer labels sort alphabetically in every column", () => {
     "How It Works",
     "KidEase Careers",
     "Meet the Team",
+    "Plans",
     "Rate KidEase",
     "Start a Daycare",
   ]);
@@ -257,6 +258,7 @@ test("FR-CA footer labels sort by the French string in every column", () => {
     "Comment ça fonctionne",
     "Évaluer KidEase",
     "Faire un don aux enfants",
+    "Forfaits",
     "L’équipe",
     "Ouvrir une garderie",
   ]);
