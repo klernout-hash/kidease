@@ -37,6 +37,25 @@ export function releaseStuckLogin(kind: StuckLoginKind): {
   return { keepContinued: true, busy: false, error };
 }
 
+export type AdminContinueDecision = "block" | "check-idle" | "allow";
+
+/**
+ * Signed-in visitors must not skip the password (and the 2FA that follows it).
+ * An admin URL — including idle-timeout "Sign in again" — never auto-continues.
+ * The owner mailbox checks the idle cookie first. Everyone else may continue.
+ */
+export function adminAutoContinueDecision(input: {
+  adminIntent: boolean;
+  sessionEmail?: string | null;
+  ownerEmail: string;
+}): AdminContinueDecision {
+  if (input.adminIntent) return "block";
+  const email = String(input.sessionEmail || "").trim().toLowerCase();
+  const owner = String(input.ownerEmail || "").trim().toLowerCase();
+  if (email && owner && email === owner) return "check-idle";
+  return "allow";
+}
+
 /** Auto-continue runs once. A released attempt must not start another. */
 export function shouldAutoContinue(input: {
   continued: boolean;

@@ -33,6 +33,30 @@ const EMPTY: SessionDesksState = {
 
 const SessionDesksContext = createContext<SessionDesksState>(EMPTY);
 
+/** Desk routes need the full session. Public pages use the lighter role chrome. */
+export function needsSessionDesks(pathname: string): boolean {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  return (
+    path === "/parent" ||
+    path.startsWith("/parent/") ||
+    path === "/provider" ||
+    path.startsWith("/provider/") ||
+    path === "/admin" ||
+    path.startsWith("/admin/") ||
+    path.startsWith("/admin-") ||
+    path === "/support" ||
+    path.startsWith("/support/") ||
+    path === "/account" ||
+    path.startsWith("/account/") ||
+    path === "/inbox" ||
+    path.startsWith("/inbox/") ||
+    path === "/notifications" ||
+    path.startsWith("/notifications/") ||
+    path === "/menu" ||
+    path.startsWith("/menu/")
+  );
+}
+
 /**
  * One shared getMyDesks fetch per signed-in session.
  * Mount once under AuthProvider — do not call getMyDesks from every desk page.
@@ -66,6 +90,11 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
       setReady(true);
       return;
     }
+    if (!needsSessionDesks(pathname)) {
+      setError(false);
+      setReady(true);
+      return;
+    }
     let cancelled = false;
     setSession(null);
     setReady(false);
@@ -92,7 +121,7 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, isPending]);
+  }, [user?.id, isPending, pathname]);
 
   useEffect(() => {
     const fromPath = deskFromPathname(pathname);

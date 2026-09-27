@@ -5,6 +5,7 @@ import { resolveSessionDesks } from "@/lib/server/roles";
 import { assertPayCheckoutAllowed, providerSubscriptionsEnabled } from "@/lib/features";
 import { resolveProviderEntitlements, type ProviderEntitlements } from "@/lib/provider-entitlements";
 import { stripeChargesLive } from "@/lib/stripe-live";
+import { e2eCheckoutMock, E2E_CHECKOUT_URL } from "@/lib/server/e2e-fixture.server";
 import {
   isProviderInterval,
   isProviderPlanId,
@@ -90,9 +91,13 @@ function daycarePortalConfiguration(): string | null {
 
 async function requireSubscriptionAccess(userId: string) {
   const session = await resolveSessionDesks(userId);
+  const role = session.role;
+  if (role !== "admin" && role !== "provider") {
+    throw new Error(DAYCARE_UPGRADE_DENIED);
+  }
   if (
     !canBuyDaycareUpgrade({
-      role: session.role,
+      role,
       ownsCentre: session.ownsCentre,
       linkedToCentre: session.centreLinked,
     })
@@ -185,8 +190,12 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     limit 1
   `.catch(() => []);
   const row = rows[0];
-  const stripeLive = stripeChargesLive();
-  const prices = catalogStatus();
+  const mockCheckout = e2eCheckoutMock();
+  const stripeLive = mockCheckout || stripeChargesLive();
+  const listed = catalogStatus();
+  const prices = mockCheckout
+    ? (Object.fromEntries(Object.keys(listed).map((key) => [key, true])) as typeof listed)
+    : listed;
   const addons = parseProviderAddons(row?.selected_addons);
   const plan = isProviderPlanId(row?.selected_plan) ? row.selected_plan : "free";
   const paymentLinks: Partial<Record<ProviderAddonId, string>> = {};
@@ -289,6 +298,7 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const desks = await requireSubscriptionAccess(context.userId);
     assertPayCheckoutAllowed(desks.role);
+    if (e2eCheckoutMock()) return { url: E2E_CHECKOUT_URL };
     const state = await readSelection(context.userId);
     const priceKey = data.plan === "free" ? null : providerPriceKey(data.plan, data.interval);
     const priceId = priceKey ? envPriceId(priceKey) : null;

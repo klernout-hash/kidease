@@ -340,9 +340,10 @@ function Listing() {
 
   const d = data.daycare;
   const ownsListing = chrome.ownedSlugs.includes(d.slug);
-  const actionMode = chrome.pending
-    ? "none"
-    : listingActionMode({ role: chrome.e2e || user ? chrome.role : "guest", ownsListing });
+  const actionMode = listingActionMode({
+    role: chrome.signedIn || chrome.role !== "guest" ? chrome.role : "guest",
+    ownsListing,
+  });
   const parentActions = showsParentListingActions(actionMode);
   const ownEdit = showsOwnListingEdit(actionMode, ownsListing);
   const km = distanceKm(origin, { lat: d.lat, lng: d.lng });

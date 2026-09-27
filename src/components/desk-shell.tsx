@@ -93,7 +93,13 @@ function DeskNavButton({
 
 function planNavItem(item: DeskItem, paid: boolean): DeskItem {
   if (item.id !== "subscription" && item.id !== "upgrade") return item;
-  return { ...item, label: upgradeNavLabel(paid), labelKey: undefined, hint: undefined, hintKey: undefined };
+  return {
+    ...item,
+    label: upgradeNavLabel(paid),
+    labelKey: paid ? "navMyPlan" : "navUpgrade",
+    hint: undefined,
+    hintKey: undefined,
+  };
 }
 
 function DeskNavLink({

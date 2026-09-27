@@ -2,14 +2,16 @@ import { Link } from "@tanstack/react-router";
 import { RoleUpgradeCard, UpgradeToProLink } from "@/components/role-upgrade-card";
 import { listingCompleteness, type CompletenessField } from "@/lib/listing-readiness";
 import { isOpenLeadStatus, type LeadRequest } from "@/lib/lead-requests";
+import { useCopy } from "@/lib/use-copy";
+import type { CopyKey } from "@/lib/copy";
 import type { Daycare, TourRequest } from "@/lib/types";
 
-const MISSING_LABEL: Record<CompletenessField, string> = {
-  fees: "Fees",
-  ages: "Ages",
-  hours: "Hours",
-  license: "Licence",
-  photo: "Photos",
+const MISSING_KEY: Record<CompletenessField, CopyKey> = {
+  fees: "deskMissFees",
+  ages: "ages",
+  hours: "hours",
+  license: "license",
+  photo: "deskMissPhotos",
 };
 
 /** Daycare landing: replies waiting, listing gaps, and the current plan. */
@@ -28,6 +30,7 @@ export function DaycareDeskHome({
   paid: boolean;
   renewsOn?: string | null;
 }) {
+  const { t } = useCopy();
   const waitingLeads = leads.filter((lead) => isOpenLeadStatus(lead.status));
   const waitingTours = tours.filter((tour) => tour.status === "pending");
   const waiting = waitingLeads.length + waitingTours.length;
@@ -39,51 +42,47 @@ export function DaycareDeskHome({
       <RoleUpgradeCard role="provider" paid={paid} planLabel={paid ? planName : null} renewsOn={renewsOn} />
 
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
-        <h2 className="font-display text-xl">Enquiries & tours</h2>
+        <h2 className="font-display text-xl">{t("deskHomeEnquiries")}</h2>
         {waiting === 0 ? (
-          <p className="mt-1 text-sm text-muted">Nothing is waiting on a reply.</p>
+          <p className="mt-1 text-sm text-muted">{t("deskHomeNothingWaiting")}</p>
         ) : (
-          <p className="mt-1 text-sm text-fg">
-            {waiting} waiting on a reply
-            {waitingLeads.length ? ` · ${waitingLeads.length} enquiries` : ""}
-            {waitingTours.length ? ` · ${waitingTours.length} tours` : ""}
-          </p>
+          <p className="mt-1 text-sm text-fg">{t("deskHomeWaiting").replace("{n}", String(waiting))}</p>
         )}
         <Link to="/provider" search={{ desk: "requests" }} className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">
-          Open enquiries
+          {t("deskHomeOpenEnquiries")}
         </Link>
       </section>
 
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
-        <h2 className="font-display text-xl">Listing</h2>
+        <h2 className="font-display text-xl">{t("deskHomeListing")}</h2>
         {!primary ? (
-          <p className="mt-1 text-sm text-muted">Add your centre so families can find you.</p>
+          <p className="mt-1 text-sm text-muted">{t("deskHomeAddCentre")}</p>
         ) : missing.length === 0 ? (
-          <p className="mt-1 text-sm text-muted">{primary.name} has photos, fees, hours, ages, and a licence on file.</p>
+          <p className="mt-1 text-sm text-muted">{t("deskHomeComplete").replace("{name}", primary.name)}</p>
         ) : (
           <>
-            <p className="mt-1 text-sm text-muted">Still missing on {primary.name}:</p>
+            <p className="mt-1 text-sm text-muted">{t("deskHomeMissing").replace("{name}", primary.name)}</p>
             <ul className="mt-1 list-disc pl-5 text-sm text-fg">
               {missing.map((field) => (
-                <li key={field}>{MISSING_LABEL[field]}</li>
+                <li key={field}>{t(MISSING_KEY[field])}</li>
               ))}
             </ul>
           </>
         )}
         <Link to="/provider" search={{ desk: "listings" }} className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">
-          {primary ? "Edit your listing" : "My listing"}
+          {primary ? t("deskHomeEdit") : t("deskHomeMyListing")}
         </Link>
         {paid ? null : (
           <p className="mt-2 text-sm text-muted">
-            Featured city and a listing boost are Pro benefits. <UpgradeToProLink />
+            {t("deskHomeProNote")} <UpgradeToProLink />
           </p>
         )}
       </section>
 
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="daycare-plan">
-        <h2 className="font-display text-xl">Current plan</h2>
-        <p className="mt-1 text-sm text-fg">{paid ? planName : "Free"}</p>
-        <p className="text-sm text-muted">Listing, messages, and vacancy stay free. Paid plans are optional and shown in CA$.</p>
+        <h2 className="font-display text-xl">{t("deskHomeCurrentPlan")}</h2>
+        <p className="mt-1 text-sm text-fg">{paid ? planName : t("deskHomeFree")}</p>
+        <p className="text-sm text-muted">{t("deskHomeFreeNote")}</p>
       </section>
 
     </div>

@@ -96,21 +96,56 @@ function allowsArea(area: PrivateArea, role: ChromeRole): boolean {
   return false;
 }
 
+/**
+ * Full return path for a private page, including ?tab= and other search.
+ * TanStack `href` is pathname + search. A bare pathname drops the query.
+ */
+export function privateReturnPath(location: { pathname: string; href?: string; searchStr?: string }): string {
+  const href = String(location.href || "");
+  if (href.startsWith("/") && !href.startsWith("//")) return href;
+  const raw = String(location.searchStr || "");
+  const search = raw && raw !== "?" ? (raw.startsWith("?") ? raw : `?${raw}`) : "";
+  return `${location.pathname || "/"}${search}`;
+}
+
+/**
+ * Nav role. A stored parent who owns a centre or is an active centre member
+ * is a provider for menus and page guards. Checkout still reads the stored role.
+ */
+export function navRoleForSession(input: {
+  role?: string | null;
+  ownsCentre?: boolean;
+  activeMember?: boolean;
+}): ChromeRole {
+  const role = chromeRole(input.role);
+  if (role === "parent" && (input.ownsCentre || input.activeMember)) return "provider";
+  if (role === "guest") return "parent";
+  return role;
+}
+
 /** Server loaders and the login return path both use this. */
 export function guardPrivatePath(input: {
   pathname: string;
   signedIn: boolean;
   role?: string | null;
+  /** Auth or the role query timed out. Do not send a maybe-signed-in visitor to /login. */
+  degraded?: boolean;
 }): GuardDecision {
   const area = privateArea(input.pathname);
   if (area === "public") return { kind: "allow" };
   if (area === "admin") {
-    if (!input.signedIn || chromeRole(input.role) !== "admin") return { kind: "not_found" };
+    if (chromeRole(input.role) !== "admin") return { kind: "not_found" };
     return { kind: "allow" };
   }
   const next = input.pathname.startsWith("/") ? input.pathname : homeForRole(input.role);
-  if (!input.signedIn) return { kind: "signin", next };
-  if (allowsArea(area, chromeRole(input.role))) return { kind: "allow" };
+  if (!input.signedIn) {
+    if (input.degraded) return { kind: "allow" };
+    return { kind: "signin", next };
+  }
+  const role = chromeRole(input.role);
+  if (input.degraded && role === "guest") return { kind: "allow" };
+  if (role === "guest") return { kind: "allow" };
+  if (allowsArea(area, role)) return { kind: "allow" };
   return { kind: "home", to: homeForRole(input.role) };
 }
 

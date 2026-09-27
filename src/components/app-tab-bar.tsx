@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ClipboardCheck, CreditCard, Heart, Menu, MessageCircle, Search } from "lucide-react";
+import { Building2, ClipboardCheck, ClipboardList, CreditCard, Heart, Map, Menu, MessageCircle, Search } from "lucide-react";
 import { useRoleChrome } from "@/components/role-chrome";
-import { bottomBarKind, upgradeNavLabel } from "@/lib/role-access";
+import { bottomBarKind } from "@/lib/role-access";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,7 @@ export function AppTabBar() {
   const view = useRouterState({ select: (s) => (s.location.search as { view?: string }).view });
   const chrome = useRoleChrome();
   const kind = bottomBarKind({ role: chrome.role, pathname, pending: chrome.pending });
-  const plan = upgradeNavLabel(chrome.paid);
+  const plan = chrome.paid ? t("navMyPlan") : t("navUpgrade");
 
   return (
     <nav
@@ -32,21 +32,21 @@ export function AppTabBar() {
           <>
             <Tab
               to="/provider"
-              label="Desk"
-              icon={Search}
+              label={t("navDesk")}
+              icon={Building2}
               active={(pathname === "/provider" || pathname === "/provider/") && !desk}
             />
             <Tab
               to="/provider"
               search={{ desk: "listings" }}
-              label="Listing"
-              icon={Heart}
+              label={t("navListingShort")}
+              icon={ClipboardList}
               active={pathname.startsWith("/provider") && desk === "listings"}
             />
             <Tab
               to="/provider"
               search={{ desk: "requests" }}
-              label="Enquiries"
+              label={t("navEnquiriesShort")}
               icon={ClipboardCheck}
               active={pathname.startsWith("/provider") && desk === "requests"}
             />
@@ -68,7 +68,7 @@ export function AppTabBar() {
         ) : null}
         {kind === "parent" ? (
           <>
-            <Tab to="/parent" label="Home" icon={Search} active={pathname.startsWith("/parent") && (!tab || tab === "explore")} />
+            <Tab to="/parent" label={t("navHome")} icon={Building2} active={pathname.startsWith("/parent") && (!tab || tab === "explore")} />
             <Tab
               to="/parent"
               search={{ tab: "saved" }}
@@ -79,7 +79,7 @@ export function AppTabBar() {
             <Tab
               to="/parent"
               search={{ tab: "requests" }}
-              label="Requests"
+              label={t("navRequestsShort")}
               icon={ClipboardCheck}
               active={pathname.startsWith("/parent") && (tab === "requests" || tab === "enrolled")}
             />
@@ -102,8 +102,8 @@ export function AppTabBar() {
         ) : null}
         {kind === "admin" ? (
           <>
-            <Tab to="/parent" label="Parent" icon={Heart} active={pathname.startsWith("/parent")} />
-            <Tab to="/provider" label="Daycare" icon={Search} active={pathname.startsWith("/provider")} />
+            <Tab to="/parent" label={t("deskParent")} icon={Heart} active={pathname.startsWith("/parent")} />
+            <Tab to="/provider" label={t("deskDirector")} icon={Search} active={pathname.startsWith("/provider")} />
             <Tab to="/search" label={t("explore")} icon={ClipboardCheck} active={pathname.startsWith("/search")} />
             <Tab to="/inbox" label={t("messages")} icon={MessageCircle} active={pathname.startsWith("/inbox")} />
             <Tab to="/menu" label="Menu" icon={Menu} active={pathname.startsWith("/menu")} />
@@ -117,18 +117,18 @@ export function AppTabBar() {
               icon={Search}
               active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")}
             />
-            <Tab to="/search" search={{ view: "map" }} label="Map" icon={Heart} active={false} />
+            <Tab to="/search" search={{ view: "map" }} label={t("navMap")} icon={Map} active={false} />
             <Tab
               to="/login"
               search={{ role: "parent", desk: "parent", intent: "up", next: "/parent" }}
-              label="I'm a parent"
+              label={t("navImParent")}
               icon={ClipboardCheck}
               active={false}
             />
             <Tab
               to="/login"
               search={{ role: "provider", desk: "director", intent: "up", next: "/provider" }}
-              label="I'm a daycare"
+              label={t("navImDaycare")}
               icon={MessageCircle}
               active={false}
             />
@@ -150,7 +150,7 @@ function Tab({
 }: {
   to: string;
   label: string;
-  icon: typeof Search;
+  icon: typeof Search | typeof Map | typeof Building2 | typeof ClipboardList;
   active: boolean;
   search?: Record<string, string>;
   marker?: string;

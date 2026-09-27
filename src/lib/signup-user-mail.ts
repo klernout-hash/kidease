@@ -208,7 +208,7 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     "2. Add your current licence number.",
     `3. Claim the listing if we already have it from the public registry: ${claim}`,
     `4. When you are ready, upload a current Vulnerable Sector Check on Screening. Your province may also require extra registry checks (for example a Child Abuse Registry check, and a Prior Contact check for home-based households): ${screening}`,
-    "5. KidEase Admin reviews those files. Parents may see a centre-level “Screening on file” badge after required current documents are cleared. Individual PDFs and names stay private.",
+    "5. The KidEase team reviews those files. Parents may see a centre-level “Screening on file” badge after required current documents are cleared. Individual PDFs and names stay private.",
     "",
     "Questions: kyle@kidease.ca",
     "",
@@ -226,7 +226,7 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     "2. Ajoutez votre numéro de permis actuel.",
     `3. Réclamez la fiche si nous l’avons déjà à partir du registre public : ${claim}`,
     `4. Quand vous êtes prêt, téléversez une vérification du secteur vulnérable à jour dans Filtrage. Votre province peut aussi exiger d’autres vérifications de registre (par exemple le registre des mauvais traitements et, pour un milieu familial, une vérification des contacts antérieurs) : ${screening}`,
-    "5. L’Admin KidEase examine ces dossiers. Les parents peuvent voir un badge « Dossier de filtrage » au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
+    "5. L’équipe KidEase examine ces dossiers. Les parents peuvent voir un badge « Dossier de filtrage » au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
     "",
     "Questions : kyle@kidease.ca",
   ].join("\n");
@@ -263,7 +263,7 @@ export function providerOnboardHtml(origin?: string | null, name?: string | null
         <li>Add your current licence number.</li>
         <li>Claim the listing if we already have it from the public registry.</li>
         <li>When ready, upload a current Vulnerable Sector Check on Screening. Your province may also require extra registry checks (for example a Child Abuse Registry check, and Prior Contact for home-based households).</li>
-        <li>Admin reviews the files. Parents may see centre-level Screening on file — never individual PDFs or names.</li>
+        <li>The KidEase team reviews the files. Parents may see centre-level Screening on file — never individual PDFs or names.</li>
       </ol>
       <p style="margin:24px 0 0;">
         <a href="${listings}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600;">Complete listing</a>

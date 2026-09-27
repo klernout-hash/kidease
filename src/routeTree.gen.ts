@@ -56,6 +56,7 @@ import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
+import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
@@ -349,6 +350,11 @@ const Verify2faRoute = Verify2faRouteImport.update({
 const ApiDigestRoute = ApiDigestRouteImport.update({
   id: '/api/digest',
   path: '/api/digest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiE2eSeedRoute = ApiE2eSeedRouteImport.update({
+  id: '/api/e2e-seed',
+  path: '/api/e2e-seed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -691,6 +697,7 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
@@ -796,6 +803,7 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
@@ -904,6 +912,7 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
@@ -1013,6 +1022,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
     | '/api/screening-documents'
@@ -1118,6 +1128,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
     | '/api/screening-documents'
@@ -1225,6 +1236,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
     | '/api/screening-documents'
@@ -1333,6 +1345,7 @@ export interface RootRouteChildren {
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
+  ApiE2eSeedRoute: typeof ApiE2eSeedRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRouteWithChildren
@@ -1697,6 +1710,13 @@ declare module '@tanstack/react-router' {
       path: '/api/digest'
       fullPath: '/api/digest'
       preLoaderRoute: typeof ApiDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/e2e-seed': {
+      id: '/api/e2e-seed'
+      path: '/api/e2e-seed'
+      fullPath: '/api/e2e-seed'
+      preLoaderRoute: typeof ApiE2eSeedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -2260,6 +2280,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
+  ApiE2eSeedRoute: ApiE2eSeedRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   ApiScreeningDocumentsRoute: ApiScreeningDocumentsRouteWithChildren,

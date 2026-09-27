@@ -1,14 +1,11 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
+import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
-import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
-import { ParentHome } from "@/components/parent-home";
-import { PlanChoiceShelf } from "@/components/plan-choice-shelf";
 import { useRoleChrome } from "@/components/role-chrome";
-import { ManageBillingCard } from "@/components/manage-billing";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -20,7 +17,7 @@ const ParentDesk = lazy(() =>
 );
 
 export const Route = createFileRoute("/parent")({
-  beforeLoad: () => beforeLoadPrivate("/parent"),
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   validateSearch: (s: Record<string, unknown>) => {
     const out: {
       tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care";
@@ -74,39 +71,11 @@ function ParentPage() {
       </Shell>
     );
   }
-  if (!user && chrome.e2e && chrome.role === "provider") return <Navigate to="/provider" />;
-  if (!user && chrome.e2e && chrome.role === "parent") {
+  if (!user && (chrome.pending || chrome.signedIn)) {
     return (
-      <DeskShell desk="parent" active={initialTab === "payments" ? "payments" : "explore"} onSelect={() => undefined}>
-        <main className="mx-auto max-w-lg py-2">
-          {initialTab === "payments" && chrome.paid ? (
-            <ManageBillingCard
-              locale="en"
-              product="plus"
-              interval="month"
-              status="active"
-              periodEnd={chrome.renewsOn}
-              cancelAtPeriodEnd={false}
-              busy={false}
-              onPortal={() => undefined}
-              onCancel={() => undefined}
-              onResume={() => undefined}
-            />
-          ) : initialTab === "payments" ? (
-            <PlanChoiceShelf role="parent" />
-          ) : (
-            <ParentHome
-              saved={[]}
-              bookings={[]}
-              tours={[]}
-              leads={[]}
-              paid={chrome.paid}
-              planLabel={chrome.planLabel}
-              renewsOn={chrome.renewsOn}
-            />
-          )}
-        </main>
-      </DeskShell>
+      <Shell>
+        <DeskSkeleton />
+      </Shell>
     );
   }
   if (!user) return <RedirectToSignIn />;

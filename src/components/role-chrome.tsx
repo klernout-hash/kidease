@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { useSessionDesks } from "@/components/session-desks";
+import { useRouteContext } from "@tanstack/react-router";
 import { chromeRole, type ChromeRole } from "@/lib/role-access";
-import { getRoleChrome, type RoleChromePayload } from "@/lib/server/role-route";
+import type { RoleChromePayload } from "@/lib/server/role-route";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
 export type RoleChromeState = {
   pending: boolean;
+  signedIn: boolean;
   role: ChromeRole;
   paid: boolean;
   planLabel: string | null;
@@ -16,6 +16,7 @@ export type RoleChromeState = {
 
 const GUEST: RoleChromeState = {
   pending: false,
+  signedIn: false,
   role: "guest",
   paid: false,
   planLabel: null,
@@ -24,55 +25,34 @@ const GUEST: RoleChromeState = {
   e2e: false,
 };
 
+/**
+ * The root beforeLoad already loaded role chrome for this request.
+ * While that payload is missing, hide role menus instead of flashing guest links.
+ * A signed-in visitor with a server role keeps that role even if the client
+ * session desks have not arrived.
+ */
 export function useRoleChrome(): RoleChromeState {
+  const ctx = useRouteContext({ from: "__root__" }) as { roleChrome?: RoleChromePayload };
+  const remote = ctx.roleChrome;
   const { user, isPending } = useCurrentUserState();
-  const { session, ready } = useSessionDesks();
-  const [remote, setRemote] = useState<RoleChromePayload | null>(null);
-  const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    let cancel = false;
-    void getRoleChrome()
-      .then((row) => {
-        if (!cancel) setRemote(row);
-      })
-      .catch(() => {
-        if (!cancel) setRemote(null);
-      })
-      .finally(() => {
-        if (!cancel) setLoaded(true);
-      });
-    return () => {
-      cancel = true;
-    };
-  }, [user?.id]);
-
-  if (remote?.e2e && remote.role) {
+  if (remote?.role) {
     return {
       pending: false,
+      signedIn: true,
       role: chromeRole(remote.role),
       paid: remote.paid,
       planLabel: remote.planLabel,
       renewsOn: remote.renewsOn,
       ownedSlugs: remote.ownedSlugs,
-      e2e: true,
+      e2e: remote.e2e,
     };
   }
 
-  if (user && session) {
-    return {
-      pending: false,
-      role: chromeRole(session.role),
-      paid: remote?.paid ?? false,
-      planLabel: remote?.planLabel ?? null,
-      renewsOn: remote?.renewsOn ?? null,
-      ownedSlugs: remote?.ownedSlugs ?? [],
-      e2e: false,
-    };
+  if (remote?.signedIn || remote?.degraded || isPending || user) {
+    return { ...GUEST, pending: true, signedIn: true };
   }
 
-  if (isPending || (user && !ready) || !loaded) {
-    return { ...GUEST, pending: true };
-  }
+  if (!remote) return { ...GUEST, pending: true };
   return GUEST;
 }

@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
+import { privateReturnPath } from "@/lib/role-access";
 import { NotificationsInbox } from "@/components/notifications-inbox";
 
 export const Route = createFileRoute("/notifications")({
-  beforeLoad: () => beforeLoadPrivate("/notifications"),
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   head: () => ({
     meta: [
       { title: "Notifications · KidEase" },

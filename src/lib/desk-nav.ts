@@ -64,7 +64,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "money", label: "Money", hint: "Bills you send", labelKey: "deskNavMoney", hintKey: "deskNavMoneyHint" },
     { id: "licence", label: "Licence", hint: "Trust checklist + photo", labelKey: "listingCoachOpenLicence", hintKey: "deskNavLicenceHint" },
     { id: "contract", label: "Contract", hint: "Agreement + enrolment packs", labelKey: "deskNavContract", hintKey: "deskNavContractHint" },
-    { id: "promote", label: "Promote", hint: "Priority placement", labelKey: "deskNavPromote", hintKey: "deskNavPromoteHint" },
+    { id: "promote", label: "Promote", hint: "Promote & add-ons", labelKey: "deskNavPromote", hintKey: "deskNavPromoteHint" },
     { id: "subscription", label: "Upgrade", hint: "Pro, Network, and add-ons", labelKey: "deskNavSubscription", hintKey: "deskNavSubscriptionHint", icon: "credit-card", href: "/provider/subscription" },
     { id: "claim", label: "Claim a centre", labelKey: "deskNavClaim", href: "/claim" },
     { id: "add", label: "Add a new Daycare listing", hint: "Another location", labelKey: "deskNavAddListing", hintKey: "deskNavAddListingHint" },

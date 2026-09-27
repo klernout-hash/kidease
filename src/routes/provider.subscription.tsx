@@ -7,8 +7,6 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canBuyDaycareUpgrade } from "@/lib/upgrade-role";
 import { useRoleChrome } from "@/components/role-chrome";
-import { ManageBillingCard } from "@/components/manage-billing";
-import { PlanChoiceShelf } from "@/components/plan-choice-shelf";
 
 export const Route = createFileRoute("/provider/subscription")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -61,28 +59,10 @@ function ProviderSubscriptionPage() {
       </Shell>
     );
   }
-  if (!user && chrome.e2e && chrome.role === "parent") return <Navigate to="/parent" />;
-  if (!user && chrome.e2e && chrome.role === "provider") {
+  if (!user && (chrome.pending || chrome.signedIn)) {
     return (
       <Shell>
-        <main className="ke-gutter mx-auto max-w-lg py-6">
-          {chrome.paid ? (
-            <ManageBillingCard
-              locale="en"
-              product={chrome.planLabel === "Network" ? "network" : "pro"}
-              interval="month"
-              status="active"
-              periodEnd={chrome.renewsOn}
-              cancelAtPeriodEnd={false}
-              busy={false}
-              onPortal={() => undefined}
-              onCancel={() => undefined}
-              onResume={() => undefined}
-            />
-          ) : (
-            <PlanChoiceShelf role="provider" />
-          )}
-        </main>
+        <p className="p-8 text-muted">Loading…</p>
       </Shell>
     );
   }

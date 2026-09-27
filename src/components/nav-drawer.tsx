@@ -28,6 +28,7 @@ export function NavDrawer({
   parentLabel,
   providerLabel,
   signedIn,
+  menusReady = true,
   accountLabel,
   accountHref = "/account",
   accountSearch,
@@ -44,6 +45,7 @@ export function NavDrawer({
   parentLabel: string;
   providerLabel: string;
   signedIn: boolean;
+  menusReady?: boolean;
   accountLabel: string;
   accountHref?: string;
   accountSearch?: Record<string, string>;
@@ -125,7 +127,7 @@ export function NavDrawer({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
-          <RoleNavLinks role={role} paid={paid} appearance="drawer" onNavigate={onClose} />
+          {menusReady ? <RoleNavLinks role={role} paid={paid} appearance="drawer" onNavigate={onClose} /> : null}
           {signedIn ? (
             <MenuRow
               to="/notifications"
@@ -176,7 +178,7 @@ export function NavDrawer({
                 {t("signOut")}
               </button>
             </>
-          ) : (
+          ) : menusReady ? (
             <>
               <Link
                 to={loginTo}
@@ -197,7 +199,7 @@ export function NavDrawer({
                 {providerLabel}
               </Link>
             </>
-          )}
+          ) : null}
           <div className="mt-4 flex items-center gap-3 overflow-visible rounded-full bg-surface px-3 ring-1 ring-border">
             <MenuGlyph id="language" />
             <LanguageSelect className="w-full justify-start" />

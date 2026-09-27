@@ -102,7 +102,7 @@ export const Route = createFileRoute("/api/license-docs/$daycareId")({
             note:
               actor === "admin"
                 ? "Admin attached the provincial licence document."
-                : "Provincial licence document uploaded for Admin review.",
+                : "Provincial licence document uploaded for the KidEase team to review.",
           }).catch(() => undefined);
           return Response.json({ ok: true, mime: stored.mime });
         } catch (err) {

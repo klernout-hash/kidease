@@ -226,7 +226,10 @@ test("smoke paths never include pay or 2FA submit", () => {
   assert.match(runner, /scripts\/browser-smoke\.mjs/);
   assert.match(runner, /args\.startPreview/);
   assert.match(runner, /skipReason/);
-  assert.match(runner, /env\.VERCEL = env\.VERCEL \|\| "1"/);
+  assert.match(runner, /delete env\.VERCEL/);
+  assert.match(runner, /env\.E2E_ROLE_FIXTURE = "1"/);
+  assert.match(runner, /env\.SHOW_PAY_CTAS = "1"/);
+  assert.doesNotMatch(runner, /env\.VERCEL = env\.VERCEL \|\| "1"/);
   assert.match(runner, /requestWithHost/);
   assert.match(runner, /kidease-git\.vercel\.app/);
 });

@@ -505,14 +505,14 @@ test("parents and daycares cannot buy or receive each other's upgrades", () => {
   assert.equal(canBuyDaycareUpgrade({ role: "parent" }), false);
   assert.equal(canBuyDaycareUpgrade({ role: "provider" }), false);
   assert.equal(canBuyDaycareUpgrade({ role: "provider", ownsCentre: true }), true);
-  assert.equal(canBuyDaycareUpgrade({ role: "parent", linkedToCentre: true }), true);
+  assert.equal(canBuyDaycareUpgrade({ role: "parent", linkedToCentre: true }), false);
   assert.equal(canBuyDaycareUpgrade({ role: "admin" }), true);
 
   assert.equal(visibleUpgradeSide({ role: "parent" }), "parent");
   assert.equal(visibleUpgradeSide({ role: "provider", ownsCentre: true }), "daycare");
   assert.equal(
     visibleUpgradeSide({ role: "parent", ownsCentre: true, activeDesk: "provider" }),
-    "daycare",
+    "parent",
   );
   assert.equal(
     visibleUpgradeSide({ role: "parent", ownsCentre: true, activeDesk: "parent" }),

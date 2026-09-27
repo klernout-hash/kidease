@@ -1,7 +1,29 @@
 import { Link } from "@tanstack/react-router";
 import { MenuRow } from "@/components/menu-row";
 import { roleNavItems, type ChromeRole } from "@/lib/role-access";
+import type { CopyKey } from "@/lib/copy";
+import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
+
+const NAV_KEY: Record<string, CopyKey> = {
+  home: "navHome",
+  search: "search",
+  saved: "saved",
+  requests: "navRequests",
+  messages: "messages",
+  upgrade: "navUpgrade",
+  account: "account",
+  desk: "navDesk",
+  listing: "navListing",
+  enquiries: "navEnquiries",
+  jobs: "navJobs",
+  queue: "navApprovals",
+  support: "navSupport",
+  map: "navMap",
+  "parent-signup": "navImParent",
+  "daycare-signup": "navImDaycare",
+  signin: "signIn",
+};
 
 export function RoleNavLinks({
   role,
@@ -14,7 +36,11 @@ export function RoleNavLinks({
   appearance?: "header" | "menu" | "drawer";
   onNavigate?: () => void;
 }) {
-  const items = roleNavItems({ role, paid });
+  const { t } = useCopy();
+  const items = roleNavItems({ role, paid }).map((item) => ({
+    ...item,
+    label: item.id === "upgrade" ? t(paid ? "navMyPlan" : "navUpgrade") : NAV_KEY[item.id] ? t(NAV_KEY[item.id]) : item.label,
+  }));
   if (appearance === "header") {
     return (
       <nav

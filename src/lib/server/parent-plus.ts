@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { stripeChargesLive } from "@/lib/stripe-live";
+import { e2eCheckoutMock, E2E_CHECKOUT_URL } from "@/lib/server/e2e-fixture.server";
 import { catalogStatus, envPriceId, parentPriceKey } from "@/lib/server/stripe-catalog";
 import {
   appOrigin,
@@ -70,8 +71,12 @@ async function readPlus(userId: string): Promise<ParentPlusState> {
     limit 1
   `.catch(() => []);
   const row = rows[0];
-  const stripeLive = stripeChargesLive();
-  const prices = catalogStatus();
+  const mockCheckout = e2eCheckoutMock();
+  const stripeLive = mockCheckout || stripeChargesLive();
+  const listed = catalogStatus();
+  const prices = mockCheckout
+    ? (Object.fromEntries(Object.keys(listed).map((key) => [key, true])) as typeof listed)
+    : listed;
   const interval = isPlusInterval(row?.plus_interval) ? row.plus_interval : "month";
   return {
     plan: isPlusPlanId(row?.plus_plan) ? row.plus_plan : "free",
@@ -126,6 +131,7 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const desks = await assertParentBuyer(context.userId);
     assertPayCheckoutAllowed(desks.role);
+    if (e2eCheckoutMock()) return { url: E2E_CHECKOUT_URL };
     const plan = data.plan === "alerts" ? "alerts" : "plus";
     if (plan === "alerts" && (!envPriceId("parent_alerts_monthly") || !envPriceId("parent_alerts_yearly"))) {
       throw new Error(PLUS_PRICE_MISSING);

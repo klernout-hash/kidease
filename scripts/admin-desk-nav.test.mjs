@@ -70,8 +70,8 @@ test("header, hamburger, and menu Admin entries document-navigate to /admin", ()
   assert.match(link, /data-ke="admin-desk"/);
   assert.match(link, /openAdminDesk/);
   assert.match(desks, /window\.location\.assign\(DESK_PATH\.admin\)/);
-  assert.match(switcher, /AdminDeskLink/);
-  assert.match(switcher, /desk === "admin"/);
+  assert.doesNotMatch(switcher, /AdminDeskLink/);
+  assert.doesNotMatch(switcher, /admin-desk-link/);
   assert.doesNotMatch(drawer, /AdminDeskLink/);
   assert.match(drawer, /isAdmin/);
   assert.doesNotMatch(menu, /AdminDeskLink/);

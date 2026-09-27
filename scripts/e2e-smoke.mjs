@@ -61,11 +61,13 @@ let previewChild = null;
 
 async function setFixture(context, base, { role, plan, own } = {}) {
   await context.clearCookies();
-  const cookies = [];
-  if (role) cookies.push({ name: "kidease_e2e_role", value: role, url: base });
-  if (plan) cookies.push({ name: "kidease_e2e_plan", value: plan, url: base });
-  if (own) cookies.push({ name: "kidease_e2e_own", value: own, url: base });
-  if (cookies.length) await context.addCookies(cookies);
+  const res = await context.request.post(new URL("/api/e2e-seed", base).href, {
+    data: { role, paid: plan === "paid", ownSlug: own || "" },
+    headers: { origin: base, "content-type": "application/json" },
+  });
+  if (!res.ok()) {
+    throw new Error(`seed ${role || "parent"} ${res.status()} ${(await res.text()).slice(0, 200)}`);
+  }
 }
 
 async function roleNavText(page) {
@@ -195,7 +197,6 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('header [data-nav="upgrade"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
     const paidPlaces = await upgradePlaces(page);
-    const paidLabel = paidPlaces.header;
     await page.locator('header [data-nav="upgrade"]:visible').first().click().catch(() => {});
     await page.locator('[data-ke="manage-or-cancel"]').waitFor({ timeout: timeoutMs }).catch(() => {});
     const managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
@@ -267,29 +268,48 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="daycare-desk"]').waitFor({ timeout: timeoutMs });
     const headerUpgrade = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
+    await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').click();
+    await page.waitForURL(/\/provider\/subscription/i, { timeout: timeoutMs }).catch(() => {});
+    const deskCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
+    await deskCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const deskHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
+    if ((await deskCheckout.count()) > 0) await deskCheckout.click();
+    const deskReached = Boolean(await deskHit);
+    await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="upgrade-cta"]:visible').first().click();
     await page.waitForURL(/\/provider\/subscription/i, { timeout: timeoutMs }).catch(() => {});
-    const proCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
-    await proCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
-    const checkoutReady = (await proCheckout.count()) > 0;
-    if (checkoutReady) await proCheckout.click();
-    await page.locator('[data-ke="checkout-step"]').waitFor({ timeout: timeoutMs }).catch(() => {});
-    const daycareCheckout = headerUpgrade === "Upgrade" && /\/provider\/subscription/i.test(page.url()) && (await page.locator('[data-ke="checkout-step"]').count()) > 0;
-    record("daycare-checkout-two-clicks", daycareCheckout, { note: headerUpgrade });
+    const homeCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
+    await homeCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const homeHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
+    if ((await homeCheckout.count()) > 0) await homeCheckout.click();
+    const homeReached = Boolean(await homeHit);
+    record("daycare-checkout-two-clicks", headerUpgrade === "Upgrade" && deskReached && homeReached, {
+      note: `${headerUpgrade} desk=${deskReached} home=${homeReached}`,
+    });
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "parent" });
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
     const parentHeaderUpgrade = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
+    await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').click();
+    await page.waitForURL(/tab=payments/i, { timeout: timeoutMs }).catch(() => {});
+    const deskPlus = page.locator('[data-ke="plan-checkout"]:visible').first();
+    await deskPlus.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const parentDeskHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
+    if ((await deskPlus.count()) > 0) await deskPlus.click();
+    const parentDeskReached = Boolean(await parentDeskHit);
+    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="upgrade-cta"]:visible').first().click();
     await page.waitForURL(/tab=payments/i, { timeout: timeoutMs }).catch(() => {});
-    const plusCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
-    await plusCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
-    if ((await plusCheckout.count()) > 0) await plusCheckout.click();
-    await page.locator('[data-ke="checkout-step"]').waitFor({ timeout: timeoutMs }).catch(() => {});
-    const parentCheckout = parentHeaderUpgrade === "Upgrade" && /tab=payments/i.test(page.url()) && (await page.locator('[data-ke="checkout-step"]').count()) > 0;
-    record("parent-plus-two-clicks", parentCheckout, { note: parentHeaderUpgrade });
+    const homePlus = page.locator('[data-ke="plan-checkout"]:visible').first();
+    await homePlus.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const parentHomeHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
+    if ((await homePlus.count()) > 0) await homePlus.click();
+    const parentHomeReached = Boolean(await parentHomeHit);
+    record("parent-plus-two-clicks", parentHeaderUpgrade === "Upgrade" && parentDeskReached && parentHomeReached, {
+      note: `${parentHeaderUpgrade} desk=${parentDeskReached} home=${parentHomeReached}`,
+    });
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.context().clearCookies();
@@ -434,16 +454,17 @@ async function waitForOrigin(url, ms) {
 }
 
 function startPreview() {
-  // The Nitro `vercel` preset sets production-like paths. Without DATABASE_URL,
-  // the bundled server must not boot PGLite (it looks for a missing
-  // pglite.data). VERCEL=1 selects the same `none` SQL backend as Vercel
-  // preview/production — catalogue pages still render. See docs/e2e.md.
+  // Role smoke signs in real accounts and opens the real plan panels, so the
+  // preview needs PGLite when DATABASE_URL is unset. Do not set VERCEL here:
+  // that selects the empty SQL backend. Catalogue pages still fall back to
+  // the bundled JSON when the database is not Neon.
   const env = { ...process.env };
   if (!String(env.DATABASE_URL || "").trim()) {
-    env.VERCEL = env.VERCEL || "1";
+    delete env.VERCEL;
   }
-  // Loopback role cookie for this preview only. Production must not set this.
+  // Loopback seed + mocked checkout only. Production builds ignore the role cookie.
   env.E2E_ROLE_FIXTURE = "1";
+  env.SHOW_PAY_CTAS = "1";
   previewChild = spawn("npm", ["run", "preview"], {
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"],

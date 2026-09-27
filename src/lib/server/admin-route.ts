@@ -1,7 +1,6 @@
 import { notFound, redirect } from "@tanstack/react-router";
 import { adminDeskGateRedirect } from "@/lib/admin-desk-gate";
 import { assertAdminDesk } from "@/lib/server/roles";
-import { getRoleChrome } from "@/lib/server/role-route";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
 
 /**
@@ -10,11 +9,8 @@ import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
  * Admin without a 2FA cookie → /verify-2fa. TwoFactorGate still owns the desk.
  */
 export async function beforeLoadAdminDesk() {
-  const chrome = await getRoleChrome().catch(() => null);
-  if (chrome?.e2e) {
-    if (chrome.role === "admin") return;
-    throw notFound();
-  }
+  // The loopback role cookie never opens this desk, including when
+  // E2E_ROLE_FIXTURE is set. Role and 2FA stay on assertAdminDesk.
   try {
     await withTimeout(assertAdminDesk(), SQL_SETTLE_MS, "admin-gate-timeout");
   } catch (err) {

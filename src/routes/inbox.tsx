@@ -1,5 +1,6 @@
 import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
+import { privateReturnPath } from "@/lib/role-access";
 import { CentreInboxDesk } from "@/components/centre-inbox";
 import { InboxList } from "@/components/inbox-list";
 import { useSessionDesks } from "@/components/session-desks";
@@ -7,7 +8,7 @@ import { parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
 import { useRoleChrome } from "@/components/role-chrome";
 
 export const Route = createFileRoute("/inbox")({
-  beforeLoad: ({ location }) => beforeLoadPrivate(location.pathname || "/inbox"),
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
   component: InboxLayout,
 });

@@ -5,6 +5,8 @@ import {
   guardPrivatePath,
   homeForRole,
   listingActionMode,
+  navRoleForSession,
+  privateReturnPath,
   roleFlipAllowed,
   roleNavItems,
   upgradeNavLabel,
@@ -30,6 +32,18 @@ test("public browse stays open and private URLs follow the role", () => {
   });
   assert.equal(guardPrivatePath({ pathname: "/inbox", signedIn: true, role: "parent" }).kind, "allow");
   assert.equal(guardPrivatePath({ pathname: "/account", signedIn: true, role: "provider" }).kind, "allow");
+  assert.deepEqual(guardPrivatePath({ pathname: "/parent?tab=payments", signedIn: false }), {
+    kind: "signin",
+    next: "/parent?tab=payments",
+  });
+  assert.equal(guardPrivatePath({ pathname: "/parent", signedIn: true, degraded: true }).kind, "allow");
+  assert.equal(guardPrivatePath({ pathname: "/provider", signedIn: false, degraded: true }).kind, "allow");
+  assert.equal(guardPrivatePath({ pathname: "/admin", signedIn: true, degraded: true }).kind, "not_found");
+  assert.equal(privateReturnPath({ pathname: "/parent", href: "/parent?tab=payments" }), "/parent?tab=payments");
+  assert.equal(navRoleForSession({ role: "parent", ownsCentre: true }), "provider");
+  assert.equal(navRoleForSession({ role: "parent", activeMember: true }), "provider");
+  assert.equal(navRoleForSession({ role: "parent" }), "parent");
+  assert.equal(navRoleForSession({ role: "provider" }), "provider");
 });
 
 test("sign-in lands on the stored role home unless the next path is allowed", () => {

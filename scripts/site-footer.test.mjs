@@ -108,8 +108,7 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.match(footer, /isKidEaseOperatorEmail\(user\?\.primaryEmail\)/);
   assert.match(copySrc, /comingSoon: "Coming soon"/);
   assert.match(copySrc, /comingSoon: "Bientôt"/);
-  assert.match(copySrc, /operatorSignIn: "Operator sign-in"/);
-  assert.match(copySrc, /operatorSignIn: "Connexion opérateur"/);
+  assert.doesNotMatch(copySrc, /operatorSignIn/);
 });
 
 test("Support column keeps help, contact, FAQ, and legal links", () => {

@@ -1,5 +1,6 @@
-import { createFileRoute, Link, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
+import { privateReturnPath } from "@/lib/role-access";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
@@ -95,7 +96,7 @@ const COACH_FOCUS = new Set<ListingCoachFocus>([
 ]);
 
 export const Route = createFileRoute("/provider")({
-  beforeLoad: ({ location }) => beforeLoadPrivate(location.pathname || "/provider"),
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   validateSearch: (s: Record<string, unknown>) => {
     const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
@@ -224,25 +225,7 @@ function ProviderPage() {
       </Shell>
     );
   }
-  if (!user && chrome.e2e && chrome.role === "provider") {
-    return (
-      <DeskShell desk="daycare" active="today" onSelect={() => undefined}>
-        <main className="mx-auto max-w-3xl py-2">
-          <h1 className="font-display text-3xl">Desk</h1>
-          <DaycareDeskHome
-            listings={[]}
-            leads={[]}
-            tours={[]}
-            planName={chrome.paid ? chrome.planLabel || "Pro" : "Free"}
-            paid={chrome.paid}
-            renewsOn={chrome.renewsOn}
-          />
-        </main>
-      </DeskShell>
-    );
-  }
-  if (!user && chrome.e2e && chrome.role === "parent") return <Navigate to="/parent" />;
-  if (!user && chrome.pending) {
+  if (!user && (chrome.pending || chrome.signedIn)) {
     return (
       <Shell>
         <DeskSkeleton />

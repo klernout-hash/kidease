@@ -133,9 +133,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             ) : (
               <HeaderSocial />
             )}
-            {chrome.pending ? null : (
-              <RoleNavLinks role={chrome.role} paid={chrome.paid} />
-            )}
+            {chrome.pending ? null : <RoleNavLinks role={chrome.role} paid={chrome.paid} />}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             {user && !guestBrowse && showDeskSwitcher(session?.desks, session?.role, session?.email) ? (
@@ -150,7 +148,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               userId={user?.id}
               image={user?.profileImageUrl}
               name={user?.displayName}
-              signedIn={Boolean(user)}
+              signedIn={Boolean(user) || chrome.signedIn}
+              menusReady={!chrome.pending}
               active={onProfile}
               profileLabel={t("profile")}
               role={chrome.role}
@@ -181,7 +180,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         items={drawerItems}
         parentLabel={t("parentSignIn")}
         providerLabel={t("providerLogin")}
-        signedIn={Boolean(user)}
+        signedIn={Boolean(user) || chrome.signedIn}
+        menusReady={!chrome.pending}
         accountLabel={t("account")}
         accountHref="/account"
         accountSearch={accountSearch(sticky)}
@@ -213,6 +213,7 @@ function HeaderProfile({
   image,
   name,
   signedIn,
+  menusReady,
   active,
   profileLabel,
   role,
@@ -222,6 +223,7 @@ function HeaderProfile({
   userId?: string | null;
   image?: string | null;
   name?: string | null;
+  menusReady: boolean;
   signedIn: boolean;
   active: boolean;
   profileLabel: string;
@@ -272,8 +274,8 @@ function HeaderProfile({
           role="menu"
           className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-64 overflow-hidden rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
         >
-          <RoleNavLinks role={role} paid={paid} appearance="menu" onNavigate={() => setOpen(false)} />
-          {signedIn ? (
+          {menusReady ? <RoleNavLinks role={role} paid={paid} appearance="menu" onNavigate={() => setOpen(false)} /> : null}
+          {!menusReady ? null : signedIn ? (
             <button
               type="button"
               role="menuitem"
