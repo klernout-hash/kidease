@@ -7,8 +7,8 @@ import { isPublicListing } from "./listing-visibility.ts";
  * with a coarse grid, is what put one "400" bubble on the Winnipeg map.
  * Map reads keep every public listing in the viewport.
  *
- * At city and search-radius zoom each listing is its own dot, on every
- * viewport. A count bubble is only for pins that sit within MAP_OVERLAP_PX
+ * At city and search-radius zoom each listing is its own KidEase logo pin,
+ * on every viewport. A count bubble is only for pins that sit within MAP_OVERLAP_PX
  * of each other on screen, and only once that distance is a short walk
  * (see MAP_OVERLAP_MAX_KM). Zoomed out past a city (below MAP_CITY_ZOOM),
  * the grid switches to area bubbles. The width of the padded camera does
@@ -33,7 +33,7 @@ export const MAP_AREA_PX = 72;
 export const MAP_MERGE_FRAC = 0.62;
 
 /**
- * Search-radius zoom and closer (25 km is zoom 10). Listings are dots.
+ * Search-radius zoom and closer (25 km is zoom 10). Listings are logo pins.
  * Below this, the map is a province view and uses area bubbles.
  */
 export const MAP_CITY_ZOOM = 8;
@@ -45,10 +45,35 @@ export const MAP_CITY_ZOOM = 8;
 export const MAP_OVERLAP_MAX_KM = 0.45;
 
 /**
- * Half of the 28px dot hit target. Overlapping dots resolve to the centre
+ * Half of the 28px pin hit target. Overlapping pins resolve to the centre
  * closest to the click, not whichever button is painted on top.
  */
 export const MAP_DOT_HIT_PX = 14;
+
+/** Full KidEase logo pin, the same artwork as the selected listing. */
+export const MAP_LOGO_PIN_PX = 36;
+
+/** Selected listing. Stays this size at every zoom, with the popup. */
+export const MAP_LOGO_PIN_ACTIVE_PX = 44;
+
+/**
+ * Painted size at radius-fit and city zoom (below 12). Smaller than the
+ * full pin so a dense downtown does not turn into one blob.
+ */
+export const MAP_LOGO_PIN_CITY_PX = 24;
+
+/** Minimum tap target. The painted pin may be smaller; the button is not. */
+export const MAP_PIN_TAP_PX = 28;
+
+/** Logo pin height in CSS pixels. Zoom 12 and closer is the full pin. */
+export function mapLogoPinPx(zoom: number): number {
+  return clampMapZoom(zoom) >= 12 ? MAP_LOGO_PIN_PX : MAP_LOGO_PIN_CITY_PX;
+}
+
+/** Square hit target. At least 28px, and never smaller than the painted pin. */
+export function mapPinTapPx(zoom: number): number {
+  return Math.max(MAP_PIN_TAP_PX, mapLogoPinPx(zoom));
+}
 
 /** Wait until the camera settles so a pan does not fire a request per frame. */
 export const MAP_FETCH_DEBOUNCE_MS = 450;

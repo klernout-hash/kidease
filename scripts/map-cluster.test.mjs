@@ -16,7 +16,13 @@ import {
   clusterMapPoints,
   collectPublicMapPins,
   groupingKm,
+  MAP_DOT_HIT_PX,
+  MAP_LOGO_PIN_ACTIVE_PX,
+  MAP_LOGO_PIN_CITY_PX,
+  MAP_LOGO_PIN_PX,
   mapLoadMode,
+  mapLogoPinPx,
+  mapPinTapPx,
   mapSpanKm,
   mapViewCacheKey,
   markerCount,
@@ -566,6 +572,27 @@ test("a city-zoom payload over 2500 pins stays individual dots", () => {
   assert.equal(drawn.some((cell) => cell.count > 1), false);
 });
 
+test("logo pins are smaller at the radius-fit zoom and full size from zoom 12", () => {
+  assert.equal(mapLogoPinPx(8), MAP_LOGO_PIN_CITY_PX);
+  assert.equal(mapLogoPinPx(9), 24);
+  assert.equal(mapLogoPinPx(11), 24);
+  assert.equal(mapLogoPinPx(12), MAP_LOGO_PIN_PX);
+  assert.equal(mapLogoPinPx(13), 36);
+  assert.equal(mapPinTapPx(9), 28);
+  assert.equal(mapPinTapPx(9) / 2, MAP_DOT_HIT_PX);
+  assert.equal(mapPinTapPx(12), 36);
+  assert.equal(MAP_LOGO_PIN_ACTIVE_PX, 44);
+  const view = read("src/components/map-view.tsx");
+  const css = read("src/styles.css");
+  assert.match(view, /aria-label", pinLabel/);
+  assert.match(view, /background-image:url/);
+  assert.equal(view.split("PIN_SVG").length > 2, true);
+  assert.doesNotMatch(css, /\.ke-map-dot \{/);
+  assert.match(css, /\.ke-map-logo-pin/);
+  assert.match(css, /\.ke-logo-pin\.is-active svg \{\s*width: 44px;/);
+  assert.match(css, /\.ke-cluster-bubble/);
+});
+
 test("the map still waits on the Google Maps loader", () => {
   const view = read("src/components/map-view.tsx");
   const loader = read("src/lib/google-maps.ts");
@@ -575,7 +602,13 @@ test("the map still waits on the Google Maps loader", () => {
   assert.match(view, /mapPinsInView/);
   assert.match(view, /MAP_FETCH_DEBOUNCE_MS/);
   assert.match(view, /ke-cluster-bubble/);
-  assert.match(view, /ke-map-dot/);
+  assert.match(view, /ke-map-logo-pin/);
+  assert.match(view, /installLogoPinSprite/);
+  assert.match(view, /LOGO_PIN_URL/);
+  assert.match(view, /mapLogoPinPx/);
+  assert.match(view, /translate\(-50%, -100%\)/);
+  assert.match(view, /ke-logo-pin is-active/);
+  assert.doesNotMatch(view, /className = "ke-map-dot"/);
   assert.match(view, /ke-logo-pin/);
   assert.match(loader, /importLibrary\("marker"\)/);
   assert.match(loader, /MAP_VIEW_WAIT_MS/);

@@ -37,6 +37,8 @@ import {
   clusterCountLabel,
   clusterStepZoom,
   MAP_DOT_HIT_PX,
+  mapLogoPinPx,
+  mapPinTapPx,
   mapViewCacheKey,
   markersForMapView,
   pickNearestMapDot,
@@ -91,6 +93,18 @@ const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" a
   <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M52.6 40c2.2-4 6.2-4 8.4 0"/>
   <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M41 51c5.4 7 12.6 7 18 0"/>
 </svg>`;
+
+/** One shared image for every unselected pin. The browser decodes it once. */
+const LOGO_PIN_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PIN_SVG)}`;
+
+function installLogoPinSprite() {
+  if (typeof document === "undefined") return;
+  if (document.head.querySelector("style[data-ke='logo-pin-sprite']")) return;
+  const style = document.createElement("style");
+  style.dataset.ke = "logo-pin-sprite";
+  style.textContent = `.ke-map-logo-pin{background-image:url("${LOGO_PIN_URL}")}`;
+  document.head.appendChild(style);
+}
 
 type AnyPin = {
   setMap(map: google.maps.Map | null): void;
@@ -557,6 +571,7 @@ export function MapView({
       const field = mountDotField({
         maps,
         map,
+        zoom,
         pins: dotPins.filter((item) => item !== selectedItem),
         locale: locale === "fr" ? "fr" : "en",
         onPick: (item) => {
@@ -951,16 +966,21 @@ function pinLabel(item: { name: string; nameFr?: string }, locale: "en" | "fr") 
 function mountDotField(input: {
   maps: typeof google.maps;
   map: google.maps.Map;
+  zoom: number;
   pins: DotItem[];
   locale: "en" | "fr";
   onPick: (item: DotItem) => void;
 }): AnyPin {
-  const { maps, map, pins, locale, onPick } = input;
+  const { maps, map, zoom, pins, locale, onPick } = input;
+  const drawPx = mapLogoPinPx(zoom);
+  const tapPx = mapPinTapPx(zoom);
+  const hitPx = Math.max(MAP_DOT_HIT_PX, tapPx / 2);
   const buttons: HTMLButtonElement[] = [];
   const placed: DotItem[] = [];
   let wrap: HTMLDivElement | null = null;
   const field = new maps.OverlayView();
   field.onAdd = () => {
+    installLogoPinSprite();
     const layer = document.createElement("div");
     layer.className = "ke-map-dots";
     const choose = (event: MouseEvent) => {
@@ -970,14 +990,17 @@ function mountDotField(input: {
         const rect = el.getBoundingClientRect();
         return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
       });
-      const hit = pickNearestMapDot(placed, centers, { x: event.clientX, y: event.clientY }, MAP_DOT_HIT_PX);
+      const hit = pickNearestMapDot(placed, centers, { x: event.clientX, y: event.clientY }, hitPx);
       if (hit) onPick(hit);
     };
     for (const item of pins) {
       if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "ke-map-dot";
+      button.className = "ke-map-logo-pin";
+      button.style.width = `${tapPx}px`;
+      button.style.height = `${tapPx}px`;
+      button.style.setProperty("--ke-pin-draw", `${drawPx}px`);
       button.setAttribute("aria-label", pinLabel(item, locale));
       button.addEventListener("click", choose);
       layer.appendChild(button);
@@ -998,7 +1021,7 @@ function mountDotField(input: {
       if (!button) continue;
       const point = projection.fromLatLngToDivPixel(new maps.LatLng(item.lat, item.lng));
       if (!point) continue;
-      button.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -50%)`;
+      button.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -100%)`;
     }
   };
   field.onRemove = () => {
