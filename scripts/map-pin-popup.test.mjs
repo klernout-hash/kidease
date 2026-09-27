@@ -216,13 +216,14 @@ test("search map opens one listing popup from a KidEase logo pin", () => {
   assert.match(mapView, /data-ke="map-pin-popup-close"/);
   assert.match(mapView, /t\("getDirections"\)/);
   assert.match(mapView, /openDirections\(/);
-  assert.match(mapView, /address:\s*item\.address/);
+  assert.match(mapView, /address:\s*displayListingText\(item\.address\)/);
   assert.match(mapView, /postalCode:\s*item\.postalCode/);
   const slim = daycares.slice(daycares.indexOf("function slimCard"), daycares.indexOf("function alignedSearchInput"));
   assert.match(slim, /description:\s*""/);
   assert.match(slim, /phone:\s*null/);
   assert.doesNotMatch(slim, /address:\s*""/);
-  assert.match(listingPage, /address:\s*d\.address/);
+  assert.match(listingPage, /displayListingText\(d\.address\)/);
+  assert.match(listingPage, /address,\s*city: d\.city/);
   assert.match(listingPage, /openDirections\(d\.lat,\s*d\.lng,\s*name,\s*directionsPlace\)/);
   assert.match(share, /address,\s*city,\s*province,\s*postalCode/);
   assert.match(mapView, /addListener\(map, "click"/);

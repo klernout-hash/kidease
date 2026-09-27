@@ -5,7 +5,8 @@
  */
 
 import { confirmedStoredFeeProgram } from "./fee-program.ts";
-import { listingAgesConfirmed } from "./listing-ages.ts";
+import { decodeHtml } from "./html-text.ts";
+import { formatPublicAgeRange, listingAgesConfirmed } from "./listing-ages.ts";
 import { classifyFacilityType, facilityTypeSeoKind } from "./facility-type.ts";
 import { cityHubCityName, cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
@@ -59,13 +60,7 @@ export type ListingSeoMeta = {
 };
 
 function clean(value: string | null | undefined) {
-  return String(value ?? "")
-    .replace(/&amp;/gi, "&")
-    .replace(/&apos;/gi, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/gi, '"')
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
+  return decodeHtml(value)
     .replace(/\bCetnres\b/g, "Centres")
     .replace(/\bCetnre\b/g, "Centre")
     .replace(/\s{2,}/g, " ")
@@ -85,9 +80,7 @@ function feeProgramPhrase(src: ListingSeoSource, locale: ListingSeoLocale) {
 
 function agePhrase(src: ListingSeoSource, locale: ListingSeoLocale) {
   if (!agesKnown(src)) return "";
-  const min = Number(src.ageMinMonths);
-  const max = Number(src.ageMaxMonths);
-  return locale === "fr" ? `${min} à ${max} mois` : `${min}–${max} months`;
+  return formatPublicAgeRange(Number(src.ageMinMonths), Number(src.ageMaxMonths), locale);
 }
 
 export function listingCanonicalUrl(slug: string | null | undefined) {
