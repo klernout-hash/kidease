@@ -12,12 +12,20 @@ import {
   mapZoomForRadius,
   openDirections,
   placePinPopup,
+  radiusFitPadding,
   readMapBase,
   writeMapBase,
   type MapBase,
   type PinPopupBox,
 } from "@/lib/maps";
 import { bboxFromRadius } from "@/lib/proximity";
+import {
+  RADIUS_CIRCLE_ALT_STYLE,
+  RADIUS_CIRCLE_STYLE,
+  boundsCoverRadiusFrame,
+  radiusCircleFrame,
+  radiusFrameKey,
+} from "@/lib/map-radius-frame";
 import { mapPinToCard } from "@/lib/map-pin-card";
 import {
   MAP_FETCH_DEBOUNCE_MS,
@@ -128,6 +136,8 @@ export function MapView({
   secondOriginRef.current = secondOrigin ?? null;
   const radiusRef = useRef(radiusKm);
   radiusRef.current = radiusKm;
+  /** Set when the parent pans or zooms. Cleared when the search or radius changes. */
+  const userMovedRef = useRef(false);
 
   const locale = useAppStore((s) => s.locale);
   const { t } = useCopy();
@@ -286,96 +296,111 @@ export function MapView({
   useEffect(() => {
     const map = mapRef.current;
     const maps = mapsApiRef.current;
-    if (!map || !maps || !ready) return;
+    const el = host.current;
+    if (!map || !maps || !el || !ready) return;
     const point = originRef.current;
-    map.setCenter({ lat: point.lat, lng: point.lng });
-    const meters = Math.max(radiusKm, 0.5) * 1000;
-    if (circleRef.current) {
-      circleRef.current.setCenter({ lat: point.lat, lng: point.lng });
-      circleRef.current.setRadius(meters);
-    } else {
-      circleRef.current = new maps.Circle({
-        map,
-        center: { lat: point.lat, lng: point.lng },
-        radius: meters,
-        strokeColor: "#1a3790",
-        strokeWeight: 2,
-        strokeOpacity: 0.85,
-        fillColor: "#1a3790",
-        fillOpacity: 0.1,
-        clickable: false,
-      });
-    }
-    if (secondOrigin) {
-      if (circle2Ref.current) {
-        circle2Ref.current.setCenter({ lat: secondOrigin.lat, lng: secondOrigin.lng });
-        circle2Ref.current.setRadius(meters);
-        circle2Ref.current.setMap(map);
+    const frameKey = radiusFrameKey(point, radiusKm, secondOriginRef.current);
+    userMovedRef.current = false;
+
+    const fit = () => {
+      const home = originRef.current;
+      const other = secondOriginRef.current;
+      const frame = radiusCircleFrame(home, radiusRef.current);
+      const box = bboxFromRadius(home, frame.radiusKm);
+      map.setCenter({ lat: home.lat, lng: home.lng });
+      if (circleRef.current) {
+        circleRef.current.setCenter({ lat: home.lat, lng: home.lng });
+        circleRef.current.setRadius(frame.meters);
+        circleRef.current.setOptions(RADIUS_CIRCLE_STYLE);
       } else {
-        circle2Ref.current = new maps.Circle({
+        circleRef.current = new maps.Circle({
           map,
-          center: { lat: secondOrigin.lat, lng: secondOrigin.lng },
-          radius: meters,
-          strokeColor: "#b45309",
-          strokeWeight: 2,
-          strokeOpacity: 0.85,
-          fillColor: "#b45309",
-          fillOpacity: 0.1,
-          clickable: false,
+          center: { lat: home.lat, lng: home.lng },
+          radius: frame.meters,
+          ...RADIUS_CIRCLE_STYLE,
         });
       }
-      if (workYouRef.current) {
-        workYouRef.current.setPosition({ lat: secondOrigin.lat, lng: secondOrigin.lng });
-        workYouRef.current.setMap(map);
+      if (other) {
+        const work = radiusCircleFrame(other, radiusRef.current);
+        if (circle2Ref.current) {
+          circle2Ref.current.setCenter({ lat: other.lat, lng: other.lng });
+          circle2Ref.current.setRadius(work.meters);
+          circle2Ref.current.setOptions(RADIUS_CIRCLE_ALT_STYLE);
+          circle2Ref.current.setMap(map);
+        } else {
+          circle2Ref.current = new maps.Circle({
+            map,
+            center: { lat: other.lat, lng: other.lng },
+            radius: work.meters,
+            ...RADIUS_CIRCLE_ALT_STYLE,
+          });
+        }
+        if (workYouRef.current) {
+          workYouRef.current.setPosition({ lat: other.lat, lng: other.lng });
+          workYouRef.current.setMap(map);
+        } else {
+          workYouRef.current = createYouAreHereDot({
+            maps,
+            map,
+            position: { lat: other.lat, lng: other.lng },
+            AdvancedMarker: advancedMarkerRef.current,
+          });
+        }
       } else {
-        workYouRef.current = createYouAreHereDot({
-          maps,
-          map,
-          position: { lat: secondOrigin.lat, lng: secondOrigin.lng },
-          AdvancedMarker: advancedMarkerRef.current,
-        });
+        circle2Ref.current?.setMap(null);
+        workYouRef.current?.setMap(null);
       }
-    } else {
-      circle2Ref.current?.setMap(null);
-      workYouRef.current?.setMap(null);
-    }
-    const box = bboxFromRadius(point, radiusKm);
-    const bounds = new maps.LatLngBounds(
-      { lat: box.minLat, lng: box.minLng },
-      { lat: box.maxLat, lng: box.maxLng },
-    );
-    if (secondOrigin) {
-      const box2 = bboxFromRadius(secondOrigin, radiusKm);
-      bounds.extend({ lat: box2.minLat, lng: box2.minLng });
-      bounds.extend({ lat: box2.maxLat, lng: box2.maxLng });
-    }
-    map.fitBounds(bounds, MAP_RADIUS_FIT_PAD);
-    let framing = true;
-    const idle = maps.event?.addListenerOnce?.(map, "idle", () => {
-      if (!framing) return;
-      const next = originRef.current;
-      const nextSecond = secondOriginRef.current;
-      map.setCenter({ lat: next.lat, lng: next.lng });
-      const boxNow = bboxFromRadius(next, radiusRef.current);
-      const nextBounds = new maps.LatLngBounds(
-        { lat: boxNow.minLat, lng: boxNow.minLng },
-        { lat: boxNow.maxLat, lng: boxNow.maxLng },
+      const bounds = new maps.LatLngBounds(
+        { lat: box.minLat, lng: box.minLng },
+        { lat: box.maxLat, lng: box.maxLng },
       );
-      if (nextSecond) {
-        const box2 = bboxFromRadius(nextSecond, radiusRef.current);
-        nextBounds.extend({ lat: box2.minLat, lng: box2.minLng });
-        nextBounds.extend({ lat: box2.maxLat, lng: box2.maxLng });
+      if (other) {
+        const workBox = bboxFromRadius(other, frame.radiusKm);
+        bounds.extend({ lat: workBox.minLat, lng: workBox.minLng });
+        bounds.extend({ lat: workBox.maxLat, lng: workBox.maxLng });
       }
-      map.fitBounds(nextBounds, MAP_RADIUS_FIT_PAD);
-      circleRef.current?.setCenter({ lat: next.lat, lng: next.lng });
-      youRef.current?.setPosition({ lat: next.lat, lng: next.lng });
-      const minZoom = mapZoomForRadius(radiusRef.current);
-      const current = map.getZoom();
-      if (typeof current === "number" && current < minZoom - 1) {
-        map.setZoom(minZoom);
-        map.setCenter({ lat: next.lat, lng: next.lng });
-      }
+      const pad = el.clientWidth > 0 ? radiusFitPadding(el.clientWidth) : MAP_RADIUS_FIT_PAD;
+      map.fitBounds(bounds, pad);
+      youRef.current?.setPosition({ lat: home.lat, lng: home.lng });
+    };
+
+    fit();
+    let framing = true;
+    const markMoved = () => {
+      userMovedRef.current = true;
+    };
+    const idle = maps.event?.addListenerOnce?.(map, "idle", () => {
+      if (!framing || userMovedRef.current) return;
+      const home = originRef.current;
+      const frame = radiusCircleFrame(home, radiusRef.current);
+      const visible = map.getBounds?.();
+      const ne = visible?.getNorthEast?.();
+      const sw = visible?.getSouthWest?.();
+      const framed =
+        ne &&
+        sw &&
+        boundsCoverRadiusFrame(
+          { minLat: sw.lat(), maxLat: ne.lat(), minLng: sw.lng(), maxLng: ne.lng() },
+          frame,
+        );
+      if (framed) return;
+      fit();
     });
+    const drag = maps.event.addListener(map, "dragstart", markMoved);
+    el.addEventListener("wheel", markMoved, { passive: true });
+    el.addEventListener("touchmove", markMoved, { passive: true });
+    el.addEventListener("dblclick", markMoved);
+    let resizeTimer = 0;
+    const ro = new ResizeObserver(() => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        if (!framing || userMovedRef.current) return;
+        if (radiusFrameKey(originRef.current, radiusRef.current, secondOriginRef.current) !== frameKey) return;
+        maps.event.trigger(map, "resize");
+        fit();
+      }, 80);
+    });
+    ro.observe(el);
     if (youRef.current) {
       youRef.current.setPosition({ lat: point.lat, lng: point.lng });
     } else {
@@ -388,7 +413,13 @@ export function MapView({
     }
     return () => {
       framing = false;
+      window.clearTimeout(resizeTimer);
+      ro.disconnect();
+      el.removeEventListener("wheel", markMoved);
+      el.removeEventListener("touchmove", markMoved);
+      el.removeEventListener("dblclick", markMoved);
       if (idle) maps.event?.removeListener?.(idle);
+      maps.event.removeListener(drag);
     };
   }, [origin.lat, origin.lng, secondOrigin?.lat, secondOrigin?.lng, radiusKm, ready]);
 
@@ -498,6 +529,7 @@ export function MapView({
             zIndex: 40 + Math.min(node.count, 80),
             collision: "REQUIRED",
             onClick: () => {
+              userMovedRef.current = true;
               if (clusterStepZoom(node)) {
                 map.setZoom(Math.min((map.getZoom() ?? zoom) + 2, 17));
                 map.panTo({ lat: node.lat, lng: node.lng });
@@ -640,6 +672,7 @@ export function MapView({
   });
 
   async function locateMe() {
+    userMovedRef.current = true;
     if (onLocate) {
       onLocate();
       return;
@@ -655,6 +688,7 @@ export function MapView({
   }
 
   function bumpZoom(delta: number) {
+    userMovedRef.current = true;
     const map = mapRef.current;
     if (!map) return;
     const next = Math.min(18, Math.max(4, (map.getZoom() ?? zoom) + delta));
