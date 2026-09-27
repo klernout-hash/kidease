@@ -23,7 +23,7 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("home chips are Kyle's 10 City, Province labels in order", () => {
+test("home chips keep Kyle's 10, then Moncton, as City, Province labels", () => {
   assert.deepEqual(
     CITY_HUB_DEFS.map((hub) => hub.slug),
     [
@@ -37,6 +37,7 @@ test("home chips are Kyle's 10 City, Province labels in order", () => {
       "quebec-city",
       "hamilton",
       "halifax",
+      "moncton",
     ],
   );
   assert.deepEqual(
@@ -52,8 +53,10 @@ test("home chips are Kyle's 10 City, Province labels in order", () => {
       "Quebec City, Quebec",
       "Hamilton, Ontario",
       "Halifax, Nova Scotia",
+      "Moncton, New Brunswick",
     ],
   );
+  assert.equal(cityHubChipLabel(CITY_HUB_DEFS.find((h) => h.slug === "moncton"), "fr"), "Moncton, Nouveau-Brunswick");
   assert.equal(cityHubChipLabel(CITY_HUB_DEFS.find((h) => h.slug === "montreal"), "fr"), "Montréal, Québec");
   assert.equal(cityHubChipLabel(CITY_HUB_DEFS.find((h) => h.slug === "quebec-city"), "fr"), "Québec, Québec");
   assert.equal(cityHubDefBySlug("quebec-city")?.slug, "quebec-city");
@@ -71,6 +74,7 @@ test("city hub URLs sit under /daycare/city and never invent empty cities", () =
   assert.equal(cityHubDefForPlace("Quebec City", "QC")?.slug, "quebec-city");
   assert.equal(cityHubDefForPlace("Hamilton", "ON")?.slug, "hamilton");
   assert.equal(cityHubDefForPlace("Halifax", "NS")?.slug, "halifax");
+  assert.equal(cityHubDefForPlace("Moncton", "NB")?.slug, "moncton");
   assert.equal(cityHubDefForPlace("Winnipegosis", "MB"), null);
   assert.equal(cityHubDefForPlace("Winnipeg", "ON"), null);
   const quebecHit = geocode(cityHubSearchQuery(CITY_HUB_DEFS.find((h) => h.slug === "quebec-city")));
@@ -107,6 +111,7 @@ test("generated city-hubs.json keeps Winnipeg and other dense cities", () => {
     "quebec-city",
     "hamilton",
     "halifax",
+    "moncton",
   ]) {
     assert.ok(slugs.includes(slug), slug);
   }

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, recommendedRank } from "@/lib/proximity";
+import { resolveListingTourTimezone } from "@/lib/tour-calendar";
 import { catalogByIdsGet, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
 import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
@@ -129,7 +130,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
     agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
     visibility: d.visibility,
     isTest: d.isTest,
-    timezone: "America/Winnipeg",
+    timezone: resolveListingTourTimezone(null, d.province),
   }));
   return {
     ...mapped,
@@ -410,12 +411,16 @@ export const searchDaycares = createServerFn({ method: "GET" })
   }))
   .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => searchIncludingLive(data)));
 
-async function loadFeatured(origin: { lat: number; lng: number; label?: string }): Promise<DaycareCard[]> {
+async function loadFeatured(
+  origin: { lat: number; lng: number; label?: string },
+  radiusKm: number,
+): Promise<DaycareCard[]> {
+  const radius = clampRadiusKm(radiusKm);
   const lock = resolveLocationLock(origin);
   const nearby: DaycareCard[] = [];
-  for (const d of await mergeApprovedCityListings(filterByLocationLock(await nearbyListings(origin, 40), lock), {
+  for (const d of await mergeApprovedCityListings(filterByLocationLock(await nearbyListings(origin, radius), lock), {
     origin,
-    radiusKm: 40,
+    radiusKm: radius,
     lock,
     label: origin.label,
   })) {
@@ -424,7 +429,7 @@ async function loadFeatured(origin: { lat: number; lng: number; label?: string }
   const pinned = await mergePinnedCentres(nearby, lock, origin);
   pinned.sort(compareProximity);
   const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(pinned, mergeClaimedCard)));
-  const scored = await overlayParentRank(merged, { distanceKnown: true, radiusKm: 40, ageGroup: "any" });
+  const scored = await overlayParentRank(merged, { distanceKnown: true, radiusKm: radius, ageGroup: "any" });
   const ranked = sortFeaturedCityAfterPriority(
     await overlayFeaturedCity(await overlayPriority(scored)),
   );
@@ -432,22 +437,26 @@ async function loadFeatured(origin: { lat: number; lng: number; label?: string }
 }
 
 export const featuredDaycares = createServerFn({ method: "GET" })
-  .validator((input: { lat: number; lng: number; label?: string }) => input)
+  .validator((input: { lat: number; lng: number; label?: string; radiusKm?: number }) => ({
+    ...input,
+    radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
+  }))
   .handler(async ({ data }) => {
+    const radiusKm = data.radiusKm;
     const aligned = alignSearchOrigin({
       lat: data.lat,
       lng: data.lng,
-      radiusKm: 40,
+      radiusKm,
       q: data.label,
       label: data.label,
     });
     const origin = { lat: aligned.lat, lng: aligned.lng, label: aligned.label || data.label };
-    const full = await withTimeoutFallback(loadFeatured(origin), LOADER_SETTLE_MS, null);
+    const full = await withTimeoutFallback(loadFeatured(origin, radiusKm), LOADER_SETTLE_MS, null);
     if (full && full.length > 0) return full;
     return liveCardsForSearch({
       lat: origin.lat,
       lng: origin.lng,
-      radiusKm: 40,
+      radiusKm,
       sort: "distance",
       ageGroup: "any",
       label: origin.label,

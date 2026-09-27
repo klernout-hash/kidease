@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { nid } from "@/lib/utils";
-import { promoPlan, type PromoPlanId } from "@/lib/promos";
-import { lookupUser, notifyPlatform } from "./notify";
+import type { PromoPlanId } from "@/lib/promos";
 import { assertCanMutateListing } from "@/lib/access-control";
 import { assertPayCheckoutAllowed } from "@/lib/features";
 import { resolveSessionDesks } from "@/lib/server/roles";
@@ -43,41 +41,13 @@ export const promoteListing = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const session = await resolveSessionDesks(context.userId);
     assertPayCheckoutAllowed(session.role);
-    const plan = promoPlan(data.plan);
-    if (!plan) throw new Error("Choose a promotion plan");
     const sql = await getSql();
     const own = await sql<{ user_id: string }>`
       select user_id from provider_daycares
       where user_id = ${context.userId} and daycare_id = ${data.daycareId}
     `;
     assertCanMutateListing(own[0] ? [data.daycareId] : [], data.daycareId);
-    const current = await sql<{ priority_until: string | null }>`
-      select priority_until from daycares where id = ${data.daycareId}
-    `.catch(() => [] as { priority_until: string | null }[]);
-    const now = Date.now();
-    const existing = current[0]?.priority_until ? Date.parse(current[0].priority_until) : 0;
-    const startMs = Number.isFinite(existing) && existing > now ? existing : now;
-    const ends = new Date(startMs + plan.days * 24 * 60 * 60 * 1000);
-    const endsIso = ends.toISOString();
-    const id = nid("pro");
-    await sql`
-      insert into listing_promos (id, daycare_id, user_id, plan, days, amount, status, ends_at)
-      values (${id}, ${data.daycareId}, ${context.userId}, ${plan.id}, ${plan.days}, ${plan.amount}, ${"paid"}, ${endsIso})
-    `;
-    await sql`
-      update daycares set priority_until = ${endsIso} where id = ${data.daycareId}
-    `;
-    const actor = await lookupUser(context.userId);
-    const listed = await sql<{ name: string; slug: string }>`
-      select name, slug from daycares where id = ${data.daycareId} limit 1
-    `.catch(() => [] as { name: string; slug: string }[]);
-    void notifyPlatform({
-      kind: "promo",
-      daycareName: listed[0]?.name,
-      slug: listed[0]?.slug,
-      actorName: actor.name,
-      actorEmail: actor.email,
-      detail: `${plan.id} · ${plan.days} days · $${plan.amount} · until ${endsIso}`,
-    });
-    return { ok: true as const, endsAt: endsIso, amount: plan.amount, days: plan.days };
+    throw new Error(
+      "Priority weeks are not in the Stripe catalogue. Use a plan or add-on from Promote. Nothing was charged.",
+    );
   });

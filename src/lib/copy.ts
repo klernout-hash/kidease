@@ -449,7 +449,7 @@ export const copy = {
     interiorCta: "Add interior photo",
     promoteTitle: "Promote this listing",
     promoteLead:
-      "Pay to appear at the top of search results near you. Priority listings show a glowing blue Priority badge so parents notice you first.",
+      "Same catalogue as the plans page, in Canadian dollars. Checkout opens Stripe for Pro, Network, and the add-ons below. Free has no charge.",
     promoteWeek: "7 days",
     promoteMonth: "30 days",
     promoteQuarter: "90 days",
@@ -1380,7 +1380,7 @@ export const copy = {
     no: "No",
     howStressFree: "Here’s how KidEase works",
     featuredBody:
-      "Every listing shows a real photo of the location so you know exactly what the place looks like. Only licensed facilities are included.",
+      "Licensed centres within your search radius. A photo is shown only when the centre has one on file.",
     viewDetails: "View Details",
     kmAway: "km away",
     bandWalk: "walkable",
@@ -1391,7 +1391,7 @@ export const copy = {
     filterCatchment: "Serves my area",
     trustWhyTitle: "Why Parents Trust KidEase",
     trustWhy1: "We only list provincially licensed daycares across Canada.",
-    trustWhy2: "Every listing features a real photo of the actual storefront so you can recognise the location.",
+    trustWhy2: "A photo is shown when the centre has one on file, so you can recognise the building when a picture is there.",
     trustWhy3: "KidEase verifies licences and who owns a listing. Screening on file means Admin reviewed required documents — not that KidEase ran a police Vulnerable Sector Check.",
     trustWhy4: "Your searches stay private. We do not sell your data.",
     trustWhyLocal:
@@ -2921,7 +2921,7 @@ export const copy = {
     interiorCta: "Ajouter une photo intérieure",
     promoteTitle: "Mettre en avant cette fiche",
     promoteLead:
-      "Payez pour apparaître en haut des résultats près de chez vous. Les fiches prioritaire affichent un badge bleu lumineux pour attirer l’œil des parents.",
+      "Même catalogue que la page des forfaits, en dollars canadiens. La caisse ouvre Stripe pour Pro, Réseau et les options ci-dessous. Gratuit n’a pas de frais.",
     promoteWeek: "7 jours",
     promoteMonth: "30 jours",
     promoteQuarter: "90 jours",
@@ -3855,7 +3855,7 @@ export const copy = {
     no: "Non",
     howStressFree: "Trouver une place ne devrait pas être stressant. Voici comment KidEase fonctionne :",
     featuredBody:
-      "Chaque fiche montre une vraie photo du lieu pour que vous sachiez à quoi ressemble l’endroit. Seuls les établissements permis sont inclus.",
+      "Centres permis dans votre rayon de recherche. Une photo s’affiche seulement lorsque le centre en a une au dossier.",
     viewDetails: "Voir les détails",
     kmAway: "km",
     bandWalk: "à pied",
@@ -3866,7 +3866,7 @@ export const copy = {
     filterCatchment: "Sert mon secteur",
     trustWhyTitle: "Pourquoi les parents font confiance à KidEase",
     trustWhy1: "Nous n’inscrivons que des garderies permises par la province, partout au Canada.",
-    trustWhy2: "Chaque fiche présente une vraie photo de la devanture pour que vous reconnaissiez le lieu.",
+    trustWhy2: "Une photo s’affiche lorsque le centre en a une au dossier, pour que vous reconnaissiez le bâtiment quand elle est là.",
     trustWhy3: "KidEase vérifie les permis et qui possède une fiche. Dossier de filtrage signifie qu’Admin a examiné les documents requis — pas que KidEase a fait une vérification policière du secteur vulnérable.",
     trustWhy4: "Vos recherches restent privées. Nous ne vendons pas vos données.",
     trustWhyLocal:

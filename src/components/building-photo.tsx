@@ -9,7 +9,7 @@ import {
   publicPhotoUrl,
   srcsetWidthsFor,
 } from "@/lib/photo";
-import { healMediaUrl } from "@/lib/listing-photo";
+import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto, rememberFailedPhoto } from "@/lib/listing-photo";
 import { cn } from "@/lib/utils";
 
 /** Mobile Lighthouse LCP: sized AVIF, not a late-discovered 1200-only file. */
@@ -25,7 +25,9 @@ export const HERO_LCP_MOBILE_WEBP_SRCSET =
 export const HERO_LCP_SIZES = HERO_SIZES;
 export const HERO_LCP_MOBILE_SIZES = "100vw";
 
-const FALLBACK = "/photos/storefront-placeholder-480.webp";
+function photoNeedsFallback(src: string): boolean {
+  return !src || isStockListingPhoto(src) || isFailedPhotoUrl(src);
+}
 
 /** Honest empty still — labelled elsewhere. Never dressed as a centre photo. */
 export function ListingPhotoFallback({
@@ -72,31 +74,31 @@ export function BuildingPhoto({
 }) {
   const healed = healMediaUrl(src);
   const ref = useRef<HTMLImageElement>(null);
-  const [cur, setCur] = useState(healed || FALLBACK);
-  const [broken, setBroken] = useState(!healed);
+  const [cur, setCur] = useState(healed);
+  const [broken, setBroken] = useState(photoNeedsFallback(healed));
   const [skipTransform, setSkipTransform] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const next = healMediaUrl(src);
-    setBroken(!next);
-    setCur(next || FALLBACK);
+    setCur(next);
+    setBroken(photoNeedsFallback(next));
     setSkipTransform(false);
     setLoaded(false);
   }, [src]);
 
-  const ready = cur || FALLBACK;
-  const delivered = skipTransform ? publicPhotoUrl(ready) : photoUrl(ready, width);
+  const ready = cur;
+  const delivered = ready ? (skipTransform ? publicPhotoUrl(ready) : photoUrl(ready, width)) : "";
 
   function fail(event?: SyntheticEvent<HTMLImageElement>) {
     const failed = event?.currentTarget?.currentSrc || event?.currentTarget?.src || delivered;
     setLoaded(false);
-    if (!skipTransform && isResizedPhotoUrl(failed || photoUrl(ready, width))) {
+    if (ready && !skipTransform && isResizedPhotoUrl(failed || photoUrl(ready, width))) {
       setSkipTransform(true);
       return;
     }
-    if (cur !== FALLBACK) setCur(FALLBACK);
-    else setBroken(true);
+    rememberFailedPhoto(ready || healed);
+    setBroken(true);
   }
 
   useEffect(() => {

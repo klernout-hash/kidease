@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
-import { healMediaUrl } from "@/lib/listing-photo";
+import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,7 @@ export function PhotoCarousel({
 }) {
   const slides = photos
     .map((p) => healMediaUrl(p))
-    .filter((p) => p && !p.includes("-logo") && isRealListingPhoto(p));
+    .filter((p) => p && !p.includes("-logo") && isRealListingPhoto(p) && !isStockListingPhoto(p) && !isFailedPhotoUrl(p));
   const list = slides;
   const [i, setI] = useState(0);
 

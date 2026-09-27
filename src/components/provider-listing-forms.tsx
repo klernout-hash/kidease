@@ -3,7 +3,6 @@ import { Camera, ChevronLeft, ChevronRight, Megaphone, Trash2 } from "lucide-rea
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
-import { PriorityPill } from "@/components/priority-pill";
 import { ListingHealthPanel } from "@/components/listing-health";
 import { ListingReadinessCoach } from "@/components/listing-readiness-coach";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
@@ -26,13 +25,16 @@ import { refreshVacancy, updateListing } from "@/lib/server/claims";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { ProviderParentFields, parentDeskFromDaycare } from "@/components/provider-parent-fields";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
-import { promoteListing } from "@/lib/server/promos";
-import { PROMO_PLANS, isPriorityActive, type PromoPlanId } from "@/lib/promos";
 import { useCopy } from "@/lib/use-copy";
 import { isReauthRequiredMessage } from "@/lib/reauth";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { useReauthPrompt } from "@/components/reauth-dialog";
-import { cn, money, formatAgeRange } from "@/lib/utils";
+import { formatAgeRange } from "@/lib/utils";
+import { formatPlanCad } from "@/lib/upgrade-plans";
+import { planPriceHint, PROVIDER_ADDONS, PROVIDER_PLANS, type ProviderAddonId } from "@/lib/provider-plans";
+import { startProviderAddonCheckout, startProviderCheckout } from "@/lib/server/provider-subscriptions";
+import { openStripeCheckout } from "@/lib/wallets";
+import { isPriorityActive } from "@/lib/promos";
 import type { Daycare } from "@/lib/types";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import {
@@ -46,65 +48,101 @@ import {
   postPrivateDocForm,
 } from "@/lib/private-docs";
 
-export function PromotePanel({ daycare, onSaved }: { daycare: Daycare; onSaved: () => void }) {
+export function PromotePanel({ daycare }: { daycare: Daycare; onSaved: () => void }) {
   const { t, locale } = useCopy();
-  const [plan, setPlan] = useState<PromoPlanId>("month");
-  const [busy, setBusy] = useState(false);
+  const loc = locale === "fr" ? "fr" : "en";
+  const [busy, setBusy] = useState<string | null>(null);
   const active = isPriorityActive(daycare.priorityUntil);
   const until = daycare.priorityUntil
-    ? new Date(daycare.priorityUntil).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
+    ? new Date(daycare.priorityUntil).toLocaleDateString(loc === "fr" ? "fr-CA" : "en-CA", {
         year: "numeric",
         month: "short",
         day: "numeric",
       })
     : "";
 
+  async function checkoutPlan(plan: "pro" | "network") {
+    setBusy(plan);
+    try {
+      const result = await startProviderCheckout({
+        data: { plan, interval: "month", addons: [], locale: loc },
+      });
+      if (result.url) {
+        await openStripeCheckout(result.url);
+        return;
+      }
+      toast.error(loc === "fr" ? "Stripe n’a pas ouvert la caisse." : "Stripe did not open checkout.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function checkoutAddon(addon: ProviderAddonId) {
+    setBusy(addon);
+    try {
+      const result = await startProviderAddonCheckout({
+        data: { addon, centreId: daycare.id, locale: loc },
+      });
+      if (result.url) {
+        await openStripeCheckout(result.url);
+        return;
+      }
+      toast.error(loc === "fr" ? "Stripe n’a pas ouvert la caisse." : "Stripe did not open checkout.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="mt-4 rounded-xl bg-surface p-4 ring-1 ring-border">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="inline-flex items-center gap-2 font-display text-xl">
-            <Megaphone className="size-5 text-primary" />
-            {t("promoteTitle")}
-          </h3>
-          <p className="mt-1 max-w-xl text-sm text-muted">{t("promoteLead")}</p>
-        </div>
-        <PriorityPill />
-      </div>
+      <h3 className="inline-flex items-center gap-2 font-display text-xl">
+        <Megaphone className="size-5 text-primary" />
+        {t("promoteTitle")}
+      </h3>
+      <p className="mt-1 max-w-xl text-sm text-muted">{t("promoteLead")}</p>
       {active ? (
         <p className="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">
           {t("promoteActive")} {until}
         </p>
       ) : null}
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        {PROMO_PLANS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => setPlan(p.id)}
-            className={cn("rounded-xl px-3 py-3 text-left ring-1", plan === p.id ? "bg-bg ring-2 ring-primary" : "bg-bg ring-border")}
-          >
-            <p className="text-sm font-medium">{p.id === "week" ? t("promoteWeek") : p.id === "month" ? t("promoteMonth") : t("promoteQuarter")}</p>
-            <p className="mt-1 font-display text-2xl tabular-nums">{money(p.amount, locale)}</p>
-          </button>
+        {PROVIDER_PLANS.map((plan) => {
+          const paid = plan.id === "pro" || plan.id === "network";
+          return (
+            <div key={plan.id} className="rounded-xl bg-bg px-3 py-3 ring-1 ring-border">
+              <p className="text-sm font-medium">{plan.name[loc]}</p>
+              <p className="mt-1 font-display text-2xl tabular-nums">{planPriceHint(plan, "month", loc)}</p>
+              <p className="mt-1 text-xs text-muted">{plan.tagline[loc]}</p>
+              {paid ? (
+                <Button className="mt-3" disabled={busy != null} onClick={() => void checkoutPlan(plan.id as "pro" | "network")}>
+                  {t("promotePay")}
+                </Button>
+              ) : (
+                <p className="mt-3 text-xs text-muted">{loc === "fr" ? "Inclus. Pas de caisse." : "Included. No checkout."}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {PROVIDER_ADDONS.map((addon) => (
+          <div key={addon.id} className="rounded-xl bg-bg px-3 py-3 ring-1 ring-border">
+            <p className="text-sm font-medium">{addon.name[loc]}</p>
+            <p className="mt-1 font-display text-2xl tabular-nums">
+              {formatPlanCad(addon.amount, loc)}
+              {addon.cadence === "month" ? (loc === "fr" ? "/mois" : "/mo") : loc === "fr" ? " une fois" : " once"}
+            </p>
+            <p className="mt-1 text-xs text-muted">{addon.blurb[loc]}</p>
+            <Button className="mt-3" disabled={busy != null} onClick={() => void checkoutAddon(addon.id)}>
+              {t("promotePay")}
+            </Button>
+          </div>
         ))}
       </div>
-      <Button
-        className="mt-3"
-        disabled={busy}
-        onClick={() => {
-          setBusy(true);
-          void promoteListing({ data: { daycareId: daycare.id, plan } })
-            .then(() => {
-              confirmAction(t, "editsSaved", { title: t("promotePay") });
-              onSaved();
-            })
-            .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
-            .finally(() => setBusy(false));
-        }}
-      >
-        {active ? t("promoteExtend") : t("promotePay")} · {money(PROMO_PLANS.find((p) => p.id === plan)?.amount ?? 0, locale)}
-      </Button>
     </div>
   );
 }

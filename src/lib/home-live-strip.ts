@@ -14,6 +14,20 @@ export type HomeLiveStrip = {
   featuredTitleKey: "featured" | "featuredStripTitle";
 };
 
+/**
+ * The featured chip and the featured section share one count.
+ * Zero hides both so the page cannot say "Featured · N" over an empty radius.
+ */
+export function featuredHomeAgreement(featuredCount: number): {
+  showChip: boolean;
+  showSection: boolean;
+  count: number;
+} {
+  const count = Number.isFinite(featuredCount) ? Math.max(0, Math.floor(featuredCount)) : 0;
+  const show = count > 0;
+  return { showChip: show, showSection: show, count };
+}
+
 export function homeLiveStrip(liveCount: number, featuredCount: number): HomeLiveStrip {
   const live = Number.isFinite(liveCount) ? Math.max(0, Math.floor(liveCount)) : 0;
   const featured = Number.isFinite(featuredCount) ? Math.max(0, Math.floor(featuredCount)) : 0;

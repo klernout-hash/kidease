@@ -57,6 +57,67 @@ export function resolveTourTimezone(value?: string | null): string {
   return DEFAULT_TOUR_TIMEZONE;
 }
 
+/**
+ * Province → IANA zone for public tour clocks.
+ * Nunavut uses Eastern (Iqaluit). `America/Iqaluit` is not in the director list.
+ * Saskatchewan is Central with no daylight-saving shift.
+ */
+const PROVINCE_TOUR_TIMEZONES: Record<string, TourTimezone> = {
+  BC: "America/Vancouver",
+  YT: "America/Whitehorse",
+  AB: "America/Edmonton",
+  NT: "America/Edmonton",
+  SK: "America/Regina",
+  MB: "America/Winnipeg",
+  ON: "America/Toronto",
+  QC: "America/Toronto",
+  NU: "America/Toronto",
+  NB: "America/Halifax",
+  NS: "America/Halifax",
+  PE: "America/Halifax",
+  NL: "America/St_Johns",
+};
+
+export function tourTimezoneForProvince(province?: string | null): string | null {
+  const code = String(province ?? "").trim().toUpperCase();
+  return PROVINCE_TOUR_TIMEZONES[code] ?? null;
+}
+
+/**
+ * A saved non-Winnipeg zone is an explicit director override.
+ * Null or the column default (`America/Winnipeg`) follows the listing province
+ * so Toronto, Vancouver, and Moncton are not labelled Central — Winnipeg.
+ */
+export function resolveListingTourTimezone(stored?: string | null, province?: string | null): string {
+  const explicit = String(stored || "").trim();
+  const known = (CANADA_TOUR_TIMEZONES as readonly string[]).includes(explicit);
+  if (known && explicit !== DEFAULT_TOUR_TIMEZONE) return explicit;
+  return tourTimezoneForProvince(province) ?? (known ? explicit : DEFAULT_TOUR_TIMEZONE);
+}
+
+/** Re-clock Winnipeg-default windows into the listing zone. Explicit zones stay. */
+export function slotsInListingZone(slots: readonly PublicTourSlot[], zone: string): PublicTourSlot[] {
+  const target = resolveTourTimezone(zone);
+  return slots.map((slot) => {
+    const current = resolveTourTimezone(slot.timezone);
+    if (current === target) return slot;
+    if (current !== DEFAULT_TOUR_TIMEZONE) return slot;
+    return (
+      toPublicTourSlot({
+        id: slot.id,
+        date: slot.date,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        capacity: slot.capacity,
+        booked: slot.booked,
+        pending: slot.pending,
+        accepted: slot.accepted,
+        timezone: target,
+      }) ?? { ...slot, timezone: target }
+    );
+  });
+}
+
 export function clampTourCapacity(value: unknown): number {
   const n = Math.floor(Number(value));
   if (!Number.isFinite(n)) return MIN_TOUR_CAPACITY;
@@ -250,20 +311,20 @@ export function timezoneLabel(zone: string, locale: "en" | "fr" | string = "en")
   const fr = locale === "fr";
   switch (resolveTourTimezone(zone)) {
     case "America/Toronto":
-      return fr ? "Heure de l’Est — Toronto" : "Eastern — Toronto";
+      return fr ? "Heure de l’Est" : "Eastern";
     case "America/Regina":
-      return fr ? "Heure du Centre (sans HAC) — Regina" : "Central (no DST) — Regina";
+      return fr ? "Heure du Centre (sans HAC)" : "Central (no DST)";
     case "America/Edmonton":
-      return fr ? "Heure des Rocheuses — Edmonton" : "Mountain — Edmonton";
+      return fr ? "Heure des Rocheuses" : "Mountain";
     case "America/Vancouver":
-      return fr ? "Heure du Pacifique — Vancouver" : "Pacific — Vancouver";
+      return fr ? "Heure du Pacifique" : "Pacific";
     case "America/Halifax":
-      return fr ? "Heure de l’Atlantique — Halifax" : "Atlantic — Halifax";
+      return fr ? "Heure de l’Atlantique" : "Atlantic";
     case "America/St_Johns":
-      return fr ? "Heure de Terre-Neuve — St. John’s" : "Newfoundland — St. John’s";
+      return fr ? "Heure de Terre-Neuve" : "Newfoundland";
     case "America/Whitehorse":
-      return fr ? "Heure du Yukon — Whitehorse" : "Yukon — Whitehorse";
+      return fr ? "Heure du Yukon" : "Yukon";
     default:
-      return fr ? "Heure du Centre — Winnipeg" : "Central — Winnipeg";
+      return fr ? "Heure du Centre" : "Central";
   }
 }
