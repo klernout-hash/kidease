@@ -1334,6 +1334,35 @@ html[data-channel="website"] .ke-web-grid > article {
   width: 40px;
   height: 40px;
 }
+.ke-cluster-bubble {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--ke-cluster-size, 44px);
+  height: var(--ke-cluster-size, 44px);
+  margin: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: #1a3790;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  box-shadow: 0 2px 6px rgba(26, 55, 144, 0.35);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.ke-logo-cluster.ke-cluster-bubble {
+  width: var(--ke-cluster-size, 44px);
+  height: var(--ke-cluster-size, 44px);
+}
+.ke-cluster-bubble:focus-visible {
+  outline: 2px solid #1a3790;
+  outline-offset: 3px;
+}
 .ke-pin-count {
   position: absolute;
   top: -2px;

@@ -18,6 +18,26 @@ import {
   type PinPopupBox,
 } from "@/lib/maps";
 import { bboxFromRadius } from "@/lib/proximity";
+import { mapPinToCard } from "@/lib/map-pin-card";
+import {
+  MAP_FETCH_DEBOUNCE_MS,
+  bboxCovers,
+  cacheMapBbox,
+  clusterAriaLabel,
+  clusterBubbleFontPx,
+  clusterBubblePx,
+  clusterCountLabel,
+  clusterStepZoom,
+  mapViewCacheKey,
+  markersForMapView,
+  viewportNeedsFetch,
+  readMapViewCache,
+  sanitizeMapBbox,
+  writeMapViewCache,
+  type MapPin,
+  type MapViewData,
+} from "@/lib/map-cluster";
+import { mapPinsInView } from "@/lib/server/map-pins";
 import {
   createKidEaseMap,
   createListingOverlayFactory,
@@ -117,17 +137,24 @@ export function MapView({
   const [zoom, setZoom] = useState(12);
   const [base, setBase] = useState<MapBase>("roadmap");
   const [picked, setPicked] = useState<string | null>(activeSlug ?? null);
+  const [pickedPin, setPickedPin] = useState<MapPin | null>(null);
+  const [viewData, setViewData] = useState<MapViewData | null>(null);
   const [locating, setLocating] = useState(false);
   const [loadGen, setLoadGen] = useState(0);
+  const appliedViewKey = useRef("");
+  const loadedView = useRef<MapViewData | null>(null);
 
   useEffect(() => {
     setBase(readMapBase());
   }, []);
 
-  const selected = useMemo(
-    () => (picked ? (items.find((i) => i.slug === picked) ?? null) : null),
-    [items, picked],
-  );
+  const selected = useMemo(() => {
+    if (!picked) return null;
+    const fromList = items.find((item) => item.slug === picked);
+    if (fromList) return fromList;
+    if (pickedPin && pickedPin.slug === picked) return mapPinToCard(pickedPin, origin);
+    return null;
+  }, [items, picked, pickedPin, origin]);
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
   const dismissRef = useRef<() => void>(() => {});
@@ -366,6 +393,69 @@ export function MapView({
   useEffect(() => {
     const map = mapRef.current;
     const maps = mapsApiRef.current;
+    if (!map || !maps || !ready) return;
+    let cancelled = false;
+    let timer = 0;
+    let request = 0;
+    let inflightKey = "";
+    const run = () => {
+      const bounds = map.getBounds?.();
+      const ne = bounds?.getNorthEast?.();
+      const sw = bounds?.getSouthWest?.();
+      const zoomNow = map.getZoom?.();
+      if (!ne || !sw || typeof zoomNow !== "number") return;
+      const visible = sanitizeMapBbox({
+        minLat: sw.lat(),
+        maxLat: ne.lat(),
+        minLng: sw.lng(),
+        maxLng: ne.lng(),
+      });
+      if (!visible) return;
+      if (!viewportNeedsFetch({ visible, zoom: zoomNow, loaded: loadedView.current })) return;
+      const key = mapViewCacheKey(visible, zoomNow);
+      const cached = readMapViewCache(key);
+      if (cached && bboxCovers(cached.bbox, visible)) {
+        if (appliedViewKey.current !== key) {
+          appliedViewKey.current = key;
+          loadedView.current = cached;
+          setViewData(cached);
+        }
+        return;
+      }
+      if (inflightKey === key) return;
+      inflightKey = key;
+      const id = ++request;
+      const snapped = cacheMapBbox(visible, zoomNow);
+      void mapPinsInView({ data: { ...snapped, zoom: zoomNow } })
+        .then((data) => {
+          if (inflightKey === key) inflightKey = "";
+          if (cancelled || id !== request || !data || data.truncated) return;
+          writeMapViewCache(key, data);
+          appliedViewKey.current = key;
+          loadedView.current = data;
+          setViewData(data);
+        })
+        .catch(() => {
+          if (inflightKey === key) inflightKey = "";
+          /* Search-result clusters stay on the map. */
+        });
+    };
+    const schedule = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(run, MAP_FETCH_DEBOUNCE_MS);
+    };
+    const listener = maps.event.addListener(map, "idle", schedule);
+    schedule();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      maps.event.removeListener(listener);
+    };
+  }, [ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const maps = mapsApiRef.current;
     const createOverlay = overlayFactoryRef.current;
     if (!map || !maps || !createOverlay || !ready) return;
 
@@ -374,31 +464,47 @@ export function MapView({
       pinsRef.current = [];
       markersBySlug.current.clear();
 
-      const clusters = clusterItems(items, zoom);
+      const bounds = map.getBounds?.();
+      const ne = bounds?.getNorthEast?.();
+      const sw = bounds?.getSouthWest?.();
+      const frame =
+        ne && sw
+          ? sanitizeMapBbox({
+              minLat: sw.lat(),
+              maxLat: ne.lat(),
+              minLng: sw.lng(),
+              maxLng: ne.lng(),
+            })
+          : null;
+      const drawn = markersForMapView({
+        items,
+        view: viewData,
+        zoom,
+        bounds: frame,
+        atLat: originRef.current.lat,
+      });
       const nextPins: AnyPin[] = [];
-      for (const node of clusters) {
+      for (const node of drawn.markers) {
         if (node.kind === "group") {
-          const content = clusterEl(node.count);
+          const content = clusterEl(node.count, locale === "fr" ? "fr" : "en");
           const overlay = createOverlay({
             map,
             position: { lat: node.lat, lng: node.lng },
             content,
             centered: true,
-            zIndex: 40 + Math.min(node.count, 200),
+            zIndex: 40 + Math.min(node.count, 80),
             collision: "REQUIRED",
             onClick: () => {
-              const box = new maps.LatLngBounds();
-              for (const item of node.items) {
-                if (Number.isFinite(item.lat) && Number.isFinite(item.lng)) {
-                  box.extend({ lat: item.lat, lng: item.lng });
-                }
-              }
-              if (!box.isEmpty()) {
-                map.fitBounds(box, MAP_CLUSTER_PAD);
-              } else {
-                map.setZoom(Math.min(zoom + 2, 16));
+              if (clusterStepZoom(node)) {
+                map.setZoom(Math.min((map.getZoom() ?? zoom) + 2, 17));
                 map.panTo({ lat: node.lat, lng: node.lng });
+                return;
               }
+              const box = new maps.LatLngBounds(
+                { lat: node.minLat, lng: node.minLng },
+                { lat: node.maxLat, lng: node.maxLng },
+              );
+              if (!box.isEmpty()) map.fitBounds(box, MAP_CLUSTER_PAD);
             },
           });
           nextPins.push(overlay);
@@ -412,10 +518,11 @@ export function MapView({
           map,
           position: { lat: item.lat, lng: item.lng },
           content,
-          zIndex: item.live ? 20 : 10,
+          zIndex: "live" in item && item.live ? 20 : 10,
           collision: "OPTIONAL_AND_HIDES_LOWER_PRIORITY",
           onClick: () => {
             pinClickAt.current = Date.now();
+            if (!("fromPrice" in item)) setPickedPin(item);
             setPicked(item.slug);
             onSelectRef.current(item.slug);
           },
@@ -427,7 +534,7 @@ export function MapView({
     }, 50);
 
     return () => window.clearTimeout(timer);
-  }, [items, locale, ready, zoom]);
+  }, [items, locale, ready, zoom, viewData]);
 
   useEffect(() => {
     const maps = mapsApiRef.current;
@@ -648,10 +755,6 @@ export function MapView({
   );
 }
 
-type ClusterNode =
-  | { kind: "pin"; item: DaycareCard }
-  | { kind: "group"; lat: number; lng: number; count: number; items: DaycareCard[] };
-
 function measurePinPopup(
   el: HTMLElement,
   point: { x: number; y: number; mapWidth: number; mapHeight: number },
@@ -791,13 +894,17 @@ function logoPinEl(className: string) {
   return content;
 }
 
-function clusterEl(count: number) {
-  const content = document.createElement("div");
-  content.className = "ke-logo-pin ke-logo-cluster";
-  const label = count > 999 ? "999+" : String(count);
-  content.innerHTML = `${PIN_SVG}<span class="ke-pin-count">${label}</span>`;
-  content.setAttribute("role", "button");
-  content.setAttribute("aria-label", `${count} licensed centres`);
+function clusterEl(count: number, locale: "en" | "fr") {
+  const content = document.createElement("button");
+  content.type = "button";
+  content.className = "ke-logo-cluster ke-cluster-bubble";
+  const size = clusterBubblePx(count);
+  content.style.setProperty("--ke-cluster-size", `${size}px`);
+  content.style.width = `${size}px`;
+  content.style.height = `${size}px`;
+  content.style.fontSize = `${clusterBubbleFontPx(count)}px`;
+  content.textContent = clusterCountLabel(count);
+  content.setAttribute("aria-label", clusterAriaLabel(count, locale));
   return content;
 }
 
@@ -815,66 +922,3 @@ function wrapOverlayPin(overlay: ListingOverlay): SlugPin {
   };
 }
 
-function clusterCellDegrees(zoom: number): number {
-  // City / neighbourhood zoom shows a KidEase logo on every listing.
-  // Cluster only when the map is pulled far back so pins would stack.
-  if (zoom >= 11) return 0;
-  if (zoom >= 9) return 0.16;
-  if (zoom >= 7) return 0.32;
-  return 0.65;
-}
-
-function clusterItems(items: DaycareCard[], zoom: number): ClusterNode[] {
-  const usable = items.filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lng));
-  const cell = clusterCellDegrees(zoom);
-  if (cell <= 0 || usable.length < 2) return usable.map((item) => ({ kind: "pin", item }));
-
-  const buckets = new Map<string, DaycareCard[]>();
-  for (const item of usable) {
-    const key = `${Math.round(item.lat / cell)}_${Math.round(item.lng / cell)}`;
-    const list = buckets.get(key);
-    if (list) list.push(item);
-    else buckets.set(key, [item]);
-  }
-
-  type Group = { lat: number; lng: number; items: DaycareCard[] };
-  const groups: Group[] = [];
-  for (const list of buckets.values()) {
-    const lat = list.reduce((s, i) => s + i.lat, 0) / list.length;
-    const lng = list.reduce((s, i) => s + i.lng, 0) / list.length;
-    groups.push({ lat, lng, items: list });
-  }
-
-  const minSep = cell * 0.72;
-  const minSep2 = minSep * minSep;
-  const merged = new Array(groups.length).fill(false);
-  const out: ClusterNode[] = [];
-  for (let i = 0; i < groups.length; i++) {
-    if (merged[i]) continue;
-    let lat = groups[i].lat * groups[i].items.length;
-    let lng = groups[i].lng * groups[i].items.length;
-    const pack = [...groups[i].items];
-    for (let j = i + 1; j < groups.length; j++) {
-      if (merged[j]) continue;
-      const dLat = groups[i].lat - groups[j].lat;
-      const dLng = (groups[i].lng - groups[j].lng) * Math.cos((groups[i].lat * Math.PI) / 180);
-      if (dLat * dLat + dLng * dLng > minSep2) continue;
-      merged[j] = true;
-      lat += groups[j].lat * groups[j].items.length;
-      lng += groups[j].lng * groups[j].items.length;
-      pack.push(...groups[j].items);
-    }
-    if (pack.length === 1) {
-      out.push({ kind: "pin", item: pack[0] });
-      continue;
-    }
-    out.push({
-      kind: "group",
-      lat: lat / pack.length,
-      lng: lng / pack.length,
-      count: pack.length,
-      items: pack,
-    });
-  }
-  return out;
-}
