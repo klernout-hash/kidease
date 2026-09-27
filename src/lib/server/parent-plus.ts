@@ -154,6 +154,7 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
           cancelUrl: `${origin}/parent?tab=payments&plus=cancel`,
           customerId: state.customerId,
           customerEmail: state.customerId ? null : await userEmail(context.userId),
+          userId: context.userId,
           clientReferenceId: context.userId,
           locale,
           metadata: {

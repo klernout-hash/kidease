@@ -604,6 +604,7 @@ export const createBillCheckout = createServerFn({ method: "POST" })
       cancelUrl: `${origin}/pay/bill/${bill.id}`,
       customerId: profile[0]?.stripe_customer_id ?? null,
       customerEmail: bill.parentEmail,
+      userId: context.userId,
       locale,
       destinationAccount: destination,
       applicationFeeCents: destination ? bill.platformFeeCents : undefined,

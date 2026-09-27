@@ -65,9 +65,34 @@ export function stripeCustomerAddressIsSet(address: StripeAddress | null | undef
  * Checkout geolocates an empty billing country from the visitor IP.
  * Set Canada only for a new customer, or an existing one with no address yet.
  */
+type RememberStripeCustomer = (userId: string, customerId: string) => Promise<void>;
+
+async function rememberNewStripeCustomer(userId: string, customerId: string) {
+  const { rememberStripeCustomer } = await import("./stripe-lifecycle.ts");
+  await rememberStripeCustomer(userId, customerId);
+}
+
+let rememberStripeCustomerImpl: RememberStripeCustomer = rememberNewStripeCustomer;
+
+/** Tests only — observe the profile write without opening a database. */
+export function setRememberStripeCustomerForTests(fn: RememberStripeCustomer | null) {
+  rememberStripeCustomerImpl = fn ?? rememberNewStripeCustomer;
+}
+
+/**
+ * Write a brand-new customer id onto the profile before Checkout is created.
+ * A failed session must not leave an id that the next attempt cannot reuse.
+ */
+async function persistNewStripeCustomer(userId: string | null | undefined, customerId: string) {
+  const id = String(userId || "").trim();
+  if (!id || !customerId) return;
+  await rememberStripeCustomerImpl(id, customerId);
+}
+
 export async function ensureCanadaStripeCustomer(input: {
   customerId?: string | null;
   email?: string | null;
+  userId?: string | null;
 }): Promise<string> {
   const existing = String(input.customerId || "").trim();
   if (existing) {
@@ -86,6 +111,7 @@ export async function ensureCanadaStripeCustomer(input: {
   const created = await stripeRequest<StripeCustomer>("/customers", canadaCustomerParams({ email: input.email }));
   const id = String(created.id || "").trim();
   if (!id) throw new Error("Stripe did not return a customer");
+  await persistNewStripeCustomer(input.userId, id);
   return id;
 }
 
@@ -104,6 +130,8 @@ export type StripeCheckoutInput = {
   cancelUrl: string;
   customerEmail?: string | null;
   customerId?: string | null;
+  /** Profile that should keep a newly created Stripe customer before the session call. */
+  userId?: string | null;
   locale?: string | null;
   /** Connect account id when the centre can receive funds. Parent never sees this. */
   destinationAccount?: string | null;
@@ -126,6 +154,8 @@ export type CatalogCheckoutInput = {
   cancelUrl: string;
   customerEmail?: string | null;
   customerId?: string | null;
+  /** Profile that should keep a newly created Stripe customer before the session call. */
+  userId?: string | null;
   clientReferenceId?: string | null;
   locale?: string | null;
   metadata: Record<string, string>;
@@ -312,6 +342,7 @@ export async function createStripeCheckoutSession(input: StripeCheckoutInput): P
   const customerId = await ensureCanadaStripeCustomer({
     customerId: input.customerId,
     email: input.customerEmail,
+    userId: input.userId,
   });
   const json = await stripeRequest<StripeCheckoutSession>(
     "/checkout/sessions",
@@ -330,6 +361,7 @@ export async function createCatalogCheckoutSession(input: CatalogCheckoutInput):
   const customerId = await ensureCanadaStripeCustomer({
     customerId: input.customerId,
     email: input.customerEmail,
+    userId: input.userId,
   });
   const json = await stripeRequest<StripeCheckoutSession>(
     "/checkout/sessions",

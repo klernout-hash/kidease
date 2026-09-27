@@ -4,7 +4,7 @@ import { formatPlanCad, yearlySavingsLine } from "../src/lib/upgrade-plans.ts";
 import { planPriceHint, providerPlan } from "../src/lib/provider-plans.ts";
 import { plusPriceHint } from "../src/lib/parent-plus.ts";
 import { billingPriceLabel } from "../src/lib/subscription-lifecycle.ts";
-import { checkoutCurrency } from "../src/lib/stripe-wallets.ts";
+import { STRIPE_CHECKOUT_LOCALES, checkoutCurrency, checkoutLocale } from "../src/lib/stripe-wallets.ts";
 import { cadLookupPrice } from "../src/lib/stripe-price-mode.ts";
 import {
   CHECKOUT_BILLING_COUNTRY,
@@ -14,6 +14,7 @@ import {
   createCatalogCheckoutSession,
   createStripeCheckoutSession,
   flattenStripeBody,
+  setRememberStripeCustomerForTests,
   setStripeFetchForTests,
   stripeCustomerAddressIsSet,
 } from "../src/lib/server/stripe-checkout.ts";
@@ -44,6 +45,22 @@ test("plan prices use a CA$ prefix in English and French", () => {
   assert.equal(billingPriceLabel({ product: "featured_city", interval: "month", locale: "en" }), "CA$29/month");
   assert.equal(yearlySavingsLine(49, 490, "en"), "or CA$490/year · save CA$98");
   assert.doesNotMatch(formatPlanCad(49, "en"), /^\$/);
+});
+
+test("checkout locale stays inside Stripe's allowlist", () => {
+  const allowed = new Set(STRIPE_CHECKOUT_LOCALES);
+  assert.equal(allowed.has("en"), true);
+  assert.equal(allowed.has("fr-CA"), true);
+  assert.equal(allowed.has("auto"), true);
+  assert.equal(allowed.has("en-CA"), false);
+  assert.equal(checkoutLocale("en"), "en");
+  assert.equal(checkoutLocale("en-CA"), "en");
+  assert.equal(checkoutLocale("fr"), "fr-CA");
+  assert.equal(checkoutLocale(""), "auto");
+  for (const sample of ["en", "en-GB", "EN", "fr", "fr-CA", "de", "es", "zh-HK", "", null]) {
+    const value = checkoutLocale(sample);
+    assert.equal(allowed.has(value), true, `${sample} -> ${value}`);
+  }
 });
 
 test("checkout session params are Canada and CAD", () => {
@@ -97,7 +114,7 @@ test("checkout session params are Canada and CAD", () => {
   assert.equal(bill["line_items[0][price_data][currency]"], "cad");
   assert.equal(bill.customer, "cus_bill");
   assert.equal(bill["customer_update[address]"], "auto");
-  assert.equal(bill.locale, "en-CA");
+  assert.equal(bill.locale, "en");
 });
 
 test("lookup reuse rejects a non-CAD price", () => {
@@ -232,7 +249,7 @@ test("creating a checkout session sets Canada on the customer and cad on the ses
     assert.equal(extra.some((call) => call.method === "POST" && call.url.includes("/customers/cus_ca")), false);
     const addon = extra.find((call) => call.url.endsWith("/checkout/sessions"));
     assert.equal(new URLSearchParams(addon.body).get("currency"), "cad");
-    assert.equal(new URLSearchParams(addon.body).get("locale"), "en-CA");
+    assert.equal(new URLSearchParams(addon.body).get("locale"), "en");
 
     const billBefore = calls.length;
     await createStripeCheckoutSession({
@@ -262,6 +279,70 @@ test("creating a checkout session sets Canada on the customer and cad on the ses
     );
   } finally {
     setStripeFetchForTests(null);
+    if (previous == null) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = previous;
+  }
+});
+
+test("a new Stripe customer is saved before Checkout, and a failed session still reuses it", async () => {
+  const previous = process.env.STRIPE_SECRET_KEY;
+  process.env.STRIPE_SECRET_KEY = "sk_test_cad_only";
+  /** @type {Array<{ step: string, url?: string, userId?: string, customerId?: string }>} */
+  const steps = [];
+  let savedCustomerId = "";
+  let failSession = true;
+  setRememberStripeCustomerForTests(async (userId, customerId) => {
+    savedCustomerId = customerId;
+    steps.push({ step: "remember", userId, customerId });
+  });
+  setStripeFetchForTests(async (input, init) => {
+    const url = String(input);
+    const method = String(init?.method || "GET");
+    steps.push({ step: method, url });
+    if (method === "GET" && url.includes("/customers/cus_saved")) {
+      return json({ id: "cus_saved", address: { country: "CA" } });
+    }
+    if (method === "POST" && url.endsWith("/customers")) return json({ id: "cus_saved" });
+    if (url.endsWith("/checkout/sessions") && failSession) {
+      failSession = false;
+      return new Response(JSON.stringify({ error: { message: "session failed" } }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return json({ id: "cs_ok", url: "https://checkout.stripe.test/cs_ok", customer: "cus_saved" });
+  });
+  const sessionInput = {
+    mode: "subscription",
+    priceId: "price_plus",
+    successUrl: "https://kidease.ca/parent",
+    cancelUrl: "https://kidease.ca/parent",
+    customerEmail: "parent@example.com",
+    userId: "user_parent",
+    locale: "en",
+    metadata: { kidease: "parent_plus" },
+  };
+  try {
+    await assert.rejects(() => createCatalogCheckoutSession(sessionInput), /session failed/);
+    const remembered = steps.findIndex((step) => step.step === "remember");
+    const created = steps.findIndex((step) => step.step === "POST" && step.url?.endsWith("/customers"));
+    const failedSession = steps.findIndex((step) => step.step === "POST" && step.url?.endsWith("/checkout/sessions"));
+    assert.ok(created >= 0 && remembered > created && failedSession > remembered);
+    assert.equal(steps[remembered].userId, "user_parent");
+    assert.equal(steps[remembered].customerId, "cus_saved");
+
+    const beforeRetry = steps.length;
+    const session = await createCatalogCheckoutSession({ ...sessionInput, customerId: savedCustomerId });
+    assert.equal(session.id, "cs_ok");
+    const retry = steps.slice(beforeRetry);
+    assert.equal(
+      retry.some((step) => step.step === "POST" && step.url?.endsWith("/customers")),
+      false,
+    );
+    assert.equal(retry.filter((step) => step.step === "remember").length, 0);
+  } finally {
+    setStripeFetchForTests(null);
+    setRememberStripeCustomerForTests(null);
     if (previous == null) delete process.env.STRIPE_SECRET_KEY;
     else process.env.STRIPE_SECRET_KEY = previous;
   }

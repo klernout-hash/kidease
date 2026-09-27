@@ -324,6 +324,7 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
           cancelUrl: `${origin}/provider/subscription?checkout=cancel`,
           customerId: state.customerId,
           customerEmail: state.customerId ? null : await userEmail(context.userId),
+          userId: context.userId,
           clientReferenceId: context.userId,
           locale,
           metadata: {
@@ -390,6 +391,7 @@ export const startProviderAddonCheckout = createServerFn({ method: "POST" })
           cancelUrl: `${origin}/provider/subscription?addon=cancel`,
           customerId: state.customerId,
           customerEmail: state.customerId ? null : await userEmail(context.userId),
+          userId: context.userId,
           clientReferenceId: context.userId,
           locale,
           metadata: {
