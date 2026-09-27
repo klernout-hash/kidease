@@ -7,10 +7,12 @@ import { isPublicListing } from "./listing-visibility.ts";
  * with a coarse grid, is what put one "400" bubble on the Winnipeg map.
  * Map reads keep every public listing in the viewport.
  *
- * At city and search-radius zoom each listing is its own dot. A count bubble
- * is only for pins that sit within MAP_OVERLAP_PX of each other on screen,
- * and only once that distance is a short walk (see MAP_OVERLAP_MAX_KM).
- * Zoomed out to a province, the grid switches to area bubbles.
+ * At city and search-radius zoom each listing is its own dot, on every
+ * viewport. A count bubble is only for pins that sit within MAP_OVERLAP_PX
+ * of each other on screen, and only once that distance is a short walk
+ * (see MAP_OVERLAP_MAX_KM). Zoomed out past a city (below MAP_CITY_ZOOM),
+ * the grid switches to area bubbles. The width of the padded camera does
+ * not change that: a 25 km search on a desktop map is still pin mode.
  */
 
 export const SEARCH_LIST_CAP = 400;
@@ -42,11 +44,11 @@ export const MAP_CITY_ZOOM = 8;
  */
 export const MAP_OVERLAP_MAX_KM = 0.45;
 
-/** A camera wider than a max search radius is a province view, even if zoom is high. */
-export const MAP_PROVINCE_SPAN_KM = 160;
-
-/** Above this, return clusters rather than a large pin payload. Not a count cap. */
-export const MAP_PIN_PAYLOAD_MAX = 2500;
+/**
+ * Half of the 28px dot hit target. Overlapping dots resolve to the centre
+ * closest to the click, not whichever button is painted on top.
+ */
+export const MAP_DOT_HIT_PX = 14;
 
 /** Wait until the camera settles so a pan does not fire a request per frame. */
 export const MAP_FETCH_DEBOUNCE_MS = 450;
@@ -162,11 +164,40 @@ export function mapSpanKm(box: MapBbox): number {
   return Math.max(latKm, lngKm);
 }
 
-/** Pins for a city or search-radius camera. A province-sized view stays aggregated. */
-export function mapLoadMode(zoom: number, box: MapBbox): "clusters" | "pins" {
-  if (clampMapZoom(zoom) < MAP_CITY_ZOOM) return "clusters";
-  if (mapSpanKm(box) > MAP_PROVINCE_SPAN_KM) return "clusters";
-  return "pins";
+/**
+ * Pins at city and search-radius zoom, including a wide desktop camera.
+ * Area bubbles only when the zoom itself is a province view.
+ * `box` is unused: a padded bbox can be hundreds of kilometres at zoom 9
+ * and must not flip the search-radius view into clusters.
+ */
+export function mapLoadMode(zoom: number, _box?: MapBbox): "clusters" | "pins" {
+  return clampMapZoom(zoom) < MAP_CITY_ZOOM ? "clusters" : "pins";
+}
+
+/** Closest dot centre within the hit radius. A farther overlapping target loses. */
+export function pickNearestMapDot<T>(
+  pins: readonly T[],
+  centers: readonly { x: number; y: number }[],
+  click: { x: number; y: number },
+  maxPx = MAP_DOT_HIT_PX,
+): T | null {
+  if (!Number.isFinite(click.x) || !Number.isFinite(click.y)) return null;
+  const max2 = maxPx * maxPx;
+  let best = -1;
+  let bestD = max2;
+  const n = Math.min(pins.length, centers.length);
+  for (let i = 0; i < n; i++) {
+    const center = centers[i];
+    if (!center || !Number.isFinite(center.x) || !Number.isFinite(center.y)) continue;
+    const dx = center.x - click.x;
+    const dy = center.y - click.y;
+    const d = dx * dx + dy * dy;
+    if (d <= bestD) {
+      bestD = d;
+      best = i;
+    }
+  }
+  return best >= 0 ? (pins[best] ?? null) : null;
 }
 
 export function pointInBbox(point: { lat: number; lng: number }, box: MapBbox): boolean {
@@ -405,17 +436,16 @@ export function markerCount(markers: Array<{ kind: string; count?: number }>): n
 }
 
 /**
- * Prefer a viewport payload that covers the camera. Otherwise draw the
- * search rows already on the page (may be the list cap) so the first paint
- * is still a set of pins, not one bubble.
+ * Draw the viewport payload only. The search list is capped at 400 and must
+ * not fill the map when a cluster payload is stale or the fetch has not landed.
  */
 export function markersForMapView<T extends { lat: number; lng: number }>(input: {
-  items: T[];
+  items?: T[];
   view: MapViewData | null;
   zoom: number;
   bounds: MapBbox | null;
   atLat: number;
-}): { markers: Array<MapMarker<T> | MapMarker<MapPin>>; source: "viewport" | "search" } {
+}): { markers: Array<MapMarker<T> | MapMarker<MapPin>>; source: "viewport" } {
   const view = input.view;
   const bounds = input.bounds;
   const covers = Boolean(view && bounds && bboxCovers(view.bbox, bounds));
@@ -428,25 +458,19 @@ export function markersForMapView<T extends { lat: number; lng: number }>(input:
   if (view && covers && view.mode === "clusters" && Math.round(view.zoom) === Math.round(input.zoom)) {
     return { source: "viewport", markers: view.clusters.map(clusterToMarker) };
   }
-  return {
-    source: "search",
-    markers: clusterMapPoints(input.items, input.zoom, input.atLat).map(toMarker),
-  };
+  return { source: "viewport", markers: [] };
 }
 
 export function projectMapRows(rows: MapPin[], zoom: number, box: MapBbox): MapViewData {
   const inBox = rows.filter((row) => usableMapPoint(row) && pointInBbox(row, box));
   const zoomed = clampMapZoom(zoom);
-  const mode = inBox.length > MAP_PIN_PAYLOAD_MAX ? "clusters" : mapLoadMode(zoomed, box);
+  const mode = mapLoadMode(zoomed, box);
   const total = inBox.length;
   if (mode === "pins") {
     return { mode: "pins", pins: inBox, total, truncated: false, bbox: box, zoom: zoomed };
   }
   const mid = (box.minLat + box.maxLat) / 2;
-  const grouped =
-    inBox.length > MAP_PIN_PAYLOAD_MAX && groupingKm(zoomed, mid) == null
-      ? clusterMapPoints(inBox, Math.min(zoomed, MAP_CITY_ZOOM - 1), mid)
-      : clusterMapPoints(inBox, zoomed, mid);
+  const grouped = clusterMapPoints(inBox, zoomed, mid);
   const clusters = grouped.map((cell) => {
     const cluster: MapCluster = {
       lat: cell.lat,
@@ -563,21 +587,23 @@ export function mapViewCacheKey(box: MapBbox, zoom: number): string {
 }
 
 /**
- * Skip a request when the last payload still covers this camera.
- * A closer city zoom can reuse a pin payload already in hand. Area counts
- * cannot: they were grouped for a different zoom.
+ * Skip a request when the last pin payload still covers this camera.
+ * A closer city zoom can reuse dots already in hand. Area counts cannot:
+ * zooming in, or panning out of the last box, loads that view's own pins.
  */
 export function viewportNeedsFetch(input: {
   visible: MapBbox;
   zoom: number;
-  loaded: { bbox: MapBbox; zoom: number } | null;
+  loaded: { bbox: MapBbox; zoom: number; mode?: "clusters" | "pins" } | null;
 }): boolean {
   const loaded = input.loaded;
   if (!loaded) return true;
   if (!bboxCovers(loaded.bbox, input.visible)) return true;
   const zoom = clampMapZoom(input.zoom);
   if (Math.round(loaded.zoom) === Math.round(zoom)) return false;
-  return mapLoadMode(loaded.zoom, loaded.bbox) !== "pins" || mapLoadMode(zoom, input.visible) !== "pins";
+  const loadedMode = loaded.mode ?? mapLoadMode(loaded.zoom, loaded.bbox);
+  if (loadedMode === "clusters") return true;
+  return mapLoadMode(zoom, input.visible) !== "pins";
 }
 
 export function bboxCovers(outer: MapBbox, inner: MapBbox): boolean {

@@ -17,8 +17,10 @@ import {
   collectPublicMapPins,
   groupingKm,
   mapLoadMode,
+  mapSpanKm,
   mapViewCacheKey,
   markerCount,
+  pickNearestMapDot,
   viewportNeedsFetch,
   markersForMapView,
   mergeMapClusters,
@@ -160,8 +162,10 @@ test("map queries do not apply the search list cap of 400", () => {
   assert.equal(street.truncated, false);
   if (street.mode === "pins") assert.equal(street.pins.length, streetPins.length);
   const province = { minLat: 49, maxLat: 52, minLng: -102, maxLng: -95 };
-  assert.equal(mapLoadMode(16, province), "clusters");
+  assert.ok(mapSpanKm(province) > 160);
+  assert.equal(mapLoadMode(16, province), "pins");
   assert.equal(mapLoadMode(10, box), "pins");
+  assert.equal(mapLoadMode(9, province), "pins");
   assert.equal(mapLoadMode(6, box), "clusters");
 });
 
@@ -198,9 +202,33 @@ test("viewport payload replaces a capped search list without dropping rows", () 
     bounds: box,
     atLat: WINNIPEG.lat,
   });
-  assert.equal(fallback.source, "search");
-  assert.equal(markerCount(fallback.markers), SEARCH_LIST_CAP);
-  assert.equal(fallback.markers.filter((marker) => marker.kind === "pin").length, SEARCH_LIST_CAP);
+  assert.equal(fallback.source, "viewport");
+  assert.equal(fallback.markers.length, 0);
+  const staleClusters = markersForMapView({
+    items: capped,
+    view: {
+      mode: "clusters",
+      clusters: [
+        {
+          lat: WINNIPEG.lat,
+          lng: WINNIPEG.lng,
+          count: 2781,
+          minLat: box.minLat,
+          maxLat: box.maxLat,
+          minLng: box.minLng,
+          maxLng: box.maxLng,
+        },
+      ],
+      total: 2781,
+      truncated: false,
+      bbox: box,
+      zoom: 11,
+    },
+    zoom: 12,
+    bounds: box,
+    atLat: WINNIPEG.lat,
+  });
+  assert.equal(staleClusters.markers.length, 0);
 });
 
 test("a small pan reuses the viewport cache", () => {
@@ -351,6 +379,191 @@ test("a provincial zoom keeps separate places instead of one bubble", async () =
   assert.equal(clusterCountTotal(view.clusters), loaded.length);
   assert.ok(view.clusters.length >= 3, `Manitoba zoom clusters: ${view.clusters.length}`);
   assert.ok(loaded.length > SEARCH_LIST_CAP);
+});
+
+const METERS_PER_PX_ZOOM0 = 156543.03392;
+
+/** Visible camera for a map of widthPx by heightPx, centred on origin. */
+function cameraBbox(origin, zoom, widthPx, heightPx) {
+  const cos = Math.max(0.2, Math.abs(Math.cos((origin.lat * Math.PI) / 180)));
+  const metersPerPx = (METERS_PER_PX_ZOOM0 * cos) / 2 ** zoom;
+  const halfWKm = ((widthPx / 2) * metersPerPx) / 1000;
+  const halfHKm = ((heightPx / 2) * metersPerPx) / 1000;
+  return {
+    minLat: origin.lat - halfHKm / 110.574,
+    maxLat: origin.lat + halfHKm / 110.574,
+    minLng: origin.lng - halfWKm / (111.32 * cos),
+    maxLng: origin.lng + halfWKm / (111.32 * cos),
+  };
+}
+
+/**
+ * Zoom that fits a search circle in the map after the desktop radius padding.
+ * Matches the live 1440×900 Winnipeg result: 25 km lands on zoom 9.
+ */
+function desktopFitZoom(origin, radiusKm, mapWidth, mapHeight) {
+  const innerW = mapWidth - 64 - 16;
+  const innerH = mapHeight - 72 - 28;
+  const diameter = radiusKm * 2;
+  for (let zoom = 18; zoom >= 3; zoom -= 1) {
+    const box = cameraBbox(origin, zoom, innerW, innerH);
+    const latKm = (box.maxLat - box.minLat) * 110.574;
+    const cos = Math.max(0.2, Math.abs(Math.cos((origin.lat * Math.PI) / 180)));
+    const lngKm = (box.maxLng - box.minLng) * 111.32 * cos;
+    if (latKm >= diameter && lngKm >= diameter) return zoom;
+  }
+  return 3;
+}
+
+function pinsIn(loaded, box) {
+  return loaded.filter(
+    (pin) =>
+      pin.lat >= box.minLat &&
+      pin.lat <= box.maxLat &&
+      pin.lng >= box.minLng &&
+      pin.lng <= box.maxLng,
+  );
+}
+
+test("a 1440x900 desktop keeps dots at the 25 km and 50 km Winnipeg fit", async () => {
+  const loaded = await pins();
+  const mapWidth = 1040;
+  const mapHeight = 480;
+  for (const radiusKm of [25, 50]) {
+    const zoom = desktopFitZoom(WINNIPEG, radiusKm, mapWidth, mapHeight);
+    const visible = cameraBbox(WINNIPEG, zoom, mapWidth, mapHeight);
+    const snapped = cacheMapBbox(visible, zoom);
+    assert.ok(mapSpanKm(snapped) > 160, `${radiusKm} km desktop fetch is ${mapSpanKm(snapped).toFixed(0)} km`);
+    assert.equal(mapLoadMode(zoom, snapped), "pins", `zoom ${zoom} for ${radiusKm} km`);
+    const inBox = pinsIn(loaded, snapped);
+    const view = projectMapRows(inBox, zoom, snapped);
+    assert.equal(view.mode, "pins");
+    assert.equal(view.truncated, false);
+    assert.equal(view.total, inBox.length);
+    if (view.mode !== "pins") continue;
+    assert.equal(view.pins.length, inBox.length);
+    const drawn = clusterMapPoints(inBox, zoom, WINNIPEG.lat);
+    assert.equal(drawn.length, inBox.length, `${radiusKm} km desktop drew bubbles`);
+    assert.ok(inBox.length > SEARCH_LIST_CAP, `${radiusKm} km desktop has ${inBox.length} pins`);
+  }
+  assert.equal(desktopFitZoom(WINNIPEG, 25, mapWidth, mapHeight), 9);
+});
+
+test("Toronto zoom 11-13 stays dots and a North York pan loads its own pins", async () => {
+  const toronto = city("Toronto, ON");
+  const northYork = { lat: 43.7615, lng: -79.4111, label: "North York" };
+  const loaded = await pins();
+  const mapWidth = 1040;
+  const mapHeight = 480;
+  for (const zoom of [11, 12, 13]) {
+    const visible = cameraBbox(toronto, zoom, mapWidth, mapHeight);
+    const snapped = cacheMapBbox(visible, zoom);
+    assert.equal(mapLoadMode(zoom, snapped), "pins");
+    const inBox = pinsIn(loaded, snapped);
+    const view = projectMapRows(inBox, zoom, snapped);
+    assert.equal(view.mode, "pins", `zoom ${zoom} mode`);
+    assert.equal(view.total, inBox.length);
+    assert.ok(inBox.length > SEARCH_LIST_CAP, `Toronto zoom ${zoom} has ${inBox.length} pins`);
+    const drawn = clusterMapPoints(inBox, zoom, toronto.lat);
+    assert.equal(drawn.length, inBox.length, `Toronto zoom ${zoom} collapsed`);
+    const shown = markersForMapView({
+      items: inBox.slice(0, SEARCH_LIST_CAP),
+      view,
+      zoom,
+      bounds: visible,
+      atLat: toronto.lat,
+    });
+    assert.equal(markerCount(shown.markers), inBox.length);
+    assert.equal(shown.markers.some((marker) => marker.kind === "group"), false);
+  }
+
+  const zoom11 = cacheMapBbox(cameraBbox(toronto, 11, mapWidth, mapHeight), 11);
+  const zoom12 = cameraBbox(toronto, 12, mapWidth, mapHeight);
+  assert.equal(bboxCovers(zoom11, zoom12), true);
+  assert.equal(
+    viewportNeedsFetch({
+      visible: zoom12,
+      zoom: 12,
+      loaded: { bbox: zoom11, zoom: 11, mode: "clusters" },
+    }),
+    true,
+  );
+  assert.equal(
+    viewportNeedsFetch({
+      visible: zoom12,
+      zoom: 12,
+      loaded: { bbox: zoom11, zoom: 11, mode: "pins" },
+    }),
+    false,
+  );
+
+  const downtown = cacheMapBbox(cameraBbox(toronto, 13, mapWidth, mapHeight), 13);
+  const northVisible = cameraBbox(northYork, 13, mapWidth, mapHeight);
+  assert.equal(
+    viewportNeedsFetch({
+      visible: northVisible,
+      zoom: 13,
+      loaded: { bbox: downtown, zoom: 13, mode: "pins" },
+    }),
+    true,
+  );
+  const northSnapped = cacheMapBbox(northVisible, 13);
+  const northPins = pinsIn(loaded, northSnapped);
+  const northView = projectMapRows(northPins, 13, northSnapped);
+  assert.equal(northView.mode, "pins");
+  assert.ok(northPins.length > 0, "North York viewport has pins");
+  assert.ok(northPins.some((pin) => haversineKm(northYork, pin) <= 8));
+  const cappedDowntown = loaded
+    .filter((pin) => haversineKm(toronto, pin) <= 25)
+    .sort((a, b) => haversineKm(toronto, a) - haversineKm(toronto, b))
+    .slice(0, SEARCH_LIST_CAP);
+  assert.equal(
+    cappedDowntown.some((pin) => haversineKm(northYork, pin) <= 4),
+    false,
+  );
+});
+
+test("overlapping dots pick the nearest centre", () => {
+  const pins = [
+    { slug: "far" },
+    { slug: "near" },
+  ];
+  const hit = pickNearestMapDot(pins, [
+    { x: 0, y: 0 },
+    { x: 10, y: 0 },
+  ], { x: 8, y: 0 });
+  assert.equal(hit?.slug, "near");
+  assert.equal(
+    pickNearestMapDot(pins, [
+      { x: 0, y: 0 },
+      { x: 40, y: 0 },
+    ], { x: 8, y: 0 })?.slug,
+    "far",
+  );
+  assert.equal(pickNearestMapDot(pins, [{ x: 0, y: 0 }, { x: 10, y: 0 }], { x: 80, y: 0 }), null);
+});
+
+test("a city-zoom payload over 2500 pins stays individual dots", () => {
+  const pins = Array.from({ length: 3000 }, (_, index) => ({
+    id: `t-${index}`,
+    slug: `t-${index}`,
+    name: `Centre ${index}`,
+    nameFr: "",
+    lat: 43.6 + (index % 60) * 0.004,
+    lng: -79.6 + Math.floor(index / 60) * 0.004,
+    address: "",
+    city: "Toronto",
+    province: "ON",
+    postalCode: "",
+  }));
+  const box = boxAround(pins);
+  const view = projectMapRows(pins, 11, box);
+  assert.equal(view.mode, "pins");
+  assert.equal(view.total, 3000);
+  if (view.mode === "pins") assert.equal(view.pins.length, 3000);
+  const drawn = clusterMapPoints(pins, 11, 43.65);
+  assert.equal(drawn.length, 3000);
+  assert.equal(drawn.some((cell) => cell.count > 1), false);
 });
 
 test("the map still waits on the Google Maps loader", () => {

@@ -36,8 +36,10 @@ import {
   clusterBubblePx,
   clusterCountLabel,
   clusterStepZoom,
+  MAP_DOT_HIT_PX,
   mapViewCacheKey,
   markersForMapView,
+  pickNearestMapDot,
   viewportNeedsFetch,
   readMapViewCache,
   sanitizeMapBbox,
@@ -72,6 +74,7 @@ type Props = {
   origin: { lat: number; lng: number };
   secondOrigin?: { lat: number; lng: number } | null;
   radiusKm: number;
+  /** List-card hover. The popup opens only after a pin tap, not from this. */
   activeSlug?: string | null;
   onSelect: (slug: string | null) => void;
   onRelocate?: (pos: { lat: number; lng: number }) => void;
@@ -106,7 +109,6 @@ export function MapView({
   origin,
   secondOrigin,
   radiusKm,
-  activeSlug,
   onSelect,
   onRelocate,
   onLocate,
@@ -126,7 +128,7 @@ export function MapView({
   const popupRef = useRef<HTMLDivElement>(null);
   const popupBoxRef = useRef<PinPopupBox | null>(null);
   const popupPointRef = useRef<{ x: number; y: number; mapWidth: number; mapHeight: number } | null>(null);
-  const popupSlugRef = useRef<string | null>(activeSlug ?? null);
+  const popupSlugRef = useRef<string | null>(null);
   const pinClickAt = useRef(0);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
@@ -148,7 +150,7 @@ export function MapView({
   );
   const [zoom, setZoom] = useState(12);
   const [base, setBase] = useState<MapBase>("roadmap");
-  const [picked, setPicked] = useState<string | null>(activeSlug ?? null);
+  const [picked, setPicked] = useState<string | null>(null);
   const [pickedPin, setPickedPin] = useState<MapPin | null>(null);
   const [viewData, setViewData] = useState<MapViewData | null>(null);
   const [locating, setLocating] = useState(false);
@@ -175,10 +177,6 @@ export function MapView({
     setPicked(null);
     onSelectRef.current(null);
   };
-
-  useEffect(() => {
-    setPicked(activeSlug ?? null);
-  }, [activeSlug]);
 
   useEffect(() => {
     if (!selected) return;
@@ -444,7 +442,16 @@ export function MapView({
         maxLng: ne.lng(),
       });
       if (!visible) return;
-      if (!viewportNeedsFetch({ visible, zoom: zoomNow, loaded: loadedView.current })) return;
+      const loaded = loadedView.current;
+      if (
+        !viewportNeedsFetch({
+          visible,
+          zoom: zoomNow,
+          loaded: loaded ? { bbox: loaded.bbox, zoom: loaded.zoom, mode: loaded.mode } : null,
+        })
+      ) {
+        return;
+      }
       const key = mapViewCacheKey(visible, zoomNow);
       const cached = readMapViewCache(key);
       if (cached && bboxCovers(cached.bbox, visible)) {
@@ -470,7 +477,6 @@ export function MapView({
         })
         .catch(() => {
           if (inflightKey === key) inflightKey = "";
-          /* Search-result clusters stay on the map. */
         });
     };
     const schedule = () => {
@@ -951,23 +957,32 @@ function mountDotField(input: {
 }): AnyPin {
   const { maps, map, pins, locale, onPick } = input;
   const buttons: HTMLButtonElement[] = [];
+  const placed: DotItem[] = [];
   let wrap: HTMLDivElement | null = null;
   const field = new maps.OverlayView();
   field.onAdd = () => {
     const layer = document.createElement("div");
     layer.className = "ke-map-dots";
+    const choose = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const centers = buttons.map((el) => {
+        const rect = el.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      });
+      const hit = pickNearestMapDot(placed, centers, { x: event.clientX, y: event.clientY }, MAP_DOT_HIT_PX);
+      if (hit) onPick(hit);
+    };
     for (const item of pins) {
       if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
       const button = document.createElement("button");
       button.type = "button";
       button.className = "ke-map-dot";
       button.setAttribute("aria-label", pinLabel(item, locale));
-      button.addEventListener("click", (event) => {
-        event.stopPropagation();
-        onPick(item);
-      });
+      button.addEventListener("click", choose);
       layer.appendChild(button);
       buttons.push(button);
+      placed.push(item);
     }
     wrap = layer;
     field.getPanes()?.overlayMouseTarget.appendChild(layer);
