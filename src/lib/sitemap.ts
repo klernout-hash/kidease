@@ -201,19 +201,28 @@ function listingRowsFromUnknown(slugs: unknown): Array<{
 
 /**
  * Bundled slugs plus any newer public Neon slugs. Order keeps the bundled
- * list first. Admin-only and unsafe slugs are dropped. The result is never
- * shorter than the bundled public set, so a partial Neon read cannot shrink
- * the sitemap.
+ * list first. Admin-only and unsafe slugs are dropped. `suppressed` slugs are
+ * rows the database marked hidden, inactive, admin-only, or retired — they
+ * leave even when the bundled file still lists them. A partial public Neon
+ * read cannot drop a bundled slug that was not suppressed.
  */
 export function mergeListingSitemapSlugs(
   bundled: readonly string[],
   extra: readonly string[],
   cap = LISTING_SITEMAP_TOTAL_CAP,
+  suppressed: readonly string[] = [],
 ): string[] {
-  const bundledRows = bundled.map((slug) => ({ slug }));
+  const drop = new Set(
+    suppressed.map((slug) => normalizeListingSlug(slug).toLowerCase()).filter(Boolean),
+  );
+  const keep = (slug: string) => {
+    const key = normalizeListingSlug(slug).toLowerCase();
+    return !key || !drop.has(key);
+  };
+  const bundledRows = bundled.filter(keep).map((slug) => ({ slug }));
   const bundledPublic = publicSitemapSlugs(bundledRows, cap);
   const merged = publicSitemapSlugs(
-    [...bundledRows, ...extra.map((slug) => ({ slug }))],
+    [...bundledRows, ...extra.filter(keep).map((slug) => ({ slug }))],
     cap,
   );
   return merged.length >= bundledPublic.length ? merged : bundledPublic;

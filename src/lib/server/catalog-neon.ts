@@ -9,9 +9,9 @@ import {
 } from "@/lib/catalog-source";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { clampRadiusKm } from "@/lib/proximity";
-import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
-import { followMergedListing } from "@/lib/listing-merge";
+import { resolveFoundCatalogRow, suppressedCatalogKey, type SuppressedCatalogKeys } from "@/lib/catalog-fallback";
 import { hiddenReviewPlaceFromRow } from "@/lib/hidden-review";
+import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL, SUPPRESSED_CATALOG_SQL } from "@/lib/listing-visibility";
 import { correctCentreNameTypos, listingSlugLookupKeys, normalizeListingSlug } from "@/lib/listing-slug";
 import { listingCultureFrom } from "@/lib/listing-culture";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
@@ -129,12 +129,44 @@ limit 400
 `;
 
 const COUNT_TTL_MS = 30_000;
+const SUPPRESSED_TTL_MS = 60_000;
 let countCache: { at: number; n: number } | null = null;
 let neonAllCache: CatalogDaycare[] | null = null;
+let suppressedCache: { at: number; keys: SuppressedCatalogKeys } | null = null;
 
 export function resetNeonCatalogCache() {
   countCache = null;
   neonAllCache = null;
+  suppressedCache = null;
+}
+
+/**
+ * Ids and slugs the database has marked hidden, inactive, admin-only, or
+ * retired. Null means the database did not answer — callers keep the bundle.
+ */
+export async function loadSuppressedCatalogKeys(): Promise<SuppressedCatalogKeys | null> {
+  if (typeof window !== "undefined") return null;
+  const now = Date.now();
+  if (suppressedCache && now - suppressedCache.at < SUPPRESSED_TTL_MS) return suppressedCache.keys;
+  try {
+    const sql = await Promise.race([getSql(), rejectAfter(4000, "suppressed-catalog-timeout")]);
+    const rows = await sql.query<{ id: string | null; slug: string | null }>(
+      `select id, slug from daycares where ${SUPPRESSED_CATALOG_SQL}`,
+    );
+    const ids = new Set<string>();
+    const slugs = new Set<string>();
+    for (const row of rows) {
+      const id = String(row.id || "").trim();
+      const slug = suppressedCatalogKey(row.slug);
+      if (id) ids.add(id);
+      if (slug) slugs.add(slug);
+    }
+    const keys = { ids, slugs };
+    suppressedCache = { at: now, keys };
+    return keys;
+  } catch {
+    return null;
+  }
 }
 
 export function catalogRowRenderable(row: Pick<CatalogDbRow, "id" | "slug">): boolean {
@@ -204,7 +236,10 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     claimStatus: row.claim_status ?? null,
     staffScreeningAttested: row.staff_screening_attested === 1 || row.staff_screening_attested === true,
     screeningOnFile: row.screening_on_file === 1 || row.screening_on_file === true,
-    listingActive: row.listing_active === 0 || row.listing_active === false ? false : true,
+    listingActive:
+      row.listing_active === 0 || row.listing_active === false || String(row.listing_active) === "0"
+        ? false
+        : true,
     visibility,
     isTest: row.is_test === 1 || row.is_test === true || visibility === "admin_only",
     contactEmail: row.contact_email || "",
@@ -270,41 +305,55 @@ export async function loadNeonCatalogIfPreferred(): Promise<CatalogDaycare[] | n
   }
 }
 
+type SlugHop = {
+  id: string;
+  mergedInto?: string | null;
+  importFault?: string | null;
+  row: CatalogDbRow;
+};
+
+function slugHop(row: CatalogDbRow): SlugHop {
+  return {
+    id: row.id,
+    mergedInto: row.merged_into,
+    importFault: row.import_fault,
+    row,
+  };
+}
+
+/**
+ * The database row for this slug, including a hidden or retired row.
+ * Returns null only when the database has no row or did not answer.
+ * A hidden import fault used to return null, and the bundled copy was served.
+ * Merged rows resolve to the keeper so the listing route can 301.
+ */
 export async function neonCatalogBySlug(slug: string): Promise<CatalogDaycare | null> {
-  if (dbSource !== "neon") return null;
   const keys = listingSlugLookupKeys(slug);
   if (keys.length === 0) return null;
+  if (typeof window !== "undefined") return null;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
-    if (!(await isNeonCatalogPreferred(sql))) return null;
     const rows = await sql.query<CatalogDbRow>(
       `select ${CATALOG_SELECT} from daycares where slug = any($1::text[]) limit 5`,
       [keys],
     );
     const exact = rows.find((row) => row.slug === slug) ?? rows[0];
     if (!exact || !catalogRowRenderable(exact)) return null;
-    const byId = new Map<string, CatalogDbRow>([[exact.id, exact]]);
+    const hops = new Map<string, SlugHop>([[exact.id, slugHop(exact)]]);
     let cursor = exact;
     for (let hop = 0; hop < 4 && (cursor.merged_into || "").trim(); hop += 1) {
       const nextId = String(cursor.merged_into).trim();
-      if (byId.has(nextId)) break;
+      if (hops.has(nextId)) break;
       const nextRows = await sql.query<CatalogDbRow>(
         `select ${CATALOG_SELECT} from daycares where id = $1 limit 1`,
         [nextId],
       );
       if (!nextRows[0]) break;
-      byId.set(nextRows[0].id, nextRows[0]);
+      hops.set(nextRows[0].id, slugHop(nextRows[0]));
       cursor = nextRows[0];
     }
-    const resolved = followMergedListing(
-      { id: exact.id, mergedInto: exact.merged_into, importFault: exact.import_fault },
-      (id) => {
-        const hit = byId.get(id);
-        return hit ? { id: hit.id, mergedInto: hit.merged_into, importFault: hit.import_fault } : undefined;
-      },
-    );
-    const keeper = resolved ? byId.get(resolved.id) : undefined;
-    return keeper && catalogRowRenderable(keeper) ? catalogRowToListing(keeper) : null;
+    const chosen = resolveFoundCatalogRow(hops.get(exact.id) ?? slugHop(exact), (id) => hops.get(id));
+    return catalogRowToListing(chosen.row);
   } catch {
     return null;
   }
@@ -315,7 +364,6 @@ export async function neonCatalogBySlug(slug: string): Promise<CatalogDaycare | 
  * A PEI name fault and a merged duplicate return null here.
  */
 export async function neonHiddenReviewPlace(slug: string): Promise<{ city: string; province: string } | null> {
-  if (dbSource !== "neon") return null;
   const keys = listingSlugLookupKeys(slug);
   if (keys.length === 0) return null;
   try {
@@ -346,42 +394,36 @@ export async function neonHiddenReviewPlace(slug: string): Promise<{ city: strin
   }
 }
 
+/** Any database row for this id, including hidden and retired. Null when it is absent or the database did not answer. */
 export async function neonCatalogById(id: string): Promise<CatalogDaycare | null> {
-  if (dbSource !== "neon") return null;
+  const wanted = String(id || "").trim();
+  if (!wanted || typeof window !== "undefined") return null;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
-    if (!(await isNeonCatalogPreferred(sql))) return null;
     const rows = await sql.query<CatalogDbRow>(
       `select ${CATALOG_SELECT} from daycares where id = $1 limit 1`,
-      [id],
+      [wanted],
     );
     const row = rows[0];
     if (!row || !catalogRowRenderable(row)) return null;
-    if ((row.merged_into || "").trim() || (row.import_fault || "").trim()) return null;
     return catalogRowToListing(row);
   } catch {
     return null;
   }
 }
 
+/** Every matching database row, including hidden and retired. Null when the database did not answer. */
 export async function neonCatalogByIds(ids: string[]): Promise<CatalogDaycare[] | null> {
-  if (dbSource !== "neon") return null;
+  if (typeof window !== "undefined") return null;
   const wanted = ids.filter(Boolean);
   if (wanted.length === 0) return [];
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
-    if (!(await isNeonCatalogPreferred(sql))) return null;
     const rows = await sql.query<CatalogDbRow>(
       `select ${CATALOG_SELECT} from daycares where id = any($1::text[])`,
       [wanted],
     );
-    const byId = new Map(
-      rows
-        .filter(catalogRowRenderable)
-        .filter((row) => !(row.merged_into || "").trim() && !(row.import_fault || "").trim())
-        .map((row) => [String(row.id).trim(), catalogRowToListing(row)]),
-    );
-    return wanted.map((id) => byId.get(id)).filter((d): d is CatalogDaycare => Boolean(d));
+    return rows.filter(catalogRowRenderable).map(catalogRowToListing);
   } catch {
     return null;
   }

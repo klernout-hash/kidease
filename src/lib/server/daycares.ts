@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, recommendedRank } from "@/lib/proximity";
 import { catalogByIdsGet, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
-import { isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
+import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerIsAdmin } from "./public-listing";
@@ -460,8 +460,7 @@ export const getDaycare = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
-    if ((found.mergedInto || "").trim() || (found.importFault || "").trim()) return null;
-    if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
+    if (hideListingFromPublicPage(found, await callerIsAdmin())) return null;
     const origin = { lat: found.lat, lng: found.lng };
     const nearby = uniqueById(
       (await catalogNear(origin, 15))
@@ -574,8 +573,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
-    if ((found.mergedInto || "").trim() || (found.importFault || "").trim()) return null;
-    if (isAdminOnlyListing(found) && !(await callerIsAdmin())) return null;
+    if (hideListingFromPublicPage(found, await callerIsAdmin())) return null;
     return {
       slug: found.slug,
       name: found.name,

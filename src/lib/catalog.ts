@@ -6,6 +6,7 @@ import {
   type CatalogDaycare,
   type RawCentre,
 } from "./catalog-hydrate.ts";
+import { chooseCatalogListing, filterSuppressedCatalogRows } from "./catalog-fallback";
 import { isPublicListing } from "./listing-visibility";
 import { listingSlugLookupKeys, rememberSlugAliases } from "./listing-slug";
 import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
@@ -85,7 +86,21 @@ export async function getCatalog(): Promise<CatalogDaycare[]> {
   const neon = await tryNeonCatalogAll();
   if (neon && neon.length > 0) return rememberCatalog(neon, "neon");
   if (cachedCatalog && cachedFrom === "json") return cachedCatalog;
-  return rememberCatalog(await loadJsonCatalog(), "json");
+  return rememberCatalog(await omitSuppressedBundleCopies(await loadJsonCatalog()), "json");
+}
+
+/** Drop bundled rows whose id or slug the database has hidden or retired. */
+export async function omitSuppressedBundleCopies<T extends { id?: string | null; slug?: string | null }>(
+  rows: T[],
+): Promise<T[]> {
+  if (rows.length === 0 || typeof window !== "undefined") return rows;
+  try {
+    const { loadSuppressedCatalogKeys } = await import("./server/catalog-neon");
+    const keys = await loadSuppressedCatalogKeys();
+    return filterSuppressedCatalogRows(rows, keys);
+  } catch {
+    return rows;
+  }
 }
 
 /** Catalogue minus merged rows, import faults, and admin-only / QA fixtures. */
@@ -118,7 +133,7 @@ export async function catalogNearFromJson(origin: { lat: number; lng: number }, 
       }
     }
   }
-  return out;
+  return omitSuppressedBundleCopies(out);
 }
 
 /** Nearby: Neon PostGIS when the national table is ready, else JSON grid. */
@@ -151,24 +166,40 @@ async function jsonById(id: string) {
   return raw ? hydrateRaw(raw) : undefined;
 }
 
+async function bundledSlug(keys: string[]): Promise<CatalogDaycare | undefined> {
+  if (cachedFrom === "neon") {
+    for (const key of keys) {
+      const hit = catalogBySlugMap.get(key);
+      if (hit) return hit;
+    }
+  }
+  let hit: CatalogDaycare | undefined;
+  for (const key of keys) {
+    if (cachedFrom === "json") hit = catalogBySlugMap.get(key);
+    if (!hit) hit = await jsonBySlug(key);
+    if (hit) break;
+  }
+  if (!hit) return undefined;
+  const [safe] = await omitSuppressedBundleCopies([hit]);
+  return safe;
+}
+
 export async function catalogBySlugGet(slug: string) {
   const keys = listingSlugLookupKeys(slug);
   if (typeof window === "undefined") {
     try {
       const { neonCatalogBySlug } = await import("./server/catalog-neon");
       const neon = await neonCatalogBySlug(slug);
-      if (neon) return neon;
+      if (neon) {
+        return chooseCatalogListing({ dbState: "found", db: neon, bundle: undefined }) ?? undefined;
+      }
     } catch {
-      /* cold fallback */
+      const bundle = await bundledSlug(keys);
+      return chooseCatalogListing({ dbState: "unreachable", db: null, bundle }) ?? undefined;
     }
   }
-  for (const key of keys) {
-    if (catalogBySlugMap.has(key)) return catalogBySlugMap.get(key);
-  }
-  for (const key of keys) {
-    const hit = await jsonBySlug(key);
-    if (hit) return hit;
-  }
+  const bundle = await bundledSlug(keys);
+  return chooseCatalogListing({ dbState: "missing", db: null, bundle }) ?? undefined;
 }
 
 export async function catalogByIdGet(id: string) {
@@ -176,29 +207,53 @@ export async function catalogByIdGet(id: string) {
     try {
       const { neonCatalogById } = await import("./server/catalog-neon");
       const neon = await neonCatalogById(id);
-      if (neon) return neon;
+      if (neon) return chooseCatalogListing({ dbState: "found", db: neon, bundle: undefined }) ?? undefined;
     } catch {
       /* cold fallback */
     }
   }
-  if (catalogByIdMap.has(id)) return catalogByIdMap.get(id);
-  return jsonById(id);
+  if (cachedFrom === "neon" && catalogByIdMap.has(id)) return catalogByIdMap.get(id);
+  const bundled = (cachedFrom === "json" ? catalogByIdMap.get(id) : undefined) ?? (await jsonById(id));
+  if (!bundled) return undefined;
+  const [safe] = await omitSuppressedBundleCopies([bundled]);
+  return safe;
 }
 
 export async function catalogByIdsGet(ids: string[]) {
+  const wanted = ids.filter(Boolean);
   if (typeof window === "undefined") {
     try {
       const { neonCatalogByIds } = await import("./server/catalog-neon");
-      const neon = await neonCatalogByIds(ids);
-      if (neon) return neon;
+      const neon = await neonCatalogByIds(wanted);
+      if (neon) {
+        const byId = new Map(neon.map((row) => [row.id, row]));
+        const out: CatalogDaycare[] = [];
+        const needBundle: string[] = [];
+        for (const id of wanted) {
+          const row = byId.get(id);
+          if (!row) {
+            needBundle.push(id);
+            continue;
+          }
+          if (isPublicListing(row)) out.push(row);
+        }
+        if (needBundle.length === 0) return out;
+        const catalog = await loadJsonCatalog();
+        const jsonById = new Map(catalog.map((row) => [row.id, row]));
+        const bundled = needBundle
+          .map((id) => jsonById.get(id))
+          .filter((row): row is CatalogDaycare => Boolean(row));
+        const safe = await omitSuppressedBundleCopies(bundled);
+        return [...out, ...safe.filter((row) => isPublicListing(row))];
+      }
     } catch {
       /* cold fallback */
     }
   }
-  const wanted = ids.filter(Boolean);
   const catalog = await loadJsonCatalog();
-  const byId = new Map(catalog.map((d) => [d.id, d]));
-  return wanted.map((id) => byId.get(id)).filter((d): d is CatalogDaycare => Boolean(d));
+  const byId = new Map(catalog.map((row) => [row.id, row]));
+  const bundled = wanted.map((id) => byId.get(id)).filter((row): row is CatalogDaycare => Boolean(row));
+  return (await omitSuppressedBundleCopies(bundled)).filter((row) => isPublicListing(row));
 }
 
 export function catalogMonths() {

@@ -20,17 +20,23 @@ import {
   pageSeoHead,
 } from "@/lib/page-seo";
 import { cityHubNotFoundHead } from "@/lib/city-hub-not-found";
+import { filterSuppressedBundleRows } from "@/lib/server/bundled-catalog";
 import { SITEMAP_ORIGIN } from "@/lib/sitemap";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/daycare/city/$city")({
-  loader: ({ params }): CityHubSnapshot => {
+  loader: async ({ params }): Promise<CityHubSnapshot> => {
     // Published Canadian hubs only. US and unknown slugs 404 — they must not
     // fall through to the Winnipeg search page. The document edge does the
     // same in scripts/request-guard.mjs so the SPA shell cannot return 200.
     const hub = cityHubBySlug(params.city);
     if (!hub) throw notFound();
-    return hub;
+    try {
+      const listings = await filterSuppressedBundleRows({ data: hub.listings });
+      return { ...hub, listings };
+    } catch {
+      return hub;
+    }
   },
   notFoundComponent: CityHubNotFoundPage,
   head: ({ loaderData }) => {
