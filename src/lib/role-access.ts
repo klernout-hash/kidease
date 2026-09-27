@@ -136,6 +136,20 @@ export function upgradeNavLabel(paid: boolean): "Upgrade" | "My plan" {
   return paid ? "My plan" : "Upgrade";
 }
 
+/** Phone bottom bar. Daycare desk paths stay daycare even for an admin tester. */
+export function bottomBarKind(input: {
+  role: ChromeRole;
+  pathname: string;
+  pending: boolean;
+}): "daycare" | "parent" | "admin" | "guest" {
+  if (input.pathname.startsWith("/provider")) return "daycare";
+  if (input.pathname.startsWith("/parent")) return "parent";
+  if (input.pending || input.role === "guest") return "guest";
+  if (input.role === "provider") return "daycare";
+  if (input.role === "admin") return "admin";
+  return "parent";
+}
+
 export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleNavItem[] {
   const paid = Boolean(input.paid);
   const planLabel = upgradeNavLabel(paid);

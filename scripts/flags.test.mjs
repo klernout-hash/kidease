@@ -172,5 +172,5 @@ test("docs and env example stay placeholders; SMS and push stay off", () => {
   assert.match(readFileSync(join(root, "src/lib/server/sms.ts"), "utf8"), /evaluateFeatureFlag\("FEATURE_SMS"/);
   assert.match(readFileSync(join(root, "src/lib/server/push-send.ts"), "utf8"), /evaluateFeatureFlag\("FEATURE_PUSH"/);
   assert.match(readFileSync(join(root, "src/lib/server/video.ts"), "utf8"), /evaluateFeatureFlag\("FEATURE_VIDEO"/);
-  assert.match(readFileSync(join(root, "src/routes/admin-chat.tsx"), "utf8"), /docs\/flags\.md/);
+  assert.match(readFileSync(join(root, "src/components/admin-chat-page.tsx"), "utf8"), /docs\/flags\.md/);
 });

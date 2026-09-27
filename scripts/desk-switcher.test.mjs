@@ -47,7 +47,7 @@ test("admin desk stays gated by profiles.role + owner email", () => {
   assert.match(roles, /bootstrapEmail/);
   assert.match(roles, /assertAdminDesk/);
   assert.match(roles, /requireAdmin/);
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /canVisitDesk\(session\.desks, "admin", session\.role, session\.email\)/);
   assert.match(admin, /beforeLoadAdminDesk/);
   assert.match(admin, /profiles\.role = admin/);

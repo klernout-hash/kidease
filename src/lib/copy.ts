@@ -1394,7 +1394,7 @@ export const copy = {
     trustWhyTitle: "Why Parents Trust KidEase",
     trustWhy1: "We only list provincially licensed daycares across Canada.",
     trustWhy2: "A photo is shown when the centre has one on file, so you can recognise the building when a picture is there.",
-    trustWhy3: "KidEase verifies licences and who owns a listing. Screening on file means Admin reviewed required documents — not that KidEase ran a police Vulnerable Sector Check.",
+    trustWhy3: "KidEase verifies licences and who owns a listing. Screening on file means verified by KidEase — not that KidEase ran a police Vulnerable Sector Check.",
     trustWhy4: "Your searches stay private. We do not sell your data.",
     trustWhyLocal:
       "A Canada-wide directory so parents can find licensed care near them — safely, clearly, and with confidence.",
@@ -1430,20 +1430,20 @@ export const copy = {
       "The official provincial or territorial registry is always the source of truth for inspections, complaints, and licence status.",
     verifyScreeningTitle: "Screening documents — not a KidEase police check",
     verifyScreeningBody:
-      "Daycares upload required certificates — typically a Criminal Record Check with Vulnerable Sector Search, plus any extra provincial registry checks. KidEase Admin reviews the file. KidEase does not issue Vulnerable Sector Checks — only local police or RCMP (or BC CRRP) can. Parents see a centre-level Screening on file badge after required current documents are cleared. Individual PDFs and names stay private.",
+      "Daycares upload required certificates — typically a Criminal Record Check with Vulnerable Sector Search, plus any extra provincial registry checks. Verified by KidEase means the file was checked. KidEase does not issue Vulnerable Sector Checks — only local police or RCMP (or BC CRRP) can. Parents see a centre-level Screening on file badge after required current documents are cleared. Individual PDFs and names stay private.",
     daycareRequirements: "Daycare requirements",
     reqTitle: "What licensed daycares must provide",
     reqLead:
       "Parents should expect a provincial licence and current screening documents. KidEase reviews those files. Police checks stay with police.",
     reqParentsTitle: "What parents should expect",
     reqParentsBody:
-      "A licensed centre, nursery, or home. A Claim verified listing means KidEase confirmed the operator. Screening on file means Admin confirmed required current documents are on file for people at that centre. It is not a KidEase background check of every educator.",
+      "A licensed centre, nursery, or home. A Claim verified listing means KidEase confirmed the operator. Screening on file means verified by KidEase: required current documents are on file for people at that centre. It is not a KidEase background check of every educator.",
     reqDaycaresTitle: "What daycares must provide",
     reqDaycaresBody:
       "A current provincial or territorial licence. For people 18+ who work with children: a Criminal Record Check with Vulnerable Sector Search from local police or RCMP. Some provinces also require extra registry checks (for example a child abuse registry check, or a prior-contact check for home-based households).",
     reqKidEaseTitle: "What KidEase does",
     reqKidEaseBody:
-      "KidEase matches licences, reviews claim ownership, stores screening documents privately, and lets Admin clear or reject them. We never publish individual certificates or say KidEase ran a police check.",
+      "KidEase matches licences, reviews claim ownership, stores screening documents privately, and clears or rejects them. We never publish individual certificates or say KidEase ran a police check.",
     reqPoliceTitle: "What police / RCMP do",
     reqPoliceBody:
       "Only a local police service or the RCMP (or British Columbia’s Criminal Records Review Program) can issue a Vulnerable Sector Check. Private companies and KidEase cannot.",
@@ -1957,7 +1957,7 @@ export const copy = {
     trustClaimDeclinedTip: "KidEase declined this ownership claim. The listing is not live for parent requests.",
     trustScreeningOnFile: "Screening on file",
     trustScreeningOnFileTip:
-      "KidEase Admin confirmed the required current screening documents for this centre are on file. KidEase did not issue police checks. Certificates stay private.",
+      "Verified by KidEase: the required current screening documents for this centre are on file. KidEase did not issue police checks. Certificates stay private.",
     trustStaffAttested: "Staff attested",
     trustStaffAttestedTip: "The operator attested that staff have required vulnerable-sector checks. KidEase recorded the attestation — it does not validate certificates.",
     trustStaffNone: "Staff screening: not attested",
@@ -1967,7 +1967,7 @@ export const copy = {
     trustPayLedger: "Payments: not charged yet",
     trustPayLedgerTip: "KidEase is not taking live card payments for this listing yet. Nothing will be charged.",
     trustWhatMeans: "What this means",
-    trustWhatMeansLead: "KidEase verifies centres, licences, and who owns a listing. Screening on file means Admin confirmed required documents are on file. KidEase does not issue Vulnerable Sector Checks — only local police or RCMP (or BC CRRP) can.",
+    trustWhatMeansLead: "KidEase verifies centres, licences, and who owns a listing. Screening on file means verified by KidEase: required documents are on file. KidEase does not issue Vulnerable Sector Checks — only local police or RCMP (or BC CRRP) can.",
     trustNotVerified: "Not verified yet",
     trustReport: "Report this listing",
     trustReportLead: "Tell KidEase if a licence looks wrong, a listing is unlicensed, or ownership looks false.",
@@ -3871,7 +3871,7 @@ export const copy = {
     trustWhyTitle: "Pourquoi les parents font confiance à KidEase",
     trustWhy1: "Nous n’inscrivons que des garderies permises par la province, partout au Canada.",
     trustWhy2: "Une photo s’affiche lorsque le centre en a une au dossier, pour que vous reconnaissiez le bâtiment quand elle est là.",
-    trustWhy3: "KidEase vérifie les permis et qui possède une fiche. Dossier de filtrage signifie qu’Admin a examiné les documents requis — pas que KidEase a fait une vérification policière du secteur vulnérable.",
+    trustWhy3: "KidEase vérifie les permis et qui possède une fiche. Dossier de filtrage signifie vérifié par KidEase — pas que KidEase a fait une vérification policière du secteur vulnérable.",
     trustWhy4: "Vos recherches restent privées. Nous ne vendons pas vos données.",
     trustWhyLocal:
       "Un répertoire pancanadien pour que les parents trouvent une garde permise près de chez eux — en toute sécurité, clairement et en confiance.",
@@ -3907,20 +3907,20 @@ export const copy = {
       "Le registre provincial ou territorial officiel reste toujours la source de vérité pour les inspections, les plaintes et le statut du permis.",
     verifyScreeningTitle: "Documents de filtrage — pas un contrôle policier KidEase",
     verifyScreeningBody:
-      "Les garderies téléversent les certificats requis — en général un contrôle du casier avec secteur vulnérable, plus toute vérification de registre exigée par la province. Admin KidEase examine le dossier. KidEase ne délivre pas de vérification du secteur vulnérable — seul le service de police local ou la GRC (ou le programme de la C.-B.) le peut. Les parents voient un badge Dossier de filtrage au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
+      "Les garderies téléversent les certificats requis — en général un contrôle du casier avec secteur vulnérable, plus toute vérification de registre exigée par la province. Vérifié par KidEase signifie que le dossier a été examiné. KidEase ne délivre pas de vérification du secteur vulnérable — seul le service de police local ou la GRC (ou le programme de la C.-B.) le peut. Les parents voient un badge Dossier de filtrage au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
     daycareRequirements: "Exigences pour les garderies",
     reqTitle: "Ce que les garderies permises doivent fournir",
     reqLead:
       "Les parents doivent s’attendre à un permis provincial et à des documents de filtrage à jour. KidEase examine ces dossiers. Les contrôles policiers restent chez la police.",
     reqParentsTitle: "Ce que les parents doivent attendre",
     reqParentsBody:
-      "Un centre, une nursery ou un milieu familial permis. Réclamation vérifiée signifie que KidEase a confirmé l’exploitant. Dossier de filtrage signifie qu’Admin a confirmé que les documents requis et à jour sont au dossier. Ce n’est pas une vérification d’antécédents KidEase de chaque éducatrice.",
+      "Un centre, une nursery ou un milieu familial permis. Réclamation vérifiée signifie que KidEase a confirmé l’exploitant. Dossier de filtrage signifie vérifié par KidEase : les documents requis et à jour sont au dossier. Ce n’est pas une vérification d’antécédents KidEase de chaque éducatrice.",
     reqDaycaresTitle: "Ce que les garderies doivent fournir",
     reqDaycaresBody:
       "Un permis provincial ou territorial à jour. Pour les personnes de 18 ans et plus qui travaillent auprès des enfants : un contrôle du casier judiciaire avec vérification du secteur vulnérable auprès de la police locale ou de la GRC. Certaines provinces exigent aussi d’autres vérifications de registre (par exemple un registre des mauvais traitements, ou une vérification des contacts antérieurs pour les milieux familiaux).",
     reqKidEaseTitle: "Ce que fait KidEase",
     reqKidEaseBody:
-      "KidEase apparie les permis, examine la propriété de la fiche, conserve les documents de filtrage en privé et laisse Admin les accepter ou les refuser. Nous ne publions jamais les certificats individuels et ne disons pas que KidEase a fait un contrôle policier.",
+      "KidEase apparie les permis, examine la propriété de la fiche, conserve les documents de filtrage en privé et les accepte ou les refuse. Nous ne publions jamais les certificats individuels et ne disons pas que KidEase a fait un contrôle policier.",
     reqPoliceTitle: "Ce que font la police et la GRC",
     reqPoliceBody:
       "Seul un service de police local ou la GRC (ou le Programme de vérification des casiers judiciaires de la Colombie-Britannique) peut délivrer une vérification du secteur vulnérable. Les entreprises privées et KidEase ne le peuvent pas.",
@@ -4438,7 +4438,7 @@ export const copy = {
     trustClaimDeclinedTip: "KidEase a refusé cette réclamation. La fiche n’est pas en ligne pour les demandes des parents.",
     trustScreeningOnFile: "Dossier de filtrage",
     trustScreeningOnFileTip:
-      "Admin KidEase a confirmé que les documents de filtrage requis et à jour de ce centre sont au dossier. KidEase n’a pas délivré de contrôles policiers. Les certificats restent privés.",
+      "Vérifié par KidEase : les documents de filtrage requis et à jour de ce centre sont au dossier. KidEase n’a pas délivré de contrôles policiers. Les certificats restent privés.",
     trustStaffAttested: "Personnel attesté",
     trustStaffAttestedTip: "L’exploitant a attesté que le personnel a les vérifications du secteur vulnérable requises. KidEase enregistre l’attestation — il ne valide pas les certificats.",
     trustStaffNone: "Vérification du personnel : non attestée",
@@ -4448,7 +4448,7 @@ export const copy = {
     trustPayLedger: "Paiements : pas encore débités",
     trustPayLedgerTip: "KidEase n’accepte pas encore les paiements par carte en direct pour cette fiche. Rien ne sera débité.",
     trustWhatMeans: "Ce que cela signifie",
-    trustWhatMeansLead: "KidEase vérifie les centres, les permis et qui possède une fiche. Dossier de filtrage signifie qu’Admin a confirmé les documents requis. KidEase ne délivre pas de vérifications du secteur vulnérable — seul le service de police local ou la GRC (ou le programme de la C.-B.) le peut.",
+    trustWhatMeansLead: "KidEase vérifie les centres, les permis et qui possède une fiche. Dossier de filtrage signifie vérifié par KidEase : les documents requis sont au dossier. KidEase ne délivre pas de vérifications du secteur vulnérable — seul le service de police local ou la GRC (ou le programme de la C.-B.) le peut.",
     trustNotVerified: "Pas encore vérifié",
     trustReport: "Signaler cette fiche",
     trustReportLead: "Dites à KidEase si un permis semble erroné, si une fiche n’est pas permise, ou si la propriété semble fausse.",

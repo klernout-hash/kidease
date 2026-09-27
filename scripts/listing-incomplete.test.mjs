@@ -159,7 +159,7 @@ test("admin list and desk expose Incomplete with missing chips and Waiting/Scree
   assert.match(centres, /infant_monthly/);
   assert.match(centres, /ages_confirmed/);
 
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /AdminIncompleteQueue/);
   assert.match(admin, /listIncompleteAdminCentres/);
   assert.match(admin, /tab === "incomplete"/);

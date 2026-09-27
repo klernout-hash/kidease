@@ -83,7 +83,7 @@ test("login and 2FA use the shared continue helper", () => {
   assert.match(gates, /to="\/verify-2fa"/);
   assert.match(src("src/routes/parent.tsx"), /LoginFunnelDeskLand/);
   assert.match(src("src/routes/provider.tsx"), /LoginFunnelDeskLand/);
-  assert.match(src("src/routes/admin.tsx"), /LoginFunnelDeskLand/);
+  assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /LoginFunnelDeskLand/);
   assert.match(src("src/routes/support.tsx"), /LoginFunnelDeskLand/);
 });
 

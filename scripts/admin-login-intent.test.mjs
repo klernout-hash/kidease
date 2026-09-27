@@ -38,10 +38,14 @@ test("parent and daycare login stay off the admin email-first path", () => {
   assert.equal(isAdminLoginIntent({ next: "/daycare/example" }), false);
 });
 
-test("login screen uses admin intent and hides social for that path", () => {
+test("public login URLs do not render an operator page; typed owner email still uses password", () => {
   const login = src("src/routes/login.tsx");
   assert.match(login, /isAdminLoginIntent/);
   assert.match(login, /intent === "admin"/);
+  assert.doesNotMatch(login, /t\("operatorSignIn"\)/);
+  assert.doesNotMatch(login, /t\("operatorLead"\)/);
+  assert.doesNotMatch(login, /t\("operatorEmailNote"\)/);
+  assert.match(login, /email\.trim\(\)\.toLowerCase\(\) === OPERATOR_EMAIL/);
   assert.match(login, /data-ke="admin-titan-note"/);
   assert.match(login, /data-ke=\{operator \? "admin-email-first" : "email-sign-in"\}/);
   assert.match(login, /data-ke="social-sign-in"/);
@@ -49,6 +53,7 @@ test("login screen uses admin intent and hides social for that path", () => {
   assert.match(login, /t\("forgotPassword"\)/);
   assert.match(login, /KIDEASE_OPERATOR_EMAIL/);
   assert.doesNotMatch(login, /const operator = role === "admin"/);
+  assert.doesNotMatch(login, /urlOperator \? OPERATOR_EMAIL/);
 });
 
 test("signed-out /admin gate and footer send Admin email-first search", () => {

@@ -20,7 +20,7 @@ function src(rel) {
 test("waiting queue is its own review section, not the dark dump", () => {
   assert.equal(ADMIN_CENTRE_STAT_COPY.waiting.title, "Daycares waiting for review");
   assert.equal(ADMIN_CENTRE_STAT_COPY.waiting.eyebrow, "Review queue");
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   const card = src("src/components/admin-review-card.tsx");
   assert.match(admin, /AdminCentreStatList/);
   assert.doesNotMatch(admin, /bg-\[#1a3790\]/);
@@ -30,7 +30,7 @@ test("waiting queue is its own review section, not the dark dump", () => {
   assert.match(card, /admin-review-empty/);
   assert.match(card, /admin-review-error/);
   assert.match(card, /Keep waiting/);
-  assert.match(src("src/routes/admin.tsx"), /data-ke="admin-queue-aside"/);
+  assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /data-ke="admin-queue-aside"/);
 });
 
 test("card face is decision facts; contracts, payments, and registry tools sit under More", () => {
@@ -50,7 +50,7 @@ test("card face is decision facts; contracts, payments, and registry tools sit u
   assert.match(card, /Replace licence document/);
   assert.match(card, /data-ke="admin-licence-upload"/);
   assert.match(card, /postPrivateDocForm\(licenseDocHref/);
-  assert.match(src("src/routes/admin.tsx"), /onLicenceUploaded/);
+  assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /onLicenceUploaded/);
 
   const decision = reviewCardLayout("decision");
   assert.deepEqual(decision.face, ["identity", "facts", "decision"]);

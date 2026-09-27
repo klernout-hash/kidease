@@ -185,7 +185,7 @@ test("provider default desk is Today and clutter stays off that path", () => {
 test("Sprint 1 does not rewrite public, parent, or admin IA", () => {
   const index = src("src/routes/index.tsx");
   const parent = src("src/components/parent-desk.tsx");
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(index, /homeLandPath/);
   assert.doesNotMatch(index, /TodayUrgencyHome|desk === "today"/);
   assert.doesNotMatch(parent, /TodayUrgencyHome/);

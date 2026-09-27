@@ -59,7 +59,7 @@ test("parent empties and inbox have a next action", () => {
 });
 
 test("activity has kind filters and money says pending is not settled", () => {
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /activityKind/);
   assert.match(admin, /Pending totals are not settled/);
   const copy = src("src/lib/copy.ts");
@@ -69,7 +69,7 @@ test("activity has kind filters and money says pending is not settled", () => {
 });
 
 test("account and signup activity always name who, with People + first-class chips", () => {
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   const nav = src("src/lib/desk-nav.ts");
   assert.match(admin, /activityAccountHeadline/);
   assert.match(admin, /activityWhoLine/);

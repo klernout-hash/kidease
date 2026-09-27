@@ -83,6 +83,14 @@ function mentions(text, phrases) {
   return phrases.filter((phrase) => lower.includes(phrase.toLowerCase()));
 }
 
+async function appBarText(page, href) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+  const bar = page.locator('[data-ke="app-tab-bar"]');
+  await bar.waitFor({ state: "visible", timeout: timeoutMs });
+  return ((await bar.innerText()) || "").replace(/\s+/g, " ").trim();
+}
+
 async function upgradePlaces(page) {
   const header = ((await page.locator('header [data-ke="role-nav"] [data-nav="upgrade"]').innerText().catch(() => "")) || "").trim();
   const panel = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').innerText().catch(() => "")) || "").trim();
@@ -100,6 +108,8 @@ async function upgradePlaces(page) {
 
 async function shot(page, name, width) {
   await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+  // Channel is chosen once at document load. Reload so 390px shots use the app bar.
+  await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
   const dir = join(dirname(outDir), "shots");
   mkdirSync(dir, { recursive: true });
   await page.screenshot({ path: join(dir, `${name}.png`), fullPage: false }).catch(() => {});
@@ -147,16 +157,33 @@ async function runRoleFixture(page, base) {
     const parentNav = await roleNavText(page);
     const parentCross = mentions(parentNav, ["My listing", "Enquiries", "I'm a daycare", "Get more with Pro"]);
     const parentPlaces = await upgradePlaces(page);
+    const parentChrome = await page.locator("body").innerText();
+    const parentSignIn = /parent sign in|daycare sign in/i.test(parentChrome);
     record(
       "menu-parent",
       parentHome &&
         parentCross.length === 0 &&
         /home/i.test(parentNav) &&
+        !parentSignIn &&
         parentPlaces.header === "Upgrade" &&
         parentPlaces.panel === "Upgrade" &&
         parentPlaces.drawer === "Upgrade",
-      { note: parentCross.join(",") || JSON.stringify(parentPlaces) },
+      { note: parentSignIn ? "sign-in leak" : parentCross.join(",") || JSON.stringify(parentPlaces) },
     );
+    const parentBar = await appBarText(page, new URL("/parent", base).href);
+    record(
+      "bottom-bar-parent",
+      /\bHome\b/.test(parentBar) &&
+        /\bSaved\b/.test(parentBar) &&
+        /\bRequests\b/.test(parentBar) &&
+        /\bMessages\b/.test(parentBar) &&
+        /\bUpgrade\b/.test(parentBar) &&
+        !/\bDesk\b/.test(parentBar) &&
+        !/\bEnquiries\b/.test(parentBar) &&
+        !/\bEnrolled\b/.test(parentBar),
+      { note: parentBar },
+    );
+    await page.setViewportSize({ width: 1280, height: 900 });
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "parent", plan: "paid" });
@@ -191,16 +218,33 @@ async function runRoleFixture(page, base) {
     const daycareNav = await roleNavText(page);
     const daycareCross = mentions(daycareNav, ["Saved", "Requests & tours", "I'm a parent", "Try Parent Plus"]);
     const daycarePlaces = await upgradePlaces(page);
+    const daycareChrome = await page.locator("body").innerText();
+    const daycareSignIn = /parent sign in|daycare sign in/i.test(daycareChrome);
     record(
       "menu-daycare",
       daycareHome &&
         daycareCross.length === 0 &&
         /desk/i.test(daycareNav) &&
+        !daycareSignIn &&
         daycarePlaces.header === "Upgrade" &&
         daycarePlaces.panel === "Upgrade" &&
         daycarePlaces.drawer === "Upgrade",
-      { note: daycareCross.join(",") || JSON.stringify(daycarePlaces) },
+      { note: daycareSignIn ? "sign-in leak" : daycareCross.join(",") || JSON.stringify(daycarePlaces) },
     );
+    // Pure daycare fixture (role=provider), not an admin who also owns centres.
+    const daycareBar = await appBarText(page, new URL("/provider", base).href);
+    record(
+      "bottom-bar-daycare",
+      daycareBar.includes("Desk") &&
+        daycareBar.includes("Listing") &&
+        daycareBar.includes("Enquiries") &&
+        daycareBar.includes("Messages") &&
+        daycareBar.includes("Upgrade") &&
+        !/\bSaved\b/.test(daycareBar) &&
+        !/\bEnrolled\b/.test(daycareBar),
+      { note: `role=provider ${daycareBar}` },
+    );
+    await page.setViewportSize({ width: 1280, height: 900 });
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "provider", plan: "paid" });
@@ -319,6 +363,29 @@ async function runRoleFixture(page, base) {
     record("admin-signed-out-404", signedOutGate.ok && signedOutGate.kind === "not-found", {
       note: signedOutGate.kind,
       status: signedOutAdmin?.status() ?? 0,
+    });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(new URL("/login?role=admin", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const adminLoginTitle = ((await page.locator("h1").first().innerText().catch(() => "")) || "").trim();
+    record("login-role-admin-plain", !/operator|admin/i.test(adminLoginTitle), { note: adminLoginTitle });
+    await page.locator('input[type="email"]').fill("kyle@kidease.ca");
+    await page.locator('[data-ke="admin-email-first"]').waitFor({ timeout: timeoutMs }).catch(() => {});
+    const ownerTitle = ((await page.locator("h1").first().innerText().catch(() => "")) || "").trim();
+    const ownerPassword = (await page.locator('[data-ke="admin-email-first"]').count()) > 0;
+    const ownerSocial = await page.locator('[data-ke="social-sign-in"]').count();
+    record("owner-email-password", ownerPassword && ownerSocial === 0 && !/operator|admin/i.test(ownerTitle), {
+      note: ownerTitle,
+    });
+    const twoFactorPath = `/${"verify"}-${"2fa"}`;
+    await page.goto(`${new URL(twoFactorPath, base).href}?next=/admin`, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    await page.waitForURL(/\/login/i, { timeout: timeoutMs }).catch(() => {});
+    const verifyTitle = ((await page.locator("h1").first().innerText().catch(() => "")) || "").trim();
+    record("verify-2fa-admin-next-plain", /\/login/i.test(page.url()) && !/operator|admin/i.test(verifyTitle), {
+      note: `${page.url()} ${verifyTitle}`,
     });
   } catch (err) {
     record("role-fixture", false, { note: err instanceof Error ? err.message : String(err) });

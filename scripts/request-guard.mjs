@@ -45,6 +45,12 @@ export function normalizePath(pathname) {
  * Access must stay on these staff prefixes only (see docs/cloudflare.md).
  * `/support*` is the Support desk (Access can be added later on www — see docs/support.md).
  */
+/** Document paths that must send X-Robots-Tag instead of a robots.txt Disallow line. */
+export function isAdminNoindexPath(pathname) {
+  const path = normalizePath(pathname);
+  return path === "/admin" || path.startsWith("/admin/") || path.startsWith("/admin-");
+}
+
 export function isSensitiveDeskPath(pathname) {
   const path = normalizePath(pathname);
   return (

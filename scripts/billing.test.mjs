@@ -193,7 +193,7 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   assert.match(inbox, /pay\/bill\/\$billId|payUseBill/);
   assert.doesNotMatch(inbox, /to="\/pay\/\$bookingId"/);
 
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /connectFeeAdminLive/);
   assert.doesNotMatch(admin, /about 3%/);
 

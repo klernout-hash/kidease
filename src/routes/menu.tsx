@@ -113,12 +113,14 @@ function MenuPage() {
         </Group>
 
         {showParents ? <Group title="Parents" defer>
-          <MenuRow
-            to="/login"
-            search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
-            label={t("parentSignIn")}
-            icon="login"
-          />
+          {!chrome.pending && chrome.role === "guest" ? (
+            <MenuRow
+              to="/login"
+              search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
+              label={t("parentSignIn")}
+              icon="login"
+            />
+          ) : null}
           <MenuRow to="/parent" label={t("parentDesk")} icon="parent" />
           <MenuRow to="/account" search={{ tab: "profile", desk: "parent" }} label={t("profile")} icon="profile" />
           <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" />
@@ -128,12 +130,14 @@ function MenuPage() {
 
         {showDaycares ? <Group title={fr ? "Garderies" : "Daycares"} defer>
           <MenuRow to="/claim" label={t("claimCta")} icon="claim" />
-          <MenuRow
-            to="/login"
-            search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
-            label={t("providerLogin")}
-            icon="login"
-          />
+          {!chrome.pending && chrome.role === "guest" ? (
+            <MenuRow
+              to="/login"
+              search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
+              label={t("providerLogin")}
+              icon="login"
+            />
+          ) : null}
           <MenuRow to="/provider" label={t("daycareDesk")} icon="daycare" />
           <MenuRow to="/account" search={{ tab: "profile", desk: "director" }} label={t("account")} icon="account" />
           <MenuRow to="/verify" label={t("mbChildcare")} icon="verify" />

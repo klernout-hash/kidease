@@ -32,10 +32,10 @@ const PUBLIC_PATHS = [
   "/start-a-daycare",
 ];
 
-test("robots.txt keeps admin disallows and points Sitemap at the www URL", () => {
-  assert.match(robots, /^Disallow: \/admin$/m);
-  assert.match(robots, /^Disallow: \/admin-contracts$/m);
-  assert.match(robots, /^Disallow: \/admin-chat$/m);
+test("robots.txt does not advertise admin paths and points Sitemap at the www URL", () => {
+  assert.doesNotMatch(robots, /^Disallow: \/admin/m);
+  assert.doesNotMatch(robots, /\/admin-contracts/);
+  assert.doesNotMatch(robots, /\/admin-chat/);
   assert.match(robots, /^Disallow: \/support$/m);
   assert.match(robots, /^Disallow: \/provider\/subscription$/m);
   assert.match(robots, /^Disallow: \/daycare\/test-ghost$/m);

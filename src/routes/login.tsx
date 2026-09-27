@@ -102,12 +102,14 @@ export function LoginScreen({
   const { t, locale } = useCopy();
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
+  // URL role=admin / next=/admin must not paint an operator page. Kyle types his email.
   const urlOperator = isAdminLoginIntent({
     role: role ?? search.role,
     desk: search.desk,
     intent: search.intent,
     next: search.next,
   });
+  void urlOperator;
   const dest = resolvePostLoginPath({
     next: search.next,
     desk: deskHint,
@@ -115,10 +117,10 @@ export function LoginScreen({
     sticky: readStickyDesk(),
   });
   const { user, isPending: sessionPending } = useCurrentUserState();
-  const [mode, setMode] = useState<"in" | "up">(urlOperator ? "in" : search.intent === "up" ? "up" : "in");
+  const [mode, setMode] = useState<"in" | "up">(search.intent === "up" ? "up" : "in");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState(urlOperator ? OPERATOR_EMAIL : "");
-  const operator = urlOperator || email.trim().toLowerCase() === OPERATOR_EMAIL;
+  const [email, setEmail] = useState("");
+  const operator = email.trim().toLowerCase() === OPERATOR_EMAIL;
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -350,17 +352,10 @@ export function LoginScreen({
     }
   }
 
-  const title = urlOperator
-    ? t("operatorSignIn")
-    : role === "provider"
-      ? t("providerSignIn")
-      : role === "parent"
-        ? t("parentSignIn")
-        : t("signIn");
+  const title =
+    role === "provider" ? t("providerSignIn") : role === "parent" ? t("parentSignIn") : t("signIn");
   const nextPath = (search.next || "").split("?")[0] || "";
-  const lead = operator
-    ? t("operatorLead")
-    : nextPath.startsWith("/daycare/")
+  const lead = nextPath.startsWith("/daycare/")
       ? t("loginLeadListing")
       : nextPath === "/search"
         ? t("loginLeadSearchSave")
@@ -397,7 +392,7 @@ export function LoginScreen({
             <p className="mt-2 text-sm text-muted" data-ke="login-lead">{busy && !error ? t("openingDesk") : lead}</p>
             {operator && !user ? (
               <p className="mt-1 text-xs text-subtle" data-ke="admin-titan-note">
-                {t("operatorEmailNote")}
+                Use email and password for this address.
               </p>
             ) : null}
           <form onSubmit={onEmail} className="mt-6 space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
@@ -425,7 +420,6 @@ export function LoginScreen({
                   autoCorrect="off"
                   inputMode="email"
                   enterKeyHint="next"
-                  readOnly={urlOperator}
                 />
             </label>
             <PasswordField

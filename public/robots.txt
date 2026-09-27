@@ -7,9 +7,6 @@
 
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /admin-contracts
-Disallow: /admin-chat
 Disallow: /support
 Disallow: /provider/subscription
 Disallow: /daycare/test-ghost

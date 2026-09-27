@@ -34,10 +34,20 @@ function Item({
   );
 }
 
-function linksForRole(links: readonly FooterLinkDef[], role: ChromeRole, column: FooterColumnId): FooterLinkDef[] {
+function isSignInLink(link: FooterLinkDef): boolean {
+  return link.to === "/login" || link.to === "/fr/login" || link.labelKey === "parentSignIn" || link.labelKey === "providerLogin";
+}
+
+function linksForRole(
+  links: readonly FooterLinkDef[],
+  role: ChromeRole,
+  column: FooterColumnId,
+  hideSignIn: boolean,
+): FooterLinkDef[] {
   if (role === "provider" && column === "parents") return [];
   if (role === "parent" && column === "daycares") return [];
   return links.filter((link) => {
+    if (hideSignIn && isSignInLink(link)) return false;
     if (role === "guest" && (link.to === "/parent" || link.to === "/provider")) return false;
     if (role === "parent" && (link.to.startsWith("/provider") || link.search?.role === "provider")) return false;
     if (role === "provider" && (link.to.startsWith("/parent") || link.search?.role === "parent")) return false;
@@ -115,19 +125,19 @@ export function SiteFooter() {
             <Column
               id="parents"
               title="Parents"
-              links={linksForRole(FOOTER_COLUMNS.parents, chrome.role, "parents")}
+              links={linksForRole(FOOTER_COLUMNS.parents, chrome.role, "parents", chrome.pending || chrome.role !== "guest")}
               locale={locale}
               t={t}
             />
             <Column
               id="daycares"
               title={fr ? "Garderies" : "Daycares"}
-              links={linksForRole(FOOTER_COLUMNS.daycares, chrome.role, "daycares")}
+              links={linksForRole(FOOTER_COLUMNS.daycares, chrome.role, "daycares", chrome.pending || chrome.role !== "guest")}
               locale={locale}
               t={t}
             />
-            <Column id="kidease" title={t("app")} links={linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease")} locale={locale} t={t} />
-            <Column id="support" title={t("support")} links={linksForRole(FOOTER_COLUMNS.support, chrome.role, "support")} locale={locale} t={t} />
+            <Column id="kidease" title={t("app")} links={linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest")} locale={locale} t={t} />
+            <Column id="support" title={t("support")} links={linksForRole(FOOTER_COLUMNS.support, chrome.role, "support", chrome.pending || chrome.role !== "guest")} locale={locale} t={t} />
           </nav>
 
           <div className="ke-footer-legal">
