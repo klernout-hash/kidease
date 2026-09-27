@@ -59,6 +59,14 @@ const timeoutMs = Number(process.env.E2E_TIMEOUT_MS || 45000);
 const results = [];
 let previewChild = null;
 
+async function settleMockCheckout(page) {
+  // The panel assigns the mock Checkout URL. Wait until that navigation commits
+  // so the next page.goto is not interrupted. The script never pays.
+  await page.waitForURL(/checkout\.stripe\.com/, { timeout: 15000 }).catch(async () => {
+    await page.evaluate(() => window.stop()).catch(() => {});
+  });
+}
+
 async function setFixture(context, base, { role, plan, own } = {}) {
   await context.clearCookies();
   const res = await context.request.post(new URL("/api/e2e-seed", base).href, {
@@ -275,6 +283,7 @@ async function runRoleFixture(page, base) {
     const deskHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
     if ((await deskCheckout.count()) > 0) await deskCheckout.click();
     const deskReached = Boolean(await deskHit);
+    await settleMockCheckout(page);
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="upgrade-cta"]:visible').first().click();
     await page.waitForURL(/\/provider\/subscription/i, { timeout: timeoutMs }).catch(() => {});
@@ -283,6 +292,7 @@ async function runRoleFixture(page, base) {
     const homeHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
     if ((await homeCheckout.count()) > 0) await homeCheckout.click();
     const homeReached = Boolean(await homeHit);
+    await settleMockCheckout(page);
     record("daycare-checkout-two-clicks", headerUpgrade === "Upgrade" && deskReached && homeReached, {
       note: `${headerUpgrade} desk=${deskReached} home=${homeReached}`,
     });
@@ -299,6 +309,7 @@ async function runRoleFixture(page, base) {
     const parentDeskHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
     if ((await deskPlus.count()) > 0) await deskPlus.click();
     const parentDeskReached = Boolean(await parentDeskHit);
+    await settleMockCheckout(page);
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="upgrade-cta"]:visible').first().click();
     await page.waitForURL(/tab=payments/i, { timeout: timeoutMs }).catch(() => {});
@@ -307,6 +318,7 @@ async function runRoleFixture(page, base) {
     const parentHomeHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
     if ((await homePlus.count()) > 0) await homePlus.click();
     const parentHomeReached = Boolean(await parentHomeHit);
+    await settleMockCheckout(page);
     record("parent-plus-two-clicks", parentHeaderUpgrade === "Upgrade" && parentDeskReached && parentHomeReached, {
       note: `${parentHeaderUpgrade} desk=${parentDeskReached} home=${parentHomeReached}`,
     });
