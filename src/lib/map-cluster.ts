@@ -65,6 +65,18 @@ export const MAP_LOGO_PIN_CITY_PX = 24;
 /** Minimum tap target. The painted pin may be smaller; the button is not. */
 export const MAP_PIN_TAP_PX = 28;
 
+/**
+ * Pointer travel past this, between press and release, is a drag.
+ * A drag must not open the pin that happens to sit under the cursor.
+ */
+export const MAP_TAP_SLOP_PX = 8;
+
+/** Extra pixels around the camera that still get painted, so edge pins are not cut off. */
+export const MAP_DRAW_MARGIN_PX = 64;
+
+/** Tile edge as a fraction of the camera. A small pan reuses the tiles already loaded. */
+export const MAP_TILE_SCREEN_FRAC = 0.5;
+
 /** Logo pin height in CSS pixels. Zoom 12 and closer is the full pin. */
 export function mapLogoPinPx(zoom: number): number {
   return clampMapZoom(zoom) >= 12 ? MAP_LOGO_PIN_PX : MAP_LOGO_PIN_CITY_PX;
@@ -73,6 +85,172 @@ export function mapLogoPinPx(zoom: number): number {
 /** Square hit target. At least 28px, and never smaller than the painted pin. */
 export function mapPinTapPx(zoom: number): number {
   return Math.max(MAP_PIN_TAP_PX, mapLogoPinPx(zoom));
+}
+
+/**
+ * A real tap. Keyboard activation does not come through here.
+ * `cameraMoved` is the map center or zoom changing between press and release.
+ */
+export function mapPointerIsTap(input: { movedPx: number; cameraMoved: boolean; slopPx?: number }): boolean {
+  if (input.cameraMoved) return false;
+  if (!Number.isFinite(input.movedPx) || input.movedPx < 0) return false;
+  return input.movedPx <= (input.slopPx ?? MAP_TAP_SLOP_PX);
+}
+
+/** True when the map itself moved during the gesture. A stationary tap is not a move. */
+export function mapCameraMoved(
+  before: { lat: number; lng: number; zoom: number } | null,
+  after: { lat: number; lng: number; zoom: number } | null,
+): boolean {
+  if (!before || !after) return false;
+  if (![before.lat, before.lng, before.zoom, after.lat, after.lng, after.zoom].every(Number.isFinite)) {
+    return false;
+  }
+  if (Math.round(before.zoom) !== Math.round(after.zoom)) return true;
+  return Math.abs(before.lat - after.lat) > 1e-5 || Math.abs(before.lng - after.lng) > 1e-5;
+}
+
+/** id, latitude, longitude, name. Address and the public URL load when the pin is tapped. */
+export type MapPinWire = [string, number, number, string];
+
+export function encodeMapPinWire(pin: Pick<MapPin, "id" | "lat" | "lng" | "name">): MapPinWire {
+  return [pin.id, Math.round(pin.lat * 1e5) / 1e5, Math.round(pin.lng * 1e5) / 1e5, pin.name];
+}
+
+export function decodeMapPinWire(row: MapPinWire): MapPin | null {
+  if (!Array.isArray(row) || row.length < 4) return null;
+  const id = String(row[0] || "").trim();
+  const name = String(row[3] || "").trim();
+  const lat = Number(row[1]);
+  const lng = Number(row[2]);
+  if (!id || !name || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return {
+    id,
+    slug: "",
+    name,
+    nameFr: "",
+    lat,
+    lng,
+    address: "",
+    city: "",
+    province: "",
+    postalCode: "",
+  };
+}
+
+export function decodeMapPinsWire(rows: readonly MapPinWire[]): MapPin[] {
+  const out: MapPin[] = [];
+  for (const row of rows) {
+    const pin = decodeMapPinWire(row);
+    if (pin) out.push(pin);
+  }
+  return out;
+}
+
+export function isMapPinWire(value: unknown): value is MapPinWire {
+  return Array.isArray(value) && value.length >= 4 && typeof value[0] === "string" && typeof value[3] === "string";
+}
+
+/** Turn a tile response back into pin objects. Cluster payloads pass through. */
+export function coerceMapViewPins(view: {
+  mode: "pins" | "clusters";
+  pins?: readonly unknown[];
+  clusters?: MapCluster[];
+  total: number;
+  truncated: false;
+  bbox: MapBbox;
+  zoom: number;
+}): MapViewData {
+  if (view.mode === "clusters") return view as MapViewData;
+  const rows = view.pins ?? [];
+  const pins =
+    rows.length > 0 && isMapPinWire(rows[0]) ? decodeMapPinsWire(rows as MapPinWire[]) : (rows as MapPin[]);
+  return {
+    mode: "pins",
+    pins,
+    total: view.total,
+    truncated: false,
+    bbox: view.bbox,
+    zoom: view.zoom,
+  };
+}
+
+export function mapMetersPerPx(zoom: number, lat: number): number {
+  const z = clampMapZoom(zoom);
+  const clampedLat = Math.max(-80, Math.min(80, Number.isFinite(lat) ? lat : 50));
+  const cos = Math.cos((clampedLat * Math.PI) / 180);
+  const safeCos = Math.abs(cos) < 0.2 ? 0.2 : Math.abs(cos);
+  return (METERS_PER_PX_ZOOM0 * safeCos) / 2 ** z;
+}
+
+function roundTile(n: number): number {
+  return Math.round(n * 1e5) / 1e5;
+}
+
+/**
+ * Tiles covering the camera plus one tile of margin, center tile first.
+ * Pin mode fetches these instead of one padded city-wide box.
+ */
+export function mapTilesForCamera(box: MapBbox, zoom: number, widthPx: number, heightPx: number): MapBbox[] {
+  const mid = (box.minLat + box.maxLat) / 2;
+  const mpp = mapMetersPerPx(zoom, mid);
+  const cos = Math.max(0.2, Math.abs(Math.cos((mid * Math.PI) / 180)));
+  const tileWKm = (Math.max(180, widthPx) * MAP_TILE_SCREEN_FRAC * mpp) / 1000;
+  const tileHKm = (Math.max(180, heightPx) * MAP_TILE_SCREEN_FRAC * mpp) / 1000;
+  const latStep = Math.max(tileHKm / 110.574, 1e-4);
+  const lngStep = Math.max(tileWKm / (111.32 * cos), 1e-4);
+  const minLat = box.minLat - latStep;
+  const maxLat = box.maxLat + latStep;
+  const minLng = box.minLng - lngStep;
+  const maxLng = box.maxLng + lngStep;
+  const lat0 = Math.floor(minLat / latStep) * latStep;
+  const lng0 = Math.floor(minLng / lngStep) * lngStep;
+  const tiles: MapBbox[] = [];
+  for (let lat = lat0; lat < maxLat - 1e-9 && tiles.length < 24; lat += latStep) {
+    for (let lng = lng0; lng < maxLng - 1e-9 && tiles.length < 24; lng += lngStep) {
+      tiles.push({
+        minLat: roundTile(lat),
+        maxLat: roundTile(lat + latStep),
+        minLng: roundTile(lng),
+        maxLng: roundTile(lng + lngStep),
+      });
+    }
+  }
+  const cLat = (box.minLat + box.maxLat) / 2;
+  const cLng = (box.minLng + box.maxLng) / 2;
+  tiles.sort((a, b) => {
+    const da = Math.abs((a.minLat + a.maxLat) / 2 - cLat) + Math.abs((a.minLng + a.maxLng) / 2 - cLng);
+    const db = Math.abs((b.minLat + b.maxLat) / 2 - cLat) + Math.abs((b.minLng + b.maxLng) / 2 - cLng);
+    return da - db;
+  });
+  return tiles;
+}
+
+export function mapTileKey(box: MapBbox, zoom: number): string {
+  return [
+    Math.round(clampMapZoom(zoom)),
+    box.minLat.toFixed(5),
+    box.maxLat.toFixed(5),
+    box.minLng.toFixed(5),
+    box.maxLng.toFixed(5),
+  ].join(":");
+}
+
+export function expandBboxByPx(box: MapBbox, zoom: number, marginPx: number): MapBbox {
+  const mid = (box.minLat + box.maxLat) / 2;
+  const mpp = mapMetersPerPx(zoom, mid);
+  const cos = Math.max(0.2, Math.abs(Math.cos((mid * Math.PI) / 180)));
+  const km = (Math.max(0, marginPx) * mpp) / 1000;
+  return {
+    minLat: box.minLat - km / 110.574,
+    maxLat: box.maxLat + km / 110.574,
+    minLng: box.minLng - km / (111.32 * cos),
+    maxLng: box.maxLng + km / (111.32 * cos),
+  };
+}
+
+export function bboxIntersects(a: MapBbox, b: MapBbox): boolean {
+  return a.minLat <= b.maxLat && a.maxLat >= b.minLat && a.minLng <= b.maxLng && a.maxLng >= b.minLng;
 }
 
 /** Wait until the camera settles so a pan does not fire a request per frame. */

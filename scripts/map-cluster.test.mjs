@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { gzipSync, brotliCompressSync, constants as zlibConstants } from "node:zlib";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -20,9 +21,16 @@ import {
   MAP_LOGO_PIN_ACTIVE_PX,
   MAP_LOGO_PIN_CITY_PX,
   MAP_LOGO_PIN_PX,
+  MAP_TAP_SLOP_PX,
+  decodeMapPinsWire,
+  encodeMapPinWire,
+  expandBboxByPx,
+  mapCameraMoved,
   mapLoadMode,
   mapLogoPinPx,
   mapPinTapPx,
+  mapPointerIsTap,
+  mapTilesForCamera,
   mapSpanKm,
   mapViewCacheKey,
   markerCount,
@@ -572,6 +580,116 @@ test("a city-zoom payload over 2500 pins stays individual dots", () => {
   assert.equal(drawn.some((cell) => cell.count > 1), false);
 });
 
+test("a drag does not open a popup and a tap still uses the nearest centre", () => {
+  assert.equal(mapPointerIsTap({ movedPx: 0, cameraMoved: false }), true);
+  assert.equal(mapPointerIsTap({ movedPx: MAP_TAP_SLOP_PX, cameraMoved: false }), true);
+  assert.equal(mapPointerIsTap({ movedPx: MAP_TAP_SLOP_PX + 1, cameraMoved: false }), false);
+  assert.equal(mapPointerIsTap({ movedPx: 40, cameraMoved: false }), false);
+  assert.equal(mapPointerIsTap({ movedPx: 0, cameraMoved: true }), false);
+  assert.equal(mapPointerIsTap({ movedPx: 2, cameraMoved: true }), false);
+  assert.equal(
+    mapCameraMoved({ lat: 43.7, lng: -79.4, zoom: 11 }, { lat: 43.7, lng: -79.4, zoom: 11 }),
+    false,
+  );
+  assert.equal(
+    mapCameraMoved({ lat: 43.7, lng: -79.4, zoom: 11 }, { lat: 43.72, lng: -79.4, zoom: 11 }),
+    true,
+  );
+  assert.equal(
+    mapCameraMoved({ lat: 43.7, lng: -79.4, zoom: 11 }, { lat: 43.7, lng: -79.4, zoom: 12 }),
+    true,
+  );
+  const pins = [
+    { slug: "angus", name: "Angus Valley Montessori" },
+    { slug: "yonge", name: "The Neighbourhood Group Yonge And Sheppard" },
+  ];
+  const centers = [
+    { x: 0, y: 0 },
+    { x: 30, y: 0 },
+  ];
+  assert.equal(pickNearestMapDot(pins, centers, { x: 2, y: 1 })?.slug, "angus");
+  assert.equal(pickNearestMapDot(pins, centers, { x: 24, y: 0 })?.slug, "yonge");
+  const dragged = mapPointerIsTap({ movedPx: 36, cameraMoved: true });
+  assert.equal(dragged, false);
+  const view = read("src/components/map-view.tsx");
+  assert.match(view, /if \(event\.detail === 0\) return/);
+  assert.match(view, /event\.stopPropagation\(\)/);
+  assert.match(view, /mapPointerIsTap\(\{ movedPx, cameraMoved \}\)/);
+  assert.match(view, /event\.key === "Enter" \|\| event\.key === " "/);
+});
+
+function fullPinJson(pin) {
+  return JSON.stringify({
+    id: pin.id,
+    slug: pin.slug,
+    name: pin.name,
+    nameFr: pin.nameFr,
+    lat: pin.lat,
+    lng: pin.lng,
+    address: pin.address,
+    city: pin.city,
+    province: pin.province,
+    postalCode: pin.postalCode,
+  });
+}
+
+test("viewport tiles stay individual pins and the wire payload is much smaller", async () => {
+  const loaded = await pins();
+  const toronto = city("Toronto, ON");
+  const scenes = [
+    { label: "Toronto desktop", origin: toronto, zoom: 9, width: 1200, height: 544 },
+    { label: "Toronto phone", origin: toronto, zoom: 9, width: 366, height: 576 },
+    { label: "Winnipeg desktop", origin: WINNIPEG, zoom: 9, width: 1200, height: 544 },
+    { label: "Winnipeg phone", origin: WINNIPEG, zoom: 9, width: 366, height: 576 },
+  ];
+  const mapSql = read("src/lib/server/map-pins.ts");
+  assert.match(mapSql, /select id, lat, lng, name/);
+  assert.match(mapSql, /MAP_PIN_DETAIL_SQL/);
+  assert.doesNotMatch(mapSql, /limit\s+400/i);
+  for (const scene of scenes) {
+    const visible = cameraBbox(scene.origin, scene.zoom, scene.width, scene.height);
+    const tiles = mapTilesForCamera(visible, scene.zoom, scene.width, scene.height);
+    assert.ok(tiles.length >= 1 && tiles.length <= 24, `${scene.label} tiles ${tiles.length}`);
+    for (const tile of tiles) assert.equal(mapLoadMode(scene.zoom, tile), "pins");
+    const padded = cacheMapBbox(visible, scene.zoom);
+    assert.ok(mapSpanKm(tiles[0]) < mapSpanKm(padded), `${scene.label} tile is smaller than the padded box`);
+    const draw = expandBboxByPx(visible, scene.zoom, 64);
+    const inView = pinsIn(loaded, draw);
+    const fromTiles = [];
+    const seen = new Set();
+    for (const tile of tiles) {
+      for (const pin of pinsIn(loaded, tile)) {
+        if (seen.has(pin.id) || !pointInside(pin, draw)) continue;
+        seen.add(pin.id);
+        fromTiles.push(pin);
+      }
+    }
+    for (const pin of inView) {
+      assert.equal(seen.has(pin.id), true, `${scene.label} missed ${pin.name}`);
+    }
+    assert.ok(fromTiles.length > SEARCH_LIST_CAP || scene.label.startsWith("Winnipeg"), scene.label);
+    const full = Buffer.from(`[${inView.map(fullPinJson).join(",")}]`);
+    const wire = Buffer.from(JSON.stringify(inView.map(encodeMapPinWire)));
+    const wireBack = decodeMapPinsWire(JSON.parse(wire.toString("utf8")));
+    assert.equal(wireBack.length, inView.length);
+    assert.equal(wireBack[0]?.name, inView[0]?.name);
+    const fullGzip = gzipSync(full).length;
+    const wireGzip = gzipSync(wire).length;
+    const wireBrotli = brotliCompressSync(wire, {
+      params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 },
+    }).length;
+    assert.ok(wire.length < full.length / 2, `${scene.label} wire ${wire.length} vs full ${full.length}`);
+    assert.ok(wireGzip < fullGzip, `${scene.label} gzip`);
+    console.log(
+      `${scene.label} pins ${inView.length} tiles ${tiles.length} full ${full.length} wire ${wire.length} gzip ${wireGzip} brotli ${wireBrotli} fullGzip ${fullGzip}`,
+    );
+  }
+});
+
+function pointInside(pin, box) {
+  return pin.lat >= box.minLat && pin.lat <= box.maxLat && pin.lng >= box.minLng && pin.lng <= box.maxLng;
+}
+
 test("logo pins are smaller at the radius-fit zoom and full size from zoom 12", () => {
   assert.equal(mapLogoPinPx(8), MAP_LOGO_PIN_CITY_PX);
   assert.equal(mapLogoPinPx(9), 24);
@@ -585,10 +703,11 @@ test("logo pins are smaller at the radius-fit zoom and full size from zoom 12", 
   const view = read("src/components/map-view.tsx");
   const css = read("src/styles.css");
   assert.match(view, /aria-label", pinLabel/);
-  assert.match(view, /background-image:url/);
+  assert.match(view, /LOGO_PIN_URL/);
+  assert.match(view, /drawImage/);
   assert.equal(view.split("PIN_SVG").length > 2, true);
   assert.doesNotMatch(css, /\.ke-map-dot \{/);
-  assert.match(css, /\.ke-map-logo-pin/);
+  assert.match(css, /\.ke-map-pin-canvas/);
   assert.match(css, /\.ke-logo-pin\.is-active svg \{\s*width: 44px;/);
   assert.match(css, /\.ke-cluster-bubble/);
 });
@@ -602,11 +721,13 @@ test("the map still waits on the Google Maps loader", () => {
   assert.match(view, /mapPinsInView/);
   assert.match(view, /MAP_FETCH_DEBOUNCE_MS/);
   assert.match(view, /ke-cluster-bubble/);
-  assert.match(view, /ke-map-logo-pin/);
-  assert.match(view, /installLogoPinSprite/);
+  assert.match(view, /ke-map-pin-canvas/);
   assert.match(view, /LOGO_PIN_URL/);
   assert.match(view, /mapLogoPinPx/);
-  assert.match(view, /translate\(-50%, -100%\)/);
+  assert.match(view, /mapPointerIsTap/);
+  assert.match(view, /event\.detail === 0/);
+  assert.match(view, /mapTilesForCamera/);
+  assert.match(view, /exact: true/);
   assert.match(view, /ke-logo-pin is-active/);
   assert.doesNotMatch(view, /className = "ke-map-dot"/);
   assert.match(view, /ke-logo-pin/);

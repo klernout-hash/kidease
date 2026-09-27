@@ -28,28 +28,39 @@ import {
 } from "@/lib/map-radius-frame";
 import { mapPinToCard } from "@/lib/map-pin-card";
 import {
+  MAP_DRAW_MARGIN_PX,
   MAP_FETCH_DEBOUNCE_MS,
   bboxCovers,
+  bboxIntersects,
   cacheMapBbox,
   clusterAriaLabel,
   clusterBubbleFontPx,
   clusterBubblePx,
   clusterCountLabel,
   clusterStepZoom,
+  coerceMapViewPins,
+  expandBboxByPx,
   MAP_DOT_HIT_PX,
+  mapCameraMoved,
+  mapLoadMode,
   mapLogoPinPx,
   mapPinTapPx,
+  mapPointerIsTap,
+  mapTileKey,
+  mapTilesForCamera,
   mapViewCacheKey,
   markersForMapView,
   pickNearestMapDot,
+  pointInBbox,
   viewportNeedsFetch,
   readMapViewCache,
   sanitizeMapBbox,
   writeMapViewCache,
+  type MapBbox,
   type MapPin,
   type MapViewData,
 } from "@/lib/map-cluster";
-import { mapPinsInView } from "@/lib/server/map-pins";
+import { mapPinDetail, mapPinsInView } from "@/lib/server/map-pins";
 import {
   createKidEaseMap,
   createListingOverlayFactory,
@@ -96,15 +107,6 @@ const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" a
 
 /** One shared image for every unselected pin. The browser decodes it once. */
 const LOGO_PIN_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PIN_SVG)}`;
-
-function installLogoPinSprite() {
-  if (typeof document === "undefined") return;
-  if (document.head.querySelector("style[data-ke='logo-pin-sprite']")) return;
-  const style = document.createElement("style");
-  style.dataset.ke = "logo-pin-sprite";
-  style.textContent = `.ke-map-logo-pin{background-image:url("${LOGO_PIN_URL}")}`;
-  document.head.appendChild(style);
-}
 
 type AnyPin = {
   setMap(map: google.maps.Map | null): void;
@@ -171,6 +173,47 @@ export function MapView({
   const [loadGen, setLoadGen] = useState(0);
   const appliedViewKey = useRef("");
   const loadedView = useRef<MapViewData | null>(null);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const detailSeq = useRef(0);
+  const tileCache = useRef(new Map<string, { box: MapBbox; pins: MapPin[] }>());
+  const openPinRef = useRef<(item: DotItem) => void>(() => {});
+  openPinRef.current = (item) => {
+    pinClickAt.current = Date.now();
+    const seq = ++detailSeq.current;
+    const fromList = itemsRef.current.find((row) => row.id === item.id || (item.slug && row.slug === item.slug));
+    if (fromList) {
+      setPicked(fromList.slug);
+      setPickedPin(null);
+      onSelectRef.current(fromList.slug);
+      return;
+    }
+    setPicked(item.id);
+    if (!("fromPrice" in item)) {
+      setPickedPin({
+        id: item.id,
+        slug: item.slug || "",
+        name: item.name,
+        nameFr: "nameFr" in item ? item.nameFr || "" : "",
+        lat: item.lat,
+        lng: item.lng,
+        address: "address" in item ? item.address || "" : "",
+        city: "city" in item ? item.city || "" : "",
+        province: "province" in item ? item.province || "" : "",
+        postalCode: "postalCode" in item ? item.postalCode || "" : "",
+      });
+    }
+    if (item.slug) onSelectRef.current(item.slug);
+    else onSelectRef.current(null);
+    if ("fromPrice" in item) return;
+    if (item.slug && "address" in item && item.address) return;
+    void mapPinDetail({ data: { id: item.id } }).then((pin) => {
+      if (detailSeq.current !== seq || !pin) return;
+      setPicked(pin.slug || pin.id);
+      setPickedPin(pin);
+      if (pin.slug) onSelectRef.current(pin.slug);
+    });
+  };
 
   useEffect(() => {
     setBase(readMapBase());
@@ -178,9 +221,9 @@ export function MapView({
 
   const selected = useMemo(() => {
     if (!picked) return null;
-    const fromList = items.find((item) => item.slug === picked);
+    const fromList = items.find((item) => item.slug === picked || item.id === picked);
     if (fromList) return fromList;
-    if (pickedPin && pickedPin.slug === picked) return mapPinToCard(pickedPin, origin);
+    if (pickedPin && (pickedPin.slug === picked || pickedPin.id === picked)) return mapPinToCard(pickedPin, origin);
     return null;
   }, [items, picked, pickedPin, origin]);
   const selectedRef = useRef(selected);
@@ -443,6 +486,35 @@ export function MapView({
     let timer = 0;
     let request = 0;
     let inflightKey = "";
+    const pendingTiles = new Set<string>();
+
+    const publishTiles = (visible: MapBbox, zoomNow: number) => {
+      const drawBox = expandBboxByPx(visible, zoomNow, MAP_DRAW_MARGIN_PX);
+      const seen = new Set<string>();
+      const pins: MapPin[] = [];
+      for (const entry of tileCache.current.values()) {
+        if (!bboxIntersects(entry.box, drawBox)) continue;
+        for (const pin of entry.pins) {
+          if (seen.has(pin.id) || !pointInBbox(pin, drawBox)) continue;
+          seen.add(pin.id);
+          pins.push(pin);
+        }
+      }
+      const signature = `${zoomNow}:${pins.length}:${drawBox.minLat.toFixed(3)}:${drawBox.minLng.toFixed(3)}:${drawBox.maxLat.toFixed(3)}:${drawBox.maxLng.toFixed(3)}`;
+      if (appliedViewKey.current === signature) return;
+      appliedViewKey.current = signature;
+      const data: MapViewData = {
+        mode: "pins",
+        pins,
+        total: pins.length,
+        truncated: false,
+        bbox: drawBox,
+        zoom: zoomNow,
+      };
+      loadedView.current = data;
+      setViewData(data);
+    };
+
     const run = () => {
       const bounds = map.getBounds?.();
       const ne = bounds?.getNorthEast?.();
@@ -456,6 +528,49 @@ export function MapView({
         maxLng: ne.lng(),
       });
       if (!visible) return;
+      if (mapLoadMode(zoomNow) === "pins") {
+        const hostEl = map.getDiv?.();
+        const tiles = mapTilesForCamera(
+          visible,
+          zoomNow,
+          hostEl?.clientWidth || 360,
+          hostEl?.clientHeight || 480,
+        );
+        const missing = tiles.filter((tile) => {
+          const key = mapTileKey(tile, zoomNow);
+          return !tileCache.current.has(key) && !pendingTiles.has(key);
+        });
+        if (tileCache.current.size > 0) publishTiles(visible, zoomNow);
+        if (missing.length === 0) return;
+        const id = ++request;
+        let cursor = 0;
+        const worker = async () => {
+          while (cursor < missing.length && !cancelled && id === request) {
+            const tile = missing[cursor];
+            cursor += 1;
+            if (!tile) continue;
+            const key = mapTileKey(tile, zoomNow);
+            pendingTiles.add(key);
+            try {
+              const raw = await mapPinsInView({ data: { ...tile, zoom: zoomNow, exact: true } });
+              if (cancelled || id !== request || !raw || raw.truncated || raw.mode !== "pins") continue;
+              const view = coerceMapViewPins(raw);
+              tileCache.current.set(key, { box: tile, pins: view.mode === "pins" ? view.pins : [] });
+              if (tileCache.current.size > 64) {
+                const oldest = tileCache.current.keys().next().value;
+                if (typeof oldest === "string") tileCache.current.delete(oldest);
+              }
+              publishTiles(visible, zoomNow);
+            } catch {
+              /* The next idle retries a tile that did not land. */
+            } finally {
+              pendingTiles.delete(key);
+            }
+          }
+        };
+        void Promise.all([worker(), worker(), worker()]);
+        return;
+      }
       const loaded = loadedView.current;
       if (
         !viewportNeedsFetch({
@@ -481,9 +596,10 @@ export function MapView({
       const id = ++request;
       const snapped = cacheMapBbox(visible, zoomNow);
       void mapPinsInView({ data: { ...snapped, zoom: zoomNow } })
-        .then((data) => {
+        .then((raw) => {
           if (inflightKey === key) inflightKey = "";
-          if (cancelled || id !== request || !data || data.truncated) return;
+          if (cancelled || id !== request || !raw || raw.truncated) return;
+          const data = coerceMapViewPins(raw);
           writeMapViewCache(key, data);
           appliedViewKey.current = key;
           loadedView.current = data;
@@ -568,36 +684,32 @@ export function MapView({
         dotPins.push(node.item);
       }
       const selectedItem = dotPins.find((item) => item.slug === picked);
-      const field = mountDotField({
+      const field = mountPinCanvas({
         maps,
         map,
         zoom,
-        pins: dotPins.filter((item) => item !== selectedItem),
+        pins: dotPins.filter((item) => item.id !== picked && item.slug !== picked),
         locale: locale === "fr" ? "fr" : "en",
-        onPick: (item) => {
-          pinClickAt.current = Date.now();
-          if (!("fromPrice" in item)) setPickedPin(item);
-          setPicked(item.slug);
-          onSelectRef.current(item.slug);
-        },
+        onPick: (item) => openPinRef.current(item),
       });
       nextPins.push(field);
       if (selectedItem && Number.isFinite(selectedItem.lat) && Number.isFinite(selectedItem.lng)) {
         const content = logoPinEl("ke-logo-pin is-active");
+        content.tabIndex = 0;
         content.setAttribute("aria-label", pinLabel(selectedItem, locale === "fr" ? "fr" : "en"));
         content.setAttribute("aria-expanded", "true");
+        content.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          openPinRef.current(selectedItem);
+        });
         const overlay = createOverlay({
           map,
           position: { lat: selectedItem.lat, lng: selectedItem.lng },
           content,
           zIndex: 500,
           collision: "REQUIRED",
-          onClick: () => {
-            pinClickAt.current = Date.now();
-            if (!("fromPrice" in selectedItem)) setPickedPin(selectedItem);
-            setPicked(selectedItem.slug);
-            onSelectRef.current(selectedItem.slug);
-          },
+          onClick: () => openPinRef.current(selectedItem),
         });
         nextPins.push(overlay);
         markersBySlug.current.set(selectedItem.slug, wrapOverlayPin(overlay));
@@ -619,13 +731,51 @@ export function MapView({
   useEffect(() => {
     const map = mapRef.current;
     const maps = mapsApiRef.current;
-    if (!map || !maps || !ready) return;
+    const el = host.current;
+    if (!map || !maps || !el || !ready) return;
+    let down: { x: number; y: number; lat: number; lng: number; zoom: number } | null = null;
+    let movedPx = 0;
+    const onDown = (event: PointerEvent) => {
+      const center = map.getCenter?.();
+      down = {
+        x: event.clientX,
+        y: event.clientY,
+        lat: center?.lat?.() ?? Number.NaN,
+        lng: center?.lng?.() ?? Number.NaN,
+        zoom: map.getZoom?.() ?? Number.NaN,
+      };
+      movedPx = 0;
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!down) return;
+      movedPx = Math.max(movedPx, Math.hypot(event.clientX - down.x, event.clientY - down.y));
+    };
+    const onClick = (event: MouseEvent) => {
+      if (event.detail === 0) return;
+      const center = map.getCenter?.();
+      const cameraMoved = mapCameraMoved(down, {
+        lat: center?.lat?.() ?? Number.NaN,
+        lng: center?.lng?.() ?? Number.NaN,
+        zoom: map.getZoom?.() ?? Number.NaN,
+      });
+      if (mapPointerIsTap({ movedPx, cameraMoved })) return;
+      event.preventDefault();
+      event.stopPropagation();
+    };
     const listener = maps.event.addListener(map, "click", () => {
       if (Date.now() - pinClickAt.current < 400) return;
       dismissRef.current();
     });
+    el.addEventListener("pointerdown", onDown, true);
+    el.addEventListener("pointermove", onMove, true);
+    window.addEventListener("pointermove", onMove, true);
+    el.addEventListener("click", onClick, true);
     return () => {
       maps.event.removeListener(listener);
+      el.removeEventListener("pointerdown", onDown, true);
+      el.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointermove", onMove, true);
+      el.removeEventListener("click", onClick, true);
     };
   }, [ready]);
 
@@ -908,33 +1058,19 @@ function MapPinPopup({
       >
         <X className="size-4" strokeWidth={2.4} />
       </button>
-      <Link
-        to="/daycare/$slug"
-        params={{ slug: item.slug }}
-        className="flex items-start gap-2 px-2 pb-1.5 pt-2 text-inherit no-underline"
-      >
-        {thumb ? (
-          <span data-ke="map-pin-photo" className="mt-0.5 shrink-0">
-            <BuildingPhoto
-              src={thumb}
-              className="aspect-[4/3] w-16 rounded-md object-cover"
-              sizes="64px"
-              width={128}
-              height={96}
-            />
-          </span>
-        ) : null}
-        <span className="min-w-0 flex-1 pr-9">
-          <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">{name}</p>
-          {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
-          {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
-          {approved ? (
-            <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
-              {t("kideaseApprovedMarker")}
-            </p>
-          ) : null}
-        </span>
-      </Link>
+      {item.slug ? (
+        <Link
+          to="/daycare/$slug"
+          params={{ slug: item.slug }}
+          className="flex items-start gap-2 px-2 pb-1.5 pt-2 text-inherit no-underline"
+        >
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} />
+        </Link>
+      ) : (
+        <div className="flex items-start gap-2 px-2 pb-1.5 pt-2">
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} />
+        </div>
+      )}
       <div className="px-2 pb-2">
         <button
           type="button"
@@ -959,11 +1095,53 @@ function MapPinPopup({
   );
 }
 
+function PinPopupSummary({
+  thumb,
+  name,
+  place,
+  facts,
+  approved,
+  approvedLabel,
+}: {
+  thumb: string | null;
+  name: string;
+  place: string;
+  facts: string;
+  approved: boolean;
+  approvedLabel: string;
+}) {
+  return (
+    <>
+      {thumb ? (
+        <span data-ke="map-pin-photo" className="mt-0.5 shrink-0">
+          <BuildingPhoto
+            src={thumb}
+            className="aspect-[4/3] w-16 rounded-md object-cover"
+            sizes="64px"
+            width={128}
+            height={96}
+          />
+        </span>
+      ) : null}
+      <span className="min-w-0 flex-1 pr-9">
+        <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">{name}</p>
+        {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
+        {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
+        {approved ? (
+          <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
+            {approvedLabel}
+          </p>
+        ) : null}
+      </span>
+    </>
+  );
+}
+
 function pinLabel(item: { name: string; nameFr?: string }, locale: "en" | "fr") {
   return displayCentreName(locale === "fr" ? item.nameFr || item.name : item.name);
 }
 
-function mountDotField(input: {
+function mountPinCanvas(input: {
   maps: typeof google.maps;
   map: google.maps.Map;
   zoom: number;
@@ -975,61 +1153,155 @@ function mountDotField(input: {
   const drawPx = mapLogoPinPx(zoom);
   const tapPx = mapPinTapPx(zoom);
   const hitPx = Math.max(MAP_DOT_HIT_PX, tapPx / 2);
-  const buttons: HTMLButtonElement[] = [];
   const placed: DotItem[] = [];
-  let wrap: HTMLDivElement | null = null;
+  const centers: { x: number; y: number }[] = [];
+  let focusIndex = -1;
+  let canvas: HTMLCanvasElement | null = null;
+  const sprite = logoPinImage();
   const field = new maps.OverlayView();
+  const hitTest = (event: MouseEvent) => {
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return pickNearestMapDot(
+      placed,
+      centers,
+      { x: event.clientX - rect.left, y: event.clientY - rect.top },
+      hitPx,
+    );
+  };
+  const focusPin = (index: number) => {
+    focusIndex = index;
+    const item = placed[index];
+    if (!canvas) return;
+    canvas.setAttribute("aria-label", item ? pinLabel(item, locale) : canvas.dataset.keMapLabel || "Map");
+  };
+  const moveFocus = (dx: number, dy: number) => {
+    if (centers.length === 0) return;
+    const origin = focusIndex >= 0 ? centers[focusIndex] : centers[0];
+    if (!origin) return;
+    let best = -1;
+    let bestScore = Infinity;
+    for (let i = 0; i < centers.length; i += 1) {
+      if (i === focusIndex) continue;
+      const point = centers[i];
+      if (!point) continue;
+      const ox = point.x - origin.x;
+      const oy = point.y - origin.y;
+      if (dx !== 0 && Math.sign(ox) !== dx) continue;
+      if (dy !== 0 && Math.sign(oy) !== dy) continue;
+      if (dx !== 0 && Math.abs(ox) < 4) continue;
+      if (dy !== 0 && Math.abs(oy) < 4) continue;
+      const score = ox * ox + oy * oy;
+      if (score < bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    if (best >= 0) focusPin(best);
+  };
   field.onAdd = () => {
-    installLogoPinSprite();
-    const layer = document.createElement("div");
-    layer.className = "ke-map-dots";
-    const choose = (event: MouseEvent) => {
+    const layer = document.createElement("canvas");
+    layer.className = "ke-map-pin-canvas";
+    layer.dataset.keMapLabel = `${pins.length} daycares`;
+    layer.tabIndex = 0;
+    layer.setAttribute("role", "application");
+    layer.setAttribute("aria-label", layer.dataset.keMapLabel);
+    layer.addEventListener("click", (event) => {
+      if (event.detail === 0) {
+        const item = placed[focusIndex];
+        if (item) onPick(item);
+        return;
+      }
+      const hit = hitTest(event);
+      if (!hit) return;
       event.preventDefault();
       event.stopPropagation();
-      const centers = buttons.map((el) => {
-        const rect = el.getBoundingClientRect();
-        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-      });
-      const hit = pickNearestMapDot(placed, centers, { x: event.clientX, y: event.clientY }, hitPx);
-      if (hit) onPick(hit);
-    };
-    for (const item of pins) {
-      if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "ke-map-logo-pin";
-      button.style.width = `${tapPx}px`;
-      button.style.height = `${tapPx}px`;
-      button.style.setProperty("--ke-pin-draw", `${drawPx}px`);
-      button.setAttribute("aria-label", pinLabel(item, locale));
-      button.addEventListener("click", choose);
-      layer.appendChild(button);
-      buttons.push(button);
-      placed.push(item);
-    }
-    wrap = layer;
+      onPick(hit);
+    });
+    layer.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        const item = placed[focusIndex >= 0 ? focusIndex : 0];
+        if (item) onPick(item);
+        return;
+      }
+      const step =
+        event.key === "ArrowLeft"
+          ? [-1, 0]
+          : event.key === "ArrowRight"
+            ? [1, 0]
+            : event.key === "ArrowUp"
+              ? [0, -1]
+              : event.key === "ArrowDown"
+                ? [0, 1]
+                : null;
+      if (!step) return;
+      event.preventDefault();
+      moveFocus(step[0] || 0, step[1] || 0);
+    });
+    canvas = layer;
     field.getPanes()?.overlayMouseTarget.appendChild(layer);
   };
   field.draw = () => {
     const projection = field.getProjection();
-    if (!projection) return;
-    let index = 0;
+    const surface = canvas;
+    if (!projection || !surface) return;
+    const mapDiv = map.getDiv?.();
+    const width = mapDiv?.clientWidth || surface.parentElement?.clientWidth || 0;
+    const height = mapDiv?.clientHeight || surface.parentElement?.clientHeight || 0;
+    if (width < 2 || height < 2) return;
+    const dpr = window.devicePixelRatio || 1;
+    const pixelW = Math.round(width * dpr);
+    const pixelH = Math.round(height * dpr);
+    if (surface.width !== pixelW || surface.height !== pixelH) {
+      surface.width = pixelW;
+      surface.height = pixelH;
+    }
+    surface.style.width = `${width}px`;
+    surface.style.height = `${height}px`;
+    const ctx = surface.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    placed.length = 0;
+    centers.length = 0;
+    const image = sprite;
+    if (!image.complete || image.naturalWidth === 0) return;
     for (const item of pins) {
       if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-      const button = buttons[index];
-      index += 1;
-      if (!button) continue;
       const point = projection.fromLatLngToDivPixel(new maps.LatLng(item.lat, item.lng));
       if (!point) continue;
-      button.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -100%)`;
+      if (
+        point.x < -MAP_DRAW_MARGIN_PX ||
+        point.y < -MAP_DRAW_MARGIN_PX ||
+        point.x > width + MAP_DRAW_MARGIN_PX ||
+        point.y > height + MAP_DRAW_MARGIN_PX
+      ) {
+        continue;
+      }
+      ctx.drawImage(image, point.x - drawPx / 2, point.y - drawPx, drawPx, drawPx);
+      placed.push(item);
+      centers.push({ x: point.x, y: point.y - drawPx / 2 });
     }
+    if (focusIndex >= placed.length) focusIndex = placed.length - 1;
   };
   field.onRemove = () => {
-    wrap?.remove();
-    wrap = null;
+    canvas?.remove();
+    canvas = null;
   };
   field.setMap(map);
+  if (!sprite.complete) sprite.addEventListener("load", () => field.draw(), { once: true });
   return field;
+}
+
+let logoPinSprite: HTMLImageElement | null = null;
+
+function logoPinImage() {
+  if (!logoPinSprite) {
+    logoPinSprite = new Image();
+    logoPinSprite.src = LOGO_PIN_URL;
+  }
+  return logoPinSprite;
 }
 
 function logoPinEl(className: string) {
