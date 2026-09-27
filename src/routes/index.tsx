@@ -59,7 +59,7 @@ import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
-import { homeLiveStrip } from "@/lib/home-live-strip";
+import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
 import { displayDistance } from "@/lib/units";
 import { showPayCtas } from "@/lib/features";
 import { catalogStatus } from "@/lib/server/stripe-catalog";
@@ -92,7 +92,7 @@ export const Route = createFileRoute("/")({
   loader: async () => {
     const origin = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
     const painted = await withPaintBudget(
-      featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label } }),
+      featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
       HOME_PAINT_BUDGET_MS,
     );
     return {
@@ -254,9 +254,9 @@ function Home() {
     let cancelled = false;
     const loadFeatured = () => {
       void dedupedQuery(
-        `home-featured:${loc.lat},${loc.lng},${loc.label ?? ""}`,
+        `home-featured:${loc.lat},${loc.lng},${radiusKm},${loc.label ?? ""}`,
         QUERY_STALE_MS,
-        () => featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label } }),
+        () => featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label, radiusKm } }),
         { cacheIf: (rows) => rows.length > 0 },
       )
         .then((rows) => {
@@ -398,17 +398,18 @@ function Home() {
   const publicFeatured = useMemo(() => publicListings(featured), [featured]);
   const liveCount = useMemo(() => publicFeatured.filter((r) => r.live).length, [publicFeatured]);
   const strip = homeLiveStrip(liveCount, publicFeatured.length);
+  const featuredAgreement = featuredHomeAgreement(publicFeatured.length);
   const shown = useMemo(
-    () =>
-      homeRailItems(liveLookingOnly(uniqueById(liveOnly ? publicFeatured.filter((r) => r.live) : publicFeatured)), {
-        city: origin.label,
-        label: origin.label,
-      }),
-    [publicFeatured, liveOnly, origin.label],
+    () => uniqueById(liveOnly ? publicFeatured.filter((r) => r.live) : publicFeatured),
+    [publicFeatured, liveOnly],
+  );
+  const liveLookingRail = useMemo(
+    () => homeRailItems(liveLookingOnly(publicFeatured), { city: origin.label, label: origin.label }),
+    [publicFeatured, origin.label],
   );
   const availableNow = useMemo(() => {
-    return uniqueById(shown.filter((r) => honestVacancy(r).kind === "open")).slice(0, 18);
-  }, [shown]);
+    return uniqueById(liveLookingRail.filter((r) => honestVacancy(r).kind === "open")).slice(0, 18);
+  }, [liveLookingRail]);
   const availableNextMonth = useMemo(() => {
     const top = new Set(availableNow.slice(0, 6).map((r) => r.id));
     return shown.filter((r) => honestVacancy(r).kind === "open" && !top.has(r.id)).slice(0, 18);
@@ -482,9 +483,11 @@ function Home() {
             <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
               {t(strip.liveLabelKey).replace("{n}", String(strip.liveCount))}
             </ChipButton>
-            <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
-              {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
-            </ChipButton>
+            {featuredAgreement.showChip ? (
+              <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
+                {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
+              </ChipButton>
+            ) : null}
           </div>
           {strip.zeroLiveHint ? (
             <p className="mt-2 text-sm text-muted" data-ke="home-zero-live">
@@ -554,6 +557,7 @@ function Home() {
           </div>
         </section>
 
+        {!featuredReady || featuredAgreement.showSection ? (
         <section id="featured" className="ke-gutter mx-auto max-w-6xl py-8 md:py-12">
           <h2 className="text-xl tracking-[-0.03em] md:text-2xl">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t("featuredBody")}</p>
@@ -583,6 +587,7 @@ function Home() {
             </Button>
           </div>
         </section>
+        ) : null}
 
         <section id="how" className="ke-defer-paint ke-gutter mx-auto max-w-6xl py-16">
           <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
@@ -716,10 +721,10 @@ function Home() {
               <ListingRail title={t("recentlyViewed")} items={recentLooking} eagerThumbs={false} visual />
               <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
               <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
-              <FacilityTypeRails items={shown} visual />
+              <FacilityTypeRails items={shown} visual skipLiveLooking />
               {!featuredReady && shown.length === 0 ? (
                 <HomeCardSkeleton />
-              ) : shown.length === 0 ? (
+              ) : shown.length === 0 && publicFeatured.length > 0 ? (
                 <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
                     <EmptyState
                       title={liveOnly && publicFeatured.length > 0 ? t("noLiveResults") : t("noResults")}
@@ -791,7 +796,7 @@ function HomeDiscovery({
       <ListingRail title={t("recentlyViewed")} items={recent} eagerThumbs={false} visual />
       <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
       <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
-      <FacilityTypeRails items={shown} visual />
+      <FacilityTypeRails items={shown} visual skipLiveLooking />
     </>
   );
 }

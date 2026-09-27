@@ -19,7 +19,9 @@ import {
   normalizeTourWindow,
   publicSlotsOpen,
   remainingTourSeats,
+  resolveListingTourTimezone,
   resolveTourTimezone,
+  slotsInListingZone,
   toPublicTourSlot,
   tourEmptyReason,
   windowEndAt,
@@ -121,8 +123,8 @@ export const listPublicTourSlots = createServerFn({ method: "GET" })
     const tzRows = await sql<{ timezone: string | null }>`
       select timezone from daycares where id = ${daycareId} limit 1
     `.catch(() => [] as { timezone: string | null }[]);
-    const timezone = resolveTourTimezone(tzRows[0]?.timezone);
-    const posted = await windowsForDaycare(sql, daycareId, { upcomingOnly: true });
+    const timezone = resolveListingTourTimezone(tzRows[0]?.timezone, listed?.province);
+    const posted = slotsInListingZone(await windowsForDaycare(sql, daycareId, { upcomingOnly: true }), timezone);
     const slots = publicSlotsOpen(posted);
     return { timezone, slots, empty: tourEmptyReason(posted) };
   });
@@ -136,11 +138,14 @@ export const listCentreTourWindows = createServerFn({ method: "GET" })
     const tzRows = await sql<{ timezone: string | null }>`
       select timezone from daycares where id = ${data.daycareId} limit 1
     `.catch(() => [] as { timezone: string | null }[]);
-    const timezone = resolveTourTimezone(tzRows[0]?.timezone);
-    const slots = (await windowsForDaycare(sql, data.daycareId, { upcomingOnly: false })).map((slot) => ({
-      ...slot,
-      daycareId: data.daycareId,
-    }));
+    const listed = await catalogByIdGet(data.daycareId);
+    const timezone = resolveListingTourTimezone(tzRows[0]?.timezone, listed?.province);
+    const slots = slotsInListingZone(await windowsForDaycare(sql, data.daycareId, { upcomingOnly: false }), timezone).map(
+      (slot) => ({
+        ...slot,
+        daycareId: data.daycareId,
+      }),
+    );
     return { timezone, slots };
   });
 
@@ -225,7 +230,8 @@ export const saveTourWindows = createServerFn({ method: "POST" })
     const tzRows = await sql<{ timezone: string | null }>`
       select timezone from daycares where id = ${data.daycareId} limit 1
     `.catch(() => [] as { timezone: string | null }[]);
-    const timezone = resolveTourTimezone(tzRows[0]?.timezone);
+    const listed = await catalogByIdGet(data.daycareId);
+    const timezone = resolveListingTourTimezone(tzRows[0]?.timezone, listed?.province);
     const drafts = data.repeatWeekly ? expandWeeklyRepeats(draft) : [draft];
     const ids: string[] = [];
     for (const item of drafts) {

@@ -124,7 +124,7 @@ describe("QA 2026-09-10: map hang + licensed-not-live honesty", () => {
     const maps = src("src/lib/google-maps.ts");
     const view = src("src/components/map-view.tsx");
     const search = src("src/routes/search.tsx");
-    assert.match(maps, /MAP_SCRIPT_WAIT_MS = 8000/);
+    assert.match(maps, /MAP_SCRIPT_WAIT_MS = 12_000/);
     assert.match(maps, /MAP_VIEW_WAIT_MS/);
     assert.match(maps, /Google Maps timed out/);
     assert.match(view, /mapRetry/);

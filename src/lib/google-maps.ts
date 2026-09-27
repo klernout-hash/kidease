@@ -112,10 +112,39 @@ export function listingMapConstructorOptions(input: {
 
 /** How long to wait for the first `tilesloaded` before dropping a Map ID. */
 export const MAP_TILES_WAIT_MS = 2500;
-/** How long to wait for the Maps JS script before treating it as failed. */
-export const MAP_SCRIPT_WAIT_MS = 8000;
-/** How long the search map may stay on "Loading…" before a retry/fallback. */
-export const MAP_VIEW_WAIT_MS = 16_000;
+/**
+ * Per-attempt wait for the Maps JS bootstrap.
+ * `loading=async` fires script onload before `google.maps.Map` exists, so this
+ * budget covers `importLibrary("maps")` as well as the script download.
+ */
+export const MAP_SCRIPT_WAIT_MS = 12_000;
+/** Backoff between automatic loader attempts. Two retries, then the manual Retry button. */
+export const MAPS_RETRY_DELAYS_MS = [500, 1_500] as const;
+/** Wall-clock cap for the automatic attempts inside one `loadGoogleMaps()` call. */
+export const MAPS_LOAD_BUDGET_MS = 24_000;
+/**
+ * Search-map skeleton stays up through the loader budget so a slow first
+ * attempt is not replaced by "Map is taking too long" before auto-retry.
+ */
+export const MAP_VIEW_WAIT_MS = 28_000;
+
+const MAPS_CALLBACK_NAME = "__kideaseGoogleMapsReady";
+
+/** True only when the Maps constructor is actually callable. */
+export function mapsNamespaceReady(maps?: { Map?: unknown } | null): boolean {
+  return typeof maps?.Map === "function";
+}
+
+/** Delay before retry attempt `attempt` (0-based). Null when retries are exhausted. */
+export function nextMapsRetryDelayMs(attempt: number): number | null {
+  if (!Number.isInteger(attempt) || attempt < 0 || attempt >= MAPS_RETRY_DELAYS_MS.length) return null;
+  return MAPS_RETRY_DELAYS_MS[attempt] ?? null;
+}
+
+/** One script tag. A pending tag is waited on; never inject a second copy. */
+export function claimMapsScriptSlot(doc: { getElementById(id: string): unknown }): "pending" | "inject" {
+  return doc.getElementById(SCRIPT_ID) ? "pending" : "inject";
+}
 
 const TILE_HOST_RE = /googleapis\.com|gstatic\.com|ggpht\.com|google\.com\/maps|\/maps\/vt/;
 
@@ -181,6 +210,109 @@ export async function createKidEaseMap(
   return { map, usedMapId, tilesReady };
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+}
+
+/**
+ * One attempt. With `loading=async`, script onload runs before `google.maps.Map`
+ * exists. Wait for the callback and `importLibrary("maps")` instead of failing
+ * the moment the tag loads.
+ */
+function loadGoogleMapsOnce(key: string, timeoutMs: number): Promise<typeof google.maps> {
+  if (mapsNamespaceReady(window.google?.maps)) return Promise.resolve(window.google.maps);
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let importing = false;
+    const finish = (err?: Error) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      window.clearInterval(poll);
+      if (err) {
+        reject(err);
+        return;
+      }
+      if (mapsNamespaceReady(window.google?.maps)) resolve(window.google.maps);
+      else reject(new Error("Google Maps timed out"));
+    };
+    const tryReady = () => {
+      const maps = window.google?.maps;
+      if (mapsNamespaceReady(maps)) {
+        finish();
+        return;
+      }
+      if (maps && typeof maps.importLibrary === "function" && !importing) {
+        importing = true;
+        void maps
+          .importLibrary("maps")
+          .then(() => {
+            if (mapsNamespaceReady(window.google?.maps)) finish();
+          })
+          .catch(() => undefined);
+      }
+    };
+    const timer = window.setTimeout(() => finish(new Error("Google Maps timed out")), timeoutMs);
+    const poll = window.setInterval(tryReady, 50);
+    window.gm_authFailure = () => {
+      finish(new Error("Google Maps key was rejected"));
+    };
+
+    const slot = claimMapsScriptSlot(document);
+    if (slot === "pending") {
+      const prev = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
+      prev?.addEventListener(
+        "error",
+        () => {
+          prev.remove();
+          finish(new Error("Google Maps failed to load"));
+        },
+        { once: true },
+      );
+      tryReady();
+      return;
+    }
+
+    const host = window as unknown as Record<string, unknown>;
+    host[MAPS_CALLBACK_NAME] = () => tryReady();
+    const script = document.createElement("script");
+    script.id = SCRIPT_ID;
+    script.async = true;
+    script.src = `${googleMapsScriptSrc(key)}&callback=${MAPS_CALLBACK_NAME}`;
+    script.onerror = () => {
+      script.remove();
+      finish(new Error("Google Maps failed to load"));
+    };
+    document.head.appendChild(script);
+    tryReady();
+  });
+}
+
+async function loadGoogleMapsWithRetries(key: string): Promise<typeof google.maps> {
+  const started = Date.now();
+  const attempts = MAPS_RETRY_DELAYS_MS.length + 1;
+  let last: Error = new Error("Google Maps timed out");
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (mapsNamespaceReady(window.google?.maps)) return window.google.maps;
+    if (attempt > 0) {
+      const wait = nextMapsRetryDelayMs(attempt - 1) ?? 0;
+      if (wait > 0) await delay(wait);
+    }
+    const remaining = MAPS_LOAD_BUDGET_MS - (Date.now() - started);
+    if (remaining <= 0) break;
+    if (mapsNamespaceReady(window.google?.maps)) return window.google.maps;
+    try {
+      return await loadGoogleMapsOnce(key, Math.min(MAP_SCRIPT_WAIT_MS, remaining));
+    } catch (err) {
+      last = err instanceof Error ? err : new Error("Google Maps failed to load");
+      if (/rejected/i.test(last.message)) throw last;
+    }
+  }
+  throw last;
+}
+
 export function loadGoogleMaps(): Promise<typeof google.maps> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Google Maps is browser-only"));
@@ -189,68 +321,16 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
   if (!key) {
     return Promise.reject(new Error(`${GOOGLE_MAPS_BROWSER_ENV} is not set`));
   }
-  const existing = window.google?.maps;
-  if (existing?.Map) return Promise.resolve(existing);
-
+  if (mapsNamespaceReady(window.google?.maps)) return Promise.resolve(window.google.maps);
   if (mapsPromise) return mapsPromise;
 
-  mapsPromise = new Promise((resolve, reject) => {
-    let settled = false;
-    const timer = window.setTimeout(() => {
-      fail("Google Maps timed out");
-    }, MAP_SCRIPT_WAIT_MS);
-    const fail = (message: string) => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timer);
+  mapsPromise = loadGoogleMapsWithRetries(key).then(
+    (maps) => maps,
+    (err) => {
       mapsPromise = null;
-      reject(new Error(message));
-    };
-    window.gm_authFailure = () => {
-      fail("Google Maps key was rejected");
-    };
-
-    const finish = () => {
-      const maps = window.google?.maps;
-      if (maps?.Map) {
-        if (settled) return;
-        settled = true;
-        window.clearTimeout(timer);
-        resolve(maps);
-        return;
-      }
-      fail("Google Maps script loaded without google.maps");
-    };
-
-    const prev = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
-    if (prev) {
-      if (window.google?.maps?.Map) {
-        finish();
-        return;
-      }
-      prev.addEventListener("load", finish, { once: true });
-      prev.addEventListener(
-        "error",
-        () => {
-          fail("Google Maps failed to load");
-        },
-        { once: true },
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = SCRIPT_ID;
-    script.async = true;
-    script.defer = true;
-    script.src = googleMapsScriptSrc(key);
-    script.onload = finish;
-    script.onerror = () => {
-      fail("Google Maps failed to load");
-    };
-    document.head.appendChild(script);
-  });
-
+      throw err;
+    },
+  );
   return mapsPromise;
 }
 

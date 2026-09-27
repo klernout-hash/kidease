@@ -13,8 +13,12 @@ import {
   normalizeTourWindow,
   publicSlotsOpen,
   remainingTourSeats,
+  resolveListingTourTimezone,
   resolveTourTimezone,
+  slotsInListingZone,
+  timezoneLabel,
   toPublicTourSlot,
+  tourTimezoneForProvince,
   tourEmptyReason,
   zonedLocalToUtc,
 } from "../src/lib/tour-calendar.ts";
@@ -24,6 +28,52 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
+
+test("tour labels follow the listing province, not a Winnipeg default", () => {
+  assert.equal(resolveTourTimezone(null), "America/Winnipeg");
+  assert.equal(resolveListingTourTimezone(null, "ON"), "America/Toronto");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "BC"), "America/Vancouver");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "NB"), "America/Halifax");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "NL"), "America/St_Johns");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "SK"), "America/Regina");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "AB"), "America/Edmonton");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "MB"), "America/Winnipeg");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "QC"), "America/Toronto");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "NS"), "America/Halifax");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "PE"), "America/Halifax");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "YT"), "America/Whitehorse");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "NT"), "America/Edmonton");
+  assert.equal(resolveListingTourTimezone("America/Winnipeg", "NU"), "America/Toronto");
+  assert.equal(resolveListingTourTimezone("America/Vancouver", "ON"), "America/Vancouver");
+  assert.equal(tourTimezoneForProvince("NB"), "America/Halifax");
+  assert.equal(timezoneLabel("America/Toronto", "en"), "Eastern");
+  assert.equal(timezoneLabel("America/Vancouver", "en"), "Pacific");
+  assert.equal(timezoneLabel("America/Halifax", "fr"), "Heure de l’Atlantique");
+  assert.equal(timezoneLabel("America/Regina", "en"), "Central (no DST)");
+  assert.equal(timezoneLabel("America/Winnipeg", "en"), "Central");
+  assert.doesNotMatch(timezoneLabel("America/Toronto", "en"), /Winnipeg/);
+  const shifted = slotsInListingZone(
+    [
+      {
+        id: "w1",
+        date: "2026-07-15",
+        startTime: "10:00",
+        endTime: "10:30",
+        capacity: 2,
+        booked: 0,
+        remaining: 2,
+        pending: 0,
+        accepted: 0,
+        inventory: "open",
+        timezone: "America/Winnipeg",
+        startAt: "2026-07-15T15:00:00.000Z",
+      },
+    ],
+    "America/Toronto",
+  );
+  assert.equal(shifted[0]?.timezone, "America/Toronto");
+  assert.equal(shifted[0]?.startAt, "2026-07-15T14:00:00.000Z");
+});
 
 test("timezone defaults to America/Winnipeg and accepts a centre override", () => {
   assert.equal(DEFAULT_TOUR_TIMEZONE, "America/Winnipeg");
