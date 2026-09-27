@@ -1,7 +1,7 @@
 import { splitPhotoList } from "@/lib/listing-photo";
 import { listingCultureFrom } from "@/lib/listing-culture";
 import { parentListingFrom } from "@/lib/parent-listing";
-import { resolveTourTimezone } from "@/lib/tour-calendar";
+import { resolveListingTourTimezone } from "@/lib/tour-calendar";
 import type { Daycare } from "@/lib/types";
 import { hasLicenceEvidence } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
@@ -205,7 +205,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
       amenities: r.amenities,
       staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
     }),
-    timezone: resolveTourTimezone(r.timezone),
+    timezone: resolveListingTourTimezone(r.timezone, r.province),
   }));
   return {
     ...mapped,

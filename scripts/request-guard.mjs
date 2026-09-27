@@ -115,6 +115,7 @@ export const PUBLISHED_CITY_HUB_SLUGS = [
   "quebec-city",
   "hamilton",
   "halifax",
+  "moncton",
 ];
 
 const PUBLISHED_CITY_HUB_SLUG_SET = new Set(PUBLISHED_CITY_HUB_SLUGS);

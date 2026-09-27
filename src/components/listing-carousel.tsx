@@ -1,6 +1,7 @@
 import { useRef, useState, type PointerEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { BuildingPhoto } from "@/components/building-photo";
+import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
+import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto } from "@/lib/listing-photo";
 import { cn } from "@/lib/utils";
 
 export function ListingCarousel({
@@ -14,9 +15,15 @@ export function ListingCarousel({
   aspect?: "4/3" | "20/19" | "1/1";
   className?: string;
 }) {
-  const shots = photos.length ? photos.slice(0, 12) : ["/photos/storefront-placeholder-480.webp"];
+  const shots = photos
+    .map((p) => healMediaUrl(p))
+    .filter((p) => p && !isStockListingPhoto(p) && !isFailedPhotoUrl(p))
+    .slice(0, 12);
   const [index, setIndex] = useState(0);
   const startX = useRef<number | null>(null);
+  if (!shots.length) {
+    return <ListingPhotoFallback className={cn("overflow-hidden rounded-[14px]", className)} />;
+  }
 
   function go(next: number) {
     const max = shots.length;

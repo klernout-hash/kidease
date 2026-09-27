@@ -34,6 +34,7 @@ const PROVINCE_CHIP_NAMES: Record<string, { en: string; fr: string }> = {
   AB: { en: "Alberta", fr: "Alberta" },
   MB: { en: "Manitoba", fr: "Manitoba" },
   NS: { en: "Nova Scotia", fr: "Nouvelle-Écosse" },
+  NB: { en: "New Brunswick", fr: "Nouveau-Brunswick" },
 };
 
 /**
@@ -131,6 +132,16 @@ export const CITY_HUB_DEFS: readonly CityHubDef[] = [
     province: "NS",
     subsidyUrl: "https://childcarenovascotia.ca/families/child-care-subsidy",
     subsidyLabel: "Nova Scotia Child Care Subsidy",
+  },
+  {
+    slug: "moncton",
+    city: "Moncton",
+    cityEn: "Moncton",
+    cityFr: "Moncton",
+    province: "NB",
+    subsidyUrl:
+      "https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/information-for-families/guide.html",
+    subsidyLabel: "New Brunswick Parent Subsidy",
   },
 ];
 

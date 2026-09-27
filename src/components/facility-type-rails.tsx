@@ -18,8 +18,9 @@ function take(rows: Card[], n = 12) {
   return uniqueById(rows).slice(0, n);
 }
 
-export function facilityTypeRailItems(items: Card[], type: FacilityType, n = 12): Card[] {
-  const byDistance = [...homeRailItems(items)].sort((a, b) => a.distanceKm - b.distanceKm);
+export function facilityTypeRailItems(items: Card[], type: FacilityType, n = 12, skipLiveLooking = false): Card[] {
+  const pool = skipLiveLooking ? items : homeRailItems(items);
+  const byDistance = [...pool].sort((a, b) => a.distanceKm - b.distanceKm);
   return take(
     byDistance.filter((row) => matchesFacilityType(row, type)),
     n,
@@ -32,19 +33,22 @@ export function FacilityTypeRails({
   rows,
   eagerThumbs = false,
   visual = false,
+  skipLiveLooking = false,
 }: {
   items?: Card[];
   rows?: Partial<Record<FacilityType, Card[]>>;
   eagerThumbs?: boolean;
   visual?: boolean;
+  /** Home featured rail: show the same centres the chip counted, including incomplete cards. */
+  skipLiveLooking?: boolean;
 }) {
   const { t } = useCopy();
   const resolved: Record<FacilityType, Card[]> = {
-    child_care_centre: rows?.child_care_centre ?? facilityTypeRailItems(items ?? [], "child_care_centre"),
-    family_home: rows?.family_home ?? facilityTypeRailItems(items ?? [], "family_home"),
-    group_home: rows?.group_home ?? facilityTypeRailItems(items ?? [], "group_home"),
-    nursery_preschool: rows?.nursery_preschool ?? facilityTypeRailItems(items ?? [], "nursery_preschool"),
-    school_age: rows?.school_age ?? facilityTypeRailItems(items ?? [], "school_age"),
+    child_care_centre: rows?.child_care_centre ?? facilityTypeRailItems(items ?? [], "child_care_centre", 12, skipLiveLooking),
+    family_home: rows?.family_home ?? facilityTypeRailItems(items ?? [], "family_home", 12, skipLiveLooking),
+    group_home: rows?.group_home ?? facilityTypeRailItems(items ?? [], "group_home", 12, skipLiveLooking),
+    nursery_preschool: rows?.nursery_preschool ?? facilityTypeRailItems(items ?? [], "nursery_preschool", 12, skipLiveLooking),
+    school_age: rows?.school_age ?? facilityTypeRailItems(items ?? [], "school_age", 12, skipLiveLooking),
   };
 
   return (

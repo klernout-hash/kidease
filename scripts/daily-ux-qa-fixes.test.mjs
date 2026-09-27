@@ -299,10 +299,13 @@ test("Firefox layout uses standards appearance and dvh fallbacks", () => {
   assert.match(src("src/components/chip-carousel.tsx"), /ke-chip-carousel/);
 });
 
-test("building photo 404s fall back to the committed placeholder, no invented JPEGs", () => {
+test("building photo 404s use the no-photo treatment, no stock stand-in", () => {
   const photo = src("src/components/building-photo.tsx");
-  assert.match(photo, /storefront-placeholder-480\.webp/);
-  assert.match(photo, /if \(cur !== FALLBACK\) setCur\(FALLBACK\)/);
+  assert.match(photo, /rememberFailedPhoto/);
+  assert.match(src("src/lib/listing-photo.ts"), /rememberFailedPhoto/);
+  assert.match(photo, /ListingPhotoFallback/);
+  assert.doesNotMatch(photo, /setCur\(FALLBACK\)/);
+  assert.doesNotMatch(photo, /storefront-placeholder-480\.webp/);
   const honesty = src("src/lib/photo-honesty.ts");
   assert.match(honesty, /\/photos\/buildings\/mb-102137\.jpg/);
   assert.match(honesty, /\/photos\/buildings\/mb-2169\.jpg/);

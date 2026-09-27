@@ -29,6 +29,23 @@ export function isStockListingPhoto(src: string) {
   return STOCK_CREATE_SET.has(src) || src.includes("storefront-placeholder") || isUnflaggedSharedFallbackSrc(src);
 }
 
+const failedPhotoUrls = new Set<string>();
+
+function failedPhotoKey(src?: string | null): string {
+  return healMediaUrl(src).split("?")[0] ?? "";
+}
+
+/** Remember a URL that 404'd so later cards skip it instead of requesting it again. */
+export function rememberFailedPhoto(src: string) {
+  const key = failedPhotoKey(src);
+  if (key) failedPhotoUrls.add(key);
+}
+
+export function isFailedPhotoUrl(src?: string | null): boolean {
+  const key = failedPhotoKey(src);
+  return Boolean(key && failedPhotoUrls.has(key));
+}
+
 /** Unique assets stay; unflagged shared fallbacks become the official placeholder. */
 export function honestListingSrc(src: string | undefined) {
   if (!src || isUnflaggedSharedFallbackSrc(src)) return LISTING_PLACEHOLDER;
