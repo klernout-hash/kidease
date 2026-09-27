@@ -194,7 +194,8 @@ test("Stripe Checkout CTAs stay honest when there are no bills", () => {
   assert.match(src("src/components/parent-plus.tsx"), /KidEase is free|parentPlusLead/);
   assert.match(src("src/components/provider-plan-banner.tsx"), /planViewPlans/);
   assert.match(src("src/components/provider-subscription.tsx"), /savedFree/);
-  assert.match(src("src/components/provider-subscription.tsx"), /current \|\| !state\.entitlements\.paid \? "secondary"/);
+  assert.match(src("src/components/provider-subscription.tsx"), /variant=\{current \? "secondary" : "primary"\}/);
+  assert.match(src("src/components/provider-subscription.tsx"), /data-ke=\{current && !canCharge \? undefined : "plan-checkout"\}/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /No centre bills yet/);
   assert.match(copy, /Aucune facture de centre/);

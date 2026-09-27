@@ -8,7 +8,7 @@ import { useSessionDesks } from "@/components/desk-switcher";
 import { canBuyDaycareUpgrade } from "@/lib/upgrade-role";
 import { useRoleChrome } from "@/components/role-chrome";
 import { ManageBillingCard } from "@/components/manage-billing";
-import { RoleUpgradeCard } from "@/components/role-upgrade-card";
+import { PlanChoiceShelf } from "@/components/plan-choice-shelf";
 
 export const Route = createFileRoute("/provider/subscription")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -80,7 +80,7 @@ function ProviderSubscriptionPage() {
               onResume={() => undefined}
             />
           ) : (
-            <RoleUpgradeCard role="provider" paid={false} />
+            <PlanChoiceShelf role="provider" />
           )}
         </main>
       </Shell>

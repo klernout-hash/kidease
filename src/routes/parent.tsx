@@ -5,6 +5,7 @@ import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { ParentHome } from "@/components/parent-home";
+import { PlanChoiceShelf } from "@/components/plan-choice-shelf";
 import { useRoleChrome } from "@/components/role-chrome";
 import { ManageBillingCard } from "@/components/manage-billing";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
@@ -90,6 +91,8 @@ function ParentPage() {
               onCancel={() => undefined}
               onResume={() => undefined}
             />
+          ) : initialTab === "payments" ? (
+            <PlanChoiceShelf role="parent" />
           ) : (
             <ParentHome
               saved={[]}

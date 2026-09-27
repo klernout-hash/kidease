@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { RoleUpgradeCard } from "@/components/role-upgrade-card";
+import { RoleUpgradeCard, UpgradeToProLink } from "@/components/role-upgrade-card";
 import { listingCompleteness, type CompletenessField } from "@/lib/listing-readiness";
 import { isOpenLeadStatus, type LeadRequest } from "@/lib/lead-requests";
 import type { Daycare, TourRequest } from "@/lib/types";
@@ -36,6 +36,8 @@ export function DaycareDeskHome({
 
   return (
     <div className="mb-6 space-y-3" data-ke="daycare-desk">
+      <RoleUpgradeCard role="provider" paid={paid} planLabel={paid ? planName : null} renewsOn={renewsOn} />
+
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
         <h2 className="font-display text-xl">Enquiries & tours</h2>
         {waiting === 0 ? (
@@ -71,6 +73,11 @@ export function DaycareDeskHome({
         <Link to="/provider" search={{ desk: "listings" }} className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">
           {primary ? "Edit your listing" : "My listing"}
         </Link>
+        {paid ? null : (
+          <p className="mt-2 text-sm text-muted">
+            Featured city and a listing boost are Pro benefits. <UpgradeToProLink />
+          </p>
+        )}
       </section>
 
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="daycare-plan">
@@ -79,7 +86,6 @@ export function DaycareDeskHome({
         <p className="text-sm text-muted">Listing, messages, and vacancy stay free. Paid plans are optional and shown in CA$.</p>
       </section>
 
-      <RoleUpgradeCard role="provider" paid={paid} planLabel={paid ? planName : null} renewsOn={renewsOn} />
     </div>
   );
 }

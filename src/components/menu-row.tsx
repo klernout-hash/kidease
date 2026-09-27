@@ -23,6 +23,7 @@ export function MenuRow({
   appearance = "page",
   onClick,
   marker,
+  emphasis = false,
 }: {
   to?: string;
   search?: Record<string, string>;
@@ -33,8 +34,9 @@ export function MenuRow({
   appearance?: "page" | "drawer";
   onClick?: () => void;
   marker?: string;
+  emphasis?: boolean;
 }) {
-  const className = appearance === "drawer" ? drawerClass : rowClass;
+  const className = cn(appearance === "drawer" ? drawerClass : rowClass, emphasis && "font-semibold text-primary");
   const trailing =
     appearance === "page" ? (
       <span className="flex items-center gap-2">

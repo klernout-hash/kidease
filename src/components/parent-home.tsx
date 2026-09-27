@@ -31,6 +31,7 @@ export function ParentHome({
 
   return (
     <div className="mt-4 space-y-6" data-ke="parent-home">
+      <RoleUpgradeCard role="parent" paid={paid} planLabel={planLabel} renewsOn={renewsOn} />
       <form action="/search" method="get" className="flex gap-2" data-ke="parent-home-search">
         <label className="min-w-0 flex-1">
           <span className="sr-only">Search daycares</span>
@@ -117,7 +118,6 @@ export function ParentHome({
         </>
       )}
 
-      <RoleUpgradeCard role="parent" paid={paid} planLabel={planLabel} renewsOn={renewsOn} />
     </div>
   );
 }

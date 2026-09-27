@@ -176,6 +176,35 @@ async function runRoleFixture(page, base) {
     record("upgrade-my-plan-daycare", daycarePaid === "My plan", { note: daycarePaid });
 
     await page.setViewportSize({ width: 1280, height: 900 });
+    await setFixture(context, base, { role: "provider" });
+    await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.locator('[data-ke="daycare-desk"]').waitFor({ timeout: timeoutMs });
+    const headerUpgrade = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
+    await page.locator('[data-ke="upgrade-cta"]:visible').first().click();
+    await page.waitForURL(/\/provider\/subscription/i, { timeout: timeoutMs }).catch(() => {});
+    const proCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
+    await proCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const checkoutReady = (await proCheckout.count()) > 0;
+    if (checkoutReady) await proCheckout.click();
+    await page.locator('[data-ke="checkout-step"]').waitFor({ timeout: timeoutMs }).catch(() => {});
+    const daycareCheckout = headerUpgrade === "Upgrade" && /\/provider\/subscription/i.test(page.url()) && (await page.locator('[data-ke="checkout-step"]').count()) > 0;
+    record("daycare-checkout-two-clicks", daycareCheckout, { note: headerUpgrade });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await setFixture(context, base, { role: "parent" });
+    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
+    const parentHeaderUpgrade = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
+    await page.locator('[data-ke="upgrade-cta"]:visible').first().click();
+    await page.waitForURL(/tab=payments/i, { timeout: timeoutMs }).catch(() => {});
+    const plusCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
+    await plusCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
+    if ((await plusCheckout.count()) > 0) await plusCheckout.click();
+    await page.locator('[data-ke="checkout-step"]').waitFor({ timeout: timeoutMs }).catch(() => {});
+    const parentCheckout = parentHeaderUpgrade === "Upgrade" && /tab=payments/i.test(page.url()) && (await page.locator('[data-ke="checkout-step"]').count()) > 0;
+    record("parent-plus-two-clicks", parentCheckout, { note: parentHeaderUpgrade });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.context().clearCookies();
     await page.goto(new URL("/search", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     const listingHref = await page.locator('a[href*="/daycare/"]').evaluateAll((els) => {

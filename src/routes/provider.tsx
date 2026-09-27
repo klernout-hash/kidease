@@ -75,6 +75,7 @@ import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
+import { UpgradeToProLink } from "@/components/role-upgrade-card";
 
 const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
@@ -455,6 +456,7 @@ function ProviderPage() {
                     </span>
                   ) : null}
                   </PayCtas>
+                  {!d.featuredCity && !subscription?.paid ? <UpgradeToProLink className="mt-2" /> : null}
                 </div>
                 <p className="mt-3 text-xs text-subtle">
                   {subscription?.analyticsDays === 90 ? t("analytics90") : t("analytics")}
