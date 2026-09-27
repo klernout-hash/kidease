@@ -33,6 +33,8 @@ export type ListingVisibilityInput = {
   mergedInto?: string | null;
   /** Set when an import could not recover a real centre name. */
   importFault?: string | null;
+  /** `false` / `0` means the operator or a merge took the row off the public site. */
+  listingActive?: boolean | number | string | null;
 };
 
 /** Known QA fixture — keep in sync with GHOST_LISTING / centres-extra-1.json / request-guard HIDDEN_LISTING_SLUGS. */
@@ -114,9 +116,34 @@ export function isSupersededCatalogueRow(
   return Boolean((d.mergedInto || "").trim() || (d.importFault || "").trim());
 }
 
+/** Paused, merged-away, or explicitly deactivated. Missing means still active. */
+export function isInactiveListing(
+  d: Pick<ListingVisibilityInput, "listingActive"> | null | undefined,
+): boolean {
+  if (!d || d.listingActive == null) return false;
+  return d.listingActive === false || d.listingActive === 0 || d.listingActive === "0";
+}
+
 export function isPublicListing(d: ListingVisibilityInput | null | undefined): boolean {
   if (isSupersededCatalogueRow(d)) return false;
+  if (isInactiveListing(d)) return false;
   return !isAdminOnlyListing(d);
+}
+
+/**
+ * Public listing document. Merged rows and import faults stay hidden from
+ * everyone here (the loader 301s a merged slug to its keeper). An admin can
+ * still open an admin-only or paused row that has no fault and no keeper.
+ */
+export function hideListingFromPublicPage(
+  d: ListingVisibilityInput | null | undefined,
+  viewerIsAdmin = false,
+): boolean {
+  if (!d) return true;
+  if (isSupersededCatalogueRow(d)) return true;
+  if (viewerIsAdmin) return false;
+  if (isInactiveListing(d)) return true;
+  return isAdminOnlyListing(d);
 }
 
 const PROVIDER_DESK_REVIEW_STATUSES = new Set(["pending", "waiting", "verified"]);
@@ -260,6 +287,7 @@ export function listingVisibilityInputFromDb(row: {
 export const PUBLIC_LISTING_SQL = `(
   merged_into is null
   and import_fault is null
+  and coalesce(listing_active, 1) <> 0
   and coalesce(is_test, 0) = 0
   and coalesce(visibility, 'public') = 'public'
   and id not ilike 'ke-test-%'
@@ -279,4 +307,16 @@ export const PUBLIC_LISTING_SQL = `(
   and slug <> 'peninsula-montessori-academy-oak-3572'
   and id <> 'bc-3572'
   and name !~* '^peninsula montessori academy oak'
+)`;
+
+/**
+ * Rows that exist in the database and must not be served from the bundled
+ * catalogue: hidden, admin-only, inactive, or retired into a keeper.
+ */
+export const SUPPRESSED_CATALOG_SQL = `(
+  merged_into is not null
+  or import_fault is not null
+  or coalesce(listing_active, 1) = 0
+  or coalesce(is_test, 0) <> 0
+  or coalesce(visibility, 'public') <> 'public'
 )`;

@@ -128,7 +128,9 @@ test("known Little Fox listing slug is centre; typo URL remaps", () => {
 
 test("listing route redirects typo slugs; generators and Neon lookup stay remapped", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
-  assert.match(listing, /seo\?\.slug && seo\.slug !== params\.slug/);
+  assert.match(listing, /decideListingLoader\(params\.slug, seo, hidden\)/);
+  assert.match(listing, /decision\.type === "redirect-keeper"/);
+  assert.match(src("src/lib/listing-not-found.ts"), /seo\?\.slug && seo\.slug !== requestedSlug/);
   assert.match(listing, /throw redirect\(/);
   assert.match(listing, /to:\s*"\/daycare\/\$slug"/);
   assert.match(listing, /rethrowRouterControl\(error, params\.slug\)/);

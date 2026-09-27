@@ -70,7 +70,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { listingPageTitle } from "@/lib/listing-meta";
 import { rethrowRouterControl } from "@/lib/listing-loader-errors";
-import { listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-found";
+import { decideListingLoader, listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-found";
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
@@ -90,32 +90,31 @@ export const Route = createFileRoute("/daycare/$slug")({
   loader: async ({ params }) => {
     try {
       const seo = await getListingSeo({ data: params.slug });
-      if (seo?.slug && seo.slug !== params.slug) {
+      const hidden = shouldNotFoundListing(seo) ? await getHiddenReviewRedirect({ data: params.slug }) : null;
+      const decision = decideListingLoader(params.slug, seo, hidden);
+      if (decision.type === "redirect-keeper") {
         throw redirect({
           to: "/daycare/$slug",
-          params: { slug: seo.slug },
+          params: { slug: decision.slug },
           statusCode: 301,
         });
       }
-      if (shouldNotFoundListing(seo)) {
-        const hidden = await getHiddenReviewRedirect({ data: params.slug });
-        if (hidden?.kind === "city") {
-          throw redirect({
-            to: "/daycare/city/$city",
-            params: { city: hidden.city },
-            statusCode: 301,
-          });
-        }
-        if (hidden?.kind === "search") {
-          throw redirect({
-            to: "/search",
-            search: { q: hidden.q },
-            statusCode: 301,
-          });
-        }
-        throw notFound();
+      if (decision.type === "redirect-city") {
+        throw redirect({
+          to: "/daycare/city/$city",
+          params: { city: decision.city },
+          statusCode: 301,
+        });
       }
-      return seo;
+      if (decision.type === "redirect-search") {
+        throw redirect({
+          to: "/search",
+          search: { q: decision.q },
+          statusCode: 301,
+        });
+      }
+      if (decision.type === "not-found") throw notFound();
+      return decision.seo;
     } catch (error) {
       rethrowRouterControl(error, params.slug);
     }

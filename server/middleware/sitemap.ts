@@ -35,14 +35,25 @@ export async function resolveListingSitemapSlugs(): Promise<string[]> {
   }
   try {
     const { getSql } = await import("../../src/lib/db.ts");
-    const { PUBLIC_LISTING_SQL } = await import("../../src/lib/listing-visibility.ts");
+    const { PUBLIC_LISTING_SQL, SUPPRESSED_CATALOG_SQL } = await import("../../src/lib/listing-visibility.ts");
     const sql = await getSql();
     const rows = await sql.query<{ slug: string | null }>(
       `select slug from daycares where ${PUBLIC_LISTING_SQL}`,
     );
+    let suppressed: string[] = [];
+    try {
+      const hidden = await sql.query<{ slug: string | null }>(
+        `select slug from daycares where ${SUPPRESSED_CATALOG_SQL}`,
+      );
+      suppressed = hidden.map((row) => row.slug || "");
+    } catch {
+      suppressed = [];
+    }
     const slugs = mergeListingSitemapSlugs(
       bundled,
       rows.map((row) => row.slug || ""),
+      undefined,
+      suppressed,
     );
     slugCache = { at: now, slugs };
     return slugs;
