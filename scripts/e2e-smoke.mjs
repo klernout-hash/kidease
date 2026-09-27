@@ -83,6 +83,21 @@ function mentions(text, phrases) {
   return phrases.filter((phrase) => lower.includes(phrase.toLowerCase()));
 }
 
+async function upgradePlaces(page) {
+  const header = ((await page.locator('header [data-ke="role-nav"] [data-nav="upgrade"]').innerText().catch(() => "")) || "").trim();
+  const panel = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').innerText().catch(() => "")) || "").trim();
+  let drawer = "";
+  const menu = page.locator('header button[aria-label="Menu"]');
+  if (await menu.isVisible().catch(() => false)) {
+    await menu.click();
+    const row = page.locator('#ke-nav-drawer [data-nav="upgrade"]');
+    await row.waitFor({ timeout: 8000 }).catch(() => {});
+    drawer = ((await row.innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
+    await page.keyboard.press("Escape");
+  }
+  return { header, panel, drawer };
+}
+
 async function shot(page, name, width) {
   await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
   const dir = join(dirname(outDir), "shots");
@@ -131,21 +146,32 @@ async function runRoleFixture(page, base) {
     await shot(page, "parent-desktop", 1280);
     const parentNav = await roleNavText(page);
     const parentCross = mentions(parentNav, ["My listing", "Enquiries", "I'm a daycare", "Get more with Pro"]);
-    const parentUpgrade = page.locator('[data-nav="upgrade"]:visible');
-    const parentLabel = ((await parentUpgrade.first().innerText().catch(() => "")) || "").trim();
-    record("menu-parent", parentHome && parentCross.length === 0 && /home/i.test(parentNav) && parentLabel === "Upgrade", {
-      note: parentCross.join(",") || parentLabel || "parent",
-    });
+    const parentPlaces = await upgradePlaces(page);
+    record(
+      "menu-parent",
+      parentHome &&
+        parentCross.length === 0 &&
+        /home/i.test(parentNav) &&
+        parentPlaces.header === "Upgrade" &&
+        parentPlaces.panel === "Upgrade" &&
+        parentPlaces.drawer === "Upgrade",
+      { note: parentCross.join(",") || JSON.stringify(parentPlaces) },
+    );
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "parent", plan: "paid" });
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page.locator('[data-nav="upgrade"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
-    const paidLabel = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
-    await page.locator('[data-nav="upgrade"]:visible').first().click().catch(() => {});
+    await page.locator('header [data-nav="upgrade"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
+    const paidPlaces = await upgradePlaces(page);
+    const paidLabel = paidPlaces.header;
+    await page.locator('header [data-nav="upgrade"]:visible').first().click().catch(() => {});
     await page.locator('[data-ke="manage-or-cancel"]').waitFor({ timeout: timeoutMs }).catch(() => {});
     const managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
-    record("upgrade-my-plan-parent", paidLabel === "My plan" && managed, { note: paidLabel });
+    record(
+      "upgrade-my-plan-parent",
+      paidPlaces.header === "My plan" && paidPlaces.panel === "My plan" && paidPlaces.drawer === "My plan" && managed,
+      { note: JSON.stringify(paidPlaces) },
+    );
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "provider" });
@@ -164,16 +190,27 @@ async function runRoleFixture(page, base) {
     await shot(page, "daycare-desktop", 1280);
     const daycareNav = await roleNavText(page);
     const daycareCross = mentions(daycareNav, ["Saved", "Requests & tours", "I'm a parent", "Try Parent Plus"]);
-    const daycareLabel = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
-    record("menu-daycare", daycareHome && daycareCross.length === 0 && /desk/i.test(daycareNav) && daycareLabel === "Upgrade", {
-      note: daycareCross.join(",") || daycareLabel || "daycare",
-    });
+    const daycarePlaces = await upgradePlaces(page);
+    record(
+      "menu-daycare",
+      daycareHome &&
+        daycareCross.length === 0 &&
+        /desk/i.test(daycareNav) &&
+        daycarePlaces.header === "Upgrade" &&
+        daycarePlaces.panel === "Upgrade" &&
+        daycarePlaces.drawer === "Upgrade",
+      { note: daycareCross.join(",") || JSON.stringify(daycarePlaces) },
+    );
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "provider", plan: "paid" });
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    const daycarePaid = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
-    record("upgrade-my-plan-daycare", daycarePaid === "My plan", { note: daycarePaid });
+    const daycarePaidPlaces = await upgradePlaces(page);
+    record(
+      "upgrade-my-plan-daycare",
+      daycarePaidPlaces.header === "My plan" && daycarePaidPlaces.panel === "My plan" && daycarePaidPlaces.drawer === "My plan",
+      { note: JSON.stringify(daycarePaidPlaces) },
+    );
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "provider" });

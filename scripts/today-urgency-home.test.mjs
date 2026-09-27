@@ -70,7 +70,7 @@ test("parent phone primaries are For you, Daily care, Children, Pay", () => {
   const parent = visiblePrimaryDeskNav("parent").map((i) => i.id);
   assert.deepEqual(parent, ["explore", "care", "children", "payments"]);
   const secondary = visibleSecondaryDeskNav("parent").map((i) => i.id);
-  assert.deepEqual(secondary, ["bookings", "saved", "alerts", "messages", "search", "account"]);
+  assert.deepEqual(secondary, ["bookings", "saved", "alerts", "messages", "search", "upgrade", "account"]);
   const admin = visiblePrimaryDeskNav("admin").map((i) => i.id);
   assert.equal(admin.includes("queue"), true);
   assert.equal(admin.includes("daycares"), true);

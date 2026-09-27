@@ -226,12 +226,19 @@ function ProviderPage() {
   }
   if (!user && chrome.e2e && chrome.role === "provider") {
     return (
-      <Shell>
-        <main className="ke-gutter mx-auto max-w-3xl py-6">
+      <DeskShell desk="daycare" active="today" onSelect={() => undefined}>
+        <main className="mx-auto max-w-3xl py-2">
           <h1 className="font-display text-3xl">Desk</h1>
-          <DaycareDeskHome listings={[]} leads={[]} tours={[]} planName="Free" paid={chrome.paid} renewsOn={chrome.renewsOn} />
+          <DaycareDeskHome
+            listings={[]}
+            leads={[]}
+            tours={[]}
+            planName={chrome.paid ? chrome.planLabel || "Pro" : "Free"}
+            paid={chrome.paid}
+            renewsOn={chrome.renewsOn}
+          />
         </main>
-      </Shell>
+      </DeskShell>
     );
   }
   if (!user && chrome.e2e && chrome.role === "parent") return <Navigate to="/parent" />;

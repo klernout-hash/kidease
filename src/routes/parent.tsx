@@ -2,6 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
+import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { ParentHome } from "@/components/parent-home";
@@ -76,8 +77,8 @@ function ParentPage() {
   if (!user && chrome.e2e && chrome.role === "provider") return <Navigate to="/provider" />;
   if (!user && chrome.e2e && chrome.role === "parent") {
     return (
-      <Shell>
-        <main className="ke-gutter mx-auto max-w-lg py-6">
+      <DeskShell desk="parent" active={initialTab === "payments" ? "payments" : "explore"} onSelect={() => undefined}>
+        <main className="mx-auto max-w-lg py-2">
           {initialTab === "payments" && chrome.paid ? (
             <ManageBillingCard
               locale="en"
@@ -105,7 +106,7 @@ function ParentPage() {
             />
           )}
         </main>
-      </Shell>
+      </DeskShell>
     );
   }
   if (!user) return <RedirectToSignIn />;
