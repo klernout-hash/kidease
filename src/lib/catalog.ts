@@ -165,6 +165,20 @@ export async function listRawMapPinsInBbox(box: {
   return collectPublicMapPins(rawCentres, box);
 }
 
+/** One public catalogue pin, for the map popup. Bulk map loads do not carry address or slug. */
+export async function findRawMapPinById(id: string): Promise<RawMapPin | null> {
+  await ensureRaw();
+  const row = rawById.get(String(id || "").trim());
+  if (!row || !Number.isFinite(row.lat) || !Number.isFinite(row.lng)) return null;
+  const [pin] = collectPublicMapPins([row], {
+    minLat: row.lat - 0.01,
+    maxLat: row.lat + 0.01,
+    minLng: row.lng - 0.01,
+    maxLng: row.lng + 0.01,
+  });
+  return pin ?? null;
+}
+
 /** Nearby: Neon PostGIS when the national table is ready, else JSON grid. */
 export async function catalogNear(origin: { lat: number; lng: number }, radiusKm: number) {
   if (typeof window === "undefined") {

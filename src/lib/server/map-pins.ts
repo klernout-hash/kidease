@@ -21,6 +21,7 @@ import {
   clampMapZoom,
   clusterCellSize,
   clusterCountTotal,
+  encodeMapPinWire,
   mapLoadMode,
   mapViewCacheKey,
   mergeMapClusters,
@@ -29,6 +30,7 @@ import {
   type MapBbox,
   type MapCluster,
   type MapPin,
+  type MapPinWire,
   type MapViewData,
 } from "@/lib/map-cluster";
 
@@ -46,8 +48,18 @@ export const MAP_BBOX_WHERE_SQL = `
   and not (lat = 0 and lng = 0)
 `;
 
-/** Lightweight pin. No fees, copy, or photo blobs. No LIMIT. */
+/**
+ * Pin-mode row. id, coordinates, and name only — address and the public
+ * URL load from MAP_PIN_DETAIL_SQL when a pin is tapped. No LIMIT.
+ */
 export const MAP_PINS_SQL = `
+select id, lat, lng, name
+from daycares
+where ${MAP_BBOX_WHERE_SQL}
+`;
+
+/** One centre, for the popup. Not the bulk pin payload. */
+export const MAP_PIN_DETAIL_SQL = `
 select id, slug, name, coalesce(name_fr, '') as name_fr,
   lat, lng,
   coalesce(address, '') as address,
@@ -55,7 +67,9 @@ select id, slug, name, coalesce(name_fr, '') as name_fr,
   coalesce(province, '') as province,
   coalesce(postal_code, '') as postal_code
 from daycares
-where ${MAP_BBOX_WHERE_SQL}
+where id = $1
+  and ${PUBLIC_LISTING_SQL}
+limit 1
 `;
 
 /**
@@ -121,7 +135,7 @@ export function mapRowToPin(row: PinRow): MapPin | null {
   const name = correctCentreNameTypos(String(row.name || "").trim());
   const lat = num(row.lat);
   const lng = num(row.lng);
-  if (!id || !slug || !name || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (!id || !name || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   if (lat === 0 && lng === 0) return null;
   return {
     id,
@@ -243,12 +257,33 @@ async function queryMap(box: MapBbox, zoom: number): Promise<MapViewData> {
   return projectMapRows(pins, zoom, box);
 }
 
+function exactTileBox(box: MapBbox): MapBbox {
+  const round = (n: number) => Math.round(n * 1e5) / 1e5;
+  return {
+    minLat: round(box.minLat),
+    maxLat: round(box.maxLat),
+    minLng: round(box.minLng),
+    maxLng: round(box.maxLng),
+  };
+}
+
+export type MapViewResponse =
+  | (Omit<Extract<MapViewData, { mode: "pins" }>, "pins"> & { pins: MapPinWire[] })
+  | Extract<MapViewData, { mode: "clusters" }>;
+
+export function toMapViewResponse(view: MapViewData): MapViewResponse {
+  if (view.mode !== "pins") return view;
+  return { ...view, pins: view.pins.map(encodeMapPinWire) };
+}
+
 export async function loadMapPinsInView(input: {
   minLat: number;
   maxLat: number;
   minLng: number;
   maxLng: number;
   zoom: number;
+  /** Tile fetch. Do not pad the box into the next city. */
+  exact?: boolean;
 }): Promise<MapViewData> {
   const zoom = clampMapZoom(input.zoom);
   const box = sanitizeMapBbox(input);
@@ -262,19 +297,47 @@ export async function loadMapPinsInView(input: {
       zoom,
     };
   }
-  const snapped = cacheMapBbox(box, zoom);
-  const key = mapViewCacheKey(snapped, zoom);
+  const snapped = input.exact ? exactTileBox(box) : cacheMapBbox(box, zoom);
+  const key = input.exact
+    ? `tile:${zoom}:${snapped.minLat}:${snapped.maxLat}:${snapped.minLng}:${snapped.maxLng}`
+    : mapViewCacheKey(snapped, zoom);
   const hit = cached(key);
   if (hit) return hit;
   return remember(key, await queryMap(snapped, zoom));
 }
 
 export const mapPinsInView = createServerFn({ method: "GET" })
-  .validator((input: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }) => ({
-    minLat: Number(input.minLat),
-    maxLat: Number(input.maxLat),
-    minLng: Number(input.minLng),
-    maxLng: Number(input.maxLng),
-    zoom: Number(input.zoom),
-  }))
-  .handler(async ({ data }) => loadMapPinsInView(data));
+  .validator(
+    (input: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number; exact?: boolean }) => ({
+      minLat: Number(input.minLat),
+      maxLat: Number(input.maxLat),
+      minLng: Number(input.minLng),
+      maxLng: Number(input.maxLng),
+      zoom: Number(input.zoom),
+      exact: Boolean(input.exact),
+    }),
+  )
+  .handler(async ({ data }) => toMapViewResponse(await loadMapPinsInView(data)));
+
+export async function loadMapPinDetail(id: string): Promise<MapPin | null> {
+  const wanted = String(id || "").trim();
+  if (!wanted) return null;
+  if (dbSource === "neon") {
+    try {
+      const sql = await Promise.race([getSql(), rejectAfter(5000, "map-sql-timeout")]);
+      const rows = await Promise.race([
+        sql.query<PinRow>(MAP_PIN_DETAIL_SQL, [wanted]),
+        rejectAfter(5000, "map-pin-detail-timeout"),
+      ]);
+      return mapRowToPin(rows[0] || {}) ?? null;
+    } catch {
+      /* Catalogue when Neon does not answer. */
+    }
+  }
+  const { findRawMapPinById } = await import("@/lib/catalog");
+  return findRawMapPinById(wanted);
+}
+
+export const mapPinDetail = createServerFn({ method: "GET" })
+  .validator((input: { id: string }) => ({ id: String(input?.id || "").trim() }))
+  .handler(async ({ data }) => loadMapPinDetail(data.id));

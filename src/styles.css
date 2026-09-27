@@ -1284,25 +1284,18 @@ html[data-channel="website"] .ke-web-grid > article {
   z-index: 4;
   pointer-events: none;
 }
-.ke-map-logo-pin {
+.ke-map-pin-canvas {
   position: absolute;
   left: 0;
   top: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background-color: transparent;
-  background-repeat: no-repeat;
-  background-position: center bottom;
-  background-size: var(--ke-pin-draw, 24px) var(--ke-pin-draw, 24px);
-  filter: drop-shadow(0 1px 1px rgba(26, 55, 144, 0.32));
+  display: block;
+  background: transparent;
   pointer-events: auto;
-  cursor: pointer;
-  appearance: none;
+  touch-action: none;
 }
-.ke-map-logo-pin:focus-visible {
+.ke-map-pin-canvas:focus-visible {
   outline: 2px solid #1a3790;
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 .ke-logo-pin {
   width: 36px;
