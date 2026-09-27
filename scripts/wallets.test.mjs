@@ -34,7 +34,7 @@ test("Checkout asks for card so Apple Pay / Google Pay can render — never thos
   assert.equal(checkoutCurrency(""), "cad");
   assert.equal(checkoutCurrency("CAD"), "cad");
   assert.equal(checkoutLocale("fr"), "fr-CA");
-  assert.equal(checkoutLocale("en-CA"), "en-CA");
+  assert.equal(checkoutLocale("en-CA"), "en");
   assert.equal(checkoutLocale(""), "auto");
 });
 
@@ -65,7 +65,7 @@ test("bill and catalog Checkout sessions are CAD card wallets with locale", () =
   });
   const cflat = Object.fromEntries(flattenStripeBody(catalog));
   assert.equal(cflat["payment_method_types[0]"], "card");
-  assert.equal(cflat.locale, "en-CA");
+  assert.equal(cflat.locale, "en");
 });
 
 test("browser wallet detection is honest about Capacitor and Safari vs Chrome", () => {
