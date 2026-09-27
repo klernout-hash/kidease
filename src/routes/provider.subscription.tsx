@@ -6,6 +6,9 @@ import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canBuyDaycareUpgrade } from "@/lib/upgrade-role";
+import { useRoleChrome } from "@/components/role-chrome";
+import { ManageBillingCard } from "@/components/manage-billing";
+import { RoleUpgradeCard } from "@/components/role-upgrade-card";
 
 export const Route = createFileRoute("/provider/subscription")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -39,6 +42,7 @@ export const Route = createFileRoute("/provider/subscription")({
 function ProviderSubscriptionPage() {
   const upgradeSearch = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
+  const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
   const daycareBuyer = Boolean(
     session &&
@@ -50,10 +54,35 @@ function ProviderSubscriptionPage() {
   );
   const allowed = Boolean(daycareBuyer && session?.providerSubscriptions);
 
-  if (isPending || (user && !ready)) {
+  if (isPending || chrome.pending || (user && !ready)) {
     return (
       <Shell>
         <p className="p-8 text-muted">Loading…</p>
+      </Shell>
+    );
+  }
+  if (!user && chrome.e2e && chrome.role === "parent") return <Navigate to="/parent" />;
+  if (!user && chrome.e2e && chrome.role === "provider") {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto max-w-lg py-6">
+          {chrome.paid ? (
+            <ManageBillingCard
+              locale="en"
+              product={chrome.planLabel === "Network" ? "network" : "pro"}
+              interval="month"
+              status="active"
+              periodEnd={chrome.renewsOn}
+              cancelAtPeriodEnd={false}
+              busy={false}
+              onPortal={() => undefined}
+              onCancel={() => undefined}
+              onResume={() => undefined}
+            />
+          ) : (
+            <RoleUpgradeCard role="provider" paid={false} />
+          )}
+        </main>
       </Shell>
     );
   }

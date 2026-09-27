@@ -9,6 +9,8 @@ import { signOut } from "@/lib/auth/client";
 import { failClosedUnread } from "@/lib/notifications";
 import { useSessionDesks } from "@/components/session-desks";
 import { ShareKidEaseButton } from "@/components/share-button";
+import { RoleNavLinks } from "@/components/role-nav";
+import { useRoleChrome } from "@/components/role-chrome";
 
 const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
@@ -52,8 +54,11 @@ function MenuPage() {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const { session } = useSessionDesks();
+  const chrome = useRoleChrome();
   const fr = locale === "fr";
   const unread = failClosedUnread(session?.notificationUnread);
+  const showParents = !chrome.pending && (chrome.role === "guest" || chrome.role === "parent" || chrome.role === "admin");
+  const showDaycares = !chrome.pending && (chrome.role === "guest" || chrome.role === "provider" || chrome.role === "admin");
 
   return (
     <ShellLite appTabs>
@@ -61,6 +66,8 @@ function MenuPage() {
         <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">
           {fr ? "Menu" : "Menu"}
         </h1>
+
+        {chrome.pending ? null : <RoleNavLinks role={chrome.role} paid={chrome.paid} appearance="menu" />}
 
         {user ? (
           <Group title={t("notifications")}>
@@ -105,7 +112,7 @@ function MenuPage() {
           <MenuRow to="/contact" label={t("contact")} icon="contact" />
         </Group>
 
-        <Group title="Parents" defer>
+        {showParents ? <Group title="Parents" defer>
           <MenuRow
             to="/login"
             search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
@@ -117,9 +124,9 @@ function MenuPage() {
           <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" />
           <MenuRow to="/compare" label={t("compare")} icon="compare" />
           <MenuRow to="/parent" search={{ tab: "saved" }} label={t("saved")} icon="saved" />
-        </Group>
+        </Group> : null}
 
-        <Group title={fr ? "Garderies" : "Daycares"} defer>
+        {showDaycares ? <Group title={fr ? "Garderies" : "Daycares"} defer>
           <MenuRow to="/claim" label={t("claimCta")} icon="claim" />
           <MenuRow
             to="/login"
@@ -131,11 +138,11 @@ function MenuPage() {
           <MenuRow to="/account" search={{ tab: "profile", desk: "director" }} label={t("account")} icon="account" />
           <MenuRow to="/verify" label={t("mbChildcare")} icon="verify" />
           <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
-        </Group>
+        </Group> : null}
 
-        <Group title={t("footerCaregivers")} defer>
+        {showDaycares ? <Group title={t("footerCaregivers")} defer>
           <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
-        </Group>
+        </Group> : null}
 
         <Group title={fr ? "Soutien" : "Support"} defer>
           <MenuRow to="/help" label={fr ? "Centre d’aide" : "Help Centre"} icon="help" />

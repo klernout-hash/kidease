@@ -10,6 +10,7 @@ import {
   nextStoredRole,
   parseAppRole,
 } from "@/lib/desks";
+import { roleFlipAllowed } from "@/lib/role-access";
 import { canAccessSupport } from "@/lib/support";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { paymentSourceLabel } from "@/lib/payment-source";
@@ -52,6 +53,13 @@ async function profileRole(sql: Awaited<ReturnType<typeof getSql>>, userId: stri
     select role from profiles where user_id = ${userId} limit 1
   `.catch(() => []);
   return rows[0]?.role ?? null;
+}
+
+async function profileRoleRow(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
+  const rows = await sql<{ role: string; created_at: string | Date | null }>`
+    select role, created_at from profiles where user_id = ${userId} limit 1
+  `.catch(() => []);
+  return rows[0] ?? null;
 }
 
 async function ownsCentre(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
@@ -218,14 +226,17 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
 
 export async function writeProfileRole(userId: string, requested: "parent" | "provider") {
   const sql = await getSql();
-  const prev = await profileRole(sql, userId);
+  const row = await profileRoleRow(sql, userId);
+  const prev = row?.role ?? null;
+  const created = row?.created_at ? new Date(row.created_at).getTime() : null;
+  const ageMs = created != null && !Number.isNaN(created) ? Date.now() - created : null;
   const next = nextStoredRole(prev, requested);
   if (!prev) {
     await sql`insert into profiles (user_id, role) values (${userId}, ${next})`;
     return { role: next, previous: null as string | null };
   }
   const stored = parseAppRole(prev);
-  if (isStaffRole(stored)) {
+  if (isStaffRole(stored) || !roleFlipAllowed(prev, requested, ageMs)) {
     return { role: stored, previous: prev };
   }
   await sql`update profiles set role = ${next} where user_id = ${userId}`;

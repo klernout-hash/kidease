@@ -36,6 +36,8 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
+import { ParentHome } from "@/components/parent-home";
+import { useRoleChrome } from "@/components/role-chrome";
 import { DeleteChildControl } from "@/components/delete-child-control";
 
 const ParentPlusPanel = lazy(() =>
@@ -84,6 +86,7 @@ export function ParentDesk({
   billingReturn?: boolean;
 }) {
   const { user } = useCurrentUserState();
+  const chrome = useRoleChrome();
   const { t, locale } = useCopy();
   const { session: desks, ready: desksReady } = useSessionDesks();
   const origin = useAppStore((s) => s.origin);
@@ -291,6 +294,9 @@ export function ParentDesk({
       .sort((a, b) => b.urgencyScore - a.urgencyScore || b.matchScore - a.matchScore);
   }, [bookings, children, contentTab, deferredSaved, located, origin, radiusKm]);
 
+  void explore;
+  void exploreReady;
+  void ParentDeskRails;
   if (!user) return null;
   const upgradeBuyer = {
     role: desks?.role,
@@ -313,20 +319,22 @@ export function ParentDesk({
       </p>
 
       {contentTab === "explore" ? (
-        <div className="mt-6">
-          <h2 className="font-display text-2xl">{t("exploreForYou")}</h2>
-          <p className="mt-1 text-sm text-muted">{t("sortMatchLead")}</p>
-          {exploreReady ? (
-            <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
-              <ParentDeskRails items={explore} children={children} bookings={bookings} />
-            </Suspense>
-          ) : (
-            <div className="mt-6 space-y-3" aria-busy="true" aria-live="polite">
-              <div className="ke-skel h-40 rounded-xl" />
-              <div className="ke-skel h-40 rounded-xl" />
-            </div>
-          )}
-        </div>
+        savedReady ? (
+          <ParentHome
+            saved={saved}
+            bookings={bookings}
+            tours={tours}
+            leads={leads}
+            paid={chrome.paid}
+            planLabel={chrome.planLabel}
+            renewsOn={chrome.renewsOn}
+          />
+        ) : (
+          <div className="mt-6 space-y-3" aria-busy="true" aria-live="polite">
+            <div className="ke-skel h-12 rounded-xl" />
+            <div className="ke-skel h-40 rounded-xl" />
+          </div>
+        )
       ) : null}
 
       {contentTab === "saved" ? (

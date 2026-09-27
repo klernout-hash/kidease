@@ -103,8 +103,8 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.match(footer, /t\("appStore"\)/);
   assert.match(footer, /t\("googlePlay"\)/);
   assert.match(footer, /t\("comingSoon"\)/);
-  assert.match(footer, /t\("operatorSignIn"\)/);
-  assert.match(footer, /showOperatorSignIn/);
+  assert.doesNotMatch(footer, /t\("operatorSignIn"\)/);
+  assert.doesNotMatch(footer, /showOperatorSignIn/);
   assert.match(footer, /isKidEaseOperatorEmail\(user\?\.primaryEmail\)/);
   assert.match(copySrc, /comingSoon: "Coming soon"/);
   assert.match(copySrc, /comingSoon: "Bientôt"/);

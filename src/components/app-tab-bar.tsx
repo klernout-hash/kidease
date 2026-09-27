@@ -1,7 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ClipboardCheck, Heart, Menu, MessageCircle, Search } from "lucide-react";
-import { useSessionDesks } from "@/components/session-desks";
-import { inboxSearch, inboxViewForDesk } from "@/lib/inbox-view";
+import { useRoleChrome } from "@/components/role-chrome";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +12,9 @@ export function AppTabBar() {
   const { t } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const tab = useRouterState({ select: (s) => (s.location.search as { tab?: string }).tab });
-  const { sticky } = useSessionDesks();
+  const desk = useRouterState({ select: (s) => (s.location.search as { desk?: string }).desk });
+  const chrome = useRoleChrome();
+  const provider = chrome.role === "provider";
 
   return (
     <nav
@@ -22,34 +23,40 @@ export function AppTabBar() {
     >
       <div className="mx-auto grid max-w-lg grid-cols-5 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
         <Tab
-          to="/"
-          label={t("explore")}
+          to={provider ? "/provider" : "/search"}
+          label={provider ? "Desk" : t("explore")}
           icon={Search}
           active={
-            pathname === "/" ||
-            pathname === "/fr" ||
-            pathname.startsWith("/search") ||
-            pathname.startsWith("/fr/search") ||
-            pathname.startsWith("/daycare")
+            provider
+              ? pathname.startsWith("/provider") && !desk
+              : pathname === "/" ||
+                pathname === "/fr" ||
+                pathname.startsWith("/search") ||
+                pathname.startsWith("/fr/search") ||
+                pathname.startsWith("/daycare")
           }
         />
         <Tab
-          to="/parent"
-          search={{ tab: "saved" }}
-          label={t("saved")}
+          to={provider ? "/provider" : "/parent"}
+          search={provider ? { desk: "listings" } : { tab: "saved" }}
+          label={provider ? "Listing" : t("saved")}
           icon={Heart}
-          active={pathname.startsWith("/parent") && tab === "saved"}
+          active={provider ? pathname.startsWith("/provider") && desk === "listings" : pathname.startsWith("/parent") && tab === "saved"}
         />
         <Tab
-          to="/parent"
-          search={{ tab: "enrolled" }}
-          label={t("enrolled")}
+          to={provider ? "/provider" : "/parent"}
+          search={provider ? { desk: "requests" } : { tab: "requests" }}
+          label={provider ? "Enquiries" : "Requests"}
           icon={ClipboardCheck}
-          active={pathname.startsWith("/parent") && tab === "enrolled"}
+          active={
+            provider
+              ? pathname.startsWith("/provider") && desk === "requests"
+              : pathname.startsWith("/parent") && (tab === "requests" || tab === "enrolled")
+          }
         />
         <Tab
           to="/inbox"
-          search={inboxSearch(inboxViewForDesk(sticky))}
+          search={{ view: provider ? "centre" : "family" }}
           label={t("messages")}
           icon={MessageCircle}
           active={pathname.startsWith("/inbox")}

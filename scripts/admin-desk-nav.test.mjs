@@ -40,16 +40,11 @@ test("header pills include Admin only for admin-role sessions", () => {
   assert.equal(canVisitDesk(["parent"], "admin", "admin"), false);
 });
 
-test("signed-out and hung admin gate go to Titan login, not home", () => {
-  assert.deepEqual(adminDeskGateRedirect(new Error("Unauthorized")), {
-    to: "/login",
-    search: ADMIN_LOGIN_SEARCH,
-  });
-  assert.deepEqual(adminDeskGateRedirect(new Error("admin-gate-timeout")), {
-    to: "/login",
-    search: ADMIN_LOGIN_SEARCH,
-  });
+test("signed-out and hung admin gate are a plain 404, not a login page", () => {
+  assert.deepEqual(adminDeskGateRedirect(new Error("Unauthorized")), { notFound: true });
+  assert.deepEqual(adminDeskGateRedirect(new Error("admin-gate-timeout")), { notFound: true });
   assert.equal(adminGateFailureKind("UnauthorizedError: Unauthorized"), "login");
+  assert.equal(ADMIN_LOGIN_SEARCH.next, "/admin");
 });
 
 test("admin 2FA failure opens verify-2fa instead of bouncing home", () => {
@@ -60,8 +55,8 @@ test("admin 2FA failure opens verify-2fa instead of bouncing home", () => {
   assert.equal(adminGateFailureKind("two-factor cookie missing"), "two_factor");
 });
 
-test("parent or daycare hitting /admin still go home", () => {
-  assert.deepEqual(adminDeskGateRedirect(new Error("Not authorized")), { to: "/" });
+test("parent or daycare hitting /admin get the same 404", () => {
+  assert.deepEqual(adminDeskGateRedirect(new Error("Not authorized")), { notFound: true });
   assert.equal(adminGateFailureKind("Not authorized"), "home");
 });
 
@@ -77,13 +72,14 @@ test("header, hamburger, and menu Admin entries document-navigate to /admin", ()
   assert.match(desks, /window\.location\.assign\(DESK_PATH\.admin\)/);
   assert.match(switcher, /AdminDeskLink/);
   assert.match(switcher, /desk === "admin"/);
-  assert.match(drawer, /AdminDeskLink/);
+  assert.doesNotMatch(drawer, /AdminDeskLink/);
   assert.match(drawer, /isAdmin/);
-  assert.match(menu, /AdminDeskLink/);
+  assert.doesNotMatch(menu, /AdminDeskLink/);
   assert.match(menu, /canSeeAdminDesk\(session\?\.role, session\?\.email\)/);
   assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role, session\?\.email/);
   assert.doesNotMatch(drawer, /to="\/admin"/);
   assert.doesNotMatch(menu, /to="\/admin"/);
+  assert.doesNotMatch(drawer, />\s*Admin\s*</);
 });
 
 test("document /admin gate is role-only; APIs still require 2FA", () => {

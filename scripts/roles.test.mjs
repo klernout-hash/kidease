@@ -75,11 +75,11 @@ test("admin role unlocks all four desks; provider also gets parent", () => {
   assert.equal(landingPath(["provider", "parent"]), "/provider");
   assert.equal(landingPath(["parent"]), "/parent");
   assert.equal(showDeskSwitcher(["parent"]), false);
-  assert.equal(showDeskSwitcher(["provider", "parent"]), true);
+  assert.equal(showDeskSwitcher(["provider", "parent"]), false);
   assert.equal(showDeskSwitcher(["provider", "parent"], "provider"), false);
-  assert.equal(showDeskSwitcher(["admin", "support", "provider", "parent"], "admin"), true);
+  assert.equal(showDeskSwitcher(["admin", "support", "provider", "parent"], "admin"), false);
   assert.equal(showDeskSwitcher(["admin", "parent"], "parent"), false);
-  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent"), true);
+  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent"), false);
   assert.deepEqual(headerDesks(["admin", "parent", "provider"], "parent"), ["parent", "provider"]);
   assert.deepEqual(headerDesks(["admin", "support", "provider", "parent"], "admin"), [
     "admin",

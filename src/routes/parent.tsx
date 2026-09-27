@@ -1,8 +1,12 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
+import { ParentHome } from "@/components/parent-home";
+import { useRoleChrome } from "@/components/role-chrome";
+import { ManageBillingCard } from "@/components/manage-billing";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -14,6 +18,7 @@ const ParentDesk = lazy(() =>
 );
 
 export const Route = createFileRoute("/parent")({
+  beforeLoad: () => beforeLoadPrivate("/parent"),
   validateSearch: (s: Record<string, unknown>) => {
     const out: {
       tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care";
@@ -39,6 +44,7 @@ export const Route = createFileRoute("/parent")({
 
 function ParentPage() {
   const { user, isPending } = useCurrentUserState();
+  const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
   const search = Route.useSearch();
   const upgradeSurface = search.tab === "payments" || search.plus === "success" || search.plus === "cancel" || search.billing === "return";
@@ -59,10 +65,43 @@ function ParentPage() {
                   ? "care"
                   : "explore";
 
-  if (isPending || (user && upgradeSurface && !ready)) {
+  if (isPending || chrome.pending || (user && upgradeSurface && !ready)) {
     return (
       <Shell>
         <DeskSkeleton />
+      </Shell>
+    );
+  }
+  if (!user && chrome.e2e && chrome.role === "provider") return <Navigate to="/provider" />;
+  if (!user && chrome.e2e && chrome.role === "parent") {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto max-w-lg py-6">
+          {initialTab === "payments" && chrome.paid ? (
+            <ManageBillingCard
+              locale="en"
+              product="plus"
+              interval="month"
+              status="active"
+              periodEnd={chrome.renewsOn}
+              cancelAtPeriodEnd={false}
+              busy={false}
+              onPortal={() => undefined}
+              onCancel={() => undefined}
+              onResume={() => undefined}
+            />
+          ) : (
+            <ParentHome
+              saved={[]}
+              bookings={[]}
+              tours={[]}
+              leads={[]}
+              paid={chrome.paid}
+              planLabel={chrome.planLabel}
+              renewsOn={chrome.renewsOn}
+            />
+          )}
+        </main>
       </Shell>
     );
   }

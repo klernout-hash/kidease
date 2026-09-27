@@ -5,6 +5,9 @@ import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { RoleNavLinks } from "@/components/role-nav";
+import { useRoleChrome } from "@/components/role-chrome";
+import type { ChromeRole } from "@/lib/role-access";
 import {
   FOOTER_COLUMNS,
   footerLinkLabel,
@@ -31,6 +34,17 @@ function Item({
   );
 }
 
+function linksForRole(links: readonly FooterLinkDef[], role: ChromeRole, column: FooterColumnId): FooterLinkDef[] {
+  if (role === "provider" && column === "parents") return [];
+  if (role === "parent" && column === "daycares") return [];
+  return links.filter((link) => {
+    if (role === "guest" && (link.to === "/parent" || link.to === "/provider")) return false;
+    if (role === "parent" && (link.to.startsWith("/provider") || link.search?.role === "provider")) return false;
+    if (role === "provider" && (link.to.startsWith("/parent") || link.search?.role === "parent")) return false;
+    return true;
+  });
+}
+
 function Column({
   id,
   title,
@@ -44,6 +58,7 @@ function Column({
   locale: string;
   t: (key: CopyKey) => string;
 }) {
+  if (links.length === 0) return null;
   const labeled = links.map((link) => ({
     ...link,
     href: link.localePaired ? localePath(link.to, locale) : link.to,
@@ -72,10 +87,11 @@ function Column({
 export function SiteFooter() {
   const { t, locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
+  const chrome = useRoleChrome();
   const fr = locale === "fr";
-  // King-admin privacy: guests and non-kyle sessions never see operator login.
-  // Wait out isPending so the link never flashes for the public.
-  const showOperatorSignIn = !isPending && isKidEaseOperatorEmail(user?.primaryEmail);
+  // Operator sign-in is not linked from the public footer. Kyle uses /login.
+  void isPending;
+  void isKidEaseOperatorEmail(user?.primaryEmail);
 
   useLayoutEffect(() => {
     const all = document.querySelectorAll("footer.ke-site-footer");
@@ -90,17 +106,28 @@ export function SiteFooter() {
     <footer className="ke-site-footer ke-web-only [[data-channel=app]_&]:hidden">
       <div className="ke-gutter">
         <div className="ke-footer-inner">
+          {chrome.pending ? null : (
+            <div className="mb-6">
+              <RoleNavLinks role={chrome.role} paid={chrome.paid} appearance="menu" />
+            </div>
+          )}
           <nav className="ke-footer-cols" aria-label="KidEase">
-            <Column id="parents" title="Parents" links={FOOTER_COLUMNS.parents} locale={locale} t={t} />
             <Column
-              id="daycares"
-              title={fr ? "Garderies" : "Daycares"}
-              links={FOOTER_COLUMNS.daycares}
+              id="parents"
+              title="Parents"
+              links={linksForRole(FOOTER_COLUMNS.parents, chrome.role, "parents")}
               locale={locale}
               t={t}
             />
-            <Column id="kidease" title={t("app")} links={FOOTER_COLUMNS.kidease} locale={locale} t={t} />
-            <Column id="support" title={t("support")} links={FOOTER_COLUMNS.support} locale={locale} t={t} />
+            <Column
+              id="daycares"
+              title={fr ? "Garderies" : "Daycares"}
+              links={linksForRole(FOOTER_COLUMNS.daycares, chrome.role, "daycares")}
+              locale={locale}
+              t={t}
+            />
+            <Column id="kidease" title={t("app")} links={linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease")} locale={locale} t={t} />
+            <Column id="support" title={t("support")} links={linksForRole(FOOTER_COLUMNS.support, chrome.role, "support")} locale={locale} t={t} />
           </nav>
 
           <div className="ke-footer-legal">
@@ -130,15 +157,6 @@ export function SiteFooter() {
                 </span>
                 {t("comingSoon")}
               </p>
-              {showOperatorSignIn ? (
-                <Link
-                  to="/login"
-                  search={{ role: "admin", desk: "admin", intent: "admin", next: "/admin" }}
-                  className="ke-footer-operator"
-                >
-                  {t("operatorSignIn")}
-                </Link>
-              ) : null}
             </div>
           </div>
         </div>

@@ -608,13 +608,19 @@ export function headerDesks(
   return gated;
 }
 
-/** Header / menu switcher — only when this session actually has two visible desks. */
+/**
+ * One account, one role. The parent/daycare switcher is never shown.
+ * Header desks stay available for tests and inbox routing; chrome does not offer a switch.
+ */
 export function showDeskSwitcher(
-  desks: DeskKey[] | undefined | null,
+  desks?: DeskKey[] | null,
   role?: AppRole | null,
   email?: string | null,
 ) {
-  return Boolean(desks && headerDesks(desks, role, email).length >= 2);
+  void desks;
+  void role;
+  void email;
+  return false;
 }
 
 export type SessionDesks = {

@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { LedgerHonesty } from "@/components/listing-status-badge";
-import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
+import { TwoFactorGate } from "@/lib/auth/gates";
+import { PageNotFound } from "@/components/page-not-found";
+import { useRoleChrome } from "@/components/role-chrome";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
@@ -135,6 +137,7 @@ function provCode(raw: string | null | undefined) {
 function AdminPage() {
   const { t } = useCopy();
   const { user, isPending } = useCurrentUserState();
+  const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
   const reauth = useReauthPrompt();
   const search = Route.useSearch();
@@ -476,14 +479,26 @@ function AdminPage() {
     }
   }
 
-  if (isPending) {
+  // Not found unless profiles.role = admin. Signed-out visitors get the same page.
+  const fixtureAdmin = chrome.e2e && chrome.role === "admin";
+  if (isPending && !fixtureAdmin) {
     return (
       <Shell>
         <p className="p-8 text-muted">Loading…</p>
       </Shell>
     );
   }
-  if (!user) return <RedirectToSignIn />;
+  if (!user && fixtureAdmin) {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto max-w-lg py-8" data-ke="admin-queue">
+          <h1 className="font-display text-3xl">Approvals</h1>
+          <p className="mt-2 text-sm text-muted">Nothing is waiting.</p>
+        </main>
+      </Shell>
+    );
+  }
+  if (!user) return <PageNotFound />;
   if (!ready) {
     return (
       <Shell>
@@ -491,16 +506,7 @@ function AdminPage() {
       </Shell>
     );
   }
-  if (!admin) {
-    return (
-      <Shell>
-        <main className="mx-auto max-w-lg px-4 py-16 text-center">
-          <h1 className="font-display text-3xl">Not found</h1>
-          <p className="mt-3 text-muted">This page is only for KidEase staff with profiles.role = admin.</p>
-        </main>
-      </Shell>
-    );
-  }
+  if (!admin) return <PageNotFound />;
 
   return (
     <TwoFactorGate next={adminDeskHref(search)}>

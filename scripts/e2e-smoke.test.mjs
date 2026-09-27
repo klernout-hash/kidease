@@ -96,11 +96,21 @@ test("login page needs Sign in plus an email field", () => {
   );
 });
 
-test("admin guest gate: login, Access redirect, Cloudflare, or 401", () => {
+test("admin guest gate: 404 on the app, Access redirect or Cloudflare at the edge", () => {
+  const login = classifyAdminGate({
+    finalUrl: "http://127.0.0.1:8081/login?next=/admin",
+    status: 200,
+    bodyText: "Sign in",
+  });
+  assert.equal(login.kind, "login");
+  assert.equal(login.ok, false);
   assert.equal(
-    classifyAdminGate({ finalUrl: "http://127.0.0.1:8081/login?next=/admin", status: 200, bodyText: "Sign in" })
-      .kind,
-    "login",
+    classifyAdminGate({
+      finalUrl: "http://127.0.0.1:8081/admin",
+      status: 404,
+      bodyText: "Page not found",
+    }).kind,
+    "not-found",
   );
   assert.equal(
     classifyAdminGate({

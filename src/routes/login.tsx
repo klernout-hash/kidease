@@ -102,7 +102,7 @@ export function LoginScreen({
   const { t, locale } = useCopy();
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
-  const operator = isAdminLoginIntent({
+  const urlOperator = isAdminLoginIntent({
     role: role ?? search.role,
     desk: search.desk,
     intent: search.intent,
@@ -115,9 +115,10 @@ export function LoginScreen({
     sticky: readStickyDesk(),
   });
   const { user, isPending: sessionPending } = useCurrentUserState();
-  const [mode, setMode] = useState<"in" | "up">(operator ? "in" : search.intent === "up" ? "up" : "in");
+  const [mode, setMode] = useState<"in" | "up">(urlOperator ? "in" : search.intent === "up" ? "up" : "in");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState(operator ? OPERATOR_EMAIL : "");
+  const [email, setEmail] = useState(urlOperator ? OPERATOR_EMAIL : "");
+  const operator = urlOperator || email.trim().toLowerCase() === OPERATOR_EMAIL;
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -196,7 +197,7 @@ export function LoginScreen({
 
   async function finish() {
     const session = await waitForSignedInSession(() => authClient.getSession());
-    if (role === "parent" || role === "provider") {
+    if (mode === "up" && (role === "parent" || role === "provider")) {
       await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
     }
     continued.current = true;
@@ -349,7 +350,7 @@ export function LoginScreen({
     }
   }
 
-  const title = operator
+  const title = urlOperator
     ? t("operatorSignIn")
     : role === "provider"
       ? t("providerSignIn")
@@ -424,7 +425,7 @@ export function LoginScreen({
                   autoCorrect="off"
                   inputMode="email"
                   enterKeyHint="next"
-                  readOnly={operator}
+                  readOnly={urlOperator}
                 />
             </label>
             <PasswordField

@@ -25,6 +25,7 @@ import {
   writeStickyDesk,
 } from "@/lib/desks";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { destinationAfterSignIn } from "@/lib/role-access";
 import { getMyDesks } from "@/lib/server/roles";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
 import { withTimeout, withTimeoutFallback } from "@/lib/timeout";
@@ -97,23 +98,19 @@ export async function resolveContinueDest(input: {
   sticky?: DeskKey | null;
 }): Promise<string> {
   const next = sanitizePostLoginNext(input.next);
+  // hinted next/desk/role still matter for analytics; the stored profile role wins the landing.
   const hinted = Boolean(next || input.desk || input.role || input.sticky);
-  let desks: DeskKey[] | null = null;
-  if (!hinted) {
-    desks = await withTimeoutFallback(
-      getMyDesks()
-        .then((row) => row.desks)
-        .catch(() => null),
-      DESK_RESOLVE_MS,
-      null,
-    );
-  }
-  const dest = resolvePostLoginPath({
+  void hinted;
+  const stored = await withTimeoutFallback(
+    getMyDesks()
+      .then((row) => row.role)
+      .catch(() => null),
+    DESK_RESOLVE_MS,
+    null,
+  );
+  const dest = destinationAfterSignIn({
+    role: stored ?? input.role,
     next,
-    desk: input.desk,
-    role: input.role,
-    desks,
-    sticky: input.sticky,
   });
   const desk = deskFromPathname(dest);
   if (desk) writeStickyDesk(desk);

@@ -59,7 +59,7 @@ test("signed-out /admin gate and footer send Admin email-first search", () => {
   assert.match(dest, /role: "admin"/);
   assert.match(dest, /desk: "admin"/);
   assert.match(dest, /next: "\/admin"/);
-  assert.match(src("src/components/site-footer.tsx"), /intent: "admin"/);
+  assert.doesNotMatch(src("src/components/site-footer.tsx"), /intent: "admin"/);
   assert.equal(
     loginErrorCallbackUrl({
       role: "admin",

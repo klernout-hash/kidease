@@ -1,0 +1,123 @@
+import { Link } from "@tanstack/react-router";
+import { EmptyState } from "@/components/empty-state";
+import { RoleUpgradeCard } from "@/components/role-upgrade-card";
+import { StatusBadge } from "@/components/status-badge";
+import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
+
+type LeadSnap = { id: string; daycareName?: string | null; status: string };
+
+/** Parent landing: search, saved centres, request status, and the next tour. */
+export function ParentHome({
+  saved,
+  bookings,
+  tours,
+  leads,
+  paid = false,
+  planLabel = null,
+  renewsOn = null,
+}: {
+  saved: DaycareCard[];
+  bookings: Booking[];
+  tours: TourRequest[];
+  leads: LeadSnap[];
+  paid?: boolean;
+  planLabel?: string | null;
+  renewsOn?: string | null;
+}) {
+  const nextTour = [...tours]
+    .filter((tour) => tour.status === "pending" || tour.status === "accepted")
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
+  const empty = saved.length === 0 && bookings.length === 0 && tours.length === 0 && leads.length === 0;
+
+  return (
+    <div className="mt-4 space-y-6" data-ke="parent-home">
+      <form action="/search" method="get" className="flex gap-2" data-ke="parent-home-search">
+        <label className="min-w-0 flex-1">
+          <span className="sr-only">Search daycares</span>
+          <input
+            name="q"
+            placeholder="City or neighbourhood"
+            className="ke-input min-h-12 w-full"
+            autoComplete="off"
+          />
+        </label>
+        <button type="submit" className="min-h-12 shrink-0 rounded-full bg-primary px-4 text-sm font-medium text-primary-fg">
+          Search
+        </button>
+      </form>
+
+      {empty ? (
+        <EmptyState
+          title="Find care nearby"
+          body="Search licensed daycares, then save the ones you want to visit."
+          action="Find care nearby"
+          actionTo="/search"
+        />
+      ) : (
+        <>
+          <section>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-xl">Saved daycares</h2>
+              <Link to="/parent" search={{ tab: "saved" }} className="text-sm font-medium text-primary">
+                Saved
+              </Link>
+            </div>
+            {saved.length === 0 ? (
+              <p className="mt-2 text-sm text-muted">None saved yet.</p>
+            ) : (
+              <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
+                {saved.slice(0, 4).map((item) => (
+                  <li key={item.id}>
+                    <Link to="/daycare/$slug" params={{ slug: item.slug }} className="flex min-h-12 items-center px-3 text-sm font-medium">
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-xl">Requests & tours</h2>
+              <Link to="/parent" search={{ tab: "requests" }} className="text-sm font-medium text-primary">
+                See all
+              </Link>
+            </div>
+            {bookings.length === 0 && leads.length === 0 ? (
+              <p className="mt-2 text-sm text-muted">No requests yet.</p>
+            ) : (
+              <ul className="mt-2 space-y-2">
+                {bookings.slice(0, 3).map((booking) => (
+                  <li key={booking.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
+                    <span className="min-w-0 truncate text-sm">{booking.daycareName}</span>
+                    <StatusBadge status={booking.status} />
+                  </li>
+                ))}
+                {leads.slice(0, 3).map((lead) => (
+                  <li key={lead.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
+                    <span className="min-w-0 truncate text-sm">{lead.daycareName || "Request"}</span>
+                    <span className="text-xs text-muted">{lead.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-fg">Next tour</h3>
+              {nextTour ? (
+                <p className="mt-1 text-sm text-muted">
+                  {nextTour.daycareName}
+                  {nextTour.status === "pending" ? " · waiting on the centre" : " · confirmed"}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-muted">No tour booked yet.</p>
+              )}
+            </div>
+          </section>
+        </>
+      )}
+
+      <RoleUpgradeCard role="parent" paid={paid} planLabel={planLabel} renewsOn={renewsOn} />
+    </div>
+  );
+}

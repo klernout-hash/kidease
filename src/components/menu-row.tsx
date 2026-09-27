@@ -22,6 +22,7 @@ export function MenuRow({
   badge,
   appearance = "page",
   onClick,
+  marker,
 }: {
   to?: string;
   search?: Record<string, string>;
@@ -31,6 +32,7 @@ export function MenuRow({
   badge?: ReactNode;
   appearance?: "page" | "drawer";
   onClick?: () => void;
+  marker?: string;
 }) {
   const className = appearance === "drawer" ? drawerClass : rowClass;
   const trailing =
@@ -53,13 +55,13 @@ export function MenuRow({
   );
   if (href) {
     return (
-      <a href={href} target="_blank" rel="noreferrer" onClick={onClick} className={className}>
+      <a href={href} target="_blank" rel="noreferrer" onClick={onClick} className={className} data-nav={marker}>
         {inner}
       </a>
     );
   }
   return (
-    <Link to={to ?? "/"} search={search} onClick={onClick} className={className}>
+    <Link to={to ?? "/"} search={search} onClick={onClick} className={className} data-nav={marker}>
       {inner}
     </Link>
   );

@@ -59,6 +59,209 @@ const timeoutMs = Number(process.env.E2E_TIMEOUT_MS || 45000);
 const results = [];
 let previewChild = null;
 
+async function setFixture(context, base, { role, plan, own } = {}) {
+  await context.clearCookies();
+  const cookies = [];
+  if (role) cookies.push({ name: "kidease_e2e_role", value: role, url: base });
+  if (plan) cookies.push({ name: "kidease_e2e_plan", value: plan, url: base });
+  if (own) cookies.push({ name: "kidease_e2e_own", value: own, url: base });
+  if (cookies.length) await context.addCookies(cookies);
+}
+
+async function roleNavText(page) {
+  const nav = page.locator('[data-ke="role-nav"]:visible');
+  const count = await nav.count();
+  const parts = [];
+  for (let i = 0; i < count; i += 1) {
+    parts.push(await nav.nth(i).innerText().catch(() => ""));
+  }
+  return parts.join("\n");
+}
+
+function mentions(text, phrases) {
+  const lower = text.toLowerCase();
+  return phrases.filter((phrase) => lower.includes(phrase.toLowerCase()));
+}
+
+async function shot(page, name, width) {
+  await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+  const dir = join(dirname(outDir), "shots");
+  mkdirSync(dir, { recursive: true });
+  await page.screenshot({ path: join(dir, `${name}.png`), fullPage: false }).catch(() => {});
+}
+
+async function runRoleFixture(page, base) {
+  const context = page.context();
+  try {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.locator('[data-ke="role-nav"][data-role="guest"]:visible').first().waitFor({ timeout: timeoutMs });
+    let guestNav = await roleNavText(page);
+    await shot(page, "guest-desktop", 1280);
+    const menu = page.locator('header button[aria-label="Menu"]');
+    if (await menu.isVisible().catch(() => false)) {
+      await menu.click({ timeout: 8000 });
+      const drawerNav = page.locator("#ke-nav-drawer [data-ke='role-nav']");
+      await drawerNav.waitFor({ timeout: 8000 }).catch(() => {});
+      guestNav = `${guestNav}\n${await drawerNav.innerText().catch(() => "")}`;
+      await page.keyboard.press("Escape");
+    }
+    await shot(page, "guest-390", 390);
+    const guestOk =
+      /i'm a parent/i.test(guestNav) &&
+      /i'm a daycare/i.test(guestNav) &&
+      /sign in/i.test(guestNav) &&
+      !/requests & tours/i.test(guestNav);
+    record("menu-guest", guestOk, { note: guestOk ? "guest" : guestNav.slice(0, 180) });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await setFixture(context, base, { role: "parent" });
+    const parentWrong = await page.goto(new URL("/provider", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    await page.waitForURL(/\/parent/i, { timeout: timeoutMs }).catch(() => {});
+    const parentHome = /\/parent/i.test(page.url());
+    record("redirect-parent-from-daycare", parentHome, {
+      note: page.url(),
+      status: parentWrong?.status() ?? 0,
+    });
+    await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
+    await shot(page, "parent-390", 390);
+    await shot(page, "parent-desktop", 1280);
+    const parentNav = await roleNavText(page);
+    const parentCross = mentions(parentNav, ["My listing", "Enquiries", "I'm a daycare", "Get more with Pro"]);
+    const parentUpgrade = page.locator('[data-nav="upgrade"]:visible');
+    const parentLabel = ((await parentUpgrade.first().innerText().catch(() => "")) || "").trim();
+    record("menu-parent", parentHome && parentCross.length === 0 && /home/i.test(parentNav) && parentLabel === "Upgrade", {
+      note: parentCross.join(",") || parentLabel || "parent",
+    });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await setFixture(context, base, { role: "parent", plan: "paid" });
+    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.locator('[data-nav="upgrade"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
+    const paidLabel = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
+    await page.locator('[data-nav="upgrade"]:visible').first().click().catch(() => {});
+    await page.locator('[data-ke="manage-or-cancel"]').waitFor({ timeout: timeoutMs }).catch(() => {});
+    const managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
+    record("upgrade-my-plan-parent", paidLabel === "My plan" && managed, { note: paidLabel });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await setFixture(context, base, { role: "provider" });
+    const daycareWrong = await page.goto(new URL("/parent", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    await page.waitForURL(/\/provider/i, { timeout: timeoutMs }).catch(() => {});
+    const daycareHome = /\/provider/i.test(page.url());
+    record("redirect-daycare-from-parent", daycareHome, {
+      note: page.url(),
+      status: daycareWrong?.status() ?? 0,
+    });
+    await page.locator('[data-ke="daycare-desk"]').waitFor({ timeout: timeoutMs });
+    await shot(page, "daycare-390", 390);
+    await shot(page, "daycare-desktop", 1280);
+    const daycareNav = await roleNavText(page);
+    const daycareCross = mentions(daycareNav, ["Saved", "Requests & tours", "I'm a parent", "Try Parent Plus"]);
+    const daycareLabel = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
+    record("menu-daycare", daycareHome && daycareCross.length === 0 && /desk/i.test(daycareNav) && daycareLabel === "Upgrade", {
+      note: daycareCross.join(",") || daycareLabel || "daycare",
+    });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await setFixture(context, base, { role: "provider", plan: "paid" });
+    await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const daycarePaid = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
+    record("upgrade-my-plan-daycare", daycarePaid === "My plan", { note: daycarePaid });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.context().clearCookies();
+    await page.goto(new URL("/search", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const listingHref = await page.locator('a[href*="/daycare/"]').evaluateAll((els) => {
+      for (const el of els) {
+        const href = el.getAttribute("href") || "";
+        if (href.includes("/daycare/") && !href.includes("/daycare/city")) return href;
+      }
+      return "";
+    });
+    if (!listingHref) {
+      record("listing-role-actions", false, { note: "no public listing link on /search" });
+    } else {
+      const listingUrl = new URL(listingHref, base).href;
+      const slug = listingHref.split("/daycare/")[1]?.split(/[?#]/)[0] || "";
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(listingUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      await page.getByRole("button", { name: /^Essential$/ }).click().catch(() => {});
+      await page.locator('[data-ke="listing-parent-actions"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
+      const guestActions = await page.locator('[data-ke="listing-parent-actions"]:visible').count();
+      const save = page.getByRole("button", { name: /^save$/i });
+      const tour = page.getByRole("button", { name: /book a tour/i });
+      if (await save.count()) await save.first().click();
+      else if (await tour.count()) await tour.first().click();
+      await page.waitForURL(/\/login/i, { timeout: timeoutMs }).catch(() => {});
+      record("listing-guest-signin", guestActions > 0 && /\/login/i.test(page.url()), {
+        note: `actions=${guestActions} save=${await save.count()} tour=${await tour.count()} url=${page.url()}`,
+      });
+
+      await setFixture(context, base, { role: "provider" });
+      await page.goto(listingUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      await page.locator("h1").first().waitFor({ timeout: timeoutMs }).catch(() => {});
+      const otherParent = await page.locator('[data-ke="listing-parent-actions"]').count();
+      const otherEdit = await page.locator('[data-ke="listing-edit"]').count();
+      record("listing-daycare-other", otherParent === 0 && otherEdit === 0, {
+        note: `parent=${otherParent} edit=${otherEdit}`,
+      });
+
+      await setFixture(context, base, { role: "provider", own: slug });
+      await page.goto(listingUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      await page.locator('[data-ke="listing-edit"]').first().waitFor({ timeout: timeoutMs }).catch(() => {});
+      const ownParent = await page.locator('[data-ke="listing-parent-actions"]').count();
+      const ownEdit = await page.locator('[data-ke="listing-edit"]').count();
+      record("listing-daycare-own", ownParent === 0 && ownEdit > 0, {
+        note: `parent=${ownParent} edit=${ownEdit} slug=${slug}`,
+      });
+    }
+
+    await setFixture(context, base, { role: "parent" });
+    const parentAdmin = await page.goto(new URL("/admin", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    const parentAdminBody = await page.locator("body").innerText().catch(() => "");
+    const parentAdminGate = classifyAdminGate({
+      finalUrl: page.url(),
+      status: parentAdmin?.status() ?? 0,
+      bodyText: parentAdminBody,
+    });
+    record("admin-parent-404", parentAdminGate.ok && parentAdminGate.kind === "not-found", {
+      note: parentAdminGate.kind,
+      status: parentAdmin?.status() ?? 0,
+    });
+
+    await context.clearCookies();
+    const signedOutAdmin = await page.goto(new URL("/admin", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    const signedOutBody = await page.locator("body").innerText().catch(() => "");
+    const signedOutGate = classifyAdminGate({
+      finalUrl: page.url(),
+      status: signedOutAdmin?.status() ?? 0,
+      bodyText: signedOutBody,
+    });
+    record("admin-signed-out-404", signedOutGate.ok && signedOutGate.kind === "not-found", {
+      note: signedOutGate.kind,
+      status: signedOutAdmin?.status() ?? 0,
+    });
+  } catch (err) {
+    record("role-fixture", false, { note: err instanceof Error ? err.message : String(err) });
+  } finally {
+    await page.context().clearCookies().catch(() => {});
+    await page.setViewportSize({ width: 1280, height: 800 }).catch(() => {});
+  }
+}
+
 function record(name, pass, detail = {}) {
   results.push({ name, ok: pass, ...detail });
   const mark = pass ? "ok" : "FAIL";
@@ -90,6 +293,8 @@ function startPreview() {
   if (!String(env.DATABASE_URL || "").trim()) {
     env.VERCEL = env.VERCEL || "1";
   }
+  // Loopback role cookie for this preview only. Production must not set this.
+  env.E2E_ROLE_FIXTURE = "1";
   previewChild = spawn("npm", ["run", "preview"], {
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"],
@@ -254,7 +459,9 @@ try {
     timeout: timeoutMs,
   });
   await page
-    .waitForURL(/\/login|cloudflareaccess/i, { timeout: timeoutMs })
+    .getByText(/page not found/i)
+    .first()
+    .waitFor({ timeout: timeoutMs })
     .catch(() => {});
   const adminBody = await page.locator("body").innerText().catch(() => "");
   const adminGate = classifyAdminGate({
@@ -324,6 +531,8 @@ try {
       status: apiStatus,
     });
   }
+
+  await runRoleFixture(page, base);
 
   if (args.browserSmoke) {
     await runBrowserSmoke(base);
