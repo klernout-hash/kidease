@@ -12,6 +12,7 @@ import {
   cityHubDefBySlug,
   cityHubDefForPlace,
   cityHubPath,
+  cityHubMapSearchQuery,
   cityHubSearchQuery,
   cityHubUrl,
   sitemapCityHubPaths,
@@ -83,7 +84,14 @@ test("city hub URLs sit under /daycare/city and never invent empty cities", () =
   assert.doesNotMatch(quebecHit.label, /Montréal|Montreal/i);
   for (const hub of CITY_HUB_DEFS) {
     assert.ok(geocode(cityHubSearchQuery(hub)), hub.slug);
+    const query = cityHubMapSearchQuery(hub);
+    assert.equal(query, `${hub.cityEn}, ${hub.province}`);
+    const hit = geocode(query);
+    assert.ok(hit, query);
+    assert.equal(hit.lat, geocode(hub.cityEn)?.lat);
   }
+  assert.equal(cityHubMapSearchQuery(cityHubDefBySlug("winnipeg")), "Winnipeg, MB");
+  assert.equal(cityHubMapSearchQuery(cityHubDefBySlug("toronto")), "Toronto, ON");
 
   const hubs = buildCityHubSnapshots([
     { slug: "test-ghost-claim-lab", name: "Ghost", city: "Winnipeg", province: "MB", visibility: "admin_only" },
@@ -163,6 +171,9 @@ test("hub route, listing breadcrumbs, and internal links are wired", () => {
   assert.match(hubRoute, /CityHubNotFoundPage/);
   assert.match(hubRoute, /cityHubNotFoundHead/);
   assert.doesNotMatch(hubRoute, /redirect\(\{\s*to:\s*"\/search"/);
+  assert.match(hubRoute, /cityHubMapSearchQuery/);
+  assert.equal((hubRoute.match(/search=\{\{\s*q:\s*mapSearch\s*\}\}/g) ?? []).length, 2);
+  assert.doesNotMatch(hubRoute, /<Link to="\/search">/);
   assert.match(hubRoute, /pageSeoHead/);
   assert.match(hubRoute, /faqPageJsonLdScript/);
   assert.match(hubRoute, /breadcrumbJsonLdScript/);

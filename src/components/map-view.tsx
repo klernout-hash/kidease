@@ -36,8 +36,12 @@ import {
   clusterBubblePx,
   clusterCountLabel,
   clusterStepZoom,
+  MAP_DOT_HIT_PX,
+  mapLogoPinPx,
+  mapPinTapPx,
   mapViewCacheKey,
   markersForMapView,
+  pickNearestMapDot,
   viewportNeedsFetch,
   readMapViewCache,
   sanitizeMapBbox,
@@ -72,6 +76,7 @@ type Props = {
   origin: { lat: number; lng: number };
   secondOrigin?: { lat: number; lng: number } | null;
   radiusKm: number;
+  /** List-card hover. The popup opens only after a pin tap, not from this. */
   activeSlug?: string | null;
   onSelect: (slug: string | null) => void;
   onRelocate?: (pos: { lat: number; lng: number }) => void;
@@ -88,6 +93,18 @@ const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" a
   <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M52.6 40c2.2-4 6.2-4 8.4 0"/>
   <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M41 51c5.4 7 12.6 7 18 0"/>
 </svg>`;
+
+/** One shared image for every unselected pin. The browser decodes it once. */
+const LOGO_PIN_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PIN_SVG)}`;
+
+function installLogoPinSprite() {
+  if (typeof document === "undefined") return;
+  if (document.head.querySelector("style[data-ke='logo-pin-sprite']")) return;
+  const style = document.createElement("style");
+  style.dataset.ke = "logo-pin-sprite";
+  style.textContent = `.ke-map-logo-pin{background-image:url("${LOGO_PIN_URL}")}`;
+  document.head.appendChild(style);
+}
 
 type AnyPin = {
   setMap(map: google.maps.Map | null): void;
@@ -106,7 +123,6 @@ export function MapView({
   origin,
   secondOrigin,
   radiusKm,
-  activeSlug,
   onSelect,
   onRelocate,
   onLocate,
@@ -126,7 +142,7 @@ export function MapView({
   const popupRef = useRef<HTMLDivElement>(null);
   const popupBoxRef = useRef<PinPopupBox | null>(null);
   const popupPointRef = useRef<{ x: number; y: number; mapWidth: number; mapHeight: number } | null>(null);
-  const popupSlugRef = useRef<string | null>(activeSlug ?? null);
+  const popupSlugRef = useRef<string | null>(null);
   const pinClickAt = useRef(0);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
@@ -148,7 +164,7 @@ export function MapView({
   );
   const [zoom, setZoom] = useState(12);
   const [base, setBase] = useState<MapBase>("roadmap");
-  const [picked, setPicked] = useState<string | null>(activeSlug ?? null);
+  const [picked, setPicked] = useState<string | null>(null);
   const [pickedPin, setPickedPin] = useState<MapPin | null>(null);
   const [viewData, setViewData] = useState<MapViewData | null>(null);
   const [locating, setLocating] = useState(false);
@@ -175,10 +191,6 @@ export function MapView({
     setPicked(null);
     onSelectRef.current(null);
   };
-
-  useEffect(() => {
-    setPicked(activeSlug ?? null);
-  }, [activeSlug]);
 
   useEffect(() => {
     if (!selected) return;
@@ -444,7 +456,16 @@ export function MapView({
         maxLng: ne.lng(),
       });
       if (!visible) return;
-      if (!viewportNeedsFetch({ visible, zoom: zoomNow, loaded: loadedView.current })) return;
+      const loaded = loadedView.current;
+      if (
+        !viewportNeedsFetch({
+          visible,
+          zoom: zoomNow,
+          loaded: loaded ? { bbox: loaded.bbox, zoom: loaded.zoom, mode: loaded.mode } : null,
+        })
+      ) {
+        return;
+      }
       const key = mapViewCacheKey(visible, zoomNow);
       const cached = readMapViewCache(key);
       if (cached && bboxCovers(cached.bbox, visible)) {
@@ -470,7 +491,6 @@ export function MapView({
         })
         .catch(() => {
           if (inflightKey === key) inflightKey = "";
-          /* Search-result clusters stay on the map. */
         });
     };
     const schedule = () => {
@@ -551,6 +571,7 @@ export function MapView({
       const field = mountDotField({
         maps,
         map,
+        zoom,
         pins: dotPins.filter((item) => item !== selectedItem),
         locale: locale === "fr" ? "fr" : "en",
         onPick: (item) => {
@@ -945,29 +966,46 @@ function pinLabel(item: { name: string; nameFr?: string }, locale: "en" | "fr") 
 function mountDotField(input: {
   maps: typeof google.maps;
   map: google.maps.Map;
+  zoom: number;
   pins: DotItem[];
   locale: "en" | "fr";
   onPick: (item: DotItem) => void;
 }): AnyPin {
-  const { maps, map, pins, locale, onPick } = input;
+  const { maps, map, zoom, pins, locale, onPick } = input;
+  const drawPx = mapLogoPinPx(zoom);
+  const tapPx = mapPinTapPx(zoom);
+  const hitPx = Math.max(MAP_DOT_HIT_PX, tapPx / 2);
   const buttons: HTMLButtonElement[] = [];
+  const placed: DotItem[] = [];
   let wrap: HTMLDivElement | null = null;
   const field = new maps.OverlayView();
   field.onAdd = () => {
+    installLogoPinSprite();
     const layer = document.createElement("div");
     layer.className = "ke-map-dots";
+    const choose = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const centers = buttons.map((el) => {
+        const rect = el.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      });
+      const hit = pickNearestMapDot(placed, centers, { x: event.clientX, y: event.clientY }, hitPx);
+      if (hit) onPick(hit);
+    };
     for (const item of pins) {
       if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "ke-map-dot";
+      button.className = "ke-map-logo-pin";
+      button.style.width = `${tapPx}px`;
+      button.style.height = `${tapPx}px`;
+      button.style.setProperty("--ke-pin-draw", `${drawPx}px`);
       button.setAttribute("aria-label", pinLabel(item, locale));
-      button.addEventListener("click", (event) => {
-        event.stopPropagation();
-        onPick(item);
-      });
+      button.addEventListener("click", choose);
       layer.appendChild(button);
       buttons.push(button);
+      placed.push(item);
     }
     wrap = layer;
     field.getPanes()?.overlayMouseTarget.appendChild(layer);
@@ -983,7 +1021,7 @@ function mountDotField(input: {
       if (!button) continue;
       const point = projection.fromLatLngToDivPixel(new maps.LatLng(item.lat, item.lng));
       if (!point) continue;
-      button.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -50%)`;
+      button.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -100%)`;
     }
   };
   field.onRemove = () => {

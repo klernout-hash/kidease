@@ -5,8 +5,9 @@
  * APPROVED_CITY_SQL). That is a list cap, not the number of public centres
  * in a city. This read has no row cap: a province view returns grid counts,
  * and a city or search-radius view returns a short pin (name, address,
- * coordinates) for every listing in the box. Results are memoized by the
- * snapped viewport so a small pan does not hit Neon again.
+ * coordinates) for every listing in the box, even when that box is wide
+ * on a desktop map. Results are memoized by the snapped viewport so a
+ * small pan does not hit Neon again. Zooming in from area counts does.
  */
 
 import { createServerFn } from "@tanstack/react-start";
@@ -16,7 +17,6 @@ import { correctCentreNameTypos } from "@/lib/listing-slug";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import {
   MAP_MERGE_FRAC,
-  MAP_PIN_PAYLOAD_MAX,
   cacheMapBbox,
   clampMapZoom,
   clusterCellSize,
@@ -164,7 +164,6 @@ async function queryNeonMap(sql: Sql, box: MapBbox, zoom: number): Promise<MapVi
       rejectAfter(5000, "map-pins-timeout"),
     ]);
     const pins = rows.map(mapRowToPin).filter((pin): pin is MapPin => Boolean(pin));
-    if (pins.length > MAP_PIN_PAYLOAD_MAX) return projectMapRows(pins, zoom, box);
     return { mode: "pins", pins, total: pins.length, truncated: false, bbox: box, zoom };
   }
   const mid = (box.minLat + box.maxLat) / 2;

@@ -9,6 +9,7 @@ import {
   cityHubChipLabel,
   cityHubCityName,
   cityHubDefBySlug,
+  cityHubMapSearchQuery,
   cityHubPath,
   cityHubUrl,
   type CityHubListing,
@@ -58,6 +59,7 @@ function CityHubPage() {
   const fr = locale === "fr";
   const def = cityHubDefBySlug(hub.slug);
   const cityName = def ? cityHubCityName(def, locale) : hub.city;
+  const mapSearch = def ? cityHubMapSearchQuery(def) : `${hub.city}, ${hub.province}`;
   const otherHubs = cityHubs().filter((item) => item.slug !== hub.slug);
   const faqItems = [
     {
@@ -112,7 +114,11 @@ function CityHubPage() {
             : `KidEase lists ${hub.count} licensed centres, nurseries, and homes in ${cityName}. Search is free. We do not list nannies or sitters.`}
         </p>
         <p className="mt-4 text-sm text-muted">
-          <Link to="/search" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link
+            to="/search"
+            search={{ q: mapSearch }}
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
             {t("cityHubSearch")}
           </Link>
           {" · "}
@@ -152,7 +158,11 @@ function CityHubPage() {
         </ul>
         {hub.listings.length < hub.count ? (
           <p className="mt-4 text-sm">
-            <Link to="/search" className="font-medium text-primary underline-offset-4 hover:underline">
+            <Link
+              to="/search"
+              search={{ q: mapSearch }}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
               {t("cityHubSeeAll")}
             </Link>
           </p>
