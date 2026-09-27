@@ -251,8 +251,8 @@ test("cancel confirmation names the end date and does not fire confetti", () => 
   assert.match(pin.body, /centre plan is unchanged/);
   assert.equal(billingStatusLine({ cancelAtPeriodEnd: true, periodEnd: ENDS, locale: "en" }), "Cancels on October 26, 2026");
   assert.equal(billingStatusLine({ cancelAtPeriodEnd: false, periodEnd: ENDS, locale: "en" }), "Renews on October 26, 2026");
-  assert.equal(billingPriceLabel({ product: "pro", interval: "year", locale: "en" }), "$490/year");
-  assert.equal(billingPriceLabel({ product: "network", interval: "month", locale: "en" }), "$39/site/month");
+  assert.equal(billingPriceLabel({ product: "pro", interval: "year", locale: "en" }), "CA$490/year");
+  assert.equal(billingPriceLabel({ product: "network", interval: "month", locale: "en" }), "CA$39/site/month");
   assert.equal(checkoutBlockedByLiveSubscription("active"), true);
   assert.equal(checkoutBlockedByLiveSubscription("canceled"), false);
 

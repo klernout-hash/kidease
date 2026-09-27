@@ -12,6 +12,7 @@ import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { profileMayReceiveUpgrade, type CatalogUpgradeLane } from "@/lib/upgrade-role";
 import { mergePriceLane, priceLaneForId, unixToIso } from "@/lib/subscription-lifecycle";
 import { STRIPE_PRICE_ENV, envPriceId, type StripePriceKey } from "@/lib/server/stripe-catalog";
+import { normalizeCheckoutLocale } from "@/lib/stripe-wallets";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
@@ -160,6 +161,20 @@ async function rememberCustomer(sql: Sql, userId: string, customerId: string | n
     set stripe_customer_id = coalesce(stripe_customer_id, ${customerId})
     where user_id = ${userId}
   `;
+}
+
+/** Keep the Canada customer from an abandoned Checkout so the next session reuses it. */
+export async function rememberStripeCustomer(userId: string, customerId: string | null) {
+  const sql = await getSql();
+  await rememberCustomer(sql, userId, customerId);
+}
+
+export async function profileCheckoutLocale(userId: string): Promise<"en" | "fr"> {
+  const sql = await getSql();
+  const rows = await sql<{ locale: string | null }>`
+    select locale from profiles where user_id = ${userId} limit 1
+  `.catch(() => []);
+  return normalizeCheckoutLocale(rows[0]?.locale) ?? "en";
 }
 
 async function rememberSession(sql: Sql, userId: string, sessionId: string | null) {

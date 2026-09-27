@@ -105,7 +105,9 @@ function PayBillPage() {
       await saveMyCaslConsents({
         data: { ...consents, locale: locale === "fr" ? "fr" : "en", method: "checkout_checkbox" },
       }).catch(() => undefined);
-      const res = await createBillCheckout({ data: bill.id });
+      const res = await createBillCheckout({
+        data: { billId: bill.id, locale: locale === "fr" ? "fr" : "en" },
+      });
       if (res.alreadyPaid) {
         toast.success(t("paid"));
         const latest = await getBill({ data: bill.id });

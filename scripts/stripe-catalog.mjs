@@ -10,6 +10,7 @@
  */
 import { bootstrapStripeCatalog } from "../src/lib/server/stripe-bootstrap.ts";
 import { maskStripeSecret } from "../src/lib/server/stripe-catalog.ts";
+import { formatPlanCad } from "../src/lib/upgrade-plans.ts";
 
 const create = process.argv.includes("--create");
 
@@ -19,7 +20,7 @@ console.log(`secret: ${maskStripeSecret(process.env.STRIPE_SECRET_KEY)} · live=
 console.log("");
 for (const row of result.rows) {
   const id = row.envPriceId || row.createdPriceId || row.existingPriceId || "MISSING";
-  console.log(`${row.envName}=${id}  # ${row.lookupKey} · $${row.amountCad} CAD · ${row.action}`);
+  console.log(`${row.envName}=${id}  # ${row.lookupKey} · ${formatPlanCad(row.amountCad, "en")} · ${row.action}`);
 }
 console.log("");
 console.log("Set these on Vercel (Production + Preview). Do not paste sk_live_ into git.");

@@ -1,6 +1,10 @@
 import type { Locale } from "./types";
 import { extraCopy } from "./extra-copy.ts";
+import { plusPriceHint } from "./parent-plus.ts";
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
+
+const plusPriceEn = `${plusPriceHint("month", "en")} or ${plusPriceHint("year", "en")}`;
+const plusPriceFr = `${plusPriceHint("month", "fr")} ou ${plusPriceHint("year", "fr")}`;
 
 export const copy = {
   en: {
@@ -823,8 +827,8 @@ export const copy = {
     videoTourKicker: "Parent Plus",
     videoTourTitle: "Video tour",
     videoTourLead:
-      "Parent ↔ centre video tour or talk. Parents need active Plus ($7.99/mo or $59/yr). Centre staff join without paying. No recording in this version.",
-    videoPlusRequired: "Parent Plus is required for video tours ($7.99/mo or $59/yr).",
+      `Parent ↔ centre video tour or talk. Parents need active Plus (${plusPriceEn}). Centre staff join without paying. No recording in this version.`,
+    videoPlusRequired: `Parent Plus is required for video tours (${plusPriceEn}).`,
     videoPlusRequiredBilling:
       "Plus required (billing not live). Video stays off for free parents until Stripe live keys and an active Plus subscription.",
     videoJoin: "Create room",
@@ -3298,8 +3302,8 @@ export const copy = {
     videoTourKicker: "Plus parents",
     videoTourTitle: "Visite vidéo",
     videoTourLead:
-      "Visite ou appel vidéo parent ↔ centre. Les parents ont besoin de Plus actif (7,99 $/mois ou 59 $/an). Le personnel du centre se joint sans payer. Aucun enregistrement dans cette version.",
-    videoPlusRequired: "Plus parents est requis pour les visites vidéo (7,99 $/mois ou 59 $/an).",
+      `Visite ou appel vidéo parent ↔ centre. Les parents ont besoin de Plus actif (${plusPriceFr}). Le personnel du centre se joint sans payer. Aucun enregistrement dans cette version.`,
+    videoPlusRequired: `Plus parents est requis pour les visites vidéo (${plusPriceFr}).`,
     videoPlusRequiredBilling:
       "Plus requis (facturation pas en direct). La vidéo reste fermée pour les parents sans Plus tant que les clés Stripe en direct et un abonnement Plus actif ne sont pas en place.",
     videoJoin: "Créer la salle",

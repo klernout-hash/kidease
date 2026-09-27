@@ -29,6 +29,14 @@ export function checkoutPaymentMethodTypes(): string[] {
   return [...CHECKOUT_WALLET_PAYMENT_METHOD_TYPES];
 }
 
+/** `fr*` → French checkout, `en*` → English. Anything else is left for the profile fallback. */
+export function normalizeCheckoutLocale(raw?: string | null): "en" | "fr" | null {
+  const value = String(raw || "").trim().toLowerCase();
+  if (value.startsWith("fr")) return "fr";
+  if (value.startsWith("en")) return "en";
+  return null;
+}
+
 /** Stripe Checkout locale. `auto` follows the browser; CAD stays on the session. */
 export function checkoutLocale(locale?: string | null): string {
   const raw = String(locale || "").trim().toLowerCase();
@@ -37,7 +45,9 @@ export function checkoutLocale(locale?: string | null): string {
   return "auto";
 }
 
+/** KidEase charges CAD only. Blank defaults to cad; anything else is refused. */
 export function checkoutCurrency(raw?: string | null): string {
-  const value = String(raw || "cad").trim().toLowerCase();
-  return value || "cad";
+  const value = String(raw ?? "cad").trim().toLowerCase();
+  if (!value || value === "cad") return "cad";
+  throw new Error("KidEase checkout is Canadian dollars (CAD) only");
 }

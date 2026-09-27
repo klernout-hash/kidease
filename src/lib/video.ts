@@ -2,7 +2,7 @@
  * Twilio Video env names, Parent Plus gate, and room-name helpers.
  * Real Account SID / API key come later — do not invent credentials.
  *
- * Video is a Parent Plus offer ($7.99/mo or $59/yr): parent ↔ centre tour.
+ * Video is a Parent Plus offer (CA$7.99/month or CA$59/year): parent ↔ centre tour.
  * Providers join without paying. Parents need active Plus (or admin testing).
  * No recording in v1. Monthly minute caps are scaffolded, not enforced.
  *
@@ -11,7 +11,7 @@
  */
 
 import { evaluateFeatureFlag, type EnvMap } from "./flags.ts";
-import { parentVideoEntitled } from "./parent-plus.ts";
+import { parentVideoEntitled, plusPriceHint } from "./parent-plus.ts";
 
 export const VIDEO_ENV_NAMES = [
   "FEATURE_VIDEO",
@@ -31,8 +31,9 @@ export const VIDEO_CREDENTIALS_MESSAGE =
 export const VIDEO_SDK_SCAFFOLD_MESSAGE =
   "Scaffold — connect Twilio Video SDK next. Room and access token were created server-side. This page does not attach the camera yet.";
 
-export const VIDEO_PLUS_REQUIRED_MESSAGE =
-  "Parent Plus is required for video tours ($7.99/mo or $59/yr).";
+const PLUS_PRICE_EN = `${plusPriceHint("month", "en")} or ${plusPriceHint("year", "en")}`;
+
+export const VIDEO_PLUS_REQUIRED_MESSAGE = `Parent Plus is required for video tours (${PLUS_PRICE_EN}).`;
 
 export const VIDEO_PLUS_BILLING_NOT_LIVE_MESSAGE =
   "Plus required (billing not live). Video stays off for free parents until Stripe live keys and an active Plus subscription.";

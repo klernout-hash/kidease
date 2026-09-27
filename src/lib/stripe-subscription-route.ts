@@ -4,7 +4,7 @@
  * subscription id was previously stored on the plan column.
  */
 
-import { paidPlanPrice, yearlySavingSuccess, yearlySavingsPercent } from "./upgrade-plans.ts";
+import { formatPlanCad, paidPlanPrice, yearlySavingSuccess, yearlySavingsPercent } from "./upgrade-plans.ts";
 import { catalogMetadataAllows } from "./upgrade-role.ts";
 
 export type CatalogLane =
@@ -322,7 +322,18 @@ export function upgradeSuccessTitle(input: {
   if (input.interval === "year") {
     const price = paidPlanPrice(id);
     const percent = price ? yearlySavingsPercent(price.monthlyCad, price.yearlyCad) : null;
-    if (percent != null) return yearlySavingSuccess(name, percent, locale);
+    if (percent != null && price) {
+      const amount = formatPlanCad(price.yearlyCad, locale);
+      const priced =
+        id === "network"
+          ? locale === "fr"
+            ? `${amount}/site/an`
+            : `${amount}/site/year`
+          : locale === "fr"
+            ? `${amount}/an`
+            : `${amount}/year`;
+      return `${yearlySavingSuccess(name, percent, locale)} · ${priced}`;
+    }
   }
   return fr ? `${name} est actif` : `${name} is active`;
 }

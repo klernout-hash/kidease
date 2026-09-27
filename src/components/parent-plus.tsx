@@ -110,7 +110,9 @@ export function ParentPlusPanel({
       await saveMyCaslConsents({
         data: { ...consents, locale: loc, method: "checkout_checkbox" },
       }).catch(() => undefined);
-      const { url } = await startParentPlusCheckout({ data: { interval, plan: plan === "alerts" ? "alerts" : "plus" } });
+      const { url } = await startParentPlusCheckout({
+        data: { interval, plan: plan === "alerts" ? "alerts" : "plus", locale: loc },
+      });
       await openStripeCheckout(url);
     } catch (err) {
       toast.error(publicPayMessage(err, "Could not start Plus checkout"));

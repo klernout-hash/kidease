@@ -374,9 +374,11 @@ test("mocked Stripe checkout never calls api.stripe.com and refuses a missing se
   });
   assert.equal(session.id, "cs_test_1");
   assert.equal(session.url, "https://checkout.stripe.test/c/pay/cs_test_1");
-  assert.equal(hits.length, 1);
-  assert.match(hits[0], /^https:\/\/api\.stripe\.com\/v1\/checkout\/sessions$/);
-  assert.doesNotMatch(hits[0], /stripe\.com\/c\/pay/);
+  assert.equal(hits.length, 2);
+  assert.match(hits[0], /^https:\/\/api\.stripe\.com\/v1\/customers$/);
+  assert.match(hits[1], /^https:\/\/api\.stripe\.com\/v1\/checkout\/sessions$/);
+  assert.doesNotMatch(hits.join("\n"), /stripe\.com\/c\/pay/);
+  setStripeFetchForTests(null);
 });
 
 test("handlers stay wired to the decision helpers (no silent IDOR regression)", () => {

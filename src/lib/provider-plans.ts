@@ -3,7 +3,7 @@
  * Checkout runs only when stripeChargesLive() and the matching STRIPE_PRICE_* env is set.
  */
 
-import { DAYCARE_ADDONS, daycareUpgradePlan, paidPlanPrice, type PlanLine } from "./upgrade-plans.ts";
+import { DAYCARE_ADDONS, daycareUpgradePlan, formatPlanCad, paidPlanPrice, type PlanLine } from "./upgrade-plans.ts";
 
 export const PROVIDER_PLAN_IDS = ["free", "pro", "network"] as const;
 export type ProviderPlanId = (typeof PROVIDER_PLAN_IDS)[number];
@@ -193,12 +193,24 @@ export function planPriceCad(plan: ProviderPlan, interval: ProviderInterval, sit
 }
 
 export function planPriceHint(plan: ProviderPlan, interval: ProviderInterval, locale: "en" | "fr"): string {
-  if (plan.id === "free") return locale === "fr" ? "0 $ / mois" : "$0 / month";
+  const cadence = (amount: number, unit: "month" | "year" | "site-month" | "site-year") => {
+    const value = formatPlanCad(amount, locale);
+    if (locale === "fr") {
+      if (unit === "site-year") return `${value}/site/an`;
+      if (unit === "site-month") return `${value}/site/mois`;
+      if (unit === "year") return `${value}/an`;
+      return `${value}/mois`;
+    }
+    if (unit === "site-year") return `${value}/site/year`;
+    if (unit === "site-month") return `${value}/site/month`;
+    if (unit === "year") return `${value}/year`;
+    return `${value}/month`;
+  };
+  if (plan.id === "free") return cadence(0, "month");
   if (plan.perSite) {
-    return locale === "fr" ? "39 $ / site / mois" : "$39 / site / month";
+    if (interval === "year" && plan.yearly != null) return cadence(plan.yearly, "site-year");
+    return cadence(plan.monthly, "site-month");
   }
-  if (interval === "year" && plan.yearly != null) {
-    return locale === "fr" ? "490 $ / an" : "$490 / year";
-  }
-  return locale === "fr" ? "49 $ / mois" : "$49 / month";
+  if (interval === "year" && plan.yearly != null) return cadence(plan.yearly, "year");
+  return cadence(plan.monthly, "month");
 }

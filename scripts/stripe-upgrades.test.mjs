@@ -410,11 +410,11 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
   assert.equal(upgradeSuccessTitle({ kind: "plan", item: "pro" }), "Pro is active");
   assert.equal(
     upgradeSuccessTitle({ kind: "plan", item: "pro", interval: "year" }),
-    "You're on Pro yearly and saving 16%",
+    "You're on Pro yearly and saving 16% · CA$490/year",
   );
   assert.equal(
     upgradeSuccessTitle({ kind: "plan", item: "network", interval: "year" }),
-    "You're on Network yearly and saving 16%",
+    "You're on Network yearly and saving 16% · CA$390/site/year",
   );
   assert.equal(upgradeSuccessTitle({ kind: "addon", item: "featured_city" }), "Featured city is live");
   assert.equal(
@@ -426,11 +426,11 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
   assert.equal(upgradeSuccessTitle({ kind: "plus" }), "Parent Plus is active");
   assert.equal(
     upgradeSuccessTitle({ kind: "plus", item: "plus", interval: "year" }),
-    "You're on Parent Plus yearly and saving 38%",
+    "You're on Parent Plus yearly and saving 38% · CA$59/year",
   );
   assert.equal(
     upgradeSuccessTitle({ kind: "plus", item: "alerts", interval: "year" }),
-    "You're on Parent Alerts yearly and saving 17%",
+    "You're on Parent Alerts yearly and saving 17% · CA$149/year",
   );
   const proBenefits = DAYCARE_UPGRADE_PLANS.find((plan) => plan.id === "pro").benefits.slice(0, 3).map((line) => line.en);
   assert.deepEqual(upgradeUnlockedBenefits({ kind: "plan", item: "pro", locale: "en" }), proBenefits);

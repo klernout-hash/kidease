@@ -3,7 +3,7 @@
  */
 
 import { subscriptionAccessOpen } from "./subscription-lifecycle.ts";
-import { paidPlanPrice, parentUpgradePlan } from "./upgrade-plans.ts";
+import { formatPlanCad, paidPlanPrice, parentUpgradePlan } from "./upgrade-plans.ts";
 
 export const PLUS_INTERVALS = ["month", "year"] as const;
 export type PlusInterval = (typeof PLUS_INTERVALS)[number];
@@ -47,6 +47,8 @@ export function parentAlertsEntitled(plan: string | null | undefined, status: st
 }
 
 export function plusPriceHint(interval: PlusInterval, locale: "en" | "fr"): string {
-  if (interval === "year") return locale === "fr" ? "59 $ / an" : "$59 / year";
-  return locale === "fr" ? "7,99 $ / mois" : "$7.99 / month";
+  const amount = interval === "year" ? PLUS_YEARLY_CAD : PLUS_MONTHLY_CAD;
+  const value = formatPlanCad(amount, locale);
+  if (interval === "year") return locale === "fr" ? `${value}/an` : `${value}/year`;
+  return locale === "fr" ? `${value}/mois` : `${value}/month`;
 }
