@@ -114,8 +114,9 @@ describe("dual chrome and map clustering stay in place", () => {
     assert.match(shell, /data-channel=app/);
     assert.match(search, /ke-gutter mx-auto max-w-7xl/);
     const map = read("src/components/map-view.tsx");
-    assert.match(map, /clusterItems/);
+    assert.match(map, /markersForMapView/);
     assert.match(map, /ke-logo-cluster/);
+    assert.match(map, /ke-cluster-bubble/);
     assert.match(map, /createKidEaseMap/);
     assert.match(map, /loadAdvancedMarkerElement/);
     assert.doesNotMatch(map, /mapId:\s*["'`]/);

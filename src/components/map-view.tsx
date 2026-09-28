@@ -12,12 +12,55 @@ import {
   mapZoomForRadius,
   openDirections,
   placePinPopup,
+  radiusFitPadding,
   readMapBase,
   writeMapBase,
   type MapBase,
   type PinPopupBox,
 } from "@/lib/maps";
 import { bboxFromRadius } from "@/lib/proximity";
+import {
+  RADIUS_CIRCLE_ALT_STYLE,
+  RADIUS_CIRCLE_STYLE,
+  boundsCoverRadiusFrame,
+  radiusCircleFrame,
+  radiusFrameKey,
+} from "@/lib/map-radius-frame";
+import { mapPinToCard } from "@/lib/map-pin-card";
+import {
+  MAP_DRAW_MARGIN_PX,
+  MAP_FETCH_DEBOUNCE_MS,
+  bboxCovers,
+  bboxIntersects,
+  cacheMapBbox,
+  clusterAriaLabel,
+  clusterBubbleFontPx,
+  clusterBubblePx,
+  clusterCountLabel,
+  clusterStepZoom,
+  coerceMapViewPins,
+  expandBboxByPx,
+  MAP_DOT_HIT_PX,
+  mapCameraMoved,
+  mapLoadMode,
+  mapLogoPinPx,
+  mapPinTapPx,
+  mapPointerIsTap,
+  mapTileKey,
+  mapTilesForCamera,
+  mapViewCacheKey,
+  markersForMapView,
+  pickNearestMapDot,
+  pointInBbox,
+  viewportNeedsFetch,
+  readMapViewCache,
+  sanitizeMapBbox,
+  writeMapViewCache,
+  type MapBbox,
+  type MapPin,
+  type MapViewData,
+} from "@/lib/map-cluster";
+import { mapPinDetail, mapPinsInView } from "@/lib/server/map-pins";
 import {
   createKidEaseMap,
   createListingOverlayFactory,
@@ -44,6 +87,7 @@ type Props = {
   origin: { lat: number; lng: number };
   secondOrigin?: { lat: number; lng: number } | null;
   radiusKm: number;
+  /** List-card hover. The popup opens only after a pin tap, not from this. */
   activeSlug?: string | null;
   onSelect: (slug: string | null) => void;
   onRelocate?: (pos: { lat: number; lng: number }) => void;
@@ -61,9 +105,14 @@ const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" a
   <path fill="none" stroke="#1A3790" stroke-width="4" stroke-linecap="round" d="M41 51c5.4 7 12.6 7 18 0"/>
 </svg>`;
 
+/** One shared image for every unselected pin. The browser decodes it once. */
+const LOGO_PIN_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PIN_SVG)}`;
+
 type AnyPin = {
   setMap(map: google.maps.Map | null): void;
 };
+
+type DotItem = DaycareCard | MapPin;
 
 type SlugPin = AnyPin & {
   setActive(on: boolean, maps: typeof google.maps): void;
@@ -76,7 +125,6 @@ export function MapView({
   origin,
   secondOrigin,
   radiusKm,
-  activeSlug,
   onSelect,
   onRelocate,
   onLocate,
@@ -96,7 +144,7 @@ export function MapView({
   const popupRef = useRef<HTMLDivElement>(null);
   const popupBoxRef = useRef<PinPopupBox | null>(null);
   const popupPointRef = useRef<{ x: number; y: number; mapWidth: number; mapHeight: number } | null>(null);
-  const popupSlugRef = useRef<string | null>(activeSlug ?? null);
+  const popupSlugRef = useRef<string | null>(null);
   const pinClickAt = useRef(0);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
@@ -106,6 +154,8 @@ export function MapView({
   secondOriginRef.current = secondOrigin ?? null;
   const radiusRef = useRef(radiusKm);
   radiusRef.current = radiusKm;
+  /** Set when the parent pans or zooms. Cleared when the search or radius changes. */
+  const userMovedRef = useRef(false);
 
   const locale = useAppStore((s) => s.locale);
   const { t } = useCopy();
@@ -116,18 +166,66 @@ export function MapView({
   );
   const [zoom, setZoom] = useState(12);
   const [base, setBase] = useState<MapBase>("roadmap");
-  const [picked, setPicked] = useState<string | null>(activeSlug ?? null);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [pickedPin, setPickedPin] = useState<MapPin | null>(null);
+  const [viewData, setViewData] = useState<MapViewData | null>(null);
   const [locating, setLocating] = useState(false);
   const [loadGen, setLoadGen] = useState(0);
+  const appliedViewKey = useRef("");
+  const loadedView = useRef<MapViewData | null>(null);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const detailSeq = useRef(0);
+  const tileCache = useRef(new Map<string, { box: MapBbox; pins: MapPin[] }>());
+  const openPinRef = useRef<(item: DotItem) => void>(() => {});
+  openPinRef.current = (item) => {
+    pinClickAt.current = Date.now();
+    const seq = ++detailSeq.current;
+    const fromList = itemsRef.current.find((row) => row.id === item.id || (item.slug && row.slug === item.slug));
+    if (fromList) {
+      setPicked(fromList.slug);
+      setPickedPin(null);
+      onSelectRef.current(fromList.slug);
+      return;
+    }
+    setPicked(item.id);
+    if (!("fromPrice" in item)) {
+      setPickedPin({
+        id: item.id,
+        slug: item.slug || "",
+        name: item.name,
+        nameFr: "nameFr" in item ? item.nameFr || "" : "",
+        lat: item.lat,
+        lng: item.lng,
+        address: "address" in item ? item.address || "" : "",
+        city: "city" in item ? item.city || "" : "",
+        province: "province" in item ? item.province || "" : "",
+        postalCode: "postalCode" in item ? item.postalCode || "" : "",
+      });
+    }
+    if (item.slug) onSelectRef.current(item.slug);
+    else onSelectRef.current(null);
+    if ("fromPrice" in item) return;
+    if (item.slug && "address" in item && item.address) return;
+    void mapPinDetail({ data: { id: item.id } }).then((pin) => {
+      if (detailSeq.current !== seq || !pin) return;
+      setPicked(pin.slug || pin.id);
+      setPickedPin(pin);
+      if (pin.slug) onSelectRef.current(pin.slug);
+    });
+  };
 
   useEffect(() => {
     setBase(readMapBase());
   }, []);
 
-  const selected = useMemo(
-    () => (picked ? (items.find((i) => i.slug === picked) ?? null) : null),
-    [items, picked],
-  );
+  const selected = useMemo(() => {
+    if (!picked) return null;
+    const fromList = items.find((item) => item.slug === picked || item.id === picked);
+    if (fromList) return fromList;
+    if (pickedPin && (pickedPin.slug === picked || pickedPin.id === picked)) return mapPinToCard(pickedPin, origin);
+    return null;
+  }, [items, picked, pickedPin, origin]);
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
   const dismissRef = useRef<() => void>(() => {});
@@ -136,10 +234,6 @@ export function MapView({
     setPicked(null);
     onSelectRef.current(null);
   };
-
-  useEffect(() => {
-    setPicked(activeSlug ?? null);
-  }, [activeSlug]);
 
   useEffect(() => {
     if (!selected) return;
@@ -257,96 +351,111 @@ export function MapView({
   useEffect(() => {
     const map = mapRef.current;
     const maps = mapsApiRef.current;
-    if (!map || !maps || !ready) return;
+    const el = host.current;
+    if (!map || !maps || !el || !ready) return;
     const point = originRef.current;
-    map.setCenter({ lat: point.lat, lng: point.lng });
-    const meters = Math.max(radiusKm, 0.5) * 1000;
-    if (circleRef.current) {
-      circleRef.current.setCenter({ lat: point.lat, lng: point.lng });
-      circleRef.current.setRadius(meters);
-    } else {
-      circleRef.current = new maps.Circle({
-        map,
-        center: { lat: point.lat, lng: point.lng },
-        radius: meters,
-        strokeColor: "#1a3790",
-        strokeWeight: 2,
-        strokeOpacity: 0.85,
-        fillColor: "#1a3790",
-        fillOpacity: 0.1,
-        clickable: false,
-      });
-    }
-    if (secondOrigin) {
-      if (circle2Ref.current) {
-        circle2Ref.current.setCenter({ lat: secondOrigin.lat, lng: secondOrigin.lng });
-        circle2Ref.current.setRadius(meters);
-        circle2Ref.current.setMap(map);
+    const frameKey = radiusFrameKey(point, radiusKm, secondOriginRef.current);
+    userMovedRef.current = false;
+
+    const fit = () => {
+      const home = originRef.current;
+      const other = secondOriginRef.current;
+      const frame = radiusCircleFrame(home, radiusRef.current);
+      const box = bboxFromRadius(home, frame.radiusKm);
+      map.setCenter({ lat: home.lat, lng: home.lng });
+      if (circleRef.current) {
+        circleRef.current.setCenter({ lat: home.lat, lng: home.lng });
+        circleRef.current.setRadius(frame.meters);
+        circleRef.current.setOptions(RADIUS_CIRCLE_STYLE);
       } else {
-        circle2Ref.current = new maps.Circle({
+        circleRef.current = new maps.Circle({
           map,
-          center: { lat: secondOrigin.lat, lng: secondOrigin.lng },
-          radius: meters,
-          strokeColor: "#b45309",
-          strokeWeight: 2,
-          strokeOpacity: 0.85,
-          fillColor: "#b45309",
-          fillOpacity: 0.1,
-          clickable: false,
+          center: { lat: home.lat, lng: home.lng },
+          radius: frame.meters,
+          ...RADIUS_CIRCLE_STYLE,
         });
       }
-      if (workYouRef.current) {
-        workYouRef.current.setPosition({ lat: secondOrigin.lat, lng: secondOrigin.lng });
-        workYouRef.current.setMap(map);
+      if (other) {
+        const work = radiusCircleFrame(other, radiusRef.current);
+        if (circle2Ref.current) {
+          circle2Ref.current.setCenter({ lat: other.lat, lng: other.lng });
+          circle2Ref.current.setRadius(work.meters);
+          circle2Ref.current.setOptions(RADIUS_CIRCLE_ALT_STYLE);
+          circle2Ref.current.setMap(map);
+        } else {
+          circle2Ref.current = new maps.Circle({
+            map,
+            center: { lat: other.lat, lng: other.lng },
+            radius: work.meters,
+            ...RADIUS_CIRCLE_ALT_STYLE,
+          });
+        }
+        if (workYouRef.current) {
+          workYouRef.current.setPosition({ lat: other.lat, lng: other.lng });
+          workYouRef.current.setMap(map);
+        } else {
+          workYouRef.current = createYouAreHereDot({
+            maps,
+            map,
+            position: { lat: other.lat, lng: other.lng },
+            AdvancedMarker: advancedMarkerRef.current,
+          });
+        }
       } else {
-        workYouRef.current = createYouAreHereDot({
-          maps,
-          map,
-          position: { lat: secondOrigin.lat, lng: secondOrigin.lng },
-          AdvancedMarker: advancedMarkerRef.current,
-        });
+        circle2Ref.current?.setMap(null);
+        workYouRef.current?.setMap(null);
       }
-    } else {
-      circle2Ref.current?.setMap(null);
-      workYouRef.current?.setMap(null);
-    }
-    const box = bboxFromRadius(point, radiusKm);
-    const bounds = new maps.LatLngBounds(
-      { lat: box.minLat, lng: box.minLng },
-      { lat: box.maxLat, lng: box.maxLng },
-    );
-    if (secondOrigin) {
-      const box2 = bboxFromRadius(secondOrigin, radiusKm);
-      bounds.extend({ lat: box2.minLat, lng: box2.minLng });
-      bounds.extend({ lat: box2.maxLat, lng: box2.maxLng });
-    }
-    map.fitBounds(bounds, MAP_RADIUS_FIT_PAD);
-    let framing = true;
-    const idle = maps.event?.addListenerOnce?.(map, "idle", () => {
-      if (!framing) return;
-      const next = originRef.current;
-      const nextSecond = secondOriginRef.current;
-      map.setCenter({ lat: next.lat, lng: next.lng });
-      const boxNow = bboxFromRadius(next, radiusRef.current);
-      const nextBounds = new maps.LatLngBounds(
-        { lat: boxNow.minLat, lng: boxNow.minLng },
-        { lat: boxNow.maxLat, lng: boxNow.maxLng },
+      const bounds = new maps.LatLngBounds(
+        { lat: box.minLat, lng: box.minLng },
+        { lat: box.maxLat, lng: box.maxLng },
       );
-      if (nextSecond) {
-        const box2 = bboxFromRadius(nextSecond, radiusRef.current);
-        nextBounds.extend({ lat: box2.minLat, lng: box2.minLng });
-        nextBounds.extend({ lat: box2.maxLat, lng: box2.maxLng });
+      if (other) {
+        const workBox = bboxFromRadius(other, frame.radiusKm);
+        bounds.extend({ lat: workBox.minLat, lng: workBox.minLng });
+        bounds.extend({ lat: workBox.maxLat, lng: workBox.maxLng });
       }
-      map.fitBounds(nextBounds, MAP_RADIUS_FIT_PAD);
-      circleRef.current?.setCenter({ lat: next.lat, lng: next.lng });
-      youRef.current?.setPosition({ lat: next.lat, lng: next.lng });
-      const minZoom = mapZoomForRadius(radiusRef.current);
-      const current = map.getZoom();
-      if (typeof current === "number" && current < minZoom - 1) {
-        map.setZoom(minZoom);
-        map.setCenter({ lat: next.lat, lng: next.lng });
-      }
+      const pad = el.clientWidth > 0 ? radiusFitPadding(el.clientWidth) : MAP_RADIUS_FIT_PAD;
+      map.fitBounds(bounds, pad);
+      youRef.current?.setPosition({ lat: home.lat, lng: home.lng });
+    };
+
+    fit();
+    let framing = true;
+    const markMoved = () => {
+      userMovedRef.current = true;
+    };
+    const idle = maps.event?.addListenerOnce?.(map, "idle", () => {
+      if (!framing || userMovedRef.current) return;
+      const home = originRef.current;
+      const frame = radiusCircleFrame(home, radiusRef.current);
+      const visible = map.getBounds?.();
+      const ne = visible?.getNorthEast?.();
+      const sw = visible?.getSouthWest?.();
+      const framed =
+        ne &&
+        sw &&
+        boundsCoverRadiusFrame(
+          { minLat: sw.lat(), maxLat: ne.lat(), minLng: sw.lng(), maxLng: ne.lng() },
+          frame,
+        );
+      if (framed) return;
+      fit();
     });
+    const drag = maps.event.addListener(map, "dragstart", markMoved);
+    el.addEventListener("wheel", markMoved, { passive: true });
+    el.addEventListener("touchmove", markMoved, { passive: true });
+    el.addEventListener("dblclick", markMoved);
+    let resizeTimer = 0;
+    const ro = new ResizeObserver(() => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        if (!framing || userMovedRef.current) return;
+        if (radiusFrameKey(originRef.current, radiusRef.current, secondOriginRef.current) !== frameKey) return;
+        maps.event.trigger(map, "resize");
+        fit();
+      }, 80);
+    });
+    ro.observe(el);
     if (youRef.current) {
       youRef.current.setPosition({ lat: point.lat, lng: point.lng });
     } else {
@@ -359,9 +468,159 @@ export function MapView({
     }
     return () => {
       framing = false;
+      window.clearTimeout(resizeTimer);
+      ro.disconnect();
+      el.removeEventListener("wheel", markMoved);
+      el.removeEventListener("touchmove", markMoved);
+      el.removeEventListener("dblclick", markMoved);
       if (idle) maps.event?.removeListener?.(idle);
+      maps.event.removeListener(drag);
     };
   }, [origin.lat, origin.lng, secondOrigin?.lat, secondOrigin?.lng, radiusKm, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const maps = mapsApiRef.current;
+    if (!map || !maps || !ready) return;
+    let cancelled = false;
+    let timer = 0;
+    let request = 0;
+    let inflightKey = "";
+    const pendingTiles = new Set<string>();
+
+    const publishTiles = (visible: MapBbox, zoomNow: number) => {
+      const drawBox = expandBboxByPx(visible, zoomNow, MAP_DRAW_MARGIN_PX);
+      const seen = new Set<string>();
+      const pins: MapPin[] = [];
+      for (const entry of tileCache.current.values()) {
+        if (!bboxIntersects(entry.box, drawBox)) continue;
+        for (const pin of entry.pins) {
+          if (seen.has(pin.id) || !pointInBbox(pin, drawBox)) continue;
+          seen.add(pin.id);
+          pins.push(pin);
+        }
+      }
+      const signature = `${zoomNow}:${pins.length}:${drawBox.minLat.toFixed(3)}:${drawBox.minLng.toFixed(3)}:${drawBox.maxLat.toFixed(3)}:${drawBox.maxLng.toFixed(3)}`;
+      if (appliedViewKey.current === signature) return;
+      appliedViewKey.current = signature;
+      const data: MapViewData = {
+        mode: "pins",
+        pins,
+        total: pins.length,
+        truncated: false,
+        bbox: drawBox,
+        zoom: zoomNow,
+      };
+      loadedView.current = data;
+      setViewData(data);
+    };
+
+    const run = () => {
+      const bounds = map.getBounds?.();
+      const ne = bounds?.getNorthEast?.();
+      const sw = bounds?.getSouthWest?.();
+      const zoomNow = map.getZoom?.();
+      if (!ne || !sw || typeof zoomNow !== "number") return;
+      const visible = sanitizeMapBbox({
+        minLat: sw.lat(),
+        maxLat: ne.lat(),
+        minLng: sw.lng(),
+        maxLng: ne.lng(),
+      });
+      if (!visible) return;
+      if (mapLoadMode(zoomNow) === "pins") {
+        const hostEl = map.getDiv?.();
+        const tiles = mapTilesForCamera(
+          visible,
+          zoomNow,
+          hostEl?.clientWidth || 360,
+          hostEl?.clientHeight || 480,
+        );
+        const missing = tiles.filter((tile) => {
+          const key = mapTileKey(tile, zoomNow);
+          return !tileCache.current.has(key) && !pendingTiles.has(key);
+        });
+        if (tileCache.current.size > 0) publishTiles(visible, zoomNow);
+        if (missing.length === 0) return;
+        const id = ++request;
+        let cursor = 0;
+        const worker = async () => {
+          while (cursor < missing.length && !cancelled && id === request) {
+            const tile = missing[cursor];
+            cursor += 1;
+            if (!tile) continue;
+            const key = mapTileKey(tile, zoomNow);
+            pendingTiles.add(key);
+            try {
+              const raw = await mapPinsInView({ data: { ...tile, zoom: zoomNow, exact: true } });
+              if (cancelled || id !== request || !raw || raw.truncated || raw.mode !== "pins") continue;
+              const view = coerceMapViewPins(raw);
+              tileCache.current.set(key, { box: tile, pins: view.mode === "pins" ? view.pins : [] });
+              if (tileCache.current.size > 64) {
+                const oldest = tileCache.current.keys().next().value;
+                if (typeof oldest === "string") tileCache.current.delete(oldest);
+              }
+              publishTiles(visible, zoomNow);
+            } catch {
+              /* The next idle retries a tile that did not land. */
+            } finally {
+              pendingTiles.delete(key);
+            }
+          }
+        };
+        void Promise.all([worker(), worker(), worker()]);
+        return;
+      }
+      const loaded = loadedView.current;
+      if (
+        !viewportNeedsFetch({
+          visible,
+          zoom: zoomNow,
+          loaded: loaded ? { bbox: loaded.bbox, zoom: loaded.zoom, mode: loaded.mode } : null,
+        })
+      ) {
+        return;
+      }
+      const key = mapViewCacheKey(visible, zoomNow);
+      const cached = readMapViewCache(key);
+      if (cached && bboxCovers(cached.bbox, visible)) {
+        if (appliedViewKey.current !== key) {
+          appliedViewKey.current = key;
+          loadedView.current = cached;
+          setViewData(cached);
+        }
+        return;
+      }
+      if (inflightKey === key) return;
+      inflightKey = key;
+      const id = ++request;
+      const snapped = cacheMapBbox(visible, zoomNow);
+      void mapPinsInView({ data: { ...snapped, zoom: zoomNow } })
+        .then((raw) => {
+          if (inflightKey === key) inflightKey = "";
+          if (cancelled || id !== request || !raw || raw.truncated) return;
+          const data = coerceMapViewPins(raw);
+          writeMapViewCache(key, data);
+          appliedViewKey.current = key;
+          loadedView.current = data;
+          setViewData(data);
+        })
+        .catch(() => {
+          if (inflightKey === key) inflightKey = "";
+        });
+    };
+    const schedule = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(run, MAP_FETCH_DEBOUNCE_MS);
+    };
+    const listener = maps.event.addListener(map, "idle", schedule);
+    schedule();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      maps.event.removeListener(listener);
+    };
+  }, [ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -374,60 +633,92 @@ export function MapView({
       pinsRef.current = [];
       markersBySlug.current.clear();
 
-      const clusters = clusterItems(items, zoom);
+      const bounds = map.getBounds?.();
+      const ne = bounds?.getNorthEast?.();
+      const sw = bounds?.getSouthWest?.();
+      const frame =
+        ne && sw
+          ? sanitizeMapBbox({
+              minLat: sw.lat(),
+              maxLat: ne.lat(),
+              minLng: sw.lng(),
+              maxLng: ne.lng(),
+            })
+          : null;
+      const drawn = markersForMapView({
+        items,
+        view: viewData,
+        zoom,
+        bounds: frame,
+        atLat: originRef.current.lat,
+      });
       const nextPins: AnyPin[] = [];
-      for (const node of clusters) {
+      const dotPins: DotItem[] = [];
+      for (const node of drawn.markers) {
         if (node.kind === "group") {
-          const content = clusterEl(node.count);
+          const content = clusterEl(node.count, locale === "fr" ? "fr" : "en");
           const overlay = createOverlay({
             map,
             position: { lat: node.lat, lng: node.lng },
             content,
             centered: true,
-            zIndex: 40 + Math.min(node.count, 200),
+            zIndex: 40 + Math.min(node.count, 80),
             collision: "REQUIRED",
             onClick: () => {
-              const box = new maps.LatLngBounds();
-              for (const item of node.items) {
-                if (Number.isFinite(item.lat) && Number.isFinite(item.lng)) {
-                  box.extend({ lat: item.lat, lng: item.lng });
-                }
-              }
-              if (!box.isEmpty()) {
-                map.fitBounds(box, MAP_CLUSTER_PAD);
-              } else {
-                map.setZoom(Math.min(zoom + 2, 16));
+              userMovedRef.current = true;
+              if (clusterStepZoom(node)) {
+                map.setZoom(Math.min((map.getZoom() ?? zoom) + 2, 17));
                 map.panTo({ lat: node.lat, lng: node.lng });
+                return;
               }
+              const box = new maps.LatLngBounds(
+                { lat: node.minLat, lng: node.minLng },
+                { lat: node.maxLat, lng: node.maxLng },
+              );
+              if (!box.isEmpty()) map.fitBounds(box, MAP_CLUSTER_PAD);
             },
           });
           nextPins.push(overlay);
           continue;
         }
-        const item = node.item;
-        if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-        const content = logoPinEl("ke-logo-pin");
-        content.setAttribute("aria-label", displayCentreName(item.name));
+        dotPins.push(node.item);
+      }
+      const selectedItem = dotPins.find((item) => item.slug === picked);
+      const field = mountPinCanvas({
+        maps,
+        map,
+        zoom,
+        pins: dotPins.filter((item) => item.id !== picked && item.slug !== picked),
+        locale: locale === "fr" ? "fr" : "en",
+        onPick: (item) => openPinRef.current(item),
+      });
+      nextPins.push(field);
+      if (selectedItem && Number.isFinite(selectedItem.lat) && Number.isFinite(selectedItem.lng)) {
+        const content = logoPinEl("ke-logo-pin is-active");
+        content.tabIndex = 0;
+        content.setAttribute("aria-label", pinLabel(selectedItem, locale === "fr" ? "fr" : "en"));
+        content.setAttribute("aria-expanded", "true");
+        content.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          openPinRef.current(selectedItem);
+        });
         const overlay = createOverlay({
           map,
-          position: { lat: item.lat, lng: item.lng },
+          position: { lat: selectedItem.lat, lng: selectedItem.lng },
           content,
-          zIndex: item.live ? 20 : 10,
-          collision: "OPTIONAL_AND_HIDES_LOWER_PRIORITY",
-          onClick: () => {
-            pinClickAt.current = Date.now();
-            setPicked(item.slug);
-            onSelectRef.current(item.slug);
-          },
+          zIndex: 500,
+          collision: "REQUIRED",
+          onClick: () => openPinRef.current(selectedItem),
         });
         nextPins.push(overlay);
-        markersBySlug.current.set(item.slug, wrapOverlayPin(overlay));
+        markersBySlug.current.set(selectedItem.slug, wrapOverlayPin(overlay));
       }
       pinsRef.current = nextPins;
     }, 50);
 
     return () => window.clearTimeout(timer);
-  }, [items, locale, ready, zoom]);
+  }, [items, locale, picked, ready, zoom, viewData]);
 
   useEffect(() => {
     const maps = mapsApiRef.current;
@@ -440,13 +731,51 @@ export function MapView({
   useEffect(() => {
     const map = mapRef.current;
     const maps = mapsApiRef.current;
-    if (!map || !maps || !ready) return;
+    const el = host.current;
+    if (!map || !maps || !el || !ready) return;
+    let down: { x: number; y: number; lat: number; lng: number; zoom: number } | null = null;
+    let movedPx = 0;
+    const onDown = (event: PointerEvent) => {
+      const center = map.getCenter?.();
+      down = {
+        x: event.clientX,
+        y: event.clientY,
+        lat: center?.lat?.() ?? Number.NaN,
+        lng: center?.lng?.() ?? Number.NaN,
+        zoom: map.getZoom?.() ?? Number.NaN,
+      };
+      movedPx = 0;
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!down) return;
+      movedPx = Math.max(movedPx, Math.hypot(event.clientX - down.x, event.clientY - down.y));
+    };
+    const onClick = (event: MouseEvent) => {
+      if (event.detail === 0) return;
+      const center = map.getCenter?.();
+      const cameraMoved = mapCameraMoved(down, {
+        lat: center?.lat?.() ?? Number.NaN,
+        lng: center?.lng?.() ?? Number.NaN,
+        zoom: map.getZoom?.() ?? Number.NaN,
+      });
+      if (mapPointerIsTap({ movedPx, cameraMoved })) return;
+      event.preventDefault();
+      event.stopPropagation();
+    };
     const listener = maps.event.addListener(map, "click", () => {
       if (Date.now() - pinClickAt.current < 400) return;
       dismissRef.current();
     });
+    el.addEventListener("pointerdown", onDown, true);
+    el.addEventListener("pointermove", onMove, true);
+    window.addEventListener("pointermove", onMove, true);
+    el.addEventListener("click", onClick, true);
     return () => {
       maps.event.removeListener(listener);
+      el.removeEventListener("pointerdown", onDown, true);
+      el.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointermove", onMove, true);
+      el.removeEventListener("click", onClick, true);
     };
   }, [ready]);
 
@@ -514,6 +843,7 @@ export function MapView({
   });
 
   async function locateMe() {
+    userMovedRef.current = true;
     if (onLocate) {
       onLocate();
       return;
@@ -529,6 +859,7 @@ export function MapView({
   }
 
   function bumpZoom(delta: number) {
+    userMovedRef.current = true;
     const map = mapRef.current;
     if (!map) return;
     const next = Math.min(18, Math.max(4, (map.getZoom() ?? zoom) + delta));
@@ -648,10 +979,6 @@ export function MapView({
   );
 }
 
-type ClusterNode =
-  | { kind: "pin"; item: DaycareCard }
-  | { kind: "group"; lat: number; lng: number; count: number; items: DaycareCard[] };
-
 function measurePinPopup(
   el: HTMLElement,
   point: { x: number; y: number; mapWidth: number; mapHeight: number },
@@ -731,33 +1058,19 @@ function MapPinPopup({
       >
         <X className="size-4" strokeWidth={2.4} />
       </button>
-      <Link
-        to="/daycare/$slug"
-        params={{ slug: item.slug }}
-        className="flex items-start gap-2 px-2 pb-1.5 pt-2 text-inherit no-underline"
-      >
-        {thumb ? (
-          <span data-ke="map-pin-photo" className="mt-0.5 shrink-0">
-            <BuildingPhoto
-              src={thumb}
-              className="aspect-[4/3] w-16 rounded-md object-cover"
-              sizes="64px"
-              width={128}
-              height={96}
-            />
-          </span>
-        ) : null}
-        <span className="min-w-0 flex-1 pr-9">
-          <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">{name}</p>
-          {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
-          {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
-          {approved ? (
-            <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
-              {t("kideaseApprovedMarker")}
-            </p>
-          ) : null}
-        </span>
-      </Link>
+      {item.slug ? (
+        <Link
+          to="/daycare/$slug"
+          params={{ slug: item.slug }}
+          className="flex items-start gap-2 px-2 pb-1.5 pt-2 text-inherit no-underline"
+        >
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} />
+        </Link>
+      ) : (
+        <div className="flex items-start gap-2 px-2 pb-1.5 pt-2">
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} />
+        </div>
+      )}
       <div className="px-2 pb-2">
         <button
           type="button"
@@ -782,6 +1095,215 @@ function MapPinPopup({
   );
 }
 
+function PinPopupSummary({
+  thumb,
+  name,
+  place,
+  facts,
+  approved,
+  approvedLabel,
+}: {
+  thumb: string | null;
+  name: string;
+  place: string;
+  facts: string;
+  approved: boolean;
+  approvedLabel: string;
+}) {
+  return (
+    <>
+      {thumb ? (
+        <span data-ke="map-pin-photo" className="mt-0.5 shrink-0">
+          <BuildingPhoto
+            src={thumb}
+            className="aspect-[4/3] w-16 rounded-md object-cover"
+            sizes="64px"
+            width={128}
+            height={96}
+          />
+        </span>
+      ) : null}
+      <span className="min-w-0 flex-1 pr-9">
+        <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">{name}</p>
+        {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
+        {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
+        {approved ? (
+          <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
+            {approvedLabel}
+          </p>
+        ) : null}
+      </span>
+    </>
+  );
+}
+
+function pinLabel(item: { name: string; nameFr?: string }, locale: "en" | "fr") {
+  return displayCentreName(locale === "fr" ? item.nameFr || item.name : item.name);
+}
+
+function mountPinCanvas(input: {
+  maps: typeof google.maps;
+  map: google.maps.Map;
+  zoom: number;
+  pins: DotItem[];
+  locale: "en" | "fr";
+  onPick: (item: DotItem) => void;
+}): AnyPin {
+  const { maps, map, zoom, pins, locale, onPick } = input;
+  const drawPx = mapLogoPinPx(zoom);
+  const tapPx = mapPinTapPx(zoom);
+  const hitPx = Math.max(MAP_DOT_HIT_PX, tapPx / 2);
+  const placed: DotItem[] = [];
+  const centers: { x: number; y: number }[] = [];
+  let focusIndex = -1;
+  let canvas: HTMLCanvasElement | null = null;
+  const sprite = logoPinImage();
+  const field = new maps.OverlayView();
+  const hitTest = (event: MouseEvent) => {
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return pickNearestMapDot(
+      placed,
+      centers,
+      { x: event.clientX - rect.left, y: event.clientY - rect.top },
+      hitPx,
+    );
+  };
+  const focusPin = (index: number) => {
+    focusIndex = index;
+    const item = placed[index];
+    if (!canvas) return;
+    canvas.setAttribute("aria-label", item ? pinLabel(item, locale) : canvas.dataset.keMapLabel || "Map");
+  };
+  const moveFocus = (dx: number, dy: number) => {
+    if (centers.length === 0) return;
+    const origin = focusIndex >= 0 ? centers[focusIndex] : centers[0];
+    if (!origin) return;
+    let best = -1;
+    let bestScore = Infinity;
+    for (let i = 0; i < centers.length; i += 1) {
+      if (i === focusIndex) continue;
+      const point = centers[i];
+      if (!point) continue;
+      const ox = point.x - origin.x;
+      const oy = point.y - origin.y;
+      if (dx !== 0 && Math.sign(ox) !== dx) continue;
+      if (dy !== 0 && Math.sign(oy) !== dy) continue;
+      if (dx !== 0 && Math.abs(ox) < 4) continue;
+      if (dy !== 0 && Math.abs(oy) < 4) continue;
+      const score = ox * ox + oy * oy;
+      if (score < bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    if (best >= 0) focusPin(best);
+  };
+  field.onAdd = () => {
+    const layer = document.createElement("canvas");
+    layer.className = "ke-map-pin-canvas";
+    layer.dataset.keMapLabel = `${pins.length} daycares`;
+    layer.tabIndex = 0;
+    layer.setAttribute("role", "application");
+    layer.setAttribute("aria-label", layer.dataset.keMapLabel);
+    layer.addEventListener("click", (event) => {
+      if (event.detail === 0) {
+        const item = placed[focusIndex];
+        if (item) onPick(item);
+        return;
+      }
+      const hit = hitTest(event);
+      if (!hit) return;
+      event.preventDefault();
+      event.stopPropagation();
+      onPick(hit);
+    });
+    layer.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        const item = placed[focusIndex >= 0 ? focusIndex : 0];
+        if (item) onPick(item);
+        return;
+      }
+      const step =
+        event.key === "ArrowLeft"
+          ? [-1, 0]
+          : event.key === "ArrowRight"
+            ? [1, 0]
+            : event.key === "ArrowUp"
+              ? [0, -1]
+              : event.key === "ArrowDown"
+                ? [0, 1]
+                : null;
+      if (!step) return;
+      event.preventDefault();
+      moveFocus(step[0] || 0, step[1] || 0);
+    });
+    canvas = layer;
+    field.getPanes()?.overlayMouseTarget.appendChild(layer);
+  };
+  field.draw = () => {
+    const projection = field.getProjection();
+    const surface = canvas;
+    if (!projection || !surface) return;
+    const mapDiv = map.getDiv?.();
+    const width = mapDiv?.clientWidth || surface.parentElement?.clientWidth || 0;
+    const height = mapDiv?.clientHeight || surface.parentElement?.clientHeight || 0;
+    if (width < 2 || height < 2) return;
+    const dpr = window.devicePixelRatio || 1;
+    const pixelW = Math.round(width * dpr);
+    const pixelH = Math.round(height * dpr);
+    if (surface.width !== pixelW || surface.height !== pixelH) {
+      surface.width = pixelW;
+      surface.height = pixelH;
+    }
+    surface.style.width = `${width}px`;
+    surface.style.height = `${height}px`;
+    const ctx = surface.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    placed.length = 0;
+    centers.length = 0;
+    const image = sprite;
+    if (!image.complete || image.naturalWidth === 0) return;
+    for (const item of pins) {
+      if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
+      const point = projection.fromLatLngToDivPixel(new maps.LatLng(item.lat, item.lng));
+      if (!point) continue;
+      if (
+        point.x < -MAP_DRAW_MARGIN_PX ||
+        point.y < -MAP_DRAW_MARGIN_PX ||
+        point.x > width + MAP_DRAW_MARGIN_PX ||
+        point.y > height + MAP_DRAW_MARGIN_PX
+      ) {
+        continue;
+      }
+      ctx.drawImage(image, point.x - drawPx / 2, point.y - drawPx, drawPx, drawPx);
+      placed.push(item);
+      centers.push({ x: point.x, y: point.y - drawPx / 2 });
+    }
+    if (focusIndex >= placed.length) focusIndex = placed.length - 1;
+  };
+  field.onRemove = () => {
+    canvas?.remove();
+    canvas = null;
+  };
+  field.setMap(map);
+  if (!sprite.complete) sprite.addEventListener("load", () => field.draw(), { once: true });
+  return field;
+}
+
+let logoPinSprite: HTMLImageElement | null = null;
+
+function logoPinImage() {
+  if (!logoPinSprite) {
+    logoPinSprite = new Image();
+    logoPinSprite.src = LOGO_PIN_URL;
+  }
+  return logoPinSprite;
+}
+
 function logoPinEl(className: string) {
   const content = document.createElement("div");
   content.className = className;
@@ -791,13 +1313,17 @@ function logoPinEl(className: string) {
   return content;
 }
 
-function clusterEl(count: number) {
-  const content = document.createElement("div");
-  content.className = "ke-logo-pin ke-logo-cluster";
-  const label = count > 999 ? "999+" : String(count);
-  content.innerHTML = `${PIN_SVG}<span class="ke-pin-count">${label}</span>`;
-  content.setAttribute("role", "button");
-  content.setAttribute("aria-label", `${count} licensed centres`);
+function clusterEl(count: number, locale: "en" | "fr") {
+  const content = document.createElement("button");
+  content.type = "button";
+  content.className = "ke-logo-cluster ke-cluster-bubble";
+  const size = clusterBubblePx(count);
+  content.style.setProperty("--ke-cluster-size", `${size}px`);
+  content.style.width = `${size}px`;
+  content.style.height = `${size}px`;
+  content.style.fontSize = `${clusterBubbleFontPx(count)}px`;
+  content.textContent = clusterCountLabel(count);
+  content.setAttribute("aria-label", clusterAriaLabel(count, locale));
   return content;
 }
 
@@ -815,66 +1341,3 @@ function wrapOverlayPin(overlay: ListingOverlay): SlugPin {
   };
 }
 
-function clusterCellDegrees(zoom: number): number {
-  // City / neighbourhood zoom shows a KidEase logo on every listing.
-  // Cluster only when the map is pulled far back so pins would stack.
-  if (zoom >= 11) return 0;
-  if (zoom >= 9) return 0.16;
-  if (zoom >= 7) return 0.32;
-  return 0.65;
-}
-
-function clusterItems(items: DaycareCard[], zoom: number): ClusterNode[] {
-  const usable = items.filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lng));
-  const cell = clusterCellDegrees(zoom);
-  if (cell <= 0 || usable.length < 2) return usable.map((item) => ({ kind: "pin", item }));
-
-  const buckets = new Map<string, DaycareCard[]>();
-  for (const item of usable) {
-    const key = `${Math.round(item.lat / cell)}_${Math.round(item.lng / cell)}`;
-    const list = buckets.get(key);
-    if (list) list.push(item);
-    else buckets.set(key, [item]);
-  }
-
-  type Group = { lat: number; lng: number; items: DaycareCard[] };
-  const groups: Group[] = [];
-  for (const list of buckets.values()) {
-    const lat = list.reduce((s, i) => s + i.lat, 0) / list.length;
-    const lng = list.reduce((s, i) => s + i.lng, 0) / list.length;
-    groups.push({ lat, lng, items: list });
-  }
-
-  const minSep = cell * 0.72;
-  const minSep2 = minSep * minSep;
-  const merged = new Array(groups.length).fill(false);
-  const out: ClusterNode[] = [];
-  for (let i = 0; i < groups.length; i++) {
-    if (merged[i]) continue;
-    let lat = groups[i].lat * groups[i].items.length;
-    let lng = groups[i].lng * groups[i].items.length;
-    const pack = [...groups[i].items];
-    for (let j = i + 1; j < groups.length; j++) {
-      if (merged[j]) continue;
-      const dLat = groups[i].lat - groups[j].lat;
-      const dLng = (groups[i].lng - groups[j].lng) * Math.cos((groups[i].lat * Math.PI) / 180);
-      if (dLat * dLat + dLng * dLng > minSep2) continue;
-      merged[j] = true;
-      lat += groups[j].lat * groups[j].items.length;
-      lng += groups[j].lng * groups[j].items.length;
-      pack.push(...groups[j].items);
-    }
-    if (pack.length === 1) {
-      out.push({ kind: "pin", item: pack[0] });
-      continue;
-    }
-    out.push({
-      kind: "group",
-      lat: lat / pack.length,
-      lng: lng / pack.length,
-      count: pack.length,
-      items: pack,
-    });
-  }
-  return out;
-}

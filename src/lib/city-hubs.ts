@@ -224,6 +224,11 @@ export function cityHubSearchQuery(hub: CityHubDef) {
   return hub.cityEn || hub.city;
 }
 
+/** Map search for a city page. Includes the province code, same shape as "Winnipeg, MB". */
+export function cityHubMapSearchQuery(hub: Pick<CityHubDef, "city" | "cityEn" | "province">) {
+  return `${hub.cityEn || hub.city}, ${hub.province}`;
+}
+
 export function cityHubDefForPlace(city: string | null | undefined, province: string | null | undefined) {
   const cityKey = normalizeCityKey(city);
   const provinceKey = String(province ?? "")

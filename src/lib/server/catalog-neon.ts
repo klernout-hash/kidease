@@ -105,7 +105,12 @@ select exists (
 ) as ok
 `;
 
-/** lng, lat, radius_meters — ST_MakePoint is (lng, lat). */
+/**
+ * lng, lat, radius_meters — ST_MakePoint is (lng, lat).
+ * The 400-row cap is the search list only. A city search can be larger
+ * (Winnipeg's 25 km catalogue is). The map uses map-pins.ts and does not
+ * apply this limit.
+ */
 export const NEON_NEAR_SQL = `
 select ${CATALOG_SELECT},
   ${LISTING_DISTANCE_KM_SQL} as distance_km

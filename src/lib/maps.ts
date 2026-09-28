@@ -284,3 +284,15 @@ export function mapZoomForRadius(radiusKm: number) {
 
 /** Tight inset so fitBounds frames the search circle, not the listing card chrome. */
 export const MAP_RADIUS_FIT_PAD = { top: 72, right: 64, bottom: 28, left: 16 };
+
+/**
+ * Phone maps are narrow. The desktop inset (controls on the right) would
+ * shove a 25 km circle off a 390px screen, so the phone pad stays small
+ * and still clears the radius chip.
+ */
+export function radiusFitPadding(viewportWidth: number) {
+  if (Number.isFinite(viewportWidth) && viewportWidth > 0 && viewportWidth < 480) {
+    return { top: 64, right: 20, bottom: 20, left: 16 };
+  }
+  return MAP_RADIUS_FIT_PAD;
+}
