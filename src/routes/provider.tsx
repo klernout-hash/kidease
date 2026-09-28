@@ -1,4 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { beforeLoadPrivate } from "@/lib/server/role-route";
+import { privateReturnPath } from "@/lib/role-access";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
@@ -11,7 +13,8 @@ import { PriorityPill } from "@/components/priority-pill";
 import { TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useSettledUser } from "@/lib/auth/use-current-user";
-import { createListing, getProvider, setRole } from "@/lib/server/family";
+import { createListing, getProvider } from "@/lib/server/family";
+import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
 import {
   DUPLICATE_LISTING_MESSAGE,
   duplicateListingUserMessage,
@@ -72,6 +75,8 @@ import type { ProviderEntitlements } from "@/lib/provider-entitlements";
 import { CentreEmployeesPanel } from "@/components/centre-employees";
 import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { useRoleChrome } from "@/components/role-chrome";
+import { DaycareDeskHome } from "@/components/daycare-desk-home";
 
 const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
@@ -91,6 +96,7 @@ const COACH_FOCUS = new Set<ListingCoachFocus>([
 ]);
 
 export const Route = createFileRoute("/provider")({
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   validateSearch: (s: Record<string, unknown>) => {
     const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
@@ -106,6 +112,7 @@ export const Route = createFileRoute("/provider")({
 
 function ProviderPage() {
   const { user, isPending } = useSettledUser();
+  const chrome = useRoleChrome();
   const { t, locale } = useCopy();
   const showPay = useShowPayCtas();
   const { session } = useSessionDesks();
@@ -131,6 +138,8 @@ function ProviderPage() {
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [leads, setLeads] = useState<LeadRequest[]>([]);
   const [pipeline, setPipeline] = useState<PipelineCard[]>([]);
+  const [upgradeDismissed, setUpgradeDismissed] = useState(false);
+  const [deskSettled, setDeskSettled] = useState(false);
   const [subscription, setSubscription] = useState<{
     selectedPlan: ProviderEntitlements["selectedPlan"];
     entitledPlan: ProviderEntitlements["entitledPlan"];
@@ -174,6 +183,8 @@ function ProviderPage() {
     setListings(res.listings);
     setStats(res.stats);
     setSubscription(res.subscription);
+    setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
+    setDeskSettled(true);
     setRequests(incoming);
     setTours(tourRows);
     setPipeline(pipelineRows);
@@ -182,7 +193,7 @@ function ProviderPage() {
 
   useEffect(() => {
     if (!user?.id) return;
-    void setRole({ data: "provider" }).then(() => load()).catch(() => undefined);
+    void load().catch(() => undefined);
   }, [user?.id]);
 
   useEffect(() => {
@@ -212,6 +223,13 @@ function ProviderPage() {
   if (childRoute) return <Outlet />;
 
   if (isPending) {
+    return (
+      <Shell>
+        <DeskSkeleton />
+      </Shell>
+    );
+  }
+  if (!user && (chrome.pending || chrome.signedIn)) {
     return (
       <Shell>
         <DeskSkeleton />
@@ -288,6 +306,29 @@ function ProviderPage() {
         </section>
       ) : null}
       {desk === "today" ? (
+        <>
+        <DaycareDeskHome
+          listings={listings}
+          leads={leads}
+          tours={tours}
+          planName={
+            subscription?.paid
+              ? subscription.selectedPlan === "network"
+                ? "Network"
+                : "Pro"
+              : "Free"
+          }
+          paid={Boolean(subscription?.paid)}
+          renewsOn={chrome.renewsOn}
+          inquiryUsed={subscription?.inquiryUsed ?? 0}
+          inquiryCap={subscription?.inquiryCap ?? null}
+          dismissed={upgradeDismissed}
+          settled={deskSettled}
+          onDismiss={() => {
+            setUpgradeDismissed(true);
+            void dismissUpgradeCard().catch(() => setUpgradeDismissed(false));
+          }}
+        />
         <TodayUrgencyHome
           listings={listings}
           tours={tours}
@@ -295,6 +336,7 @@ function ProviderPage() {
           onChanged={() => void load()}
           onOpenDesk={(next) => setDesk(next)}
         />
+        </>
       ) : null}
       {desk === "requests" ? (
         <section className="space-y-8">

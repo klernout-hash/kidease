@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, MessageCircle } from "lucide-react";
-import { AdminDeskLink } from "@/components/admin-desk-link";
 import {
   DESK_PATH,
   headerDesks,
@@ -48,18 +47,7 @@ function DeskPills({
           "inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium leading-none",
           on ? "bg-primary text-primary-fg" : "text-muted hover:text-fg",
         );
-        if (desk === "admin") {
-          return (
-            <AdminDeskLink
-              key={desk}
-              onClick={() => onPick(desk)}
-              aria-current={on ? "page" : undefined}
-              className={className}
-            >
-              {deskLabel(t, desk)}
-            </AdminDeskLink>
-          );
-        }
+        if (desk === "admin") return null;
         return (
           <Link
             key={desk}
@@ -166,19 +154,7 @@ function DeskMenu({
               onPick(desk);
               setOpen(false);
             };
-            if (desk === "admin") {
-              return (
-                <AdminDeskLink
-                  key={desk}
-                  role="menuitem"
-                  onClick={onSelect}
-                  aria-current={on ? "page" : undefined}
-                  className={className}
-                >
-                  {deskLabel(t, desk)}
-                </AdminDeskLink>
-              );
-            }
+            if (desk === "admin") return null;
             return (
               <Link
                 key={desk}

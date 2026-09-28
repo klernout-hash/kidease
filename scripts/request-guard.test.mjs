@@ -12,6 +12,7 @@ import {
   isApexKideaseHost,
   isHiddenListingPath,
   isOffScopeCityHubPath,
+  isAdminNoindexPath,
   isSensitiveDeskPath,
   isVercelAppHost,
   PUBLISHED_CITY_HUB_SLUGS,
@@ -30,6 +31,17 @@ test("isVercelAppHost matches system domains including kidease-git", () => {
   assert.equal(isVercelAppHost("kidease.ca"), false);
   assert.equal(isVercelAppHost("localhost:8080"), false);
   assert.equal(isVercelAppHost("vercel.app.evil.com"), false);
+});
+
+test("admin documents are noindex paths and are not listed as robots Disallow", () => {
+  assert.equal(isAdminNoindexPath("/admin"), true);
+  assert.equal(isAdminNoindexPath("/admin/queue"), true);
+  assert.equal(isAdminNoindexPath("/admin-chat"), true);
+  assert.equal(isAdminNoindexPath("/admin-contracts"), true);
+  assert.equal(isAdminNoindexPath("/admin-email-health"), true);
+  assert.equal(isAdminNoindexPath("/parent"), false);
+  assert.equal(isAdminNoindexPath("/provider"), false);
+  assert.equal(isAdminNoindexPath("/login"), false);
 });
 
 test("isSensitiveDeskPath is prefix-safe", () => {

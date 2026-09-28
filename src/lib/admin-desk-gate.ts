@@ -12,9 +12,8 @@ export const ADMIN_LOGIN_SEARCH = {
 };
 
 export type AdminDeskGateDest =
-  | { to: "/login"; search: typeof ADMIN_LOGIN_SEARCH }
   | { to: "/verify-2fa"; search: { next: "/admin" } }
-  | { to: "/" };
+  | { notFound: true };
 
 export function adminGateFailureKind(err: unknown): "login" | "two_factor" | "home" {
   const raw = err instanceof Error ? err.message : String(err ?? "");
@@ -26,9 +25,13 @@ export function adminGateFailureKind(err: unknown): "login" | "two_factor" | "ho
   return "home";
 }
 
+/**
+ * Signed-out visitors and every non-admin get a plain 404 so /admin is not
+ * advertised. Kyle, already signed in as admin, still reaches the OTP step.
+ * He signs in on /login (type kyle@kidease.ca). There is no public Admin link.
+ */
 export function adminDeskGateRedirect(err: unknown): AdminDeskGateDest {
   const kind = adminGateFailureKind(err);
-  if (kind === "login") return { to: "/login", search: ADMIN_LOGIN_SEARCH };
   if (kind === "two_factor") return { to: "/verify-2fa", search: { next: "/admin" } };
-  return { to: "/" };
+  return { notFound: true };
 }

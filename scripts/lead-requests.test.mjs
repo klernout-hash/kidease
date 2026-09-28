@@ -209,7 +209,7 @@ test("listing CTAs deep-link ask= tour|spot|waitlist and confirm in Messages", (
 });
 
 test("admin can see lead counts; no GHL and no FCM in this track PR", () => {
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /listAdminLeadCounts/);
   assert.match(admin, /Open leads/);
   const server = src("src/lib/server/lead-requests.ts");

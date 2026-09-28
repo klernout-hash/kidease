@@ -19,6 +19,7 @@ import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-healt
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
 import { Route as ChildcareBenefitsProgramRouteImport } from './routes/childcare-benefits-program'
+import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -43,6 +44,7 @@ import { Route as MenuRouteImport } from './routes/menu'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PayRouteImport } from './routes/pay'
+import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -56,6 +58,7 @@ import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
+import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
@@ -166,6 +169,11 @@ const ChildcareBenefitsProgramRoute =
     path: '/childcare-benefits-program',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CitiesRoute = CitiesRouteImport.update({
+  id: '/cities',
+  path: '/cities',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClaimRoute = ClaimRouteImport.update({
   id: '/claim',
   path: '/claim',
@@ -286,6 +294,11 @@ const PayRoute = PayRouteImport.update({
   path: '/pay',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlansRoute = PlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -349,6 +362,11 @@ const Verify2faRoute = Verify2faRouteImport.update({
 const ApiDigestRoute = ApiDigestRouteImport.update({
   id: '/api/digest',
   path: '/api/digest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiE2eSeedRoute = ApiE2eSeedRouteImport.update({
+  id: '/api/e2e-seed',
+  path: '/api/e2e-seed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -654,6 +672,7 @@ export interface FileRoutesByFullPath {
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
+  '/cities': typeof CitiesRoute
   '/claim': typeof ClaimRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
@@ -678,6 +697,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
   '/pay': typeof PayRouteWithChildren
+  '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -691,6 +711,7 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
@@ -761,6 +782,7 @@ export interface FileRoutesByTo {
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
+  '/cities': typeof CitiesRoute
   '/claim': typeof ClaimRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
@@ -783,6 +805,7 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
+  '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -796,6 +819,7 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
@@ -867,6 +891,7 @@ export interface FileRoutesById {
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
+  '/cities': typeof CitiesRoute
   '/claim': typeof ClaimRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
@@ -891,6 +916,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
   '/pay': typeof PayRouteWithChildren
+  '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -904,6 +930,7 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/api/digest': typeof ApiDigestRoute
+  '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
@@ -976,6 +1003,7 @@ export interface FileRouteTypes {
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
+    | '/cities'
     | '/claim'
     | '/compare'
     | '/contact'
@@ -1000,6 +1028,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/parent'
     | '/pay'
+    | '/plans'
     | '/privacy'
     | '/provider'
     | '/reset-password'
@@ -1013,6 +1042,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
     | '/api/screening-documents'
@@ -1083,6 +1113,7 @@ export interface FileRouteTypes {
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
+    | '/cities'
     | '/claim'
     | '/compare'
     | '/contact'
@@ -1105,6 +1136,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/notifications'
     | '/parent'
+    | '/plans'
     | '/privacy'
     | '/provider'
     | '/reset-password'
@@ -1118,6 +1150,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
     | '/api/screening-documents'
@@ -1188,6 +1221,7 @@ export interface FileRouteTypes {
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
+    | '/cities'
     | '/claim'
     | '/compare'
     | '/contact'
@@ -1212,6 +1246,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/parent'
     | '/pay'
+    | '/plans'
     | '/privacy'
     | '/provider'
     | '/reset-password'
@@ -1225,6 +1260,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/api/digest'
+    | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
     | '/api/screening-documents'
@@ -1296,6 +1332,7 @@ export interface RootRouteChildren {
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
   ChildcareBenefitsProgramRoute: typeof ChildcareBenefitsProgramRoute
+  CitiesRoute: typeof CitiesRoute
   ClaimRoute: typeof ClaimRoute
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
@@ -1320,6 +1357,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   ParentRoute: typeof ParentRoute
   PayRoute: typeof PayRouteWithChildren
+  PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
   ProviderRoute: typeof ProviderRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1333,6 +1371,7 @@ export interface RootRouteChildren {
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
+  ApiE2eSeedRoute: typeof ApiE2eSeedRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRouteWithChildren
@@ -1438,6 +1477,13 @@ declare module '@tanstack/react-router' {
       path: '/childcare-benefits-program'
       fullPath: '/childcare-benefits-program'
       preLoaderRoute: typeof ChildcareBenefitsProgramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cities': {
+      id: '/cities'
+      path: '/cities'
+      fullPath: '/cities'
+      preLoaderRoute: typeof CitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/claim': {
@@ -1608,6 +1654,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plans': {
+      id: '/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -1697,6 +1750,13 @@ declare module '@tanstack/react-router' {
       path: '/api/digest'
       fullPath: '/api/digest'
       preLoaderRoute: typeof ApiDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/e2e-seed': {
+      id: '/api/e2e-seed'
+      path: '/api/e2e-seed'
+      fullPath: '/api/e2e-seed'
+      preLoaderRoute: typeof ApiE2eSeedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -2223,6 +2283,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,
   ChildcareBenefitsProgramRoute: ChildcareBenefitsProgramRoute,
+  CitiesRoute: CitiesRoute,
   ClaimRoute: ClaimRoute,
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
@@ -2247,6 +2308,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   ParentRoute: ParentRoute,
   PayRoute: PayRouteWithChildren,
+  PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
   ProviderRoute: ProviderRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -2260,6 +2322,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
+  ApiE2eSeedRoute: ApiE2eSeedRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   ApiScreeningDocumentsRoute: ApiScreeningDocumentsRouteWithChildren,

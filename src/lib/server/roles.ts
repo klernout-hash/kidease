@@ -10,6 +10,7 @@ import {
   nextStoredRole,
   parseAppRole,
 } from "@/lib/desks";
+import { roleFlipAllowed } from "@/lib/role-access";
 import { canAccessSupport } from "@/lib/support";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { paymentSourceLabel } from "@/lib/payment-source";
@@ -54,20 +55,24 @@ async function profileRole(sql: Awaited<ReturnType<typeof getSql>>, userId: stri
   return rows[0]?.role ?? null;
 }
 
+async function profileRoleRow(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
+  const rows = await sql<{ role: string; created_at: string | Date | null }>`
+    select role, created_at from profiles where user_id = ${userId} limit 1
+  `.catch(() => []);
+  return rows[0] ?? null;
+}
+
 async function ownsCentre(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const owned = await listOwnedDaycareIds(sql, userId);
   return owned.length > 0;
 }
 
-async function unreadInboxCount(
-  sql: Awaited<ReturnType<typeof getSql>>,
-  userId: string,
-  view: "all" | "family" | "centre" = "all",
-) {
-  const familyOnly = view === "family";
-  const centreOnly = view === "centre";
-  const rows = await sql<{ n: number }>`
-    select count(*)::int as n
+async function unreadInboxCounts(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
+  const rows = await sql<{ n_all: number; n_family: number; n_centre: number }>`
+    select
+      count(*)::int as n_all,
+      count(*) filter (where c.user_id = ${userId})::int as n_family,
+      count(*) filter (where c.user_id <> ${userId})::int as n_centre
     from conversations c
     where (
         c.user_id = ${userId}
@@ -80,8 +85,6 @@ async function unreadInboxCount(
           where m.user_id = ${userId} and m.daycare_id = c.daycare_id and m.status = 'active'
         )
       )
-      and (${familyOnly} = false or c.user_id = ${userId})
-      and (${centreOnly} = false or c.user_id <> ${userId})
       and exists (
         select 1 from messages m
         where m.conversation_id = c.id
@@ -93,8 +96,12 @@ async function unreadInboxCount(
             '1970-01-01'::timestamptz
           )
       )
-  `.catch(() => [{ n: 0 }]);
-  return rows[0]?.n ?? 0;
+  `.catch(() => [{ n_all: 0, n_family: 0, n_centre: 0 }]);
+  return {
+    all: rows[0]?.n_all ?? 0,
+    family: rows[0]?.n_family ?? 0,
+    centre: rows[0]?.n_centre ?? 0,
+  };
 }
 
 /**
@@ -188,11 +195,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   if (stored === "provider" || owned) await claimProviderCrmIntake(userId);
   const member = owned ? false : await isActiveCentreMember(sql, userId);
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
-  const [unread, unreadFamily, unreadCentre] = await Promise.all([
-    unreadInboxCount(sql, userId),
-    unreadInboxCount(sql, userId, "family"),
-    unreadInboxCount(sql, userId, "centre"),
-  ]);
+  const { all: unread, family: unreadFamily, centre: unreadCentre } = await unreadInboxCounts(sql, userId);
   const { countUnreadNotifications } = await import("@/lib/server/notifications");
   const notificationUnread = await countUnreadNotifications(userId).catch(() => 0);
   const stripeLive = stripeChargesLive();
@@ -218,14 +221,17 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
 
 export async function writeProfileRole(userId: string, requested: "parent" | "provider") {
   const sql = await getSql();
-  const prev = await profileRole(sql, userId);
+  const row = await profileRoleRow(sql, userId);
+  const prev = row?.role ?? null;
+  const created = row?.created_at ? new Date(row.created_at).getTime() : null;
+  const ageMs = created != null && !Number.isNaN(created) ? Date.now() - created : null;
   const next = nextStoredRole(prev, requested);
   if (!prev) {
     await sql`insert into profiles (user_id, role) values (${userId}, ${next})`;
     return { role: next, previous: null as string | null };
   }
   const stored = parseAppRole(prev);
-  if (isStaffRole(stored)) {
+  if (isStaffRole(stored) || !roleFlipAllowed(prev, requested, ageMs)) {
     return { role: stored, previous: prev };
   }
   await sql`update profiles set role = ${next} where user_id = ${userId}`;

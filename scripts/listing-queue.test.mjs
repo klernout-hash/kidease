@@ -248,7 +248,7 @@ test("QA fixtures stay opt-in and unclaimed QA is not a production waiting claim
 });
 
 test("admin surfaces use queueable status, not unclaimed-as-waiting", () => {
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /isQueueableClaimStatus/);
   assert.match(admin, /staffQueueRows/);
   assert.match(admin, /AdminIncompleteQueue/);

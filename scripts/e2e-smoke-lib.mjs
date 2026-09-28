@@ -140,10 +140,10 @@ export function expectedAccessLocation(pathname = SMOKE_PATHS.admin) {
 }
 
 /**
- * Guest /admin is gated without Cloudflare or a session.
- * - Local preview: TanStack beforeLoad → /login
+ * Guest /admin must not advertise the desk.
+ * - Local preview: plain 404 (Page not found). A sign-in page or 403 fails.
  * - *.vercel.app: request-guard 302 → www.kidease.ca/admin (Access lives there)
- * - www: Cloudflare Access interstitial, or /login after Access
+ * - www: Cloudflare Access interstitial is still accepted at the edge.
  */
 export function classifyAdminGate({
   finalUrl = "",
@@ -156,9 +156,6 @@ export function classifyAdminGate({
   const body = String(bodyText || "");
   const expected = expectedAccessLocation();
 
-  if (status >= 400 && status < 500) {
-    return { ok: true, kind: "denied" };
-  }
   if (location.startsWith(CANONICAL_ORIGIN) && /\/admin(?:\/|$|\?)/.test(location)) {
     return { ok: true, kind: "access-redirect" };
   }
@@ -168,13 +165,16 @@ export function classifyAdminGate({
   if (/cloudflareaccess\.com|Cloudflare Access|Sign in with Cloudflare/i.test(`${url}\n${body}`)) {
     return { ok: true, kind: "cloudflare-access" };
   }
-  if (/\/login(?:\/|$|\?)/.test(url) || /Sign in/i.test(body)) {
-    return { ok: true, kind: "login" };
+  if (status === 404 || (/page not found/i.test(body) && !/\/login(?:\/|$|\?)/.test(url))) {
+    return { ok: true, kind: "not-found" };
   }
-  if (location.includes("/login")) {
-    return { ok: true, kind: "login" };
+  if (status === 403) {
+    return { ok: false, kind: "denied", reason: "unsigned /admin returned 403 instead of 404" };
   }
-  if (/Admin · KidEase|Admin desk/i.test(body) && !/Sign in/i.test(body)) {
+  if (/\/login(?:\/|$|\?)/.test(url) || location.includes("/login") || /Sign in/i.test(body)) {
+    return { ok: false, kind: "login", reason: "unsigned /admin opened a sign-in page" };
+  }
+  if (/Admin · KidEase|Admin desk/i.test(body)) {
     return { ok: false, kind: "open", reason: "unsigned /admin rendered the admin desk" };
   }
   if (url.includes(expected) || location === expected) {
@@ -183,7 +183,7 @@ export function classifyAdminGate({
   return {
     ok: false,
     kind: "unknown",
-    reason: `unsigned /admin did not redirect to login or Access (status ${status}, url ${url || "(none)"})`,
+    reason: `unsigned /admin was not a 404 (status ${status}, url ${url || "(none)"})`,
   };
 }
 

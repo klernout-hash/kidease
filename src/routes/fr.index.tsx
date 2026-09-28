@@ -10,7 +10,6 @@ import {
   HERO_LCP_MOBILE_SIZES,
   HERO_LCP_SIZES,
 } from "@/components/building-photo";
-import { CityHubLinks } from "@/components/city-hub-links";
 import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
@@ -119,8 +118,13 @@ function FrHome() {
                 <Link to="/fr" hash="comment">{t("howItWorksCta")}</Link>
               </Button>
             </div>
-            <CityHubLinks className="mt-5" />
-            <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>
+            <Link
+              to="/cities"
+              data-ke="browse-cities"
+              className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
+            >
+              {t("browseCities")}
+            </Link>
           </div>
           <div className="overflow-hidden rounded-xl shadow-lift ring-1 ring-border">
             <HeroYard />

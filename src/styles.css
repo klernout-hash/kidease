@@ -507,6 +507,13 @@
   .ke-gutter {
     padding-inline: clamp(12px, 3vw, 40px);
   }
+  /* Language, appearance, and social stay in the header from md up.
+     Below that they move into the menu so the Menu button stays on screen. */
+  @media (max-width: 767px) {
+    .ke-narrow-hide {
+      display: none !important;
+    }
+  }
   .ke-site-footer {
     border-top: 1px solid var(--color-border);
     background: var(--color-surface);

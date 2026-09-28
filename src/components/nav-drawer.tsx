@@ -2,8 +2,9 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
-import { AdminDeskLink } from "@/components/admin-desk-link";
 import { BrandMark } from "@/components/brand-mark";
+import { RoleNavLinks } from "@/components/role-nav";
+import type { ChromeRole } from "@/lib/role-access";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
@@ -27,9 +28,12 @@ export function NavDrawer({
   parentLabel,
   providerLabel,
   signedIn,
+  menusReady = true,
   accountLabel,
   accountHref = "/account",
   accountSearch,
+  role = "guest",
+  paid = false,
   isAdmin = false,
   desksSlot,
   onSignOut,
@@ -41,9 +45,12 @@ export function NavDrawer({
   parentLabel: string;
   providerLabel: string;
   signedIn: boolean;
+  menusReady?: boolean;
   accountLabel: string;
   accountHref?: string;
   accountSearch?: Record<string, string>;
+  role?: ChromeRole;
+  paid?: boolean;
   isAdmin?: boolean;
   desksSlot?: ReactNode;
   onSignOut: () => void;
@@ -52,6 +59,7 @@ export function NavDrawer({
   const panelRef = useRef<HTMLElement>(null);
   const { t, locale } = useCopy();
   const { session } = useSessionDesks();
+  void isAdmin;
   const unread = failClosedUnread(session?.notificationUnread);
   const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
 
@@ -119,6 +127,7 @@ export function NavDrawer({
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
+          {menusReady ? <RoleNavLinks role={role} paid={paid} appearance="drawer" onNavigate={onClose} /> : null}
           {signedIn ? (
             <MenuRow
               to="/notifications"
@@ -157,15 +166,6 @@ export function NavDrawer({
                 <MenuGlyph id="account" className="text-primary-fg" />
                 {accountLabel}
               </Link>
-              {isAdmin ? (
-                <AdminDeskLink
-                  onClick={onClose}
-                  className="mt-2 flex min-h-12 items-center gap-3 rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
-                >
-                  <MenuGlyph id="admin" />
-                  Admin
-                </AdminDeskLink>
-              ) : null}
               <button
                 type="button"
                 onClick={() => {
@@ -178,7 +178,7 @@ export function NavDrawer({
                 {t("signOut")}
               </button>
             </>
-          ) : (
+          ) : menusReady ? (
             <>
               <Link
                 to={loginTo}
@@ -199,7 +199,7 @@ export function NavDrawer({
                 {providerLabel}
               </Link>
             </>
-          )}
+          ) : null}
           <div className="mt-4 flex items-center gap-3 overflow-visible rounded-full bg-surface px-3 ring-1 ring-border">
             <MenuGlyph id="language" />
             <LanguageSelect className="w-full justify-start" />

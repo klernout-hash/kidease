@@ -46,7 +46,7 @@ test("successful empty lists stay empty; failures do not become []", async () =>
 });
 
 test("admin refresh does not swallow listAdminCentres as an empty queue", () => {
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   const incomplete = src("src/components/admin-incomplete.tsx");
   const centres = src("src/lib/server/admin-centres.ts");
   assert.doesNotMatch(admin, /listAdminCentres\(\)\.catch\(\(\) => \[\]\)/);

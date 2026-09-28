@@ -42,13 +42,15 @@ test("app home uses one location bar; website does not stack rails and the featu
   assert.match(home, /const featuredSearch/);
   assert.match(home, /<ExploreSearchBar/);
   assert.match(appBlock, /featuredSearch/);
-  assert.match(appBlock, /CITY_CHIPS/);
-  assert.match(appBlock, /applyPlace/);
+  assert.match(appBlock, /heroCityBrowse/);
+  assert.doesNotMatch(appBlock, /CITY_CHIPS/);
+  assert.match(home, /function applyPlace/);
   assert.doesNotMatch(appBlock, /locationForm/);
   assert.doesNotMatch(appBlock, /useLocation\(\)/);
   assert.match(home, /user && role !== "admin" && role !== "provider"/);
   assert.match(webBlock, /featuredSearch/);
-  assert.match(webBlock, /HomePopularCities/);
+  assert.match(webBlock, /heroCityBrowse/);
+  assert.doesNotMatch(webBlock, /HomePopularCities/);
   assert.match(webBlock, /<HomeDiscovery/);
   assert.match(home, /FacilityTypeRails items=\{shown\} visual/);
   assert.doesNotMatch(webBlock, /ke-web-grid/);

@@ -37,8 +37,8 @@ import { UpgradePlanCard } from "@/components/upgrade-plan-card";
 
 const COPY = {
   en: {
-    eyebrow: "Daycare SaaS",
-    title: "Subscription",
+    eyebrow: "Optional plans",
+    title: "Upgrade your centre",
     lead: "Centre plans for listing, inquiries, and multi-site tools are optional. KidEase is free for every centre — vacancy, claim, and licence stay open. This is not parent Plus or a family bill.",
     pendingPortal: "Manage billing",
     monthly: "Monthly",
@@ -63,8 +63,8 @@ const COPY = {
     portalOff: "Card payments are not live yet. Centre plan checkout is not charged.",
   },
   fr: {
-    eyebrow: "SaaS garderie",
-    title: "Abonnement",
+    eyebrow: "Forfaits facultatifs",
+    title: "Améliorer votre centre",
     lead: "Les forfaits centre pour la fiche, les demandes et plusieurs sites sont facultatifs. KidEase est gratuit pour chaque centre — places, réclamation et permis restent ouverts. Ce n’est pas Plus parents ni une facture famille.",
     pendingPortal: "Gérer la facturation",
     monthly: "Mensuel",
@@ -456,14 +456,16 @@ export function ProviderSubscriptionPanel({
               monthly={plan.monthly}
               yearly={plan.yearly}
               perSite={plan.perSite}
+              current={current}
               cta={
                 <>
                   {plan.id === "network" && state.siteCount < plan.minSites ? (
                     <p className="mb-3 text-xs text-subtle">{t.networkNeed}</p>
                   ) : null}
                   <Button
-                    className="min-h-11 w-full"
-                    variant={plan.id === "pro" && !(current || !state.entitlements.paid) ? "primary" : current || !state.entitlements.paid ? "secondary" : "secondary"}
+                    className="min-h-12 w-full text-base"
+                    data-ke={current && !canCharge ? undefined : "plan-checkout"}
+                    variant={current ? "secondary" : "primary"}
                     disabled={busy || (current && !canCharge) || (plan.id === "network" && state.siteCount < plan.minSites)}
                     onClick={() => void subscribe(plan.id)}
                   >

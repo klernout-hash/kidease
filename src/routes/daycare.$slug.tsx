@@ -67,6 +67,8 @@ import { CompareBar } from "@/components/compare-bar";
 import { EmptyState } from "@/components/empty-state";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useRoleChrome } from "@/components/role-chrome";
+import { listingActionMode, showsOwnListingEdit, showsParentListingActions } from "@/lib/role-access";
 import { useCopy } from "@/lib/use-copy";
 import { listingPageTitle } from "@/lib/listing-meta";
 import { rethrowRouterControl } from "@/lib/listing-loader-errors";
@@ -169,6 +171,7 @@ function Listing() {
   const { t, locale } = useCopy();
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
+  const chrome = useRoleChrome();
   const [data, setData] = useState<{
     daycare: Daycare;
     reviews: Review[];
@@ -336,6 +339,13 @@ function Listing() {
   }
 
   const d = data.daycare;
+  const ownsListing = chrome.ownedSlugs.includes(d.slug);
+  const actionMode = listingActionMode({
+    role: chrome.signedIn || chrome.role !== "guest" ? chrome.role : "guest",
+    ownsListing,
+  });
+  const parentActions = showsParentListingActions(actionMode);
+  const ownEdit = showsOwnListingEdit(actionMode, ownsListing);
   const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
   const ranked = {
     ...d,
@@ -410,6 +420,10 @@ function Listing() {
 
   function onInfo() {
     if (!live) return;
+    if (!user) {
+      goLogin("guestSignInReturn", "info");
+      return;
+    }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "info" });
     capturePostHogEvent("listing_request_started", { intent: "info" });
     setInfoOpen(true);
@@ -428,6 +442,10 @@ function Listing() {
 
   function onTour() {
     if (!live) return;
+    if (!user) {
+      goLogin("guestSignInReturn", "tour");
+      return;
+    }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "tour" });
     capturePostHogEvent("listing_request_started", { intent: "tour" });
     setTourOpen(true);
@@ -448,12 +466,23 @@ function Listing() {
   const cityHub = cityHubDefForPlace(d.city, d.province);
   const heroBack = cityHub ? { to: "/daycare/city/$city" as const, city: cityHub.slug } : { to: "/search" as const };
 
+  function ListingEditLink() {
+    if (!ownEdit) return null;
+    return (
+      <Button className="rounded-[14px]" data-ke="listing-edit" asChild>
+        <Link to="/provider" search={{ desk: "listings" }}>
+          Edit your listing
+        </Link>
+      </Button>
+    );
+  }
+
   function ListingOverflowItems() {
     return (
       <>
-        {live ? <ListingMoreItem onClick={onTour}>{t("bookTour")}</ListingMoreItem> : null}
-        {live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
-        {live ? (
+        {parentActions && live ? <ListingMoreItem onClick={onTour}>{t("bookTour")}</ListingMoreItem> : null}
+        {parentActions && live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
+        {parentActions && live ? (
           <ListingMoreItem onClick={onMessage}>
             <MessageCircle className="size-4" /> {t("message")}
           </ListingMoreItem>
@@ -497,25 +526,27 @@ function Listing() {
   }
 
   function ListingActions() {
+    if (!parentActions && !ownEdit) return <div data-ke="listing-actions-none" />;
     return (
-      <>
-        {live ? (
+      <div data-ke={parentActions ? "listing-parent-actions" : "listing-own-edit"}>
+        <ListingEditLink />
+        {parentActions && live ? (
           <Button className="rounded-[14px]" data-ke="listing-primary-cta" onClick={onInfo}>
             {t("requestInfo")}
           </Button>
-        ) : (
+        ) : null}
+        {parentActions && !live ? (
           <Button className="rounded-[14px]" data-ke="listing-primary-cta" asChild>
             <Link to="/search">{t("searchNearby")}</Link>
           </Button>
-        )}
-        {live ? (
+        ) : null}
+        {parentActions && live ? (
           <Button className="rounded-[14px]" variant="secondary" onClick={onTour}>
             {t("bookTour")}
           </Button>
-        ) : (
-          <p className="text-xs text-muted">{t("parentRequestNotLive")}</p>
-        )}
-      </>
+        ) : null}
+        {parentActions && !live ? <p className="text-xs text-muted">{t("parentRequestNotLive")}</p> : null}
+      </div>
     );
   }
 
@@ -769,7 +800,7 @@ function Listing() {
               </section>
             ) : null}
 
-            <ListingTourTimes daycare={d} onBook={onTour} canBook={live} />
+            <ListingTourTimes daycare={d} onBook={onTour} canBook={live && parentActions} />
             {data.jobs?.length ? (
               <section data-ke="centre-jobs">
                 <h2 className="font-display text-2xl">{locale === "fr" ? "Offres de personnel" : "Staff openings"}</h2>
@@ -887,7 +918,7 @@ function Listing() {
           {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
           <div className="mt-3 grid gap-1.5">
             <ListingActions />
-            {live && waitlisted ? (
+            {parentActions && live && waitlisted ? (
               <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
             ) : null}
             <ListingMoreActions>
@@ -897,7 +928,7 @@ function Listing() {
                 <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} {...directionsPlace} />
               </div>
             </ListingMoreActions>
-            <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" />
+            {parentActions ? <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" /> : null}
           </div>
           <p className="mt-3 text-xs text-subtle">{t("privacyNote")}</p>
         </aside>
@@ -914,21 +945,23 @@ function Listing() {
         <div className="mx-auto max-w-lg">
           <ListingCtaSnippet live={live} from={from} hours={hours} />
           <div className="flex items-center gap-2">
-          {live ? (
-            <>
+          {ownEdit ? <ListingEditLink /> : null}
+          {parentActions && live ? (
+            <div className="flex min-w-0 flex-1 gap-2" data-ke="listing-parent-actions">
               <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight" data-ke="listing-sticky-cta" onClick={onInfo}>
                 {t("requestInfo")}
               </Button>
               <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight" variant="secondary" data-ke="listing-sticky-tour" onClick={onTour}>
                 {t("bookTour")}
               </Button>
-            </>
-          ) : (
+            </div>
+          ) : null}
+          {parentActions && !live ? (
             <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" asChild>
               <Link to="/search">{t("searchNearbyShort")}</Link>
             </Button>
-          )}
-          <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="bar" className="shrink-0" />
+          ) : null}
+          {parentActions ? <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="bar" className="shrink-0" /> : null}
           <ListingMoreActions compact>
             <ListingOverflowItems />
             <div className="px-1 py-1">

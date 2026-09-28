@@ -365,8 +365,8 @@ export function screeningLetterHtml(input: {
     ? `${input.personName} travaille ou réside auprès des enfants à ${input.centreName} (${input.province}) à titre de ${roleFr[input.role]}. Veuillez accepter une demande de contrôle du casier judiciaire avec vérification du secteur vulnérable.`
     : `${input.personName} works with or lives around children at ${input.centreName} (${input.province}) as ${roleEn[input.role]}. Please accept an application for a Criminal Record Check with Vulnerable Sector Search.`;
   const keep = fr
-    ? "Remettez le certificat au centre. KidEase conserve une copie privée pour la révision Admin. Les parents ne voient jamais le PDF ni le nom de la personne."
-    : "Give the certificate to the centre. KidEase keeps a private copy for Admin review. Parents never see the PDF or the person’s name.";
+    ? "Remettez le certificat au centre. KidEase conserve une copie privée pour que l’équipe KidEase la révise. Les parents ne voient jamais le PDF ni le nom de la personne."
+    : "Give the certificate to the centre. KidEase keeps a private copy for the KidEase team to review. Parents never see the PDF or the person’s name.";
   return `<!doctype html>
 <html lang="${fr ? "fr-CA" : "en-CA"}">
 <head>

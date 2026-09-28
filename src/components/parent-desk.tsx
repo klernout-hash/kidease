@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily } from "@/lib/server/family";
+import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import type { LeadRequest } from "@/lib/lead-requests";
@@ -36,6 +37,8 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
+import { ParentHome } from "@/components/parent-home";
+import { useRoleChrome } from "@/components/role-chrome";
 import { DeleteChildControl } from "@/components/delete-child-control";
 
 const ParentPlusPanel = lazy(() =>
@@ -84,6 +87,7 @@ export function ParentDesk({
   billingReturn?: boolean;
 }) {
   const { user } = useCurrentUserState();
+  const chrome = useRoleChrome();
   const { t, locale } = useCopy();
   const { session: desks, ready: desksReady } = useSessionDesks();
   const origin = useAppStore((s) => s.origin);
@@ -100,6 +104,9 @@ export function ParentDesk({
   const [children, setChildren] = useState<Child[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [leads, setLeads] = useState<LeadRequest[]>([]);
+  const [centreMessages, setCentreMessages] = useState(0);
+  const [upgradeDismissed, setUpgradeDismissed] = useState(false);
+  const [homeSettled, setHomeSettled] = useState(false);
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
@@ -163,6 +170,8 @@ export function ParentDesk({
       setBookings(f.bookings);
       setPayments(f.payments);
       setChildren(f.children);
+      setCentreMessages(f.centreMessages ?? 0);
+      setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
     });
     return f;
   }, [user?.id]);
@@ -209,6 +218,9 @@ export function ParentDesk({
     setChildren([]);
     setTours([]);
     setLeads([]);
+    setCentreMessages(0);
+    setUpgradeDismissed(false);
+    setHomeSettled(false);
     setExplore([]);
     setExploreReady(false);
     setPicked({});
@@ -226,6 +238,7 @@ export function ParentDesk({
       })
       .then((f) => {
         if (cancelled || !f) return;
+        startTransition(() => setHomeSettled(true));
         cancelIdle = scheduleIdle(() => {
           if (cancelled) return;
           void loadExplore(f.bookings).catch(() => undefined);
@@ -291,6 +304,9 @@ export function ParentDesk({
       .sort((a, b) => b.urgencyScore - a.urgencyScore || b.matchScore - a.matchScore);
   }, [bookings, children, contentTab, deferredSaved, located, origin, radiusKm]);
 
+  void explore;
+  void exploreReady;
+  void ParentDeskRails;
   if (!user) return null;
   const upgradeBuyer = {
     role: desks?.role,
@@ -313,20 +329,22 @@ export function ParentDesk({
       </p>
 
       {contentTab === "explore" ? (
-        <div className="mt-6">
-          <h2 className="font-display text-2xl">{t("exploreForYou")}</h2>
-          <p className="mt-1 text-sm text-muted">{t("sortMatchLead")}</p>
-          {exploreReady ? (
-            <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
-              <ParentDeskRails items={explore} children={children} bookings={bookings} />
-            </Suspense>
-          ) : (
-            <div className="mt-6 space-y-3" aria-busy="true" aria-live="polite">
-              <div className="ke-skel h-40 rounded-xl" />
-              <div className="ke-skel h-40 rounded-xl" />
-            </div>
-          )}
-        </div>
+        <ParentHome
+          saved={saved}
+          bookings={bookings}
+          tours={tours}
+          leads={leads}
+          paid={chrome.paid}
+          planLabel={chrome.planLabel}
+          renewsOn={chrome.renewsOn}
+          messages={centreMessages}
+          dismissed={upgradeDismissed}
+          settled={homeSettled}
+          onDismiss={() => {
+            setUpgradeDismissed(true);
+            void dismissUpgradeCard().catch(() => setUpgradeDismissed(false));
+          }}
+        />
       ) : null}
 
       {contentTab === "saved" ? (

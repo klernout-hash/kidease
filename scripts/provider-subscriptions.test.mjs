@@ -48,19 +48,17 @@ test("addon parse keeps only known ids and a stable order", () => {
   assert.equal(serializeProviderAddons(["job_post", "featured_city", "x"]), "featured_city,job_post");
 });
 
-test("Subscription nav is on the centre desk when the live flag is on", () => {
-  const hidden = visibleDeskNav("daycare", { providerSubscriptions: false }).map((i) => i.id);
-  const shown = visibleDeskNav("daycare", { providerSubscriptions: true }).map((i) => i.id);
-  assert.equal(hidden.includes("subscription"), false);
-  assert.equal(shown.includes("subscription"), true);
-  const item = visibleDeskNav("daycare", { providerSubscriptions: true }).find((i) => i.id === "subscription");
-  assert.equal(item?.label, "Subscription");
-  assert.equal(item?.icon, "credit-card");
-  assert.equal(item?.href, "/provider/subscription");
-  assert.equal(
-    visibleDeskNav("parent", { providerSubscriptions: true }).some((i) => i.id === "subscription"),
-    false,
-  );
+test("Upgrade stays on the parent and daycare desk panels", () => {
+  const daycare = visibleDeskNav("daycare", { providerSubscriptions: false, centreOwner: true });
+  const centre = daycare.find((i) => i.id === "subscription");
+  assert.equal(centre?.label, "Upgrade");
+  assert.equal(centre?.icon, "credit-card");
+  assert.equal(centre?.href, "/provider/subscription");
+  const parent = visibleDeskNav("parent", { providerSubscriptions: false }).find((i) => i.id === "upgrade");
+  assert.equal(parent?.label, "Upgrade");
+  assert.equal(parent?.href, "/parent");
+  assert.equal(parent?.search?.tab, "payments");
+  assert.equal(daycare.some((i) => i.id === "upgrade"), false);
 });
 
 test("subscription route is live for directors and checkout is live-keyed", () => {

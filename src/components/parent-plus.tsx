@@ -150,7 +150,8 @@ export function ParentPlusPanel({
 
   return (
     <div className="rounded-xl bg-surface p-5 ring-1 ring-border">
-      <h3 className="font-display text-xl">{t("parentPlusTitle")}</h3>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Upgrade</p>
+      <h2 className="mt-1 font-display text-3xl">{t("parentPlusTitle")}</h2>
       <p className="mt-1 text-sm text-muted">{t("parentPlusLead")}</p>
       {returnPhase ? (
         <div className="mt-3">
@@ -209,9 +210,20 @@ export function ParentPlusPanel({
               interval={interval}
               monthly={amount.monthly}
               yearly={amount.yearly}
+              current={current || (plan.id === "free" && state.plan === "free")}
               cta={
-                plan.id === "free" ? null : (
-                  <Button className="min-h-11 w-full" disabled={busy || current || !live || !offerCheckout} onClick={() => void start(plan.id as PlusPlanId)}>
+                plan.id === "free" ? (
+                  <Button className="min-h-12 w-full" variant="secondary" disabled>
+                    {state.plan === "free" ? (loc === "fr" ? "Forfait actuel" : "Current plan") : plan.name[loc]}
+                  </Button>
+                ) : (
+                  <Button
+                    className="min-h-12 w-full text-base"
+                    data-ke={current ? undefined : "plan-checkout"}
+                    variant={current ? "secondary" : "primary"}
+                    disabled={busy || current || !live || !offerCheckout}
+                    onClick={() => void start(plan.id as PlusPlanId)}
+                  >
                     {current
                       ? t("parentPlusCurrent")
                       : interval === "year"

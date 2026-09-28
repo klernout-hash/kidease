@@ -21,6 +21,18 @@ test("app tab bar always renders the same five lucide icons, including on Menu",
   assert.match(bar, /icon=\{ClipboardCheck\}/);
   assert.match(bar, /icon=\{MessageCircle\}/);
   assert.match(bar, /icon=\{Menu\}/);
+  assert.match(bar, /icon=\{Building2\}/);
+  assert.match(bar, /icon=\{ClipboardList\}/);
+  assert.match(bar, /icon=\{Map\}/);
+  assert.match(bar, /t\("navDesk"\)/);
+  assert.match(bar, /t\("navListingShort"\)/);
+  assert.match(bar, /t\("navEnquiriesShort"\)/);
+  assert.match(bar, /t\("navHome"\)/);
+  assert.match(bar, /t\("navRequestsShort"\)/);
+  assert.match(bar, /t\("navMap"\)/);
+  assert.match(bar, /bottomBarKind/);
+  assert.doesNotMatch(bar, /label="Desk"[\s\S]{0,80}icon=\{Search\}/);
+  assert.doesNotMatch(bar, /label=\{t\("enrolled"\)\}/);
   assert.match(bar, /className="size-5 shrink-0"/);
   assert.match(bar, /data-ke="app-tab-bar"/);
   assert.match(bar, /data-ke="app-tab"/);

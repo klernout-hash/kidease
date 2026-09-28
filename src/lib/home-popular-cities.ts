@@ -36,6 +36,11 @@ export const POPULAR_HOME_CITY_SLUGS = [
 
 export const POPULAR_HOME_CITY_LIMIT = 6;
 export const POPULAR_HOME_NEAR_KM = 75;
+/** Closest hubs under the home search when location is already known. */
+export const NEARBY_HOME_CITY_LIMIT = 4;
+export const NEARBY_HOME_MAX_KM = 550;
+
+const KNOWN_LOCATION_SOURCES = new Set(["manual", "gps", "saved", "ip"]);
 
 export type PopularHomeCity = {
   slug: string;
@@ -104,6 +109,47 @@ export function pickPopularHomeLead(origin?: PopularHomeOrigin | null): CityHubD
 
   if (mbFirst) return winnipeg;
   return winnipeg;
+}
+
+/** True when a city is already on the search box or from an existing geo header. Never prompts. */
+export function locationKnownForNearby(origin?: PopularHomeOrigin | null) {
+  if (!origin) return false;
+  if (origin.explicit === true) return true;
+  return KNOWN_LOCATION_SOURCES.has(String(origin.source || ""));
+}
+
+function hubMatchesLabel(hub: CityHubDef, label: string) {
+  const keys = new Set(cityHubPlaceKeys(hub));
+  const city = normalizeCityKey(label.split(",")[0]);
+  const full = normalizeCityKey(label);
+  return (city && keys.has(city)) || (full && keys.has(full));
+}
+
+/**
+ * Three or four nearby city hubs when the visitor's city is already known.
+ * A product default (Winnipeg with no geo) returns none.
+ */
+export function nearbyHomeCities(
+  origin?: PopularHomeOrigin | null,
+  locale = "en",
+): PopularHomeCity[] {
+  if (!locationKnownForNearby(origin)) return [];
+  const here = originPoint(origin);
+  if (!here) return [];
+  const label = origin?.label || "";
+  const ranked = CITY_HUB_DEFS.flatMap((hub) => {
+    if (hubMatchesLabel(hub, label)) return [];
+    const coords = hubLatLng(hub);
+    if (!coords) return [];
+    const km = haversineKm(here, coords);
+    if (km > NEARBY_HOME_MAX_KM) return [];
+    return [{ hub, km }];
+  }).sort((a, b) => a.km - b.km);
+  return ranked.slice(0, NEARBY_HOME_CITY_LIMIT).map(({ hub }) => ({
+    slug: hub.slug,
+    q: cityHubSearchQuery(hub),
+    label: cityHubCityName(hub, locale),
+  }));
 }
 
 export function popularHomeCities(

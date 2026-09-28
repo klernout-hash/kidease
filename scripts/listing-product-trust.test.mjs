@@ -227,7 +227,7 @@ test("create listing form can attach a storefront before publish", () => {
 test("admin reviews tab is first-class and migration is 0024", () => {
   const nav = src("src/lib/desk-nav.ts");
   assert.match(nav, /id: "reviews"/);
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /AdminReviewsPanel/);
   const migration = src("migrations/0024_listing_freshness_reviews.sql");
   assert.match(migration, /last_vacancy_updated_at/);

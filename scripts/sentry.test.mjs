@@ -126,7 +126,7 @@ describe("Sentry wiring", () => {
     assert.match(csp, /connect-src[^;]*https:\/\/us\.i\.posthog\.com/);
     assert.doesNotMatch(csp, /'unsafe-eval'/);
     assert.match(csp, /'wasm-unsafe-eval'/);
-    assert.match(read("src/routes/admin.tsx"), /AdminSentryTest/);
+    assert.match((read("src/routes/admin.tsx") + "\n" + read("src/components/admin-desk-page.tsx")), /AdminSentryTest/);
   });
 
   it("parses a DSN without throwing and inits from entry files", () => {

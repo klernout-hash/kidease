@@ -11,6 +11,12 @@
  */
 import { decideRequest } from "../../scripts/request-guard.mjs";
 
+function adminNoindexPath(pathname: string): boolean {
+  const raw = pathname.split("?")[0] || "/";
+  const path = raw.length > 1 && raw.endsWith("/") ? raw.slice(0, -1) : raw;
+  return path === "/admin" || path.startsWith("/admin/") || path.startsWith("/admin-");
+}
+
 interface RequestGuardEvent {
   url: URL;
   req: { method: string; headers: Headers };
@@ -45,5 +51,15 @@ export default async function requestGuardMiddleware(
     });
   }
 
-  return next();
+  const result = await next();
+  if (adminNoindexPath(event.url.pathname) && result instanceof Response) {
+    const headers = new Headers(result.headers);
+    headers.set("x-robots-tag", "noindex, nofollow");
+    return new Response(result.body, {
+      status: result.status,
+      statusText: result.statusText,
+      headers,
+    });
+  }
+  return result;
 }

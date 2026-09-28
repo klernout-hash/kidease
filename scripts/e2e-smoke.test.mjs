@@ -96,11 +96,21 @@ test("login page needs Sign in plus an email field", () => {
   );
 });
 
-test("admin guest gate: login, Access redirect, Cloudflare, or 401", () => {
+test("admin guest gate: 404 on the app, Access redirect or Cloudflare at the edge", () => {
+  const login = classifyAdminGate({
+    finalUrl: "http://127.0.0.1:8081/login?next=/admin",
+    status: 200,
+    bodyText: "Sign in",
+  });
+  assert.equal(login.kind, "login");
+  assert.equal(login.ok, false);
   assert.equal(
-    classifyAdminGate({ finalUrl: "http://127.0.0.1:8081/login?next=/admin", status: 200, bodyText: "Sign in" })
-      .kind,
-    "login",
+    classifyAdminGate({
+      finalUrl: "http://127.0.0.1:8081/admin",
+      status: 404,
+      bodyText: "Page not found",
+    }).kind,
+    "not-found",
   );
   assert.equal(
     classifyAdminGate({
@@ -216,7 +226,12 @@ test("smoke paths never include pay or 2FA submit", () => {
   assert.match(runner, /scripts\/browser-smoke\.mjs/);
   assert.match(runner, /args\.startPreview/);
   assert.match(runner, /skipReason/);
-  assert.match(runner, /env\.VERCEL = env\.VERCEL \|\| "1"/);
+  assert.match(runner, /delete env\.VERCEL/);
+  assert.match(runner, /stagePgliteArtifacts/);
+  assert.match(runner, /pglite\.data/);
+  assert.match(runner, /env\.E2E_ROLE_FIXTURE = "1"/);
+  assert.match(runner, /env\.SHOW_PAY_CTAS = "1"/);
+  assert.doesNotMatch(runner, /env\.VERCEL = env\.VERCEL \|\| "1"/);
   assert.match(runner, /requestWithHost/);
   assert.match(runner, /kidease-git\.vercel\.app/);
 });

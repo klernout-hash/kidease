@@ -48,10 +48,12 @@ import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import {
   ADMIN_IDLE_CHECK_MS,
+  adminAutoContinueDecision,
   LOGIN_CONTINUE_MS,
   LOGIN_POST_MS,
   releaseStuckLogin,
 } from "@/lib/auth/login-stall";
+import { socialSignupCallbackPath } from "@/lib/auth/social-callback";
 
 type Role = "parent" | "provider" | "admin";
 type DeskAlias = "parent" | "director" | "centre" | "admin" | "support" | "provider";
@@ -102,7 +104,8 @@ export function LoginScreen({
   const { t, locale } = useCopy();
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
-  const operator = isAdminLoginIntent({
+  // URL role=admin / next=/admin must not paint an operator page. Kyle types his email.
+  const urlOperator = isAdminLoginIntent({
     role: role ?? search.role,
     desk: search.desk,
     intent: search.intent,
@@ -115,9 +118,10 @@ export function LoginScreen({
     sticky: readStickyDesk(),
   });
   const { user, isPending: sessionPending } = useCurrentUserState();
-  const [mode, setMode] = useState<"in" | "up">(operator ? "in" : search.intent === "up" ? "up" : "in");
+  const [mode, setMode] = useState<"in" | "up">(search.intent === "up" ? "up" : "in");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState(operator ? OPERATOR_EMAIL : "");
+  const [email, setEmail] = useState("");
+  const operator = email.trim().toLowerCase() === OPERATOR_EMAIL;
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -150,6 +154,25 @@ export function LoginScreen({
     return () => window.clearTimeout(id);
   }, [busy]);
 
+  async function holdForAdminPassword(id: number): Promise<boolean> {
+    const decision = adminAutoContinueDecision({
+      adminIntent: urlOperator,
+      sessionEmail: user?.primaryEmail,
+      ownerEmail: OPERATOR_EMAIL,
+    });
+    if (decision === "allow") return false;
+    if (decision === "check-idle") {
+      const idle = await withTimeoutFallback(canContinueAdminSession(), ADMIN_IDLE_CHECK_MS, { ok: false });
+      if (attempt.current !== id) return true;
+      if (idle.ok) return false;
+    }
+    const released = releaseStuckLogin("admin-password");
+    continued.current = released.keepContinued;
+    setBusy(released.busy);
+    setError(released.error);
+    return true;
+  }
+
   useEffect(() => {
     if (sessionPending || !user || busy || continued.current) return;
     if (consumeJustSignedOut()) return;
@@ -159,21 +182,15 @@ export function LoginScreen({
     setStalled(false);
     setError(null);
     void (async () => {
-      // Admin idle cookie is independent of Better Auth session. Soft-continuing
-      // an old session after "Sign in again" must not skip password re-entry.
-      // keepContinued stays true on failure so this effect cannot re-arm and
-      // pin the button on “Opening your desk…”.
-      if (operator) {
-        const idle = await withTimeoutFallback(canContinueAdminSession(), ADMIN_IDLE_CHECK_MS, { ok: false });
-        if (attempt.current !== id) return;
-        if (!idle.ok) {
-          const released = releaseStuckLogin("admin-password");
-          continued.current = released.keepContinued;
-          setBusy(released.busy);
-          setError(released.error);
-          return;
-        }
+      // Admin URL (including idle-timeout "Sign in again") never auto-continues.
+      // The owner mailbox re-checks the idle cookie before any continue.
+      // keepContinued stays true on failure so this effect cannot re-arm.
+      if (await holdForAdminPassword(id)) return;
+      if (attempt.current !== id) return;
+      if (search.intent === "up" && (role === "parent" || role === "provider")) {
+        await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
       }
+      if (attempt.current !== id) return;
       await withTimeout(
         continueAfterSignIn({
           next: search.next,
@@ -192,11 +209,11 @@ export function LoginScreen({
       setError(released.error);
       setBusy(released.busy);
     });
-  }, [sessionPending, user, dest, busy, search.next, deskHint, role, operator]);
+  }, [sessionPending, user, dest, busy, search.next, search.intent, deskHint, role, urlOperator]);
 
   async function finish() {
     const session = await waitForSignedInSession(() => authClient.getSession());
-    if (role === "parent" || role === "provider") {
+    if (mode === "up" && (role === "parent" || role === "provider")) {
       await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
     }
     continued.current = true;
@@ -222,17 +239,8 @@ export function LoginScreen({
     setStalled(false);
     setError(null);
     void (async () => {
-      if (operator) {
-        const idle = await withTimeoutFallback(canContinueAdminSession(), ADMIN_IDLE_CHECK_MS, { ok: false });
-        if (attempt.current !== id) return;
-        if (!idle.ok) {
-          const released = releaseStuckLogin("admin-password");
-          continued.current = released.keepContinued;
-          setBusy(released.busy);
-          setError(released.error);
-          return;
-        }
-      }
+      if (await holdForAdminPassword(id)) return;
+      if (attempt.current !== id) return;
       await withTimeout(
         continueAfterSignIn({
           next: search.next,
@@ -272,7 +280,7 @@ export function LoginScreen({
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
       // Operator / Admin idle recovery must mint a new session.createdAt so
       // assertAdminIdleFresh can bootstrap the idle cookie after password entry.
-      if (user || operator) {
+      if (user || operator || urlOperator) {
         await dropExistingSession();
       }
       if (mode === "up") {
@@ -332,8 +340,14 @@ export function LoginScreen({
       });
       markContinued(dest, { method: "social" });
       const socialDest = !operator && isCloudflareAccessPath(dest) ? "/parent" : dest;
+      const staged = socialSignupCallbackPath({
+        intent: search.intent,
+        role,
+        desk: search.desk,
+        next: search.next,
+      });
       await withTimeout(signIn(providerId, {
-        callbackURL: staffTwoFactorRequired(socialDest) ? twoFactorUrl(socialDest) : socialDest,
+        callbackURL: staged ?? (staffTwoFactorRequired(socialDest) ? twoFactorUrl(socialDest) : socialDest),
         errorCallbackURL: loginErrorCallbackUrl({
           next: search.next,
           role,
@@ -349,17 +363,10 @@ export function LoginScreen({
     }
   }
 
-  const title = operator
-    ? t("operatorSignIn")
-    : role === "provider"
-      ? t("providerSignIn")
-      : role === "parent"
-        ? t("parentSignIn")
-        : t("signIn");
+  const title =
+    role === "provider" ? t("providerSignIn") : role === "parent" ? t("parentSignIn") : t("signIn");
   const nextPath = (search.next || "").split("?")[0] || "";
-  const lead = operator
-    ? t("operatorLead")
-    : nextPath.startsWith("/daycare/")
+  const lead = nextPath.startsWith("/daycare/")
       ? t("loginLeadListing")
       : nextPath === "/search"
         ? t("loginLeadSearchSave")
@@ -396,7 +403,7 @@ export function LoginScreen({
             <p className="mt-2 text-sm text-muted" data-ke="login-lead">{busy && !error ? t("openingDesk") : lead}</p>
             {operator && !user ? (
               <p className="mt-1 text-xs text-subtle" data-ke="admin-titan-note">
-                {t("operatorEmailNote")}
+                Use email and password for this address.
               </p>
             ) : null}
           <form onSubmit={onEmail} className="mt-6 space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
@@ -424,7 +431,6 @@ export function LoginScreen({
                   autoCorrect="off"
                   inputMode="email"
                   enterKeyHint="next"
-                  readOnly={operator}
                 />
             </label>
             <PasswordField

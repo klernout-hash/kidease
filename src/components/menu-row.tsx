@@ -22,6 +22,8 @@ export function MenuRow({
   badge,
   appearance = "page",
   onClick,
+  marker,
+  emphasis = false,
 }: {
   to?: string;
   search?: Record<string, string>;
@@ -31,8 +33,10 @@ export function MenuRow({
   badge?: ReactNode;
   appearance?: "page" | "drawer";
   onClick?: () => void;
+  marker?: string;
+  emphasis?: boolean;
 }) {
-  const className = appearance === "drawer" ? drawerClass : rowClass;
+  const className = cn(appearance === "drawer" ? drawerClass : rowClass, emphasis && "font-semibold text-primary");
   const trailing =
     appearance === "page" ? (
       <span className="flex items-center gap-2">
@@ -53,13 +57,13 @@ export function MenuRow({
   );
   if (href) {
     return (
-      <a href={href} target="_blank" rel="noreferrer" onClick={onClick} className={className}>
+      <a href={href} target="_blank" rel="noreferrer" onClick={onClick} className={className} data-nav={marker}>
         {inner}
       </a>
     );
   }
   return (
-    <Link to={to ?? "/"} search={search} onClick={onClick} className={className}>
+    <Link to={to ?? "/"} search={search} onClick={onClick} className={className} data-nav={marker}>
       {inner}
     </Link>
   );

@@ -91,7 +91,7 @@ test("shared badge system is used on parent, provider, and admin", () => {
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /ProviderTrustChecklist/);
   assert.match(provider, /TrustSignals/);
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /AdminTrustPanel/);
   assert.match(src("src/components/admin-review-card.tsx"), /AdminLicenseActions/);
   const badges = src("src/components/listing-badges.tsx");

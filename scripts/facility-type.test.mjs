@@ -108,7 +108,7 @@ test("Explore wires facility-type categories and listing copy", () => {
   assert.match(src("src/routes/verify.tsx"), /verifyFacilityTitle/);
   assert.match(src("src/lib/copy.ts"), /Show Centres/);
   assert.match(src("src/lib/copy.ts"), /Afficher les nurseries/);
-  assert.match(src("src/routes/admin.tsx"), /data-facility-type-taxonomy/);
+  assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /data-facility-type-taxonomy/);
   const care = src("src/lib/care-type.ts");
   assert.match(care, /nursery/);
   assert.match(care, /classifyFacilityType/);

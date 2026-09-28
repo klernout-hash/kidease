@@ -32,6 +32,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/verify",
   "/daycare-requirements",
   "/search",
+  "/cities",
   "/contact",
   "/help",
   "/team",

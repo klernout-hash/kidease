@@ -16,6 +16,7 @@ import { RoleBoot } from "@/components/role-boot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
 import { SuccessConfirmHost } from "@/components/success-confirm";
 import { reportError } from "@/lib/observe";
+import { getRoleChrome } from "@/lib/server/role-route";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import appCss from "../styles.css?url";
@@ -25,6 +26,19 @@ const ICON_VER = "20";
 const APP_ICON = `/icon-512.png?v=${ICON_VER}`;
 
 export const Route = createRootRoute({
+  beforeLoad: async () => {
+    const roleChrome = await getRoleChrome().catch(() => ({
+      signedIn: true,
+      role: null as null,
+      paid: false,
+      planLabel: null,
+      renewsOn: null,
+      ownedSlugs: [] as string[],
+      e2e: false,
+      degraded: true,
+    }));
+    return { roleChrome };
+  },
   errorComponent: ({ error }) => {
     reportError(error, {
       route: typeof window !== "undefined" ? window.location.pathname : "root",

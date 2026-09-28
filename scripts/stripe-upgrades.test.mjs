@@ -492,8 +492,10 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
   assert.match(panel, /publicPayMessage/);
   assert.match(src("src/components/parent-plus.tsx"), /CheckoutReturnNote/);
   assert.match(src("src/components/admin-stripe-catalog.tsx"), /Recent checkout errors/);
-  assert.match(src("src/routes/index.tsx"), /OptionalUpgrades/);
-  assert.match(src("src/routes/index.tsx"), /showPayCtas\(\)/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /OptionalUpgrades|showPayCtas\(\)|data-ke="optional-upgrades"/);
+  assert.match(src("src/routes/plans.tsx"), /OptionalUpgrades/);
+  assert.match(src("src/routes/plans.tsx"), /plansAudience/);
+  assert.match(src("src/lib/site-footer-nav.ts"), /\/plans/);
   assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /\/pricing|\/for-daycares/);
   assert.doesNotMatch(src("src/routes/index.tsx"), /\/pricing|\/for-daycares/);
 });
@@ -505,14 +507,14 @@ test("parents and daycares cannot buy or receive each other's upgrades", () => {
   assert.equal(canBuyDaycareUpgrade({ role: "parent" }), false);
   assert.equal(canBuyDaycareUpgrade({ role: "provider" }), false);
   assert.equal(canBuyDaycareUpgrade({ role: "provider", ownsCentre: true }), true);
-  assert.equal(canBuyDaycareUpgrade({ role: "parent", linkedToCentre: true }), true);
+  assert.equal(canBuyDaycareUpgrade({ role: "parent", linkedToCentre: true }), false);
   assert.equal(canBuyDaycareUpgrade({ role: "admin" }), true);
 
   assert.equal(visibleUpgradeSide({ role: "parent" }), "parent");
   assert.equal(visibleUpgradeSide({ role: "provider", ownsCentre: true }), "daycare");
   assert.equal(
     visibleUpgradeSide({ role: "parent", ownsCentre: true, activeDesk: "provider" }),
-    "daycare",
+    "parent",
   );
   assert.equal(
     visibleUpgradeSide({ role: "parent", ownsCentre: true, activeDesk: "parent" }),
@@ -685,7 +687,8 @@ test("parents and daycares cannot buy or receive each other's upgrades", () => {
   assert.match(upgrades, /For daycares/);
   assert.match(upgrades, /upgrades-families/);
   assert.match(upgrades, /upgrades-daycares/);
-  assert.match(src("src/routes/index.tsx"), /visibleUpgradeSide/);
+  assert.match(src("src/routes/plans.tsx"), /plansAudience/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /visibleUpgradeSide|OptionalUpgrades/);
   const staffHidden = visibleDeskNav("daycare", {
     providerSubscriptions: true,
     centreOwner: false,

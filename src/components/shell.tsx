@@ -21,7 +21,10 @@ import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { RoleNavLinks } from "@/components/role-nav";
+import { useRoleChrome } from "@/components/role-chrome";
 import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
+import type { ChromeRole } from "@/lib/role-access";
 import { SiteFooter } from "@/components/site-footer";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { rememberResumePath } from "@/lib/retention";
@@ -33,6 +36,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const tab = useRouterState({ select: (s) => (s.location.search as { tab?: string }).tab });
   const { user } = useCurrentUserState();
   const { session, sticky } = useSessionDesks();
+  const chrome = useRoleChrome();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -56,7 +60,6 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     barePath === "/explore" ||
     publicListing;
   const hideTabs = barePath.startsWith("/login");
-  const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
   const verifyLite = pathname.startsWith("/verify-2fa");
   const menuLite = pathname.startsWith("/menu");
   const onAccount = pathname.startsWith("/account");
@@ -130,10 +133,13 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             ) : (
               <HeaderSocial />
             )}
+            {chrome.pending ? null : <RoleNavLinks role={chrome.role} paid={chrome.paid} />}
           </div>
-          <div className="flex items-center gap-1.5">
-            {user && !guestBrowse ? <DeskSwitcher /> : null}
-            <div className="hidden items-center overflow-visible rounded-full bg-surface/90 p-0.5 ring-1 ring-border [[data-channel=website]_&]:flex">
+          <div className="flex shrink-0 items-center gap-1.5">
+            {user && !guestBrowse && showDeskSwitcher(session?.desks, session?.role, session?.email) ? (
+              <DeskSwitcher />
+            ) : null}
+            <div className="ke-narrow-hide hidden items-center overflow-visible rounded-full bg-surface/90 p-0.5 ring-1 ring-border [[data-channel=website]_&]:flex">
               <LanguageSelect compact />
               <span className="h-3.5 w-px shrink-0 bg-border" aria-hidden />
               <AppearanceControl variant="select" compact />
@@ -142,12 +148,13 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               userId={user?.id}
               image={user?.profileImageUrl}
               name={user?.displayName}
-              signedIn={Boolean(user)}
+              signedIn={Boolean(user) || chrome.signedIn}
+              menusReady={!chrome.pending}
               active={onProfile}
               profileLabel={t("profile")}
-              parentLabel={t("parentSignIn")}
-              providerLabel={t("providerLogin")}
-              loginTo={loginTo}
+              role={chrome.role}
+              paid={chrome.paid}
+              onSignOut={() => void signOut("/")}
             />
             {user ? <NotificationBell className="hidden [[data-channel=website]_&]:grid" /> : null}
             <button
@@ -173,10 +180,13 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         items={drawerItems}
         parentLabel={t("parentSignIn")}
         providerLabel={t("providerLogin")}
-        signedIn={Boolean(user)}
+        signedIn={Boolean(user) || chrome.signedIn}
+        menusReady={!chrome.pending}
         accountLabel={t("account")}
         accountHref="/account"
         accountSearch={accountSearch(sticky)}
+        role={chrome.role}
+        paid={chrome.paid}
         isAdmin={canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
         desksSlot={
           user &&
@@ -203,21 +213,23 @@ function HeaderProfile({
   image,
   name,
   signedIn,
+  menusReady,
   active,
   profileLabel,
-  parentLabel,
-  providerLabel,
-  loginTo = "/login",
+  role,
+  paid,
+  onSignOut,
 }: {
   userId?: string | null;
   image?: string | null;
   name?: string | null;
+  menusReady: boolean;
   signedIn: boolean;
   active: boolean;
   profileLabel: string;
-  parentLabel: string;
-  providerLabel: string;
-  loginTo?: "/login" | "/fr/login";
+  role: ChromeRole;
+  paid: boolean;
+  onSignOut: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -244,17 +256,6 @@ function HeaderProfile({
     active ? "text-primary" : "text-muted",
   );
 
-  const { sticky } = useSessionDesks();
-
-  if (signedIn) {
-    return (
-      <Link to="/account" search={accountSearch(sticky)} className={triggerClass} aria-label={profileLabel}>
-        <ProfileAvatar userId={userId} fallback={image} name={name} size="sm" />
-        <span className="text-[9px] font-medium tracking-wide">{profileLabel}</span>
-      </Link>
-    );
-  }
-
   return (
     <div ref={wrap} className="relative hidden [[data-channel=app]_&]:block [[data-channel=website]_&]:block">
       <button
@@ -263,10 +264,7 @@ function HeaderProfile({
         aria-expanded={open}
         aria-label={profileLabel}
         onClick={() => setOpen((v) => !v)}
-        className={cn(
-          "flex min-w-12 flex-col items-center justify-center gap-0.5 px-1 py-0.5",
-          open ? "text-primary" : "text-muted",
-        )}
+        className={cn(triggerClass, "min-w-12", open ? "text-primary" : active ? "text-primary" : "text-muted")}
       >
         <ProfileAvatar userId={userId} fallback={image} name={name} size="sm" />
         <span className="text-[9px] font-medium tracking-wide">{profileLabel}</span>
@@ -274,29 +272,27 @@ function HeaderProfile({
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-56 overflow-hidden rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
+          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-64 overflow-hidden rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
         >
-          <p className="border-b border-border px-3 py-2 text-xs font-medium text-muted">Sign in</p>
-          <Link
-            role="menuitem"
-            to={loginTo}
-            search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
-            onClick={() => setOpen(false)}
-            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
-          >
-            {parentLabel}
-          </Link>
-          <Link
-            role="menuitem"
-            to={loginTo}
-            search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
-            onClick={() => setOpen(false)}
-            className="block px-3 py-2.5 text-sm text-fg hover:bg-surface-2"
-          >
-            {providerLabel}
-          </Link>
-          <ShareKidEaseButton appearance="menu" onDone={() => setOpen(false)} />
-          <RateKidEaseControl appearance="menu" onDone={() => setOpen(false)} />
+          {menusReady ? <RoleNavLinks role={role} paid={paid} appearance="menu" onNavigate={() => setOpen(false)} /> : null}
+          {!menusReady ? null : signedIn ? (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onSignOut();
+              }}
+              className="block min-h-11 w-full px-3 py-2.5 text-left text-sm text-fg hover:bg-surface-2"
+            >
+              Sign out
+            </button>
+          ) : (
+            <>
+              <ShareKidEaseButton appearance="menu" onDone={() => setOpen(false)} />
+              <RateKidEaseControl appearance="menu" onDone={() => setOpen(false)} />
+            </>
+          )}
         </div>
       ) : null}
     </div>

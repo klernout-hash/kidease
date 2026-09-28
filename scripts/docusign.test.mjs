@@ -298,8 +298,8 @@ test("runtimeEnv reads live process env and ignores a mocked snapshot when injec
   assert.match(copy, /docusignLeadKey/);
   assert.match(src("src/components/admin-contracts.tsx"), /docusign-missing-env/);
   assert.match(src("src/components/admin-contracts.tsx"), /docusignLoadFailed/);
-  assert.match(src("src/routes/admin.tsx"), /docusignLoadFailed:\s*true/);
-  assert.match(src("src/routes/admin-contracts.tsx"), /docusignLoadFailed:\s*true/);
+  assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /docusignLoadFailed:\s*true/);
+  assert.match(src("src/components/admin-contracts-page.tsx"), /docusignLoadFailed:\s*true/);
 });
 
 test("runtimeProcessEnv prefers node:process over an emptied globalThis process shim", () => {

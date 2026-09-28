@@ -102,7 +102,7 @@ describe("catalog source preference", () => {
     assert.doesNotMatch(src("src/lib/server/catalog-neon.ts"), /MASTER_CSV/);
     assert.match(src("src/lib/server/catalog-neon.ts"), /readCatalogHealth/);
     assert.match(src("src/lib/server/catalog-health.ts"), /getCatalogHealth/);
-    assert.match(src("src/routes/admin.tsx"), /getCatalogHealth/);
+    assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /getCatalogHealth/);
     assert.match(src("docs/catalog-source.md"), /never treats Drive/);
   });
 });

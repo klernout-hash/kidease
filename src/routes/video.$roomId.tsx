@@ -116,7 +116,7 @@ function VideoRoomPage() {
         {error && !blockedScaffold ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
 
         {paywall ? (
-          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="parent-plus-prompt">
             <p className="font-medium">{t("parentPlusTitle")}</p>
             <p className="mt-2 text-sm text-muted">
               {status?.reason === "plus_required_billing_not_live" ? t("videoPlusRequiredBilling") : t("videoPlusRequired")}

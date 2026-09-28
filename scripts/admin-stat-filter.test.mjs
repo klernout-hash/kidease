@@ -128,7 +128,7 @@ test("lead pills stay count-only and do not invent centre rows", () => {
 });
 
 test("admin desk Stat pills are buttons with selected state and Declined filter wiring", () => {
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /function Stat\(/);
   assert.match(admin, /type="button"/);
   assert.match(admin, /aria-pressed=\{Boolean\(accent\)\}/);

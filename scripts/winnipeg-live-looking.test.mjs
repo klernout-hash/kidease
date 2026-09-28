@@ -269,7 +269,7 @@ test("repo Winnipeg catalogue is not live-looking without invented facts", async
 test("admin desk exposes the Winnipeg gap fill", () => {
   const nav = readFileSync(join(root, "src/lib/desk-nav.ts"), "utf8");
   const tabs = readFileSync(join(root, "src/lib/account-notify.ts"), "utf8");
-  const admin = readFileSync(join(root, "src/routes/admin.tsx"), "utf8");
+  const admin = (readFileSync(join(root, "src/routes/admin.tsx"), "utf8") + "\n" + readFileSync(join(root, "src/components/admin-desk-page.tsx"), "utf8"));
   assert.match(nav, /id: "winnipeg"/);
   assert.match(tabs, /"winnipeg"/);
   assert.match(admin, /tab === "winnipeg"/);
