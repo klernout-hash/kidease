@@ -119,8 +119,8 @@ const PARENT_FREE_PITCH: PlanLine = {
 };
 
 const PARENT_PLUS_PITCH: PlanLine = {
-  en: "Plus only gates a parent ↔ centre video tour. Search, messages, and alerts stay free without it.",
-  fr: "Plus ne débloque que la visite vidéo parent ↔ centre. La recherche, les messages et les alertes restent gratuits.",
+  en: "Plus adds touring and family tools on top of Free. Search, messages, and email alerts stay free.",
+  fr: "Plus ajoute les outils de visite et de famille au-dessus de Gratuit. Recherche, messages et alertes courriel restent gratuits.",
 };
 
 const DAYCARE_FREE_PITCH: PlanLine = {
@@ -129,8 +129,8 @@ const DAYCARE_FREE_PITCH: PlanLine = {
 };
 
 const PRO_PITCH: PlanLine = {
-  en: "Pro lifts the monthly cap, includes one featured city in search, and keeps 90 days of stats.",
-  fr: "Pro enlève le plafond mensuel, inclut une ville en vedette dans la recherche et garde 90 jours de stats.",
+  en: "Pro lifts the monthly cap, pins one city in search, keeps 90 days of stats, and opens the desk pipeline and staff tools.",
+  fr: "Pro enlève le plafond mensuel, épingle une ville dans la recherche, garde 90 jours de stats et ouvre le pipeline et le personnel.",
 };
 
 const NETWORK_PITCH: PlanLine = {
@@ -142,6 +142,29 @@ const PARENT_ALERTS_PITCH: PlanLine = {
   en: "Adds SMS and push on top of Parent Plus. Email alerts stay free. SMS and push send only when those channels are on.",
   fr: "Ajoute les SMS et le push en plus de Plus parents. Les alertes courriel restent gratuites. SMS et push partent seulement quand ces canaux sont activés.",
 };
+
+const PLUS_CORE_BENEFITS: PlanLine[] = [
+  {
+    en: "Parent \u2194 centre video tour, when video is on",
+    fr: "Visite vidéo parent \u2194 centre, quand la vidéo est activée",
+  },
+  {
+    en: "Compare up to 10 centres side by side",
+    fr: "Comparer jusqu’à 10 centres côte à côte",
+  },
+  {
+    en: "Tour checklist saved on each child",
+    fr: "Liste de visite enregistrée pour chaque enfant",
+  },
+  {
+    en: "Daily care notes on the parent desk",
+    fr: "Notes de garde quotidienne sur le bureau parent",
+  },
+  {
+    en: "Four child profiles on one account",
+    fr: "Quatre profils d’enfants sur un compte",
+  },
+];
 
 export const PARENT_UPGRADE_PLANS: UpgradePlanCopy[] = [
   {
@@ -162,12 +185,7 @@ export const PARENT_UPGRADE_PLANS: UpgradePlanCopy[] = [
     recommended: true,
     name: { en: "Parent Plus", fr: "Plus parents" },
     pitch: PARENT_PLUS_PITCH,
-    benefits: [
-      {
-        en: "Parent ↔ centre video tour, when video is on",
-        fr: "Visite vidéo parent ↔ centre, quand la vidéo est activée",
-      },
-    ],
+    benefits: PLUS_CORE_BENEFITS,
   },
   {
     id: "alerts",
@@ -176,10 +194,7 @@ export const PARENT_UPGRADE_PLANS: UpgradePlanCopy[] = [
     name: { en: "Parent Alerts", fr: "Alertes parents" },
     pitch: PARENT_ALERTS_PITCH,
     benefits: [
-      {
-        en: "Parent ↔ centre video tour, when video is on",
-        fr: "Visite vidéo parent ↔ centre, quand la vidéo est activée",
-      },
+      ...PLUS_CORE_BENEFITS,
       {
         en: "SMS for saved-search alerts, when SMS is on",
         fr: "SMS pour les alertes de recherche, quand les SMS sont activés",
@@ -216,6 +231,8 @@ export const DAYCARE_UPGRADE_PLANS: UpgradePlanCopy[] = [
       { en: "Unlimited messages and tours", fr: "Messages et visites illimités" },
       { en: "One featured city in search", fr: "Une ville en vedette dans la recherche" },
       { en: "90 days of views and requests", fr: "90 jours de vues et de demandes" },
+      { en: "Lead pipeline on the desk", fr: "Pipeline des demandes sur le bureau" },
+      { en: "Staff roster and screening", fr: "Équipe et vérification du personnel" },
     ],
   },
   {
@@ -227,6 +244,8 @@ export const DAYCARE_UPGRADE_PLANS: UpgradePlanCopy[] = [
     benefits: [
       { en: "Unlimited messages and tours", fr: "Messages et visites illimités" },
       { en: "90 days of views and requests", fr: "90 jours de vues et de demandes" },
+      { en: "Lead pipeline on the desk", fr: "Pipeline des demandes sur le bureau" },
+      { en: "Staff roster and screening", fr: "Équipe et vérification du personnel" },
       { en: "Totals across your sites", fr: "Totaux pour tous vos sites" },
     ],
   },
