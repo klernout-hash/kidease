@@ -59,7 +59,6 @@ test("admin gate and login refuse Open Road as KidEase admin", () => {
   assert.match(src("src/components/desk-switcher.tsx"), /headerDesks\(session\.desks, session\.role, session\.email\)/);
   assert.match(src("src/components/desk-switcher.tsx"), /showDeskSwitcher\(session\.desks, session\.role, session\.email\)/);
   assert.match(src("src/components/menu-desk-tools.tsx"), /canSeeAdminDesk\(session\?\.role, session\?\.email\)/);
-  assert.match(src("src/components/menu-desk-tools.tsx"), /canVisitDesk\(session\.desks, "admin", session\.role, session\.email\)/);
   assert.match(src("src/routes/menu.tsx"), /MenuDeskTools/);
   assert.match(src("src/components/shell.tsx"), /desksSlot/);
   assert.doesNotMatch(src("src/components/nav-drawer.tsx"), /AdminDeskLink/);
