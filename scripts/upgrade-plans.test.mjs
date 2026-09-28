@@ -35,7 +35,11 @@ test("each role has one recommended plan and only real benefits", () => {
   );
   const plus = parentUpgradePlan("plus").benefits.map((line) => line.en).join(" | ");
   assert.match(plus, /video tour, when video is on/);
-  assert.equal(parentUpgradePlan("plus").benefits.length, 1);
+  assert.match(plus, /Compare up to 4 centres/);
+  assert.match(plus, /Tour checklist/);
+  assert.match(plus, /Daily care notes/);
+  assert.match(plus, /Four child profiles/);
+  assert.equal(parentUpgradePlan("plus").benefits.length, 5);
   assert.equal(PLUS_FEATURES.map((line) => line.en).join(" | "), plus);
   assert.doesNotMatch(plus, /saved-search|priority support|early access|peace of mind|enrol/i);
 
@@ -44,9 +48,12 @@ test("each role has one recommended plan and only real benefits", () => {
     "Unlimited messages and tours",
     "One featured city in search",
     "90 days of views and requests",
+    "Lead pipeline on the desk",
+    "Staff roster and screening",
   ]);
   const network = daycareUpgradePlan("network").benefits.map((line) => line.en).join(" | ");
   assert.match(network, /Totals across your sites/);
+  assert.match(network, /Lead pipeline/);
   assert.doesNotMatch(network, /featured city/i);
   assert.equal(yearlySavingsCad(7.99, 59), 36.88);
   assert.equal(yearlySavingsCad(49, 490), 98);
@@ -68,6 +75,7 @@ test("each role has one recommended plan and only real benefits", () => {
   const alerts = parentUpgradePlan("alerts").benefits.map((line) => line.en).join(" | ");
   assert.match(alerts, /when SMS is on/);
   assert.match(alerts, /when push is on/);
+  assert.match(alerts, /Compare up to 4 centres/);
   assert.doesNotMatch(alerts, /priority support|early access|peace of mind|enrol/i);
 
   const parentUi = src("src/components/parent-plus.tsx");
