@@ -113,7 +113,7 @@ test("Admin P1: QA fixtures are opt-in on staff queues", () => {
   );
   assert.equal(staffQueueRows([GHOST_LISTING, live], true).length, 2);
   assert.equal(isAdminOnlyListing(GHOST_LISTING), true);
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /staffQueueRows/);
   assert.match(admin, /showQaFixtures/);
   assert.match(admin, /Show QA fixtures/);
@@ -133,7 +133,7 @@ test("Admin: registry stub labels and chat/activity guidance", () => {
   assert.match(trust, /Ontario, Alberta, British Columbia, Saskatchewan, and Québec/);
   assert.match(CHAT_SCAFFOLD_MESSAGE, /not a chat product/i);
   assert.match(CHAT_SCAFFOLD_EMPTY, /\/inbox/);
-  const activity = src("src/routes/admin.tsx");
+  const activity = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(activity, /No platform events yet/);
   assert.match(activity, /Waiting on you/);
 });

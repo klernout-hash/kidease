@@ -77,7 +77,7 @@ test("P0 email sign-in drops a different session before Connexion", () => {
   const login = src("src/routes/login.tsx");
   // Existing session still drops; Admin password sign-in also drops so
   // session.createdAt is fresh for idle bootstrap. Must stay before Connexion.
-  assert.match(login, /if \(user \|\| operator\) \{\s*await dropExistingSession\(\);/);
+  assert.match(login, /if \(user \|\| operator \|\| urlOperator\) \{\s*await dropExistingSession\(\);/);
   const onEmail = login.slice(login.indexOf("async function onEmail"));
   const dropAt = onEmail.search(/await dropExistingSession\(\);/);
   const signInAt = onEmail.search(/authClient\.signIn\.email/);

@@ -15,6 +15,37 @@ const START_COPY: Record<SearchStart, CopyKey> = {
   "next-month": "searchStartNextMonth",
 };
 
+const RADIUS_KM_OPTIONS = [5, 10, 25, 50] as const;
+
+function SearchRadiusSelect({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (km: number) => void;
+}) {
+  const { t } = useCopy();
+  return (
+    <select
+      data-ke="search-radius"
+      aria-label={t("searchRadius")}
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      onClick={(e) => e.stopPropagation()}
+      className="h-11 max-w-[5.75rem] shrink-0 rounded-full bg-bg px-2 text-sm font-medium text-fg ring-1 ring-border"
+    >
+      {(RADIUS_KM_OPTIONS.includes(value as (typeof RADIUS_KM_OPTIONS)[number])
+        ? RADIUS_KM_OPTIONS
+        : [...RADIUS_KM_OPTIONS, value].sort((a, b) => a - b)
+      ).map((km) => (
+        <option key={km} value={km}>
+          {km} km
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export type ExploreSearchBarValues = {
   where: string;
   name: string;
@@ -40,6 +71,8 @@ export function ExploreSearchBar({
   childSummary,
   childAges,
   onChildAge,
+  radiusKm,
+  onRadiusChange,
 }: {
   values: ExploreSearchBarValues;
   onWhereChange: (q: string) => void;
@@ -57,6 +90,9 @@ export function ExploreSearchBar({
   childSummary?: string;
   childAges?: { id: string; label: string; on: boolean }[];
   onChildAge?: (id: string) => void;
+  /** Kilometres around the city already shown in the where field. */
+  radiusKm?: number;
+  onRadiusChange?: (km: number) => void;
 }) {
   const { t, locale } = useCopy();
   const whereId = useId();
@@ -109,24 +145,43 @@ export function ExploreSearchBar({
 
   if (!expanded) {
     const whereLine = values.where.trim() || t("findChildcare");
-    const meta = [whenFilled ? whenLabel : t("searchWhen"), childSummary].filter(Boolean).join(" · ");
+    const meta = [whenFilled ? whenLabel : "", childSummary].filter(Boolean).join(" · ");
     return (
-      <div className={cn("w-full", className)}>
-        <button
-          type="button"
-          data-ke="search-pill"
-          className="flex min-h-14 w-full items-center gap-3 rounded-full bg-surface px-4 text-left shadow-card ring-1 ring-border"
-          aria-expanded={false}
-          aria-label={t("searchBarAria")}
-          onClick={() => setExpanded(true)}
-        >
-          <Search className="size-5 shrink-0 text-fg" strokeWidth={2.25} />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold text-fg">{whereLine}</span>
-            <span className="block truncate text-xs text-muted">{meta}</span>
-          </span>
-        </button>
-      </div>
+      <form
+        className={cn("w-full", className)}
+        aria-label={t("searchBarAria")}
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
+      >
+        <div className="flex min-h-14 w-full items-center gap-2 rounded-full bg-surface py-1 pl-4 pr-1.5 shadow-card ring-1 ring-border">
+          <button
+            type="button"
+            data-ke="search-pill"
+            className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left"
+            aria-expanded={false}
+            aria-label={t("searchBarAria")}
+            onClick={() => setExpanded(true)}
+          >
+            <Search className="size-5 shrink-0 text-fg" strokeWidth={2.25} />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold text-fg">{whereLine}</span>
+              {meta ? <span className="block truncate text-xs text-muted">{meta}</span> : null}
+            </span>
+          </button>
+          {onRadiusChange && radiusKm != null ? (
+            <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
+          ) : null}
+          <button
+            type="submit"
+            data-ke="search-submit"
+            className="inline-flex h-11 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          >
+            {t("searchSubmit")}
+          </button>
+        </div>
+      </form>
     );
   }
 
@@ -183,6 +238,9 @@ export function ExploreSearchBar({
                 inputClassName="mt-0.5 h-5 w-full bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"
               />
             </div>
+            {onRadiusChange && radiusKm != null ? (
+              <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
+            ) : null}
             {onLocate ? (
               <button
                 type="button"
@@ -328,10 +386,11 @@ export function ExploreSearchBar({
             </div>
             <button
               type="submit"
-              className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              data-ke="search-submit"
+              className="inline-flex h-11 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               aria-label={t("findChildcare")}
             >
-              <Search className="size-5" strokeWidth={2.25} />
+              {t("searchSubmit")}
             </button>
           </div>
           {childAges?.length && active === "name" && onChildAge ? (

@@ -164,7 +164,7 @@ describe("admin reauth grace", () => {
     assert.match(server, /assertGraceReauth/);
     assert.match(dialog, /ADMIN_REAUTH_GRACE_MINUTES/);
     assert.match(dialog, /REAUTH_WINDOW_MINUTES/);
-    assert.match(src("src/routes/admin.tsx"), /withReauth/);
+    assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /withReauth/);
     assert.match(src("src/components/admin-screening.tsx"), /withReauth/);
     assert.match(src("src/components/admin-review-card.tsx"), /withReauth/);
     assert.match(src("src/components/admin-reviews.tsx"), /withReauth/);

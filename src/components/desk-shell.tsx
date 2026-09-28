@@ -15,6 +15,8 @@ import {
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
+import { useRoleChrome } from "@/components/role-chrome";
+import { upgradeNavLabel } from "@/lib/role-access";
 
 function DeskItemIcon({ name, className }: { name?: DeskIcon; className?: string }) {
   if (name === "credit-card") return <CreditCard className={className} strokeWidth={1.8} />;
@@ -89,6 +91,17 @@ function DeskNavButton({
   );
 }
 
+function planNavItem(item: DeskItem, paid: boolean): DeskItem {
+  if (item.id !== "subscription" && item.id !== "upgrade") return item;
+  return {
+    ...item,
+    label: upgradeNavLabel(paid),
+    labelKey: paid ? "navMyPlan" : "navUpgrade",
+    hint: undefined,
+    hintKey: undefined,
+  };
+}
+
 function DeskNavLink({
   item,
   on,
@@ -98,11 +111,13 @@ function DeskNavLink({
   on: boolean;
   t: (key: CopyKey) => string;
 }) {
+  const plan = item.id === "subscription" || item.id === "upgrade";
   return (
     <Link
       to={item.href!}
       {...(item.search ? { search: item.search } : {})}
       data-ke="desk-primary-pill"
+      data-nav={plan ? "upgrade" : item.id}
       className={cn(navClass(on), "text-left")}
     >
       <DeskNavFace item={item} on={on} t={t} />
@@ -111,7 +126,9 @@ function DeskNavLink({
 }
 
 function itemIsOn(item: DeskItem, active: string, pathname: string): boolean {
+  if (item.id === "upgrade") return active === "upgrade" || active === "payments";
   if (item.href) {
+    if (item.search?.tab) return active === item.id;
     const pathOnly = item.href.split("?")[0] || item.href;
     return pathname === pathOnly || (pathOnly !== "/" && pathname.startsWith(`${pathOnly}/`));
   }
@@ -336,6 +353,7 @@ export function DeskShell({
   const meta = DESK_META[desk];
   const { t } = useCopy();
   const { session } = useSessionDesks();
+  const chrome = useRoleChrome();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const opts = {
     providerSubscriptions: session?.providerSubscriptions,
@@ -344,9 +362,10 @@ export function DeskShell({
     centreLinked: session?.centreLinked,
   };
   const phoneMore = desk === "parent" || desk === "daycare";
-  const allItems = visibleDeskNav(desk, opts);
-  const primary = phoneMore ? visiblePrimaryDeskNav(desk, opts) : allItems;
-  const secondary = phoneMore ? visibleSecondaryDeskNav(desk, opts) : [];
+  const labelPlan = (item: DeskItem) => planNavItem(item, chrome.paid);
+  const allItems = visibleDeskNav(desk, opts).map(labelPlan);
+  const primary = (phoneMore ? visiblePrimaryDeskNav(desk, opts) : allItems).map(labelPlan);
+  const secondary = (phoneMore ? visibleSecondaryDeskNav(desk, opts) : []).map(labelPlan);
   const eyebrow = meta.eyebrowKey ? t(meta.eyebrowKey) : meta.eyebrow;
   const title = meta.titleKey ? t(meta.titleKey) : meta.title;
 

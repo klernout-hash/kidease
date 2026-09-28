@@ -1,14 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CityHubLinks } from "@/components/city-hub-links";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
-import { OptionalUpgrades } from "@/components/optional-upgrades";
-import { useSessionDesks } from "@/components/session-desks";
-import { visibleUpgradeSide } from "@/lib/upgrade-role";
 import { BrandMark } from "@/components/brand-mark";
 import { FacilityTypeRails } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
@@ -25,7 +21,7 @@ import {
   HERO_LCP_SIZES,
 } from "@/components/building-photo";
 import { ChipButton } from "@/components/chip";
-import { HomePopularCities } from "@/components/home-popular-cities";
+import { HomeNearbyCities } from "@/components/home-nearby-cities";
 import { STEP_SIZES } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily, getMyRole } from "@/lib/server/family";
@@ -52,17 +48,13 @@ import { publicListings } from "@/lib/listing-visibility";
 import { readRecent } from "@/lib/recent";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { resolveLocationQuery } from "@/components/place-search";
-import { CITY_HUB_DEFS, cityHubChipLabel, cityHubSearchQuery } from "@/lib/city-hubs";
 import { compactExploreSearch, guestHeroSearch } from "@/lib/explore-search";
-import { popularHomeCities } from "@/lib/home-popular-cities";
+import { nearbyHomeCities } from "@/lib/home-popular-cities";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
-import { displayDistance } from "@/lib/units";
-import { showPayCtas } from "@/lib/features";
-import { catalogStatus } from "@/lib/server/stripe-catalog";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
 import {
   honestVacancy,
@@ -99,8 +91,6 @@ export const Route = createFileRoute("/")({
       featured: painted.value ?? [],
       featuredReady: painted.ready,
       origin,
-      showPay: showPayCtas(),
-      priceFlags: catalogStatus(),
     };
   },
   staleTime: 60_000,
@@ -139,28 +129,8 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-function HomeUpgrades({ priceFlags }: { priceFlags: Record<string, boolean> }) {
-  const { user } = useCurrentUserState();
-  const { session, ready, sticky } = useSessionDesks();
-  if (!user) return <OptionalUpgrades initialFlags={priceFlags} />;
-  if (!ready || !session) return null;
-  const side = visibleUpgradeSide({
-    role: session.role,
-    ownsCentre: session.ownsCentre,
-    linkedToCentre: session.centreLinked,
-    activeDesk: sticky,
-  });
-  if (side === "none") return null;
-  return <OptionalUpgrades side={side} signedIn initialFlags={priceFlags} />;
-}
-
 function Home() {
   const { t, locale } = useCopy();
-  const CITY_CHIPS = CITY_HUB_DEFS.map((hub) => ({
-    slug: hub.slug,
-    q: cityHubSearchQuery(hub),
-    label: cityHubChipLabel(hub, locale),
-  }));
   const navigate = useNavigate();
   const boot = Route.useLoaderData();
   const { user, isPending } = useCurrentUserState();
@@ -170,12 +140,13 @@ function Home() {
   const liveOnly = useAppStore((s) => s.liveOnly);
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
   const radiusKm = useAppStore((s) => s.radiusKm);
+  const setRadiusKm = useAppStore((s) => s.setRadiusKm);
   const setQuery = useAppStore((s) => s.setQuery);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
-  const popularCities = useMemo(
+  const nearbyCities = useMemo(
     () =>
-      popularHomeCities(
+      nearbyHomeCities(
         {
           lat: originSource ? origin.lat : boot.origin.lat,
           lng: originSource ? origin.lng : boot.origin.lng,
@@ -343,13 +314,6 @@ function Home() {
     });
   }
 
-  async function applyCity(raw: string) {
-    const hit = (await resolveLocationQuery(raw)) ?? geocode(raw);
-    if (hit) setOrigin({ ...hit, explicit: true }, "manual");
-    const fields = guestHeroSearch(raw, hit);
-    goSearch(fields.q, { name: fields.name });
-  }
-
   async function applyPlace(raw: string) {
     const hit = (await resolveLocationQuery(raw)) ?? geocode(raw);
     if (hit) {
@@ -464,11 +428,14 @@ function Home() {
           }
         }}
         startCollapsed
+        radiusKm={radiusKm}
+        onRadiusChange={setRadiusKm}
         onLocate={() => void pinLocation()}
         onSubmit={() => {
           void applyPlace(place).then((hit) => {
-            goSearch(hit?.label || place.trim() || origin.label, {
-              name: homeName,
+            const named = guestHeroSearch(place, hit);
+            goSearch(named.q || hit?.label || origin.label, {
+              name: homeName || named.name,
               from: homeStart ? startWindowToDate(homeStart) : homeFrom,
               to: homeTo,
               start: homeStart || undefined,
@@ -477,30 +444,18 @@ function Home() {
         }}
       />
 
-      {featuredReady ? (
-        <>
-          <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip">
-            <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
-              {t(strip.liveLabelKey).replace("{n}", String(strip.liveCount))}
+      {featuredReady && strip.liveCount > 0 ? (
+        <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip">
+          <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
+            {t(strip.liveLabelKey).replace("{n}", String(strip.liveCount))}
+          </ChipButton>
+          {featuredAgreement.showChip ? (
+            <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
+              {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
             </ChipButton>
-            {featuredAgreement.showChip ? (
-              <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
-                {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
-              </ChipButton>
-            ) : null}
-          </div>
-          {strip.zeroLiveHint ? (
-            <p className="mt-2 text-sm text-muted" data-ke="home-zero-live">
-              {t("exploreBrowseHint").replace("{n}", "0")}
-            </p>
           ) : null}
-        </>
-      ) : (
-        <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip" aria-busy="true">
-          <span className="ke-skel inline-block h-11 w-28 rounded-full" />
-          <span className="ke-skel inline-block h-11 w-36 rounded-full" />
         </div>
-      )}
+      ) : null}
 
       {askLocation ? (
         <div className="mt-3">
@@ -515,11 +470,20 @@ function Home() {
           />
         </div>
       ) : null}
-      <p className="mt-3 text-sm text-muted">
-        {(originSource ? origin.label : boot.origin.label).split(",")[0]} · {displayDistance(radiusKm, "km")}{" "}
-        {t("km")}
-      </p>
     </>
+  );
+
+  const heroCityBrowse = (
+    <div className="mt-3" data-ke="hero-city-browse">
+      <HomeNearbyCities cities={nearbyCities} />
+      <Link
+        to="/cities"
+        data-ke="browse-cities"
+        className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
+      >
+        {t("browseCities")}
+      </Link>
+    </div>
   );
 
   return (
@@ -535,13 +499,7 @@ function Home() {
               </h1>
               <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
               {featuredSearch}
-              <HomePopularCities
-                cities={popularCities}
-                label={t("heroPopular")}
-                onSelect={(query) => void applyCity(query)}
-              />
-              <CityHubLinks className="mt-5" />
-              <p className="mt-6 text-xs font-medium text-muted">{t("heroTrust")}</p>
+              {heroCityBrowse}
             </div>
             <div className="relative">
               <div className="overflow-hidden rounded-[14px] shadow-card ring-1 ring-border">
@@ -615,8 +573,6 @@ function Home() {
             />
           </div>
         </section>
-
-        {boot.showPay ? <HomeUpgrades priceFlags={boot.priceFlags} /> : null}
 
         <section className="ke-defer-paint bg-surface">
           <div className="ke-gutter mx-auto max-w-6xl py-16">
@@ -702,14 +658,8 @@ function Home() {
             {t("tagline")}
           </h1>
           {featuredSearch}
+          {heroCityBrowse}
           <ResumeVisitCard />
-          <div className="mt-4 flex flex-wrap gap-2">
-            {CITY_CHIPS.map((c) => (
-              <ChipButton key={c.slug} className="whitespace-nowrap" onClick={() => void applyPlace(c.q)}>
-                {c.label}
-              </ChipButton>
-            ))}
-          </div>
           {user ? (
             <ParentDeskRails
               items={explore.length ? explore : shown}

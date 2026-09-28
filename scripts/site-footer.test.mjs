@@ -103,13 +103,12 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.match(footer, /t\("appStore"\)/);
   assert.match(footer, /t\("googlePlay"\)/);
   assert.match(footer, /t\("comingSoon"\)/);
-  assert.match(footer, /t\("operatorSignIn"\)/);
-  assert.match(footer, /showOperatorSignIn/);
+  assert.doesNotMatch(footer, /t\("operatorSignIn"\)/);
+  assert.doesNotMatch(footer, /showOperatorSignIn/);
   assert.match(footer, /isKidEaseOperatorEmail\(user\?\.primaryEmail\)/);
   assert.match(copySrc, /comingSoon: "Coming soon"/);
   assert.match(copySrc, /comingSoon: "Bientôt"/);
-  assert.match(copySrc, /operatorSignIn: "Operator sign-in"/);
-  assert.match(copySrc, /operatorSignIn: "Connexion opérateur"/);
+  assert.doesNotMatch(copySrc, /operatorSignIn/);
 });
 
 test("Support column keeps help, contact, FAQ, and legal links", () => {
@@ -161,6 +160,7 @@ test("Daycares column keeps verify listings and drops About, Team, and Manitoba 
 test("Parents column keeps product links and omits city hubs", () => {
   const parentTo = FOOTER_PARENTS.map((link) => link.to);
   assert.ok(parentTo.includes("/search"));
+  assert.ok(parentTo.includes("/cities"));
   assert.ok(parentTo.includes("/login"));
   assert.ok(parentTo.includes("/parent"));
   assert.ok(parentTo.includes("/benefits"));
@@ -173,8 +173,10 @@ test("Parents column keeps product links and omits city hubs", () => {
   assert.doesNotMatch(nav, /cityHubs/);
   assert.doesNotMatch(nav, /cityHubPath/);
   assert.doesNotMatch(nav, /daycare\/city/);
-  assert.match(src("src/routes/index.tsx"), /CITY_HUB_DEFS\.map/);
+  assert.match(src("src/routes/index.tsx"), /to="\/cities"/);
+  assert.match(src("src/routes/cities.tsx"), /\/daycare\/city\/\$city/);
   assert.match(src("public/sitemap.xml"), /\/daycare\/city\/winnipeg/);
+  assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/cities</);
 });
 
 test("Find daycare jobs lives on Daycares only; KidEase Careers stays on /jobs/post", () => {
@@ -197,6 +199,7 @@ test("footer CSS clusters columns instead of stretching full width", () => {
 
 test("EN footer labels sort alphabetically in every column", () => {
   assert.deepEqual(labels(FOOTER_PARENTS, "en"), [
+    "Browse by city",
     "Childcare Benefits Program",
     "Compare",
     "Get the app",
@@ -220,6 +223,7 @@ test("EN footer labels sort alphabetically in every column", () => {
     "How It Works",
     "KidEase Careers",
     "Meet the Team",
+    "Plans",
     "Rate KidEase",
     "Start a Daycare",
   ]);
@@ -240,6 +244,7 @@ test("FR-CA footer labels sort by the French string in every column", () => {
     "Espace parent",
     "Favoris",
     "Liste pour la visite",
+    "Parcourir par ville",
     "Programme d’aide à la garde d’enfants",
     "Rechercher",
     "Télécharger l’appli",
@@ -258,6 +263,7 @@ test("FR-CA footer labels sort by the French string in every column", () => {
     "Comment ça fonctionne",
     "Évaluer KidEase",
     "Faire un don aux enfants",
+    "Forfaits",
     "L’équipe",
     "Ouvrir une garderie",
   ]);

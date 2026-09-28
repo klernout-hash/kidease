@@ -601,7 +601,7 @@ export async function saveScreeningUpload(input: {
     daycareId: input.daycareId,
     actorUserId: input.userId,
     kind: "screening_upload",
-    note: `${input.kind} uploaded for Admin review. File stays private.`,
+    note: `${input.kind} uploaded for the KidEase team to review. File stays private.`,
   });
   return { ok: true as const, id };
 }

@@ -1,8 +1,11 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { beforeLoadPrivate } from "@/lib/server/role-route";
+import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
+import { useRoleChrome } from "@/components/role-chrome";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -14,6 +17,7 @@ const ParentDesk = lazy(() =>
 );
 
 export const Route = createFileRoute("/parent")({
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   validateSearch: (s: Record<string, unknown>) => {
     const out: {
       tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care";
@@ -39,6 +43,7 @@ export const Route = createFileRoute("/parent")({
 
 function ParentPage() {
   const { user, isPending } = useCurrentUserState();
+  const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
   const search = Route.useSearch();
   const upgradeSurface = search.tab === "payments" || search.plus === "success" || search.plus === "cancel" || search.billing === "return";
@@ -59,7 +64,14 @@ function ParentPage() {
                   ? "care"
                   : "explore";
 
-  if (isPending || (user && upgradeSurface && !ready)) {
+  if (isPending || chrome.pending || (user && upgradeSurface && !ready)) {
+    return (
+      <Shell>
+        <DeskSkeleton />
+      </Shell>
+    );
+  }
+  if (!user && (chrome.pending || chrome.signedIn)) {
     return (
       <Shell>
         <DeskSkeleton />

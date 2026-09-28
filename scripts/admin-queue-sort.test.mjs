@@ -47,7 +47,7 @@ test("asIsoString normalizes Date and leaves strings", () => {
 });
 
 test("admin queue and verify sorts no longer localeCompare submittedAt", () => {
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   const server = src("src/lib/server/admin-centres.ts");
   const money = src("src/lib/server/admin-money.ts");
   const pipeline = src("src/lib/crm-pipeline.ts");

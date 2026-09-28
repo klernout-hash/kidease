@@ -24,6 +24,21 @@ import { createMiddleware } from "@tanstack/react-start";
  * never throw. Use it on every server function that touches per-user data, and
  * scope every query by `context.userId`.
  */
+/**
+ * Forward a bearer session without requiring a user. Role chrome must work
+ * for guests and for partitioned preview iframes that cannot send cookies.
+ */
+export const sessionBearerMiddleware = createMiddleware({ type: "function" })
+  .client(async ({ next }) => {
+    const { getBearerToken } = await import("./client");
+    return next({ sendContext: { bearerToken: getBearerToken() ?? undefined } });
+  })
+  .server(async ({ next, context }) => {
+    const { assertSameSiteRequest } = await import("./isolation.server");
+    assertSameSiteRequest();
+    return next({ context: { bearerToken: context.bearerToken as string | undefined } });
+  });
+
 export const authMiddleware = createMiddleware({ type: "function" })
   .client(async ({ next }) => {
     // Live preview (partitioned iframe): the session rides a bearer token, not a

@@ -6,6 +6,7 @@ import { test } from "node:test";
 import { isAdminLoginIntent, loginErrorCallbackUrl } from "../src/lib/desks.ts";
 import { emailAndPasswordEnabled } from "../src/lib/auth/email-password.ts";
 import { KIDEASE_OPERATOR_EMAIL } from "../src/lib/admin-email.ts";
+import { adminAutoContinueDecision } from "../src/lib/auth/login-stall.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -38,10 +39,15 @@ test("parent and daycare login stay off the admin email-first path", () => {
   assert.equal(isAdminLoginIntent({ next: "/daycare/example" }), false);
 });
 
-test("login screen uses admin intent and hides social for that path", () => {
+test("public login URLs do not render an operator page; typed owner email still uses password", () => {
   const login = src("src/routes/login.tsx");
   assert.match(login, /isAdminLoginIntent/);
+  assert.match(login, /adminAutoContinueDecision/);
   assert.match(login, /intent === "admin"/);
+  assert.doesNotMatch(login, /t\("operatorSignIn"\)/);
+  assert.doesNotMatch(login, /t\("operatorLead"\)/);
+  assert.doesNotMatch(login, /t\("operatorEmailNote"\)/);
+  assert.match(login, /email\.trim\(\)\.toLowerCase\(\) === OPERATOR_EMAIL/);
   assert.match(login, /data-ke="admin-titan-note"/);
   assert.match(login, /data-ke=\{operator \? "admin-email-first" : "email-sign-in"\}/);
   assert.match(login, /data-ke="social-sign-in"/);
@@ -49,6 +55,7 @@ test("login screen uses admin intent and hides social for that path", () => {
   assert.match(login, /t\("forgotPassword"\)/);
   assert.match(login, /KIDEASE_OPERATOR_EMAIL/);
   assert.doesNotMatch(login, /const operator = role === "admin"/);
+  assert.doesNotMatch(login, /urlOperator \? OPERATOR_EMAIL/);
 });
 
 test("signed-out /admin gate and footer send Admin email-first search", () => {
@@ -59,7 +66,7 @@ test("signed-out /admin gate and footer send Admin email-first search", () => {
   assert.match(dest, /role: "admin"/);
   assert.match(dest, /desk: "admin"/);
   assert.match(dest, /next: "\/admin"/);
-  assert.match(src("src/components/site-footer.tsx"), /intent: "admin"/);
+  assert.doesNotMatch(src("src/components/site-footer.tsx"), /intent: "admin"/);
   assert.equal(
     loginErrorCallbackUrl({
       role: "admin",
@@ -71,15 +78,41 @@ test("signed-out /admin gate and footer send Admin email-first search", () => {
   );
 });
 
-test("operator copy notes Titan email, not Google", () => {
+test("operator copy is gone from the public bundle; the owner email still forces a password", () => {
   const copy = src("src/lib/copy.ts");
-  assert.match(copy, /kyle@kidease\.ca signs in with email \(Titan\), not Google/);
-  assert.match(copy, /kyle@kidease\.ca se connecte par courriel \(Titan\), pas Google/);
-  assert.match(copy, /operatorEmailNote/);
-  assert.match(copy, /operatorLead/);
+  assert.doesNotMatch(copy, /operatorEmailNote/);
+  assert.doesNotMatch(copy, /operatorLead/);
+  assert.doesNotMatch(copy, /operatorSignIn/);
+  assert.doesNotMatch(copy, /kyle@kidease\.ca/);
   assert.equal(KIDEASE_OPERATOR_EMAIL, "kyle@kidease.ca");
-  const support = src("scripts/support-desk.test.mjs");
-  assert.match(support, /operatorEmailNote/);
+  assert.equal(
+    adminAutoContinueDecision({
+      adminIntent: true,
+      sessionEmail: "kyle@kidease.ca",
+      ownerEmail: "kyle@kidease.ca",
+    }),
+    "block",
+  );
+  assert.equal(
+    adminAutoContinueDecision({
+      adminIntent: false,
+      sessionEmail: "kyle@kidease.ca",
+      ownerEmail: "kyle@kidease.ca",
+    }),
+    "check-idle",
+  );
+  assert.equal(
+    adminAutoContinueDecision({
+      adminIntent: false,
+      sessionEmail: "parent@example.com",
+      ownerEmail: "kyle@kidease.ca",
+    }),
+    "allow",
+  );
+  const login = src("src/routes/login.tsx");
+  const gate = login.indexOf("const decision = adminAutoContinueDecision({");
+  const cont = login.indexOf("continueAfterSignIn({", gate);
+  assert.ok(gate > 0 && cont > gate);
 });
 
 test("reset and verification mail fall back to Titan SMTP when Resend is unverified", () => {

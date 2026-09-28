@@ -264,8 +264,15 @@ export const getFamily = createServerFn({ method: "GET" })
         order by p.created_at desc
       `,
     );
-    const profile = await sql<{ role: string }>`
-      select role from profiles where user_id = ${context.userId}
+    const profile = await sql<{ role: string; dismissed: boolean | null }>`
+      select role, upgrade_card_dismissed_at is not null as dismissed
+      from profiles where user_id = ${context.userId}
+    `;
+    const sent = await sql<{ n: number }>`
+      select count(*)::int as n
+      from messages m
+      join conversations c on c.id = m.conversation_id
+      where c.user_id = ${context.userId} and m.sender = 'parent'
     `;
     const admin = await callerIsAdmin();
     return {
@@ -318,6 +325,8 @@ export const getFamily = createServerFn({ method: "GET" })
         createdAt: String(p.created_at),
         invoiceId: p.invoice_id,
       })),
+      centreMessages: sent[0]?.n ?? 0,
+      upgradeCardDismissed: Boolean(profile[0]?.dismissed),
     };
   });
 
@@ -1414,6 +1423,14 @@ export const getProvider = createServerFn({ method: "GET" })
         inquiryUsed,
         siteCount: listings.length,
       },
+      upgradeCardDismissed: Boolean(
+        (
+          await sql<{ dismissed: boolean | null }>`
+            select upgrade_card_dismissed_at is not null as dismissed
+            from profiles where user_id = ${context.userId} limit 1
+          `
+        )[0]?.dismissed,
+      ),
       inbox,
       requests: requests.map((b) => ({
         id: b.id,

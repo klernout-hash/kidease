@@ -51,7 +51,7 @@ test("approve success is gated on every health check", () => {
   assert.equal(approvalSuccessReady({ ok: true, health: null }), false);
   assert.equal(approvalSuccessReady({ ok: true, health: { ok: true } }), true);
 
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   const gate = admin.indexOf("approvalSuccessReady(result)");
   const cheer = admin.indexOf('confirmAction(t, "daycareApproved"');
   assert.ok(gate !== -1 && cheer > gate);

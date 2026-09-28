@@ -17,6 +17,7 @@ export function UpgradePlanCard({
   yearly,
   interval = "month",
   perSite = false,
+  current = false,
   cta,
 }: {
   plan: UpgradePlanCopy;
@@ -25,6 +26,7 @@ export function UpgradePlanCard({
   yearly?: number | null;
   interval?: "month" | "year";
   perSite?: boolean;
+  current?: boolean;
   cta?: ReactNode;
 }) {
   const yearlyMode = plan.id !== "free" && interval === "year" && yearly != null && yearly > 0;
@@ -57,15 +59,20 @@ export function UpgradePlanCard({
     <article
       data-ke={plan.recommended ? "plan-recommended" : "plan-card"}
       data-plan={plan.id}
+      data-current={current ? "true" : "false"}
       data-interval={yearlyMode ? "year" : "month"}
       className={cn(
         "flex h-full flex-col rounded-2xl bg-surface p-4 ring-1",
-        plan.recommended ? "ring-primary/40" : "ring-border",
+        current ? "ring-2 ring-primary" : plan.recommended ? "ring-primary/40" : "ring-border",
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium">{plan.name[locale]}</p>
-        {plan.recommended ? (
+        {current ? (
+          <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-fg">
+            {locale === "fr" ? "Forfait actuel" : "Current plan"}
+          </span>
+        ) : plan.recommended ? (
           <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
             {RECOMMENDED_LABEL[locale]}
           </span>

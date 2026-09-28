@@ -137,31 +137,25 @@ test("generated city-hubs.json keeps Winnipeg and other dense cities", () => {
   );
 });
 
-test("guest home uses a short popular-city line, not the 10-city chip grid", () => {
+test("guest home links Browse by city and does not render city pills", () => {
   const home = src("src/routes/index.tsx");
   const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
   const hero = web.slice(web.indexOf("from-soft"), web.indexOf('id="how"'));
-  assert.match(hero, /HomePopularCities/);
-  assert.match(hero, /popularCities/);
-  assert.match(hero, /applyCity/);
+  assert.doesNotMatch(hero, /HomePopularCities/);
+  assert.doesNotMatch(hero, /<CityHubLinks/);
   assert.doesNotMatch(hero, /CITY_CHIPS/);
-  assert.doesNotMatch(hero, /ChipButton/);
-  assert.equal((hero.match(/<CityHubLinks/g) ?? []).length, 1);
-  assert.match(home, /CITY_HUB_DEFS\.map/);
-  assert.match(home, /cityHubChipLabel/);
+  assert.match(hero, /\{heroCityBrowse\}/);
+  assert.match(home, /to="\/cities"/);
   assert.match(src("src/lib/city-hubs.ts"), /city: "Montréal"/);
   assert.match(src("src/lib/city-hubs.ts"), /cityEn: "Montreal"/);
-  assert.match(src("src/components/home-popular-cities.tsx"), /data-ke="hero-popular-cities"/);
-  assert.match(src("src/lib/copy.ts"), /heroPopular: "Popular"/);
-  assert.match(src("src/lib/copy.ts"), /heroPopular: "Populaires"/);
-
-  assert.equal((web.match(/<CityHubLinks/g) ?? []).length, 1);
   assert.doesNotMatch(web, /hero-trust-chips/);
   assert.doesNotMatch(web, /t\("requestInfo"\)/);
+  assert.doesNotMatch(web, /t\("heroTrust"\)/);
 
   const app = home.slice(home.indexOf("ke-app-only"));
-  assert.match(app, /CITY_CHIPS/);
+  assert.doesNotMatch(app, /CITY_CHIPS/);
   assert.equal((app.match(/<CityHubLinks/g) ?? []).length, 0);
+  assert.match(app, /\{heroCityBrowse\}/);
 });
 
 test("hub route, listing breadcrumbs, and internal links are wired", () => {
@@ -185,8 +179,10 @@ test("hub route, listing breadcrumbs, and internal links are wired", () => {
   const home = src("src/routes/index.tsx");
   const search = src("src/routes/search.tsx");
   const footer = src("src/components/site-footer.tsx");
-  assert.match(home, /CityHubLinks/);
+  const cities = src("src/routes/cities.tsx");
+  assert.doesNotMatch(home, /CityHubLinks/);
   assert.match(search, /CityHubLinks/);
+  assert.match(cities, /\/daycare\/city\/\$city/);
   assert.doesNotMatch(footer, /cityHubPath/);
   assert.doesNotMatch(footer, /cityHubs\(\)/);
 });

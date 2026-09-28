@@ -64,8 +64,8 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "money", label: "Money", hint: "Bills you send", labelKey: "deskNavMoney", hintKey: "deskNavMoneyHint" },
     { id: "licence", label: "Licence", hint: "Trust checklist + photo", labelKey: "listingCoachOpenLicence", hintKey: "deskNavLicenceHint" },
     { id: "contract", label: "Contract", hint: "Agreement + enrolment packs", labelKey: "deskNavContract", hintKey: "deskNavContractHint" },
-    { id: "promote", label: "Promote", hint: "Priority placement", labelKey: "deskNavPromote", hintKey: "deskNavPromoteHint" },
-    { id: "subscription", label: "Subscription", hint: "Centre plans", labelKey: "deskNavSubscription", hintKey: "deskNavSubscriptionHint", icon: "credit-card", href: "/provider/subscription" },
+    { id: "promote", label: "Promote", hint: "Promote & add-ons", labelKey: "deskNavPromote", hintKey: "deskNavPromoteHint" },
+    { id: "subscription", label: "Upgrade", hint: "Pro, Network, and add-ons", labelKey: "deskNavSubscription", hintKey: "deskNavSubscriptionHint", icon: "credit-card", href: "/provider/subscription" },
     { id: "claim", label: "Claim a centre", labelKey: "deskNavClaim", href: "/claim" },
     { id: "add", label: "Add a new Daycare listing", hint: "Another location", labelKey: "deskNavAddListing", hintKey: "deskNavAddListingHint" },
     { id: "account", label: "Account", hint: "Sign-in and preferences", labelKey: "account", hintKey: "deskNavAccountHint", href: "/account", search: { tab: "profile", desk: "director" } },
@@ -80,6 +80,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments", hintKey: "deskNavPaymentsHint" },
     { id: "messages", label: "Messages", hint: "Centre threads + tours", labelKey: "messages", hintKey: "deskNavParentMessagesHint", href: "/inbox", search: { view: "family" } },
     { id: "search", label: "Find care", labelKey: "wayfindFindCare", href: "/search" },
+    { id: "upgrade", label: "Upgrade", hint: "Parent Plus", labelKey: "deskNavUpgrade", hintKey: "deskNavUpgradeHint", icon: "credit-card", href: "/parent", search: { tab: "payments" } },
     { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", hintKey: "deskNavParentAccountHint", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
 };
@@ -157,9 +158,9 @@ const OWNER_ONLY_NAV = new Set([
 
 export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
+    if (item.id === "upgrade") return true;
     if (item.id === "subscription") {
-      if (!opts?.providerSubscriptions) return false;
-      if (opts.centreOwner === false && opts.centreLinked !== true) return false;
+      if (opts?.centreOwner === false && opts?.centreLinked !== true) return false;
       return true;
     }
     if (item.id === "promote") {

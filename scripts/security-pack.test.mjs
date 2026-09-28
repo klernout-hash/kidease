@@ -118,7 +118,7 @@ describe("2) step-up auth", () => {
     assert.match(contracts, /assertRecentReauth/);
     assert.match(account, /changeAccountPassword/);
     assert.match(account, /changeAccountEmail/);
-    assert.match(src("src/routes/admin.tsx"), /withReauth/);
+    assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /withReauth/);
     assert.match(src("src/components/admin-contracts.tsx"), /withReauth/);
   });
 });

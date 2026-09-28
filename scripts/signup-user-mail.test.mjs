@@ -188,7 +188,9 @@ test("provider next-steps copy is honest and bilingual, and can name an existing
   assert.match(text, /\/provider\?desk=listings/);
   assert.match(text, /\/provider\?desk=screening/);
   assert.match(text, /\/claim/);
-  assert.match(text, /Admin reviews/);
+  assert.match(text, /The KidEase team reviews those files/);
+  assert.doesNotMatch(text, /KidEase Admin/);
+  assert.doesNotMatch(text, /L’Admin KidEase/);
   assert.match(text, /Screening on file/);
   assert.match(text, /Bonjour Joan,/);
   assert.match(text, /Nous avons déjà « Little Fox Child Care » au dossier/);

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { beforeLoadPrivate } from "@/lib/server/role-route";
+import { privateReturnPath } from "@/lib/role-access";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
@@ -29,6 +31,7 @@ import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 
 export const Route = createFileRoute("/account")({
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   validateSearch: (s: Record<string, unknown>) => {
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";

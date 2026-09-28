@@ -105,7 +105,10 @@ test("push stubs do not invent credentials and env example has names only", () =
 });
 
 test("admin chat lab is registered, admin-gated, and honest", () => {
-  const route = readFileSync(join(root, "src/routes/admin-chat.tsx"), "utf8");
+  const route =
+    readFileSync(join(root, "src/routes/admin-chat.tsx"), "utf8") +
+    "\n" +
+    readFileSync(join(root, "src/components/admin-chat-page.tsx"), "utf8");
   const tree = readFileSync(join(root, "src/routeTree.gen.ts"), "utf8");
   const send = readFileSync(join(root, "src/lib/server/push.server.ts"), "utf8");
   const client = readFileSync(join(root, "src/lib/push-client.ts"), "utf8");

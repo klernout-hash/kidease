@@ -206,7 +206,7 @@ test("upload and admin reprocess call the polisher and do not touch Live gates",
   const claims = src("src/lib/server/claims.ts");
   const family = src("src/lib/server/family.ts");
   const reprocess = src("src/lib/server/reprocess-listing-photos.ts");
-  const admin = src("src/routes/admin.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   const card = src("src/components/admin-review-card.tsx");
   const docs = src("docs/listing-photo-polish.md");
   const env = src(".env.example");

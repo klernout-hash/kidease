@@ -247,7 +247,7 @@ test("private screening and licence docs persist as R2 keys and reopen via auth 
   assert.doesNotMatch(src("src/components/admin-screening.tsx"), /window\.open\(file\.dataUrl/);
   assert.match(src("src/components/provider-listing-forms.tsx"), /licenseDocHref/);
   assert.match(src("src/components/admin-review-card.tsx"), /licenseDocHref/);
-  assert.match(src("src/routes/admin.tsx"), /AdminReviewCard/);
+  assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /AdminReviewCard/);
   assert.match(src("src/routes/api/screening-documents.ts"), /saveScreeningUpload/);
   assert.match(src("src/routes/api/screening-documents.\$id.ts"), /authorizeScreeningDocument/);
   assert.match(src("src/routes/api/license-docs.\$daycareId.ts"), /R2_LICENSE_PREFIX/);
@@ -288,7 +288,7 @@ test("public copy and desks stay honest and PIPEDA-tight", () => {
   assert.match(src("src/components/provider-screening.tsx"), /uploadDocHint/);
   assert.match(src("src/components/provider-screening.tsx"), /uploadDocTooBig/);
   assert.match(src("src/components/admin-screening.tsx"), /AdminScreeningQueue/);
-  assert.match(src("src/routes/admin.tsx"), /tab === "screening"/);
+  assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /tab === "screening"/);
   assert.match(src("src/routes/provider.tsx"), /desk === "screening"/);
   assert.match(src("src/lib/desk-nav.ts"), /id: "screening"/);
   assert.doesNotMatch(src("src/lib/desk-nav.ts"), /OWNER_ONLY_NAV = new Set\(\[[^\]]*screening/);

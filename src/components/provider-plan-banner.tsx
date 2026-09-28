@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { CreditCard } from "lucide-react";
 import { useCopy } from "@/lib/use-copy";
 import { inquiryRemaining, type ProviderEntitlements } from "@/lib/provider-entitlements";
+import { daycareCapPrompt } from "@/lib/upgrade-prompt";
 import { providerPlan } from "@/lib/provider-plans";
 
 export type ProviderDeskSubscription = {
@@ -23,6 +24,15 @@ export function ProviderPlanBanner({ subscription }: { subscription: ProviderDes
   const loc = locale === "fr" ? "fr" : "en";
   const plan = providerPlan(subscription.entitledPlan);
   const remaining = inquiryRemaining(subscription.inquiryUsed, subscription.inquiryCap);
+  const cap = daycareCapPrompt(subscription.inquiryUsed, subscription.inquiryCap);
+  const capCopy =
+    cap === "at"
+      ? t("daycareCapHit")
+      : cap === "near"
+        ? t("daycareCapNear")
+            .replace("{used}", String(subscription.inquiryUsed))
+            .replace("{cap}", String(subscription.inquiryCap ?? ""))
+        : null;
   return (
     <section className="rounded-xl bg-surface px-5 py-4 ring-1 ring-border">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -41,16 +51,21 @@ export function ProviderPlanBanner({ subscription }: { subscription: ProviderDes
           </p>
           {!subscription.stripeLive ? <p className="mt-2 text-sm text-muted">{t("planBillingPaused")}</p> : null}
         </div>
-        <Link
-          to="/provider/subscription"
-          className={
-            subscription.paid
-              ? "inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
-              : "inline-flex min-h-11 items-center rounded-full bg-surface px-4 text-sm font-medium text-fg ring-1 ring-border"
-          }
-        >
-          {subscription.paid ? t("planCurrent") : t("planViewPlans")}
-        </Link>
+        {subscription.paid ? (
+          <Link
+            to="/provider/subscription"
+            className="inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+          >
+            {t("planCurrent")}
+          </Link>
+        ) : capCopy ? (
+          <div data-ke="daycare-cap-prompt" className="max-w-sm text-sm">
+            <p>{capCopy}</p>
+            <Link to="/provider/subscription" className="mt-1 inline-flex min-h-11 items-center font-semibold text-primary">
+              {t("planViewPlans")}
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

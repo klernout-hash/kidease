@@ -18,7 +18,7 @@ test("declined claims keep Approve and hide Waiting/Decline as live actions", ()
 });
 
 test("admin queue shows licence and storefront photos for review", () => {
-  const ui = readFileSync(join(root, "src/routes/admin.tsx"), "utf8");
+  const ui = (readFileSync(join(root, "src/routes/admin.tsx"), "utf8") + "\n" + readFileSync(join(root, "src/components/admin-desk-page.tsx"), "utf8"));
   const card = readFileSync(join(root, "src/components/admin-review-card.tsx"), "utf8");
   assert.match(card, /centre\.licensePhoto/);
   assert.match(card, /centre\.storefrontPhoto/);

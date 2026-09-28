@@ -291,7 +291,7 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   const inbox = src("src/routes/inbox.$id.tsx");
   const tree = src("src/routeTree.gen.ts");
   const lab = src("src/lib/server/chat-scaffold.ts");
-  const admin = src("src/routes/admin-chat.tsx");
+  const admin = src("src/components/admin-chat-page.tsx");
   const join = src("src/lib/server/video-join.ts");
   assert.match(route, /createFileRoute\("\/video\/\$roomId"\)/);
   assert.match(route, /parentPlusSubscribe/);

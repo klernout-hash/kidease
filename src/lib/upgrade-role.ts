@@ -1,7 +1,7 @@
 /**
  * Parent upgrades and daycare upgrades stay on their own side.
- * A stored parent who also owns or works at a centre can buy either,
- * and the active desk decides which one the UI shows.
+ * Daycare checkout requires a stored provider or admin role, so a parent
+ * profile that still owns a centre cannot buy Pro until that row is migrated.
  * Admin may open both while testing.
  */
 
@@ -36,6 +36,7 @@ export function canBuyParentUpgrade(buyer: UpgradeBuyer): boolean {
 export function canBuyDaycareUpgrade(buyer: UpgradeBuyer): boolean {
   const role = roleOf(buyer.role);
   if (role === "admin") return true;
+  if (role !== "provider") return false;
   return Boolean(buyer.ownsCentre || buyer.linkedToCentre);
 }
 

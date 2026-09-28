@@ -85,8 +85,8 @@ test("owner screening upload is not step-up gated, and a confirm error still has
 
 test("other step-up endpoints already open the confirm dialog", () => {
   const pairs = [
-    ["src/lib/server/admin-centres.ts", "src/routes/admin.tsx"],
-    ["src/lib/server/trust.ts", "src/routes/admin.tsx"],
+    ["src/lib/server/admin-centres.ts", "src/components/admin-desk-page.tsx"],
+    ["src/lib/server/trust.ts", "src/components/admin-desk-page.tsx"],
     ["src/lib/server/contracts.ts", "src/components/admin-contracts.tsx"],
     ["src/lib/server/reviews.ts", "src/components/admin-reviews.tsx"],
     ["src/components/admin-review-card.tsx", "src/components/admin-review-card.tsx"],
@@ -97,7 +97,7 @@ test("other step-up endpoints already open the confirm dialog", () => {
   }
   assert.match(src("src/lib/server/reprocess-listing-photos.ts"), /assertGraceReauth/);
   assert.doesNotMatch(src("src/lib/server/reprocess-listing-photos.ts"), /assertRecentReauth/);
-  assert.match(src("src/routes/admin.tsx"), /withReauth/);
+  assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /withReauth/);
   assert.match(src("src/components/account-security.tsx"), /ReauthDialog/);
   assert.match(src("src/components/account-security.tsx"), /isReauthRequiredMessage/);
 });
