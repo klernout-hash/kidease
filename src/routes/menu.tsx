@@ -57,8 +57,9 @@ function MenuPage() {
   const chrome = useRoleChrome();
   const fr = locale === "fr";
   const unread = failClosedUnread(session?.notificationUnread);
-  const showParents = !chrome.pending && (chrome.role === "guest" || chrome.role === "parent" || chrome.role === "admin");
-  const showDaycares = !chrome.pending && (chrome.role === "guest" || chrome.role === "provider" || chrome.role === "admin");
+  const deskUser =
+    !chrome.pending && (chrome.role === "parent" || chrome.role === "provider" || chrome.role === "admin");
+  const showGuestDesks = !chrome.pending && chrome.role === "guest";
 
   return (
     <ShellLite appTabs>
@@ -67,7 +68,15 @@ function MenuPage() {
           {fr ? "Menu" : "Menu"}
         </h1>
 
-        {chrome.pending ? null : <RoleNavLinks role={chrome.role} paid={chrome.paid} appearance="menu" />}
+        {user ? (
+          <Suspense fallback={null}>
+            <MenuDeskTools />
+          </Suspense>
+        ) : null}
+
+        {deskUser ? null : chrome.pending ? null : (
+          <RoleNavLinks role={chrome.role} paid={chrome.paid} appearance="menu" />
+        )}
 
         {user ? (
           <Group title={t("notifications")}>
@@ -78,12 +87,6 @@ function MenuPage() {
               badge={<NotificationUnreadDot unread={unread} />}
             />
           </Group>
-        ) : null}
-
-        {user ? (
-          <Suspense fallback={null}>
-            <MenuDeskTools />
-          </Suspense>
         ) : null}
 
         <Group title={t("settings")}>
@@ -112,41 +115,31 @@ function MenuPage() {
           <MenuRow to="/contact" label={t("contact")} icon="contact" />
         </Group>
 
-        {showParents ? <Group title="Parents" defer>
-          {!chrome.pending && chrome.role === "guest" ? (
+        {showGuestDesks ? (
+          <Group title="Parents" defer>
             <MenuRow
               to="/login"
               search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
               label={t("parentSignIn")}
               icon="login"
             />
-          ) : null}
-          <MenuRow to="/parent" label={t("parentDesk")} icon="parent" />
-          <MenuRow to="/account" search={{ tab: "profile", desk: "parent" }} label={t("profile")} icon="profile" />
-          <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" />
-          <MenuRow to="/compare" label={t("compare")} icon="compare" />
-          <MenuRow to="/parent" search={{ tab: "saved" }} label={t("saved")} icon="saved" />
-        </Group> : null}
+            <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" />
+            <MenuRow to="/compare" label={t("compare")} icon="compare" />
+          </Group>
+        ) : null}
 
-        {showDaycares ? <Group title={fr ? "Garderies" : "Daycares"} defer>
-          <MenuRow to="/claim" label={t("claimCta")} icon="claim" />
-          {!chrome.pending && chrome.role === "guest" ? (
+        {showGuestDesks ? (
+          <Group title={fr ? "Garderies" : "Daycares"} defer>
+            <MenuRow to="/claim" label={t("claimCta")} icon="claim" />
             <MenuRow
               to="/login"
               search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
               label={t("providerLogin")}
               icon="login"
             />
-          ) : null}
-          <MenuRow to="/provider" label={t("daycareDesk")} icon="daycare" />
-          <MenuRow to="/account" search={{ tab: "profile", desk: "director" }} label={t("account")} icon="account" />
-          <MenuRow to="/verify" label={t("mbChildcare")} icon="verify" />
-          <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
-        </Group> : null}
-
-        {showDaycares ? <Group title={t("footerCaregivers")} defer>
-          <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
-        </Group> : null}
+            <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
+          </Group>
+        ) : null}
 
         <Group title={fr ? "Soutien" : "Support"} defer>
           <MenuRow to="/help" label={fr ? "Centre d’aide" : "Help Centre"} icon="help" />
