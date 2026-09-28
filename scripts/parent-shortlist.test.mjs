@@ -117,7 +117,7 @@ test("parent desk shortlist compares up to five centres", () => {
   assert.match(copy, /myShortlist: "My shortlist"/);
   assert.match(copy, /myShortlist: "Ma liste"/);
   assert.match(copy, /Select up to 5 centres/);
-  assert.match(localCompare, /const MAX = 5/);
+  assert.match(localCompare, /FREE_COMPARE_MAX = 5/);
   assert.doesNotMatch(desk, /GHL|ghl/);
   assert.doesNotMatch(shortlist, /DeskSwitcher/);
 });
