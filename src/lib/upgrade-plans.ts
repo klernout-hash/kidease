@@ -149,8 +149,8 @@ const PLUS_CORE_BENEFITS: PlanLine[] = [
     fr: "Visite vidéo parent ↔ centre, quand la vidéo est activée",
   },
   {
-    en: "Compare up to 4 centres side by side",
-    fr: "Comparer jusqu’à 4 centres côte à côte",
+    en: "Compare up to 10 centres side by side",
+    fr: "Comparer jusqu’à 10 centres côte à côte",
   },
   {
     en: "Tour checklist saved on each child",
