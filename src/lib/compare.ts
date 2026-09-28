@@ -15,13 +15,13 @@ function cap(): number {
 }
 
 function asEntry(raw: unknown): CompareEntry | null {
-  if (typeof raw === "string" && raw.trim()) {
-    return { id: raw.trim(), slug: raw.trim() };
-  }
-  if (raw && typeof raw === "object") {
+  if (typeof raw !== "string" && raw && typeof raw === "object") {
     const id = String((raw as { id?: unknown }).id || "").trim();
     const slug = String((raw as { slug?: unknown }).slug || id).trim();
     if (id) return { id, slug };
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    return { id: raw.trim(), slug: raw.trim() };
   }
   return null;
 }

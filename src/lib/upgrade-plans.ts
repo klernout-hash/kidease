@@ -145,8 +145,8 @@ const PARENT_ALERTS_PITCH: PlanLine = {
 
 const PLUS_CORE_BENEFITS: PlanLine[] = [
   {
-    en: "Parent ↔ centre video tour, when video is on",
-    fr: "Visite vidéo parent ↔ centre, quand la vidéo est activée",
+    en: "Parent \u2194 centre video tour, when video is on",
+    fr: "Visite vidéo parent \u2194 centre, quand la vidéo est activée",
   },
   {
     en: "Compare up to 10 centres side by side",
@@ -271,7 +271,7 @@ function cents(amountCad: number): number {
 }
 
 /**
- * Floor of (monthly × 12 − yearly) / (monthly × 12), as a percent.
+ * Floor of (monthly \u00d7 12 \u2212 yearly) / (monthly \u00d7 12), as a percent.
  * Rounded down so the saving is never overstated. Null when yearly is not cheaper.
  */
 export function yearlySavingsPercentFromCents(monthlyCents: number, yearlyCents: number): number | null {
@@ -291,10 +291,10 @@ export function yearlySavingsToggleLabel(percents: Array<number | null | undefin
   const unique = [...new Set(percents.filter((n): n is number => typeof n === "number" && n > 0))].sort((a, b) => a - b);
   if (!unique.length) return null;
   if (locale === "fr") {
-    const span = unique.length === 1 ? `${unique[0]} %` : `${unique[0]}–${unique[unique.length - 1]} %`;
-    return `Économisez ${span}`;
+    const span = unique.length === 1 ? `${unique[0]} %` : `${unique[0]}\u2013${unique[unique.length - 1]} %`;
+    return `\u00c9conomisez ${span}`;
   }
-  const span = unique.length === 1 ? `${unique[0]}%` : `${unique[0]}–${unique[unique.length - 1]}%`;
+  const span = unique.length === 1 ? `${unique[0]}%` : `${unique[0]}\u2013${unique[unique.length - 1]}%`;
   return `Save ${span}`;
 }
 
@@ -342,8 +342,8 @@ export function checkoutCtaLabel(input: {
     return input.locale === "fr" ? `Choisir ${input.planName} à l’année` : `Choose ${input.planName} yearly`;
   }
   return input.locale === "fr"
-    ? `Choisir ${input.planName} à l’année · économisez ${percent} %`
-    : `Choose ${input.planName} yearly · save ${percent}%`;
+    ? `Choisir ${input.planName} à l’année \u00b7 économisez ${percent} %`
+    : `Choose ${input.planName} yearly \u00b7 save ${percent}%`;
 }
 
 export function yearlySavingSuccess(name: string, percent: number, locale: PlanLocale): string {
@@ -396,5 +396,5 @@ export function yearlySavingsLine(monthly: number, yearly: number | null | undef
   if (save == null || yearly == null) return null;
   const year = formatPlanCad(yearly, locale);
   const saved = formatPlanCad(save, locale);
-  return locale === "fr" ? `ou ${year}/an · économisez ${saved}` : `or ${year}/year · save ${saved}`;
+  return locale === "fr" ? `ou ${year}/an \u00b7 économisez ${saved}` : `or ${year}/year \u00b7 save ${saved}`;
 }
