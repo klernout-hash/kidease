@@ -1,9 +1,18 @@
 import { parseCompareSlugs } from "@/lib/now-loops";
 
 const KEY = "kidease-compare";
-const MAX = 5;
+export const FREE_COMPARE_MAX = 5;
+export const PLUS_COMPARE_MAX = 10;
 
 export type CompareEntry = { id: string; slug: string };
+
+export function compareLimit(paid: boolean): number {
+  return paid ? PLUS_COMPARE_MAX : FREE_COMPARE_MAX;
+}
+
+function cap(): number {
+  return FREE_COMPARE_MAX;
+}
 
 function asEntry(raw: unknown): CompareEntry | null {
   if (typeof raw === "string" && raw.trim()) {
@@ -17,7 +26,7 @@ function asEntry(raw: unknown): CompareEntry | null {
   return null;
 }
 
-export function readCompareEntries(): CompareEntry[] {
+export function readCompareEntries(max = cap()): CompareEntry[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(KEY);
@@ -30,7 +39,7 @@ export function readCompareEntries(): CompareEntry[] {
       if (!entry || seen.has(entry.id)) continue;
       seen.add(entry.id);
       out.push(entry);
-      if (out.length >= MAX) break;
+      if (out.length >= max) break;
     }
     return out;
   } catch {
@@ -47,8 +56,8 @@ export function readCompareSlugs(): string[] {
   return readCompareEntries().map((item) => item.slug).filter(Boolean);
 }
 
-export function writeCompareEntries(items: CompareEntry[]) {
-  window.localStorage.setItem(KEY, JSON.stringify(items.slice(0, MAX)));
+export function writeCompareEntries(items: CompareEntry[], max = cap()) {
+  window.localStorage.setItem(KEY, JSON.stringify(items.slice(0, max)));
   window.dispatchEvent(new Event("kidease-compare"));
 }
 
@@ -57,22 +66,23 @@ export function writeCompare(ids: string[]) {
 }
 
 export function hasCompare(id: string, slug?: string) {
-  return readCompareEntries().some((item) => item.id === id || (slug && item.slug === slug));
+  return readCompareEntries(PLUS_COMPARE_MAX).some((item) => item.id === id || (slug && item.slug === slug));
 }
 
-export function toggleCompareItem(item: CompareEntry): CompareEntry[] {
-  const cur = readCompareEntries();
+export function toggleCompareItem(item: CompareEntry, paid = false): CompareEntry[] {
+  const max = compareLimit(paid);
+  const cur = readCompareEntries(max);
   const next = cur.some((row) => row.id === item.id || row.slug === item.slug)
     ? cur.filter((row) => row.id !== item.id && row.slug !== item.slug)
-    : cur.length >= MAX
+    : cur.length >= max
       ? cur
       : [...cur, item];
-  writeCompareEntries(next);
+  writeCompareEntries(next, max);
   return next;
 }
 
-export function toggleCompare(id: string): string[] {
-  toggleCompareItem({ id, slug: id });
+export function toggleCompare(id: string, paid = false): string[] {
+  toggleCompareItem({ id, slug: id }, paid);
   return readCompare();
 }
 
