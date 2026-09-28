@@ -23,10 +23,13 @@ import {
   clusterCountTotal,
   encodeMapPinWire,
   mapLoadMode,
+  mapTileKey,
   mapViewCacheKey,
   mergeMapClusters,
   projectMapRows,
   sanitizeMapBbox,
+  splitMapPinsByTile,
+  unionMapTiles,
   type MapBbox,
   type MapCluster,
   type MapPin,
@@ -318,6 +321,83 @@ export const mapPinsInView = createServerFn({ method: "GET" })
     }),
   )
   .handler(async ({ data }) => toMapViewResponse(await loadMapPinsInView(data)));
+
+export type MapPinTileBatch = {
+  tiles: Array<{ key: string; pins: MapPinWire[] }>;
+};
+
+const MAP_PIN_TILE_BATCH_MAX = 24;
+
+function tileCacheKey(box: MapBbox, zoom: number): string {
+  return `tile:${mapTileKey(box, zoom)}`;
+}
+
+/**
+ * Every tile the camera still needs, in one read. The client caches each
+ * tile, so a later pan only asks for the new ones. One request stays inside
+ * the server-function burst instead of firing two dozen calls.
+ */
+export async function loadMapPinTileBatch(input: {
+  zoom: number;
+  tiles: MapBbox[];
+}): Promise<MapPinTileBatch> {
+  const zoom = clampMapZoom(input.zoom);
+  const tiles: MapBbox[] = [];
+  for (const raw of input.tiles) {
+    const box = sanitizeMapBbox(raw);
+    if (!box) continue;
+    tiles.push(exactTileBox(box));
+    if (tiles.length >= MAP_PIN_TILE_BATCH_MAX) break;
+  }
+  const ready = new Map<string, MapPin[]>();
+  const missing: MapBbox[] = [];
+  for (const tile of tiles) {
+    const key = mapTileKey(tile, zoom);
+    const hit = cached(tileCacheKey(tile, zoom));
+    if (hit?.mode === "pins") ready.set(key, hit.pins);
+    else missing.push(tile);
+  }
+  if (missing.length > 0) {
+    const union = unionMapTiles(missing);
+    const view = union && mapLoadMode(zoom) === "pins" ? await queryMap(union, zoom) : null;
+    const pins = view?.mode === "pins" ? view.pins : [];
+    const split = splitMapPinsByTile(pins, missing, zoom);
+    for (const tile of missing) {
+      const key = mapTileKey(tile, zoom);
+      const tilePins = split.find((row) => row.key === key)?.pins ?? [];
+      remember(tileCacheKey(tile, zoom), {
+        mode: "pins",
+        pins: tilePins,
+        total: tilePins.length,
+        truncated: false,
+        bbox: tile,
+        zoom,
+      });
+      ready.set(key, tilePins);
+    }
+  }
+  return {
+    tiles: tiles.map((tile) => {
+      const key = mapTileKey(tile, zoom);
+      return { key, pins: (ready.get(key) ?? []).map(encodeMapPinWire) };
+    }),
+  };
+}
+
+export const mapPinTiles = createServerFn({ method: "POST" })
+  .validator((input: { zoom: number; tiles: MapBbox[] }) => {
+    const tiles = (Array.isArray(input?.tiles) ? input.tiles : [])
+      .slice(0, MAP_PIN_TILE_BATCH_MAX)
+      .map((tile) => ({
+        minLat: Number(tile?.minLat),
+        maxLat: Number(tile?.maxLat),
+        minLng: Number(tile?.minLng),
+        maxLng: Number(tile?.maxLng),
+      }))
+      .filter((tile) => [tile.minLat, tile.maxLat, tile.minLng, tile.maxLng].every((value) => Number.isFinite(value)));
+    return { zoom: Number(input?.zoom), tiles };
+  })
+  .handler(async ({ data }) => loadMapPinTileBatch(data));
 
 export async function loadMapPinDetail(id: string): Promise<MapPin | null> {
   const wanted = String(id || "").trim();
