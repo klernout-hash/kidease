@@ -236,6 +236,159 @@ export function mapTileKey(box: MapBbox, zoom: number): string {
   ].join(":");
 }
 
+/**
+ * OverlayView div pixels are centred on the map. The canvas has to sit on the
+ * projected north-west corner (about -width/2, -height/2) or it only covers
+ * the bottom-right quadrant.
+ */
+export function mapCanvasFrame(input: {
+  width: number;
+  height: number;
+  northWest?: { x: number; y: number } | null;
+}): { originX: number; originY: number } {
+  const nw = input.northWest;
+  const originX = nw && Number.isFinite(nw.x) ? nw.x : -input.width / 2;
+  const originY = nw && Number.isFinite(nw.y) ? nw.y : -input.height / 2;
+  return { originX: Math.round(originX), originY: Math.round(originY) };
+}
+
+/** Pin position on the canvas. Same space as a click minus the canvas rect. */
+export function mapPinCanvasPoint(
+  divPixel: { x: number; y: number },
+  frame: { originX: number; originY: number },
+): { x: number; y: number } {
+  return { x: divPixel.x - frame.originX, y: divPixel.y - frame.originY };
+}
+
+/**
+ * Screen position of a canvas whose pane origin is the map centre.
+ * A frame at (0, 0) lands on the centre; the corrected frame lands on the map's top-left.
+ */
+export function mapCanvasScreenOrigin(input: {
+  mapLeft: number;
+  mapTop: number;
+  width: number;
+  height: number;
+  frame: { originX: number; originY: number };
+}): { left: number; top: number } {
+  return {
+    left: input.mapLeft + input.width / 2 + input.frame.originX,
+    top: input.mapTop + input.height / 2 + input.frame.originY,
+  };
+}
+
+/** One camera settle fetches every missing tile in a single request. */
+export function mapCameraSettleRequests(missingTiles: number): number {
+  return missingTiles > 0 ? 1 : 0;
+}
+
+export function unionMapTiles(tiles: readonly MapBbox[]): MapBbox | null {
+  if (tiles.length === 0) return null;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  for (const tile of tiles) {
+    minLat = Math.min(minLat, tile.minLat);
+    maxLat = Math.max(maxLat, tile.maxLat);
+    minLng = Math.min(minLng, tile.minLng);
+    maxLng = Math.max(maxLng, tile.maxLng);
+  }
+  return sanitizeMapBbox({ minLat, maxLat, minLng, maxLng });
+}
+
+/** Bucket one query's pins back into the tiles the client caches. */
+export function splitMapPinsByTile<T extends { lat: number; lng: number }>(
+  pins: readonly T[],
+  tiles: readonly MapBbox[],
+  zoom: number,
+): Array<{ key: string; pins: T[] }> {
+  return tiles.map((tile) => ({
+    key: mapTileKey(tile, zoom),
+    pins: pins.filter((pin) => pointInBbox(pin, tile)),
+  }));
+}
+
+const MAP_BATCH_RETRY_LIMIT = 3;
+
+function mapBatchFailure(error: unknown): { status: number; retryAfterSec: number | null } {
+  if (typeof error === "string") {
+    return { status: /\b429\b|too many requests/i.test(error) ? 429 : 0, retryAfterSec: null };
+  }
+  if (!error || typeof error !== "object") return { status: 0, retryAfterSec: null };
+  const record = error as {
+    status?: unknown;
+    statusCode?: unknown;
+    retryAfterSec?: unknown;
+    retryAfter?: unknown;
+    message?: unknown;
+    headers?: { get?: (name: string) => string | null };
+  };
+  let status = Number(record.status ?? record.statusCode);
+  const message = String(record.message || "");
+  if (!Number.isFinite(status) || status <= 0) {
+    status = /\b429\b|too many requests/i.test(message) ? 429 : 0;
+  }
+  let retryAfterSec: number | null = null;
+  const hinted = Number(record.retryAfterSec ?? record.retryAfter);
+  if (Number.isFinite(hinted) && hinted > 0) retryAfterSec = hinted;
+  const header = record.headers?.get?.("retry-after") ?? record.headers?.get?.("Retry-After");
+  if (retryAfterSec == null && header) {
+    const parsed = Number(header);
+    if (Number.isFinite(parsed) && parsed > 0) retryAfterSec = parsed;
+  }
+  return { status, retryAfterSec };
+}
+
+/** Delay before another try of the same batch. Null means do not retry. */
+export function mapBatchRetryDelayMs(error: unknown, attempt: number): number | null {
+  const failure = mapBatchFailure(error);
+  if (failure.status !== 429 || attempt >= MAP_BATCH_RETRY_LIMIT) return null;
+  if (failure.retryAfterSec != null) return Math.min(8_000, Math.round(failure.retryAfterSec * 1000));
+  return Math.min(8_000, 500 * 2 ** attempt);
+}
+
+/** One batch call, retried in place when the server function throttle answers 429. */
+export async function runMapTileBatch<T>(input: {
+  load: () => Promise<T>;
+  retryDelayMs?: (error: unknown, attempt: number) => number | null;
+  sleep: (ms: number) => Promise<void>;
+  active?: () => boolean;
+}): Promise<T> {
+  const retryDelayMs = input.retryDelayMs ?? mapBatchRetryDelayMs;
+  let attempt = 0;
+  for (;;) {
+    try {
+      return await input.load();
+    } catch (error) {
+      const wait = retryDelayMs(error, attempt);
+      if (wait == null || input.active?.() === false) throw error;
+      attempt += 1;
+      await input.sleep(wait);
+      if (input.active?.() === false) throw error;
+    }
+  }
+}
+
+/** Popup subtitle: street address when we have one, then town, then distance. */
+export function mapPinPlaceLine(input: {
+  address?: string | null;
+  city?: string | null;
+  away?: string | null;
+}): string {
+  const street = String(input.address || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const city = String(input.city || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const away = String(input.away || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const showCity = Boolean(city) && !street.toLowerCase().includes(city.toLowerCase());
+  return [street, showCity ? city : "", away].filter(Boolean).join(" · ");
+}
+
 export function expandBboxByPx(box: MapBbox, zoom: number, marginPx: number): MapBbox {
   const mid = (box.minLat + box.maxLat) / 2;
   const mpp = mapMetersPerPx(zoom, mid);

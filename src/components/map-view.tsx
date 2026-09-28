@@ -39,11 +39,16 @@ import {
   clusterCountLabel,
   clusterStepZoom,
   coerceMapViewPins,
+  decodeMapPinsWire,
   expandBboxByPx,
   MAP_DOT_HIT_PX,
+  mapBatchRetryDelayMs,
   mapCameraMoved,
+  mapCanvasFrame,
   mapLoadMode,
   mapLogoPinPx,
+  mapPinCanvasPoint,
+  mapPinPlaceLine,
   mapPinTapPx,
   mapPointerIsTap,
   mapTileKey,
@@ -52,6 +57,7 @@ import {
   markersForMapView,
   pickNearestMapDot,
   pointInBbox,
+  runMapTileBatch,
   viewportNeedsFetch,
   readMapViewCache,
   sanitizeMapBbox,
@@ -60,7 +66,7 @@ import {
   type MapPin,
   type MapViewData,
 } from "@/lib/map-cluster";
-import { mapPinDetail, mapPinsInView } from "@/lib/server/map-pins";
+import { mapPinDetail, mapPinTiles, mapPinsInView } from "@/lib/server/map-pins";
 import {
   createKidEaseMap,
   createListingOverlayFactory,
@@ -543,32 +549,37 @@ export function MapView({
         if (tileCache.current.size > 0) publishTiles(visible, zoomNow);
         if (missing.length === 0) return;
         const id = ++request;
-        let cursor = 0;
-        const worker = async () => {
-          while (cursor < missing.length && !cancelled && id === request) {
-            const tile = missing[cursor];
-            cursor += 1;
-            if (!tile) continue;
-            const key = mapTileKey(tile, zoomNow);
-            pendingTiles.add(key);
-            try {
-              const raw = await mapPinsInView({ data: { ...tile, zoom: zoomNow, exact: true } });
-              if (cancelled || id !== request || !raw || raw.truncated || raw.mode !== "pins") continue;
-              const view = coerceMapViewPins(raw);
-              tileCache.current.set(key, { box: tile, pins: view.mode === "pins" ? view.pins : [] });
-              if (tileCache.current.size > 64) {
-                const oldest = tileCache.current.keys().next().value;
-                if (typeof oldest === "string") tileCache.current.delete(oldest);
-              }
-              publishTiles(visible, zoomNow);
-            } catch {
-              /* The next idle retries a tile that did not land. */
-            } finally {
-              pendingTiles.delete(key);
+        const keys = missing.map((tile) => mapTileKey(tile, zoomNow));
+        for (const key of keys) pendingTiles.add(key);
+        const active = () => !cancelled && id === request;
+        void runMapTileBatch({
+          active,
+          retryDelayMs: mapBatchRetryDelayMs,
+          sleep: (ms) => new Promise((resolve) => window.setTimeout(resolve, ms)),
+          load: () => mapPinTiles({ data: { zoom: zoomNow, tiles: missing } }),
+        })
+          .then((raw) => {
+            if (!active() || !raw) return;
+            const byKey = new Map(missing.map((tile) => [mapTileKey(tile, zoomNow), tile]));
+            for (const tile of raw.tiles) {
+              const box = byKey.get(tile.key);
+              if (!box) continue;
+              tileCache.current.set(tile.key, { box, pins: decodeMapPinsWire(tile.pins) });
             }
-          }
-        };
-        void Promise.all([worker(), worker(), worker()]);
+            while (tileCache.current.size > 64) {
+              const oldest = tileCache.current.keys().next().value;
+              if (typeof oldest !== "string") break;
+              tileCache.current.delete(oldest);
+            }
+            publishTiles(visible, zoomNow);
+          })
+          .catch(() => {
+            /* Retries already ran. The next camera settle asks again. */
+          })
+          .finally(() => {
+            if (id !== request) return;
+            for (const key of keys) pendingTiles.delete(key);
+          });
         return;
       }
       const loaded = loadedView.current;
@@ -1023,7 +1034,11 @@ function MapPinPopup({
   const away = Number.isFinite(item.distanceKm)
     ? `${displayDistance(item.distanceKm, "km")} ${t("km")}`
     : "";
-  const place = [item.city || displayListingText(item.address), away].filter(Boolean).join(" · ");
+  const place = mapPinPlaceLine({
+    address: displayListingText(item.address),
+    city: item.city,
+    away,
+  });
   const ages = listingAgeRangeText(item, "months", locale === "fr" ? "fr" : "en");
   const vacancy = honestVacancy(item);
   const facts = [
@@ -1259,6 +1274,18 @@ function mountPinCanvas(input: {
     }
     surface.style.width = `${width}px`;
     surface.style.height = `${height}px`;
+    const bounds = map.getBounds?.();
+    const ne = bounds?.getNorthEast?.();
+    const sw = bounds?.getSouthWest?.();
+    const northWest =
+      ne && sw ? projection.fromLatLngToDivPixel(new maps.LatLng(ne.lat(), sw.lng())) : null;
+    const frame = mapCanvasFrame({
+      width,
+      height,
+      northWest: northWest ? { x: northWest.x, y: northWest.y } : null,
+    });
+    surface.style.left = `${frame.originX}px`;
+    surface.style.top = `${frame.originY}px`;
     const ctx = surface.getContext("2d");
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1271,17 +1298,18 @@ function mountPinCanvas(input: {
       if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
       const point = projection.fromLatLngToDivPixel(new maps.LatLng(item.lat, item.lng));
       if (!point) continue;
+      const local = mapPinCanvasPoint(point, frame);
       if (
-        point.x < -MAP_DRAW_MARGIN_PX ||
-        point.y < -MAP_DRAW_MARGIN_PX ||
-        point.x > width + MAP_DRAW_MARGIN_PX ||
-        point.y > height + MAP_DRAW_MARGIN_PX
+        local.x < -MAP_DRAW_MARGIN_PX ||
+        local.y < -MAP_DRAW_MARGIN_PX ||
+        local.x > width + MAP_DRAW_MARGIN_PX ||
+        local.y > height + MAP_DRAW_MARGIN_PX
       ) {
         continue;
       }
-      ctx.drawImage(image, point.x - drawPx / 2, point.y - drawPx, drawPx, drawPx);
+      ctx.drawImage(image, local.x - drawPx / 2, local.y - drawPx, drawPx, drawPx);
       placed.push(item);
-      centers.push({ x: point.x, y: point.y - drawPx / 2 });
+      centers.push({ x: local.x, y: local.y - drawPx / 2 });
     }
     if (focusIndex >= placed.length) focusIndex = placed.length - 1;
   };
