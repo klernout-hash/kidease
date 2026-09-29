@@ -15,8 +15,7 @@ import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
-import { HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
-import { getHomeCareType, setHomeCareType, subscribeHomeCareType } from "@/lib/home-care-selection";
+import { HomeCareTypeRow, selectedBrowseType } from "@/components/facility-type-rails";
 import { useRoleChrome } from "@/components/role-chrome";
 import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
 import { SiteFooter } from "@/components/site-footer";
@@ -26,17 +25,15 @@ import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
 export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const headerType = useRouterState({ select: (s) => selectedBrowseType(s.location.search) });
   const { user } = useCurrentUserState();
   const { session, sticky } = useSessionDesks();
   const chrome = useRoleChrome();
   const [open, setOpen] = useState(false);
-  const [careType, setCareType] = useState<BrowseDaycareType | undefined>(() => getHomeCareType());
 
   useEffect(() => {
     applyDocumentLocale(locale);
   }, [locale]);
-
-  useEffect(() => subscribeHomeCareType(setCareType), []);
 
   useEffect(() => {
     setOpen(false);
@@ -133,12 +130,13 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               <Menu className="size-6" strokeWidth={1.75} />
             </button>
           </div>
-          {barePath === "/" ? (
+          {barePath === "/" || barePath === "/search" ? (
             <div className="flex w-full overflow-x-auto pb-1.5 [-ms-overflow-style:none] [scrollbar-width:none] lg:absolute lg:inset-x-16 lg:top-0 lg:h-16 lg:w-auto lg:items-center lg:justify-center lg:overflow-hidden lg:pb-0 [&::-webkit-scrollbar]:hidden [[data-channel=website]_&]:flex">
               <HomeCareTypeRow
                 compact
-                selected={careType}
-                onSelect={(type) => setHomeCareType(type)}
+                toSearch
+                selected={headerType}
+                onSelect={() => {}}
               />
             </div>
           ) : null}

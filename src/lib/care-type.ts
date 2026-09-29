@@ -39,6 +39,7 @@ export function isRailAge(value: string): value is RailAge {
 export function isBeforeAfterProgram(item: Pick<Daycare, "amenities" | "hours">): boolean {
   const amenities = item.amenities || "";
   return (
+    hasAmenity(amenities, "before-after") ||
     hasAmenity(amenities, "school-age") ||
     hasAmenity(amenities, "in-school") ||
     hasAmenity(amenities, "extended") ||

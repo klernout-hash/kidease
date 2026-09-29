@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { ListingRail } from "@/components/listing-rail";
 import { ChipButton } from "@/components/chip";
 import { ChipCarousel } from "@/components/chip-carousel";
@@ -34,6 +35,29 @@ export const BROWSE_RAIL_CAP = 96;
 
 function take(rows: Card[], n = BROWSE_RAIL_CAP) {
   return uniqueById(rows).slice(0, n);
+}
+
+export function isBrowseDaycareType(value: string): value is BrowseDaycareType {
+  return (BROWSE_DAYCARE_TYPES as readonly string[]).includes(value);
+}
+
+/** Search URL for one of the six header types. */
+export function browseTypeSearch(type: BrowseDaycareType): { fac: BrowseDaycareType } | { cat: "before-after" } {
+  if (type === "before_after") return { cat: "before-after" };
+  return { fac: type };
+}
+
+export function selectedBrowseType(search: unknown): BrowseDaycareType | undefined {
+  const bag: Record<string, unknown> =
+    typeof search === "string"
+      ? Object.fromEntries(new URLSearchParams(search.startsWith("?") ? search.slice(1) : search))
+      : search && typeof search === "object"
+        ? (search as Record<string, unknown>)
+        : {};
+  const fac = typeof bag.fac === "string" ? bag.fac : "";
+  if (fac && !fac.includes(",") && isBrowseDaycareType(fac) && fac !== "before_after") return fac;
+  if (bag.cat === "before-after") return "before_after";
+  return undefined;
 }
 
 export function matchesBrowseDaycareType(
@@ -82,11 +106,14 @@ export function HomeCareTypeRow({
   selected,
   onSelect,
   compact = false,
+  toSearch = false,
 }: {
   selected?: BrowseDaycareType;
   onSelect: (type?: BrowseDaycareType) => void;
   /** Header size. Same six types, tighter so they sit on one line. */
   compact?: boolean;
+  /** Header tabs open /search?fac= or ?cat=before-after. */
+  toSearch?: boolean;
 }) {
   const { t } = useCopy();
   return (
@@ -100,24 +127,16 @@ export function HomeCareTypeRow({
     >
       {BROWSE_DAYCARE_TYPES.map((type) => {
         const on = selected === type;
-        return (
-          <button
-            key={type}
-            type="button"
-            role="tab"
-            aria-selected={on}
-            data-browse-type={type}
-            className={
-              compact
-                ? `flex min-h-11 min-w-[4.75rem] max-w-[6.5rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 py-1 text-center transition-colors duration-150 ease-out sm:min-w-[5.4rem] sm:max-w-[7.5rem] ${
-                    on ? "text-fg" : "text-muted hover:bg-surface hover:text-fg"
-                  }`
-                : `flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 rounded-xl px-1.5 pb-2 pt-1.5 text-center transition-colors duration-150 ease-out ${
-                    on ? "text-fg" : "text-muted hover:text-fg"
-                  }`
-            }
-            onClick={() => onSelect(on ? undefined : type)}
-          >
+        const className =
+          compact
+            ? `flex min-h-11 min-w-[4.75rem] max-w-[6.5rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 py-1 text-center transition-colors duration-150 ease-out sm:min-w-[5.4rem] sm:max-w-[7.5rem] ${
+                on ? "text-fg" : "text-muted hover:bg-surface hover:text-fg"
+              }`
+            : `flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 rounded-xl px-1.5 pb-2 pt-1.5 text-center transition-colors duration-150 ease-out ${
+                on ? "text-fg" : "text-muted hover:text-fg"
+              }`;
+        const body = (
+          <>
             <span
               className={`leading-none [font-family:'Apple_Color_Emoji','Segoe_UI_Emoji','Noto_Color_Emoji',sans-serif] ${
                 compact ? "text-[1.45rem] sm:text-[1.65rem]" : "text-[2.65rem]"
@@ -133,6 +152,33 @@ export function HomeCareTypeRow({
             >
               {t(BROWSE_RAIL_COPY[type])}
             </span>
+          </>
+        );
+        if (toSearch) {
+          return (
+            <Link
+              key={type}
+              to="/search"
+              search={browseTypeSearch(type)}
+              data-browse-type={type}
+              aria-current={on ? "page" : undefined}
+              className={className}
+            >
+              {body}
+            </Link>
+          );
+        }
+        return (
+          <button
+            key={type}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            data-browse-type={type}
+            className={className}
+            onClick={() => onSelect(on ? undefined : type)}
+          >
+            {body}
           </button>
         );
       })}
