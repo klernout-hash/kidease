@@ -88,8 +88,8 @@ test("guest hero treats unresolved text as a daycare name search", () => {
 
   const home = src("src/routes/index.tsx");
   const copy = src("src/lib/copy.ts");
-  assert.match(home, /guestHeroSearch/);
-  assert.match(home, /name: fields\.name/);
+  assert.doesNotMatch(home, /guestHeroSearch/);
+  assert.match(home, /name: homeName/);
   assert.match(copy, /locationPh: "Address, city, postal code, or daycare"/);
   assert.match(copy, /locationPh: "Adresse, ville, code postal ou garderie"/);
 });
