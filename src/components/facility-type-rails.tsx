@@ -121,7 +121,7 @@ export function HomeCareTypeRow({
   return (
     <div
       className={`flex overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center [&::-webkit-scrollbar]:hidden ${
-        compact ? "w-max max-w-none justify-start gap-1 px-0.5 lg:w-full lg:max-w-[58rem] lg:justify-center" : "gap-1 pb-1"
+        compact ? "mx-auto w-max max-w-none justify-start gap-1 px-0.5" : "gap-1 pb-1"
       }`}
       data-ke="home-care-types"
       role="tablist"
@@ -131,10 +131,10 @@ export function HomeCareTypeRow({
         const on = selected === type;
         const className =
           compact
-            ? `flex min-h-11 min-w-[4.75rem] max-w-[6.5rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 py-1 text-center transition-colors duration-150 ease-out sm:min-w-[5.4rem] sm:max-w-[7.5rem] ${
+            ? `flex min-h-11 w-max max-w-none shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1 text-center transition-colors duration-150 ease-out ${
                 on ? "text-fg" : "text-muted hover:bg-surface hover:text-fg"
               }`
-            : `flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 rounded-xl px-1.5 pb-2 pt-1.5 text-center transition-colors duration-150 ease-out ${
+            : `flex w-max max-w-none shrink-0 flex-col items-center gap-1.5 rounded-xl px-2.5 pb-2 pt-1.5 text-center transition-colors duration-150 ease-out ${
                 on ? "text-fg" : "text-muted hover:text-fg"
               }`;
         const body = (
@@ -148,8 +148,8 @@ export function HomeCareTypeRow({
               {CARE_TYPE_EMOJI[type]}
             </span>
             <span
-              className={`font-semibold leading-tight ${
-                compact ? "text-[12px] leading-tight" : "text-[12px]"
+              className={`whitespace-nowrap font-semibold leading-tight ${
+                compact ? "text-[12px] leading-tight" : "text-[13px]"
               } ${on ? "underline decoration-2 underline-offset-4" : ""}`}
             >
               {t(BROWSE_RAIL_COPY[type])}

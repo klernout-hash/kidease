@@ -137,7 +137,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             </button>
           </div>
           {barePath === "/" || barePath === "/search" ? (
-            <div className="flex w-full overflow-x-auto pb-1.5 [-ms-overflow-style:none] [scrollbar-width:none] lg:absolute lg:inset-x-16 lg:top-0 lg:h-16 lg:w-auto lg:items-center lg:justify-center lg:overflow-hidden lg:pb-0 [&::-webkit-scrollbar]:hidden [[data-channel=website]_&]:flex">
+            <div className="flex w-full overflow-x-auto pb-1.5 [-ms-overflow-style:none] [scrollbar-width:none] lg:absolute lg:inset-x-16 lg:top-0 lg:h-16 lg:w-auto lg:items-center lg:overflow-x-auto lg:pb-0 [&::-webkit-scrollbar]:hidden [[data-channel=website]_&]:flex">
               <HomeCareTypeRow
                 compact
                 toSearch

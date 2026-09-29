@@ -201,8 +201,8 @@ export function ExploreSearchBar({
   const whenLabel = dateLabel || (onStartChange ? startLabel : "") || t("searchWhenHint");
   const whenFilled = Boolean(dateLabel || start);
   const fieldLabel = prominent
-    ? "block truncate text-[13px] font-semibold leading-4 text-fg sm:text-[19px] sm:leading-6"
-    : "block truncate text-[12px] font-semibold leading-4 text-fg";
+    ? "block text-[13px] font-semibold leading-4 text-fg sm:text-[19px] sm:leading-6"
+    : "block text-[12px] font-semibold leading-4 text-fg";
   const fieldValue = prominent
     ? "mt-0.5 h-7 w-full min-w-0 bg-transparent text-base leading-6 text-fg outline-none placeholder:text-muted sm:h-8 sm:text-[1.55rem] sm:leading-7"
     : "mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted";

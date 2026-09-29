@@ -55,5 +55,6 @@ test("Explore location suggestions dismiss on route, scroll, blur, menu, and vie
 
   const css = src("src/styles.css");
   assert.match(css, /\.ke-chip \{[\s\S]*white-space: nowrap;/);
-  assert.match(css, /\.ke-chip \{[\s\S]*text-overflow: ellipsis;/);
+  assert.match(css, /\.ke-chip \{[\s\S]*overflow: visible;/);
+  assert.doesNotMatch(css, /\.ke-chip \{[\s\S]*text-overflow: ellipsis;/);
 });
