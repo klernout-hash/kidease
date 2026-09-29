@@ -45,7 +45,6 @@ function CardPhotoBadges({
   item,
   compact,
   hollowPhoto,
-  live,
   showLivePill,
   feeLabel,
   licenseWarning,
@@ -54,7 +53,6 @@ function CardPhotoBadges({
   item: Card;
   compact: boolean;
   hollowPhoto: boolean;
-  live: boolean;
   showLivePill: boolean;
   feeLabel: string;
   licenseWarning: TrustBadgeModel | null;
@@ -84,16 +82,6 @@ function CardPhotoBadges({
             </span>
           ) : null}
         </div>
-      ) : null}
-      {hollowPhoto ? (
-        <span
-          className={cn(
-            "inline-flex rounded-full bg-black/40 font-normal text-white/80",
-            compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-[10px]",
-          )}
-        >
-          {live ? t("photoPending") : t("notOnKidEase")}
-        </span>
       ) : null}
       {!compact && !hollowPhoto && licenseWarning ? (
         <span className="pointer-events-auto">
@@ -189,7 +177,6 @@ export const DaycareCard = memo(function DaycareCard({
               item={item}
               compact={false}
               hollowPhoto={hollowPhoto}
-              live={live}
               showLivePill={showLivePill}
               feeLabel={feePillLabel}
               licenseWarning={licenseWarning}
@@ -251,7 +238,6 @@ export const DaycareCard = memo(function DaycareCard({
             item={item}
             compact={compact}
             hollowPhoto={hollowPhoto}
-            live={live}
             showLivePill={showLivePill}
             feeLabel={feePillLabel}
             licenseWarning={licenseWarning}

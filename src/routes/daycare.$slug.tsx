@@ -320,12 +320,7 @@ function Listing() {
                   className="size-full object-cover"
                 />
               ) : (
-                <>
-                  <ListingPhotoFallback className="size-full" />
-                  <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-muted">
-                    {t("photoPending")}
-                  </span>
-                </>
+                <ListingPhotoFallback claim claimQuery={earlyName || undefined} className="size-full" />
               )}
             </div>
           </div>
