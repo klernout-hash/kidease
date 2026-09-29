@@ -371,7 +371,7 @@ function Home() {
       <JsonLd json={organizationGraphJsonLdScript()} />
       <div className="ke-web-only [[data-channel=app]_&]:hidden">
         <section className="from-soft border-b border-border bg-bg">
-          <div className="ke-gutter mx-auto max-w-6xl pb-6 pt-2">
+          <div className="ke-gutter mx-auto max-w-6xl pb-4 pt-1">
             <h1 className="sr-only">{t("tagline")}</h1>
             {featuredSearch}
           </div>

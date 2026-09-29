@@ -92,7 +92,7 @@ export function HomeCareTypeRow({
   return (
     <div
       className={`flex overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center [&::-webkit-scrollbar]:hidden ${
-        compact ? "w-full max-w-[52rem] gap-0.5" : "gap-1 pb-1"
+        compact ? "w-full max-w-[58rem] justify-center gap-1" : "gap-1 pb-1"
       }`}
       data-ke="home-care-types"
       role="tablist"
@@ -109,7 +109,7 @@ export function HomeCareTypeRow({
             data-browse-type={type}
             className={
               compact
-                ? `flex min-w-[4.6rem] max-w-[7rem] shrink-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1 text-center transition-colors duration-150 ease-out ${
+                ? `flex min-w-[5.4rem] max-w-[7.5rem] shrink-0 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-center transition-colors duration-150 ease-out ${
                     on ? "text-fg" : "text-muted hover:bg-surface hover:text-fg"
                   }`
                 : `flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 rounded-xl px-1.5 pb-2 pt-1.5 text-center transition-colors duration-150 ease-out ${
@@ -120,7 +120,7 @@ export function HomeCareTypeRow({
           >
             <span
               className={`leading-none [font-family:'Apple_Color_Emoji','Segoe_UI_Emoji','Noto_Color_Emoji',sans-serif] ${
-                compact ? "text-[1.35rem]" : "text-[2.65rem]"
+                compact ? "text-[1.65rem]" : "text-[2.65rem]"
               }`}
               aria-hidden
             >
@@ -128,7 +128,7 @@ export function HomeCareTypeRow({
             </span>
             <span
               className={`font-semibold leading-tight ${
-                compact ? "line-clamp-2 text-[11px]" : "text-[12px]"
+                compact ? "text-[12px] leading-tight" : "text-[12px]"
               } ${on ? "underline decoration-2 underline-offset-4" : ""}`}
             >
               {t(BROWSE_RAIL_COPY[type])}
