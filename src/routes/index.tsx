@@ -5,7 +5,8 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
-import { FacilityTypeRails, HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
+import { FacilityTypeRails, type BrowseDaycareType } from "@/components/facility-type-rails";
+import { getHomeCareType, setHomeCareType, subscribeHomeCareType } from "@/lib/home-care-selection";
 import { ListingRail } from "@/components/listing-rail";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
@@ -106,7 +107,8 @@ function Home() {
   const [role, setRole] = useState<AppRole | null>(null);
   const [place, setPlace] = useState(boot.origin.label);
   const [homeName, setHomeName] = useState("");
-  const [homeType, setHomeType] = useState<BrowseDaycareType | undefined>();
+  const [homeType, setHomeType] = useState<BrowseDaycareType | undefined>(() => getHomeCareType());
+  useEffect(() => subscribeHomeCareType(setHomeType), []);
   const [homeFrom, setHomeFrom] = useState("");
   const [homeTo, setHomeTo] = useState("");
   const [homeStart, setHomeStart] = useState<SearchStart | "">("");
@@ -295,7 +297,8 @@ function Home() {
   const featuredSearch = (
     <>
       <ExploreSearchBar
-        className="mx-auto mt-3 max-w-3xl"
+        className="mx-auto mt-1 max-w-[60rem]"
+        prominent
         compactSubmit
         values={{ where: place, name: homeName, from: homeFrom, to: homeTo }}
         origin={origin}
@@ -368,9 +371,8 @@ function Home() {
       <JsonLd json={organizationGraphJsonLdScript()} />
       <div className="ke-web-only [[data-channel=app]_&]:hidden">
         <section className="from-soft border-b border-border bg-bg">
-          <div className="ke-gutter mx-auto max-w-6xl pb-5 pt-4">
+          <div className="ke-gutter mx-auto max-w-6xl pb-4 pt-1">
             <h1 className="sr-only">{t("tagline")}</h1>
-            <HomeCareTypeRow selected={homeType} onSelect={setHomeType} />
             {featuredSearch}
           </div>
         </section>
@@ -396,7 +398,7 @@ function Home() {
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
             careType={homeType}
-            onCareType={setHomeType}
+            onCareType={(type) => setHomeCareType(type)}
           />
           <div className="mt-6">
             <Button size="md" variant="secondary" className="rounded-[14px]" onClick={() => goSearch(origin.label)}>

@@ -36,6 +36,7 @@ export function NavDrawer({
   isAdmin = false,
   desksSlot,
   onSignOut,
+  headerExtra,
 }: {
   open: boolean;
   onClose: () => void;
@@ -53,6 +54,7 @@ export function NavDrawer({
   isAdmin?: boolean;
   desksSlot?: ReactNode;
   onSignOut: () => void;
+  headerExtra?: ReactNode;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -114,6 +116,7 @@ export function NavDrawer({
       >
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <BrandMark size="sm" align="start" />
+          {headerExtra}
           <button
             ref={closeRef}
             type="button"

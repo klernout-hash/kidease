@@ -155,6 +155,7 @@ export function ExploreSearchBar({
   className,
   startCollapsed = false,
   compactSubmit = false,
+  prominent = false,
   childSummary,
   childAges,
   onChildAge,
@@ -176,6 +177,8 @@ export function ExploreSearchBar({
   startCollapsed?: boolean;
   /** Round icon button, for the home browse bar. */
   compactSubmit?: boolean;
+  /** Home bar: 25% taller and wider than the results bar. */
+  prominent?: boolean;
   childSummary?: string;
   childAges?: { id: string; label: string; on: boolean }[];
   onChildAge?: (id: string) => void;
@@ -197,6 +200,12 @@ export function ExploreSearchBar({
   const startLabel = start ? t(START_COPY[start]) : "";
   const whenLabel = dateLabel || (onStartChange ? startLabel : "") || t("searchWhenHint");
   const whenFilled = Boolean(dateLabel || start);
+  const fieldLabel = prominent
+    ? "block truncate text-[19px] font-semibold leading-6 text-fg"
+    : "block truncate text-[12px] font-semibold leading-4 text-fg";
+  const fieldValue = prominent
+    ? "mt-0.5 h-8 w-full min-w-0 bg-transparent text-[1.55rem] leading-7 text-fg outline-none placeholder:text-muted"
+    : "mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted";
   const destinationCities = origin ? nearestCities(origin, 6) : [];
 
   useEffect(() => {
@@ -221,8 +230,8 @@ export function ExploreSearchBar({
 
   function segmentClass(field: Field, index: number) {
     return cn(
-      "relative flex min-h-[2.75rem] min-w-0 flex-1 flex-col justify-center overflow-visible px-3 py-1 text-left transition-colors",
-      "lg:px-4",
+      "relative flex min-w-0 flex-1 flex-col justify-center overflow-visible px-3 text-left transition-colors duration-150 ease-out",
+      prominent ? "min-h-[4.3rem] py-2 lg:px-6" : "min-h-[2.75rem] py-1 lg:px-4",
       index === 0 && "rounded-t-[2rem] lg:rounded-none lg:rounded-l-full",
       index === 2 && "rounded-b-[2rem] lg:rounded-none lg:rounded-r-full",
       index > 0 &&
@@ -300,7 +309,12 @@ export function ExploreSearchBar({
           </button>
         </div>
       ) : null}
-      <div className="relative z-20 flex min-h-[8.4rem] flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:min-h-[2.75rem] lg:flex-row lg:flex-wrap lg:items-stretch lg:divide-y-0 lg:rounded-full">
+      <div
+        className={cn(
+          "relative z-20 flex flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:flex-row lg:flex-wrap lg:items-stretch lg:divide-y-0 lg:rounded-full",
+          prominent ? "min-h-[13.15rem] lg:min-h-[4.3rem]" : "min-h-[8.4rem] lg:min-h-[2.75rem]",
+        )}
+      >
         <div
           className={cn(segmentClass("where", 0), "lg:min-w-[12rem] lg:flex-[1.2]")}
           onClick={() => {
@@ -312,7 +326,7 @@ export function ExploreSearchBar({
             <label
               id={whereLabelId}
               htmlFor={whereId}
-              className="block truncate text-[12px] font-semibold leading-4 text-fg"
+              className={fieldLabel}
             >
               {t("searchWhere")}
             </label>
@@ -335,7 +349,7 @@ export function ExploreSearchBar({
                 onNearby: onLocate,
                 cities: destinationCities,
               }}
-              inputClassName="mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"
+              inputClassName={fieldValue}
             />
           </div>
         </div>
@@ -368,12 +382,12 @@ export function ExploreSearchBar({
             aria-controls={whenPanelId}
             onClick={() => setActive((cur) => (cur === "when" ? null : "when"))}
           >
-            <span id={whenLabelId} className="block text-[12px] font-semibold leading-4 text-fg">
+            <span id={whenLabelId} className={fieldLabel}>
               {t("searchWhen")}
             </span>
             <span
               className={cn(
-                "mt-0.5 block h-5 truncate text-base leading-5",
+                prominent ? "mt-0.5 block h-8 truncate text-[1.55rem] leading-7" : "mt-0.5 block h-5 truncate text-base leading-5",
                 whenFilled ? "text-fg" : "text-muted",
               )}
             >
@@ -443,7 +457,7 @@ export function ExploreSearchBar({
               <label
                 id={nameLabelId}
                 htmlFor={nameId}
-                className="block text-[12px] font-semibold leading-4 text-fg"
+                className={fieldLabel}
               >
                 {t("searchDaycare")}
               </label>
@@ -453,6 +467,7 @@ export function ExploreSearchBar({
                 value={values.name}
                 onChange={onNameChange}
                 placeholder={t("searchDaycareHint")}
+                inputClassName={fieldValue}
                 onFocus={() => setActive("name")}
               />
             </div>
@@ -461,7 +476,9 @@ export function ExploreSearchBar({
               data-ke="search-submit"
               className={
                 compactSubmit
-                  ? "grid size-12 shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  ? `grid shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card transition-colors duration-150 ease-out hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
+                      prominent ? "size-[4.7rem]" : "size-12"
+                    }`
                   : "inline-flex h-11 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               }
               aria-label={t("findChildcare")}
