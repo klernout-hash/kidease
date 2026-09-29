@@ -369,7 +369,7 @@ test("approve flushes the search memo so the next Live search sees the centre", 
   assert.match(src("src/lib/server/approved-search.ts"), /provinceSearchTokens/);
   assert.match(src("src/lib/server/approved-search.ts"), /listing_active = 1/);
   assert.match(src("src/lib/server/approve-centre.ts"), /flushSearchMemo\(\)/);
-  assert.match(src("src/lib/search-cache.ts"), /live3/);
+  assert.match(src("src/lib/search-cache.ts"), /live4/);
   const migration = src("migrations/0054_live_search_pin.sql");
   assert.match(migration, /st_makepoint\(lng, lat\)/);
   assert.match(migration, /daycares_approved_city_idx/);

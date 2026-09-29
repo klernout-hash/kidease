@@ -58,6 +58,32 @@ export function listingCareType(
   return "centre";
 }
 
+export function matchesListedDaycareType(
+  item: { amenities?: string | null; hours?: string | null; name?: string | null; facilityType?: string | null },
+  type: FacilityType | "before_after",
+): boolean {
+  if (type === "before_after") {
+    return (
+      isBeforeAfterProgram({ amenities: item.amenities || "", hours: item.hours || "" }) &&
+      classifyFacilityType(item).type !== "school_age"
+    );
+  }
+  return matchesFacilityType(item, type);
+}
+
+export function listedDaycareTypeFromSearch(search: unknown): FacilityType | "before_after" | undefined {
+  const bag: Record<string, unknown> =
+    typeof search === "string"
+      ? Object.fromEntries(new URLSearchParams(search.startsWith("?") ? search.slice(1) : search))
+      : search && typeof search === "object"
+        ? (search as Record<string, unknown>)
+        : {};
+  const fac = typeof bag.fac === "string" ? bag.fac : "";
+  if (fac && !fac.includes(",") && isFacilityType(fac)) return fac;
+  if (bag.cat === "before-after") return "before_after";
+  return undefined;
+}
+
 export function matchesCareType(
   item: Pick<Daycare, "amenities" | "hours" | "name" | "facilityType">,
   care: CareType,

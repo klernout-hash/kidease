@@ -422,6 +422,7 @@ function Home() {
             onShowAll={() => setLiveOnly(false)}
             careType={homeType}
             onCareType={(type) => setHomeCareType(type)}
+            city={origin.label}
           />
           <div className="mt-6">
             <Button size="md" variant="secondary" className="rounded-[14px]" onClick={() => goSearch(origin.label)}>
@@ -540,6 +541,7 @@ function Home() {
             onShowAll={() => setLiveOnly(false)}
             careType={homeType}
             onCareType={(type) => setHomeCareType(type)}
+            city={origin.label}
           />
           <div className="mt-6">
             <Button size="md" variant="secondary" className="w-full rounded-[14px]" onClick={() => goSearch(origin.label)}>
@@ -568,6 +570,7 @@ function HomeDiscovery({
   onShowAll,
   careType,
   onCareType,
+  city,
 }: {
   ready: boolean;
   shown: Card[];
@@ -579,6 +582,7 @@ function HomeDiscovery({
   onShowAll: () => void;
   careType?: BrowseDaycareType;
   onCareType?: (type?: BrowseDaycareType) => void;
+  city?: string;
 }) {
   const { t } = useCopy();
   if (!ready && shown.length === 0) return <HomeCardSkeleton />;
@@ -602,7 +606,7 @@ function HomeDiscovery({
       <ListingRail title={t("recentlyViewed")} items={recent} eagerThumbs={false} visual />
       <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
       <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
-      <FacilityTypeRails items={shown} visual skipLiveLooking menu={!onCareType} selected={careType} onSelect={onCareType} />
+      <FacilityTypeRails items={shown} visual skipLiveLooking menu={!onCareType} selected={careType} onSelect={onCareType} city={city} />
     </>
   );
 }

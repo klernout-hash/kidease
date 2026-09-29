@@ -18,6 +18,7 @@ export function searchMemoKey(input: {
   lat2?: number;
   lng2?: number;
   mode?: string;
+  facility?: string;
 }) {
   return [
     input.lat.toFixed(3),
@@ -30,6 +31,7 @@ export function searchMemoKey(input: {
     input.q || "",
     input.startDate || "",
     input.mode || "home",
+    input.facility || "",
     typeof input.lat2 === "number" ? input.lat2.toFixed(3) : "",
     typeof input.lng2 === "number" ? input.lng2.toFixed(3) : "",
   ].join(":");

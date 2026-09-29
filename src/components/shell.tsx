@@ -26,6 +26,12 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const headerType = useRouterState({ select: (s) => selectedBrowseType(s.location.search) });
+  const headerCity = useRouterState({
+    select: (s) => {
+      const search = s.location.search as { q?: unknown } | undefined;
+      return typeof search?.q === "string" ? search.q : "";
+    },
+  });
   const { user } = useCurrentUserState();
   const { session, sticky } = useSessionDesks();
   const chrome = useRoleChrome();
@@ -136,6 +142,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                 compact
                 toSearch
                 selected={headerType}
+                city={headerCity}
                 onSelect={() => {}}
               />
             </div>
