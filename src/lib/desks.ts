@@ -609,18 +609,18 @@ export function headerDesks(
 }
 
 /**
- * One account, one role. The parent/daycare switcher is never shown.
- * Header desks stay available for tests and inbox routing; chrome does not offer a switch.
+ * Parent | Daycare | Admin pills. Only the operator admin
+ * (profiles.role = admin, and kyle@kidease.ca when the mailbox is known).
+ * Parent-only and daycare-only stay on their own desk.
  */
 export function showDeskSwitcher(
   desks?: DeskKey[] | null,
   role?: AppRole | null,
   email?: string | null,
 ) {
-  void desks;
-  void role;
-  void email;
-  return false;
+  if (!canSeeAdminDesk(role, email)) return false;
+  const list = headerDesks(desks ?? [], role, email);
+  return list.includes("admin") && list.length > 1;
 }
 
 export type SessionDesks = {
