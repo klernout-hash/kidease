@@ -1,12 +1,15 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { ProviderSubscriptionPanel } from "@/components/provider-subscription";
+import { Button } from "@/components/ui/button";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canBuyDaycareUpgrade } from "@/lib/upgrade-role";
 import { useRoleChrome } from "@/components/role-chrome";
+import { useCopy } from "@/lib/use-copy";
+import { parseAppRole } from "@/lib/desks";
 
 export const Route = createFileRoute("/provider/subscription")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -38,6 +41,7 @@ export const Route = createFileRoute("/provider/subscription")({
 });
 
 function ProviderSubscriptionPage() {
+  const { t } = useCopy();
   const upgradeSearch = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
@@ -77,7 +81,29 @@ function ProviderSubscriptionPage() {
       </Shell>
     );
   }
-  if (!daycareBuyer) return <Navigate to="/parent" />;
+  if (!daycareBuyer) {
+    if (parseAppRole(session.role) === "provider") {
+      return (
+        <Shell>
+          <main className="mx-auto max-w-lg px-4 py-16 text-center">
+            <h1 className="font-display text-3xl">{t("claimCta")}</h1>
+            <p className="mt-3 text-muted">
+              Centre plans open after you claim a licensed listing. Nothing was charged.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button asChild>
+                <Link to="/claim">{t("claimCta")}</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link to="/plans">{t("navPlans")}</Link>
+              </Button>
+            </div>
+          </main>
+        </Shell>
+      );
+    }
+    return <Navigate to="/parent" />;
+  }
   if (!allowed) {
     return (
       <Shell>

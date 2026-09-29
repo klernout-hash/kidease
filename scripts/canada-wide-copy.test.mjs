@@ -18,8 +18,8 @@ const store = src("src/lib/store-listing.ts");
 const mail = src("src/lib/signup-user-mail.ts");
 
 test("product trust copy is Canada-wide outside Childcare Benefits", () => {
-  assert.match(copy, /footerCopy: "KidEase is a Canada-wide project serving families across the country\."/);
-  assert.match(copy, /footerCopy: "KidEase est un projet pancanadien, au service des familles partout au pays\."/);
+  assert.match(copy, /footerCopy: "Made in Winnipeg\."/);
+  assert.match(copy, /footerCopy: "Fait à Winnipeg\."/);
   assert.doesNotMatch(copy, /Winnipeg-based, Canada-wide project/);
   assert.doesNotMatch(copy, /projet basé à Winnipeg, au service des familles partout au Canada/);
   assert.doesNotMatch(copy, /Manitoba first/);

@@ -11,7 +11,6 @@ import { signOut } from "@/lib/auth/client";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
-import { HeaderSocial } from "@/components/header-social";
 import { MenuLeafBack } from "@/components/menu-leaf-back";
 import { isMenuLeafPath } from "@/lib/menu-leaf";
 import { LanguageSelect } from "@/components/language-select";
@@ -126,13 +125,6 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
-            {menuLeaf ? (
-              <div className="max-md:hidden">
-                <HeaderSocial />
-              </div>
-            ) : (
-              <HeaderSocial />
-            )}
             {chrome.pending ? null : <RoleNavLinks role={chrome.role} paid={chrome.paid} />}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">

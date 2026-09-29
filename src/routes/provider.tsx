@@ -290,7 +290,7 @@ function ProviderPage() {
         setDesk(id as DaycareDesk);
       }}
     >
-      {desk !== "today" && listings.length === 0 && centreOwner ? (
+      {listings.length === 0 && centreOwner ? (
         <ProviderOnboarding
           showForm={showNewForm}
           onShowForm={() => {
@@ -305,7 +305,7 @@ function ProviderPage() {
           <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
         </section>
       ) : null}
-      {desk === "today" ? (
+      {desk === "today" && listings.length > 0 ? (
         <>
         <DaycareDeskHome
           listings={listings}

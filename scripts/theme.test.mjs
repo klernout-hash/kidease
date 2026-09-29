@@ -148,7 +148,8 @@ describe("appearance is wired across public + desks chrome", () => {
     assert.doesNotMatch(shell, /desktopNav/);
     assert.doesNotMatch(shell, /\[\[data-channel=website\]_&\]:xl:flex/);
     assert.doesNotMatch(shell, /\[\[data-channel=website\]_&\]:xl:hidden/);
-    assert.match(shell, /HeaderSocial/);
+    assert.match(src("src/components/site-footer.tsx"), /HeaderSocial/);
+    assert.doesNotMatch(shell, /HeaderSocial/);
     assert.match(shell, /\[\[data-channel=website\]_&\]:flex/);
     assert.match(shell, /\[\[data-channel=website\]_&\]:grid/);
     assert.match(shell, /aria-label="Menu"/);
