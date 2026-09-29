@@ -82,9 +82,11 @@ async function openHeaderMenu(page) {
   const menu = page.locator('header button[aria-label="Menu"]');
   const drawer = page.locator("#ke-nav-drawer");
   await menu.first().waitFor({ timeout: timeoutMs });
-  await page.waitForTimeout(500);
-  if (await drawer.isVisible().catch(() => false)) return;
-  await menu.first().click({ force: true });
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    if (await drawer.isVisible().catch(() => false)) return;
+    await menu.first().click({ force: true });
+    if (await drawer.waitFor({ state: "visible", timeout: 1500 }).then(() => true).catch(() => false)) return;
+  }
   await drawer.waitFor({ timeout: timeoutMs });
 }
 

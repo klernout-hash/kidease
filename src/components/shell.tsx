@@ -134,10 +134,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             aria-label="Menu"
             aria-expanded={open}
             aria-controls="ke-nav-drawer"
-            onPointerDown={(e) => {
-              e.preventDefault();
-              setOpen(true);
-            }}
+            onPointerDown={() => setOpen(true)}
             onClick={(e) => {
               e.stopPropagation();
               setOpen(true);
