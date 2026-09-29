@@ -40,9 +40,9 @@ const UPDATED_EN = "Effective 7 September 2026 · KidEase · Winnipeg, Manitoba"
 const UPDATED_FR = "En vigueur le 7 septembre 2026 · KidEase · Winnipeg (Manitoba)";
 
 const DISCLAIMER_EN =
-  "This page explains how KidEase handles personal information and how the service works. It is draft copy for Kyle and counsel to review. It is not legal advice. Official PIPEDA text lives on the Privacy Commissioner of Canada website.";
+  "This page explains how KidEase handles personal information and how the service works. It is not legal advice. Official PIPEDA text lives on the Privacy Commissioner of Canada website.";
 const DISCLAIMER_FR =
-  "Cette page décrit le traitement des renseignements personnels et le fonctionnement du service. Il s’agit d’un brouillon pour Kyle et les conseillers juridiques. Ce n’est pas un avis juridique. Le texte officiel de la LPRPDE est sur le site du Commissariat à la protection de la vie privée du Canada.";
+  "Cette page décrit le traitement des renseignements personnels et le fonctionnement du service. Ce n’est pas un avis juridique. Le texte officiel de la LPRPDE est sur le site du Commissariat à la protection de la vie privée du Canada.";
 
 export const PRIVACY_EN: LegalDoc = {
   kicker: "Privacy",
