@@ -35,7 +35,7 @@ test("each role has one recommended plan and only real benefits", () => {
   );
   const plus = parentUpgradePlan("plus").benefits.map((line) => line.en).join(" | ");
   assert.match(plus, /video tour, when video is on/);
-  assert.equal(parentUpgradePlan("plus").benefits.length, 1);
+  assert.equal(parentUpgradePlan("plus").benefits.length, 5);
   assert.equal(PLUS_FEATURES.map((line) => line.en).join(" | "), plus);
   assert.doesNotMatch(plus, /saved-search|priority support|early access|peace of mind|enrol/i);
 
@@ -44,6 +44,8 @@ test("each role has one recommended plan and only real benefits", () => {
     "Unlimited messages and tours",
     "One featured city in search",
     "90 days of views and requests",
+    "Lead pipeline on the desk",
+    "Staff roster and screening",
   ]);
   const network = daycareUpgradePlan("network").benefits.map((line) => line.en).join(" | ");
   assert.match(network, /Totals across your sites/);
