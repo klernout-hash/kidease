@@ -47,6 +47,14 @@ export function ListingHeroGallery({
     onIndex((current + dir + count) % count);
   }
 
+  function backIfInApp(event: { preventDefault: () => void }) {
+    const idx = (window.history.state as { idx?: number } | null)?.idx;
+    if (typeof idx === "number" && idx > 0) {
+      event.preventDefault();
+      window.history.back();
+    }
+  }
+
   function onTouchStart(event: TouchEvent) {
     if ((event.target as HTMLElement).closest("a,button")) return;
     const touch = event.changedTouches[0];
@@ -66,7 +74,7 @@ export function ListingHeroGallery({
 
   const backLink =
     back.to === "/search" ? (
-      <Link to="/search" className={count ? overlayControl : emptyControl} aria-label={t("backToExplore")}>
+      <Link to="/search" className={count ? overlayControl : emptyControl} aria-label={t("backToExplore")} onClick={backIfInApp}>
         <ChevronLeft className="size-6" strokeWidth={1.75} aria-hidden />
       </Link>
     ) : (
@@ -75,6 +83,7 @@ export function ListingHeroGallery({
         params={{ city: back.city }}
         className={count ? overlayControl : emptyControl}
         aria-label={t("backToExplore")}
+        onClick={backIfInApp}
       >
         <ChevronLeft className="size-6" strokeWidth={1.75} aria-hidden />
       </Link>

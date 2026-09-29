@@ -148,7 +148,7 @@ export function CareOpsPanel({
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm text-muted">{t("careRosterEmpty")}</p>
+        <p className="mt-2 text-sm text-muted">{t("careRoomsEmpty")}</p>
       )}
 
       {role === "provider" ? (

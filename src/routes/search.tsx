@@ -1080,6 +1080,12 @@ function SearchPage() {
   const city = (whereLabel || origin.label).split(",")[0];
   const whereSet = Boolean(whereLabel);
   const mapOrigin = anchors.primary;
+  const searchCountLine =
+    fabric.live > 0
+      ? t("exploreBrowseHint").replace("{n}", String(fabric.live))
+      : catalog.length === 1
+        ? t("searchLicensedCountOne")
+        : t("searchLicensedCount").replace("{n}", String(catalog.length));
 
   function chip(on: boolean, label: string, action: () => void) {
     return (
@@ -1183,7 +1189,7 @@ function SearchPage() {
                   <span>{t("searchCountLoading")}</span>
                 </span>
               ) : (
-                t("exploreBrowseHint").replace("{n}", String(fabric.live))
+                {searchCountLine}
               )}
             </p>
           </div>

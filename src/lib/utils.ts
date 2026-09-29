@@ -34,15 +34,38 @@ export function storedCentreName(name?: string | null, nameFr?: string | null) {
   return displayCentreName(primary || french);
 }
 
-/** Registry typos we refuse to show on parent-facing cards. */
+/** Registry typos we refuse to show on parent-facing cards. Display only — the master row stays as stored. */
 export function displayCentreName(value: string | null | undefined) {
-  return decodeHtml(value)
+  const decoded = decodeHtml(value)
+    .replace(/[“”]/g, "\"")
+    .replace(/(^|\s)"+|"+(\s|$)/g, "$1$2")
     .replace(/\bCetnre\b/g, "Centre")
     .replace(/\bCetnres\b/g, "Centres")
+    .replace(/\b(\d+)(St|Nd|Rd|Th)\b/g, (_, n: string, suf: string) => `${n}${suf.toLowerCase()}`)
     .replace(/\s+-\s*/g, " – ")
     .replace(/([a-z])-([A-Z])/g, "$1 – $2")
     .replace(/\s{2,}/g, " ")
     .trim();
+  return titleCaseScrapedName(decoded);
+}
+
+const NAME_KEEP_UPPER = new Set(["ymca", "ywca", "abc", "ece", "cpr"]);
+
+/** Registries ship ALL CAPS. Title-case those only. Mixed-case names stay put. */
+function titleCaseScrapedName(value: string) {
+  const letters = value.match(/[A-Za-zÀ-ÿ]/g) ?? [];
+  if (letters.length < 4) return value;
+  const upper = letters.filter((ch) => ch === ch.toUpperCase() && ch !== ch.toLowerCase()).length;
+  if (upper / letters.length < 0.75) return value;
+  return value
+    .toLowerCase()
+    .split(/(\s+|[-–/])/)
+    .map((part) => {
+      if (!/[a-zà-ÿ]/i.test(part)) return part;
+      if (NAME_KEEP_UPPER.has(part)) return part.toUpperCase();
+      return part.charAt(0).toLocaleUpperCase() + part.slice(1);
+    })
+    .join("");
 }
 
 export function money(cad: number, locale: Locale = "en") {

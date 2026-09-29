@@ -19,6 +19,12 @@ function src(rel) {
 test("Guest: live vs all counts, empty-search lead, and listing login handoff", () => {
   const search = src("src/routes/search.tsx");
   assert.match(search, /exploreBrowseHint/);
+  assert.match(search, /searchLicensedCount/);
+  assert.match(src("src/components/listing-more-actions.tsx"), /bottom-full/);
+  assert.match(src("src/components/listing-hero-gallery.tsx"), /history\.back/);
+  assert.match(src("src/components/care-ops-panel.tsx"), /careRoomsEmpty/);
+  assert.match(src("src/routes/claim.tsx"), /sendClaimRequest/);
+  assert.match(src("src/styles.css"), /\.ke-listing-hero \{\s*width: 100%/);
   assert.match(search, /data-ke="search-result-list"/);
   assert.match(search, /areaPresence\(catalog\)/);
   assert.match(search, /parentLoginSearch\("\/search"\)/);
