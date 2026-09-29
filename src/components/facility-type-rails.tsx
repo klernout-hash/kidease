@@ -243,10 +243,14 @@ export function DaycareTypeRails({
 /** @deprecated alias — Explore home still mounts this name. */
 export function FacilityTypeRails(props: {
   items?: Card[];
-  rows?: Partial<Record<FacilityType, Card[]>>;
+  rows?: Partial<Record<BrowseDaycareType, Card[]>>;
   eagerThumbs?: boolean;
   visual?: boolean;
   skipLiveLooking?: boolean;
+  menu?: boolean;
+  seeAll?: boolean;
+  selected?: BrowseDaycareType;
+  onSelect?: (type?: BrowseDaycareType) => void;
 }) {
   return <DaycareTypeRails {...props} />;
 }
