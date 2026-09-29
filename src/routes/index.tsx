@@ -5,19 +5,13 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
-import { BrandMark } from "@/components/brand-mark";
-import { FacilityTypeRails } from "@/components/facility-type-rails";
+import { FacilityTypeRails, HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import {
   FeelPhoto,
   HeroBanner,
-  HeroYard,
-  HERO_LCP_AVIF_SRCSET,
-  HERO_LCP_MOBILE_AVIF_SRCSET,
-  HERO_LCP_MOBILE_SIZES,
-  HERO_LCP_SIZES,
 } from "@/components/building-photo";
 import { ChipButton } from "@/components/chip";
 import { HomeNearbyCities } from "@/components/home-nearby-cities";
@@ -93,35 +87,7 @@ export const Route = createFileRoute("/")({
   pendingMs: 0,
   pendingMinMs: 0,
   pendingComponent: BootPending,
-  head: () => {
-    const seo = pageSeoHead(MARKETING_PAGE_SEO.home);
-    return {
-      ...seo,
-      links: [
-        ...seo.links,
-        {
-          rel: "preload",
-          as: "image",
-          type: "image/avif",
-          href: "/photos/hero-480-k2.avif?v=1",
-          imageSrcSet: HERO_LCP_MOBILE_AVIF_SRCSET,
-          imageSizes: HERO_LCP_MOBILE_SIZES,
-          fetchPriority: "high",
-          media: "(max-width: 1023px)",
-        },
-        {
-          rel: "preload",
-          as: "image",
-          type: "image/avif",
-          href: "/photos/hero-768-k2.avif?v=1",
-          imageSrcSet: HERO_LCP_AVIF_SRCSET,
-          imageSizes: HERO_LCP_SIZES,
-          fetchPriority: "high",
-          media: "(min-width: 1024px)",
-        },
-      ],
-    };
-  },
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.home),
   component: Home,
 });
 
@@ -167,6 +133,7 @@ function Home() {
   const [role, setRole] = useState<AppRole | null>(null);
   const [place, setPlace] = useState(boot.origin.label);
   const [homeName, setHomeName] = useState("");
+  const [homeType, setHomeType] = useState<BrowseDaycareType | undefined>();
   const [homeFrom, setHomeFrom] = useState("");
   const [homeTo, setHomeTo] = useState("");
   const [homeStart, setHomeStart] = useState<SearchStart | "">("");
@@ -355,7 +322,8 @@ function Home() {
   const featuredSearch = (
     <>
       <ExploreSearchBar
-        className="mt-5 lg:mt-8"
+        className="mx-auto mt-3 max-w-3xl"
+        compactSubmit
         values={{ where: place, name: homeName, from: homeFrom, to: homeTo }}
         origin={origin}
         start={homeStart}
@@ -380,7 +348,7 @@ function Home() {
             setHomeTo("");
           }
         }}
-        startCollapsed
+        startCollapsed={false}
         radiusKm={radiusKm}
         onRadiusChange={setRadiusKm}
         onLocate={() => void pinLocation()}
@@ -442,22 +410,12 @@ function Home() {
     <Shell bare>
       <JsonLd json={organizationGraphJsonLdScript()} />
       <div className="ke-web-only [[data-channel=app]_&]:hidden">
-        <section className="relative overflow-hidden bg-gradient-to-b from-soft via-bg to-bg">
-          <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20 xl:py-24">
-            <div>
-              <BrandMark size="md" align="start" />
-              <h1 className="mt-8 max-w-xl text-[clamp(2rem,6vw,3.25rem)] text-fg">
-                {t("tagline")}
-              </h1>
-              <p className="mt-4 max-w-lg text-base text-muted md:text-lg">{t("heroSub")}</p>
-              {featuredSearch}
-              {heroCityBrowse}
-            </div>
-            <div className="relative">
-              <div className="overflow-hidden rounded-[14px] shadow-card ring-1 ring-border">
-                <HeroYard />
-              </div>
-            </div>
+        <section className="from-soft border-b border-border bg-bg">
+          <div className="ke-gutter mx-auto max-w-6xl pb-5 pt-4">
+            <h1 className="sr-only">{t("tagline")}</h1>
+            <HomeCareTypeRow selected={homeType} onSelect={setHomeType} />
+            {featuredSearch}
+            {heroCityBrowse}
           </div>
         </section>
 
@@ -481,6 +439,8 @@ function Home() {
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
+            careType={homeType}
+            onCareType={setHomeType}
           />
           <div className="mt-6">
             <Button size="md" variant="secondary" className="rounded-[14px]" onClick={() => goSearch(origin.label)}>
@@ -624,6 +584,8 @@ function HomeDiscovery({
   liveOnly,
   hasPublic,
   onShowAll,
+  careType,
+  onCareType,
 }: {
   ready: boolean;
   shown: Card[];
@@ -633,6 +595,8 @@ function HomeDiscovery({
   liveOnly: boolean;
   hasPublic: boolean;
   onShowAll: () => void;
+  careType?: BrowseDaycareType;
+  onCareType?: (type?: BrowseDaycareType) => void;
 }) {
   const { t } = useCopy();
   if (!ready && shown.length === 0) return <HomeCardSkeleton />;
@@ -656,7 +620,14 @@ function HomeDiscovery({
       <ListingRail title={t("recentlyViewed")} items={recent} eagerThumbs={false} visual />
       <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
       <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
-      <FacilityTypeRails items={shown} visual skipLiveLooking />
+      <FacilityTypeRails
+        items={shown}
+        visual
+        skipLiveLooking
+        menu={!onCareType}
+        selected={careType}
+        onSelect={onCareType}
+      />
     </>
   );
 }

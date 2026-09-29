@@ -120,5 +120,6 @@ test("guest home hero keeps the search bar and drops the city grid and trust dup
   assert.doesNotMatch(hero, /t\("heroTrust"\)/);
   assert.doesNotMatch(hero, /t\("sortOpen"\)/);
   assert.doesNotMatch(hero, /t\("requestInfo"\)/);
-  assert.match(hero, /HeroYard/);
+  assert.match(hero, /HomeCareTypeRow/);
+  assert.doesNotMatch(hero, /HeroYard/);
 });
