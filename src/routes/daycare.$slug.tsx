@@ -164,6 +164,20 @@ function ListingJsonLd({
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />;
 }
 
+function ClaimListingButton({ name, className = "" }: { name: string; className?: string }) {
+  const { t } = useCopy();
+  return (
+    <Link
+      to="/claim"
+      search={{ q: name }}
+      data-ke="listing-claim-button"
+      className={`inline-flex min-h-11 items-center justify-center rounded-[14px] bg-[#1f9d55] px-4 text-sm font-semibold text-white shadow-card hover:bg-[#187a43] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f9d55]/50 ${className}`}
+    >
+      {t("claimListingFrame")}
+    </Link>
+  );
+}
+
 function Listing() {
   const { slug } = Route.useParams();
   const search = Route.useSearch();
@@ -635,6 +649,11 @@ function Listing() {
             </div>
           ) : null}
           <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={from} />
+          {offerClaim ? (
+            <div className="mt-3">
+              <ClaimListingButton name={name} />
+            </div>
+          ) : null}
           <ListingBadges item={ranked} compact feeOnly />
         </header>
         <ListingJumpNav />
@@ -920,6 +939,7 @@ function Listing() {
             </p>
         </div>
         <aside className="ke-panel hidden h-fit px-4 py-4 shadow-card lg:sticky lg:top-20 lg:block">
+          {offerClaim ? <ClaimListingButton name={name} className="mb-3 w-full" /> : null}
           <ListingCtaSnippet live={live} from={from} hours={hours} prominent />
           <p className="mt-1 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
           {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
@@ -962,6 +982,9 @@ function Listing() {
                 {t("bookTour")}
               </Button>
             </div>
+          ) : null}
+          {parentActions && !live && offerClaim ? (
+            <ClaimListingButton name={name} className="h-12 min-h-12 flex-1" />
           ) : null}
           {parentActions && !live ? (
             <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" asChild>
