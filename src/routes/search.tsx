@@ -1189,7 +1189,7 @@ function SearchPage() {
                   <span>{t("searchCountLoading")}</span>
                 </span>
               ) : (
-                {searchCountLine}
+                searchCountLine
               )}
             </p>
           </div>
