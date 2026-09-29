@@ -233,7 +233,7 @@ export function ExploreSearchBar({
               placeholder={t("searchWhereHint")}
               origin={origin}
               ariaLabelledBy={whereLabelId}
-              className="min-h-6 w-full"
+              className="min-h-6"
               inputClassName="mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"
             />
           </div>
