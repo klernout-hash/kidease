@@ -190,7 +190,7 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleN
   const planLabel = upgradeNavLabel(paid);
   if (input.role === "parent") {
     return [
-      { id: "home", label: "Home", to: "/parent", icon: "parent" },
+      { id: "home", label: "Home", to: "/", icon: "parent" },
       { id: "search", label: "Search", to: "/search", icon: "explore" },
       { id: "saved", label: "Saved", to: "/parent", search: { tab: "saved" }, icon: "saved" },
       { id: "requests", label: "Requests & tours", to: "/parent", search: { tab: "requests" }, icon: "tourChecklist" },

@@ -8,7 +8,6 @@ import { Shell } from "@/components/shell";
 import { BrandMark } from "@/components/brand-mark";
 import { FacilityTypeRails } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
-import { ParentDeskRails } from "@/components/parent-desk-rails";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import {
@@ -24,7 +23,7 @@ import { ChipButton } from "@/components/chip";
 import { HomeNearbyCities } from "@/components/home-nearby-cities";
 import { STEP_SIZES } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { getFamily, getMyRole } from "@/lib/server/family";
+import { getMyRole } from "@/lib/server/family";
 import {
   consumeJustSignedOut,
   DESK_LANDED_KEY,
@@ -33,10 +32,10 @@ import {
   readStickyDesk,
   type AppRole,
 } from "@/lib/desks";
-import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
+import { featuredDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { BootPending } from "@/components/boot-pending";
-import { HOME_PAINT_BUDGET_MS, LOADER_SETTLE_MS, ORIGIN_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
+import { HOME_PAINT_BUDGET_MS, ORIGIN_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, trustedSavedOrigin } from "@/lib/default-origin";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
@@ -55,7 +54,7 @@ import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
-import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
+import type { DaycareCard as Card } from "@/lib/types";
 import {
   honestVacancy,
   homeRailItems,
@@ -180,9 +179,6 @@ function Home() {
   const [featuredReady, setFeaturedReady] = useState(boot.featuredReady !== false);
   const [recent, setRecent] = useState<Card[]>([]);
   const [enrollOpen, setEnrollOpen] = useState(false);
-  const [familyKids, setFamilyKids] = useState<Child[]>([]);
-  const [familyBookings, setFamilyBookings] = useState<Booking[]>([]);
-  const [explore, setExplore] = useState<Card[]>(publicListings(boot.featured ?? []));
 
   useEffect(() => {
     if (!featured.length) return;
@@ -193,19 +189,11 @@ function Home() {
     const uid = user?.id;
     if (!uid) {
       setRole(null);
-      setFamilyKids([]);
-      setFamilyBookings([]);
       return;
     }
     void dedupedQuery(`home-role:${uid}`, QUERY_STALE_MS, () => getMyRole())
       .then((r) => setRole(r.role))
       .catch(() => setRole("parent"));
-    void dedupedQuery(`home-family:${uid}`, QUERY_STALE_MS, () => getFamily())
-      .then((f) => {
-        setFamilyKids(f.children);
-        setFamilyBookings(f.bookings);
-      })
-      .catch(() => undefined);
   }, [user?.id]);
 
   useEffect(() => {
@@ -235,41 +223,12 @@ function Home() {
           const next = publicListings(uniqueById(rows));
           setFeatured(next);
           setFeaturedReady(true);
-          setExplore((cur) => (cur.length ? cur : next));
         })
         .catch(() => {
           if (cancelled) return;
           setFeatured([]);
           setFeaturedReady(true);
         });
-    };
-    const loadExplore = () => {
-      void withTimeoutFallback(
-        dedupedQuery(
-          `home-search:${loc.lat},${loc.lng},${radiusKm},${loc.label ?? ""}`,
-          QUERY_STALE_MS,
-          () =>
-            searchDaycares({
-              data: {
-                lat: loc.lat,
-                lng: loc.lng,
-                radiusKm,
-                sort: "match",
-                ageGroup: "any",
-                label: loc.label,
-                q: loc.label,
-              },
-            }),
-          { cacheIf: (rows) => rows.length > 0 },
-        ),
-        LOADER_SETTLE_MS,
-        [] as Card[],
-      )
-        .then((rows) => {
-          if (cancelled || !rows.length) return;
-          setExplore(publicListings(uniqueById(rows)));
-        })
-        .catch(() => undefined);
     };
     // Catalogue XHR waits until the hero request is already in flight.
     const featuredWait = boot.featuredReady;
@@ -280,15 +239,12 @@ function Home() {
         : window.setTimeout(loadFeatured, 400)
       : null;
     if (!featuredWait) loadFeatured();
-    const exploreId = ric ? ric(loadExplore, { timeout: 2000 }) : window.setTimeout(loadExplore, 600);
     return () => {
       cancelled = true;
       if (featuredId != null) {
         if (ric) cancelIdleCallback(featuredId);
         else window.clearTimeout(featuredId);
       }
-      if (ric) cancelIdleCallback(exploreId);
-      else window.clearTimeout(exploreId);
     };
   }, [origin, originSource, radiusKm, boot.origin, boot.featuredReady]);
 
@@ -520,24 +476,16 @@ function Home() {
           <h2 className="text-xl tracking-[-0.03em] md:text-2xl">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t("featuredBody")}</p>
           <ResumeVisitCard />
-          {user && role !== "admin" && role !== "provider" ? (
-            <ParentDeskRails
-              items={explore.length ? explore : shown}
-              children={familyKids}
-              bookings={familyBookings}
-            />
-          ) : (
-            <HomeDiscovery
-              ready={featuredReady}
-              shown={shown}
-              availableNow={availableNow}
-              availableNextMonth={availableNextMonth}
-              recent={recentLooking}
-              liveOnly={liveOnly}
-              hasPublic={publicFeatured.length > 0}
-              onShowAll={() => setLiveOnly(false)}
-            />
-          )}
+          <HomeDiscovery
+            ready={featuredReady}
+            shown={shown}
+            availableNow={availableNow}
+            availableNextMonth={availableNextMonth}
+            recent={recentLooking}
+            liveOnly={liveOnly}
+            hasPublic={publicFeatured.length > 0}
+            onShowAll={() => setLiveOnly(false)}
+          />
           <div className="mt-6">
             <Button size="md" variant="secondary" className="rounded-[14px]" onClick={() => goSearch(origin.label)}>
               <Search className="size-5" />
@@ -660,35 +608,16 @@ function Home() {
           {featuredSearch}
           {heroCityBrowse}
           <ResumeVisitCard />
-          {user ? (
-            <ParentDeskRails
-              items={explore.length ? explore : shown}
-              children={familyKids}
-              bookings={familyBookings}
-            />
-          ) : (
-            <>
-              <ListingRail title={t("recentlyViewed")} items={recentLooking} eagerThumbs={false} visual />
-              <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
-              <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
-              <FacilityTypeRails items={shown} visual skipLiveLooking />
-              {!featuredReady && shown.length === 0 ? (
-                <HomeCardSkeleton />
-              ) : shown.length === 0 && publicFeatured.length > 0 ? (
-                <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
-                    <EmptyState
-                      title={liveOnly && publicFeatured.length > 0 ? t("noLiveResults") : t("noResults")}
-                      body={liveOnly && publicFeatured.length > 0 ? t("noLiveResultsLead") : t("noResultsLead")}
-                      action={liveOnly && publicFeatured.length > 0 ? t("showAll") : t("changeLocation")}
-                      onAction={liveOnly && publicFeatured.length > 0 ? () => setLiveOnly(false) : undefined}
-                      actionTo={liveOnly && publicFeatured.length > 0 ? undefined : "/?change=1"}
-                      secondary={liveOnly && publicFeatured.length > 0 ? t("noLiveResultsClaim") : undefined}
-                      secondaryTo={liveOnly && publicFeatured.length > 0 ? "/claim" : undefined}
-                    />
-                </div>
-              ) : null}
-            </>
-          )}
+          <HomeDiscovery
+            ready={featuredReady}
+            shown={shown}
+            availableNow={availableNow}
+            availableNextMonth={availableNextMonth}
+            recent={recentLooking}
+            liveOnly={liveOnly}
+            hasPublic={publicFeatured.length > 0}
+            onShowAll={() => setLiveOnly(false)}
+          />
           <div className="mt-8">
             <Button size="md" variant="secondary" className="w-full rounded-[14px]" onClick={() => goSearch(origin.label)}>
               <Search className="size-5" />
