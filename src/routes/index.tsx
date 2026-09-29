@@ -47,7 +47,7 @@ import { publicListings } from "@/lib/listing-visibility";
 import { readRecent } from "@/lib/recent";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { resolveLocationQuery } from "@/components/place-search";
-import { compactExploreSearch, guestHeroSearch } from "@/lib/explore-search";
+import { compactExploreSearch } from "@/lib/explore-search";
 import { nearbyHomeCities } from "@/lib/home-popular-cities";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
@@ -386,9 +386,8 @@ function Home() {
         onLocate={() => void pinLocation()}
         onSubmit={() => {
           void applyPlace(place).then((hit) => {
-            const named = guestHeroSearch(place, hit);
-            goSearch(named.q || hit?.label || origin.label, {
-              name: homeName || named.name,
+            goSearch(hit?.label || place.trim() || origin.label, {
+              name: homeName,
               from: homeStart ? startWindowToDate(homeStart) : homeFrom,
               to: homeTo,
               start: homeStart || undefined,

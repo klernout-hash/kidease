@@ -213,8 +213,8 @@ export function ExploreSearchBar({
         </div>
       ) : null}
       <div className="relative z-20 flex min-h-[8.4rem] flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:min-h-[2.75rem] lg:flex-row lg:flex-wrap lg:items-stretch lg:divide-y-0 lg:rounded-full">
-        <div className={cn(segmentClass("where", 0), "lg:min-w-[18rem] lg:flex-[1.4]")} onClick={() => setActive("where")}>
-          <div data-ke="where-field" className="flex min-w-0 flex-col">
+        <div className={cn(segmentClass("where", 0), "lg:min-w-[12rem] lg:flex-[1.2]")} onClick={() => setActive("where")}>
+          <div data-ke="where-field" className="min-w-0">
             <label
               id={whereLabelId}
               htmlFor={whereId}
@@ -237,27 +237,27 @@ export function ExploreSearchBar({
               inputClassName="mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"
             />
           </div>
-          {(onRadiusChange && radiusKm != null) || onLocate ? (
-            <div data-ke="where-controls" className="mt-1 flex items-center gap-1">
-              {onRadiusChange && radiusKm != null ? (
-                <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
-              ) : null}
-              {onLocate ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLocate();
-                  }}
-                  className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-bg hover:text-fg"
-                  aria-label={t("useLocation")}
-                >
-                  <LocateFixed className="size-5" />
-                </button>
-              ) : null}
-            </div>
-          ) : null}
         </div>
+        {(onRadiusChange && radiusKm != null) || onLocate ? (
+          <div data-ke="where-controls" className="flex shrink-0 items-center gap-1 px-2 py-1">
+            {onRadiusChange && radiusKm != null ? (
+              <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
+            ) : null}
+            {onLocate ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLocate();
+                }}
+                className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-bg hover:text-fg"
+                aria-label={t("useLocation")}
+              >
+                <LocateFixed className="size-5" />
+              </button>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className={segmentClass("when", 1)}>
           <button
@@ -365,7 +365,7 @@ export function ExploreSearchBar({
           ) : null}
         </div>
 
-        <div className={cn(segmentClass("name", 2), "lg:pr-2")}>
+        <div className={cn(segmentClass("name", 2), "lg:min-w-[14rem] lg:pr-1.5")}>
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
               <label

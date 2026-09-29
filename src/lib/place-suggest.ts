@@ -57,6 +57,7 @@ type AutocompleteService = {
   getPlacePredictions: (
     req: {
       input: string;
+      types?: string[];
       componentRestrictions?: { country: string };
       location?: unknown;
       radius?: number;
@@ -99,6 +100,7 @@ export async function suggestPlacesBrowser(
       svc.getPlacePredictions(
         {
           input: q,
+          types: ["(cities)"],
           componentRestrictions: { country: "ca" },
           location,
           radius: origin ? 50_000 : undefined,

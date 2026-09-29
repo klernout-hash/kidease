@@ -30,7 +30,7 @@ export const suggestPlaces = createServerFn({ method: "POST" })
     const params = new URLSearchParams({
       input: data.q,
       key: placesKey(),
-      types: "geocode",
+      types: "(cities)",
       components: CA_COMPONENTS,
       language: "en",
       location: `${bias.lat},${bias.lng}`,

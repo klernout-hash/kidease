@@ -39,6 +39,8 @@ test("PlaceSearch anchors suggestions under the input and falls back when server
   assert.match(places, /suggestPlacesBrowser/);
   assert.match(places, /geocodeWithBrowser/);
   assert.match(places, /suggestLocalPlaces/);
+  assert.match(src("src/lib/place-suggest.ts"), /types: \["\(cities\)"\]/);
+  assert.match(src("src/lib/server/google-places.ts"), /types: "\(cities\)"/);
   assert.match(places, /resolveLocationQuery/);
   assert.doesNotMatch(places, /contain-layout/);
   assert.match(src("src/components/dual-anchor-bar.tsx"), /anchorWorkMiss/);
