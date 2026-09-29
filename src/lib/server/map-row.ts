@@ -7,6 +7,7 @@ import { hasLicenceEvidence } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
 import { isAdminOnlyListing, listingVisibilityOf } from "@/lib/listing-visibility";
+import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
