@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import {
   DESK_PATH,
   headerDesks,
   highlightDesk,
+  openAdminDesk,
   parseDeskQuery,
   showDeskSwitcher,
   type DeskKey,
@@ -47,7 +47,22 @@ function DeskPills({
           "inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium leading-none",
           on ? "bg-primary text-primary-fg" : "text-muted hover:text-fg",
         );
-        if (desk === "admin") return null;
+        if (desk === "admin") {
+          return (
+            <button
+              key={desk}
+              type="button"
+              aria-current={on ? "page" : undefined}
+              className={className}
+              onClick={() => {
+                onPick(desk);
+                openAdminDesk();
+              }}
+            >
+              {deskLabel(t, desk)}
+            </button>
+          );
+        }
         return (
           <Link
             key={desk}
@@ -93,87 +108,6 @@ function InboxLink({
   );
 }
 
-function DeskMenu({
-  desks,
-  current,
-  onPick,
-  t,
-}: {
-  desks: DeskKey[];
-  current: DeskKey | null;
-  onPick: (desk: DeskKey) => void;
-  t: (key: CopyKey) => string;
-}) {
-  const [open, setOpen] = useState(false);
-  const wrap = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  return (
-    <div ref={wrap} className="relative">
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={t("deskSwitcherLabel")}
-        onClick={() => setOpen((v) => !v)}
-        className={cn(
-          "inline-flex h-8 items-center gap-0.5 rounded-full px-2.5 text-[11px] font-medium leading-none",
-          current ? "bg-primary text-primary-fg" : "text-muted hover:text-fg",
-        )}
-      >
-        {current ? deskLabel(t, current) : t("deskSwitcherLabel")}
-        <ChevronDown className="size-3" strokeWidth={1.8} />
-      </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 min-w-36 overflow-hidden rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
-        >
-          {desks.map((desk) => {
-            const on = current === desk;
-            const className = cn(
-              "block px-3 py-2.5 text-sm hover:bg-surface-2",
-              on ? "font-semibold text-fg" : "text-fg",
-            );
-            const onSelect = () => {
-              onPick(desk);
-              setOpen(false);
-            };
-            if (desk === "admin") return null;
-            return (
-              <Link
-                key={desk}
-                role="menuitem"
-                to={DESK_PATH[desk]}
-                onClick={onSelect}
-                aria-current={on ? "page" : undefined}
-                className={className}
-              >
-                {deskLabel(t, desk)}
-              </Link>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   const { t } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -202,11 +136,7 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
 
   return (
     <div role="navigation" aria-label={t("deskSwitcherLabel")} className="shrink-0">
-      <div className={cn(chrome, "md:hidden")}>
-        <DeskMenu desks={desks} current={current} onPick={setSticky} t={t} />
-        <InboxLink pathname={pathname} current={current} unread={inboxUnreadForDesk(session, current)} />
-      </div>
-      <div className={cn(chrome, "hidden md:flex")}>
+      <div className={chrome}>
         <DeskPills desks={desks} current={current} onPick={setSticky} t={t} />
         <InboxLink pathname={pathname} current={current} unread={inboxUnreadForDesk(session, current)} />
       </div>
