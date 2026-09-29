@@ -80,13 +80,11 @@ async function setFixture(context, base, { role, plan, own, activity } = {}) {
 
 async function openHeaderMenu(page) {
   const menu = page.locator('header button[aria-label="Menu"]');
-  await menu.first().waitFor({ timeout: timeoutMs });
-  await page.waitForTimeout(400);
-  await menu.first().click();
   const drawer = page.locator("#ke-nav-drawer");
-  if (!(await drawer.isVisible().catch(() => false))) {
-    await menu.first().click();
-  }
+  await menu.first().waitFor({ timeout: timeoutMs });
+  await page.waitForTimeout(500);
+  if (await drawer.isVisible().catch(() => false)) return;
+  await menu.first().click();
   await drawer.waitFor({ timeout: timeoutMs });
 }
 
