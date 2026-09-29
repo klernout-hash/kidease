@@ -364,6 +364,8 @@ test("guest, parent, and daycare stay in sync with the approval strip", () => {
   const page = src("src/routes/daycare.$slug.tsx");
   assert.match(page, /showPublicClaimPrompt\(d\)/);
   assert.match(page, /data-ke="listing-claim-prompt"/);
+  assert.match(page, /data-ke="listing-claim-button"/);
+  assert.match(page, /offerClaim \? \(/);
   assert.match(page, /data-ke="listing-sticky-tour"/);
   assert.match(page, /data-ke="listing-sticky-cta"/);
   assert.doesNotMatch(page, /license_photo|storage_ref/);
