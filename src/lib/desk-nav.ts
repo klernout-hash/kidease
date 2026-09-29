@@ -6,8 +6,8 @@ export type DeskId = "admin" | "support" | "daycare" | "parent";
 export const DAYCARE_PRIMARY_NAV_IDS = ["today", "messages", "listings", "money"] as const;
 export type DaycarePrimaryNavId = (typeof DAYCARE_PRIMARY_NAV_IDS)[number];
 
-/** Phone rail: For you · Daily care · Children · Pay. Overflow (incl. Messages, Find care) goes in More. */
-export const PARENT_PRIMARY_NAV_IDS = ["explore", "care", "children", "payments"] as const;
+/** Phone rail: Home · Search · Shortlist · Messages · Account. The rest stays in More. */
+export const PARENT_PRIMARY_NAV_IDS = ["explore", "search", "saved", "messages", "account"] as const;
 export type ParentPrimaryNavId = (typeof PARENT_PRIMARY_NAV_IDS)[number];
 
 const PHONE_PRIMARY_NAV: Partial<Record<DeskId, readonly string[]>> = {
@@ -71,15 +71,15 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "account", label: "Account", hint: "Sign-in and preferences", labelKey: "account", hintKey: "deskNavAccountHint", href: "/account", search: { tab: "profile", desk: "director" } },
   ],
   parent: [
-    { id: "explore", label: "For you", hint: "Matches near you", labelKey: "exploreForYou", hintKey: "deskNavForYouHint" },
+    { id: "explore", label: "Home", hint: "Matches near you", labelKey: "exploreForYou", hintKey: "deskNavForYouHint" },
     { id: "care", label: "Daily care", hint: "Presence, journal, meds, rooms", labelKey: "dailyCare", hintKey: "dailyCareHint" },
     { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children" },
     { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots", labelKey: "myRequests", hintKey: "deskNavBookingsHint" },
-    { id: "saved", label: "My shortlist", hint: "Compare up to 5", labelKey: "myShortlist", hintKey: "deskNavShortlistHint" },
+    { id: "saved", label: "My shortlist", hint: "5 free · 10 on Plus", labelKey: "myShortlist", hintKey: "deskNavShortlistHint" },
     { id: "alerts", label: "Search alerts", hint: "Saved searches + notify", labelKey: "searchAlerts", hintKey: "deskNavAlertsHint" },
     { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments", hintKey: "deskNavPaymentsHint" },
     { id: "messages", label: "Messages", hint: "Centre threads + tours", labelKey: "messages", hintKey: "deskNavParentMessagesHint", href: "/inbox", search: { view: "family" } },
-    { id: "search", label: "Find care", labelKey: "wayfindFindCare", href: "/search" },
+    { id: "search", label: "Search", labelKey: "search", href: "/search" },
     { id: "upgrade", label: "Upgrade", hint: "Parent Plus", labelKey: "deskNavUpgrade", hintKey: "deskNavUpgradeHint", icon: "credit-card", href: "/parent", search: { tab: "payments" } },
     { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", hintKey: "deskNavParentAccountHint", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
@@ -191,6 +191,6 @@ export function visibleSecondaryDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskI
   if (!ids) return [];
   const primary = new Set<string>(ids);
   const rest = items.filter((item) => !primary.has(item.id) && item.id !== "account");
-  const account = items.filter((item) => item.id === "account");
+  const account = items.filter((item) => item.id === "account" && !primary.has(item.id));
   return [...rest, ...account];
 }

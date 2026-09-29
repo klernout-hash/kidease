@@ -65,12 +65,12 @@ test("daycare primary nav is Today, Messages, Listings, Money", () => {
   assert.equal(PROVIDER_TAB_KEYS.includes("today"), true);
 });
 
-test("parent phone primaries are For you, Daily care, Children, Pay", () => {
-  assert.deepEqual([...PARENT_PRIMARY_NAV_IDS], ["explore", "care", "children", "payments"]);
+test("parent phone primaries are Home, Search, Shortlist, Messages, Account", () => {
+  assert.deepEqual([...PARENT_PRIMARY_NAV_IDS], ["explore", "search", "saved", "messages", "account"]);
   const parent = visiblePrimaryDeskNav("parent").map((i) => i.id);
-  assert.deepEqual(parent, ["explore", "care", "children", "payments"]);
+  assert.deepEqual(parent, ["explore", "search", "saved", "messages", "account"]);
   const secondary = visibleSecondaryDeskNav("parent").map((i) => i.id);
-  assert.deepEqual(secondary, ["bookings", "saved", "alerts", "messages", "search", "upgrade", "account"]);
+  assert.deepEqual(secondary, ["care", "children", "bookings", "alerts", "payments", "upgrade"]);
   const admin = visiblePrimaryDeskNav("admin").map((i) => i.id);
   assert.equal(admin.includes("queue"), true);
   assert.equal(admin.includes("daycares"), true);

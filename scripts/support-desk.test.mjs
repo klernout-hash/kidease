@@ -166,7 +166,7 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
   const legal = readFileSync(join(root, "src/lib/legal-copy.ts"), "utf8");
   assert.match(legal, /SUPPORT_INBOX_EMAIL/);
   assert.match(legal, /Email \$\{SUPPORT_INBOX_EMAIL\} if a deposit looks wrong/);
-  assert.match(legal, /Notify kyle@kidease\.ca of new accounts/);
+  assert.match(legal, /Notify KidEase support at support@kidease\.ca of new accounts/);
   assert.match(legal, /operator mail for kyle@kidease\.ca/);
 
   const docs = readFileSync(join(root, "docs/support.md"), "utf8");

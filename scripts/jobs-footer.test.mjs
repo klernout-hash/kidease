@@ -24,8 +24,8 @@ test("jobs pages are honest Canada waitlists, not a fake board", () => {
   assert.match(src("src/lib/copy.ts"), /n’invente aucun inventaire de postes/);
   assert.match(src("src/lib/copy.ts"), /findDaycareJobs: "Find daycare jobs"/);
   assert.match(src("src/lib/copy.ts"), /findDaycareJobs: "Trouver des emplois en garderie"/);
-  assert.match(src("src/lib/copy.ts"), /addJobsAtKidEase: "KidEase Careers"/);
-  assert.match(src("src/lib/copy.ts"), /addJobsAtKidEase: "Carrières KidEase"/);
+  assert.match(src("src/lib/copy.ts"), /addJobsAtKidEase: "Post a job"/);
+  assert.match(src("src/lib/copy.ts"), /addJobsAtKidEase: "Publier un emploi"/);
 });
 
 test("jobs routes are locale-paired and listed in the sitemap sources", () => {

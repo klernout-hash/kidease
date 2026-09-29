@@ -22,7 +22,7 @@ export function isAttendanceStatus(value: string | null | undefined): value is A
 }
 
 export const DAILY_CARE_HONESTY =
-  "Ops-lite for claimed centres and enrolled children: check-in, journal, messages, medication logs, incident reports, room counts, and today's roster. Not timesheets, tuition billing, provincial subsidy workflows, or a Fastoche replacement.";
+  "For a claimed centre and enrolled children: check-in, journal, messages, medication logs, incident reports, room counts, and today's roster. Not payroll timesheets, tuition billing, or provincial subsidy workflows.";
 
 export const CARE_OPS_LATER_OUT_OF_SCOPE =
   "Not in this phase: staff timesheets / payroll, full centre tuition billing, or provincial subsidy workflows.";

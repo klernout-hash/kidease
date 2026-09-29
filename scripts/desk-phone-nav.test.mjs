@@ -38,13 +38,13 @@ test("phone primaries plus More still reach every Parent and Daycare destination
   assert.deepEqual(ids(visiblePrimaryDeskNav("daycare", ownerOpts)), [...DAYCARE_PRIMARY_NAV_IDS]);
 });
 
-test("Messages and Find care are deduped off Parent primaries; Daycare Messages stays a desk primary", () => {
+test("Parent primaries include Search and Messages; Daycare Messages stays a desk primary", () => {
   const parentPrimary = new Set(ids(visiblePrimaryDeskNav("parent")));
   const parentSheet = new Set(ids(visibleSecondaryDeskNav("parent")));
-  assert.equal(parentPrimary.has("messages"), false);
-  assert.equal(parentPrimary.has("search"), false);
-  assert.equal(parentSheet.has("messages"), true);
-  assert.equal(parentSheet.has("search"), true);
+  assert.equal(parentPrimary.has("messages"), true);
+  assert.equal(parentPrimary.has("search"), true);
+  assert.equal(parentSheet.has("messages"), false);
+  assert.equal(parentSheet.has("search"), false);
   assert.equal(DESK_NAV.parent.find((i) => i.id === "messages")?.href, "/inbox");
   assert.equal(DESK_NAV.parent.find((i) => i.id === "search")?.href, "/search");
 

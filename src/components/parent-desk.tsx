@@ -39,6 +39,7 @@ import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { ParentHome } from "@/components/parent-home";
 import { useRoleChrome } from "@/components/role-chrome";
+import { FREE_COMPARE_MAX, PLUS_COMPARE_MAX } from "@/lib/compare";
 import { DeleteChildControl } from "@/components/delete-child-control";
 
 const ParentPlusPanel = lazy(() =>
@@ -354,6 +355,7 @@ export function ParentDesk({
           located={located}
           tours={tours}
           bookings={bookings}
+          compareMax={chrome.paid ? PLUS_COMPARE_MAX : FREE_COMPARE_MAX}
         />
       ) : null}
 

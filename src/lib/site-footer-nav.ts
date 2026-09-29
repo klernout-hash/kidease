@@ -55,8 +55,6 @@ export const FOOTER_KIDEASE: FooterLinkDef[] = [
   copyLink("/how-it-works", "howItWorksCta", { localePaired: true }),
   copyLink("/jobs/post", "addJobsAtKidEase", { localePaired: true }),
   copyLink("/start-a-daycare", "startADaycare", { localePaired: true }),
-  // Web footer is website-only; same destination as rateKidEaseFromMenu() on www.
-  copyLink("/get-app", "rateKidEase"),
 ];
 
 /** Support column — help and legal only. Unsubscribe lives on Privacy + email, not here. */

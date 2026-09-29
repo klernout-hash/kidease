@@ -5,7 +5,6 @@ import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { RoleNavLinks } from "@/components/role-nav";
 import { useRoleChrome } from "@/components/role-chrome";
 import type { ChromeRole } from "@/lib/role-access";
 import {
@@ -116,11 +115,6 @@ export function SiteFooter() {
     <footer className="ke-site-footer ke-web-only [[data-channel=app]_&]:hidden">
       <div className="ke-gutter">
         <div className="ke-footer-inner">
-          {chrome.pending ? null : (
-            <div className="mb-6">
-              <RoleNavLinks role={chrome.role} paid={chrome.paid} appearance="menu" />
-            </div>
-          )}
           <nav className="ke-footer-cols" aria-label="KidEase">
             <Column
               id="parents"

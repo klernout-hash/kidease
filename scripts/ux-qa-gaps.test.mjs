@@ -77,7 +77,7 @@ test("bare /pay is an empty-state hub, not a missing route", () => {
 test("home/about marketing copy uses Canadian recognise", () => {
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /so you can recognise the location/);
-  assert.match(copy, /so you can recognise the location"/);
+  assert.match(copy, /so you can recognise the location/);
   assert.doesNotMatch(copy, /trustWhy2: ".*recognize/);
   assert.doesNotMatch(copy, /aboutDiff2: ".*recognize/);
 });

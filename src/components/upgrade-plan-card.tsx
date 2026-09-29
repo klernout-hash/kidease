@@ -33,13 +33,6 @@ export function UpgradePlanCard({
   const percent = yearlyMode ? yearlySavingsPercent(monthly, yearly) : null;
   const saved = percent != null ? yearlySavingsCad(monthly, yearly) : null;
   const price = formatPlanCad(yearlyMode ? yearly! : monthly, locale);
-  const saveUnit = perSite
-    ? locale === "fr"
-      ? "/site/an"
-      : "/site/year"
-    : locale === "fr"
-      ? "/an"
-      : "/year";
   const unit = perSite
     ? yearlyMode
       ? locale === "fr"
@@ -89,8 +82,8 @@ export function UpgradePlanCard({
               ? `Économisez ${percent} %`
               : `Save ${percent}%`
             : locale === "fr"
-              ? `Économisez ${percent} % · ${formatPlanCad(saved, locale)}${saveUnit}`
-              : `Save ${percent}% · ${formatPlanCad(saved, locale)}${saveUnit}`}
+              ? `Économisez ${percent} % — ${formatPlanCad(saved, locale)} de moins qu’en payant au mois`
+              : `Save ${percent}% — ${formatPlanCad(saved, locale)} less than paying monthly`}
         </p>
       ) : null}
       <p className="mt-3 text-sm text-muted">{plan.pitch[locale]}</p>

@@ -298,13 +298,13 @@ export const MARKETING_PAGE_SEO = {
   jobs: {
     title: "Find daycare jobs in Canada · KidEase",
     description:
-      "KidEase does not run a live job board yet. Licensed caregivers in Canada can leave a note. We do not invent openings.",
+      "KidEase is not a job board yet. Licensed caregivers in Canada can leave a note. We do not invent openings.",
     path: "/jobs",
   },
   jobsPost: {
-    title: "KidEase Careers · Licensed centres",
+    title: "Post a job · KidEase",
     description:
-      "Licensed centres can tell KidEase about an opening. This is a waitlist note, not a live job board. We do not publish unverified roles.",
+      "Licensed centres can tell KidEase about an opening. This is a waitlist note, not a job board. We do not publish unverified roles.",
     path: "/jobs/post",
   },
   startADaycare: {
@@ -380,13 +380,13 @@ export const MARKETING_PAGE_SEO_FR = {
   jobs: {
     title: "Trouver des emplois en garderie au Canada · KidEase",
     description:
-      "KidEase n’offre pas encore un babillard d’emplois en direct. Les éducatrices au Canada peuvent laisser une note. Nous n’inventons pas de postes.",
+      "KidEase n’est pas encore un babillard d’emplois. Les éducatrices au Canada peuvent laisser une note. Nous n’inventons pas de postes.",
     path: "/fr/jobs",
   },
   jobsPost: {
-    title: "Carrières KidEase · Centres permis",
+    title: "Publier un emploi · KidEase",
     description:
-      "Les centres permis peuvent parler à KidEase d’une ouverture. C’est une note d’attente, pas un babillard en direct. Nous n’affichons pas de postes non vérifiés.",
+      "Les centres permis peuvent parler à KidEase d’une ouverture. C’est une note d’attente, pas un babillard. Nous n’affichons pas de postes non vérifiés.",
     path: "/fr/jobs/post",
   },
   startADaycare: {

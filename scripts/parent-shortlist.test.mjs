@@ -116,7 +116,9 @@ test("parent desk shortlist compares up to five centres", () => {
   assert.match(nav, /My shortlist/);
   assert.match(copy, /myShortlist: "My shortlist"/);
   assert.match(copy, /myShortlist: "Ma liste"/);
-  assert.match(copy, /Select up to 5 centres/);
+  assert.match(desk, /compareMax=\{chrome\.paid \? PLUS_COMPARE_MAX : FREE_COMPARE_MAX\}/);
+  assert.match(copy, /Free compares 5 centres. Parent Plus compares 10/);
+  assert.match(copy, /Free is 5 centres. Parent Plus is 10/);
   assert.match(localCompare, /export const FREE_COMPARE_MAX = 5/);
   assert.match(localCompare, /export const PLUS_COMPARE_MAX = 10/);
   assert.doesNotMatch(desk, /GHL|ghl/);
