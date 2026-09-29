@@ -52,7 +52,6 @@ import {
   homeRailItems,
   isLiveLookingCard,
   liveLookingOnly,
-  startWindowToDate,
   type SearchAge,
   type SearchStart,
 } from "@/lib/now-loops";
@@ -314,10 +313,7 @@ function Home() {
         }}
         onStartChange={(start) => {
           setHomeStart(start);
-          if (start) {
-            setHomeFrom(startWindowToDate(start));
-            setHomeTo("");
-          } else {
+          if (!start) {
             setHomeFrom("");
             setHomeTo("");
           }
@@ -330,7 +326,7 @@ function Home() {
           void applyPlace(place).then((hit) => {
             goSearch(hit?.label || place.trim() || origin.label, {
               name: homeName,
-              from: homeStart ? startWindowToDate(homeStart) : homeFrom,
+              from: homeFrom,
               to: homeTo,
               start: homeStart || undefined,
             });

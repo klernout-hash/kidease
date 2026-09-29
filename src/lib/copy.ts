@@ -287,6 +287,8 @@ export const copy = {
     whereNearbyHint: "Find childcare around you",
     searchWhen: "Care schedule",
     searchWhenHint: "Start date",
+    searchWhenNote:
+      "The next 14 days show centres with a confirmed opening. A later date is only a start date. Openings that far ahead are not on file.",
     searchSubmit: "Search",
     searchRadius: "Search radius",
     searchChildAge: "Child's age",
@@ -2836,6 +2838,8 @@ export const copy = {
     whereNearbyHint: "Trouver une garderie près de vous",
     searchWhen: "Horaire",
     searchWhenHint: "Date de début",
+    searchWhenNote:
+      "Les 14 prochains jours montrent les centres avec une place confirmée. Une date plus loin est seulement une date de début. Les places aussi loin ne sont pas au dossier.",
     searchSubmit: "Rechercher",
     searchRadius: "Rayon de recherche",
     searchChildAge: "Âge de l’enfant",

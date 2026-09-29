@@ -46,6 +46,7 @@ import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { resolveLocationQuery } from "@/components/place-search";
 import {
   compactExploreSearch,
+  dateAsksForOpenSpot,
   matchesDaycareName,
   parseExploreSearchFields,
 } from "@/lib/explore-search";
@@ -877,6 +878,9 @@ function SearchPage() {
     const cat = isExploreCategory(incoming.cat) ? incoming.cat : undefined;
     if (cat) rows = rows.filter((r) => listingMatchesExploreFilter(r, cat));
     if (nameQuery.trim()) rows = rows.filter((r) => matchesDaycareName(r, nameQuery));
+    if (needBy && dateAsksForOpenSpot(needBy)) {
+      rows = rows.filter((r) => honestVacancy(r).kind === "open");
+    }
     if (parentSearchActive(parentFilters)) rows = rows.filter((r) => matchesParentListingFilters(r, parentFilters));
     return rows;
   }, [
@@ -901,6 +905,7 @@ function SearchPage() {
     incoming.age,
     incoming.care,
     nameQuery,
+    needBy,
     parentFilters,
   ]);
   const selectedAges = parseExploreRailAges(incoming);

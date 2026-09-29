@@ -42,6 +42,31 @@ export function matchesDaycareName(
   return item.name.toLowerCase().includes(q) || (item.nameFr ?? "").toLowerCase().includes(q);
 }
 
+export const OPENING_HORIZON_DAYS = 14;
+
+export function localIsoDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** A near date can filter confirmed openings. Later dates are a start date only. */
+export function dateAsksForOpenSpot(iso: string, now = new Date()): boolean {
+  if (!isIsoDate(iso)) return false;
+  const today = localIsoDate(now);
+  if (iso < today) return false;
+  const soon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + OPENING_HORIZON_DAYS);
+  return iso <= localIsoDate(soon);
+}
+
+export function startWindowForDate(iso: string, now = new Date()): "now" | "this-month" | "next-month" {
+  if (dateAsksForOpenSpot(iso, now)) return "now";
+  const month = localIsoDate(now).slice(0, 7);
+  if (iso.startsWith(month)) return "this-month";
+  return "next-month";
+}
+
 export function formatExploreDateRange(from?: string, to?: string, locale = "en"): string {
   if (!from && !to) return "";
   const tag = locale === "fr" ? "fr-CA" : "en-CA";
