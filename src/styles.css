@@ -725,6 +725,86 @@
       contain-intrinsic-size: 17.5rem 22rem;
     }
   }
+  .ke-rail-card--in {
+    animation: ke-rail-card-in 420ms ease both;
+  }
+  @keyframes ke-rail-card-in {
+    from {
+      opacity: 0;
+      transform: translateX(18px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .ke-rail-more {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    text-align: left;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  .ke-rail-more:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+    border-radius: 14px;
+  }
+  .ke-rail-more-stage {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: 14px;
+  }
+  .ke-rail-more-ghost,
+  .ke-rail-more-face {
+    position: absolute;
+    border-radius: 14px;
+    background: var(--color-surface);
+    box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+  .ke-rail-more-ghost-a {
+    inset: 10px 0 0 10px;
+    opacity: 0.55;
+  }
+  .ke-rail-more-ghost-b {
+    inset: 5px 4px 4px 5px;
+    opacity: 0.82;
+  }
+  .ke-rail-more-face {
+    inset: 0 8px 8px 0;
+    display: grid;
+    place-items: center;
+    animation: ke-rail-more-lift 2.6s ease-in-out infinite;
+  }
+  .ke-rail-more-mark {
+    font-size: 1.85rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--color-primary);
+  }
+  .ke-rail-more-label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--color-fg);
+  }
+  @keyframes ke-rail-more-lift {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
   .ke-result-stack {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
