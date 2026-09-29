@@ -15,19 +15,20 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("home hero has no city pills and one Browse by city link", () => {
+test("home hero has no city pills and no Browse by city link", () => {
   const home = src("src/routes/index.tsx");
   const hero = home.slice(home.indexOf("from-soft"), home.indexOf('id="how"'));
   assert.doesNotMatch(hero, /HomePopularCities/);
   assert.doesNotMatch(hero, /<CityHubLinks/);
   assert.doesNotMatch(hero, /CITY_CHIPS/);
   assert.doesNotMatch(hero, /heroPopular/);
-  assert.match(hero, /\{heroCityBrowse\}/);
-  assert.equal((home.match(/data-ke="browse-cities"/g) ?? []).length, 1);
-  assert.match(home, /to="\/cities"/);
+  assert.doesNotMatch(hero, /heroCityBrowse/);
+  assert.doesNotMatch(hero, /browseCities/);
+  assert.equal((home.match(/data-ke="browse-cities"/g) ?? []).length, 0);
   assert.doesNotMatch(home, /<CityHubLinks/);
   assert.doesNotMatch(src("src/routes/fr.index.tsx"), /<CityHubLinks/);
   assert.match(src("src/routes/fr.index.tsx"), /to="\/cities"/);
+  assert.match(src("src/components/place-search.tsx"), /data-ke="where-nearby"/);
 });
 
 test("live toggle stays off the home hero when the live count is 0", () => {

@@ -117,6 +117,23 @@ export const CITIES: CityHit[] = [
   { lat: 63.7467, lng: -68.517, label: "Iqaluit, NU", province: "NU", aliases: ["iqaluit", "x0a"] },
 ];
 
+const PROVINCE_CITY = /,\s*[A-Z]{2}$/;
+
+/** Closest real cities. Neighbourhood rows (no province code) stay out. */
+export function nearestCities(origin: LatLng, limit = 6): CityHit[] {
+  const seen = new Set<string>();
+  return CITIES.filter((city) => PROVINCE_CITY.test(city.label))
+    .map((city) => ({ city, km: haversineKm(origin, city) }))
+    .sort((a, b) => a.km - b.km || a.city.label.localeCompare(b.city.label))
+    .filter(({ city }) => {
+      if (seen.has(city.label)) return false;
+      seen.add(city.label);
+      return true;
+    })
+    .slice(0, limit)
+    .map((row) => row.city);
+}
+
 const FSA_CITY: Array<{ re: RegExp; label: string }> = [
   { re: /^[r][23]/i, label: "Winnipeg, MB" },
   { re: /^r6w/i, label: "Winkler, MB" },

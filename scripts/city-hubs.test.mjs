@@ -144,8 +144,8 @@ test("guest home links Browse by city and does not render city pills", () => {
   assert.doesNotMatch(hero, /HomePopularCities/);
   assert.doesNotMatch(hero, /<CityHubLinks/);
   assert.doesNotMatch(hero, /CITY_CHIPS/);
-  assert.match(hero, /\{heroCityBrowse\}/);
-  assert.match(home, /to="\/cities"/);
+  assert.doesNotMatch(hero, /heroCityBrowse/);
+  assert.doesNotMatch(hero, /browseCities/);
   assert.match(src("src/lib/city-hubs.ts"), /city: "Montréal"/);
   assert.match(src("src/lib/city-hubs.ts"), /cityEn: "Montreal"/);
   assert.doesNotMatch(web, /hero-trust-chips/);
@@ -155,7 +155,7 @@ test("guest home links Browse by city and does not render city pills", () => {
   const app = home.slice(home.indexOf("ke-app-only"));
   assert.doesNotMatch(app, /CITY_CHIPS/);
   assert.equal((app.match(/<CityHubLinks/g) ?? []).length, 0);
-  assert.match(app, /\{heroCityBrowse\}/);
+  assert.doesNotMatch(app, /heroCityBrowse/);
 });
 
 test("hub route, listing breadcrumbs, and internal links are wired", () => {

@@ -42,7 +42,7 @@ test("app home uses one location bar; website does not stack rails and the featu
   assert.match(home, /const featuredSearch/);
   assert.match(home, /<ExploreSearchBar/);
   assert.match(appBlock, /featuredSearch/);
-  assert.match(appBlock, /heroCityBrowse/);
+  assert.doesNotMatch(appBlock, /heroCityBrowse/);
   assert.doesNotMatch(appBlock, /CITY_CHIPS/);
   assert.match(home, /function applyPlace/);
   assert.doesNotMatch(appBlock, /locationForm/);
@@ -50,7 +50,7 @@ test("app home uses one location bar; website does not stack rails and the featu
   assert.doesNotMatch(home, /ParentDeskRails/);
   assert.match(appBlock, /<HomeDiscovery/);
   assert.match(webBlock, /featuredSearch/);
-  assert.match(webBlock, /heroCityBrowse/);
+  assert.doesNotMatch(webBlock, /heroCityBrowse/);
   assert.doesNotMatch(webBlock, /HomePopularCities/);
   assert.match(webBlock, /<HomeDiscovery/);
   assert.match(home, /FacilityTypeRails items=\{shown\} visual/);

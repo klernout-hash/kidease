@@ -14,7 +14,6 @@ import {
   HeroBanner,
 } from "@/components/building-photo";
 import { ChipButton } from "@/components/chip";
-import { HomeNearbyCities } from "@/components/home-nearby-cities";
 import { STEP_SIZES } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMyRole } from "@/lib/server/family";
@@ -42,7 +41,6 @@ import { readRecent } from "@/lib/recent";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { resolveLocationQuery } from "@/components/place-search";
 import { compactExploreSearch } from "@/lib/explore-search";
-import { nearbyHomeCities } from "@/lib/home-popular-cities";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
@@ -92,7 +90,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { t, locale } = useCopy();
+  const { t } = useCopy();
   const navigate = useNavigate();
   const boot = Route.useLoaderData();
   const { user, isPending } = useCurrentUserState();
@@ -106,30 +104,6 @@ function Home() {
   const setQuery = useAppStore((s) => s.setQuery);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
-  const nearbyCities = useMemo(
-    () =>
-      nearbyHomeCities(
-        {
-          lat: originSource ? origin.lat : boot.origin.lat,
-          lng: originSource ? origin.lng : boot.origin.lng,
-          label: originSource ? origin.label : boot.origin.label,
-          source: originSource ?? boot.origin.source,
-          timeZone: readClientTimeZone(),
-        },
-        locale,
-      ),
-    [
-      boot.origin.lat,
-      boot.origin.lng,
-      boot.origin.label,
-      boot.origin.source,
-      locale,
-      origin.lat,
-      origin.label,
-      origin.lng,
-      originSource,
-    ],
-  );
   const [role, setRole] = useState<AppRole | null>(null);
   const [place, setPlace] = useState(boot.origin.label);
   const [homeName, setHomeName] = useState("");
@@ -393,19 +367,6 @@ function Home() {
     </>
   );
 
-  const heroCityBrowse = (
-    <div className="mt-3" data-ke="hero-city-browse">
-      <HomeNearbyCities cities={nearbyCities} />
-      <Link
-        to="/cities"
-        data-ke="browse-cities"
-        className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
-      >
-        {t("browseCities")}
-      </Link>
-    </div>
-  );
-
   return (
     <Shell bare>
       <JsonLd json={organizationGraphJsonLdScript()} />
@@ -415,7 +376,6 @@ function Home() {
             <h1 className="sr-only">{t("tagline")}</h1>
             <HomeCareTypeRow selected={homeType} onSelect={setHomeType} />
             {featuredSearch}
-            {heroCityBrowse}
           </div>
         </section>
 
@@ -547,7 +507,6 @@ function Home() {
             {t("tagline")}
           </h1>
           {featuredSearch}
-          {heroCityBrowse}
           <ResumeVisitCard />
           <HomeDiscovery
             ready={featuredReady}

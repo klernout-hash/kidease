@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { WINNIPEG } from "../src/lib/geo.ts";
+import { WINNIPEG, nearestCities } from "../src/lib/geo.ts";
 import {
   POPULAR_HOME_CITY_LIMIT,
   POPULAR_HOME_CITY_SLUGS,
@@ -107,13 +107,26 @@ test("nearby trusted geo leads the popular list; inferred Toronto does not", () 
   assert.equal(hubLatLng(cityHubDefBySlug("winnipeg"))?.lat, WINNIPEG.lat);
 });
 
+test("Where menu lists the closest cities and keeps Nearby first", () => {
+  const near = nearestCities(WINNIPEG, 6);
+  assert.equal(near[0]?.label, "Winnipeg, MB");
+  assert.ok(near.some((city) => city.label === "Steinbach, MB"));
+  assert.ok(near.every((city) => /,\s*[A-Z]{2}$/.test(city.label)));
+  assert.equal(near.length, 6);
+  const menu = src("src/components/place-search.tsx");
+  assert.match(menu, /data-ke="where-nearby"/);
+  assert.match(menu, /emptyMenu\.cities\.map/);
+  assert.match(src("src/components/explore-search-bar.tsx"), /nearestCities\(origin, 6\)/);
+});
+
 test("guest home hero keeps the search bar and drops the city grid and trust duplicate", () => {
   const home = src("src/routes/index.tsx");
   const hero = home.slice(home.indexOf("from-soft"), home.indexOf('id="how"'));
   assert.doesNotMatch(hero, /HomePopularCities/);
   assert.match(hero, /featuredSearch/);
-  assert.match(hero, /\{heroCityBrowse\}/);
-  assert.match(home, /to="\/cities"/);
+  assert.doesNotMatch(hero, /heroCityBrowse/);
+  assert.doesNotMatch(hero, /browseCities/);
+  assert.match(src("src/components/place-search.tsx"), /data-ke="where-nearby"/);
   assert.match(src("src/components/explore-search-bar.tsx"), /PlaceSearch/);
   assert.doesNotMatch(hero, /hero-trust-chips/);
   assert.doesNotMatch(hero, /t\("trustLicensedOnly"\)/);
