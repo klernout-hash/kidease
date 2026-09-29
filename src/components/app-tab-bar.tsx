@@ -68,7 +68,12 @@ export function AppTabBar() {
         ) : null}
         {kind === "parent" ? (
           <>
-            <Tab to="/parent" label={t("navHome")} icon={Building2} active={pathname.startsWith("/parent") && (!tab || tab === "explore")} />
+            <Tab
+              to="/"
+              label={t("navHome")}
+              icon={Building2}
+              active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")}
+            />
             <Tab
               to="/parent"
               search={{ tab: "saved" }}
@@ -104,7 +109,7 @@ export function AppTabBar() {
           <>
             <Tab to="/parent" label={t("deskParent")} icon={Heart} active={pathname.startsWith("/parent")} />
             <Tab to="/provider" label={t("deskDirector")} icon={Search} active={pathname.startsWith("/provider")} />
-            <Tab to="/search" label={t("explore")} icon={ClipboardCheck} active={pathname.startsWith("/search")} />
+            <Tab to="/" label={t("explore")} icon={ClipboardCheck} active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")} />
             <Tab to="/inbox" label={t("messages")} icon={MessageCircle} active={pathname.startsWith("/inbox")} />
             <Tab to="/menu" label="Menu" icon={Menu} active={pathname.startsWith("/menu")} />
           </>
@@ -112,7 +117,7 @@ export function AppTabBar() {
         {kind === "guest" ? (
           <>
             <Tab
-              to="/search"
+              to="/"
               label={t("explore")}
               icon={Search}
               active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")}

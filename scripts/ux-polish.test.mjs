@@ -47,7 +47,8 @@ test("app home uses one location bar; website does not stack rails and the featu
   assert.match(home, /function applyPlace/);
   assert.doesNotMatch(appBlock, /locationForm/);
   assert.doesNotMatch(appBlock, /useLocation\(\)/);
-  assert.match(home, /user && role !== "admin" && role !== "provider"/);
+  assert.doesNotMatch(home, /ParentDeskRails/);
+  assert.match(appBlock, /<HomeDiscovery/);
   assert.match(webBlock, /featuredSearch/);
   assert.match(webBlock, /heroCityBrowse/);
   assert.doesNotMatch(webBlock, /HomePopularCities/);
