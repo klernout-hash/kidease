@@ -24,15 +24,11 @@ test("home LCP hero is preloaded and sized instead of a late 1200-only AVIF", ()
   assert.match(listing, /priority/);
 
   const home = src("src/routes/index.tsx");
-  assert.match(home, /rel: "preload"/);
-  assert.match(home, /as: "image"/);
-  assert.match(home, /type: "image\/avif"/);
-  assert.match(home, /imageSrcSet: HERO_LCP_AVIF_SRCSET/);
-  assert.match(home, /imageSrcSet: HERO_LCP_MOBILE_AVIF_SRCSET/);
-  assert.match(home, /imageSizes: HERO_LCP_SIZES/);
-  assert.match(home, /media: "\(max-width: 1023px\)"/);
+  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
+  assert.doesNotMatch(web, /HeroYard/);
+  assert.doesNotMatch(web, /HeroBanner/);
+  assert.doesNotMatch(home, /imageSrcSet: HERO_LCP_AVIF_SRCSET/);
   assert.match(home, /HeroBanner/);
-  assert.match(home, /fetchPriority: "high"/);
   assert.doesNotMatch(home, /eager=\{i < 3\}/);
   assert.match(home, /eagerThumbs=\{false\}/);
 

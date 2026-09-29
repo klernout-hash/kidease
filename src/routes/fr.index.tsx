@@ -2,14 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ListChecks, MapPin, MessageCircle, Search } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
-import {
-  FeelPhoto,
-  HeroYard,
-  HERO_LCP_AVIF_SRCSET,
-  HERO_LCP_MOBILE_AVIF_SRCSET,
-  HERO_LCP_MOBILE_SIZES,
-  HERO_LCP_SIZES,
-} from "@/components/building-photo";
+import { FeelPhoto } from "@/components/building-photo";
 import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
@@ -30,35 +23,7 @@ import { STEP_SIZES } from "@/lib/photo";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/fr/")({
-  head: () => {
-    const seo = pageSeoHead(MARKETING_PAGE_SEO_FR.home);
-    return {
-      ...seo,
-      links: [
-        ...seo.links,
-        {
-          rel: "preload",
-          as: "image",
-          type: "image/avif",
-          href: "/photos/hero-480-k2.avif?v=1",
-          imageSrcSet: HERO_LCP_MOBILE_AVIF_SRCSET,
-          imageSizes: HERO_LCP_MOBILE_SIZES,
-          fetchPriority: "high",
-          media: "(max-width: 1023px)",
-        },
-        {
-          rel: "preload",
-          as: "image",
-          type: "image/avif",
-          href: "/photos/hero-768-k2.avif?v=1",
-          imageSrcSet: HERO_LCP_AVIF_SRCSET,
-          imageSizes: HERO_LCP_SIZES,
-          fetchPriority: "high",
-          media: "(min-width: 1024px)",
-        },
-      ],
-    };
-  },
+  head: () => pageSeoHead(MARKETING_PAGE_SEO_FR.home),
   component: FrHome,
 });
 
@@ -101,7 +66,7 @@ function FrHome() {
     <Shell bare>
       <JsonLd json={organizationGraphJsonLdScript("fr")} />
       <section className="relative overflow-hidden bg-gradient-to-b from-[#eef2fb] via-bg to-bg">
-        <div className="ke-gutter mx-auto grid max-w-6xl items-center gap-10 py-12 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:py-20">
+        <div className="ke-gutter mx-auto max-w-3xl py-10 md:py-14">
           <div>
             <BrandMark size="md" align="start" />
             <h1 className="mt-8 max-w-xl text-[clamp(2rem,6vw,3.25rem)] text-fg">{t("tagline")}</h1>
@@ -125,9 +90,6 @@ function FrHome() {
             >
               {t("browseCities")}
             </Link>
-          </div>
-          <div className="overflow-hidden rounded-xl shadow-lift ring-1 ring-border">
-            <HeroYard />
           </div>
         </div>
       </section>

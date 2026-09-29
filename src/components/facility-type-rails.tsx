@@ -68,6 +68,59 @@ export function browseTypeRailItems(items: Card[], type: BrowseDaycareType, n = 
   );
 }
 
+const CARE_TYPE_EMOJI: Record<BrowseDaycareType, string> = {
+  child_care_centre: "🏫",
+  family_home: "🏡",
+  group_home: "🏘️",
+  nursery_preschool: "🧸",
+  school_age: "🎒",
+  before_after: "🌅",
+};
+
+/** Six licensed childcare types, in daycare-type order, for the home header row. */
+export function HomeCareTypeRow({
+  selected,
+  onSelect,
+}: {
+  selected?: BrowseDaycareType;
+  onSelect: (type?: BrowseDaycareType) => void;
+}) {
+  const { t } = useCopy();
+  return (
+    <div
+      className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center [&::-webkit-scrollbar]:hidden"
+      data-ke="home-care-types"
+      role="tablist"
+      aria-label={t("railByCare")}
+    >
+      {BROWSE_DAYCARE_TYPES.map((type) => {
+        const on = selected === type;
+        return (
+          <button
+            key={type}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            data-browse-type={type}
+            className={`flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 rounded-xl px-1.5 pb-2 pt-1.5 text-center ${on ? "text-fg" : "text-muted hover:text-fg"}`}
+            onClick={() => onSelect(on ? undefined : type)}
+          >
+            <span
+              className="text-[2.65rem] leading-none [font-family:'Apple_Color_Emoji','Segoe_UI_Emoji','Noto_Color_Emoji',sans-serif]"
+              aria-hidden
+            >
+              {CARE_TYPE_EMOJI[type]}
+            </span>
+            <span className={`text-[12px] font-semibold leading-tight ${on ? "underline decoration-2 underline-offset-[6px]" : ""}`}>
+              {t(BROWSE_RAIL_COPY[type])}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function DaycareTypeMenu({
   selected,
   onSelect,
@@ -190,10 +243,14 @@ export function DaycareTypeRails({
 /** @deprecated alias — Explore home still mounts this name. */
 export function FacilityTypeRails(props: {
   items?: Card[];
-  rows?: Partial<Record<FacilityType, Card[]>>;
+  rows?: Partial<Record<BrowseDaycareType, Card[]>>;
   eagerThumbs?: boolean;
   visual?: boolean;
   skipLiveLooking?: boolean;
+  menu?: boolean;
+  seeAll?: boolean;
+  selected?: BrowseDaycareType;
+  onSelect?: (type?: BrowseDaycareType) => void;
 }) {
   return <DaycareTypeRails {...props} />;
 }

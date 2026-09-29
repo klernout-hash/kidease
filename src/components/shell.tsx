@@ -118,7 +118,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   return (
     <div className="min-h-dvh bg-bg text-fg">
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
-        <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 py-2">
+        <div className="ke-gutter mx-auto flex min-h-[4.6rem] max-w-6xl items-center justify-between gap-3 py-2.5">
           <div className="flex min-w-0 items-center gap-0.5">
             {menuLeaf ? <MenuLeafBack /> : null}
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">

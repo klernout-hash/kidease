@@ -68,6 +68,7 @@ export function ExploreSearchBar({
   origin,
   className,
   startCollapsed = false,
+  compactSubmit = false,
   childSummary,
   childAges,
   onChildAge,
@@ -87,6 +88,8 @@ export function ExploreSearchBar({
   className?: string;
   /** Results and home open as one pill; tap expands where → schedule → child. */
   startCollapsed?: boolean;
+  /** Round icon button, for the home browse bar. */
+  compactSubmit?: boolean;
   childSummary?: string;
   childAges?: { id: string; label: string; on: boolean }[];
   onChildAge?: (id: string) => void;
@@ -389,10 +392,15 @@ export function ExploreSearchBar({
             <button
               type="submit"
               data-ke="search-submit"
-              className="inline-flex h-11 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              className={
+                compactSubmit
+                  ? "grid size-12 shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  : "inline-flex h-11 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              }
               aria-label={t("findChildcare")}
             >
-              {t("searchSubmit")}
+              {compactSubmit ? <Search className="size-5" strokeWidth={2.25} /> : null}
+              <span className={compactSubmit ? "sr-only" : undefined}>{t("searchSubmit")}</span>
             </button>
           </div>
           {childAges?.length && active === "name" && onChildAge ? (
