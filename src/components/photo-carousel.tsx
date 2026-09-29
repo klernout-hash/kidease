@@ -9,11 +9,14 @@ export function PhotoCarousel({
   eager = false,
   className,
   rounded = "rounded-[14px]",
+  claim = false,
 }: {
   photos: string[];
   eager?: boolean;
   className?: string;
   rounded?: string;
+  /** Unclaimed listings only. Live centres keep their own frame. */
+  claim?: boolean;
 }) {
   const slides = photos
     .map((p) => healMediaUrl(p))
@@ -32,12 +35,12 @@ export function PhotoCarousel({
   }, [list.length]);
 
   if (!list.length) {
-    return <ListingPhotoFallback claim className={cn("relative overflow-hidden", rounded, className)} />;
+    return <ListingPhotoFallback claim={claim} className={cn("relative overflow-hidden", rounded, className)} />;
   }
 
   return (
     <div className={cn("relative overflow-hidden bg-surface-2", rounded, className)}>
-      <BuildingPhoto src={list[i]} eager={eager} className="size-full object-cover object-center" />
+      <BuildingPhoto src={list[i]} eager={eager} claim={claim} className="size-full object-cover object-center" />
       {list.length > 1 ? (
         <div className="absolute inset-x-0 bottom-2 z-[1] flex justify-center gap-1">
           {list.map((_, n) => (

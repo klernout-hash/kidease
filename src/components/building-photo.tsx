@@ -78,7 +78,12 @@ export function ListingPhotoFallback({
         ) : (
           mark
         )
-      ) : null}
+      ) : (
+        <svg viewBox="0 0 48 48" className="size-12 text-muted" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <path d="M8 22 24 10l16 12v18H8Z" />
+          <path d="M20 40V28h8v12" />
+        </svg>
+      )}
     </div>
   );
 }
@@ -92,6 +97,7 @@ export function BuildingPhoto({
   sizes = CARD_SIZES,
   width = 480,
   height = 360,
+  claim = false,
 }: {
   src: string;
   alt?: string;
@@ -102,6 +108,8 @@ export function BuildingPhoto({
   sizes?: string;
   width?: number;
   height?: number;
+  /** Broken or missing stills. Live listings pass false so they are not asked to claim. */
+  claim?: boolean;
 }) {
   const healed = healMediaUrl(src);
   const ref = useRef<HTMLImageElement>(null);
@@ -156,7 +164,7 @@ export function BuildingPhoto({
   if (broken) {
     return (
       <ListingPhotoFallback
-        claim
+        claim={claim}
         className={className}
         style={sized ? undefined : { aspectRatio: `${width} / ${height}` }}
       />

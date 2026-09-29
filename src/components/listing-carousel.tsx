@@ -22,7 +22,7 @@ export function ListingCarousel({
   const [index, setIndex] = useState(0);
   const startX = useRef<number | null>(null);
   if (!shots.length) {
-    return <ListingPhotoFallback claim className={cn("overflow-hidden rounded-[14px]", className)} />;
+    return <ListingPhotoFallback claim={false} className={cn("overflow-hidden rounded-[14px]", className)} />;
   }
 
   function go(next: number) {
