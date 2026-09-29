@@ -320,7 +320,12 @@ function Listing() {
                   className="size-full object-cover"
                 />
               ) : (
-                <ListingPhotoFallback claim claimQuery={earlyName || undefined} className="size-full" />
+                <>
+                  <ListingPhotoFallback className="size-full" />
+                  <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-muted">
+                    {t("photoPending")}
+                  </span>
+                </>
               )}
             </div>
           </div>
@@ -561,6 +566,7 @@ function Listing() {
             daycareId={d.id}
             nextPath={`/daycare/${slug}`}
             photoId={roomPhotos.length ? undefined : "listing-photos"}
+            claim={offerClaim}
           />
         </div>
         <div className="ke-gutter">

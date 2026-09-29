@@ -25,6 +25,7 @@ export function ListingHeroGallery({
   daycareId,
   nextPath,
   photoId,
+  claim = false,
 }: {
   photos: string[];
   index: number;
@@ -35,6 +36,8 @@ export function ListingHeroGallery({
   daycareId: string;
   nextPath: string;
   photoId?: string;
+  /** False for a centre already live. Do not ask them to claim. */
+  claim?: boolean;
 }) {
   const { t } = useCopy();
   const start = useRef<{ x: number; y: number } | null>(null);
@@ -104,14 +107,22 @@ export function ListingHeroGallery({
         <BuildingPhoto
           eager
           priority
+          claim={claim}
           src={src}
           sizes={DETAIL_SIZES}
           width={768}
           height={576}
           className="size-full object-cover"
         />
-      ) : (
+      ) : claim ? (
         <ListingPhotoFallback claim claimQuery={name} className="size-full" />
+      ) : (
+        <>
+          <ListingPhotoFallback className="size-full" />
+          <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-muted">
+            {t("photoPending")}
+          </span>
+        </>
       )}
       {count ? (
         <>

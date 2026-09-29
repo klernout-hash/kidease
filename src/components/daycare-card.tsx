@@ -14,7 +14,7 @@ import { listingAgeRangeText } from "@/lib/listing-ages";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
-import { publicApprovalEligible } from "@/lib/approve-live";
+import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import {
   cardFeePillLabelKey,
   cardPhotoLicenseWarning,
@@ -45,6 +45,7 @@ function CardPhotoBadges({
   item,
   compact,
   hollowPhoto,
+  live,
   showLivePill,
   feeLabel,
   licenseWarning,
@@ -53,6 +54,7 @@ function CardPhotoBadges({
   item: Card;
   compact: boolean;
   hollowPhoto: boolean;
+  live: boolean;
   showLivePill: boolean;
   feeLabel: string;
   licenseWarning: TrustBadgeModel | null;
@@ -82,6 +84,16 @@ function CardPhotoBadges({
             </span>
           ) : null}
         </div>
+      ) : null}
+      {hollowPhoto && live ? (
+        <span
+          className={cn(
+            "inline-flex rounded-full bg-black/40 font-normal text-white/80",
+            compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-[10px]",
+          )}
+        >
+          {t("photoPending")}
+        </span>
       ) : null}
       {!compact && !hollowPhoto && licenseWarning ? (
         <span className="pointer-events-auto">
@@ -133,6 +145,7 @@ export const DaycareCard = memo(function DaycareCard({
   const away = located ? `${displayDistance(distanceKm, "km")} ${t("kmAway")}` : "";
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
+  const offerClaim = showPublicClaimPrompt(item);
 
   const license = publicLicenseBadge(item);
   const cardTrust = trustBadgesFor(item, "card");
@@ -170,6 +183,7 @@ export const DaycareCard = memo(function DaycareCard({
             <PhotoCarousel
               photos={photos}
               eager={eager}
+              claim={offerClaim}
               rounded="rounded-[14px]"
               className="aspect-[4/3] bg-[#EBEBEB]"
             />
@@ -177,6 +191,7 @@ export const DaycareCard = memo(function DaycareCard({
               item={item}
               compact={false}
               hollowPhoto={hollowPhoto}
+              live={live}
               showLivePill={showLivePill}
               feeLabel={feePillLabel}
               licenseWarning={licenseWarning}
@@ -231,6 +246,7 @@ export const DaycareCard = memo(function DaycareCard({
           <PhotoCarousel
             photos={photos}
             eager={eager}
+            claim={offerClaim}
             rounded="rounded-[14px]"
             className="aspect-[3/2] bg-[#EBEBEB]"
           />
@@ -238,6 +254,7 @@ export const DaycareCard = memo(function DaycareCard({
             item={item}
             compact={compact}
             hollowPhoto={hollowPhoto}
+            live={live}
             showLivePill={showLivePill}
             feeLabel={feePillLabel}
             licenseWarning={licenseWarning}
