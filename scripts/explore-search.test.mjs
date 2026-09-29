@@ -97,6 +97,18 @@ test("a start date in the next 14 days asks for a confirmed opening", () => {
   assert.match(src("src/lib/copy.ts"), /confirmed opening/);
 });
 
+test("daycare name search lists public records, not only the current radius", () => {
+  const srcName = src("src/lib/server/daycare-name-search.ts");
+  const field = src("src/components/daycare-name-field.tsx");
+  assert.match(srcName, /PUBLIC_LISTING_SQL/);
+  assert.match(srcName, /name ilike/);
+  assert.match(srcName, /name_fr/);
+  assert.match(srcName, /DAYCARE_NAME_MATCH_LIMIT = 40/);
+  assert.match(field, /data-ke="daycare-name-hits"/);
+  assert.match(field, /to="\/daycare\/\$slug"/);
+  assert.match(src("src/components/explore-search-bar.tsx"), /DaycareNameField/);
+});
+
 test("guest hero treats unresolved text as a daycare name search", () => {
   assert.deepEqual(guestHeroSearch("  Winnipeg, MB  ", { label: "Winnipeg, MB" }), {
     q: "Winnipeg, MB",

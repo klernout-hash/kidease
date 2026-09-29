@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { LocateFixed, Search } from "lucide-react";
 import { ChipButton } from "@/components/chip";
+import { DaycareNameField } from "@/components/daycare-name-field";
 import { PlaceSearch, type ResolvedPlace } from "@/components/place-search";
 import { formatExploreDateRange, localIsoDate, startWindowForDate } from "@/lib/explore-search";
 import { nearestCities } from "@/lib/geo";
@@ -446,15 +447,13 @@ export function ExploreSearchBar({
               >
                 {t("searchDaycare")}
               </label>
-              <input
+              <DaycareNameField
                 id={nameId}
+                labelId={nameLabelId}
                 value={values.name}
-                onChange={(e) => onNameChange(e.target.value)}
-                onFocus={() => setActive("name")}
+                onChange={onNameChange}
                 placeholder={t("searchDaycareHint")}
-                aria-labelledby={nameLabelId}
-                autoComplete="off"
-                className="mt-0.5 h-5 w-full bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"
+                onFocus={() => setActive("name")}
               />
             </div>
             <button
@@ -471,7 +470,7 @@ export function ExploreSearchBar({
               <span className={compactSubmit ? "sr-only" : undefined}>{t("searchSubmit")}</span>
             </button>
           </div>
-          {childAges?.length && active === "name" && onChildAge ? (
+          {childAges?.length && active === "name" && onChildAge && values.name.trim().length < 2 ? (
             <div className="absolute left-2 right-2 top-full z-[60] mt-1.5 rounded-xl bg-surface p-3 shadow-card ring-1 ring-border lg:left-auto lg:right-0 lg:w-[22rem]">
               <p className="text-sm font-semibold text-fg">{t("searchChildAge")}</p>
               <div className="mt-2 flex flex-wrap gap-2">
