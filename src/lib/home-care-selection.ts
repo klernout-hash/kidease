@@ -16,5 +16,7 @@ export function setHomeCareType(type: BrowseDaycareType | undefined) {
 
 export function subscribeHomeCareType(listener: Listener) {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
