@@ -5,7 +5,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
-import { FacilityTypeRails, HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
+import { DaycareTypeRails, HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
 import { ListingRail } from "@/components/listing-rail";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
@@ -620,7 +620,7 @@ function HomeDiscovery({
       <ListingRail title={t("recentlyViewed")} items={recent} eagerThumbs={false} visual />
       <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
       <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
-      <FacilityTypeRails
+      <DaycareTypeRails
         items={shown}
         visual
         skipLiveLooking
