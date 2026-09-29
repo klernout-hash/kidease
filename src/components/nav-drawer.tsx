@@ -8,7 +8,6 @@ import type { ChromeRole } from "@/lib/role-access";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
-import { RateKidEaseControl } from "@/components/rate-kidease";
 import { ShareKidEaseButton } from "@/components/share-button";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
 import { NotificationUnreadDot } from "@/components/notification-bell";
@@ -152,7 +151,6 @@ export function NavDrawer({
             </span>
           ))}
           <ShareKidEaseButton appearance="drawer" onDone={onClose} />
-          <RateKidEaseControl appearance="drawer" onDone={onClose} />
           <div className="my-3 h-px bg-border" />
           {signedIn ? (
             <>

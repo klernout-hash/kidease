@@ -16,9 +16,6 @@ const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
 );
 
-const RateKidEaseMenuRow = lazy(() =>
-  import("@/components/rate-kidease").then((m) => ({ default: m.RateKidEaseMenuRow })),
-);
 const AppearanceControl = lazy(() =>
   import("@/components/appearance-control").then((m) => ({ default: m.AppearanceControl })),
 );
@@ -101,9 +98,6 @@ function MenuPage() {
           <MenuRow to="/benefits" label={t("benefitsTab")} icon="benefits" />
           <MenuRow to="/get-app" label={t("getApp")} icon="getApp" />
           <ShareKidEaseButton appearance="row" />
-          <Suspense fallback={null}>
-            <RateKidEaseMenuRow />
-          </Suspense>
           <MenuRow to="/about" label={t("about")} icon="about" />
           <MenuRow to="/start-a-daycare" label={t("startADaycare")} icon="startDaycare" />
           <MenuRow to="/donate" label={t("donateToKids")} icon="donate" />

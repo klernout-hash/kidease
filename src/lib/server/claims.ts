@@ -15,6 +15,7 @@ import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
 import { applyInteriorPhotos, applyManagedListingPhotos, applyStorefrontPhoto, listingPhotosChanged, MAX_LISTING_PHOTOS } from "@/lib/listing-photo";
+import { claimCityScore } from "@/lib/claim-search";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
 import {
   mergeListingAmenities,
@@ -98,14 +99,14 @@ export const searchClaimable = createServerFn({ method: "POST" })
       if ((d.mergedInto || "").trim() || (d.importFault || "").trim()) continue;
       if (isAdminOnlyListing(d) && !admin) continue;
       const name = (d.name || "").toLowerCase();
-      const city = (d.city || "").toLowerCase();
       const addr = (d.address || "").toLowerCase();
       const postal = (d.postalCode || "").toLowerCase();
       const lic = (d.licenseNumber || "").toLowerCase();
       let score = 0;
+      const cityScore = claimCityScore(q, d.city || "");
       if (name.startsWith(q)) score = 100;
       else if (name.includes(q)) score = 80;
-      else if (city.startsWith(q) || city.includes(q)) score = 60;
+      else if (cityScore) score = cityScore;
       else if (addr.includes(q)) score = 40;
       else if (lic.includes(q)) score = 30;
       else if (postal.includes(q)) score = 20;

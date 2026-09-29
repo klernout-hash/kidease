@@ -6,44 +6,29 @@ import { ChipCarousel } from "@/components/chip-carousel";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
-function LiveAllSegment({
+function ReplyOnKidEaseToggle({
   liveOnly,
   listingCount,
   onLiveOnly,
-  className,
 }: {
   liveOnly: boolean;
   listingCount?: number;
   onLiveOnly: (live: boolean) => void;
-  className?: string;
 }) {
   const { t } = useCopy();
   return (
-    <div
-      className={cn("ke-explore-scope", className)}
-      role="tablist"
-      aria-label={t("searchRowScope")}
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={liveOnly}
+      data-ke="reply-on-kidease"
+      data-listing-count={listingCount}
+      className="ke-reply-toggle"
+      onClick={() => onLiveOnly(!liveOnly)}
     >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={liveOnly}
-        className="ke-explore-scope-tab"
-        onClick={() => onLiveOnly(true)}
-      >
-        {t("live")}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={!liveOnly}
-        data-listing-count={listingCount}
-        className="ke-explore-scope-tab"
-        onClick={() => onLiveOnly(false)}
-      >
-        {t("scopeAll")}
-      </button>
-    </div>
+      <span className="ke-reply-box" aria-hidden="true" />
+      <span>{t("replyOnKidEase")}</span>
+    </button>
   );
 }
 
@@ -128,12 +113,7 @@ export function ExploreFilterBar({
       data-ke="explore-filter-bar"
       data-search-row="filter-bar"
     >
-      <LiveAllSegment
-        liveOnly={liveOnly}
-        listingCount={listingCount}
-        onLiveOnly={onLiveOnly}
-        className="ke-explore-scope--docked hidden lg:inline-flex"
-      />
+      <ReplyOnKidEaseToggle liveOnly={liveOnly} listingCount={listingCount} onLiveOnly={onLiveOnly} />
 
       <ChipCarousel
         compact
@@ -141,12 +121,6 @@ export function ExploreFilterBar({
         className="ke-explore-filter-scroll"
         label={t("searchRowFilters")}
       >
-        <LiveAllSegment
-          liveOnly={liveOnly}
-          listingCount={listingCount}
-          onLiveOnly={onLiveOnly}
-          className="ke-explore-scope--scroll lg:hidden"
-        />
         {ageChips}
         <ChipButton on={nearMeOn} aria-pressed={nearMeOn} onClick={onNearMe}>
           {t("nearMe")}

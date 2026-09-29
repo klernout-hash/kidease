@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { useEffect, useState } from "react";
@@ -97,6 +97,7 @@ const COACH_FOCUS = new Set<ListingCoachFocus>([
 
 export const Route = createFileRoute("/provider")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
+  pendingComponent: ProviderPending,
   validateSearch: (s: Record<string, unknown>) => {
     const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
@@ -110,6 +111,16 @@ export const Route = createFileRoute("/provider")({
   component: ProviderPage,
 });
 
+function ProviderPending() {
+  return (
+    <Shell>
+      <div role="status" aria-live="polite" aria-label="Loading">
+        <DeskSkeleton />
+      </div>
+    </Shell>
+  );
+}
+
 function ProviderPage() {
   const { user, isPending } = useSettledUser();
   const chrome = useRoleChrome();
@@ -118,6 +129,7 @@ function ProviderPage() {
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
   const search = Route.useSearch();
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const childRoute = pathname === "/provider/subscription" || pathname.startsWith("/provider/subscription/");
   const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? DEFAULT_DESK);
@@ -197,8 +209,14 @@ function ProviderPage() {
   }, [user?.id]);
 
   useEffect(() => {
-    if (search.desk) setDesk(search.desk);
-  }, [search.desk]);
+    const next = search.desk ?? DEFAULT_DESK;
+    if (OWNER_DESKS.has(next) && deskSettled && !centreOwner) {
+      setDesk(DEFAULT_DESK);
+      void navigate({ to: "/provider", search: { desk: "today" }, replace: true });
+      return;
+    }
+    setDesk(next);
+  }, [search.desk, centreOwner, deskSettled, navigate]);
 
   useEffect(() => {
     const focus = search.focus;

@@ -41,10 +41,9 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
 
   assert.match(bar, /data-search-row="filter-bar"/);
   assert.match(bar, /data-ke="explore-filter-bar"/);
-  assert.match(bar, /ke-explore-scope/);
-  assert.match(bar, /role="tablist"/);
-  assert.match(bar, /t\("live"\)/);
-  assert.match(bar, /t\("scopeAll"\)/);
+  assert.match(bar, /data-ke="reply-on-kidease"/);
+  assert.match(bar, /role="checkbox"/);
+  assert.match(bar, /t\("replyOnKidEase"\)/);
   assert.match(bar, /t\("filters"\)/);
   assert.match(bar, /t\("map"\)/);
   assert.match(bar, /t\("nearMe"\)/);
@@ -93,15 +92,18 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
 
   assert.match(copy, /catAllAges: "All ages"/);
   assert.match(copy, /nearMe: "Near me"/);
+  assert.match(copy, /replyOnKidEase: "Only show centres that reply on KidEase"/);
   assert.match(copy, /scopeAll: "All"/);
   assert.match(copy, /searchRowFilters: "Quick filters"/);
   assert.match(copy, /nearWorkLead:/);
   assert.match(copy, /Tous les âges/);
   assert.match(copy, /Près de moi/);
+  assert.match(copy, /replyOnKidEase: "Afficher seulement les centres qui répondent sur KidEase"/);
   assert.match(copy, /scopeAll: "Tout"/);
 
   assert.match(css, /\.ke-explore-filter-bar/);
   assert.match(css, /\.ke-explore-filter-sticky/);
+  assert.match(css, /\.ke-reply-toggle/);
   assert.match(css, /\.ke-explore-scope-tab/);
   assert.match(css, /\.ke-explore-icon-btn/);
   assert.match(css, /@media \(max-width: 639px\)/);

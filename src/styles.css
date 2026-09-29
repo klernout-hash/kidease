@@ -418,6 +418,66 @@
     border-radius: 999px;
     background: var(--color-fg);
   }
+  .ke-reply-toggle {
+    display: inline-flex;
+    flex: 0 1 auto;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    max-width: min(100%, 16.5rem);
+    padding: 0.3rem 0.75rem 0.3rem 0.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-surface);
+    color: var(--color-fg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: left;
+    box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+  .ke-reply-toggle[aria-checked="true"] {
+    background: color-mix(in oklab, var(--color-primary) 12%, var(--color-surface));
+    box-shadow: inset 0 0 0 1px var(--color-primary);
+  }
+  .ke-reply-box {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+    border-radius: 0.25rem;
+    box-shadow: inset 0 0 0 1.5px var(--color-muted);
+  }
+  .ke-reply-toggle[aria-checked="true"] .ke-reply-box {
+    background: var(--color-primary);
+    box-shadow: inset 0 0 0 1.5px var(--color-primary);
+  }
+  .ke-reply-toggle[aria-checked="true"] .ke-reply-box::after {
+    content: "";
+    display: block;
+    width: 0.35rem;
+    height: 0.6rem;
+    margin: 0.05rem auto 0;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .ke-route-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 80;
+    height: 3px;
+    width: 40%;
+    background: var(--color-primary);
+    animation: ke-route-progress 0.9s ease-in-out infinite;
+  }
+  @keyframes ke-route-progress {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(280%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ke-route-progress { animation: none; width: 100%; }
+  }
   .ke-explore-filter-scroll {
     min-width: 0;
   }
@@ -483,6 +543,14 @@
     color: var(--color-fg);
   }
   @media (max-width: 639px) {
+    .ke-explore-filter-bar {
+      flex-wrap: wrap;
+      overflow: visible;
+    }
+    .ke-reply-toggle {
+      flex: 1 1 100%;
+      max-width: none;
+    }
     .ke-explore-icon-btn {
       width: 2.75rem;
       padding: 0;
