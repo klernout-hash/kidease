@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import {
   FeelPhoto,
-  HeroBanner,
 } from "@/components/building-photo";
 import { ChipButton } from "@/components/chip";
 import { STEP_SIZES } from "@/lib/photo";
@@ -497,14 +496,14 @@ function Home() {
       </div>
 
       <div className="ke-app-only hidden [[data-channel=app]_&]:block">
-        <section className="ke-gutter mx-auto max-w-6xl pb-6 pt-5">
-          <div className="overflow-hidden rounded-xl shadow-card ring-1 ring-border">
-            <HeroBanner />
+        <section className="border-b border-border bg-bg">
+          <div className="ke-gutter mx-auto max-w-6xl pb-4 pt-2">
+            <h1 className="sr-only">{t("tagline")}</h1>
+            {featuredSearch}
           </div>
-          <h1 className="mt-4 font-display text-[1.65rem] leading-tight tracking-[-0.03em]">
-            {t("tagline")}
-          </h1>
-          {featuredSearch}
+        </section>
+        <section className="ke-gutter mx-auto max-w-6xl py-6">
+          <h2 className="text-xl tracking-[-0.03em]">{t(strip.featuredTitleKey)}</h2>
           <ResumeVisitCard />
           <HomeDiscovery
             ready={featuredReady}
@@ -515,8 +514,10 @@ function Home() {
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
+            careType={homeType}
+            onCareType={(type) => setHomeCareType(type)}
           />
-          <div className="mt-8">
+          <div className="mt-6">
             <Button size="md" variant="secondary" className="w-full rounded-[14px]" onClick={() => goSearch(origin.label)}>
               <Search className="size-5" />
               {t("heroCta")}

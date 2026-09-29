@@ -112,36 +112,36 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   return (
     <div className="min-h-dvh bg-bg text-fg">
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
-        <div className="ke-gutter relative mx-auto flex h-16 max-w-6xl items-center">
-          {menuLeaf ? <MenuLeafBack /> : null}
-          <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
-            <BrandMark size="sm" />
-          </Link>
+        <div className="ke-gutter relative mx-auto max-w-6xl">
+          <div className="flex h-14 items-center lg:h-16">
+            {menuLeaf ? <MenuLeafBack /> : null}
+            <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
+              <BrandMark size="sm" />
+            </Link>
+            <button
+              type="button"
+              className="relative z-20 ml-auto grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
+              aria-label="Menu"
+              aria-expanded={open}
+              aria-controls="ke-nav-drawer"
+              onPointerDown={() => setOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(true);
+              }}
+            >
+              <Menu className="size-6" strokeWidth={1.75} />
+            </button>
+          </div>
           {barePath === "/" ? (
-            <div className="pointer-events-none absolute inset-x-14 inset-y-0 hidden items-center justify-center [[data-channel=website]_&]:flex">
-              <div className="pointer-events-auto w-full max-w-[52rem] overflow-hidden">
-                <HomeCareTypeRow
-                  compact
-                  selected={careType}
-                  onSelect={(type) => setHomeCareType(type)}
-                />
-              </div>
+            <div className="flex w-full overflow-x-auto pb-1.5 [-ms-overflow-style:none] [scrollbar-width:none] lg:absolute lg:inset-x-16 lg:top-0 lg:h-16 lg:w-auto lg:items-center lg:justify-center lg:overflow-hidden lg:pb-0 [&::-webkit-scrollbar]:hidden [[data-channel=website]_&]:flex">
+              <HomeCareTypeRow
+                compact
+                selected={careType}
+                onSelect={(type) => setHomeCareType(type)}
+              />
             </div>
           ) : null}
-          <button
-            type="button"
-            className="relative z-20 ml-auto grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
-            aria-label="Menu"
-            aria-expanded={open}
-            aria-controls="ke-nav-drawer"
-            onPointerDown={() => setOpen(true)}
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpen(true);
-            }}
-          >
-            <Menu className="size-6" strokeWidth={1.75} />
-          </button>
         </div>
       </header>
       <NavDrawer

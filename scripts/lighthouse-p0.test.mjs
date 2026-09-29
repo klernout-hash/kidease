@@ -28,7 +28,7 @@ test("home LCP hero is preloaded and sized instead of a late 1200-only AVIF", ()
   assert.doesNotMatch(web, /HeroYard/);
   assert.doesNotMatch(web, /HeroBanner/);
   assert.doesNotMatch(home, /imageSrcSet: HERO_LCP_AVIF_SRCSET/);
-  assert.match(home, /HeroBanner/);
+  assert.doesNotMatch(home, /HeroBanner/);
   assert.doesNotMatch(home, /eager=\{i < 3\}/);
   assert.match(home, /eagerThumbs=\{false\}/);
 
