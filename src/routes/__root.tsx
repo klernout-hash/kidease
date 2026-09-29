@@ -11,6 +11,7 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
 import { ThemeBoot } from "@/components/theme-boot";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
+import { RouteProgress } from "@/components/route-progress";
 import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
@@ -176,6 +177,7 @@ function RootDocument() {
           <NativeBoot />
           <PostHogBoot />
           <RoleBoot />
+          <RouteProgress />
           <Outlet />
           <CookieConsentBanner />
           <KidEaseToaster />

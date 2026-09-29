@@ -71,9 +71,6 @@ const RoleEnrollChooser = lazy(() =>
 const RoleEnrollDialog = lazy(() =>
   import("@/components/role-enroll").then((m) => ({ default: m.RoleEnrollDialog })),
 );
-const RateKidEasePrompt = lazy(() =>
-  import("@/components/rate-kidease").then((m) => ({ default: m.RateKidEasePrompt })),
-);
 
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -578,21 +575,6 @@ function Home() {
             </Button>
           </div>
         </section>
-
-        {!user ? (
-          <section className="ke-defer-paint border-t border-border bg-bg" aria-label={t("rateKidEase")}>
-            {/*
-              Guest www homepage (logged-out): Rate KidEase is intentionally public,
-              not Account-only. Same prompt as /account. Web → rateKidEaseFromMenu → /get-app.
-              No live App Store / Play calls. Cookie consent banner stays on the root layout.
-            */}
-            <div className="ke-gutter mx-auto max-w-lg py-12">
-              <Suspense fallback={<div className="min-h-24" aria-hidden="true" />}>
-                <RateKidEasePrompt />
-              </Suspense>
-            </div>
-          </section>
-        ) : null}
 
         <SiteFooter />
       </div>

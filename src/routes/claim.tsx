@@ -263,37 +263,8 @@ function ClaimPage() {
   return (
     <Shell>
       <main className="mx-auto max-w-3xl px-4 py-10">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t("provider")}</p>
-        <h1 className="mt-3 font-display text-4xl">{t("claimTitle")}</h1>
-        <p className="mt-3 max-w-xl text-muted">{t("providerDiscover")}</p>
-        <p className="mt-2 max-w-xl text-sm text-subtle">{t("claimLead")}</p>
-        <FeelBanner src="/photos/brick.jpg" className="mt-8" />
-
-        <h2 className="mt-10 font-display text-2xl">{t("partnerPerksTitle")}</h2>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {(
-            [
-              [Users, "perkParents"],
-              [Megaphone, "perkBrand"],
-              [Globe, "perkPage"],
-              [CalendarCheck, "perkSpots"],
-              [MessageCircle, "perkChat"],
-              [MapPin, "perkNear"],
-              [Smartphone, "perkMobile"],
-              [Wallet, payoutsLive ? "perkPayLive" : "perkPay"],
-              [TrendingUp, "perkGrow"],
-            ] as const
-          ).map(([Icon, key]) => (
-            <li key={key} className="flex gap-3 rounded-xl bg-surface p-4 shadow-card ring-1 ring-border">
-              <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                <Icon className="size-4" />
-              </span>
-              <p className="text-sm font-medium leading-6">{t(key)}</p>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-6 max-w-2xl text-sm text-muted">{t("providerTrustBody")}</p>
-
+        <h1 className="font-display text-4xl">{t("claimFindTitle")}</h1>
+        <p className="mt-3 max-w-xl text-muted">{t("claimFindLead")}</p>
         {pending ? (
           <form onSubmit={verify} className="mt-8 space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border">
             <h2 className="font-display text-2xl">{t("verifyListing")}</h2>
@@ -353,6 +324,7 @@ function ClaimPage() {
                 onFocus={() => hits.length > 0 && setOpen(true)}
                 placeholder={t("claimSearchPh")}
                 autoComplete="off"
+                data-ke="claim-find"
                 className="h-12 w-full rounded-full bg-surface px-5 shadow-card ring-1 ring-border outline-none focus:ring-2 focus:ring-primary"
               />
               {busy && q.trim().length >= 2 ? (
@@ -405,6 +377,32 @@ function ClaimPage() {
             </p>
           </>
         )}
+
+        <details className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">
+          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">{t("partnerPerksTitle")}</summary>
+          <FeelBanner src="/photos/brick.jpg" className="mt-4" />
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                [Users, "perkParents"],
+                [Megaphone, "perkBrand"],
+                [Globe, "perkPage"],
+                [CalendarCheck, "perkSpots"],
+                [MessageCircle, "perkChat"],
+                [MapPin, "perkNear"],
+                [Smartphone, "perkMobile"],
+                [Wallet, payoutsLive ? "perkPayLive" : "perkPay"],
+                [TrendingUp, "perkGrow"],
+              ] as const
+            ).map(([Icon, key]) => (
+              <li key={key} className="flex gap-3 text-sm font-medium leading-6">
+                <Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                {t(key)}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-sm text-muted">{t("providerTrustBody")}</p>
+        </details>
 
         <form id="enroll" onSubmit={sendEnroll} className="mt-12 scroll-mt-24 space-y-3 rounded-xl bg-surface p-5 ring-1 ring-border">
           <h2 className="font-display text-2xl">{t("enrollFormTitle")}</h2>

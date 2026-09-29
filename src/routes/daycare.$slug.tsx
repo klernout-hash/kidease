@@ -703,12 +703,7 @@ function Listing() {
               {feeNotes.unconfirmed ? (
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeUnknownLead")}</p>
               ) : null}
-              <p className="mt-3 text-sm">
-                <Link to="/benefits" className="font-medium text-primary underline-offset-4 hover:underline">
-                  {t("benefitsTab")}
-                </Link>
-                <span className="text-muted"> — {t("aidOnListing")}</span>
-              </p>
+              <p className="mt-3 text-sm text-muted">{t("feesAndSubsidies")} — {t("aidOnListing")}</p>
             </section>
 
             <section id="listing-location" className="scroll-mt-24">
@@ -858,10 +853,11 @@ function Listing() {
 
             <ListingCultureCard daycare={d} />
 
-            <section>
-              <h2 className="font-display text-2xl">{t("licenceRecord")}</h2>
+            <div className="grid gap-4 sm:grid-cols-2" data-ke="listing-record-groups">
+            <section id="listing-licence" className="scroll-mt-24 rounded-xl bg-surface p-4 ring-1 ring-border">
+              <h2 className="font-display text-2xl">{t("licenceAndInspections")}</h2>
               <p className="mt-2 max-w-prose text-sm text-muted">{t("licenceRecordLead")}</p>
-              <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+              <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm">
                 <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
                 {licensed && !approved ? (
                   <Meta label={t("licenseStatus")} value={t(licensed.labelKey as CopyKey)} />
@@ -869,7 +865,7 @@ function Listing() {
                 <Meta label={t("facilityType")} value={facilityLabel} />
                 <Meta label={t("lastInspection")} value={t("seeOfficialRecord")} />
               </dl>
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+              <div className="mt-3 flex flex-col items-start gap-1">
                 <a
                   href={licenseRecordUrl(d.province, name, d.licenseNumber)}
                   target="_blank"
@@ -878,28 +874,38 @@ function Listing() {
                 >
                   {t("viewLicenceRecord")}
                 </a>
-                <a
-                  href={subsidyEstimatorUrl(d.province)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:underline"
-                >
-                  {t("checkSubsidy")}
-                </a>
-                <Link to="/tour-checklist" className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:underline">
-                  {t("tourChecklist")}
-                </Link>
                 <Link to="/verify" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
                   {t("learnMore")}
                 </Link>
               </div>
-              <p className="mt-2 text-xs text-subtle">
-                {cwelccKind(d.province) === "qc" ? t("cwelccQcNote") : t("cwelccAskNote")}
-              </p>
               <div className="mt-3">
                 <ListingReport daycareId={d.id} centreName={name} />
               </div>
             </section>
+
+            <section id="listing-subsidies" className="scroll-mt-24 rounded-xl bg-surface p-4 ring-1 ring-border">
+              <h2 className="font-display text-2xl">{t("feesAndSubsidies")}</h2>
+              <p className="mt-2 max-w-prose text-sm text-muted">
+                {cwelccKind(d.province) === "qc" ? t("cwelccQcNote") : t("cwelccAskNote")}
+              </p>
+              <div className="mt-3 flex flex-col items-start gap-1">
+                <a
+                  href={subsidyEstimatorUrl(d.province)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {t("checkSubsidy")}
+                </a>
+                <Link to="/benefits" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
+                  {t("benefitsTab")}
+                </Link>
+                <Link to="/tour-checklist" className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:underline">
+                  {t("tourChecklist")}
+                </Link>
+              </div>
+            </section>
+            </div>
 
             <p className="max-w-prose text-xs leading-5 text-subtle">
               {[

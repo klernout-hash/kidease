@@ -25,7 +25,6 @@ import type { CaslPrefs } from "@/lib/casl";
 import { PlaceSearch } from "@/components/place-search";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
 import { useAppStore } from "@/lib/store";
-import { RateKidEasePrompt } from "@/components/rate-kidease";
 import { AppearanceControl } from "@/components/appearance-control";
 import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
@@ -395,7 +394,6 @@ function ProfilePane() {
             <SignedInDevices />
           </>
         ) : null}
-        <RateKidEasePrompt className="mt-8" />
         {user ? (
           <section
             className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border"

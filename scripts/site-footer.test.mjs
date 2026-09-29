@@ -111,12 +111,12 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.doesNotMatch(copySrc, /operatorSignIn/);
 });
 
-test("Support column keeps help, contact, FAQ, and legal links", () => {
+test("Support column keeps help, contact, and legal links", () => {
   const supportTo = FOOTER_SUPPORT.map((link) => link.to);
   assert.ok(supportTo.includes("/help"));
   assert.ok(FOOTER_SUPPORT.some((link) => link.to === "/help" && link.localePaired));
   assert.ok(supportTo.includes("/contact"));
-  assert.ok(supportTo.includes("/faq"));
+  assert.ok(!supportTo.includes("/faq"));
   assert.ok(supportTo.includes("/privacy"));
   assert.ok(supportTo.includes("/terms"));
   assert.ok(supportTo.includes("/cookies"));
@@ -137,9 +137,9 @@ test("KidEase column is company/product; Support does not repeat About, Team, or
   const supportTo = FOOTER_SUPPORT.map((link) => link.to);
   assert.ok(kideaseTo.includes("/about"));
   assert.ok(kideaseTo.includes("/donate"));
-  assert.ok(kideaseTo.includes("/team"));
   assert.ok(kideaseTo.includes("/how-it-works"));
   assert.ok(kideaseTo.includes("/start-a-daycare"));
+  assert.ok(!kideaseTo.includes("/team"));
   assert.ok(!supportTo.includes("/about"));
   assert.ok(!supportTo.includes("/team"));
   assert.ok(!supportTo.includes("/verify"));
@@ -162,13 +162,12 @@ test("Parents column keeps product links and omits city hubs", () => {
   assert.ok(parentTo.includes("/search"));
   assert.ok(parentTo.includes("/cities"));
   assert.ok(parentTo.includes("/login"));
-  assert.ok(parentTo.includes("/parent"));
   assert.ok(parentTo.includes("/benefits"));
-  assert.ok(parentTo.includes("/tour-checklist"));
   assert.ok(parentTo.includes("/compare"));
   assert.ok(parentTo.includes("/get-app"));
+  assert.ok(!parentTo.includes("/tour-checklist"));
   assert.ok(FOOTER_PARENTS.some((link) => link.labelKey === "parentSignIn"));
-  assert.ok(FOOTER_PARENTS.some((link) => link.labelKey === "saved"));
+  assert.ok(!FOOTER_PARENTS.some((link) => link.labelKey === "saved"));
   assert.ok(FOOTER_PARENTS.some((link) => link.to === "/get-app" && link.labelKey === "getApp"));
   assert.doesNotMatch(nav, /cityHubs/);
   assert.doesNotMatch(nav, /cityHubPath/);
@@ -203,15 +202,11 @@ test("EN footer labels sort alphabetically in every column", () => {
     "Childcare Benefits Program",
     "Compare",
     "Get the app",
-    "Parent desk",
     "Parent Sign In",
-    "Saved",
     "Search",
-    "Tour checklist",
   ]);
   assert.deepEqual(labels(FOOTER_DAYCARES, "en"), [
     "Claim your daycare",
-    "Daycare desk",
     "Daycare requirements",
     "Daycare Sign In",
     "Find daycare jobs",
@@ -221,7 +216,6 @@ test("EN footer labels sort alphabetically in every column", () => {
     "About",
     "Donate to Kids",
     "How It Works",
-    "Meet the Team",
     "Plans",
     "Post a job",
     "Start a Daycare",
@@ -229,7 +223,6 @@ test("EN footer labels sort alphabetically in every column", () => {
   assert.deepEqual(labels(FOOTER_SUPPORT, "en"), [
     "Contact Us",
     "Cookies",
-    "FAQ",
     "Help Centre",
     "Privacy",
     "Terms",
@@ -240,9 +233,6 @@ test("FR-CA footer labels sort by the French string in every column", () => {
   assert.deepEqual(labels(FOOTER_PARENTS, "fr"), [
     "Comparer",
     "Connexion parent",
-    "Espace parent",
-    "Favoris",
-    "Liste pour la visite",
     "Parcourir par ville",
     "Programme d’aide à la garde d’enfants",
     "Rechercher",
@@ -251,7 +241,6 @@ test("FR-CA footer labels sort by the French string in every column", () => {
   assert.deepEqual(labels(FOOTER_DAYCARES, "fr"), [
     "Comment nous vérifions les fiches",
     "Connexion garderie",
-    "Espace garderie",
     "Exigences pour les garderies",
     "Réclamez votre garderie",
     "Trouver des emplois en garderie",
@@ -261,7 +250,6 @@ test("FR-CA footer labels sort by the French string in every column", () => {
     "Comment ça fonctionne",
     "Faire un don aux enfants",
     "Forfaits",
-    "L’équipe",
     "Ouvrir une garderie",
     "Publier un emploi",
   ]);
@@ -269,7 +257,6 @@ test("FR-CA footer labels sort by the French string in every column", () => {
     "Centre d’aide",
     "Conditions",
     "Confidentialité",
-    "FAQ",
     "Nous joindre",
     "Témoins",
   ]);
@@ -280,27 +267,21 @@ test("footer does not drop destinations when columns are renamed and reordered",
   for (const dest of [
     "/search|{}|bare",
     '/login|{"role":"parent","desk":"parent","intent":"in","next":"/parent"}|bare',
-    "/parent|{}|bare",
     "/benefits|{}|bare",
-    "/tour-checklist|{}|bare",
     "/compare|{}|bare",
-    '/parent|{"tab":"saved"}|bare',
     "/get-app|{}|bare",
     "/claim|{}|bare",
     '/login|{"role":"provider","desk":"director","intent":"in","next":"/provider"}|bare',
-    "/provider|{}|bare",
     "/verify|{}|bare",
     "/daycare-requirements|{}|bare",
     "/jobs|{}|paired",
     "/jobs/post|{}|paired",
     "/help|{}|paired",
     "/contact|{}|paired",
-    "/faq|{}|paired",
     "/how-it-works|{}|paired",
     "/about|{}|paired",
     "/start-a-daycare|{}|paired",
     "/donate|{}|paired",
-    "/team|{}|bare",
     "/privacy|{}|paired",
     "/terms|{}|paired",
     "/cookies|{}|paired",

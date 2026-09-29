@@ -4,7 +4,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu } from "lucide-react";
 import { AppTabBar } from "@/components/app-tab-bar";
 import { NotificationBell } from "@/components/notification-bell";
-import { RateKidEaseControl } from "@/components/rate-kidease";
 import { ShareKidEaseButton } from "@/components/share-button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
@@ -282,7 +281,6 @@ function HeaderProfile({
           ) : (
             <>
               <ShareKidEaseButton appearance="menu" onDone={() => setOpen(false)} />
-              <RateKidEaseControl appearance="menu" onDone={() => setOpen(false)} />
             </>
           )}
         </div>

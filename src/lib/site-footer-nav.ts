@@ -15,22 +15,15 @@ function copyLink(to: string, labelKey: CopyKey, extra: Partial<FooterLinkDef> =
   return { to, labelKey, ...extra };
 }
 
-function literalLink(to: string, labelEn: string, labelFr: string, extra: Partial<FooterLinkDef> = {}): FooterLinkDef {
-  return { to, labelEn, labelFr, ...extra };
-}
-
-/** Parents column — product links. Destinations unchanged from the four-column footer. */
+/** Parents column — short set. The menu still has the longer list. */
 export const FOOTER_PARENTS: FooterLinkDef[] = [
   copyLink("/search", "search"),
   copyLink("/cities", "browseCities"),
   copyLink("/login", "parentSignIn", {
     search: { role: "parent", desk: "parent", intent: "in", next: "/parent" },
   }),
-  literalLink("/parent", "Parent desk", "Espace parent"),
   copyLink("/benefits", "benefitsTab"),
-  copyLink("/tour-checklist", "tourChecklist"),
   copyLink("/compare", "compare"),
-  copyLink("/parent", "saved", { search: { tab: "saved" } }),
   copyLink("/get-app", "getApp"),
 ];
 
@@ -40,7 +33,6 @@ export const FOOTER_DAYCARES: FooterLinkDef[] = [
   copyLink("/login", "providerLogin", {
     search: { role: "provider", desk: "director", intent: "in", next: "/provider" },
   }),
-  literalLink("/provider", "Daycare desk", "Espace garderie"),
   copyLink("/verify", "verifyListings"),
   copyLink("/daycare-requirements", "daycareRequirements"),
   copyLink("/jobs", "findDaycareJobs", { localePaired: true }),
@@ -51,7 +43,6 @@ export const FOOTER_KIDEASE: FooterLinkDef[] = [
   copyLink("/plans", "navPlans"),
   copyLink("/about", "about", { localePaired: true }),
   copyLink("/donate", "donateToKids", { localePaired: true }),
-  copyLink("/team", "team"),
   copyLink("/how-it-works", "howItWorksCta", { localePaired: true }),
   copyLink("/jobs/post", "addJobsAtKidEase", { localePaired: true }),
   copyLink("/start-a-daycare", "startADaycare", { localePaired: true }),
@@ -60,7 +51,6 @@ export const FOOTER_KIDEASE: FooterLinkDef[] = [
 /** Support column — help and legal only. Unsubscribe lives on Privacy + email, not here. */
 export const FOOTER_SUPPORT: FooterLinkDef[] = [
   copyLink("/help", "helpTitle", { localePaired: true }),
-  literalLink("/faq", "FAQ", "FAQ", { localePaired: true }),
   copyLink("/contact", "contactTitle", { localePaired: true }),
   copyLink("/privacy", "privacy", { localePaired: true }),
   copyLink("/terms", "terms", { localePaired: true }),

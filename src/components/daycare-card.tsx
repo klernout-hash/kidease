@@ -174,8 +174,7 @@ export const DaycareCard = memo(function DaycareCard({
   const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
 
   if (presentation === "visual") {
-    const placeLine = [item.city, away].filter(Boolean).join(" · ");
-    const careLine = [ages, hours].filter(Boolean).join(" · ");
+    const placeLine = [item.city, away, ages].filter(Boolean).join(" · ");
     return (
       <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group w-full">
         <div className="relative">
@@ -213,11 +212,10 @@ export const DaycareCard = memo(function DaycareCard({
           </div>
           {placeLine ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{placeLine}</p> : null}
           {publicApprovalEligible(item) ? (
-            <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
+            <p className="mt-0.5 truncate text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
               {t("kideaseApprovedMarker")}
             </p>
           ) : null}
-          {careLine ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{careLine}</p> : null}
           {priceAmount ? (
             <p className="mt-1 text-[14px] leading-5 tabular-nums">
               <span className="font-semibold">{priceAmount}</span>

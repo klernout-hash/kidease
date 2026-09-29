@@ -107,18 +107,16 @@ describe("plugin wiring and honest copy", () => {
     assert.match(src("src/lib/store-review.ts"), /noteHappyMoment\("share"\)/);
   });
 
-  it("exposes Rate KidEase on guest home, menu, and account; web falls through to get-app", () => {
+  it("keeps Rate KidEase off guest home, menu, and account until store links exist", () => {
     const home = src("src/routes/index.tsx");
     const rate = src("src/components/rate-kidease.tsx");
-    assert.match(src("src/routes/menu.tsx"), /RateKidEaseMenuRow/);
-    assert.match(src("src/routes/account.tsx"), /RateKidEasePrompt/);
-    // Guest www homepage: same Account prompt. Not an Account-only hide.
-    assert.match(home, /RateKidEasePrompt/);
-    assert.match(home, /Guest www homepage/);
-    assert.match(home, /!user \? \(/);
+    assert.doesNotMatch(src("src/routes/menu.tsx"), /RateKidEaseMenuRow/);
+    assert.doesNotMatch(src("src/routes/account.tsx"), /RateKidEasePrompt/);
+    assert.doesNotMatch(home, /RateKidEasePrompt/);
+    assert.doesNotMatch(home, /Guest www homepage/);
     assert.ok(!FOOTER_KIDEASE.some((link) => link.labelKey === "rateKidEase"));
-    assert.match(src("src/components/nav-drawer.tsx"), /RateKidEaseControl/);
-    assert.match(src("src/components/shell.tsx"), /RateKidEaseControl/);
+    assert.doesNotMatch(src("src/components/nav-drawer.tsx"), /RateKidEaseControl/);
+    assert.doesNotMatch(src("src/components/shell.tsx"), /RateKidEaseControl/);
     assert.match(rate, /to: "\/get-app"/);
     assert.match(rate, /search: \{ dev: undefined \}/);
     assert.match(rate, /not Account-only/);
