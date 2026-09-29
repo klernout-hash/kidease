@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { amenityLabel } from "@/lib/amenities";
 import {
   curriculumLabel,
@@ -55,24 +56,48 @@ export function ListingHeaderPills({
   );
 }
 
+const JUMP_LINKS = [
+  ["listing-overview", "jumpOverview"],
+  ["listing-programs", "jumpPrograms"],
+  ["listing-fees", "jumpFees"],
+  ["listing-location", "jumpLocation"],
+  ["listing-reviews", "jumpReviews"],
+  ["listing-photos", "jumpPhotos"],
+  ["listing-tours", "tourTimesJump"],
+] as const;
+
 export function ListingJumpNav() {
   const { t } = useCopy();
-  const links = [
-    ["listing-overview", "jumpOverview"],
-    ["listing-programs", "jumpPrograms"],
-    ["listing-fees", "jumpFees"],
-    ["listing-location", "jumpLocation"],
-    ["listing-reviews", "jumpReviews"],
-    ["listing-photos", "jumpPhotos"],
-    ["listing-tours", "tourTimesJump"],
-  ] as const;
+  const [active, setActive] = useState<(typeof JUMP_LINKS)[number][0]>(JUMP_LINKS[0][0]);
+
+  useEffect(() => {
+    const ids = JUMP_LINKS.map(([id]) => id);
+    function pick() {
+      const line = 96;
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top - line <= 8) current = id;
+      }
+      setActive(current);
+    }
+    pick();
+    window.addEventListener("scroll", pick, { passive: true });
+    window.addEventListener("resize", pick);
+    return () => {
+      window.removeEventListener("scroll", pick);
+      window.removeEventListener("resize", pick);
+    };
+  }, []);
+
   return (
     <nav
       className="ke-listing-jump -mx-[clamp(12px,3vw,40px)] px-[clamp(12px,3vw,40px)] lg:mx-0 lg:px-0"
       aria-label={t("jumpOverview")}
     >
-      {links.map(([id, key]) => (
-        <a key={id} href={`#${id}`}>
+      {JUMP_LINKS.map(([id, key]) => (
+        <a key={id} href={`#${id}`} aria-current={active === id ? "true" : undefined}>
           {t(key)}
         </a>
       ))}

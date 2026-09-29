@@ -642,7 +642,7 @@ function Listing() {
             {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
               <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
             ) : null}
-            <CompletenessBanner item={d} />
+            {ownEdit ? <CompletenessBanner item={d} /> : null}
             {!live ? (
               <p className="text-sm text-muted">
                 {t("unclaimedNotice")}{" "}

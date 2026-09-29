@@ -949,7 +949,8 @@
     text-decoration: none;
   }
   .ke-listing-jump a:hover,
-  .ke-listing-jump a:focus-visible {
+  .ke-listing-jump a:focus-visible,
+  .ke-listing-jump a[aria-current="true"] {
     border-bottom-color: var(--color-fg);
     color: var(--color-fg);
   }

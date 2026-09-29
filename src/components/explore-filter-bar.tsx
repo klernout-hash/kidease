@@ -137,6 +137,7 @@ export function ExploreFilterBar({
 
       <ChipCarousel
         compact
+        arrows={false}
         className="ke-explore-filter-scroll"
         label={t("searchRowFilters")}
       >

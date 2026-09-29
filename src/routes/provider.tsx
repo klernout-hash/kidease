@@ -25,11 +25,11 @@ import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-que
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
+import { EmptyState } from "@/components/empty-state";
 import { TodayUrgencyHome } from "@/components/today-urgency-home";
 import { DirectorProStrip } from "@/components/director-pro-strip";
 import { type DaycareDesk } from "@/lib/desk-nav";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { isOpenLeadStatus } from "@/lib/lead-requests";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { listCentrePipeline } from "@/lib/server/crm-pipeline";
 import { CentrePipeline } from "@/components/centre-pipeline";
@@ -339,6 +339,9 @@ function ProviderPage() {
         </>
       ) : null}
       {desk === "requests" ? (
+        leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
+          <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} />
+        ) : (
         <section className="space-y-8">
           <PayCtas>
           <DirectorProStrip
@@ -346,29 +349,22 @@ function ProviderPage() {
             requests={stats.reduce((sum, s) => sum + (s.weekRequests ?? 0), 0)}
           />
           </PayCtas>
-          <p className="text-sm text-muted">
-            {t("leadInbox")}
-            {leads.filter((row) => isOpenLeadStatus(row.status)).length
-              ? ` · ${leads.filter((row) => isOpenLeadStatus(row.status)).length}`
-              : ""}
-          </p>
           <DaycareLeadInbox items={leads} onChanged={() => void load()} />
-          <CentrePipeline cards={pipeline} />
+          {pipeline.length ? <CentrePipeline cards={pipeline} /> : null}
+          {tours.length ? (
           <div>
             <h2 className="font-display text-2xl">{t("pendingTours")}</h2>
             <p className="mt-1 text-sm text-muted">{t("pendingToursLead")}</p>
-            {tours.length === 0 ? (
-              <p className="mt-4 rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("noTours")}</p>
-            ) : (
-              <ul className="mt-4 space-y-3">
-                {tours.map((tour) => (
-                  <li key={tour.id}>
-                    <TourCard tour={tour} canRespond onChanged={() => void load()} />
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className="mt-4 space-y-3">
+              {tours.map((tour) => (
+                <li key={tour.id}>
+                  <TourCard tour={tour} canRespond onChanged={() => void load()} />
+                </li>
+              ))}
+            </ul>
           </div>
+          ) : null}
+          {waiting.length ? (
           <div>
             <h2 className="font-display text-2xl">{t("directorNudgeTitle")}</h2>
             <p className="mt-1 text-sm text-muted">{t("requestsWaitingLead")}</p>
@@ -391,6 +387,8 @@ function ProviderPage() {
               locale={locale}
             />
           </div>
+          ) : null}
+          {later.length ? (
           <div>
             <h2 className="font-display text-2xl">{t("requestsDecidedTitle")}</h2>
             <p className="mt-1 text-sm text-muted">{t("requestsDecidedLead")}</p>
@@ -405,7 +403,9 @@ function ProviderPage() {
               locale={locale}
             />
           </div>
+          ) : null}
         </section>
+        )
       ) : null}
 
       {desk === "tours" ? <TourAvailabilityDesk listings={listings} onSaved={() => void load()} /> : null}

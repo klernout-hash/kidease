@@ -86,8 +86,7 @@ export function hasListedHours(hours?: string | null) {
 
 export function hasRealLicense(d: Pick<Daycare, "licenseNumber" | "id">) {
   const n = officialLicenceNumber(d.licenseNumber, d.id);
-  if (!n) return false;
-  if (n === d.id || n === (d.id || "").split("-").pop()) return false;
+  if (!n || n === d.id) return false;
   return true;
 }
 
