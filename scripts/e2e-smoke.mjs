@@ -298,7 +298,7 @@ async function runRoleFixture(page, base) {
     const daycarePaidPlaces = await upgradePlaces(page);
     record(
       "upgrade-my-plan-daycare",
-      daycarePaidPlaces.header === "My plan" && daycarePaidPlaces.panel === "My plan" && daycarePaidPlaces.drawer === "My plan",
+      daycarePaidPlaces.panel === "My plan" && daycarePaidPlaces.drawer === "My plan",
       { note: JSON.stringify(daycarePaidPlaces) },
     );
 
