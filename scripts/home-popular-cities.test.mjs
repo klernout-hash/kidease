@@ -133,6 +133,8 @@ test("guest home hero keeps the search bar and drops the city grid and trust dup
   assert.doesNotMatch(hero, /t\("heroTrust"\)/);
   assert.doesNotMatch(hero, /t\("sortOpen"\)/);
   assert.doesNotMatch(hero, /t\("requestInfo"\)/);
-  assert.match(hero, /HomeCareTypeRow/);
+  assert.doesNotMatch(hero, /HomeCareTypeRow/);
+  assert.match(src("src/components/shell.tsx"), /HomeCareTypeRow/);
+  assert.doesNotMatch(src("src/components/shell.tsx"), /<RoleNavLinks role=\{chrome\.role\}/);
   assert.doesNotMatch(hero, /HeroYard/);
 });

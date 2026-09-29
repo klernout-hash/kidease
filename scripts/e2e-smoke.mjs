@@ -121,7 +121,7 @@ async function shot(page, name, width, content) {
   // Channel is chosen once at document load. Reload so 390px shots use the app bar.
   await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
   const ready =
-    width < 1024 ? page.locator('[data-ke="app-tab-bar"]') : page.locator('[data-ke="role-nav"]:visible');
+    width < 1024 ? page.locator('[data-ke="app-tab-bar"]') : page.locator('header button[aria-label="Menu"]');
   await ready.first().waitFor({ timeout: timeoutMs }).catch(() => {});
   if (content) await page.locator(content).first().waitFor({ timeout: timeoutMs }).catch(() => {});
   const dir = join(dirname(outDir), "shots");
@@ -134,16 +134,19 @@ async function runRoleFixture(page, base) {
   try {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page.locator('[data-ke="role-nav"][data-role="guest"]:visible').first().waitFor({ timeout: timeoutMs });
-    let guestNav = await roleNavText(page);
+    await page.locator('header button[aria-label="Menu"]').first().waitFor({ timeout: timeoutMs });
+    await page.locator('header button[aria-label="Menu"]').click();
+    await page.locator('#ke-nav-drawer [data-ke="role-nav"][data-role="guest"]').waitFor({ timeout: timeoutMs });
+    let guestNav = await page.locator('#ke-nav-drawer [data-ke="role-nav"]').innerText();
     const guestPricing = await page.locator('[data-ke="optional-upgrades"]').count();
-    const guestPlans = await page.locator('[data-nav="plans"]').count();
+    const guestPlans = await page.locator('#ke-nav-drawer [data-nav="plans"]').count();
     const guestFooterPlans = await page.locator('footer a[href="/plans"]').count();
     record("guest-no-pricing", guestPricing === 0, { note: `pricing blocks ${guestPricing}` });
     record("guest-plans-links", guestPlans > 0 && guestFooterPlans > 0, {
       note: `nav=${guestPlans} footer=${guestFooterPlans}`,
     });
     await shot(page, "guest-desktop", 1280, "h1");
+    await page.keyboard.press("Escape");
     const menu = page.locator('header button[aria-label="Menu"]');
     if (await menu.isVisible().catch(() => false)) {
       await menu.click({ timeout: 8000 });
@@ -182,8 +185,10 @@ async function runRoleFixture(page, base) {
     await shot(page, "parent-new", 1280, '[data-ke="parent-home"]');
     await shot(page, "parent-390", 390, '[data-ke="parent-home"]');
     await shot(page, "parent-desktop", 1280, '[data-ke="parent-home"]');
-    await page.locator('[data-ke="role-nav"][data-role="parent"]:visible').first().waitFor({ timeout: timeoutMs });
-    const parentNav = await roleNavText(page);
+    await page.locator('header button[aria-label="Menu"]').click();
+    await page.locator('#ke-nav-drawer [data-ke="role-nav"][data-role="parent"]').waitFor({ timeout: timeoutMs });
+    const parentNav = await page.locator('#ke-nav-drawer [data-ke="role-nav"]').innerText();
+    await page.keyboard.press("Escape");
     const parentCross = mentions(parentNav, ["My listing", "Enquiries", "I'm a daycare", "Get more with Pro"]);
     const parentPlaces = await upgradePlaces(page);
     const parentChrome = await page.locator("body").innerText();
@@ -194,8 +199,6 @@ async function runRoleFixture(page, base) {
         parentCross.length === 0 &&
         /home/i.test(parentNav) &&
         !parentSignIn &&
-        parentPlaces.header === "Upgrade" &&
-        parentPlaces.panel === "Upgrade" &&
         parentPlaces.drawer === "Upgrade",
       { note: parentSignIn ? "sign-in leak" : parentCross.join(",") || JSON.stringify(parentPlaces) },
     );
@@ -219,12 +222,13 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('header [data-nav="upgrade"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
     const paidPlaces = await upgradePlaces(page);
-    await page.locator('header [data-nav="upgrade"]:visible').first().click().catch(() => {});
+    await page.locator('header button[aria-label="Menu"]').click();
+    await page.locator('#ke-nav-drawer [data-nav="upgrade"]').click();
     await page.locator('[data-ke="manage-or-cancel"]').waitFor({ timeout: timeoutMs }).catch(() => {});
     const managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
     record(
       "upgrade-my-plan-parent",
-      paidPlaces.header === "My plan" && paidPlaces.panel === "My plan" && paidPlaces.drawer === "My plan" && managed,
+      paidPlaces.drawer === "My plan" && managed,
       { note: JSON.stringify(paidPlaces) },
     );
 
@@ -245,8 +249,10 @@ async function runRoleFixture(page, base) {
     record("daycare-card-new", daycareCardNew === 0, { note: `cards ${daycareCardNew}` });
     await shot(page, "daycare-390", 390, '[data-ke="daycare-desk"]');
     await shot(page, "daycare-desktop", 1280, '[data-ke="daycare-desk"]');
-    await page.locator('[data-ke="role-nav"][data-role="provider"]:visible').first().waitFor({ timeout: timeoutMs });
-    const daycareNav = await roleNavText(page);
+    await page.locator('header button[aria-label="Menu"]').click();
+    await page.locator('#ke-nav-drawer [data-ke="role-nav"][data-role="provider"]').waitFor({ timeout: timeoutMs });
+    const daycareNav = await page.locator('#ke-nav-drawer [data-ke="role-nav"]').innerText();
+    await page.keyboard.press("Escape");
     const daycareCross = mentions(daycareNav, ["Saved", "Requests & tours", "I'm a parent", "Try Parent Plus"]);
     const daycarePlaces = await upgradePlaces(page);
     const daycareChrome = await page.locator("body").innerText();
@@ -257,8 +263,6 @@ async function runRoleFixture(page, base) {
         daycareCross.length === 0 &&
         /desk/i.test(daycareNav) &&
         !daycareSignIn &&
-        daycarePlaces.header === "Upgrade" &&
-        daycarePlaces.panel === "Upgrade" &&
         daycarePlaces.drawer === "Upgrade",
       { note: daycareSignIn ? "sign-in leak" : daycareCross.join(",") || JSON.stringify(daycarePlaces) },
     );

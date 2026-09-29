@@ -68,7 +68,7 @@ test("marketing feel photos stay on existing /photos paths", () => {
   const home = readFileSync(join(root, "src/routes/index.tsx"), "utf8");
   const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
   assert.doesNotMatch(web, /HeroYard/);
-  assert.match(web, /data-ke="home-care-types"|HomeCareTypeRow/);
+  assert.match(readFileSync(join(root, "src/components/shell.tsx"), "utf8"), /data-ke="home-care-types"|HomeCareTypeRow/);
   assert.match(home, /HeroBanner/);
   assert.match(home, /\[\[data-channel=app\]/);
   assert.match(source, /\/photos\/hero\.jpg/);

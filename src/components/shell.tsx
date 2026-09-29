@@ -20,6 +20,8 @@ import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { RoleNavLinks } from "@/components/role-nav";
+import { HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
+import { getHomeCareType, setHomeCareType, subscribeHomeCareType } from "@/lib/home-care-selection";
 import { useRoleChrome } from "@/components/role-chrome";
 import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
 import type { ChromeRole } from "@/lib/role-access";
@@ -36,10 +38,13 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const { session, sticky } = useSessionDesks();
   const chrome = useRoleChrome();
   const [open, setOpen] = useState(false);
+  const [careType, setCareType] = useState<BrowseDaycareType | undefined>(() => getHomeCareType());
 
   useEffect(() => {
     applyDocumentLocale(locale);
   }, [locale]);
+
+  useEffect(() => subscribeHomeCareType(setCareType), []);
 
   useEffect(() => {
     setOpen(false);
@@ -118,14 +123,24 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   return (
     <div className="min-h-dvh bg-bg text-fg">
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
-        <div className="ke-gutter mx-auto flex min-h-[4.6rem] max-w-6xl items-center justify-between gap-3 py-2.5">
+        <div className="ke-gutter mx-auto grid min-h-[4.6rem] max-w-6xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 py-1.5">
           <div className="flex min-w-0 items-center gap-0.5">
             {menuLeaf ? <MenuLeafBack /> : null}
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
-            {chrome.pending ? null : <RoleNavLinks role={chrome.role} paid={chrome.paid} />}
           </div>
+          {barePath === "/" ? (
+            <div className="hidden min-w-0 justify-center [[data-channel=website]_&]:flex">
+              <HomeCareTypeRow
+                compact
+                selected={careType}
+                onSelect={(type) => setHomeCareType(type)}
+              />
+            </div>
+          ) : (
+            <div />
+          )}
           <div className="flex shrink-0 items-center gap-1.5">
             {user && !guestBrowse && showDeskSwitcher(session?.desks, session?.role, session?.email) ? (
               <DeskSwitcher />

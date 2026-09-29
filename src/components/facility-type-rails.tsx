@@ -81,14 +81,19 @@ const CARE_TYPE_EMOJI: Record<BrowseDaycareType, string> = {
 export function HomeCareTypeRow({
   selected,
   onSelect,
+  compact = false,
 }: {
   selected?: BrowseDaycareType;
   onSelect: (type?: BrowseDaycareType) => void;
+  /** Header size. Same six types, tighter so they sit on one line. */
+  compact?: boolean;
 }) {
   const { t } = useCopy();
   return (
     <div
-      className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center [&::-webkit-scrollbar]:hidden"
+      className={`flex overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center [&::-webkit-scrollbar]:hidden ${
+        compact ? "w-full max-w-[52rem] gap-0.5" : "gap-1 pb-1"
+      }`}
       data-ke="home-care-types"
       role="tablist"
       aria-label={t("railByCare")}
@@ -102,16 +107,30 @@ export function HomeCareTypeRow({
             role="tab"
             aria-selected={on}
             data-browse-type={type}
-            className={`flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 rounded-xl px-1.5 pb-2 pt-1.5 text-center ${on ? "text-fg" : "text-muted hover:text-fg"}`}
+            className={
+              compact
+                ? `flex min-w-[4.6rem] max-w-[7rem] shrink-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1 text-center transition-colors duration-150 ease-out ${
+                    on ? "text-fg" : "text-muted hover:bg-surface hover:text-fg"
+                  }`
+                : `flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 rounded-xl px-1.5 pb-2 pt-1.5 text-center transition-colors duration-150 ease-out ${
+                    on ? "text-fg" : "text-muted hover:text-fg"
+                  }`
+            }
             onClick={() => onSelect(on ? undefined : type)}
           >
             <span
-              className="text-[2.65rem] leading-none [font-family:'Apple_Color_Emoji','Segoe_UI_Emoji','Noto_Color_Emoji',sans-serif]"
+              className={`leading-none [font-family:'Apple_Color_Emoji','Segoe_UI_Emoji','Noto_Color_Emoji',sans-serif] ${
+                compact ? "text-[1.35rem]" : "text-[2.65rem]"
+              }`}
               aria-hidden
             >
               {CARE_TYPE_EMOJI[type]}
             </span>
-            <span className={`text-[12px] font-semibold leading-tight ${on ? "underline decoration-2 underline-offset-[6px]" : ""}`}>
+            <span
+              className={`font-semibold leading-tight ${
+                compact ? "line-clamp-2 text-[11px]" : "text-[12px]"
+              } ${on ? "underline decoration-2 underline-offset-4" : ""}`}
+            >
               {t(BROWSE_RAIL_COPY[type])}
             </span>
           </button>

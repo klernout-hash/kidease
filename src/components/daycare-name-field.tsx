@@ -9,6 +9,7 @@ export function DaycareNameField({
   value,
   onChange,
   placeholder,
+  inputClassName,
   onFocus,
 }: {
   id: string;
@@ -16,6 +17,7 @@ export function DaycareNameField({
   value: string;
   onChange: (name: string) => void;
   placeholder: string;
+  inputClassName?: string;
   onFocus?: () => void;
 }) {
   const { t } = useCopy();
@@ -76,7 +78,7 @@ export function DaycareNameField({
         role="combobox"
         aria-autocomplete="list"
         autoComplete="off"
-        className="mt-0.5 h-5 w-full bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"
+        className={inputClassName || "mt-0.5 h-5 w-full bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"}
       />
       {show ? (
         <div
