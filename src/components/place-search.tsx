@@ -1,3 +1,4 @@
+import { LocateFixed, MapPin } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { geocode } from "@/lib/geo";
@@ -18,6 +19,16 @@ import {
 import { cn } from "@/lib/utils";
 
 export type ResolvedPlace = { lat: number; lng: number; label: string };
+
+export type WhereDestination = { label: string; lat: number; lng: number };
+
+export type WhereEmptyMenu = {
+  title: string;
+  nearby: string;
+  nearbyHint: string;
+  onNearby?: () => void;
+  cities: WhereDestination[];
+};
 
 export async function resolveLocationQuery(query: string): Promise<ResolvedPlace | null> {
   const q = query.trim();
@@ -73,6 +84,7 @@ export function PlaceSearch({
   id,
   ariaLabel,
   ariaLabelledBy,
+  emptyMenu,
 }: {
   value: string;
   onChange: (q: string) => void;
@@ -84,6 +96,8 @@ export function PlaceSearch({
   id?: string;
   ariaLabel?: string;
   ariaLabelledBy?: string;
+  /** Shown on focus before a city is typed. Nearby stays first. */
+  emptyMenu?: WhereEmptyMenu;
 }) {
   const listId = useId();
   const wrap = useRef<HTMLDivElement>(null);
@@ -93,6 +107,9 @@ export function PlaceSearch({
   const [hits, setHits] = useState<PlaceSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [destOpen, setDestOpen] = useState(false);
+  const focusedValue = useRef(value);
+  const showDestinations = Boolean(emptyMenu) && destOpen && !open && (value.trim().length < 2 || value === focusedValue.current);
 
   function close() {
     setOpen(false);
@@ -197,20 +214,26 @@ export function PlaceSearch({
         ref={input}
         id={id}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => {
+          if (!placeHostVisible(wrap.current)) return;
+          focusedValue.current = value;
+          if (emptyMenu) setDestOpen(true);
+          if (hits.length && value.trim().length >= 2 && value !== focusedValue.current) setOpen(true);
+        }}
+        onChange={(e) => {
+          const next = e.target.value;
+          onChange(next);
+          if (next !== focusedValue.current) setDestOpen(false);
+        }}
         placeholder={placeholder}
         className={inputClassName}
         role="combobox"
-        aria-expanded={open}
+        aria-expanded={open || showDestinations}
         aria-controls={listId}
         aria-autocomplete="list"
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         autoComplete="off"
-        onFocus={() => {
-          if (!placeHostVisible(wrap.current)) return;
-          if (hits.length) setOpen(true);
-        }}
         onBlur={(event) => {
           const next = event.relatedTarget as Node | null;
           if (wrap.current?.contains(next) || menuContains(listId, next)) return;
@@ -218,11 +241,13 @@ export function PlaceSearch({
             if (document.activeElement === input.current) return;
             if (menuContains(listId, document.activeElement)) return;
             close();
+            setDestOpen(false);
           }, 0);
         }}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
             close();
+            setDestOpen(false);
             return;
           }
           if (!open || hits.length === 0) return;
@@ -238,6 +263,55 @@ export function PlaceSearch({
           }
         }}
       />
+      {showDestinations && emptyMenu ? (
+        <div
+          data-ke="where-destinations"
+          className="absolute left-0 top-[calc(100%+0.375rem)] z-[80] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-surface py-2 shadow-lift ring-1 ring-border"
+        >
+          <p className="px-4 pb-1 pt-1 text-xs font-semibold text-muted">{emptyMenu.title}</p>
+          <ul>
+            <li>
+              <button
+                type="button"
+                data-ke="where-nearby"
+                className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface-2"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setDestOpen(false);
+                  emptyMenu.onNearby?.();
+                }}
+              >
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-2 text-fg">
+                  <LocateFixed className="size-5" aria-hidden />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-fg">{emptyMenu.nearby}</span>
+                  <span className="block text-xs text-muted">{emptyMenu.nearbyHint}</span>
+                </span>
+              </button>
+            </li>
+            {emptyMenu.cities.map((city) => (
+              <li key={city.label}>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface-2"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setDestOpen(false);
+                    onChange(city.label);
+                    onResolved(city);
+                  }}
+                >
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-2 text-muted">
+                    <MapPin className="size-5" aria-hidden />
+                  </span>
+                  <span className="text-sm font-semibold text-fg">{city.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {open && hits.length > 0 ? (
         <ul
           id={listId}

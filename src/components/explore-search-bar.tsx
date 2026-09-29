@@ -3,6 +3,7 @@ import { LocateFixed, Search } from "lucide-react";
 import { ChipButton } from "@/components/chip";
 import { PlaceSearch, type ResolvedPlace } from "@/components/place-search";
 import { formatExploreDateRange } from "@/lib/explore-search";
+import { nearestCities } from "@/lib/geo";
 import { DISMISS_POPOVERS } from "@/lib/dismiss-popovers";
 import type { CopyKey } from "@/lib/copy";
 import { SEARCH_STARTS, type SearchStart } from "@/lib/now-loops";
@@ -113,6 +114,7 @@ export function ExploreSearchBar({
   const startLabel = start ? t(START_COPY[start]) : "";
   const whenLabel = onStartChange ? startLabel || t("searchWhenHint") : dateLabel || t("searchWhenHint");
   const whenFilled = onStartChange ? Boolean(start) : Boolean(dateLabel);
+  const destinationCities = origin ? nearestCities(origin, 6) : [];
 
   useEffect(() => {
     function onDoc(event: MouseEvent) {
@@ -216,7 +218,13 @@ export function ExploreSearchBar({
         </div>
       ) : null}
       <div className="relative z-20 flex min-h-[8.4rem] flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:min-h-[2.75rem] lg:flex-row lg:flex-wrap lg:items-stretch lg:divide-y-0 lg:rounded-full">
-        <div className={cn(segmentClass("where", 0), "lg:min-w-[12rem] lg:flex-[1.2]")} onClick={() => setActive("where")}>
+        <div
+          className={cn(segmentClass("where", 0), "lg:min-w-[12rem] lg:flex-[1.2]")}
+          onClick={() => {
+            setActive("where");
+            document.getElementById(whereId)?.focus();
+          }}
+        >
           <div data-ke="where-field" className="min-w-0">
             <label
               id={whereLabelId}
@@ -237,6 +245,13 @@ export function ExploreSearchBar({
               origin={origin}
               ariaLabelledBy={whereLabelId}
               className="min-h-6"
+              emptyMenu={{
+                title: t("whereSuggested"),
+                nearby: t("whereNearby"),
+                nearbyHint: t("whereNearbyHint"),
+                onNearby: onLocate,
+                cities: destinationCities,
+              }}
               inputClassName="mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"
             />
           </div>
