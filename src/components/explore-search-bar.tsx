@@ -212,49 +212,51 @@ export function ExploreSearchBar({
           </button>
         </div>
       ) : null}
-      <div className="relative z-20 flex min-h-[8.4rem] flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:min-h-[2.75rem] lg:flex-row lg:items-stretch lg:divide-y-0 lg:rounded-full">
-        <div className={segmentClass("where", 0)} onClick={() => setActive("where")}>
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-              <label
-                id={whereLabelId}
-                htmlFor={whereId}
-                className="block text-[12px] font-semibold leading-4 text-fg"
-              >
-                {t("searchWhere")}
-              </label>
-              <PlaceSearch
-                id={whereId}
-                value={values.where}
-                onChange={onWhereChange}
-                onResolved={(place) => {
-                  onWhereChange(place.label);
-                  onWhereResolved(place);
-                }}
-                placeholder={t("searchWhereHint")}
-                origin={origin}
-                ariaLabelledBy={whereLabelId}
-                className="min-h-6"
-                inputClassName="mt-0.5 h-5 w-full bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"
-              />
-            </div>
-            {onRadiusChange && radiusKm != null ? (
-              <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
-            ) : null}
-            {onLocate ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLocate();
-                }}
-                className="mt-0.5 grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-bg hover:text-fg"
-                aria-label={t("useLocation")}
-              >
-                <LocateFixed className="size-5" />
-              </button>
-            ) : null}
+      <div className="relative z-20 flex min-h-[8.4rem] flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:min-h-[2.75rem] lg:flex-row lg:flex-wrap lg:items-stretch lg:divide-y-0 lg:rounded-full">
+        <div className={cn(segmentClass("where", 0), "lg:min-w-[18rem] lg:flex-[1.4]")} onClick={() => setActive("where")}>
+          <div data-ke="where-field" className="flex min-w-0 flex-col">
+            <label
+              id={whereLabelId}
+              htmlFor={whereId}
+              className="block truncate text-[12px] font-semibold leading-4 text-fg"
+            >
+              {t("searchWhere")}
+            </label>
+            <PlaceSearch
+              id={whereId}
+              value={values.where}
+              onChange={onWhereChange}
+              onResolved={(place) => {
+                onWhereChange(place.label);
+                onWhereResolved(place);
+              }}
+              placeholder={t("searchWhereHint")}
+              origin={origin}
+              ariaLabelledBy={whereLabelId}
+              className="min-h-6"
+              inputClassName="mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted"
+            />
           </div>
+          {(onRadiusChange && radiusKm != null) || onLocate ? (
+            <div data-ke="where-controls" className="mt-1 flex items-center gap-1">
+              {onRadiusChange && radiusKm != null ? (
+                <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
+              ) : null}
+              {onLocate ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLocate();
+                  }}
+                  className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-bg hover:text-fg"
+                  aria-label={t("useLocation")}
+                >
+                  <LocateFixed className="size-5" />
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className={segmentClass("when", 1)}>

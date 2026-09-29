@@ -58,6 +58,8 @@ test("search control has a Search button, radius, and no Care schedule subtitle"
   assert.match(bar, /data-ke="search-submit"/);
   assert.match(bar, /t\("searchSubmit"\)/);
   assert.match(bar, /data-ke="search-radius"/);
+  assert.match(bar, /data-ke="where-field"/);
+  assert.match(bar, /data-ke="where-controls"/);
   assert.doesNotMatch(bar, /whenFilled \? whenLabel : t\("searchWhen"\)/);
   assert.match(home, /onRadiusChange=\{setRadiusKm\}/);
   assert.doesNotMatch(home, /displayDistance\(radiusKm/);
