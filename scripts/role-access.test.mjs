@@ -79,7 +79,7 @@ test("menus stay on one role and the plan label switches when paid", () => {
 test("listing actions follow the viewer, and a role sticks after sign-up", () => {
   assert.equal(listingActionMode({ role: "guest", ownsListing: false }), "parent");
   assert.equal(listingActionMode({ role: "parent", ownsListing: false }), "parent");
-  assert.equal(listingActionMode({ role: "provider", ownsListing: false }), "none");
+  assert.equal(listingActionMode({ role: "provider", ownsListing: false }), "parent");
   assert.equal(listingActionMode({ role: "provider", ownsListing: true }), "edit");
   assert.equal(listingActionMode({ role: "admin", ownsListing: false }), "all");
   assert.equal(roleFlipAllowed("parent", "provider", 60_000), true);

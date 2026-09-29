@@ -61,7 +61,10 @@ export function ListingMoreActions({
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-2 min-w-52 rounded-[14px] bg-surface p-1 shadow-card ring-1 ring-border"
+          className={cn(
+            "absolute right-0 z-30 min-w-52 rounded-[14px] bg-surface p-1 shadow-card ring-1 ring-border",
+            compact ? "bottom-full mb-2" : "mt-2",
+          )}
         >
           <div className="flex flex-col" onClick={() => setOpen(false)}>
             {children}

@@ -97,10 +97,10 @@ export const searchClaimable = createServerFn({ method: "POST" })
     for (const d of await getCatalog()) {
       if ((d.mergedInto || "").trim() || (d.importFault || "").trim()) continue;
       if (isAdminOnlyListing(d) && !admin) continue;
-      const name = d.name.toLowerCase();
-      const city = d.city.toLowerCase();
-      const addr = d.address.toLowerCase();
-      const postal = d.postalCode.toLowerCase();
+      const name = (d.name || "").toLowerCase();
+      const city = (d.city || "").toLowerCase();
+      const addr = (d.address || "").toLowerCase();
+      const postal = (d.postalCode || "").toLowerCase();
       const lic = (d.licenseNumber || "").toLowerCase();
       let score = 0;
       if (name.startsWith(q)) score = 100;

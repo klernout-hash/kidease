@@ -248,11 +248,11 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleN
 
 export type ListingActionMode = "parent" | "edit" | "none" | "all";
 
-/** Guest and parent get parent actions. A daycare does not, except Edit on its own listing. */
+/** Guest, parent, and a daycare browsing someone else's listing get parent actions. Edit stays on the owner's own listing. */
 export function listingActionMode(input: { role: ChromeRole; ownsListing: boolean }): ListingActionMode {
   if (input.role === "admin") return "all";
-  if (input.role === "provider") return input.ownsListing ? "edit" : "none";
-  if (input.role === "parent" || input.role === "guest") return "parent";
+  if (input.role === "provider" && input.ownsListing) return "edit";
+  if (input.role === "provider" || input.role === "parent" || input.role === "guest") return "parent";
   return "none";
 }
 

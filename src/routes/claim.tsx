@@ -76,6 +76,10 @@ function ClaimPage() {
           setHits(rows);
           setOpen(true);
         })
+        .catch(() => {
+          setHits([]);
+          setOpen(true);
+        })
         .finally(() => setBusy(false));
     }, 180);
     return () => window.clearTimeout(tmr);
@@ -85,6 +89,15 @@ function ClaimPage() {
     if (!id0 || !user) return;
     void begin(id0);
   }, [id0, user]);
+
+  useEffect(() => {
+    if (!user || user.isDevFallback) return;
+    setEnroll((s) => ({
+      ...s,
+      name: s.name || user.displayName || "",
+      email: s.email || user.primaryEmail || "",
+    }));
+  }, [user]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -346,7 +359,7 @@ function ClaimPage() {
                 <p className="absolute right-3 top-3.5 text-xs text-muted">{t("loading")}</p>
               ) : null}
               {open && q.trim().length >= 2 ? (
-                <ul className="absolute z-20 mt-1 max-h-[min(60vh,28rem)] w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
+                <ul className="z-20 mt-2 max-h-[min(60vh,28rem)] w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
                   {hits.length === 0 && !busy ? (
                     <li className="px-4 py-6 text-center text-sm text-muted">{t("claimNoMatch")}</li>
                   ) : (
@@ -508,7 +521,7 @@ function ClaimPage() {
           </label>
           <TurnstileField onToken={enrollChallenge.onToken} />
           <Button type="submit" size="lg" className="w-full" disabled={enrollBusy}>
-            {t("enrollNow")}
+            {t("sendClaimRequest")}
           </Button>
         </form>
       </main>
