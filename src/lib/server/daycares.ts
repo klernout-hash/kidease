@@ -315,12 +315,13 @@ async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
   const livePromise = liveCardsForSearch(searched);
   const full = await withTimeoutFallback(runSearch(searched), LOADER_SETTLE_MS, null);
   const live = await withTimeoutFallback(livePromise, full && full.length > 0 ? 800 : 2500, []);
+  const facility = data.facility;
   if (!full || full.length === 0) {
     const liveOnly = uniqueById(live);
-    return data.facility ? liveOnly.filter((card) => matchesListedDaycareType(card, data.facility)) : liveOnly;
+    return facility ? liveOnly.filter((card) => matchesListedDaycareType(card, facility)) : liveOnly;
   }
   const rows = unionLiveCards(full, live);
-  return data.facility ? rows.filter((card) => matchesListedDaycareType(card, data.facility)) : rows;
+  return facility ? rows.filter((card) => matchesListedDaycareType(card, facility)) : rows;
 }
 
 async function mergePinnedCentres(
@@ -407,8 +408,9 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
       return compareProximity(left, right);
     }),
   );
+  const facility = data.facility;
   return publicListings(uniqueById(filterByLocationLock(cards, lock)))
-    .filter((card) => (data.facility ? matchesListedDaycareType(card, data.facility) : true))
+    .filter((card) => (facility ? matchesListedDaycareType(card, facility) : true))
     .map(slimCard);
 }
 
