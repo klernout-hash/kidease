@@ -10,6 +10,12 @@ import { isAdminOnlyListing, listingVisibilityOf } from "@/lib/listing-visibilit
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
+function cadAmount(value: number | string | null | undefined): number | null {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
+}
+
 export type DaycareRow = {
   id: string;
   slug: string;
@@ -30,10 +36,10 @@ export type DaycareRow = {
   hours_fr: string;
   age_min_months: number;
   age_max_months: number;
-  infant_monthly: number | null;
-  toddler_monthly: number | null;
-  preschool_monthly: number | null;
-  part_time_monthly: number | null;
+  infant_monthly: number | string | null;
+  toddler_monthly: number | string | null;
+  preschool_monthly: number | string | null;
+  part_time_monthly: number | string | null;
   fee_program?: string | null;
   fact_source?: string | null;
   spots_infant: number;
@@ -116,10 +122,10 @@ export function mapDaycare(r: DaycareRow): Daycare {
     hoursFr: r.hours_fr,
     ageMinMonths: r.age_min_months,
     ageMaxMonths: r.age_max_months,
-    infantMonthly: r.infant_monthly,
-    toddlerMonthly: r.toddler_monthly,
-    preschoolMonthly: r.preschool_monthly,
-    partTimeMonthly: r.part_time_monthly,
+    infantMonthly: cadAmount(r.infant_monthly),
+    toddlerMonthly: cadAmount(r.toddler_monthly),
+    preschoolMonthly: cadAmount(r.preschool_monthly),
+    partTimeMonthly: cadAmount(r.part_time_monthly),
     feeProgram: r.fee_program || null,
     factSource: r.fact_source || null,
     spotsInfant: r.spots_infant,

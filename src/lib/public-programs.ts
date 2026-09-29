@@ -41,7 +41,7 @@ export type GeneratedAgeBand = {
 function positiveFee(value: number | null | undefined): number | null {
   const n = Number(value);
   if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n);
+  return Math.round(n * 100) / 100;
 }
 
 /**
@@ -112,10 +112,12 @@ export function monthlyFeeVisible(
 
 /** CAD monthly amount with an explicit unit. */
 export function formatMonthlyFee(cad: number, locale: Locale = "en"): string {
+  const cents = Math.round(Math.abs(Number(cad)) * 100) % 100 !== 0;
   const formatted = new Intl.NumberFormat(localeTag(locale), {
     style: "currency",
     currency: "CAD",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: cents ? 2 : 0,
+    maximumFractionDigits: cents ? 2 : 0,
   }).format(cad);
   return `${formatted}${locale === "fr" ? "/mois" : "/month"}`;
 }
