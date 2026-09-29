@@ -5,11 +5,14 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   compactExploreSearch,
+  dateAsksForOpenSpot,
   formatExploreDateRange,
   guestHeroSearch,
   isIsoDate,
+  localIsoDate,
   matchesDaycareName,
   parseExploreSearchFields,
+  startWindowForDate,
 } from "../src/lib/explore-search.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -75,6 +78,23 @@ test("Explore search bar is an Airbnb-style pill wired to /search params", () =>
   assert.match(copy, /searchWhereHint: "Chercher une destination"/);
   assert.match(copy, /searchWhenHint: "Date de début"/);
   assert.match(copy, /searchDaycareHint: "Search by name"/);
+});
+
+test("a start date in the next 14 days asks for a confirmed opening", () => {
+  const now = new Date(2026, 8, 29);
+  assert.equal(localIsoDate(now), "2026-09-29");
+  assert.equal(dateAsksForOpenSpot("2026-09-29", now), true);
+  assert.equal(dateAsksForOpenSpot("2026-10-13", now), true);
+  assert.equal(dateAsksForOpenSpot("2026-10-14", now), false);
+  assert.equal(dateAsksForOpenSpot("2026-09-28", now), false);
+  assert.equal(startWindowForDate("2026-09-30", now), "now");
+  assert.equal(startWindowForDate("2026-10-20", now), "next-month");
+  const bar = src("src/components/explore-search-bar.tsx");
+  const search = src("src/routes/search.tsx");
+  assert.match(bar, /data-ke="when-calendar"/);
+  assert.match(search, /dateAsksForOpenSpot\(needBy\)/);
+  assert.match(src("src/lib/copy.ts"), /searchWhenNote:/);
+  assert.match(src("src/lib/copy.ts"), /confirmed opening/);
 });
 
 test("guest hero treats unresolved text as a daycare name search", () => {

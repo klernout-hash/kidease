@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { LocateFixed, Search } from "lucide-react";
 import { ChipButton } from "@/components/chip";
 import { PlaceSearch, type ResolvedPlace } from "@/components/place-search";
-import { formatExploreDateRange } from "@/lib/explore-search";
+import { formatExploreDateRange, localIsoDate, startWindowForDate } from "@/lib/explore-search";
 import { nearestCities } from "@/lib/geo";
 import { DISMISS_POPOVERS } from "@/lib/dismiss-popovers";
 import type { CopyKey } from "@/lib/copy";
@@ -17,6 +17,90 @@ const START_COPY: Record<SearchStart, CopyKey> = {
 };
 
 const RADIUS_KM_OPTIONS = [5, 10, 25, 50] as const;
+
+function WhenCalendar({
+  selected,
+  locale,
+  onPick,
+}: {
+  selected: string;
+  locale: string;
+  onPick: (iso: string) => void;
+}) {
+  const today = new Date();
+  const todayIso = localIsoDate(today);
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(selected) ? new Date(`${selected}T12:00:00`) : today;
+  const [cursor, setCursor] = useState(() => new Date(parsed.getFullYear(), parsed.getMonth(), 1));
+  const tag = locale === "fr" ? "fr-CA" : "en-CA";
+  const monthLabel = cursor.toLocaleDateString(tag, { month: "long", year: "numeric" });
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const canPrev = cursor.getTime() > monthStart.getTime();
+  const lead = new Date(cursor.getFullYear(), cursor.getMonth(), 1).getDay();
+  const count = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+  const weekdays = Array.from({ length: 7 }, (_, i) =>
+    new Date(2024, 0, 7 + i).toLocaleDateString(tag, { weekday: "narrow" }),
+  );
+  return (
+    <div data-ke="when-calendar">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          className="grid size-11 place-items-center rounded-full text-fg hover:bg-surface-2 disabled:opacity-30"
+          aria-label={locale === "fr" ? "Mois précédent" : "Previous month"}
+          disabled={!canPrev}
+          onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
+        >
+          ‹
+        </button>
+        <p className="text-sm font-semibold text-fg">{monthLabel}</p>
+        <button
+          type="button"
+          className="grid size-11 place-items-center rounded-full text-fg hover:bg-surface-2"
+          aria-label={locale === "fr" ? "Mois suivant" : "Next month"}
+          onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
+        >
+          ›
+        </button>
+      </div>
+      <div className="mt-2 grid grid-cols-7 text-center text-xs font-medium text-muted">
+        {weekdays.map((day, i) => (
+          <span key={`${day}-${i}`} className="py-1">
+            {day}
+          </span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {Array.from({ length: lead }, (_, i) => (
+          <span key={`pad-${i}`} />
+        ))}
+        {Array.from({ length: count }, (_, i) => {
+          const date = new Date(cursor.getFullYear(), cursor.getMonth(), i + 1);
+          const iso = localIsoDate(date);
+          const past = iso < todayIso;
+          const on = iso === selected;
+          return (
+            <button
+              key={iso}
+              type="button"
+              disabled={past}
+              aria-pressed={on}
+              className={`mx-auto grid size-11 place-items-center rounded-full text-sm ${
+                on
+                  ? "bg-fg font-semibold text-bg"
+                  : past
+                    ? "text-muted/40"
+                    : "text-fg hover:bg-surface-2"
+              }`}
+              onClick={() => onPick(iso)}
+            >
+              {i + 1}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function SearchRadiusSelect({
   value,
@@ -101,8 +185,6 @@ export function ExploreSearchBar({
   const { t, locale } = useCopy();
   const whereId = useId();
   const nameId = useId();
-  const startId = useId();
-  const endId = useId();
   const whereLabelId = useId();
   const whenLabelId = useId();
   const nameLabelId = useId();
@@ -112,8 +194,8 @@ export function ExploreSearchBar({
   const [expanded, setExpanded] = useState(!startCollapsed);
   const dateLabel = formatExploreDateRange(values.from, values.to, locale);
   const startLabel = start ? t(START_COPY[start]) : "";
-  const whenLabel = onStartChange ? startLabel || t("searchWhenHint") : dateLabel || t("searchWhenHint");
-  const whenFilled = onStartChange ? Boolean(start) : Boolean(dateLabel);
+  const whenLabel = dateLabel || (onStartChange ? startLabel : "") || t("searchWhenHint");
+  const whenFilled = Boolean(dateLabel || start);
   const destinationCities = origin ? nearestCities(origin, 6) : [];
 
   useEffect(() => {
@@ -302,83 +384,54 @@ export function ExploreSearchBar({
               id={whenPanelId}
               role="group"
               aria-labelledby={whenLabelId}
-              className="absolute left-2 right-2 top-full z-[60] mt-1.5 rounded-xl bg-surface p-3 shadow-card ring-1 ring-border lg:left-0 lg:right-auto lg:w-[20rem]"
+              className="absolute left-2 right-2 top-full z-[60] mt-1.5 rounded-2xl bg-surface p-3 shadow-lift ring-1 ring-border lg:left-0 lg:right-auto lg:w-[22rem]"
             >
               {onStartChange ? (
-                <>
-                  <div className="flex flex-wrap gap-2">
-                    {SEARCH_STARTS.map((window) => (
-                      <ChipButton
-                        key={window}
-                        on={start === window}
-                        aria-pressed={start === window}
-                        onClick={() => {
-                          onStartChange(start === window ? "" : window);
-                          setActive(null);
-                        }}
-                      >
-                        {t(START_COPY[window])}
-                      </ChipButton>
-                    ))}
-                  </div>
-                  {start ? (
-                    <button
-                      type="button"
-                      className="mt-3 min-h-11 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {SEARCH_STARTS.map((window) => (
+                    <ChipButton
+                      key={window}
+                      on={start === window}
+                      aria-pressed={start === window}
                       onClick={() => {
-                        onStartChange("");
-                        onDatesChange({ from: "", to: "" });
+                        if (start === window) {
+                          onStartChange("");
+                          onDatesChange({ from: "", to: "" });
+                        } else {
+                          onDatesChange({ from: "", to: "" });
+                          onStartChange(window);
+                        }
                         setActive(null);
                       }}
                     >
-                      {t("searchClearDates")}
-                    </button>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="block text-sm" htmlFor={startId}>
-                      <span className="font-semibold text-fg">{t("searchStartDate")}</span>
-                      <input
-                        id={startId}
-                        type="date"
-                        className="ke-input mt-1 w-full text-base"
-                        value={values.from}
-                        onChange={(e) => {
-                          const from = e.target.value;
-                          onDatesChange({
-                            from,
-                            to: values.to && from && values.to < from ? "" : values.to,
-                          });
-                        }}
-                      />
-                    </label>
-                    <label className="block text-sm" htmlFor={endId}>
-                      <span className="font-semibold text-fg">{t("searchEndDate")}</span>
-                      <input
-                        id={endId}
-                        type="date"
-                        className="ke-input mt-1 w-full text-base"
-                        min={values.from || undefined}
-                        value={values.to}
-                        onChange={(e) => onDatesChange({ from: values.from, to: e.target.value })}
-                      />
-                    </label>
-                  </div>
-                  {values.from || values.to ? (
-                    <button
-                      type="button"
-                      className="mt-3 min-h-11 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                      onClick={() => onDatesChange({ from: "", to: "" })}
-                    >
-                      {t("searchClearDates")}
-                    </button>
-                  ) : (
-                    <p className="mt-3 text-xs text-muted">{t("needBy")}</p>
-                  )}
-                </>
-              )}
+                      {t(START_COPY[window])}
+                    </ChipButton>
+                  ))}
+                </div>
+              ) : null}
+              <WhenCalendar
+                selected={values.from}
+                locale={locale}
+                onPick={(iso) => {
+                  onDatesChange({ from: iso, to: "" });
+                  onStartChange?.(startWindowForDate(iso));
+                  setActive(null);
+                }}
+              />
+              <p className="mt-3 text-xs text-muted">{t("searchWhenNote")}</p>
+              {values.from || values.to || start ? (
+                <button
+                  type="button"
+                  className="mt-2 min-h-11 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  onClick={() => {
+                    onDatesChange({ from: "", to: "" });
+                    onStartChange?.("");
+                    setActive(null);
+                  }}
+                >
+                  {t("searchClearDates")}
+                </button>
+              ) : null}
             </div>
           ) : null}
         </div>
