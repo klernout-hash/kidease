@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
 import {
   CARD_SIZES,
@@ -10,6 +11,7 @@ import {
   srcsetWidthsFor,
 } from "@/lib/photo";
 import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto, rememberFailedPhoto } from "@/lib/listing-photo";
+import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
 /** Mobile Lighthouse LCP: sized AVIF, not a late-discovered 1200-only file. */
@@ -29,25 +31,54 @@ function photoNeedsFallback(src: string): boolean {
   return !src || isStockListingPhoto(src) || isFailedPhotoUrl(src);
 }
 
-/** Honest empty still — labelled elsewhere. Never dressed as a centre photo. */
+/** Quiet while a real photo loads. Logo and Claim Listing only when there is no picture. */
 export function ListingPhotoFallback({
   className,
   style,
+  claim = false,
+  claimQuery,
 }: {
   className?: string;
   style?: CSSProperties;
+  claim?: boolean;
+  /** When set, the frame links to claim search for this centre. */
+  claimQuery?: string;
 }) {
+  const { t } = useCopy();
+  const mark = (
+    <span className="flex max-w-full flex-col items-center gap-1.5 px-3 text-center">
+      <img
+        src="/logo-transparent.svg?v=17"
+        alt=""
+        width={56}
+        height={56}
+        decoding="async"
+        className="h-11 w-11 object-contain [.ke-listing-hero_&]:h-16 [.ke-listing-hero_&]:w-16"
+      />
+      <span className="text-[13px] font-semibold leading-4 tracking-[-0.01em] text-primary">{t("claimListingFrame")}</span>
+    </span>
+  );
   return (
     <div
-      className={cn("grid place-items-center bg-surface-2 text-muted", className)}
+      className={cn("grid place-items-center bg-[#F7F4EF] text-primary", className)}
       style={style}
       data-ke="photo-fallback"
-      aria-hidden="true"
+      data-claim={claim ? "listing" : undefined}
+      aria-hidden={claim ? undefined : true}
     >
-      <svg viewBox="0 0 48 48" className="size-12" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M8 22 24 10l16 12v18H8Z" />
-        <path d="M20 40V28h8v12" />
-      </svg>
+      {claim ? (
+        claimQuery !== undefined ? (
+          <Link
+            to="/claim"
+            search={claimQuery ? { q: claimQuery } : {}}
+            className="text-inherit no-underline"
+          >
+            {mark}
+          </Link>
+        ) : (
+          mark
+        )
+      ) : null}
     </div>
   );
 }
@@ -125,6 +156,7 @@ export function BuildingPhoto({
   if (broken) {
     return (
       <ListingPhotoFallback
+        claim
         className={className}
         style={sized ? undefined : { aspectRatio: `${width} / ${height}` }}
       />

@@ -32,7 +32,7 @@ export function PhotoCarousel({
   }, [list.length]);
 
   if (!list.length) {
-    return <ListingPhotoFallback className={cn("relative overflow-hidden", rounded, className)} />;
+    return <ListingPhotoFallback claim className={cn("relative overflow-hidden", rounded, className)} />;
   }
 
   return (
