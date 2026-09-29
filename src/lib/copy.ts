@@ -410,7 +410,7 @@ export const copy = {
     licensed: "Licensed",
     live: "Live",
     liveBadge: "Live on KidEase",
-    notOnKidEase: "Not yet on KidEase",
+    notOnKidEase: "Registry listing",
     liveOnly: "Live Listings",
     showAll: "All listings",
     unclaimedNotice: "This daycare hasn’t joined KidEase yet. You can still view their basic information.",
@@ -952,7 +952,7 @@ export const copy = {
     roleParent: "Parent",
     roleProvider: "Provider",
     switchRole: "Using as",
-    footerCopy: "KidEase is a Canada-wide project serving families across the country.",
+    footerCopy: "Made in Winnipeg.",
     pipeda: "PIPEDA & child safety",
     pipedaBody:
       "KidEase is built around PIPEDA’s consent, limiting-collection, and safeguarding principles. We store the minimum needed to run search, enrolment, and payments: your account, child care profiles you add (allergies, routines, emergency contacts), messages you send, and payment records. We do not sell personal information. Children’s details are visible only to you and to a centre you contact or book. Video check-in is a parent-initiated room — we do not offer continuous livestreams of children. Card payments, when enabled, run through Stripe. Messages are encrypted in transit (HTTPS).",
@@ -1256,7 +1256,7 @@ export const copy = {
     carePhotoVideoBlocked: "Video is out of scope for this phase. Photos only.",
     careNoEnrolled: "No enrolled children yet",
     careNoEnrolledLead:
-      "Daily care is for claimed centres and enrolled or linked children. Guests can still browse Explore. Send a request or claim a listing first.",
+      "Daily care is for claimed centres and enrolled or linked children. Guests can still browse Search. Send a request or claim a listing first.",
     careMessage: "Message the other side",
     careMessagePh: "On-the-go update — this stays on the in-app thread.",
     careMessageSent: "Message sent",
@@ -2943,7 +2943,7 @@ export const copy = {
     licensed: "Permis",
     live: "En ligne",
     liveBadge: "Actif sur KidEase",
-    notOnKidEase: "Pas encore sur KidEase",
+    notOnKidEase: "Fiche du registre",
     liveOnly: "Fiches actives",
     showAll: "Toutes les fiches",
     unclaimedNotice: "Cette garderie n’a pas encore rejoint KidEase. Vous pouvez tout de même consulter les renseignements de base.",
@@ -3489,7 +3489,7 @@ export const copy = {
     roleParent: "Parent",
     roleProvider: "Fournisseur",
     switchRole: "Espace",
-    footerCopy: "KidEase est un projet pancanadien, au service des familles partout au pays.",
+    footerCopy: "Fait à Winnipeg.",
     pipeda: "PIPEDA et sécurité des enfants",
     pipedaBody:
       "KidEase s'appuie sur le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous conservons le minimum pour la recherche, l'inscription et les paiements. Nous ne vendons pas de renseignements personnels. Les détails sur les enfants ne sont visibles que par vous et par un centre que vous contactez. La visio est lancée par le parent — pas de diffusion continue d'enfants. Les paiements par carte, lorsqu'ils sont activés, passent par Stripe. Les messages sont chiffrés en transit (HTTPS).",
@@ -3793,7 +3793,7 @@ export const copy = {
     carePhotoVideoBlocked: "La vidéo n’est pas dans cette phase. Photos seulement.",
     careNoEnrolled: "Aucun enfant inscrit pour l’instant",
     careNoEnrolledLead:
-      "Les soins du jour sont pour les centres revendiqués et les enfants inscrits ou liés. Les visiteurs peuvent encore parcourir Explorer. Envoyez une demande ou revendiquez une fiche d’abord.",
+      "Les soins du jour sont pour les centres revendiqués et les enfants inscrits ou liés. Les visiteurs peuvent encore parcourir la recherche. Envoyez une demande ou revendiquez une fiche d’abord.",
     careMessage: "Écrire à l’autre partie",
     careMessagePh: "Mise à jour en déplacement — ça reste sur le fil interne.",
     careMessageSent: "Message envoyé",

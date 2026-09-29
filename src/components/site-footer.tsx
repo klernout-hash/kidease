@@ -5,6 +5,7 @@ import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { HeaderSocial } from "@/components/header-social";
 import { useRoleChrome } from "@/components/role-chrome";
 import type { ChromeRole } from "@/lib/role-access";
 import {
@@ -146,6 +147,7 @@ export function SiteFooter() {
               <p className="ke-footer-legal-note">{t("neverSell")}</p>
             </div>
             <div className="ke-footer-legal-meta">
+              <HeaderSocial />
               <p>
                 {t("appStore")}
                 <span className="mx-1.5" aria-hidden>

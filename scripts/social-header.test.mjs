@@ -41,7 +41,9 @@ test("header wires website-only Facebook and Instagram buttons with a11y labels"
   const shell = src("src/components/shell.tsx");
   const copy = src("src/lib/copy.ts");
   const login = src("src/routes/login.tsx");
-  assert.match(shell, /HeaderSocial/);
+  const footer = src("src/components/site-footer.tsx");
+  assert.doesNotMatch(shell, /HeaderSocial/);
+  assert.match(footer, /HeaderSocial/);
   assert.match(header, /SOCIAL_PROFILES/);
   assert.match(header, /target="_blank"/);
   assert.match(header, /rel="noopener noreferrer"/);
