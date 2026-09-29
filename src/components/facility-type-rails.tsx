@@ -4,7 +4,7 @@ import { ListingRail } from "@/components/listing-rail";
 import { ChipButton } from "@/components/chip";
 import { ChipCarousel } from "@/components/chip-carousel";
 import type { CopyKey } from "@/lib/copy";
-import { isBeforeAfterProgram } from "@/lib/care-type";
+import { matchesListedDaycareType } from "@/lib/care-type";
 import { classifyFacilityType, FACILITY_TYPES, matchesFacilityType, type FacilityType } from "@/lib/facility-type";
 import { homeRailItems } from "@/lib/now-loops";
 import type { DaycareCard as Card } from "@/lib/types";
@@ -41,10 +41,14 @@ export function isBrowseDaycareType(value: string): value is BrowseDaycareType {
   return (BROWSE_DAYCARE_TYPES as readonly string[]).includes(value);
 }
 
-/** Search URL for one of the six header types. */
-export function browseTypeSearch(type: BrowseDaycareType): { fac: BrowseDaycareType } | { cat: "before-after" } {
-  if (type === "before_after") return { cat: "before-after" };
-  return { fac: type };
+/** Search URL for one of the six header types. Keeps the city when one is already chosen. */
+export function browseTypeSearch(
+  type: BrowseDaycareType,
+  city?: string,
+): { fac: BrowseDaycareType; q?: string } | { cat: "before-after"; q?: string } {
+  const q = city?.trim();
+  if (type === "before_after") return q ? { cat: "before-after", q } : { cat: "before-after" };
+  return q ? { fac: type, q } : { fac: type };
 }
 
 export function selectedBrowseType(search: unknown): BrowseDaycareType | undefined {
@@ -64,13 +68,8 @@ export function matchesBrowseDaycareType(
   item: { amenities?: string | null; hours?: string | null; name?: string | null; facilityType?: string | null },
   type: BrowseDaycareType,
 ): boolean {
-  if (type === "before_after") {
-    return (
-      isBeforeAfterProgram({ amenities: item.amenities || "", hours: item.hours || "" }) &&
-      classifyFacilityType(item).type !== "school_age"
-    );
-  }
-  return matchesFacilityType(item, type);
+  if (type === "before_after") return matchesListedDaycareType(item, "before_after");
+  return matchesListedDaycareType(item, type);
 }
 
 export function facilityTypeRailItems(items: Card[], type: FacilityType, n = BROWSE_RAIL_CAP, skipLiveLooking = false): Card[] {
@@ -107,6 +106,7 @@ export function HomeCareTypeRow({
   onSelect,
   compact = false,
   toSearch = false,
+  city,
 }: {
   selected?: BrowseDaycareType;
   onSelect: (type?: BrowseDaycareType) => void;
@@ -114,6 +114,8 @@ export function HomeCareTypeRow({
   compact?: boolean;
   /** Header tabs open /search?fac= or ?cat=before-after. */
   toSearch?: boolean;
+  /** Current city, kept on the category URL. */
+  city?: string;
 }) {
   const { t } = useCopy();
   return (
@@ -159,7 +161,7 @@ export function HomeCareTypeRow({
             <Link
               key={type}
               to="/search"
-              search={browseTypeSearch(type)}
+              search={browseTypeSearch(type, city)}
               data-browse-type={type}
               aria-current={on ? "page" : undefined}
               className={className}
@@ -232,6 +234,7 @@ export function DaycareTypeRails({
   seeAll = true,
   selected,
   onSelect,
+  city,
 }: {
   items?: Card[];
   rows?: Partial<Record<BrowseDaycareType, Card[]>>;
@@ -244,6 +247,7 @@ export function DaycareTypeRails({
   seeAll?: boolean;
   selected?: BrowseDaycareType;
   onSelect?: (type?: BrowseDaycareType) => void;
+  city?: string;
 }) {
   const { t } = useCopy();
   const [localType, setLocalType] = useState<BrowseDaycareType | undefined>();
@@ -281,9 +285,9 @@ export function DaycareTypeRails({
               pageSize={BROWSE_RAIL_PAGE}
               seeAllHref={
                 seeAll
-                  ? kind === "before_after"
-                    ? "/search?cat=before-after"
-                    : `/search?fac=${kind}`
+                  ? `${
+                      kind === "before_after" ? "/search?cat=before-after" : `/search?fac=${kind}`
+                    }${city?.trim() ? `&q=${encodeURIComponent(city.trim())}` : ""}`
                   : undefined
               }
               eagerThumbs={eagerThumbs}
@@ -316,6 +320,7 @@ export function FacilityTypeRails(props: {
   seeAll?: boolean;
   selected?: BrowseDaycareType;
   onSelect?: (type?: BrowseDaycareType) => void;
+  city?: string;
 }) {
   return <DaycareTypeRails {...props} />;
 }

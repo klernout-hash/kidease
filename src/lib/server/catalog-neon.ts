@@ -111,6 +111,9 @@ select exists (
  * (Winnipeg's 25 km catalogue is). The map uses map-pins.ts and does not
  * apply this limit.
  */
+/** Typed city menus need the whole radius, not only the nearest mixed 400. */
+export const CITY_TYPE_LIST_CAP = 2500;
+
 export const NEON_NEAR_SQL = `
 select ${CATALOG_SELECT},
   ${LISTING_DISTANCE_KM_SQL} as distance_km
@@ -120,6 +123,12 @@ where ${PUBLIC_LISTING_SQL}
 order by distance_km
 limit 400
 `;
+
+export function neonNearSql(limit = 400): string {
+  const cap = Math.min(CITY_TYPE_LIST_CAP, Math.max(1, Math.floor(limit)));
+  if (cap === 400) return NEON_NEAR_SQL;
+  return NEON_NEAR_SQL.replace("limit 400", `limit ${cap}`);
+}
 
 /** lngA, latA, radius_meters, lngB, latB — intersection of two ST_DWithin circles. */
 export const NEON_DUAL_NEAR_SQL = `
@@ -438,6 +447,7 @@ export async function queryNeonNearby(
   origin: { lat: number; lng: number },
   radiusKm: number,
   sql?: Sql,
+  limit = 400,
 ): Promise<(CatalogDaycare & { distanceKm?: number })[] | null> {
   if (dbSource !== "neon") return null;
   try {
@@ -445,7 +455,7 @@ export async function queryNeonNearby(
     if (!(await postgisReady(client))) return null;
     const meters = clampRadiusKm(radiusKm) * 1000;
     const rows = await Promise.race([
-      client.query<CatalogDbRow>(NEON_NEAR_SQL, [origin.lng, origin.lat, meters]),
+      client.query<CatalogDbRow>(neonNearSql(limit), [origin.lng, origin.lat, meters]),
       rejectAfter(6000, "nearby-dwithin-timeout"),
     ]);
     return rows

@@ -14,9 +14,10 @@ export function searchCacheKey(input: {
   lat2?: number;
   lng2?: number;
   mode?: string;
+  facility?: string;
 }) {
   return [
-    "live3",
+    "live4",
     input.lat.toFixed(3),
     input.lng.toFixed(3),
     input.radiusKm,
@@ -26,6 +27,7 @@ export function searchCacheKey(input: {
     input.q || "",
     input.startDate || "",
     input.mode || "home",
+    input.facility || "",
     typeof input.lat2 === "number" ? input.lat2.toFixed(3) : "",
     typeof input.lng2 === "number" ? input.lng2.toFixed(3) : "",
   ].join(":");

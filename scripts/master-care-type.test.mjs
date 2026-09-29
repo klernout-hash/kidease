@@ -46,6 +46,19 @@ test("master CSV care types classify a known centre, home, and before-and-after 
   assert.match(after.amenities, /before-after/);
 });
 
+test("a city category keeps that daycare type and a wider list", () => {
+  const care = readFileSync(join(root, "src/lib/care-type.ts"), "utf8");
+  const search = readFileSync(join(root, "src/lib/server/daycares.ts"), "utf8");
+  const neon = readFileSync(join(root, "src/lib/server/catalog-neon.ts"), "utf8");
+  const rails = readFileSync(join(root, "src/components/facility-type-rails.tsx"), "utf8");
+  assert.match(care, /export function matchesListedDaycareType/);
+  assert.match(search, /matchesListedDaycareType\(card, facility\)/);
+  assert.match(search, /CITY_TYPE_LIST_CAP/);
+  assert.match(neon, /limit 400/);
+  assert.match(neon, /CITY_TYPE_LIST_CAP = 2500/);
+  assert.match(rails, /city\?\.trim\(\)/);
+});
+
 test("header care types open a search URL", () => {
   const rails = readFileSync(join(root, "src/components/facility-type-rails.tsx"), "utf8");
   const shell = readFileSync(join(root, "src/components/shell.tsx"), "utf8");

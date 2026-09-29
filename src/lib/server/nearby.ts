@@ -28,6 +28,7 @@ async function importCatalogSlice(sql: Sql, rows: CatalogDaycare[]) {
 export async function nearbyListings(
   origin: { lat: number; lng: number },
   radiusKm: number,
+  limit = 400,
 ): Promise<NearbyListing[]> {
   if (dbSource === "neon" && catalogSourceFromEnv() !== "json") {
     try {
@@ -37,7 +38,7 @@ export async function nearbyListings(
           setTimeout(() => reject(new Error("nearby-sql-timeout")), 6000);
         }),
       ]);
-      const geo = await queryNeonNearby(origin, radiusKm, sql);
+      const geo = await queryNeonNearby(origin, radiusKm, sql, limit);
       if (geo) {
         if (geo.length > 0) return geo.filter(isPublicListing);
         if (await isNeonCatalogPreferred(sql)) return [];

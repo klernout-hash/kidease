@@ -34,6 +34,8 @@ import { mergeApprovedCityListings } from "./approved-search";
 import { alignSearchOrigin } from "@/lib/search-query";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
+import { listedDaycareTypeFromSearch, matchesListedDaycareType } from "@/lib/care-type";
+import { CITY_TYPE_LIST_CAP } from "@/lib/server/catalog-neon";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
 
@@ -52,6 +54,8 @@ type SearchInput = {
   lat2?: number;
   lng2?: number;
   mode?: "home" | "work" | "both";
+  /** One of the six daycare categories. Filters the city, it does not mix types. */
+  facility?: ReturnType<typeof listedDaycareTypeFromSearch>;
 };
 
 function optionalCoord(value: unknown) {
@@ -311,8 +315,13 @@ async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
   const livePromise = liveCardsForSearch(searched);
   const full = await withTimeoutFallback(runSearch(searched), LOADER_SETTLE_MS, null);
   const live = await withTimeoutFallback(livePromise, full && full.length > 0 ? 800 : 2500, []);
-  if (!full || full.length === 0) return uniqueById(live);
-  return unionLiveCards(full, live);
+  const facility = data.facility;
+  if (!full || full.length === 0) {
+    const liveOnly = uniqueById(live);
+    return facility ? liveOnly.filter((card) => matchesListedDaycareType(card, facility)) : liveOnly;
+  }
+  const rows = unionLiveCards(full, live);
+  return facility ? rows.filter((card) => matchesListedDaycareType(card, facility)) : rows;
 }
 
 async function mergePinnedCentres(
@@ -353,7 +362,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     filterByLocationLock(
       anchors.intersect && anchors.secondary
         ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
-        : await nearbyListings(origin, data.radiusKm),
+        : await nearbyListings(origin, data.radiusKm, data.facility ? CITY_TYPE_LIST_CAP : 400),
       lock,
     ),
     { origin, radiusKm: data.radiusKm, lock, label: data.label || data.q },
@@ -399,7 +408,10 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
       return compareProximity(left, right);
     }),
   );
-  return publicListings(uniqueById(filterByLocationLock(cards, lock))).map(slimCard);
+  const facility = data.facility;
+  return publicListings(uniqueById(filterByLocationLock(cards, lock)))
+    .filter((card) => (facility ? matchesListedDaycareType(card, facility) : true))
+    .map(slimCard);
 }
 
 export const searchDaycares = createServerFn({ method: "GET" })
@@ -409,6 +421,9 @@ export const searchDaycares = createServerFn({ method: "GET" })
     lat2: optionalCoord(input.lat2),
     lng2: optionalCoord(input.lng2),
     mode: parseAnchorMode(input.mode),
+    facility: listedDaycareTypeFromSearch(
+      input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
+    ),
   }))
   .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => searchIncludingLive(data)));
 

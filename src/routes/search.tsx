@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
+import { listedDaycareTypeFromSearch } from "@/lib/care-type";
 import { DaycareTypeRails, BROWSE_RAIL_COPY, type BrowseDaycareType } from "@/components/facility-type-rails";
 import { ExploreCategoryChips } from "@/components/explore-category-chips";
 import { ExploreFilterBar } from "@/components/explore-filter-bar";
@@ -132,6 +133,7 @@ export const Route = createFileRoute("/search")({
           ageGroup: "any",
           label: origin.label,
           q: searchQueryFromUnknown(location.search) || origin.label,
+          facility: listedDaycareTypeFromSearch(location.search),
         },
       }),
       PAINT_BUDGET_MS,
@@ -431,6 +433,7 @@ function SearchPage() {
     fsa: fsaOf(query) || fsaOf(cameraHome.label),
     label: cameraHome.label,
     q: placeQuery,
+    facility: listedDaycareTypeFromSearch(incoming),
     startDate: needBy || null,
     lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
     lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
@@ -444,6 +447,7 @@ function SearchPage() {
     ageGroup: "any" as const,
     label: cameraHome.label,
     q: placeQuery,
+    facility: listedDaycareTypeFromSearch(incoming),
     startDate: needBy || null,
     lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
     lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
@@ -516,6 +520,8 @@ function SearchPage() {
     query,
     origin.label,
     incoming.q,
+    incoming.fac,
+    incoming.cat,
     needBy,
     workOrigin?.lat,
     workOrigin?.lng,
