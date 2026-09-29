@@ -60,9 +60,26 @@ test("part-time is its own fee and never a school-age amount", () => {
   assert.match(src("src/components/listing-parent-pack.tsx"), /partTimeHalfDay/);
 });
 
+test("Kids World pin and $326.25 fee are the published address and parent fee", () => {
+  const programs = src("src/lib/parent-listing.ts");
+  assert.match(programs, /published \? row\.ageMinMonths/);
+  assert.match(programs, /Math\.round\(fee \* 100\) \/ 100/);
+  const migration = src("migrations/0068_kids_world_address_pin.sql");
+  assert.match(migration, /53\.5483389/);
+  assert.match(migration, /-113\.5107201/);
+  assert.match(migration, /11012 105 Avenue NW/);
+  assert.match(migration, /326\.25/);
+  assert.match(migration, /7:00 a\.m\./);
+  assert.match(migration, /part_time_monthly = null/);
+  assert.match(migration, /50% off for the next 3 months/);
+  assert.doesNotMatch(migration, /spots_infant/);
+  assert.doesNotMatch(migration, /T5H/);
+});
+
 test("monthly fees use CAD and an explicit month unit", () => {
   assert.equal(formatMonthlyFee(1960, "en"), "$1,960/month");
   assert.equal(formatMonthlyFee(1025, "en"), "$1,025/month");
+  assert.equal(formatMonthlyFee(326.25, "en"), "$326.25/month");
   const fr = formatMonthlyFee(700, "fr");
   assert.match(fr, /700/);
   assert.match(fr, /\$/);

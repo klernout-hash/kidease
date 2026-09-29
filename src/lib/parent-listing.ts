@@ -287,7 +287,7 @@ export function normalizePrograms(value: unknown): AgeProgram[] {
       ageMinMonths: Number.isFinite(min) ? Math.max(0, Math.min(216, Math.round(min))) : range.min,
       ageMaxMonths: Number.isFinite(max) ? Math.max(0, Math.min(216, Math.round(max))) : range.max,
       schedules: normalizeScheduleOptions(row.schedules),
-      monthlyFee: Number.isFinite(fee) && fee > 0 ? Math.round(fee) : null,
+      monthlyFee: Number.isFinite(fee) && fee > 0 ? Math.round(fee * 100) / 100 : null,
     });
     if (out.length >= 8) break;
   }
@@ -474,7 +474,15 @@ export function listingPrograms(d: Pick<
     return stored.flatMap((row) => {
       const clip = clipAgeBand(d.ageMinMonths, d.ageMaxMonths, row.band);
       if (!clip) return [];
-      return [{ ...row, ageMinMonths: clip.min, ageMaxMonths: clip.max }];
+      const published =
+        row.ageMaxMonths > row.ageMinMonths &&
+        row.ageMinMonths >= d.ageMinMonths &&
+        row.ageMaxMonths <= d.ageMaxMonths;
+      return [{
+        ...row,
+        ageMinMonths: published ? row.ageMinMonths : clip.min,
+        ageMaxMonths: published ? row.ageMaxMonths : clip.max,
+      }];
     });
   }
   if (!hasConfirmedAges(d)) return [];
