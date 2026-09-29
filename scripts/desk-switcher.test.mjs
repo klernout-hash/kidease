@@ -47,7 +47,7 @@ test("admin desk stays gated by profiles.role + owner email", () => {
   assert.match(roles, /bootstrapEmail/);
   assert.match(roles, /assertAdminDesk/);
   assert.match(roles, /requireAdmin/);
-  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
+  const admin = src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx");
   assert.match(admin, /canVisitDesk\(session\.desks, "admin", session\.role, session\.email\)/);
   assert.match(admin, /beforeLoadAdminDesk/);
   assert.match(admin, /profiles\.role = admin/);
@@ -59,8 +59,7 @@ test("admin desk stays gated by profiles.role + owner email", () => {
   assert.match(switcher, /showDeskSwitcher\(session\.desks, session\.role, session\.email\)/);
   assert.match(switcher, /do not call setRole/);
   assert.match(switcher, /deskSwitcherLabel/);
-  assert.match(switcher, /aria-haspopup="menu"/);
-  assert.match(switcher, /md:hidden/);
+  assert.match(switcher, /openAdminDesk/);
   assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role, session\?\.email/);
   assert.match(src("src/components/shell.tsx"), /desksSlot/);
   assert.match(src("src/components/session-desks.tsx"), /sanitizeStickyDesk/);
