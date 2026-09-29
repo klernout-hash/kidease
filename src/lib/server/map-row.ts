@@ -8,6 +8,7 @@ import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
 import { isAdminOnlyListing, listingVisibilityOf } from "@/lib/listing-visibility";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
+import { applyMasterCareType } from "@/lib/server/master-care-type";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 
 function cadAmount(value: number | string | null | undefined): number | null {
@@ -213,10 +214,10 @@ export function mapDaycare(r: DaycareRow): Daycare {
     }),
     timezone: resolveListingTourTimezone(r.timezone, r.province),
   }));
-  return {
+  return applyMasterCareType({
     ...mapped,
     live: Boolean(mapped.live) && hasLicenceEvidence(mapped) && !isAdminOnlyListing(mapped),
-  };
+  });
 }
 
 export function fromPrice(d: Daycare) {

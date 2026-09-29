@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
-import { DaycareTypeRails, type BrowseDaycareType } from "@/components/facility-type-rails";
+import { DaycareTypeRails, BROWSE_RAIL_COPY, type BrowseDaycareType } from "@/components/facility-type-rails";
 import { ExploreCategoryChips } from "@/components/explore-category-chips";
 import { ExploreFilterBar } from "@/components/explore-filter-bar";
 import { ExploreFilterChips } from "@/components/explore-filter-chips";
@@ -1193,7 +1193,11 @@ function SearchPage() {
               className="truncate font-display text-[1.35rem] leading-tight tracking-[-0.03em]"
               data-search-h1=""
             >
-              {city}
+              {parentFilters.fac.length === 1
+                ? t(BROWSE_RAIL_COPY[parentFilters.fac[0]])
+                : incoming.cat === "before-after"
+                  ? t(BROWSE_RAIL_COPY.before_after)
+                  : city}
             </h1>
             <p className="mt-0.5 min-h-5 truncate text-sm text-muted" aria-live="polite">
               {items === null ? (
@@ -1201,6 +1205,8 @@ function SearchPage() {
                   <span className="ke-skel inline-block h-3.5 w-28" aria-hidden="true" />
                   <span>{t("searchCountLoading")}</span>
                 </span>
+              ) : parentFilters.fac.length === 1 || incoming.cat === "before-after" ? (
+                `${city} · ${searchCountLine}`
               ) : (
                 searchCountLine
               )}

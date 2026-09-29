@@ -34,6 +34,7 @@ import { mergeApprovedCityListings } from "./approved-search";
 import { alignSearchOrigin } from "@/lib/search-query";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
+import { applyMasterCareType } from "@/lib/server/master-care-type";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
 
 export type CentreJobPost = { id: string; role: string; note: string; createdAt: string };
@@ -132,10 +133,10 @@ function toDaycare(d: CatalogDaycare): Daycare {
     isTest: d.isTest,
     timezone: resolveListingTourTimezone(null, d.province),
   }));
-  return {
+  return applyMasterCareType({
     ...mapped,
     live: Boolean(mapped.live) && hasLicenceEvidence(mapped) && !isAdminOnlyListing(mapped),
-  };
+  });
 }
 
 function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
