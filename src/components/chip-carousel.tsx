@@ -15,12 +15,15 @@ export function ChipCarousel({
   label,
   className,
   compact = false,
+  arrows = true,
   "data-search-row": row,
 }: {
   children: ReactNode;
   label: string;
   className?: string;
   compact?: boolean;
+  /** Overlay arrows cover chips on a short row. Touch scroll still works when false. */
+  arrows?: boolean;
   "data-search-row"?: string;
 }) {
   const { t } = useCopy();
@@ -79,6 +82,9 @@ export function ChipCarousel({
     port.scrollBy({ left: dir * step, behavior: "smooth" });
   }
 
+  const showPrev = arrows && overflow && canPrev;
+  const showNext = arrows && overflow && canNext;
+
   return (
     <div
       ref={wrap}
@@ -89,6 +95,7 @@ export function ChipCarousel({
       data-search-row={row}
     >
       <script dangerouslySetInnerHTML={{ __html: SCROLL_SCRIPT }} />
+      {arrows ? (
       <button
         type="button"
         aria-label={t("chipCarouselPrev")}
@@ -97,25 +104,27 @@ export function ChipCarousel({
         onClick={() => go(-1)}
         className={cn(
           "absolute left-0 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-fg shadow-card ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30",
-          overflow && canPrev ? "" : "hidden",
+          showPrev ? "" : "hidden",
         )}
       >
         <ChevronLeft className="size-4" strokeWidth={2} />
       </button>
+      ) : null}
       <div
         ref={scroller}
         role="group"
         aria-label={label}
         className={cn(
           "ke-chip-carousel w-full min-w-0",
-          overflow && canPrev ? (compact ? "pl-10" : "pl-12") : "pl-0",
-          overflow && canNext ? (compact ? "pr-10" : "pr-12") : "pr-0",
+          showPrev ? (compact ? "pl-10" : "pl-12") : "pl-0",
+          showNext ? (compact ? "pr-10" : "pr-12") : "pr-0",
         )}
       >
         <div ref={track} className="ke-chip-carousel-track">
           {children}
         </div>
       </div>
+      {arrows ? (
       <button
         type="button"
         aria-label={t("chipCarouselNext")}
@@ -124,11 +133,12 @@ export function ChipCarousel({
         onClick={() => go(1)}
         className={cn(
           "absolute right-0 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-fg shadow-card ring-1 ring-border hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-30",
-          overflow && canNext ? "" : "hidden",
+          showNext ? "" : "hidden",
         )}
       >
         <ChevronRight className="size-4" strokeWidth={2} />
       </button>
+      ) : null}
     </div>
   );
 }

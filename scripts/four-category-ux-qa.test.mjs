@@ -25,10 +25,15 @@ test("Guest: live vs all counts, empty-search lead, and listing login handoff", 
   assert.match(src("src/components/care-ops-panel.tsx"), /careRoomsEmpty/);
   assert.match(src("src/routes/claim.tsx"), /sendClaimRequest/);
   assert.match(src("src/styles.css"), /\.ke-listing-hero \{\s*width: 100%/);
+  assert.match(src("src/components/listing-parent-pack.tsx"), /aria-current=\{active === id \? "true"/);
+  assert.match(src("src/components/explore-filter-bar.tsx"), /arrows=\{false\}/);
+  assert.match(src("src/routes/provider.tsx"), /enquiriesEmptyTitle/);
+  assert.match(src("src/lib/copy.ts"), /proWhyTitle: "Get more families with Pro"/);
   assert.match(search, /data-ke="search-result-list"/);
   assert.match(search, /areaPresence\(catalog\)/);
   assert.match(search, /parentLoginSearch\("\/search"\)/);
   const listing = src("src/routes/daycare.$slug.tsx");
+  assert.match(listing, /ownEdit \? <CompletenessBanner/);
   assert.match(listing, /ask === "tour"/);
   assert.match(listing, /setTourOpen\(true\)/);
   assert.match(listing, /ListingTourTimes/);
