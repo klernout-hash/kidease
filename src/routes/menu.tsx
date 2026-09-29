@@ -98,7 +98,6 @@ function MenuPage() {
         </Group>
 
         <Group title="KidEase" defer>
-          <MenuRow to="/search" label={t("explore")} icon="explore" />
           <MenuRow to="/benefits" label={t("benefitsTab")} icon="benefits" />
           <MenuRow to="/get-app" label={t("getApp")} icon="getApp" />
           <ShareKidEaseButton appearance="row" />
@@ -139,12 +138,7 @@ function MenuPage() {
             />
           ) : null}
           <MenuRow to="/provider" label={t("daycareDesk")} icon="daycare" />
-          <MenuRow to="/account" search={{ tab: "profile", desk: "director" }} label={t("account")} icon="account" />
           <MenuRow to="/verify" label={t("mbChildcare")} icon="verify" />
-          <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
-        </Group> : null}
-
-        {showDaycares ? <Group title={t("footerCaregivers")} defer>
           <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
         </Group> : null}
 

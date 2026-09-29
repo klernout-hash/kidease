@@ -15,8 +15,8 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
     keys: ["enroll", "provider", "claim", "listing", "centre owner", "daycare owner", "partner"],
     lines: [
       `If you run a licensed centre, tap Enroll Now (or Claim). Search your name in our catalogue — over 20,000 licensed centres across Canada. Not listed? Choose Enter name manually and send the form. It goes to ${SUPPORT_INBOX_EMAIL}. Claiming is free.`,
-      "Providers get a free landing page, proximity so nearby parents find you first, and in-app chat. Bank payouts stay off until Stripe finishes review. Start at Enroll Now on the home page or kidease.ca/claim.",
-      "To go live: claim your listing, add spots and monthly fees, and upload a storefront photo. Priority listing can pin you higher — that’s optional.",
+      "Providers get a free landing page, proximity so nearby parents find you first, and in-app chat. Bank payouts are not turned on yet. Start at Enroll Now on the home page or kidease.ca/claim.",
+      "To show your centre to parents: claim your listing, add spots and monthly fees, and upload a storefront photo. Priority listing can pin you higher — that’s optional.",
     ],
   },
   {

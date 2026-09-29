@@ -172,7 +172,7 @@ export function StartADaycarePage() {
               </span>
               <div>
                 <h3 className="text-base font-semibold">
-                  <span className="mr-2 text-primary">{index + 1}.</span>
+                  <span className="text-primary">{index + 1}. </span>
                   {t(step.title)}
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-muted">{t(step.body)}</p>

@@ -18,17 +18,20 @@ export function ParentShortlist({
   located,
   tours,
   bookings,
+  compareMax = MAX_SHORTLIST_COMPARE,
 }: {
   items: Array<Card & { distanceKm: number }>;
   ready: boolean;
   located: boolean;
   tours: TourRequest[];
   bookings: Booking[];
+  /** Free is 5. Parent Plus is 10. */
+  compareMax?: number;
 }) {
   const { t } = useCopy();
   const [picked, setPicked] = useState<string[]>([]);
   const visible = ready ? items : items.slice(0, SAVED_EAGER_CARDS);
-  const compared = useMemo(() => items.filter((item) => picked.includes(item.id)).slice(0, MAX_SHORTLIST_COMPARE), [items, picked]);
+  const compared = useMemo(() => items.filter((item) => picked.includes(item.id)).slice(0, compareMax), [compareMax, items, picked]);
   const distances = useMemo(() => Object.fromEntries(items.map((item) => [item.id, item.distanceKm])), [items]);
 
   if (!items.length) {
@@ -48,11 +51,11 @@ export function ParentShortlist({
           {t("shortlistCompareLead")}{" "}
           {picked.length ? (
             <span className="font-medium text-fg">
-              {t("compare")} · {picked.length}/{MAX_SHORTLIST_COMPARE}
+              {t("compare")} · {picked.length}/{compareMax}
             </span>
           ) : null}
         </p>
-        {picked.length >= MAX_SHORTLIST_COMPARE ? <p className="mt-1 text-xs text-subtle">{t("shortlistCompareMax")}</p> : null}
+        {picked.length >= compareMax ? <p className="mt-1 text-xs text-subtle">{t("shortlistCompareMax")}</p> : null}
         {picked.length === 1 ? <p className="mt-1 text-xs text-subtle">{t("shortlistNeedTwo")}</p> : null}
         {picked.length ? (
           <Button variant="ghost" size="sm" className="mt-2" onClick={() => setPicked([])}>
@@ -71,7 +74,7 @@ export function ParentShortlist({
       <div className="ke-listings ke-listings-narrow">
         {visible.map((item) => {
           const on = picked.includes(item.id);
-          const atCap = !on && picked.length >= MAX_SHORTLIST_COMPARE;
+          const atCap = !on && picked.length >= compareMax;
           return (
             <div key={item.id} className="min-w-0 space-y-2">
               <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 overflow-hidden">
@@ -81,7 +84,7 @@ export function ParentShortlist({
                     className="size-4 accent-primary"
                     checked={on}
                     disabled={atCap}
-                    onChange={() => setPicked((cur) => toggleCompareSelection(cur, item.id))}
+                    onChange={() => setPicked((cur) => toggleCompareSelection(cur, item.id, compareMax))}
                   />
                   <span>{t("addToCompare")}</span>
                 </label>

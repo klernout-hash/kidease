@@ -46,13 +46,11 @@ function destinations(links) {
   return links.map((link) => `${link.to}|${JSON.stringify(link.search ?? {})}|${link.localePaired ? "paired" : "bare"}`);
 }
 
-test("footer exposes Rate KidEase on the KidEase column and Get the app in Parents", () => {
-  const getApp = nav.match(/"\/get-app"/g) ?? [];
-  assert.ok(getApp.length >= 2, "Get the app + Rate KidEase both link to /get-app on www");
+test("footer Get the app stays in Parents; Rate KidEase is not a footer label", () => {
   assert.ok(FOOTER_PARENTS.some((link) => link.to === "/get-app" && link.labelKey === "getApp"));
-  assert.ok(FOOTER_KIDEASE.some((link) => link.to === "/get-app" && link.labelKey === "rateKidEase"));
+  assert.ok(!FOOTER_KIDEASE.some((link) => link.labelKey === "rateKidEase"));
   assert.ok(!FOOTER_PARENTS.some((link) => link.labelKey === "rateKidEase"));
-  assert.match(nav, /rateKidEaseFromMenu/);
+  assert.doesNotMatch(nav, /rateKidEase/);
 });
 
 test("footer keeps Parents / Daycares / KidEase / Support groups without a duplicate legal row", () => {
@@ -75,7 +73,7 @@ test("footer keeps Parents / Daycares / KidEase / Support groups without a dupli
   assert.match(nav, /verifyListings/);
 });
 
-test("hamburger stays Parents, Daycares, Caregivers, Support; footer is Parents, Daycares, KidEase, Support", () => {
+test("hamburger is Parents, Daycares, Support; jobs are not a second Caregivers group", () => {
   const footerParents = footer.indexOf('id="parents"');
   const footerDaycares = footer.indexOf('id="daycares"');
   const footerKidEase = footer.indexOf('id="kidease"');
@@ -89,9 +87,11 @@ test("hamburger stays Parents, Daycares, Caregivers, Support; footer is Parents,
 
   const menuParents = menu.indexOf('title="Parents"');
   const menuDaycares = menu.indexOf('title={fr ? "Garderies" : "Daycares"}');
-  const menuCaregivers = menu.indexOf('t("footerCaregivers")');
   const menuSupport = menu.indexOf('title={fr ? "Soutien" : "Support"}');
-  assert.ok(menuParents > 0 && menuDaycares > menuParents && menuCaregivers > menuDaycares && menuSupport > menuCaregivers);
+  assert.ok(menuParents > 0 && menuDaycares > menuParents && menuSupport > menuDaycares);
+  assert.equal(menu.indexOf('t("footerCaregivers")'), -1);
+  assert.match(menu, /findDaycareJobs/);
+  assert.match(menu, /addJobsAtKidEase/);
   assert.match(copySrc, /footerCaregivers: "Caregivers & jobs"/);
   assert.match(copySrc, /footerCaregivers: "Éducatrices et emplois"/);
 });
@@ -184,8 +184,8 @@ test("Find daycare jobs lives on Daycares only; KidEase Careers stays on /jobs/p
   assert.ok(!FOOTER_KIDEASE.some((link) => link.to === "/jobs"));
   assert.ok(FOOTER_KIDEASE.some((link) => link.to === "/jobs/post" && link.labelKey === "addJobsAtKidEase"));
   assert.ok(!FOOTER_SUPPORT.some((link) => link.to === "/jobs/post"));
-  assert.match(copySrc, /addJobsAtKidEase: "KidEase Careers"/);
-  assert.match(copySrc, /addJobsAtKidEase: "Carrières KidEase"/);
+  assert.match(copySrc, /addJobsAtKidEase: "Post a job"/);
+  assert.match(copySrc, /addJobsAtKidEase: "Publier un emploi"/);
   assert.doesNotMatch(footer + nav, /Open Road/i);
   assert.doesNotMatch(footer + nav, /openroad/i);
 });
@@ -221,10 +221,9 @@ test("EN footer labels sort alphabetically in every column", () => {
     "About",
     "Donate to Kids",
     "How It Works",
-    "KidEase Careers",
     "Meet the Team",
     "Plans",
-    "Rate KidEase",
+    "Post a job",
     "Start a Daycare",
   ]);
   assert.deepEqual(labels(FOOTER_SUPPORT, "en"), [
@@ -259,13 +258,12 @@ test("FR-CA footer labels sort by the French string in every column", () => {
   ]);
   assert.deepEqual(labels(FOOTER_KIDEASE, "fr"), [
     "À propos",
-    "Carrières KidEase",
     "Comment ça fonctionne",
-    "Évaluer KidEase",
     "Faire un don aux enfants",
     "Forfaits",
     "L’équipe",
     "Ouvrir une garderie",
+    "Publier un emploi",
   ]);
   assert.deepEqual(labels(FOOTER_SUPPORT, "fr"), [
     "Centre d’aide",
@@ -311,7 +309,7 @@ test("footer does not drop destinations when columns are renamed and reordered",
   }
   assert.ok(!all.includes("/unsubscribe|{}|bare"));
   assert.equal(FOOTER_PARENTS.filter((link) => link.to === "/get-app").length, 1);
-  assert.equal(FOOTER_KIDEASE.filter((link) => link.to === "/get-app").length, 1);
+  assert.equal(FOOTER_KIDEASE.filter((link) => link.to === "/get-app").length, 0);
 });
 
 test("unsubscribe stays off the footer and remains on Privacy and account prefs", () => {
