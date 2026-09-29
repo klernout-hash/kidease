@@ -109,6 +109,7 @@ export function PlaceSearch({
   const [active, setActive] = useState(0);
   const [destOpen, setDestOpen] = useState(false);
   const focusedValue = useRef(value);
+  const holdDest = useRef(false);
   const showDestinations = Boolean(emptyMenu) && destOpen && !open && (value.trim().length < 2 || value === focusedValue.current);
 
   function close() {
@@ -121,7 +122,8 @@ export function PlaceSearch({
 
   useEffect(() => {
     const q = value.trim();
-    if (q.length < 2) {
+    const untouched = q === focusedValue.current.trim();
+    if (q.length < 2 || untouched) {
       setHits([]);
       setOpen(false);
       return;
@@ -129,7 +131,7 @@ export function PlaceSearch({
     let live = true;
     const tmr = window.setTimeout(() => {
       void loadSuggestions(q, origin, session.current).then((rows) => {
-        if (!live) return;
+        if (!live || holdDest.current) return;
         if (!placeHostVisible(wrap.current)) return;
         if (document.activeElement !== input.current) return;
         setHits(rows);
@@ -217,13 +219,30 @@ export function PlaceSearch({
         onFocus={() => {
           if (!placeHostVisible(wrap.current)) return;
           focusedValue.current = value;
-          if (emptyMenu) setDestOpen(true);
-          if (hits.length && value.trim().length >= 2 && value !== focusedValue.current) setOpen(true);
+          if (emptyMenu) {
+            holdDest.current = true;
+            setDestOpen(true);
+          }
+        }}
+        onClick={() => {
+          if (!emptyMenu) return;
+          focusedValue.current = value;
+          holdDest.current = true;
+          setHits([]);
+          setOpen(false);
+          setDestOpen(true);
         }}
         onChange={(e) => {
           const next = e.target.value;
           onChange(next);
-          if (next !== focusedValue.current) setDestOpen(false);
+          if (next.trim() === focusedValue.current.trim()) {
+            holdDest.current = true;
+            setDestOpen(Boolean(emptyMenu));
+            setOpen(false);
+            return;
+          }
+          holdDest.current = false;
+          setDestOpen(false);
         }}
         placeholder={placeholder}
         className={inputClassName}
@@ -241,12 +260,14 @@ export function PlaceSearch({
             if (document.activeElement === input.current) return;
             if (menuContains(listId, document.activeElement)) return;
             close();
+            holdDest.current = false;
             setDestOpen(false);
           }, 0);
         }}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
             close();
+            holdDest.current = false;
             setDestOpen(false);
             return;
           }
@@ -266,7 +287,7 @@ export function PlaceSearch({
       {showDestinations && emptyMenu ? (
         <div
           data-ke="where-destinations"
-          className="absolute left-0 top-[calc(100%+0.375rem)] z-[80] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-surface py-2 shadow-lift ring-1 ring-border"
+          className="absolute left-0 top-[calc(100%+0.5rem)] z-[80] w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-surface py-3 shadow-lift ring-1 ring-border"
         >
           <p className="px-4 pb-1 pt-1 text-xs font-semibold text-muted">{emptyMenu.title}</p>
           <ul>
@@ -274,7 +295,7 @@ export function PlaceSearch({
               <button
                 type="button"
                 data-ke="where-nearby"
-                className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface-2"
+                className="mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-xl bg-surface-2 px-3 py-2.5 text-left"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setDestOpen(false);
