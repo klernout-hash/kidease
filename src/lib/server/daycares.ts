@@ -411,6 +411,9 @@ export const searchDaycares = createServerFn({ method: "GET" })
   }))
   .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => searchIncludingLive(data)));
 
+/** Home type rows page 12 at a time. Keep a few pages of each nearby type. */
+const HOME_TYPE_POOL = 72;
+
 async function loadFeatured(
   origin: { lat: number; lng: number; label?: string },
   radiusKm: number,
@@ -433,7 +436,7 @@ async function loadFeatured(
   const ranked = sortFeaturedCityAfterPriority(
     await overlayFeaturedCity(await overlayPriority(scored)),
   );
-  return publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, 12).map(slimCard);
+  return publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, HOME_TYPE_POOL).map(slimCard);
 }
 
 export const featuredDaycares = createServerFn({ method: "GET" })

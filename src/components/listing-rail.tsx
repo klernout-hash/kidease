@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { DaycareCard } from "@/components/daycare-card";
@@ -9,6 +9,8 @@ export function ListingRail({
   title,
   items,
   limit = 12,
+  pageSize = 12,
+  expandable = false,
   seeAllHref,
   hideTitle = false,
   eagerThumbs = true,
@@ -21,6 +23,10 @@ export function ListingRail({
   title: string;
   items: Card[];
   limit?: number;
+  /** First window, then each "show more" adds this many in the same row. */
+  pageSize?: number;
+  /** Keep later centres out of the row until the listing card at the end is clicked. */
+  expandable?: boolean;
   seeAllHref?: string;
   hideTitle?: boolean;
   /** Off on marketing home so hidden app rails do not preload against the LCP hero. */
@@ -35,7 +41,18 @@ export function ListingRail({
 }) {
   const { t } = useCopy();
   const scroller = useRef<HTMLDivElement>(null);
-  const shown = items.slice(0, limit);
+  const [extra, setExtra] = useState(0);
+  const [enteredFrom, setEnteredFrom] = useState(0);
+  const sig = `${railId ?? title}:${items.length}:${items[0]?.id ?? ""}:${items.at(-1)?.id ?? ""}`;
+  useEffect(() => {
+    setExtra(0);
+    setEnteredFrom(0);
+  }, [sig]);
+
+  const page = Math.max(1, pageSize);
+  const shownCount = expandable ? Math.min(items.length, page + extra) : Math.min(items.length, limit);
+  const shown = items.slice(0, shownCount);
+  const more = expandable && items.length > shown.length;
   if (!shown.length && !empty && !persist) return null;
 
   function go(dir: -1 | 1) {
@@ -44,7 +61,17 @@ export function ListingRail({
     port?.scrollBy({ left: dir * step, behavior: "smooth" });
   }
 
-  const showChevrons = shown.length > 1;
+  function revealMore() {
+    setEnteredFrom(shownCount);
+    setExtra((n) => n + page);
+    requestAnimationFrame(() => {
+      const port = scroller.current;
+      if (!port) return;
+      port.scrollBy({ left: Math.max(Math.round(port.clientWidth * 0.42), 180), behavior: "smooth" });
+    });
+  }
+
+  const showChevrons = shown.length > 1 || more;
 
   if (!shown.length && (empty || persist)) {
     return (
@@ -114,7 +141,11 @@ export function ListingRail({
       <div className="ke-listing-rail-port">
         <div ref={scroller} className={cn("ke-rail", visual && "ke-rail--visual")}>
           {shown.map((item, i) => (
-            <div key={item.id} className="ke-rail-card">
+            <div
+              key={item.id}
+              className={cn("ke-rail-card", enteredFrom > 0 && i >= enteredFrom && "ke-rail-card--in")}
+              style={enteredFrom > 0 && i >= enteredFrom ? { animationDelay: `${Math.min(i - enteredFrom, 8) * 35}ms` } : undefined}
+            >
               <DaycareCard
                 item={item}
                 presentation={visual ? "visual" : "rail"}
@@ -123,6 +154,20 @@ export function ListingRail({
               />
             </div>
           ))}
+          {more ? (
+            <div className="ke-rail-card">
+              <button type="button" className="ke-rail-more" onClick={revealMore}>
+                <span className="ke-rail-more-stage" aria-hidden="true">
+                  <span className="ke-rail-more-ghost ke-rail-more-ghost-a" />
+                  <span className="ke-rail-more-ghost ke-rail-more-ghost-b" />
+                  <span className="ke-rail-more-face">
+                    <span className="ke-rail-more-mark">+</span>
+                  </span>
+                </span>
+                <span className="ke-rail-more-label">{t("showMoreListings")}</span>
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

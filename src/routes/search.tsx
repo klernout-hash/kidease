@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
+import { DaycareTypeRails, type BrowseDaycareType } from "@/components/facility-type-rails";
 import { ExploreCategoryChips } from "@/components/explore-category-chips";
 import { ExploreFilterBar } from "@/components/explore-filter-bar";
 import { ExploreFilterChips } from "@/components/explore-filter-chips";
@@ -237,7 +238,6 @@ function SearchPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);
-  const [listWindow, setListWindow] = useState({ key: "", count: 12 });
   const [need, setNeed] = useState("");
   const [matchNote, setMatchNote] = useState<string | null>(null);
   const [matchBusy, setMatchBusy] = useState(false);
@@ -642,6 +642,30 @@ function SearchPage() {
     void navigate({ search: exploreSearchPatch(next) });
   }
 
+  function writeBrowseType(type?: BrowseDaycareType) {
+    const keepAge = incoming.cat && !isFacilityExploreCategory(incoming.cat) ? incoming.cat : undefined;
+    const cat = type === "before_after" ? ("before-after" as const) : keepAge;
+    const fac = type && type !== "before_after" ? type : undefined;
+    void navigate({
+      search: {
+        ...withParentSearch({
+          q: incoming.q ?? query,
+          name: incoming.name,
+          from: incoming.from,
+          to: incoming.to,
+          sort: incoming.sort,
+          age: incoming.age,
+          start: incoming.start,
+          cat,
+          care: incoming.care,
+          favorites: incoming.favorites,
+          openings: incoming.openings,
+        }),
+        fac,
+      },
+    });
+  }
+
   /** Age chips 1–4 write `?age=`. All / facility chips clear the age band. */
   function writeCategorySearch(cat?: ExploreCategory) {
     const age = cat && isRailAge(cat) ? [cat] : [];
@@ -928,22 +952,6 @@ function SearchPage() {
     if (openingsOn && honestVacancy(row).kind !== "open") return false;
     return true;
   });
-  const listKey = [
-    selectedAges.join(","),
-    openingsOn ? "1" : "0",
-    query,
-    nameQuery,
-    sort,
-    liveOnly ? "1" : "0",
-    avail,
-    incoming.age ?? "",
-    incoming.cat ?? "",
-    incoming.openings ?? "",
-  ].join("|");
-  if (listWindow.key !== listKey) {
-    setListWindow({ key: listKey, count: 12 });
-  }
-  const visibleCards = visualItems.slice(0, listWindow.key === listKey ? listWindow.count : 12);
   const showSearchEmpty =
     items !== null &&
     railItems.length === 0 &&
@@ -1544,28 +1552,28 @@ function SearchPage() {
             </div>
           ) : (
             <div
-              className="ke-result-stack"
               data-ke="search-result-list"
+              data-ke-layout="type-rails"
               onMouseOver={(e) => {
                 const node = (e.target as HTMLElement).closest("[data-slug]");
                 const slug = node?.getAttribute("data-slug");
                 if (slug) setActive(slug);
               }}
             >
-              {visibleCards.map((item, i) => (
-                <DaycareCard key={item.id} item={item} presentation="visual" eager={i < 2} />
-              ))}
-              {visualItems.length > visibleCards.length ? (
-                <div className="md:col-span-2 min-[1100px]:col-span-3">
-                  <button
-                    type="button"
-                    className="inline-flex min-h-12 items-center rounded-full bg-fg px-5 text-sm font-semibold text-surface"
-                    onClick={() => setListWindow({ key: listKey, count: visibleCards.length + 12 })}
-                  >
-                    {t("showMoreCentres")}
-                  </button>
-                </div>
-              ) : null}
+              <DaycareTypeRails
+                items={visualItems}
+                visual
+                skipLiveLooking
+                seeAll={false}
+                selected={
+                  parentFilters.fac.length === 1
+                    ? parentFilters.fac[0]
+                    : incoming.cat === "before-after"
+                      ? "before_after"
+                      : undefined
+                }
+                onSelect={writeBrowseType}
+              />
             </div>
           )}
           {gated && split.ageUnknown.length ? (
