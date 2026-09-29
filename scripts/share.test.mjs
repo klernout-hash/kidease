@@ -167,13 +167,11 @@ test("shareOrCopy uses Web Share when available and copies the link otherwise", 
   });
 });
 
-test("Share KidEase lives in the header profile menu, app menu, and drawer", () => {
+test("Share KidEase lives in the app menu and drawer, not the header", () => {
   const shell = src("src/components/shell.tsx");
   const menu = src("src/routes/menu.tsx");
   const drawer = src("src/components/nav-drawer.tsx");
-  assert.match(shell, /ShareKidEaseButton/);
-  assert.match(shell, /appearance="menu"/);
-  assert.doesNotMatch(shell, /appearance="nav"/);
+  assert.doesNotMatch(shell, /ShareKidEaseButton/);
   assert.match(menu, /import \{ ShareKidEaseButton \}/);
   assert.match(menu, /ShareKidEaseButton/);
   assert.match(menu, /appearance="row"/);

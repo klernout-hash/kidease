@@ -120,7 +120,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             </Link>
           </div>
           {barePath === "/" ? (
-            <div className="hidden min-w-0 justify-center [[data-channel=website]_&]:flex">
+            <div className="hidden min-w-0 justify-center overflow-hidden [[data-channel=website]_&]:flex">
               <HomeCareTypeRow
                 compact
                 selected={careType}
@@ -133,7 +133,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
           <div className="flex shrink-0 items-center">
             <button
               type="button"
-              className="relative z-10 hidden size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
+              className="relative z-20 grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
               aria-label="Menu"
               aria-expanded={open}
               aria-controls="ke-nav-drawer"
