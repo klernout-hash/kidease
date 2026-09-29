@@ -84,7 +84,7 @@ async function openHeaderMenu(page) {
   await menu.first().waitFor({ timeout: timeoutMs });
   await page.waitForTimeout(500);
   if (await drawer.isVisible().catch(() => false)) return;
-  await menu.first().click();
+  await menu.first().click({ force: true });
   await drawer.waitFor({ timeout: timeoutMs });
 }
 
@@ -314,7 +314,8 @@ async function runRoleFixture(page, base) {
     const deskReached = Boolean(await deskHit);
     await settleMockCheckout(page);
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page.locator('header [data-nav="upgrade"]:visible').first().click();
+    await openHeaderMenu(page);
+    await page.locator('#ke-nav-drawer [data-nav="upgrade"]').click();
     await page.waitForURL(/\/provider\/subscription/i, { timeout: timeoutMs }).catch(() => {});
     const homeCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
     await homeCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
@@ -340,7 +341,8 @@ async function runRoleFixture(page, base) {
     const parentDeskReached = Boolean(await parentDeskHit);
     await settleMockCheckout(page);
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page.locator('header [data-nav="upgrade"]:visible').first().click();
+    await openHeaderMenu(page);
+    await page.locator('#ke-nav-drawer [data-nav="upgrade"]').click();
     await page.waitForURL(/tab=payments/i, { timeout: timeoutMs }).catch(() => {});
     const homePlus = page.locator('[data-ke="plan-checkout"]:visible').first();
     await homePlus.waitFor({ timeout: timeoutMs }).catch(() => {});

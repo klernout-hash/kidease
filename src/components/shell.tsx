@@ -112,39 +112,39 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   return (
     <div className="min-h-dvh bg-bg text-fg">
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
-        <div className="ke-gutter mx-auto grid min-h-16 max-w-6xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-1">
-          <div className="flex min-w-0 items-center gap-0.5">
-            {menuLeaf ? <MenuLeafBack /> : null}
-            <Link to={homeTo} className="shrink-0" aria-label="KidEase">
-              <BrandMark size="sm" />
-            </Link>
-          </div>
+        <div className="ke-gutter relative mx-auto flex h-16 max-w-6xl items-center">
+          {menuLeaf ? <MenuLeafBack /> : null}
+          <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
+            <BrandMark size="sm" />
+          </Link>
           {barePath === "/" ? (
-            <div className="hidden min-w-0 justify-center overflow-hidden [[data-channel=website]_&]:flex">
-              <HomeCareTypeRow
-                compact
-                selected={careType}
-                onSelect={(type) => setHomeCareType(type)}
-              />
+            <div className="pointer-events-none absolute inset-x-14 inset-y-0 hidden items-center justify-center [[data-channel=website]_&]:flex">
+              <div className="pointer-events-auto w-full max-w-[52rem] overflow-hidden">
+                <HomeCareTypeRow
+                  compact
+                  selected={careType}
+                  onSelect={(type) => setHomeCareType(type)}
+                />
+              </div>
             </div>
-          ) : (
-            <div />
-          )}
-          <div className="flex shrink-0 items-center">
-            <button
-              type="button"
-              className="relative z-20 grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
-              aria-label="Menu"
-              aria-expanded={open}
-              aria-controls="ke-nav-drawer"
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen((v) => !v);
-              }}
-            >
-              <Menu className="size-6" strokeWidth={1.75} />
-            </button>
-          </div>
+          ) : null}
+          <button
+            type="button"
+            className="relative z-20 ml-auto grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
+            aria-label="Menu"
+            aria-expanded={open}
+            aria-controls="ke-nav-drawer"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              setOpen(true);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
+          >
+            <Menu className="size-6" strokeWidth={1.75} />
+          </button>
         </div>
       </header>
       <NavDrawer
