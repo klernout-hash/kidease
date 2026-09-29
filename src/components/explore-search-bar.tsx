@@ -322,57 +322,64 @@ export function ExploreSearchBar({
             document.getElementById(whereId)?.focus();
           }}
         >
-          <div data-ke="where-field" className="min-w-0">
-            <label
-              id={whereLabelId}
-              htmlFor={whereId}
-              className={fieldLabel}
-            >
-              {t("searchWhere")}
-            </label>
-            <PlaceSearch
-              id={whereId}
-              value={values.where}
-              onChange={onWhereChange}
-              onResolved={(place) => {
-                onWhereChange(place.label);
-                onWhereResolved(place);
-              }}
-              placeholder={t("searchWhereHint")}
-              origin={origin}
-              ariaLabelledBy={whereLabelId}
-              className="min-h-6"
-              emptyMenu={{
-                title: t("whereSuggested"),
-                nearby: t("whereNearby"),
-                nearbyHint: t("whereNearbyHint"),
-                onNearby: onLocate,
-                cities: destinationCities,
-              }}
-              inputClassName={fieldValue}
-            />
+          <div className="flex min-w-0 items-center gap-2">
+            <div data-ke="where-field" className="min-w-0 flex-1">
+              <label
+                id={whereLabelId}
+                htmlFor={whereId}
+                className={fieldLabel}
+              >
+                {t("searchWhere")}
+              </label>
+              <PlaceSearch
+                id={whereId}
+                value={values.where}
+                onChange={onWhereChange}
+                onResolved={(place) => {
+                  onWhereChange(place.label);
+                  onWhereResolved(place);
+                }}
+                placeholder={t("searchWhereHint")}
+                origin={origin}
+                ariaLabelledBy={whereLabelId}
+                className="min-h-6"
+                emptyMenu={{
+                  title: t("whereSuggested"),
+                  nearby: t("whereNearby"),
+                  nearbyHint: t("whereNearbyHint"),
+                  onNearby: onLocate,
+                  cities: destinationCities,
+                }}
+                inputClassName={fieldValue}
+              />
+            </div>
+            {(onRadiusChange && radiusKm != null) || onLocate ? (
+              <div
+                data-ke="where-controls"
+                className="flex shrink-0 items-center gap-1"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {onLocate ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onLocate();
+                    }}
+                    className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-bg hover:text-fg"
+                    aria-label={t("useLocation")}
+                  >
+                    <LocateFixed className="size-5" />
+                  </button>
+                ) : null}
+                {onRadiusChange && radiusKm != null ? (
+                  <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
-        {(onRadiusChange && radiusKm != null) || onLocate ? (
-          <div data-ke="where-controls" className="flex shrink-0 items-center gap-1 px-2 py-1">
-            {onRadiusChange && radiusKm != null ? (
-              <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
-            ) : null}
-            {onLocate ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLocate();
-                }}
-                className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-bg hover:text-fg"
-                aria-label={t("useLocation")}
-              >
-                <LocateFixed className="size-5" />
-              </button>
-            ) : null}
-          </div>
-        ) : null}
 
         <div className={segmentClass("when", 1)}>
           <button

@@ -89,7 +89,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const navigate = useNavigate();
   const boot = Route.useLoaderData();
   const { user, isPending } = useCurrentUserState();
@@ -104,7 +104,9 @@ function Home() {
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const [role, setRole] = useState<AppRole | null>(null);
-  const [place, setPlace] = useState(boot.origin.label);
+  const [place, setPlace] = useState(() =>
+    boot.origin.source === "manual" ? boot.origin.label : t("nearMe"),
+  );
   const [homeName, setHomeName] = useState("");
   const [homeType, setHomeType] = useState<BrowseDaycareType | undefined>(() => getHomeCareType());
   useEffect(() => subscribeHomeCareType(setHomeType), []);
@@ -142,12 +144,23 @@ function Home() {
       { lat: boot.origin.lat, lng: boot.origin.lng, label: boot.origin.label },
       boot.origin.source,
     );
-    setPlace(boot.origin.label);
+    setPlace(boot.origin.source === "manual" ? boot.origin.label : t("nearMe"));
   }, [boot.origin.lat, boot.origin.lng, boot.origin.label, boot.origin.source, setOrigin]);
 
   useEffect(() => {
     const loc = originSource ? origin : boot.origin;
-    setPlace(loc.label);
+    const source = originSource || boot.origin.source;
+    setPlace((current) => {
+      const near = t("nearMe");
+      const nearby = t("whereNearby");
+      const untouched = !current.trim() || current === near || current === nearby || current === loc.label;
+      if (!untouched && source !== "manual") return current;
+      return source === "manual" ? loc.label : near;
+    });
+  }, [origin.label, originSource, boot.origin.label, boot.origin.source, locale]);
+
+  useEffect(() => {
+    const loc = originSource ? origin : boot.origin;
     let cancelled = false;
     const loadFeatured = () => {
       void dedupedQuery(
@@ -229,7 +242,7 @@ function Home() {
       const resolved = originFromDeviceFix(pos, boot.origin, { timeZone: readClientTimeZone() });
       const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
       setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
-      setPlace(label);
+      setPlace(resolved.source === "manual" ? label : t("nearMe"));
       void hapticLight();
       return true;
     }
@@ -325,8 +338,19 @@ function Home() {
         onRadiusChange={setRadiusKm}
         onLocate={() => void pinLocation()}
         onSubmit={() => {
-          void applyPlace(place).then((hit) => {
-            goSearch(hit?.label || place.trim() || origin.label, {
+          const typed = place.trim();
+          const nearMe = typed === t("nearMe") || typed === t("whereNearby");
+          if (!typed || nearMe) {
+            goSearch(origin.label, {
+              name: homeName,
+              from: homeFrom,
+              to: homeTo,
+              start: homeStart || undefined,
+            });
+            return;
+          }
+          void applyPlace(typed).then((hit) => {
+            goSearch(hit?.label || typed || origin.label, {
               name: homeName,
               from: homeFrom,
               to: homeTo,
