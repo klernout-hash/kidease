@@ -24,6 +24,8 @@ test("Live pill needs the live flag and KidEase approval together", () => {
 
 test("$10 / Day is only the confirmed ten-a-day program", () => {
   assert.equal(cardFeePillLabelKey("badgeTen"), "cardTenPerDay");
+  assert.equal(cardFeePillLabelKey("badgeQc965"), "cardQcPerDay");
+  assert.equal(cardFeePillLabelKey("badgeReduced"), "cardReducedFees");
   assert.equal(cardFeePillLabelKey("badgeFifteen"), "badgeFifteen");
   assert.equal(cardFeePillLabelKey("badgeReducedQc"), "badgeReducedQc");
   assert.equal(cardFeePillLabelKey(null), null);
@@ -43,7 +45,7 @@ test("listing card photo uses the live and fee pills instead of registry-checked
   assert.match(card, /data-ke="card-fee-pill"/);
   assert.match(card, /showCardLivePill\(live, publicApprovalEligible\(item\)\)/);
   assert.match(card, /cardFeePillLabelKey\(feeBadge\)/);
-  assert.match(card, /priceOnPhoto = feeBadge === "badgeTen" \|\| feeBadge === "badgeFifteen"/);
+  assert.match(card, /priceOnPhoto = feeBadge === "badgeTen" \|\| feeBadge === "badgeQc965"/);
   assert.match(card, /!priceOnPhoto && priceAmount/);
   assert.match(card, /confirmedFeeProgramBadge/);
   assert.match(card, /cardPhotoLicenseWarning\(license\.id\)/);

@@ -24,7 +24,7 @@ export function ShellLite({
           </Link>
         </div>
       </header>
-      <div className={appTabs ? "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]" : undefined}>
+      <div className={appTabs ? "[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]" : undefined}>
         {children}
       </div>
       {appTabs ? <AppTabBar /> : null}

@@ -294,7 +294,7 @@ function generatedVendorEnv() {
     FCM_PRIVATE_KEY: rsa.privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
     APNS_KEY_ID: "ABCDE12345",
     APNS_TEAM_ID: "TEAMID1234",
-    APNS_BUNDLE_ID: "ca.daycarenearme.app",
+    APNS_BUNDLE_ID: "ca.kidease.app",
     APNS_KEY: ec.privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
   };
 }
@@ -361,7 +361,7 @@ test("sendPushToDevices posts FCM HTTP v1 and APNs without leaking secrets", asy
   assert.equal(apnsCalls[0].host, "api.sandbox.push.apple.com");
   assert.equal(apnsCalls[0].path, "/3/device/apns-token-ios-device-000001");
   assert.match(apnsCalls[0].headers.authorization, /^bearer /);
-  assert.equal(apnsCalls[0].headers["apns-topic"], "ca.daycarenearme.app");
+  assert.equal(apnsCalls[0].headers["apns-topic"], "ca.kidease.app");
 });
 
 test("invalid vendor tokens are deleted and APNs production host is gated", async () => {

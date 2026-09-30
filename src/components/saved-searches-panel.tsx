@@ -111,7 +111,7 @@ export function SavedSearchesPanel() {
             <span>{t("alertInApp")}</span>
           </label>
           <p className="text-xs text-subtle">{t("alertPushOff")}</p>
-          <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm" data-ke="sms-entry">
             <input
               type="checkbox"
               className="mt-1 size-4 accent-primary"

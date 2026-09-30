@@ -208,9 +208,9 @@ export const DaycareCard = memo(function DaycareCard({
         : t(vacancy.labelKey);
   const openSpotsLine = vacancy.kind === "open" || vacancy.kind === "waitlist" ? spotsKnown : "";
   const priceAmount =
-    feeBadge === "badgeTen" ? "$10" : feeBadge === "badgeFifteen" ? "$15" : feeOk ? money(item.fromPrice, locale) : "";
-  const priceUnit = feeBadge === "badgeTen" || feeBadge === "badgeFifteen" ? " / day" : feeOk ? t("month") : "";
-  const priceOnPhoto = feeBadge === "badgeTen" || feeBadge === "badgeFifteen";
+    feeBadge === "badgeTen" ? "$10" : feeBadge === "badgeQc965" ? "$9.65" : feeOk ? money(item.fromPrice, locale) : "";
+  const priceUnit = feeBadge === "badgeTen" || feeBadge === "badgeQc965" ? " / day" : feeOk ? t("month") : "";
+  const priceOnPhoto = feeBadge === "badgeTen" || feeBadge === "badgeQc965";
   const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
 
   if (presentation === "visual") {

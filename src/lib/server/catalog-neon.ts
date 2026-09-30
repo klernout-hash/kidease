@@ -96,6 +96,60 @@ from daycares
 where ${PUBLIC_LISTING_SQL}
 `;
 
+/** Same folding as normalizeCityKey for hub city names (Montréal → montreal). */
+export const DIRECTORY_CITY_KEY_SQL = `trim(regexp_replace(lower(translate(btrim(coalesce(city, '')), 'ÁÀÂÄÃÅáàâäãåÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖÕóòôöõÚÙÛÜúùûüÝŸýÿÇçÑñ', 'AAAAAAaaaaaaEEEEeeeeIIIIiiiiOOOOOoooooUUUUuuuuYYyyCcNn')), '[^a-z0-9]+', ' ', 'g'))`;
+
+const DIRECTORY_PUBLIC_SQL = `
+${PUBLIC_LISTING_SQL}
+and lower(btrim(coalesce(slug, ''))) not in ('', 'null', 'undefined')
+and length(btrim(coalesce(name, ''))) > 0
+`;
+
+export const DIRECTORY_GROUP_SQL = `
+select city, province, count(*)::int as n
+from daycares
+where ${DIRECTORY_PUBLIC_SQL}
+group by city, province
+`;
+
+export async function queryNeonDirectoryGroups(): Promise<
+  Array<{ city: string | null; province: string | null; n: number }> | null
+> {
+  if (dbSource !== "neon") return null;
+  try {
+    const sql = await Promise.race([getSql(), rejectAfter(6000, "directory-count-timeout")]);
+    const rows = await sql.query<{ city: string | null; province: string | null; n: number }>(DIRECTORY_GROUP_SQL);
+    return rows;
+  } catch {
+    return null;
+  }
+}
+
+export async function queryNeonCityHubListings(
+  province: string,
+  cityKeys: readonly string[],
+): Promise<CatalogDaycare[] | null> {
+  if (dbSource !== "neon") return null;
+  const keys = [...new Set(cityKeys.map((key) => key.trim()).filter(Boolean))];
+  if (!keys.length) return [];
+  try {
+    const sql = await Promise.race([getSql(), rejectAfter(6000, "directory-list-timeout")]);
+    const rows = await sql.query<CatalogDbRow>(
+      `select ${CATALOG_SELECT}
+       from daycares
+       where ${DIRECTORY_PUBLIC_SQL}
+         and upper(btrim(coalesce(province, ''))) = $1
+         and ${DIRECTORY_CITY_KEY_SQL} = any($2::text[])
+       order by name
+       limit ${CITY_TYPE_LIST_CAP}`,
+      [province.toUpperCase(), keys],
+    );
+    return rows.filter(catalogRowRenderable).map(catalogRowToListing).filter(isPublicListing);
+  } catch {
+    return null;
+  }
+}
+
 export const POSTGIS_READY_SQL = `
 select exists (
   select 1 from pg_extension where extname = 'postgis'

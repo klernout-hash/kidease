@@ -480,6 +480,9 @@ export function ParentDesk({
             <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
             {showParentPlus ? (
             <div className="mt-4">
+              <p className="ke-native-plan-note mb-3 text-sm text-muted" data-ke="native-plan-note">
+                {t("nativePlansHidden")}
+              </p>
               <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
                 <ParentPlusPanel offerCheckout plusReturn={plusReturn} upgradeSearch={upgradeSearch} billingReturn={billingReturn} />
               </Suspense>

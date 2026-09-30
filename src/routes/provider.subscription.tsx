@@ -94,7 +94,7 @@ function ProviderSubscriptionPage() {
               <Button asChild>
                 <Link to="/claim">{t("claimCta")}</Link>
               </Button>
-              <Button asChild variant="secondary">
+              <Button asChild variant="secondary" className="ke-digital-plan" data-ke="digital-plan">
                 <Link to="/plans">{t("navPlans")}</Link>
               </Button>
             </div>
@@ -127,6 +127,9 @@ function ProviderSubscriptionPage() {
           if (id !== "subscription" && typeof window !== "undefined") window.location.assign("/provider");
         }}
       >
+        <p className="ke-native-plan-note mb-4 text-sm text-muted" data-ke="native-plan-note">
+          {t("nativePlansHidden")}
+        </p>
         <ProviderSubscriptionPanel upgradeSearch={upgradeSearch} billingReturn={upgradeSearch.billing === "return"} />
       </DeskShell>
     </TwoFactorGate>

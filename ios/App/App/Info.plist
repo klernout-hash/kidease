@@ -78,11 +78,11 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>ca.daycarenearme.app</string>
+			<string>ca.kidease.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>KidEase</string>
-				<string>ca.daycarenearme.app</string>
+				<string>ca.kidease.app</string>
 			</array>
 		</dict>
 	</array>

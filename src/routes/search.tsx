@@ -21,10 +21,12 @@ import { ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, withPaintBudget, withTimeoutFallback
 import { bootSearchOrigin } from "@/lib/search-origin";
 import {
   anchorsForSearchMap,
+  cityParamFromUnknown,
   originFromSearchQuery,
   originsMatchSearchQuery,
   searchQueryFromUnknown,
 } from "@/lib/search-query";
+import { resolveSearchDirectory } from "@/lib/city-directory";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { publicListings } from "@/lib/listing-visibility";
@@ -38,7 +40,8 @@ import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { useAppStore, type SortKey } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
-import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
+import { confirmedFeeProgramBadge } from "@/lib/fee-program";
+import { hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { ChipButton } from "@/components/chip";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
@@ -119,7 +122,19 @@ const CompareBar = lazy(() =>
 
 export const Route = createFileRoute("/search")({
   loader: async ({ location }) => {
-    const fromQ = originFromSearchQuery(searchQueryFromUnknown(location.search));
+    const q = searchQueryFromUnknown(location.search);
+    const city = cityParamFromUnknown(location.search);
+    const decision = resolveSearchDirectory({ q, city });
+    if (decision.kind === "unknown") {
+      return {
+        items: [] as Card[],
+        itemsReady: true,
+        unknownCity: true as const,
+        origin: { lat: 0, lng: 0, label: city, source: "manual" as const },
+      };
+    }
+    const place = q || (city ? originFromSearchQuery(city)?.label || city : "");
+    const fromQ = originFromSearchQuery(place);
     const origin = fromQ
       ? { lat: fromQ.lat, lng: fromQ.lng, label: fromQ.label, source: "manual" as const }
       : await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
@@ -132,13 +147,14 @@ export const Route = createFileRoute("/search")({
           sort: "distance",
           ageGroup: "any",
           label: origin.label,
-          q: searchQueryFromUnknown(location.search) || origin.label,
+          q: place || origin.label,
+          city: city || undefined,
           facility: listedDaycareTypeFromSearch(location.search),
         },
       }),
       PAINT_BUDGET_MS,
     );
-    return { items: painted.value ?? [], itemsReady: painted.ready, origin };
+    return { items: painted.value ?? [], itemsReady: painted.ready, origin, unknownCity: false as const };
   },
   staleTime: 60_000,
   pendingMs: 0,
@@ -162,7 +178,10 @@ export const Route = createFileRoute("/search")({
       open?: string;
       sched?: string;
       fac?: string;
+      city?: string;
     } = { ...fields };
+    const city = typeof s.city === "string" ? s.city.trim().slice(0, 80) : "";
+    if (city) out.city = city;
     const sort = typeof s.sort === "string" ? s.sort : "";
     if (
       ["distance", "price", "rating", "availability", "recommended", "match", "urgency"].includes(
@@ -279,8 +298,9 @@ function SearchPage() {
   }, [view]);
 
   useEffect(() => {
-    void bootSearchOrigin(incoming.q, boot.origin);
-  }, [incoming.q, boot.origin]);
+    const place = (incoming.q || "").trim() || (incoming.city || "").trim();
+    void bootSearchOrigin(place, boot.origin);
+  }, [incoming.q, incoming.city, boot.origin]);
 
   useEffect(() => {
     if (incoming.sort) setSort(incoming.sort);
@@ -398,13 +418,19 @@ function SearchPage() {
     anchorMode,
   ]);
 
+  const requestedPlace =
+    (incoming.q || "").trim() ||
+    (incoming.city ? originFromSearchQuery(incoming.city)?.label || "" : "");
+  const unknownCity = Boolean(
+    (incoming.city || "").trim() && !(incoming.q || "").trim() && !originFromSearchQuery(incoming.city),
+  );
   const viewAnchors = useMemo(
     () =>
       anchorsForSearchMap({
         lat: origin.lat,
         lng: origin.lng,
         radiusKm,
-        q: incoming.q,
+        q: requestedPlace,
         query,
         label: origin.label,
         work: workOrigin,
@@ -415,7 +441,7 @@ function SearchPage() {
       origin.lng,
       origin.label,
       radiusKm,
-      incoming.q,
+      requestedPlace,
       query,
       workOrigin?.lat,
       workOrigin?.lng,
@@ -433,6 +459,7 @@ function SearchPage() {
     fsa: fsaOf(query) || fsaOf(cameraHome.label),
     label: cameraHome.label,
     q: placeQuery,
+    city: (incoming.city || "").trim() || undefined,
     facility: listedDaycareTypeFromSearch(incoming),
     startDate: needBy || null,
     lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
@@ -447,6 +474,7 @@ function SearchPage() {
     ageGroup: "any" as const,
     label: cameraHome.label,
     q: placeQuery,
+    city: (incoming.city || "").trim() || undefined,
     facility: listedDaycareTypeFromSearch(incoming),
     startDate: needBy || null,
     lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
@@ -465,6 +493,12 @@ function SearchPage() {
   );
 
   useEffect(() => {
+    if (unknownCity) {
+      setItems([]);
+      setRefreshing(false);
+      setSearchFailed(false);
+      return;
+    }
     let live = true;
     const key = searchCacheKey(cacheInput);
     const cached = readSearchCache(key);
@@ -520,6 +554,7 @@ function SearchPage() {
     query,
     origin.label,
     incoming.q,
+    incoming.city,
     incoming.fac,
     incoming.cat,
     needBy,
@@ -811,6 +846,12 @@ function SearchPage() {
   }
 
   function retrySearch() {
+    if (unknownCity) {
+      setItems([]);
+      setSearchFailed(false);
+      setRefreshing(false);
+      return;
+    }
     setItems(null);
     setSearchFailed(false);
     setRefreshing(true);
@@ -858,13 +899,7 @@ function SearchPage() {
     if (avail === "open") rows = rows.filter((r) => honestVacancy(r).kind === "open");
     if (avail === "waitlist") rows = rows.filter((r) => honestVacancy(r).kind === "waitlist");
     if (avail === "unknown") rows = rows.filter((r) => !r.availabilityKnown);
-    if (ten)
-      rows = rows.filter(
-        (r) =>
-          cwelccKind(r.province) !== "ask" ||
-          hasAmenity(r.amenities, "ten-a-day") ||
-          hasAmenity(r.amenities, "funded"),
-      );
+    if (ten) rows = rows.filter((r) => confirmedFeeProgramBadge(r) != null);
     if (meals) rows = rows.filter((r) => hasAmenity(r.amenities, "meals"));
     if (outdoor)
       rows = rows.filter(

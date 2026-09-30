@@ -7,7 +7,7 @@ This repository does **not** enroll an Apple Developer Program or Google Play Co
 Account enrollment, legal URLs, listing copy, and the remaining store checklist live in [`store-readiness.md`](store-readiness.md). Canada **1 Nov 2026** owner timeline: [`STORE-LAUNCH.md`](STORE-LAUNCH.md).
 
 Live WebView URL: **https://www.kidease.ca**  
-Bundle / application id: **ca.daycarenearme.app**  
+Bundle / application id: **ca.kidease.app**  
 App name: **KidEase**
 
 ## What is checked in
@@ -17,7 +17,7 @@ App name: **KidEase**
 - `resources/` — icon + splash generated from the existing pin pipeline (`public/logo-transparent.png`).
 - `ios/` and `android/` — Capacitor 8 native projects, permission strings, and icons. Regenerable (see below).
 - `ios/App/App/App.entitlements` — Associated Domains for `www.kidease.ca` and `kidease.ca` (no Team ID, no `aps-environment` yet).
-- `AndroidManifest.xml` — App Links `autoVerify` for those hosts plus `KidEase://` / `ca.daycarenearme.app://`.
+- `AndroidManifest.xml` — App Links `autoVerify` for those hosts plus `KidEase://` / `ca.kidease.app://`.
 - Location is **while-using only**. No background location permission, no `UIBackgroundModes: location`.
 
 Do not commit signing secrets, `.p12`, keystores, `android/key.properties`, or `local.properties`.
@@ -58,7 +58,7 @@ Capacitor 8 uses Swift Package Manager (`ios/App/CapApp-SPM`). Open `ios/App/App
 Needs Kyle’s Apple ID / paid Apple Developer Program. This PR does not create that account.
 
 1. Mac: `npm ci && npm run cap:sync && npm run cap:ios` (opens `ios/App/App.xcodeproj`; SPM resolves plugin packages on first build).
-2. Xcode → App target → **Signing & Capabilities**: select Kyle’s team. Bundle ID must stay `ca.daycarenearme.app`.
+2. Xcode → App target → **Signing & Capabilities**: select Kyle’s team. Bundle ID must stay `ca.kidease.app`.
 3. Confirm **Info** → Privacy — Location When In Use Usage Description is the parent daycare-finder string (when-in-use only). Do not add Always / Background Modes → Location.
 4. Select **Any iOS Device (arm64)**.
 5. **Product → Archive**. When the Organizer opens, **Distribute App → App Store Connect → Upload**.
@@ -68,7 +68,7 @@ Xcode will ask you to register the bundle ID in the developer portal the first t
 
 ## Android — `bundleRelease` → Play internal
 
-Needs a Play Console account and an app created with application id `ca.daycarenearme.app`. This PR does not sign up for Play.
+Needs a Play Console account and an app created with application id `ca.kidease.app`. This PR does not sign up for Play.
 
 1. Copy `android/key.properties.example` to `android/key.properties` and point at a **local** upload keystore you created (`keytool`). Never commit the keystore or passwords. `android/app/build.gradle` reads that file only when it exists.
 2. Android Studio: `npm run cap:android`, or:
@@ -82,6 +82,50 @@ Needs a Play Console account and an app created with application id `ca.daycaren
 3. Play Console → Testing → Internal testing → create a release → upload the AAB → add testers by email.
 
 Debug USB installs (`./gradlew installDebug`) use the debug keystore and are enough for the physical-device smoke list below.
+
+### Signed `app-release.aab` (upload keystore + GitHub Actions)
+
+Nothing has been uploaded yet, so this upload key is the one Play will record on the first internal release. After that, Play re-signs with its app signing key. Leave `ANDROID_CERT_SHA256S` empty until Play shows that certificate. Do not invent a fingerprint.
+
+Create the upload keystore once, on a machine you control:
+
+```bash
+keytool -genkeypair -v \
+  -keystore kidease-upload.jks \
+  -alias kidease \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+`keytool` asks for a store password and a key password. Store the `.jks` and both passwords in 1Password. Never commit them. `android/*.jks` and `android/key.properties` are gitignored.
+
+Local signing uses `android/key.properties` (copy from `android/key.properties.example`):
+
+```
+storeFile=/absolute/path/to/kidease-upload.jks
+storePassword=…
+keyAlias=kidease
+keyPassword=…
+```
+
+`android/app/build.gradle` signs `bundleRelease` only when that file exists. Without it the AAB is unsigned. Do not upload an unsigned bundle.
+
+GitHub → Settings → Secrets and variables → Actions. Create these four secrets. Names must match the workflow:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | Linux: `base64 -w 0 kidease-upload.jks`. Mac: `base64 -i kidease-upload.jks \| tr -d '\n'`. Paste the one line. |
+| `ANDROID_KEYSTORE_PASSWORD` | store password from `keytool` |
+| `ANDROID_KEY_ALIAS` | `kidease` (the `-alias` you used) |
+| `ANDROID_KEY_PASSWORD` | key password from `keytool` |
+
+CI does not run this on every pull request (the secrets are not required for check or e2e). When the four secrets exist, run **Actions → Android release → Run workflow**. That workflow (`.github/workflows/android-release.yml`):
+
+1. Decodes `ANDROID_KEYSTORE_BASE64` to `android/kidease-upload.jks`.
+2. Writes `android/key.properties` with the alias and passwords. `storeFile` is an absolute path so Gradle can see it from the app module.
+3. Runs `./gradlew bundleRelease` with Java 21.
+4. Uploads `android/app/build/outputs/bundle/release/app-release.aab` as the `app-release-aab` artifact.
+
+Download that artifact and upload it in Play Console. Do not upload `app-release.apk`.
 
 ## Location permissions (when-in-use)
 

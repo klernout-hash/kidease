@@ -3,7 +3,8 @@
  * Origin lat/lng must come from a real search origin — never invent coordinates.
  */
 
-import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
+import { confirmedFeeProgramBadge } from "@/lib/fee-program";
+import { hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { clampRadiusKm } from "@/lib/proximity";
 import { isClaimVerified } from "@/lib/trust";
@@ -187,6 +188,10 @@ export type FilterableListing = {
   claimed?: boolean;
   claimedAt?: string | null;
   province?: string;
+  city?: string | null;
+  name?: string | null;
+  facilityType?: string | null;
+  feeProgram?: string | null;
 };
 
 function spotsTotalOf(row: FilterableListing) {
@@ -206,9 +211,7 @@ export function listingMatchesSavedFilters(row: FilterableListing, filters: Save
   if (filters.avail === "open" && !(liveFresh && spots > 0)) return false;
   if (filters.avail === "waitlist" && !(liveFresh && spots <= 0)) return false;
   if (filters.avail === "unknown" && known) return false;
-  if (filters.ten && cwelccKind(row.province || "") === "ask" && !hasAmenity(amenities, "ten-a-day") && !hasAmenity(amenities, "funded")) {
-    return false;
-  }
+  if (filters.ten && !confirmedFeeProgramBadge(row)) return false;
   if (filters.meals && !hasAmenity(amenities, "meals")) return false;
   if (filters.outdoor && !hasAmenity(amenities, "outdoor") && !hasAmenity(amenities, "yard")) return false;
   if (filters.inclusive && !hasAmenity(amenities, "inclusive")) return false;

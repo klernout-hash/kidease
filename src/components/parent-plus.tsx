@@ -149,7 +149,7 @@ export function ParentPlusPanel({
   }
 
   return (
-    <div className="rounded-xl bg-surface p-5 ring-1 ring-border">
+    <div className="ke-digital-plan rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="digital-plan">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Upgrade</p>
       <h2 className="mt-1 font-display text-3xl">{t("parentPlusTitle")}</h2>
       <p className="mt-1 text-sm text-muted">{t("parentPlusLead")}</p>
