@@ -50,6 +50,7 @@ import type { CopyKey } from "@/lib/copy";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
 import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { trackRankingEvent } from "@/lib/ranking/events";
 import { formatMonthlyFee, listingFeeNotes } from "@/lib/public-programs";
 import { liveLookingOnly } from "@/lib/now-loops";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
@@ -292,8 +293,9 @@ export function Listing() {
     const origin = useAppStore.getState().origin;
     trackLocation("view", origin.lat, origin.lng, origin.label, { slug: d.slug });
     captureMarketplaceFunnel({ step: "listing_view", source: "listing", dest_path: "/daycare" });
+    trackRankingEvent("listing_viewed", { listingId: d.id, city: d.city, ageGroup });
     document.title = listingSeoPageTitle(d, locale === "fr" ? "fr" : "en") || listingPageTitle(d);
-  }, [data, locale]);
+  }, [data, locale, ageGroup]);
 
   const seoLocale = locale === "fr" ? "fr" : "en";
   const jsonLdSrc = data?.daycare ?? seo;
@@ -479,6 +481,7 @@ export function Listing() {
     }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "message" });
     capturePostHogEvent("listing_request_started", { intent: "message" });
+    trackRankingEvent("message_started", { listingId: d.id, city: d.city, ageGroup });
     setMessageOpen(true);
   }
 

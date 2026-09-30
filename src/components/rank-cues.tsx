@@ -1,7 +1,60 @@
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { DemandSnapshot } from "@/lib/demand-heat";
+import type { Daycare } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const WHY_KEY: Record<NonNullable<Daycare["matchWhy"]>[number], CopyKey> = {
+  close_home: "whyCloseHome",
+  close_work: "whyCloseWork",
+  close_both: "whyCloseBoth",
+  age_fit: "whyAgeFit",
+  ages_listed: "whyAgesListed",
+  spots_fresh: "whySpotsFresh",
+  subsidy: "whySubsidy",
+  hours: "whyHours",
+  complete: "whyComplete",
+  claim: "whyClaim",
+};
+
+function ageWord(age: string | null | undefined, t: (key: CopyKey) => string) {
+  if (age === "infant") return t("infant");
+  if (age === "toddler") return t("toddler");
+  if (age === "preschool") return t("preschool");
+  if (age === "school-age") return t("schoolAge");
+  return "";
+}
+
+export function MatchWhy({
+  reasons,
+  age,
+  days,
+}: {
+  reasons?: Daycare["matchWhy"];
+  age?: string | null;
+  days?: number | null;
+}) {
+  const { t } = useCopy();
+  if (!reasons?.length) return null;
+  const ageLabel = ageWord(age, t);
+  const parts = reasons.slice(0, 3).map((code) => {
+    if (code === "spots_fresh") {
+      const n = typeof days === "number" ? days : 0;
+      if (!ageLabel) {
+        return (n <= 0 ? t("whySpotsTodayAny") : t("whySpotsFreshAny")).replace("{n}", String(Math.max(0, n)));
+      }
+      const template = n <= 0 ? t("whySpotsToday") : t("whySpotsFresh");
+      return template.replace("{age}", ageLabel).replace("{n}", String(Math.max(0, n)));
+    }
+    if (code === "age_fit") return t("whyAgeFit").replace("{age}", ageLabel || t("ages"));
+    return t(WHY_KEY[code]);
+  });
+  return (
+    <p className="text-[12px] font-normal leading-4 text-muted" data-ke="why-match">
+      {parts.join(" · ")}
+    </p>
+  );
+}
 
 export function MatchCue({
   score,

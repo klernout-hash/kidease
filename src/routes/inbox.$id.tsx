@@ -15,6 +15,7 @@ import { sendConnectedMessage } from "@/lib/server/inbox";
 import { formatAgeLabel, formatStart, pushNewRequest, scheduleLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
+import { trackRankingEvent } from "@/lib/ranking/events";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { TourCard } from "@/components/tour-card";
 import { cn, money } from "@/lib/utils";
@@ -52,6 +53,7 @@ function ThreadPage() {
   const [slug, setSlug] = useState("");
   const [photo, setPhoto] = useState("");
   const [phone, setPhone] = useState<string | null>(null);
+  const [centreId, setCentreId] = useState("");
   const [isParent, setIsParent] = useState(true);
   const [booking, setBooking] = useState<BookingInfo | null>(null);
   const [child, setChild] = useState<Child | null>(null);
@@ -70,6 +72,7 @@ function ThreadPage() {
     setSlug(res.daycareSlug);
     setPhoto(res.photo);
     setPhone(res.phone);
+    setCentreId(res.daycareId || "");
     setIsParent(res.isParent);
     let next = res.booking ? { ...res.booking, birthdate: res.booking.birthdate ?? null } : null;
     let kid = res.child ?? null;
@@ -227,7 +230,11 @@ function ThreadPage() {
           <div className="flex shrink-0 gap-1">
             {telHref ? (
               <Button variant="ghost" size="icon" asChild>
-                <a href={telHref} aria-label={t("call")}>
+                <a
+                  href={telHref}
+                  aria-label={t("call")}
+                  onClick={() => trackRankingEvent("phone_clicked", { listingId: centreId })}
+                >
                   <Phone className="size-5" />
                 </a>
               </Button>

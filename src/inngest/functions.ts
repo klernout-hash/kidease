@@ -1,4 +1,5 @@
-import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT } from "@/lib/inngest";
+import { DEMAND_SUPPLY_CRON, DEMAND_SUPPLY_EVENT, SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT } from "@/lib/inngest";
+import { runDemandSupplyJob } from "@/lib/server/demand-supply";
 import { runSearchAlertJob } from "@/lib/server/search-alerts";
 import { runExpireTourHoldsJob } from "@/lib/server/tour-holds";
 import { runWaitlistPulseJob } from "@/lib/server/waitlist-pulse";
@@ -64,4 +65,17 @@ export const expireTourHoldsHourly = inngest.createFunction(
   },
 );
 
-export const functions = [searchAlertsHourly, waitlistPulse, expireTourHoldsHourly];
+export const demandSupplyNightly = inngest.createFunction(
+  {
+    id: "demand-supply-nightly",
+    name: "Demand vs supply (nightly)",
+    triggers: [{ cron: DEMAND_SUPPLY_CRON }, { event: DEMAND_SUPPLY_EVENT }],
+  },
+  async ({ event, step }) => {
+    const data = event && typeof event === "object" && "data" in event ? event.data : undefined;
+    const dryRun = Boolean(data && typeof data === "object" && "dryRun" in data && data.dryRun);
+    return step.run("build-demand-supply", () => runDemandSupplyJob({ dryRun }));
+  },
+);
+
+export const functions = [searchAlertsHourly, waitlistPulse, expireTourHoldsHourly, demandSupplyNightly];

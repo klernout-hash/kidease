@@ -15,6 +15,7 @@ export function searchCacheKey(input: {
   lng2?: number;
   mode?: string;
   facility?: string;
+  matchAge?: string;
 }) {
   return [
     "live4",
@@ -30,6 +31,7 @@ export function searchCacheKey(input: {
     input.facility || "",
     typeof input.lat2 === "number" ? input.lat2.toFixed(3) : "",
     typeof input.lng2 === "number" ? input.lng2.toFixed(3) : "",
+    input.matchAge || "",
   ].join(":");
 }
 

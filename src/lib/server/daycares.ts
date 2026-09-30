@@ -19,8 +19,8 @@ import { overlayParentRank } from "./rank";
 import { overlayPriority } from "./promos";
 import { featuredCentreIdsInLock, overlayFeaturedCity } from "@/lib/server/provider-entitlements";
 import { compareWithPaidPins, sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
-import { compareParentMatch } from "@/lib/parent-match";
 import { compareParentUrgency } from "@/lib/parent-urgency";
+import { safeScoreSmartMatch, type MatchAnchor } from "@/lib/ranking/score";
 import { parentReviewSummary } from "@/lib/review-gate";
 import { hasLicenceEvidence } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
@@ -58,6 +58,10 @@ type SearchInput = {
   lat2?: number;
   lng2?: number;
   mode?: "home" | "work" | "both";
+  /** Age used only by Best match. Does not change the age filter. */
+  matchAge?: string | null;
+  wantSubsidy?: boolean;
+  schedules?: string[];
   /** One of the six daycare categories. Filters the city, it does not mix types. */
   facility?: ReturnType<typeof listedDaycareTypeFromSearch>;
   /** `/search?city=Toronto`. Never a default city when this does not geocode. */
@@ -412,21 +416,45 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
       return c.ageMaxMonths >= 30 && c.ageMinMonths < 72;
     });
   }
-  cards.sort((a, b) =>
-    compareWithPaidPins(a, b, (left, right) => {
-      if (data.sort === "match") return compareParentMatch(left, right, rankPrefs);
-      if (data.sort === "urgency") return compareParentUrgency(left, right, rankPrefs);
-      if (data.sort === "recommended") {
-        const delta = recommendedRank(right) - recommendedRank(left);
-        if (Math.abs(delta) > 1e-6) return delta;
-        return left.distanceKm - right.distanceKm;
+  if (data.sort === "match") {
+    try {
+      const anchor: MatchAnchor = data.mode === "work" ? "work" : data.mode === "both" ? "both" : "home";
+      const work = anchors.secondary;
+      for (const card of cards) {
+        const scored = safeScoreSmartMatch(card, {
+          ageGroup: data.matchAge,
+          radiusKm: data.radiusKm,
+          distanceKnown: true,
+          anchor,
+          workDistanceKm: work ? distanceKm(work, card) : undefined,
+          wantSubsidy: data.wantSubsidy,
+          schedules: data.schedules,
+        });
+        card.matchScore = scored.score;
+        card.matchWhy = scored.reasons;
+        card.matchWhyDays = scored.spotDays;
+        card.matchWhyAge = data.matchAge && data.matchAge !== "any" ? data.matchAge : null;
       }
-      if (data.sort === "price") return (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
-      if (data.sort === "rating") return right.ratingX10 - left.ratingX10;
-      if (data.sort === "availability") return right.spotsTotal - left.spotsTotal || left.distanceKm - right.distanceKm;
-      return compareProximity(left, right);
-    }),
-  );
+      cards.sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0) || a.distanceKm - b.distanceKm);
+    } catch {
+      cards.sort(compareProximity);
+    }
+  } else {
+    cards.sort((a, b) =>
+      compareWithPaidPins(a, b, (left, right) => {
+        if (data.sort === "urgency") return compareParentUrgency(left, right, rankPrefs);
+        if (data.sort === "recommended") {
+          const delta = recommendedRank(right) - recommendedRank(left);
+          if (Math.abs(delta) > 1e-6) return delta;
+          return left.distanceKm - right.distanceKm;
+        }
+        if (data.sort === "price") return (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
+        if (data.sort === "rating") return right.ratingX10 - left.ratingX10;
+        if (data.sort === "availability") return right.spotsTotal - left.spotsTotal || left.distanceKm - right.distanceKm;
+        return compareProximity(left, right);
+      }),
+    );
+  }
   const facility = data.facility;
   const listed = publicListings(uniqueById(filterByLocationLock(cards, lock)))
     .filter((card) => (facility ? matchesListedDaycareType(card, facility) : true))
@@ -447,6 +475,11 @@ export const searchDaycares = createServerFn({ method: "GET" })
       lat2: optionalCoord(input.lat2),
       lng2: optionalCoord(input.lng2),
       mode: parseAnchorMode(input.mode),
+      matchAge: typeof input.matchAge === "string" ? input.matchAge.slice(0, 24) : null,
+      wantSubsidy: input.wantSubsidy === true,
+      schedules: Array.isArray(input.schedules)
+        ? input.schedules.filter((s) => s === "full" || s === "part" || s === "flexible")
+        : [],
       facility: listedDaycareTypeFromSearch(
         input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
       ),

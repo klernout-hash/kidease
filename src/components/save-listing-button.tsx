@@ -3,6 +3,7 @@ import { useEffect, useState, type MouseEvent } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
+import { trackRankingEvent } from "@/lib/ranking/events";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listSavedIds, saveDaycare, unsaveDaycare } from "@/lib/server/family";
@@ -102,6 +103,7 @@ export function SaveListingButton({
       const nowSaved = res.saved;
       setSaved(nowSaved);
       markShortlistCache(daycareId, nowSaved, user.id);
+      if (nowSaved) trackRankingEvent("listing_saved", { listingId: daycareId });
       confirmAction(t, nowSaved ? "listingSaved" : "listingRemoved");
     } catch {
       setSaved(!next);

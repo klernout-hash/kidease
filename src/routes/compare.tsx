@@ -21,6 +21,7 @@ import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 import { parentMatchScore } from "@/lib/parent-match";
+import { trackRankingEvent } from "@/lib/ranking/events";
 import { parentUrgencyScore } from "@/lib/parent-urgency";
 import { useAppStore } from "@/lib/store";
 import { distanceKm } from "@/lib/proximity";
@@ -53,6 +54,10 @@ function ComparePage() {
   const ageGroup = useAppStore((s) => s.ageGroup);
   const incoming = Route.useSearch();
   const [items, setItems] = useState<DaycareCard[]>([]);
+
+  useEffect(() => {
+    trackRankingEvent("compare_opened", { ageGroup });
+  }, [ageGroup]);
 
   useEffect(() => {
     const keys = compareKeysFromSearch(incoming.slugs, readCompare());

@@ -20,6 +20,9 @@ export function searchMemoKey(input: {
   mode?: string;
   facility?: string;
   city?: string;
+  matchAge?: string | null;
+  wantSubsidy?: boolean;
+  schedules?: string[];
 }) {
   return [
     input.lat.toFixed(3),
@@ -36,6 +39,9 @@ export function searchMemoKey(input: {
     input.facility || "",
     typeof input.lat2 === "number" ? input.lat2.toFixed(3) : "",
     typeof input.lng2 === "number" ? input.lng2.toFixed(3) : "",
+    input.matchAge || "",
+    input.wantSubsidy ? "1" : "",
+    (input.schedules || []).join(","),
   ].join(":");
 }
 

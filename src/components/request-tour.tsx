@@ -8,6 +8,7 @@ import { getFamily } from "@/lib/server/family";
 import { bookTourSlot, listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { trackRankingEvent } from "@/lib/ranking/events";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import {
@@ -159,6 +160,7 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
         },
       });
       capturePostHogEvent("listing_request_submitted", { intent: "tour" });
+      trackRankingEvent("tour_requested", { listingId: daycare.id, city: daycare.city });
       await holdSendBeat();
       if (!send.live(token)) return;
       setDone({

@@ -300,6 +300,23 @@ export function isPostHogFlagEnabled(flag: string): boolean | undefined {
   return client?.isFeatureEnabled(flag);
 }
 
+/** Whether PostHog has loaded flags and this key is actually in the payload. */
+export function readPostHogFlagState(flag: string): {
+  loaded: boolean;
+  known: boolean;
+  value: boolean | string | undefined;
+} {
+  if (!client) return { loaded: false, known: false, value: undefined };
+  const loaded = Boolean(client.featureFlags?.hasLoadedFlags);
+  if (!loaded) return { loaded: false, known: false, value: undefined };
+  const known = client.featureFlags.getFlags().includes(flag);
+  return {
+    loaded: true,
+    known,
+    value: known ? client.getFeatureFlag(flag) : undefined,
+  };
+}
+
 /**
  * Identify with the Better Auth user id only — no email, name, or other PII.
  * Skip the sandbox `dev-user` so preview traffic is not pooled.

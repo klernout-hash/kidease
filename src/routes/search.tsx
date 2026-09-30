@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
@@ -66,7 +66,10 @@ import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anc
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { DaycareCard as Card } from "@/lib/types";
-import { capturePostHogEvent } from "@/lib/posthog";
+import { capturePostHogEvent, readPostHogFlagState } from "@/lib/posthog";
+import { BEST_MATCH_FLAG, rankSessionSeed, resolveBestMatchVariant, type RankVariant } from "@/lib/ranking/flag";
+import { rememberRankContext } from "@/lib/ranking/context";
+import { trackRankingEvent } from "@/lib/ranking/events";
 import {
   honestVacancy,
   isSearchAge,
@@ -179,6 +182,7 @@ export const Route = createFileRoute("/search")({
       sched?: string;
       fac?: string;
       city?: string;
+      bm?: "0" | "1";
     } = { ...fields };
     const city = typeof s.city === "string" ? s.city.trim().slice(0, 80) : "";
     if (city) out.city = city;
@@ -199,7 +203,8 @@ export const Route = createFileRoute("/search")({
     else if (typeof s.facility === "string" && isCareType(s.facility)) out.care = s.facility;
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
     const parent = compactParentListingSearch(parseParentListingSearch(s));
-    return { ...out, ...parent };
+    const bm = s.bm === "1" || s.bm === "0" ? s.bm : undefined;
+    return { ...out, ...parent, ...(bm ? { bm } : {}) };
   },
   head: ({ loaderData }) => {
     const seo = pageSeoHead(MARKETING_PAGE_SEO.search);
@@ -243,6 +248,11 @@ function SearchPage() {
   const setSort = useAppStore((s) => s.setSort);
   const ageGroup = useAppStore((s) => s.ageGroup);
   const setAgeGroup = useAppStore((s) => s.setAgeGroup);
+  const rankForce = useRef<RankVariant | null>(incoming.bm === "1" ? "best_match" : incoming.bm === "0" ? "nearest" : null);
+  const rankPicked = useRef(Boolean(incoming.sort));
+  const rankLogged = useRef("");
+  const [rankVariant, setRankVariant] = useState<RankVariant>("nearest");
+  const [rankReady, setRankReady] = useState(false);
   const view = useAppStore((s) => s.view);
   const setView = useAppStore((s) => s.setView);
   const liveOnly = useAppStore((s) => s.liveOnly);
@@ -325,6 +335,41 @@ function SearchPage() {
       setNeedBy(startWindowToDate(incoming.start));
     }
   }, [incoming.sort, incoming.age, incoming.cat, incoming.care, incoming.favorites, incoming.start, incoming.openings, setSort, setAgeGroup]);
+
+  useEffect(() => {
+    const seed = rankSessionSeed();
+    const apply = () => {
+      const flag = readPostHogFlagState(BEST_MATCH_FLAG);
+      setRankVariant(
+        resolveBestMatchVariant({
+          flagKnown: flag.known,
+          flag: flag.value,
+          seed,
+          force: rankForce.current,
+        }),
+      );
+      setRankReady(true);
+    };
+    apply();
+    const id = window.setInterval(apply, 500);
+    const stop = window.setTimeout(() => window.clearInterval(id), 4000);
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(stop);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!rankReady) return;
+    if (rankVariant === "nearest" && sort === "match") {
+      setSort("distance");
+      return;
+    }
+    if (rankVariant === "best_match" && !rankPicked.current && sort !== "match") {
+      setSort("match");
+      rankPicked.current = true;
+    }
+  }, [rankReady, rankVariant, sort, setSort]);
 
   useEffect(() => {
     setNameQuery(incoming.name ?? "");
@@ -450,6 +495,8 @@ function SearchPage() {
   );
   const cameraHome = viewAnchors.home;
   const placeQuery = viewAnchors.q;
+  const rankParent = parseParentListingSearch(incoming);
+  const rankKey = sort === "match" ? `${ageGroup}|${ten ? 1 : 0}|${rankParent.sched.join(",")}` : "";
   const searchData = {
     lat: cameraHome.lat,
     lng: cameraHome.lng,
@@ -465,6 +512,9 @@ function SearchPage() {
     lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
     lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
     mode: viewAnchors.mode,
+    matchAge: sort === "match" ? ageGroup : "any",
+    wantSubsidy: sort === "match" && ten,
+    schedules: sort === "match" ? [...rankParent.sched] : [],
   };
   const cacheInput = {
     lat: cameraHome.lat,
@@ -480,6 +530,7 @@ function SearchPage() {
     lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
     lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
     mode: viewAnchors.mode,
+    matchAge: rankKey,
   };
   const locationLock = useMemo(
     () =>
@@ -561,6 +612,7 @@ function SearchPage() {
     workOrigin?.lat,
     workOrigin?.lng,
     anchorMode,
+    rankKey,
   ]);
 
   const parentFilters = useMemo(() => parseParentListingSearch(incoming), [incoming]);
@@ -1024,6 +1076,56 @@ function SearchPage() {
       n_age_unknown: split.ageUnknown.length,
     });
   }, [gated, items, shownList.length, split.ageUnknown.length, resultCount]);
+  useEffect(() => {
+    if (!rankReady || items === null) return;
+    const positions: Record<string, number> = {};
+    shownList.forEach((row, index) => {
+      positions[row.id] = index + 1;
+    });
+    const activeSort = rankVariant === "nearest" && sort === "match" ? "distance" : sort;
+    rememberRankContext({ sort: activeSort, variant: rankVariant, positions });
+    const cityRaw = (incoming.city || origin.label || "").trim();
+    const cityParts = cityRaw.split(",").map((part) => part.trim()).filter(Boolean);
+    const city = (/\d/.test(cityParts[0] || "") && cityParts[1] ? cityParts[1] : cityParts[0] || "").slice(0, 80);
+    const filters = [
+      ten ? "ten" : "",
+      meals ? "meals" : "",
+      outdoor ? "outdoor" : "",
+      inclusive ? "inclusive" : "",
+      extended ? "extended" : "",
+      openingsOn ? "openings" : "",
+      ageGroup !== "any" ? ageGroup : "",
+    ]
+      .filter(Boolean)
+      .join(",");
+    const logKey = `${city}|${ageGroup}|${activeSort}|${resultCount}|${rankVariant}|${filters}`;
+    if (rankLogged.current === logKey) return;
+    rankLogged.current = logKey;
+    trackRankingEvent("search_performed", {
+      city,
+      ageGroup,
+      filters,
+      sort: activeSort,
+      resultCount,
+      variant: rankVariant,
+    });
+  }, [
+    rankReady,
+    rankVariant,
+    items,
+    shownList,
+    sort,
+    resultCount,
+    incoming.city,
+    origin.label,
+    ten,
+    meals,
+    outdoor,
+    inclusive,
+    extended,
+    openingsOn,
+    ageGroup,
+  ]);
   const resolvedCat = resolvedExploreCategory(incoming);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
@@ -1478,15 +1580,26 @@ function SearchPage() {
               {(
                 [
                   ["match", t("sortMatch")],
+                  ["distance", t("sortDistance")],
                   ["urgency", t("sortUrgency")],
                   ["recommended", t("sortRecommended")],
-                  ["distance", t("sortDistance")],
                   ["price", t("sortPrice")],
                   ["rating", t("sortRating")],
                   ["availability", t("sortOpen")],
                 ] as [SortKey, string][]
-              ).map(([k, label]) => (
-                <ChipButton key={k} on={sort === k} aria-pressed={sort === k} onClick={() => setSort(k)}>
+              )
+                .filter(([k]) => k !== "match" || rankVariant === "best_match")
+                .map(([k, label]) => (
+                <ChipButton
+                  key={k}
+                  on={sort === k}
+                  aria-pressed={sort === k}
+                  data-ke={k === "match" ? "sort-best-match" : k === "distance" ? "sort-nearest" : undefined}
+                  onClick={() => {
+                    rankPicked.current = true;
+                    setSort(k);
+                  }}
+                >
                   {label}
                 </ChipButton>
               ))}

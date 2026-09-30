@@ -15,6 +15,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
+import { Route as AdminDemandRouteImport } from './routes/admin-demand'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
@@ -148,6 +149,11 @@ const AdminChatRoute = AdminChatRouteImport.update({
 const AdminContractsRoute = AdminContractsRouteImport.update({
   id: '/admin-contracts',
   path: '/admin-contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDemandRoute = AdminDemandRouteImport.update({
+  id: '/admin-demand',
+  path: '/admin-demand',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
@@ -680,6 +686,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
+  '/admin-demand': typeof AdminDemandRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
@@ -792,6 +799,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
+  '/admin-demand': typeof AdminDemandRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
@@ -903,6 +911,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
+  '/admin-demand': typeof AdminDemandRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
@@ -1017,6 +1026,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-chat'
     | '/admin-contracts'
+    | '/admin-demand'
     | '/admin-email-health'
     | '/app-icon'
     | '/benefits'
@@ -1129,6 +1139,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-chat'
     | '/admin-contracts'
+    | '/admin-demand'
     | '/admin-email-health'
     | '/app-icon'
     | '/benefits'
@@ -1239,6 +1250,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-chat'
     | '/admin-contracts'
+    | '/admin-demand'
     | '/admin-email-health'
     | '/app-icon'
     | '/benefits'
@@ -1352,6 +1364,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
+  AdminDemandRoute: typeof AdminDemandRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
@@ -1474,6 +1487,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-contracts'
       fullPath: '/admin-contracts'
       preLoaderRoute: typeof AdminContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-demand': {
+      id: '/admin-demand'
+      path: '/admin-demand'
+      fullPath: '/admin-demand'
+      preLoaderRoute: typeof AdminDemandRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-email-health': {
@@ -2322,6 +2342,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
+  AdminDemandRoute: AdminDemandRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,

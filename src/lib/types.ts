@@ -76,6 +76,21 @@ export type Daycare = {
   qualityScore?: number;
   guestFavorite?: boolean;
   matchScore?: number;
+  /** Why-this-match reason codes. Only set for Best match sort. */
+  matchWhy?: Array<
+    | "close_home"
+    | "close_work"
+    | "close_both"
+    | "age_fit"
+    | "ages_listed"
+    | "spots_fresh"
+    | "subsidy"
+    | "hours"
+    | "complete"
+    | "claim"
+  >;
+  matchWhyDays?: number | null;
+  matchWhyAge?: string | null;
   urgencyScore?: number;
   replyMedianHours?: number | null;
   replySample?: number;

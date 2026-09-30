@@ -26,7 +26,7 @@ import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { TrustBadge, TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
-import { MatchCue, UrgencyCue } from "@/components/rank-cues";
+import { MatchCue, MatchWhy, UrgencyCue } from "@/components/rank-cues";
 import { CompareChip } from "@/components/compare-chip";
 import {
   canShowMatchScore,
@@ -381,6 +381,9 @@ export const DaycareCard = memo(function DaycareCard({
             <p className="truncate text-[12px] font-normal leading-4 text-muted">{item.city}</p>
           )}
           {line3 ? <p className="truncate text-[12px] font-normal leading-4 text-muted">{line3}</p> : null}
+          {!compact && item.matchWhy?.length ? (
+            <MatchWhy reasons={item.matchWhy} age={item.matchWhyAge} days={item.matchWhyDays} />
+          ) : null}
           {gaps.length ? (
             <p className="truncate text-[12px] font-normal leading-4 text-muted">
               {gaps.map((gap) => t(GAP_COPY[gap])).join(" · ")}

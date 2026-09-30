@@ -25,6 +25,11 @@ export const TOUR_HOLDS_CRON = "TZ=America/Winnipeg 50 * * * *";
 
 export const TOUR_HOLDS_EVENT = "kidease/tour-holds.expire";
 
+/** Nightly 2:15 Winnipeg — yesterday's demand vs supply table. */
+export const DEMAND_SUPPLY_CRON = "TZ=America/Winnipeg 15 2 * * *";
+
+export const DEMAND_SUPPLY_EVENT = "kidease/demand-supply.run";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }

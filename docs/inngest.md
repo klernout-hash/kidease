@@ -1,6 +1,6 @@
 # Inngest (background jobs)
 
-KidEase uses [Inngest](https://www.inngest.com) for durable background work. Jobs today: saved-search alerts (hourly), **waitlist pulse** (`kidease/waitlist.pulse`), and **tour soft-hold expiry** (`kidease/tour-holds.expire`). Later: SMS digests, DocuSign follow-ups.
+KidEase uses [Inngest](https://www.inngest.com) for durable background work. Jobs today: saved-search alerts (hourly), **waitlist pulse** (`kidease/waitlist.pulse`), **tour soft-hold expiry** (`kidease/tour-holds.expire`), and **demand vs supply** (`kidease/demand-supply.run`, nightly 2:15 America/Winnipeg). Later: SMS digests, DocuSign follow-ups.
 
 TanStack Start on Vercel — **not** a Next.js `app/api` route. The handler is `src/routes/api/inngest.ts` (`createFileRoute` + `inngest/edge`).
 
@@ -27,7 +27,7 @@ Absent keys = the Next/Vite app still boots. `/api/inngest` exists but Cloud can
 3. Sync:
    - Production: `https://www.kidease.ca/api/inngest`
    - Preview: `https://<preview>.vercel.app/api/inngest`
-4. After a successful sync you should see **Search alerts (hourly)** (`search-alerts-hourly`), **Waitlist pulse** (`waitlist-pulse`), and **Expire tour soft-holds** (`tour-holds-hourly`).
+4. After a successful sync you should see **Search alerts (hourly)** (`search-alerts-hourly`), **Waitlist pulse** (`waitlist-pulse`), **Expire tour soft-holds** (`tour-holds-hourly`), and **Demand vs supply (nightly)** (`demand-supply-nightly`).
 5. Local: `npx inngest-cli@latest dev` and `npm run dev`. Dev Server discovers `http://localhost:8080/api/inngest`. Local keys are not required.
 
 If Preview has Vercel Deployment Protection, enable **Protection Bypass for Automation** and add that secret in the Inngest Vercel integration so Cloud can reach `/api/inngest`.
