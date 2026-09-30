@@ -36,8 +36,8 @@ export type LegalDoc = {
   disclaimer: string;
 };
 
-const UPDATED_EN = "Effective 7 September 2026 · KidEase · Winnipeg, Manitoba";
-const UPDATED_FR = "En vigueur le 7 septembre 2026 · KidEase · Winnipeg (Manitoba)";
+const UPDATED_EN = "Effective 30 September 2026 · KidEase · Winnipeg, Manitoba";
+const UPDATED_FR = "En vigueur le 30 septembre 2026 · KidEase · Winnipeg (Manitoba)";
 
 const DISCLAIMER_EN =
   "This page explains how KidEase handles personal information and how the service works. It is not legal advice. Official PIPEDA text lives on the Privacy Commissioner of Canada website.";
@@ -158,9 +158,9 @@ export const PRIVACY_EN: LegalDoc = {
               hrefLabel: "Cloudflare Privacy Policy",
             },
             {
-              name: "Stripe, when card payments are enabled",
+              name: "Stripe",
               purpose:
-                "Card, Apple Pay, and Google Pay for a first-month deposit after a centre offers a spot. We send amount, currency (CAD), and a booking reference — not full card numbers and not medical notes. Until a live Stripe key is on, charges stay on KidEase’s internal ledger and are not taken from a card.",
+                "Card, Apple Pay, and Google Pay for a first-month deposit after a centre offers a spot, and for KidEase plan charges. We send amount, currency (CAD), and a booking or plan reference — not full card numbers and not medical notes. Stripe processes the card. KidEase does not store the full card number.",
               href: "https://stripe.com/en-ca/privacy",
               hrefLabel: "Stripe Privacy Policy",
             },
@@ -271,16 +271,15 @@ export const PRIVACY_EN: LegalDoc = {
     },
     {
       id: "payments",
-      title: "Payments (Stripe when enabled)",
+      title: "Payments (Stripe)",
       blocks: [
         {
           type: "ul",
           items: [
             "Roles: a parent may pay a first-month deposit after the centre offers a spot. KidEase records the payment. The care contract stays between the parent and the centre. Childcare is a real-world service, not a digital in-app purchase.",
-            "When Stripe is live: Stripe processes the card, Apple Pay, or Google Pay. KidEase never stores the full card number. We may send Stripe the amount, CAD, payment method type, and identifiers for the booking, parent, and centre — not allergy or medical notes.",
-            "When Stripe is not live: the app can still show a receipt on an internal ledger. No card is charged.",
+            "Stripe processes the card, Apple Pay, or Google Pay. KidEase never stores the full card number. We may send Stripe the amount, CAD, payment method type, and identifiers for the booking, parent, and centre — not allergy or medical notes.",
             "Interac e-Transfer and other bank methods may be added later. We will say so on the pay screen when they are on.",
-            `Refunds follow the centre’s policy. Chargebacks, when Stripe is on, go through Stripe. Email ${SUPPORT_INBOX_EMAIL} if a deposit looks wrong.`,
+            `Refunds follow the centre’s policy. Chargebacks go through Stripe. Email ${SUPPORT_INBOX_EMAIL} if a deposit looks wrong.`,
           ],
         },
       ],
@@ -328,7 +327,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase is based in Winnipeg, Manitoba. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe when enabled, DocuSign when centre paperwork is sent, Cloudflare when proxied, PostHog when analytics is on, Sentry when error monitoring is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
+          text: "KidEase is based in Winnipeg, Manitoba. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe, DocuSign when centre paperwork is sent, Cloudflare when proxied, PostHog when analytics is on, Sentry when error monitoring is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
         },
       ],
     },
@@ -359,7 +358,7 @@ export const PRIVACY_EN: LegalDoc = {
             "Delete my account at /delete-account (or in the app) removes your children, messages, bookings, payments, saved centres, director links, profile, and sign-in rows on KidEase. This cannot be undone. Marketing email or SMS stops at /unsubscribe without deleting the account.",
             "Deletion does not erase copies a centre already received, emails already sitting in kyle@kidease.ca or Titan, or records a law or chargeback requires us to keep for a time.",
             `You can also email ${SUPPORT_INBOX_EMAIL} to access, correct, or delete.`,
-            "Security we actually use: HTTPS in transit; signed-in sessions in first-party cookies; OAuth tokens encrypted at rest; email sign-in codes; access checks on parent and director desks; payment card data (when Stripe is on) stays with Stripe; audit events do not store card numbers or medical notes.",
+            "Security we actually use: HTTPS in transit; signed-in sessions in first-party cookies; OAuth tokens encrypted at rest; email sign-in codes; access checks on parent and director desks; payment card data stays with Stripe; audit events do not store card numbers or medical notes.",
             "We do not claim the internet is risk-free. If a breach creates a real risk of significant harm, we will notify affected people and the Office of the Privacy Commissioner of Canada as PIPEDA requires.",
           ],
         },
@@ -514,9 +513,9 @@ export const PRIVACY_FR: LegalDoc = {
               hrefLabel: "Politique de confidentialité Cloudflare",
             },
             {
-              name: "Stripe, lorsque les paiements par carte sont activés",
+              name: "Stripe",
               purpose:
-                "Carte, Apple Pay et Google Pay pour un dépôt du premier mois. Nous envoyons le montant, le CAD et une référence — pas le numéro de carte complet ni les notes médicales. Tant qu’aucune clé Stripe en direct n’est en place, aucun prélèvement sur carte.",
+                "Carte, Apple Pay et Google Pay pour un dépôt du premier mois et pour les forfaits KidEase. Nous envoyons le montant, le CAD et une référence — pas le numéro de carte complet ni les notes médicales. Stripe traite la carte. KidEase ne conserve pas le numéro complet.",
               href: "https://stripe.com/en-ca/privacy",
               hrefLabel: "Politique de confidentialité Stripe",
             },
@@ -627,16 +626,15 @@ export const PRIVACY_FR: LegalDoc = {
     },
     {
       id: "payments",
-      title: "Paiements (Stripe lorsque activé)",
+      title: "Paiements (Stripe)",
       blocks: [
         {
           type: "ul",
           items: [
             "Rôles : un parent peut verser un dépôt du premier mois après une offre de place. Le contrat de garde reste entre le parent et le centre. Ce n’est pas un achat numérique.",
-            "Lorsque Stripe est en direct : Stripe traite la carte, Apple Pay ou Google Pay. KidEase ne conserve pas le numéro complet. Nous pouvons envoyer le montant, le CAD et des identifiants de réservation — pas les notes médicales.",
-            "Lorsque Stripe n’est pas en direct : un reçu interne peut s’afficher. Aucune carte n’est débitée.",
+            "Stripe traite la carte, Apple Pay ou Google Pay. KidEase ne conserve pas le numéro complet. Nous pouvons envoyer le montant, le CAD et des identifiants de réservation — pas les notes médicales.",
             "Le virement Interac et d’autres modes bancaires pourront s’ajouter plus tard.",
-            "Les remboursements suivent la politique du centre. Les rétrofacturations, si Stripe est actif, passent par Stripe.",
+            "Les remboursements suivent la politique du centre. Les rétrofacturations passent par Stripe.",
           ],
         },
       ],
@@ -684,7 +682,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase est à Winnipeg (Manitoba). Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe si activé, DocuSign si les documents du centre sont envoyés, Cloudflare si proxifié, PostHog si l’analytique est active, Sentry si le suivi des erreurs est actif). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
+          text: "KidEase est à Winnipeg (Manitoba). Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe, DocuSign si les documents du centre sont envoyés, Cloudflare si proxifié, PostHog si l’analytique est active, Sentry si le suivi des erreurs est actif). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
         },
       ],
     },
@@ -715,7 +713,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Supprimer mon compte à /delete-account (ou dans l’appli) efface enfants, messages, demandes, paiements, centres enregistrés, liens de direction, profil et sessions. Irréversible. /unsubscribe arrête les messages marketing sans supprimer le compte.",
             "La suppression n’efface pas les copies déjà reçues par un centre, les courriels déjà reçus, ni les dossiers qu’une loi ou une rétrofacturation exige.",
             `Vous pouvez aussi écrire à ${SUPPORT_INBOX_EMAIL}.`,
-            "Sécurité réelle : HTTPS; sessions en témoins internes; jetons OAuth chiffrés; codes par courriel; contrôles d’accès; les cartes (si Stripe) restent chez Stripe; les journaux d’audit ne stockent pas les numéros de carte ni les notes médicales.",
+            "Sécurité réelle : HTTPS; sessions en témoins internes; jetons OAuth chiffrés; codes par courriel; contrôles d’accès; les cartes restent chez Stripe; les journaux d’audit ne stockent pas les numéros de carte ni les notes médicales.",
             "Si une atteinte crée un risque réel de préjudice important, nous aviserons les personnes concernées et le Commissariat, comme l’exige la LPRPDE.",
           ],
         },
@@ -1037,7 +1035,7 @@ export const TERMS_EN: LegalDoc = {
           type: "ul",
           items: [
             "In-app deposits, when offered, hold a spot after the centre accepts a request. Refunds follow that centre’s policy.",
-            "When Stripe is enabled, cards are processed by Stripe. KidEase does not store full card numbers. Until Stripe is live, on-screen payments may be an internal record only.",
+            "Cards, Apple Pay, and Google Pay are processed by Stripe. KidEase does not store full card numbers.",
             "Interac or other bank methods may be added later and will be labelled on the pay screen.",
           ],
         },
@@ -1180,7 +1178,7 @@ export const TERMS_FR: LegalDoc = {
           type: "ul",
           items: [
             "Les dépôts dans l’appli, le cas échéant, retiennent une place après acceptation. Les remboursements suivent la politique du centre.",
-            "Lorsque Stripe est activé, les cartes passent par Stripe. KidEase ne conserve pas les numéros complets. Tant que Stripe n’est pas en direct, l’écran peut n’être qu’un registre interne.",
+            "Les paiements par carte, Apple Pay et Google Pay sont traités par Stripe. KidEase ne conserve pas les numéros complets.",
             "Le virement Interac ou d’autres modes pourront s’ajouter plus tard.",
           ],
         },

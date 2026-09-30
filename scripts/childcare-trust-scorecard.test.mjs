@@ -37,14 +37,13 @@ test("footer How we verify listings goes to /verify, not /about", () => {
   assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/daycare-requirements/);
 });
 
-test("claim and help copy stay honest until Stripe payouts are live", () => {
+test("claim and help copy say Stripe card payments are live", () => {
   const copy = src("src/lib/copy.ts");
-  assert.match(copy, /perkPay:\s*\n\s*"Card payments to your bank are not turned on yet/);
   assert.match(copy, /perkPayLive: "Payments processed in the app and paid to you directly, quickly"/);
-  assert.match(src("src/routes/claim.tsx"), /payoutsLive \? "perkPayLive" : "perkPay"/);
-  assert.match(src("src/routes/claim.tsx"), /stripePayoutsLive/);
-  assert.match(src("src/lib/help-knowledge.ts"), /Bank payouts are not turned on yet/);
-  assert.doesNotMatch(src("src/lib/help-knowledge.ts"), /payments paid to you/);
+  assert.match(src("src/routes/claim.tsx"), /"perkPayLive"/);
+  assert.doesNotMatch(src("src/routes/claim.tsx"), /payoutsLive \? "perkPayLive"/);
+  assert.match(src("src/lib/help-knowledge.ts"), /Card payments are processed in the app through Stripe/);
+  assert.doesNotMatch(src("src/lib/help-knowledge.ts"), /not turned on yet/);
   assert.equal(stripeChargesLive(""), false);
   assert.equal(stripePayoutsLive("sk_live_example", ""), false);
   assert.equal(stripePayoutsLive("sk_live_example", "0"), false);

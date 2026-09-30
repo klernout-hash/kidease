@@ -12,7 +12,6 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
-import { stripePayoutsLive } from "@/lib/stripe-live";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
@@ -20,7 +19,6 @@ import { isListingPhotoTooBig } from "@/lib/upload-limits";
 
 export const Route = createFileRoute("/claim")({
   head: () => pageSeoHead(MARKETING_PAGE_SEO.claim),
-  loader: () => ({ payoutsLive: stripePayoutsLive() }),
   validateSearch: (s: Record<string, unknown>) => {
     const q = typeof s.q === "string" ? s.q : "";
     const id = typeof s.id === "string" ? s.id : "";
@@ -33,7 +31,6 @@ export const Route = createFileRoute("/claim")({
 });
 
 function ClaimPage() {
-  const { payoutsLive } = Route.useLoaderData();
   const search = Route.useSearch();
   const q0 = search.q ?? "";
   const id0 = search.id ?? "";
@@ -391,7 +388,7 @@ function ClaimPage() {
                 [MessageCircle, "perkChat"],
                 [MapPin, "perkNear"],
                 [Smartphone, "perkMobile"],
-                [Wallet, payoutsLive ? "perkPayLive" : "perkPay"],
+                [Wallet, "perkPayLive"],
                 [TrendingUp, "perkGrow"],
               ] as const
             ).map(([Icon, key]) => (
