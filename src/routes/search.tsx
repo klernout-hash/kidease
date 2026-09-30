@@ -1292,9 +1292,7 @@ function SearchPage() {
         />
         <div className="ke-explore-filter-sticky mt-3">
         <ExploreFilterBar
-          liveOnly={liveOnly}
           listingCount={items !== null ? resultCount : undefined}
-          onLiveOnly={setLiveOnly}
           ageChips={
             <ExploreCategoryChips
               selected={selectedAges}

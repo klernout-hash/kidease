@@ -6,32 +6,6 @@ import { ChipCarousel } from "@/components/chip-carousel";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
-function ReplyOnKidEaseToggle({
-  liveOnly,
-  listingCount,
-  onLiveOnly,
-}: {
-  liveOnly: boolean;
-  listingCount?: number;
-  onLiveOnly: (live: boolean) => void;
-}) {
-  const { t } = useCopy();
-  return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={liveOnly}
-      data-ke="reply-on-kidease"
-      data-listing-count={listingCount}
-      className="ke-reply-toggle"
-      onClick={() => onLiveOnly(!liveOnly)}
-    >
-      <span className="ke-reply-box" aria-hidden="true" />
-      <span>{t("replyOnKidEase")}</span>
-    </button>
-  );
-}
-
 function IconToggle({
   pressed,
   label,
@@ -69,9 +43,7 @@ function IconToggle({
 }
 
 export function ExploreFilterBar({
-  liveOnly,
   listingCount,
-  onLiveOnly,
   ageChips,
   nearMeOn,
   onNearMe,
@@ -87,9 +59,7 @@ export function ExploreFilterBar({
   onMap,
   className,
 }: {
-  liveOnly: boolean;
   listingCount?: number;
-  onLiveOnly: (live: boolean) => void;
   ageChips: ReactNode;
   nearMeOn: boolean;
   onNearMe: () => void;
@@ -112,9 +82,8 @@ export function ExploreFilterBar({
       className={cn("ke-explore-filter-bar", className)}
       data-ke="explore-filter-bar"
       data-search-row="filter-bar"
+      data-listing-count={listingCount}
     >
-      <ReplyOnKidEaseToggle liveOnly={liveOnly} listingCount={listingCount} onLiveOnly={onLiveOnly} />
-
       <ChipCarousel
         compact
         arrows={false}
