@@ -125,7 +125,29 @@ export function NavDrawer({
             <X className="size-6" strokeWidth={1.75} />
           </button>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {!signedIn && menusReady ? (
+          <div className="border-b border-border px-3 py-3">
+            <Link
+              to={loginTo}
+              search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
+              onClick={onClose}
+              className="flex min-h-12 items-center gap-3 rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
+            >
+              <MenuGlyph id="parent" className="text-primary-fg" />
+              {parentLabel}
+            </Link>
+            <Link
+              to={loginTo}
+              search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
+              onClick={onClose}
+              className="mt-2 flex min-h-12 items-center gap-3 rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
+            >
+              <MenuGlyph id="daycare" />
+              {providerLabel}
+            </Link>
+          </div>
+        ) : null}
+        <nav className="flex-1 overflow-y-auto px-3 py-3">
           <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
           {menusReady ? <RoleNavLinks role={role} paid={paid} appearance="drawer" onNavigate={onClose} /> : null}
           {signedIn ? (
@@ -152,9 +174,9 @@ export function NavDrawer({
             </span>
           ))}
           <ShareKidEaseButton appearance="drawer" onDone={onClose} />
-          <div className="my-3 h-px bg-border" />
           {signedIn ? (
             <>
+              <div className="my-3 h-px bg-border" />
               <Link
                 to={accountHref}
                 search={accountSearch}
@@ -176,40 +198,19 @@ export function NavDrawer({
                 {t("signOut")}
               </button>
             </>
-          ) : menusReady ? (
-            <>
-              <Link
-                to={loginTo}
-                search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
-                onClick={onClose}
-                className="flex min-h-12 items-center gap-3 rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
-              >
-                <MenuGlyph id="parent" className="text-primary-fg" />
-                {parentLabel}
-              </Link>
-              <Link
-                to={loginTo}
-                search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
-                onClick={onClose}
-                className="mt-2 flex min-h-12 items-center gap-3 rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
-              >
-                <MenuGlyph id="daycare" />
-                {providerLabel}
-              </Link>
-            </>
           ) : null}
-          <div className="mt-4 flex items-center gap-3 overflow-visible rounded-full bg-surface px-3 ring-1 ring-border">
+        </nav>
+        <div className="space-y-2 border-t border-border px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="flex items-center gap-3 overflow-visible rounded-full bg-surface px-3 ring-1 ring-border">
             <MenuGlyph id="language" />
             <LanguageSelect className="w-full justify-start" />
           </div>
-          <div className="mt-3 rounded-xl bg-surface px-3 py-3 ring-1 ring-border">
-            <div className="mb-2 flex items-center gap-3 px-0">
-              <MenuGlyph id="appearance" />
-              <span className="text-[13px] font-medium text-muted">{t("appearance")}</span>
-            </div>
-            <AppearanceControl />
+          <div className="flex items-center gap-3 overflow-visible rounded-full bg-surface px-3 ring-1 ring-border">
+            <MenuGlyph id="appearance" />
+            <span className="shrink-0 text-[13px] font-medium text-muted">{t("appearance")}</span>
+            <AppearanceControl variant="select" className="min-w-0 flex-1 justify-end" />
           </div>
-        </nav>
+        </div>
       </aside>
     </div>,
     document.body,

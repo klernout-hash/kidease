@@ -1112,14 +1112,15 @@
   }
   .ke-listing-hero {
     width: 100%;
-    aspect-ratio: 4 / 3;
-    max-height: min(22rem, 52dvh);
+    aspect-ratio: 16 / 9;
+    max-height: min(16rem, 38dvh);
+    overflow: hidden;
     background: var(--color-surface-2);
   }
   .ke-listing-hero[data-empty="true"] {
     width: 100%;
-    aspect-ratio: 5 / 2;
-    max-height: min(11rem, 32dvh);
+    aspect-ratio: 2 / 1;
+    max-height: none;
   }
   @media (min-width: 1024px) {
     .ke-listing-hero {
@@ -1127,7 +1128,8 @@
       max-height: 20rem;
     }
     .ke-listing-hero[data-empty="true"] {
-      max-height: 11rem;
+      aspect-ratio: 5 / 2;
+      max-height: 13rem;
     }
   }
   .ke-listing-jump {

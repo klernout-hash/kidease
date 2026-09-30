@@ -38,7 +38,9 @@ export function RoleNavLinks({
   onNavigate?: () => void;
 }) {
   const { t } = useCopy();
-  const items = roleNavItems({ role, paid }).map((item) => ({
+  const items = roleNavItems({ role, paid })
+    .filter((item) => !(appearance === "drawer" && item.id === "signin"))
+    .map((item) => ({
     ...item,
     label: item.id === "upgrade" ? t(paid ? "navMyPlan" : "navUpgrade") : NAV_KEY[item.id] ? t(NAV_KEY[item.id]) : item.label,
   }));
