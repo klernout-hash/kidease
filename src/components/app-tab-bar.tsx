@@ -168,7 +168,7 @@ function Tab({
       data-nav={marker}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 px-0.5 text-center text-[11px] font-medium leading-tight tracking-wide",
+        "flex h-[3.35rem] min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-center text-[10px] font-medium leading-[1.05] sm:text-[11px]",
         active ? "text-primary" : "text-muted",
       )}
     >
@@ -178,7 +178,7 @@ function Tab({
         fill={active && Icon === Heart ? "currentColor" : "none"}
         aria-hidden
       />
-      {label}
+      <span className="line-clamp-2 w-full break-words">{label}</span>
     </Link>
   );
 }

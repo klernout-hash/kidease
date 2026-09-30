@@ -120,8 +120,8 @@ export function HomeCareTypeRow({
   const { t } = useCopy();
   return (
     <div
-      className={`flex overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center [&::-webkit-scrollbar]:hidden ${
-        compact ? "mx-auto w-max max-w-none justify-start gap-1 px-0.5" : "gap-1 pb-1"
+      className={`flex w-full min-w-0 justify-start overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] lg:[justify-content:safe_center] [&::-webkit-scrollbar]:hidden ${
+        compact ? "gap-1 px-0.5" : "gap-1 pb-1"
       }`}
       data-ke="home-care-types"
       role="tablist"
