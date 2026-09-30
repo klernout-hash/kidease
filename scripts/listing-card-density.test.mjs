@@ -48,7 +48,8 @@ test("listing card copy stays a compact single stack with 44px save target", () 
   assert.doesNotMatch(card, /aspect-\[20\/19\]/);
   assert.match(card, /SaveListingButton/);
   assert.match(save, /grid place-items-center rounded-full/);
-  assert.match(save, /size-12 bg-white shadow-\[0_2px_10px_rgba\(0,0,0,0\.32\)\]/);
+  assert.match(save, /size-12 bg-white ring-1 ring-black\/10/);
+  assert.doesNotMatch(save, /shadow-\[0_2px_10px_rgba\(0,0,0,0\.32\)\]/);
   assert.match(save, /size-7/);
   assert.doesNotMatch(card, /Guest favourite/);
 });
