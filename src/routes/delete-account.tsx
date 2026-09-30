@@ -8,7 +8,7 @@ import { DeskSkeleton } from "@/components/page-skeleton";
 export const Route = createFileRoute("/delete-account")({
   head: () => ({
     meta: [
-      { title: "Delete my account · KidEase" },
+      { title: "Delete account · KidEase" },
       {
         name: "description",
         content: "PIPEDA account deletion for KidEase — sign in to remove your account and family data.",
@@ -28,6 +28,10 @@ function DeleteAccountPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{t("privacy")}</p>
         <h1 className="mt-2 font-display text-3xl tracking-[-0.03em]">{t("deleteAccount")}</h1>
         <p className="mt-3 text-muted">{t("deleteAccountLead")}</p>
+        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-muted" data-ke="delete-account-kept">
+          <li>{t("deleteAccountKeepBilling")}</li>
+          <li>{t("deleteAccountKeepLogs")}</li>
+        </ul>
         {isPending ? (
           <DeskSkeleton />
         ) : (

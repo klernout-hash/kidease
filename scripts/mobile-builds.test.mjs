@@ -22,7 +22,7 @@ function read(rel) {
 describe("Capacitor production config", () => {
   it("defaults the native WebView to https://www.kidease.ca", () => {
     const cap = read("capacitor.config.ts");
-    assert.match(cap, /appId:\s*CAP_APP_ID|appId:\s*"ca\.daycarenearme\.app"/);
+    assert.match(cap, /appId:\s*CAP_APP_ID|appId:\s*"ca\.kidease\.app"/);
     assert.match(cap, /appName:\s*CAP_APP_NAME|appName:\s*"KidEase"/);
     assert.match(cap, /https:\/\/www\.kidease\.ca/);
     assert.match(cap, /www\.kidease\.ca/);
@@ -30,7 +30,7 @@ describe("Capacitor production config", () => {
     assert.match(cap, /CAP_SERVER_URL/);
     assert.match(cap, /allowMixedContent:\s*remote\.startsWith\("http:\/\/"\)/);
     assert.doesNotMatch(cap, /ACCESS_BACKGROUND_LOCATION|NSLocationAlways/);
-    assert.equal(CAP_APP_ID, "ca.daycarenearme.app");
+    assert.equal(CAP_APP_ID, "ca.kidease.app");
     assert.equal(CAP_APP_NAME, "KidEase");
     assert.equal(CAP_PROD_SERVER_URL, "https://www.kidease.ca");
     assert.equal(CAP_PROD_HOSTNAME, "www.kidease.ca");
@@ -118,9 +118,9 @@ describe("native project scaffolding", () => {
     assert.match(read("ios/App/App/fr.lproj/InfoPlist.strings"), /garderies/);
 
     const gradle = read("android/app/build.gradle");
-    assert.match(gradle, /ca\.daycarenearme\.app|applicationId/);
+    assert.match(gradle, /ca\.kidease\.app|applicationId/);
     assert.match(gradle, /key\.properties/);
-    assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /ca\.daycarenearme\.app/);
+    assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /ca\.kidease\.app/);
     assert.match(read("ios/App/App/capacitor.config.json"), /https:\/\/www\.kidease\.ca/);
     assert.match(read("android/app/src/main/assets/capacitor.config.json"), /https:\/\/www\.kidease\.ca/);
   });
@@ -136,7 +136,13 @@ describe("mobile build docs stay honest", () => {
     assert.match(doc, /Play internal|Internal testing/);
     assert.match(doc, /Physical device smoke checklist/);
     assert.match(doc, /https:\/\/www\.kidease\.ca/);
-    assert.match(doc, /ca\.daycarenearme\.app/);
+    assert.match(doc, /ca\.kidease\.app/);
+    assert.match(doc, /ANDROID_KEYSTORE_BASE64/);
+    assert.match(doc, /ANDROID_KEYSTORE_PASSWORD/);
+    assert.match(doc, /ANDROID_KEY_ALIAS/);
+    assert.match(doc, /ANDROID_KEY_PASSWORD/);
+    assert.match(doc, /android-release\.yml/);
+    assert.match(read(".github/workflows/android-release.yml"), /bundleRelease/);
     assert.doesNotMatch(doc, /store listing is live|listed on the App Store/i);
     assert.match(doc, /not\*\* live|are \*\*not\*\* live/);
     assert.match(doc, /store-readiness\.md/);
@@ -147,7 +153,7 @@ describe("mobile build docs stay honest", () => {
   it("keeps the Kyle-approved store-readiness checklist", () => {
     const checklist = read("docs/store-readiness.md");
     assert.match(checklist, /# KidEase — App Store & Google Play readiness checklist/);
-    assert.match(checklist, /ca\.daycarenearme\.app/);
+    assert.match(checklist, /ca\.kidease\.app/);
     assert.match(checklist, /https:\/\/www\.kidease\.ca/);
     assert.match(checklist, /\[ \] Public store listings live/);
     assert.match(checklist, /\[ \] Apple Developer Program enrolled/);
@@ -160,7 +166,7 @@ describe("mobile build docs stay honest", () => {
   it("keeps the Nov 1 Canada launch checklist honest about accounts", () => {
     const launch = read("docs/STORE-LAUNCH.md");
     assert.match(launch, /1 Nov 2026|1 November 2026/);
-    assert.match(launch, /ca\.daycarenearme\.app/);
+    assert.match(launch, /ca\.kidease\.app/);
     assert.match(launch, /XXXXXXXXXX/);
     assert.match(launch, /APPLE_TEAM_ID/);
     assert.match(launch, /ANDROID_CERT_SHA256S/);

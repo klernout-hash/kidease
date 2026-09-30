@@ -3,12 +3,12 @@
     "apps": [],
     "details": [
       {
-        "appID": "XXXXXXXXXX.ca.daycarenearme.app",
+        "appID": "XXXXXXXXXX.ca.kidease.app",
         "paths": [
           "*"
         ],
         "appIDs": [
-          "XXXXXXXXXX.ca.daycarenearme.app"
+          "XXXXXXXXXX.ca.kidease.app"
         ],
         "components": [
           {
@@ -57,7 +57,7 @@
   },
   "webcredentials": {
     "apps": [
-      "XXXXXXXXXX.ca.daycarenearme.app"
+      "XXXXXXXXXX.ca.kidease.app"
     ]
   }
 }

@@ -24,6 +24,7 @@ import { isFrPath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
 import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
+import { bindAndroidBack } from "@/lib/android-back";
 import { usePushRegistration } from "@/lib/use-push";
 import { applyTheme, readThemePreference } from "@/lib/theme";
 
@@ -84,6 +85,24 @@ export function NativeBoot() {
     registerOfflineShell();
     void paintStatusBar();
     void hideNativeSplash();
+  }, []);
+
+  useEffect(() => {
+    let remove = () => {};
+    let cancelled = false;
+    void bindAndroidBack(
+      () => window.history.back(),
+      () => {
+        void import("@capacitor/app").then(({ App }) => App.exitApp());
+      },
+    ).then((stop) => {
+      if (cancelled) stop();
+      else remove = stop;
+    });
+    return () => {
+      cancelled = true;
+      remove();
+    };
   }, []);
 
   useEffect(() => {

@@ -4,7 +4,7 @@
  * Relative .ts imports so Node tests can load this file.
  */
 
-import { confirmedStoredFeeProgram } from "./fee-program.ts";
+import { confirmedFeeProgramBadge, confirmedStoredFeeProgram } from "./fee-program.ts";
 import { decodeHtml } from "./html-text.ts";
 import { formatPublicAgeRange, listingAgesConfirmed } from "./listing-ages.ts";
 import { classifyFacilityType, facilityTypeSeoKind } from "./facility-type.ts";
@@ -72,10 +72,28 @@ function agesKnown(src: ListingSeoSource) {
 }
 
 function feeProgramPhrase(src: ListingSeoSource, locale: ListingSeoLocale) {
-  if (confirmedStoredFeeProgram(src) !== "mb-10-day") return "";
-  return locale === "fr"
-    ? " Programme financé du Manitoba, tarif parental maximal réglementé de 10 $ par jour."
-    : " Manitoba funded fee program, maximum regulated parent fee $10 a day.";
+  if (confirmedStoredFeeProgram(src) === "mb-10-day") {
+    return locale === "fr"
+      ? " Programme financé du Manitoba, tarif parental maximal réglementé de 10 $ par jour."
+      : " Manitoba funded fee program, maximum regulated parent fee $10 a day.";
+  }
+  const pill = confirmedFeeProgramBadge(src);
+  if (pill === "badgeTen") {
+    return locale === "fr"
+      ? " Tarif parental de 10 $ par jour pour les âges visés par la province."
+      : " Parent fee is $10 a day for the ages this province covers.";
+  }
+  if (pill === "badgeQc965") {
+    return locale === "fr"
+      ? " Service de garde subventionné du Québec. Contribution réduite de 9,65 $ par jour en 2026."
+      : " Quebec subsidized childcare. The 2026 reduced contribution is $9.65 a day.";
+  }
+  if (pill === "badgeReduced") {
+    return locale === "fr"
+      ? " Réduction territoriale des frais. 10 $ par jour est une moyenne ici, pas un plafond."
+      : " Territorial fee reduction. $10 a day is an average here, not a cap.";
+  }
+  return "";
 }
 
 function agePhrase(src: ListingSeoSource, locale: ListingSeoLocale) {

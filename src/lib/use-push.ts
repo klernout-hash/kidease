@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { isNative } from "@/lib/native";
-import { registerPushDevice } from "@/lib/push-client";
 
 /**
  * Native-only, flag-gated token registration.
@@ -20,7 +19,7 @@ export function usePushRegistration(): void {
       .then(async ({ getPushClientStatus }) => {
         const status = await getPushClientStatus();
         if (cancelled || !status.enabled) return;
-        await registerPushDevice({ enabled: true });
+        // PushExplain asks in the app first. Do not open the system sheet here.
       })
       .catch(() => undefined);
 

@@ -14,7 +14,7 @@ export function PlanChoiceShelf({ role }: { role: "parent" | "provider" }) {
 
   if (picked) {
     return (
-      <section className="rounded-2xl bg-surface px-4 py-6 ring-1 ring-border" data-ke="checkout-step">
+      <section className="ke-digital-plan rounded-2xl bg-surface px-4 py-6 ring-1 ring-border" data-ke="checkout-step">
         <h1 className="font-display text-3xl">Checkout</h1>
         <p className="mt-2 text-sm text-muted">
           {picked} · prices in CA$. This preview does not charge a card.
@@ -24,7 +24,7 @@ export function PlanChoiceShelf({ role }: { role: "parent" | "provider" }) {
   }
 
   return (
-    <section className="space-y-4" data-ke="plan-shelf">
+    <section className="ke-digital-plan space-y-4" data-ke="plan-shelf">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Upgrade</p>
         <h1 className="mt-1 font-display text-3xl">{parent ? "Parent Plus" : "Upgrade your centre"}</h1>

@@ -1733,8 +1733,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
     const uid = context.userId;
     await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
     await sql`delete from conversations where user_id = ${uid}`;
-    await sql`delete from payments where user_id = ${uid}`;
-    await sql`delete from invoices where parent_user_id = ${uid}`.catch(() => undefined);
+    // Keep payment and invoice rows. Tax rules need the billing record after the account is gone.
     await sql`delete from bookings where user_id = ${uid}`;
     await sql`delete from children where user_id = ${uid}`;
     await sql`delete from saved_daycares where user_id = ${uid}`;

@@ -742,27 +742,34 @@ function ProviderPage() {
       ) : null}
 
       {desk === "promote" && centreOwner ? (
-        !showPay ? (
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
-        ) : listings.length === 0 ? (
-          <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("providerOnboardingLead")}</p>
-        ) : (
-          listings.map((d) => {
-            const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
-            return (
-            <section key={d.id} className="mb-6">
-              <h2 className="font-display text-2xl">{storedCentreName(d.name, d.nameFr)}</h2>
-              {declined ? (
-                <p className="mt-3 rounded-xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
-                  {t("promoteDeclined")}
-                </p>
-              ) : (
-                <PromotePanel daycare={d} onSaved={() => void load()} />
-              )}
-            </section>
-            );
-          })
-        )
+        <>
+          <p className="ke-native-plan-note mb-4 text-sm text-muted" data-ke="native-plan-note">
+            {t("nativePlansHidden")}
+          </p>
+          <div className="ke-digital-plan" data-ke="digital-plan">
+            {!showPay ? (
+              <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
+            ) : listings.length === 0 ? (
+              <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("providerOnboardingLead")}</p>
+            ) : (
+              listings.map((d) => {
+                const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
+                return (
+                  <section key={d.id} className="mb-6">
+                    <h2 className="font-display text-2xl">{storedCentreName(d.name, d.nameFr)}</h2>
+                    {declined ? (
+                      <p className="mt-3 rounded-xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
+                        {t("promoteDeclined")}
+                      </p>
+                    ) : (
+                      <PromotePanel daycare={d} onSaved={() => void load()} />
+                    )}
+                  </section>
+                );
+              })
+            )}
+          </div>
+        </>
       ) : null}
     </DeskShell>
     </TwoFactorGate>
