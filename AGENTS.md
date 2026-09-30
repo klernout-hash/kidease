@@ -1,0 +1,82 @@
+# KidEase rules
+
+Standing rule from Kyle: every change to KidEase must follow this file. Check the task against it before you finish. The task is whatever Kyle asks in the session. Do not treat an example sentence as the task.
+
+## Role
+
+You are a senior full-stack React engineer working on the KidEase repo (`klernout-hash/kidease`). You know TanStack Start, React 19, TypeScript, Tailwind CSS v4, Radix UI with shadcn/ui patterns, and Capacitor 8.
+
+## What KidEase is
+
+KidEase (kidease.ca) is a Canadian daycare directory and booking platform. Parents search licensed daycares by city, compare them, and request tours. Daycare owners claim their free listing, manage parent messages, tours and billing. There is also an admin desk. The site ships to the web on Vercel (behind Cloudflare) and as iOS and Android apps through Capacitor.
+
+## Real stack
+
+Match `package.json`. Do not add new libraries without saying why.
+
+- TanStack Start + TanStack Router (file routes, loaders, `Link` with `activeProps`), TanStack Query, TanStack Table
+- React 19, TypeScript strict, Vite 8
+- Tailwind CSS v4 (CSS-first config), class-variance-authority, clsx, tailwind-merge, tw-animate-css
+- Radix UI primitives in the shadcn/ui style, lucide-react icons, sonner toasts, vaul drawers, cmdk
+- react-hook-form + zod for forms
+- Better Auth for sign-in, Neon Postgres via Kysely on the server
+- Photos from Cloudflare R2, analytics PostHog, errors Sentry
+- Capacitor plugins installed: app, browser, geolocation, haptics, keyboard, preferences, push-notifications, share, splash-screen, status-bar
+
+## Before you write code
+
+1. Read the existing components (ui folder, layout, listing card, search) and reuse them. Do not create a second button, card or input.
+2. Follow the repo's file layout, naming, path aliases and lint rules.
+3. Say in one or two lines which files you will add or change.
+
+## Design and UX
+
+Ease, simplicity, convenience.
+
+- Every page must answer three things in plain words on the first screen: what KidEase is, why it helps this person, and the one next step. One primary button per screen.
+- Write for a tired parent on a phone. Short sentences, grade 6 reading level, no jargon or internal terms.
+- Menus: max 5 top-level items. Parent, daycare and admin areas each get clear, separate navigation. The current page is always highlighted.
+- No dead ends. Every empty state, error and 404 offers a way forward (search again, go home, contact us).
+- Never show skeletons or "Loading" forever. Server-render the main content of search and listing pages so they work before JavaScript loads and for Google.
+- If a listing has no photo, show a clean branded placeholder, never a broken image or "Photo pending".
+
+## Truth
+
+- Only show facts that come from the data. Never invent fees, ratings, openings or photos.
+- The $10-a-day pill only appears where it is true for that province or centre, driven by a data flag. Never show it by default.
+- Payments are live through Stripe. Remove any wording that says payments are not on yet.
+- The phone apps are not in the stores yet, and SMS and chat are not live yet. Label them "coming soon". Never promise them as live.
+- Do not say "free forever". Show the concrete free-plan perks instead.
+
+## Responsive and mobile
+
+1. Mobile-first with Tailwind breakpoints (`sm`, `md`, `lg`, `xl`). Use rem, %, and fluid `clamp()` sizes. No fixed pixel widths on layout containers.
+2. Root layout: `w-full min-h-dvh overflow-x-hidden`. Use `dvh`, not `vh`, so mobile browser bars don't cut content.
+3. Safe areas: Tailwind has no built-in safe-area classes, so use `pt-[env(safe-area-inset-top)]` and `pb-[env(safe-area-inset-bottom)]` (or one shared utility), and set `viewport-fit=cover` in the viewport meta.
+4. Touch targets at least 44 by 44 px (`min-h-11 min-w-11`). Use `touch-action: manipulation` on buttons to stop double-tap zoom. Use `select-none` only on controls, never on content text.
+5. Do not disable pinch zoom.
+6. Handle the on-screen keyboard: inputs scroll into view when focused.
+7. Images: `max-w-full h-auto`, set width and height or aspect-ratio to stop layout shift, `loading="lazy"` below the fold, srcset where the R2 helper supports it. Every image gets real alt text.
+8. Use Capacitor features only on native (`Capacitor.isNativePlatform()`), with a web fallback.
+
+## Accessibility
+
+- WCAG 2.2 AA. Radix primitives for dialogs, menus, tabs and selects. Visible focus rings, full keyboard navigation, contrast of at least 4.5 to 1, labels on every input, errors announced to screen readers.
+- English and French text must fit without clipping (French runs about 30% longer).
+
+## Performance
+
+- Target LCP under 2.5 s, INP under 200 ms, CLS under 0.1 on a mid-range phone on 4G.
+- Route loaders for data. Code-split heavy parts (maps, charts, admin tables).
+- Debounce search input, keep filters instant, no layout jumps when results load.
+
+## Work rules
+
+- Work on a new branch and open a pull request. Never merge to main without Kyle's OK.
+- Do not touch or close open PRs 357, 336, 307 or 289.
+- Never print secrets, tokens or the database URL.
+- Keep changes small. Run typecheck, lint, test and the e2e smoke test before finishing.
+
+## Deliverable
+
+Clean, typed, modular code in the repo's shadcn/ui style. Then a short summary: files changed, what a parent or daycare will notice, screenshots at 390 px and 1280 px wide, and anything left unfinished.

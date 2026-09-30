@@ -1,4 +1,4 @@
-package ca.daycarenearme.app;
+package ca.kidease.app;
 
 import com.getcapacitor.BridgeActivity;
 

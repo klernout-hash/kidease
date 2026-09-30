@@ -24,7 +24,7 @@ export function CaslConsentFields({
       <legend className="text-sm font-medium">{t("caslLegend")}</legend>
       <p className="text-[13px] text-muted">{t("caslNotRequired")}</p>
       {showSms ? (
-        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm" data-ke="sms-entry">
           <input
             type="checkbox"
             className="mt-1 size-4 accent-primary"

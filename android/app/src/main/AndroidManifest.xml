@@ -31,13 +31,13 @@
                 <data android:scheme="https" android:host="kidease.ca" />
             </intent-filter>
 
-            <!-- Custom schemes. KidEase:// matches iOS; ca.daycarenearme.app:// is the Capacitor appId. -->
+            <!-- Custom schemes. KidEase:// matches iOS; ca.kidease.app:// is the Capacitor appId. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="KidEase" />
-                <data android:scheme="ca.daycarenearme.app" />
+                <data android:scheme="ca.kidease.app" />
             </intent-filter>
 
         </activity>

@@ -152,6 +152,14 @@ describe("PostHog client wiring", () => {
         consent: "unset",
         env: { [POSTHOG_REPLAY_NATIVE_ENV]: "1" },
       }),
+      false,
+    );
+    assert.equal(
+      sessionReplayEnabled({
+        native: true,
+        consent: "granted",
+        env: { [POSTHOG_REPLAY_NATIVE_ENV]: "1" },
+      }),
       true,
     );
     assert.equal(
@@ -178,7 +186,7 @@ describe("PostHog client wiring", () => {
     assert.equal(native.api_host, `${POSTHOG_FIRST_PARTY_ORIGIN}${POSTHOG_PROXY_PATH}`);
   });
 
-  it("requires Allow before website PostHog and hides the banner in Capacitor", () => {
+  it("requires Allow before PostHog on the website and in Capacitor", () => {
     assert.equal(ANALYTICS_CONSENT_KEY, "kidease-analytics-consent");
     assert.equal(readAnalyticsConsent(memoryStorage()), "unset");
     assert.equal(analyticsConsentAllowsReplay("unset"), false);
@@ -188,12 +196,15 @@ describe("PostHog client wiring", () => {
     assert.equal(shouldShowAnalyticsConsentBanner({ native: false, consent: "unset" }), true);
     assert.equal(shouldShowAnalyticsConsentBanner({ native: false, consent: "granted" }), false);
     assert.equal(shouldShowAnalyticsConsentBanner({ native: false, consent: "denied" }), false);
-    assert.equal(shouldShowAnalyticsConsentBanner({ native: true, consent: "unset" }), false);
-    assert.equal(analyticsConsentApplies({ native: true }), false);
+    assert.equal(shouldShowAnalyticsConsentBanner({ native: true, consent: "unset" }), true);
+    assert.equal(shouldShowAnalyticsConsentBanner({ native: true, consent: "granted" }), false);
+    assert.equal(analyticsConsentApplies({ native: true }), true);
     assert.equal(shouldStartPostHog({ native: false, consent: "unset" }), false);
     assert.equal(shouldStartPostHog({ native: false, consent: "denied" }), false);
     assert.equal(shouldStartPostHog({ native: false, consent: "granted" }), true);
-    assert.equal(shouldStartPostHog({ native: true, consent: "unset" }), true);
+    assert.equal(shouldStartPostHog({ native: true, consent: "unset" }), false);
+    assert.equal(shouldStartPostHog({ native: true, consent: "denied" }), false);
+    assert.equal(shouldStartPostHog({ native: true, consent: "granted" }), true);
     const store = memoryStorage();
     writeAnalyticsConsent("denied", store);
     assert.equal(readAnalyticsConsent(store), "denied");

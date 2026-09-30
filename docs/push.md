@@ -34,7 +34,7 @@ Set the same keys on **Production and Preview** (encrypted). Never commit values
 | `FCM_PRIVATE_KEY` | Android / FCM HTTP v1 | PEM from the service account JSON. Paste the full key; keep `\n` escapes. |
 | `APNS_KEY_ID` | iOS | 10-character Key ID from Apple Developer → Keys. |
 | `APNS_TEAM_ID` | iOS | 10-character Team ID. |
-| `APNS_BUNDLE_ID` | iOS | `ca.daycarenearme.app` (Capacitor `appId`). |
+| `APNS_BUNDLE_ID` | iOS | `ca.kidease.app` (Capacitor `appId`). |
 | `APNS_KEY` | iOS | Contents of the Auth Key `.p8` (-----BEGIN PRIVATE KEY----- …). |
 | `APNS_PRODUCTION` | iOS TestFlight / App Store | `1` for production APNs (`api.push.apple.com`). Default / `0` is sandbox. TestFlight uses production. |
 | `VITE_FCM_VAPID_PUBLIC_KEY` | web push only | **Not used.** www stays off. Leave blank. |
@@ -46,14 +46,14 @@ Do **not** put `.p8` files, `google-services.json`, `GoogleService-Info.plist`, 
 ## Firebase (Android + FCM) — Kyle later
 
 1. Create a Firebase project (Google Cloud). Enable **Cloud Messaging**.
-2. Add an Android app with package `ca.daycarenearme.app`. Download `google-services.json` into `android/app/` on the laptop that cuts the Play build. That file is gitignored.
+2. Add an Android app with package `ca.kidease.app`. Download `google-services.json` into `android/app/` on the laptop that cuts the Play build. That file is gitignored.
 3. Project settings → Service accounts → generate a new private key. Copy `project_id`, `client_email`, and `private_key` into the Vercel names above.
 4. Do not enable Analytics / Crashlytics just to “turn push on.”
 
 ## Apple (.p8 + TestFlight entitlements) — Kyle later
 
 1. Apple Developer → Certificates, Identifiers & Profiles → **Keys** → create a key with **Apple Push Notifications service (APNs)** enabled. Download the `.p8` once. Copy Key ID → `APNS_KEY_ID`, Team ID → `APNS_TEAM_ID`, file body → `APNS_KEY`.
-2. Identifiers → `ca.daycarenearme.app` → enable **Push Notifications**.
+2. Identifiers → `ca.kidease.app` → enable **Push Notifications**.
 3. Xcode / Capacitor iOS target (after Apple enrollment):
    - Signing & Capabilities → **+ Push Notifications**.
    - **Background Modes** → Remote notifications (Info.plist already lists `remote-notification`).

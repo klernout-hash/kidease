@@ -122,18 +122,19 @@ export type SessionReplayGateInput = {
  * Whether this browser may start a recording.
  * Default on for web when the project key is set and the visitor allowed
  * analytics. Off when consent is unset or denied, the env kill switch is 0,
- * or we are in Capacitor (unless native replay is on).
+ * or we are in Capacitor without the native replay env. Consent is required
+ * on both surfaces — unset is not a yes.
  */
 export function sessionReplayEnabled(input: SessionReplayGateInput = {}): boolean {
   const env = input.env ?? viteEnv();
   if (envFlagSet(env[POSTHOG_REPLAY_ENV]) && !envFlagOn(env[POSTHOG_REPLAY_ENV])) {
     return false;
   }
+  const consent = input.consent ?? readAnalyticsConsent();
+  if (!analyticsConsentAllowsReplay(consent)) return false;
   const native = input.native ?? (typeof window !== "undefined" && isNative());
   if (native && !envFlagOn(env[POSTHOG_REPLAY_NATIVE_ENV])) return false;
-  if (native) return true;
-  const consent = input.consent ?? readAnalyticsConsent();
-  return analyticsConsentAllowsReplay(consent);
+  return true;
 }
 
 export function sanitizePostHogProperties(
@@ -277,7 +278,10 @@ export function flushQueuedPostHogEvents(ph?: PostHog | null): void {
 export function capturePostHogEvent(event: string, properties: Record<string, unknown> = {}): void {
   const name = event.trim();
   if (!name) return;
-  if (readAnalyticsConsent() === "denied") return;
+  const consent = readAnalyticsConsent();
+  if (consent === "denied") return;
+  // Native: do not queue or send until Allow. The website may still queue until Allow.
+  if (consent !== "granted" && isNative()) return;
   const props = sanitizePostHogProperties(properties, name);
   if (client) {
     client.capture(name, props);

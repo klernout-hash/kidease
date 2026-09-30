@@ -4,15 +4,12 @@
  * Stored in localStorage as `granted` or `denied` under ANALYTICS_CONSENT_KEY
  * (same key the PostHog replay gate already reads — do not invent another).
  *
- * - unset: no choice yet → do not load PostHog on the website; show the banner
+ * - unset: no choice yet → do not load PostHog; show the banner
  * - granted: visitor tapped Allow analytics
  * - denied: visitor tapped Essential (required cookies only)
  *
- * Capacitor does not use this banner. Native init stays on the existing
- * website-vs-native replay gates in `src/lib/posthog.ts`.
+ * The Capacitor shell uses the same Allow step before PostHog starts.
  */
-
-import { isNative } from "./native.ts";
 
 export type AnalyticsConsent = "unset" | "granted" | "denied";
 
@@ -81,17 +78,12 @@ export type AnalyticsConsentSurfaceInput = {
   consent?: AnalyticsConsent;
 };
 
-function resolveNative(input?: AnalyticsConsentSurfaceInput): boolean {
-  if (typeof input?.native === "boolean") return input.native;
-  return typeof window !== "undefined" && isNative();
+/** Website and the Capacitor shell. Unset is not a yes on either. */
+export function analyticsConsentApplies(_input: AnalyticsConsentSurfaceInput = {}): boolean {
+  return true;
 }
 
-/** Website (including mobile web chrome). Not the Capacitor shell. */
-export function analyticsConsentApplies(input: AnalyticsConsentSurfaceInput = {}): boolean {
-  return !resolveNative(input);
-}
-
-/** Show Essential vs Allow until a stored choice exists — website only. */
+/** Show Essential vs Allow until a stored choice exists — website and Capacitor. */
 export function shouldShowAnalyticsConsentBanner(
   input: AnalyticsConsentSurfaceInput = {},
 ): boolean {
@@ -239,11 +231,9 @@ export function scheduleAnalyticsConsentBannerReveal(
 }
 
 /**
- * Website: start PostHog only after Allow.
- * Capacitor: this cookie banner does not apply — existing native replay env
- * still keeps session recording off unless explicitly enabled.
+ * Start PostHog only after Allow. Capacitor uses the same choice as the website.
+ * Unset and Essential do not start capture.
  */
 export function shouldStartPostHog(input: AnalyticsConsentSurfaceInput = {}): boolean {
-  if (!analyticsConsentApplies(input)) return true;
   return analyticsConsentAllowsCapture(input.consent ?? readAnalyticsConsent());
 }
