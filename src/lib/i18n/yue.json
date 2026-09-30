@@ -1047,7 +1047,7 @@
   "supportLead": "家長同提供者——我哋每則留言都會睇。電郵我哋，或者喺下面發送訊息。App Store 同 Google Play 亦會用呢一頁做支援網址。",
   "supportSent": "訊息已發送。我哋會用電郵回覆。",
   "deleteAccount": "刪除我嘅帳戶",
-  "deleteAccountLead": "會移除你嘅小朋友、訊息、預約、付款同已儲存嘅中心。呢個操作唔可以撤銷。",
+  "deleteAccountLead": "會移除你嘅小朋友、訊息、預約同已儲存嘅中心。我哋會依法保留帳單紀錄。欺詐同保安日誌都會留低。呢個操作唔可以撤銷。",
   "deleteAccountGuestLead": "要刪除你嘅 KidEase 帳戶，請先登入。呢條路徑就係 App Store 同 PIPEDA 審查要搵嘅。",
   "deleteAccountSignIn": "登入以刪除我嘅帳戶",
   "deleteAccountConfirm": "刪除全部",
@@ -2407,5 +2407,8 @@
   "pushExplainTitle": "喺手機收到回覆",
   "pushExplainBody": "托兒所回覆、你有訊息，或者認領狀態更新時，KidEase 可以通知你。只有你開啟之後先會問。",
   "pushExplainYes": "開啟通知",
-  "pushExplainNo": "暫時唔使"
+  "pushExplainNo": "暫時唔使",
+  "deleteAccountKeepBilling": "帳單紀錄 — 按稅法要求保留。",
+  "deleteAccountKeepLogs": "欺詐同保安日誌 — 為保護服務而保留。呢啲紀錄唔會刪。",
+  "nativePlansHidden": "呢個 app 唔賣數碼計劃。托兒費、參觀同名額仍然用中心嘅帳單。"
 }

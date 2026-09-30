@@ -137,6 +137,41 @@
     display: none !important;
     pointer-events: none !important;
   }
+  /* Capacitor only. Phone website is data-channel=app with data-runtime=web.
+     The slot is display:contents on the website so PayCtas does not change layout. */
+  .ke-digital-plan-slot {
+    display: contents;
+  }
+  html[data-runtime="ios"] .ke-digital-plan,
+  html[data-runtime="android"] .ke-digital-plan,
+  html[data-runtime="ios"] .ke-digital-plan-slot,
+  html[data-runtime="android"] .ke-digital-plan-slot,
+  html[data-runtime="ios"] [data-ke="digital-plan"],
+  html[data-runtime="android"] [data-ke="digital-plan"],
+  html[data-runtime="ios"] [data-nav="upgrade"],
+  html[data-runtime="android"] [data-nav="upgrade"],
+  html[data-runtime="ios"] [data-nav="plans"],
+  html[data-runtime="android"] [data-nav="plans"],
+  html[data-runtime="ios"] [data-nav="promote"],
+  html[data-runtime="android"] [data-nav="promote"],
+  html[data-runtime="ios"] [data-nav="chat"],
+  html[data-runtime="android"] [data-nav="chat"],
+  html[data-runtime="ios"] [data-ke="store-coming-soon"],
+  html[data-runtime="android"] [data-ke="store-coming-soon"],
+  html[data-runtime="ios"] [data-nav="store-coming-soon"],
+  html[data-runtime="android"] [data-nav="store-coming-soon"],
+  html[data-runtime="ios"] [data-ke="sms-entry"],
+  html[data-runtime="android"] [data-ke="sms-entry"] {
+    display: none !important;
+    pointer-events: none !important;
+  }
+  .ke-native-plan-note {
+    display: none;
+  }
+  html[data-runtime="ios"] .ke-native-plan-note,
+  html[data-runtime="android"] .ke-native-plan-note {
+    display: block;
+  }
   [data-sonner-toaster] {
     pointer-events: none !important;
   }

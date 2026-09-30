@@ -1047,7 +1047,7 @@
   "supportLead": "Eltern und Anbieter — wir lesen jede Nachricht. Schreiben Sie uns eine E-Mail oder senden Sie unten eine Nachricht. App Store und Google Play verwenden diese Seite ebenfalls als Support-URL.",
   "supportSent": "Nachricht gesendet. Wir antworten per E-Mail.",
   "deleteAccount": "Mein Konto löschen",
-  "deleteAccountLead": "Entfernt Ihre Kinder, Nachrichten, Buchungen, Zahlungen und gespeicherten Kitas. Dies kann nicht rückgängig gemacht werden.",
+  "deleteAccountLead": "Damit werden Ihre Kinder, Nachrichten, Buchungen und gespeicherten Kitas entfernt. Wir behalten die gesetzlich vorgeschriebenen Abrechnungsunterlagen. Betrugs- und Sicherheitsprotokolle bleiben ebenfalls. Dies kann nicht rückgängig gemacht werden.",
   "deleteAccountGuestLead": "Melden Sie sich an, um Ihr KidEase-Konto zu löschen. Dies ist derselbe Weg, nach dem Prüfungen von App Store und PIPEDA suchen.",
   "deleteAccountSignIn": "Anmelden, um mein Konto zu löschen",
   "deleteAccountConfirm": "Alles löschen",
@@ -2407,5 +2407,8 @@
   "pushExplainTitle": "Antworten auf dem Telefon erhalten",
   "pushExplainBody": "KidEase kann Bescheid sagen, wenn eine Kita antwortet, wenn Sie eine Nachricht haben oder wenn sich ein Anspruch ändert. Wir fragen nur, wenn Sie es einschalten.",
   "pushExplainYes": "Mitteilungen einschalten",
-  "pushExplainNo": "Nicht jetzt"
+  "pushExplainNo": "Nicht jetzt",
+  "deleteAccountKeepBilling": "Abrechnungsunterlagen — bleiben, weil das Steuerrecht sie verlangt.",
+  "deleteAccountKeepLogs": "Betrugs- und Sicherheitsprotokolle — bleiben zum Schutz des Dienstes. Diese Einträge werden nicht gelöscht.",
+  "nativePlansHidden": "Digitale Tarife werden in dieser App nicht verkauft. Betreuungsgebühren, Besichtigungen und Plätze laufen weiter über die Rechnung der Kita."
 }

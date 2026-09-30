@@ -34,7 +34,7 @@ Recordings are for product UX, not for reading medical notes or family messages.
 | Event property scrub | Keys that look like email, phone, child name, allergy, medical, birthdate are dropped. |
 | Identify | Better Auth user id only. No email, no name. `dev-user` is skipped. |
 
-The **website** shows an Essential vs Allow analytics banner. Until the visitor taps **Allow analytics**, `posthog-js` is not loaded (no pageviews, no replay). **Essential** stores `denied` and keeps required cookies only. The choice is saved in `localStorage` as `kidease-analytics-consent` (`granted` / `denied`). The Capacitor app does **not** show this banner. Denied calls `applyPostHogRecordingGate()` and opts out of capture.
+The **website and the Capacitor app** show an Essential vs Allow analytics banner. Until the person taps **Allow analytics**, `posthog-js` is not loaded (no pageviews, no replay). **Essential** stores `denied` and keeps required cookies only. The choice is saved in `localStorage` as `kidease-analytics-consent` (`granted` / `denied`). In the app, events are not queued before Allow. Denied calls `applyPostHogRecordingGate()` and opts out of capture. Native crash reports (Sentry) use the same Allow tap. The website still starts Sentry without that banner.
 
 ## Vercel env (kidease-git)
 
@@ -119,7 +119,7 @@ Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) wh
 
 ## Reverse proxy
 
-PostHog health flags **No reverse proxy detected** when `$lib_custom_api_host` is unset (a relative `/ingest` path does not count). Whenever analytics is allowed, `api_host` is an **absolute** first-party URL (`https://www.kidease.ca/ingest` on production, preview origin + `/ingest` on Vercel). A missing `window.location.origin` falls back to `https://www.kidease.ca/ingest` — never a bare `/ingest`. Capacitor’s production WebView is already `https://www.kidease.ca`, so native uses the same first-party proxy (not `us.i.posthog.com`). `ui_host` stays `https://us.posthog.com`. Consent is unchanged: website PostHog still starts only after **Allow analytics**. The ingest proxy answers CORS preflight so a live-reload WebView can still POST to www.
+PostHog health flags **No reverse proxy detected** when `$lib_custom_api_host` is unset (a relative `/ingest` path does not count). Whenever analytics is allowed, `api_host` is an **absolute** first-party URL (`https://www.kidease.ca/ingest` on production, preview origin + `/ingest` on Vercel). A missing `window.location.origin` falls back to `https://www.kidease.ca/ingest` — never a bare `/ingest`. Capacitor’s production WebView is already `https://www.kidease.ca`, so native uses the same first-party proxy (not `us.i.posthog.com`). `ui_host` stays `https://us.posthog.com`. Consent is the same on the website and in the app: PostHog starts only after **Allow analytics**. The ingest proxy answers CORS preflight so a live-reload WebView can still POST to www.
 
 `sanitizePostHogProperties` **preserves `$lib_*` keys** (including `$lib_custom_api_host`) so the privacy sanitizer cannot strip the health signal.
 

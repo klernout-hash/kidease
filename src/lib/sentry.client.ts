@@ -1,4 +1,6 @@
 import * as Sentry from "@sentry/react";
+import { analyticsConsentAllowsCapture } from "@/lib/analytics-consent";
+import { isNative } from "@/lib/native";
 import { registerErrorCapture, type ObserveContext } from "@/lib/observe";
 import {
   SENTRY_DENY_URLS,
@@ -24,10 +26,18 @@ export function sentryBrowserEnabled() {
   return Boolean(publicDsn() && Sentry.getClient());
 }
 
-/** Init once in the browser. No-op when the public DSN is unset. */
+/** Website starts immediately. The native app waits for Allow analytics. */
+export function shouldStartSentryBrowser(): boolean {
+  if (typeof window === "undefined") return false;
+  if (!isNative()) return true;
+  return analyticsConsentAllowsCapture();
+}
+
+/** Init once in the browser. No-op when the public DSN is unset or consent is missing. */
 export function initSentryBrowser() {
   if (typeof window === "undefined") return false;
   if (Sentry.getClient()) return true;
+  if (!shouldStartSentryBrowser()) return false;
   const dsn = publicDsn();
   if (!dsn) return false;
 

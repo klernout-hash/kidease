@@ -1047,7 +1047,7 @@
   "supportLead": "家长与服务方——我们会阅读每一条备注。请给我们发电子邮件，或在下方留言。App Store 与 Google Play 也将此页用作支持 URL。",
   "supportSent": "消息已发送。我们将通过电子邮件回复。",
   "deleteAccount": "删除我的账户",
-  "deleteAccountLead": "将移除您的子女资料、消息、预订、付款记录以及已保存的中心。此操作无法撤销。",
+  "deleteAccountLead": "将移除您的子女资料、消息、预订以及已保存的中心。我们会依法保留账单记录。欺诈与安全日志也会保留。此操作无法撤销。",
   "deleteAccountGuestLead": "请登录以删除您的 KidEase 账户。这也是 App Store 与 PIPEDA 审核所查找的同一路径。",
   "deleteAccountSignIn": "登录以删除我的账户",
   "deleteAccountConfirm": "全部删除",
@@ -2407,5 +2407,8 @@
   "pushExplainTitle": "在手机上收到回复",
   "pushExplainBody": "托儿所回复、您有消息或认领状态更新时，KidEase 可以通知您。只有在您开启后我们才会询问。",
   "pushExplainYes": "开启通知",
-  "pushExplainNo": "暂时不要"
+  "pushExplainNo": "暂时不要",
+  "deleteAccountKeepBilling": "账单记录 — 因税法要求而保留。",
+  "deleteAccountKeepLogs": "欺诈与安全日志 — 为保护服务而保留。这些记录不会删除。",
+  "nativePlansHidden": "本应用不销售数字套餐。托育费用、参观和名额仍通过中心账单支付。"
 }

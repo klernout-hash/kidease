@@ -67,7 +67,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     { to: "/search", label: t("explore"), icon: "explore" as const },
     { to: "/compare", label: t("compare"), icon: "compare" as const },
     { to: "/benefits", label: t("benefitsTab"), icon: "benefits" as const },
-    { to: "/get-app", label: t("getApp"), icon: "getApp" as const },
+    { to: "/get-app", label: t("getApp"), icon: "getApp" as const, marker: "store-coming-soon" },
     { to: localePath("/about", locale), label: t("about"), icon: "about" as const },
     { to: localePath("/start-a-daycare", locale), label: t("startADaycare"), icon: "startDaycare" as const },
     { to: localePath("/donate", locale), label: t("donateToKids"), icon: "donate" as const },
