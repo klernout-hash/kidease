@@ -70,6 +70,8 @@ test("M-01 public ages require confirmed min/max and never invent 12–60", () =
   assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 6, ageMaxMonths: 72 }, "months"), "6 months \u2013 6 years");
   assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 24, ageMaxMonths: 72 }, "months", "en"), "2\u20136 years");
   assert.match(src("src/components/daycare-card.tsx"), /listingAgeRangeText\(item, "months"/);
+  assert.match(src("src/components/daycare-card.tsx"), /const placeLine = \[item\.city, away\]/);
+  assert.match(src("src/components/daycare-card.tsx"), /data-ke="card-age-range"/);
   assert.match(src("src/routes/daycare.$slug.tsx"), /listingAgeRangeText\(d/);
   assert.match(src("src/lib/listing-seo.ts"), /listingAgesConfirmed/);
 });
