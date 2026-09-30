@@ -44,7 +44,7 @@ function DeskPills({
       {desks.map((desk) => {
         const on = current === desk;
         const className = cn(
-          "inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium leading-none",
+          "inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium leading-none min-w-0 flex-1 justify-center",
           on ? "bg-primary text-primary-fg" : "text-muted hover:text-fg",
         );
         if (desk === "admin") {
@@ -52,6 +52,8 @@ function DeskPills({
             <button
               key={desk}
               type="button"
+              data-ke="desk-switch-tab"
+              data-desk={desk}
               aria-current={on ? "page" : undefined}
               className={className}
               onClick={() => {
@@ -68,6 +70,8 @@ function DeskPills({
             key={desk}
             to={DESK_PATH[desk]}
             onClick={() => onPick(desk)}
+            data-ke="desk-switch-tab"
+            data-desk={desk}
             aria-current={on ? "page" : undefined}
             className={className}
           >
@@ -123,19 +127,15 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   const highlighted = highlightDesk(pathname, sticky, queryDesk);
   const current = highlighted && desks.includes(highlighted) ? highlighted : null;
 
-  const chrome = "flex items-center gap-0.5 rounded-full bg-surface/90 p-0.5 ring-1 ring-border";
-
-  if (compact) {
-    return (
-      <div role="navigation" aria-label={t("deskSwitcherLabel")} className="flex items-center gap-1">
-        <DeskPills desks={desks} current={current} onPick={setSticky} t={t} />
-        <InboxLink pathname={pathname} current={current} unread={inboxUnreadForDesk(session, current)} />
-      </div>
-    );
-  }
+  const chrome = "flex w-full min-w-0 items-center gap-0.5 rounded-full bg-surface/90 p-0.5 ring-1 ring-border";
 
   return (
-    <div role="navigation" aria-label={t("deskSwitcherLabel")} className="shrink-0">
+    <div
+      data-ke="desk-switcher"
+      role="navigation"
+      aria-label={t("deskSwitcherLabel")}
+      className={compact ? "flex w-full min-w-0 items-center gap-1" : "w-full min-w-0"}
+    >
       <div className={chrome}>
         <DeskPills desks={desks} current={current} onPick={setSticky} t={t} />
         <InboxLink pathname={pathname} current={current} unread={inboxUnreadForDesk(session, current)} />

@@ -586,7 +586,7 @@ export function sanitizeStickyDesk(
  * see Admin, even if a stale desk list included it.
  * Parent: stored parent/admin/support only. Daycare-only (provider role) does
  * not get a Parent pill just because desksFor also keeps /parent reachable.
- * Admin (kyle) still sees Admin + Parent + Daycare. Support stays in the menu.
+ * The operator admin sees Parent, then Daycare, then Admin. Support stays out of that row.
  */
 export function headerDesks(
   desks: DeskKey[],
@@ -603,7 +603,7 @@ export function headerDesks(
     return true;
   });
   if (gated.includes("admin")) {
-    return (["admin", "parent", "provider"] as const).filter((d) => gated.includes(d));
+    return (["parent", "provider", "admin"] as const).filter((d) => gated.includes(d));
   }
   return gated;
 }

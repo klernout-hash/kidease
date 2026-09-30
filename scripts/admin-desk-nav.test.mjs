@@ -28,7 +28,7 @@ test("admin desk path is /admin", () => {
 });
 
 test("header pills include Admin only for admin-role sessions", () => {
-  assert.deepEqual(headerDesks(desksFor({ role: "admin" }), "admin"), ["admin", "parent", "provider"]);
+  assert.deepEqual(headerDesks(desksFor({ role: "admin" }), "admin"), ["parent", "provider", "admin"]);
   assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("admin"), false);
   assert.equal(headerDesks(desksFor({ role: "provider" }), "provider").includes("admin"), false);
   assert.equal(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent").includes("admin"), false);
