@@ -2403,5 +2403,9 @@
   "careProgramNotCollected": "KidEase 不收取项目份额。",
   "careSendParentShare": "发送家长份额",
   "careShareSent": "家长份额已发送",
-  "careShareMemo": "{month} 的家长份额：孩子到园 {days} 天。项目份额不在此账单上。KidEase 不收取该份额。"
+  "careShareMemo": "{month} 的家长份额：孩子到园 {days} 天。项目份额不在此账单上。KidEase 不收取该份额。",
+  "pushExplainTitle": "在手机上收到回复",
+  "pushExplainBody": "托儿所回复、您有消息或认领状态更新时，KidEase 可以通知您。只有在您开启后我们才会询问。",
+  "pushExplainYes": "开启通知",
+  "pushExplainNo": "暂时不要"
 }

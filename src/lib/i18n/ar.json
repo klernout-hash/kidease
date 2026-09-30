@@ -2403,5 +2403,9 @@
   "careProgramNotCollected": "KidEase لا يحصّل حصة البرنامج.",
   "careSendParentShare": "إرسال حصة الأهل",
   "careShareSent": "أُرسلت حصة الأهل",
-  "careShareMemo": "حصة الأهل عن {month}: {days} أيام كان الطفل فيها هنا. حصة البرنامج ليست في هذه الفاتورة. KidEase لا يحصّلها."
+  "careShareMemo": "حصة الأهل عن {month}: {days} أيام كان الطفل فيها هنا. حصة البرنامج ليست في هذه الفاتورة. KidEase لا يحصّلها.",
+  "pushExplainTitle": "استلم الردود على هاتفك",
+  "pushExplainBody": "يمكن لـ KidEase إخبارك عندما ترد الحضانة، أو عندما تصلك رسالة، أو عندما يتحدث طلب المطالبة. نسأل فقط إذا فعّلت ذلك.",
+  "pushExplainYes": "تشغيل الإشعارات",
+  "pushExplainNo": "ليس الآن"
 }

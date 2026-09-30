@@ -2403,5 +2403,9 @@
   "careProgramNotCollected": "KidEase non incassa la quota del programma.",
   "careSendParentShare": "Invia la quota della famiglia",
   "careShareSent": "Quota della famiglia inviata",
-  "careShareMemo": "Quota della famiglia per {month}: {days} giorni in cui il bambino era qui. La quota del programma non è su questo conto. KidEase non la incassa."
+  "careShareMemo": "Quota della famiglia per {month}: {days} giorni in cui il bambino era qui. La quota del programma non è su questo conto. KidEase non la incassa.",
+  "pushExplainTitle": "Ricevi le risposte sul telefono",
+  "pushExplainBody": "KidEase può avvisarti quando un asilo risponde, quando hai un messaggio o quando cambia una richiesta. Chiediamo solo se lo attivi.",
+  "pushExplainYes": "Attiva le notifiche",
+  "pushExplainNo": "Non ora"
 }
