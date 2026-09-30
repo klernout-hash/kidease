@@ -5,8 +5,6 @@ import { DaycareCard } from "@/components/daycare-card";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
-const GLIDE_RAILS = new Set(["child_care_centre", "family_home", "nursery_preschool"]);
-
 export function ListingRail({
   title,
   items,
@@ -55,7 +53,7 @@ export function ListingRail({
   const shownCount = expandable ? Math.min(items.length, page + extra) : Math.min(items.length, limit);
   const shown = items.slice(0, shownCount);
   const more = expandable && items.length > shown.length;
-  const glide = GLIDE_RAILS.has(railId ?? "");
+  if (!shown.length && !empty && !persist) return null;
 
   function go(dir: -1 | 1) {
     const port = scroller.current;
@@ -73,29 +71,7 @@ export function ListingRail({
     });
   }
 
-  useEffect(() => {
-    const port = scroller.current;
-    if (!glide || !port) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const cards = [...port.querySelectorAll<HTMLElement>(".ke-rail-card")];
-    const seen = new WeakSet<Element>();
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting || seen.has(entry.target)) continue;
-          seen.add(entry.target);
-          entry.target.classList.add("ke-rail-card--glide");
-          io.unobserve(entry.target);
-        }
-      },
-      { root: port, threshold: 0.35 },
-    );
-    for (const card of cards) io.observe(card);
-    return () => io.disconnect();
-  }, [glide, shownCount, sig]);
-
   const showChevrons = shown.length > 1 || more;
-  if (!shown.length && !empty && !persist) return null;
 
   if (!shown.length && (empty || persist)) {
     return (
@@ -163,7 +139,7 @@ export function ListingRail({
         </div>
       )}
       <div className="ke-listing-rail-port">
-        <div ref={scroller} className={cn("ke-rail", visual && "ke-rail--visual", glide && "ke-rail--glide")}>
+        <div ref={scroller} className={cn("ke-rail", visual && "ke-rail--visual")}>
           {shown.map((item, i) => (
             <div
               key={item.id}
@@ -185,7 +161,11 @@ export function ListingRail({
                   <span className="ke-rail-more-ghost ke-rail-more-ghost-a" />
                   <span className="ke-rail-more-ghost ke-rail-more-ghost-b" />
                   <span className="ke-rail-more-face">
-                    <span className="ke-rail-more-mark">+</span>
+                    <span className="ke-rail-more-emojis" aria-hidden="true">
+                      <span>🏫</span>
+                      <span>🏡</span>
+                      <span>🧸</span>
+                    </span>
                   </span>
                 </span>
                 <span className="ke-rail-more-label">{t("showMoreListings")}</span>
