@@ -90,6 +90,23 @@ async function openHeaderMenu(page) {
   await drawer.waitFor({ timeout: timeoutMs });
 }
 
+/** Role chrome can remount the drawer link once. Re-open and click again. The checkout assertion stays. */
+async function clickDrawerUpgrade(page) {
+  const link = page.locator('#ke-nav-drawer [data-nav="upgrade"]');
+  let lastError = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await openHeaderMenu(page);
+    try {
+      await link.waitFor({ state: "visible", timeout: 8000 });
+      await link.click({ timeout: 8000 });
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 async function roleNavText(page) {
   const nav = page.locator('[data-ke="role-nav"]:visible');
   const count = await nav.count();
@@ -234,7 +251,7 @@ async function runRoleFixture(page, base) {
     await page.locator('header [data-nav="upgrade"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
     const paidPlaces = await upgradePlaces(page);
     await openHeaderMenu(page);
-    await page.locator('#ke-nav-drawer [data-nav="upgrade"]').click();
+    await clickDrawerUpgrade(page);
     await page.locator('[data-ke="manage-or-cancel"]').waitFor({ timeout: timeoutMs }).catch(() => {});
     const managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
     record(
@@ -317,7 +334,7 @@ async function runRoleFixture(page, base) {
     await settleMockCheckout(page);
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await openHeaderMenu(page);
-    await page.locator('#ke-nav-drawer [data-nav="upgrade"]').click();
+    await clickDrawerUpgrade(page);
     await page.waitForURL(/\/provider\/subscription/i, { timeout: timeoutMs }).catch(() => {});
     const homeCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
     await homeCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
@@ -344,7 +361,7 @@ async function runRoleFixture(page, base) {
     await settleMockCheckout(page);
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await openHeaderMenu(page);
-    await page.locator('#ke-nav-drawer [data-nav="upgrade"]').click();
+    await clickDrawerUpgrade(page);
     await page.waitForURL(/tab=payments/i, { timeout: timeoutMs }).catch(() => {});
     const homePlus = page.locator('[data-ke="plan-checkout"]:visible').first();
     await homePlus.waitFor({ timeout: timeoutMs }).catch(() => {});
