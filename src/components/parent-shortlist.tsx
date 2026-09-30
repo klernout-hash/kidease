@@ -7,6 +7,7 @@ import { PipelineBadge } from "@/components/pipeline-badge";
 import { ShortlistCompareTable } from "@/components/shortlist-compare";
 import { TrustSignals } from "@/components/trust-badge";
 import { Button } from "@/components/ui/button";
+import { MultiApplyPanel } from "@/components/multi-apply-sheet";
 import { mirrorOfflineSaved, readOfflineSaved, type OfflineSaved } from "@/lib/offline-shortlist";
 import { MAX_SHORTLIST_COMPARE, toggleCompareSelection } from "@/lib/shortlist";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
@@ -104,6 +105,8 @@ export function ParentShortlist({
         located={located}
         onRemove={(id) => setPicked((cur) => cur.filter((x) => x !== id))}
       />
+
+      <MultiApplyPanel centres={visible} returnTo="/parent?tab=saved" />
 
       <div className="ke-listings ke-listings-narrow">
         {visible.map((item) => {
