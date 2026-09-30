@@ -38,7 +38,8 @@ import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { useAppStore, type SortKey } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
-import { cwelccKind, hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
+import { confirmedFeeProgramBadge } from "@/lib/fee-program";
+import { hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { ChipButton } from "@/components/chip";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
@@ -858,13 +859,7 @@ function SearchPage() {
     if (avail === "open") rows = rows.filter((r) => honestVacancy(r).kind === "open");
     if (avail === "waitlist") rows = rows.filter((r) => honestVacancy(r).kind === "waitlist");
     if (avail === "unknown") rows = rows.filter((r) => !r.availabilityKnown);
-    if (ten)
-      rows = rows.filter(
-        (r) =>
-          cwelccKind(r.province) !== "ask" ||
-          hasAmenity(r.amenities, "ten-a-day") ||
-          hasAmenity(r.amenities, "funded"),
-      );
+    if (ten) rows = rows.filter((r) => confirmedFeeProgramBadge(r) != null);
     if (meals) rows = rows.filter((r) => hasAmenity(r.amenities, "meals"));
     if (outdoor)
       rows = rows.filter(

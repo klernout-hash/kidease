@@ -5,26 +5,26 @@
  * includes a centre in Live search, and publicApprovalEligible (the
  * “KidEase approved” line). Either one alone is not enough.
  *
- * $10 / Day uses confirmedFeeProgramBadge — the centre confirmed ten-a-day.
- * The search chip “$10-a-day / reduced fee” also keeps every centre in
- * provinces where a reduced fee is typical. That would stamp $10 on
- * unconfirmed listings, so the photo pill does not follow the chip’s
- * province-wide branch. $15-a-day and Québec reduced-contribution keep
- * their own labels when that confirmed program is the one on file.
+ * $10 / Day, $9.65 / Day, and Reduced fees use confirmedFeeProgramBadge.
+ * The pill follows the sourced rule for this centre, not a province-wide guess
+ * and not a harvested ten-a-day amenity. Ontario, Alberta, New Brunswick, and
+ * Nova Scotia never get a daily-fee pill.
  */
 
 export function showCardLivePill(live: boolean, kideaseApproved: boolean): boolean {
   return live && kideaseApproved;
 }
 
-export type ConfirmedFeeProgram = "badgeTen" | "badgeFifteen" | "badgeReducedQc";
+export type ConfirmedFeeProgram = "badgeTen" | "badgeFifteen" | "badgeReducedQc" | "badgeQc965" | "badgeReduced";
 
 export function cardFeePillLabelKey(
   program: ConfirmedFeeProgram | null,
-): "cardTenPerDay" | "badgeFifteen" | "badgeReducedQc" | null {
+): "cardTenPerDay" | "badgeFifteen" | "badgeReducedQc" | "cardQcPerDay" | "cardReducedFees" | null {
   if (program === "badgeTen") return "cardTenPerDay";
   if (program === "badgeFifteen") return "badgeFifteen";
   if (program === "badgeReducedQc") return "badgeReducedQc";
+  if (program === "badgeQc965") return "cardQcPerDay";
+  if (program === "badgeReduced") return "cardReducedFees";
   return null;
 }
 
