@@ -43,6 +43,7 @@ function IconToggle({
 }
 
 export function ExploreFilterBar({
+  listingCount,
   ageChips,
   nearMeOn,
   onNearMe,
@@ -58,6 +59,7 @@ export function ExploreFilterBar({
   onMap,
   className,
 }: {
+  listingCount?: number;
   ageChips: ReactNode;
   nearMeOn: boolean;
   onNearMe: () => void;
@@ -80,6 +82,7 @@ export function ExploreFilterBar({
       className={cn("ke-explore-filter-bar", className)}
       data-ke="explore-filter-bar"
       data-search-row="filter-bar"
+      data-listing-count={listingCount}
     >
       <ChipCarousel
         compact

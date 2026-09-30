@@ -1292,6 +1292,7 @@ function SearchPage() {
         />
         <div className="ke-explore-filter-sticky mt-3">
         <ExploreFilterBar
+          listingCount={items !== null ? resultCount : undefined}
           ageChips={
             <ExploreCategoryChips
               selected={selectedAges}
