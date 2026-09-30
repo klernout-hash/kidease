@@ -43,6 +43,8 @@ test("listing card photo uses the live and fee pills instead of registry-checked
   assert.match(card, /data-ke="card-fee-pill"/);
   assert.match(card, /showCardLivePill\(live, publicApprovalEligible\(item\)\)/);
   assert.match(card, /cardFeePillLabelKey\(feeBadge\)/);
+  assert.match(card, /priceOnPhoto = feeBadge === "badgeTen" \|\| feeBadge === "badgeFifteen"/);
+  assert.match(card, /!priceOnPhoto && priceAmount/);
   assert.match(card, /confirmedFeeProgramBadge/);
   assert.match(card, /cardPhotoLicenseWarning\(license\.id\)/);
   assert.doesNotMatch(card, /trustLicensedMatched/);

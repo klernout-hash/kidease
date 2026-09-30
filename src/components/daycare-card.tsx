@@ -172,6 +172,7 @@ export const DaycareCard = memo(function DaycareCard({
   const priceAmount =
     feeBadge === "badgeTen" ? "$10" : feeBadge === "badgeFifteen" ? "$15" : feeOk ? money(item.fromPrice, locale) : "";
   const priceUnit = feeBadge === "badgeTen" || feeBadge === "badgeFifteen" ? " / day" : feeOk ? t("month") : "";
+  const priceOnPhoto = feeBadge === "badgeTen" || feeBadge === "badgeFifteen";
   const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
 
   if (presentation === "visual") {
@@ -218,7 +219,7 @@ export const DaycareCard = memo(function DaycareCard({
               {t("kideaseApprovedMarker")}
             </p>
           ) : null}
-          {priceAmount ? (
+          {!priceOnPhoto && priceAmount ? (
             <p className="mt-1 text-[14px] leading-5 tabular-nums">
               <span className="font-semibold">{priceAmount}</span>
               <span className="font-normal text-muted">{priceUnit}</span>
@@ -343,14 +344,14 @@ export const DaycareCard = memo(function DaycareCard({
               ))}
             </div>
           ) : null}
-          {priceAmount ? (
+          {!priceOnPhoto && priceAmount ? (
             <p className="pt-0.5 text-[12px] leading-4 tabular-nums">
               <span className="font-semibold">{priceAmount}</span>
               <span className="font-normal text-muted">{priceUnit}</span>
             </p>
-          ) : (
+          ) : !priceOnPhoto ? (
             <p className="pt-0.5 text-[12px] leading-4 text-muted">{t("cardGapFees")}</p>
-          )}
+          ) : null}
         </div>
       </Link>
       <Link
