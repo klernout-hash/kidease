@@ -9,6 +9,8 @@ Bundle / application id: `ca.daycarenearme.app`
 App name: KidEase  
 Support: support@kidease.ca
 
+Reviewer sign-in (not created until Kyle runs it): set `REVIEWER_PARENT_PASSWORD` and `REVIEWER_DAYCARE_PASSWORD` in the shell, never in git, then `npm run ops:reviewer-demo`. Default emails are `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. The demo centre `qa-reviewer-demo-centre` stays out of public search. The command does not print the passwords.
+
 Longer engineering notes: [`mobile-builds.md`](mobile-builds.md). Account + review policy: [`store-readiness.md`](store-readiness.md).
 
 ---
