@@ -161,7 +161,11 @@ export function ListingRail({
                   <span className="ke-rail-more-ghost ke-rail-more-ghost-a" />
                   <span className="ke-rail-more-ghost ke-rail-more-ghost-b" />
                   <span className="ke-rail-more-face">
-                    <span className="ke-rail-more-mark">+</span>
+                    <span className="ke-rail-more-emojis" aria-hidden="true">
+                      <span>🏫</span>
+                      <span>🏡</span>
+                      <span>🧸</span>
+                    </span>
                   </span>
                 </span>
                 <span className="ke-rail-more-label">{t("showMoreListings")}</span>
