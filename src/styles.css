@@ -992,6 +992,41 @@
   img.ke-photo {
     background-color: var(--color-surface-2);
   }
+  /* Unclaimed cards. One wash, not a photo of a centre. */
+  .ke-unclaimed-wash {
+    background:
+      radial-gradient(68% 52% at 100% 0%, color-mix(in oklab, #8eb4e8 70%, transparent), transparent 70%),
+      radial-gradient(52% 42% at 0% 100%, color-mix(in oklab, #e4c49a 55%, transparent), transparent 72%),
+      linear-gradient(180deg, #f4f7fc 0%, #f7f4ef 46%, #f1e6d6 100%);
+  }
+  .ke-unclaimed-mark {
+    color: #1a3790;
+    opacity: 0.16;
+  }
+  html[data-theme="dark"] .ke-unclaimed-wash,
+  html[data-resolved-theme="dark"] .ke-unclaimed-wash {
+    background:
+      radial-gradient(68% 52% at 100% 0%, color-mix(in oklab, var(--color-primary) 48%, transparent), transparent 68%),
+      radial-gradient(48% 40% at 0% 100%, color-mix(in oklab, #31456f 80%, transparent), transparent 72%),
+      linear-gradient(180deg, #1a2233 0%, #141820 100%);
+  }
+  html[data-theme="dark"] .ke-unclaimed-mark,
+  html[data-resolved-theme="dark"] .ke-unclaimed-mark {
+    color: #c5d2f4;
+    opacity: 0.28;
+  }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]):not([data-resolved-theme="light"]) .ke-unclaimed-wash {
+      background:
+        radial-gradient(68% 52% at 100% 0%, color-mix(in oklab, var(--color-primary) 48%, transparent), transparent 68%),
+        radial-gradient(48% 40% at 0% 100%, color-mix(in oklab, #31456f 80%, transparent), transparent 72%),
+        linear-gradient(180deg, #1a2233 0%, #141820 100%);
+    }
+    html:not([data-theme="light"]):not([data-resolved-theme="light"]) .ke-unclaimed-mark {
+      color: #c5d2f4;
+      opacity: 0.28;
+    }
+  }
   /* /menu LCP is the heading. Do not wait on Plus Jakarta or Lucide. */
   .ke-menu-main,
   .ke-menu-main h1,

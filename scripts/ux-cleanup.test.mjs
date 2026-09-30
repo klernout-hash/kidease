@@ -49,6 +49,8 @@ test("Cards quiet overlapping labels and keep a reserved photo aspect", () => {
   assert.match(carousel, /ListingPhotoFallback/);
   assert.match(carousel, /isRealListingPhoto/);
   assert.match(photo, /data-ke="photo-fallback"/);
+  assert.match(photo, /ke-unclaimed-wash/);
+  assert.match(css, /\.ke-unclaimed-wash/);
   assert.match(photo, /aspectRatio/);
   assert.match(css, /--color-soft: #eef2fb/);
   assert.match(css, /contain-intrinsic-size: var\(--ke-card-w, 11\.25rem\) 16rem;/);
