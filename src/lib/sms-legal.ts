@@ -76,7 +76,8 @@ export const SMS_TERMS_EN: LegalSection = {
     {
       type: "ul",
       items: [
-        "Reply STOP to opt out. Reply HELP for help.",
+        "Reply STOP to cancel. You will get one confirmation text and then no further program messages.",
+        "Reply HELP for help, or email kyle@kidease.ca.",
         "Consent is not required to use the website or app.",
         "Privacy Policy: https://kidease.ca/privacy",
       ],
@@ -99,7 +100,8 @@ export const SMS_TERMS_FR: LegalSection = {
     {
       type: "ul",
       items: [
-        "Répondez STOP pour cesser. Répondez HELP pour de l’aide.",
+        "Répondez STOP pour vous désinscrire. Vous recevrez un accusé, puis plus de textos du programme.",
+        "Répondez HELP pour de l’aide, ou écrivez à kyle@kidease.ca.",
         "Le consentement n’est pas exigé pour utiliser le site ou l’appli.",
         "Politique de confidentialité : https://kidease.ca/privacy",
       ],

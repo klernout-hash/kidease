@@ -1548,7 +1548,7 @@ export const copy = {
       "A director claims an existing listing, uploads the current provincial licence, and KidEase reviews ownership. Unclaimed pages stay searchable. Claim verified means the operator, not that KidEase police-checked staff.",
     verifyPayTitle: "Payments and payouts",
     verifyPayBody:
-      "Card payments to a centre’s bank are not turned on yet. KidEase will say so here when a payment can be paid out.",
+      "Card payments are processed in the app by Stripe and paid to the centre. KidEase does not store the full card number.",
     verifyOfficial:
       "The official provincial or territorial registry is always the source of truth for inspections, complaints, and licence status.",
     verifyScreeningTitle: "Screening documents — not a KidEase police check",
@@ -1741,8 +1741,7 @@ export const copy = {
     perkChat: "In-app communication with parents",
     perkNear: "Proximity locating so nearby families find you first",
     perkMobile: "Everything managed from a mobile app",
-    perkPay:
-      "Card payments to your bank are not turned on yet. KidEase will say so on this page when a deposit can be paid out.",
+    perkPay: "Payments processed in the app and paid to you directly, quickly",
     perkPayLive: "Payments processed in the app and paid to you directly, quickly",
     perkGrow: "A simple way to grow your enrolment",
     contactSubject: "Subject",
@@ -4148,7 +4147,7 @@ export const copy = {
       "Un directeur revendique une fiche existante, téléverse le permis provincial et KidEase examine la propriété. Les pages non réclamées restent trouvables. Réclamation vérifiée désigne l’exploitant, pas une vérification policière du personnel.",
     verifyPayTitle: "Paiements et versements",
     verifyPayBody:
-      "Les paiements par carte vers la banque d’un centre ne sont pas encore activés. KidEase le dira ici lorsqu’un versement pourra être fait.",
+      "Les paiements par carte sont traités dans l’application par Stripe et versés au centre. KidEase ne conserve pas le numéro complet.",
     verifyOfficial:
       "Le registre provincial ou territorial officiel reste toujours la source de vérité pour les inspections, les plaintes et le statut du permis.",
     verifyScreeningTitle: "Documents de filtrage — pas un contrôle policier KidEase",
@@ -4342,8 +4341,7 @@ export const copy = {
     perkChat: "Messagerie dans l’application avec les parents",
     perkNear: "Repérage par proximité pour que les familles du quartier vous trouvent en premier",
     perkMobile: "Tout se gère depuis l’application mobile",
-    perkPay:
-      "Les paiements par carte vers votre banque ne sont pas encore activés. KidEase le dira sur cette page lorsqu’un dépôt pourra être versé.",
+    perkPay: "Paiements dans l’application, versés directement et rapidement",
     perkPayLive: "Paiements dans l’application, versés directement et rapidement",
     perkGrow: "Une façon simple d’augmenter vos inscriptions",
     contactSubject: "Sujet",
