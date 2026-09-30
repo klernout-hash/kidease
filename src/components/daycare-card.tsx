@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
-import { memo } from "react";
+import { memo, type MouseEvent, type ReactNode } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
+import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
@@ -109,6 +110,42 @@ function CardPhotoBadges({
   );
 }
 
+function ListingAnchor({
+  slug,
+  className,
+  search,
+  onClick,
+  children,
+  "data-ke": dataKe,
+}: {
+  slug: string;
+  className?: string;
+  search?: { ask: "info" };
+  onClick?: (event: MouseEvent) => void;
+  children: ReactNode;
+  "data-ke"?: string;
+}) {
+  if (!isSafeSitemapSlug(slug)) {
+    return (
+      <div className={className} data-ke={dataKe}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <Link
+      to="/daycare/$slug"
+      params={{ slug }}
+      search={search}
+      className={className}
+      data-ke={dataKe}
+      onClick={onClick}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export const DaycareCard = memo(function DaycareCard({
   item,
   showDistance = true,
@@ -181,7 +218,7 @@ export const DaycareCard = memo(function DaycareCard({
     return (
       <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group w-full">
         <div className="relative">
-          <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
+          <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
             <PhotoCarousel
               photos={photos}
               eager={eager}
@@ -198,10 +235,10 @@ export const DaycareCard = memo(function DaycareCard({
               feeLabel={feePillLabel}
               licenseWarning={licenseWarning}
             />
-          </Link>
+          </ListingAnchor>
           <SaveListingButton daycareId={item.id} />
         </div>
-        <Link to="/daycare/$slug" params={{ slug: item.slug }} className="mt-2 block text-inherit no-underline">
+        <ListingAnchor slug={item.slug} className="mt-2 block text-inherit no-underline">
           <div className="flex items-start justify-between gap-2">
             <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] font-semibold leading-5 tracking-[-0.02em] text-fg">
               {name}
@@ -236,17 +273,16 @@ export const DaycareCard = memo(function DaycareCard({
               <span className="font-normal text-muted">{priceUnit}</span>
             </p>
           ) : null}
-        </Link>
-        <Link
-          to="/daycare/$slug"
-          params={{ slug: item.slug }}
+        </ListingAnchor>
+        <ListingAnchor
+          slug={item.slug}
           search={{ ask: "info" }}
           data-ke="card-request-info"
           className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline"
           onClick={(e) => e.stopPropagation()}
         >
           {t("cardRequestInfo")}
-        </Link>
+        </ListingAnchor>
       </article>
     );
   }
@@ -254,7 +290,7 @@ export const DaycareCard = memo(function DaycareCard({
   return (
     <article data-slug={item.slug} className="ke-tile group w-full">
       <div className="relative">
-        <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
+        <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
           <PhotoCarousel
             photos={photos}
             eager={eager}
@@ -272,15 +308,15 @@ export const DaycareCard = memo(function DaycareCard({
             licenseWarning={licenseWarning}
             clearShare={!compact}
           />
-        </Link>
-        {!compact ? (
+        </ListingAnchor>
+        {isSafeSitemapSlug(item.slug) && !compact ? (
           <CompareChip
             id={item.id}
             slug={item.slug}
             className="pointer-events-auto absolute bottom-2 right-2 z-20"
           />
         ) : null}
-        {!compact ? (
+        {isSafeSitemapSlug(item.slug) && !compact ? (
           <ShareListingButton
             slug={item.slug}
             name={name}
@@ -291,7 +327,7 @@ export const DaycareCard = memo(function DaycareCard({
         <SaveListingButton daycareId={item.id} />
       </div>
 
-      <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
+      <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
         <div className="mt-1 space-y-px text-fg">
           <div className="flex items-start justify-between gap-2">
             <h3 className="min-w-0 truncate text-[12px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
@@ -364,17 +400,16 @@ export const DaycareCard = memo(function DaycareCard({
             <p className="pt-0.5 text-[12px] leading-4 text-muted">{t("cardGapFees")}</p>
           ) : null}
         </div>
-      </Link>
-      <Link
-        to="/daycare/$slug"
-        params={{ slug: item.slug }}
+      </ListingAnchor>
+      <ListingAnchor
+        slug={item.slug}
         search={{ ask: "info" }}
         data-ke="card-request-info"
         className="relative z-10 mt-1.5 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-2.5 text-[11px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
         onClick={(e) => e.stopPropagation()}
       >
         {t("cardRequestInfo")}
-      </Link>
+      </ListingAnchor>
     </article>
   );
 });
