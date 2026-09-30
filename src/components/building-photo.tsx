@@ -32,6 +32,32 @@ function photoNeedsFallback(src: string): boolean {
 }
 
 /** Quiet while a real photo loads. Logo and Claim Listing only when there is no picture. */
+function UnclaimedWash() {
+  return (
+    <>
+      <div className="ke-unclaimed-wash pointer-events-none absolute inset-0" aria-hidden />
+      <svg
+        viewBox="0 0 320 240"
+        className="ke-unclaimed-mark pointer-events-none absolute inset-0 size-full"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
+      >
+        <circle cx="274" cy="34" r="22" fill="currentColor" />
+        <path d="M36 78V46h58v32" fill="none" stroke="currentColor" strokeWidth="3" />
+        <path d="M65 46v32M36 62h58" fill="none" stroke="currentColor" strokeWidth="3" />
+        <path d="M188 168v-28h46v28" fill="none" stroke="currentColor" strokeWidth="3" />
+        <path d="M184 140h54L211 118z" fill="currentColor" />
+        <rect x="206" y="148" width="12" height="20" rx="1" fill="currentColor" />
+        <rect x="28" y="176" width="28" height="28" rx="4" fill="currentColor" />
+        <rect x="48" y="160" width="22" height="22" rx="4" fill="currentColor" />
+        <rect x="62" y="186" width="18" height="18" rx="3" fill="currentColor" />
+        <circle cx="292" cy="196" r="16" fill="currentColor" />
+        <rect x="288" y="196" width="8" height="22" fill="currentColor" />
+      </svg>
+    </>
+  );
+}
+
 export function ListingPhotoFallback({
   className,
   style,
@@ -60,12 +86,17 @@ export function ListingPhotoFallback({
   );
   return (
     <div
-      className={cn("grid place-items-center bg-[#F7F4EF] text-primary", className)}
+      className={cn(
+        "relative grid place-items-center overflow-hidden text-primary",
+        claim ? "" : "bg-[#F7F4EF]",
+        className,
+      )}
       style={style}
       data-ke="photo-fallback"
       data-claim={claim ? "listing" : undefined}
       aria-hidden={claim ? undefined : true}
     >
+      {claim ? <UnclaimedWash /> : null}
       {claim ? (
         claimQuery !== undefined ? (
           <Link
@@ -73,10 +104,10 @@ export function ListingPhotoFallback({
             search={claimQuery ? { q: claimQuery } : {}}
             className="text-inherit no-underline"
           >
-            {mark}
+            <span className="relative z-[1]">{mark}</span>
           </Link>
         ) : (
-          mark
+          <span className="relative z-[1]">{mark}</span>
         )
       ) : (
         <svg viewBox="0 0 48 48" className="size-12 text-muted" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
