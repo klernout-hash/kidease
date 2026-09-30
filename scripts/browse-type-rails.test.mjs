@@ -41,7 +41,11 @@ test("explore and search share six daycare-type rows with in-row show more", () 
   assert.match(rail, /showMoreListings/);
   assert.match(rail, /ke-rail-more/);
   assert.match(rail, /ke-rail-card--in/);
+  assert.match(rail, /child_care_centre", "family_home", "nursery_preschool"/);
+  assert.match(rail, /ke-rail--glide/);
+  assert.match(rail, /ke-rail-card--glide/);
   assert.match(css, /ke-rail-card--in/);
+  assert.match(css, /ke-rail-glide/);
   assert.match(css, /ke-rail-more-lift/);
   assert.match(copy, /showMoreListings: "Show more listings"/);
   assert.match(copy, /showMoreListings: "Voir plus de garderies"/);
