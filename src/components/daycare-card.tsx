@@ -114,20 +114,20 @@ function ListingAnchor({
   slug,
   className,
   search,
-  marker,
   onClick,
   children,
+  "data-ke": dataKe,
 }: {
   slug: string;
   className?: string;
   search?: { ask: "info" };
-  marker?: string;
   onClick?: (event: MouseEvent) => void;
   children: ReactNode;
+  "data-ke"?: string;
 }) {
   if (!isSafeSitemapSlug(slug)) {
     return (
-      <div className={className} data-ke={marker}>
+      <div className={className} data-ke={dataKe}>
         {children}
       </div>
     );
@@ -138,7 +138,7 @@ function ListingAnchor({
       params={{ slug }}
       search={search}
       className={className}
-      data-ke={marker}
+      data-ke={dataKe}
       onClick={onClick}
     >
       {children}
@@ -277,7 +277,7 @@ export const DaycareCard = memo(function DaycareCard({
         <ListingAnchor
           slug={item.slug}
           search={{ ask: "info" }}
-          marker="card-request-info"
+          data-ke="card-request-info"
           className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline"
           onClick={(e) => e.stopPropagation()}
         >
@@ -404,7 +404,7 @@ export const DaycareCard = memo(function DaycareCard({
       <ListingAnchor
         slug={item.slug}
         search={{ ask: "info" }}
-        marker="card-request-info"
+        data-ke="card-request-info"
         className="relative z-10 mt-1.5 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-2.5 text-[11px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
         onClick={(e) => e.stopPropagation()}
       >
