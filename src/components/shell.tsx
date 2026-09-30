@@ -100,7 +100,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             </Link>
           </div>
         </header>
-        <div className="[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]">{children}</div>
+        <div className="[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]">{children}</div>
         <AppTabBar />
       </div>
     );
@@ -131,7 +131,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             </button>
           </div>
           {barePath === "/" || barePath === "/search" ? (
-            <div className="flex w-full overflow-x-auto pb-1.5 [-ms-overflow-style:none] [scrollbar-width:none] lg:absolute lg:inset-x-16 lg:top-0 lg:h-16 lg:w-auto lg:items-center lg:overflow-x-auto lg:pb-0 [&::-webkit-scrollbar]:hidden [[data-channel=website]_&]:flex">
+            <div className="w-full min-w-0 overflow-hidden pb-1.5 lg:absolute lg:inset-x-16 lg:top-0 lg:flex lg:h-16 lg:w-auto lg:items-center lg:overflow-visible lg:pb-0 [[data-channel=website]_&]:flex">
               <HomeCareTypeRow
                 compact
                 toSearch
@@ -161,7 +161,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         onSignOut={() => void signOut("/")}
         headerExtra={user ? <NotificationBell /> : null}
       />
-      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"}>
+      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]"}>
         <ApplyPendingShortlist />
         {children}
       </div>
