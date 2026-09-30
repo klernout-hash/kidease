@@ -63,14 +63,18 @@ test("messaging is allowed only for inquiry threads or enrolled links", () => {
 });
 
 test("check-in/out maps to presence parents can see", () => {
-  assert.deepEqual([...ATTENDANCE_STATUSES], ["scheduled", "arrived", "departed", "absent"]);
+  assert.deepEqual([...ATTENDANCE_STATUSES], ["scheduled", "arrived", "departed", "absent", "sick", "vacation"]);
   assert.equal(presenceFromAttendance("arrived"), "here");
   assert.equal(presenceFromAttendance("departed"), "picked_up");
   assert.equal(presenceFromAttendance("absent"), "absent");
+  assert.equal(presenceFromAttendance("sick"), "sick");
+  assert.equal(presenceFromAttendance("vacation"), "vacation");
   assert.equal(presenceFromAttendance("scheduled"), "expected");
   assert.equal(attendanceFromAction("check_in"), "arrived");
   assert.equal(attendanceFromAction("check_out"), "departed");
   assert.equal(attendanceFromAction("absent"), "absent");
+  assert.equal(attendanceFromAction("sick"), "sick");
+  assert.equal(attendanceFromAction("vacation"), "vacation");
   assert.equal(canMarkAttendance("parent"), true);
   assert.equal(canMarkAttendance("provider"), true);
   assert.equal(canMarkAttendance("read_only"), false);

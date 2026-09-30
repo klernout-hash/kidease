@@ -20,14 +20,24 @@ import {
 import { nid } from "@/lib/utils";
 import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
 import { insertCareStatusMessage } from "./daily-care";
+import {
+  canWriteDayNote,
+  dayNoteReady,
+  isProgramKind,
+  isRatioAgeGroup,
+  normalizeSplit,
+  type ProgramKind,
+} from "@/lib/licensed-day";
 import { lookupUser } from "./notify";
 
 export type CareRoomRow = {
   id: string;
   daycareId: string;
   daycareName: string;
+  province: string;
   name: string;
   capacity: number;
+  ageGroup: string | null;
 };
 
 export type CareStaffRow = {
@@ -103,6 +113,27 @@ export type CareIncidentRow = {
   createdAt: string;
 };
 
+export type CareDayNoteRow = {
+  daycareId: string;
+  bookingId: string | null;
+  childName: string;
+  day: string;
+  food: string;
+  nap: string;
+  incident: string;
+  photo: string;
+};
+
+export type CareSplitRow = {
+  bookingId: string;
+  daycareId: string;
+  childName: string;
+  parentDailyCents: number;
+  programDailyCents: number;
+  programKind: ProgramKind;
+  programLabel: string;
+};
+
 export type CareOpsPayload = {
   day: string;
   role: "parent" | "provider";
@@ -113,6 +144,8 @@ export type CareOpsPayload = {
   medications: CareMedicationRow[];
   logs: CareMedicationLogRow[];
   incidents: CareIncidentRow[];
+  dayNotes: CareDayNoteRow[];
+  splits: CareSplitRow[];
 };
 
 const ENSURE_CARE_OPS = `
@@ -206,6 +239,33 @@ create unique index if not exists care_child_rooms_child_idx
   on care_child_room_assignments (daycare_id, child_name);
 create unique index if not exists care_roster_room_staff_day_idx
   on care_roster_assignments (room_id, staff_user_id, day);
+alter table care_rooms add column if not exists age_group text;
+create table if not exists care_enrolment_splits (
+  booking_id text primary key,
+  daycare_id text not null,
+  child_name text not null,
+  parent_daily_cents int not null,
+  program_daily_cents int not null,
+  program_kind text not null,
+  program_label text not null default '',
+  updated_by text not null,
+  updated_at timestamptz not null default now()
+);
+create table if not exists care_day_notes (
+  id text primary key,
+  daycare_id text not null,
+  booking_id text,
+  child_name text not null,
+  day date not null,
+  food text not null default '',
+  nap text not null default '',
+  incident text not null default '',
+  photo text not null default '',
+  author_user_id text not null,
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists care_day_notes_child_day
+  on care_day_notes (daycare_id, child_name, day);
 `;
 
 async function ensureCareOpsTables(sql: Awaited<ReturnType<typeof getSql>>) {
@@ -270,10 +330,12 @@ export const listCareOps = createServerFn({ method: "POST" })
         id: string;
         daycare_id: string;
         daycare_name: string;
+        province: string | null;
         name: string;
         capacity: number;
+        age_group: string | null;
       }>(
-        `select r.id, r.daycare_id, d.name as daycare_name, r.name, r.capacity
+        `select r.id, r.daycare_id, d.name as daycare_name, d.province, r.name, r.capacity, r.age_group
          from care_rooms r
          join daycares d on d.id = r.daycare_id
          where r.archived_at is null
@@ -474,6 +536,70 @@ export const listCareOps = createServerFn({ method: "POST" })
       )
       .catch(() => []);
 
+    const dayNotes = await sql
+      .query<{
+        daycare_id: string;
+        booking_id: string | null;
+        child_name: string;
+        day: string;
+        food: string;
+        nap: string;
+        incident: string;
+        photo: string;
+      }>(
+        `select daycare_id, booking_id, child_name, day::text as day, food, nap, incident, photo
+         from care_day_notes
+         where day = $1
+           and (
+             daycare_id in (select daycare_id from provider_daycares where user_id = $2)
+             or daycare_id in (
+               select daycare_id from centre_members
+               where user_id = $2 and status = 'active'
+             )
+             or booking_id in (
+               select id from bookings
+               where user_id = $2 and status in ('accepted', 'active')
+             )
+             or child_name in (
+               select coalesce(ch.name, b.parent_name, 'Child')
+               from bookings b
+               left join children ch on ch.id = b.child_id
+               where b.user_id = $2 and b.status in ('accepted', 'active')
+             )
+           )
+           ${data.daycareId ? "and daycare_id = $3" : ""}`,
+        data.daycareId ? [day, context.userId, data.daycareId] : [day, context.userId],
+      )
+      .catch(() => []);
+
+    const splits = await sql
+      .query<{
+        booking_id: string;
+        daycare_id: string;
+        child_name: string;
+        parent_daily_cents: number;
+        program_daily_cents: number;
+        program_kind: string;
+        program_label: string;
+      }>(
+        `select booking_id, daycare_id, child_name, parent_daily_cents, program_daily_cents, program_kind, program_label
+         from care_enrolment_splits
+         where (
+             daycare_id in (select daycare_id from provider_daycares where user_id = $1)
+             or daycare_id in (
+               select daycare_id from centre_members
+               where user_id = $1 and status = 'active'
+             )
+             or booking_id in (
+               select id from bookings
+               where user_id = $1 and status in ('accepted', 'active')
+             )
+           )
+           ${data.daycareId ? "and daycare_id = $2" : ""}`,
+        data.daycareId ? [context.userId, data.daycareId] : [context.userId],
+      )
+      .catch(() => []);
+
     const visibleRooms = isProvider
       ? rooms
       : rooms.filter((room) =>
@@ -488,8 +614,10 @@ export const listCareOps = createServerFn({ method: "POST" })
         id: r.id,
         daycareId: r.daycare_id,
         daycareName: r.daycare_name,
+        province: (r.province || "").trim().toUpperCase(),
         name: r.name,
         capacity: clampRoomCapacity(r.capacity),
+        ageGroup: isRatioAgeGroup(r.age_group) ? r.age_group : null,
       })),
       staff: staff.map((s) => ({
         userId: s.user_id,
@@ -579,12 +707,35 @@ export const listCareOps = createServerFn({ method: "POST" })
         };
         return [row];
       }),
+      dayNotes: dayNotes.map((n) => ({
+        daycareId: n.daycare_id,
+        bookingId: n.booking_id,
+        childName: n.child_name,
+        day: n.day,
+        food: n.food || "",
+        nap: n.nap || "",
+        incident: n.incident || "",
+        photo: n.photo || "",
+      })),
+      splits: splits.flatMap((s) => {
+        if (!isProgramKind(s.program_kind)) return [];
+        const row: CareSplitRow = {
+          bookingId: s.booking_id,
+          daycareId: s.daycare_id,
+          childName: s.child_name,
+          parentDailyCents: Number(s.parent_daily_cents) || 0,
+          programDailyCents: Number(s.program_daily_cents) || 0,
+          programKind: s.program_kind,
+          programLabel: s.program_label || "",
+        };
+        return [row];
+      }),
     };
   });
 
 export const saveCareRoom = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { daycareId: string; name: string; capacity?: number }) => input)
+  .validator((input: { daycareId: string; name: string; capacity?: number; ageGroup?: string | null }) => input)
   .handler(async ({ context, data }) => {
     const daycareId = String(data.daycareId || "").trim();
     const name = String(data.name || "").replace(/\s+/g, " ").trim().slice(0, 80);
@@ -593,11 +744,250 @@ export const saveCareRoom = createServerFn({ method: "POST" })
     await ensureCareOpsTables(sql);
     const id = nid("rm");
     const capacity = clampRoomCapacity(data.capacity);
+    const ageGroup = isRatioAgeGroup(data.ageGroup) ? data.ageGroup : null;
     await sql`
-      insert into care_rooms (id, daycare_id, name, capacity)
-      values (${id}, ${daycareId}, ${name}, ${capacity})
+      insert into care_rooms (id, daycare_id, name, capacity, age_group)
+      values (${id}, ${daycareId}, ${name}, ${capacity}, ${ageGroup})
     `;
     return { ok: true as const, id };
+  });
+
+export const setCareRoomAge = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId: string; roomId: string; ageGroup: string }) => input)
+  .handler(async ({ context, data }) => {
+    const daycareId = String(data.daycareId || "").trim();
+    const roomId = String(data.roomId || "").trim();
+    if (!daycareId || !roomId || !isRatioAgeGroup(data.ageGroup)) throw new Error("Pick an age group");
+    const sql = await requireStaffWrite(context.userId, daycareId);
+    await ensureCareOpsTables(sql);
+    await sql`
+      update care_rooms
+      set age_group = ${data.ageGroup}, updated_at = now()
+      where id = ${roomId} and daycare_id = ${daycareId} and archived_at is null
+    `;
+    return { ok: true as const };
+  });
+
+export const saveEnrolmentSplit = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    (input: {
+      daycareId: string;
+      bookingId: string;
+      childName: string;
+      parentDailyCents: number;
+      programDailyCents: number;
+      programKind: string;
+      programLabel?: string;
+    }) => input,
+  )
+  .handler(async ({ context, data }) => {
+    const daycareId = String(data.daycareId || "").trim();
+    const bookingId = String(data.bookingId || "").trim();
+    const childName = String(data.childName || "").trim();
+    const split = normalizeSplit(data);
+    if (!daycareId || !bookingId || !childName || !split) throw new Error("Enter the daily amounts");
+    const sql = await requireStaffWrite(context.userId, daycareId);
+    await ensureCareOpsTables(sql);
+    const booking = await sql<{ id: string }>`
+      select id from bookings
+      where id = ${bookingId} and daycare_id = ${daycareId}
+        and status in ('accepted', 'active')
+      limit 1
+    `;
+    if (!booking[0]) throw new Error("Daily care is for enrolled children");
+    await sql`
+      insert into care_enrolment_splits (
+        booking_id, daycare_id, child_name, parent_daily_cents, program_daily_cents,
+        program_kind, program_label, updated_by
+      )
+      values (
+        ${bookingId}, ${daycareId}, ${childName}, ${split.parentDailyCents}, ${split.programDailyCents},
+        ${split.programKind}, ${split.programLabel}, ${context.userId}
+      )
+      on conflict (booking_id) do update set
+        child_name = excluded.child_name,
+        parent_daily_cents = excluded.parent_daily_cents,
+        program_daily_cents = excluded.program_daily_cents,
+        program_kind = excluded.program_kind,
+        program_label = excluded.program_label,
+        updated_by = excluded.updated_by,
+        updated_at = now()
+    `;
+    return { ok: true as const };
+  });
+
+export const saveDayNote = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    (input: {
+      daycareId: string;
+      bookingId?: string | null;
+      childName: string;
+      day: string;
+      food?: string;
+      nap?: string;
+      incident?: string;
+      photo?: string;
+    }) => input,
+  )
+  .handler(async ({ context, data }) => {
+    const daycareId = String(data.daycareId || "").trim();
+    const childName = String(data.childName || "").trim();
+    const day = String(data.day || "").trim();
+    if (!daycareId || !childName || !/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error("Pick the day");
+    const food = String(data.food || "").trim().slice(0, 500);
+    const nap = String(data.nap || "").trim().slice(0, 500);
+    const incident = String(data.incident || "").trim().slice(0, 2000);
+    const photo = String(data.photo || "").trim();
+    if (photo && (photo.length > 2_500_000 || !photo.startsWith("data:image/") && !/^https?:\/\//i.test(photo) && !photo.startsWith("/img?"))) {
+      throw new Error("Use one photo");
+    }
+    if (!dayNoteReady({ food, nap, incident, photo })) throw new Error("Add food, nap, an incident, or a photo");
+    const sql = await requireStaffWrite(context.userId, daycareId);
+    await ensureCareOpsTables(sql);
+    const marked = await sql<{ status: string }>`
+      select status from attendance
+      where daycare_id = ${daycareId} and child_name = ${childName} and day = ${day}
+      limit 1
+    `;
+    if (!canWriteDayNote(marked[0]?.status)) throw new Error("Mark the day before the note");
+    const id = nid("dn");
+    await sql`
+      insert into care_day_notes (
+        id, daycare_id, booking_id, child_name, day, food, nap, incident, photo, author_user_id
+      )
+      values (
+        ${id}, ${daycareId}, ${data.bookingId ?? null}, ${childName}, ${day},
+        ${food}, ${nap}, ${incident}, ${photo}, ${context.userId}
+      )
+      on conflict (daycare_id, child_name, day) do update set
+        food = excluded.food,
+        nap = excluded.nap,
+        incident = excluded.incident,
+        photo = excluded.photo,
+        booking_id = coalesce(excluded.booking_id, care_day_notes.booking_id),
+        author_user_id = excluded.author_user_id,
+        updated_at = now()
+    `;
+    return { ok: true as const };
+  });
+
+export type LicensedMonthChild = {
+  bookingId: string;
+  daycareId: string;
+  daycareName: string;
+  childName: string;
+  parentUserId: string | null;
+  days: Array<{ day: string; status: string }>;
+  split: CareSplitRow | null;
+};
+
+export const getLicensedMonth = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input?: { daycareId?: string; month?: string }) => ({
+    daycareId: String(input?.daycareId || "").trim() || undefined,
+    month: String(input?.month || "").trim() || undefined,
+  }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await ensureCareOpsTables(sql);
+    const month = /^\d{4}-\d{2}$/.test(data.month || "") ? data.month! : todayYmd().slice(0, 7);
+    const start = `${month}-01`;
+    const kids = await sql<{
+      booking_id: string;
+      daycare_id: string;
+      daycare_name: string;
+      child_name: string;
+      parent_user_id: string;
+    }>`
+      select b.id as booking_id, b.daycare_id, d.name as daycare_name,
+             coalesce(ch.name, b.parent_name, 'Child') as child_name,
+             b.user_id as parent_user_id
+      from bookings b
+      join daycares d on d.id = b.daycare_id
+      left join children ch on ch.id = b.child_id
+      where b.status in ('accepted', 'active')
+        and (
+          b.user_id = ${context.userId}
+          or b.daycare_id in (select daycare_id from provider_daycares where user_id = ${context.userId})
+          or b.daycare_id in (
+            select daycare_id from centre_members
+            where user_id = ${context.userId} and status = 'active'
+          )
+        )
+        and (${data.daycareId ?? ""} = '' or b.daycare_id = ${data.daycareId ?? ""})
+      order by child_name
+    `;
+    const rows = await sql<{
+      daycare_id: string;
+      child_name: string;
+      day: string;
+      status: string;
+    }>`
+      select daycare_id, child_name, day::text as day, status
+      from attendance
+      where day >= ${start}::date and day < (${start}::date + interval '1 month')
+        and (
+          parent_user_id = ${context.userId}
+          or daycare_id in (select daycare_id from provider_daycares where user_id = ${context.userId})
+          or daycare_id in (
+            select daycare_id from centre_members
+            where user_id = ${context.userId} and status = 'active'
+          )
+        )
+    `.catch(() => []);
+    const splitRows = await sql<{
+      booking_id: string;
+      daycare_id: string;
+      child_name: string;
+      parent_daily_cents: number;
+      program_daily_cents: number;
+      program_kind: string;
+      program_label: string;
+    }>`
+      select booking_id, daycare_id, child_name, parent_daily_cents, program_daily_cents, program_kind, program_label
+      from care_enrolment_splits
+      where (
+          daycare_id in (select daycare_id from provider_daycares where user_id = ${context.userId})
+          or daycare_id in (
+            select daycare_id from centre_members
+            where user_id = ${context.userId} and status = 'active'
+          )
+          or booking_id in (
+            select id from bookings
+            where user_id = ${context.userId} and status in ('accepted', 'active')
+          )
+        )
+    `.catch(() => []);
+    const children: LicensedMonthChild[] = kids.map((kid) => {
+      const splitHit = splitRows.find((s) => s.booking_id === kid.booking_id);
+      const kind = splitHit && isProgramKind(splitHit.program_kind) ? splitHit.program_kind : null;
+      return {
+        bookingId: kid.booking_id,
+        daycareId: kid.daycare_id,
+        daycareName: kid.daycare_name,
+        childName: kid.child_name,
+        parentUserId: kid.parent_user_id,
+        days: rows
+          .filter((r) => r.daycare_id === kid.daycare_id && r.child_name === kid.child_name)
+          .map((r) => ({ day: r.day, status: r.status })),
+        split:
+          splitHit && kind
+            ? {
+                bookingId: splitHit.booking_id,
+                daycareId: splitHit.daycare_id,
+                childName: splitHit.child_name,
+                parentDailyCents: Number(splitHit.parent_daily_cents) || 0,
+                programDailyCents: Number(splitHit.program_daily_cents) || 0,
+                programKind: kind,
+                programLabel: splitHit.program_label || "",
+              }
+            : null,
+      };
+    });
+    return { month, children };
   });
 
 export const assignChildRoom = createServerFn({ method: "POST" })

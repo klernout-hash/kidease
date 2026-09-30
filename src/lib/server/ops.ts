@@ -209,7 +209,17 @@ export const saveAttendance = createServerFn({ method: "POST" })
     `;
 
     const action: CareAttendanceAction | null =
-      data.status === "arrived" ? "check_in" : data.status === "departed" ? "check_out" : data.status === "absent" ? "absent" : null;
+      data.status === "arrived"
+        ? "check_in"
+        : data.status === "departed"
+          ? "check_out"
+          : data.status === "absent"
+            ? "absent"
+            : data.status === "sick"
+              ? "sick"
+              : data.status === "vacation"
+                ? "vacation"
+                : null;
     if (action) {
       const centre = await sql<{ name: string }>`select name from daycares where id = ${data.daycareId} limit 1`;
       const daycareName = centre[0]?.name || "the centre";

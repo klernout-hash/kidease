@@ -14,7 +14,7 @@
 
 import { LISTING_PHOTO_MAX_BYTES } from "./upload-limits.ts";
 
-export const ATTENDANCE_STATUSES = ["scheduled", "arrived", "departed", "absent"] as const;
+export const ATTENDANCE_STATUSES = ["scheduled", "arrived", "departed", "absent", "sick", "vacation"] as const;
 export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 
 export function isAttendanceStatus(value: string | null | undefined): value is AttendanceStatus {
@@ -22,18 +22,18 @@ export function isAttendanceStatus(value: string | null | undefined): value is A
 }
 
 export const DAILY_CARE_HONESTY =
-  "For a claimed centre and enrolled children: check-in, journal, messages, medication logs, incident reports, room counts, and today's roster. Not payroll timesheets, tuition billing, or provincial subsidy workflows.";
+  "For a claimed centre and enrolled children: check-in, the day's note, messages, medication logs, incident reports, room ratios, and the parent/program split. Not payroll timesheets. KidEase does not pay a subsidy.";
 
 export const CARE_OPS_LATER_OUT_OF_SCOPE =
-  "Not in this phase: staff timesheets / payroll, full centre tuition billing, or provincial subsidy workflows.";
+  "Not in this phase: staff timesheets / payroll or full centre tuition billing. KidEase records the program share and does not pay it.";
 
 export const JOURNAL_MAX_PHOTOS = 4;
 export const JOURNAL_MAX_PHOTO_BYTES = LISTING_PHOTO_MAX_BYTES;
 export const JOURNAL_MAX_BODY = 2_000;
 export const JOURNAL_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 
-export type CarePresence = "here" | "picked_up" | "expected" | "absent";
-export type CareAttendanceAction = "check_in" | "check_out" | "absent";
+export type CarePresence = "here" | "picked_up" | "expected" | "absent" | "sick" | "vacation";
+export type CareAttendanceAction = "check_in" | "check_out" | "absent" | "sick" | "vacation";
 export type CareDeskRole = "parent" | "provider";
 export type CareStatusKind = CareAttendanceAction | "journal" | "medication" | "incident";
 
@@ -89,12 +89,16 @@ export function presenceFromAttendance(status: AttendanceStatus | string | null 
   if (status === "arrived") return "here";
   if (status === "departed") return "picked_up";
   if (status === "absent") return "absent";
+  if (status === "sick") return "sick";
+  if (status === "vacation") return "vacation";
   return "expected";
 }
 
 export function attendanceFromAction(action: CareAttendanceAction): AttendanceStatus {
   if (action === "check_in") return "arrived";
   if (action === "check_out") return "departed";
+  if (action === "sick") return "sick";
+  if (action === "vacation") return "vacation";
   return "absent";
 }
 
@@ -192,6 +196,14 @@ export function careStatusBody(input: {
   }
   if (input.kind === "absent") {
     return fr ? `${child} est absent(e) aujourd’hui à ${input.daycareName}.` : `${child} is marked absent at ${input.daycareName} today.`;
+  }
+  if (input.kind === "sick") {
+    return fr ? `${child} est malade aujourd’hui à ${input.daycareName}.` : `${child} is marked sick at ${input.daycareName} today.`;
+  }
+  if (input.kind === "vacation") {
+    return fr
+      ? `${child} est en vacances aujourd’hui — pas à ${input.daycareName}.`
+      : `${child} is on vacation today — not at ${input.daycareName}.`;
   }
   if (input.kind === "medication") {
     const med = (input.medicationName || "medication").trim() || "medication";

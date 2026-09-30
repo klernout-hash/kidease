@@ -6,11 +6,21 @@ import {
   assignCareRoster,
   assignChildRoom,
   saveCareRoom,
+  setCareRoomAge,
   type CareOpsPayload,
 } from "@/lib/server/care-ops";
 import { buildRoomCounts, canAssignRoster, canManageRooms, type CareDeskRole } from "@/lib/daily-care";
+import { evaluateRoom, RATIO_AGE_GROUPS, type RatioAgeGroup } from "@/lib/licensed-day";
 import type { AttendanceRow } from "@/lib/server/ops";
 import { useCopy } from "@/lib/use-copy";
+import type { CopyKey } from "@/lib/copy";
+
+const AGE_LABEL: Record<RatioAgeGroup, CopyKey> = {
+  infant: "careAgeInfant",
+  toddler: "careAgeToddler",
+  preschool: "careAgePreschool",
+  school_age: "careAgeSchool",
+};
 
 export function CareOpsPanel({
   role,
@@ -32,6 +42,7 @@ export function CareOpsPanel({
   const { t } = useCopy();
   const [roomName, setRoomName] = useState("");
   const [capacity, setCapacity] = useState("8");
+  const [ageGroup, setAgeGroup] = useState<RatioAgeGroup>("preschool");
   const [staffPick, setStaffPick] = useState<Record<string, string>>({});
   const daycareOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -61,7 +72,7 @@ export function CareOpsPanel({
     setBusy("room:add");
     try {
       await saveCareRoom({
-        data: { daycareId: selectedDaycareId, name: roomName, capacity: Number(capacity) || 8 },
+        data: { daycareId: selectedDaycareId, name: roomName, capacity: Number(capacity) || 8, ageGroup },
       });
       confirmSuccess({ variant: "toast", title: t("careRoomAdded") });
       setRoomName("");
@@ -99,21 +110,70 @@ export function CareOpsPanel({
       <p className="mt-1 text-sm text-muted">{t("careRoomsLead")}</p>
       {counts.length ? (
         <ul className="mt-3 space-y-2">
-          {counts.map((row) => (
+          {counts.map((row) => {
+            const room = ops.rooms.find((item) => item.id === row.roomId);
+            const ratio = evaluateRoom({
+              province: room?.province,
+              ageGroup: room?.ageGroup,
+              present: row.present,
+              staff: row.staffNames.length,
+              capacity: row.capacity,
+            });
+            return (
             <li key={row.roomId} className="rounded-lg bg-bg p-3 ring-1 ring-border">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="font-medium">{row.roomName}</p>
                 <p className="text-sm">
-                  {row.present} {t("careHere")} / {row.capacity}
-                  {row.overCapacity ? (
-                    <span className="ml-2 text-xs font-medium text-danger">{t("careRoomOver")}</span>
+                  {ratio.rule
+                    ? t("careRatioLine")
+                        .replace("{present}", String(row.present))
+                        .replace("{staff}", String(row.staffNames.length))
+                        .replace("{need}", String(ratio.staffRequired))
+                    : `${row.present} / ${row.capacity}`}
+                  {ratio.overRatio ? (
+                    <span className="ml-2 text-xs font-medium text-danger">{t("careRatioOver")}</span>
+                  ) : null}
+                  {ratio.overGroup ? (
+                    <span className="ml-2 text-xs font-medium text-danger">{t("careRatioGroup")}</span>
                   ) : null}
                 </p>
               </div>
               <p className="mt-1 text-xs text-subtle">
+                {ratio.rule
+                  ? `${ratio.rule.band} · ${ratio.rule.citation}. ${ratio.rule.note}`
+                  : t("careRatioMissing")}
+              </p>
+              <p className="mt-1 text-xs text-subtle">
                 {row.daycareName}
                 {row.staffNames.length ? ` · ${row.staffNames.join(", ")}` : ` · ${t("careRosterEmpty")}`}
               </p>
+              {role === "provider" && room ? (
+                <label className="mt-2 block text-sm">
+                  {t("careAgeGroup")}
+                  <select
+                    className="mt-1 block rounded-md border border-border bg-bg px-2 py-1.5 text-sm"
+                    value={room.ageGroup ?? ""}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      if (!next) return;
+                      setBusy(`age:${row.roomId}`);
+                      void setCareRoomAge({
+                        data: { daycareId: room.daycareId, roomId: room.id, ageGroup: next },
+                      })
+                        .then(() => onReload())
+                        .catch((err) => toast.error(err instanceof Error ? err.message : t("tourRespondFailed")))
+                        .finally(() => setBusy(null));
+                    }}
+                  >
+                    <option value="">{t("careAgeGroup")}</option>
+                    {RATIO_AGE_GROUPS.map((group) => (
+                      <option key={group} value={group}>
+                        {t(AGE_LABEL[group])}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               {role === "provider" ? (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <label className="sr-only" htmlFor={`roster-${row.roomId}`}>
@@ -145,7 +205,8 @@ export function CareOpsPanel({
                 </div>
               ) : null}
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : (
         <p className="mt-2 text-sm text-muted">{t("careRoomsEmpty")}</p>
@@ -180,6 +241,20 @@ export function CareOpsPanel({
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
               />
+            </label>
+            <label className="text-sm">
+              {t("careAgeGroup")}
+              <select
+                className="mt-1 block rounded-md border border-border bg-bg px-2 py-1.5 text-sm"
+                value={ageGroup}
+                onChange={(e) => setAgeGroup(e.target.value as RatioAgeGroup)}
+              >
+                {RATIO_AGE_GROUPS.map((group) => (
+                  <option key={group} value={group}>
+                    {t(AGE_LABEL[group])}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="text-sm">
               {t("careRoomCapacity")}

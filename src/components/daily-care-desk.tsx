@@ -21,8 +21,10 @@ import {
 } from "@/lib/daily-care";
 import { sendConnectedMessage } from "@/lib/server/inbox";
 import { listDailyJournals, postDailyJournal, type DailyJournalRow } from "@/lib/server/daily-care";
-import { listCareOps, type CareOpsPayload } from "@/lib/server/care-ops";
+import { listCareOps, getLicensedMonth, saveDayNote, saveEnrolmentSplit, type CareOpsPayload, type LicensedMonthChild } from "@/lib/server/care-ops";
 import { getWeekSchedule, saveAttendance, type AttendanceRow } from "@/lib/server/ops";
+import { createBill, sendBill } from "@/lib/server/billing";
+import { buildMonthLedger, canWriteDayNote, dollarsToDailyCents, parentShareDollars } from "@/lib/licensed-day";
 import { CareChildOps } from "@/components/care-child-ops";
 import { CareChildRoomSelect, CareOpsPanel } from "@/components/care-ops-panel";
 import { useCopy } from "@/lib/use-copy";
@@ -33,6 +35,8 @@ const PRESENCE_COPY: Record<ReturnType<typeof presenceFromAttendance>, CopyKey> 
   picked_up: "carePickedUp",
   expected: "careExpected",
   absent: "careAbsent",
+  sick: "careSick",
+  vacation: "careVacation",
 };
 
 function childKey(row: Pick<AttendanceRow, "daycareId" | "childName" | "bookingId">) {
@@ -46,7 +50,7 @@ export function DailyCareDesk({
   role: CareDeskRole;
   daycareId?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const day = todayYmd();
   const [items, setItems] = useState<AttendanceRow[]>([]);
   const [journals, setJournals] = useState<DailyJournalRow[]>([]);
@@ -55,9 +59,13 @@ export function DailyCareDesk({
   const [busy, setBusy] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, { body: string; photos: JournalPhoto[] }>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [monthChildren, setMonthChildren] = useState<LicensedMonthChild[]>([]);
+  const [monthLabel, setMonthLabel] = useState(day.slice(0, 7));
+  const [dayDrafts, setDayDrafts] = useState<Record<string, { food: string; nap: string; incident: string; photo: string }>>({});
+  const [splitDrafts, setSplitDrafts] = useState<Record<string, { parent: string; program: string; kind: string; label: string }>>({});
 
   const load = useCallback(async () => {
-    const [week, feed, careOps] = await Promise.all([
+    const [week, feed, careOps, month] = await Promise.all([
       getWeekSchedule({ data: { daycareId, weekStart: day } }).catch(() => ({
         days: [day],
         items: [] as AttendanceRow[],
@@ -65,10 +73,16 @@ export function DailyCareDesk({
       })),
       listDailyJournals({ data: { daycareId, day } }).catch(() => ({ day, items: [] as DailyJournalRow[] })),
       listCareOps({ data: { daycareId, day } }).catch(() => null),
+      getLicensedMonth({ data: { daycareId, month: day.slice(0, 7) } }).catch(() => ({
+        month: day.slice(0, 7),
+        children: [] as LicensedMonthChild[],
+      })),
     ]);
     setItems(week.items.filter((row) => row.day === day));
     setJournals(feed.items);
     setOps(careOps);
+    setMonthChildren(month.children);
+    setMonthLabel(month.month);
     setReady(true);
   }, [daycareId, day, role]);
 
@@ -115,7 +129,16 @@ export function DailyCareDesk({
       });
       confirmSuccess({
         variant: "toast",
-        title: action === "check_in" ? t("careCheckedIn") : action === "check_out" ? t("careCheckedOut") : t("careAbsent"),
+        title:
+          action === "check_in"
+            ? t("careCheckedIn")
+            : action === "check_out"
+              ? t("careCheckedOut")
+              : action === "sick"
+                ? t("careMarkedSick")
+                : action === "vacation"
+                  ? t("careMarkedVacation")
+                  : t("careAbsent"),
       });
       await load();
     } catch (err) {
@@ -195,6 +218,98 @@ export function DailyCareDesk({
       },
       () => toast.error(t("carePhotoTooBig")),
     );
+  }
+
+  async function saveDay(row: AttendanceRow) {
+    if (!canWriteDayNote(row.status)) return;
+    const draft = dayDrafts[childKey(row)] ?? { food: "", nap: "", incident: "", photo: "" };
+    setBusy(`${childKey(row)}:day`);
+    try {
+      await saveDayNote({
+        data: {
+          daycareId: row.daycareId,
+          bookingId: row.bookingId,
+          childName: row.childName,
+          day: row.day,
+          food: draft.food,
+          nap: draft.nap,
+          incident: draft.incident,
+          photo: draft.photo,
+        },
+      });
+      confirmSuccess({ variant: "toast", title: t("careDayNoteSaved") });
+      setDayDrafts((prev) => ({ ...prev, [childKey(row)]: { food: "", nap: "", incident: "", photo: "" } }));
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function saveSplit(row: AttendanceRow) {
+    if (!row.bookingId) return;
+    const draft = splitDrafts[childKey(row)] ?? { parent: "", program: "", kind: "cwelcc", label: "" };
+    const parentDailyCents = dollarsToDailyCents(draft.parent);
+    const programDailyCents = draft.kind === "none" ? 0 : dollarsToDailyCents(draft.program);
+    if (parentDailyCents == null || programDailyCents == null) {
+      toast.error(t("careSplitNeedAmount"));
+      return;
+    }
+    setBusy(`${childKey(row)}:split`);
+    try {
+      await saveEnrolmentSplit({
+        data: {
+          daycareId: row.daycareId,
+          bookingId: row.bookingId,
+          childName: row.childName,
+          parentDailyCents,
+          programDailyCents,
+          programKind: draft.kind,
+          programLabel: draft.label,
+        },
+      });
+      confirmSuccess({ variant: "toast", title: t("careSplitSaved") });
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function sendParentShare(child: LicensedMonthChild) {
+    if (role !== "provider" || !child.parentUserId || !child.split) return;
+    const ledger = buildMonthLedger({
+      statuses: child.days.map((d) => d.status),
+      parentDailyCents: child.split.parentDailyCents,
+      programDailyCents: child.split.programDailyCents,
+    });
+    const dollars = parentShareDollars(ledger.parentCents);
+    if (!dollars) return;
+    setBusy(`bill:${child.bookingId}`);
+    try {
+      const bill = await createBill({
+        data: {
+          daycareId: child.daycareId,
+          parentUserId: child.parentUserId,
+          bookingId: child.bookingId,
+          amountCad: dollars,
+          period: monthLabel,
+          memo: t("careShareMemo").replace("{month}", monthLabel).replace("{days}", String(ledger.present)),
+        },
+      });
+      await sendBill({ data: bill.id });
+      confirmSuccess({ variant: "toast", title: t("careShareSent") });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function money(cents: number) {
+    return (cents / 100).toLocaleString(locale === "fr" ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" });
   }
 
   return (
@@ -284,6 +399,22 @@ export function DailyCareDesk({
                     >
                       {t("careMarkAbsent")}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy !== null || row.status === "sick"}
+                      onClick={() => void mark(row, "sick")}
+                    >
+                      {t("careMarkSick")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy !== null || row.status === "vacation"}
+                      onClick={() => void mark(row, "vacation")}
+                    >
+                      {t("careMarkVacation")}
+                    </Button>
                     {row.conversationId ? (
                       <Button size="sm" variant="secondary" asChild>
                         <Link to="/inbox/$id" params={{ id: row.conversationId }}>
@@ -293,6 +424,33 @@ export function DailyCareDesk({
                     ) : null}
                   </div>
                 </div>
+
+                <DayRecord
+                  role={role}
+                  row={row}
+                  note={ops?.dayNotes.find((n) => n.daycareId === row.daycareId && n.childName === row.childName) ?? null}
+                  split={ops?.splits.find((s) => s.bookingId && s.bookingId === row.bookingId) ?? null}
+                  draft={dayDrafts[key] ?? { food: "", nap: "", incident: "", photo: "" }}
+                  splitDraft={splitDrafts[key]}
+                  busy={busy}
+                  onDraft={(next) => setDayDrafts((prev) => ({ ...prev, [key]: next }))}
+                  onSplit={(next) => setSplitDrafts((prev) => ({ ...prev, [key]: next }))}
+                  onSaveDay={() => void saveDay(row)}
+                  onSaveSplit={() => void saveSplit(row)}
+                  onPhoto={(file) => {
+                    if (!file) return;
+                    const decision = journalPhotoDecision({ type: file.type, size: file.size });
+                    if (decision !== "ok") {
+                      toast.error(decision === "video" ? t("carePhotoVideoBlocked") : t("carePhotoTooBig"));
+                      return;
+                    }
+                    readListingImage(
+                      file,
+                      (src) => setDayDrafts((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { food: "", nap: "", incident: "", photo: "" }), photo: src } })),
+                      () => toast.error(t("carePhotoTooBig")),
+                    );
+                  }}
+                />
 
                 {row.conversationId ? (
                   <div className="mt-4">
@@ -394,8 +552,191 @@ export function DailyCareDesk({
           })}
         </ul>
       )}
+      {ready && monthChildren.length ? (
+        <MonthShares
+          role={role}
+          month={monthLabel}
+          rows={monthChildren}
+          busy={busy}
+          money={money}
+          onSend={(child) => void sendParentShare(child)}
+        />
+      ) : null}
       <p className="sr-only">{DAILY_CARE_HONESTY}</p>
       <p className="sr-only">{CARE_OPS_LATER_OUT_OF_SCOPE}</p>
+    </section>
+  );
+}
+
+function DayRecord({
+  role,
+  row,
+  note,
+  split,
+  draft,
+  splitDraft,
+  busy,
+  onDraft,
+  onSplit,
+  onSaveDay,
+  onSaveSplit,
+  onPhoto,
+}: {
+  role: CareDeskRole;
+  row: AttendanceRow;
+  note: { food: string; nap: string; incident: string; photo: string } | null;
+  split: { parentDailyCents: number; programDailyCents: number; programKind: string; programLabel: string } | null;
+  draft: { food: string; nap: string; incident: string; photo: string };
+  splitDraft?: { parent: string; program: string; kind: string; label: string };
+  busy: string | null;
+  onDraft: (next: { food: string; nap: string; incident: string; photo: string }) => void;
+  onSplit: (next: { parent: string; program: string; kind: string; label: string }) => void;
+  onSaveDay: () => void;
+  onSaveSplit: () => void;
+  onPhoto: (file: File | undefined) => void;
+}) {
+  const { t } = useCopy();
+  const marked = canWriteDayNote(row.status);
+  const amounts = splitDraft ?? {
+    parent: split ? (split.parentDailyCents / 100).toFixed(2) : "",
+    program: split ? (split.programDailyCents / 100).toFixed(2) : "",
+    kind: split?.programKind ?? "cwelcc",
+    label: split?.programLabel ?? "",
+  };
+  return (
+    <div className="mt-4 border-t border-border pt-4" data-ke="day-record">
+      <p className="font-medium">{t("careDayNote")}</p>
+      {marked ? null : <p className="mt-1 text-sm text-muted">{t("careDayNoteLocked")}</p>}
+      {note && (note.food || note.nap || note.incident || note.photo) ? (
+        <div className="mt-2 space-y-1 text-sm">
+          {note.food ? <p>{t("careFood")}: {note.food}</p> : null}
+          {note.nap ? <p>{t("careNap")}: {note.nap}</p> : null}
+          {note.incident ? <p>{t("careIncidentNote")}: {note.incident}</p> : null}
+          {note.photo ? <img src={note.photo} alt="" className="mt-2 h-24 w-24 rounded-md object-cover ring-1 ring-border" /> : null}
+        </div>
+      ) : null}
+      {role === "provider" && marked ? (
+        <div className="mt-2 space-y-2">
+          <label className="block text-sm">
+            {t("careFood")}
+            <input className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.food} onChange={(e) => onDraft({ ...draft, food: e.target.value })} />
+          </label>
+          <label className="block text-sm">
+            {t("careNap")}
+            <input className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.nap} onChange={(e) => onDraft({ ...draft, nap: e.target.value })} />
+          </label>
+          <label className="block text-sm">
+            {t("careIncidentNote")}
+            <textarea rows={2} className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.incident} onChange={(e) => onDraft({ ...draft, incident: e.target.value })} />
+          </label>
+          <label className="block text-sm">
+            {t("careJournalPhotos")}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="mt-1 block text-sm"
+              onChange={(e) => {
+                onPhoto(e.target.files?.[0]);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+          <Button size="sm" disabled={busy !== null} onClick={onSaveDay}>
+            {t("careDayNoteSave")}
+          </Button>
+        </div>
+      ) : null}
+      {role === "provider" && row.bookingId ? (
+        <div className="mt-4 space-y-2">
+          <p className="font-medium">{t("careSplitTitle")}</p>
+          <p className="text-sm text-muted">{t("careProgramNotCollected")}</p>
+          <div className="flex flex-wrap gap-2">
+            <label className="text-sm">
+              {t("careParentDaily")}
+              <input className="mt-1 block w-28 rounded-md border border-border bg-bg px-3 py-2 text-sm" inputMode="decimal" value={amounts.parent} onChange={(e) => onSplit({ ...amounts, parent: e.target.value })} />
+            </label>
+            <label className="text-sm">
+              {t("careProgramDaily")}
+              <input className="mt-1 block w-28 rounded-md border border-border bg-bg px-3 py-2 text-sm" inputMode="decimal" value={amounts.program} onChange={(e) => onSplit({ ...amounts, program: e.target.value })} disabled={amounts.kind === "none"} />
+            </label>
+            <label className="text-sm">
+              {t("careProgramKind")}
+              <select className="mt-1 block rounded-md border border-border bg-bg px-2 py-2 text-sm" value={amounts.kind} onChange={(e) => onSplit({ ...amounts, kind: e.target.value, program: e.target.value === "none" ? "0" : amounts.program })}>
+                <option value="cwelcc">{t("careProgramCwelcc")}</option>
+                <option value="subsidy">{t("careProgramSubsidy")}</option>
+                <option value="none">{t("careProgramNone")}</option>
+              </select>
+            </label>
+            <label className="min-w-40 flex-1 text-sm">
+              {t("careProgramLabel")}
+              <input className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" placeholder={t("careProgramLabelPh")} value={amounts.label} onChange={(e) => onSplit({ ...amounts, label: e.target.value })} />
+            </label>
+          </div>
+          <Button size="sm" variant="secondary" disabled={busy !== null} onClick={onSaveSplit}>
+            {t("careSplitSave")}
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function MonthShares({
+  role,
+  month,
+  rows,
+  busy,
+  money,
+  onSend,
+}: {
+  role: CareDeskRole;
+  month: string;
+  rows: LicensedMonthChild[];
+  busy: string | null;
+  money: (cents: number) => string;
+  onSend: (child: LicensedMonthChild) => void;
+}) {
+  const { t } = useCopy();
+  return (
+    <section className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="licensed-month">
+      <h3 className="font-medium">{t("careMonthTitle").replace("{month}", month)}</h3>
+      <p className="mt-1 text-sm text-muted">{t("careMonthLead")}</p>
+      <ul className="mt-3 space-y-3">
+        {rows.map((child) => {
+          const ledger = buildMonthLedger({
+            statuses: child.days.map((d) => d.status),
+            parentDailyCents: child.split?.parentDailyCents ?? 0,
+            programDailyCents: child.split?.programDailyCents ?? 0,
+          });
+          const dollars = parentShareDollars(ledger.parentCents);
+          return (
+            <li key={child.bookingId} className="rounded-lg bg-bg p-3 ring-1 ring-border">
+              <p className="font-medium">{child.childName}</p>
+              <p className="text-sm text-muted">{child.daycareName}{child.split?.programLabel ? ` · ${child.split.programLabel}` : ""}</p>
+              <p className="mt-1 text-sm">
+                {t("carePresentDays").replace("{n}", String(ledger.present))}
+                {" · "}
+                {t("careAbsent")} {ledger.absent}
+                {" · "}
+                {t("careSick")} {ledger.sick}
+                {" · "}
+                {t("careVacation")} {ledger.vacation}
+              </p>
+              <p className="mt-1 text-sm">
+                {t("careParentOwes").replace("{amount}", money(ledger.parentCents))}
+                {" · "}
+                {t("careProgramOwes").replace("{amount}", money(ledger.programCents))}
+              </p>
+              <p className="mt-1 text-xs text-subtle">{t("careProgramNotCollected")}</p>
+              {role === "provider" && dollars && child.parentUserId ? (
+                <Button className="mt-2" size="sm" disabled={busy !== null} onClick={() => onSend(child)}>
+                  {busy === `bill:${child.bookingId}` ? t("loading") : t("careSendParentShare")}
+                </Button>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
