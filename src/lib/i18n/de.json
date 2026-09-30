@@ -2403,5 +2403,9 @@
   "careProgramNotCollected": "KidEase zieht den Programmanteil nicht ein.",
   "careSendParentShare": "Elternanteil senden",
   "careShareSent": "Elternanteil gesendet",
-  "careShareMemo": "Elternanteil für {month}: {days} Tage, an denen das Kind hier war. Der Programmanteil steht nicht auf dieser Rechnung. KidEase zieht ihn nicht ein."
+  "careShareMemo": "Elternanteil für {month}: {days} Tage, an denen das Kind hier war. Der Programmanteil steht nicht auf dieser Rechnung. KidEase zieht ihn nicht ein.",
+  "pushExplainTitle": "Antworten auf dem Telefon erhalten",
+  "pushExplainBody": "KidEase kann Bescheid sagen, wenn eine Kita antwortet, wenn Sie eine Nachricht haben oder wenn sich ein Anspruch ändert. Wir fragen nur, wenn Sie es einschalten.",
+  "pushExplainYes": "Mitteilungen einschalten",
+  "pushExplainNo": "Nicht jetzt"
 }

@@ -2403,5 +2403,9 @@
   "careProgramNotCollected": "KidEase 唔收項目份。",
   "careSendParentShare": "發送家長份",
   "careShareSent": "家長份已發送",
-  "careShareMemo": "{month} 嘅家長份：小朋友到園 {days} 日。項目份唔喺呢張賬單。KidEase 唔收呢份。"
+  "careShareMemo": "{month} 嘅家長份：小朋友到園 {days} 日。項目份唔喺呢張賬單。KidEase 唔收呢份。",
+  "pushExplainTitle": "喺手機收到回覆",
+  "pushExplainBody": "托兒所回覆、你有訊息，或者認領狀態更新時，KidEase 可以通知你。只有你開啟之後先會問。",
+  "pushExplainYes": "開啟通知",
+  "pushExplainNo": "暫時唔使"
 }

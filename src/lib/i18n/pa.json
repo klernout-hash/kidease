@@ -2403,5 +2403,9 @@
   "careProgramNotCollected": "KidEase ਪ੍ਰੋਗਰਾਮ ਦਾ ਹਿੱਸਾ ਨਹੀਂ ਲੈਂਦਾ।",
   "careSendParentShare": "ਮਾਪੇ ਦਾ ਹਿੱਸਾ ਭੇਜੋ",
   "careShareSent": "ਮਾਪੇ ਦਾ ਹਿੱਸਾ ਭੇਜਿਆ",
-  "careShareMemo": "{month} ਲਈ ਮਾਪੇ ਦਾ ਹਿੱਸਾ: ਬੱਚਾ {days} ਦਿਨ ਇੱਥੇ ਸੀ। ਪ੍ਰੋਗਰਾਮ ਦਾ ਹਿੱਸਾ ਇਸ ਬਿੱਲ ਉੱਤੇ ਨਹੀਂ। KidEase ਇਹ ਨਹੀਂ ਲੈਂਦਾ।"
+  "careShareMemo": "{month} ਲਈ ਮਾਪੇ ਦਾ ਹਿੱਸਾ: ਬੱਚਾ {days} ਦਿਨ ਇੱਥੇ ਸੀ। ਪ੍ਰੋਗਰਾਮ ਦਾ ਹਿੱਸਾ ਇਸ ਬਿੱਲ ਉੱਤੇ ਨਹੀਂ। KidEase ਇਹ ਨਹੀਂ ਲੈਂਦਾ।",
+  "pushExplainTitle": "ਫ਼ੋਨ ਉੱਤੇ ਜਵਾਬ ਲਵੋ",
+  "pushExplainBody": "ਜਦੋਂ ਡੇਅਕੇਅਰ ਜਵਾਬ ਦੇਵੇ, ਤੁਹਾਨੂੰ ਸੁਨੇਹਾ ਆਵੇ, ਜਾਂ ਕਲੇਮ ਅੱਪਡੇਟ ਹੋਵੇ, KidEase ਦੱਸ ਸਕਦਾ ਹੈ। ਅਸੀਂ ਤਾਂ ਹੀ ਪੁੱਛਾਂਗੇ ਜੇ ਤੁਸੀਂ ਇਹ ਚਾਲੂ ਕਰੋ।",
+  "pushExplainYes": "ਨੋਟੀਫਿਕੇਸ਼ਨ ਚਾਲੂ ਕਰੋ",
+  "pushExplainNo": "ਹੁਣੇ ਨਹੀਂ"
 }

@@ -25,6 +25,7 @@ import { useAppStore } from "@/lib/store";
 import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
 import { usePushRegistration } from "@/lib/use-push";
+import { PushExplain } from "@/components/push-explain";
 import { applyTheme, readThemePreference } from "@/lib/theme";
 
 /**
@@ -159,5 +160,5 @@ export function NativeBoot() {
     };
   }, [setOrigin, setLocated]);
 
-  return null;
+  return <PushExplain />;
 }

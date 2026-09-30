@@ -2403,5 +2403,9 @@
   "careProgramNotCollected": "KidEase no cobra la parte del programa.",
   "careSendParentShare": "Enviar la parte de la familia",
   "careShareSent": "Parte de la familia enviada",
-  "careShareMemo": "Parte de la familia de {month}: {days} días en que el niño estuvo aquí. La parte del programa no está en esta cuenta. KidEase no la cobra."
+  "careShareMemo": "Parte de la familia de {month}: {days} días en que el niño estuvo aquí. La parte del programa no está en esta cuenta. KidEase no la cobra.",
+  "pushExplainTitle": "Reciba respuestas en su teléfono",
+  "pushExplainBody": "KidEase puede avisarle cuando una guardería responda, cuando tenga un mensaje o cuando cambie un reclamo. Solo preguntamos si usted lo activa.",
+  "pushExplainYes": "Activar avisos",
+  "pushExplainNo": "Ahora no"
 }

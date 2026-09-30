@@ -2403,5 +2403,9 @@
   "careProgramNotCollected": "Hindi kinokolekta ng KidEase ang bahagi ng programa.",
   "careSendParentShare": "Ipadala ang bahagi ng magulang",
   "careShareSent": "Naipadala ang bahagi ng magulang",
-  "careShareMemo": "Bahagi ng magulang para sa {month}: {days} araw na nandito ang bata. Wala sa bill na ito ang bahagi ng programa. Hindi ito kinokolekta ng KidEase."
+  "careShareMemo": "Bahagi ng magulang para sa {month}: {days} araw na nandito ang bata. Wala sa bill na ito ang bahagi ng programa. Hindi ito kinokolekta ng KidEase.",
+  "pushExplainTitle": "Makatanggap ng sagot sa telepono",
+  "pushExplainBody": "Maaaring sabihin ng KidEase kapag sumagot ang daycare, kapag may mensahe ka, o kapag may update sa claim. Magtatanong lang kami kung io-on mo ito.",
+  "pushExplainYes": "I-on ang abiso",
+  "pushExplainNo": "Hindi muna"
 }
