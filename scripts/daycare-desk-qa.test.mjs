@@ -51,9 +51,9 @@ test("header pills follow stored roles; Admin only for kyle", () => {
     "parent",
   ]);
   assert.deepEqual(headerDesks(desksFor({ role: "admin" }), "admin", "kyle@kidease.ca"), [
-    "admin",
     "parent",
     "provider",
+    "admin",
   ]);
   assert.equal(headerDesks(desksFor({ role: "admin" }), "admin", "parent@example.com").includes("admin"), false);
   assert.equal(canSeeAdminDesk("provider", "kyle@kidease.ca"), false);

@@ -14,10 +14,10 @@ import { NavDrawer } from "@/components/nav-drawer";
 import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
-import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { useSessionDesks } from "@/components/desk-switcher";
 import { HomeCareTypeRow, selectedBrowseType } from "@/components/facility-type-rails";
 import { useRoleChrome } from "@/components/role-chrome";
-import { accountSearch, canSeeAdminDesk, showDeskSwitcher } from "@/lib/desks";
+import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
 import { SiteFooter } from "@/components/site-footer";
 import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
@@ -51,12 +51,6 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   }, []);
 
   const barePath = stripLocalePrefix(pathname);
-  const publicListing = /^\/daycare\/(?!city(?:\/|$))[^/]+/.test(barePath);
-  const guestBrowse =
-    barePath === "/" ||
-    barePath === "/search" ||
-    barePath === "/explore" ||
-    publicListing;
   const hideTabs = barePath.startsWith("/login");
   const verifyLite = pathname.startsWith("/verify-2fa");
   const menuLite = pathname.startsWith("/menu");
@@ -164,13 +158,6 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         role={chrome.role}
         paid={chrome.paid}
         isAdmin={canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
-        desksSlot={
-          user &&
-          !guestBrowse &&
-          showDeskSwitcher(session?.desks, session?.role, session?.email ?? user?.primaryEmail) ? (
-            <DeskSwitcher compact />
-          ) : null
-        }
         onSignOut={() => void signOut("/")}
         headerExtra={user ? <NotificationBell /> : null}
       />

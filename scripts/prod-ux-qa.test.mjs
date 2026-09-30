@@ -27,7 +27,7 @@ test("admin can land on Parent desk; parent-only still cannot see Admin", () => 
   const adminDesks = desksFor({ role: "admin" });
   assert.equal(adminDesks.includes("parent"), true);
   assert.equal(resolvePostLoginPath({ next: "/parent", desks: adminDesks, role: "parent" }), "/parent");
-  assert.deepEqual(headerDesks(adminDesks, "admin"), ["admin", "parent", "provider"]);
+  assert.deepEqual(headerDesks(adminDesks, "admin"), ["parent", "provider", "admin"]);
   assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("admin"), false);
   assert.equal(canSeeAdminDesk("parent"), false);
   assert.match(src("src/routes/login.tsx"), /resolvePostLoginPath/);

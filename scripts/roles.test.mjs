@@ -85,9 +85,9 @@ test("admin role unlocks all four desks; provider also gets parent", () => {
   assert.equal(showDeskSwitcher(["provider", "parent"], "provider", "kyle@kidease.ca"), false);
   assert.deepEqual(headerDesks(["admin", "parent", "provider"], "parent"), ["parent", "provider"]);
   assert.deepEqual(headerDesks(["admin", "support", "provider", "parent"], "admin"), [
-    "admin",
     "parent",
     "provider",
+    "admin",
   ]);
   assert.deepEqual(headerDesks(["admin", "parent", "provider"], "parent"), ["parent", "provider"]);
   assert.deepEqual(headerDesks(["provider", "parent"], "provider"), ["provider"]);
@@ -100,9 +100,9 @@ test("admin role unlocks all four desks; provider also gets parent", () => {
     "parent",
   ]);
   assert.deepEqual(headerDesks(desksFor({ role: "admin" }), "admin", "kyle@kidease.ca"), [
-    "admin",
     "parent",
     "provider",
+    "admin",
   ]);
   assert.equal(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent").includes("admin"), false);
   assert.equal(canSeeAdminDesk("parent"), false);

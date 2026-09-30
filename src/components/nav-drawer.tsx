@@ -34,7 +34,6 @@ export function NavDrawer({
   role = "guest",
   paid = false,
   isAdmin = false,
-  desksSlot,
   onSignOut,
   headerExtra,
 }: {
@@ -52,7 +51,6 @@ export function NavDrawer({
   role?: ChromeRole;
   paid?: boolean;
   isAdmin?: boolean;
-  desksSlot?: ReactNode;
   onSignOut: () => void;
   headerExtra?: ReactNode;
 }) {
@@ -157,7 +155,6 @@ export function NavDrawer({
           <div className="my-3 h-px bg-border" />
           {signedIn ? (
             <>
-              {desksSlot ? <div className="mb-3 px-1">{desksSlot}</div> : null}
               <Link
                 to={accountHref}
                 search={accountSearch}
