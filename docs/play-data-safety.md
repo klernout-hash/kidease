@@ -1,6 +1,6 @@
 # Play Data safety — Android binary
 
-Fill the Data safety form from this list. Do not add a row for an SDK that is not here. The application id in the project is `ca.daycarenearme.app` (Capacitor `appId`, iOS bundle, and Android `applicationId`). It is not `ca.kidease.app`. `targetSdkVersion` and `compileSdk` are 36. The store file is an Android App Bundle from `./gradlew bundleRelease` (`android/app/build/outputs/bundle/release/app-release.aab`), not an APK. `assembleRelease` exists because the Android Gradle plugin always offers it. Do not upload that APK.
+Fill the Data safety form from this list. Do not add a row for an SDK that is not here. The application id in the project is `ca.kidease.app` (Capacitor `appId`, iOS bundle, and Android `applicationId`). `targetSdkVersion` and `compileSdk` are 36. The store file is an Android App Bundle from `./gradlew bundleRelease` (`android/app/build/outputs/bundle/release/app-release.aab`), not an APK. `assembleRelease` exists because the Android Gradle plugin always offers it. Do not upload that APK.
 
 `ANDROID_CERT_SHA256S` stays empty until the first Play App Signing upload.
 

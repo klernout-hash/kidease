@@ -39,12 +39,12 @@ Do **not**:
 | Constant | Today | When to set |
 | --- | --- | --- |
 | `STORE.appleAppStoreId` / `VITE_APPLE_APP_STORE_ID` | **empty** | After App Store Connect assigns the numeric id (`id1234567890`) |
-| `STORE.playPackageName` / `VITE_PLAY_PACKAGE_NAME` | `ca.daycarenearme.app` | Already the Capacitor `appId`. Override only if the Play package differs |
+| `STORE.playPackageName` / `VITE_PLAY_PACKAGE_NAME` | `ca.kidease.app` | Already the Capacitor `appId`. Override only if the Play package differs |
 
 Write-review URLs:
 
 - Apple (only when the numeric id is set): `https://apps.apple.com/app/id{id}?action=write-review`
-- Play: `https://play.google.com/store/apps/details?id=ca.daycarenearme.app`
+- Play: `https://play.google.com/store/apps/details?id=ca.kidease.app`
 
 If the Apple id is still empty, the native menu item falls back to the OS in-app sheet (no invented id). Web still goes to `/get-app`.
 

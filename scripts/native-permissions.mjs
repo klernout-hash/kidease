@@ -2,7 +2,7 @@
  * Shared when-in-use location purpose strings for Capacitor iOS / Android.
  * Parent daycare finder only — never background location.
  */
-export const CAP_APP_ID = "ca.daycarenearme.app";
+export const CAP_APP_ID = "ca.kidease.app";
 export const CAP_APP_NAME = "KidEase";
 export const CAP_PROD_SERVER_URL = "https://www.kidease.ca";
 export const CAP_PROD_HOSTNAME = "www.kidease.ca";

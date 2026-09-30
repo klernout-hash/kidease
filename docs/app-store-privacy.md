@@ -2,7 +2,7 @@
 
 Use this list when filling Apple's privacy nutrition labels and Google's Data safety form. Do not invent extra collection. If a row says off, leave it out of the form until that feature is turned on.
 
-Bundle id: `ca.daycarenearme.app`
+Bundle id: `ca.kidease.app`
 
 ## SDKs in the app
 

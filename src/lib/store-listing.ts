@@ -4,7 +4,7 @@ export const STORE = {
   name: "KidEase",
   subtitle: "Licensed childcare nearby",
   subtitleFr: "Garde permise près de chez vous",
-  bundleId: "ca.daycarenearme.app",
+  bundleId: "ca.kidease.app",
   version: "1.0.0",
   build: "1",
   category: "Lifestyle",
@@ -25,9 +25,9 @@ export const STORE = {
   /**
    * Google Play application id. Same as the Capacitor `appId` — not a made-up
    * Play listing number. Override with `VITE_PLAY_PACKAGE_NAME` only if the
-   * Play package ever differs from `ca.daycarenearme.app`.
+   * Play package ever differs from `ca.kidease.app`.
    */
-  playPackageName: "ca.daycarenearme.app",
+  playPackageName: "ca.kidease.app",
   keywords:
     "daycare,childcare,Canada,licensed,preschool,infant,$10-a-day,garde,garderie,province",
   /** Google Play short description — max 80 characters. */
