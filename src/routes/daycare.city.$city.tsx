@@ -22,6 +22,7 @@ import {
 } from "@/lib/page-seo";
 import { cityHubNotFoundHead } from "@/lib/city-hub-not-found";
 import { filterSuppressedBundleRows } from "@/lib/server/bundled-catalog";
+import { liveHubCount } from "@/lib/server/city-directory";
 import { SITEMAP_ORIGIN, isSafeSitemapSlug } from "@/lib/sitemap";
 import { useCopy } from "@/lib/use-copy";
 
@@ -32,11 +33,18 @@ export const Route = createFileRoute("/daycare/city/$city")({
     // same in scripts/request-guard.mjs so the SPA shell cannot return 200.
     const hub = cityHubBySlug(params.city);
     if (!hub) throw notFound();
+    let count = hub.count;
+    try {
+      const live = await liveHubCount(hub.slug);
+      if (live != null) count = live;
+    } catch {
+      /* Snapshot count stays if the live catalogue is unreachable. */
+    }
     try {
       const listings = await filterSuppressedBundleRows({ data: hub.listings });
-      return { ...hub, listings };
+      return { ...hub, count, listings };
     } catch {
-      return hub;
+      return { ...hub, count };
     }
   },
   notFoundComponent: CityHubNotFoundPage,
