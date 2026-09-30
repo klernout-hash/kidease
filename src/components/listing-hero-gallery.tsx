@@ -95,7 +95,7 @@ export function ListingHeroGallery({
   return (
     <div
       id={photoId}
-      className="ke-listing-hero relative lg:overflow-hidden lg:rounded-[14px]"
+      className="ke-listing-hero relative overflow-hidden lg:rounded-[14px]"
       data-empty={count ? undefined : "true"}
       data-ke="listing-hero"
       onTouchStart={onTouchStart}
