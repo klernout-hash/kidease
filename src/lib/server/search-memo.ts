@@ -19,6 +19,7 @@ export function searchMemoKey(input: {
   lng2?: number;
   mode?: string;
   facility?: string;
+  city?: string;
 }) {
   return [
     input.lat.toFixed(3),
@@ -29,6 +30,7 @@ export function searchMemoKey(input: {
     input.fsa || "",
     input.label || "",
     input.q || "",
+    input.city || "",
     input.startDate || "",
     input.mode || "home",
     input.facility || "",
