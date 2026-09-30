@@ -155,7 +155,7 @@ export function SaveListingButton({
       className={cn(
         "pointer-events-auto absolute right-2 top-2 z-20 grid place-items-center rounded-full",
         framed
-          ? "size-12 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.32)] ring-1 ring-black/10"
+          ? "size-12 bg-white ring-1 ring-black/10"
           : "size-11",
         className,
       )}
