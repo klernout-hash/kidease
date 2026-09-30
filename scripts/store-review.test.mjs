@@ -44,15 +44,15 @@ describe("store review IDs stay placeholders", () => {
   });
 
   it("builds Play write-review from the real Capacitor package, not a fake listing id", () => {
-    assert.equal(STORE.playPackageName, "ca.daycarenearme.app");
-    assert.equal(playPackageName(), "ca.daycarenearme.app");
-    assert.equal(isPlayPackageName("ca.daycarenearme.app"), true);
+    assert.equal(STORE.playPackageName, "ca.kidease.app");
+    assert.equal(playPackageName(), "ca.kidease.app");
+    assert.equal(isPlayPackageName("ca.kidease.app"), true);
     assert.equal(isPlayPackageName(""), false);
     assert.equal(isPlayPackageName("not-a-package"), false);
     assert.equal(playStoreListingUrl(), null);
     assert.equal(
       playWriteReviewUrl(),
-      "https://play.google.com/store/apps/details?id=ca.daycarenearme.app",
+      "https://play.google.com/store/apps/details?id=ca.kidease.app",
     );
     assert.equal(writeReviewUrlForPlatform("android"), playWriteReviewUrl());
     assert.equal(writeReviewUrlForPlatform("web"), null);

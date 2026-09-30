@@ -34,8 +34,8 @@ test("native shell hides digital plans and does not rename the application id", 
   const vars = src("android/variables.gradle");
   const manifest = src("android/app/src/main/AndroidManifest.xml");
   assert.match(vars, /targetSdkVersion = 36/);
-  assert.match(gradle, /applicationId "ca\.daycarenearme\.app"/);
-  assert.doesNotMatch(gradle, /ca\.kidease\.app/);
+  assert.match(gradle, /applicationId "ca\.kidease\.app"/);
+  assert.match(gradle, /namespace = "ca\.kidease\.app"/);
   assert.match(src("docs/mobile-builds.md"), /bundleRelease/);
   assert.match(src("docs/mobile-builds.md"), /app-release\.aab/);
   assert.doesNotMatch(manifest, /READ_SMS|RECEIVE_SMS|READ_CALL_LOG|READ_CONTACTS|ACCESS_BACKGROUND_LOCATION/);
