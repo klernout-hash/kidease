@@ -22,7 +22,7 @@ import {
 } from "@/lib/page-seo";
 import { cityHubNotFoundHead } from "@/lib/city-hub-not-found";
 import { filterSuppressedBundleRows } from "@/lib/server/bundled-catalog";
-import { SITEMAP_ORIGIN } from "@/lib/sitemap";
+import { SITEMAP_ORIGIN, isSafeSitemapSlug } from "@/lib/sitemap";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/daycare/city/$city")({
@@ -144,7 +144,7 @@ function CityHubPage() {
               : `${hub.count} licensed listings.`}
         </p>
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-          {hub.listings.map((listing: CityHubListing) => (
+          {hub.listings.filter((listing: CityHubListing) => isSafeSitemapSlug(listing.slug)).map((listing: CityHubListing) => (
             <li key={listing.slug}>
               <Link
                 to="/daycare/$slug"
