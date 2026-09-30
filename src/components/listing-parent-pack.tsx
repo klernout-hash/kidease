@@ -10,7 +10,7 @@ import {
   safetyLabel,
 } from "@/lib/parent-listing";
 import { formatPublicAgeRange } from "@/lib/listing-ages";
-import { confirmedStoredFeeProgram } from "@/lib/fee-program";
+import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { honestVacancy } from "@/lib/now-loops";
 import {
   formatMonthlyFee,
@@ -46,8 +46,9 @@ export function ListingHeaderPills({
   if (agesLabel) parts.push(`${t("ages")} ${agesLabel}`);
   const hoursText = hours.trim();
   if (hoursText && hoursText !== "—" && hoursText !== "-") parts.push(hoursText);
+  const subsidy = listingSubsidy(item);
   if (feeFrom > 0) parts.push(`${t("monthlyFrom")} ${money(feeFrom, locale)}${t("month")}`);
-  else if (confirmedStoredFeeProgram(item) === "mb-10-day") parts.push(t("cardTenPerDay"));
+  else if (subsidy) parts.push(subsidyLabel(subsidy, loc));
   if (!parts.length) return null;
   return (
     <p className="mt-2 text-sm leading-5 text-fg" data-listing-header-pills>

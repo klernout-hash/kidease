@@ -42,7 +42,7 @@ import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl, officialLicenceNumber } from "@/lib/licensing";
-import { subsidyNoteKey } from "@/lib/fee-program";
+import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
@@ -402,6 +402,7 @@ function Listing() {
     : "";
   const agesLabel = listingAgeRangeText(d, "short", loc);
   const feeNotes = listingFeeNotes(d);
+  const subsidy = listingSubsidy(d);
   const directionsPlace = {
     address,
     city: d.city,
@@ -907,9 +908,19 @@ function Listing() {
             <section id="listing-subsidies" className="scroll-mt-24 rounded-xl bg-surface p-4 ring-1 ring-border">
               <h2 className="font-display text-2xl">{t("feesAndSubsidies")}</h2>
               <p className="mt-2 max-w-prose text-sm text-muted">
-                {t(subsidyNoteKey(d))}
+                {subsidy ? subsidyNote(subsidy, locale) : t(subsidyNoteKey(d))}
               </p>
               <div className="mt-3 flex flex-col items-start gap-1">
+                {subsidy ? (
+                  <a
+                    href={subsidy.subsidy_source}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    {t("seeOfficialRecord")}
+                  </a>
+                ) : null}
                 <a
                   href={subsidyEstimatorUrl(d.province)}
                   target="_blank"
