@@ -9,7 +9,7 @@ import { isCatalogueMatchedBadge, licenseBadge, type TrustCopyKey } from "@/lib/
  * Licensed only when we actually know. Unverified and catalogue-matched stay off.
  */
 export function listingPill(item: Pick<DaycareCard, "province" | "live" | "priority" | "licenseStatus" | "registryMatchState" | "amenities" | "feeConfirmed">): {
-  labelKey: "badgeTen" | "badgeFifteen" | "badgeReducedQc" | "live" | TrustCopyKey;
+  labelKey: "badgeTen" | "badgeQc965" | "badgeReduced" | "badgeFifteen" | "badgeReducedQc" | "live" | TrustCopyKey;
 } | null {
   const fee = confirmedFeeProgramBadge(item);
   if (fee) return { labelKey: fee };

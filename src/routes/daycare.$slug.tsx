@@ -41,7 +41,8 @@ import { SaveListingButton } from "@/components/save-listing-button";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { amenityLabel } from "@/lib/amenities";
-import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
+import { licenseRecordUrl, subsidyEstimatorUrl, officialLicenceNumber } from "@/lib/licensing";
+import { subsidyNoteKey } from "@/lib/fee-program";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
@@ -906,7 +907,7 @@ function Listing() {
             <section id="listing-subsidies" className="scroll-mt-24 rounded-xl bg-surface p-4 ring-1 ring-border">
               <h2 className="font-display text-2xl">{t("feesAndSubsidies")}</h2>
               <p className="mt-2 max-w-prose text-sm text-muted">
-                {cwelccKind(d.province) === "qc" ? t("cwelccQcNote") : t("cwelccAskNote")}
+                {t(subsidyNoteKey(d))}
               </p>
               <div className="mt-3 flex flex-col items-start gap-1">
                 <a
