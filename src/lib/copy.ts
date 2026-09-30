@@ -1135,7 +1135,7 @@ export const copy = {
     supportLead: "Parents and providers — we read every note. Email us or send a message below. App Store and Google Play also use this page as the support URL.",
     supportSent: "Message sent. We’ll reply by email.",
     deleteAccount: "Delete my account",
-    deleteAccountLead: "Removes your children, messages, bookings, payments, and saved centres. This cannot be undone.",
+    deleteAccountLead: "This removes your children, messages, bookings, and saved centres. We keep billing records the law requires. This cannot be undone.",
     deleteAccountGuestLead:
       "Sign in to delete your KidEase account. This is the same path App Store and PIPEDA reviews look for.",
     deleteAccountSignIn: "Sign in to delete my account",
@@ -3742,7 +3742,7 @@ export const copy = {
     supportLead: "Parents et fournisseurs — nous lisons chaque note. Écrivez-nous ou envoyez un message ci-dessous. L’App Store et Google Play utilisent aussi cette page comme URL de soutien.",
     supportSent: "Message envoyé. Nous répondrons par courriel.",
     deleteAccount: "Supprimer mon compte",
-    deleteAccountLead: "Efface vos enfants, messages, demandes, paiements et centres enregistrés. Irréversible.",
+    deleteAccountLead: "Ceci efface vos enfants, messages, demandes et centres enregistrés. Nous gardons les dossiers de facturation exigés par la loi. Irréversible.",
     deleteAccountGuestLead:
       "Connectez-vous pour supprimer votre compte KidEase. C’est le chemin que les revues App Store et PIPEDA recherchent.",
     deleteAccountSignIn: "Se connecter pour supprimer mon compte",

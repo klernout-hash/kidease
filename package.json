@@ -39,7 +39,8 @@
     "cap:sync": "npx cap sync",
     "cap:ios": "npx cap open ios",
     "cap:android": "npx cap open android",
-    "cap:prepare": "npm run cap:assets && npm run cap:permissions && npx cap sync"
+    "cap:prepare": "npm run cap:assets && npm run cap:permissions && npx cap sync",
+    "cap:version": "node scripts/bump-native-version.mjs"
   },
   "dependencies": {
     "@capacitor-community/in-app-review": "^8.0.0",
