@@ -28,7 +28,11 @@
 		},
 		"Geolocation": {},
 		"PushNotifications": {
-			"presentationOptions": ["badge", "sound", "alert"]
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
 		},
 		"InAppReview": {}
 	},
@@ -43,13 +47,14 @@
 		"scheme": "KidEase"
 	},
 	"packageClassList": [
+		"InAppReviewPlugin",
 		"AppPlugin",
 		"CAPBrowserPlugin",
 		"GeolocationPlugin",
 		"HapticsPlugin",
-		"InAppReviewPlugin",
 		"KeyboardPlugin",
 		"PreferencesPlugin",
+		"PushNotificationsPlugin",
 		"SharePlugin",
 		"SplashScreenPlugin",
 		"StatusBarPlugin"
