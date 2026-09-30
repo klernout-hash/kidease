@@ -51,9 +51,8 @@ export function NativeBoot() {
         const saved = localeFromPreference(window.localStorage.getItem("kidease-locale"));
         setLocale(saved);
       }
-      const livePref = window.localStorage.getItem("kidease-live-only");
-      if (livePref === "1") setLiveOnly(true);
-      else if (livePref === "0") setLiveOnly(false);
+      window.localStorage.removeItem("kidease-live-only");
+      setLiveOnly(false);
       setDistanceUnit(readDistanceUnit());
       setLocationConsent(readLocationConsent());
       const dual = readDualAnchorPrefs();

@@ -41,9 +41,9 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
 
   assert.match(bar, /data-search-row="filter-bar"/);
   assert.match(bar, /data-ke="explore-filter-bar"/);
-  assert.match(bar, /data-ke="reply-on-kidease"/);
-  assert.match(bar, /role="checkbox"/);
-  assert.match(bar, /t\("replyOnKidEase"\)/);
+  assert.doesNotMatch(bar, /data-ke="reply-on-kidease"/);
+  assert.doesNotMatch(bar, /role="checkbox"/);
+  assert.doesNotMatch(bar, /t\("replyOnKidEase"\)/);
   assert.match(bar, /t\("filters"\)/);
   assert.match(bar, /t\("map"\)/);
   assert.match(bar, /t\("nearMe"\)/);
@@ -69,7 +69,7 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   const chrome = search.slice(search.indexOf("<ExploreSearchBar"), search.indexOf("{askLocation"));
   assert.match(chrome, /ExploreFilterBar/);
   assert.match(chrome, /ExploreCategoryChips/);
-  assert.match(chrome, /onLiveOnly=\{setLiveOnly\}/);
+  assert.doesNotMatch(chrome, /onLiveOnly=\{setLiveOnly\}/);
   assert.match(chrome, /t\("nearMe"\)|onNearMe/);
   assert.doesNotMatch(chrome, /t\("nearWork"\)/);
   assert.doesNotMatch(chrome, /ExploreFilterChips/);
