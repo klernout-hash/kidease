@@ -148,7 +148,7 @@
     font-weight: 400;
     font-size: 14px;
     line-height: 1.4;
-    overflow-x: clip;
+    overflow-x: hidden;
     overscroll-behavior-x: none;
   }
   [data-ke-mark] img {
