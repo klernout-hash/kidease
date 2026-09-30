@@ -49,7 +49,7 @@ export function NativeBoot() {
         setLocale("fr");
       } else {
         const saved = localeFromPreference(window.localStorage.getItem("kidease-locale"));
-        if (saved === "fr") setLocale("fr");
+        setLocale(saved);
       }
       const livePref = window.localStorage.getItem("kidease-live-only");
       if (livePref === "1") setLiveOnly(true);

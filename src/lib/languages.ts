@@ -20,17 +20,17 @@ export const LANGUAGES: readonly {
   { code: "de", native: "Deutsch", nameEn: "German", bcp47: "de-CA" },
 ];
 
-/** Official languages with full chrome. Other packs in extra-copy are not offered as complete. */
-export const SHIPPED_LOCALES = ["en", "fr"] as const;
+/** Official languages plus the other eight mother tongues offered in the picker. Missing strings stay English. */
+export const SHIPPED_LOCALES = ["en", "fr", "zh", "yue", "pa", "es", "ar", "tl", "it", "de"] as const;
 export type ShippedLocale = (typeof SHIPPED_LOCALES)[number];
 
 export function isShippedLocale(code: string | null | undefined): code is ShippedLocale {
-  return code === "en" || code === "fr";
+  return (SHIPPED_LOCALES as readonly string[]).includes(code ?? "");
 }
 
 /**
- * English unless the user explicitly chose French.
- * Geo, IP, Quebec, and partial language packs do not stick.
+ * English unless the user picked one of the ten languages.
+ * Geo, IP, and the browser language do not choose for them.
  */
 export function localeFromPreference(saved: string | null | undefined): ShippedLocale {
   return isShippedLocale(saved) ? saved : "en";
