@@ -20,24 +20,27 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("English is the default and only an explicit French choice sticks", () => {
+test("English is the default and an explicit language choice sticks", () => {
   assert.equal(localeFromPreference(null), "en");
   assert.equal(localeFromPreference(undefined), "en");
   assert.equal(localeFromPreference(""), "en");
-  assert.equal(localeFromPreference("zh"), "en");
-  assert.equal(localeFromPreference("pa"), "en");
+  assert.equal(localeFromPreference("xx"), "en");
   assert.equal(localeFromPreference("en"), "en");
   assert.equal(localeFromPreference("fr"), "fr");
+  assert.equal(localeFromPreference("zh"), "zh");
+  assert.equal(localeFromPreference("pa"), "pa");
   assert.equal(isShippedLocale("fr"), true);
-  assert.equal(isShippedLocale("es"), false);
+  assert.equal(isShippedLocale("es"), true);
   assert.deepEqual(
     shippedLanguages().map((lang) => lang.code),
-    ["en", "fr"],
+    ["en", "fr", "zh", "yue", "pa", "es", "ar", "tl", "it", "de"],
   );
   const boot = src("src/components/native-boot.tsx");
   const select = src("src/components/language-select.tsx");
   const useCopy = src("src/lib/use-copy.ts");
   assert.match(boot, /localeFromPreference/);
+  assert.match(boot, /setLocale\(saved\)/);
+  assert.doesNotMatch(boot, /saved === "fr"/);
   assert.doesNotMatch(boot, /LANGUAGES\.some/);
   assert.match(select, /shippedLanguages\(\)/);
   assert.doesNotMatch(select, /LANGUAGES\.map/);
