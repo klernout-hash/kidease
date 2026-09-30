@@ -512,7 +512,7 @@ function Listing() {
             to="/claim"
             search={{ q: name }}
             role="menuitem"
-            className="flex min-h-11 items-center px-3 text-sm font-medium text-fg hover:bg-surface-2"
+            className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
           >
             {t("claimCtaShort")}
           </Link>
@@ -522,7 +522,7 @@ function Listing() {
           target="_blank"
           rel="noreferrer"
           role="menuitem"
-          className="flex min-h-11 items-center px-3 text-sm font-medium text-fg hover:bg-surface-2"
+          className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
         >
           {t("viewLicenceRecord")}
         </a>
@@ -531,7 +531,7 @@ function Listing() {
           target="_blank"
           rel="noreferrer"
           role="menuitem"
-          className="flex min-h-11 items-center px-3 text-sm font-medium text-fg hover:bg-surface-2"
+          className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
         >
           {t("checkSubsidy")}
         </a>
@@ -920,7 +920,7 @@ function Listing() {
                 <Link to="/benefits" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
                   {t("benefitsTab")}
                 </Link>
-                <Link to="/tour-checklist" className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:underline">
+                <Link to="/tour-checklist" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4">
                   {t("tourChecklist")}
                 </Link>
               </div>

@@ -71,6 +71,8 @@ test("Listing has one primary CTA, sticky enquire, and a hero that shares the ti
   assert.match(src("src/styles.css"), /ke-listing-sections/);
   assert.match(src("src/components/listing-hero-gallery.tsx"), /data-ke="listing-photo-count"/);
   assert.match(src("src/components/listing-parent-pack.tsx"), /ke-listing-jump/);
+  assert.match(src("src/styles.css"), /\.ke-crumb \{[\s\S]*color: var\(--color-primary\)/);
+  assert.match(src("src/styles.css"), /\.ke-listing-jump a \{[\s\S]*color: var\(--color-primary\)/);
   assert.match(src("src/components/listing-parent-pack.tsx"), /jumpOverview/);
   assert.match(src("src/components/shell.tsx"), /publicListing/);
   assert.doesNotMatch(listing, /md:aspect-\[2\/1\]/);
