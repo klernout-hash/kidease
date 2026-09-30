@@ -48,6 +48,8 @@ test("explore and search share six daycare-type rows with in-row show more", () 
   assert.match(rail, /🏡/);
   assert.match(rail, /🧸/);
   assert.match(css, /ke-rail-more-emoji/);
+  assert.match(css, /scroll-snap-type: x proximity/);
+  assert.match(css, /touch-action: pan-x pan-y/);
   assert.match(copy, /showMoreListings: "Show more listings"/);
   assert.match(copy, /showMoreListings: "Voir plus de garderies"/);
   assert.match(daycares, /HOME_TYPE_POOL = 72/);

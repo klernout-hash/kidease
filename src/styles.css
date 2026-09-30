@@ -148,7 +148,7 @@
     font-weight: 400;
     font-size: 14px;
     line-height: 1.4;
-    overflow-x: hidden;
+    overflow-x: clip;
     overscroll-behavior-x: none;
   }
   [data-ke-mark] img {
@@ -317,7 +317,7 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    touch-action: pan-x;
+    touch-action: pan-x pan-y;
   }
   .ke-chip-carousel::-webkit-scrollbar {
     display: none;
@@ -732,16 +732,21 @@
     display: flex;
     gap: 0.5rem;
     overflow-x: auto;
-    overflow-y: visible;
-    scroll-snap-type: x mandatory;
+    overflow-y: clip;
+    scroll-snap-type: x proximity;
     scroll-padding-inline: 0.25rem;
     padding-block: 0.25rem 0.5rem;
     padding-inline-start: 0.15rem;
-    -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
-    touch-action: pan-x;
+    touch-action: pan-x pan-y;
     scrollbar-width: none;
     -ms-overflow-style: none;
+  }
+  .ke-rail a,
+  .ke-rail button,
+  .ke-chip-carousel a,
+  .ke-chip-carousel button {
+    touch-action: pan-x pan-y;
   }
   .ke-rail::-webkit-scrollbar {
     display: none;
