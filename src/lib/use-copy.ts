@@ -7,7 +7,7 @@ import { useAppStore } from "./store";
 /**
  * FR document URLs (`/fr`, `/fr/get-app`, …) use French chrome on the first
  * paint. Zustand still drives language on unprefixed routes (Explore, desks).
- * Partial packs fill what they have. Anything missing stays English.
+ * English and French are complete. The other eight locales use full packs.
  */
 export function useCopy() {
   const storeLocale = useAppStore((s) => s.locale);
