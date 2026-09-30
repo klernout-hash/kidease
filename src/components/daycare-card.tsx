@@ -169,6 +169,7 @@ export const DaycareCard = memo(function DaycareCard({
       : vacancy.kind === "waitlist"
         ? t("waitlist")
         : t(vacancy.labelKey);
+  const openSpotsLine = vacancy.kind === "open" || vacancy.kind === "waitlist" ? spotsKnown : "";
   const priceAmount =
     feeBadge === "badgeTen" ? "$10" : feeBadge === "badgeFifteen" ? "$15" : feeOk ? money(item.fromPrice, locale) : "";
   const priceUnit = feeBadge === "badgeTen" || feeBadge === "badgeFifteen" ? " / day" : feeOk ? t("month") : "";
@@ -217,6 +218,11 @@ export const DaycareCard = memo(function DaycareCard({
           {ages ? (
             <p className="mt-0.5 text-[13px] font-medium leading-5 text-fg" data-ke="card-age-range">
               {ages}
+            </p>
+          ) : null}
+          {openSpotsLine ? (
+            <p className="mt-0.5 text-[13px] font-medium leading-5 text-fg" data-ke="card-open-spots">
+              {openSpotsLine}
             </p>
           ) : null}
           {publicApprovalEligible(item) ? (

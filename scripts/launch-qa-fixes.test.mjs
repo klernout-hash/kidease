@@ -72,6 +72,8 @@ test("M-01 public ages require confirmed min/max and never invent 12–60", () =
   assert.match(src("src/components/daycare-card.tsx"), /listingAgeRangeText\(item, "months"/);
   assert.match(src("src/components/daycare-card.tsx"), /const placeLine = \[item\.city, away\]/);
   assert.match(src("src/components/daycare-card.tsx"), /data-ke="card-age-range"/);
+  assert.match(src("src/components/daycare-card.tsx"), /data-ke="card-open-spots"/);
+  assert.match(src("src/components/daycare-card.tsx"), /openSpotsLine = vacancy\.kind === "open" \|\| vacancy\.kind === "waitlist"/);
   assert.match(src("src/routes/daycare.$slug.tsx"), /listingAgeRangeText\(d/);
   assert.match(src("src/lib/listing-seo.ts"), /listingAgesConfirmed/);
 });
