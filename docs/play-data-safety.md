@@ -12,7 +12,7 @@ The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libr
 | --- | --- | --- |
 | capacitor-android | WebView shell. Loads `https://www.kidease.ca`. | Always, to show the site. |
 | @capacitor/geolocation | Precise location (fine + coarse) while the app is open. | After the search permission prompt. Not background. Not used for ads. |
-| @capacitor/push-notifications | The manifest declares `POST_NOTIFICATIONS`. No token is read in v1. | `FEATURE_PUSH` is off. The app does not call `requestPermissions` on launch, on the first open, or while the flag is off. |
+| @capacitor/push-notifications | Pulls `com.google.firebase:firebase-messaging` 25.0.1 into the AAB. That library can collect a Firebase installation id and an FCM token once Firebase is initialized. This repo has no `google-services.json`, so the Google Services plugin is not applied and Firebase does not auto-start. The manifest still declares `POST_NOTIFICATIONS`. | `FEATURE_PUSH` is off. The app does not call `requestPermissions` on launch, on the first open, or while the flag is off. No token is read in v1. If a later upload adds `google-services.json`, add Device or other IDs on the form before you ship that build. |
 | @capacitor/preferences | On-device key/value (review cooldown, push seen flag, saved centres). | Stays on the phone. The plugin does not upload it. |
 | @capacitor/browser | Opens the system browser for childcare Stripe Checkout and store links. | The app does not see card numbers. |
 | @capacitor/share | Share sheet. | No personal data stored by the plugin. |

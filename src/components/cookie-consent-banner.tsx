@@ -8,7 +8,6 @@ import {
   writeAnalyticsConsent,
 } from "@/lib/analytics-consent";
 import { applyPostHogRecordingGate, startPostHog } from "@/lib/posthog";
-import { initSentryBrowser } from "@/lib/sentry.client";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
@@ -38,7 +37,9 @@ export function CookieConsentBanner() {
     writeAnalyticsConsent(value);
     if (value === "granted") {
       startPostHog();
-      initSentryBrowser();
+      // instrument.client.ts owns the Sentry import. A static import here
+      // is denied in the server build.
+      window.dispatchEvent(new Event("kidease:analytics-granted"));
     }
     applyPostHogRecordingGate();
     setOpen(false);
