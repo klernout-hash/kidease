@@ -37,6 +37,10 @@ import { listingInfoSlaReady } from "@/lib/parent-listing";
 import { listedDaycareTypeFromSearch, matchesListedDaycareType } from "@/lib/care-type";
 import { CITY_TYPE_LIST_CAP } from "@/lib/server/catalog-neon";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
+import { resolveSearchDirectory, listingBelongsToHub } from "@/lib/city-directory";
+import { cityHubDefBySlug, cityHubMapSearchQuery } from "@/lib/city-hubs";
+import { listingsForCityHub } from "@/lib/server/city-directory";
+import { geocode } from "@/lib/geo";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
 
 export type CentreJobPost = { id: string; role: string; note: string; createdAt: string };
@@ -56,6 +60,10 @@ type SearchInput = {
   mode?: "home" | "work" | "both";
   /** One of the six daycare categories. Filters the city, it does not mix types. */
   facility?: ReturnType<typeof listedDaycareTypeFromSearch>;
+  /** `/search?city=Toronto`. Never a default city when this does not geocode. */
+  city?: string;
+  /** Server-only. Set from the city query, never trusted from the client. */
+  directorySlug?: string;
 };
 
 function optionalCoord(value: unknown) {
@@ -311,7 +319,15 @@ function unionLiveCards(primary: DaycareCard[], live: DaycareCard[]): DaycareCar
 }
 
 async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
-  const searched = alignedSearchInput(data);
+  const decision = resolveSearchDirectory({ q: data.q, city: data.city });
+  if (decision.kind === "unknown") return [];
+  const hub = decision.kind === "hub" ? cityHubDefBySlug(decision.slug) : null;
+  const searched = alignedSearchInput(
+    hub
+      ? { ...data, q: data.q || cityHubMapSearchQuery(hub), directorySlug: hub.slug }
+      : data,
+  );
+  if (hub) return runSearch({ ...searched, directorySlug: hub.slug });
   const livePromise = liveCardsForSearch(searched);
   const full = await withTimeoutFallback(runSearch(searched), LOADER_SETTLE_MS, null);
   const live = await withTimeoutFallback(livePromise, full && full.length > 0 ? 800 : 2500, []);
@@ -358,15 +374,18 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     label: data.label,
     q: data.q,
   });
-  const listings = await mergeApprovedCityListings(
-    filterByLocationLock(
-      anchors.intersect && anchors.secondary
-        ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
-        : await nearbyListings(origin, data.radiusKm, data.facility ? CITY_TYPE_LIST_CAP : 400),
-      lock,
-    ),
-    { origin, radiusKm: data.radiusKm, lock, label: data.label || data.q },
-  );
+  const directory = data.directorySlug ? cityHubDefBySlug(data.directorySlug) : null;
+  const listings = directory
+    ? await listingsForCityHub(directory.slug)
+    : await mergeApprovedCityListings(
+        filterByLocationLock(
+          anchors.intersect && anchors.secondary
+            ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
+            : await nearbyListings(origin, data.radiusKm, data.facility ? CITY_TYPE_LIST_CAP : 400),
+          lock,
+        ),
+        { origin, radiusKm: data.radiusKm, lock, label: data.label || data.q },
+      );
   let cards: DaycareCard[] = [];
   for (const d of listings) {
     cards.push(toCard(d, origin, data.fsa));
@@ -409,22 +428,30 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     }),
   );
   const facility = data.facility;
-  return publicListings(uniqueById(filterByLocationLock(cards, lock)))
+  const listed = publicListings(uniqueById(filterByLocationLock(cards, lock)))
     .filter((card) => (facility ? matchesListedDaycareType(card, facility) : true))
-    .map(slimCard);
+    .filter((card) => (directory ? listingBelongsToHub(card, directory) : true));
+  return listed.map(slimCard);
 }
 
 export const searchDaycares = createServerFn({ method: "GET" })
-  .validator((input: SearchInput) => ({
-    ...input,
-    radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
-    lat2: optionalCoord(input.lat2),
-    lng2: optionalCoord(input.lng2),
-    mode: parseAnchorMode(input.mode),
-    facility: listedDaycareTypeFromSearch(
-      input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
-    ),
-  }))
+  .validator((input: SearchInput) => {
+    const city = typeof input.city === "string" ? input.city.trim().slice(0, 80) : "";
+    const located = city ? geocode(city) : null;
+    return {
+      ...input,
+      directorySlug: undefined,
+      city,
+      q: (typeof input.q === "string" && input.q.trim()) || located?.label || input.q,
+      radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
+      lat2: optionalCoord(input.lat2),
+      lng2: optionalCoord(input.lng2),
+      mode: parseAnchorMode(input.mode),
+      facility: listedDaycareTypeFromSearch(
+        input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
+      ),
+    };
+  })
   .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => searchIncludingLive(data)));
 
 /** Home type rows page 12 at a time. Keep a few pages of each nearby type. */
