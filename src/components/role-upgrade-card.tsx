@@ -29,7 +29,7 @@ export function RoleUpgradeCard({
     : null;
   if (paid) {
     return (
-      <aside className="rounded-2xl bg-surface px-4 py-4 ring-1 ring-border" data-ke="plan-card">
+      <aside className="ke-digital-plan rounded-2xl bg-surface px-4 py-4 ring-1 ring-border" data-ke="plan-card">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-subtle">{t("navMyPlan")}</p>
         <p className="mt-1 font-display text-2xl">{planLabel || t("navMyPlan")}</p>
         {renewal ? <p className="mt-1 text-sm text-muted">{t("upgradeRenews").replace("{date}", renewal)}</p> : null}
@@ -45,7 +45,7 @@ export function RoleUpgradeCard({
     );
   }
   return (
-    <aside className="rounded-2xl bg-primary/10 px-4 py-4 ring-1 ring-primary/30" data-ke="upgrade-card">
+    <aside className="ke-digital-plan rounded-2xl bg-primary/10 px-4 py-4 ring-1 ring-primary/30" data-ke="upgrade-card">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{t("navUpgrade")}</p>
       <p className="mt-1 font-display text-2xl text-fg">{parent ? t("upgradeTryPlus") : t("upgradeGetPro")}</p>
       <p className="mt-1 text-sm text-muted">{parent ? t("upgradePlusBody") : t("upgradeProBody")}</p>
@@ -78,7 +78,7 @@ export function UpgradeToProLink({ className = "" }: { className?: string }) {
     <Link
       to="/provider/subscription"
       data-ke="upgrade-to-pro"
-      className={`inline-flex min-h-11 items-center text-sm font-semibold text-primary ${className}`}
+      className={`ke-digital-plan inline-flex min-h-11 items-center text-sm font-semibold text-primary ${className}`}
     >
       {t("upgradeToPro")}
     </Link>

@@ -79,7 +79,7 @@ export function OptionalUpgrades({
   const familyPlans = PARENT_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, parentInterval, flags));
   const daycarePlans = DAYCARE_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, daycareInterval, flags));
   return (
-    <section className="ke-gutter mx-auto max-w-6xl py-12" data-ke="optional-upgrades">
+    <section className="ke-digital-plan ke-gutter mx-auto max-w-6xl py-12" data-ke="optional-upgrades">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{t.kicker}</p>
       <h2 className="mt-2 font-display text-2xl">{t.title}</h2>
       <p className="mt-2 max-w-2xl text-sm text-muted">{t.lead}</p>

@@ -1047,7 +1047,7 @@
   "supportLead": "Padres y proveedores — leemos cada nota. Envíenos un correo o un mensaje abajo. App Store y Google Play también usan esta página como URL de soporte.",
   "supportSent": "Mensaje enviado. Te responderemos por correo electrónico.",
   "deleteAccount": "Eliminar mi cuenta",
-  "deleteAccountLead": "Elimina a tus hijos, mensajes, reservas, pagos y centros guardados. Esta acción no se puede deshacer.",
+  "deleteAccountLead": "Esto elimina a tus hijos, mensajes, reservas y centros guardados. Conservamos los registros de facturación que exige la ley. También se quedan los registros de fraude y seguridad. Esta acción no se puede deshacer.",
   "deleteAccountGuestLead": "Inicia sesión para eliminar tu cuenta de KidEase. Esta es la misma ruta que buscan las revisiones de App Store y PIPEDA.",
   "deleteAccountSignIn": "Iniciar sesión para eliminar mi cuenta",
   "deleteAccountConfirm": "Eliminar todo",
@@ -2407,5 +2407,8 @@
   "pushExplainTitle": "Reciba respuestas en su teléfono",
   "pushExplainBody": "KidEase puede avisarle cuando una guardería responda, cuando tenga un mensaje o cuando cambie un reclamo. Solo preguntamos si usted lo activa.",
   "pushExplainYes": "Activar avisos",
-  "pushExplainNo": "Ahora no"
+  "pushExplainNo": "Ahora no",
+  "deleteAccountKeepBilling": "Registros de facturación — se conservan porque la ley fiscal lo exige.",
+  "deleteAccountKeepLogs": "Registros de fraude y seguridad — se conservan para proteger el servicio. Estos registros no se eliminan.",
+  "nativePlansHidden": "Los planes digitales no se venden en esta app. Las tarifas de cuidado, las visitas y los cupos siguen en la factura del centro."
 }

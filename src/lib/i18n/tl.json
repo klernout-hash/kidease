@@ -1047,7 +1047,7 @@
   "supportLead": "Mga magulang at provider — binabasa namin ang bawat tala. Mag-email sa amin o magpadala ng mensahe sa ibaba. Ginagamit din ng App Store at Google Play ang pahinang ito bilang support URL.",
   "supportSent": "Naipadala ang mensahe. Sasagot kami sa email.",
   "deleteAccount": "Burahin ang aking account",
-  "deleteAccountLead": "Aalisin ang mga anak mo, mga mensahe, booking, bayad, at naka-save na mga sentro. Hindi na ito maaaring bawiin.",
+  "deleteAccountLead": "Aalisin nito ang mga anak mo, mga mensahe, booking, at naka-save na mga sentro. Pinapanatili namin ang mga billing record na hinihingi ng batas. Nananatili rin ang mga log ng pandaraya at seguridad. Hindi na ito maaaring bawiin.",
   "deleteAccountGuestLead": "Mag-sign in para burahin ang iyong KidEase account. Ito ang parehong landas na hinahanap sa mga review ng App Store at PIPEDA.",
   "deleteAccountSignIn": "Mag-sign in para burahin ang aking account",
   "deleteAccountConfirm": "Burahin ang lahat",
@@ -2407,5 +2407,8 @@
   "pushExplainTitle": "Makatanggap ng sagot sa telepono",
   "pushExplainBody": "Maaaring sabihin ng KidEase kapag sumagot ang daycare, kapag may mensahe ka, o kapag may update sa claim. Magtatanong lang kami kung io-on mo ito.",
   "pushExplainYes": "I-on ang abiso",
-  "pushExplainNo": "Hindi muna"
+  "pushExplainNo": "Hindi muna",
+  "deleteAccountKeepBilling": "Mga billing record — pinapanatili dahil hinihingi ng batas sa buwis.",
+  "deleteAccountKeepLogs": "Mga log ng pandaraya at seguridad — pinapanatili para protektahan ang serbisyo. Hindi binubura ang mga ito.",
+  "nativePlansHidden": "Hindi ibinebenta sa app na ito ang mga digital na plano. Ang bayad sa pag-aalaga, mga tour, at mga puwesto ay nasa bill pa rin ng sentro."
 }
