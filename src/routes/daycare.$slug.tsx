@@ -322,7 +322,7 @@ function Listing() {
         <ListingJsonLd src={seo} locale={seoLocale} />
         <main className="mx-auto max-w-5xl overflow-x-hidden">
           <div className="lg:ke-gutter lg:pt-4">
-            <div className="ke-listing-hero relative lg:overflow-hidden lg:rounded-[14px]" data-empty={earlyReal ? undefined : "true"}>
+            <div className="ke-listing-hero relative overflow-hidden lg:rounded-[14px]" data-empty={earlyReal ? undefined : "true"}>
               {earlyReal ? (
                 <BuildingPhoto
                   eager
@@ -584,7 +584,7 @@ function Listing() {
           />
         </div>
         <div className="ke-gutter">
-        <nav className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0 text-muted">
+        <nav className="relative z-10 mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-0 bg-bg text-muted">
           <Link to="/" className="ke-crumb hover:text-fg hover:underline">
             KidEase
           </Link>

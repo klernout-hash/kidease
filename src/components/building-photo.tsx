@@ -37,22 +37,22 @@ function UnclaimedWash() {
     <>
       <div className="ke-unclaimed-wash pointer-events-none absolute inset-0" aria-hidden />
       <svg
-        viewBox="0 0 320 240"
+        viewBox="0 0 640 320"
         className="ke-unclaimed-mark pointer-events-none absolute inset-0 size-full"
-        preserveAspectRatio="xMidYMid slice"
+        preserveAspectRatio="xMidYMid meet"
         aria-hidden
       >
-        <circle cx="274" cy="34" r="22" fill="currentColor" />
-        <path d="M36 78V46h58v32" fill="none" stroke="currentColor" strokeWidth="3" />
-        <path d="M65 46v32M36 62h58" fill="none" stroke="currentColor" strokeWidth="3" />
-        <path d="M188 168v-28h46v28" fill="none" stroke="currentColor" strokeWidth="3" />
-        <path d="M184 140h54L211 118z" fill="currentColor" />
-        <rect x="206" y="148" width="12" height="20" rx="1" fill="currentColor" />
-        <rect x="28" y="176" width="28" height="28" rx="4" fill="currentColor" />
-        <rect x="48" y="160" width="22" height="22" rx="4" fill="currentColor" />
-        <rect x="62" y="186" width="18" height="18" rx="3" fill="currentColor" />
-        <circle cx="292" cy="196" r="16" fill="currentColor" />
-        <rect x="288" y="196" width="8" height="22" fill="currentColor" />
+        <circle cx="560" cy="52" r="22" fill="currentColor" />
+        <path d="M48 110V64h70v46" fill="none" stroke="currentColor" strokeWidth="3" />
+        <path d="M83 64v46M48 87h70" fill="none" stroke="currentColor" strokeWidth="3" />
+        <path d="M470 250v-72h92v72" fill="none" stroke="currentColor" strokeWidth="3" />
+        <path d="M458 178h116L516 136z" fill="currentColor" />
+        <rect x="508" y="202" width="18" height="48" rx="1" fill="currentColor" />
+        <rect x="40" y="228" width="36" height="36" rx="4" fill="currentColor" />
+        <rect x="66" y="206" width="30" height="30" rx="4" fill="currentColor" />
+        <rect x="88" y="240" width="24" height="24" rx="3" fill="currentColor" />
+        <circle cx="598" cy="228" r="18" fill="currentColor" />
+        <rect x="592" y="228" width="10" height="32" fill="currentColor" />
       </svg>
     </>
   );
