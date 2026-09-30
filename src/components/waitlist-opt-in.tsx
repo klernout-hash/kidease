@@ -7,9 +7,18 @@ import { getWaitlistInterest, setWaitlistInterest } from "@/lib/server/waitlist-
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { subsidyEstimatorUrl } from "@/lib/licensing";
 import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
 
-export function WaitlistOptIn({ daycareId, next }: { daycareId: string; next?: string }) {
+export function WaitlistOptIn({
+  daycareId,
+  next,
+  province,
+}: {
+  daycareId: string;
+  next?: string;
+  province?: string;
+}) {
   const { t } = useCopy();
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
@@ -52,11 +61,26 @@ export function WaitlistOptIn({ daycareId, next }: { daycareId: string; next?: s
       .finally(() => setBusy(false));
   }
 
+  const official = province ? subsidyEstimatorUrl(province) : "";
+
   return (
     <div id="waitlist-opt-in" className="rounded-lg bg-surface p-4 ring-1 ring-border">
       <p className="font-medium">{t("waitlistOptIn")}</p>
       <p className="mt-1 text-sm text-muted">{t("waitlistOptInLead")}</p>
       <p className="mt-1 text-xs text-subtle">{t("waitlistOptInSmsHint")}</p>
+      {official ? (
+        <div className="mt-3" data-ke="waitlist-official">
+          <p className="text-sm text-muted">{t("waitlistOfficialLead")}</p>
+          <a
+            href={official}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
+          >
+            {t("waitlistOfficial")}
+          </a>
+        </div>
+      ) : null}
       <Button type="button" variant={optedIn ? "secondary" : "primary"} className="mt-3" disabled={busy} onClick={onToggle}>
         {optedIn ? t("waitlistOptInOn") : user ? t("waitlistOptIn") : t("waitlistOptInNeedSignIn")}
       </Button>

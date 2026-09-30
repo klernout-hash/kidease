@@ -61,7 +61,7 @@ export function sitemapPublicPaths(extraPaths: readonly string[] = []) {
   for (const path of extraPaths) {
     const clean = path.startsWith("/") ? path : `/${path}`;
     if (!clean || seen.has(clean)) continue;
-    if (!clean.startsWith("/daycare/city/")) continue;
+    if (!clean.startsWith("/daycare/city/") && !clean.startsWith("/fr/daycare/city/")) continue;
     seen.add(clean);
     out.push(clean);
   }

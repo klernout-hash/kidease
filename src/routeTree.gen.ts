@@ -75,6 +75,7 @@ import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
 import { Route as FrContactRouteImport } from './routes/fr.contact'
 import { Route as FrCookiesRouteImport } from './routes/fr.cookies'
+import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrDonateRouteImport } from './routes/fr.donate'
 import { Route as FrExploreRouteImport } from './routes/fr.explore'
 import { Route as FrFaqRouteImport } from './routes/fr.faq'
@@ -114,6 +115,7 @@ import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.resend'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
+import { Route as FrDaycareCityCityRouteImport } from './routes/fr.daycare.city.$city'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
@@ -449,6 +451,11 @@ const FrCookiesRoute = FrCookiesRouteImport.update({
   path: '/cookies',
   getParentRoute: () => FrRoute,
 } as any)
+const FrDaycareSlugRoute = FrDaycareSlugRouteImport.update({
+  id: '/daycare/$slug',
+  path: '/daycare/$slug',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrDonateRoute = FrDonateRouteImport.update({
   id: '/donate',
   path: '/donate',
@@ -645,6 +652,11 @@ const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
   path: '/daycare/city/$city',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FrDaycareCityCityRoute = FrDaycareCityCityRouteImport.update({
+  id: '/daycare/city/$city',
+  path: '/daycare/city/$city',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrJobsPostRoute = FrJobsPostRouteImport.update({
   id: '/jobs_/post',
   path: '/jobs/post',
@@ -727,6 +739,7 @@ export interface FileRoutesByFullPath {
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
+  '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
@@ -767,6 +780,7 @@ export interface FileRoutesByFullPath {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
@@ -835,6 +849,7 @@ export interface FileRoutesByTo {
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
+  '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
@@ -875,6 +890,7 @@ export interface FileRoutesByTo {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
@@ -946,6 +962,7 @@ export interface FileRoutesById {
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
+  '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
@@ -986,6 +1003,7 @@ export interface FileRoutesById {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
@@ -1058,6 +1076,7 @@ export interface FileRouteTypes {
     | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
+    | '/fr/daycare/$slug'
     | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
@@ -1098,6 +1117,7 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/api/webhooks/resend'
     | '/daycare/city/$city'
+    | '/fr/daycare/city/$city'
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
@@ -1166,6 +1186,7 @@ export interface FileRouteTypes {
     | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
+    | '/fr/daycare/$slug'
     | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
@@ -1206,6 +1227,7 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/api/webhooks/resend'
     | '/daycare/city/$city'
+    | '/fr/daycare/city/$city'
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
@@ -1276,6 +1298,7 @@ export interface FileRouteTypes {
     | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
+    | '/fr/daycare/$slug'
     | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
@@ -1316,6 +1339,7 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/api/webhooks/resend'
     | '/daycare/city/$city'
+    | '/fr/daycare/city/$city'
     | '/fr/jobs_/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
@@ -1404,6 +1428,7 @@ export interface RootRouteChildren {
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ApiWebhooksResendRoute: typeof ApiWebhooksResendRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
+  FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
   ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
 }
 
@@ -1871,6 +1896,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrCookiesRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/daycare/$slug': {
+      id: '/fr/daycare/$slug'
+      path: '/daycare/$slug'
+      fullPath: '/fr/daycare/$slug'
+      preLoaderRoute: typeof FrDaycareSlugRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/donate': {
       id: '/fr/donate'
       path: '/donate'
@@ -2144,6 +2176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DaycareCityCityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fr/daycare/city/$city': {
+      id: '/fr/daycare/city/$city'
+      path: '/daycare/city/$city'
+      fullPath: '/fr/daycare/city/$city'
+      preLoaderRoute: typeof FrDaycareCityCityRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/jobs_/post': {
       id: '/fr/jobs_/post'
       path: '/jobs/post'
@@ -2173,6 +2212,7 @@ interface FrRouteChildren {
   FrBenefitsRoute: typeof FrBenefitsRoute
   FrContactRoute: typeof FrContactRoute
   FrCookiesRoute: typeof FrCookiesRoute
+  FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrDonateRoute: typeof FrDonateRoute
   FrExploreRoute: typeof FrExploreRoute
   FrFaqRoute: typeof FrFaqRoute
@@ -2187,6 +2227,7 @@ interface FrRouteChildren {
   FrTermsRoute: typeof FrTermsRoute
   FrIndexRoute: typeof FrIndexRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
+  FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
 }
 
 const FrRouteChildren: FrRouteChildren = {
@@ -2194,6 +2235,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrBenefitsRoute: FrBenefitsRoute,
   FrContactRoute: FrContactRoute,
   FrCookiesRoute: FrCookiesRoute,
+  FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrDonateRoute: FrDonateRoute,
   FrExploreRoute: FrExploreRoute,
   FrFaqRoute: FrFaqRoute,
@@ -2208,6 +2250,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrTermsRoute: FrTermsRoute,
   FrIndexRoute: FrIndexRoute,
   FrJobsPostRoute: FrJobsPostRoute,
+  FrDaycareCityCityRoute: FrDaycareCityCityRoute,
 }
 
 const FrRouteWithChildren = FrRoute._addFileChildren(FrRouteChildren)
@@ -2355,6 +2398,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ApiWebhooksResendRoute: ApiWebhooksResendRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,
+  FrDaycareCityCityRoute: FrDaycareCityCityRoute,
   ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
 }
 export const routeTree = rootRouteImport
