@@ -126,12 +126,13 @@ export const PUBLISHED_CITY_HUB_SLUGS = [
 
 const PUBLISHED_CITY_HUB_SLUG_SET = new Set(PUBLISHED_CITY_HUB_SLUGS);
 
-/** Single-segment slug under `/daycare/city/`, or null when the path is not a hub URL. */
+/** Single-segment slug under `/daycare/city/` or `/fr/daycare/city/`. */
 export function cityHubSlugFromPath(pathname) {
   const path = normalizePath(pathname).toLowerCase();
+  const bare = path.startsWith("/fr/") ? path.slice(3) : path;
   const prefix = "/daycare/city/";
-  if (!path.startsWith(prefix)) return null;
-  const slug = path.slice(prefix.length);
+  if (!bare.startsWith(prefix)) return null;
+  const slug = bare.slice(prefix.length);
   if (!slug || slug.includes("/")) return null;
   return slug;
 }
@@ -145,9 +146,10 @@ export function isOffScopeCityHubPath(pathname) {
 
 export function isHiddenListingPath(pathname) {
   const path = normalizePath(pathname).toLowerCase();
+  const bare = path.startsWith("/fr/") ? path.slice(3) : path;
   for (const prefix of LISTING_DOCUMENT_PREFIXES) {
-    if (!path.startsWith(prefix)) continue;
-    const slug = path.slice(prefix.length);
+    if (!bare.startsWith(prefix)) continue;
+    const slug = bare.slice(prefix.length);
     if (isHiddenListingSlug(slug)) return true;
   }
   return false;

@@ -287,8 +287,12 @@ export function buildCityHubSnapshots(
   return out;
 }
 
-export function sitemapCityHubPaths(hubs: ReadonlyArray<{ slug: string; count?: number }> = CITY_HUB_DEFS) {
-  return hubs
-    .filter((hub) => (hub.count ?? CITY_HUB_MIN_LISTINGS) >= CITY_HUB_MIN_LISTINGS)
-    .map((hub) => cityHubPath(hub.slug));
+export function sitemapCityHubPaths(hubs: ReadonlyArray<{ slug: string; count?: number; province?: string }> = CITY_HUB_DEFS) {
+  const published = hubs.filter((hub) => (hub.count ?? CITY_HUB_MIN_LISTINGS) >= CITY_HUB_MIN_LISTINGS);
+  const paths = published.map((hub) => cityHubPath(hub.slug));
+  for (const hub of published) {
+    const province = hub.province ?? CITY_HUB_DEFS.find((def) => def.slug === hub.slug)?.province;
+    if (province === "QC") paths.push(`/fr${cityHubPath(hub.slug)}`);
+  }
+  return paths;
 }
