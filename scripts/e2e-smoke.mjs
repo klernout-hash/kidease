@@ -148,7 +148,7 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await openHeaderMenu(page);
     await page.locator('#ke-nav-drawer [data-ke="role-nav"][data-role="guest"]').waitFor({ timeout: timeoutMs });
-    let guestNav = await page.locator('#ke-nav-drawer [data-ke="role-nav"]').innerText();
+    let guestNav = await page.locator("#ke-nav-drawer").innerText();
     const guestPricing = await page.locator('[data-ke="optional-upgrades"]').count();
     const guestPlans = await page.locator('#ke-nav-drawer [data-nav="plans"]').count();
     const guestFooterPlans = await page.locator('footer a[href="/plans"]').count();
