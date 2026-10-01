@@ -39,6 +39,7 @@ import { uniqueById } from "@/lib/utils";
 import { publicListings } from "@/lib/listing-visibility";
 import { readRecent } from "@/lib/recent";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
+import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
 import { compactExploreSearch } from "@/lib/explore-search";
 import { EmptyState } from "@/components/empty-state";
@@ -359,6 +360,7 @@ function Home() {
           });
         }}
       />
+      <SmartMatchEntry />
 
       {featuredReady && strip.liveCount > 0 ? (
         <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip">

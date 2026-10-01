@@ -47,6 +47,7 @@ import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { DualAnchorBar } from "@/components/dual-anchor-bar";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
+import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
 import {
   compactExploreSearch,
@@ -1421,6 +1422,7 @@ function SearchPage() {
           onLocate={() => void geo()}
           onSubmit={() => void applyQuery()}
         />
+        <SmartMatchEntry />
         <div className="ke-explore-filter-sticky mt-3">
         <ExploreFilterBar
           listingCount={items !== null ? resultCount : undefined}

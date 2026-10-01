@@ -14,6 +14,11 @@ AI only explains or reshapes facts we already have. It never invents a daycare, 
 - If the call fails or times out, use the non-AI path. The page must still render.
 - English and French strings ship together. The phone layout comes first.
 
+## Smart match
+
+The quiz builds filters. An optional note may only add filters (`age`, `budget`, `french`, `schedule`, `extraSupport`). Home, work, and the start date are not sent to the model. Results are the existing Best match order, cut to 10. "Why this matches" uses listing reason codes only. A failed or invalid note falls back to the quiz. Flag: `smart-match`. Events: `smart_match_started`, `smart_match_completed`, `smart_match_result_clicked`, `smart_match_applied`.
+
+
 ## What is stored
 
 `ai_calls` stores the feature name, token counts, cost, latency, and whether the call failed. It does not store the prompt or the reply. `ai_cache` stores the scrubbed reply for 24 hours, keyed by a hash.
