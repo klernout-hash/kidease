@@ -135,7 +135,7 @@ export const PRIVACY_EN: LegalDoc = {
               name: "Titan Email, when the kyle@kidease.ca inbox is connected",
               purpose:
                 "Receiving and sending operator mail for kyle@kidease.ca (support, claims, and replies). If Titan is not connected, those messages still go through Resend or stay in the app.",
-              href: "https://www.titan.email/privacy/",
+              href: "https://support.titan.email/hc/en-us/articles/360038535773-Titan-Privacy-Policy",
               hrefLabel: "Titan Privacy Policy",
             },
             {
@@ -491,7 +491,7 @@ export const PRIVACY_FR: LegalDoc = {
               name: "Titan Email, lorsque la boîte kyle@kidease.ca est liée",
               purpose:
                 "Courrier de l’opérateur pour kyle@kidease.ca. Si Titan n’est pas lié, ces messages passent par Resend ou restent dans l’appli.",
-              href: "https://www.titan.email/privacy/",
+              href: "https://support.titan.email/hc/en-us/articles/360038535773-Titan-Privacy-Policy",
               hrefLabel: "Politique de confidentialité Titan",
             },
             {
