@@ -18,7 +18,7 @@ import { compactExploreSearch, parseExploreSearchFields } from "@/lib/explore-se
 import { productHomeOrigin } from "@/lib/default-origin";
 import { geocode } from "@/lib/geo";
 import { MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
-import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
+import { featuredDaycares, searchDaycarePage } from "@/lib/server/daycares";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
 import {
@@ -59,7 +59,7 @@ export const Route = createFileRoute("/fr/search")({
     const sort = rank === "best" ? "best" : "distance";
     const [searched, featured] = await Promise.all([
       withPaintBudget(
-        searchDaycares({
+        searchDaycarePage({
           data: {
             lat: origin.lat,
             lng: origin.lng,
@@ -68,6 +68,7 @@ export const Route = createFileRoute("/fr/search")({
             ageGroup: "any",
             label: origin.label,
             q: origin.label,
+            page: 1,
           },
         }),
         PAINT_BUDGET_MS,
@@ -78,7 +79,7 @@ export const Route = createFileRoute("/fr/search")({
       ),
     ]);
     return {
-      items: searched.value ?? [],
+      items: searched.value?.items ?? [],
       featured: featured.value ?? [],
       catalogueReady: searched.ready || featured.ready,
       origin,
@@ -122,7 +123,7 @@ function FrExplore() {
   useEffect(() => {
     if (boot.catalogueReady !== false && sort === boot.sort) return;
     let live = true;
-    void searchDaycares({
+    void searchDaycarePage({
       data: {
         lat: boot.origin.lat,
         lng: boot.origin.lng,
@@ -131,10 +132,11 @@ function FrExplore() {
         ageGroup: "any",
         label: boot.origin.label,
         q: boot.origin.label,
+        page: 1,
       },
     })
-      .then((items) => {
-        if (live) setRows(items);
+      .then((result) => {
+        if (live) setRows(result.items);
       })
       .catch(() => {
         if (live) setRows([]);

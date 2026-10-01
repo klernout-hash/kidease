@@ -13,6 +13,7 @@ export function productionServerFnId(filename, exportName) {
 /** Public catalogue reads. Same payload for every caller. */
 export const CATALOGUE_SERVER_FNS = [
   ["src/lib/server/daycares.ts", "searchDaycares"],
+  ["src/lib/server/daycares.ts", "searchDaycarePage"],
   ["src/lib/server/daycares.ts", "featuredDaycares"],
   ["src/lib/server/daycares.ts", "getDaycaresByIds"],
 ];

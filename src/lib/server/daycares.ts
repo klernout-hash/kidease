@@ -31,6 +31,7 @@ import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
+import { pageFromSearch, sliceSearchPage } from "@/lib/search-page";
 import { rememberSearch, searchMemoKey } from "./search-memo";
 import { mergeApprovedCityListings } from "./approved-search";
 import { alignSearchOrigin } from "@/lib/search-query";
@@ -513,31 +514,45 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   });
 }
 
+function normalizeSearchInput(input: SearchInput): SearchInput {
+  const city = typeof input.city === "string" ? input.city.trim().slice(0, 80) : "";
+  const located = city ? geocode(city) : null;
+  return {
+    ...input,
+    directorySlug: undefined,
+    city,
+    q: (typeof input.q === "string" && input.q.trim()) || located?.label || input.q,
+    radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
+    lat2: optionalCoord(input.lat2),
+    lng2: optionalCoord(input.lng2),
+    mode: parseAnchorMode(input.mode),
+    sort: parseSort(input.sort),
+    rankAge: parseRankAge(input.rankAge),
+    wantSubsidy: input.wantSubsidy === true,
+    wantExtendedHours: input.wantExtendedHours === true,
+    schedules: parseSchedules(input.schedules),
+    countDemand: input.countDemand === true,
+    facility: listedDaycareTypeFromSearch(
+      input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
+    ),
+  };
+}
+
 export const searchDaycares = createServerFn({ method: "GET" })
-  .validator((input: SearchInput) => {
-    const city = typeof input.city === "string" ? input.city.trim().slice(0, 80) : "";
-    const located = city ? geocode(city) : null;
-    return {
-      ...input,
-      directorySlug: undefined,
-      city,
-      q: (typeof input.q === "string" && input.q.trim()) || located?.label || input.q,
-      radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
-      lat2: optionalCoord(input.lat2),
-      lng2: optionalCoord(input.lng2),
-      mode: parseAnchorMode(input.mode),
-      sort: parseSort(input.sort),
-      rankAge: parseRankAge(input.rankAge),
-      wantSubsidy: input.wantSubsidy === true,
-      wantExtendedHours: input.wantExtendedHours === true,
-      schedules: parseSchedules(input.schedules),
-      countDemand: input.countDemand === true,
-      facility: listedDaycareTypeFromSearch(
-        input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
-      ),
-    };
-  })
+  .validator((input: SearchInput) => normalizeSearchInput(input))
   .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => searchIncludingLive(data)));
+
+/** Same ranking as searchDaycares, then one page of 96 cards. */
+export const searchDaycarePage = createServerFn({ method: "GET" })
+  .validator((input: SearchInput & { page?: unknown }) => {
+    const page = pageFromSearch({ page: input.page });
+    return { ...normalizeSearchInput(input), page };
+  })
+  .handler(async ({ data }) => {
+    const { page, ...query } = data;
+    const all = await rememberSearch(searchMemoKey(query), () => searchIncludingLive(query));
+    return sliceSearchPage(all, page);
+  });
 
 /** Home type rows page 12 at a time. Keep a few pages of each nearby type. */
 const HOME_TYPE_POOL = 72;

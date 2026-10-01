@@ -12,7 +12,8 @@ import { ExploreCategoryChips } from "@/components/explore-category-chips";
 import { ExploreFilterBar } from "@/components/explore-filter-bar";
 import { ExploreFilterChips } from "@/components/explore-filter-chips";
 import { DaycareCard } from "@/components/daycare-card";
-import { searchDaycares } from "@/lib/server/daycares";
+import { SEARCH_PAGE_SIZE, pageFromSearch } from "@/lib/search-page";
+import { searchDaycarePage } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
 import { isIqaluitQuery, reverseGeocode } from "@/lib/geo";
 import { originFromDeviceFix, productHomeOrigin, readClientTimeZone } from "@/lib/default-origin";
@@ -139,6 +140,8 @@ export const Route = createFileRoute("/search")({
         itemsReady: true,
         unknownCity: true as const,
         origin: { lat: 0, lng: 0, label: city, source: "manual" as const },
+        page: 1,
+        hasMore: false,
       };
     }
     const place = q || (city ? originFromSearchQuery(city)?.label || city : "");
@@ -146,8 +149,9 @@ export const Route = createFileRoute("/search")({
     const origin = fromQ
       ? { lat: fromQ.lat, lng: fromQ.lng, label: fromQ.label, source: "manual" as const }
       : await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
+    const page = pageFromSearch(location.search);
     const painted = await withPaintBudget(
-      searchDaycares({
+      searchDaycarePage({
         data: {
           lat: origin.lat,
           lng: origin.lng,
@@ -158,11 +162,19 @@ export const Route = createFileRoute("/search")({
           q: place || origin.label,
           city: city || undefined,
           facility: listedDaycareTypeFromSearch(location.search),
+          page,
         },
       }),
       PAINT_BUDGET_MS,
     );
-    return { items: painted.value ?? [], itemsReady: painted.ready, origin, unknownCity: false as const };
+    return {
+      items: painted.value?.items ?? [],
+      itemsReady: painted.ready,
+      origin,
+      unknownCity: false as const,
+      page: painted.value?.page ?? page,
+      hasMore: painted.value?.hasMore === true,
+    };
   },
   staleTime: 60_000,
   pendingMs: 0,
@@ -188,6 +200,7 @@ export const Route = createFileRoute("/search")({
       fac?: string;
       city?: string;
       rank?: "best" | "nearest";
+      page?: number;
     } = { ...fields };
     const city = typeof s.city === "string" ? s.city.trim().slice(0, 80) : "";
     if (city) out.city = city;
@@ -201,6 +214,8 @@ export const Route = createFileRoute("/search")({
     }
     const rank = parseRankingOverride(s.rank);
     if (rank) out.rank = rank;
+    const page = pageFromSearch(s);
+    if (page > 1) out.page = page;
     const ageCsv = formatExploreRailAges(parseExploreRailAges({ age: s.age, cat: s.cat }));
     if (ageCsv) out.age = ageCsv;
     if (s.openings === "1" || s.openings === true || s.openings === 1) out.openings = "1";
@@ -284,6 +299,8 @@ function SearchPage() {
         )
       : null,
   );
+  const resultPage = incoming.page ?? 1;
+  const [hasMore, setHasMore] = useState(boot.hasMore === true);
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);
@@ -494,7 +511,8 @@ function SearchPage() {
     wantSubsidy: ten,
     wantExtendedHours: extended,
     schedules: rankSchedules,
-    countDemand: true,
+    countDemand: resultPage === 1,
+    page: resultPage,
     fsa: fsaOf(query) || fsaOf(cameraHome.label),
     label: cameraHome.label,
     q: placeQuery,
@@ -519,6 +537,7 @@ function SearchPage() {
     lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
     lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
     mode: viewAnchors.mode,
+    page: resultPage,
   };
   const locationLock = useMemo(
     () =>
@@ -543,19 +562,21 @@ function SearchPage() {
     const cached = readSearchCache(key);
     if (cached) {
       setItems(filterByLocationLock(cached, locationLock));
+      setHasMore(cached.length >= SEARCH_PAGE_SIZE);
       setSearchFailed(false);
     } else {
       setRefreshing(true);
       setSearchFailed(false);
     }
     const tmr = window.setTimeout(() => {
-      void searchDaycares({
+      void searchDaycarePage({
         data: searchData,
       })
-        .then((rows) => {
+        .then((result) => {
           if (!live) return;
-          const locked = filterByLocationLock(rows, locationLock);
+          const locked = filterByLocationLock(result.items, locationLock);
           setItems(locked);
+          setHasMore(result.hasMore);
           setSearchFailed(false);
           writeSearchCache(key, locked);
           captureMarketplaceFunnel({ step: "search", source: "search", dest_path: "/search" });
@@ -604,12 +625,32 @@ function SearchPage() {
     anchorMode,
     extended,
     rankSchedules.join(","),
+    resultPage,
   ]);
 
   const parentFilters = useMemo(() => parseParentListingSearch(incoming), [incoming]);
 
   function withParentSearch(search: Record<string, unknown>) {
     return { ...search, ...compactParentListingSearch(parentFilters) };
+  }
+
+  function listingPageSearch(page: number) {
+    return withParentSearch({
+      q: incoming.q,
+      name: incoming.name,
+      from: incoming.from,
+      to: incoming.to,
+      sort: incoming.sort,
+      age: incoming.age,
+      start: incoming.start,
+      cat: incoming.cat,
+      care: incoming.care,
+      favorites: incoming.favorites,
+      openings: incoming.openings,
+      city: incoming.city,
+      rank: incoming.rank,
+      page: page > 1 ? page : undefined,
+    });
   }
 
   function writeParentFilters(next: ParentListingSearch) {
@@ -898,12 +939,13 @@ function SearchPage() {
     setItems(null);
     setSearchFailed(false);
     setRefreshing(true);
-    void searchDaycares({
+    void searchDaycarePage({
       data: searchData,
     })
-      .then((rows) => {
-        const locked = filterByLocationLock(rows, locationLock);
+      .then((result) => {
+        const locked = filterByLocationLock(result.items, locationLock);
         setItems(locked);
+        setHasMore(result.hasMore);
         setSearchFailed(false);
         writeSearchCache(searchCacheKey(cacheInput), locked);
       })
@@ -1741,6 +1783,24 @@ function SearchPage() {
               />
             </div>
           )}
+          {items !== null && (hasMore || resultPage > 1) ? (
+            <nav className="mt-6 flex flex-wrap gap-3" aria-label={t("search")}>
+              {resultPage > 1 ? (
+                <Button asChild variant="secondary">
+                  <Link to="/search" search={listingPageSearch(resultPage - 1)}>
+                    {t("showPreviousListings")}
+                  </Link>
+                </Button>
+              ) : null}
+              {hasMore ? (
+                <Button asChild variant="secondary">
+                  <Link to="/search" search={listingPageSearch(resultPage + 1)}>
+                    {t("showMoreListings")}
+                  </Link>
+                </Button>
+              ) : null}
+            </nav>
+          ) : null}
           {gated && split.ageUnknown.length ? (
             <div className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">
               <p className="font-semibold">{t("ageNotConfirmed")}</p>
