@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { pushPromptStep } from "../src/lib/push-prompt.ts";
 import { tx } from "../src/lib/copy.ts";
+import { loadExtraCopy } from "../src/lib/extra-copy.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -12,7 +13,8 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("native shell hides digital plans and does not rename the application id", () => {
+test("native shell hides digital plans and does not rename the application id", async () => {
+  await loadExtraCopy("es");
   const css = src("src/styles.css");
   assert.match(css, /html\[data-runtime="ios"\] \.ke-digital-plan/);
   assert.match(css, /html\[data-runtime="android"\] \[data-nav="upgrade"\]/);

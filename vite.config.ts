@@ -220,6 +220,25 @@ export default defineConfig(({ command, isPreview }) => ({
   // a future POSTHOG_* / SENTRY_DSN secret is not inlined into the client bundle.
   // Browser Sentry reads VITE_PUBLIC_SENTRY_DSN only.
   envPrefix: ["VITE_", "POSTHOG_HOST"],
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: (["zh", "yue", "pa", "es", "ar", "tl", "it", "de"] as const).map((code) => ({
+            name: `locale-${code}`,
+            test: new RegExp(`/src/lib/i18n/${code}\\.json$`),
+            minSize: 0,
+            minShareCount: 1,
+          })),
+        },
+      },
+    },
+    modulePreload: {
+      resolveDependencies(_filename, deps) {
+        return deps.filter((dep) => !/locale-(?:zh|yue|pa|es|ar|tl|it|de)/.test(dep));
+      },
+    },
+  },
   // Vite 8 replaces `process.env` with {} when keepProcessEnv is false (client
   // or worker). Nitro / TanStack Start server functions must see Vercel runtime
   // secrets, including Sensitive keys that were absent from the build snapshot.

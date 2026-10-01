@@ -1,5 +1,5 @@
 import type { Locale } from "./types";
-import { extraCopy } from "./extra-copy.ts";
+import { extraPack, isExtraLocale } from "./extra-copy.ts";
 import { plusPriceHint } from "./parent-plus.ts";
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
 
@@ -5749,6 +5749,7 @@ export type CopyKey = keyof typeof copy.en;
 export function tx(locale: Locale, key: CopyKey): string {
   if (locale === "fr") return copy.fr[key];
   if (locale === "en") return copy.en[key];
-  const extra = extraCopy[locale]?.[key];
+  if (!isExtraLocale(locale)) return copy.en[key];
+  const extra = extraPack(locale)?.[key];
   return extra ?? copy.en[key];
 }
