@@ -31,7 +31,13 @@ const ADMIN_FLAGS = new Set<AiFlag>([
 ]);
 
 /** New features stay off when PostHog has not answered. Smart match and the writer keep 50%. */
-const FALLBACK_OFF = new Set<AiFlag>([AI_FLAGS.photoCheck, AI_FLAGS.spotAlerts, AI_FLAGS.replyDrafts, AI_FLAGS.parentHelper]);
+const FALLBACK_OFF = new Set<AiFlag>([
+  AI_FLAGS.photoCheck,
+  AI_FLAGS.spotAlerts,
+  AI_FLAGS.replyDrafts,
+  AI_FLAGS.parentHelper,
+  AI_FLAGS.translate,
+]);
 
 export function aiFlagRolloutPercent(flag: AiFlag): number {
   if (ADMIN_FLAGS.has(flag) || FALLBACK_OFF.has(flag)) return 0;
