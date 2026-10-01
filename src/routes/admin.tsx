@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import {
@@ -44,6 +44,8 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminRoute() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname === "/admin/features") return <Outlet />;
   return (
     <Suspense
       fallback={
