@@ -1,4 +1,5 @@
 import { ChipButton } from "@/components/chip";
+import { ListingWriter } from "@/components/listing-writer";
 import {
   CURRICULUM_TAGS,
   DESK_AMENITIES,
@@ -80,9 +81,15 @@ function defaultProgram(band: AgeProgram["band"]): AgeProgram {
 export function ProviderParentFields({
   value,
   onChange,
+  daycareId,
+  website,
+  onWriterApplied,
 }: {
   value: ParentDeskState;
   onChange: (next: ParentDeskState) => void;
+  daycareId?: string;
+  website?: string | null;
+  onWriterApplied?: () => void;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -350,6 +357,18 @@ export function ProviderParentFields({
             onChange={(e) => onChange({ ...value, promoText: e.target.value })}
           />
         </label>
+        {daycareId ? (
+          <ListingWriter
+            daycareId={daycareId}
+            website={website}
+            onUse={(draft) => {
+              const parts = [draft.description, draft.programSummary, draft.highlights.join("\n")].filter((part) => part.trim());
+              if (!parts.length) return;
+              onChange({ ...value, description: parts.join("\n\n").slice(0, 2000) });
+              onWriterApplied?.();
+            }}
+          />
+        ) : null}
         <label className="text-sm">
           {t("about")}
           <textarea

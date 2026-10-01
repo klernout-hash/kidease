@@ -23,6 +23,8 @@ import {
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
+import { listingWriterEventProps } from "@/lib/ai/listing-writer";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { ProviderParentFields, parentDeskFromDaycare } from "@/components/provider-parent-fields";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { useCopy } from "@/lib/use-copy";
@@ -264,6 +266,7 @@ export function CapacityForm({
   const [licenseNeedsConfirm, setLicenseNeedsConfirm] = useState(false);
   const [licenseBusy, setLicenseBusy] = useState(false);
   const licencePrompting = useRef(false);
+  const writerApplied = useRef(false);
   if (appliedRev !== serverRev) {
     setAppliedRev(serverRev);
     setState(listingFormState(daycare));
@@ -501,6 +504,10 @@ export function CapacityForm({
                     : "listingEdits";
             confirmAction(t, id);
             setGallery(null);
+            if (writerApplied.current) {
+              capturePostHogEvent("listing_writer_published", listingWriterEventProps({ daycare_id: daycare.id }));
+              writerApplied.current = false;
+            }
           })
           .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
           .finally(() => setSaving(false));
@@ -729,6 +736,11 @@ export function CapacityForm({
           <div id="listing-health-subsidy">
             <div id="listing-health-policies">
               <ProviderParentFields
+                daycareId={daycare.id}
+                website={daycare.website}
+                onWriterApplied={() => {
+                  writerApplied.current = true;
+                }}
                 value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
                 onChange={(parent) => setState({ ...state, ...parent })}
               />

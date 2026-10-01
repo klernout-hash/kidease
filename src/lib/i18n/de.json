@@ -2514,5 +2514,21 @@
   "smartMatchSaved": "Saved. We will tell you when a centre confirms an opening.",
   "smartMatchSaveFailed": "We could not save that match. Try again.",
   "smartMatchSignIn": "Sign in to save this match",
-  "smartMatchSearchInstead": "Search this place"
+  "smartMatchSearchInstead": "Search this place",
+  "listingWriterCta": "Write it for me",
+  "listingWriterLead": "We rewrite only your notes and the website address already on file. Nothing is published until you save.",
+  "listingWriterWebsite": "Website on file",
+  "listingWriterNoWebsite": "No website on file.",
+  "listingWriterNotes": "Notes",
+  "listingWriterNotesHint": "Facts you want in the listing. We do not add fees, spots, or reviews.",
+  "listingWriterDraft": "Draft",
+  "listingWriterDescription": "Description",
+  "listingWriterProgram": "Program summary",
+  "listingWriterHighlights": "Highlights",
+  "listingWriterUnsourced": "Check these. We could not find them in your notes.",
+  "listingWriterUse": "Use this draft",
+  "listingWriterUsed": "Draft added. Save changes to publish it.",
+  "listingWriterEmpty": "Add notes first. We will not invent a description.",
+  "listingWriterFailed": "We could not write a draft. Your listing is unchanged.",
+  "listingWriterWorking": "Writing…"
 }
