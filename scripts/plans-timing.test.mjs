@@ -58,6 +58,12 @@ test("home upgrade card waits for a real action and stays hidden after dismissal
   assert.match(src("src/components/role-upgrade-card.tsx"), /data-ke="upgrade-card-dismiss"/);
   assert.match(src("migrations/0067_upgrade_card_dismiss.sql"), /upgrade_card_dismissed_at/);
   assert.match(src("src/lib/server/upgrade-card.ts"), /upgrade_card_dismissed_at = now\(\)/);
+  for (const file of ["src/components/parent-desk.tsx", "src/routes/provider.tsx"]) {
+    const desk = src(file);
+    assert.match(desk, /dismissUpgradeCard\(\)\s*\.then\(\(\) => setUpgradeDismissed\(true\)\)/, file);
+    assert.doesNotMatch(desk, /setUpgradeDismissed\(true\);\s*void dismissUpgradeCard/, file);
+  }
+  assert.match(src("scripts/e2e-smoke.mjs"), /upgrade-card-dismiss[\s\S]*state: "hidden"/);
   assert.doesNotMatch(src("src/components/role-upgrade-card.tsx"), /sessionStorage|Dialog|role="dialog"/);
 });
 

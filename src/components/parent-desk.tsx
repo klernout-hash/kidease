@@ -345,8 +345,9 @@ export function ParentDesk({
           dismissed={upgradeDismissed}
           settled={homeSettled}
           onDismiss={() => {
-            setUpgradeDismissed(true);
-            void dismissUpgradeCard().catch(() => setUpgradeDismissed(false));
+            void dismissUpgradeCard()
+              .then(() => setUpgradeDismissed(true))
+              .catch(() => setUpgradeDismissed(false));
           }}
         />
       ) : null}
