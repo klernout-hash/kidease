@@ -18,6 +18,11 @@ AI only explains or reshapes facts we already have. It never invents a daycare, 
 
 The quiz builds filters. An optional note may only add filters (`age`, `budget`, `french`, `schedule`, `extraSupport`). Home, work, and the start date are not sent to the model. Results are the existing Best match order, cut to 10. "Why this matches" uses listing reason codes only. A failed or invalid note falls back to the quiz. Flag: `smart-match`. Events: `smart_match_started`, `smart_match_completed`, `smart_match_result_clicked`, `smart_match_applied`.
 
+## Listing writer
+
+A claimed centre can draft a description from the website address already stored and from notes they type. The draft is editable. It is not saved until they click Save changes. Sentences that are not in those inputs are listed as unsourced and are not copied into the listing. Flag: `ai-listing-writer`. Events: `listing_writer_used`, `listing_writer_published`.
+
+
 
 ## What is stored
 
