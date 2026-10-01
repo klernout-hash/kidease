@@ -85,6 +85,8 @@ import {
 import { BuildingPhoto } from "@/components/building-photo";
 import { mapPinThumb } from "@/lib/listing-photo";
 import { listingAgeRangeText } from "@/lib/listing-ages";
+import { parentDistanceLabel } from "@/lib/distance-label";
+import { originIsParentLocation } from "@/lib/presence";
 import { displayDistance } from "@/lib/units";
 import { honestVacancy } from "@/lib/now-loops";
 import { publicApprovalEligible } from "@/lib/approve-live";
@@ -1031,10 +1033,13 @@ function MapPinPopup({
   onClose: () => void;
   t: (key: CopyKey) => string;
 }) {
+  const originSource = useAppStore((s) => s.originSource);
   const name = displayCentreName(locale === "fr" ? item.nameFr || item.name : item.name);
-  const away = Number.isFinite(item.distanceKm)
-    ? `${displayDistance(item.distanceKm, "km")} ${t("km")}`
-    : "";
+  const away = parentDistanceLabel({
+    km: item.distanceKm,
+    away: t("km"),
+    show: originIsParentLocation(originSource),
+  });
   const place = mapPinPlaceLine({
     address: displayListingText(item.address),
     city: item.city,

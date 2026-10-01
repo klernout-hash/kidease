@@ -10,7 +10,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { askParentHelper, estimateSubsidy } from "@/lib/server/parent-helper";
 import { useCopy } from "@/lib/use-copy";
 
-export function ParentHelperPanel() {
+export function ParentHelperPanel({ collapsed = false }: { collapsed?: boolean } = {}) {
   const on = useAiFeatureFlag(AI_FLAGS.parentHelper);
   const { user } = useCurrentUserState();
   const { t } = useCopy();
@@ -74,9 +74,8 @@ export function ParentHelperPanel() {
       .finally(() => setBusy(false));
   }
 
-  return (
-    <section className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="parent-helper">
-      <h2 className="font-display text-xl">{t("parentHelperTitle")}</h2>
+  const body = (
+    <>
       <p className="mt-1 text-sm text-muted">{t("parentHelperLead")}</p>
       <label className="mt-3 block text-sm font-medium">
         {t("parentHelperAsk")}
@@ -126,6 +125,27 @@ export function ParentHelperPanel() {
         </Button>
       </div>
       {subsidy ? <p className="mt-2 text-sm">{subsidy}</p> : null}
+    </>
+  );
+
+  if (collapsed) {
+    return (
+      <details
+        className="mt-6 min-h-11 rounded-xl bg-surface ring-1 ring-border"
+        data-ke="parent-helper"
+      >
+        <summary className="flex min-h-11 cursor-pointer select-none items-center px-4 text-sm font-semibold touch-manipulation">
+          {t("parentHelperTitle")}
+        </summary>
+        <div className="px-4 pb-4">{body}</div>
+      </details>
+    );
+  }
+
+  return (
+    <section className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="parent-helper">
+      <h2 className="font-display text-xl">{t("parentHelperTitle")}</h2>
+      {body}
     </section>
   );
 }

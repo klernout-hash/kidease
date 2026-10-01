@@ -196,7 +196,6 @@ function FrExplore() {
         <h1 className="mt-2 text-4xl md:text-5xl">{t("tagline")}</h1>
         <p className="mt-4 max-w-2xl text-muted">{t("heroSub")}</p>
         <p className="mt-3 max-w-2xl text-sm text-muted">{t("listingCopyEnNote")}</p>
-        <ParentHelperPanel />
 
         <ExploreSearchBar
           className="mt-8"
@@ -291,6 +290,7 @@ function FrExplore() {
             <CityHubLinks headingKey="otherCities" />
           </div>
         )}
+        <ParentHelperPanel collapsed />
       </main>
       <SiteFooter />
     </Shell>

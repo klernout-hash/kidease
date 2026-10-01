@@ -142,6 +142,7 @@ export const Route = createFileRoute("/search")({
         origin: { lat: 0, lng: 0, label: city, source: "manual" as const },
         page: 1,
         hasMore: false,
+        total: 0,
       };
     }
     const place = q || (city ? originFromSearchQuery(city)?.label || city : "");
@@ -174,6 +175,7 @@ export const Route = createFileRoute("/search")({
       unknownCity: false as const,
       page: painted.value?.page ?? page,
       hasMore: painted.value?.hasMore === true,
+      total: painted.value?.total ?? 0,
     };
   },
   staleTime: 60_000,
@@ -301,6 +303,7 @@ function SearchPage() {
   );
   const resultPage = incoming.page ?? 1;
   const [hasMore, setHasMore] = useState(boot.hasMore === true);
+  const [resultTotal, setResultTotal] = useState(boot.total ?? 0);
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);
@@ -577,6 +580,7 @@ function SearchPage() {
           const locked = filterByLocationLock(result.items, locationLock);
           setItems(locked);
           setHasMore(result.hasMore);
+          setResultTotal(result.total);
           setSearchFailed(false);
           writeSearchCache(key, locked);
           captureMarketplaceFunnel({ step: "search", source: "search", dest_path: "/search" });
@@ -946,6 +950,7 @@ function SearchPage() {
         const locked = filterByLocationLock(result.items, locationLock);
         setItems(locked);
         setHasMore(result.hasMore);
+        setResultTotal(result.total);
         setSearchFailed(false);
         writeSearchCache(searchCacheKey(cacheInput), locked);
       })
@@ -1281,12 +1286,13 @@ function SearchPage() {
   const headingCity = locationKnown ? city : t("searchPlacePending");
   const whereSet = Boolean(whereLabel);
   const mapOrigin = anchors.primary;
+  const centreCount = extraFilters ? visualItems.length : resultTotal;
   const searchCountLine =
     fabric.live > 0
       ? t("exploreBrowseHint").replace("{n}", String(fabric.live))
-      : catalog.length === 1
+      : centreCount === 1
         ? t("searchLicensedCountOne")
-        : t("searchLicensedCount").replace("{n}", String(catalog.length));
+        : t("searchLicensedCount").replace("{n}", String(centreCount));
 
   function chip(on: boolean, label: string, action: () => void) {
     return (
@@ -1408,8 +1414,6 @@ function SearchPage() {
             {t("changeLocation")}
           </Link>
         </div>
-        <ParentHelperPanel />
-
         {saveOpen ? (
           <div className="mt-3 rounded-xl bg-surface p-4 ring-1 ring-border">
             <p className="text-sm font-semibold">{t("saveSearch")}</p>
@@ -1783,6 +1787,7 @@ function SearchPage() {
               />
             </div>
           )}
+          <ParentHelperPanel collapsed />
           {items !== null && (hasMore || resultPage > 1) ? (
             <nav className="mt-6 flex flex-wrap gap-3" aria-label={t("search")}>
               {resultPage > 1 ? (

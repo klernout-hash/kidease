@@ -20,6 +20,8 @@ test("search pages are 96 cards of the same sorted list", () => {
   assert.equal(first.items.at(-1).id, "c95");
   assert.equal(first.hasMore, true);
   assert.equal(first.page, 1);
+  assert.equal(first.total, 200);
+  assert.equal(sliceSearchPage([], 1).total, 0);
 
   const second = sliceSearchPage(rows, 2);
   assert.equal(second.items[0].id, "c96");
@@ -54,6 +56,9 @@ test("public search routes page the payload and keep a crawlable next link", () 
   const french = src("src/routes/fr.search.tsx");
   const daycares = src("src/lib/server/daycares.ts");
   assert.match(search, /searchDaycarePage/);
+  assert.match(search, /resultTotal/);
+  assert.match(search, /ParentHelperPanel collapsed/);
+  assert.match(french, /ParentHelperPanel collapsed/);
   assert.doesNotMatch(search, /searchDaycares\(/);
   assert.match(search, /showMoreListings/);
   assert.match(search, /showPreviousListings/);
