@@ -25,6 +25,8 @@ test("Guest: live vs all counts, empty-search lead, and listing login handoff", 
   assert.match(src("src/components/care-ops-panel.tsx"), /careRoomsEmpty/);
   assert.match(src("src/routes/claim.tsx"), /sendClaimRequest/);
   assert.match(src("src/styles.css"), /\.ke-listing-hero \{\s*width: 100%/);
+  assert.match(src("src/styles.css"), /\.ke-listing-hero\[data-empty="true"\] \{\s*width: 100%;\s*aspect-ratio: 16 \/ 9;/);
+  assert.doesNotMatch(src("src/styles.css"), /ke-listing-hero\[data-empty="true"\][\s\S]{0,80}aspect-ratio: 2 \/ 1/);
   assert.match(src("src/components/listing-parent-pack.tsx"), /aria-current=\{active === id \? "true"/);
   assert.match(src("src/components/explore-filter-bar.tsx"), /arrows=\{false\}/);
   assert.match(src("src/routes/provider.tsx"), /enquiriesEmptyTitle/);
