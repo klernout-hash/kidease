@@ -311,17 +311,9 @@ function digestCopy(
 }
 
 async function ensureDigestTable() {
-  const sql = await getSql();
-  await sql
-    .query(
-      `create table if not exists digest_sends (
-        day text primary key,
-        sent_at timestamptz not null default now(),
-        event_count int not null default 0,
-        email_status text not null
-      )`,
-    )
-    .catch(() => undefined);
+  if (!import.meta.env.SSR) return;
+  const { ensureDigestSends } = await import("./runtime-schema");
+  await ensureDigestSends();
 }
 
 export async function sendDailyDigest() {
@@ -537,31 +529,9 @@ async function deliverSms(kind: PlatformKind, title: string, detail?: string, bo
 }
 
 async function ensureEventsTable() {
-  const sql = await getSql();
-  await sql
-    .query(
-      `
-    create table if not exists platform_events (
-      id text primary key,
-      kind text not null,
-      daycare_name text,
-      address text,
-      city text,
-      province text,
-      slug text,
-      provider_name text,
-      provider_email text,
-      listing_url text,
-      email_to text not null,
-      email_status text not null default 'queued',
-      email_error text,
-      detail text,
-      created_at timestamptz not null default now()
-    )
-  `,
-    )
-    .catch(() => undefined);
-  await sql.query(`alter table platform_events add column if not exists detail text`).catch(() => undefined);
+  if (!import.meta.env.SSR) return;
+  const { ensurePlatformEvents } = await import("./runtime-schema");
+  await ensurePlatformEvents();
 }
 
 export async function notifyPlatform(p: PlatformEvent) {

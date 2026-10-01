@@ -17,26 +17,9 @@ export type SignedInDevice = {
 };
 
 async function ensureTrustedDeviceTables() {
-  const sql = await getSql();
-  await sql
-    .query(
-      `create table if not exists trusted_devices (
-        id text primary key,
-        user_id text not null,
-        device_id text not null,
-        label text,
-        user_agent text,
-        ip text,
-        created_at timestamptz not null default now(),
-        last_seen timestamptz not null default now(),
-        expires_at timestamptz not null,
-        revoked_at timestamptz
-      )`,
-    )
-    .catch(() => undefined);
-  await sql
-    .query(`create unique index if not exists trusted_devices_user_device on trusted_devices (user_id, device_id)`)
-    .catch(() => undefined);
+  if (!import.meta.env.SSR) return;
+  const { ensureTrustedDevices } = await import("./runtime-schema");
+  await ensureTrustedDevices();
 }
 
 export async function persistTrustedDevice(input: {

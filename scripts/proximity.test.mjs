@@ -64,7 +64,11 @@ describe("nearby uses PostGIS ST_DWithin with a catalogue fallback", () => {
 
   it("PGLite skips the PostGIS migration; Neon migrate.mjs still applies it", () => {
     const db = read("src/lib/db.ts");
-    assert.match(db, /geography|postgis/);
+    const pglite = read("src/lib/server/pglite-sql.ts");
+    assert.doesNotMatch(db, /import\.meta\.glob/);
+    assert.match(db, /import\.meta\.env\.SSR/);
+    assert.match(pglite, /import\.meta\.glob\("\/migrations\/\*\.sql"/);
+    assert.match(pglite, /geography|postgis/);
     assert.match(read("scripts/migrate.mjs"), /migrations/);
   });
 });

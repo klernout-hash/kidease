@@ -20,19 +20,10 @@ export const ingestTelemetry = createServerFn({ method: "POST" })
     const hits = data.hits.filter((h) => h.geohash && h.geohash.length <= 5).slice(0, 40);
     if (!hits.length) return { ok: true, n: 0 };
     const sql = await getSql();
-    await sql.query(
-      `create table if not exists location_telemetry (
-        id text primary key,
-        kind text not null,
-        geohash text not null,
-        city text,
-        province text,
-        radius_km integer,
-        slug text,
-        session_id text,
-        created_at timestamptz not null default now()
-      )`,
-    );
+    if (import.meta.env.SSR) {
+      const { ensureLocationTelemetry } = await import("./runtime-schema");
+      await ensureLocationTelemetry(sql);
+    }
     await sql.query(`delete from location_telemetry where created_at < now() - interval '7 days'`).catch(() => null);
     for (const hit of hits) {
       await sql.query(

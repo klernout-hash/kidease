@@ -33,25 +33,10 @@ export type DailyJournalRow = {
   createdAt: string;
 };
 
-const ENSURE_JOURNALS = `
-create table if not exists daily_journals (
-  id text primary key,
-  daycare_id text not null,
-  booking_id text,
-  conversation_id text,
-  child_id text,
-  child_name text not null,
-  parent_user_id text,
-  author_user_id text not null,
-  day date not null,
-  body text not null default '',
-  photos jsonb not null default '[]'::jsonb,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-)`;
-
 async function ensureJournalTable(sql: Awaited<ReturnType<typeof getSql>>) {
-  await sql.query(ENSURE_JOURNALS).catch(() => undefined);
+  if (!import.meta.env.SSR) return;
+  const { ensureDailyJournals } = await import("./runtime-schema");
+  await ensureDailyJournals(sql);
 }
 
 async function postCareThreadNotice(input: {
