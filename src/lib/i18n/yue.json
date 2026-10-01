@@ -2471,5 +2471,14 @@
   "pushExplainNo": "暫時唔使",
   "deleteAccountKeepBilling": "帳單紀錄 — 按稅法要求保留。",
   "deleteAccountKeepLogs": "欺詐同保安日誌 — 為保護服務而保留。呢啲紀錄唔會刪。",
-  "nativePlansHidden": "呢個 app 唔賣數碼計劃。托兒費、參觀同名額仍然用中心嘅帳單。"
+  "nativePlansHidden": "呢個 app 唔賣數碼計劃。托兒費、參觀同名額仍然用中心嘅帳單。",
+  "aiUsageTitle": "AI usage",
+  "aiUsageLead": "Calls, cost, and failures for the last 30 days. Prompts and replies are not stored.",
+  "aiUsageEmpty": "No AI calls in the last 30 days.",
+  "aiUsageFeature": "Feature",
+  "aiUsageCalls": "Calls",
+  "aiUsageFailures": "Failures",
+  "aiUsageRate": "Failure rate",
+  "aiUsageCost": "Cost",
+  "aiUsageBack": "Back to the desk"
 }

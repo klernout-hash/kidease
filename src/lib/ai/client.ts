@@ -1,0 +1,183 @@
+/**
+ * Server-only LLM wrapper. Callers pass already-scrubbed text.
+ * A timeout, a missing key, or a bad response returns ok: false. It never throws.
+ */
+
+import { createHash } from "node:crypto";
+import type { ZodType } from "zod";
+import { readMemoryCache, writeMemoryCache } from "./cache.ts";
+import { costMicros, DEFAULT_INPUT_USD_PER_M, DEFAULT_OUTPUT_USD_PER_M } from "./cost.ts";
+import { scrubText } from "./pii.ts";
+import { allowAiCall } from "./rate-limit.ts";
+
+const DEFAULT_TIMEOUT_MS = 12_000;
+const DEFAULT_MODEL = "grok-4-1-fast-non-reasoning";
+
+export type AiLogRow = {
+  feature: string;
+  ok: boolean;
+  inputTokens: number;
+  outputTokens: number;
+  costMicros: number;
+  latencyMs: number;
+  cacheHit: boolean;
+  error?: string;
+};
+
+export type AiDeps = {
+  fetchImpl?: typeof fetch;
+  now?: () => number;
+  log?: (row: AiLogRow) => Promise<void> | void;
+  readCache?: (key: string) => Promise<string | null> | string | null;
+  writeCache?: (key: string, body: string) => Promise<void> | void;
+  env?: Record<string, string | undefined>;
+};
+
+export type AiSuccess<T> = { ok: true; data: T; cached: boolean; text: string };
+export type AiFailure = { ok: false; error: "unconfigured" | "rate_limited" | "timeout" | "invalid" | "upstream" };
+export type AiResult<T> = AiSuccess<T> | AiFailure;
+
+function envOf(deps?: AiDeps): Record<string, string | undefined> {
+  return deps?.env ?? (typeof process !== "undefined" ? process.env : {});
+}
+
+export function aiCacheKey(feature: string, system: string, user: string): string {
+  return createHash("sha256").update(`${feature}\n${system}\n${user}`).digest("hex");
+}
+
+function parseContent(raw: string): string {
+  const trimmed = raw.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return (fenced?.[1] ?? trimmed).trim();
+}
+
+export async function callAi<T = string>(input: {
+  feature: string;
+  system: string;
+  user: string;
+  schema?: ZodType<T>;
+  timeoutMs?: number;
+  userId?: string | null;
+  ipHash?: string | null;
+  deps?: AiDeps;
+}): Promise<AiResult<T>> {
+  const now = input.deps?.now ?? Date.now;
+  const started = now();
+  const env = envOf(input.deps);
+  const feature = input.feature.trim() || "unknown";
+  const system = scrubText(input.system);
+  const user = scrubText(input.user);
+  const finish = async (result: AiResult<T>, extra: Partial<AiLogRow> = {}): Promise<AiResult<T>> => {
+    await input.deps?.log?.({
+      feature,
+      ok: result.ok,
+      inputTokens: extra.inputTokens ?? 0,
+      outputTokens: extra.outputTokens ?? 0,
+      costMicros: extra.costMicros ?? 0,
+      latencyMs: Math.max(0, now() - started),
+      cacheHit: extra.cacheHit ?? false,
+      error: result.ok ? undefined : result.error,
+    });
+    return result;
+  };
+
+  if (!allowAiCall({ userId: input.userId, ipHash: input.ipHash, now: started })) {
+    return finish({ ok: false, error: "rate_limited" });
+  }
+
+  const key = aiCacheKey(feature, system, user);
+  const cached = await (input.deps?.readCache?.(key) ?? readMemoryCache(key, started));
+  if (cached) {
+    const parsed = applySchema(cached, input.schema);
+    if (parsed.ok) return finish({ ok: true, data: parsed.data, cached: true, text: cached }, { cacheHit: true });
+  }
+
+  const apiKey = env.XAI_API_KEY?.trim();
+  if (!apiKey) return finish({ ok: false, error: "unconfigured" });
+
+  const model = env.XAI_MODEL?.trim() || DEFAULT_MODEL;
+  const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const fetchImpl = input.deps?.fetchImpl ?? fetch;
+  let lastError: AiFailure["error"] = "upstream";
+  let inputTokens = 0;
+  let outputTokens = 0;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetchImpl("https://api.x.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${apiKey}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
+        }),
+        signal: controller.signal,
+      });
+      if (response.status === 429 || response.status >= 500) {
+        lastError = "upstream";
+        continue;
+      }
+      if (!response.ok) return finish({ ok: false, error: "upstream" });
+      const body = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
+      };
+      inputTokens = body.usage?.prompt_tokens ?? 0;
+      outputTokens = body.usage?.completion_tokens ?? 0;
+      const text = parseContent(body.choices?.[0]?.message?.content ?? "");
+      const parsed = applySchema(text, input.schema);
+      if (!parsed.ok) return finish({ ok: false, error: "invalid" }, tokenCost(env, inputTokens, outputTokens));
+      const stored = input.schema ? JSON.stringify(parsed.data) : text;
+      writeMemoryCache(key, stored, started);
+      await input.deps?.writeCache?.(key, stored);
+      return finish(
+        { ok: true, data: parsed.data, cached: false, text: stored },
+        tokenCost(env, inputTokens, outputTokens),
+      );
+    } catch (err) {
+      lastError = err instanceof Error && err.name === "AbortError" ? "timeout" : "upstream";
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return finish({ ok: false, error: lastError }, tokenCost(env, inputTokens, outputTokens));
+}
+
+function tokenCost(env: Record<string, string | undefined>, inputTokens: number, outputTokens: number) {
+  return {
+    inputTokens,
+    outputTokens,
+    costMicros: costMicros({
+      inputTokens,
+      outputTokens,
+      inputUsdPerM: numberEnv(env.XAI_INPUT_USD_PER_M, DEFAULT_INPUT_USD_PER_M),
+      outputUsdPerM: numberEnv(env.XAI_OUTPUT_USD_PER_M, DEFAULT_OUTPUT_USD_PER_M),
+    }),
+  };
+}
+
+function numberEnv(raw: string | undefined, fallback: number): number {
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
+function applySchema<T>(text: string, schema?: ZodType<T>): { ok: true; data: T } | { ok: false } {
+  if (!schema) return { ok: true, data: text as T };
+  try {
+    const json = JSON.parse(text) as unknown;
+    const parsed = schema.safeParse(json);
+    if (!parsed.success) return { ok: false };
+    return { ok: true, data: parsed.data };
+  } catch {
+    return { ok: false };
+  }
+}

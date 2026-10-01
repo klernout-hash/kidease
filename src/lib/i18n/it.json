@@ -2471,5 +2471,14 @@
   "pushExplainNo": "Non ora",
   "deleteAccountKeepBilling": "Documenti di fatturazione — conservati perché la legge fiscale lo richiede.",
   "deleteAccountKeepLogs": "Registri di frode e sicurezza — conservati per proteggere il servizio. Questi registri non vengono cancellati.",
-  "nativePlansHidden": "I piani digitali non si vendono in questa app. Le rette, le visite e i posti restano sulla fattura del centro."
+  "nativePlansHidden": "I piani digitali non si vendono in questa app. Le rette, le visite e i posti restano sulla fattura del centro.",
+  "aiUsageTitle": "AI usage",
+  "aiUsageLead": "Calls, cost, and failures for the last 30 days. Prompts and replies are not stored.",
+  "aiUsageEmpty": "No AI calls in the last 30 days.",
+  "aiUsageFeature": "Feature",
+  "aiUsageCalls": "Calls",
+  "aiUsageFailures": "Failures",
+  "aiUsageRate": "Failure rate",
+  "aiUsageCost": "Cost",
+  "aiUsageBack": "Back to the desk"
 }

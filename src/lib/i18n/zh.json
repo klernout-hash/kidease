@@ -2471,5 +2471,14 @@
   "pushExplainNo": "暂时不要",
   "deleteAccountKeepBilling": "账单记录 — 因税法要求而保留。",
   "deleteAccountKeepLogs": "欺诈与安全日志 — 为保护服务而保留。这些记录不会删除。",
-  "nativePlansHidden": "本应用不销售数字套餐。托育费用、参观和名额仍通过中心账单支付。"
+  "nativePlansHidden": "本应用不销售数字套餐。托育费用、参观和名额仍通过中心账单支付。",
+  "aiUsageTitle": "AI usage",
+  "aiUsageLead": "Calls, cost, and failures for the last 30 days. Prompts and replies are not stored.",
+  "aiUsageEmpty": "No AI calls in the last 30 days.",
+  "aiUsageFeature": "Feature",
+  "aiUsageCalls": "Calls",
+  "aiUsageFailures": "Failures",
+  "aiUsageRate": "Failure rate",
+  "aiUsageCost": "Cost",
+  "aiUsageBack": "Back to the desk"
 }

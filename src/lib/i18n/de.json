@@ -2471,5 +2471,14 @@
   "pushExplainNo": "Nicht jetzt",
   "deleteAccountKeepBilling": "Abrechnungsunterlagen — bleiben, weil das Steuerrecht sie verlangt.",
   "deleteAccountKeepLogs": "Betrugs- und Sicherheitsprotokolle — bleiben zum Schutz des Dienstes. Diese Einträge werden nicht gelöscht.",
-  "nativePlansHidden": "Digitale Tarife werden in dieser App nicht verkauft. Betreuungsgebühren, Besichtigungen und Plätze laufen weiter über die Rechnung der Kita."
+  "nativePlansHidden": "Digitale Tarife werden in dieser App nicht verkauft. Betreuungsgebühren, Besichtigungen und Plätze laufen weiter über die Rechnung der Kita.",
+  "aiUsageTitle": "AI usage",
+  "aiUsageLead": "Calls, cost, and failures for the last 30 days. Prompts and replies are not stored.",
+  "aiUsageEmpty": "No AI calls in the last 30 days.",
+  "aiUsageFeature": "Feature",
+  "aiUsageCalls": "Calls",
+  "aiUsageFailures": "Failures",
+  "aiUsageRate": "Failure rate",
+  "aiUsageCost": "Cost",
+  "aiUsageBack": "Back to the desk"
 }
