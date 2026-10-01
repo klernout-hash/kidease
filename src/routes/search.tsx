@@ -67,11 +67,12 @@ import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anc
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { DaycareCard as Card } from "@/lib/types";
-import { capturePostHogEvent, getPostHog, isPostHogFlagEnabled } from "@/lib/posthog";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { captureRankingEvent } from "@/lib/ranking/events";
 import { publishRankingContext } from "@/lib/ranking/context";
 import { rankingCity } from "@/lib/ranking/market";
-import { assignRankingVariant, parseRankingOverride, RANKING_BEST_MATCH_FLAG } from "@/lib/ranking/variant";
+import { useRankingBestMatchFlag } from "@/lib/ranking/use-ranking-flag";
+import { assignRankingVariant, parseRankingOverride } from "@/lib/ranking/variant";
 import type { RankAge } from "@/lib/ranking/score";
 import {
   honestVacancy,
@@ -251,26 +252,8 @@ function SearchPage() {
   const sort = useAppStore((s) => s.sort);
   const setSort = useAppStore((s) => s.setSort);
   const rankOverride = parseRankingOverride(incoming.rank);
-  const [rankingFlag, setRankingFlag] = useState<boolean | undefined>(undefined);
+  const rankingFlag = useRankingBestMatchFlag();
   const rankingDefaulted = useRef(false);
-  useEffect(() => {
-    let stop = false;
-    const timer = window.setInterval(() => {
-      const ph = getPostHog();
-      if (!ph) return;
-      window.clearInterval(timer);
-      const apply = () => {
-        if (stop) return;
-        setRankingFlag(isPostHogFlagEnabled(RANKING_BEST_MATCH_FLAG) === true);
-      };
-      ph.onFeatureFlags(apply);
-      apply();
-    }, 500);
-    return () => {
-      stop = true;
-      window.clearInterval(timer);
-    };
-  }, []);
   const rankingVariant = assignRankingVariant({ flag: rankingFlag, override: rankOverride });
   const showBestMatch = rankingVariant === "best_match" || sort === "best";
   useEffect(() => {

@@ -1,13 +1,13 @@
 /**
- * Server-side PostHog read for AI flags. The browser SDK stays off until
- * Allow, so this is what production actually evaluates.
+ * Server-side PostHog read. The browser SDK stays off until Allow, so this
+ * is what production actually evaluates. Ranking uses the same read.
  */
 
 import { flagsHost } from "../flags.ts";
 import {
-  AI_REMOTE_FLAGS,
   parseAiFlagSnapshot,
   sanitizeAiDistinctId,
+  SERVER_FLAG_KEYS,
   type AiFlagSnapshot,
 } from "./flag-gate.ts";
 
@@ -38,20 +38,17 @@ async function reportFlagCalls(input: {
   snapshot: AiFlagSnapshot;
   fetchImpl: typeof fetch;
 }): Promise<void> {
-  const batch = AI_REMOTE_FLAGS.flatMap((key) => {
+  const batch = SERVER_FLAG_KEYS.map((key) => {
     const value = input.snapshot.flags[key];
-    if (typeof value !== "boolean") return [];
-    return [
-      {
-        event: "$feature_flag_called",
+    return {
+      event: "$feature_flag_called",
+      distinct_id: input.distinctId,
+      properties: {
         distinct_id: input.distinctId,
-        properties: {
-          distinct_id: input.distinctId,
-          $feature_flag: key,
-          $feature_flag_response: value,
-        },
+        $feature_flag: key,
+        $feature_flag_response: value === true,
       },
-    ];
+    };
   });
   if (!batch.length) return;
   const controller = new AbortController();
@@ -110,12 +107,12 @@ async function loadAiFeatureFlags(input: {
       body: JSON.stringify({
         api_key: apiKey,
         distinct_id: input.distinctId,
-        flag_keys: [...AI_REMOTE_FLAGS],
+        flag_keys: [...SERVER_FLAG_KEYS],
       }),
       signal: controller.signal,
     });
     if (!res.ok) return { reached: false, flags: {} };
-    const snapshot = parseAiFlagSnapshot(await res.json(), AI_REMOTE_FLAGS);
+    const snapshot = parseAiFlagSnapshot(await res.json(), SERVER_FLAG_KEYS);
     if (!snapshot.reached) return snapshot;
     cache.set(input.distinctId, { at: input.now, snapshot });
     if (reportedAt === 0 || input.now - reportedAt >= REPORT_GAP_MS) {
