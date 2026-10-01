@@ -2471,5 +2471,14 @@
   "pushExplainNo": "Ahora no",
   "deleteAccountKeepBilling": "Registros de facturación — se conservan porque la ley fiscal lo exige.",
   "deleteAccountKeepLogs": "Registros de fraude y seguridad — se conservan para proteger el servicio. Estos registros no se eliminan.",
-  "nativePlansHidden": "Los planes digitales no se venden en esta app. Las tarifas de cuidado, las visitas y los cupos siguen en la factura del centro."
+  "nativePlansHidden": "Los planes digitales no se venden en esta app. Las tarifas de cuidado, las visitas y los cupos siguen en la factura del centro.",
+  "aiUsageTitle": "AI usage",
+  "aiUsageLead": "Calls, cost, and failures for the last 30 days. Prompts and replies are not stored.",
+  "aiUsageEmpty": "No AI calls in the last 30 days.",
+  "aiUsageFeature": "Feature",
+  "aiUsageCalls": "Calls",
+  "aiUsageFailures": "Failures",
+  "aiUsageRate": "Failure rate",
+  "aiUsageCost": "Cost",
+  "aiUsageBack": "Back to the desk"
 }

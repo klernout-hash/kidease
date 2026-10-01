@@ -4,7 +4,7 @@ import { assertAdminDesk } from "@/lib/server/roles";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
 
 /**
- * beforeLoad for /admin, /admin-chat, /admin-contracts, /admin-email-health.
+ * beforeLoad for /admin, /admin-chat, /admin-contracts, /admin-email-health, /admin-ranking, /admin-ai.
  * Signed-out and non-admin → plain 404 (not a sign-in page, not a 403).
  * Admin without a 2FA cookie → /verify-2fa. TwoFactorGate still owns the desk.
  */

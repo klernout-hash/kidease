@@ -2471,5 +2471,14 @@
   "pushExplainNo": "Hindi muna",
   "deleteAccountKeepBilling": "Mga billing record — pinapanatili dahil hinihingi ng batas sa buwis.",
   "deleteAccountKeepLogs": "Mga log ng pandaraya at seguridad — pinapanatili para protektahan ang serbisyo. Hindi binubura ang mga ito.",
-  "nativePlansHidden": "Hindi ibinebenta sa app na ito ang mga digital na plano. Ang bayad sa pag-aalaga, mga tour, at mga puwesto ay nasa bill pa rin ng sentro."
+  "nativePlansHidden": "Hindi ibinebenta sa app na ito ang mga digital na plano. Ang bayad sa pag-aalaga, mga tour, at mga puwesto ay nasa bill pa rin ng sentro.",
+  "aiUsageTitle": "AI usage",
+  "aiUsageLead": "Calls, cost, and failures for the last 30 days. Prompts and replies are not stored.",
+  "aiUsageEmpty": "No AI calls in the last 30 days.",
+  "aiUsageFeature": "Feature",
+  "aiUsageCalls": "Calls",
+  "aiUsageFailures": "Failures",
+  "aiUsageRate": "Failure rate",
+  "aiUsageCost": "Cost",
+  "aiUsageBack": "Back to the desk"
 }
