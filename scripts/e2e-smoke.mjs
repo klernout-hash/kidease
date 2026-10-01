@@ -409,6 +409,7 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="upgrade-card"]').waitFor({ timeout: timeoutMs });
     await page.locator('[data-ke="upgrade-card-dismiss"]').click();
+    await page.locator('[data-ke="upgrade-card"]').waitFor({ state: "hidden", timeout: timeoutMs }).catch(() => {});
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="daycare-desk"]').waitFor({ timeout: timeoutMs });
     const daycareCardAfter = await page.locator('[data-ke="upgrade-card"]').count();

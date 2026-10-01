@@ -343,8 +343,9 @@ function ProviderPage() {
           dismissed={upgradeDismissed}
           settled={deskSettled}
           onDismiss={() => {
-            setUpgradeDismissed(true);
-            void dismissUpgradeCard().catch(() => setUpgradeDismissed(false));
+            void dismissUpgradeCard()
+              .then(() => setUpgradeDismissed(true))
+              .catch(() => setUpgradeDismissed(false));
           }}
         />
         <TodayUrgencyHome
