@@ -1,7 +1,8 @@
-import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT } from "@/lib/inngest";
+import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT, RANKING_MARKET_CRON, RANKING_MARKET_EVENT } from "@/lib/inngest";
 import { runSearchAlertJob } from "@/lib/server/search-alerts";
 import { runExpireTourHoldsJob } from "@/lib/server/tour-holds";
 import { runWaitlistPulseJob } from "@/lib/server/waitlist-pulse";
+import { runRankingMarketJob } from "@/lib/server/ranking-market";
 import { inngest } from "./client";
 
 /**
@@ -64,4 +65,17 @@ export const expireTourHoldsHourly = inngest.createFunction(
   },
 );
 
-export const functions = [searchAlertsHourly, waitlistPulse, expireTourHoldsHourly];
+export const rankingMarketNightly = inngest.createFunction(
+  {
+    id: "ranking-market-nightly",
+    name: "Demand vs supply (nightly)",
+    triggers: [{ cron: RANKING_MARKET_CRON }, { event: RANKING_MARKET_EVENT }],
+  },
+  async ({ event, step }) => {
+    const data = event && typeof event === "object" && "data" in event ? event.data : undefined;
+    const dryRun = Boolean(data && typeof data === "object" && "dryRun" in data && data.dryRun);
+    return step.run("build-ranking-market", () => runRankingMarketJob({ dryRun }));
+  },
+);
+
+export const functions = [searchAlertsHourly, waitlistPulse, expireTourHoldsHourly, rankingMarketNightly];

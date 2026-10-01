@@ -16,6 +16,8 @@ import {
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { captureRankingEvent } from "@/lib/ranking/events";
+import { rankingContextFor } from "@/lib/ranking/context";
 
 const HEART_SAVED = "#FF385C";
 
@@ -102,6 +104,15 @@ export function SaveListingButton({
       const nowSaved = res.saved;
       setSaved(nowSaved);
       markShortlistCache(daycareId, nowSaved, user.id);
+      if (nowSaved) {
+        const ctx = rankingContextFor(daycareId);
+        captureRankingEvent("listing_saved", {
+          listing_id: daycareId,
+          position: ctx.position,
+          sort: ctx.sort,
+          variant: ctx.variant,
+        });
+      }
       confirmAction(t, nowSaved ? "listingSaved" : "listingRemoved");
     } catch {
       setSaved(!next);

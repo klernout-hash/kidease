@@ -19,6 +19,8 @@ import { overlayParentRank } from "./rank";
 import { overlayPriority } from "./promos";
 import { featuredCentreIdsInLock, overlayFeaturedCity } from "@/lib/server/provider-entitlements";
 import { compareWithPaidPins, sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
+import { compareSmartMatchOrNearest, whyForListing, type RankAge, type SmartMatchQuery } from "@/lib/ranking/score";
+import { recordRankingSearch } from "@/lib/server/ranking-market";
 import { compareParentMatch } from "@/lib/parent-match";
 import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
@@ -45,11 +47,14 @@ import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/
 
 export type CentreJobPost = { id: string; role: string; note: string; createdAt: string };
 
+type SearchSort = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency" | "best";
+type SearchSchedule = "full" | "part" | "flexible";
+
 type SearchInput = {
   lat: number;
   lng: number;
   radiusKm: number;
-  sort: "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency";
+  sort: SearchSort;
   ageGroup: "any" | AgeGroup;
   fsa?: string;
   label?: string;
@@ -64,7 +69,53 @@ type SearchInput = {
   city?: string;
   /** Server-only. Set from the city query, never trusted from the client. */
   directorySlug?: string;
+  /** Age the parent picked, including school-age. Not a birthdate. */
+  rankAge?: RankAge;
+  wantSubsidy?: boolean;
+  wantExtendedHours?: boolean;
+  schedules?: SearchSchedule[];
+  /** Interactive searches only. The first paint does not count demand. */
+  countDemand?: boolean;
 };
+
+function parseSort(raw: unknown): SearchSort {
+  if (
+    raw === "price" ||
+    raw === "rating" ||
+    raw === "availability" ||
+    raw === "recommended" ||
+    raw === "match" ||
+    raw === "urgency" ||
+    raw === "best"
+  ) {
+    return raw;
+  }
+  return "distance";
+}
+
+function parseRankAge(raw: unknown): RankAge {
+  if (raw === "infant" || raw === "toddler" || raw === "preschool" || raw === "school-age") return raw;
+  return "any";
+}
+
+function parseSchedules(raw: unknown): SearchSchedule[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((item): item is SearchSchedule => item === "full" || item === "part" || item === "flexible");
+}
+
+function smartQuery(data: SearchInput): SmartMatchQuery {
+  const work =
+    typeof data.lat2 === "number" && typeof data.lng2 === "number" ? { lat: data.lat2, lng: data.lng2 } : null;
+  return {
+    home: { lat: data.lat, lng: data.lng },
+    work,
+    radiusKm: data.radiusKm,
+    ageGroup: data.rankAge && data.rankAge !== "any" ? data.rankAge : data.ageGroup,
+    wantSubsidy: Boolean(data.wantSubsidy),
+    wantExtendedHours: Boolean(data.wantExtendedHours),
+    schedules: data.schedules,
+  };
+}
 
 function optionalCoord(value: unknown) {
   const n = Number(value);
@@ -88,6 +139,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
     lat: d.lat,
     lng: d.lng,
     phone: d.phone || null,
+    website: d.website || null,
     hours: d.hours,
     hoursFr: d.hoursFr,
     ageMinMonths: d.ageMinMonths,
@@ -412,26 +464,42 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
       return c.ageMaxMonths >= 30 && c.ageMinMonths < 72;
     });
   }
-  cards.sort((a, b) =>
-    compareWithPaidPins(a, b, (left, right) => {
-      if (data.sort === "match") return compareParentMatch(left, right, rankPrefs);
-      if (data.sort === "urgency") return compareParentUrgency(left, right, rankPrefs);
-      if (data.sort === "recommended") {
-        const delta = recommendedRank(right) - recommendedRank(left);
-        if (Math.abs(delta) > 1e-6) return delta;
-        return left.distanceKm - right.distanceKm;
-      }
-      if (data.sort === "price") return (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
-      if (data.sort === "rating") return right.ratingX10 - left.ratingX10;
-      if (data.sort === "availability") return right.spotsTotal - left.spotsTotal || left.distanceKm - right.distanceKm;
-      return compareProximity(left, right);
-    }),
-  );
+  const useBest = data.sort === "best";
+  const matchQuery = smartQuery(data);
+  if (useBest) {
+    cards.sort((a, b) => compareSmartMatchOrNearest(a, b, matchQuery));
+  } else {
+    cards.sort((a, b) =>
+      compareWithPaidPins(a, b, (left, right) => {
+        if (data.sort === "match") return compareParentMatch(left, right, rankPrefs);
+        if (data.sort === "urgency") return compareParentUrgency(left, right, rankPrefs);
+        if (data.sort === "recommended") {
+          const delta = recommendedRank(right) - recommendedRank(left);
+          if (Math.abs(delta) > 1e-6) return delta;
+          return left.distanceKm - right.distanceKm;
+        }
+        if (data.sort === "price") return (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
+        if (data.sort === "rating") return right.ratingX10 - left.ratingX10;
+        if (data.sort === "availability") return right.spotsTotal - left.spotsTotal || left.distanceKm - right.distanceKm;
+        return compareProximity(left, right);
+      }),
+    );
+  }
   const facility = data.facility;
   const listed = publicListings(uniqueById(filterByLocationLock(cards, lock)))
     .filter((card) => (facility ? matchesListedDaycareType(card, facility) : true))
     .filter((card) => (directory ? listingBelongsToHub(card, directory) : true));
-  return listed.map(slimCard);
+  if (data.countDemand) {
+    await recordRankingSearch({
+      city: data.city || data.label || data.q,
+      ageGroup: data.rankAge || data.ageGroup,
+    });
+  }
+  return listed.map((card) => {
+    const slim = slimCard(card);
+    if (!useBest) return slim;
+    return { ...slim, smartMatchWhy: whyForListing(card, matchQuery) };
+  });
 }
 
 export const searchDaycares = createServerFn({ method: "GET" })
@@ -447,6 +515,12 @@ export const searchDaycares = createServerFn({ method: "GET" })
       lat2: optionalCoord(input.lat2),
       lng2: optionalCoord(input.lng2),
       mode: parseAnchorMode(input.mode),
+      sort: parseSort(input.sort),
+      rankAge: parseRankAge(input.rankAge),
+      wantSubsidy: input.wantSubsidy === true,
+      wantExtendedHours: input.wantExtendedHours === true,
+      schedules: parseSchedules(input.schedules),
+      countDemand: input.countDemand === true,
       facility: listedDaycareTypeFromSearch(
         input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
       ),

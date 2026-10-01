@@ -45,6 +45,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "activity", label: "Activity", hint: "Platform log" },
     { id: "reviews", label: "Reviews", hint: "Publish or hide gated parent reviews" },
     { id: "chat", label: "Chat lab", hint: "Scaffold only", href: "/admin-chat" },
+    { id: "ranking", label: "Demand and supply", hint: "Searches vs openings", href: "/admin-ranking" },
     { id: "support", label: "Support", hint: "Cases and refunds", href: "/support" },
     { id: "account", label: "Account", hint: "Profile and preferences", href: "/account", search: { tab: "profile", desk: "admin" } },
   ],

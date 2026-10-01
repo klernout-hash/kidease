@@ -25,6 +25,11 @@ export const TOUR_HOLDS_CRON = "TZ=America/Winnipeg 50 * * * *";
 
 export const TOUR_HOLDS_EVENT = "kidease/tour-holds.expire";
 
+/** Nightly 02:15 America/Winnipeg — demand vs supply snapshot. No PII. */
+export const RANKING_MARKET_CRON = "TZ=America/Winnipeg 15 2 * * *";
+
+export const RANKING_MARKET_EVENT = "kidease/ranking-market.run";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }
@@ -51,6 +56,13 @@ export function shouldDeferSearchAlertsToInngest(
 }
 
 export function shouldDeferTourHoldsToInngest(
+  request: Request,
+  env: EnvMap = process.env,
+): boolean {
+  return shouldDeferCronToInngest(request, env);
+}
+
+export function shouldDeferRankingMarketToInngest(
   request: Request,
   env: EnvMap = process.env,
 ): boolean {

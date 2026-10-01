@@ -33,6 +33,7 @@ export type DaycareRow = {
   lat: number;
   lng: number;
   phone: string | null;
+  website?: string | null;
   hours: string;
   hours_fr: string;
   age_min_months: number;
@@ -119,6 +120,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     lat: Number(r.lat),
     lng: Number(r.lng),
     phone: r.phone,
+    website: r.website || null,
     hours: r.hours,
     hoursFr: r.hours_fr,
     ageMinMonths: r.age_min_months,

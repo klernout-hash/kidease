@@ -19,6 +19,8 @@ export type SecurityKind =
   | "search_alerts_run"
   | "tour_holds_denied"
   | "tour_holds_run"
+  | "ranking_market_denied"
+  | "ranking_market_run"
   | "seed_catalog_denied"
   | "seed_catalog_run"
   | "employee_invite"

@@ -9,7 +9,7 @@ import { clampRadiusKm } from "./proximity";
 import { parseAnchorMode, writeDualAnchorPrefs, type AnchorMode } from "./dual-anchor";
 import { applyTheme, writeThemePreference, type ResolvedTheme, type ThemePreference } from "./theme";
 
-export type SortKey = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency";
+export type SortKey = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency" | "best";
 
 type Origin = { lat: number; lng: number; label: string; explicit?: boolean };
 
