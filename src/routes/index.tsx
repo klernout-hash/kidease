@@ -394,10 +394,12 @@ function Home() {
   return (
     <Shell bare>
       <JsonLd json={organizationGraphJsonLdScript()} />
+      <h1 className="ke-gutter mx-auto max-w-6xl pt-4 text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
+        {t("tagline")}
+      </h1>
       <div className="ke-web-only [[data-channel=app]_&]:hidden">
         <section className="from-soft border-b border-border bg-bg">
           <div className="ke-gutter mx-auto max-w-6xl pb-4 pt-1">
-            <h1 className="sr-only">{t("tagline")}</h1>
             {featuredSearch}
           </div>
         </section>
@@ -525,7 +527,6 @@ function Home() {
       <div className="ke-app-only hidden [[data-channel=app]_&]:block">
         <section className="border-b border-border bg-bg">
           <div className="ke-gutter mx-auto max-w-6xl pb-4 pt-2">
-            <h1 className="sr-only">{t("tagline")}</h1>
             {featuredSearch}
           </div>
         </section>

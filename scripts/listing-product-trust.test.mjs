@@ -38,6 +38,8 @@ const FEE_PROGRAM = new Set(["MB", "SK", "PE", "NL", "YT", "NT", "NU", "QC", "AB
 function officialLicenceNumber(raw, id) {
   const n = (raw || "").trim();
   if (!n || n === "—" || n.toLowerCase() === "unknown") return null;
+  if (n.includes("|")) return null;
+  if (id && n.toLowerCase() === id.toLowerCase()) return null;
   const tail = (id || "").split("-").pop() || "";
   if (/^\d{1,3}$/.test(n) && (!id || n === tail)) return null;
   return n;
