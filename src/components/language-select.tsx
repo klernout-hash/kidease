@@ -1,4 +1,5 @@
 import { useRouterState } from "@tanstack/react-router";
+import { activateLocale, isExtraLocale } from "@/lib/extra-copy";
 import { applyDocumentLocale, shippedLanguages } from "@/lib/languages";
 import { localeSwitchPath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
@@ -30,10 +31,22 @@ export function LanguageSelect({
         value={locale}
         onChange={(e) => {
           const next = e.target.value as Locale;
-          const dest = localeSwitchPath(pathname, next);
-          setLocale(next);
-          applyDocumentLocale(next);
-          if (dest) window.location.assign(dest);
+          const apply = () => {
+            const dest = localeSwitchPath(pathname, next);
+            setLocale(next);
+            applyDocumentLocale(next);
+            if (dest) window.location.assign(dest);
+          };
+          // English and French are already in memory. Extra languages wait
+          // for their pack so the page does not flash English strings.
+          if (!isExtraLocale(next)) {
+            void activateLocale(next);
+            apply();
+            return;
+          }
+          void activateLocale(next).then((ok) => {
+            if (ok) apply();
+          });
         }}
         className={cn(
           "ke-lang-select w-full cursor-pointer rounded-full border-0 bg-transparent text-center font-medium text-muted hover:text-fg",

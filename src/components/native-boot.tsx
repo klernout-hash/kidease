@@ -19,6 +19,7 @@ import {
 import { clearSavedOrigin, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { gpsMayMoveSearchOrigin, searchQueryFromUnknown, urlHasGeocodableSearchQuery } from "@/lib/search-query";
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
+import { activateLocale, isExtraLocale } from "@/lib/extra-copy";
 import { localeFromPreference } from "@/lib/languages";
 import { isFrPath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
@@ -50,7 +51,13 @@ export function NativeBoot() {
         setLocale("fr");
       } else {
         const saved = localeFromPreference(window.localStorage.getItem("kidease-locale"));
-        setLocale(saved);
+        if (!isExtraLocale(saved)) {
+          setLocale(saved);
+        } else {
+          void activateLocale(saved).then((ok) => {
+            if (ok) setLocale(saved);
+          });
+        }
       }
       window.localStorage.removeItem("kidease-live-only");
       setLiveOnly(false);

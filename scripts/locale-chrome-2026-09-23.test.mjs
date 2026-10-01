@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { copy, tx } from "../src/lib/copy.ts";
-import { extraCopy } from "../src/lib/extra-copy.ts";
+import { extraPack, loadExtraCopy } from "../src/lib/extra-copy.ts";
 import { presentAuthCopy } from "../src/lib/auth/present-auth-copy.ts";
 import { homeLiveStrip } from "../src/lib/home-live-strip.ts";
 import {
@@ -50,7 +50,8 @@ test("English is the default and an explicit language choice sticks", () => {
   assert.doesNotMatch(src("src/lib/languages.ts"), /navigator\.language/);
 });
 
-test("French and English copy keys match", () => {
+test("French and English copy keys match", async () => {
+  await loadExtraCopy("zh");
   const en = Object.keys(copy.en);
   const fr = Object.keys(copy.fr);
   assert.deepEqual(
@@ -75,11 +76,12 @@ test("French and English copy keys match", () => {
   assert.notEqual(tx("zh", "forgotPassword"), tx("en", "forgotPassword"));
 });
 
-test("the other eight locales cover every copy key", () => {
+test("the other eight locales cover every copy key", async () => {
   const placeholders = (value) =>
     [...String(value).matchAll(/\{[a-zA-Z0-9_]+\}/g)].map((match) => match[0]).sort();
   for (const code of ["zh", "yue", "pa", "es", "ar", "tl", "it", "de"]) {
-    const pack = extraCopy[code];
+    const pack = await loadExtraCopy(code);
+    assert.equal(extraPack(code), pack);
     for (const key of Object.keys(copy.en)) {
       assert.equal(typeof pack[key], "string", `${code}.${key}`);
       assert.ok(String(pack[key]).trim(), `${code}.${key} empty`);
