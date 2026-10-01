@@ -7,5 +7,10 @@ export const Route = createFileRoute("/fr/daycare/city/$city")({
   loader: ({ params }) => loadCityHub(params.city),
   notFoundComponent: CityHubNotFoundPage,
   head: ({ loaderData }) => cityHubHead(loaderData, "fr"),
-  component: CityHubPage,
+  component: FrenchCityHubPage,
 });
+
+function FrenchCityHubPage() {
+  const hub = Route.useLoaderData();
+  return <CityHubPage hub={hub} />;
+}

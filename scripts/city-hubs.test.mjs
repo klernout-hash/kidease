@@ -161,6 +161,20 @@ test("guest home links Browse by city and does not render city pills", () => {
   assert.doesNotMatch(app, /heroCityBrowse/);
 });
 
+test("French city hubs read their own loader instead of the English route hook", () => {
+  const en = src("src/routes/daycare.city.$city.tsx");
+  const fr = src("src/routes/fr.daycare.city.$city.tsx");
+  assert.match(en, /function EnglishCityHubPage\(\)/);
+  assert.match(en, /component: EnglishCityHubPage/);
+  assert.match(en, /export function CityHubPage\(\{ hub \}/);
+  const page = en.slice(en.indexOf("export function CityHubPage"));
+  assert.doesNotMatch(page, /useLoaderData/);
+  assert.match(fr, /function FrenchCityHubPage\(\)/);
+  assert.match(fr, /component: FrenchCityHubPage/);
+  assert.match(fr, /const hub = Route\.useLoaderData\(\)/);
+  assert.match(fr, /<CityHubPage hub=\{hub\} \/>/);
+});
+
 test("hub route, listing breadcrumbs, and internal links are wired", () => {
   const hubRoute = src("src/routes/daycare.city.$city.tsx");
   const hubPage = src("src/lib/city-hub-page.ts");

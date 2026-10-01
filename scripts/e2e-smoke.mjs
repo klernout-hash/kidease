@@ -25,6 +25,8 @@ import {
   classifyPublicHealth,
   HEALTH_SMOKE_PATH,
   DEFAULT_PREVIEW_ORIGIN,
+  FR_CITY_HUB_SLUGS,
+  frenchCityHubSsrOk,
   homepageLooksLive,
   loginPageLooksLive,
   parseE2eArgs,
@@ -742,6 +744,23 @@ async function rankingSortSmoke(page, base) {
   await page.setViewportSize({ width: 1280, height: 800 });
 }
 
+async function frenchCityHubSmoke(page, base) {
+  const misses = [];
+  for (const slug of FR_CITY_HUB_SLUGS) {
+    const url = new URL(`/fr/daycare/city/${slug}`, base).href;
+    const res = await page.request.get(url).catch(() => null);
+    const status = res?.status() ?? 0;
+    const html = (await res?.text().catch(() => "")) || "";
+    const check = frenchCityHubSsrOk(html);
+    if (status !== 200 || !check.ok) {
+      misses.push(`${slug}:${status}:${check.reason ?? "bad"}`);
+    }
+  }
+  record("fr-city-hubs", misses.length === 0, {
+    note: misses.length ? misses.join(" ") : `${FR_CITY_HUB_SLUGS.length} hubs with h1`,
+  });
+}
+
 let browser = null;
 try {
   if (args.startPreview && !args.explicitUrl) {
@@ -778,6 +797,7 @@ try {
   record("homepage", home.ok, { note: home.reason, status: homeResp?.status() ?? 0 });
 
   await rankingSortSmoke(page, base);
+  await frenchCityHubSmoke(page, base);
 
   const healthResp = await page.request.get(new URL(HEALTH_SMOKE_PATH, base).href).catch(() => null);
   const healthBody = (await healthResp?.text().catch(() => "")) || "";
