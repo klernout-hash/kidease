@@ -97,7 +97,9 @@ test("askKidEase and matchCentres require auth", () => {
   const matchBlock = ai.slice(ai.indexOf("export const matchCentres"), ai.indexOf("export const askKidEase"));
   assert.match(matchBlock, /\.middleware\(\[authMiddleware\]\)/);
   const bot = src("src/components/help-bot.tsx");
-  assert.match(bot, /helpBotSignIn/);
+  assert.doesNotMatch(bot, /askKidEase/);
+  assert.doesNotMatch(bot, /helpBotSignIn/);
+  assert.match(bot, /askParentHelper/);
   assert.match(bot, /useCurrentUserState/);
 });
 

@@ -2,7 +2,7 @@
 
 Admin → Chat lab (`/admin-chat`) is a **flag checklist**, not a chat product.
 
-Parent ↔ centre messages stay on `/inbox` (text; poll/reload) for claimed centres, inquiry threads, and enrolled/linked families. Daily-care check-in, journals, medication dose logs, and incident reports also post a short status line on that thread (transactional email to the linked parent — no commercial SMS). Do **not** buy Stream or Sendbird. Do **not** treat `FEATURE_INAPP_CHAT=1` as working delivery — that flag is the guest HelpBot / admin lab only and stays **off**.
+Parent ↔ centre messages stay on `/inbox` (text; poll/reload) for claimed centres, inquiry threads, and enrolled/linked families. Daily-care check-in, journals, medication dose logs, and incident reports also post a short status line on that thread (transactional email to the linked parent — no commercial SMS). Do **not** buy Stream or Sendbird. Do **not** treat `FEATURE_INAPP_CHAT=1` as working delivery — that flag is the admin chat lab only and stays **off**. The parent helper bubble uses `parent-helper`, not this flag.
 
 ## What staff see
 
@@ -29,7 +29,9 @@ This PR does **not** turn `FEATURE_PUSH` or `FEATURE_VIDEO` on.
 
 ## Guest Live Chat helper
 
-The floating **Live Chat** helper on marketing pages (`HelpBot`) is gated on `FEATURE_INAPP_CHAT`. When the flag is off (the default), the bubble and “Ask a question” composer are not mounted, so guests are not invited to send. `askKidEase` also refuses when the flag is off. Parent ↔ centre threads stay on `/inbox`.
+`askKidEase` stays gated on `FEATURE_INAPP_CHAT` and is not used by the help bubble.
+
+The floating helper (`HelpBot`) follows the PostHog flag `parent-helper`. It stays hidden when that flag is off or PostHog cannot be reached. Questions go through `askParentHelper` only. Signed-out visitors can ask until a short limit, then they complete a Turnstile check. A live-agent button opens a support ticket and does not promise a reply time. `FEATURE_INAPP_CHAT` does not show or hide this bubble. Parent ↔ centre threads stay on `/inbox`.
 
 ## Composer
 

@@ -6,9 +6,9 @@
  * NEXT: medication schedules + dose audit, incident reports, room counts,
  * and a same-day staff roster. Not a Fastoche replacement.
  *
- * FEATURE_INAPP_CHAT stays off. That flag is the guest HelpBot / admin
- * chat lab — not parent ↔ daycare threads. Live messages stay on /inbox
- * for claimed centres, enrolled/linked children, and inquiry threads.
+ * FEATURE_INAPP_CHAT stays off. It does not control the parent helper bubble.
+ * Live messages stay on /inbox for claimed centres, enrolled or linked
+ * children, and inquiry threads.
  * Care notices are transactional thread/email only — no commercial SMS.
  */
 

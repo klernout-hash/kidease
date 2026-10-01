@@ -1,34 +1,52 @@
 import { useState } from "react";
+import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import { Button } from "@/components/ui/button";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AI_FLAGS } from "@/lib/ai/flags";
+import { helpBubbleDistinctId } from "@/lib/ai/help-bubble";
 import { parentHelperEventProps } from "@/lib/ai/parent-helper";
 import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { askParentHelper, estimateSubsidy } from "@/lib/server/parent-helper";
 import { useCopy } from "@/lib/use-copy";
-import { Button } from "@/components/ui/button";
 
 export function ParentHelperPanel() {
   const on = useAiFeatureFlag(AI_FLAGS.parentHelper);
+  const { user } = useCurrentUserState();
   const { t } = useCopy();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [path, setPath] = useState<string | null>(null);
   const [subsidy, setSubsidy] = useState("");
   const [busy, setBusy] = useState(false);
+  const [needChallenge, setNeedChallenge] = useState(false);
+  const { onToken, takeChallenge, resetSignal, reset } = useTurnstileToken();
   if (!on) return null;
 
   function ask() {
     const text = question.trim();
     if (!text || busy) return;
+    const token = takeChallenge();
+    if (needChallenge && !token) {
+      setAnswer(t("helpBotChallenge"));
+      return;
+    }
     setBusy(true);
-    void askParentHelper({ data: { question: text } })
+    void askParentHelper({
+      data: { question: text, distinctId: helpBubbleDistinctId(user?.id), turnstileToken: token },
+    })
       .then((res) => {
         if ("error" in res) {
-          setAnswer(t("parentHelperUnknown"));
+          setNeedChallenge(res.error === "turnstile");
+          setAnswer(
+            res.error === "turnstile" ? t("helpBotChallenge") : res.error === "rate_limited" ? t("helpBotLimited") : t("parentHelperUnknown"),
+          );
           setPath(null);
           capturePostHogEvent("parent_helper_unknown", {});
           return;
         }
+        setNeedChallenge(false);
+        reset();
         setAnswer(res.answer);
         setPath(res.path);
         capturePostHogEvent(res.known ? "parent_helper_asked" : "parent_helper_unknown", parentHelperEventProps({ path: res.path || "" }));
@@ -68,6 +86,11 @@ export function ParentHelperPanel() {
           onChange={(e) => setQuestion(e.target.value)}
         />
       </label>
+      {needChallenge ? (
+        <div className="mt-3">
+          <TurnstileField onToken={onToken} resetSignal={resetSignal} />
+        </div>
+      ) : null}
       <Button type="button" className="mt-2 min-h-11" disabled={busy} onClick={ask}>
         {busy ? t("parentHelperWorking") : t("parentHelperAsk")}
       </Button>

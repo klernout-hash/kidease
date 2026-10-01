@@ -36,7 +36,8 @@ test("FEATURE_INAPP_CHAT stays off; live parent ↔ centre chat is /inbox", () =
   assert.equal(inAppChatEnabled({}), false);
   assert.equal(inAppChatEnabled({ FEATURE_INAPP_CHAT: "0" }), false);
   const bot = src("src/components/help-bot.tsx");
-  assert.match(bot, /if \(!inAppChatEnabled\(\)\) return null/);
+  assert.doesNotMatch(bot, /inAppChatEnabled/);
+  assert.match(bot, /AI_FLAGS\.parentHelper/);
   const inbox = src("src/lib/server/inbox.ts");
   assert.match(inbox, /export const sendConnectedMessage/);
   assert.match(inbox, /requireConversationWrite/);

@@ -3,7 +3,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { callAi } from "@/lib/ai/client";
 import { AI_FLAGS } from "@/lib/ai/flags";
 import { fetchAiFeatureFlags } from "@/lib/ai/flag-fetch";
-import { scrubText } from "@/lib/ai/pii";
+import { sanitizeAiDistinctId } from "@/lib/ai/flag-gate";
+import { bubbleQuestionForModel, consumeBubbleAsk } from "@/lib/ai/help-bubble";
+import { sessionBearerMiddleware } from "@/lib/auth/middleware";
 import {
   groundParentAnswer,
   parentHelperModelUser,
@@ -13,6 +15,8 @@ import {
   type ParentAnswer,
   type SubsidyEstimate,
 } from "@/lib/ai/parent-helper";
+
+export type ParentHelperBlock = { ok: false; error: "off" | "turnstile" | "rate_limited" | "ticket" };
 
 async function ipHashFor(): Promise<string> {
   try {
@@ -30,13 +34,64 @@ async function flagOn(distinctId: string): Promise<boolean> {
   return snapshot.reached === true && snapshot.flags[AI_FLAGS.parentHelper] === true;
 }
 
+async function sessionUserId(bearer?: string): Promise<string | null> {
+  try {
+    const { getSessionUser } = await import("@/lib/auth/verify.server");
+    const session = await getSessionUser(bearer);
+    return session?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Signed-out visitors share an IP bucket. Past the soft limit they must pass
+ * Turnstile. A missing Turnstile key cannot be bypassed: the ask just waits.
+ * The session id is for the ticket only. It is never sent to the model.
+ */
+async function guardGuest(input: {
+  bearer?: string;
+  turnstileToken: string;
+}): Promise<{ ok: true; userId: string | null; ipHash: string } | ParentHelperBlock> {
+  const ipHash = await ipHashFor();
+  const userId = await sessionUserId(input.bearer);
+  if (userId) return { ok: true, userId, ipHash };
+  const { currentTurnstileMode, turnstileSecretKey } = await import("@/lib/server/turnstile");
+  const { verifyTurnstileResponse } = await import("@/lib/server/turnstile-verify");
+  const mode = currentTurnstileMode();
+  let passed = false;
+  if (mode !== "off" && input.turnstileToken) {
+    const result = await verifyTurnstileResponse({
+      token: input.turnstileToken,
+      secret: turnstileSecretKey(),
+      mode,
+    });
+    passed = result.ok === true && result.skipped !== true;
+  }
+  const decision = consumeBubbleAsk(ipHash, Date.now(), passed);
+  if (!decision.ok) {
+    if (decision.error === "turnstile" && mode === "off") return { ok: false, error: "rate_limited" };
+    return { ok: false, error: decision.error };
+  }
+  return { ok: true, userId: null, ipHash };
+}
+
+function askInput(input: { question?: string; distinctId?: string; turnstileToken?: string } | undefined) {
+  return {
+    question: bubbleQuestionForModel(String(input?.question || "")),
+    distinctId: sanitizeAiDistinctId(input?.distinctId),
+    turnstileToken: String(input?.turnstileToken || "").trim().slice(0, 2048),
+  };
+}
+
 export const askParentHelper = createServerFn({ method: "POST" })
-  .validator((input: { question?: string; distinctId?: string } | undefined) => ({
-    question: scrubText(String(input?.question || "")).replace(/\s+/g, " ").trim().slice(0, 400),
-    distinctId: String(input?.distinctId || "guest").replace(/[^A-Za-z0-9_.:-]/g, "").slice(0, 80) || "guest",
-  }))
-  .handler(async ({ data }): Promise<ParentAnswer | { ok: false; error: "off" }> => {
+  .middleware([sessionBearerMiddleware])
+  .validator(askInput)
+  .handler(async ({ data, context }): Promise<ParentAnswer | ParentHelperBlock> => {
     if (!(await flagOn(data.distinctId))) return { ok: false, error: "off" };
+    const bearer = (context as { bearerToken?: string }).bearerToken;
+    const guard = await guardGuest({ bearer, turnstileToken: data.turnstileToken });
+    if (!guard.ok) return guard;
     if (!data.question) return groundParentAnswer(null);
     const { logAiCall, readAiCache, writeAiCache } = await import("@/lib/server/ai-usage");
     const result = await callAi({
@@ -44,8 +99,8 @@ export const askParentHelper = createServerFn({ method: "POST" })
       system: PARENT_HELPER_SYSTEM,
       user: parentHelperModelUser(data.question),
       schema: parentHelperSchema,
-      userId: data.distinctId,
-      ipHash: await ipHashFor(),
+      userId: guard.userId,
+      ipHash: guard.ipHash,
       maxTokens: 180,
       deps: {
         log: logAiCall,
@@ -53,13 +108,44 @@ export const askParentHelper = createServerFn({ method: "POST" })
         writeCache: (key, body) => writeAiCache("parent-helper", key, body),
       },
     });
+    if (!result.ok && result.error === "rate_limited") return { ok: false, error: "rate_limited" };
     return groundParentAnswer(result.ok ? result.data : null);
+  });
+
+export const requestParentHelperAgent = createServerFn({ method: "POST" })
+  .middleware([sessionBearerMiddleware])
+  .validator(askInput)
+  .handler(async ({ data, context }): Promise<{ ok: true } | ParentHelperBlock> => {
+    if (!(await flagOn(data.distinctId))) return { ok: false, error: "off" };
+    const bearer = (context as { bearerToken?: string }).bearerToken;
+    const guard = await guardGuest({ bearer, turnstileToken: data.turnstileToken });
+    if (!guard.ok) return guard;
+    const note = data.question || "Visitor asked for a person from the help bubble.";
+    try {
+      const { getSql } = await import("@/lib/db");
+      const { nid } = await import("@/lib/utils");
+      const sql = await getSql();
+      const id = nid("sc");
+      await sql.query(
+        `insert into support_cases (id, status, type, priority, subject, parent_user_id)
+         values ($1, 'open', 'other', 'normal', $2, $3)`,
+        [id, "Parent helper: a person was asked", guard.userId],
+      );
+      await sql.query(
+        `insert into support_case_events (id, case_id, actor_user_id, kind, body, meta)
+         values ($1, $2, $3, 'note', $4, $5::jsonb)`,
+        [nid("sev"), id, guard.userId, note.slice(0, 400), JSON.stringify({ source: "parent-helper" })],
+      );
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "ticket" };
+    }
   });
 
 export const estimateSubsidy = createServerFn({ method: "POST" })
   .validator((input: { province?: string; distinctId?: string } | undefined) => ({
     province: String(input?.province || "").trim().slice(0, 8),
-    distinctId: String(input?.distinctId || "guest").replace(/[^A-Za-z0-9_.:-]/g, "").slice(0, 80) || "guest",
+    distinctId: sanitizeAiDistinctId(input?.distinctId),
   }))
   .handler(async ({ data }): Promise<SubsidyEstimate | { ok: false; error: "off" }> => {
     if (!(await flagOn(data.distinctId))) return { ok: false, error: "off" };

@@ -13,20 +13,23 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("FEATURE_INAPP_CHAT off hides the guest Live Chat composer", () => {
+test("FEATURE_INAPP_CHAT does not show the parent helper bubble", () => {
   assert.equal(inAppChatEnabled({}), false);
   assert.equal(inAppChatEnabled({ FEATURE_INAPP_CHAT: "0" }), false);
   const off = chatComposerState(false);
   assert.equal(off.disabled, true);
   assert.equal(off.enabled, false);
   const bot = src("src/components/help-bot.tsx");
-  assert.match(bot, /inAppChatEnabled\(\)/);
-  assert.match(bot, /if \(!inAppChatEnabled\(\)\) return null/);
-  assert.match(bot, /FEATURE_INAPP_CHAT is parked off/);
+  assert.doesNotMatch(bot, /inAppChatEnabled/);
+  assert.doesNotMatch(bot, /askKidEase/);
+  assert.match(bot, /AI_FLAGS\.parentHelper/);
+  assert.match(bot, /if \(!ready \|\| !helperOn\) return null/);
+  assert.match(bot, /askParentHelper/);
   const ai = src("src/lib/server/ai.ts");
   assert.match(ai, /if \(!inAppChatEnabled\(\)\)/);
   assert.match(ai, /CHAT_FLAG_OFF_MESSAGE/);
   assert.match(src("docs/chat.md"), /gated on `FEATURE_INAPP_CHAT`/);
+  assert.match(src("docs/chat.md"), /parent-helper/);
 });
 
 test("FR get-app, benefits, and login routes exist and pair with English", () => {
