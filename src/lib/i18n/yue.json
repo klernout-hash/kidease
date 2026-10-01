@@ -2542,5 +2542,13 @@
   "photoCheckReviewEmpty": "No photos are waiting.",
   "photoCheckAllowed": "Allowed. It is on the listing now.",
   "photoCheckRejected": "Kept off the listing.",
-  "photoCheckFull": "The listing already has 10 photos, so this one stays off."
+  "photoCheckFull": "The listing already has 10 photos, so this one stays off.",
+  "spotAlertLead": "This is a draft. Nothing goes out until you send it.",
+  "spotAlertFit": "{n} families fit",
+  "spotAlertFitDetail": "Age {age} · Start date {start} · Distance {distance}",
+  "spotAlertApprove": "Send this alert",
+  "spotAlertQuiet": "It's after 9 PM in Winnipeg. Nothing was sent. Send it again in the morning.",
+  "spotAlertSent": "Sent to families who still want alerts.",
+  "spotAlertEmpty": "No saved matches or waitlist families fit this open spot.",
+  "spotAlertWorking": "Checking who fits…"
 }

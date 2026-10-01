@@ -10,7 +10,7 @@ AI only explains or reshapes facts we already have. It never invents a daycare, 
 - Rate limit per signed-in user and per IP hash. Identical scrubbed requests are cached for 24 hours.
 - Messages, alerts, and listing text stay drafts until a person clicks publish or send. Nothing auto-sends.
 - Each feature has its own PostHog flag in `flags.ts`. `smart-match` and `ai-listing-writer` are read from PostHog on the server. If that flag is off, the button stays hidden. The built-in 50% split is used only when PostHog cannot be reached. The browser analytics SDK still waits for Allow. The server sends a random device id, not a name or email. The same read evaluates `ranking-best-match` and sends `$feature_flag_called`. Best match stays off when that flag is off or PostHog cannot be reached. It does not use the 50% split. Newer flags, starting with `ai-photo-check`, also stay off when PostHog cannot be reached.
-- The help bot and centre match go through `callAi`, so they use the gateway key when it is set.
+- The help bot and centre match go through `callAi`, so they use the gateway key when it is set. Newer flags, starting with `ai-photo-check`, stay off when PostHog cannot be reached. `spot-alerts` is one of those: a daycare sees a count and a draft, and parents are notified only after approve.
 - Log events only after analytics consent.
 - If the call fails or times out, use the non-AI path. The page must still render.
 - English and French strings ship together. The phone layout comes first.
@@ -22,6 +22,10 @@ The quiz builds filters. An optional note may only add filters (`age`, `budget`,
 ## Listing writer
 
 A claimed centre can draft a description from the website address already stored and from notes they type. The draft is editable. It is not saved until they click Save changes. Sentences that are not in those inputs are listed as unsourced and are not copied into the listing. Flag: `ai-listing-writer`. Events: `listing_writer_used`, `listing_writer_published`.
+
+## Spot alerts
+
+When a daycare asks to notify parents, the server counts saved searches and waitlist rows that fit the open spots by age, start date, and distance. The daycare sees that count and a draft. Approve sends an in-app notice and an email. Unsubscribe and quiet hours (after 9 PM Winnipeg) are respected. A failed draft falls back to the existing waitlist pulse. Flag: `spot-alerts`. Events: `spot_alert_drafted`, `spot_alert_approved`, `spot_alert_held_quiet`, `spot_alert_fallback`.
 
 
 
