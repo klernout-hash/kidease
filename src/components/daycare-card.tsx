@@ -19,7 +19,6 @@ import { licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import {
-  cardFeePillLabelKey,
   cardPhotoLicenseWarning,
   showCardLivePill,
 } from "@/lib/card-photo-pills";
@@ -31,13 +30,15 @@ import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 import { CompareChip } from "@/components/compare-chip";
 import {
   canShowMatchScore,
-  confirmedFeeProgramBadge,
   honestVacancy,
   liveLookingGaps,
 } from "@/lib/now-loops";
 import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
+import { listingSubsidy } from "@/lib/fee-program";
+import { SubsidyPill } from "@/components/subsidy-pill";
+
 function whyMatchLine(
   item: Card,
   t: (key: CopyKey) => string,
@@ -84,7 +85,6 @@ function CardPhotoBadges({
   hollowPhoto,
   live,
   showLivePill,
-  feeLabel,
   licenseWarning,
   clearShare = false,
 }: {
@@ -93,7 +93,6 @@ function CardPhotoBadges({
   hollowPhoto: boolean;
   live: boolean;
   showLivePill: boolean;
-  feeLabel: string;
   licenseWarning: TrustBadgeModel | null;
   /** Rail cards also place a share control beside the heart. */
   clearShare?: boolean;
@@ -108,18 +107,14 @@ function CardPhotoBadges({
         compact ? "left-2 top-2 gap-1" : "left-3 top-3 gap-1.5",
       )}
     >
-      {showLivePill || feeLabel ? (
+      {showLivePill || listingSubsidy(item) ? (
         <div className="flex flex-wrap items-center gap-1" data-ke="card-photo-pills">
           {showLivePill ? (
             <span data-ke="card-live-pill" className={cn(LIVE_PILL, pill)}>
               {t("live")}
             </span>
           ) : null}
-          {feeLabel ? (
-            <span data-ke="card-fee-pill" className={cn(FEE_PILL, pill)}>
-              {feeLabel}
-            </span>
-          ) : null}
+          <SubsidyPill item={item} className={cn(FEE_PILL, pill)} />
         </div>
       ) : null}
       {hollowPhoto && live ? (
@@ -204,8 +199,8 @@ export const DaycareCard = memo(function DaycareCard({
   const located = useAppStore((s) => s.located);
   const sort = useAppStore((s) => s.sort);
   const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
-  const feeBadge = confirmedFeeProgramBadge(item);
-  const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(feeBadge));
+  const subsidy = listingSubsidy(item);
+  const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(subsidy));
   const gaps = liveLookingGaps(item);
   const vacancy = honestVacancy(item);
   const freshness = vacancyLine(item, t, locale);
@@ -226,8 +221,6 @@ export const DaycareCard = memo(function DaycareCard({
   const licenceHref = licenceNo ? licenseRecordUrl(item.province, name, item.licenseNumber) : "";
   const cardTrust = trustBadgesFor(item, "card");
   const showLivePill = showCardLivePill(live, publicApprovalEligible(item));
-  const feePillKey = cardFeePillLabelKey(feeBadge);
-  const feePillLabel = feePillKey ? t(feePillKey) : "";
   const licenseWarning =
     license && !isCatalogueMatchedBadge(license) && cardPhotoLicenseWarning(license.id) ? license : null;
   const loc = locale === "fr" ? "fr" : "en";
@@ -246,10 +239,16 @@ export const DaycareCard = memo(function DaycareCard({
         ? t("waitlist")
         : t(vacancy.labelKey);
   const openSpotsLine = vacancy.kind === "open" || vacancy.kind === "waitlist" ? spotsKnown : "";
-  const priceAmount =
-    feeBadge === "badgeTen" ? "$10" : feeBadge === "badgeQc965" ? "$9.65" : feeOk ? money(item.fromPrice, locale) : "";
-  const priceUnit = feeBadge === "badgeTen" || feeBadge === "badgeQc965" ? " / day" : feeOk ? t("month") : "";
-  const priceOnPhoto = feeBadge === "badgeTen" || feeBadge === "badgeQc965";
+  const daily = subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max" || subsidy?.subsidy_type === "qc_965";
+  const priceAmount = subsidy?.subsidy_type === "qc_965"
+    ? "$9.65"
+    : subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max"
+      ? "$10"
+      : feeOk
+        ? money(item.fromPrice, locale)
+        : "";
+  const priceUnit = subsidy?.subsidy_type === "ten_max" ? " / day max" : daily ? " / day" : feeOk ? t("month") : "";
+  const priceOnPhoto = daily;
   const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
 
   if (presentation === "visual") {
@@ -271,7 +270,6 @@ export const DaycareCard = memo(function DaycareCard({
               hollowPhoto={hollowPhoto}
               live={live}
               showLivePill={showLivePill}
-              feeLabel={feePillLabel}
               licenseWarning={licenseWarning}
             />
           </ListingAnchor>
@@ -361,7 +359,6 @@ export const DaycareCard = memo(function DaycareCard({
             hollowPhoto={hollowPhoto}
             live={live}
             showLivePill={showLivePill}
-            feeLabel={feePillLabel}
             licenseWarning={licenseWarning}
             clearShare={!compact}
           />
