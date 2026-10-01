@@ -1,7 +1,7 @@
 /**
  * One PostHog flag per AI feature.
- * Parent and daycare features roll out at 50% when PostHog has not answered.
- * Admin features stay off until the flag is explicitly on.
+ * Parent and daycare features that shipped first roll out at 50% when PostHog has not answered.
+ * Newer features and admin features stay off until the flag is explicitly on.
  */
 
 export const AI_FLAGS = {
@@ -30,8 +30,12 @@ const ADMIN_FLAGS = new Set<AiFlag>([
   AI_FLAGS.demandMap,
 ]);
 
+/** New features stay off when PostHog has not answered. Smart match and the writer keep 50%. */
+const FALLBACK_OFF = new Set<AiFlag>([AI_FLAGS.photoCheck]);
+
 export function aiFlagRolloutPercent(flag: AiFlag): number {
-  return ADMIN_FLAGS.has(flag) ? 0 : 50;
+  if (ADMIN_FLAGS.has(flag) || FALLBACK_OFF.has(flag)) return 0;
+  return 50;
 }
 
 export function aiFlagDefaultOn(flag: AiFlag, bucket: number, remote?: boolean): boolean {
