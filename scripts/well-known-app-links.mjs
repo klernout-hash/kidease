@@ -9,7 +9,7 @@
  *   /.well-known/assetlinks.json
  *
  * Bundle / application id is the Capacitor appId already in the repo
- * (`ca.daycarenearme.app`). Apple Team ID and Play SHA-256 fingerprints are
+ * (`ca.kidease.app`). Apple Team ID and Play SHA-256 fingerprints are
  * NOT in git — do not invent production signing hashes.
  *
  * TODO (Kyle, after Apple Developer + Play Console enroll):

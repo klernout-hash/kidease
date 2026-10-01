@@ -1,7 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Building2, ClipboardCheck, ClipboardList, CreditCard, Heart, Map, Menu, MessageCircle, Search } from "lucide-react";
+import { Building2, ClipboardCheck, ClipboardList, CreditCard, Heart, Map, Menu, MessageCircle, Search, User } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRoleChrome } from "@/components/role-chrome";
 import { bottomBarKind } from "@/lib/role-access";
+import { hapticLight, isNative } from "@/lib/native";
+import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -20,15 +23,52 @@ export function AppTabBar() {
   const chrome = useRoleChrome();
   const kind = bottomBarKind({ role: chrome.role, pathname, pending: chrome.pending });
   const plan = chrome.paid ? t("navMyPlan") : t("navUpgrade");
+  const [native, setNative] = useState(false);
+  useEffect(() => {
+    setNative(isNative());
+  }, []);
+  const storeTabs = native ? nativeStoreTabs(kind) : null;
+  const storeLabel: Record<NativeStoreTabId, string> = {
+    search: t("search"),
+    saved: t("saved"),
+    messages: t("messages"),
+    account: t("account"),
+  };
+  const storeIcon = {
+    search: Search,
+    saved: Heart,
+    messages: MessageCircle,
+    account: User,
+  } as const;
 
   return (
     <nav
       data-ke="app-tab-bar"
-      data-bar={kind}
+      data-bar={storeTabs ? "store" : kind}
       className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block"
     >
-      <div className="mx-auto grid max-w-lg grid-cols-5 px-0.5 pb-[env(safe-area-inset-bottom)] pt-1">
-        {kind === "daycare" ? (
+      <div
+        className={cn(
+          "mx-auto grid max-w-lg px-0.5 pb-[env(safe-area-inset-bottom)] pt-1",
+          storeTabs ? "grid-cols-4" : "grid-cols-5",
+        )}
+      >
+        {storeTabs
+          ? storeTabs.map((item) => (
+              <Tab
+                key={item.id}
+                to={item.to}
+                search={item.search}
+                label={storeLabel[item.id]}
+                icon={storeIcon[item.id]}
+                active={storeTabActive(item.id, pathname, tab)}
+                onClick={() => {
+                  void hapticLight();
+                }}
+              />
+            ))
+          : null}
+        {!storeTabs && kind === "daycare" ? (
           <>
             <Tab
               to="/provider"
@@ -66,7 +106,7 @@ export function AppTabBar() {
             />
           </>
         ) : null}
-        {kind === "parent" ? (
+        {kind === "parent" && !storeTabs ? (
           <>
             <Tab
               to="/"
@@ -105,7 +145,7 @@ export function AppTabBar() {
             />
           </>
         ) : null}
-        {kind === "admin" ? (
+        {kind === "admin" && !storeTabs ? (
           <>
             <Tab to="/parent" label={t("deskParent")} icon={Heart} active={pathname.startsWith("/parent")} />
             <Tab to="/provider" label={t("deskDirector")} icon={Search} active={pathname.startsWith("/provider")} />
@@ -114,7 +154,7 @@ export function AppTabBar() {
             <Tab to="/menu" label="Menu" icon={Menu} active={pathname.startsWith("/menu")} />
           </>
         ) : null}
-        {kind === "guest" ? (
+        {kind === "guest" && !storeTabs ? (
           <>
             <Tab
               to="/"
@@ -145,6 +185,15 @@ export function AppTabBar() {
   );
 }
 
+function storeTabActive(id: NativeStoreTabId, pathname: string, tab: string | undefined): boolean {
+  if (id === "search") {
+    return pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare");
+  }
+  if (id === "saved") return pathname.startsWith("/parent") && tab === "saved";
+  if (id === "messages") return pathname.startsWith("/inbox");
+  return pathname.startsWith("/account");
+}
+
 function Tab({
   to,
   label,
@@ -152,18 +201,21 @@ function Tab({
   active,
   search,
   marker,
+  onClick,
 }: {
   to: string;
   label: string;
-  icon: typeof Search | typeof Map | typeof Building2 | typeof ClipboardList;
+  icon: typeof Search | typeof Map | typeof Building2 | typeof ClipboardList | typeof User;
   active: boolean;
   search?: Record<string, string>;
   marker?: string;
+  onClick?: () => void;
 }) {
   return (
     <Link
       to={to}
       search={search}
+      onClick={onClick}
       data-ke="app-tab"
       data-nav={marker}
       aria-current={active ? "page" : undefined}

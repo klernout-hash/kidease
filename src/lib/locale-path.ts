@@ -7,8 +7,10 @@
  * need a real HTTP URL for hreflang and the sitemap.
  *
  * Catalogue listing bodies stay English for v1 (user-generated / registry
- * text). Desks and /admin stay unprefixed. `/login` has a `/fr/login`
- * counterpart so the URL is not a 404; other auth desks stay English.
+ * text). Listing and city-hub documents still have a French URL so the
+ * language toggle, hreflang, and Quebec city pages resolve. Desks and
+ * /admin stay unprefixed. `/login` has a `/fr/login` counterpart so the
+ * URL is not a 404; other auth desks stay English.
  */
 
 export const DEFAULT_LOCALE = "en" as const;
@@ -74,7 +76,15 @@ export function documentLangFromPath(pathname: string | null | undefined): strin
 }
 
 export function isPairedPath(pathname: string | null | undefined): boolean {
-  return PAIRED.has(stripLocalePrefix(pathname));
+  return PAIRED.has(stripLocalePrefix(pathname)) || isCatalogueDocumentPath(pathname);
+}
+
+/** `/daycare/:slug` and `/daycare/city/:slug` — one segment after the prefix. */
+export function isCatalogueDocumentPath(pathname: string | null | undefined): boolean {
+  const bare = stripLocalePrefix(pathname);
+  const listing = bare.match(/^\/daycare\/([^/]+)$/);
+  if (listing && listing[1] !== "city") return true;
+  return /^\/daycare\/city\/[^/]+$/.test(bare);
 }
 
 export function frenchPath(enPath: string): string {
@@ -90,7 +100,7 @@ export function englishPath(pathname: string): string {
 export function localePath(enPath: string, locale: string): string {
   const bare = enPath.startsWith("/") ? enPath : `/${enPath}`;
   if (bare === "/explore") return locale === "fr" ? frenchPath("/search") : "/search";
-  if (locale === "fr" && PAIRED.has(bare)) return frenchPath(bare);
+  if (locale === "fr" && (PAIRED.has(bare) || isCatalogueDocumentPath(bare))) return frenchPath(bare);
   return bare;
 }
 

@@ -111,11 +111,11 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                 </Link>
               </Button>
             </div>
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap gap-2" data-ke="store-coming-soon">
               <StoreBadge store="apple" label={locale === "fr" ? "App Store \u00b7 Bient\u00f4t" : "App Store \u00b7 Coming soon"} />
               <StoreBadge store="play" label={locale === "fr" ? "Google Play \u00b7 Bient\u00f4t" : "Google Play \u00b7 Coming soon"} />
             </div>
-            <p className="mt-3 max-w-md text-xs text-subtle">{coming}</p>
+            <p className="mt-3 max-w-md text-xs text-subtle" data-ke="store-coming-soon">{coming}</p>
           </div>
           <DeviceFrame device="iphone">
             <ShotSearch />

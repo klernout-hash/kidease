@@ -3,13 +3,22 @@ import { geocode, haversineKm } from "./geo.ts";
 
 /** Parse `q` from TanStack `location.search` (object or query string). */
 export function searchQueryFromUnknown(search: unknown): string {
+  return searchParamFromUnknown(search, "q");
+}
+
+/** Parse `city` from TanStack `location.search`. Empty when the param is absent. */
+export function cityParamFromUnknown(search: unknown): string {
+  return searchParamFromUnknown(search, "city");
+}
+
+function searchParamFromUnknown(search: unknown, key: "q" | "city"): string {
   if (typeof search === "string") {
     const raw = search.startsWith("?") ? search.slice(1) : search;
-    return new URLSearchParams(raw).get("q")?.trim() || "";
+    return new URLSearchParams(raw).get(key)?.trim() || "";
   }
-  if (search && typeof search === "object" && "q" in search) {
-    const q = (search as { q?: unknown }).q;
-    return typeof q === "string" ? q.trim() : "";
+  if (search && typeof search === "object" && key in search) {
+    const value = (search as Record<string, unknown>)[key];
+    return typeof value === "string" ? value.trim() : "";
   }
   return "";
 }

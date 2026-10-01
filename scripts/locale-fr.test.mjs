@@ -6,6 +6,7 @@ import { test } from "node:test";
 import {
   frenchPath,
   hreflangLinks,
+  isCatalogueDocumentPath,
   isFrPath,
   localePath,
   localeSwitchPath,
@@ -50,6 +51,13 @@ test("language toggle rewrites paired pages and stays put on Explore and desks",
   assert.equal(localeSwitchPath("/parent", "fr"), null);
   assert.equal(localeSwitchPath("/admin", "fr"), null);
   assert.equal(localeSwitchPath("/fr/search", "en"), "/search");
+  assert.equal(isCatalogueDocumentPath("/daycare/sunny-side"), true);
+  assert.equal(isCatalogueDocumentPath("/daycare/city/montreal"), true);
+  assert.equal(isCatalogueDocumentPath("/fr/daycare/city/montreal"), true);
+  assert.equal(localeSwitchPath("/daycare/sunny-side", "fr"), "/fr/daycare/sunny-side");
+  assert.equal(localeSwitchPath("/fr/daycare/sunny-side", "en"), "/daycare/sunny-side");
+  assert.equal(localeSwitchPath("/daycare/city/montreal", "fr"), "/fr/daycare/city/montreal");
+  assert.equal(hreflangLinks("/daycare/city/montreal").length, 3);
 });
 
 test("hreflang includes en, fr, and x-default on paired pages", () => {

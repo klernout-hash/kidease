@@ -70,8 +70,20 @@ export async function optimizePhoto(request: Request): Promise<Response> {
   }
 
   const buf = await readListingOriginal(src, request);
-  if (!buf) return new Response("not found", { status: 404 });
-  if (buf.byteLength > MAX_BYTES) return new Response("too large", { status: 413 });
+  if (!buf || buf.byteLength > MAX_BYTES) {
+    try {
+      const out = await encodePerListingPlaceholder(src, width, format);
+      const type = `image/${format}`;
+      const cachedMiss = { body: out, type, placeholder: true };
+      mem.set(cacheKey, cachedMiss);
+      return new Response(new Uint8Array(out), {
+        status: 200,
+        headers: photoHeaders(type, true),
+      });
+    } catch {
+      return new Response("encode failed", { status: 500 });
+    }
+  }
 
   const placeholder = shouldReplaceWithPerListingPlaceholder(src, sha256Hex(buf));
 

@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
-import { memo } from "react";
+import { memo, type MouseEvent, type ReactNode } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
+import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
@@ -13,10 +14,10 @@ import { displayDistance } from "@/lib/units";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
+import { licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import {
-  cardFeePillLabelKey,
   cardPhotoLicenseWarning,
   showCardLivePill,
 } from "@/lib/card-photo-pills";
@@ -28,13 +29,14 @@ import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 import { CompareChip } from "@/components/compare-chip";
 import {
   canShowMatchScore,
-  confirmedFeeProgramBadge,
   honestVacancy,
   liveLookingGaps,
 } from "@/lib/now-loops";
 import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
+import { listingSubsidy } from "@/lib/fee-program";
+import { SubsidyPill } from "@/components/subsidy-pill";
 
 const LIVE_PILL =
   "inline-flex items-center rounded-full bg-[#22C55E] font-bold leading-none text-[#052e16] shadow-[0_1px_3px_rgba(0,0,0,0.28)]";
@@ -47,7 +49,6 @@ function CardPhotoBadges({
   hollowPhoto,
   live,
   showLivePill,
-  feeLabel,
   licenseWarning,
   clearShare = false,
 }: {
@@ -56,7 +57,6 @@ function CardPhotoBadges({
   hollowPhoto: boolean;
   live: boolean;
   showLivePill: boolean;
-  feeLabel: string;
   licenseWarning: TrustBadgeModel | null;
   /** Rail cards also place a share control beside the heart. */
   clearShare?: boolean;
@@ -71,18 +71,14 @@ function CardPhotoBadges({
         compact ? "left-2 top-2 gap-1" : "left-3 top-3 gap-1.5",
       )}
     >
-      {showLivePill || feeLabel ? (
+      {showLivePill || listingSubsidy(item) ? (
         <div className="flex flex-wrap items-center gap-1" data-ke="card-photo-pills">
           {showLivePill ? (
             <span data-ke="card-live-pill" className={cn(LIVE_PILL, pill)}>
               {t("live")}
             </span>
           ) : null}
-          {feeLabel ? (
-            <span data-ke="card-fee-pill" className={cn(FEE_PILL, pill)}>
-              {feeLabel}
-            </span>
-          ) : null}
+          <SubsidyPill item={item} className={cn(FEE_PILL, pill)} />
         </div>
       ) : null}
       {hollowPhoto && live ? (
@@ -109,6 +105,42 @@ function CardPhotoBadges({
   );
 }
 
+function ListingAnchor({
+  slug,
+  className,
+  search,
+  onClick,
+  children,
+  "data-ke": dataKe,
+}: {
+  slug: string;
+  className?: string;
+  search?: { ask: "info" };
+  onClick?: (event: MouseEvent) => void;
+  children: ReactNode;
+  "data-ke"?: string;
+}) {
+  if (!isSafeSitemapSlug(slug)) {
+    return (
+      <div className={className} data-ke={dataKe}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <Link
+      to="/daycare/$slug"
+      params={{ slug }}
+      search={search}
+      className={className}
+      data-ke={dataKe}
+      onClick={onClick}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export const DaycareCard = memo(function DaycareCard({
   item,
   showDistance = true,
@@ -130,8 +162,8 @@ export const DaycareCard = memo(function DaycareCard({
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
-  const feeBadge = confirmedFeeProgramBadge(item);
-  const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(feeBadge));
+  const subsidy = listingSubsidy(item);
+  const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(subsidy));
   const gaps = liveLookingGaps(item);
   const vacancy = honestVacancy(item);
   const freshness = vacancyLine(item, t, locale);
@@ -148,10 +180,10 @@ export const DaycareCard = memo(function DaycareCard({
   const offerClaim = showPublicClaimPrompt(item);
 
   const license = publicLicenseBadge(item);
+  const licenceNo = officialLicenceNumber(item.licenseNumber, item.id);
+  const licenceHref = licenceNo ? licenseRecordUrl(item.province, name, item.licenseNumber) : "";
   const cardTrust = trustBadgesFor(item, "card");
   const showLivePill = showCardLivePill(live, publicApprovalEligible(item));
-  const feePillKey = cardFeePillLabelKey(feeBadge);
-  const feePillLabel = feePillKey ? t(feePillKey) : "";
   const licenseWarning =
     license && !isCatalogueMatchedBadge(license) && cardPhotoLicenseWarning(license.id) ? license : null;
   const loc = locale === "fr" ? "fr" : "en";
@@ -170,10 +202,16 @@ export const DaycareCard = memo(function DaycareCard({
         ? t("waitlist")
         : t(vacancy.labelKey);
   const openSpotsLine = vacancy.kind === "open" || vacancy.kind === "waitlist" ? spotsKnown : "";
-  const priceAmount =
-    feeBadge === "badgeTen" ? "$10" : feeBadge === "badgeQc965" ? "$9.65" : feeOk ? money(item.fromPrice, locale) : "";
-  const priceUnit = feeBadge === "badgeTen" || feeBadge === "badgeQc965" ? " / day" : feeOk ? t("month") : "";
-  const priceOnPhoto = feeBadge === "badgeTen" || feeBadge === "badgeQc965";
+  const daily = subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max" || subsidy?.subsidy_type === "qc_965";
+  const priceAmount = subsidy?.subsidy_type === "qc_965"
+    ? "$9.65"
+    : subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max"
+      ? "$10"
+      : feeOk
+        ? money(item.fromPrice, locale)
+        : "";
+  const priceUnit = subsidy?.subsidy_type === "ten_max" ? " / day max" : daily ? " / day" : feeOk ? t("month") : "";
+  const priceOnPhoto = daily;
   const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
 
   if (presentation === "visual") {
@@ -181,7 +219,7 @@ export const DaycareCard = memo(function DaycareCard({
     return (
       <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group w-full">
         <div className="relative">
-          <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
+          <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
             <PhotoCarousel
               photos={photos}
               eager={eager}
@@ -195,13 +233,12 @@ export const DaycareCard = memo(function DaycareCard({
               hollowPhoto={hollowPhoto}
               live={live}
               showLivePill={showLivePill}
-              feeLabel={feePillLabel}
               licenseWarning={licenseWarning}
             />
-          </Link>
+          </ListingAnchor>
           <SaveListingButton daycareId={item.id} />
         </div>
-        <Link to="/daycare/$slug" params={{ slug: item.slug }} className="mt-2 block text-inherit no-underline">
+        <ListingAnchor slug={item.slug} className="mt-2 block text-inherit no-underline">
           <div className="flex items-start justify-between gap-2">
             <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] font-semibold leading-5 tracking-[-0.02em] text-fg">
               {name}
@@ -236,17 +273,28 @@ export const DaycareCard = memo(function DaycareCard({
               <span className="font-normal text-muted">{priceUnit}</span>
             </p>
           ) : null}
-        </Link>
-        <Link
-          to="/daycare/$slug"
-          params={{ slug: item.slug }}
+        </ListingAnchor>
+        <ListingAnchor
+          slug={item.slug}
           search={{ ask: "info" }}
           data-ke="card-request-info"
           className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline"
           onClick={(e) => e.stopPropagation()}
         >
           {t("cardRequestInfo")}
-        </Link>
+        </ListingAnchor>
+        {licenceHref ? (
+          <a
+            href={licenceHref}
+            target="_blank"
+            rel="noreferrer"
+            data-ke="card-licence"
+            className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[13px] font-medium text-muted no-underline underline-offset-4 hover:text-fg hover:underline"
+          >
+            {t("viewLicenceRecord")}
+            {licenceNo ? ` · ${licenceNo}` : ""}
+          </a>
+        ) : null}
       </article>
     );
   }
@@ -254,7 +302,7 @@ export const DaycareCard = memo(function DaycareCard({
   return (
     <article data-slug={item.slug} className="ke-tile group w-full">
       <div className="relative">
-        <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
+        <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
           <PhotoCarousel
             photos={photos}
             eager={eager}
@@ -268,19 +316,18 @@ export const DaycareCard = memo(function DaycareCard({
             hollowPhoto={hollowPhoto}
             live={live}
             showLivePill={showLivePill}
-            feeLabel={feePillLabel}
             licenseWarning={licenseWarning}
             clearShare={!compact}
           />
-        </Link>
-        {!compact ? (
+        </ListingAnchor>
+        {isSafeSitemapSlug(item.slug) && !compact ? (
           <CompareChip
             id={item.id}
             slug={item.slug}
             className="pointer-events-auto absolute bottom-2 right-2 z-20"
           />
         ) : null}
-        {!compact ? (
+        {isSafeSitemapSlug(item.slug) && !compact ? (
           <ShareListingButton
             slug={item.slug}
             name={name}
@@ -291,7 +338,7 @@ export const DaycareCard = memo(function DaycareCard({
         <SaveListingButton daycareId={item.id} />
       </div>
 
-      <Link to="/daycare/$slug" params={{ slug: item.slug }} className="block text-inherit no-underline">
+      <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
         <div className="mt-1 space-y-px text-fg">
           <div className="flex items-start justify-between gap-2">
             <h3 className="min-w-0 truncate text-[12px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
@@ -364,17 +411,28 @@ export const DaycareCard = memo(function DaycareCard({
             <p className="pt-0.5 text-[12px] leading-4 text-muted">{t("cardGapFees")}</p>
           ) : null}
         </div>
-      </Link>
-      <Link
-        to="/daycare/$slug"
-        params={{ slug: item.slug }}
+      </ListingAnchor>
+      <ListingAnchor
+        slug={item.slug}
         search={{ ask: "info" }}
         data-ke="card-request-info"
         className="relative z-10 mt-1.5 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-2.5 text-[11px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
         onClick={(e) => e.stopPropagation()}
       >
         {t("cardRequestInfo")}
-      </Link>
+      </ListingAnchor>
+      {licenceHref && !compact ? (
+        <a
+          href={licenceHref}
+          target="_blank"
+          rel="noreferrer"
+          data-ke="card-licence"
+          className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[12px] font-medium text-muted no-underline underline-offset-4 hover:text-fg hover:underline"
+        >
+          {t("viewLicenceRecord")}
+          {licenceNo ? ` · ${licenceNo}` : ""}
+        </a>
+      ) : null}
     </article>
   );
 });

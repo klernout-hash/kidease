@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { getDaycaresByIds } from "@/lib/server/daycares";
 import { clearCompare, compareKeysFromSearch, readCompare, toggleCompareItem } from "@/lib/compare";
+import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import {
   canShowMatchScore,
-  confirmedFeeProgramBadge,
   honestVacancy,
   parseCompareSlugs,
 } from "@/lib/now-loops";
@@ -35,6 +35,7 @@ import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
 import type { DaycareCard } from "@/lib/types";
+import { MultiApplyPanel } from "@/components/multi-apply-sheet";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/compare")({
@@ -65,7 +66,7 @@ function ComparePage() {
 
   return (
     <Shell>
-      <main className="ke-gutter mx-auto max-w-6xl py-10">
+      <main className="ke-gutter mx-auto max-w-6xl py-10" data-ke="compare-page">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-4xl">{t("compareTitle")}</h1>
@@ -77,6 +78,7 @@ function ComparePage() {
             </Button>
           ) : null}
         </div>
+        {items.length ? <MultiApplyPanel centres={items} /> : null}
         {items.length ? (
           <div className="mt-8 overflow-x-auto">
             <table className="w-full min-w-[40rem] text-left text-sm">
@@ -169,8 +171,8 @@ function ComparePage() {
                 <Row
                   label={t("compareFeesCwelcc")}
                   values={items.map((d) => {
-                    const badge = confirmedFeeProgramBadge(d);
-                    if (badge) return t(badge);
+                    const subsidy = listingSubsidy(d);
+                    if (subsidy) return subsidyLabel(subsidy, locale);
                     return d.fromPrice > 0 ? money(d.fromPrice, locale) : t("cardGapFees");
                   })}
                 />

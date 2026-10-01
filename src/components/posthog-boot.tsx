@@ -4,10 +4,10 @@ import { identifyPostHogUser, resetPostHogIdentity, startPostHog } from "@/lib/p
 import { captureRetentionTouch } from "@/lib/retention";
 
 /**
- * Mount once in the root shell. Initializes PostHog on the client after
- * website analytics consent (or immediately in Capacitor). Pageviews,
- * autocapture, privacy-masked web session replay, feature flags. Identifies
- * the Better Auth user by account id when a real session is present.
+ * Mount once in the root shell. Initializes PostHog on the client only after
+ * Allow, including inside Capacitor. Pageviews, autocapture, privacy-masked
+ * web session replay, feature flags. Identifies the Better Auth user by
+ * account id when a real session is present.
  * Missing VITE_PUBLIC_POSTHOG_KEY is a no-op — the app still boots.
  */
 export function PostHogBoot() {

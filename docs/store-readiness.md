@@ -1,6 +1,6 @@
 # KidEase — App Store & Google Play readiness checklist
 
-Bundle ID: `ca.daycarenearme.app`  
+Bundle ID: `ca.kidease.app`  
 App name: KidEase  
 Live web: https://www.kidease.ca  
 Support: support@kidease.ca  
@@ -15,7 +15,7 @@ Canada date: **1 Nov 2026**. Short owner timeline: [`STORE-LAUNCH.md`](STORE-LAU
 ## 0) Current status (2026-09-15)
 
 - [x] Capacitor In-App Review plugin + Rate KidEase menu (placeholders for store IDs — see `docs/store-review.md`)
-- [x] Capacitor shell configured (`ca.daycarenearme.app`)
+- [x] Capacitor shell configured (`ca.kidease.app`)
 - [x] Icons / splash pipeline (pin fill pass)
 - [x] Geolocation while-using only (good for review)
 - [x] Get-app page shows App Store / Play as Coming soon
@@ -34,12 +34,12 @@ Canada date: **1 Nov 2026**. Short owner timeline: [`STORE-LAUNCH.md`](STORE-LAU
 
 ### Apple
 - [ ] Enroll Apple Developer Program (~$99/yr) as the KidEase entity
-- [ ] App Store Connect access for bundle `ca.daycarenearme.app`
+- [ ] App Store Connect access for bundle `ca.kidease.app`
 - [ ] Agreements / banking / tax paid if asking for paid apps (KidEase can stay free + Stripe web)
 
 ### Google
 - [ ] Play Console (~$25 one-time)
-- [ ] Create app KidEase, package `ca.daycarenearme.app`
+- [ ] Create app KidEase, package `ca.kidease.app`
 - [ ] Complete Play Console identity / org verification if prompted
 
 ### Policy URLs (must be live HTTPS)
@@ -87,7 +87,7 @@ Canada date: **1 Nov 2026**. Short owner timeline: [`STORE-LAUNCH.md`](STORE-LAU
 ### Capacitor
 - [x] `ios/` and `android/` projects generated and `npx cap sync` (re-run `npm run cap:prepare` on the laptop that archives)
 - [x] Production server URL points at `https://www.kidease.ca` (or approved CAP_SERVER_URL)
-- [x] Hostname / scheme consistent (`www.kidease.ca`; custom schemes `KidEase` + `ca.daycarenearme.app`)
+- [x] Hostname / scheme consistent (`www.kidease.ca`; custom schemes `KidEase` + `ca.kidease.app`)
 - [x] Icons + splash from current pipeline
 - [ ] Status bar / safe area OK on notched phones (device smoke)
 
@@ -113,7 +113,7 @@ Store and OS probes hit these URLs. They must be **HTTP 200** `application/json`
 | `https://www.kidease.ca/.well-known/assetlinks.json` | Digital Asset Links JSON |
 | `https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-association` | Apple Pay domain file — **404 until** `STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION` is set (hosted Checkout does not need it) |
 
-Expected AASA shape (bundle id is already `ca.daycarenearme.app`):
+Expected AASA shape (bundle id is already `ca.kidease.app`):
 
 ```json
 {
@@ -121,9 +121,9 @@ Expected AASA shape (bundle id is already `ca.daycarenearme.app`):
     "apps": [],
     "details": [
       {
-        "appID": "XXXXXXXXXX.ca.daycarenearme.app",
+        "appID": "XXXXXXXXXX.ca.kidease.app",
         "paths": ["*"],
-        "appIDs": ["XXXXXXXXXX.ca.daycarenearme.app"],
+        "appIDs": ["XXXXXXXXXX.ca.kidease.app"],
         "components": [
           { "/": "/daycare/*" },
           { "/": "/search" },
@@ -139,11 +139,11 @@ Expected AASA shape (bundle id is already `ca.daycarenearme.app`):
       }
     ]
   },
-  "webcredentials": { "apps": ["XXXXXXXXXX.ca.daycarenearme.app"] }
+  "webcredentials": { "apps": ["XXXXXXXXXX.ca.kidease.app"] }
 }
 ```
 
-`XXXXXXXXXX` is a **placeholder Team ID**, not a real Apple team. After Apple Developer enroll, set `APPLE_TEAM_ID` (or `APNS_TEAM_ID`) on Vercel — same 10-character id as Sign in with Apple / APNs. Then confirm `appID` / `appIDs` become `TEAMID.ca.daycarenearme.app`. Do not invent a Team ID.
+`XXXXXXXXXX` is a **placeholder Team ID**, not a real Apple team. After Apple Developer enroll, set `APPLE_TEAM_ID` (or `APNS_TEAM_ID`) on Vercel — same 10-character id as Sign in with Apple / APNs. Then confirm `appID` / `appIDs` become `TEAMID.ca.kidease.app`. Do not invent a Team ID.
 
 Expected `assetlinks.json` shape:
 
@@ -153,7 +153,7 @@ Expected `assetlinks.json` shape:
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "ca.daycarenearme.app",
+      "package_name": "ca.kidease.app",
       "sha256_cert_fingerprints": []
     }
   }
@@ -171,11 +171,11 @@ Leave both vars **blank** until Apple / Play assign real values. Then paste exac
 | Name | Where to copy from | Paste format |
 | --- | --- | --- |
 | `APPLE_TEAM_ID` | Apple Developer → Membership details → **Team ID** (same 10 characters as Sign in with Apple / APNs) | 10 alphanumeric characters, no spaces. Never invent one. |
-| `ANDROID_CERT_SHA256S` | Play Console → KidEase (`ca.daycarenearme.app`) → Test and release → App integrity → App signing → **App signing key certificate** SHA-256. If Play also shows an **Upload key certificate**, paste both. | Colon hex, comma-separated if two: `AA:BB:…:FF, 11:22:…:99` |
+| `ANDROID_CERT_SHA256S` | Play Console → KidEase (`ca.kidease.app`) → Test and release → App integrity → App signing → **App signing key certificate** SHA-256. If Play also shows an **Upload key certificate**, paste both. | Colon hex, comma-separated if two: `AA:BB:…:FF, 11:22:…:99` |
 
 Optional alias (do not set both unless they match): `ANDROID_SHA256_CERT_FINGERPRINTS`. `APNS_TEAM_ID` is used only when `APPLE_TEAM_ID` is empty.
 
-After the redeploy, `appID` must read `<TeamID>.ca.daycarenearme.app` (not `XXXXXXXXXX.…`) and `sha256_cert_fingerprints` must be a non-empty array of the pasted hashes.
+After the redeploy, `appID` must read `<TeamID>.ca.kidease.app` (not `XXXXXXXXXX.…`) and `sha256_cert_fingerprints` must be a non-empty array of the pasted hashes.
 
 Verify after deploy (must be 200, not 3xx):
 

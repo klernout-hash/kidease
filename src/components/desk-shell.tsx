@@ -84,6 +84,7 @@ function DeskNavButton({
     <button
       type="button"
       data-ke="desk-primary-pill"
+      data-nav={item.id === "subscription" || item.id === "upgrade" ? "upgrade" : item.id}
       onClick={() => onSelect(item.id)}
       className={cn(navClass(on), "text-left")}
     >
@@ -244,12 +245,14 @@ function DeskMoreSheet({
               </>
             );
             if (item.href) {
+              const plan = item.id === "subscription" || item.id === "upgrade";
               return (
                 <Link
                   key={item.id}
                   to={item.href}
                   {...(item.search ? { search: item.search } : {})}
                   onClick={onClose}
+                  data-nav={plan ? "upgrade" : item.id}
                   className={rowClass}
                 >
                   {body}
@@ -260,6 +263,7 @@ function DeskMoreSheet({
               <button
                 key={item.id}
                 type="button"
+                data-nav={item.id === "subscription" || item.id === "upgrade" ? "upgrade" : item.id}
                 onClick={() => {
                   onClose();
                   onSelect(item.id);

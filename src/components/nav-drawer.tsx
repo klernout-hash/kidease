@@ -16,8 +16,9 @@ import { localePath } from "@/lib/locale-path";
 import { failClosedUnread } from "@/lib/notifications";
 import { useCopy } from "@/lib/use-copy";
 import type { MenuIconId } from "@/lib/menu-icons";
+import { nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
 
-type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId };
+type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId; marker?: string };
 
 export function NavDrawer({
   open,
@@ -56,6 +57,12 @@ export function NavDrawer({
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+  const latchRef = useRef<DrawerLatch | null>(null);
+  const latched = nextDrawerLatch(open, menusReady, role, paid, latchRef.current);
+  latchRef.current = latched;
+  const roleShown = (latched?.role ?? role) as ChromeRole;
+  const paidShown = latched?.paid ?? paid;
+  const showMenus = latched != null;
   const { t, locale } = useCopy();
   const { session } = useSessionDesks();
   void isAdmin;
@@ -125,7 +132,7 @@ export function NavDrawer({
             <X className="size-6" strokeWidth={1.75} />
           </button>
         </div>
-        {!signedIn && menusReady ? (
+        {!signedIn && showMenus ? (
           <div className="border-b border-border px-3 py-3">
             <Link
               to={loginTo}
@@ -149,7 +156,7 @@ export function NavDrawer({
         ) : null}
         <nav className="flex-1 overflow-y-auto px-3 py-3">
           <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
-          {menusReady ? <RoleNavLinks role={role} paid={paid} appearance="drawer" onNavigate={onClose} /> : null}
+          {showMenus ? <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} /> : null}
           {signedIn ? (
             <MenuRow
               to="/notifications"
@@ -169,6 +176,7 @@ export function NavDrawer({
                 label={item.label}
                 icon={item.icon}
                 appearance="drawer"
+                marker={item.marker}
                 onClick={onClose}
               />
             </span>
