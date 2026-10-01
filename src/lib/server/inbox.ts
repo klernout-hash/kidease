@@ -268,6 +268,9 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     await markConversationRead(sql, row.id, context.userId);
 
     const actor = await lookupUser(context.userId);
+    void import("@/lib/server/admin-tools")
+      .then((mod) => mod.maybeQueueSpam({ kind: "message", text: body, email: actor.email, sourceId: row.id }))
+      .catch(() => undefined);
     void notifyPlatform({
       kind: "chat",
       title: sender === "parent" ? `Parent message: ${row.name}` : `Daycare message: ${row.name}`,

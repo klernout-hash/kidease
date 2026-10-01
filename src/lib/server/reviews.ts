@@ -278,6 +278,10 @@ export const submitListingReview = createServerFn({ method: "POST" })
       `;
     }
 
+    void import("@/lib/server/admin-tools")
+      .then((mod) => mod.maybeQueueSpam({ kind: "review", text: body, email: actor.email, sourceId: id }))
+      .catch(() => undefined);
+
     await notifyPlatform({
       kind: "review",
       title: `Parent review waiting: ${centre[0].name}`,

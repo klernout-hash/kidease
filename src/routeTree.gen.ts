@@ -18,6 +18,9 @@ import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
 import { Route as AdminRankingRouteImport } from './routes/admin-ranking'
+import { Route as AdminSpamRouteImport } from './routes/admin-spam'
+import { Route as AdminTriageRouteImport } from './routes/admin-triage'
+import { Route as AdminTruthRouteImport } from './routes/admin-truth'
 import { Route as AdminVacanciesRouteImport } from './routes/admin-vacancies'
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
@@ -168,6 +171,21 @@ const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
 const AdminRankingRoute = AdminRankingRouteImport.update({
   id: '/admin-ranking',
   path: '/admin-ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSpamRoute = AdminSpamRouteImport.update({
+  id: '/admin-spam',
+  path: '/admin-spam',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTriageRoute = AdminTriageRouteImport.update({
+  id: '/admin-triage',
+  path: '/admin-triage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTruthRoute = AdminTruthRouteImport.update({
+  id: '/admin-truth',
+  path: '/admin-truth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminVacanciesRoute = AdminVacanciesRouteImport.update({
@@ -713,6 +731,9 @@ export interface FileRoutesByFullPath {
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
   '/admin-ranking': typeof AdminRankingRoute
+  '/admin-spam': typeof AdminSpamRoute
+  '/admin-triage': typeof AdminTriageRoute
+  '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
@@ -830,6 +851,9 @@ export interface FileRoutesByTo {
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
   '/admin-ranking': typeof AdminRankingRoute
+  '/admin-spam': typeof AdminSpamRoute
+  '/admin-triage': typeof AdminTriageRoute
+  '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
@@ -946,6 +970,9 @@ export interface FileRoutesById {
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
   '/admin-ranking': typeof AdminRankingRoute
+  '/admin-spam': typeof AdminSpamRoute
+  '/admin-triage': typeof AdminTriageRoute
+  '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
@@ -1065,6 +1092,9 @@ export interface FileRouteTypes {
     | '/admin-contracts'
     | '/admin-email-health'
     | '/admin-ranking'
+    | '/admin-spam'
+    | '/admin-triage'
+    | '/admin-truth'
     | '/admin-vacancies'
     | '/app-icon'
     | '/benefits'
@@ -1182,6 +1212,9 @@ export interface FileRouteTypes {
     | '/admin-contracts'
     | '/admin-email-health'
     | '/admin-ranking'
+    | '/admin-spam'
+    | '/admin-triage'
+    | '/admin-truth'
     | '/admin-vacancies'
     | '/app-icon'
     | '/benefits'
@@ -1297,6 +1330,9 @@ export interface FileRouteTypes {
     | '/admin-contracts'
     | '/admin-email-health'
     | '/admin-ranking'
+    | '/admin-spam'
+    | '/admin-triage'
+    | '/admin-truth'
     | '/admin-vacancies'
     | '/app-icon'
     | '/benefits'
@@ -1415,6 +1451,9 @@ export interface RootRouteChildren {
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AdminRankingRoute: typeof AdminRankingRoute
+  AdminSpamRoute: typeof AdminSpamRoute
+  AdminTriageRoute: typeof AdminTriageRoute
+  AdminTruthRoute: typeof AdminTruthRoute
   AdminVacanciesRoute: typeof AdminVacanciesRoute
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
@@ -1559,6 +1598,27 @@ declare module '@tanstack/react-router' {
       path: '/admin-ranking'
       fullPath: '/admin-ranking'
       preLoaderRoute: typeof AdminRankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-spam': {
+      id: '/admin-spam'
+      path: '/admin-spam'
+      fullPath: '/admin-spam'
+      preLoaderRoute: typeof AdminSpamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-triage': {
+      id: '/admin-triage'
+      path: '/admin-triage'
+      fullPath: '/admin-triage'
+      preLoaderRoute: typeof AdminTriageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-truth': {
+      id: '/admin-truth'
+      path: '/admin-truth'
+      fullPath: '/admin-truth'
+      preLoaderRoute: typeof AdminTruthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-vacancies': {
@@ -2424,6 +2484,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
   AdminRankingRoute: AdminRankingRoute,
+  AdminSpamRoute: AdminSpamRoute,
+  AdminTriageRoute: AdminTriageRoute,
+  AdminTruthRoute: AdminTruthRoute,
   AdminVacanciesRoute: AdminVacanciesRoute,
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,

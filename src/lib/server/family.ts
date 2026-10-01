@@ -112,6 +112,9 @@ async function pingNewAccount(userId: string, role: "parent" | "provider", extra
   } catch (err) {
     console.error("[kidease-mail] signup user mail failed", err);
   }
+  void import("@/lib/server/admin-tools")
+    .then((mod) => mod.maybeQueueSignup(userId, extra))
+    .catch(() => undefined);
 }
 
 /**

@@ -35,6 +35,11 @@ export const PROVINCIAL_VACANCY_CRON = "TZ=America/Winnipeg 15 3 * * *";
 
 export const PROVINCIAL_VACANCY_EVENT = "kidease/provincial-vacancy.run";
 
+/** Nightly 04:15 America/Winnipeg — compare websites on file. No-ops when the flag is off. */
+export const TRUTH_CHECK_CRON = "TZ=America/Winnipeg 15 4 * * *";
+
+export const TRUTH_CHECK_EVENT = "kidease/truth-check.run";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }
