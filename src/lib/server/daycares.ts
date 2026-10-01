@@ -316,6 +316,15 @@ function withQualityCards<T extends { id: string; qualityScore?: number; guestFa
  * Search and featured cards drop long copy and contact fields.
  * The street stays so a map pin can open the same directions as the listing page.
  */
+async function withProvincial<T extends { id: string; claimed?: boolean; lastVacancyUpdatedAt?: string | null }>(rows: T[]): Promise<T[]> {
+  try {
+    const { stampProvincialOpenings } = await import("@/lib/server/provincial-vacancy");
+    return await stampProvincialOpenings(rows);
+  } catch {
+    return rows;
+  }
+}
+
 function slimCard(card: DaycareCard): DaycareCard {
   return {
     ...card,
@@ -361,7 +370,8 @@ async function liveCardsForSearch(data: SearchInput): Promise<DaycareCard[]> {
     lock,
     label: data.label || data.q,
   });
-  return publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa)))).map(slimCard);
+  const listed = publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa))));
+  return withProvincial(listed).then((rows) => rows.map(slimCard));
 }
 
 function unionLiveCards(primary: DaycareCard[], live: DaycareCard[]): DaycareCard[] {
@@ -495,7 +505,8 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
       ageGroup: data.rankAge || data.ageGroup,
     });
   }
-  return listed.map((card) => {
+  const stamped = await withProvincial(listed);
+  return stamped.map((card) => {
     const slim = slimCard(card);
     if (!useBest) return slim;
     return { ...slim, smartMatchWhy: whyForListing(card, matchQuery) };
@@ -553,7 +564,7 @@ async function loadFeatured(
   const ranked = sortFeaturedCityAfterPriority(
     await overlayFeaturedCity(await overlayPriority(scored)),
   );
-  return publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, HOME_TYPE_POOL).map(slimCard);
+  return withProvincial(publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, HOME_TYPE_POOL)).then((rows) => rows.map(slimCard));
 }
 
 export const featuredDaycares = createServerFn({ method: "GET" })
@@ -670,15 +681,19 @@ export const getDaycare = createServerFn({ method: "GET" })
         note: row.note,
         createdAt: String(row.created_at),
       }));
+      const mainStamped = await withProvincial([overlayed[0] ?? daycare]);
+      const nearbyStamped = await withProvincial(withQualityCards(nearby, overlayed));
       return {
-        daycare: withInboxReady(overlayed[0] ?? daycare),
+        daycare: withInboxReady(mainStamped[0] ?? daycare),
         reviews: mapReviews(reviews),
         availability,
-        nearby: withQualityCards(nearby, overlayed),
+        nearby: nearbyStamped,
         jobs,
       };
     } catch {
-      return catalogPayload;
+      const mainStamped = await withProvincial([catalogPayload.daycare]);
+      const nearbyStamped = await withProvincial(catalogPayload.nearby);
+      return { ...catalogPayload, daycare: mainStamped[0] ?? catalogPayload.daycare, nearby: nearbyStamped };
     }
   });
 

@@ -13,11 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminAiRouteImport } from './routes/admin-ai'
+import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
 import { Route as AdminRankingRouteImport } from './routes/admin-ranking'
+import { Route as AdminVacanciesRouteImport } from './routes/admin-vacancies'
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
 import { Route as ChildcareBenefitsProgramRouteImport } from './routes/childcare-benefits-program'
@@ -63,6 +64,7 @@ import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
+import { Route as ApiProvincialVacancyRouteImport } from './routes/api/provincial-vacancy'
 import { Route as ApiRankingMarketRouteImport } from './routes/api/ranking-market'
 import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
@@ -143,14 +145,14 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminChatRoute = AdminChatRouteImport.update({
-  id: '/admin-chat',
-  path: '/admin-chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminAiRoute = AdminAiRouteImport.update({
   id: '/admin-ai',
   path: '/admin-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminChatRoute = AdminChatRouteImport.update({
+  id: '/admin-chat',
+  path: '/admin-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminContractsRoute = AdminContractsRouteImport.update({
@@ -166,6 +168,11 @@ const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
 const AdminRankingRoute = AdminRankingRouteImport.update({
   id: '/admin-ranking',
   path: '/admin-ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminVacanciesRoute = AdminVacanciesRouteImport.update({
+  id: '/admin-vacancies',
+  path: '/admin-vacancies',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIconRoute = AppIconRouteImport.update({
@@ -392,6 +399,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
 const ApiInngestRoute = ApiInngestRouteImport.update({
   id: '/api/inngest',
   path: '/api/inngest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiProvincialVacancyRoute = ApiProvincialVacancyRouteImport.update({
+  id: '/api/provincial-vacancy',
+  path: '/api/provincial-vacancy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRankingMarketRoute = ApiRankingMarketRouteImport.update({
@@ -701,6 +713,7 @@ export interface FileRoutesByFullPath {
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
   '/admin-ranking': typeof AdminRankingRoute
+  '/admin-vacancies': typeof AdminVacanciesRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -746,6 +759,7 @@ export interface FileRoutesByFullPath {
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
@@ -816,6 +830,7 @@ export interface FileRoutesByTo {
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
   '/admin-ranking': typeof AdminRankingRoute
+  '/admin-vacancies': typeof AdminVacanciesRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -859,6 +874,7 @@ export interface FileRoutesByTo {
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
@@ -930,6 +946,7 @@ export interface FileRoutesById {
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
   '/admin-ranking': typeof AdminRankingRoute
+  '/admin-vacancies': typeof AdminVacanciesRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -975,6 +992,7 @@ export interface FileRoutesById {
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
@@ -1047,6 +1065,7 @@ export interface FileRouteTypes {
     | '/admin-contracts'
     | '/admin-email-health'
     | '/admin-ranking'
+    | '/admin-vacancies'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -1092,6 +1111,7 @@ export interface FileRouteTypes {
     | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
+    | '/api/provincial-vacancy'
     | '/api/ranking-market'
     | '/api/screening-documents'
     | '/api/search-alerts'
@@ -1162,6 +1182,7 @@ export interface FileRouteTypes {
     | '/admin-contracts'
     | '/admin-email-health'
     | '/admin-ranking'
+    | '/admin-vacancies'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -1205,6 +1226,7 @@ export interface FileRouteTypes {
     | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
+    | '/api/provincial-vacancy'
     | '/api/ranking-market'
     | '/api/screening-documents'
     | '/api/search-alerts'
@@ -1275,6 +1297,7 @@ export interface FileRouteTypes {
     | '/admin-contracts'
     | '/admin-email-health'
     | '/admin-ranking'
+    | '/admin-vacancies'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -1320,6 +1343,7 @@ export interface FileRouteTypes {
     | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
+    | '/api/provincial-vacancy'
     | '/api/ranking-market'
     | '/api/screening-documents'
     | '/api/search-alerts'
@@ -1391,6 +1415,7 @@ export interface RootRouteChildren {
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AdminRankingRoute: typeof AdminRankingRoute
+  AdminVacanciesRoute: typeof AdminVacanciesRoute
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
   ChildcareBenefitsProgramRoute: typeof ChildcareBenefitsProgramRoute
@@ -1436,6 +1461,7 @@ export interface RootRouteChildren {
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
+  ApiProvincialVacancyRoute: typeof ApiProvincialVacancyRoute
   ApiRankingMarketRoute: typeof ApiRankingMarketRoute
   ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRouteWithChildren
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
@@ -1533,6 +1559,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-ranking'
       fullPath: '/admin-ranking'
       preLoaderRoute: typeof AdminRankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-vacancies': {
+      id: '/admin-vacancies'
+      path: '/admin-vacancies'
+      fullPath: '/admin-vacancies'
+      preLoaderRoute: typeof AdminVacanciesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app-icon': {
@@ -1848,6 +1881,13 @@ declare module '@tanstack/react-router' {
       path: '/api/inngest'
       fullPath: '/api/inngest'
       preLoaderRoute: typeof ApiInngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/provincial-vacancy': {
+      id: '/api/provincial-vacancy'
+      path: '/api/provincial-vacancy'
+      fullPath: '/api/provincial-vacancy'
+      preLoaderRoute: typeof ApiProvincialVacancyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ranking-market': {
@@ -2384,6 +2424,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
   AdminRankingRoute: AdminRankingRoute,
+  AdminVacanciesRoute: AdminVacanciesRoute,
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,
   ChildcareBenefitsProgramRoute: ChildcareBenefitsProgramRoute,
@@ -2429,6 +2470,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiE2eSeedRoute: ApiE2eSeedRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
+  ApiProvincialVacancyRoute: ApiProvincialVacancyRoute,
   ApiRankingMarketRoute: ApiRankingMarketRoute,
   ApiScreeningDocumentsRoute: ApiScreeningDocumentsRouteWithChildren,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,

@@ -170,6 +170,8 @@ export type Daycare = {
   timezone?: string;
   /** Claimed + centre inbox + transactional mail configured. */
   inboxMailReady?: boolean;
+  /** Official provincial opening. Omitted when stale, missing, or the centre set its own. */
+  provincialOpening?: { total: number; asOf: string; sourceUrl: string; ageLabel: string } | null;
 };
 
 export type DaycareCard = Daycare & {

@@ -30,6 +30,11 @@ export const RANKING_MARKET_CRON = "TZ=America/Winnipeg 15 2 * * *";
 
 export const RANKING_MARKET_EVENT = "kidease/ranking-market.run";
 
+/** Nightly 03:15 America/Winnipeg — official MB and NB opening import. */
+export const PROVINCIAL_VACANCY_CRON = "TZ=America/Winnipeg 15 3 * * *";
+
+export const PROVINCIAL_VACANCY_EVENT = "kidease/provincial-vacancy.run";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }
@@ -63,6 +68,13 @@ export function shouldDeferTourHoldsToInngest(
 }
 
 export function shouldDeferRankingMarketToInngest(
+  request: Request,
+  env: EnvMap = process.env,
+): boolean {
+  return shouldDeferCronToInngest(request, env);
+}
+
+export function shouldDeferProvincialVacancyToInngest(
   request: Request,
   env: EnvMap = process.env,
 ): boolean {
