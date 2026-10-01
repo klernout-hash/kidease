@@ -6,11 +6,16 @@ import { chatComposerState } from "@/lib/chat-scaffold";
 import { inAppChatEnabled } from "@/lib/features";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
+import { AI_FLAGS } from "@/lib/ai/flags";
+import { parentHelperEventProps } from "@/lib/ai/parent-helper";
+import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
+import { capturePostHogEvent } from "@/lib/posthog";
 
 type ChatMsg = { role: "user" | "assistant"; text: string };
 
 export function HelpBot() {
   const { t } = useCopy();
+  const helperOn = useAiFeatureFlag(AI_FLAGS.parentHelper);
   const { user } = useCurrentUserState();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -38,6 +43,17 @@ export function HelpBot() {
     try {
       if (!user) {
         setMsgs((m) => [...m, { role: "assistant", text: t("helpBotSignIn") }]);
+        return;
+      }
+      if (helperOn) {
+        const { askParentHelper } = await import("@/lib/server/parent-helper");
+        const res = await askParentHelper({ data: { question: trimmed, distinctId: user.id } });
+        const reply = "error" in res ? t("parentHelperUnknown") : res.path ? `${res.answer} (${res.path})` : res.answer;
+        capturePostHogEvent(
+          "error" in res || !res.known ? "parent_helper_unknown" : "parent_helper_asked",
+          parentHelperEventProps({ path: "error" in res ? "" : res.path || "" }),
+        );
+        setMsgs((m) => [...m, { role: "assistant", text: reply }]);
         return;
       }
       const { askKidEase } = await import("@/lib/server/ai");

@@ -3,6 +3,7 @@ import { FeelBanner } from "@/components/building-photo";
 import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
+import { ParentHelperPanel } from "@/components/parent-helper";
 import { FAQ_ITEM_KEYS } from "@/lib/faq-items";
 import { localePath } from "@/lib/locale-path";
 import { faqPageJsonLdScript, MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
@@ -33,6 +34,7 @@ export function FaqPage() {
             </li>
           ))}
         </ul>
+        <ParentHelperPanel />
         <p className="mt-8 text-sm">
           <Link to={localePath("/help", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
             {t("helpTitle")}

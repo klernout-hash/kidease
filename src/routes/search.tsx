@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
+import { ParentHelperPanel } from "@/components/parent-helper";
 import { Button } from "@/components/ui/button";
 import { listedDaycareTypeFromSearch } from "@/lib/care-type";
 import { DaycareTypeRails, BROWSE_RAIL_COPY, type BrowseDaycareType } from "@/components/facility-type-rails";
@@ -1341,6 +1342,7 @@ function SearchPage() {
             {t("changeLocation")}
           </Link>
         </div>
+        <ParentHelperPanel />
 
         {saveOpen ? (
           <div className="mt-3 rounded-xl bg-surface p-4 ring-1 ring-border">
