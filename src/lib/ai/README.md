@@ -31,6 +31,10 @@ When a daycare asks to notify parents, the server counts saved searches and wait
 
 A daycare can draft a reply from the parent's latest message and the listing facts on file. The draft is editable. Send is a separate click, and it is held after 9 PM Winnipeg. A failed draft leaves the box empty. Flag: `ai-reply-drafts`. Events: `reply_draft_used`, `reply_draft_sent`, `reply_draft_held_quiet`, `reply_draft_fallback`.
 
+## Parent helper
+
+The guide chat answers only from `/faq`, `/benefits`, and `/help`. It cites the page. If the pages do not answer, it says it does not know. A subsidy figure is returned only for published Alberta and Canada Child Benefit amounts. The old help bot uses this path when the flag is on. Flag: `parent-helper`. Events: `parent_helper_asked`, `parent_helper_unknown`, `parent_helper_subsidy`.
+
 
 
 ## What is stored

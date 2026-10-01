@@ -2556,5 +2556,18 @@
   "replyDraftLead": "Edit the draft, then send it. Nothing goes out until you send.",
   "replyDraftEmpty": "There is no parent message to answer. Type your own reply.",
   "replyDraftFailed": "We could not draft a reply. Nothing was sent.",
-  "replyDraftQuiet": "It's after 9 PM in Winnipeg. This reply was not sent."
+  "replyDraftQuiet": "It's after 9 PM in Winnipeg. This reply was not sent.",
+  "parentHelperTitle": "Ask KidEase",
+  "parentHelperLead": "Answers come from our guides. If we don't have it, we say so.",
+  "parentHelperAsk": "Ask",
+  "parentHelperWorking": "Checking the guides…",
+  "parentHelperUnknown": "I don't know that from KidEase guides.",
+  "parentHelperCite": "From {path}",
+  "parentHelperTour": "Questions to ask on a tour",
+  "parentHelperSubsidy": "Subsidy figure we publish",
+  "parentHelperSubsidyUnknown": "We don't publish a figure for that province.",
+  "parentHelperQ1": "Which ages are posted on the listing?",
+  "parentHelperQ2": "Which hours are posted?",
+  "parentHelperQ3": "Is a monthly fee posted, or does it say not confirmed?",
+  "parentHelperQ4": "How do I request a tour on this listing?"
 }

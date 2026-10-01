@@ -15,6 +15,7 @@ export const AI_REMOTE_FLAGS = [
   AI_FLAGS.photoCheck,
   AI_FLAGS.spotAlerts,
   AI_FLAGS.replyDrafts,
+  AI_FLAGS.parentHelper,
 ] as const;
 
 /** Keys this server read asks PostHog to evaluate. Callers must not add their own. */

@@ -12,6 +12,7 @@ import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { publicFormErrorMessage } from "@/lib/public-form-error";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { ParentHelperPanel } from "@/components/parent-helper";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/help")({
@@ -69,6 +70,7 @@ export function Help() {
         <p className="ke-kicker">{t("helpKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("helpTitle")}</h1>
         <p className="mt-6 text-muted">{t("supportLead")}</p>
+        <ParentHelperPanel />
         <FeelBanner src="/photos/cottage.jpg" className="mt-8" />
 
         <div className="mt-8 rounded-xl bg-surface p-5 ring-1 ring-border">
