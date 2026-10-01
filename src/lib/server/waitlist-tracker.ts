@@ -27,19 +27,9 @@ export type WaitlistRow = {
 };
 
 async function ensureWaitlistColumns() {
-  const sql = await getSql();
-  await sql`alter table bookings add column if not exists status_updated_at timestamptz`.catch(() => undefined);
-  await sql`
-    create table if not exists waitlist_status_mail (
-      id text primary key,
-      user_id text not null,
-      booking_id text not null,
-      status text not null,
-      daycare_name text not null,
-      created_at timestamptz not null default now(),
-      sent_at timestamptz
-    )
-  `.catch(() => undefined);
+  if (!import.meta.env.SSR) return;
+  const { ensureWaitlistMailTable } = await import("./runtime-schema");
+  await ensureWaitlistMailTable();
 }
 
 function iso(value: unknown): string {

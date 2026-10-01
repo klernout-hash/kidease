@@ -26,25 +26,9 @@ import {
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
 async function ensureNotificationsTable(sql: Sql) {
-  await sql
-    .query(
-      `create table if not exists user_notifications (
-        id text primary key,
-        user_id text not null,
-        kind text not null,
-        title_key text not null,
-        href text not null,
-        source_key text not null,
-        daycare_name text,
-        status text,
-        created_at timestamptz not null default now(),
-        read_at timestamptz
-      )`,
-    )
-    .catch(() => undefined);
-  await sql
-    .query(`create unique index if not exists user_notifications_source_uidx on user_notifications (user_id, source_key)`)
-    .catch(() => undefined);
+  if (!import.meta.env.SSR) return;
+  const { ensureUserNotifications } = await import("./runtime-schema");
+  await ensureUserNotifications(sql);
 }
 
 async function projectFromLeads(sql: Sql, userId: string): Promise<ProjectedNotification[]> {

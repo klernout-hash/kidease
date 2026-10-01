@@ -27,20 +27,9 @@ async function hashCode(code: string) {
 }
 
 async function ensureTable() {
-  const sql = await getSql();
-  await sql
-    .query(
-      `create table if not exists login_challenges (
-        id text primary key,
-        user_id text not null,
-        email text not null,
-        code_hash text not null,
-        attempts int not null default 0,
-        expires_at timestamptz not null,
-        created_at timestamptz not null default now()
-      )`,
-    )
-    .catch(() => undefined);
+  if (!import.meta.env.SSR) return;
+  const { ensureLoginChallenges } = await import("./runtime-schema");
+  await ensureLoginChallenges();
 }
 
 async function sendCodeEmail(to: string, code: string) {
@@ -127,15 +116,10 @@ export const startTwoFactor = createServerFn({ method: "POST" })
     if (decision === "reuse") {
       return { ok: true as const, emailed, wait: true as const, reused: true as const, sent: false as const };
     }
-    await sql
-      .query(
-        `create table if not exists two_factor_sends (
-          id text primary key,
-          user_id text not null,
-          created_at timestamptz not null default now()
-        )`,
-      )
-      .catch(() => undefined);
+    if (import.meta.env.SSR) {
+      const { ensureTwoFactorSends } = await import("./runtime-schema");
+      await ensureTwoFactorSends(sql);
+    }
     const sends = await sql<{ created_at: string }>`
       select created_at from two_factor_sends
       where user_id = ${context.userId} and created_at > now() - interval '1 hour'

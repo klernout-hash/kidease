@@ -5,17 +5,9 @@ import { PROVIDER_ONBOARD_PURPOSE, winnipegDayKey } from "@/lib/signup-user-mail
 export const ACTOR_MAIL_ONCE_DAY = "1970-01-01";
 
 async function ensureTable() {
-  const sql = await getSql();
-  await sql.query(`
-    create table if not exists actor_mail_sends (
-      purpose text not null,
-      email text not null,
-      winnipeg_day date not null,
-      user_id text,
-      created_at timestamptz not null default now(),
-      primary key (purpose, email, winnipeg_day)
-    )
-  `).catch(() => undefined);
+  if (!import.meta.env.SSR) return;
+  const { ensureActorMail } = await import("./runtime-schema");
+  await ensureActorMail();
 }
 
 /** Claim the same-day slot. Returns false when this mailbox already got this purpose today (Winnipeg). */

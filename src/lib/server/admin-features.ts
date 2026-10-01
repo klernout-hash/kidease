@@ -56,16 +56,9 @@ type RemoteFlag = {
 const writes = new Map<string, number[]>();
 
 async function ensureAudit(sql: Sql) {
-  await sql`
-    create table if not exists admin_feature_audit (
-      id text primary key,
-      actor_user_id text not null,
-      flag_key text not null,
-      old_value text not null,
-      new_value text not null,
-      created_at timestamptz not null default now()
-    )
-  `;
+  if (!import.meta.env.SSR) return;
+  const { ensureAdminFeatureAudit } = await import("./runtime-schema");
+  await ensureAdminFeatureAudit(sql);
 }
 
 async function historyByFlag(sql: Sql) {
