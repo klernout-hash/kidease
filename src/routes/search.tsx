@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
@@ -66,7 +66,12 @@ import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anc
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { isClaimVerified } from "@/lib/trust";
 import type { DaycareCard as Card } from "@/lib/types";
-import { capturePostHogEvent } from "@/lib/posthog";
+import { capturePostHogEvent, getPostHog, isPostHogFlagEnabled } from "@/lib/posthog";
+import { captureRankingEvent } from "@/lib/ranking/events";
+import { publishRankingContext } from "@/lib/ranking/context";
+import { rankingCity } from "@/lib/ranking/market";
+import { assignRankingVariant, parseRankingOverride, RANKING_BEST_MATCH_FLAG } from "@/lib/ranking/variant";
+import type { RankAge } from "@/lib/ranking/score";
 import {
   honestVacancy,
   isSearchAge,
@@ -179,17 +184,20 @@ export const Route = createFileRoute("/search")({
       sched?: string;
       fac?: string;
       city?: string;
+      rank?: "best" | "nearest";
     } = { ...fields };
     const city = typeof s.city === "string" ? s.city.trim().slice(0, 80) : "";
     if (city) out.city = city;
     const sort = typeof s.sort === "string" ? s.sort : "";
     if (
-      ["distance", "price", "rating", "availability", "recommended", "match", "urgency"].includes(
+      ["distance", "price", "rating", "availability", "recommended", "match", "urgency", "best"].includes(
         sort,
       )
     ) {
       out.sort = sort as SortKey;
     }
+    const rank = parseRankingOverride(s.rank);
+    if (rank) out.rank = rank;
     const ageCsv = formatExploreRailAges(parseExploreRailAges({ age: s.age, cat: s.cat }));
     if (ageCsv) out.age = ageCsv;
     if (s.openings === "1" || s.openings === true || s.openings === 1) out.openings = "1";
@@ -241,6 +249,40 @@ function SearchPage() {
   const setRadiusKm = useAppStore((s) => s.setRadiusKm);
   const sort = useAppStore((s) => s.sort);
   const setSort = useAppStore((s) => s.setSort);
+  const rankOverride = parseRankingOverride(incoming.rank);
+  const [rankingFlag, setRankingFlag] = useState<boolean | undefined>(undefined);
+  const rankingDefaulted = useRef(false);
+  useEffect(() => {
+    let stop = false;
+    const timer = window.setInterval(() => {
+      const ph = getPostHog();
+      if (!ph) return;
+      window.clearInterval(timer);
+      const apply = () => {
+        if (stop) return;
+        setRankingFlag(isPostHogFlagEnabled(RANKING_BEST_MATCH_FLAG) === true);
+      };
+      ph.onFeatureFlags(apply);
+      apply();
+    }, 500);
+    return () => {
+      stop = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+  const rankingVariant = assignRankingVariant({ flag: rankingFlag, override: rankOverride });
+  const showBestMatch = rankingVariant === "best_match" || sort === "best";
+  useEffect(() => {
+    if (rankingDefaulted.current) return;
+    if (!rankOverride && rankingFlag === undefined) return;
+    rankingDefaulted.current = true;
+    if (rankingVariant === "best_match" && !incoming.sort) setSort("best");
+    if (rankingVariant === "nearest" && sort === "best" && rankOverride !== "best") setSort("distance");
+  }, [rankingFlag, rankingVariant, rankOverride, incoming.sort, setSort, sort]);
+  function pickSort(next: SortKey) {
+    rankingDefaulted.current = true;
+    setSort(next);
+  }
   const ageGroup = useAppStore((s) => s.ageGroup);
   const setAgeGroup = useAppStore((s) => s.setAgeGroup);
   const view = useAppStore((s) => s.view);
@@ -450,12 +492,24 @@ function SearchPage() {
   );
   const cameraHome = viewAnchors.home;
   const placeQuery = viewAnchors.q;
+  const askedAges = parseExploreRailAges(incoming);
+  const pickedAge = askedAges.length === 1 ? askedAges[0] : undefined;
+  const rankAge: RankAge =
+    pickedAge === "infant" || pickedAge === "toddler" || pickedAge === "preschool" || pickedAge === "school-age"
+      ? pickedAge
+      : "any";
+  const rankSchedules = parseParentListingSearch(incoming).sched;
   const searchData = {
     lat: cameraHome.lat,
     lng: cameraHome.lng,
     radiusKm,
     sort,
     ageGroup: "any" as const,
+    rankAge,
+    wantSubsidy: ten,
+    wantExtendedHours: extended,
+    schedules: rankSchedules,
+    countDemand: true,
     fsa: fsaOf(query) || fsaOf(cameraHome.label),
     label: cameraHome.label,
     q: placeQuery,
@@ -551,6 +605,8 @@ function SearchPage() {
     origin.lng,
     radiusKm,
     sort,
+    rankAge,
+    ten,
     query,
     origin.label,
     incoming.q,
@@ -561,6 +617,8 @@ function SearchPage() {
     workOrigin?.lat,
     workOrigin?.lng,
     anchorMode,
+    extended,
+    rankSchedules.join(","),
   ]);
 
   const parentFilters = useMemo(() => parseParentListingSearch(incoming), [incoming]);
@@ -1024,6 +1082,44 @@ function SearchPage() {
       n_age_unknown: split.ageUnknown.length,
     });
   }, [gated, items, shownList.length, split.ageUnknown.length, resultCount]);
+  useEffect(() => {
+    if (items === null) return;
+    const filters = [
+      ten ? "ten" : "",
+      extended ? "extended" : "",
+      meals ? "meals" : "",
+      outdoor ? "outdoor" : "",
+      infantOnly ? "infant" : "",
+      openingsOn ? "openings" : "",
+      rankSchedules.join("+"),
+    ]
+      .filter(Boolean)
+      .join(",");
+    publishRankingContext(visualItems, sort, rankingVariant);
+    captureRankingEvent("search_performed", {
+      city: rankingCity(incoming.city || cameraHome.label) || undefined,
+      age_group: rankAge,
+      filters,
+      sort,
+      result_count: visualItems.length,
+      variant: rankingVariant,
+    });
+  }, [
+    items,
+    visualItems.map((row) => row.id).join(","),
+    sort,
+    rankingVariant,
+    ten,
+    extended,
+    meals,
+    outdoor,
+    infantOnly,
+    openingsOn,
+    rankSchedules.join(","),
+    rankAge,
+    incoming.city,
+    cameraHome.label,
+  ]);
   const resolvedCat = resolvedExploreCategory(incoming);
   const extraFilters =
     (avail !== "any" ? 1 : 0) +
@@ -1474,23 +1570,31 @@ function SearchPage() {
             />
             {filterChips}
             {radiusSlider}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" data-ke="sort-row">
               {(
                 [
-                  ["match", t("sortMatch")],
+                  ...(showBestMatch ? [["best", t("sortBest")] as [SortKey, string]] : []),
+                  ["distance", showBestMatch ? t("sortNearest") : t("sortDistance")],
+                  ...(showBestMatch ? [] : [["match", t("sortMatch")] as [SortKey, string]]),
                   ["urgency", t("sortUrgency")],
                   ["recommended", t("sortRecommended")],
-                  ["distance", t("sortDistance")],
                   ["price", t("sortPrice")],
                   ["rating", t("sortRating")],
                   ["availability", t("sortOpen")],
                 ] as [SortKey, string][]
               ).map(([k, label]) => (
-                <ChipButton key={k} on={sort === k} aria-pressed={sort === k} onClick={() => setSort(k)}>
+                <ChipButton
+                  key={k}
+                  on={sort === k}
+                  aria-pressed={sort === k}
+                  data-ke={k === "best" ? "sort-best" : k === "distance" && showBestMatch ? "sort-nearest" : undefined}
+                  onClick={() => pickSort(k)}
+                >
                   {label}
                 </ChipButton>
               ))}
             </div>
+            {sort === "best" ? <p className="text-xs text-muted">{t("sortBestLead")}</p> : null}
             {sort === "recommended" ? (
               <p className="text-xs text-muted">{t("sortRecommendedLead")}</p>
             ) : null}
