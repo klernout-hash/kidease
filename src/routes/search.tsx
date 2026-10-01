@@ -1361,7 +1361,7 @@ function SearchPage() {
           <Link
             to="/"
             search={{ change: "1" }}
-            className="shrink-0 pb-0.5 text-sm font-medium text-primary"
+            className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-primary"
           >
             {t("changeLocation")}
           </Link>

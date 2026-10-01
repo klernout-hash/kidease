@@ -5,7 +5,7 @@ const CREAM = "#f6f3ee";
 const PAPER = "#fffcf8";
 const INK = "#1c2438";
 const MUTED = "#5c6578";
-const SUBTLE = "#8a847a";
+const SUBTLE = "#6a645c";
 const LINE = "#e3ddd3";
 
 const PIN = (

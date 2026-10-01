@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { LocateFixed, Minus, Navigation, Plus, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { isSafeSitemapSlug } from "@/lib/sitemap";
 import type { CopyKey } from "@/lib/copy";
 import type { DaycareCard, Locale } from "@/lib/types";
 import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
@@ -1073,7 +1074,7 @@ function MapPinPopup({
       >
         <X className="size-4" strokeWidth={2.4} />
       </button>
-      {item.slug ? (
+      {isSafeSitemapSlug(item.slug) ? (
         <Link
           to="/daycare/$slug"
           params={{ slug: item.slug }}
