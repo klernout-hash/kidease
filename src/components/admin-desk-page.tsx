@@ -1,6 +1,7 @@
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
+import { AdminLicenceReads } from "@/components/admin-licence-reads";
 import { DeskShell } from "@/components/desk-shell";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TwoFactorGate } from "@/lib/auth/gates";
@@ -534,6 +535,7 @@ export function AdminPage() {
                 <p className="mt-3 text-sm leading-6 text-muted">
                   Open the uploaded licence and storefront. Mark the registry match. This is not an inspection score.
                 </p>
+                <AdminLicenceReads />
               </div>
               <p className="text-sm tabular-nums text-muted">
                 {queueLoading || queueUnavailable ? "—" : verifyListed.length === 0 ? "Caught up" : `${verifyListed.length} to review`}

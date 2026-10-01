@@ -384,6 +384,9 @@ export const createSupportCase = createServerFn({ method: "POST" })
         billId,
       ],
     );
+    void import("@/lib/server/admin-tools")
+      .then((mod) => mod.maybeDraftSupport({ caseId: id, message: data.subject }))
+      .catch(() => undefined);
     await writeEvent(sql, {
       caseId: id,
       actorUserId: context.userId,

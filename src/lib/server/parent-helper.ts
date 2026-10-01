@@ -136,6 +136,9 @@ export const requestParentHelperAgent = createServerFn({ method: "POST" })
          values ($1, $2, $3, 'note', $4, $5::jsonb)`,
         [nid("sev"), id, guard.userId, note.slice(0, 400), JSON.stringify({ source: "parent-helper" })],
       );
+      void import("@/lib/server/admin-tools")
+        .then((mod) => mod.maybeDraftSupport({ caseId: id, message: note }))
+        .catch(() => undefined);
       return { ok: true };
     } catch {
       return { ok: false, error: "ticket" };

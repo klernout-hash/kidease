@@ -20,8 +20,17 @@ export const AI_REMOTE_FLAGS = [
   AI_FLAGS.reviewSummary,
 ] as const;
 
+/** Admin tools. Missing or unreachable stays off. Not part of the 50% split. */
+export const ADMIN_REMOTE_FLAGS = [
+  AI_FLAGS.truthChecker,
+  AI_FLAGS.licenceReader,
+  AI_FLAGS.spamFilter,
+  AI_FLAGS.supportTriage,
+  AI_FLAGS.demandMap,
+] as const;
+
 /** Keys this server read asks PostHog to evaluate. Callers must not add their own. */
-export const SERVER_FLAG_KEYS = [...AI_REMOTE_FLAGS, RANKING_BEST_MATCH_FLAG] as const;
+export const SERVER_FLAG_KEYS = [...AI_REMOTE_FLAGS, ...ADMIN_REMOTE_FLAGS, RANKING_BEST_MATCH_FLAG] as const;
 
 export type AiFlagSnapshot = {
   reached: boolean;

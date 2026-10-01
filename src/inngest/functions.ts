@@ -1,9 +1,10 @@
-import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT, RANKING_MARKET_CRON, RANKING_MARKET_EVENT, PROVINCIAL_VACANCY_CRON, PROVINCIAL_VACANCY_EVENT } from "@/lib/inngest";
+import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT, RANKING_MARKET_CRON, RANKING_MARKET_EVENT, PROVINCIAL_VACANCY_CRON, PROVINCIAL_VACANCY_EVENT, TRUTH_CHECK_CRON, TRUTH_CHECK_EVENT } from "@/lib/inngest";
 import { runSearchAlertJob } from "@/lib/server/search-alerts";
 import { runExpireTourHoldsJob } from "@/lib/server/tour-holds";
 import { runWaitlistPulseJob } from "@/lib/server/waitlist-pulse";
 import { runRankingMarketJob } from "@/lib/server/ranking-market";
 import { runProvincialVacancyJob } from "@/lib/server/provincial-vacancy";
+import { runTruthCheckerJob } from "@/lib/server/admin-tools";
 import { inngest } from "./client";
 
 /**
@@ -92,4 +93,20 @@ export const provincialVacancyNightly = inngest.createFunction(
   },
 );
 
-export const functions = [searchAlertsHourly, waitlistPulse, expireTourHoldsHourly, rankingMarketNightly, provincialVacancyNightly];
+export const truthCheckerNightly = inngest.createFunction(
+  {
+    id: "truth-checker-nightly",
+    name: "Listing website check (nightly)",
+    triggers: [{ cron: TRUTH_CHECK_CRON }, { event: TRUTH_CHECK_EVENT }],
+  },
+  async ({ step }) => step.run("queue-website-diffs", () => runTruthCheckerJob()),
+);
+
+export const functions = [
+  searchAlertsHourly,
+  waitlistPulse,
+  expireTourHoldsHourly,
+  rankingMarketNightly,
+  provincialVacancyNightly,
+  truthCheckerNightly,
+];

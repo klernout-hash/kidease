@@ -2,12 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { listRankingMarket } from "@/lib/server/ranking-market";
 import { rankingMarketCsv, type MarketRow } from "@/lib/ranking/market";
+import { demandMapCells } from "@/lib/admin-tools";
+import { AI_FLAGS } from "@/lib/ai/flags";
+import { aiFeatureOn } from "@/lib/server/ai-feature";
 import { useCopy } from "@/lib/use-copy";
 import { Shell } from "@/components/shell";
 
 export const Route = createFileRoute("/admin-ranking")({
   beforeLoad: beforeLoadAdminDesk,
-  loader: () => listRankingMarket(),
+  loader: async () => {
+    const rows = await listRankingMarket();
+    const on = await aiFeatureOn(AI_FLAGS.demandMap, "kidease-admin");
+    return { rows, cells: on ? demandMapCells(rows) : null };
+  },
   head: () => ({
     meta: [
       { title: "Demand and supply · KidEase" },
@@ -28,8 +35,10 @@ function downloadCsv(rows: MarketRow[]) {
 }
 
 function RankingMarketPage() {
-  const rows = Route.useLoaderData();
+  const data = Route.useLoaderData();
+  const rows = data.rows;
   const { t } = useCopy();
+  const max = data.cells?.reduce((peak, cell) => Math.max(peak, cell.demand, cell.supply), 1) ?? 1;
   return (
     <Shell>
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
@@ -47,6 +56,27 @@ function RankingMarketPage() {
             {t("rankingMarketExport")}
           </button>
         </div>
+        {data.cells ? (
+          <section className="mt-8" data-ke="admin-demand-map">
+            <h2 className="font-display text-2xl">{t("adminDemandTitle")}</h2>
+            <p className="mt-2 max-w-prose text-sm text-muted">{t("adminDemandLead")}</p>
+            <ul className="mt-4 space-y-3">
+              {data.cells.map((cell) => (
+                <li key={`${cell.city}-${cell.ageGroup}`}>
+                  <p className="text-sm font-medium">
+                    {cell.city} · {cell.ageGroup}
+                  </p>
+                  <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-surface ring-1 ring-border" aria-hidden="true">
+                    <div className="h-full bg-primary" style={{ width: `${Math.max(4, Math.round((cell.demand / max) * 100))}%` }} />
+                  </div>
+                  <p className="mt-1 text-xs text-muted">
+                    {cell.demand} / {cell.supply}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
         {rows.length ? (
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[40rem] text-left text-sm">

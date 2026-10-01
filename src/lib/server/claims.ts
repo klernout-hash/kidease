@@ -360,6 +360,16 @@ export const submitEnrollLicense = createServerFn({ method: "POST" })
       `;
     });
     if (data.daycareId) await storeLicensePhoto(sql, data.daycareId, photo);
+    void import("@/lib/server/admin-tools")
+      .then((mod) =>
+        mod.maybeReadLicence({
+          uploadId: id,
+          daycareId: data.daycareId,
+          centreName: centre,
+          text: body,
+        }),
+      )
+      .catch(() => undefined);
     let eventId: string | null = null;
     let notifyError: unknown = null;
     try {
