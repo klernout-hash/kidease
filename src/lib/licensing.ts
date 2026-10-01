@@ -95,6 +95,7 @@ export function officialLicenceNumber(raw?: string | null, id?: string | null): 
   // Catalogue keys such as MB|home-… are not a provincial licence number.
   if (n.includes("|")) return null;
   if (id && n.toLowerCase() === id.toLowerCase()) return null;
+  if (/^d_[a-z0-9]{6,}$/i.test(n)) return null;
   const tail = (id || "").split("-").pop() || "";
   if (/^\d{1,3}$/.test(n) && (!id || n === tail)) return null;
   return n;

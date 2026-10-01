@@ -61,6 +61,20 @@ test("pin popup stays inside the map and the caret still points at the pin", () 
   assert.ok(box.top + 120 <= 492);
 });
 
+test("pin popup never returns NaN coordinates", () => {
+  const box = placePinPopup({
+    pointX: Number.NaN,
+    pointY: 20,
+    width: 240,
+    height: 120,
+    mapWidth: 400,
+    mapHeight: 500,
+  });
+  assert.equal(Number.isFinite(box.left), true);
+  assert.equal(Number.isFinite(box.top), true);
+  assert.equal(Number.isFinite(box.caretX), true);
+});
+
 test("directions use the centre point, Apple Maps when asked, Google Maps otherwise", () => {
   const google = directionsUrl(53.54, -113.49, "Kids World", { apple: false });
   assert.match(google, /^https:\/\/www\.google\.com\/maps\/dir\/\?/);

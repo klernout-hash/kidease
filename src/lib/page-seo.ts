@@ -280,7 +280,7 @@ export const MARKETING_PAGE_SEO = {
   donate: {
     title: "Donate to Kids · KidEase",
     description:
-      "Donate to SickKids Foundation or Canada’s Children’s Hospital Foundations. KidEase will match every dollar donated through KidEase. Giving is optional.",
+      "Donate to SickKids Foundation or Canada’s Children’s Hospital Foundations. Gifts go to the foundation you choose. Giving is optional.",
     path: "/donate",
   },
   tourChecklist: {
@@ -350,7 +350,7 @@ export const MARKETING_PAGE_SEO_FR = {
   donate: {
     title: "Faire un don aux enfants · KidEase",
     description:
-      "Donnez à la Fondation SickKids ou aux Fondations des hôpitaux pour enfants du Canada. KidEase égalera chaque dollar donné par l’intermédiaire de KidEase. Le don est facultatif.",
+      "Donnez à la Fondation SickKids ou aux Fondations des hôpitaux pour enfants du Canada. Le don va à la fondation choisie. Le don est facultatif.",
     path: "/fr/donate",
   },
   search: {

@@ -29,7 +29,12 @@ test("Kyle’s EN label stays Donate to Kids and FR matches the footer pattern",
   assert.equal(copyValue("donateToKids", "en"), "Donate to Kids");
   assert.equal(copyValue("donateTitle", "en"), "Donate to Kids");
   assert.equal(copyValue("donateToKids", "fr"), "Faire un don aux enfants");
-  assert.equal(copyValue("donateMatch", "en"), "Every dollar donated through KidEase, KidEase will match.");
+  assert.equal(
+    copyValue("donateMatch", "en"),
+    "Gifts on this page go to the hospital foundation you choose. KidEase does not match donations.",
+  );
+  assert.doesNotMatch(copyValue("donateMatch", "en"), /will match/);
+  assert.doesNotMatch(copyValue("donateMatch", "fr"), /égalera/);
   assert.match(copyValue("donateOptional", "en"), /optional/i);
   const t = (key) => copyValue(key, "en");
   const donate = FOOTER_KIDEASE.find((link) => link.to === "/donate");

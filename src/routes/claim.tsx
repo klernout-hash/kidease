@@ -4,6 +4,9 @@ import { CalendarCheck, Globe, MapPin, Megaphone, MessageCircle, Smartphone, Tre
 import { toast } from "sonner";
 import { confirmAction, confirmSuccess } from "@/lib/success-confirm";
 import { FeelBanner } from "@/components/building-photo";
+import { officialLicenceNumber } from "@/lib/licensing";
+import { LISTING_PLACEHOLDER } from "@/lib/listing-photo";
+import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
@@ -16,6 +19,20 @@ import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import { isListingPhotoTooBig } from "@/lib/upload-limits";
+
+function ClaimHitPhoto({ photo, name, compact = false }: { photo: string; name: string; compact?: boolean }) {
+  const size = compact ? 40 : 48;
+  const src = isRealListingPhoto(photo) ? photo : LISTING_PLACEHOLDER;
+  return (
+    <img
+      src={src}
+      alt={name}
+      width={size}
+      height={size}
+      className={`mt-0.5 shrink-0 rounded-md object-cover ${compact ? "size-10" : "size-12"}`}
+    />
+  );
+}
 
 export const Route = createFileRoute("/claim")({
   head: () => pageSeoHead(MARKETING_PAGE_SEO.claim),
@@ -340,15 +357,15 @@ function ClaimPage() {
                           onClick={() => void begin(h.id, h.name)}
                           className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-bg disabled:opacity-60"
                         >
-                          <img src={h.photo} alt="" className="mt-0.5 size-12 shrink-0 rounded-md object-cover" />
+                          <ClaimHitPhoto photo={h.photo} name={h.name} />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-medium">{h.name}</span>
                             <span className="mt-0.5 block truncate text-sm text-muted">
                               {h.address}, {h.city} {h.province} {h.postalCode}
                             </span>
-                            {h.licenseNumber ? (
+                            {officialLicenceNumber(h.licenseNumber, h.id) ? (
                               <span className="mt-0.5 block text-xs text-subtle">
-                                {t("licenceNo")} {h.licenseNumber}
+                                {t("licenceNo")} {officialLicenceNumber(h.licenseNumber, h.id)}
                               </span>
                             ) : null}
                           </span>
@@ -462,7 +479,7 @@ function ClaimPage() {
                           setEnrollOpen(false);
                         }}
                       >
-                        <img src={h.photo} alt="" className="mt-0.5 size-10 shrink-0 rounded-md object-cover" />
+                        <ClaimHitPhoto photo={h.photo} name={h.name} compact />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate font-medium">{h.name}</span>
                           <span className="mt-0.5 block truncate text-sm text-muted">
