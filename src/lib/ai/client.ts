@@ -12,6 +12,25 @@ import { allowAiCall } from "./rate-limit.ts";
 
 const DEFAULT_TIMEOUT_MS = 12_000;
 const DEFAULT_MODEL = "grok-4-1-fast-non-reasoning";
+const GATEWAY_MODEL = "spacexai/grok-4.1-fast-non-reasoning";
+const XAI_URL = "https://api.x.ai/v1/chat/completions";
+const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
+
+function resolveEndpoint(env: Record<string, string | undefined>): { url: string; apiKey: string; model: string } | null {
+  const gatewayKey = env.AI_GATEWAY_API_KEY?.trim();
+  if (gatewayKey) return { url: GATEWAY_URL, apiKey: gatewayKey, model: gatewayModel(env.XAI_MODEL) };
+  const apiKey = env.XAI_API_KEY?.trim();
+  if (!apiKey) return null;
+  return { url: XAI_URL, apiKey, model: env.XAI_MODEL?.trim() || DEFAULT_MODEL };
+}
+
+/** Gateway ids are creator/model. The direct xAI id uses hyphens, not dots. */
+function gatewayModel(raw: string | undefined): string {
+  const model = raw?.trim();
+  if (!model || model === DEFAULT_MODEL) return GATEWAY_MODEL;
+  if (model.includes("/")) return model;
+  return `spacexai/${model}`;
+}
 
 export type AiLogRow = {
   feature: string;
@@ -92,10 +111,10 @@ export async function callAi<T = string>(input: {
     if (parsed.ok) return finish({ ok: true, data: parsed.data, cached: true, text: cached }, { cacheHit: true });
   }
 
-  const apiKey = env.XAI_API_KEY?.trim();
-  if (!apiKey) return finish({ ok: false, error: "unconfigured" });
+  const endpoint = resolveEndpoint(env);
+  if (!endpoint) return finish({ ok: false, error: "unconfigured" });
 
-  const model = env.XAI_MODEL?.trim() || DEFAULT_MODEL;
+  const { url, apiKey, model } = endpoint;
   const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const fetchImpl = input.deps?.fetchImpl ?? fetch;
   let lastError: AiFailure["error"] = "upstream";
@@ -106,7 +125,7 @@ export async function callAi<T = string>(input: {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const response = await fetchImpl("https://api.x.ai/v1/chat/completions", {
+      const response = await fetchImpl(url, {
         method: "POST",
         headers: {
           authorization: `Bearer ${apiKey}`,
