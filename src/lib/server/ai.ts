@@ -1,19 +1,35 @@
 import { createServerFn } from "@tanstack/react-start";
-import { authMiddleware } from "@/lib/auth/middleware";
+import { callAi } from "@/lib/ai/client";
+import { parseCentreMatch } from "@/lib/ai/match-reply";
 import { allowAiSpend } from "@/lib/ai-spend";
+import { authMiddleware } from "@/lib/auth/middleware";
 import { getPublicCatalog } from "@/lib/catalog";
 import { CHAT_FLAG_OFF_MESSAGE } from "@/lib/chat-scaffold";
 import { inAppChatEnabled } from "@/lib/features";
 import { AGENT_CONFIRM, KIDEASE_SYSTEM, localHelpReply, wantsLiveAgent } from "@/lib/help-knowledge";
 import { notifyPlatform } from "@/lib/server/notify";
 
+const MATCH_SYSTEM =
+  'You match Canadian parents to licensed childcare from a fixed catalog. Reply with compact JSON only: {"picks":[{"slug":"...","why":"one sentence"}],"note":"one sentence"}. Use only provided slugs. Prefer open spots over waitlists when the need matches. Max 3 picks.';
+
+async function chatDeps(feature: string) {
+  try {
+    const { logAiCall, readAiCache, writeAiCache } = await import("@/lib/server/ai-usage");
+    return {
+      log: logAiCall,
+      readCache: readAiCache,
+      writeCache: (key: string, body: string) => writeAiCache(feature, key, body),
+    };
+  } catch {
+    return {};
+  }
+}
+
 export const matchCentres = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((prompt: string) => prompt.trim().slice(0, 500))
   .handler(async ({ context, data: prompt }) => {
     if (!allowAiSpend(context.userId)) return { ok: false as const, error: "rate_limit" };
-    const apiKey = process.env.XAI_API_KEY;
-    if (!apiKey) return { ok: false as const, error: "unavailable" };
     const tokens = prompt.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
     const CATALOG = await getPublicCatalog();
     const scored = CATALOG.map((d) => {
@@ -41,42 +57,18 @@ export const matchCentres = createServerFn({ method: "POST" })
       amenities: d.amenities,
       tagline: d.tagline,
     }));
-    const res = await fetch("https://api.x.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "grok-4.5",
-        max_tokens: 500,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You match Canadian parents to licensed childcare from a fixed catalog. Reply with compact JSON only: {\"picks\":[{\"slug\":\"...\",\"why\":\"one sentence\"}],\"note\":\"one sentence\"}. Use only provided slugs. Prefer open spots over waitlists when the need matches. Max 3 picks.",
-          },
-          {
-            role: "user",
-            content: `Need: ${prompt}\nCatalog: ${JSON.stringify(catalog)}`,
-          },
-        ],
-      }),
+    const result = await callAi({
+      feature: "match-centres",
+      system: MATCH_SYSTEM,
+      user: `Need: ${prompt}\nCatalog: ${JSON.stringify(catalog)}`,
+      maxTokens: 500,
+      userId: context.userId,
+      deps: await chatDeps("match-centres"),
     });
-    if (!res.ok) return { ok: false as const, error: `xAI ${res.status}` };
-    const body = (await res.json()) as { choices: { message: { content: string } }[] };
-    const text = body.choices[0]?.message.content ?? "";
-    const jsonStart = text.indexOf("{");
-    const jsonEnd = text.lastIndexOf("}");
-    try {
-      const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1)) as {
-        picks: { slug: string; why: string }[];
-        note: string;
-      };
-      return { ok: true as const, picks: parsed.picks ?? [], note: parsed.note ?? "" };
-    } catch {
-      return { ok: false as const, error: "parse" };
-    }
+    if (!result.ok) return { ok: false as const, error: "unavailable" };
+    const parsed = parseCentreMatch(result.text, catalog.map((row) => row.slug));
+    if (!parsed) return { ok: false as const, error: "unavailable" };
+    return { ok: true as const, picks: parsed.picks, note: parsed.note };
   });
 
 export const askKidEase = createServerFn({ method: "POST" })
@@ -117,31 +109,16 @@ export const askKidEase = createServerFn({ method: "POST" })
         return { ok: true as const, live: true as const, reply: AGENT_CONFIRM };
       }
       await ping(`Live Chat: ${last.slice(0, 80)}`);
-      const apiKey = process.env.XAI_API_KEY;
-      if (!apiKey) return { ok: true as const, live: false as const, reply: localHelpReply(last, prior) };
-      const res = await fetch("https://api.x.ai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "grok-4.5",
-          max_tokens: 700,
-          temperature: 0.6,
-          messages: [
-            { role: "system", content: KIDEASE_SYSTEM },
-            ...data.messages.map((m) => ({
-              role: m.role === "assistant" ? "assistant" : "user",
-              content: m.text,
-            })),
-          ],
-        }),
+      const result = await callAi({
+        feature: "in-app-chat",
+        system: KIDEASE_SYSTEM,
+        user: transcript,
+        maxTokens: 700,
+        userId: context.userId,
+        deps: await chatDeps("in-app-chat"),
       });
-      if (!res.ok) return { ok: true as const, live: false as const, reply: localHelpReply(last, prior) };
-      const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-      const reply = (body.choices?.[0]?.message?.content || "").trim();
-      return { ok: true as const, live: true as const, reply: reply || localHelpReply(last, prior) };
+      const reply = result.ok ? result.data.trim() : "";
+      return { ok: true as const, live: result.ok, reply: reply || localHelpReply(last, prior) };
     } catch {
       return { ok: true as const, live: false as const, reply: AGENT_CONFIRM };
     }

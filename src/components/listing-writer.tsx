@@ -1,19 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { AI_FLAGS, aiBucket, aiFlagDefaultOn } from "@/lib/ai/flags";
+import { AI_FLAGS } from "@/lib/ai/flags";
+import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import { listingWriterEventProps, type ListingDraft } from "@/lib/ai/listing-writer";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { capturePostHogEvent, isPostHogFlagEnabled } from "@/lib/posthog";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { draftListingCopy } from "@/lib/server/listing-writer";
 import { useCopy } from "@/lib/use-copy";
-
-function anonId() {
-  try {
-    return window.localStorage.getItem("kidease-ai-id") || "0";
-  } catch {
-    return "0";
-  }
-}
 
 function track(event: "listing_writer_used" | "listing_writer_published", daycareId: string) {
   capturePostHogEvent(event, listingWriterEventProps({ daycare_id: daycareId }));
@@ -29,34 +21,12 @@ export function ListingWriter({
   onUse: (draft: ListingDraft) => void;
 }) {
   const { t } = useCopy();
-  const { user } = useCurrentUserState();
-  const [on, setOn] = useState(false);
+  const on = useAiFeatureFlag(AI_FLAGS.listingWriter);
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<ListingDraft | null>(null);
   const [notice, setNotice] = useState<"empty" | "failed" | "used" | null>(null);
-
-  useEffect(() => {
-    let stop = false;
-    const apply = () => {
-      if (stop) return;
-      const id = user?.id && user.id !== "dev-user" ? user.id : anonId();
-      setOn(aiFlagDefaultOn(AI_FLAGS.listingWriter, aiBucket(id), isPostHogFlagEnabled(AI_FLAGS.listingWriter)));
-    };
-    apply();
-    const started = Date.now();
-    const timer = window.setInterval(() => {
-      apply();
-      if (isPostHogFlagEnabled(AI_FLAGS.listingWriter) !== undefined || Date.now() - started > 8000) {
-        window.clearInterval(timer);
-      }
-    }, 500);
-    return () => {
-      stop = true;
-      window.clearInterval(timer);
-    };
-  }, [user?.id]);
 
   if (!on) return null;
 

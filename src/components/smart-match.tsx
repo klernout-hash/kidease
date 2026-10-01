@@ -3,7 +3,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { AI_FLAGS, aiBucket, aiFlagDefaultOn } from "@/lib/ai/flags";
+import { AI_FLAGS } from "@/lib/ai/flags";
+import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import {
   pickSmartMatchResults,
   quizToFilters,
@@ -15,7 +16,7 @@ import {
   type SmartMatchFilters,
 } from "@/lib/ai/smart-match";
 import { geocode } from "@/lib/geo";
-import { capturePostHogEvent, isPostHogFlagEnabled } from "@/lib/posthog";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { searchDaycares } from "@/lib/server/daycares";
 import { saveSearch } from "@/lib/server/saved-searches";
 import { refineSmartMatch } from "@/lib/server/smart-match";
@@ -31,19 +32,6 @@ const AGES: Array<{ id: SmartMatchAge; label: CopyKey }> = [
   { id: "any", label: "anyAge" },
 ];
 
-function anonId() {
-  const key = "kidease-ai-id";
-  try {
-    const existing = window.localStorage.getItem(key);
-    if (existing) return existing;
-    const next = crypto.randomUUID();
-    window.localStorage.setItem(key, next);
-    return next;
-  } catch {
-    return "0";
-  }
-}
-
 function track(event: "smart_match_started" | "smart_match_completed" | "smart_match_result_clicked" | "smart_match_applied", props: Record<string, unknown> = {}) {
   capturePostHogEvent(event, smartMatchEventProps(props));
 }
@@ -51,29 +39,8 @@ function track(event: "smart_match_started" | "smart_match_completed" | "smart_m
 export function SmartMatchEntry() {
   const { user } = useCurrentUserState();
   const { t } = useCopy();
-  const [on, setOn] = useState(false);
+  const on = useAiFeatureFlag(AI_FLAGS.smartMatch);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    let stop = false;
-    const apply = () => {
-      if (stop) return;
-      const id = user?.id && user.id !== "dev-user" ? user.id : anonId();
-      setOn(aiFlagDefaultOn(AI_FLAGS.smartMatch, aiBucket(id), isPostHogFlagEnabled(AI_FLAGS.smartMatch)));
-    };
-    apply();
-    const started = Date.now();
-    const timer = window.setInterval(() => {
-      apply();
-      if (isPostHogFlagEnabled(AI_FLAGS.smartMatch) !== undefined || Date.now() - started > 8000) {
-        window.clearInterval(timer);
-      }
-    }, 500);
-    return () => {
-      stop = true;
-      window.clearInterval(timer);
-    };
-  }, [user?.id]);
 
   if (!on) return null;
 
