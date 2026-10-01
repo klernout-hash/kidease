@@ -14,6 +14,8 @@ import { noteHappyMoment } from "@/lib/store-review";
 import type { Child, Daycare, Schedule } from "@/lib/types";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { captureRankingEvent } from "@/lib/ranking/events";
+import { rankingContextFor } from "@/lib/ranking/context";
 
 const DAYS = [
   ["Mon", "dayMon"],
@@ -122,6 +124,15 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
         },
       });
       capturePostHogEvent("listing_request_submitted", { intent });
+      if (intent === "spot") {
+        const ctx = rankingContextFor(daycare.id);
+        captureRankingEvent("spot_requested", {
+          listing_id: daycare.id,
+          position: ctx.position,
+          sort: ctx.sort,
+          variant: ctx.variant,
+        });
+      }
       noteHappyMoment("booking");
       await holdSendBeat();
       if (!send.live(token)) return;

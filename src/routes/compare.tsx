@@ -21,6 +21,8 @@ import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 import { parentMatchScore } from "@/lib/parent-match";
+import { captureRankingEvent } from "@/lib/ranking/events";
+import { rankingContextFor } from "@/lib/ranking/context";
 import { parentUrgencyScore } from "@/lib/parent-urgency";
 import { useAppStore } from "@/lib/store";
 import { distanceKm } from "@/lib/proximity";
@@ -61,7 +63,19 @@ function ComparePage() {
       setItems([]);
       return;
     }
-    void getDaycaresByIds({ data: keys }).then(setItems).catch(() => setItems([]));
+    void getDaycaresByIds({ data: keys }).then((rows) => {
+      setItems(rows);
+      for (const row of rows.slice(0, 4)) {
+        const ctx = rankingContextFor(row.id);
+        captureRankingEvent("compare_opened", {
+          listing_id: row.id,
+          position: ctx.position,
+          sort: ctx.sort,
+          variant: ctx.variant,
+          listing_count: rows.length,
+        });
+      }
+    }).catch(() => setItems([]));
   }, [incoming.slugs]);
 
   return (

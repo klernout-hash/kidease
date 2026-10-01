@@ -10,6 +10,7 @@ import { useCopy } from "@/lib/use-copy";
 import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
+import type { CopyKey } from "@/lib/copy";
 import { displayDistance } from "@/lib/units";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
@@ -37,6 +38,41 @@ import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { listingSubsidy } from "@/lib/fee-program";
 import { SubsidyPill } from "@/components/subsidy-pill";
+
+function whyMatchLine(
+  item: Card,
+  t: (key: CopyKey) => string,
+): string {
+  const who: Record<string, CopyKey> = {
+    infant: "whySpotsWhoInfant",
+    toddler: "whySpotsWhoToddler",
+    preschool: "whySpotsWhoPreschool",
+    "school-age": "whySpotsWhoSchool",
+    any: "whySpotsWhoAny",
+  };
+  const parts = (item.smartMatchWhy ?? []).map((reason) => {
+    if (reason.code === "close_work") return t("whyCloseWork");
+    if (reason.code === "close_home") return t("whyCloseHome");
+    if (reason.code === "age_fit") {
+      if (reason.age === "infant") return t("whyAgeInfant");
+      if (reason.age === "toddler") return t("whyAgeToddler");
+      if (reason.age === "preschool") return t("whyAgePreschool");
+      if (reason.age === "school-age") return t("whyAgeSchool");
+    }
+    if (reason.code === "spots_fresh") {
+      const label = t(who[reason.age || "any"] ?? "whySpotsWhoAny");
+      if (reason.days === 0) return t("whySpotsToday").replace("{who}", label);
+      if (reason.days === 1) return t("whySpotsOne").replace("{who}", label);
+      return t("whySpotsDays").replace("{who}", label).replace("{n}", String(reason.days ?? ""));
+    }
+    if (reason.code === "subsidy") return t("whySubsidy");
+    if (reason.code === "hours_days") return t("whyHoursDays");
+    if (reason.code === "complete") return t("whyComplete");
+    if (reason.code === "claim_verified") return t("whyClaim");
+    return "";
+  });
+  return parts.filter(Boolean).join(" · ");
+}
 
 const LIVE_PILL =
   "inline-flex items-center rounded-full bg-[#22C55E] font-bold leading-none text-[#052e16] shadow-[0_1px_3px_rgba(0,0,0,0.28)]";
@@ -161,6 +197,7 @@ export const DaycareCard = memo(function DaycareCard({
   const live = Boolean(item.live);
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
+  const sort = useAppStore((s) => s.sort);
   const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
   const subsidy = listingSubsidy(item);
   const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(subsidy));
@@ -252,6 +289,12 @@ export const DaycareCard = memo(function DaycareCard({
             ) : null}
           </div>
           {placeLine ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{placeLine}</p> : null}
+          {sort === "best" && whyMatchLine(item, t) ? (
+            <p className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-muted" data-ke="why-match">
+              <span className="font-medium text-fg">{t("whyMatch")}. </span>
+              {whyMatchLine(item, t)}
+            </p>
+          ) : null}
           {ages ? (
             <p className="mt-0.5 text-[13px] font-medium leading-5 text-fg" data-ke="card-age-range">
               {ages}

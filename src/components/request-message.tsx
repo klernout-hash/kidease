@@ -8,6 +8,8 @@ import { openConversation } from "@/lib/server/family";
 import { sendConnectedMessage } from "@/lib/server/inbox";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { captureRankingEvent } from "@/lib/ranking/events";
+import { rankingContextFor } from "@/lib/ranking/context";
 import { useCopy } from "@/lib/use-copy";
 import type { Daycare } from "@/lib/types";
 
@@ -83,6 +85,15 @@ export function RequestMessageSheet({ daycare, open, onClose }: Props) {
       const sent = await sendConnectedMessage({ data: { conversationId: thread.id, body: text } });
       if (!sent.ok) throw new Error(t("requestSentFailed"));
       capturePostHogEvent("listing_request_submitted", { intent: "message" });
+      {
+        const ctx = rankingContextFor(daycare.id);
+        captureRankingEvent("message_started", {
+          listing_id: daycare.id,
+          position: ctx.position,
+          sort: ctx.sort,
+          variant: ctx.variant,
+        });
+      }
       await holdSendBeat();
       if (!send.live(token)) return;
       setDone({ conversationId: thread.id });

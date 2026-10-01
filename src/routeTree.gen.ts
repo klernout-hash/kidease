@@ -16,6 +16,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
+import { Route as AdminRankingRouteImport } from './routes/admin-ranking'
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
 import { Route as ChildcareBenefitsProgramRouteImport } from './routes/childcare-benefits-program'
@@ -61,6 +62,7 @@ import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
+import { Route as ApiRankingMarketRouteImport } from './routes/api/ranking-market'
 import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
@@ -75,7 +77,6 @@ import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
 import { Route as FrContactRouteImport } from './routes/fr.contact'
 import { Route as FrCookiesRouteImport } from './routes/fr.cookies'
-import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrDonateRouteImport } from './routes/fr.donate'
 import { Route as FrExploreRouteImport } from './routes/fr.explore'
 import { Route as FrFaqRouteImport } from './routes/fr.faq'
@@ -115,10 +116,11 @@ import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.resend'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
-import { Route as FrDaycareCityCityRouteImport } from './routes/fr.daycare.city.$city'
+import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
+import { Route as FrDaycareCityCityRouteImport } from './routes/fr.daycare.city.$city'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -153,6 +155,11 @@ const AdminContractsRoute = AdminContractsRouteImport.update({
 const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
   id: '/admin-email-health',
   path: '/admin-email-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRankingRoute = AdminRankingRouteImport.update({
+  id: '/admin-ranking',
+  path: '/admin-ranking',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIconRoute = AppIconRouteImport.update({
@@ -381,6 +388,11 @@ const ApiInngestRoute = ApiInngestRouteImport.update({
   path: '/api/inngest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRankingMarketRoute = ApiRankingMarketRouteImport.update({
+  id: '/api/ranking-market',
+  path: '/api/ranking-market',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiScreeningDocumentsRoute = ApiScreeningDocumentsRouteImport.update({
   id: '/api/screening-documents',
   path: '/api/screening-documents',
@@ -449,11 +461,6 @@ const FrContactRoute = FrContactRouteImport.update({
 const FrCookiesRoute = FrCookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
-  getParentRoute: () => FrRoute,
-} as any)
-const FrDaycareSlugRoute = FrDaycareSlugRouteImport.update({
-  id: '/daycare/$slug',
-  path: '/daycare/$slug',
   getParentRoute: () => FrRoute,
 } as any)
 const FrDonateRoute = FrDonateRouteImport.update({
@@ -652,9 +659,9 @@ const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
   path: '/daycare/city/$city',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FrDaycareCityCityRoute = FrDaycareCityCityRouteImport.update({
-  id: '/daycare/city/$city',
-  path: '/daycare/city/$city',
+const FrDaycareSlugRoute = FrDaycareSlugRouteImport.update({
+  id: '/daycare/$slug',
+  path: '/daycare/$slug',
   getParentRoute: () => FrRoute,
 } as any)
 const FrJobsPostRoute = FrJobsPostRouteImport.update({
@@ -672,6 +679,11 @@ const ApiContractsIdPdfRoute = ApiContractsIdPdfRouteImport.update({
   path: '/api/contracts/$id/pdf',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FrDaycareCityCityRoute = FrDaycareCityCityRouteImport.update({
+  id: '/daycare/city/$city',
+  path: '/daycare/city/$city',
+  getParentRoute: () => FrRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -681,6 +693,7 @@ export interface FileRoutesByFullPath {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ranking': typeof AdminRankingRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -726,6 +739,7 @@ export interface FileRoutesByFullPath {
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/ranking-market': typeof ApiRankingMarketRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -739,7 +753,6 @@ export interface FileRoutesByFullPath {
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
-  '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
@@ -780,10 +793,11 @@ export interface FileRoutesByFullPath {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
-  '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
+  '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -793,6 +807,7 @@ export interface FileRoutesByTo {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ranking': typeof AdminRankingRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -836,6 +851,7 @@ export interface FileRoutesByTo {
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/ranking-market': typeof ApiRankingMarketRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -849,7 +865,6 @@ export interface FileRoutesByTo {
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
-  '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
@@ -890,10 +905,11 @@ export interface FileRoutesByTo {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
-  '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
+  '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -904,6 +920,7 @@ export interface FileRoutesById {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ranking': typeof AdminRankingRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/childcare-benefits-program': typeof ChildcareBenefitsProgramRoute
@@ -949,6 +966,7 @@ export interface FileRoutesById {
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/ranking-market': typeof ApiRankingMarketRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -962,7 +980,6 @@ export interface FileRoutesById {
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
-  '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
@@ -1003,10 +1020,11 @@ export interface FileRoutesById {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
-  '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
+  '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1018,6 +1036,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ranking'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -1063,6 +1082,7 @@ export interface FileRouteTypes {
     | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
+    | '/api/ranking-market'
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -1076,7 +1096,6 @@ export interface FileRouteTypes {
     | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
-    | '/fr/daycare/$slug'
     | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
@@ -1117,10 +1136,11 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/api/webhooks/resend'
     | '/daycare/city/$city'
-    | '/fr/daycare/city/$city'
+    | '/fr/daycare/$slug'
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
+    | '/fr/daycare/city/$city'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1130,6 +1150,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ranking'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -1173,6 +1194,7 @@ export interface FileRouteTypes {
     | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
+    | '/api/ranking-market'
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -1186,7 +1208,6 @@ export interface FileRouteTypes {
     | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
-    | '/fr/daycare/$slug'
     | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
@@ -1227,10 +1248,11 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/api/webhooks/resend'
     | '/daycare/city/$city'
-    | '/fr/daycare/city/$city'
+    | '/fr/daycare/$slug'
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
+    | '/fr/daycare/city/$city'
   id:
     | '__root__'
     | '/'
@@ -1240,6 +1262,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ranking'
     | '/app-icon'
     | '/benefits'
     | '/childcare-benefits-program'
@@ -1285,6 +1308,7 @@ export interface FileRouteTypes {
     | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
+    | '/api/ranking-market'
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -1298,7 +1322,6 @@ export interface FileRouteTypes {
     | '/fr/benefits'
     | '/fr/contact'
     | '/fr/cookies'
-    | '/fr/daycare/$slug'
     | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
@@ -1339,10 +1362,11 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/api/webhooks/resend'
     | '/daycare/city/$city'
-    | '/fr/daycare/city/$city'
+    | '/fr/daycare/$slug'
     | '/fr/jobs_/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
+    | '/fr/daycare/city/$city'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1353,6 +1377,7 @@ export interface RootRouteChildren {
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
+  AdminRankingRoute: typeof AdminRankingRoute
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
   ChildcareBenefitsProgramRoute: typeof ChildcareBenefitsProgramRoute
@@ -1398,6 +1423,7 @@ export interface RootRouteChildren {
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
+  ApiRankingMarketRoute: typeof ApiRankingMarketRoute
   ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRouteWithChildren
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
@@ -1428,7 +1454,6 @@ export interface RootRouteChildren {
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ApiWebhooksResendRoute: typeof ApiWebhooksResendRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
-  FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
   ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
 }
 
@@ -1481,6 +1506,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-email-health'
       fullPath: '/admin-email-health'
       preLoaderRoute: typeof AdminEmailHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-ranking': {
+      id: '/admin-ranking'
+      path: '/admin-ranking'
+      fullPath: '/admin-ranking'
+      preLoaderRoute: typeof AdminRankingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app-icon': {
@@ -1798,6 +1830,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInngestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ranking-market': {
+      id: '/api/ranking-market'
+      path: '/api/ranking-market'
+      fullPath: '/api/ranking-market'
+      preLoaderRoute: typeof ApiRankingMarketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/screening-documents': {
       id: '/api/screening-documents'
       path: '/api/screening-documents'
@@ -1894,13 +1933,6 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/fr/cookies'
       preLoaderRoute: typeof FrCookiesRouteImport
-      parentRoute: typeof FrRoute
-    }
-    '/fr/daycare/$slug': {
-      id: '/fr/daycare/$slug'
-      path: '/daycare/$slug'
-      fullPath: '/fr/daycare/$slug'
-      preLoaderRoute: typeof FrDaycareSlugRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/donate': {
@@ -2176,11 +2208,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DaycareCityCityRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fr/daycare/city/$city': {
-      id: '/fr/daycare/city/$city'
-      path: '/daycare/city/$city'
-      fullPath: '/fr/daycare/city/$city'
-      preLoaderRoute: typeof FrDaycareCityCityRouteImport
+    '/fr/daycare/$slug': {
+      id: '/fr/daycare/$slug'
+      path: '/daycare/$slug'
+      fullPath: '/fr/daycare/$slug'
+      preLoaderRoute: typeof FrDaycareSlugRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/jobs_/post': {
@@ -2204,6 +2236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiContractsIdPdfRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fr/daycare/city/$city': {
+      id: '/fr/daycare/city/$city'
+      path: '/daycare/city/$city'
+      fullPath: '/fr/daycare/city/$city'
+      preLoaderRoute: typeof FrDaycareCityCityRouteImport
+      parentRoute: typeof FrRoute
+    }
   }
 }
 
@@ -2212,7 +2251,6 @@ interface FrRouteChildren {
   FrBenefitsRoute: typeof FrBenefitsRoute
   FrContactRoute: typeof FrContactRoute
   FrCookiesRoute: typeof FrCookiesRoute
-  FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrDonateRoute: typeof FrDonateRoute
   FrExploreRoute: typeof FrExploreRoute
   FrFaqRoute: typeof FrFaqRoute
@@ -2226,6 +2264,7 @@ interface FrRouteChildren {
   FrStartADaycareRoute: typeof FrStartADaycareRoute
   FrTermsRoute: typeof FrTermsRoute
   FrIndexRoute: typeof FrIndexRoute
+  FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
 }
@@ -2235,7 +2274,6 @@ const FrRouteChildren: FrRouteChildren = {
   FrBenefitsRoute: FrBenefitsRoute,
   FrContactRoute: FrContactRoute,
   FrCookiesRoute: FrCookiesRoute,
-  FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrDonateRoute: FrDonateRoute,
   FrExploreRoute: FrExploreRoute,
   FrFaqRoute: FrFaqRoute,
@@ -2249,6 +2287,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrStartADaycareRoute: FrStartADaycareRoute,
   FrTermsRoute: FrTermsRoute,
   FrIndexRoute: FrIndexRoute,
+  FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrDaycareCityCityRoute: FrDaycareCityCityRoute,
 }
@@ -2323,6 +2362,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
+  AdminRankingRoute: AdminRankingRoute,
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,
   ChildcareBenefitsProgramRoute: ChildcareBenefitsProgramRoute,
@@ -2368,6 +2408,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiE2eSeedRoute: ApiE2eSeedRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
+  ApiRankingMarketRoute: ApiRankingMarketRoute,
   ApiScreeningDocumentsRoute: ApiScreeningDocumentsRouteWithChildren,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
@@ -2398,7 +2439,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ApiWebhooksResendRoute: ApiWebhooksResendRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,
-  FrDaycareCityCityRoute: FrDaycareCityCityRoute,
   ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
 }
 export const routeTree = rootRouteImport
