@@ -2550,5 +2550,11 @@
   "spotAlertQuiet": "It's after 9 PM in Winnipeg. Nothing was sent. Send it again in the morning.",
   "spotAlertSent": "Sent to families who still want alerts.",
   "spotAlertEmpty": "No saved matches or waitlist families fit this open spot.",
-  "spotAlertWorking": "Checking who fits…"
+  "spotAlertWorking": "Checking who fits…",
+  "replyDraft": "Draft reply",
+  "replyDraftWorking": "Drafting…",
+  "replyDraftLead": "Edit the draft, then send it. Nothing goes out until you send.",
+  "replyDraftEmpty": "There is no parent message to answer. Type your own reply.",
+  "replyDraftFailed": "We could not draft a reply. Nothing was sent.",
+  "replyDraftQuiet": "It's after 9 PM in Winnipeg. This reply was not sent."
 }
