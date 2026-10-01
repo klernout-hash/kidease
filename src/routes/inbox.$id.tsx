@@ -17,6 +17,7 @@ import { AI_FLAGS } from "@/lib/ai/flags";
 import { replyDraftEventProps, replyDraftQuiet } from "@/lib/ai/reply-drafts";
 import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { parentWaitlistStatus, waitlistEventProps } from "@/lib/waitlist-tracker";
 import { formatAgeLabel, formatStart, pushNewRequest, scheduleLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
@@ -44,6 +45,7 @@ type BookingInfo = {
   parentName: string | null;
   monthlyAmount: number;
   paymentStatus?: string | null;
+  daycareId?: string;
 };
 
 function ThreadPage() {
@@ -102,6 +104,7 @@ function ThreadPage() {
             parentName: match.parentName ?? user?.displayName ?? null,
             monthlyAmount: match.monthlyAmount,
             paymentStatus: match.paymentStatus,
+            daycareId: match.daycareId,
           };
         }
       } catch {
@@ -330,7 +333,16 @@ function ThreadPage() {
                 size="sm"
                 variant={booking.status === st ? "primary" : "secondary"}
                 onClick={() => {
-                  void updateRequestStatus({ data: { bookingId: booking.id, status: st } }).then(() => load());
+                  void updateRequestStatus({ data: { bookingId: booking.id, status: st } }).then(() => {
+                    const status = parentWaitlistStatus(st);
+                    if (status) {
+                      capturePostHogEvent(
+                        "waitlist_status_changed",
+                        waitlistEventProps({ daycareId: booking.daycareId, status }),
+                      );
+                    }
+                    load();
+                  });
                 }}
               >
                 {st === "under_review" ? t("markReview") : st === "accepted" ? t("offerSpot") : st === "waitlist" ? t("waitlistChild") : t("declineRequest")}

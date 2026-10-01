@@ -94,18 +94,15 @@ async function loadParentFacts(daycare: DaycareSpotRow): Promise<SpotParentFact[
       radiusKm: 25,
     });
   }
-  const bookings = await sql<{ user_id: string; age_group: string; start_date: string | null }>`
-    select user_id, age_group, start_date
-    from bookings
-    where daycare_id = ${daycare.id}
-      and status in ('requested', 'under_review', 'waitlist')
-  `.catch(() => [] as Array<{ user_id: string; age_group: string; start_date: string | null }>);
+  const { listOpenWaitlistFacts } = await import("@/lib/server/waitlist-tracker");
+  const bookings = await listOpenWaitlistFacts(daycare.id).catch(
+    () => [] as Array<{ userId: string; ageGroup: string; startDate: string | null; status: string }>,
+  );
   for (const row of bookings) {
-    const start = row.start_date ? String(row.start_date).slice(0, 10) : null;
     facts.push({
-      userId: row.user_id,
-      ageBand: asAgeBand(row.age_group),
-      startDate: start,
+      userId: row.userId,
+      ageBand: asAgeBand(row.ageGroup),
+      startDate: row.startDate,
       distanceKm: null,
       radiusKm: 25,
     });
