@@ -1,0 +1,18 @@
+# KidEase
+
+KidEase (https://www.kidease.ca) helps parents in Canada find a licensed daycare, compare centres, and ask for a tour. Daycare owners can claim their listing and reply to parents.
+
+Fees, ages, and open spots are shown only when that centre or a public registry published them.
+
+## Key pages
+
+- Home: https://www.kidease.ca/
+- Search: https://www.kidease.ca/search
+- French home: https://www.kidease.ca/fr
+- French search: https://www.kidease.ca/fr/search
+- Cities: https://www.kidease.ca/cities
+- Benefits: https://www.kidease.ca/benefits
+- FAQ: https://www.kidease.ca/faq
+- Help: https://www.kidease.ca/help
+- Claim a listing: https://www.kidease.ca/claim
+- Contact: https://www.kidease.ca/contact

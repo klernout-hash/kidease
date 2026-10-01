@@ -112,7 +112,9 @@ function FrExplore() {
   );
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setQuery = useAppStore((s) => s.setQuery);
-  const [place, setPlace] = useState(incoming.q || origin.label || boot.origin.label);
+  const [place, setPlace] = useState(
+    (incoming.q || "").trim() || (boot.origin.source === "default" ? "" : boot.origin.label),
+  );
   const [name, setName] = useState(incoming.name || "");
   const [from, setFrom] = useState(incoming.from || "");
   const [to, setTo] = useState(incoming.to || "");

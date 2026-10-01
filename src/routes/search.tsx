@@ -14,7 +14,7 @@ import { ExploreFilterChips } from "@/components/explore-filter-chips";
 import { DaycareCard } from "@/components/daycare-card";
 import { searchDaycares } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
-import { reverseGeocode } from "@/lib/geo";
+import { isIqaluitQuery, reverseGeocode } from "@/lib/geo";
 import { originFromDeviceFix, productHomeOrigin, readClientTimeZone } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
 import { CARD_SIZES, CARD_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
@@ -1144,7 +1144,22 @@ function SearchPage() {
   const catalog = items ?? [];
   const fabric = areaPresence(catalog);
   const dualEmpty = anchors.intersect && !searchFailed && (items?.length ?? 0) === 0;
-  const emptyState = searchFailed
+  const iqaluitEmpty =
+    !searchFailed &&
+    items !== null &&
+    items.length === 0 &&
+    isIqaluitQuery(`${incoming.q || ""} ${incoming.city || ""} ${origin.label || ""}`);
+  const emptyState = iqaluitEmpty
+    ? {
+        title: t("searchIqaluitEmpty"),
+        body: t("searchIqaluitEmptyLead"),
+        action: t("widenRadius"),
+        onAction: widenSearchRadius,
+        secondary: t("changeLocation"),
+        secondaryTo: "/?change=1",
+        onSecondary: undefined as (() => void) | undefined,
+      }
+    : searchFailed
     ? {
         title: t("searchFailedTitle"),
         body: t("searchFailedLead"),
@@ -1213,6 +1228,15 @@ function SearchPage() {
               };
   const whereLabel = (incoming.q || query || origin.label || "").trim();
   const city = (whereLabel || origin.label).split(",")[0];
+  const askedPlace = Boolean((incoming.q || incoming.city || "").trim());
+  const locationKnown =
+    askedPlace ||
+    located ||
+    originSource === "gps" ||
+    originSource === "manual" ||
+    originSource === "saved" ||
+    originSource === "ip";
+  const headingCity = locationKnown ? city : t("searchPlacePending");
   const whereSet = Boolean(whereLabel);
   const mapOrigin = anchors.primary;
   const searchCountLine =
@@ -1319,7 +1343,7 @@ function SearchPage() {
                 ? t(BROWSE_RAIL_COPY[parentFilters.fac[0]])
                 : incoming.cat === "before-after"
                   ? t(BROWSE_RAIL_COPY.before_after)
-                  : city}
+                  : headingCity}
             </h1>
             <p className="mt-0.5 min-h-5 text-sm text-muted text-balance" aria-live="polite">
               {items === null ? (
@@ -1328,7 +1352,7 @@ function SearchPage() {
                   <span>{t("searchCountLoading")}</span>
                 </span>
               ) : parentFilters.fac.length === 1 || incoming.cat === "before-after" ? (
-                `${city} · ${searchCountLine}`
+                `${locationKnown ? `${city} · ` : ""}${searchCountLine}`
               ) : (
                 searchCountLine
               )}

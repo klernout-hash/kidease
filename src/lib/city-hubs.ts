@@ -219,7 +219,7 @@ export function cityHubChipLabel(hub: CityHubDef, locale = "en") {
   return `${city}, ${province}`;
 }
 
-/** Geocode-safe query for home chips. "Quebec" alone resolves to Montréal. */
+/** Geocode-safe query for home chips. "Quebec City" is the city, not the province pin. */
 export function cityHubSearchQuery(hub: CityHubDef) {
   return hub.cityEn || hub.city;
 }
@@ -290,9 +290,6 @@ export function buildCityHubSnapshots(
 export function sitemapCityHubPaths(hubs: ReadonlyArray<{ slug: string; count?: number; province?: string }> = CITY_HUB_DEFS) {
   const published = hubs.filter((hub) => (hub.count ?? CITY_HUB_MIN_LISTINGS) >= CITY_HUB_MIN_LISTINGS);
   const paths = published.map((hub) => cityHubPath(hub.slug));
-  for (const hub of published) {
-    const province = hub.province ?? CITY_HUB_DEFS.find((def) => def.slug === hub.slug)?.province;
-    if (province === "QC") paths.push(`/fr${cityHubPath(hub.slug)}`);
-  }
+  for (const hub of published) paths.push(`/fr${cityHubPath(hub.slug)}`);
   return paths;
 }

@@ -76,7 +76,8 @@ export const CITIES: CityHit[] = [
   { lat: 48.3809, lng: -89.2477, label: "Thunder Bay, ON", province: "ON", aliases: ["thunder bay"] },
   { lat: 43.8971, lng: -78.8658, label: "Oshawa, ON", province: "ON", aliases: ["oshawa"] },
   { lat: 45.5017, lng: -73.5673, label: "Montréal, QC", province: "QC", aliases: ["montreal", "montréal", "h2", "h3", "h4"] },
-  { lat: 46.8139, lng: -71.208, label: "Québec City, QC", province: "QC", aliases: ["quebec", "québec", "ville de quebec", "g1"] },
+  { lat: 45.6066, lng: -73.7124, label: "Laval, QC", province: "QC", aliases: ["laval", "h7"] },
+  { lat: 46.8139, lng: -71.208, label: "Québec City, QC", province: "QC", aliases: ["quebec", "québec", "ville de quebec", "ville de québec", "quebec city", "g1"] },
   { lat: 45.4, lng: -71.8991, label: "Sherbrooke, QC", province: "QC", aliases: ["sherbrooke"] },
   { lat: 46.343, lng: -72.5477, label: "Trois-Rivières, QC", province: "QC", aliases: ["trois-rivieres", "trois-rivières"] },
   { lat: 48.427, lng: -71.0689, label: "Saguenay, QC", province: "QC", aliases: ["saguenay", "chicoutimi"] },
@@ -142,6 +143,7 @@ const FSA_CITY: Array<{ re: RegExp; label: string }> = [
   { re: /^[m]/i, label: "Toronto, ON" },
   { re: /^[k][12]/i, label: "Ottawa, ON" },
   { re: /^l[456]/i, label: "Mississauga, ON" },
+  { re: /^h7/i, label: "Laval, QC" },
   { re: /^[h]/i, label: "Montréal, QC" },
   { re: /^g1/i, label: "Québec City, QC" },
   { re: /^v[56]/i, label: "Vancouver, BC" },
@@ -171,12 +173,34 @@ function looksLikePostalQuery(query: string) {
   return /^[a-z]\d[a-z](?:\d[a-z]\d)?$/i.test(compact);
 }
 
+function foldPlace(value: string) {
+  return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+}
+
 function aliasMatches(query: string, alias: string) {
-  const a = alias.toLowerCase();
+  const a = foldPlace(alias);
+  const q = foldPlace(query);
   if (!a) return false;
-  if (query === a) return true;
-  if (query.length < 3 || a.length < 3) return false;
-  return query.includes(a) || a.includes(query);
+  if (q === a) return true;
+  if (q.length < 3 || a.length < 3) return false;
+  return q.includes(a) || a.includes(q);
+}
+
+/** City name or alias, before a province name. "Québec" is the city, not Montréal. */
+function exactCity(query: string): CityHit | undefined {
+  const q = foldPlace(query);
+  if (!q) return undefined;
+  return CITIES.find((city) => {
+    const label = foldPlace(city.label);
+    const name = label.split(",")[0]?.trim() || "";
+    if (q === label || q === name) return true;
+    return city.aliases.some((alias) => foldPlace(alias) === q);
+  });
+}
+
+/** Iqaluit has almost no listings in a short radius. Say so instead of a blank page. */
+export function isIqaluitQuery(value: string | null | undefined) {
+  return foldPlace(value || "").includes("iqaluit");
 }
 
 export function geocode(query: string): (LatLng & { label: string }) | null {
@@ -191,14 +215,17 @@ export function geocode(query: string): (LatLng & { label: string }) | null {
       }
     }
   }
+  const cityFirst = exactCity(q);
+  if (cityFirst) return { lat: cityFirst.lat, lng: cityFirst.lng, label: cityFirst.label };
+  const folded = foldPlace(q);
   const prov = PROVINCES.find(
     (p) =>
-      p.code.toLowerCase() === q ||
-      p.name.toLowerCase() === q ||
-      p.nameFr.toLowerCase() === q ||
-      p.label.toLowerCase().includes(q),
+      foldPlace(p.code) === folded ||
+      foldPlace(p.name) === folded ||
+      foldPlace(p.nameFr) === folded ||
+      foldPlace(p.label).includes(folded),
   );
-  if (prov && q.length <= 22) return { lat: prov.lat, lng: prov.lng, label: prov.label };
+  if (prov && q.length <= 22 && !exactCity(q)) return { lat: prov.lat, lng: prov.lng, label: prov.label };
   const hit = CITIES.find(
     (c) => c.label.toLowerCase().includes(q) || c.aliases.some((a) => aliasMatches(q, a)),
   );
