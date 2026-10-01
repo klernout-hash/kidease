@@ -35,6 +35,10 @@ A daycare can draft a reply from the parent's latest message and the listing fac
 
 The guide chat answers only from `/faq`, `/benefits`, and `/help`. It cites the page. If the pages do not answer, it says it does not know. A subsidy figure is returned only for published Alberta and Canada Child Benefit amounts. The old help bot uses this path when the flag is on. Flag: `parent-helper`. Events: `parent_helper_asked`, `parent_helper_unknown`, `parent_helper_subsidy`.
 
+## Translate
+
+A claimed centre can draft French from the listing text already saved. The draft is labelled auto-translated and can be edited. It is not saved until they click Save changes. A number, fee, or licence that is not in the English text is dropped, and a failed draft leaves the French box unchanged. Flag: `ai-translate`. Events: `translate_drafted`, `translate_fallback`.
+
 
 
 ## What is stored

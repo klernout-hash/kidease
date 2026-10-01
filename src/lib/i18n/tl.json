@@ -2569,5 +2569,13 @@
   "parentHelperQ1": "Which ages are posted on the listing?",
   "parentHelperQ2": "Which hours are posted?",
   "parentHelperQ3": "Is a monthly fee posted, or does it say not confirmed?",
-  "parentHelperQ4": "How do I request a tour on this listing?"
+  "parentHelperQ4": "How do I request a tour on this listing?",
+  "translateCta": "Draft French",
+  "translateLead": "French is drafted from the listing text already saved. Nothing is published until you save.",
+  "translateWorking": "Translating…",
+  "translateFrench": "French listing text",
+  "translateAuto": "Auto-translated",
+  "translateSave": "Edit the draft, then save changes.",
+  "translateEmpty": "Add a listing description first. We will not invent one.",
+  "translateFailed": "We could not draft French. Your listing is unchanged."
 }

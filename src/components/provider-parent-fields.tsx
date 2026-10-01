@@ -1,5 +1,6 @@
 import { ChipButton } from "@/components/chip";
 import { ListingWriter } from "@/components/listing-writer";
+import { ListingTranslate } from "@/components/listing-translate";
 import {
   CURRICULUM_TAGS,
   DESK_AMENITIES,
@@ -38,6 +39,7 @@ export type ParentDeskState = {
   promoText: string;
   tagline: string;
   description: string;
+  descriptionFr: string;
   partTimeMonthly: number;
   amenityKeys: string[];
 };
@@ -55,6 +57,7 @@ export function parentDeskFromDaycare(daycare: Daycare): ParentDeskState {
     promoText: daycare.promoText ?? "",
     tagline: daycare.tagline ?? "",
     description: daycare.description ?? "",
+    descriptionFr: daycare.descriptionFr ?? "",
     partTimeMonthly: daycare.partTimeMonthly ?? 0,
     amenityKeys: (daycare.amenities || "")
       .split(",")
@@ -378,6 +381,13 @@ export function ProviderParentFields({
             onChange={(e) => onChange({ ...value, description: e.target.value })}
           />
         </label>
+        {daycareId ? (
+          <ListingTranslate
+            daycareId={daycareId}
+            value={value.descriptionFr}
+            onChange={(descriptionFr) => onChange({ ...value, descriptionFr })}
+          />
+        ) : null}
         <label className="text-sm">
           {t("deskValues")}
           <textarea

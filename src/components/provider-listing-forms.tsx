@@ -319,6 +319,7 @@ export function CapacityForm({
     state.culturalTeamNote !== (daycare.culturalTeamNote ?? "") ||
     state.tagline !== (daycare.tagline ?? "") ||
     state.description !== (daycare.description ?? "") ||
+    state.descriptionFr !== (daycare.descriptionFr ?? "") ||
     state.partTimeMonthly !== (daycare.partTimeMonthly ?? 0) ||
     state.promoText !== (daycare.promoText ?? "") ||
     state.valuesNote !== (daycare.valuesNote ?? "") ||
@@ -512,6 +513,7 @@ export function CapacityForm({
             culturalTeamNote: state.culturalTeamNote,
             tagline: state.tagline,
             description: state.description,
+            descriptionFr: state.descriptionFr,
             partTimeMonthly: state.partTimeMonthly,
             amenities: state.amenityKeys.join(","),
             facilityType: state.facilityType,

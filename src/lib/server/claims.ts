@@ -429,6 +429,7 @@ export const updateListing = createServerFn({ method: "POST" })
       culturalTeamNote?: string | null;
       tagline?: string;
       description?: string;
+      descriptionFr?: string;
       partTimeMonthly?: number;
       amenities?: string;
       facilityType?: FacilityType | null;
@@ -639,6 +640,7 @@ export const updateListing = createServerFn({ method: "POST" })
     });
     const tagline = (data.tagline ?? "").trim().slice(0, 180);
     const description = (data.description ?? "").trim().slice(0, 2000);
+    const descriptionFr = (data.descriptionFr ?? "").trim().slice(0, 2000);
     const partTime =
       typeof data.partTimeMonthly === "number" && data.partTimeMonthly > 0
         ? Math.round(data.partTimeMonthly)
@@ -658,7 +660,7 @@ export const updateListing = createServerFn({ method: "POST" })
         tagline = case when ${tagline} = '' then tagline else ${tagline} end,
         tagline_fr = case when ${tagline} = '' then tagline_fr else ${tagline} end,
         description = case when ${description} = '' then description else ${description} end,
-        description_fr = case when ${description} = '' then description_fr else ${description} end,
+        description_fr = case when ${descriptionFr} <> '' then ${descriptionFr} when ${description} = '' then description_fr else ${description} end,
         part_time_monthly = coalesce(${partTime}, part_time_monthly)
       where id = ${data.daycareId}
     `;
