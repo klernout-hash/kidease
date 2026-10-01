@@ -43,6 +43,19 @@ export function ListingHeaderPills({
   if (opening) parts.push(parentOpeningLabel(opening, loc));
   else if (vacancy.kind === "open") parts.push(`${vacancy.spots} ${t("spots")}`);
   else if (vacancy.kind === "waitlist" || vacancy.kind === "confirm") parts.push(t(vacancy.labelKey));
+  const provincial = item.provincialOpening;
+  if (provincial) {
+    const date = new Date(provincial.asOf);
+    const label = Number.isNaN(date.getTime())
+      ? ""
+      : date.toLocaleDateString(loc === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium" });
+    const ages = provincial.ageLabel === "All ages" ? t("provincialOpeningsAllAges") : "";
+    parts.push(
+      [t("provincialOpenings"), String(provincial.total), ages, label ? t("provincialOpeningsAsOf").replace("{date}", label) : ""]
+        .filter(Boolean)
+        .join(" · "),
+    );
+  }
   if (agesLabel) parts.push(`${t("ages")} ${agesLabel}`);
   const hoursText = hours.trim();
   if (hoursText && hoursText !== "—" && hoursText !== "-") parts.push(hoursText);

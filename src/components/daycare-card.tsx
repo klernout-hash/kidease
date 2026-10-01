@@ -177,6 +177,24 @@ function ListingAnchor({
   );
 }
 
+function ProvincialOpeningLine({ item }: { item: Card }) {
+  const { t, locale } = useCopy();
+  const row = item.provincialOpening;
+  if (!row) return null;
+  const date = new Date(row.asOf);
+  const label = Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium" });
+  const ages = row.ageLabel === "All ages" ? t("provincialOpeningsAllAges") : "";
+  return (
+    <p className="mt-0.5 text-[13px] leading-5 text-muted" data-ke="provincial-openings">
+      {t("provincialOpenings")} · {row.total}
+      {ages ? ` · ${ages}` : ""}
+      {label ? ` · ${t("provincialOpeningsAsOf").replace("{date}", label)}` : ""}
+    </p>
+  );
+}
+
 export const DaycareCard = memo(function DaycareCard({
   item,
   showDistance = true,
@@ -305,6 +323,7 @@ export const DaycareCard = memo(function DaycareCard({
               {openSpotsLine}
             </p>
           ) : null}
+          <ProvincialOpeningLine item={item} />
           {publicApprovalEligible(item) ? (
             <p className="mt-0.5 truncate text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
               {t("kideaseApprovedMarker")}
@@ -436,6 +455,7 @@ export const DaycareCard = memo(function DaycareCard({
               {!compact ? <UrgencyCue score={item.urgencyScore} compact /> : null}
             </div>
           ) : null}
+          <ProvincialOpeningLine item={item} />
           {!compact && ageChips.length ? (
             <div className="flex flex-wrap gap-1 pt-1">
               {ageChips.map((band) => (
