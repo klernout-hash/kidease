@@ -23,7 +23,12 @@ import { signedPdfPath } from "@/lib/docusign-packs";
 import { approvalHealthSummary, canOfferApprove, licenceFileMissingCopy, type ApprovalHealth } from "@/lib/approve-live";
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import type { AdminCentreRow, Decision } from "@/lib/server/admin-centres";
-import { HIDDEN_REVIEW_ADMIN_LABEL, isHiddenReviewFault } from "@/lib/listing-visibility";
+import {
+  HIDDEN_REVIEW_ADMIN_LABEL,
+  isHiddenReviewFault,
+  REMOVED_FROM_MASTER_ADMIN_LABEL,
+  REMOVED_FROM_MASTER_FAULT,
+} from "@/lib/listing-visibility";
 import type { AdminContractRow, AdminPackRow } from "@/lib/server/contracts";
 import type { LicenseReviewAction } from "@/lib/server/trust";
 import { trustBadgesFor, type TrustListing } from "@/lib/trust";
@@ -414,6 +419,10 @@ export function AdminReviewCard({
           ) : isHiddenReviewFault(centre.importFault) ? (
             <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-warn" data-ke="hidden-review">
               {HIDDEN_REVIEW_ADMIN_LABEL}
+            </p>
+          ) : centre.importFault === REMOVED_FROM_MASTER_FAULT ? (
+            <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-warn" data-ke="removed-from-master">
+              {REMOVED_FROM_MASTER_ADMIN_LABEL}
             </p>
           ) : centre.importFault ? (
             <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-warn" data-ke="import-fault">

@@ -18,8 +18,11 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseCsvRecords } from "../src/lib/catalog-master.ts";
 import {
   planDuplicateMerges,
+  planExplicitDuplicateMerges,
+  planAddressReviewHides,
   rollbackInputsForPlan,
   buildRollbackSql,
   hideRollbackInputs,
@@ -65,6 +68,23 @@ function loadGroups(path) {
   return groups;
 }
 
+function csvRecords(path) {
+  const table = parseCsvRecords(readFileSync(path, "utf8"));
+  if (table.length < 2) return [];
+  const header = table[0].map((cell) => cell.trim());
+  return table.slice(1).filter((row) => row.some((cell) => cell.trim())).map((row) => {
+    const record = {};
+    header.forEach((key, index) => {
+      record[key] = row[index] || "";
+    });
+    return record;
+  });
+}
+
+function isCsv(path) {
+  return path.toLowerCase().endsWith(".csv");
+}
+
 function emptyChild(daycareId, photos) {
   return {
     daycareId,
@@ -78,6 +98,9 @@ function emptyChild(daycareId, photos) {
     conversations: [],
     photos: photos || "",
     photoCount: photoCount(photos),
+    waitlistUserIds: [],
+    claimIds: [],
+    ownerUserIds: [],
   };
 }
 
@@ -123,6 +146,7 @@ function factsFromDbRow(row) {
     visibility: asText(row.visibility) || "public",
     mergedInto: asText(row.merged_into),
     importFault: asText(row.import_fault),
+    ownerCount: Number(row.owner_count) || 0,
   };
 }
 
@@ -138,6 +162,14 @@ async function loadLive(databaseUrl, ids) {
               d.age_min_months, d.age_max_months,
               d.infant_monthly, d.toddler_monthly, d.preschool_monthly, d.part_time_monthly,
               d.photos, d.listing_active, d.visibility, d.merged_into, d.import_fault,
+              (
+                (select count(*)::int from provider_daycares p where p.daycare_id = d.id)
+                + (select count(*)::int from listing_claims lc
+                    where lc.daycare_id = d.id
+                      and coalesce(lc.status, '') not in ('rejected', 'withdrawn', 'cancelled'))
+                + (select count(*)::int from centre_members cm
+                    where cm.daycare_id = d.id and cm.status = 'active')
+              ) as owner_count,
               (select count(*)::int from bookings b where b.daycare_id = d.id) as enquiry_count,
               (select count(*)::int from lead_requests l where l.daycare_id = d.id) as lead_count,
               (select count(*)::int from messages m
@@ -147,7 +179,7 @@ async function loadLive(databaseUrl, ids) {
         where d.id = any($1::text[])`,
       [ids],
     );
-    const [enquiries, tours, leads, saved, reviews, availability, views, conversations] = await Promise.all([
+    const [enquiries, tours, leads, saved, reviews, availability, views, conversations, waitlists, claims, owners] = await Promise.all([
       client.query(`select id, daycare_id from bookings where daycare_id = any($1::text[])`, [ids]),
       client.query(`select id, daycare_id from tour_requests where daycare_id = any($1::text[])`, [ids]),
       client.query(`select id, daycare_id from lead_requests where daycare_id = any($1::text[])`, [ids]),
@@ -156,6 +188,14 @@ async function loadLive(databaseUrl, ids) {
       client.query(`select daycare_id, month from availability where daycare_id = any($1::text[])`, [ids]),
       client.query(`select daycare_id, viewed_on from daycare_views where daycare_id = any($1::text[])`, [ids]),
       client.query(`select id, user_id, daycare_id from conversations where daycare_id = any($1::text[])`, [ids]),
+      client.query(`select user_id, daycare_id from waitlist_interests where daycare_id = any($1::text[])`, [ids]),
+      client.query(
+        `select id, user_id, daycare_id from listing_claims
+          where daycare_id = any($1::text[])
+            and coalesce(status, '') not in ('rejected', 'withdrawn', 'cancelled')`,
+        [ids],
+      ),
+      client.query(`select user_id, daycare_id from provider_daycares where daycare_id = any($1::text[])`, [ids]),
     ]);
     const byId = new Map(facts.rows.map((row) => [row.id, factsFromDbRow(row)]));
     const children = new Map();
@@ -175,6 +215,9 @@ async function loadLive(databaseUrl, ids) {
     push(availability.rows, "availabilityMonths", (row) => row.month);
     push(views.rows, "viewDays", (row) => row.viewed_on);
     push(conversations.rows, "conversations", (row) => ({ id: row.id, userId: row.user_id }));
+    push(waitlists.rows, "waitlistUserIds", (row) => row.user_id);
+    push(claims.rows, "claimIds", (row) => row.id);
+    push(owners.rows, "ownerUserIds", (row) => row.user_id);
     return { byId, children, client, pool };
   } catch (error) {
     client.release();
@@ -316,6 +359,45 @@ async function applyPlan(client, plan, factsById) {
           [group.keeperId, move.retiredId, move.moved.viewDays],
         );
       }
+      if ((move.moved.waitlistUserIds || []).length > 0) {
+        await client.query(
+          `update waitlist_interests set daycare_id = $1
+            where user_id = any($2::text[])
+              and daycare_id = $3
+              and not exists (
+                select 1 from waitlist_interests keeper_row
+                where keeper_row.user_id = waitlist_interests.user_id
+                  and keeper_row.daycare_id = $1
+              )`,
+          [group.keeperId, move.moved.waitlistUserIds, move.retiredId],
+        );
+      }
+      if ((move.moved.claimIds || []).length > 0) {
+        await client.query(
+          `update listing_claims set daycare_id = $1
+            where id = any($2::text[])
+              and daycare_id = $3
+              and not exists (
+                select 1 from listing_claims keeper_row
+                where keeper_row.user_id = listing_claims.user_id
+                  and keeper_row.daycare_id = $1
+              )`,
+          [group.keeperId, move.moved.claimIds, move.retiredId],
+        );
+      }
+      if ((move.moved.ownerUserIds || []).length > 0) {
+        await client.query(
+          `update provider_daycares set daycare_id = $1
+            where user_id = any($2::text[])
+              and daycare_id = $3
+              and not exists (
+                select 1 from provider_daycares keeper_row
+                where keeper_row.user_id = provider_daycares.user_id
+                  and keeper_row.daycare_id = $1
+              )`,
+          [group.keeperId, move.moved.ownerUserIds, move.retiredId],
+        );
+      }
       await client.query(
         `update daycares
             set merged_into = $1,
@@ -354,11 +436,103 @@ async function applyPlan(client, plan, factsById) {
   await persistLocalLicenseMatches(client, matchIds);
 }
 
+function loadExplicitPairs(path) {
+  return csvRecords(path)
+    .map((row) => ({
+      duplicateId: (row.duplicate_site_id || "").trim(),
+      keeperId: (row.keeper_site_id || "").trim(),
+      duplicateSlug: (row.duplicate_slug || "").trim(),
+      keeperSlug: (row.keeper_slug || "").trim(),
+      name: row.name || "",
+      keeperName: row.keeper_name || "",
+      address: row.duplicate_address || "",
+      keeperAddress: row.keeper_address || "",
+      city: row.city || "",
+      province: row.province || "",
+      postalCode: row.postal || "",
+      keeperPostal: row.keeper_postal || "",
+    }))
+    .filter((row) => row.duplicateId && row.keeperId);
+}
+
+function loadExcludedKeys(path) {
+  const ids = new Set();
+  const slugs = new Set();
+  for (const row of csvRecords(path)) {
+    for (const key of ["duplicate_site_id", "site_id", "keeper_site_id"]) {
+      const value = (row[key] || "").trim();
+      if (value) ids.add(value);
+    }
+    for (const key of ["duplicate_slug", "slug", "keeper_slug"]) {
+      const value = (row[key] || "").trim();
+      if (value) slugs.add(value);
+    }
+  }
+  return { ids, slugs };
+}
+
+function loadKeeperSlugs(path) {
+  const centres = loadJson(path);
+  const bySlug = new Map();
+  for (const row of centres) {
+    if (row && row.slug && row.id) bySlug.set(String(row.slug).toLowerCase(), String(row.id));
+  }
+  return bySlug;
+}
+
+function loadReviewPairs(path, keeperIdsBySlug) {
+  return csvRecords(path)
+    .map((row) => {
+      const keeperSlug = (row.keeper_slug || "").trim();
+      const keeperId = keeperIdsBySlug.get(keeperSlug.toLowerCase()) || "";
+      return {
+        duplicateId: (row.site_id || "").trim(),
+        keeperId,
+        duplicateSlug: (row.slug || "").trim(),
+        keeperSlug,
+        names: [row.name || ""].filter(Boolean),
+        addresses: [row.address || ""].filter(Boolean),
+        city: row.city || "",
+        province: row.province || "",
+      };
+    })
+    .filter((row) => row.duplicateId);
+}
+
+function assertNoExcluded(pairs, excluded) {
+  const hits = pairs.filter(
+    (pair) =>
+      excluded.ids.has(pair.duplicateId) ||
+      excluded.ids.has(pair.keeperId) ||
+      excluded.slugs.has(pair.duplicateSlug) ||
+      excluded.slugs.has(pair.keeperSlug),
+  );
+  if (hits.length > 0) {
+    throw new Error(`${hits.length} pairs are on the do-not-merge list`);
+  }
+}
+
+function printSkips(label, skipped) {
+  const reasons = new Map();
+  for (const row of skipped) reasons.set(row.reason, (reasons.get(row.reason) || 0) + 1);
+  console.log(`[merge-duplicates] ${label} ${skipped.length}`);
+  for (const [reason, count] of [...reasons.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    console.log(`[merge-duplicates] ${label} ${reason} ${count}`);
+  }
+  for (const row of skipped) {
+    if (row.reason === "both claimed" || row.reason === "protected listing" || row.reason === "claimed duplicate left public") {
+      console.log(`[merge-duplicates] ${label} row ${row.duplicateId} -> ${row.keeperId} ${row.reason}`);
+    }
+  }
+}
+
 async function main() {
   const apply = flag("apply");
   const groupsPath = option("groups");
   const factsPath = option("facts");
   const childrenPath = option("children");
+  const excludePath = option("exclude");
+  const reviewPath = option("review");
   if (!groupsPath) {
     console.error("[merge-duplicates] pass --groups path/to/duplicate-groups.json");
     process.exit(1);
@@ -372,12 +546,60 @@ async function main() {
     console.error("[merge-duplicates] --apply needs DATABASE_URL. A dry-run does not.");
     process.exit(1);
   }
-  const groups = loadGroups(resolve(groupsPath));
-  const ids = [...new Set(groups.flatMap((group) => (group.rows || []).map((row) => row.id).filter(Boolean)))];
+  const explicit = isCsv(groupsPath);
+  const pairs = explicit ? loadExplicitPairs(resolve(groupsPath)) : [];
+  const excluded = excludePath ? loadExcludedKeys(resolve(excludePath)) : { ids: new Set(), slugs: new Set() };
+  if (explicit) assertNoExcluded(pairs, excluded);
+  const reviewPairs = reviewPath
+    ? loadReviewPairs(resolve(reviewPath), loadKeeperSlugs(join(root, "src/lib/data/centres.json")))
+    : [];
+  if (reviewPairs.some((row) => !row.keeperId)) {
+    const missingKeepers = reviewPairs.filter((row) => !row.keeperId).length;
+    throw new Error(`${missingKeepers} review rows have no keeper id`);
+  }
+  const groups = explicit
+    ? pairs.map((pair) => ({
+        rows: [
+          { id: pair.duplicateId, province: pair.province, slug: pair.duplicateSlug, name: pair.name, address: pair.address },
+          { id: pair.keeperId, province: pair.province, slug: pair.keeperSlug, name: pair.keeperName, address: pair.keeperAddress },
+        ],
+      }))
+    : loadGroups(resolve(groupsPath));
+  const ids = explicit
+    ? [...new Set([...pairs.flatMap((pair) => [pair.duplicateId, pair.keeperId]), ...reviewPairs.flatMap((pair) => [pair.duplicateId, pair.keeperId])])]
+    : [...new Set(groups.flatMap((group) => (group.rows || []).map((row) => row.id).filter(Boolean)))];
   let factsById = new Map();
   let children = indexChildren(childrenPath ? loadJson(resolve(childrenPath)) : []);
   if (factsPath) {
     for (const row of loadJson(resolve(factsPath))) factsById.set(row.id, row);
+  }
+  if (explicit && !factsPath) {
+    for (const pair of pairs) {
+      if (!factsById.has(pair.duplicateId)) {
+        factsById.set(pair.duplicateId, {
+          id: pair.duplicateId,
+          slug: pair.duplicateSlug,
+          name: pair.name,
+          address: pair.address,
+          city: pair.city,
+          province: pair.province,
+          postalCode: pair.postalCode,
+          claimStatus: "unclaimed",
+        });
+      }
+      if (!factsById.has(pair.keeperId)) {
+        factsById.set(pair.keeperId, {
+          id: pair.keeperId,
+          slug: pair.keeperSlug,
+          name: pair.keeperName,
+          address: pair.keeperAddress,
+          city: pair.city,
+          province: pair.province,
+          postalCode: pair.keeperPostal,
+          claimStatus: "unclaimed",
+        });
+      }
+    }
   }
   let live = null;
   if (databaseUrl && !factsPath) {
@@ -394,7 +616,32 @@ async function main() {
       }
     }
   }
-  const plan = planDuplicateMerges(groups, factsById, children);
+  let swaps = [];
+  let explicitSkips = [];
+  let plan;
+  if (explicit) {
+    if (!databaseUrl) {
+      console.log("[merge-duplicates] claims not checked (no DATABASE_URL)");
+    } else {
+      console.log("[merge-duplicates] claims checked");
+    }
+    const explicitPlan = planExplicitDuplicateMerges(pairs, factsById, children);
+    plan = explicitPlan.plan;
+    swaps = explicitPlan.swaps;
+    explicitSkips = explicitPlan.skipped;
+    const reviews = planAddressReviewHides(reviewPairs, factsById);
+    plan.hiddenReviews = reviews.hides;
+    plan.hiddenReview = reviews.hides.length;
+    printSkips("skipped", explicitSkips);
+    printSkips("reviewSkipped", reviews.skipped);
+    console.log(`[merge-duplicates] swaps ${swaps.length}`);
+    for (const swap of swaps) {
+      console.log(`[merge-duplicates] swap keeper ${swap.keeperSlug || swap.keeperId} duplicate was ${swap.duplicateSlug || swap.duplicateId}`);
+    }
+    console.log(`[merge-duplicates] reviewQueued ${reviews.hides.length}`);
+  } else {
+    plan = planDuplicateMerges(groups, factsById, children);
+  }
   printPlan(plan, groups);
   console.log(`[merge-duplicates] mode ${apply ? "apply" : "dry-run"}`);
   if (!apply) {

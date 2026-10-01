@@ -38,7 +38,7 @@ export async function resolveListingSitemapSlugs(): Promise<string[]> {
     const { PUBLIC_LISTING_SQL, SUPPRESSED_CATALOG_SQL } = await import("../../src/lib/listing-visibility.ts");
     const sql = await getSql();
     const rows = await sql.query<{ slug: string | null }>(
-      `select slug from daycares where ${PUBLIC_LISTING_SQL}`,
+      `select slug from daycares where ${PUBLIC_LISTING_SQL} order by lower(slug), slug`,
     );
     let suppressed: string[] = [];
     try {

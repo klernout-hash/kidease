@@ -59,6 +59,8 @@ export type MergeListingFacts = {
   visibility?: string | null;
   mergedInto?: string | null;
   importFault?: string | null;
+  /** Owners, approved claims, or staff links. A claimed listing stays the keeper. */
+  ownerCount?: number | null;
 };
 
 export type MergeConversation = { id: string; userId: string };
@@ -75,6 +77,11 @@ export type MergeChildInventory = {
   conversations?: MergeConversation[];
   photos?: string | null;
   photoCount?: number | null;
+  waitlistUserIds?: string[];
+  /** listing_claims ids to move when the keeper has no claim for that user. */
+  claimIds?: string[];
+  /** provider_daycares user ids to move when the keeper has no row for that user. */
+  ownerUserIds?: string[];
 };
 
 export type MergeFieldFill = {
@@ -93,6 +100,9 @@ export type MergeMovedChildren = {
   availabilityMonths: string[];
   viewDays: string[];
   conversationIds: string[];
+  waitlistUserIds: string[];
+  claimIds: string[];
+  ownerUserIds: string[];
   photosCopied: boolean;
 };
 
@@ -189,9 +199,15 @@ export function factsFromGroupRow(row: DuplicateGroupInput["rows"][number]): Mer
   };
 }
 
-function claimed(row: MergeListingFacts): boolean {
+/** Claimed, owner-linked, or otherwise not free to retire. */
+export function listingOwned(row: MergeListingFacts): boolean {
+  if ((row.ownerCount || 0) > 0) return true;
   if (text(row.claimedAt)) return true;
   return CLAIMED.has(text(row.claimStatus).toLowerCase());
+}
+
+function claimed(row: MergeListingFacts): boolean {
+  return listingOwned(row);
 }
 
 function activity(row: MergeListingFacts): number {
@@ -275,6 +291,9 @@ function emptyMoved(): MergeMovedChildren {
     availabilityMonths: [],
     viewDays: [],
     conversationIds: [],
+    waitlistUserIds: [],
+    claimIds: [],
+    ownerUserIds: [],
     photosCopied: false,
   };
 }
@@ -315,6 +334,19 @@ function absorbRetired(state: MoveState, row: MergeChildInventory): { moved: Mer
     state.users.add(userId);
     moved.conversationIds.push(id);
   }
+  for (const userId of list(row.waitlistUserIds)) {
+    if (state.saved.has(`wait:${userId}`)) continue;
+    state.saved.add(`wait:${userId}`);
+    moved.waitlistUserIds.push(userId);
+  }
+  for (const claimId of list(row.claimIds)) {
+    moved.claimIds.push(claimId);
+  }
+  for (const userId of list(row.ownerUserIds)) {
+    if (state.users.has(`owner:${userId}`)) continue;
+    state.users.add(`owner:${userId}`);
+    moved.ownerUserIds.push(userId);
+  }
   let photos: string | null = null;
   if (!state.photosTaken && !blank(row.photos)) {
     moved.photosCopied = true;
@@ -333,6 +365,9 @@ function concatMoved(target: MergeMovedChildren, extra: MergeMovedChildren) {
   target.availabilityMonths.push(...extra.availabilityMonths);
   target.viewDays.push(...extra.viewDays);
   target.conversationIds.push(...extra.conversationIds);
+  target.waitlistUserIds.push(...(extra.waitlistUserIds || []));
+  target.claimIds.push(...(extra.claimIds || []));
+  target.ownerUserIds.push(...(extra.ownerUserIds || []));
   if (extra.photosCopied) target.photosCopied = true;
 }
 
@@ -341,10 +376,16 @@ function moveChildren(
   retired: MergeChildInventory[],
 ): { moved: MergeMovedChildren; retiredMoves: MergeRetiredMove[] } {
   const state: MoveState = {
-    saved: new Set(list(keeper?.savedUserIds)),
+    saved: new Set([
+      ...list(keeper?.savedUserIds),
+      ...list(keeper?.waitlistUserIds).map((userId) => `wait:${userId}`),
+    ]),
     months: new Set(list(keeper?.availabilityMonths)),
     days: new Set(list(keeper?.viewDays)),
-    users: new Set((keeper?.conversations || []).map((row) => row.userId).filter(Boolean)),
+    users: new Set([
+      ...(keeper?.conversations || []).map((row) => row.userId).filter(Boolean),
+      ...list(keeper?.ownerUserIds).map((userId) => `owner:${userId}`),
+    ]),
     photosTaken: (keeper?.photoCount || 0) > 0 || !blank(keeper?.photos),
   };
   const moved = emptyMoved();
@@ -367,6 +408,9 @@ export function countMoved(moved: MergeMovedChildren): number {
     moved.availabilityMonths.length +
     moved.viewDays.length +
     moved.conversationIds.length +
+    (moved.waitlistUserIds || []).length +
+    (moved.claimIds || []).length +
+    (moved.ownerUserIds || []).length +
     (moved.photosCopied ? 1 : 0)
   );
 }
@@ -493,6 +537,17 @@ export function planMergeGroup(
   }
   if (retired.length === 0 && unrelatedIds.length === 0) return { skip: "already merged" };
   if (retired.length === 0) return { skip: "not the same centre" };
+  return retireIntoKeeper(keeper, retired, rows, children, unrelatedIds, hiddenReviews);
+}
+
+function retireIntoKeeper(
+  keeper: MergeListingFacts,
+  retired: MergeListingFacts[],
+  rows: MergeListingFacts[],
+  children: Map<string, MergeChildInventory>,
+  unrelatedIds: string[] = [],
+  hiddenReviews: HiddenReviewAction[] = [],
+): MergeGroupPlan {
   const alreadyRetiredIds = rows.filter((row) => text(row.mergedInto) === keeper.id).map((row) => row.id);
   const conflictIds = rows
     .filter((row) => text(row.mergedInto) && text(row.mergedInto) !== keeper.id)
@@ -525,6 +580,185 @@ export function planMergeGroup(
     needsReview: [],
     hiddenReviews,
   };
+}
+
+/** Kids World stays public. A merge must not hide it or rewrite it. */
+export const PROTECTED_MERGE_SLUGS = new Set(["kids-world-daycare-kh2t"]);
+
+export type ExplicitDuplicatePair = {
+  duplicateId: string;
+  keeperId: string;
+  duplicateSlug?: string | null;
+  keeperSlug?: string | null;
+};
+
+export type ExplicitMergeSwap = {
+  duplicateId: string;
+  keeperId: string;
+  duplicateSlug: string;
+  keeperSlug: string;
+};
+
+export type ExplicitMergeSkip = {
+  duplicateId: string;
+  keeperId: string;
+  reason: string;
+};
+
+function protectedListing(id: string, slug: string | null | undefined): boolean {
+  const value = text(slug).toLowerCase();
+  return PROTECTED_MERGE_SLUGS.has(value) || PROTECTED_MERGE_SLUGS.has(id.toLowerCase());
+}
+
+/**
+ * Audited duplicate → keeper pairs. Does not re-check the street matcher.
+ * A claimed or owner-linked listing stays the keeper. If both are claimed, the pair is skipped.
+ * kids-world-daycare-kh2t is never retired and never rewritten.
+ */
+export function planExplicitDuplicateMerges(
+  pairs: ExplicitDuplicatePair[],
+  factsById: Map<string, MergeListingFacts> = new Map(),
+  children: Map<string, MergeChildInventory> = new Map(),
+): { plan: MergePlan; swaps: ExplicitMergeSwap[]; skipped: ExplicitMergeSkip[] } {
+  const planned: MergeGroupPlan[] = [];
+  const skipped: ExplicitMergeSkip[] = [];
+  const swaps: ExplicitMergeSwap[] = [];
+  const staying = new Set<string>();
+  const retiring = new Set<string>();
+  for (const pair of pairs) {
+    const duplicateId = text(pair.duplicateId);
+    const keeperId = text(pair.keeperId);
+    if (!duplicateId || !keeperId || duplicateId === keeperId) {
+      skipped.push({ duplicateId, keeperId, reason: "missing id" });
+      continue;
+    }
+    if (
+      protectedListing(duplicateId, pair.duplicateSlug) ||
+      protectedListing(keeperId, pair.keeperSlug)
+    ) {
+      skipped.push({ duplicateId, keeperId, reason: "protected listing" });
+      continue;
+    }
+    if (retiring.has(duplicateId) || retiring.has(keeperId) || staying.has(duplicateId)) {
+      skipped.push({ duplicateId, keeperId, reason: "id already used in this plan" });
+      continue;
+    }
+    const duplicate = factsById.get(duplicateId);
+    const keeper = factsById.get(keeperId);
+    const duplicateFacts = duplicate || {
+      ...factsFromGroupRow({ id: duplicateId, slug: pair.duplicateSlug || "" }),
+    };
+    const keeperFacts = keeper || {
+      ...factsFromGroupRow({ id: keeperId, slug: pair.keeperSlug || "" }),
+    };
+    if (protectedListing(duplicateFacts.id, duplicateFacts.slug) || protectedListing(keeperFacts.id, keeperFacts.slug)) {
+      skipped.push({ duplicateId, keeperId, reason: "protected listing" });
+      continue;
+    }
+    const duplicateOwned = listingOwned(duplicateFacts);
+    const keeperOwned = listingOwned(keeperFacts);
+    if (duplicateOwned && keeperOwned) {
+      skipped.push({ duplicateId, keeperId, reason: "both claimed" });
+      continue;
+    }
+    let stay = keeperFacts;
+    let retire = duplicateFacts;
+    if (duplicateOwned && !keeperOwned) {
+      stay = duplicateFacts;
+      retire = keeperFacts;
+      swaps.push({
+        duplicateId,
+        keeperId: duplicateId,
+        duplicateSlug: text(pair.duplicateSlug),
+        keeperSlug: text(pair.keeperSlug),
+      });
+    }
+    if (text(retire.mergedInto) === stay.id) {
+      skipped.push({ duplicateId, keeperId, reason: "already merged" });
+      continue;
+    }
+    if (text(retire.importFault) && !text(retire.mergedInto)) {
+      skipped.push({ duplicateId, keeperId, reason: "already hidden" });
+      continue;
+    }
+    if (retiring.has(stay.id) || staying.has(retire.id)) {
+      skipped.push({ duplicateId, keeperId, reason: "id already used in this plan" });
+      continue;
+    }
+    const group = retireIntoKeeper(stay, [retire], [stay, retire], children);
+    planned.push(group);
+    staying.add(stay.id);
+    retiring.add(retire.id);
+  }
+  const plan: MergePlan = {
+    groups: planned,
+    skipped: skipped.map((row) => ({ ids: [row.duplicateId, row.keeperId], reason: row.reason })),
+    needsReview: [],
+    hiddenReviews: [],
+    keepers: planned.length,
+    retired: planned.reduce((sum, group) => sum + group.retiredIds.length, 0),
+    fieldsFilled: planned.reduce((sum, group) => sum + countFills(group.fieldFills), 0),
+    childRecordsMoved: planned.reduce((sum, group) => sum + countMoved(group.moved), 0),
+    hiddenReview: 0,
+  };
+  return { plan, swaps, skipped };
+}
+
+export type AddressReviewPair = {
+  duplicateId: string;
+  keeperId: string;
+  duplicateSlug?: string | null;
+  names?: string[];
+  addresses?: string[];
+  city?: string | null;
+  province?: string | null;
+};
+
+/**
+ * Possible duplicates whose addresses differ. Hidden for Admin review.
+ * Not a merge: merged_into stays null. A claimed duplicate is left public.
+ */
+export function planAddressReviewHides(
+  pairs: AddressReviewPair[],
+  factsById: Map<string, MergeListingFacts> = new Map(),
+): { hides: HiddenReviewAction[]; skipped: ExplicitMergeSkip[] } {
+  const hides: HiddenReviewAction[] = [];
+  const skipped: ExplicitMergeSkip[] = [];
+  for (const pair of pairs) {
+    const duplicateId = text(pair.duplicateId);
+    const keeperId = text(pair.keeperId);
+    if (!duplicateId || !keeperId) {
+      skipped.push({ duplicateId, keeperId, reason: "missing id" });
+      continue;
+    }
+    const duplicate = factsById.get(duplicateId);
+    const slug = text(pair.duplicateSlug || duplicate?.slug);
+    if (protectedListing(duplicateId, slug) || protectedListing(keeperId, "")) {
+      skipped.push({ duplicateId, keeperId, reason: "protected listing" });
+      continue;
+    }
+    if (duplicate && listingOwned(duplicate)) {
+      skipped.push({ duplicateId, keeperId, reason: "claimed duplicate left public" });
+      continue;
+    }
+    if (duplicate && (text(duplicate.mergedInto) || text(duplicate.importFault))) {
+      skipped.push({ duplicateId, keeperId, reason: "already hidden" });
+      continue;
+    }
+    hides.push({
+      liveId: keeperId,
+      hiddenId: duplicateId,
+      names: uniqueLabels(pair.names || [duplicate?.name]),
+      addresses: uniqueLabels(pair.addresses || [duplicate?.address]),
+      city: text(pair.city || duplicate?.city),
+      province: text(pair.province || duplicate?.province),
+      reason: "possible duplicate, addresses differ",
+      flag: HIDDEN_REVIEW_POSSIBLE_SECOND_SITE,
+      listingActive: 0,
+      visibility: LISTING_VISIBILITY.adminOnly,
+    });
+  }
+  return { hides, skipped };
 }
 
 export function planDuplicateMerges(
@@ -677,6 +911,21 @@ export function buildRollbackSql(rows: MergeRollbackInput[], hides: HideRollback
     for (const day of row.moved.viewDays) {
       lines.push(
         `update daycare_views set daycare_id = ${sqlLiteral(row.retiredId)} where daycare_id = ${sqlLiteral(row.keeperId)} and viewed_on = ${sqlLiteral(day)} and not exists (select 1 from daycare_views existing where existing.daycare_id = ${sqlLiteral(row.retiredId)} and existing.viewed_on = ${sqlLiteral(day)});`,
+      );
+    }
+    for (const userId of row.moved.waitlistUserIds || []) {
+      lines.push(
+        `update waitlist_interests set daycare_id = ${sqlLiteral(row.retiredId)} where user_id = ${sqlLiteral(userId)} and daycare_id = ${sqlLiteral(row.keeperId)};`,
+      );
+    }
+    for (const claimId of row.moved.claimIds || []) {
+      lines.push(
+        `update listing_claims set daycare_id = ${sqlLiteral(row.retiredId)} where id = ${sqlLiteral(claimId)} and daycare_id = ${sqlLiteral(row.keeperId)};`,
+      );
+    }
+    for (const userId of row.moved.ownerUserIds || []) {
+      lines.push(
+        `update provider_daycares set daycare_id = ${sqlLiteral(row.retiredId)} where user_id = ${sqlLiteral(userId)} and daycare_id = ${sqlLiteral(row.keeperId)};`,
       );
     }
   }

@@ -78,10 +78,17 @@ What the merge does:
 
 - Every existing catalogue row stays. The script throws if the row count shrinks.
 - A master row does not create a second listing when the province, the
-  normalized name, and the street number plus street name all match. A shared
-  licence is not enough when both rows have real streets. A same-licence row
-  with no real street (a room, a matching civic number, postal R3K 0Z8, or a
-  city written as Wpg) folds into the street row. A shared name is not enough.
+  normalized name, and the street number plus street name all match.
+  `9231 100 AVENUE` and `401 - 5 STREET` keep the first number as the civic
+  number. `St E` matches `Street` when the other side has no direction.
+  `St E` does not match `St W`. `Rue` matches `St` or `Rd`. `Chemin` matches
+  `Rd`. `Crt` matches `Court`. `Lake Shore` matches `Lakeshore`. A Quebec
+  `C.P. 69` box matches the same box. An Alberta licence matches when the
+  bundled value is the 16-character hex prefix of the master's longer hash.
+  A shared licence is not enough when both rows have real streets. A
+  same-licence row with no real street (a room, a matching civic number,
+  postal R3K 0Z8, or a city written as Wpg) folds into the street row. A
+  shared name is not enough.
 - Blank phone / email / website are filled from the master. A filled value is
   never replaced with blank.
 - Unmatched Canada rows are appended only when a coordinate already exists for
@@ -91,6 +98,12 @@ What the merge does:
 - Ages, fees, photos, open spots, and Live/claim fields are not copied from
   the CSV. New rows stay unclaimed (`claim_status` default `unclaimed`), so
   they are catalogue listings, not Live centres.
+- With a master CSV, `mx-` rows whose `facility_id` is no longer in that file
+  are hidden (`listing_active = 0`, `import_fault = removed_from_master`).
+  This is the default. Claimed rows and `kids-world-daycare-kh2t` are not
+  hidden. Nothing is deleted. If the hide count is above 40, the seed stops
+  and writes nothing. `--no-hide-stale` skips the hide. A dry-run with
+  `DATABASE_URL` prints `staleMaster=` and does not write.
 - The upsert still skips any row with `claimed_at`, a provider link, a claim,
   or a staff membership. Kids World and other approved centres are left as
   they are.
@@ -169,6 +182,38 @@ npm run ops:merge-duplicates -- --groups /secure/duplicate-groups-20260926.json
 # Write after the counts look right. Prints the backup path, not contact values.
 DATABASE_URL='postgresql://…' \
 npm run ops:merge-duplicates -- --groups /secure/duplicate-groups-20260926.json --apply
+```
+
+The 1 October 2026 duplicate list is in git. It is an audited pair list.
+The script hides the duplicate (`merged_into`, `listing_active = 0`) and the
+old `/daycare/<slug>` and `/fr/daycare/<slug>` URLs 301 to the keeper.
+Favourites, waitlists, tours, reviews, leads, and claims move to the keeper
+when that user is not already there. A claimed listing stays the keeper.
+If both listings are claimed, the pair is skipped. `kids-world-daycare-kh2t`
+is never touched. Rows in the excluded file are not merged. The review file
+is queued for Admin as a possible second site. It is not merged.
+
+```bash
+# Counts only. Claims are not checked without DATABASE_URL.
+npm run ops:merge-duplicates -- \
+  --groups data/ops/merge-duplicates-20261001.csv \
+  --exclude data/ops/merge-excluded-20261001.csv \
+  --review data/ops/a2-review-20261001.csv
+
+# Read Production, including claims. Still no writes.
+DATABASE_URL='postgresql://…' \
+npm run ops:merge-duplicates -- \
+  --groups data/ops/merge-duplicates-20261001.csv \
+  --exclude data/ops/merge-excluded-20261001.csv \
+  --review data/ops/a2-review-20261001.csv
+
+# Write after the counts, swaps, and skips look right.
+DATABASE_URL='postgresql://…' \
+npm run ops:merge-duplicates -- \
+  --groups data/ops/merge-duplicates-20261001.csv \
+  --exclude data/ops/merge-excluded-20261001.csv \
+  --review data/ops/a2-review-20261001.csv \
+  --apply
 ```
 
 A shared name is not a match, and a shared licence is not a match when both

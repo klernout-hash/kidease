@@ -258,6 +258,14 @@ export function normalizeListingSitemapSlugs(
 }
 
 /**
+ * Same slug set, same page contents, on every serverless instance.
+ * Postgres does not promise row order, and each instance caches its own list.
+ */
+export function stableListingSitemapSlugs(slugs: readonly string[]): string[] {
+  return [...slugs].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()) || a.localeCompare(b));
+}
+
+/**
  * Listing-only urlset, capped at one file. Never throws — crawlers get a
  * valid urlset even when the slug source is missing, corrupt, or empty.
  */
@@ -318,7 +326,7 @@ export function listingSitemapXmlForPath(
   try {
     const path = String(pathname ?? "").split("?")[0] || "/";
     const trimmed = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
-    const all = normalizeListingSitemapSlugs(slugs);
+    const all = stableListingSitemapSlugs(normalizeListingSitemapSlugs(slugs));
     const pages = listingSitemapPageCount(all.length);
 
     if (trimmed === SITEMAP_LISTINGS_PATH) {

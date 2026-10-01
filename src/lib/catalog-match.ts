@@ -89,6 +89,7 @@ export function catalogueNameKey(value: string | null | undefined): string {
   text = text.replace(/\b(?:inc|ltd|limited|corp|corporation|incorporated|the)\b/g, " ");
   text = text.replace(/\bday\s*care\b/g, "daycare");
   text = text.replace(/\bchild\s*care\b/g, "childcare");
+  text = text.replace(/\bcenter\b/g, "centre");
   return text.replace(/[^a-z0-9]+/g, "");
 }
 
@@ -125,7 +126,17 @@ const STREET_TYPE: Record<string, string> = {
   highway: "hwy",
   hwy: "hwy",
   pth: "hwy",
-  rue: "rue",
+  rue: "st",
+  chemin: "rd",
+  circle: "cir",
+  cir: "cir",
+  cercle: "cir",
+  circuit: "circt",
+  circt: "circt",
+  square: "sq",
+  sq: "sq",
+  parkway: "pkwy",
+  pkwy: "pkwy",
 };
 
 const DIRECTION: Record<string, string> = {
@@ -147,35 +158,198 @@ const DIRECTION: Record<string, string> = {
   w: "w",
 };
 
+const UNIT_WORD = /^(?:unit|units|suite|apt|apartment|floor|rm|room|rooms|ste|no)$/;
+const FRENCH_TYPE_WORD = new Set(["rue", "chemin", "cercle"]);
+
+type ParsedStreet = {
+  number: string;
+  name: string;
+  type: string;
+  direction: string;
+  /** Original type word, before Rue / Chemin / Cercle are folded. */
+  word: string;
+};
+
+function isCivicToken(token: string): boolean {
+  return /^\d+[a-z]?$/.test(token) || /^[a-z]\d+[a-z]?$/.test(token);
+}
+
+function normCivic(token: string): string {
+  return token.replace(/^0+/, "") || token;
+}
+
+function formatParsedStreet(street: ParsedStreet, opts?: { type?: boolean; direction?: boolean }): string {
+  if (!street.number || !street.name) return "";
+  const parts = [street.number, street.name];
+  const keepType = opts?.type !== false && street.type;
+  const keepDirection = opts?.direction !== false && street.direction;
+  if (keepType) parts.push(street.type);
+  else if (keepDirection) parts.push("");
+  if (keepDirection) parts.push(street.direction);
+  return parts.join("|");
+}
+
+function boxParsed(tokens: string[]): ParsedStreet | null {
+  const text = ` ${tokens.join(" ")} `;
+  const match = text.match(/ (?:c p|cp|p o box|po box|box) (\d+) /);
+  if (!match) return null;
+  return {
+    number: normCivic(match[1]),
+    name: "cp",
+    type: "box",
+    direction: "",
+    word: "box",
+  };
+}
+
+/**
+ * Civic number, street name, type, and direction.
+ * Numbered streets keep the first number (`9231 100 AVENUE`, `401 - 5 STREET`).
+ * A unit in front of that civic is skipped (`1 5115 45 STREET`, `10/11/12 20 Island Shore Blvd.`).
+ * `Rue` folds to `st` and stays marked French so it can also match `rd`.
+ * `Chemin` folds to `rd`. A direction is kept off the name (`St E` vs `Street`).
+ * Words after the street type (city, postal, venue) are not part of the key.
+ * A PO box (`C.P. 69`) is a box key. A bare civic number is not a street.
+ */
+export function parseCatalogueStreet(value: string | null | undefined): ParsedStreet | null {
+  let text = foldLetters(decodeImportText(value)).replace(/[.#']/g, " ").replace(/&/g, " and ");
+  text = text.replace(/\b(?:saint|sainte|ste)\b/g, "st");
+  text = text.replace(/\b(?:mailing address|civic address|civic)\b/g, " ");
+  const tokens = text
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token && !UNIT_WORD.test(token));
+  if (tokens.length === 0) return null;
+
+  let typeIdx = -1;
+  for (let i = 1; i < tokens.length; i += 1) {
+    const word = tokens[i];
+    if (!STREET_TYPE[word]) continue;
+    const before = tokens.slice(0, i);
+    const after = tokens.slice(i + 1);
+    const hasWordBefore = before.some((token) => !isCivicToken(token));
+    const frenchAfter =
+      FRENCH_TYPE_WORD.has(word) && after.some((token) => !DIRECTION[token] && !STREET_TYPE[token]);
+    const numbered =
+      isCivicToken(before[before.length - 1] || "") && before.slice(0, -1).some((token) => isCivicToken(token));
+    if (hasWordBefore || frenchAfter || numbered) {
+      typeIdx = i;
+      break;
+    }
+  }
+
+  if (typeIdx < 0) {
+    const civicIdx = tokens.reduce((found, token, index) => (isCivicToken(token) ? index : found), -1);
+    if (civicIdx >= 0 && civicIdx < tokens.length - 1) {
+      const name = tokens.slice(civicIdx + 1).join("");
+      if (!name) return boxParsed(tokens);
+      if (ROOM_ADDRESS.test(addressFold(value))) return null;
+      return { number: normCivic(tokens[civicIdx]), name, type: "", direction: "", word: "" };
+    }
+    return boxParsed(tokens);
+  }
+
+  const word = tokens[typeIdx];
+  const type = STREET_TYPE[word] || "";
+  const before = tokens.slice(0, typeIdx);
+  let after = tokens.slice(typeIdx + 1);
+  while (after.length > 0 && STREET_TYPE[after[0]] === type) after = after.slice(1);
+  const frenchName =
+    FRENCH_TYPE_WORD.has(word) &&
+    !before.some((token) => !isCivicToken(token)) &&
+    after.some((token) => !DIRECTION[token] && !STREET_TYPE[token]);
+
+  let direction = "";
+  let name = "";
+  let number = "";
+  if (!frenchName && after[0] && DIRECTION[after[0]]) direction = DIRECTION[after[0]];
+
+  const immediate = before[before.length - 1] || "";
+  if (!frenchName && isCivicToken(immediate) && before.slice(0, -1).some((token) => isCivicToken(token))) {
+    const earlier = [...before.slice(0, -1)].reverse().find((token) => isCivicToken(token)) || "";
+    number = normCivic(earlier);
+    name = immediate;
+  } else if (frenchName) {
+    const civic = [...before].reverse().find((token) => isCivicToken(token)) || "";
+    number = normCivic(civic);
+    name = after.filter((token) => !DIRECTION[token] && !STREET_TYPE[token]).join("");
+  } else {
+    let civicIdx = -1;
+    for (let i = before.length - 1; i >= 0; i -= 1) {
+      if (isCivicToken(before[i])) {
+        civicIdx = i;
+        break;
+      }
+    }
+    if (civicIdx < 0) return boxParsed(tokens);
+    number = normCivic(before[civicIdx]);
+    name = before
+      .slice(civicIdx + 1)
+      .filter((token) => STREET_TYPE[token] !== type)
+      .join("");
+  }
+  if (!number || !name) return boxParsed(tokens);
+  if (!type && ROOM_ADDRESS.test(addressFold(value))) return null;
+  return { number, name, type, direction, word };
+}
+
 /**
  * Street number plus street name.
  * `240 Avenue Rd` and `240 Avenue Road` share a key. Extra spaces do not matter.
  * A unit prefix is skipped, so `10/11/12 20 Island Shore Blvd.` matches
- * `20 Island Shore Blvd.`. `230 Jane St` and `232 Jane St` do not match.
- * A bare civic number is not a street.
+ * `20 Island Shore Blvd.`. `9231 100 AVENUE` keeps 9231 as the civic number.
+ * `230 Jane St` and `232 Jane St` do not match.
+ * A bare civic number is not a street. A direction stays its own field.
  */
 export function catalogueStreetKey(value: string | null | undefined): string {
-  let text = foldLetters(decodeImportText(value)).replace(/\./g, " ").replace(/#/g, " ").replace(/&/g, " and ");
-  text = text.replace(/\b(?:saint|sainte|ste)\b/g, "st");
-  text = text.replace(/^(?:mailing address|civic address|civic)\b/, " ");
-  const tokens = text.replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return "";
-  let numIndex = tokens.findIndex((token, index) => /^\d+[a-z]?$/.test(token) && /^[a-z]/.test(tokens[index + 1] || ""));
-  if (numIndex < 0) numIndex = tokens.findIndex((token, index) => /^\d+[a-z]?$/.test(token) && Boolean(tokens[index + 1]));
-  if (numIndex < 0) return "";
-  const number = tokens[numIndex].replace(/^0+/, "") || tokens[numIndex];
-  const after = tokens.slice(numIndex + 1);
-  let direction = "";
-  const last = after[after.length - 1];
-  if (last && DIRECTION[last]) direction = DIRECTION[after.pop() || ""] || "";
-  let type = "";
-  const typed = after[after.length - 1];
-  if (typed && STREET_TYPE[typed]) type = STREET_TYPE[after.pop() || ""] || "";
-  const name = `${after.join("")}${direction}`;
-  if (!name) return "";
-  // "Room 1 and gym" has a number, but it is a room, not a street.
-  if (!type && ROOM_ADDRESS.test(addressFold(value))) return "";
-  return type ? `${number}|${name}|${type}` : `${number}|${name}`;
+  const parsed = parseCatalogueStreet(value);
+  return parsed ? formatParsedStreet(parsed) : "";
+}
+
+/** Lookup forms. A directed or typed street also matches the form without that part. */
+export function catalogueStreetLookupKeys(value: string | null | undefined): string[] {
+  const parsed = parseCatalogueStreet(value);
+  if (!parsed) return [];
+  const keys = [
+    formatParsedStreet(parsed),
+    formatParsedStreet(parsed, { direction: false }),
+    formatParsedStreet(parsed, { type: false, direction: false }),
+  ];
+  const out: string[] = [];
+  for (const key of keys) {
+    if (key && !out.includes(key)) out.push(key);
+  }
+  return out;
+}
+
+function streetTypesCompatible(left: ParsedStreet, right: ParsedStreet): boolean {
+  if (left.type === right.type) return true;
+  if (!left.type || !right.type) return true;
+  const loose = (street: ParsedStreet, other: string) => {
+    if (street.word === "rue" && (other === "st" || other === "rd")) return true;
+    if (street.word === "chemin" && other === "rd") return true;
+    if (street.word === "cercle" && other === "cir") return true;
+    return false;
+  };
+  return loose(left, right.type) || loose(right, left.type);
+}
+
+/**
+ * Same street for import matching.
+ * `St E` matches `Street` when the other side has no direction.
+ * `St E` does not match `St W`. `Rue` matches `St` or `Rd`. `Chemin` matches `Rd`.
+ * A missing street type matches the typed form (`175 Glenwood` and `175 Glenwood Drive`).
+ */
+export function catalogueStreetsCompatible(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = parseCatalogueStreet(a);
+  const right = parseCatalogueStreet(b);
+  if (!left || !right) return false;
+  if (left.number !== right.number || left.name !== right.name) return false;
+  if (left.type === "box" || right.type === "box") return left.type === right.type;
+  if (!streetTypesCompatible(left, right)) return false;
+  if (left.direction && right.direction && left.direction !== right.direction) return false;
+  return true;
 }
 
 /** `Civic #35117` is a civic number, not a street. */
@@ -268,10 +442,29 @@ function sameProvince(a: CatalogueIdentity, b: CatalogueIdentity): boolean {
   return Boolean(left && right && left === right);
 }
 
+/**
+ * Hex licence, keeping a leading AB/BC/… when there is no separator.
+ * `catalogueLicenceKey` treats `ABFF…` as province AB plus `FF…`, so the
+ * 16-character Alberta hash would shrink to 14 characters and miss the
+ * master's 32-character value. This token keeps the raw hex.
+ */
+function hexLicenceToken(value: string | null | undefined): string {
+  const raw = decodeImportText(value).toUpperCase().replace(/\s+/g, "");
+  if (!raw) return "";
+  return raw.replace(/[^A-F0-9]/g, "");
+}
+
 function sameLicence(a: CatalogueIdentity, b: CatalogueIdentity): boolean {
   const left = catalogueLicenceKey(a.licenseNumber);
   const right = catalogueLicenceKey(b.licenseNumber);
-  return Boolean(left && right && left === right);
+  if (left && right && left === right) return true;
+  const hexLeft = hexLicenceToken(a.licenseNumber);
+  const hexRight = hexLicenceToken(b.licenseNumber);
+  if (hexLeft.length < 16 || hexRight.length < 16) return false;
+  if (!/[A-F]/.test(hexLeft) || !/[A-F]/.test(hexRight)) return false;
+  const shorter = hexLeft.length <= hexRight.length ? hexLeft : hexRight;
+  const longer = hexLeft.length <= hexRight.length ? hexRight : hexLeft;
+  return longer.length > shorter.length && longer.startsWith(shorter);
 }
 
 function postalDiffers(a: CatalogueIdentity, b: CatalogueIdentity): boolean {
@@ -320,10 +513,13 @@ export function catalogueMatchKeys(row: CatalogueIdentity): string[] {
 export function catalogueCandidateKeys(row: CatalogueIdentity): string[] {
   const province = provinceCode(row);
   const keys = [];
-  const street = catalogueStreetKey(row.address);
-  if (street) keys.push(`street|${province}|${street}`);
+  for (const street of catalogueStreetLookupKeys(row.address)) {
+    keys.push(`street|${province}|${street}`);
+  }
   const licence = catalogueLicenceKey(row.licenseNumber);
   if (licence) keys.push(`pool|${province}|${licence}`);
+  const hex = hexLicenceToken(row.licenseNumber);
+  if (hex.length >= 16 && /[A-F]/.test(hex)) keys.push(`pool|${province}|${hex.slice(0, 16)}`);
   return keys;
 }
 
@@ -351,7 +547,14 @@ export function sameCatalogueCentre(a: CatalogueIdentity, b: CatalogueIdentity):
   if (!sameProvince(a, b)) return false;
   const streetA = catalogueStreetKey(a.address);
   const streetB = catalogueStreetKey(b.address);
-  if (streetA && streetB && streetA === streetB && (similarCatalogueName(a.name, b.name) || sameLicence(a, b))) return true;
+  if (
+    streetA &&
+    streetB &&
+    catalogueStreetsCompatible(a.address, b.address) &&
+    (similarCatalogueName(a.name, b.name) || sameLicence(a, b))
+  ) {
+    return true;
+  }
   if (!sameLicence(a, b)) return false;
   if (!streetA && !streetB && similarCatalogueName(a.name, b.name)) return true;
   if (Boolean(streetA) === Boolean(streetB)) return false;
@@ -371,7 +574,7 @@ export function catalogueHoldReason(a: CatalogueIdentity, b: CatalogueIdentity):
   if (!sameLic && !sameName) return null;
   const streetA = catalogueStreetKey(a.address);
   const streetB = catalogueStreetKey(b.address);
-  if (streetA && streetB && streetA !== streetB) return "different street addresses";
+  if (streetA && streetB && !catalogueStreetsCompatible(a.address, b.address)) return "different street addresses";
   const venue = isNamedVenue(a.address) ? a : isNamedVenue(b.address) ? b : null;
   const street = streetA ? a : streetB ? b : null;
   if (venue && street && venue !== street && postalDiffers(venue, street) && !isPlaceholderPostal(venue.postalCode) && !isCityAbbreviation(venue.city)) {

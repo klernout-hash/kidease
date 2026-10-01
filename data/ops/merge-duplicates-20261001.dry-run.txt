@@ -1,0 +1,87 @@
+[merge-duplicates] claims not checked (no DATABASE_URL)
+[merge-duplicates] skipped 0
+[merge-duplicates] reviewSkipped 0
+[merge-duplicates] swaps 0
+[merge-duplicates] reviewQueued 64
+[merge-duplicates] keepers 1193
+[merge-duplicates] retired 1193
+[merge-duplicates] fieldsFilled 4
+[merge-duplicates] childRecordsMoved 0
+[merge-duplicates] licenceNormalized 0
+[merge-duplicates] skipped 0
+[merge-duplicates] skippedNotSameCentre 0
+[merge-duplicates] leftSeparate 0
+[merge-duplicates] hiddenReview 64
+[merge-duplicates] hiddenReview Michif Children's Place Day Care | 525 Main Street S
+[merge-duplicates] hiddenReview Bright Beginnings - Heartland | Headingley, MB
+[merge-duplicates] hiddenReview Prairie Meadows Early Learning Inc. Site 2 | Ile-des-Chenes, MB
+[merge-duplicates] hiddenReview La Salle KIDZ Prairie View Lakes Site | La Salle, MB
+[merge-duplicates] hiddenReview Tache Early Learning Centre Site 2 | Lorette, MB
+[merge-duplicates] hiddenReview Pembina Valley Child Care Westview Site | Morden, MB
+[merge-duplicates] hiddenReview Oak Bluff Early Years-RTM | Oak Bluff, MB
+[merge-duplicates] hiddenReview Tyndall Play and Learn Centre | Tyndall, MB
+[merge-duplicates] hiddenReview Whitemouth Child Care Centre Inc. | Whitemouth, MB
+[merge-duplicates] hiddenReview Happiness Is.... Inc. | Gym is also included as licenced space
+[merge-duplicates] hiddenReview Special Additions Child Care Centre | Gulley Road
+[merge-duplicates] hiddenReview Kidz at Heart Learning Centre Inc. | 58 Highroad South
+[merge-duplicates] hiddenReview New Fun Land IX | Ressegieu Drive
+[merge-duplicates] hiddenReview Activ-Time Preschool & Day Care | 14 Fowler's Road
+[merge-duplicates] hiddenReview St. Edward's Afterschool | Longshore Road
+[merge-duplicates] hiddenReview Play, Learn & Grow Child Care Centre | 33 Circular Road
+[merge-duplicates] hiddenReview YMCA Children's Learning Centre | 13B Price's Avenue
+[merge-duplicates] hiddenReview Robin's Nest Child Care Centre | 734 Chatham Street
+[merge-duplicates] hiddenReview Building Blocks Quality Child Care Centre #2 - St. Joseph's | St. Joseph's School
+[merge-duplicates] hiddenReview Lourdes Preschool | Lourdes Elementary School
+[merge-duplicates] hiddenReview Little People's Workshop - Smallwood Drive | 56 Smallwood Drive
+[merge-duplicates] hiddenReview Pigutsavik Centre | LIHC Child Care Facility
+[merge-duplicates] hiddenReview YMCA School Age Child Care - Paradise Elementary | 60 Karwood Drive
+[merge-duplicates] hiddenReview YMCA Wee Care | 8 Abbot Street
+[merge-duplicates] hiddenReview Kangnik Centre | Rigolet, NL
+[merge-duplicates] hiddenReview New Fun Land II | 86 Little Bay Road
+[merge-duplicates] hiddenReview Riddles & Rhymes Daycare Centre | 83 East Street
+[merge-duplicates] hiddenReview Happy Times Preschool | 48 Bannerman Street
+[merge-duplicates] hiddenReview International Friends | 10 Smithville Crescent
+[merge-duplicates] hiddenReview The Children's Centre | 80 Craigmiller Avenue
+[merge-duplicates] hiddenReview YMCA School Age Child Care - Vanier Elementary | 85 Ennis Avenue
+[merge-duplicates] hiddenReview YMCA Twillingate Early Learning & Child Care Centre | 2 Hughs Lane
+[merge-duplicates] hiddenReview Building Blocks Child Care Centre | 70 Bowater Drive
+[merge-duplicates] hiddenReview Fort Resolution Metis Daycare | 715 RCMP Road
+[merge-duplicates] hiddenReview Kids Corner Daycare | Antoine Drive
+[merge-duplicates] hiddenReview Open Doors Society Afterschool Program | 9906 98th Avenue
+[merge-duplicates] hiddenReview Open Doors Society Preschool | 9906 98th Avenue
+[merge-duplicates] hiddenReview Fort Smith Metis Daycare | Fort Smith, NT
+[merge-duplicates] hiddenReview Inuvik Aboriginal Headstart | 210 Kingmingya Road
+[merge-duplicates] hiddenReview Shinning Star Day Home | Yellowknife, NT
+[merge-duplicates] hiddenReview Solid Touch Dayhome | Yellowknife, NT
+[merge-duplicates] hiddenReview Village Day Home | Yellowknife, NT
+[merge-duplicates] hiddenReview Y-K Kids Hub | Yellowknife, NT
+[merge-duplicates] hiddenReview YWCA Afterschool Program - Ecole St. Joseph - 254 | 489 Range Lake Road
+[merge-duplicates] hiddenReview YWCA Afterschool Program - Ecole St. Joseph - 368 | 489 Range Lake Road
+[merge-duplicates] hiddenReview YWCA Afterschool Program - Mildred Hall School - 98 | 5408 50th Avenue
+[merge-duplicates] hiddenReview YWCA Afterschool Program - NJ MacPherson School - 357 | 525 Range Lake Road
+[merge-duplicates] hiddenReview YWCA Afterschool Program - NJ MacPherson School - 400 | 525 Range Lake Road
+[merge-duplicates] hiddenReview YWCA Afterschool Program - NJ MacPherson School -148 | 525 Range Lake Road
+[merge-duplicates] hiddenReview YWCA Afterschool Program - Range Lake North School - 325 | 170 Borden Drive
+[merge-duplicates] hiddenReview YWCA Afterschool Program Mildred Hall (2)-479 | 5408 50th Avenue
+[merge-duplicates] hiddenReview YWCA Afterschool Program École Įtłʼǫ̀ - 256 | 5700 51A Avenue
+[merge-duplicates] hiddenReview YWCA Afterschool Program École Įtłʼǫ̀ - 395 | 5700 51A Avenue
+[merge-duplicates] hiddenReview YWCA Afterschool Program École Įtłʼǫ̀ - 396 | 5700 51A Avenue
+[merge-duplicates] hiddenReview YWCA Afterschool Program École Įtłʼǫ̀ - 465 | 5700 51A Avenue
+[merge-duplicates] hiddenReview YWCA Afterschool Program École Įtłʼǫ̀ - 466 | 5700 51A Avenue
+[merge-duplicates] hiddenReview YWCA Afterschool Program École Įtłʼǫ̀ - 6 | 5700 51A Avenue
+[merge-duplicates] hiddenReview Your Wooden Treehouse - Day Care | 220 Dupuis Street
+[merge-duplicates] hiddenReview Chabad Of Midtown - St Clair | 546 St Clair Ave W
+[merge-duplicates] hiddenReview Toronto Metropolitan University Early Learning Centre (Tmu Elc) | 350 Victoria St
+[merge-duplicates] hiddenReview Prince Albert Childcare Co-operative | 199 6th Street East
+[merge-duplicates] hiddenReview Confederation Park Child Care Center | 3555 John A. MacDonald Road
+[merge-duplicates] hiddenReview USSU Child Care Centre Inc. | 221 Cumberland Avenue North
+[merge-duplicates] hiddenReview Swift Current Child Care Centre | 287 13th Avenue Northeast
+[merge-duplicates] peiHidden 0
+[merge-duplicates] province AB keepers 740 retired 740
+[merge-duplicates] province MB keepers 15 retired 15
+[merge-duplicates] province NB keepers 3 retired 3
+[merge-duplicates] province NL keepers 4 retired 4
+[merge-duplicates] province ON keepers 329 retired 329
+[merge-duplicates] province QC keepers 100 retired 100
+[merge-duplicates] province SK keepers 2 retired 2
+[merge-duplicates] mode dry-run

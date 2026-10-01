@@ -495,3 +495,48 @@ export function dropStoredDuplicateAdditions<T extends CatalogueMatchRow>(
   }
   return { rows, dropped };
 }
+
+/**
+ * Stop a bad or partial master file from hiding the catalogue.
+ * The October 2026 audit found 19 live mx- rows the master had dropped.
+ */
+export const STALE_MASTER_HIDE_CAP = 40;
+
+const CLAIMED_STATUS = new Set(["approved", "live", "active", "published", "pending", "waiting", "verified"]);
+
+export type StaleMasterRow = {
+  id: string;
+  slug?: string | null;
+  claimedAt?: string | null;
+  claimStatus?: string | null;
+  ownerCount?: number | null;
+  mergedInto?: string | null;
+  importFault?: string | null;
+};
+
+/**
+ * mx- ids whose facility_id is not in this master.
+ * Claimed rows, Kids World, and rows already merged or already flagged are left alone.
+ * `overCap` means the caller must not write.
+ */
+export function planStaleMasterHides(
+  stored: readonly StaleMasterRow[],
+  facilityIds: readonly string[],
+  cap = STALE_MASTER_HIDE_CAP,
+): { ids: string[]; count: number; cap: number; overCap: boolean } {
+  const live = new Set(facilityIds.filter(Boolean).map((id) => masterListingId(id)));
+  const ids: string[] = [];
+  for (const row of stored) {
+    if (!row.id || !row.id.startsWith("mx-")) continue;
+    if (live.has(row.id)) continue;
+    if ((row.slug || "").trim().toLowerCase() === "kids-world-daycare-kh2t") continue;
+    if ((row.mergedInto || "").trim()) continue;
+    if ((row.importFault || "").trim()) continue;
+    if (row.claimedAt) continue;
+    if ((row.ownerCount || 0) > 0) continue;
+    if (CLAIMED_STATUS.has((row.claimStatus || "").trim().toLowerCase())) continue;
+    ids.push(row.id);
+  }
+  ids.sort((a, b) => a.localeCompare(b));
+  return { ids, count: ids.length, cap, overCap: ids.length > cap };
+}
