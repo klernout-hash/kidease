@@ -4,7 +4,13 @@ import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { parseCsvRecords, parseMasterContacts } from "../src/lib/catalog-master.ts";
-import { dropStoredDuplicateAdditions, masterListingId, syncMasterCatalogue } from "../src/lib/catalog-master-sync.ts";
+import {
+  dropStoredDuplicateAdditions,
+  masterListingId,
+  planStaleMasterHides,
+  STALE_MASTER_HIDE_CAP,
+  syncMasterCatalogue,
+} from "../src/lib/catalog-master-sync.ts";
 import { DAYCARE_UPSERT_SQL } from "../src/lib/catalog-upsert.ts";
 import { assertMasterLock, parseSeedArgs } from "./seed-catalog-to-neon.mjs";
 import { isSafeSitemapSlug, mergeListingSitemapSlugs, publicSitemapSlugs } from "../src/lib/sitemap.ts";
@@ -174,6 +180,37 @@ describe("master catalogue sync", () => {
     assert.equal(opts.dryRun, true);
     assert.equal(opts.expectMaster, 23927);
     assert.equal(opts.masterCsvPath, "/secure/master.csv");
+    assert.equal(opts.hideStale, true);
+  });
+
+  it("hides mx rows whose facility_id left the master, and stops above the cap", () => {
+    const gone = masterListingId("AB|old-facility");
+    const still = masterListingId("AB|still-here");
+    const plan = planStaleMasterHides(
+      [
+        { id: gone, slug: "old-centre" },
+        { id: still, slug: "still-centre" },
+        { id: "ab-bundled", slug: "bundled-centre" },
+        { id: masterListingId("AB|claimed"), slug: "claimed-centre", claimStatus: "approved" },
+        { id: masterListingId("AB|owned"), slug: "owned-centre", ownerCount: 1 },
+        { id: "mx-not-really", slug: "kids-world-daycare-kh2t" },
+        { id: masterListingId("AB|merged"), slug: "merged-centre", mergedInto: "ab-1" },
+        { id: masterListingId("AB|fault"), slug: "fault-centre", importFault: "removed_from_master" },
+      ],
+      ["AB|still-here"],
+    );
+    assert.deepEqual(plan.ids, [gone]);
+    assert.equal(plan.overCap, false);
+    assert.equal(plan.cap, STALE_MASTER_HIDE_CAP);
+    const many = Array.from({ length: STALE_MASTER_HIDE_CAP + 1 }, (_, i) => ({
+      id: masterListingId(`AB|gone-${i}`),
+      slug: `gone-${i}`,
+    }));
+    const capped = planStaleMasterHides(many, []);
+    assert.equal(capped.count, STALE_MASTER_HIDE_CAP + 1);
+    assert.equal(capped.overCap, true);
+    const off = parseSeedArgs(["--dry-run", "--no-hide-stale"]);
+    assert.equal(off.hideStale, false);
   });
 });
 

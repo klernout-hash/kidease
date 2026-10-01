@@ -13,6 +13,11 @@ export const HIDDEN_REVIEW_POSSIBLE_SECOND_SITE = "hidden_review_possible_second
 
 export const HIDDEN_REVIEW_ADMIN_LABEL = "Hidden: possible second site, needs review";
 
+/** mx- row whose facility_id left the licensed master. Hidden, not deleted. */
+export const REMOVED_FROM_MASTER_FAULT = "removed_from_master";
+
+export const REMOVED_FROM_MASTER_ADMIN_LABEL = "Hidden: not in the current licensed list";
+
 export function isHiddenReviewFault(value: string | null | undefined): boolean {
   return (value || "").trim() === HIDDEN_REVIEW_POSSIBLE_SECOND_SITE;
 }

@@ -8,12 +8,15 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 import { hiddenReviewPlaceFromRow, hiddenReviewRedirectTarget } from "../src/lib/hidden-review.ts";
 import { HIDDEN_REVIEW_ADMIN_LABEL, HIDDEN_REVIEW_POSSIBLE_SECOND_SITE } from "../src/lib/listing-visibility.ts";
+import { decideListingLoader } from "../src/lib/listing-not-found.ts";
 import {
   buildRollbackSql,
   compareKeeper,
   followMergedListing,
   hideRollbackInputs,
+  planAddressReviewHides,
   planDuplicateMerges,
+  planExplicitDuplicateMerges,
   planMergeGroup,
   rollbackInputsForPlan,
 } from "../src/lib/listing-merge.ts";
@@ -340,5 +343,101 @@ describe("audit file shape", () => {
     const fixture = readFileSync(new URL("./fixtures/merge-groups.json", import.meta.url), "utf8");
     assert.match(fixture, /fixture-keeper/);
     assert.doesNotMatch(fixture, /on-tor-14663/);
+  });
+});
+
+describe("audited duplicate pairs", () => {
+  it("retires the duplicate, swaps a claimed duplicate to keeper, and skips when both are claimed", () => {
+    const facts = new Map([
+      ["dup", row({ id: "dup", slug: "copy-centre", claimStatus: "unclaimed" })],
+      ["keep", row({ id: "keep", slug: "live-centre", claimStatus: "unclaimed" })],
+      ["claimed-dup", row({ id: "claimed-dup", slug: "claimed-copy", claimStatus: "approved", claimedAt: "2026-09-01T00:00:00.000Z" })],
+      ["plain-keep", row({ id: "plain-keep", slug: "plain-live", claimStatus: "unclaimed" })],
+      ["owned-a", row({ id: "owned-a", slug: "owned-a", ownerCount: 1 })],
+      ["owned-b", row({ id: "owned-b", slug: "owned-b", claimStatus: "approved" })],
+      ["kids", row({ id: "kids", slug: "kids-world-daycare-kh2t", claimStatus: "approved" })],
+      ["other", row({ id: "other", slug: "other-centre" })],
+    ]);
+    const children = new Map([
+      ["dup", { daycareId: "dup", savedUserIds: ["parent-1"], waitlistUserIds: ["parent-2"], reviewIds: ["rev-1"], tourIds: ["tour-1"] }],
+    ]);
+    const planned = planExplicitDuplicateMerges(
+      [
+        { duplicateId: "dup", keeperId: "keep", duplicateSlug: "copy-centre", keeperSlug: "live-centre" },
+        { duplicateId: "claimed-dup", keeperId: "plain-keep", duplicateSlug: "claimed-copy", keeperSlug: "plain-live" },
+        { duplicateId: "owned-a", keeperId: "owned-b", duplicateSlug: "owned-a", keeperSlug: "owned-b" },
+        { duplicateId: "other", keeperId: "kids", duplicateSlug: "other-centre", keeperSlug: "kids-world-daycare-kh2t" },
+      ],
+      facts,
+      children,
+    );
+    assert.equal(planned.plan.retired, 2);
+    assert.equal(planned.plan.groups[0].keeperId, "keep");
+    assert.deepEqual(planned.plan.groups[0].retiredIds, ["dup"]);
+    assert.deepEqual(planned.plan.groups[0].moved.waitlistUserIds, ["parent-2"]);
+    assert.deepEqual(planned.plan.groups[0].moved.savedUserIds, ["parent-1"]);
+    assert.equal(planned.swaps.length, 1);
+    assert.equal(planned.swaps[0].keeperId, "claimed-dup");
+    assert.equal(planned.plan.groups[1].keeperId, "claimed-dup");
+    assert.deepEqual(planned.plan.groups[1].retiredIds, ["plain-keep"]);
+    assert.ok(planned.skipped.some((item) => item.reason === "both claimed"));
+    assert.ok(planned.skipped.some((item) => item.reason === "protected listing"));
+    assert.equal(
+      planned.plan.groups.some((group) => group.retiredIds.includes("kids") || group.keeperId === "kids"),
+      false,
+    );
+  });
+
+  it("queues an address-differs row for admin review and leaves a claimed one public", () => {
+    const facts = new Map([
+      ["mx-review", row({ id: "mx-review", slug: "possible-copy", claimStatus: "unclaimed" })],
+      ["mx-claimed", row({ id: "mx-claimed", slug: "claimed-copy", claimStatus: "approved" })],
+    ]);
+    const review = planAddressReviewHides(
+      [
+        {
+          duplicateId: "mx-review",
+          keeperId: "mb-1",
+          duplicateSlug: "possible-copy",
+          names: ["Possible Copy"],
+          addresses: ["1 First St"],
+          city: "Winnipeg",
+          province: "MB",
+        },
+        {
+          duplicateId: "mx-claimed",
+          keeperId: "mb-2",
+          duplicateSlug: "claimed-copy",
+          names: ["Claimed Copy"],
+          addresses: ["2 Second St"],
+          city: "Winnipeg",
+          province: "MB",
+        },
+      ],
+      facts,
+    );
+    assert.equal(review.hides.length, 1);
+    assert.equal(review.hides[0].hiddenId, "mx-review");
+    assert.equal(review.hides[0].liveId, "mb-1");
+    assert.equal(review.hides[0].flag, "hidden_review_possible_second_site");
+    assert.equal(review.hides[0].listingActive, 0);
+    assert.equal(review.skipped[0].reason, "claimed duplicate left public");
+  });
+
+  it("301s a hidden duplicate slug to the keeper in English and French", () => {
+    const decision = decideListingLoader(
+      "airdrie-daycare-first-avenue-23b47299",
+      { slug: "airdrie-daycare-first-avenue-399B5954" },
+      null,
+    );
+    assert.equal(decision.type, "redirect-keeper");
+    assert.equal(decision.slug, "airdrie-daycare-first-avenue-399B5954");
+    const english = readFileSync(join(root, "src/routes/daycare.$slug.tsx"), "utf8");
+    const french = readFileSync(join(root, "src/routes/fr.daycare.$slug.tsx"), "utf8");
+    assert.match(english, /redirect-keeper/);
+    assert.match(english, /statusCode: 301/);
+    assert.match(french, /redirect-keeper/);
+    assert.match(french, /statusCode: 301/);
+    assert.match(french, /\/fr\/daycare\/\$slug/);
   });
 });

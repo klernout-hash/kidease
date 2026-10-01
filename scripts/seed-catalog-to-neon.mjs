@@ -14,7 +14,13 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { dropStoredDuplicateAdditions, syncMasterCatalogue } from "../src/lib/catalog-master-sync.ts";
+import {
+  dropStoredDuplicateAdditions,
+  parseMasterFacilities,
+  planStaleMasterHides,
+  syncMasterCatalogue,
+} from "../src/lib/catalog-master-sync.ts";
+import { REMOVED_FROM_MASTER_FAULT } from "../src/lib/listing-visibility.ts";
 import { catalogRowsForSeed, clampSeedLimit, clampSeedOffset, seedCatalogChunk } from "../src/lib/catalog-seed.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -31,6 +37,7 @@ export function parseSeedArgs(argv = process.argv.slice(2), env = process.env) {
     help: false,
     masterCsvPath: (env.MASTER_CSV_PATH || "").trim(),
     expectMaster: env.SEED_EXPECT_MASTER ? Number(env.SEED_EXPECT_MASTER) : null,
+    hideStale: true,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -61,9 +68,9 @@ export function parseSeedArgs(argv = process.argv.slice(2), env = process.env) {
     else if (arg === "--expect-master" && next) {
       opts.expectMaster = Number(next);
       i += 1;
-    } else if (arg.startsWith("--expect-master=")) {
+    }     else if (arg.startsWith("--expect-master=")) {
       opts.expectMaster = Number(arg.slice("--expect-master=".length));
-    }
+    } else if (arg === "--no-hide-stale") opts.hideStale = false;
   }
   return opts;
 }
@@ -86,12 +93,19 @@ Flags:
   --dry-run         Load + count only. No DATABASE_URL writes
   --master-csv PATH Private master CSV. Blank-only contacts, plus new Canada rows
   --expect-master N Fail unless the CSV has N rows and the catalogue stays >= N
+  --no-hide-stale   Leave mx- rows whose facility_id has left the master
   --help
 
 The master CSV is not in this repo. Pass MASTER_CSV_PATH or --master-csv.
 New rows are appended. Existing rows are never deleted. Filled phone, email,
 and website are never replaced with blank. Ages, fees, photos, open spots,
 and Live/claim fields are not taken from the CSV.
+
+With a master CSV, mx- rows whose facility_id is gone are hidden
+(listing_active = 0, import_fault = removed_from_master). That is the default.
+Claimed rows and kids-world-daycare-kh2t are not hidden. If the hide count is
+above the safety cap, the seed stops and writes nothing. --no-hide-stale skips
+that step. A dry-run with DATABASE_URL prints the count and does not write.
 
 Claimed, provider-owned, and staffed listings are left unchanged by the upsert.
 /api/seed-catalog does not read the private CSV — use this script for the
@@ -182,9 +196,10 @@ async function main() {
   const prepared = await prepareCatalogRows(opts);
   let seedRows = prepared.rows;
   const file = checkpointPath(opts.checkpoint);
-  const databaseUrlReady = !opts.dryRun;
+  const databaseUrlReady = Boolean(databaseUrl);
   let pool = null;
   let sql = null;
+  let staleHide = null;
   try {
     if (databaseUrlReady) {
       const { default: pg } = await import("pg");
@@ -196,7 +211,22 @@ async function main() {
         },
       };
       const stored = await sql.query(
-        `select id, slug, name, city, province, postal_code as "postalCode", license_number as "licenseNumber" from daycares`,
+        `select id, slug, name, city, province, address,
+                postal_code as "postalCode",
+                license_number as "licenseNumber",
+                claimed_at as "claimedAt",
+                claim_status as "claimStatus",
+                merged_into as "mergedInto",
+                import_fault as "importFault",
+                (
+                  (select count(*)::int from provider_daycares p where p.daycare_id = daycares.id)
+                  + (select count(*)::int from listing_claims lc
+                      where lc.daycare_id = daycares.id
+                        and coalesce(lc.status, '') not in ('rejected', 'withdrawn', 'cancelled'))
+                  + (select count(*)::int from centre_members cm
+                      where cm.daycare_id = daycares.id and cm.status = 'active')
+                ) as "ownerCount"
+           from daycares`,
       );
       const filtered = dropStoredDuplicateAdditions(seedRows, stored);
       if (filtered.rows.length + filtered.dropped !== seedRows.length) {
@@ -204,6 +234,26 @@ async function main() {
       }
       seedRows = filtered.rows;
       console.log(`[seed-catalog] alreadyInNeon=${filtered.dropped} (kept; not inserted again)`);
+      if (opts.masterCsvPath && opts.hideStale) {
+        const master = parseMasterFacilities(await loadMasterText(opts.masterCsvPath));
+        const stale = planStaleMasterHides(
+          stored,
+          master.rows.map((row) => row.facilityId),
+        );
+        staleHide = stale;
+        console.log(
+          `[seed-catalog] staleMaster=${stale.count} cap=${stale.cap} overCap=${stale.overCap}`,
+        );
+        if (stale.overCap && !opts.dryRun) {
+          throw new Error(
+            `stale master hide count ${stale.count} is above the cap ${stale.cap}. Nothing was hidden.`,
+          );
+        }
+      } else if (opts.masterCsvPath && !opts.hideStale) {
+        console.log("[seed-catalog] staleMaster skipped (--no-hide-stale)");
+      }
+    } else if (opts.masterCsvPath && opts.hideStale) {
+      console.log("[seed-catalog] staleMaster not counted (no DATABASE_URL)");
     }
     const total = seedRows.length;
     let offset = clampSeedOffset(opts.resume ? await readCheckpoint(file) : opts.offset, total);
@@ -237,6 +287,27 @@ async function main() {
       if (result.failed && result.upserted === 0) {
         throw new Error("seed-catalog stopped: a full chunk failed (is 0035_listing_website.sql applied?)");
       }
+    }
+    if (staleHide && staleHide.count > 0 && !staleHide.overCap) {
+      await sql.query(
+        `update daycares
+            set listing_active = 0,
+                import_fault = $1
+          where id = any($2::text[])
+            and merged_into is null
+            and import_fault is null
+            and claimed_at is null
+            and coalesce(claim_status, 'unclaimed') not in ('approved', 'live', 'active', 'published', 'pending', 'waiting', 'verified')
+            and not exists (select 1 from provider_daycares p where p.daycare_id = daycares.id)
+            and not exists (
+              select 1 from listing_claims lc
+               where lc.daycare_id = daycares.id
+                 and coalesce(lc.status, '') not in ('rejected', 'withdrawn', 'cancelled')
+            )
+            and slug <> 'kids-world-daycare-kh2t'`,
+        [REMOVED_FROM_MASTER_FAULT, staleHide.ids],
+      );
+      console.log(`[seed-catalog] staleHidden=${staleHide.count}`);
     }
   } finally {
     if (pool) await pool.end();

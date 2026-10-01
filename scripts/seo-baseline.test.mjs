@@ -142,7 +142,10 @@ test("listings sitemap paginates past the 5000-URL file cap", async () => {
     listingSitemapPageCount,
     listingSitemapPagePath,
   } = await import("../src/lib/sitemap.ts");
-  const overflow = Array.from({ length: LISTING_SITEMAP_CAP + 3 }, (_, i) => `public-centre-${i + 1}`);
+  const overflow = Array.from(
+    { length: LISTING_SITEMAP_CAP + 3 },
+    (_, i) => `public-centre-${String(i + 1).padStart(5, "0")}`,
+  );
   assert.equal(listingSitemapNeedsIndex(overflow.length), true);
   assert.equal(listingSitemapPageCount(overflow.length), 2);
 
@@ -156,14 +159,18 @@ test("listings sitemap paginates past the 5000-URL file cap", async () => {
   const page2 = listingSitemapXmlForPath(overflow, listingSitemapPagePath(2));
   assert.match(page1, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"/);
   assert.match(page1, /hreflang="fr"/);
-  assert.match(page1, /https:\/\/www\.kidease\.ca\/fr\/daycare\/public-centre-1/);
-  assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-1/);
-  assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-5000/);
-  assert.doesNotMatch(page1, /public-centre-5001/);
-  assert.match(page2, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-5001/);
-  assert.match(page2, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-5003/);
+  assert.match(page1, /https:\/\/www\.kidease\.ca\/fr\/daycare\/public-centre-00001/);
+  assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-00001/);
+  assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-05000/);
+  assert.doesNotMatch(page1, /public-centre-05001/);
+  assert.match(page2, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-05001/);
+  assert.match(page2, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-05003/);
   assert.equal((page1.match(/<url>/g) || []).length, LISTING_SITEMAP_CAP);
   assert.equal((page2.match(/<url>/g) || []).length, 3);
+  const reversedPage1 = listingSitemapXmlForPath([...overflow].reverse(), listingSitemapPagePath(1));
+  const reversedPage2 = listingSitemapXmlForPath([...overflow].reverse(), listingSitemapPagePath(2));
+  assert.equal(reversedPage1, page1);
+  assert.equal(reversedPage2, page2);
 
   const empty = listingSitemapXmlForPath(overflow, "/sitemap-listings-9.xml");
   assert.match(empty, /<urlset /);
