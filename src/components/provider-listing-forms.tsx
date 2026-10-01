@@ -24,10 +24,16 @@ import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/l
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { listingWriterEventProps } from "@/lib/ai/listing-writer";
+import { AI_FLAGS } from "@/lib/ai/flags";
+import { photoCheckEventProps, sha256Hex, type PhotoWarning } from "@/lib/ai/photo-check";
+import { measurePhotoDataUrl } from "@/lib/ai/photo-measure";
+import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { checkListingPhoto } from "@/lib/server/photo-check";
 import { ProviderParentFields, parentDeskFromDaycare } from "@/components/provider-parent-fields";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { useCopy } from "@/lib/use-copy";
+import type { CopyKey } from "@/lib/copy";
 import { isReauthRequiredMessage } from "@/lib/reauth";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { useReauthPrompt } from "@/components/reauth-dialog";
@@ -242,6 +248,12 @@ function listingDeskRevision(daycare: Daycare) {
   });
 }
 
+function photoWarningKey(warning: PhotoWarning): CopyKey {
+  if (warning === "blurry") return "photoCheckBlurry";
+  if (warning === "dark") return "photoCheckDark";
+  return "photoCheckDuplicate";
+}
+
 export function CapacityForm({
   daycare,
   onSaved,
@@ -261,6 +273,8 @@ export function CapacityForm({
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoNotices, setPhotoNotices] = useState<CopyKey[]>([]);
+  const photoCheckOn = useAiFeatureFlag(AI_FLAGS.photoCheck);
   const [licenseError, setLicenseError] = useState<string | null>(null);
   const [pendingLicense, setPendingLicense] = useState<File | null>(null);
   const [licenseNeedsConfirm, setLicenseNeedsConfirm] = useState(false);
@@ -406,6 +420,7 @@ export function CapacityForm({
       setPhotoError(null);
     }
     const targetBytes = listingPhotoByteBudget(MAX_LISTING_PHOTOS);
+    let local = gallery ?? managedListingPhotos(daycare.photos);
     for (const file of take) {
       const id = `${Date.now()}-${file.name}-${Math.random().toString(36).slice(2, 8)}`;
       setPhotoJobs((jobs) => [...jobs, { id, name: file.name || t("storefrontPhoto"), progress: 8 }]);
@@ -416,11 +431,38 @@ export function CapacityForm({
             setPhotoJobs((jobs) => jobs.map((job) => (job.id === id ? { ...job, progress: n } : job)));
           },
         });
-        setGallery((current) => {
-          const start = current ?? managedListingPhotos(daycare.photos);
-          if (start.length >= MAX_LISTING_PHOTOS) return start;
-          return [...start, dataUrl];
-        });
+        let blocked = false;
+        if (photoCheckOn) {
+          try {
+            const measure = await measurePhotoDataUrl(dataUrl).catch(() => ({ meanLuma: 255, edgeScore: 99 }));
+            const existingHashes: string[] = [];
+            for (const src of local) existingHashes.push(await sha256Hex(src));
+            const result = await checkListingPhoto({
+              data: {
+                daycareId: daycare.id,
+                dataUrl,
+                meanLuma: measure.meanLuma,
+                edgeScore: measure.edgeScore,
+                existingHashes,
+              },
+            });
+            if (result.hold) {
+              blocked = true;
+              setPhotoNotices((list) => [...list, "photoCheckHeld" satisfies CopyKey].slice(-8) as CopyKey[]);
+              capturePostHogEvent("photo_check_held", photoCheckEventProps({ daycare_id: daycare.id }));
+            } else if (result.warnings.length) {
+              const keys = result.warnings.map(photoWarningKey);
+              setPhotoNotices((list) => [...list, ...keys].slice(-8) as CopyKey[]);
+              capturePostHogEvent("photo_check_warned", photoCheckEventProps({ daycare_id: daycare.id }));
+            }
+          } catch {
+            blocked = false;
+          }
+        }
+        if (!blocked && local.length < MAX_LISTING_PHOTOS) {
+          local = [...local, dataUrl];
+          setGallery(local);
+        }
       } catch (err) {
         const unreadable = err instanceof ListingPhotoPrepareError && err.code === "unreadable";
         const message = t(unreadable ? "photoUnreadable" : "photoTooBig");
@@ -695,6 +737,15 @@ export function CapacityForm({
               </label>
             ) : null}
           </div>
+          {photoNotices.length ? (
+            <div className="space-y-1" data-ke="photo-check-notices">
+              {photoNotices.map((key, index) => (
+                <p key={`${key}-${index}`} className="text-sm" role="alert" data-ke={key === "photoCheckHeld" ? "photo-check-held" : "photo-check-warning"}>
+                  {t(key)}
+                </p>
+              ))}
+            </div>
+          ) : null}
           <h3 className="font-display text-xl">{t("businessDetails")}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={t("centreName")} value={state.name} onChange={(v) => setState({ ...state, name: v })} />

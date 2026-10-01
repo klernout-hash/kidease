@@ -2530,5 +2530,17 @@
   "listingWriterUsed": "Draft added. Save changes to publish it.",
   "listingWriterEmpty": "Add notes first. We will not invent a description.",
   "listingWriterFailed": "We could not write a draft. Your listing is unchanged.",
-  "listingWriterWorking": "Writing…"
+  "listingWriterWorking": "Writing…",
+  "photoCheckBlurry": "This photo looks blurry. You can keep it, or take another.",
+  "photoCheckDark": "This photo looks too dark. You can keep it, or take another.",
+  "photoCheckDuplicate": "This photo is already on the listing.",
+  "photoCheckHeld": "A child's face is easy to see. This photo went to review and was not added.",
+  "photoCheckReviewTitle": "Photo review",
+  "photoCheckReviewLead": "These photos are waiting because a child's face is easy to see. Nothing is public until you allow it.",
+  "photoCheckAllow": "Allow on the listing",
+  "photoCheckReject": "Keep it off",
+  "photoCheckReviewEmpty": "No photos are waiting.",
+  "photoCheckAllowed": "Allowed. It is on the listing now.",
+  "photoCheckRejected": "Kept off the listing.",
+  "photoCheckFull": "The listing already has 10 photos, so this one stays off."
 }

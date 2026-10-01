@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { listAiUsage } from "@/lib/server/ai-usage";
 import { formatUsdMicros } from "@/lib/ai/cost";
+import { PhotoCheckReview } from "@/components/photo-check-review";
 import { useCopy } from "@/lib/use-copy";
 import { Shell } from "@/components/shell";
 
@@ -58,6 +59,7 @@ function AiUsagePage() {
             {t("aiUsageBack")}
           </Link>
         </p>
+        <PhotoCheckReview />
       </main>
     </Shell>
   );

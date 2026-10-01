@@ -77,6 +77,8 @@ export async function callAi<T = string>(input: {
   schema?: ZodType<T>;
   timeoutMs?: number;
   maxTokens?: number;
+  /** A data URL the model may look at. It is not logged. */
+  imageDataUrl?: string | null;
   userId?: string | null;
   ipHash?: string | null;
   deps?: AiDeps;
@@ -85,8 +87,10 @@ export async function callAi<T = string>(input: {
   const started = now();
   const env = envOf(input.deps);
   const feature = input.feature.trim() || "unknown";
+  const image = safeImageDataUrl(input.imageDataUrl);
   const system = scrubText(input.system);
   const user = scrubText(input.user);
+  const cacheUser = image ? `${user}\n${createHash("sha256").update(image).digest("hex")}` : user;
   const finish = async (result: AiResult<T>, extra: Partial<AiLogRow> = {}): Promise<AiResult<T>> => {
     await input.deps?.log?.({
       feature,
@@ -105,7 +109,7 @@ export async function callAi<T = string>(input: {
     return finish({ ok: false, error: "rate_limited" });
   }
 
-  const key = aiCacheKey(feature, system, user);
+  const key = aiCacheKey(feature, system, cacheUser);
   const cached = await (input.deps?.readCache?.(key) ?? readMemoryCache(key, started));
   if (cached) {
     const parsed = applySchema(cached, input.schema);
@@ -138,7 +142,7 @@ export async function callAi<T = string>(input: {
           ...(input.maxTokens && input.maxTokens > 0 ? { max_tokens: Math.floor(input.maxTokens) } : {}),
           messages: [
             { role: "system", content: system },
-            { role: "user", content: user },
+            { role: "user", content: image ? [{ type: "text", text: user }, { type: "image_url", image_url: { url: image } }] : user },
           ],
         }),
         signal: controller.signal,
@@ -184,6 +188,13 @@ function tokenCost(env: Record<string, string | undefined>, inputTokens: number,
       outputUsdPerM: numberEnv(env.XAI_OUTPUT_USD_PER_M, DEFAULT_OUTPUT_USD_PER_M),
     }),
   };
+}
+
+function safeImageDataUrl(raw: string | null | undefined): string | null {
+  const value = String(raw ?? "").trim();
+  if (!value || value.length > 480_000) return null;
+  if (!/^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=\s]+$/i.test(value)) return null;
+  return value;
 }
 
 function numberEnv(raw: string | undefined, fallback: number): number {
