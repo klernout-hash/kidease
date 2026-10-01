@@ -174,7 +174,7 @@ export function jurisdictionCode(code?: string | null) {
 }
 
 export function canadaFallbackUrl() {
-  return "https://www.canada.ca/en/early-learning-child-care.html";
+  return "https://www.canada.ca/en/early-learning-child-care-agreement/agreements-provinces-territories.html";
 }
 
 export function adapterStatusLabel(status: AdapterStatus) {
