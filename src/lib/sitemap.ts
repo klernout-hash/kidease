@@ -124,6 +124,23 @@ function locFor(path: string): string {
   return `${SITEMAP_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+function bareCataloguePath(path: string): string {
+  return path.startsWith("/fr/") ? path.slice(3) : path;
+}
+
+function isCatalogueSitemapPath(path: string): boolean {
+  const bare = bareCataloguePath(path);
+  return bare.startsWith("/daycare/");
+}
+
+function hreflangXml(enPath: string): string {
+  const en = locFor(enPath);
+  const fr = locFor(`/fr${enPath === "/" ? "" : enPath}`);
+  return `    <xhtml:link rel="alternate" hreflang="en" href="${escapeXml(en)}"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="${escapeXml(fr)}"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(en)}"/>`;
+}
+
 function escapeXml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -134,24 +151,27 @@ export function renderSitemapXml(input: {
   lastmod?: string;
 }): string {
   const lastmod = input.lastmod || SITEMAP_LASTMOD;
-  const urls: string[] = [];
+  const entries: string[] = [];
   for (const path of input.paths ?? sitemapBasePaths()) {
-    urls.push(locFor(path));
+    const loc = locFor(path);
+    const alt = isCatalogueSitemapPath(path) ? `\n${hreflangXml(bareCataloguePath(path))}` : "";
+    entries.push(`  <url>
+    <loc>${escapeXml(loc)}</loc>${alt}
+    <lastmod>${lastmod}</lastmod>
+  </url>`);
   }
   for (const slug of input.listingSlugs ?? []) {
     if (!isSafeSitemapSlug(slug)) continue;
-    urls.push(locFor(sitemapListingPath(slug)));
-  }
-  const body = urls
-    .map(
-      (loc) => `  <url>
-    <loc>${escapeXml(loc)}</loc>
+    const path = sitemapListingPath(slug);
+    entries.push(`  <url>
+    <loc>${escapeXml(locFor(path))}</loc>
+${hreflangXml(path)}
     <lastmod>${lastmod}</lastmod>
-  </url>`,
-    )
-    .join("\n");
+  </url>`);
+  }
+  const body = entries.join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${body}
 </urlset>
 `;

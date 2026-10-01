@@ -212,6 +212,10 @@ export const copy = {
     searchLiveCount: "{live} live · {n} listed",
     noLiveResultsClaim: "Directors: claim your listing",
     searchCountLoading: "Loading centres…",
+    searchPlacePending: "Licensed daycares",
+    searchIqaluitEmpty: "No daycares in Iqaluit yet",
+    searchIqaluitEmptyLead:
+      "We don't have a licensed daycare in Iqaluit in this search. Widen the area to see the nearest ones, or try another city.",
     mapSearchRadius: "{n} {u} search",
     liveVsAllNone: "0 live on KidEase · {n} licensed in the directory",
     licensedNotLiveTitle: "Licensed centres nearby — none live on KidEase yet",
@@ -3017,6 +3021,10 @@ export const copy = {
     searchLiveCount: "{live} en ligne · {n} fiches",
     noLiveResultsClaim: "Directeurs : réclamez votre fiche",
     searchCountLoading: "Chargement des centres…",
+    searchPlacePending: "Garderies permises",
+    searchIqaluitEmpty: "Pas de garderie à Iqaluit pour l’instant",
+    searchIqaluitEmptyLead:
+      "Aucune garderie permise à Iqaluit dans cette recherche. Élargissez la zone pour voir les plus près, ou essayez une autre ville.",
     mapSearchRadius: "Recherche {n} {u}",
     liveVsAllNone: "0 actifs sur KidEase · {n} permis dans le répertoire",
     licensedNotLiveTitle: "Centres permis près d’ici — aucun encore actif sur KidEase",

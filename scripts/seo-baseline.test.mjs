@@ -125,7 +125,7 @@ test("listing sitemap stays valid XML when slugs are missing or corrupt", async 
   for (const source of [null, undefined, "nope", { slug: "x" }, [null, 1, { slug: "not a slug" }]]) {
     const xml = safeListingSitemapXml(source);
     assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
-    assert.match(xml, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+    assert.match(xml, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"/);
     assert.match(xml, /<\/urlset>/);
     assert.doesNotMatch(xml, /<loc>/);
   }
@@ -154,7 +154,9 @@ test("listings sitemap paginates past the 5000-URL file cap", async () => {
 
   const page1 = listingSitemapXmlForPath(overflow, listingSitemapPagePath(1));
   const page2 = listingSitemapXmlForPath(overflow, listingSitemapPagePath(2));
-  assert.match(page1, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(page1, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"/);
+  assert.match(page1, /hreflang="fr"/);
+  assert.match(page1, /https:\/\/www\.kidease\.ca\/fr\/daycare\/public-centre-1/);
   assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-1/);
   assert.match(page1, /https:\/\/www\.kidease\.ca\/daycare\/public-centre-5000/);
   assert.doesNotMatch(page1, /public-centre-5001/);

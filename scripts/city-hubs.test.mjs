@@ -135,7 +135,7 @@ test("generated city-hubs.json keeps Winnipeg and other dense cities", () => {
     sitemapCityHubPaths(hubs),
     [
       ...hubs.map((h) => `/daycare/city/${h.slug}`),
-      ...hubs.filter((h) => h.province === "QC").map((h) => `/fr/daycare/city/${h.slug}`),
+      ...hubs.map((h) => `/fr/daycare/city/${h.slug}`),
     ],
   );
 });
