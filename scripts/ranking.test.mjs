@@ -9,6 +9,7 @@ import {
   assignRankingVariant,
   parseRankingOverride,
   rankingBucket,
+  rankingFlagOn,
   RANKING_BEST_MATCH_FLAG,
   RANKING_BEST_MATCH_ROLLOUT_PERCENT,
 } from "../src/lib/ranking/variant.ts";
@@ -199,6 +200,19 @@ test("the flag defaults to nearest and an explicit override wins", () => {
   const bucket = rankingBucket("parent-search-1");
   assert.ok(bucket.bucket >= 0 && bucket.bucket < 100);
   assert.equal(bucket.inRollout, bucket.bucket < 50);
+  assert.equal(rankingFlagOn({ reached: true, flags: { [RANKING_BEST_MATCH_FLAG]: true } }), true);
+  assert.equal(rankingFlagOn({ reached: true, flags: { [RANKING_BEST_MATCH_FLAG]: false } }), false);
+  assert.equal(rankingFlagOn({ reached: false, flags: { [RANKING_BEST_MATCH_FLAG]: true } }), false);
+  assert.equal(rankingFlagOn({ reached: false, flags: {} }), false);
+  assert.equal(
+    assignRankingVariant({ flag: rankingFlagOn({ reached: true, flags: { [RANKING_BEST_MATCH_FLAG]: true } }) }),
+    "best_match",
+  );
+  assert.equal(
+    assignRankingVariant({ flag: rankingFlagOn({ reached: true, flags: { [RANKING_BEST_MATCH_FLAG]: false } }) }),
+    "nearest",
+  );
+  assert.equal(assignRankingVariant({ flag: rankingFlagOn({ reached: false, flags: {} }) }), "nearest");
 });
 
 test("ranking events keep an allowlist and drop contact or child fields", () => {

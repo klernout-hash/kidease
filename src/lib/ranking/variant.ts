@@ -1,7 +1,6 @@
 /**
- * Best match is a PostHog experiment. Nearest is the fallback.
- * Set `ranking-best-match` to 50% of searches in PostHog.
- * Flag missing, still loading, or off → Nearest.
+ * Best match follows the PostHog flag `ranking-best-match`.
+ * Off, missing, or PostHog unreachable stays on Nearest. Not a 50% coin flip.
  * `?rank=best` and `?rank=nearest` are explicit overrides for preview and e2e.
  */
 
@@ -27,6 +26,15 @@ export function assignRankingVariant(input: {
   if (input.override === "nearest") return "nearest";
   if (input.flag === true) return "best_match";
   return "nearest";
+}
+
+/** True only when PostHog was reached and the flag is on. Unreachable is off. */
+export function rankingFlagOn(snapshot: {
+  reached: boolean;
+  flags?: Partial<Record<string, boolean>>;
+}): boolean {
+  if (!snapshot.reached) return false;
+  return snapshot.flags?.[RANKING_BEST_MATCH_FLAG] === true;
 }
 
 /** Stable 0–99 bucket. PostHog should use the same 50% cutoff on the flag. */

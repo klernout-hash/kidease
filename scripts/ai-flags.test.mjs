@@ -7,15 +7,17 @@ import { AI_FLAGS, aiBucket } from "../src/lib/ai/flags.ts";
 import { fetchAiFeatureFlags, resetAiFlagFetchForTests } from "../src/lib/ai/flag-fetch.ts";
 import { aiFeatureVisible, parseAiFlagSnapshot, sanitizeAiDistinctId } from "../src/lib/ai/flag-gate.ts";
 import { parseCentreMatch } from "../src/lib/ai/match-reply.ts";
+import { rankingFlagOn } from "../src/lib/ranking/variant.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFileSync(join(root, path), "utf8");
 
 const OFF = {
-  featureFlags: { "smart-match": false, "ai-listing-writer": false },
+  featureFlags: { "smart-match": false, "ai-listing-writer": false, "ranking-best-match": false },
   flags: {
     "smart-match": { enabled: false },
     "ai-listing-writer": { enabled: false },
+    "ranking-best-match": { enabled: false },
   },
 };
 
@@ -73,10 +75,15 @@ test("the flag request evaluates PostHog and does not return the key", async () 
   assert.equal(calls[0].body.distinct_id, "kidease-server");
   assert.equal(calls[0].body.api_key, "phc_test_not_real");
   assert.equal(calls[0].body.flag_keys.includes("smart-match"), true);
+  assert.equal(calls[0].body.flag_keys.includes("ranking-best-match"), true);
   assert.equal(calls[1].url, "https://us.i.posthog.com/batch/");
   assert.equal(calls[1].body.batch[0].event, "$feature_flag_called");
   assert.equal(calls[1].body.batch[0].properties.$feature_flag, "smart-match");
   assert.equal(calls[1].body.batch[0].properties.$feature_flag_response, false);
+  const rankingCall = calls[1].body.batch.find((row) => row.properties.$feature_flag === "ranking-best-match");
+  assert.equal(rankingCall.event, "$feature_flag_called");
+  assert.equal(rankingCall.properties.$feature_flag_response, false);
+  assert.equal(rankingFlagOn(snapshot), false);
   assert.equal(JSON.stringify(calls[1].body).includes("parent@example.com"), false);
 
   const cached = await fetchAiFeatureFlags({
@@ -108,6 +115,83 @@ test("a PostHog miss uses the 50% path and a down request does not throw", async
   });
   assert.equal(down.reached, false);
   assert.equal(parseAiFlagSnapshot({ errorsWhileComputingFlags: true }, ["smart-match"]).reached, false);
+});
+
+test("ranking-best-match is on only when PostHog says on", async () => {
+  resetAiFlagFetchForTests();
+  const calls = [];
+  const on = await fetchAiFeatureFlags({
+    distinctId: "visitor-ranking-on",
+    now: 5_000,
+    env: { VITE_PUBLIC_POSTHOG_KEY: "phc_test_not_real" },
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), body: JSON.parse(String(init?.body ?? "{}")) });
+      if (String(url).includes("/flags")) {
+        return new Response(
+          JSON.stringify({ flags: { "ranking-best-match": { enabled: true }, "smart-match": { enabled: false } } }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response("ok", { status: 200 });
+    },
+  });
+  assert.equal(on.reached, true);
+  assert.equal(rankingFlagOn(on), true);
+  assert.equal(calls[0].body.flag_keys.includes("ranking-best-match"), true);
+  const called = calls[1].body.batch.find((row) => row.properties.$feature_flag === "ranking-best-match");
+  assert.equal(called.event, "$feature_flag_called");
+  assert.equal(called.properties.$feature_flag_response, true);
+
+  resetAiFlagFetchForTests();
+  const off = await fetchAiFeatureFlags({
+    distinctId: "visitor-ranking-off",
+    now: 5_000,
+    env: { VITE_PUBLIC_POSTHOG_KEY: "phc_test_not_real" },
+    fetchImpl: async (url) => {
+      if (String(url).includes("/flags")) {
+        return new Response(JSON.stringify({ flags: { "ranking-best-match": { enabled: false } } }), { status: 200 });
+      }
+      return new Response("ok", { status: 200 });
+    },
+  });
+  assert.equal(rankingFlagOn(off), false);
+
+  resetAiFlagFetchForTests();
+  const down = await fetchAiFeatureFlags({
+    distinctId: "visitor-ranking-down",
+    now: 5_000,
+    env: { VITE_PUBLIC_POSTHOG_KEY: "phc_test_not_real" },
+    fetchImpl: async () => new Response("no", { status: 503 }),
+  });
+  assert.equal(down.reached, false);
+  assert.equal(rankingFlagOn(down), false);
+
+  resetAiFlagFetchForTests();
+  const missingKey = await fetchAiFeatureFlags({
+    distinctId: "visitor-ranking-nokey",
+    env: {},
+    fetchImpl: async () => {
+      throw new Error("should not fetch");
+    },
+  });
+  assert.equal(rankingFlagOn(missingKey), false);
+});
+
+test("search reads ranking-best-match on the server, not the browser SDK", () => {
+  const search = read("src/routes/search.tsx");
+  const hook = read("src/lib/ranking/use-ranking-flag.ts");
+  const fetchSrc = read("src/lib/ai/flag-fetch.ts");
+  const gate = read("src/lib/ai/flag-gate.ts");
+  assert.match(search, /useRankingBestMatchFlag/);
+  assert.doesNotMatch(search, /isPostHogFlagEnabled/);
+  assert.doesNotMatch(search, /getPostHog/);
+  assert.match(hook, /readAiFeatureFlags/);
+  assert.match(hook, /rankingFlagOn/);
+  assert.doesNotMatch(hook, /rankingBucket/);
+  assert.doesNotMatch(hook, /isPostHogFlagEnabled/);
+  assert.match(gate, /RANKING_BEST_MATCH_FLAG/);
+  assert.match(fetchSrc, /SERVER_FLAG_KEYS/);
+  assert.match(fetchSrc, /\$feature_flag_called/);
 });
 
 test("the quiz and the writer stay hidden until the real flag is read", () => {

@@ -10,8 +10,8 @@
  * can still reach 100. Stale or unknown openings stay inside
  * `openingsFreshness` and score 0. They are not dropped and not a penalty.
  *
- * PostHog flag `ranking-best-match` should roll out to 50% of searches.
- * The other half stay on Nearest. An explicit off flag falls back to Nearest.
+ * PostHog flag `ranking-best-match` is read on the server. Off stays on Nearest.
+ * If PostHog cannot be reached, search stays on Nearest. Not a 50% split.
  */
 
 export const SMART_MATCH_WEIGHTS = {
@@ -39,10 +39,10 @@ export const SMART_MATCH_WEIGHTS = {
 
 export type SmartMatchWeightKey = keyof typeof SMART_MATCH_WEIGHTS;
 
-/** Boolean PostHog flag. Set the rollout to 50% in PostHog. Default in code is off. */
+/** Boolean PostHog flag. The rollout percent is set in PostHog, not in this file. */
 export const RANKING_BEST_MATCH_FLAG = "ranking-best-match";
 
-/** The split Kyle sets on the PostHog flag. Code does not flip this on by itself. */
+/** The split set on the PostHog flag. Code does not turn Best match on by itself. */
 export const RANKING_BEST_MATCH_ROLLOUT_PERCENT = 50;
 
 export const WHY_REASON_LIMIT = 2;

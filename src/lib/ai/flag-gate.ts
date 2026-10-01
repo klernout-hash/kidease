@@ -2,15 +2,21 @@
  * Decide whether an AI feature is visible.
  * A PostHog answer wins. The built-in 50% split is only for when PostHog
  * cannot be reached. A reached response with the flag off stays hidden.
+ * Best match ranking is read in the same request, but it is not an AI feature
+ * and does not use that 50% split.
  */
 
+import { RANKING_BEST_MATCH_FLAG } from "../ranking/weights.ts";
 import { AI_FLAGS, aiFlagDefaultOn, type AiFlag } from "./flags.ts";
 
 export const AI_REMOTE_FLAGS = [AI_FLAGS.smartMatch, AI_FLAGS.listingWriter] as const;
 
+/** Keys this server read asks PostHog to evaluate. Callers must not add their own. */
+export const SERVER_FLAG_KEYS = [...AI_REMOTE_FLAGS, RANKING_BEST_MATCH_FLAG] as const;
+
 export type AiFlagSnapshot = {
   reached: boolean;
-  flags: Partial<Record<AiFlag, boolean>>;
+  flags: Partial<Record<string, boolean>>;
 };
 
 export function sanitizeAiDistinctId(raw: unknown): string {
@@ -47,10 +53,10 @@ function readFlagValue(body: Record<string, unknown>, key: string): boolean | un
 }
 
 /** A successful PostHog payload. Missing keys count as off. A failed compute does not. */
-export function parseAiFlagSnapshot(body: unknown, keys: readonly AiFlag[]): AiFlagSnapshot {
+export function parseAiFlagSnapshot(body: unknown, keys: readonly string[]): AiFlagSnapshot {
   if (!body || typeof body !== "object") return { reached: false, flags: {} };
   const rec = body as Record<string, unknown>;
-  const flags: Partial<Record<AiFlag, boolean>> = {};
+  const flags: Partial<Record<string, boolean>> = {};
   for (const key of keys) {
     const value = readFlagValue(rec, key);
     if (typeof value === "boolean") flags[key] = value;
