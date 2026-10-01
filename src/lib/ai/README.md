@@ -9,7 +9,8 @@ AI only explains or reshapes facts we already have. It never invents a daycare, 
 - All model calls go through `callAi` on the server. `AI_GATEWAY_API_KEY` is used when it is set (Vercel AI Gateway, model `spacexai/grok-4.1-fast-non-reasoning`). Otherwise `XAI_API_KEY` calls api.x.ai. Keys stay in the environment and are not logged.
 - Rate limit per signed-in user and per IP hash. Identical scrubbed requests are cached for 24 hours.
 - Messages, alerts, and listing text stay drafts until a person clicks publish or send. Nothing auto-sends.
-- Each feature has its own PostHog flag in `flags.ts`. Parent and daycare flags default to 50%. Admin flags default to off.
+- Each feature has its own PostHog flag in `flags.ts`. `smart-match` and `ai-listing-writer` are read from PostHog on the server. If that flag is off, the button stays hidden. The built-in 50% split is used only when PostHog cannot be reached. The browser analytics SDK still waits for Allow. The server sends a random device id, not a name or email.
+- The help bot and centre match go through `callAi`, so they use the gateway key when it is set.
 - Log events only after analytics consent.
 - If the call fails or times out, use the non-AI path. The page must still render.
 - English and French strings ship together. The phone layout comes first.

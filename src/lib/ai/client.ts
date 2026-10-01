@@ -76,6 +76,7 @@ export async function callAi<T = string>(input: {
   user: string;
   schema?: ZodType<T>;
   timeoutMs?: number;
+  maxTokens?: number;
   userId?: string | null;
   ipHash?: string | null;
   deps?: AiDeps;
@@ -134,6 +135,7 @@ export async function callAi<T = string>(input: {
         body: JSON.stringify({
           model,
           temperature: 0,
+          ...(input.maxTokens && input.maxTokens > 0 ? { max_tokens: Math.floor(input.maxTokens) } : {}),
           messages: [
             { role: "system", content: system },
             { role: "user", content: user },
