@@ -12,7 +12,7 @@ export function DirectorProStrip({
   const weekViews = Number.isFinite(views) ? Math.max(0, Math.floor(views)) : 0;
   const weekRequests = Number.isFinite(requests) ? Math.max(0, Math.floor(requests)) : 0;
   return (
-    <section className="rounded-xl bg-surface p-4 ring-1 ring-border">
+    <section className="ke-digital-plan rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="digital-plan">
       <p className="font-semibold">{t("proWhyTitle")}</p>
       <p className="mt-1 text-sm text-muted">{t("proWhyLead")}</p>
       <dl className="mt-3 grid grid-cols-2 gap-3 text-center text-sm">

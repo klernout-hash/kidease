@@ -90,6 +90,23 @@ async function openHeaderMenu(page) {
   await drawer.waitFor({ timeout: timeoutMs });
 }
 
+/** Role chrome can remount the drawer link once. Re-open and click again. The checkout assertion stays. */
+async function clickDrawerUpgrade(page) {
+  const link = page.locator('#ke-nav-drawer [data-nav="upgrade"]');
+  let lastError = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await openHeaderMenu(page);
+    try {
+      await link.waitFor({ state: "visible", timeout: 8000 });
+      await link.click({ timeout: 8000 });
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 async function roleNavText(page) {
   const nav = page.locator('[data-ke="role-nav"]:visible');
   const count = await nav.count();
@@ -195,6 +212,26 @@ async function runRoleFixture(page, base) {
     record("parent-card-new", parentCardNew === 0, { note: `cards ${parentCardNew}` });
     await shot(page, "parent-new", 1280, '[data-ke="parent-home"]');
     await shot(page, "parent-390", 390, '[data-ke="parent-home"]');
+    await page.setViewportSize({ width: 390, height: 844 });
+    const compareResp = await page.goto(
+      new URL("/compare?slugs=a-a-daycare-centre-1288", base).href,
+      { waitUntil: "domcontentloaded", timeout: timeoutMs },
+    );
+    await page.locator("[data-ke='compare-page']").waitFor({ timeout: timeoutMs }).catch(() => {});
+    const compareText = await page.locator("body").innerText();
+    const compareUp = (compareResp?.status() ?? 0) < 500 && /compare centres/i.test(compareText);
+    const named = /a & a daycare/i.test(compareText);
+    const guardShown = /not accepting online requests yet|request a spot/i.test(compareText);
+    record("multi-apply-compare", compareUp && (!named || guardShown), {
+      note: named ? (guardShown ? "guard" : compareText.slice(0, 160)) : "compare page",
+      status: compareResp?.status() ?? 0,
+    });
+    if (await page.locator("[data-ke='multi-apply']").count()) {
+      await shot(page, "multi-apply-390", 390, "[data-ke='multi-apply']");
+    }
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.locator('[data-ke="parent-home"][data-settled="1"]').waitFor({ timeout: timeoutMs });
     await shot(page, "parent-desktop", 1280, '[data-ke="parent-home"]');
     await openHeaderMenu(page);
     await page.locator('#ke-nav-drawer [data-ke="role-nav"][data-role="parent"]').waitFor({ timeout: timeoutMs });
@@ -234,7 +271,7 @@ async function runRoleFixture(page, base) {
     await page.locator('header [data-nav="upgrade"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
     const paidPlaces = await upgradePlaces(page);
     await openHeaderMenu(page);
-    await page.locator('#ke-nav-drawer [data-nav="upgrade"]').click();
+    await clickDrawerUpgrade(page);
     await page.locator('[data-ke="manage-or-cancel"]').waitFor({ timeout: timeoutMs }).catch(() => {});
     const managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
     record(
@@ -317,7 +354,7 @@ async function runRoleFixture(page, base) {
     await settleMockCheckout(page);
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await openHeaderMenu(page);
-    await page.locator('#ke-nav-drawer [data-nav="upgrade"]').click();
+    await clickDrawerUpgrade(page);
     await page.waitForURL(/\/provider\/subscription/i, { timeout: timeoutMs }).catch(() => {});
     const homeCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
     await homeCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
@@ -344,7 +381,7 @@ async function runRoleFixture(page, base) {
     await settleMockCheckout(page);
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await openHeaderMenu(page);
-    await page.locator('#ke-nav-drawer [data-nav="upgrade"]').click();
+    await clickDrawerUpgrade(page);
     await page.waitForURL(/tab=payments/i, { timeout: timeoutMs }).catch(() => {});
     const homePlus = page.locator('[data-ke="plan-checkout"]:visible').first();
     await homePlus.waitFor({ timeout: timeoutMs }).catch(() => {});

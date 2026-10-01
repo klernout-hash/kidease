@@ -133,7 +133,10 @@ test("generated city-hubs.json keeps Winnipeg and other dense cities", () => {
   assert.doesNotMatch(JSON.stringify(hubs), /test-ghost-claim-lab/);
   assert.deepEqual(
     sitemapCityHubPaths(hubs),
-    hubs.map((h) => `/daycare/city/${h.slug}`),
+    [
+      ...hubs.map((h) => `/daycare/city/${h.slug}`),
+      ...hubs.filter((h) => h.province === "QC").map((h) => `/fr/daycare/city/${h.slug}`),
+    ],
   );
 });
 
@@ -160,15 +163,16 @@ test("guest home links Browse by city and does not render city pills", () => {
 
 test("hub route, listing breadcrumbs, and internal links are wired", () => {
   const hubRoute = src("src/routes/daycare.city.$city.tsx");
+  const hubPage = src("src/lib/city-hub-page.ts");
   assert.match(hubRoute, /createFileRoute\("\/daycare\/city\/\$city"\)/);
-  assert.match(hubRoute, /throw notFound\(\)/);
+  assert.match(hubPage, /throw notFound\(\)/);
   assert.match(hubRoute, /CityHubNotFoundPage/);
-  assert.match(hubRoute, /cityHubNotFoundHead/);
-  assert.doesNotMatch(hubRoute, /redirect\(\{\s*to:\s*"\/search"/);
+  assert.match(hubPage, /cityHubNotFoundHead/);
+  assert.doesNotMatch(hubRoute + hubPage, /redirect\(\{\s*to:\s*"\/search"/);
   assert.match(hubRoute, /cityHubMapSearchQuery/);
   assert.equal((hubRoute.match(/search=\{\{\s*q:\s*mapSearch\s*\}\}/g) ?? []).length, 2);
   assert.doesNotMatch(hubRoute, /<Link to="\/search">/);
-  assert.match(hubRoute, /pageSeoHead/);
+  assert.match(hubPage, /pageSeoHead/);
   assert.match(hubRoute, /faqPageJsonLdScript/);
   assert.match(hubRoute, /breadcrumbJsonLdScript/);
   assert.match(hubRoute, /do not list nannies or sitters/);

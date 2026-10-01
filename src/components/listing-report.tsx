@@ -12,6 +12,7 @@ const REASONS: Array<{ id: string; key: CopyKey }> = [
   { id: "unlicensed", key: "trustReasonUnlicensed" },
   { id: "ownership", key: "trustReasonOwnership" },
   { id: "photo", key: "trustReasonPhoto" },
+  { id: "complaint", key: "trustReasonComplaint" },
   { id: "other", key: "trustReasonOther" },
 ];
 
@@ -29,8 +30,9 @@ export function ListingReport({ daycareId, centreName }: { daycareId: string; ce
     return (
       <button
         type="button"
+        data-ke="report-complaint"
         onClick={() => setOpen(true)}
-        className="text-xs text-muted underline-offset-4 hover:text-fg hover:underline"
+        className="inline-flex min-h-11 items-center rounded-[14px] bg-surface px-4 text-sm font-semibold text-fg ring-1 ring-border hover:bg-surface-2"
       >
         {t("trustReport")}
       </button>

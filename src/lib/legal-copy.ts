@@ -181,7 +181,7 @@ export const PRIVACY_EN: LegalDoc = {
             {
               name: "Sentry, when error monitoring is on",
               purpose:
-                "Crash and performance reports so we can fix production bugs. We send stack traces and a route tag — not cookies, Authorization headers, emails, tokens, or child names. Sentry is not an advertising pixel.",
+                "Crash and performance reports so we can fix production bugs. We send stack traces and a route tag — not cookies, Authorization headers, emails, tokens, or child names. Sentry is not an advertising pixel. In the iPhone and Android app it starts only after you tap Allow analytics.",
               href: "https://sentry.io/privacy/",
               hrefLabel: "Sentry Privacy Policy",
             },
@@ -221,7 +221,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "We use cookies and similar storage to keep you signed in and remember search settings. We do not use advertising pixels or ad-tech trackers. On the website, a banner asks you to choose Essential (required cookies only) or Allow analytics before we load PostHog or session replay. The native iPhone and Android app does not show this banner.",
+          text: "We use cookies and similar storage to keep you signed in and remember search settings. We do not use advertising pixels or ad-tech trackers. On the website and in the iPhone and Android app, a banner asks you to choose Essential (required cookies only) or Allow analytics before we load PostHog. In the app, crash reports also wait for that Allow tap.",
         },
         { type: "link", to: "/cookies", label: "Read the Cookie Policy" },
       ],
@@ -355,7 +355,7 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "We keep account, request, message, and payment records while the account is open.",
-            "Delete my account at /delete-account (or in the app) removes your children, messages, bookings, payments, saved centres, director links, profile, and sign-in rows on KidEase. This cannot be undone. Marketing email or SMS stops at /unsubscribe without deleting the account.",
+            "Delete account at /delete-account (or in the app) removes your children, messages, bookings, saved centres, director links, profile, and sign-in rows on KidEase. We keep billing records because tax law requires them, and we keep fraud and security logs. This cannot be undone. Marketing email or SMS stops at /unsubscribe without deleting the account.",
             "Deletion does not erase copies a centre already received, emails already sitting in kyle@kidease.ca or Titan, or records a law or chargeback requires us to keep for a time.",
             `You can also email ${SUPPORT_INBOX_EMAIL} to access, correct, or delete.`,
             "Security we actually use: HTTPS in transit; signed-in sessions in first-party cookies; OAuth tokens encrypted at rest; email sign-in codes; access checks on parent and director desks; payment card data stays with Stripe; audit events do not store card numbers or medical notes.",
@@ -536,7 +536,7 @@ export const PRIVACY_FR: LegalDoc = {
             {
               name: "Sentry, lorsque le suivi des erreurs est actif",
               purpose:
-                "Rapports de plantage et de performance pour corriger la production. Nous envoyons des traces et une route — pas les témoins, les en-têtes Authorization, les courriels, les jetons ni les noms d’enfants. Sentry n’est pas un pixel publicitaire.",
+                "Rapports de plantage et de performance pour corriger la production. Nous envoyons des traces et une route — pas les témoins, les en-têtes Authorization, les courriels, les jetons ni les noms d’enfants. Sentry n’est pas un pixel publicitaire. Dans l’appli iPhone et Android, il démarre seulement après Autoriser l’analytique.",
               href: "https://sentry.io/privacy/",
               hrefLabel: "Politique de confidentialité Sentry",
             },
@@ -576,7 +576,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "Nous utilisons des témoins et un stockage similaire pour vous garder connecté et mémoriser la recherche. Pas de pixels publicitaires. Sur le site web, une bannière vous demande de choisir Essentiel (témoins nécessaires seulement) ou Autoriser l’analytique avant de charger PostHog ou le replay. L’appli iPhone et Android n’affiche pas cette bannière.",
+          text: "Nous utilisons des témoins et un stockage similaire pour vous garder connecté et mémoriser la recherche. Pas de pixels publicitaires. Sur le site web et dans l’appli iPhone et Android, une bannière vous demande de choisir Essentiel (témoins nécessaires seulement) ou Autoriser l’analytique avant de charger PostHog. Dans l’appli, les rapports de plantage attendent aussi ce choix.",
         },
         { type: "link", to: "/cookies", label: "Lire la politique sur les témoins" },
       ],
@@ -710,7 +710,7 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Nous gardons le compte, les demandes, les messages et les paiements tant que le compte est ouvert.",
-            "Supprimer mon compte à /delete-account (ou dans l’appli) efface enfants, messages, demandes, paiements, centres enregistrés, liens de direction, profil et sessions. Irréversible. /unsubscribe arrête les messages marketing sans supprimer le compte.",
+            "Supprimer le compte à /delete-account (ou dans l’appli) efface enfants, messages, demandes, centres enregistrés, liens de direction, profil et sessions. Nous gardons les dossiers de facturation exigés par la loi fiscale, ainsi que les journaux de fraude et de sécurité. Irréversible. /unsubscribe arrête les messages marketing sans supprimer le compte.",
             "La suppression n’efface pas les copies déjà reçues par un centre, les courriels déjà reçus, ni les dossiers qu’une loi ou une rétrofacturation exige.",
             `Vous pouvez aussi écrire à ${SUPPORT_INBOX_EMAIL}.`,
             "Sécurité réelle : HTTPS; sessions en témoins internes; jetons OAuth chiffrés; codes par courriel; contrôles d’accès; les cartes restent chez Stripe; les journaux d’audit ne stockent pas les numéros de carte ni les notes médicales.",
@@ -761,7 +761,7 @@ export const COOKIES_EN: LegalDoc = {
   updated: UPDATED_EN,
   intro: [
     "This page lists the cookies and similar storage KidEase uses. It is part of our Privacy notice.",
-    "We do not use advertising cookies, ad pixels, or third-party marketing trackers. On the website, optional product analytics (PostHog, including privacy-masked session replay) loads only after you tap Allow analytics. Essential cookies still work if you choose Essential. We remember your choice in this browser. The iPhone and Android app does not show this banner.",
+    "We do not use advertising cookies, ad pixels, or third-party marketing trackers. On the website and in the iPhone and Android app, optional product analytics (PostHog) loads only after you tap Allow analytics. Essential cookies still work if you choose Essential. We remember your choice on this device. In the app, crash reports wait for the same Allow tap.",
   ],
   sections: [
     {
@@ -817,7 +817,7 @@ export const COOKIES_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "On the website, PostHog loads only after you tap Allow analytics. Until then — or if you choose Essential — we do not initialize PostHog or session replay. If you allow it, PostHog records page views, in-app clicks, and privacy-masked session replay. It may set a first-party cookie on this site and send events through this site’s /ingest path (proxied to PostHog in the US). Passwords and form fields are masked. This is not an advertising or remarketing cookie.",
+          text: "On the website and in the iPhone and Android app, PostHog loads only after you tap Allow analytics. Until then — or if you choose Essential — we do not initialize PostHog or session replay. If you allow it, PostHog records page views, in-app clicks, and privacy-masked session replay on the website. Replay stays off in the app unless a separate switch is on. It may set a first-party cookie on this site and send events through this site’s /ingest path (proxied to PostHog in the US). Passwords and form fields are masked. This is not an advertising or remarketing cookie.",
         },
       ],
     },
@@ -841,7 +841,7 @@ export const COOKIES_EN: LegalDoc = {
             "Analytics on the website: tap Essential or Allow analytics on the banner. To choose again, clear this site’s data for kidease.ca.",
             "Browser settings: block or delete cookies and site data for kidease.ca.",
             "Location: OS or browser permission, or “Not now” in the app. Details are in Privacy → Location.",
-            "Account: Delete my account removes server-side data; it does not clear cookies already on this phone until you sign out or clear site data.",
+            "Account: Delete account removes your profile and family data. Billing records stay for tax law. Fraud and security logs stay. It does not clear cookies already on this phone until you sign out or clear site data.",
             "Google Maps: use the browser’s site settings for maps.googleapis.com if you want to limit Google’s cookies. The map may not load.",
           ],
         },
@@ -858,7 +858,7 @@ export const COOKIES_FR: LegalDoc = {
   updated: UPDATED_FR,
   intro: [
     "Cette page dresse la liste des témoins et du stockage similaire. Elle complète l’avis de confidentialité.",
-    "Nous n’utilisons pas de témoins publicitaires, de pixels ni de traceurs marketing. Sur le site web, l’analytique facultative (PostHog, y compris le replay masqué) se charge seulement après Autoriser l’analytique. Les témoins essentiels fonctionnent si vous choisissez Essentiel. Nous gardons votre choix dans ce navigateur. L’appli iPhone et Android n’affiche pas cette bannière.",
+    "Nous n’utilisons pas de témoins publicitaires, de pixels ni de traceurs marketing. Sur le site web et dans l’appli iPhone et Android, l’analytique facultative (PostHog) se charge seulement après Autoriser l’analytique. Les témoins essentiels fonctionnent si vous choisissez Essentiel. Nous gardons votre choix sur cet appareil. Dans l’appli, les rapports de plantage attendent le même choix.",
   ],
   sections: [
     {
@@ -914,7 +914,7 @@ export const COOKIES_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "Sur le site web, PostHog se charge seulement après Autoriser l’analytique. Avant cela — ou si vous choisissez Essentiel — nous n’initialisons ni PostHog ni le replay. Si vous l’autorisez, PostHog enregistre les pages vues, les clics et un replay masqué. Il peut déposer un témoin de première partie et envoyer les événements par le chemin /ingest de ce site (relayé vers PostHog aux États-Unis). Les mots de passe et les champs de formulaire sont masqués. Ce n’est pas un témoin publicitaire.",
+          text: "Sur le site web et dans l’appli iPhone et Android, PostHog se charge seulement après Autoriser l’analytique. Avant cela — ou si vous choisissez Essentiel — nous n’initialisons ni PostHog ni le replay. Si vous l’autorisez, PostHog enregistre les pages vues, les clics et, sur le site web, un replay masqué. Le replay reste éteint dans l’appli sauf si un interrupteur séparé est ouvert. Il peut déposer un témoin de première partie et envoyer les événements par le chemin /ingest de ce site (relayé vers PostHog aux États-Unis). Les mots de passe et les champs de formulaire sont masqués. Ce n’est pas un témoin publicitaire.",
         },
       ],
     },
@@ -938,7 +938,7 @@ export const COOKIES_FR: LegalDoc = {
             "Analytique sur le site : Essentiel ou Autoriser l’analytique sur la bannière. Pour choisir de nouveau, effacez les données de kidease.ca.",
             "Réglages du navigateur : bloquer ou supprimer les témoins de kidease.ca.",
             "Position : permission du système ou « Pas maintenant ». Détails dans Confidentialité → Position.",
-            "Compte : supprimer le compte efface les données côté serveur; les témoins sur cet appareil restent jusqu’à la déconnexion ou l’effacement du site.",
+            "Compte : supprimer le compte efface le profil et les données familiales. Les dossiers de facturation restent pour la loi fiscale. Les journaux de fraude et de sécurité restent. Les témoins sur cet appareil restent jusqu’à la déconnexion ou l’effacement du site.",
             "Google Maps : réglages du site pour maps.googleapis.com. La carte peut ne plus s’afficher.",
           ],
         },

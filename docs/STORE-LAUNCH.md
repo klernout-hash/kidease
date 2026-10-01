@@ -5,7 +5,7 @@ Cheap DIY Capacitor path. This repo can get a **debug / local** iOS + Android bi
 **This checklist does not mean a build was submitted.** App Store / Play listings stay **Coming soon** on `/get-app`.
 
 Live WebView: https://www.kidease.ca  
-Bundle / application id: `ca.daycarenearme.app`  
+Bundle / application id: `ca.kidease.app`  
 App name: KidEase  
 Support: support@kidease.ca
 
@@ -25,7 +25,7 @@ Longer engineering notes: [`mobile-builds.md`](mobile-builds.md). Account + revi
 | When-in-use location only (no background / Always) | Done |
 | AASA + Digital Asset Links served as `application/json` | Done — **placeholder Team ID / empty SHA-256** |
 | iOS Associated Domains (`applinks` + `webcredentials` for `www.kidease.ca` and `kidease.ca`) | Done in `App.entitlements` |
-| Android App Links (`autoVerify` https hosts) + `KidEase://` / `ca.daycarenearme.app://` | Done in `AndroidManifest.xml` |
+| Android App Links (`autoVerify` https hosts) + `KidEase://` / `ca.kidease.app://` | Done in `AndroidManifest.xml` |
 | Legal URLs live: `/privacy`, `/terms`, `/help`, `/delete-account` | Done |
 | Export compliance flag `ITSAppUsesNonExemptEncryption=false` | Done |
 | Android `allowBackup=false` | Done |
@@ -39,11 +39,11 @@ Do **not** invent these values. Leave env vars blank until the consoles show rea
 | Need | Where it comes from | What to do in the repo / Vercel |
 | --- | --- | --- |
 | Apple Developer Program (~$99/yr) | developer.apple.com | Enroll as the KidEase entity |
-| Apple Team ID (10 chars) | Membership details | Set `APPLE_TEAM_ID` on Vercel Production. Until then AASA keeps `XXXXXXXXXX.ca.daycarenearme.app` |
-| App Store Connect app + bundle `ca.daycarenearme.app` | App Store Connect | Xcode Automatic signing after Team is selected |
+| Apple Team ID (10 chars) | Membership details | Set `APPLE_TEAM_ID` on Vercel Production. Until then AASA keeps `XXXXXXXXXX.ca.kidease.app` |
+| App Store Connect app + bundle `ca.kidease.app` | App Store Connect | Xcode Automatic signing after Team is selected |
 | Distribution cert + provisioning | Xcode / portal | **Product → Archive → TestFlight**. Not possible from this VM |
 | Numeric App Store id | App Store Connect URL (`idNNNN`) | Set `VITE_APPLE_APP_STORE_ID` — never guess |
-| Play Console (~$25) | play.google.com/console | Create app package `ca.daycarenearme.app` |
+| Play Console (~$25) | play.google.com/console | Create app package `ca.kidease.app` |
 | Upload keystore | Local `keytool` (gitignored) | `android/key.properties` from `android/key.properties.example` |
 | Play App Signing SHA-256 | Play → App integrity → App signing | Set `ANDROID_CERT_SHA256S` on Vercel. Until then `sha256_cert_fingerprints` stays `[]` |
 | Play internal AAB | `./gradlew bundleRelease` on a signed machine | Upload to Internal testing — not this PR |
@@ -93,6 +93,6 @@ curl -sI https://www.kidease.ca/apple-app-site-association
 curl -sI https://www.kidease.ca/.well-known/assetlinks.json
 ```
 
-Expect **HTTP 200** `application/json`, no redirect. `appID` must become `<TeamID>.ca.daycarenearme.app`. `sha256_cert_fingerprints` must be a non-empty array of Play hashes.
+Expect **HTTP 200** `application/json`, no redirect. `appID` must become `<TeamID>.ca.kidease.app`. `sha256_cert_fingerprints` must be a non-empty array of Play hashes.
 
 Amazon Appstore is out of scope.

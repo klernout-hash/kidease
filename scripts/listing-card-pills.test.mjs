@@ -42,16 +42,16 @@ test("photo overlay keeps expired and suspended, not registry-checked", () => {
 test("listing card photo uses the live and fee pills instead of registry-checked", () => {
   const card = src("src/components/daycare-card.tsx");
   assert.match(card, /data-ke="card-live-pill"/);
-  assert.match(card, /data-ke="card-fee-pill"/);
+  assert.match(card, /SubsidyPill/);
   assert.match(card, /showCardLivePill\(live, publicApprovalEligible\(item\)\)/);
-  assert.match(card, /cardFeePillLabelKey\(feeBadge\)/);
-  assert.match(card, /priceOnPhoto = feeBadge === "badgeTen" \|\| feeBadge === "badgeQc965"/);
+  assert.match(card, /listingSubsidy\(item\)/);
+  assert.match(card, /priceOnPhoto = daily/);
   assert.match(card, /!priceOnPhoto && priceAmount/);
-  assert.match(card, /confirmedFeeProgramBadge/);
   assert.match(card, /cardPhotoLicenseWarning\(license\.id\)/);
   assert.doesNotMatch(card, /trustLicensedMatched/);
   assert.doesNotMatch(card, /listingPill/);
   const copy = src("src/lib/copy.ts");
-  assert.match(copy, /cardTenPerDay: "\$10 \/ Day"/);
-  assert.match(copy, /cardTenPerDay: "10 \$ \/ jour"/);
+  assert.match(copy, /cardTenPerDay: "\$10\/day"/);
+  assert.match(copy, /cardQcPerDay: "\$9.65\/day subsidized"/);
+  assert.match(copy, /cardTenPerDay: "10 \$\/jour"/);
 });
