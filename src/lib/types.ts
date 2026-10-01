@@ -57,6 +57,8 @@ export type Daycare = {
   lat: number;
   lng: number;
   phone: string | null;
+  /** Public centre site. Shown only when it is a real http(s) URL. */
+  website?: string | null;
   hours: string;
   hoursFr: string;
   ageMinMonths: number;
@@ -176,6 +178,8 @@ export type DaycareCard = Daycare & {
   fromPrice: number;
   catchmentKm?: number;
   inCatchment?: boolean;
+  /** Set only for Best match. Reason codes, not a sentence, so French can fit. */
+  smartMatchWhy?: Array<{ code: string; days?: number; age?: string }>;
 };
 
 export type ReviewStatus = "pending" | "published" | "hidden" | "approved" | "rejected";

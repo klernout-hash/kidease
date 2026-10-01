@@ -15,6 +15,10 @@
     {
       "path": "/api/tour-holds",
       "schedule": "50 * * * *"
+    },
+    {
+      "path": "/api/ranking-market",
+      "schedule": "15 7 * * *"
     }
   ],
   "rewrites": [
@@ -67,6 +71,12 @@
       "source": "/admin-chat/:path*",
       "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
       "destination": "https://www.kidease.ca/admin-chat/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/admin-ranking",
+      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "destination": "https://www.kidease.ca/admin-ranking",
       "permanent": false
     },
     {
@@ -123,6 +133,10 @@
     },
     {
       "source": "/admin-chat",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/admin-ranking",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {

@@ -640,6 +640,44 @@ async function adminHttpGate(base) {
   });
 }
 
+async function rankingSortSmoke(page, base) {
+  const shotDir = dirname(outDir);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const bestResp = await page.goto(new URL("/search?rank=best", base).href, {
+    waitUntil: "domcontentloaded",
+    timeout: timeoutMs,
+  });
+  await page.getByRole("button", { name: /^Essential$/ }).click({ timeout: 4000 }).catch(() => {});
+  const opened = await page
+    .locator('[data-ke="explore-filters-toggle"]')
+    .first()
+    .click({ timeout: timeoutMs })
+    .then(() => true)
+    .catch(() => false);
+  const bestCount = await page.locator('[data-ke="sort-best"]').count();
+  const nearestCount = await page.locator('[data-ke="sort-nearest"]').count();
+  const whyCount = await page.locator('[data-ke="why-match"]').count();
+  await page.screenshot({ path: join(shotDir, "ranking-best-390.png"), fullPage: false }).catch(() => {});
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.screenshot({ path: join(shotDir, "ranking-best-1280.png"), fullPage: false }).catch(() => {});
+  record("ranking-best-sort", (bestResp?.status() ?? 0) < 500 && opened && bestCount > 0 && nearestCount > 0, {
+    note: `status=${bestResp?.status() ?? 0} best=${bestCount} nearest=${nearestCount} why=${whyCount}`,
+  });
+
+  await page.goto(new URL("/search?rank=nearest", base).href, {
+    waitUntil: "domcontentloaded",
+    timeout: timeoutMs,
+  });
+  await page
+    .locator('[data-ke="explore-filters-toggle"]')
+    .first()
+    .click({ timeout: timeoutMs })
+    .catch(() => {});
+  const hidden = await page.locator('[data-ke="sort-best"]').count();
+  record("ranking-nearest-fallback", hidden === 0, { note: `sort-best=${hidden}` });
+  await page.setViewportSize({ width: 1280, height: 800 });
+}
+
 let browser = null;
 try {
   if (args.startPreview && !args.explicitUrl) {
@@ -674,6 +712,8 @@ try {
   });
   await page.screenshot({ path: join(dirname(outDir), "home.png"), fullPage: false }).catch(() => {});
   record("homepage", home.ok, { note: home.reason, status: homeResp?.status() ?? 0 });
+
+  await rankingSortSmoke(page, base);
 
   const healthResp = await page.request.get(new URL(HEALTH_SMOKE_PATH, base).href).catch(() => null);
   const healthBody = (await healthResp?.text().catch(() => "")) || "";

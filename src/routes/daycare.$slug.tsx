@@ -73,6 +73,8 @@ import { listingActionMode, showsOwnListingEdit, showsParentListingActions } fro
 import { useCopy } from "@/lib/use-copy";
 import { listingPageTitle } from "@/lib/listing-meta";
 import { hreflangLinks } from "@/lib/locale-path";
+import { captureRankingEvent, publicTelHref, publicWebsiteHref } from "@/lib/ranking/events";
+import { rankingContextFor } from "@/lib/ranking/context";
 import { rethrowRouterControl } from "@/lib/listing-loader-errors";
 import { decideListingLoader, listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-found";
 import { ListingNotFoundPage } from "@/components/page-not-found";
@@ -252,6 +254,17 @@ export function Listing() {
     sync();
     window.addEventListener("kidease-compare", sync);
     return () => window.removeEventListener("kidease-compare", sync);
+  }, [data]);
+
+  useEffect(() => {
+    if (!data) return;
+    const ctx = rankingContextFor(data.daycare.id);
+    captureRankingEvent("listing_viewed", {
+      listing_id: data.daycare.id,
+      position: ctx.position,
+      sort: ctx.sort,
+      variant: ctx.variant,
+    });
   }, [data]);
 
   useEffect(() => {
@@ -533,6 +546,44 @@ export function Listing() {
         >
           {t("viewLicenceRecord")}
         </a>
+        {publicTelHref(d.phone) ? (
+          <a
+            href={publicTelHref(d.phone) || undefined}
+            role="menuitem"
+            className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
+            onClick={() => {
+              const ctx = rankingContextFor(d.id);
+              captureRankingEvent("phone_clicked", {
+                listing_id: d.id,
+                position: ctx.position,
+                sort: ctx.sort,
+                variant: ctx.variant,
+              });
+            }}
+          >
+            {t("call")}
+          </a>
+        ) : null}
+        {publicWebsiteHref(d.website) ? (
+          <a
+            href={publicWebsiteHref(d.website) || undefined}
+            target="_blank"
+            rel="noreferrer"
+            role="menuitem"
+            className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
+            onClick={() => {
+              const ctx = rankingContextFor(d.id);
+              captureRankingEvent("website_clicked", {
+                listing_id: d.id,
+                position: ctx.position,
+                sort: ctx.sort,
+                variant: ctx.variant,
+              });
+            }}
+          >
+            {t("listingWebsite")}
+          </a>
+        ) : null}
         <a
           href={subsidyEstimatorUrl(d.province)}
           target="_blank"
