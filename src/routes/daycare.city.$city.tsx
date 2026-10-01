@@ -12,6 +12,7 @@ import {
   cityHubMapSearchQuery,
   cityHubUrl,
   type CityHubListing,
+  type CityHubSnapshot,
 } from "@/lib/city-hubs";
 import { breadcrumbJsonLdScript, faqPageJsonLdScript } from "@/lib/page-seo";
 import { cityHubHead, loadCityHub } from "@/lib/city-hub-page";
@@ -23,11 +24,15 @@ export const Route = createFileRoute("/daycare/city/$city")({
   loader: ({ params }) => loadCityHub(params.city),
   notFoundComponent: CityHubNotFoundPage,
   head: ({ loaderData }) => cityHubHead(loaderData, "en"),
-  component: CityHubPage,
+  component: EnglishCityHubPage,
 });
 
-export function CityHubPage() {
+function EnglishCityHubPage() {
   const hub = Route.useLoaderData();
+  return <CityHubPage hub={hub} />;
+}
+
+export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onFr = isFrPath(pathname);
   const { t, locale } = useCopy();

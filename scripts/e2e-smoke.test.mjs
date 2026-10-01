@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { CITY_HUB_DEFS } from "../src/lib/city-hubs.ts";
 import { CANONICAL_ORIGIN } from "./request-guard.mjs";
 import { smokeAllowedOutputDirs } from "./browser-guard.mjs";
 import {
@@ -16,6 +17,8 @@ import {
   DEFAULT_PREVIEW_ORIGIN,
   e2eScriptMustStayChargeFree,
   expectedAccessLocation,
+  FR_CITY_HUB_SLUGS,
+  frenchCityHubSsrOk,
   homepageLooksLive,
   loginPageLooksLive,
   parseE2eArgs,
@@ -152,6 +155,19 @@ test("guest admin API gate: 401/403/redirect, never a 200 payload", () => {
   assert.equal(classifyAdminApiGate({ status: 200, bodyText: JSON.stringify({ ok: false, error: "Not authorized" }) }).ok, true);
   assert.equal(classifyAdminApiGate({ status: 200, bodyText: JSON.stringify({ ok: true, prices: {} }) }).ok, false);
   assert.deepEqual([...ADMIN_API_SMOKE_PATHS], ["/api/admin/sentry-test", "/api/admin/stripe-catalog"]);
+});
+
+test("French city hub SSR rejects the crash screen and requires the hub h1", () => {
+  assert.deepEqual([...FR_CITY_HUB_SLUGS], CITY_HUB_DEFS.map((hub) => hub.slug));
+  assert.equal(
+    frenchCityHubSsrOk('<main><h1>Garderies permises à Montréal, QC</h1></main>').ok,
+    true,
+  );
+  assert.equal(frenchCityHubSsrOk("<h1>Something went wrong</h1><p>Invariant failed</p>").ok, false);
+  assert.equal(frenchCityHubSsrOk("<h1>Licensed daycare in Montreal, QC</h1>").ok, false);
+  assert.equal(frenchCityHubSsrOk("").ok, false);
+  assert.match(src("scripts/e2e-smoke.mjs"), /frenchCityHubSmoke/);
+  assert.match(src("scripts/e2e-smoke.mjs"), /fr-city-hubs/);
 });
 
 test("public /api/health is a guest 200 probe", () => {

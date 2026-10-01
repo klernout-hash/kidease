@@ -318,6 +318,41 @@ export function loginPageLooksLive({ title = "", bodyText = "", hasEmail = false
   return { ok: true };
 }
 
+/** Published French city hubs. Keep in lockstep with CITY_HUB_DEFS slugs. */
+export const FR_CITY_HUB_SLUGS = Object.freeze([
+  "toronto",
+  "montreal",
+  "vancouver",
+  "calgary",
+  "edmonton",
+  "ottawa",
+  "winnipeg",
+  "quebec-city",
+  "hamilton",
+  "halifax",
+  "moncton",
+]);
+
+/** Initial HTML for a French city hub must include the real h1, not the crash screen. */
+export function frenchCityHubSsrOk(html) {
+  if (typeof html !== "string" || !html.trim()) {
+    return { ok: false, reason: "empty html" };
+  }
+  if (/Invariant failed/i.test(html)) {
+    return { ok: false, reason: "invariant failed" };
+  }
+  const h1 = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i);
+  if (!h1) return { ok: false, reason: "missing h1" };
+  const text = h1[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  if (/something went wrong/i.test(text)) {
+    return { ok: false, reason: "error h1" };
+  }
+  if (!/Garderies permises/i.test(text)) {
+    return { ok: false, reason: `h1 is not the city hub: ${text.slice(0, 80)}` };
+  }
+  return { ok: true, h1: text };
+}
+
 export function e2eScriptMustStayChargeFree(src) {
   const forbidden = [
     /stripe\.com\/checkout/i,
