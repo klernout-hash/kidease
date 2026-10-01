@@ -77,6 +77,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "care", label: "Daily care", hint: "Presence, journal, meds, rooms", labelKey: "dailyCare", hintKey: "dailyCareHint" },
     { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children" },
     { id: "bookings", label: "My requests", hint: "Tours, waitlist, and spots", labelKey: "myRequests", hintKey: "deskNavBookingsHint" },
+    { id: "waitlists", label: "My waitlists", hint: "Your spot requests", labelKey: "myWaitlists", hintKey: "deskNavWaitlistsHint" },
     { id: "saved", label: "My shortlist", hint: "5 free · 10 on Plus", labelKey: "myShortlist", hintKey: "deskNavShortlistHint" },
     { id: "alerts", label: "Search alerts", hint: "Saved searches + notify", labelKey: "searchAlerts", hintKey: "deskNavAlertsHint" },
     { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments", hintKey: "deskNavPaymentsHint" },
@@ -120,9 +121,10 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
 
 export function parentNavSearch(
   id: string,
-): { tab?: "explore" | "saved" | "enrolled" | "requests" | "payments" | "alerts" | "children" | "care" } {
+): { tab?: "explore" | "saved" | "enrolled" | "requests" | "payments" | "alerts" | "children" | "care" | "waitlists" } {
   if (id === "saved") return { tab: "saved" };
   if (id === "bookings") return { tab: "enrolled" };
+  if (id === "waitlists") return { tab: "waitlists" };
   if (id === "payments") return { tab: "payments" };
   if (id === "alerts") return { tab: "alerts" };
   if (id === "children") return { tab: "children" };

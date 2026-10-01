@@ -780,6 +780,10 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
     }
   }
 
+  if (!dryRun) {
+    const { flushHeldWaitlistMail } = await import("@/lib/server/waitlist-tracker");
+    await flushHeldWaitlistMail(now).catch(() => undefined);
+  }
   const result = {
     ok: true as const,
     dryRun,

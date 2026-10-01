@@ -63,6 +63,9 @@ const ParentRequestsList = lazy(() =>
 const DailyCareDesk = lazy(() =>
   import("@/components/daily-care-desk").then((m) => ({ default: m.DailyCareDesk })),
 );
+const MyWaitlists = lazy(() =>
+  import("@/components/my-waitlists").then((m) => ({ default: m.MyWaitlists })),
+);
 
 function scheduleIdle(work: () => void): () => void {
   const ric = typeof requestIdleCallback === "function" ? requestIdleCallback : null;
@@ -74,7 +77,7 @@ function scheduleIdle(work: () => void): () => void {
   return () => window.clearTimeout(id);
 }
 
-type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "alerts" | "care";
+type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "alerts" | "care" | "waitlists";
 
 export function ParentDesk({
   initialTab,
@@ -371,6 +374,16 @@ export function ParentDesk({
         <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
           <SavedSearchesPanel />
         </Suspense>
+      ) : null}
+
+      {contentTab === "waitlists" ? (
+        <div className="mt-6">
+          <h2 className="font-display text-2xl">{t("myWaitlists")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("myWaitlistsLead")}</p>
+          <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
+            <MyWaitlists />
+          </Suspense>
+        </div>
       ) : null}
 
       {contentTab === "bookings" ? (

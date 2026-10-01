@@ -973,6 +973,7 @@ export const getThread = createServerFn({ method: "GET" })
             parentName: b.parent_name,
             monthlyAmount: b.monthly_amount,
             paymentStatus: b.payment_status,
+            daycareId: conv[0].daycare_id,
           }
         : null,
       child,
@@ -1097,7 +1098,9 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
       throw new Error(accessDeniedMessage("request"));
     }
     const prev = b.status;
-    await sql`update bookings set status = ${data.status} where id = ${b.id}`;
+    await sql`update bookings set status = ${data.status}, status_updated_at = now() where id = ${b.id}`.catch(async () => {
+      await sql`update bookings set status = ${data.status} where id = ${b.id}`;
+    });
 
     if (data.status === "waitlist" && prev !== "waitlist") {
       await sql`update daycares set waitlist = waitlist + 1 where id = ${b.daycare_id}`;
@@ -1143,6 +1146,15 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
         values (${nid("msg")}, ${cid}, ${"system"}, ${body}, ${"status"})
       `;
       await sql`update conversations set last_at = now() where id = ${cid}`;
+    }
+    if (prev !== data.status) {
+      const { notifyWaitlistStatusChange } = await import("@/lib/server/waitlist-tracker");
+      await notifyWaitlistStatusChange({
+        userId: b.user_id,
+        bookingId: b.id,
+        daycareName: b.daycare_name,
+        status: data.status,
+      }).catch(() => undefined);
     }
     return { ok: true as const, status: data.status, conversationId: cid };
   });

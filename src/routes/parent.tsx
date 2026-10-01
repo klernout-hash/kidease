@@ -20,7 +20,7 @@ export const Route = createFileRoute("/parent")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   validateSearch: (s: Record<string, unknown>) => {
     const out: {
-      tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care";
+      tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care" | "waitlists";
       preview?: "support";
       plus?: "success" | "cancel";
       plan?: "plus" | "alerts";
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/parent")({
       billing?: "return";
     } = {};
     const tab = s.tab;
-    if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "alerts" || tab === "children" || tab === "care") out.tab = tab;
+    if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "alerts" || tab === "children" || tab === "care" || tab === "waitlists") out.tab = tab;
     if (s.preview === "support") out.preview = "support";
     if (s.plus === "success" || s.plus === "cancel") out.plus = s.plus;
     if (s.plan === "plus" || s.plan === "alerts") out.plan = s.plan;
@@ -62,7 +62,9 @@ function ParentPage() {
                 ? "children"
                 : search.tab === "care"
                   ? "care"
-                  : "explore";
+                  : search.tab === "waitlists"
+                    ? "waitlists"
+                    : "explore";
 
   if (isPending || chrome.pending || (user && upgradeSurface && !ready)) {
     return (
