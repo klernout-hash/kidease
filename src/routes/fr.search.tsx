@@ -5,6 +5,7 @@ import { CityHubLinks } from "@/components/city-hub-links";
 import { DaycareCard } from "@/components/daycare-card";
 import { EmptyState } from "@/components/empty-state";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
+import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
@@ -201,6 +202,7 @@ function FrExplore() {
             });
           }}
         />
+        <SmartMatchEntry />
 
         {place.trim() ? null : <CityHubLinks className="mt-6" />}
 
