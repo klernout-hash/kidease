@@ -117,12 +117,7 @@ export function ListingHeroGallery({
       ) : claim ? (
         <ListingPhotoFallback claim claimQuery={name} className="size-full" />
       ) : (
-        <>
-          <ListingPhotoFallback className="size-full" />
-          <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-muted">
-            {t("photoPending")}
-          </span>
-        </>
+        <ListingPhotoFallback className="size-full" />
       )}
       {count ? (
         <>
