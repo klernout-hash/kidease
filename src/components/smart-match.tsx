@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AI_FLAGS } from "@/lib/ai/flags";
+import { helpBubbleDistinctId } from "@/lib/ai/help-bubble";
 import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import {
   pickSmartMatchResults,
@@ -51,12 +52,20 @@ export function SmartMatchEntry() {
           {t("smartMatchCta")}
         </Button>
       </div>
-      {open ? <SmartMatchSheet onClose={() => setOpen(false)} signedIn={Boolean(user)} /> : null}
+      {open ? <SmartMatchSheet onClose={() => setOpen(false)} signedIn={Boolean(user)} visitorId={user?.id} /> : null}
     </>
   );
 }
 
-function SmartMatchSheet({ onClose, signedIn }: { onClose: () => void; signedIn: boolean }) {
+function SmartMatchSheet({
+  onClose,
+  signedIn,
+  visitorId,
+}: {
+  onClose: () => void;
+  signedIn: boolean;
+  visitorId?: string | null;
+}) {
   const { t, locale } = useCopy();
   const navigate = useNavigate();
   const titleId = useId();
@@ -112,7 +121,9 @@ function SmartMatchSheet({ onClose, signedIn }: { onClose: () => void; signedIn:
     let next = quizToFilters(quiz);
     let source: "quiz" | "note" = "quiz";
     try {
-      const refined = await refineSmartMatch({ data: quiz });
+      const refined = await refineSmartMatch({
+        data: { ...quiz, distinctId: helpBubbleDistinctId(visitorId) },
+      });
       next = refined.filters;
       source = refined.source;
     } catch {

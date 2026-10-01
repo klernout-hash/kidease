@@ -40,7 +40,7 @@ export function ListingWriter({
       const next = result.draft;
       setDraft(next);
       const blank = !next.description && !next.programSummary && next.highlights.length === 0;
-      setNotice(result.source === "fallback" ? "failed" : blank ? "empty" : null);
+      setNotice(result.source === "fallback" || result.source === "off" ? "failed" : blank ? "empty" : null);
     } catch {
       setDraft(null);
       setNotice("failed");
