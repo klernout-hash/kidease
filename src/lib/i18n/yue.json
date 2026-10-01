@@ -2577,5 +2577,8 @@
   "translateAuto": "Auto-translated",
   "translateSave": "Edit the draft, then save changes.",
   "translateEmpty": "Add a listing description first. We will not invent one.",
-  "translateFailed": "We could not draft French. Your listing is unchanged."
+  "translateFailed": "We could not draft French. Your listing is unchanged.",
+  "reviewSummaryTitle": "What parents mentioned",
+  "reviewSummaryLead": "From {count} parent reviews",
+  "reviewSummaryLink": "Read the reviews"
 }

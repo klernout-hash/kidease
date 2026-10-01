@@ -37,6 +37,7 @@ const FALLBACK_OFF = new Set<AiFlag>([
   AI_FLAGS.replyDrafts,
   AI_FLAGS.parentHelper,
   AI_FLAGS.translate,
+  AI_FLAGS.reviewSummary,
 ]);
 
 export function aiFlagRolloutPercent(flag: AiFlag): number {

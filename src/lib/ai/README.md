@@ -39,6 +39,10 @@ The guide chat answers only from `/faq`, `/benefits`, and `/help`. It cites the 
 
 A claimed centre can draft French from the listing text already saved. The draft is labelled auto-translated and can be edited. It is not saved until they click Save changes. A number, fee, or licence that is not in the English text is dropped, and a failed draft leaves the French box unchanged. Flag: `ai-translate`. Events: `translate_drafted`, `translate_fallback`.
 
+## Review summary
+
+A listing with 3 or more published parent reviews can show up to 3 short points. Each point has to appear in those reviews. The count is the number of reviews that were read. The full reviews stay on the page. A failed summary shows nothing. Flag: `ai-review-summary`. Events: `review_summary_shown`, `review_summary_fallback`.
+
 
 
 ## What is stored
