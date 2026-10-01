@@ -13,7 +13,7 @@ export const PARENT_PAGES = [
   },
   {
     path: "/benefits",
-    text: `The Canada Child Benefit maximum for a child under 6 is ${CCB.maxUnder6Year} a year for July 2026 to June 2027. The Alberta kindergarten facility-based maximum when income is under 50000 is ${AB_K_FACILITY_MAX_UNDER_50K} a month. KidEase does not process the application.`,
+    text: `The Canada Child Benefit maximum for a child under 6 is ${CCB.maxUnder6Year} a year for July 2026 to June 2027. The Alberta kindergarten facility-based maximum when income is under 50000 is ${AB_K_FACILITY_MAX_UNDER_50K} a month. Canada-wide $10-a-day plans are set by each province. Manitoba funded licensed child care has a maximum regulated daily fee of 10 dollars. Saskatchewan, Prince Edward Island, Newfoundland and Labrador, and Nunavut use $10-a-day at participating licensed centres. Yukon and the Northwest Territories use an average of about 10 dollars a day. British Columbia has some $10-a-Day ChildCareBC centres. Quebec uses its own reduced contribution of 9.65 dollars a day on spaces marked contribution reduite, not the same schedule. Ontario, Alberta, Nova Scotia, and New Brunswick have reduced fees that are not always 10 dollars. A $10 badge on a listing appears only when that centre's data says so. KidEase does not process the application.`,
   },
   {
     path: "/help",
@@ -94,7 +94,7 @@ export type SubsidyEstimate =
   | { known: true; path: "/benefits"; amount: number; label: string }
   | { known: false; path: "/benefits"; label: string };
 
-/** Only figures published in benefits-facts. Anything else is unknown. */
+/** Only figures already published on KidEase. Anything else is unknown. */
 export function subsidyEstimate(province: string): SubsidyEstimate {
   const code = province.trim().toUpperCase();
   if (code === "AB") {
@@ -111,6 +111,14 @@ export function subsidyEstimate(province: string): SubsidyEstimate {
       path: "/benefits",
       amount: CCB.maxUnder6Year,
       label: "Canada Child Benefit maximum for a child under 6, July 2026 to June 2027.",
+    };
+  }
+  if (code === "MB") {
+    return {
+      known: true,
+      path: "/benefits",
+      amount: 10,
+      label: "Manitoba maximum regulated daily fee at funded licensed centres is $10 a day.",
     };
   }
   return { known: false, path: "/benefits", label: "KidEase does not publish a subsidy figure for that province." };
