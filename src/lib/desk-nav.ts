@@ -51,6 +51,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "triage", label: "Support drafts", hint: "Drafts are not sent", labelKey: "adminTriageTitle", hintKey: "adminNavTriageHint", href: "/admin-triage" },
     { id: "vacancies", label: "Provincial openings", hint: "Manitoba and New Brunswick", href: "/admin-vacancies" },
     { id: "ai", label: "AI usage", hint: "Calls, cost, failures", href: "/admin-ai" },
+    { id: "features", label: "Features", hint: "On, off, or a split", labelKey: "adminNavFeatures", hintKey: "adminNavFeaturesHint", href: "/admin/features" },
     { id: "support", label: "Support", hint: "Cases and refunds", href: "/support" },
     { id: "account", label: "Account", hint: "Profile and preferences", href: "/account", search: { tab: "profile", desk: "admin" } },
   ],

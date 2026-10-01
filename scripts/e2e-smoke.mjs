@@ -479,6 +479,21 @@ async function runRoleFixture(page, base) {
       status: parentAdmin?.status() ?? 0,
     });
 
+    const parentFeatures = await page.goto(new URL("/admin/features", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    const parentFeaturesBody = await page.locator("body").innerText().catch(() => "");
+    const parentFeaturesGate = classifyAdminGate({
+      finalUrl: page.url(),
+      status: parentFeatures?.status() ?? 0,
+      bodyText: parentFeaturesBody,
+    });
+    record("admin-features-parent-404", parentFeaturesGate.ok && parentFeaturesGate.kind === "not-found", {
+      note: parentFeaturesGate.kind,
+      status: parentFeatures?.status() ?? 0,
+    });
+
     await context.clearCookies();
     const signedOutAdmin = await page.goto(new URL("/admin", base).href, {
       waitUntil: "domcontentloaded",
