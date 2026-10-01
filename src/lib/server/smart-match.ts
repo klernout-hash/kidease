@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { callAi } from "@/lib/ai/client";
+import { AI_FLAGS } from "@/lib/ai/flags";
+import { sanitizeAiDistinctId } from "@/lib/ai/flag-gate";
 import {
   filtersAfterModel,
   parseSmartMatchQuiz,
@@ -10,6 +12,7 @@ import {
   smartMatchNoteSchema,
 } from "@/lib/ai/smart-match";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
+import { aiFeatureOn } from "@/lib/server/ai-feature";
 
 /**
  * Optional note -> filters. Home, work, and the start date are not accepted.
@@ -17,7 +20,10 @@ import { sessionBearerMiddleware } from "@/lib/auth/middleware";
  */
 export const refineSmartMatch = createServerFn({ method: "POST" })
   .middleware([sessionBearerMiddleware])
-  .validator((input: unknown) => parseSmartMatchQuiz(input))
+  .validator((input: unknown) => {
+    const src = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+    return { ...parseSmartMatchQuiz(input), distinctId: sanitizeAiDistinctId(src.distinctId) };
+  })
   .handler(async ({ data, context }) => {
     const base = quizToFilters(data);
     if (!data.note) return { filters: base, source: "quiz" as const };
@@ -38,6 +44,8 @@ export const refineSmartMatch = createServerFn({ method: "POST" })
     } catch {
       userId = null;
     }
+    const flagId = userId || data.distinctId;
+    if (!(await aiFeatureOn(AI_FLAGS.smartMatch, flagId))) return { filters: base, source: "quiz" as const };
     const { logAiCall, readAiCache, writeAiCache } = await import("@/lib/server/ai-usage");
     const result = await callAi({
       feature: "smart-match",

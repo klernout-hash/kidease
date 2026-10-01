@@ -11,7 +11,9 @@ import {
   listingWriterSource,
   websiteOnFile,
 } from "@/lib/ai/listing-writer";
+import { AI_FLAGS } from "@/lib/ai/flags";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { aiFeatureOn } from "@/lib/server/ai-feature";
 import { assertCentreCanMutateListing } from "@/lib/server/centre-access";
 import { getSql } from "@/lib/db";
 
@@ -27,6 +29,9 @@ export const draftListingCopy = createServerFn({ method: "POST" })
   }))
   .handler(async ({ context, data }) => {
     if (!data.daycareId) return { draft: EMPTY_LISTING_DRAFT, source: "empty" as const };
+    if (!(await aiFeatureOn(AI_FLAGS.listingWriter, context.userId))) {
+      return { draft: EMPTY_LISTING_DRAFT, source: "off" as const };
+    }
     const sql = await getSql();
     await assertCentreCanMutateListing(sql, context.userId, data.daycareId);
     const rows = await sql<{ website: string | null }>`
