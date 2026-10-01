@@ -47,6 +47,10 @@ export type ListingSeoSource = {
   photos?: string[] | null;
   amenities?: string | null;
   feeProgram?: string | null;
+  description?: string | null;
+  descriptionFr?: string | null;
+  hours?: string | null;
+  hoursFr?: string | null;
 };
 
 export type ListingSeoMeta = {
