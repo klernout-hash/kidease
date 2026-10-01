@@ -62,6 +62,7 @@ import { distanceKm } from "@/lib/proximity";
 import { ListingBadges } from "@/components/listing-badges";
 import { CompletenessBanner } from "@/components/listing-completeness";
 import { ListingReviewForm } from "@/components/listing-review-form";
+import { ReviewSummary } from "@/components/review-summary";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { CompareBar } from "@/components/compare-bar";
@@ -824,6 +825,7 @@ export function Listing() {
                   </span>
                 </p>
               ) : null}
+              <ReviewSummary daycareId={d.id} />
               {data.reviews.length ? (
                 <ul className="mt-3 divide-y divide-border">
                   {data.reviews.map((r) => (
