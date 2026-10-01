@@ -177,10 +177,18 @@ export function shouldCanonicalizeApexPath(pathname) {
 
 /**
  * @param {{ host?: string | null, pathname?: string | null, search?: string | null, method?: string | null }} input
- * @returns {{ action: "next" } | { action: "redirect", status: 302 | 308, location: string } | { action: "not_found", status: 404 }}
+ * @returns {{ action: "next" } | { action: "redirect", status: 301 | 302 | 308, location: string } | { action: "not_found", status: 404 }}
  */
 export function decideRequest(input = {}) {
   const path = normalizePath(input.pathname);
+
+  if (path === "/signup") {
+    return { action: "redirect", status: 301, location: "/login?intent=up" };
+  }
+
+  if (path === "/for-daycares") {
+    return { action: "redirect", status: 301, location: "/claim" };
+  }
 
   if (path === CHANGE_PASSWORD_PATH) {
     return {

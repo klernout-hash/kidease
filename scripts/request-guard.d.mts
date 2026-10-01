@@ -16,5 +16,5 @@ export function decideRequest(input?: {
   method?: string | null;
 }):
   | { action: "next" }
-  | { action: "redirect"; status: 302 | 308; location: string }
+  | { action: "redirect"; status: 301 | 302 | 308; location: string }
   | { action: "not_found"; status: 404 };

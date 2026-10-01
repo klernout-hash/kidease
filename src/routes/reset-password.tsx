@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { PasswordField } from "@/components/password-field";
 import { Shell } from "@/components/shell";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { PasswordRules } from "@/components/password-rules";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { useCopy } from "@/lib/use-copy";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/reset-password")({
   validateSearch: (s: Record<string, unknown>) => ({
     token: typeof s.token === "string" ? s.token : "",
   }),
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.resetPassword),
   component: ResetPassword,
 });
 
