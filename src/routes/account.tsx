@@ -281,6 +281,16 @@ function ProfilePane() {
           </p>
         ) : null}
         <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("profile")}</h1>
+        {user ? (
+          <Link
+            to="/delete-account"
+            data-ke="account-delete"
+            className="mt-4 flex min-h-14 items-center justify-between rounded-xl bg-surface px-4 text-[15px] font-medium text-danger ring-1 ring-border"
+          >
+            <span>{t("deleteAccount")}</span>
+            <span aria-hidden>›</span>
+          </Link>
+        ) : null}
         <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
           <AppearanceControl />
         </section>
@@ -397,10 +407,14 @@ function ProfilePane() {
         {user ? (
           <section
             className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border"
-            data-ke="account-delete"
+            data-ke="account-delete-detail"
           >
             <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
             <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+              <li>{t("deleteAccountKeepBilling")}</li>
+              <li>{t("deleteAccountKeepLogs")}</li>
+            </ul>
             <Button variant="ghost" className="mt-4 text-danger" asChild>
               <Link to="/delete-account">{t("deleteAccount")}</Link>
             </Button>

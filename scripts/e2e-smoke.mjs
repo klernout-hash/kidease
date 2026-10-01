@@ -212,6 +212,26 @@ async function runRoleFixture(page, base) {
     record("parent-card-new", parentCardNew === 0, { note: `cards ${parentCardNew}` });
     await shot(page, "parent-new", 1280, '[data-ke="parent-home"]');
     await shot(page, "parent-390", 390, '[data-ke="parent-home"]');
+    await page.setViewportSize({ width: 390, height: 844 });
+    const compareResp = await page.goto(
+      new URL("/compare?slugs=a-a-daycare-centre-1288", base).href,
+      { waitUntil: "domcontentloaded", timeout: timeoutMs },
+    );
+    await page.locator("[data-ke='compare-page']").waitFor({ timeout: timeoutMs }).catch(() => {});
+    const compareText = await page.locator("body").innerText();
+    const compareUp = (compareResp?.status() ?? 0) < 500 && /compare centres/i.test(compareText);
+    const named = /a & a daycare/i.test(compareText);
+    const guardShown = /not accepting online requests yet|request a spot/i.test(compareText);
+    record("multi-apply-compare", compareUp && (!named || guardShown), {
+      note: named ? (guardShown ? "guard" : compareText.slice(0, 160)) : "compare page",
+      status: compareResp?.status() ?? 0,
+    });
+    if (await page.locator("[data-ke='multi-apply']").count()) {
+      await shot(page, "multi-apply-390", 390, "[data-ke='multi-apply']");
+    }
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.locator('[data-ke="parent-home"][data-settled="1"]').waitFor({ timeout: timeoutMs });
     await shot(page, "parent-desktop", 1280, '[data-ke="parent-home"]');
     await openHeaderMenu(page);
     await page.locator('#ke-nav-drawer [data-ke="role-nav"][data-role="parent"]').waitFor({ timeout: timeoutMs });

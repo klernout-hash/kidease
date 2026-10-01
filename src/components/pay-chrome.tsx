@@ -56,9 +56,14 @@ export function usePayChromeReady(): boolean {
   return useContext(PayChromeContext).ready;
 }
 
-/** Hide Upgrade / Subscribe / plan-price chrome when SHOW_PAY_CTAS is off. */
+/** Hide Upgrade / Subscribe / plan-price chrome when SHOW_PAY_CTAS is off.
+ *  On iOS and Android the wrapper is hidden in CSS so childcare bills stay. */
 export function PayCtas({ children }: { children: ReactNode }) {
   const on = useShowPayCtas();
   if (!on) return null;
-  return <>{children}</>;
+  return (
+    <div className="ke-digital-plan-slot" data-ke="digital-plan">
+      {children}
+    </div>
+  );
 }

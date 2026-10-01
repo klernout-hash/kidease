@@ -9,6 +9,7 @@ import { documentLangFromPath } from "@/lib/locale-path";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
+import { PushExplain } from "@/components/push-explain";
 import { ThemeBoot } from "@/components/theme-boot";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { RouteProgress } from "@/components/route-progress";
@@ -175,6 +176,7 @@ function RootDocument() {
         <AuthProvider>
           <ThemeBoot />
           <NativeBoot />
+          <PushExplain />
           <PostHogBoot />
           <RoleBoot />
           <RouteProgress />

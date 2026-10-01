@@ -18,7 +18,7 @@ import { useCopy } from "@/lib/use-copy";
 import type { MenuIconId } from "@/lib/menu-icons";
 import { nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
 
-type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId };
+type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId; marker?: string };
 
 export function NavDrawer({
   open,
@@ -176,6 +176,7 @@ export function NavDrawer({
                 label={item.label}
                 icon={item.icon}
                 appearance="drawer"
+                marker={item.marker}
                 onClick={onClose}
               />
             </span>

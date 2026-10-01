@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { DaycareCard } from "@/components/daycare-card";
 import { EmptyState } from "@/components/empty-state";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
@@ -6,6 +7,8 @@ import { PipelineBadge } from "@/components/pipeline-badge";
 import { ShortlistCompareTable } from "@/components/shortlist-compare";
 import { TrustSignals } from "@/components/trust-badge";
 import { Button } from "@/components/ui/button";
+import { MultiApplyPanel } from "@/components/multi-apply-sheet";
+import { mirrorOfflineSaved, readOfflineSaved, type OfflineSaved } from "@/lib/offline-shortlist";
 import { MAX_SHORTLIST_COMPARE, toggleCompareSelection } from "@/lib/shortlist";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
@@ -28,11 +31,43 @@ export function ParentShortlist({
   /** Free is 5. Parent Plus is 10. */
   compareMax?: number;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [picked, setPicked] = useState<string[]>([]);
+  const [offline, setOffline] = useState<OfflineSaved[]>([]);
   const visible = ready ? items : items.slice(0, SAVED_EAGER_CARDS);
   const compared = useMemo(() => items.filter((item) => picked.includes(item.id)).slice(0, compareMax), [compareMax, items, picked]);
   const distances = useMemo(() => Object.fromEntries(items.map((item) => [item.id, item.distanceKm])), [items]);
+
+  useEffect(() => {
+    if (items.length) {
+      void mirrorOfflineSaved(items.map((item) => ({ id: item.id, name: item.name, city: item.city, slug: item.slug })));
+      return;
+    }
+    void readOfflineSaved().then(setOffline).catch(() => undefined);
+  }, [items]);
+
+  if (!items.length && offline.length) {
+    const note =
+      locale === "fr"
+        ? "Enregistré sur ce téléphone. Reconnectez-vous pour actualiser."
+        : "Saved on this phone. Connect again to refresh.";
+    return (
+      <div className="ke-listings mt-6">
+        <h2 className="font-display text-2xl">{t("myShortlist")}</h2>
+        <ul className="mt-4 space-y-2">
+          {offline.map((row) => (
+            <li key={row.id}>
+              <Link to="/daycare/$slug" params={{ slug: row.slug }} className="block min-h-11 rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
+                <span className="block font-medium text-fg">{row.name}</span>
+                {row.city ? <span className="block text-sm text-muted">{row.city}</span> : null}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-sm text-muted">{note}</p>
+      </div>
+    );
+  }
 
   if (!items.length) {
     return (
@@ -70,6 +105,8 @@ export function ParentShortlist({
         located={located}
         onRemove={(id) => setPicked((cur) => cur.filter((x) => x !== id))}
       />
+
+      <MultiApplyPanel centres={visible} returnTo="/parent?tab=saved" />
 
       <div className="ke-listings ke-listings-narrow">
         {visible.map((item) => {

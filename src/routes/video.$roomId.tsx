@@ -92,7 +92,7 @@ function VideoRoomPage() {
         <p className="mt-1 text-xs text-subtle">{t("videoMinutesNote")}</p>
 
         {blockedScaffold && !joined ? (
-          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="store-coming-soon">
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">{t("comingSoon")}</p>
             <p className="mt-2 font-medium">
               {featureOff
@@ -116,7 +116,7 @@ function VideoRoomPage() {
         {error && !blockedScaffold ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
 
         {paywall ? (
-          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="parent-plus-prompt">
+          <div className="ke-digital-plan mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="parent-plus-prompt">
             <p className="font-medium">{t("parentPlusTitle")}</p>
             <p className="mt-2 text-sm text-muted">
               {status?.reason === "plus_required_billing_not_live" ? t("videoPlusRequiredBilling") : t("videoPlusRequired")}

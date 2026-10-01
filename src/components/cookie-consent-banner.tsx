@@ -12,8 +12,9 @@ import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
 /**
- * Website-only cookie banner. Hidden in the Capacitor native shell.
- * Essential = required cookies only. Allow = load PostHog + masked replay.
+ * Essential vs Allow. Website and the Capacitor shell both wait for a choice
+ * before PostHog or native crash reports start. Essential = required cookies only.
+ * Allow = load PostHog, and start Sentry inside the app.
  */
 export function CookieConsentBanner() {
   const { t, locale } = useCopy();
@@ -34,7 +35,12 @@ export function CookieConsentBanner() {
 
   function choose(value: "granted" | "denied") {
     writeAnalyticsConsent(value);
-    if (value === "granted") startPostHog();
+    if (value === "granted") {
+      startPostHog();
+      // instrument.client.ts owns the Sentry import. A static import here
+      // is denied in the server build.
+      window.dispatchEvent(new Event("kidease:analytics-granted"));
+    }
     applyPostHogRecordingGate();
     setOpen(false);
   }

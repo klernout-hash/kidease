@@ -1,0 +1,51 @@
+name: Android release
+
+# Manual only. Needs the four upload-keystore secrets in docs/mobile-builds.md.
+# Does not run on pull requests, so a missing keystore does not fail CI.
+on:
+  workflow_dispatch:
+
+jobs:
+  bundleRelease:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Write upload keystore and key.properties
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "${ANDROID_KEYSTORE_BASE64}" || { echo "Missing secret ANDROID_KEYSTORE_BASE64"; exit 1; }
+          test -n "${ANDROID_KEYSTORE_PASSWORD}" || { echo "Missing secret ANDROID_KEYSTORE_PASSWORD"; exit 1; }
+          test -n "${ANDROID_KEY_ALIAS}" || { echo "Missing secret ANDROID_KEY_ALIAS"; exit 1; }
+          test -n "${ANDROID_KEY_PASSWORD}" || { echo "Missing secret ANDROID_KEY_PASSWORD"; exit 1; }
+          echo "${ANDROID_KEYSTORE_BASE64}" | base64 -d > android/kidease-upload.jks
+          python3 - << 'PY'
+          import os
+          from pathlib import Path
+          def field(value: str) -> str:
+              return value.replace("\\", "\\\\").replace("\n", "").replace("=", "\\=")
+          lines = [
+              "storeFile=" + os.environ["GITHUB_WORKSPACE"] + "/android/kidease-upload.jks",
+              "storePassword=" + field(os.environ["ANDROID_KEYSTORE_PASSWORD"]),
+              "keyAlias=" + field(os.environ["ANDROID_KEY_ALIAS"]),
+              "keyPassword=" + field(os.environ["ANDROID_KEY_PASSWORD"]),
+          ]
+          Path("android/key.properties").write_text("\n".join(lines) + "\n")
+          PY
+      - name: bundleRelease
+        working-directory: android
+        run: chmod +x ./gradlew && ./gradlew bundleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error

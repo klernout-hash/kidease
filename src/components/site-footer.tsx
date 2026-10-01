@@ -148,7 +148,7 @@ export function SiteFooter() {
             </div>
             <div className="ke-footer-legal-meta">
               <HeaderSocial />
-              <p>
+              <p data-ke="store-coming-soon">
                 {t("appStore")}
                 <span className="mx-1.5" aria-hidden>
                   ·

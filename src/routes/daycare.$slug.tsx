@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect, useNavigate, useParams, useSearch, useLoaderData } from "@tanstack/react-router";
 import { MapPinned, MessageCircle, Star } from "lucide-react";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { ShareListingButton } from "@/components/share-button";
@@ -41,7 +41,8 @@ import { SaveListingButton } from "@/components/save-listing-button";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { amenityLabel } from "@/lib/amenities";
-import { licenseRecordUrl, subsidyEstimatorUrl, cwelccKind, officialLicenceNumber } from "@/lib/licensing";
+import { licenseRecordUrl, subsidyEstimatorUrl, officialLicenceNumber } from "@/lib/licensing";
+import { subsidyNoteKey } from "@/lib/fee-program";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
@@ -71,12 +72,14 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { listingActionMode, showsOwnListingEdit, showsParentListingActions } from "@/lib/role-access";
 import { useCopy } from "@/lib/use-copy";
 import { listingPageTitle } from "@/lib/listing-meta";
+import { hreflangLinks } from "@/lib/locale-path";
 import { rethrowRouterControl } from "@/lib/listing-loader-errors";
 import { decideListingLoader, listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-found";
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { listingAgeRangeText } from "@/lib/listing-ages";
+import type { ListingSeoSource } from "@/lib/listing-seo";
 import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { googleReviewsUrl } from "@/lib/google-reviews";
@@ -142,7 +145,11 @@ export const Route = createFileRoute("/daycare/$slug")({
       : [];
     return {
       meta: listingSeoHeadTags(loaderData),
-      links: [...(canonical ? [{ rel: "canonical", href: canonical }] : []), ...image],
+      links: [
+        ...(canonical ? [{ rel: "canonical", href: canonical }] : []),
+        ...hreflangLinks(`/daycare/${loaderData.slug}`),
+        ...image,
+      ],
       scripts: [
         ...(jsonLd ? [{ type: "application/ld+json", children: jsonLd }] : []),
         ...(crumbs ? [{ type: "application/ld+json", children: crumbs }] : []),
@@ -178,10 +185,10 @@ function ClaimListingButton({ name, className = "" }: { name: string; className?
   );
 }
 
-function Listing() {
-  const { slug } = Route.useParams();
-  const search = Route.useSearch();
-  const seo = Route.useLoaderData();
+export function Listing() {
+  const { slug } = useParams({ strict: false }) as { slug: string };
+  const search = useSearch({ strict: false }) as { ask?: ListingAsk };
+  const seo = useLoaderData({ strict: false }) as ListingSeoSource | undefined;
   const { t, locale } = useCopy();
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
@@ -850,7 +857,7 @@ function Listing() {
               <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
               {live ? (
                 <div className="mt-4">
-                  <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}`} />
+                  <WaitlistOptIn daycareId={d.id} province={d.province} next={`/daycare/${d.slug}`} />
                 </div>
               ) : null}
             </section>
@@ -906,7 +913,7 @@ function Listing() {
             <section id="listing-subsidies" className="scroll-mt-24 rounded-xl bg-surface p-4 ring-1 ring-border">
               <h2 className="font-display text-2xl">{t("feesAndSubsidies")}</h2>
               <p className="mt-2 max-w-prose text-sm text-muted">
-                {cwelccKind(d.province) === "qc" ? t("cwelccQcNote") : t("cwelccAskNote")}
+                {t(subsidyNoteKey(d))}
               </p>
               <div className="mt-3 flex flex-col items-start gap-1">
                 <a
@@ -946,7 +953,7 @@ function Listing() {
           <div className="mt-3 grid gap-1.5">
             <ListingActions />
             {parentActions && live && waitlisted ? (
-              <WaitlistOptIn daycareId={d.id} next={`/daycare/${d.slug}?ask=waitlist`} />
+              <WaitlistOptIn daycareId={d.id} province={d.province} next={`/daycare/${d.slug}?ask=waitlist`} />
             ) : null}
             <ListingMoreActions>
               <ListingOverflowItems />
