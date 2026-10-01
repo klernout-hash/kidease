@@ -63,7 +63,13 @@ test("a subsidy estimate uses only published figures", () => {
   assert.equal(ab.known, true);
   if (ab.known) assert.equal(ab.amount, 644);
   const mb = subsidyEstimate("MB");
-  assert.equal(mb.known, false);
+  assert.equal(mb.known, true);
+  if (mb.known) assert.equal(mb.amount, 10);
+  const manitoba = groundParentAnswer({
+    answer: "Manitoba funded licensed child care has a maximum regulated daily fee of 10 dollars a day.",
+    path: "/benefits",
+  });
+  assert.equal(manitoba.known, true);
   assert.equal(TOUR_QUESTIONS.length >= 3, true);
   const page = read("src/components/parent-helper.tsx");
   const bot = read("src/components/help-bot.tsx");
