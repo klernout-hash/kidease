@@ -9,7 +9,13 @@
 import { RANKING_BEST_MATCH_FLAG } from "../ranking/weights.ts";
 import { AI_FLAGS, aiFlagDefaultOn, type AiFlag } from "./flags.ts";
 
-export const AI_REMOTE_FLAGS = [AI_FLAGS.smartMatch, AI_FLAGS.listingWriter, AI_FLAGS.photoCheck, AI_FLAGS.spotAlerts] as const;
+export const AI_REMOTE_FLAGS = [
+  AI_FLAGS.smartMatch,
+  AI_FLAGS.listingWriter,
+  AI_FLAGS.photoCheck,
+  AI_FLAGS.spotAlerts,
+  AI_FLAGS.replyDrafts,
+] as const;
 
 /** Keys this server read asks PostHog to evaluate. Callers must not add their own. */
 export const SERVER_FLAG_KEYS = [...AI_REMOTE_FLAGS, RANKING_BEST_MATCH_FLAG] as const;

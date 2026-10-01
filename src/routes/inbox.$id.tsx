@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
 import { MapPinned, Phone, Video } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { PipelineBadge } from "@/components/pipeline-badge";
@@ -12,6 +12,11 @@ import { getFamily, getThread, updateRequestStatus } from "@/lib/server/family";
 import { listParentBills } from "@/lib/server/billing";
 import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
 import { sendConnectedMessage } from "@/lib/server/inbox";
+import { draftInboxReply } from "@/lib/server/reply-drafts";
+import { AI_FLAGS } from "@/lib/ai/flags";
+import { replyDraftEventProps, replyDraftQuiet } from "@/lib/ai/reply-drafts";
+import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { formatAgeLabel, formatStart, pushNewRequest, scheduleLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
@@ -61,6 +66,10 @@ function ThreadPage() {
   const [openBill, setOpenBill] = useState<Bill | null>(null);
   const [body, setBody] = useState("");
   const [sendError, setSendError] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [fromDraft, setFromDraft] = useState(false);
+  const aiDrafted = useRef(false);
+  const replyDraftsOn = useAiFeatureFlag(AI_FLAGS.replyDrafts);
   const [videoSurface, setVideoSurface] = useState(false);
 
   async function load() {
@@ -178,15 +187,50 @@ function ThreadPage() {
   async function onSend(e: React.FormEvent) {
     e.preventDefault();
     if (!body.trim()) return;
+    if (aiDrafted.current && replyDraftQuiet()) {
+      capturePostHogEvent("reply_draft_held_quiet", replyDraftEventProps({ conversationId: id }));
+      setSendError(t("replyDraftQuiet"));
+      return;
+    }
     setSendError("");
+    const drafted = aiDrafted.current;
     try {
       await sendConnectedMessage({ data: { conversationId: id, body } });
       setBody("");
+      aiDrafted.current = false;
+      setFromDraft(false);
+      if (drafted) capturePostHogEvent("reply_draft_sent", replyDraftEventProps({ conversationId: id }));
       confirmAction(t, "replySent");
       await load();
     } catch (err) {
       setSendError(err instanceof Error ? err.message : "Could not send");
     }
+  }
+
+  function draftReply() {
+    setDrafting(true);
+    setSendError("");
+    void draftInboxReply({ data: { conversationId: id } })
+      .then((res) => {
+        if (!res.ok || !res.body) {
+          aiDrafted.current = false;
+          setFromDraft(false);
+          capturePostHogEvent("reply_draft_fallback", replyDraftEventProps({ conversationId: id }));
+          setSendError(res.ok ? t("replyDraftFailed") : res.error === "empty" ? t("replyDraftEmpty") : t("replyDraftFailed"));
+          return;
+        }
+        aiDrafted.current = true;
+        setFromDraft(true);
+        setBody(res.body);
+        capturePostHogEvent("reply_draft_used", replyDraftEventProps({ conversationId: id }));
+      })
+      .catch(() => {
+        aiDrafted.current = false;
+        setFromDraft(false);
+        capturePostHogEvent("reply_draft_fallback", replyDraftEventProps({ conversationId: id }));
+        setSendError(t("replyDraftFailed"));
+      })
+      .finally(() => setDrafting(false));
   }
 
   const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : undefined;
@@ -322,6 +366,12 @@ function ThreadPage() {
         {canWrite ? (
           <form id="reply" onSubmit={onSend} className="sticky bottom-20 mt-4 flex flex-col gap-2 bg-bg py-2 md:bottom-0">
             {sendError ? <p className="text-sm text-danger">{sendError}</p> : null}
+            {fromDraft ? <p className="text-sm text-muted">{t("replyDraftLead")}</p> : null}
+            {!isParent && replyDraftsOn ? (
+              <Button type="button" variant="secondary" className="min-h-11 self-start" disabled={drafting} onClick={draftReply}>
+                {drafting ? t("replyDraftWorking") : t("replyDraft")}
+              </Button>
+            ) : null}
             <div className="flex gap-2">
               <input value={body} onChange={(e) => setBody(e.target.value)} placeholder={t("writeMessage")} className="h-12 flex-1 rounded-md border border-border bg-surface px-3" />
               <Button type="submit">{t("send")}</Button>

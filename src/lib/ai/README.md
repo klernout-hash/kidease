@@ -27,6 +27,10 @@ A claimed centre can draft a description from the website address already stored
 
 When a daycare asks to notify parents, the server counts saved searches and waitlist rows that fit the open spots by age, start date, and distance. The daycare sees that count and a draft. Approve sends an in-app notice and an email. Unsubscribe and quiet hours (after 9 PM Winnipeg) are respected. A failed draft falls back to the existing waitlist pulse. Flag: `spot-alerts`. Events: `spot_alert_drafted`, `spot_alert_approved`, `spot_alert_held_quiet`, `spot_alert_fallback`.
 
+## Reply drafts
+
+A daycare can draft a reply from the parent's latest message and the listing facts on file. The draft is editable. Send is a separate click, and it is held after 9 PM Winnipeg. A failed draft leaves the box empty. Flag: `ai-reply-drafts`. Events: `reply_draft_used`, `reply_draft_sent`, `reply_draft_held_quiet`, `reply_draft_fallback`.
+
 
 
 ## What is stored
