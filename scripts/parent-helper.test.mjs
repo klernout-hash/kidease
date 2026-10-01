@@ -71,7 +71,8 @@ test("a subsidy estimate uses only published figures", () => {
   assert.match(page, /useAiFeatureFlag\(AI_FLAGS\.parentHelper\)/);
   assert.match(bot, /askParentHelper/);
   assert.match(server, /feature: "parent-helper"/);
-  assert.match(server, /scrubText/);
+  assert.match(server, /bubbleQuestionForModel/);
+  assert.match(read("src/lib/ai/help-bubble.ts"), /scrubText/);
   assert.match(read("src/routes/faq.tsx"), /ParentHelperPanel/);
   assert.match(read("src/routes/search.tsx"), /ParentHelperPanel/);
   assert.match(read("src/routes/fr.search.tsx"), /ParentHelperPanel/);

@@ -37,8 +37,8 @@ await check("/", async (page, status) => {
   await page.waitForTimeout(2800);
   const live = await page.locator(".ke-help-bot").count();
   const ask = await page.getByPlaceholder(/ask a question/i).count();
-  assert.equal(live, 0, "Live Chat bubble must stay hidden when FEATURE_INAPP_CHAT is off");
-  assert.equal(ask, 0, "Ask-a-question composer must not mount when chat is off");
+  assert.equal(live, 0, "Help bubble stays hidden when the parent-helper flag is off");
+  assert.equal(ask, 0, "Ask box stays hidden when the parent-helper flag is off");
 });
 
 await check("/pay", async (page, status) => {

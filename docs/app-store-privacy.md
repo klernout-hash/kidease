@@ -20,7 +20,7 @@ Bundle id: `ca.kidease.app`
 ## Not collected in the store build
 
 - SMS. Twilio is not approved. `FEATURE_SMS` stays off.
-- In-app chat. `FEATURE_INAPP_CHAT` stays off. The help bubble does not render.
+- In-app chat with a person is not live. `FEATURE_INAPP_CHAT` stays off. A help bubble can show when the `parent-helper` flag is on. It answers from KidEase guides and does not send personal details to the model.
 - Advertising ID, contacts, microphone, and background location.
 - Children's profiles are parent-entered. Do not put the app in the Kids category.
 
