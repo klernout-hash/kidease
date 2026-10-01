@@ -11,12 +11,12 @@ import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import type { CopyKey } from "@/lib/copy";
-import { displayDistance } from "@/lib/units";
+import { parentDistanceLabel } from "@/lib/distance-label";
+import { originIsParentLocation } from "@/lib/presence";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
-import { originIsParentLocation } from "@/lib/presence";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import {
@@ -233,9 +233,11 @@ export const DaycareCard = memo(function DaycareCard({
     fees: "cardGapFees",
     photo: "cardGapPhoto",
   } as const;
-  const away = originIsParentLocation(originSource)
-    ? `${displayDistance(distanceKm, "km")} ${t("kmAway")}`
-    : "";
+  const away = parentDistanceLabel({
+    km: distanceKm,
+    away: t("kmAway"),
+    show: originIsParentLocation(originSource),
+  });
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
   const offerClaim = showPublicClaimPrompt(item);
