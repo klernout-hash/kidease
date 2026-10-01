@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { getDaycaresByIds } from "@/lib/server/daycares";
 import { clearCompare, compareKeysFromSearch, readCompare, toggleCompareItem } from "@/lib/compare";
+import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import {
   canShowMatchScore,
-  confirmedFeeProgramBadge,
   honestVacancy,
   parseCompareSlugs,
 } from "@/lib/now-loops";
@@ -171,8 +171,8 @@ function ComparePage() {
                 <Row
                   label={t("compareFeesCwelcc")}
                   values={items.map((d) => {
-                    const badge = confirmedFeeProgramBadge(d);
-                    if (badge) return t(badge);
+                    const subsidy = listingSubsidy(d);
+                    if (subsidy) return subsidyLabel(subsidy, locale);
                     return d.fromPrice > 0 ? money(d.fromPrice, locale) : t("cardGapFees");
                   })}
                 />

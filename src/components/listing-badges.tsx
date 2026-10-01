@@ -3,8 +3,10 @@ import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 import { PriorityPill } from "@/components/priority-pill";
 import { TrustSignals } from "@/components/trust-badge";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
+import { SubsidyPill } from "@/components/subsidy-pill";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
-import { canShowMatchScore, confirmedFeeProgramBadge, honestVacancy } from "@/lib/now-loops";
+import { listingSubsidy } from "@/lib/fee-program";
+import { canShowMatchScore, honestVacancy } from "@/lib/now-loops";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -21,7 +23,7 @@ export function ListingBadges({
   feeOnly?: boolean;
 }) {
   const { t, locale } = useCopy();
-  const feeBadge = confirmedFeeProgramBadge(item);
+  const subsidy = listingSubsidy(item);
   const vacancy = honestVacancy(item);
   const live = Boolean(item.live);
   const freshness = vacancyLine(item, t, locale);
@@ -39,8 +41,8 @@ export function ListingBadges({
   };
 
   if (feeOnly) {
-    if (!feeBadge) return null;
-    return <span className={cn(pill, "mt-2 inline-flex bg-primary text-primary-fg")}>{t(feeBadge)}</span>;
+    if (!subsidy) return null;
+    return <SubsidyPill item={item} className={cn(pill, "mt-2 inline-flex bg-primary text-primary-fg")} />;
   }
 
   return (
@@ -51,8 +53,8 @@ export function ListingBadges({
       {item.priority ? <PriorityPill /> : null}
       {!compact ? <GuestFavoriteBadge item={item} compact={compact} /> : null}
       <TrustSignals item={item} surface="parent" compact={compact} />
-      {feeBadge ? <span className={cn(pill, "bg-primary text-primary-fg")}>{t(feeBadge)}</span> : null}
-      {live && !feeBadge ? (
+      {subsidy ? <SubsidyPill item={item} className={cn(pill, "bg-primary text-primary-fg")} /> : null}
+      {live && !subsidy ? (
         <span className={cn(pill, "bg-ok text-primary-fg")}>{t("live")}</span>
       ) : null}
       <span className={cn(pill, vacancy.kind === "open" ? "" : "text-muted", vacancy.kind === "waitlist" && "bg-fg/80 text-surface")}>
