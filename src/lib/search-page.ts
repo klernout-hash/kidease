@@ -9,6 +9,8 @@ export type SearchPage<T> = {
   page: number;
   pageSize: number;
   hasMore: boolean;
+  /** Full result count, not the length of this page. */
+  total: number;
 };
 
 export function parseSearchPage(raw: unknown): number {
@@ -39,5 +41,6 @@ export function sliceSearchPage<T>(rows: readonly T[], page: number, pageSize = 
     page: current,
     pageSize: size,
     hasMore: start + size < rows.length,
+    total: rows.length,
   };
 }

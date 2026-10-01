@@ -32,7 +32,7 @@ import {
   formatListingLanguages,
   listingIsVerified,
 } from "@/lib/shortlist";
-import { displayDistance } from "@/lib/units";
+import { parentDistanceLabel } from "@/lib/distance-label";
 import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
@@ -168,10 +168,10 @@ function ComparePage() {
                 <Row
                   label={t("compareDistance")}
                   values={items.map((d) => {
-                    if (!located) return t("noneListed");
                     const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
-                    if (!Number.isFinite(km)) return t("noneListed");
-                    return `${displayDistance(km, "km")} ${t("kmAway")}`;
+                    return (
+                      parentDistanceLabel({ km, away: t("kmAway"), show: located }) || t("noneListed")
+                    );
                   })}
                 />
                 <Row
