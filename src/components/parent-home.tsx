@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { EmptyState } from "@/components/empty-state";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -104,9 +105,13 @@ export function ParentHome({
               <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
                 {saved.slice(0, 4).map((item) => (
                   <li key={item.id}>
-                    <Link to="/daycare/$slug" params={{ slug: item.slug }} className="flex min-h-12 items-center px-3 text-sm font-medium">
-                      {item.name}
-                    </Link>
+                    {isSafeSitemapSlug(item.slug) ? (
+                      <Link to="/daycare/$slug" params={{ slug: item.slug }} className="flex min-h-12 items-center px-3 text-sm font-medium">
+                        {item.name}
+                      </Link>
+                    ) : (
+                      <span className="flex min-h-12 items-center px-3 text-sm font-medium">{item.name}</span>
+                    )}
                   </li>
                 ))}
               </ul>
