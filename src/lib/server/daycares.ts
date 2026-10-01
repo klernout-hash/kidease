@@ -691,9 +691,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         jobs,
       };
     } catch {
-      const mainStamped = await withProvincial([catalogPayload.daycare]);
-      const nearbyStamped = await withProvincial(catalogPayload.nearby);
-      return { ...catalogPayload, daycare: mainStamped[0] ?? catalogPayload.daycare, nearby: nearbyStamped };
+      return catalogPayload;
     }
   });
 
