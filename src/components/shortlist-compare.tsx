@@ -9,7 +9,7 @@ import {
   listingIsVerified,
   listingSpotsTotal,
 } from "@/lib/shortlist";
-import { displayDistance } from "@/lib/units";
+import { parentDistanceLabel } from "@/lib/distance-label";
 import { useCopy } from "@/lib/use-copy";
 import { displayCentreName } from "@/lib/utils";
 import type { DaycareCard } from "@/lib/types";
@@ -74,11 +74,10 @@ export function ShortlistCompareTable({
           <CompareRow
             label={t("compareDistance")}
             values={items.map((d) => {
-              if (!located) return t("noneListed");
-              const km = distancesKm[d.id];
-              if (typeof km !== "number" || !Number.isFinite(km)) return t("noneListed");
-              const n = displayDistance(km, "km");
-              return `${n} ${t("kmAway")}`;
+              return (
+                parentDistanceLabel({ km: distancesKm[d.id], away: t("kmAway"), show: located }) ||
+                t("noneListed")
+              );
             })}
           />
           <CompareRow
