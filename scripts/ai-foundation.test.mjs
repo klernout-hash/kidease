@@ -129,4 +129,49 @@ test("the call log stores no prompt and the admin page is gated", () => {
   const client = readFileSync(join(root, "src/lib/ai/client.ts"), "utf8");
   assert.match(client, /scrubText/);
   assert.match(client, /api\.x\.ai/);
+  assert.match(client, /ai-gateway\.vercel\.sh/);
+  assert.match(client, /AI_GATEWAY_API_KEY/);
+});
+
+test("a gateway key is preferred and a direct key still reaches xAI", async () => {
+  resetAiCacheForTests();
+  resetAiRateLimitForTests();
+  const calls = [];
+  const logs = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url: String(url), body: JSON.parse(String(init?.body ?? "{}")), authorization: init?.headers?.authorization });
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content: "ok" } }], usage: { prompt_tokens: 1, completion_tokens: 1 } }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  };
+  const gateway = await callAi({
+    feature: "gateway",
+    system: "facts",
+    user: "one",
+    userId: "user_g",
+    deps: {
+      env: { AI_GATEWAY_API_KEY: "gateway-secret", XAI_API_KEY: "direct-secret", XAI_MODEL: "grok-4-1-fast-non-reasoning" },
+      fetchImpl,
+      log: (row) => logs.push(row),
+    },
+  });
+  assert.equal(gateway.ok, true);
+  assert.equal(calls[0].url, "https://ai-gateway.vercel.sh/v1/chat/completions");
+  assert.equal(calls[0].body.model, "spacexai/grok-4.1-fast-non-reasoning");
+  assert.equal(calls[0].authorization, "Bearer gateway-secret");
+  assert.equal(JSON.stringify(logs).includes("gateway-secret"), false);
+  assert.equal(JSON.stringify(logs).includes("direct-secret"), false);
+
+  const direct = await callAi({
+    feature: "direct",
+    system: "facts",
+    user: "two",
+    userId: "user_g",
+    deps: { env: { XAI_API_KEY: "direct-secret" }, fetchImpl },
+  });
+  assert.equal(direct.ok, true);
+  assert.equal(calls[1].url, "https://api.x.ai/v1/chat/completions");
+  assert.equal(calls[1].body.model, "grok-4-1-fast-non-reasoning");
+  assert.equal(calls[1].authorization, "Bearer direct-secret");
 });
